@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.window.to.foreground
 
 import com.intellij.openapi.util.Key
@@ -15,7 +16,7 @@ private val terminalPIDKey = Key<Int?>("ProcessWindowUtils_TerminalPIDKey")
 private val terminalBroughtSuccessfullyKey = Key<Boolean>("ProcessWindowUtils_TerminalBroughtSuccessfullyKey")
 
 @ApiStatus.Internal
-fun BringProcessWindowToForegroundSupport.bring(pid: Int, dataHolder: UserDataHolderBase) : Boolean {
+fun BringProcessWindowToForegroundSupport.bring(pid: Int, dataHolder: UserDataHolderBase, tryExternalTerminalApp: Boolean) : Boolean {
   if (!this.isApplicable())
     return false
 
@@ -23,6 +24,8 @@ fun BringProcessWindowToForegroundSupport.bring(pid: Int, dataHolder: UserDataHo
     logger.trace { "Could successfully bring $pid process into foreground" }
     return true
   }
+
+  if (!tryExternalTerminalApp) return false
 
   logger.trace { "Bringing terminal window into foreground if it exists" }
 

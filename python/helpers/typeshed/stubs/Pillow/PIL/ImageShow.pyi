@@ -1,6 +1,5 @@
 from _typeshed import Incomplete, Unused
-from typing import Any
-from typing_extensions import Literal
+from typing import Any, Literal
 
 def register(viewer, order: int = 1) -> None: ...
 def show(image, title: Incomplete | None = None, **options): ...

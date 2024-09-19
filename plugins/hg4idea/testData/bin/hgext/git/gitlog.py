@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from mercurial.i18n import _
 
 from mercurial.node import (
@@ -29,7 +31,7 @@ from . import (
 pygit2 = gitutil.get_pygit2()
 
 
-class baselog:  # revlog.revlog):
+class baselog(object):  # revlog.revlog):
     """Common implementations between changelog and manifestlog."""
 
     def __init__(self, gr, db):
@@ -69,7 +71,7 @@ class baselog:  # revlog.revlog):
         return t is not None
 
 
-class baselogindex:
+class baselogindex(object):
     def __init__(self, log):
         self._log = log
 
@@ -112,7 +114,7 @@ class changelog(baselog):
             return False
 
     def __iter__(self):
-        return iter(range(len(self)))
+        return iter(pycompat.xrange(len(self)))
 
     @property
     def filteredrevs(self):
@@ -186,7 +188,7 @@ class changelog(baselog):
 
     def shortest(self, node, minlength=1):
         nodehex = hex(node)
-        for attempt in range(minlength, len(nodehex) + 1):
+        for attempt in pycompat.xrange(minlength, len(nodehex) + 1):
             candidate = nodehex[:attempt]
             matches = int(
                 self._db.execute(
@@ -282,30 +284,6 @@ class changelog(baselog):
 
         return ancestor.incrementalmissingancestors(self.parentrevs, common)
 
-    def findmissingrevs(self, common=None, heads=None):
-        """Return the revision numbers of the ancestors of heads that
-        are not ancestors of common.
-
-        More specifically, return a list of revision numbers corresponding to
-        nodes N such that every N satisfies the following constraints:
-
-          1. N is an ancestor of some node in 'heads'
-          2. N is not an ancestor of any node in 'common'
-
-        The list is sorted by revision number, meaning it is
-        topologically sorted.
-
-        'heads' and 'common' are both lists of revision numbers.  If heads is
-        not supplied, uses all of the revlog's heads.  If common is not
-        supplied, uses nullid."""
-        if common is None:
-            common = [nullrev]
-        if heads is None:
-            heads = self.headrevs()
-
-        inc = self.incrementalmissingrevs(common=common)
-        return inc.missingancestors(heads)
-
     def findmissing(self, common=None, heads=None):
         """Return the ancestors of heads that are not ancestors of common.
 
@@ -324,7 +302,7 @@ class changelog(baselog):
         if common is None:
             common = [sha1nodeconstants.nullid]
         if heads is None:
-            heads = [self.node(r) for r in self.headrevs()]
+            heads = self.heads()
 
         common = [self.rev(n) for n in common]
         heads = [self.rev(n) for n in heads]
@@ -558,7 +536,8 @@ WHERE filenode = ? AND filename = ?
                 ).fetchone()[0]
                 # This filelog is missing some data. Build the
                 # filelog, then recurse (which will always find data).
-                commit = commit.decode('ascii')
+                if pycompat.ispy3:
+                    commit = commit.decode('ascii')
                 index.fill_in_filelog(self.gitrepo, self._db, commit, gp, gn)
                 return self.parents(node)
             else:

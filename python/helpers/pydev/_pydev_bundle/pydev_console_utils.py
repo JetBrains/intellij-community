@@ -1,5 +1,4 @@
 import os
-import signal
 import sys
 import traceback
 
@@ -8,7 +7,6 @@ from _pydev_bundle.pydev_code_executor import BaseCodeExecutor
 from _pydev_bundle.pydev_console_types import CodeFragment
 from _pydev_bundle.pydev_imports import Exec
 from _pydev_bundle.pydev_stdin import StdIn, DebugConsoleStdIn
-from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_comm import InternalDataViewerAction
@@ -413,7 +411,7 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             raise PythonUnhandledException(traceback.format_exc())
 
     #
-    def execTableCommand(self, command, command_type, start_index, end_index):
+    def execTableCommand(self, command, command_type, start_index, end_index, format):
         try:
             try:
                 start_index = int(start_index)
@@ -422,7 +420,7 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                 start_index = None
                 end_index = None
             success, res = exec_table_command(command, command_type,
-                                              start_index, end_index,
+                                              start_index, end_index, format,
                                               self.get_namespace(),
                                               self.get_namespace())
             if success:

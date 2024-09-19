@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionSource
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -25,7 +26,7 @@ class IntentionActionAsAction(intention: IntentionAction)
     val file = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return
     val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
 
-    intention.invokeAsAction(editor, file)
+    intention.invokeAsAction(editor, file, IntentionSource.CUSTOM_SHORTCUT)
   }
 
   override fun update(e: AnActionEvent) {

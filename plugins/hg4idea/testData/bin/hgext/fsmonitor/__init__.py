@@ -107,6 +107,7 @@ created.
 # The issues related to nested repos and subrepos are probably not fundamental
 # ones. Patches to fix them are welcome.
 
+from __future__ import absolute_import
 
 import codecs
 import os
@@ -117,7 +118,6 @@ import weakref
 
 from mercurial.i18n import _
 from mercurial.node import hex
-
 from mercurial.pycompat import open
 from mercurial import (
     context,
@@ -132,9 +132,6 @@ from mercurial import (
     scmutil,
     util,
 )
-
-# no-check-code because we're accessing private information only public in pure
-from mercurial.pure import parsers
 from mercurial import match as matchmod
 from mercurial.utils import (
     hashutil,
@@ -332,27 +329,11 @@ def overridewalk(orig, self, match, subrepos, unknown, ignored, full=True):
     matchfn = match.matchfn
     matchalways = match.always()
     dmap = self._map
-    if hasattr(dmap, '_map'):
+    if util.safehasattr(dmap, b'_map'):
         # for better performance, directly access the inner dirstate map if the
         # standard dirstate implementation is in use.
         dmap = dmap._map
-
-    has_mtime = parsers.DIRSTATE_V2_HAS_MTIME
-    mtime_is_ambiguous = parsers.DIRSTATE_V2_MTIME_SECOND_AMBIGUOUS
-    mask = has_mtime | mtime_is_ambiguous
-
-    # All entries that may not be clean
-    nonnormalset = {
-        f
-        for f, e in self._map.items()
-        if not e.maybe_clean
-        # same as "not has_time or has_ambiguous_time", but factored to only
-        # need a single access to flags for performance.
-        # `mask` removes all irrelevant bits, then we flip the `mtime` bit so
-        # its `true` value is NOT having a mtime, then check if either bit
-        # is set.
-        or bool((e.v2_data()[0] & mask) ^ has_mtime)
-    }
+    nonnormalset = self._map.nonnormalset
 
     copymap = self._map.copymap
     getkind = stat.S_IFMT
@@ -517,11 +498,15 @@ def overridewalk(orig, self, match, subrepos, unknown, ignored, full=True):
             visit.update(f for f in copymap if f not in results and matchfn(f))
     else:
         if matchalways:
-            visit.update(f for f, st in dmap.items() if f not in results)
+            visit.update(
+                f for f, st in pycompat.iteritems(dmap) if f not in results
+            )
             visit.update(f for f in copymap if f not in results)
         else:
             visit.update(
-                f for f, st in dmap.items() if f not in results and matchfn(f)
+                f
+                for f, st in pycompat.iteritems(dmap)
+                if f not in results and matchfn(f)
             )
             visit.update(f for f in copymap if f not in results and matchfn(f))
 
@@ -575,8 +560,8 @@ def overridestatus(
             for i, (s1, s2) in enumerate(zip(l1, l2)):
                 if set(s1) != set(s2):
                     f.write(b'sets at position %d are unequal\n' % i)
-                    f.write(b'watchman returned: %r\n' % s1)
-                    f.write(b'stat returned: %r\n' % s2)
+                    f.write(b'watchman returned: %s\n' % s1)
+                    f.write(b'stat returned: %s\n' % s2)
         finally:
             f.close()
 
@@ -697,7 +682,7 @@ def overridestatus(
     )
 
 
-class poststatus:
+class poststatus(object):
     def __init__(self, startclock):
         self._startclock = pycompat.sysbytes(startclock)
 
@@ -744,7 +729,7 @@ def makedirstate(repo, dirstate):
 def wrapdirstate(orig, self):
     ds = orig(self)
     # only override the dirstate when Watchman is available for the repo
-    if hasattr(self, '_fsmonitorstate'):
+    if util.safehasattr(self, b'_fsmonitorstate'):
         makedirstate(self, ds)
     return ds
 
@@ -755,9 +740,9 @@ def extsetup(ui):
     )
     if pycompat.isdarwin:
         # An assist for avoiding the dangling-symlink fsevents bug
-        extensions.wrapfunction(os, 'symlink', wrapsymlink)
+        extensions.wrapfunction(os, b'symlink', wrapsymlink)
 
-    extensions.wrapfunction(merge, '_update', wrapupdate)
+    extensions.wrapfunction(merge, b'_update', wrapupdate)
 
 
 def wrapsymlink(orig, source, link_name):
@@ -772,7 +757,7 @@ def wrapsymlink(orig, source, link_name):
             pass
 
 
-class state_update:
+class state_update(object):
     """This context manager is responsible for dispatching the state-enter
     and state-leave signals to the watchman service. The enter and leave
     methods can be invoked manually (for scenarios where context manager
@@ -811,7 +796,7 @@ class state_update:
             self.oldnode = self.repo[b'.'].node()
 
         if self.repo.currentwlock() is None:
-            if hasattr(self.repo, 'wlocknostateupdate'):
+            if util.safehasattr(self.repo, b'wlocknostateupdate'):
                 self._lock = self.repo.wlocknostateupdate()
             else:
                 self._lock = self.repo.wlock()
@@ -839,7 +824,7 @@ class state_update:
                 self._lock.release()
 
     def _state(self, cmd, commithash, status=b'ok'):
-        if not hasattr(self.repo, '_watchmanclient'):
+        if not util.safehasattr(self.repo, b'_watchmanclient'):
             return False
         try:
             self.repo._watchmanclient.command(

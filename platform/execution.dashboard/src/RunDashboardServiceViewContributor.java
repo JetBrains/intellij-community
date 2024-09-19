@@ -213,7 +213,7 @@ public final class RunDashboardServiceViewContributor
       RunDashboardManagerImpl manager = ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject()));
       RunDashboardComponentWrapper wrapper = manager.getContentWrapper();
       Content content = myNode.getContent();
-      if (content == null) {
+      if (content == null || content.getManager() != manager.getDashboardContentManager()) {
         wrapper.setContent(manager.getEmptyContent());
         wrapper.setContentId(null);
       }

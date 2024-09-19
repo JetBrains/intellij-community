@@ -9,7 +9,7 @@
     // Don't format on save for formatters we don't explicitely control
     "editor.formatOnSave": false,
     "editor.codeActionsOnSave": {
-        "source.fixAll": false
+        "source.fixAll": "never"
     },
     // Set file associations to support comments syntax highlight
     "files.associations": {
@@ -48,9 +48,7 @@
     "[json][jsonc][yaml][python][toml]": {
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
-            "source.fixAll": true,
-            // Allow isort or Ruff to organize imports
-            "source.organizeImports": true
+            "source.fixAll": "explicit"
         }
     },
     "[json][jsonc]": {
@@ -69,26 +67,17 @@
         "editor.rulers": [
             130
         ],
-        "editor.defaultFormatter": "ms-python.black-formatter"
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.codeActionsOnSave": {
+            // Let Ruff lint fixes handle imports
+            "source.organizeImports": "never"
+        }
     },
-    // Use the new dedicated extensions instead
-    "python.formatting.provider": "none",
-    "python.linting.enabled": false,
-    "python.linting.mypyEnabled": false,
-    "python.linting.flake8Enabled": false,
-    "python.linting.pycodestyleEnabled": false,
-    "python.linting.prospectorEnabled": false,
-    "python.linting.pylamaEnabled": false,
-    "python.linting.pylintEnabled": false,
-    // Not using bandit
-    "python.linting.banditEnabled": false,
     // python.analysis is Pylance (pyright) configurations
     "python.analysis.fixAll": [
         "source.unusedImports"
         // Explicitly omiting "source.convertImportFormat", some stubs use relative imports
     ],
-    // Important to use `types-*` and flag untyped dependencies.
-    "python.analysis.useLibraryCodeForTypes": false,
     "python.analysis.typeshedPaths": [
         "${workspaceFolder}"
     ],
@@ -109,13 +98,12 @@
         "--config=.flake8"
     ],
     "flake8.importStrategy": "fromEnvironment",
-    "isort.check": true,
-    "isort.importStrategy": "fromEnvironment",
     "black-formatter.importStrategy": "fromEnvironment",
+    // Using Ruff instead of isort
+    "isort.check": false,
     "ruff.importStrategy": "fromEnvironment",
     "ruff.fixAll": true,
-    // Conflict between Ruff and isort
-    "ruff.organizeImports": false,
+    "ruff.organizeImports": true,
     "evenBetterToml.formatter.alignComments": false,
     "evenBetterToml.formatter.alignEntries": false,
     "evenBetterToml.formatter.allowedBlankLines": 1,

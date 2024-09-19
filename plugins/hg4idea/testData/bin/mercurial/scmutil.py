@@ -5,8 +5,8 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
-import binascii
 import errno
 import glob
 import os
@@ -23,6 +23,7 @@ from .node import (
     short,
     wdirrev,
 )
+from .pycompat import getattr
 from .thirdparty import attr
 from . import (
     copies as copiesmod,
@@ -62,7 +63,7 @@ termsize = scmplatform.termsize
 
 
 @attr.s(slots=True, repr=False)
-class status:
+class status(object):
     """Struct with a list of files per status.
 
     The 'deleted', 'unknown' and 'ignored' properties are only
@@ -108,7 +109,7 @@ def itersubrepos(ctx1, ctx2):
             del subpaths[subpath]
             missing.add(subpath)
 
-    for subpath, ctx in sorted(subpaths.items()):
+    for subpath, ctx in sorted(pycompat.iteritems(subpaths)):
         yield subpath, ctx.sub(subpath)
 
     # Yield an empty subrepo based on ctx1 for anything only in ctx2.  That way,
@@ -179,8 +180,6 @@ def callcatch(ui, func):
             )
         )
     except error.RepoError as inst:
-        if isinstance(inst, error.RepoLookupError):
-            detailed_exit_code = 10
         ui.error(_(b"abort: %s\n") % inst)
         if inst.hint:
             ui.error(_(b"(%s)\n") % inst.hint)
@@ -227,12 +226,16 @@ def callcatch(ui, func):
         except (AttributeError, IndexError):
             # it might be anything, for example a string
             reason = inst.reason
-        if isinstance(reason, str):
+        if isinstance(reason, pycompat.unicode):
             # SSLError of Python 2.7.9 contains a unicode
             reason = encoding.unitolocal(reason)
         ui.error(_(b"abort: error: %s\n") % stringutil.forcebytestr(reason))
     except (IOError, OSError) as inst:
-        if hasattr(inst, "args") and inst.args and inst.args[0] == errno.EPIPE:
+        if (
+            util.safehasattr(inst, b"args")
+            and inst.args
+            and inst.args[0] == errno.EPIPE
+        ):
             pass
         elif getattr(inst, "strerror", None):  # common IOError or OSError
             if getattr(inst, "filename", None) is not None:
@@ -273,11 +276,6 @@ def checknewlabel(repo, lbl, kind):
             )
     try:
         int(lbl)
-        if b'_' in lbl:
-            # If label contains underscores, Python might consider it an
-            # integer (with "_" as visual separators), but we do not.
-            # See PEP 515 - Underscores in Numeric Literals.
-            raise ValueError
         raise error.InputError(_(b"cannot use an integer as a name"))
     except ValueError:
         pass
@@ -324,7 +322,7 @@ def checkportabilityalert(ui):
     return abort, warn
 
 
-class casecollisionauditor:
+class casecollisionauditor(object):
     def __init__(self, ui, abort, dirstate):
         self._ui = ui
         self._abort = abort
@@ -343,13 +341,13 @@ class casecollisionauditor:
         if fl in self._loweredfiles and f not in self._dirstate:
             msg = _(b'possible case-folding collision for %s') % f
             if self._abort:
-                raise error.StateError(msg)
+                raise error.Abort(msg)
             self._ui.warn(_(b"warning: %s\n") % msg)
         self._loweredfiles.add(fl)
         self._newfiles.add(f)
 
 
-def combined_filtered_and_obsolete_hash(repo, maxrev, needobsolete=False):
+def filteredhash(repo, maxrev):
     """build hash of filtered revisions in the current repoview.
 
     Multiple caches perform up-to-date validation by checking that the
@@ -358,84 +356,22 @@ def combined_filtered_and_obsolete_hash(repo, maxrev, needobsolete=False):
     of revisions in the view may change without the repository tiprev and
     tipnode changing.
 
-    This function hashes all the revs filtered from the view (and, optionally,
-    all obsolete revs) up to maxrev and returns that SHA-1 digest.
+    This function hashes all the revs filtered from the view and returns
+    that SHA-1 digest.
     """
     cl = repo.changelog
-    if needobsolete:
-        obsrevs = obsolete.getrevs(repo, b'obsolete')
-        if not cl.filteredrevs and not obsrevs:
-            return None
-        key = (maxrev, hash(cl.filteredrevs), hash(obsrevs))
-    else:
-        if not cl.filteredrevs:
-            return None
-        key = maxrev
-        obsrevs = frozenset()
-
-    result = cl._filteredrevs_hashcache.get(key)
-    if not result:
-        revs, obs_revs = _filtered_and_obs_revs(repo, maxrev)
-        if needobsolete:
-            revs = revs | obs_revs
-        revs = sorted(revs)
+    if not cl.filteredrevs:
+        return None
+    key = cl._filteredrevs_hashcache.get(maxrev)
+    if not key:
+        revs = sorted(r for r in cl.filteredrevs if r <= maxrev)
         if revs:
-            result = _hash_revs(revs)
-            cl._filteredrevs_hashcache[key] = result
-    return result
-
-
-def filtered_and_obsolete_hash(repo, maxrev):
-    """build hashs of filtered and obsolete revisions in the current repoview.
-
-    Multiple caches perform up-to-date validation by checking that the
-    tiprev and tipnode stored in the cache file match the current repository.
-    However, this is not sufficient for validating repoviews because the set
-    of revisions in the view may change without the repository tiprev and
-    tipnode changing.
-
-    This function hashes all the revs filtered from the view up to maxrev and
-    returns that SHA-1 digest. The obsolete revisions hashed are only the
-    non-filtered one.
-    """
-    cl = repo.changelog
-    obs_set = obsolete.getrevs(repo, b'obsolete')
-    key = (maxrev, hash(cl.filteredrevs), hash(obs_set))
-
-    result = cl._filteredrevs_hashcache.get(key)
-    if result is None:
-        filtered_hash = None
-        obs_hash = None
-        filtered_revs, obs_revs = _filtered_and_obs_revs(repo, maxrev)
-        if filtered_revs:
-            filtered_hash = _hash_revs(filtered_revs)
-        if obs_revs:
-            obs_hash = _hash_revs(obs_revs)
-        result = (filtered_hash, obs_hash)
-        cl._filteredrevs_hashcache[key] = result
-    return result
-
-
-def _filtered_and_obs_revs(repo, max_rev):
-    """return the set of filtered and non-filtered obsolete revision"""
-    cl = repo.changelog
-    obs_set = obsolete.getrevs(repo, b'obsolete')
-    filtered_set = cl.filteredrevs
-    if cl.filteredrevs:
-        obs_set = obs_set - cl.filteredrevs
-    if max_rev < (len(cl) - 1):
-        # there might be revision to filter out
-        filtered_set = set(r for r in filtered_set if r <= max_rev)
-        obs_set = set(r for r in obs_set if r <= max_rev)
-    return (filtered_set, obs_set)
-
-
-def _hash_revs(revs):
-    """return a hash from a list of revision numbers"""
-    s = hashutil.sha1()
-    for rev in revs:
-        s.update(b'%d;' % rev)
-    return s.digest()
+            s = hashutil.sha1()
+            for rev in revs:
+                s.update(b'%d;' % rev)
+            key = s.digest()
+            cl._filteredrevs_hashcache[maxrev] = key
+    return key
 
 
 def walkrepos(path, followsym=False, seen_dirs=None, recurse=False):
@@ -608,23 +544,20 @@ def shortesthexnodeidprefix(repo, node, minlength=1, cache=None):
             nodetree = None
             if cache is not None:
                 nodetree = cache.get(b'disambiguationnodetree')
-            is_invalidated = getattr(nodetree, 'is_invalidated', lambda: False)
-            if is_invalidated():
-                nodetree = None
             if not nodetree:
-                if hasattr(parsers, 'nodetree') and isinstance(
-                    cl.index, parsers.index
-                ):
+                if util.safehasattr(parsers, 'nodetree'):
+                    # The CExt is the only implementation to provide a nodetree
+                    # class so far.
                     index = cl.index
+                    if util.safehasattr(index, 'get_cindex'):
+                        # the rust wrapped need to give access to its internal index
+                        index = index.get_cindex()
                     nodetree = parsers.nodetree(index, len(revs))
-            elif getattr(cl.index, 'is_rust', False):
-                nodetree = rustrevlog.NodeTree(cl.index)
-
+                    for r in revs:
+                        nodetree.insert(r)
+                    if cache is not None:
+                        cache[b'disambiguationnodetree'] = nodetree
             if nodetree is not None:
-                for r in revs:
-                    nodetree.insert(r)
-                if cache is not None:
-                    cache[b'disambiguationnodetree'] = nodetree
                 length = max(nodetree.shortest(node), minlength)
                 prefix = hexnode[:length]
                 return disambiguate(prefix)
@@ -696,7 +629,7 @@ def revsymbol(repo, symbol):
                 return repo[rev]
             except error.FilteredLookupError:
                 raise
-            except (binascii.Error, LookupError):
+            except (TypeError, LookupError):
                 pass
 
         # look up bookmarks through the name interface
@@ -756,7 +689,7 @@ def revsingle(repo, revspec, default=b'.', localalias=None):
 
     l = revrange(repo, [revspec], localalias=localalias)
     if not l:
-        raise error.InputError(_(b'empty revision set'))
+        raise error.Abort(_(b'empty revision set'))
     return repo[l.last()]
 
 
@@ -777,7 +710,7 @@ def revpair(repo, revs):
     l = revrange(repo, revs)
 
     if not l:
-        raise error.InputError(_(b'empty revision range'))
+        raise error.Abort(_(b'empty revision range'))
 
     first = l.first()
     second = l.last()
@@ -787,7 +720,7 @@ def revpair(repo, revs):
         and len(revs) >= 2
         and not all(revrange(repo, [r]) for r in revs)
     ):
-        raise error.InputError(_(b'empty revision on one side of range'))
+        raise error.Abort(_(b'empty revision on one side of range'))
 
     # if top-level is range expression, the result must always be a pair
     if first == second and len(revs) == 1 and not _pairspec(revs[0]):
@@ -856,7 +789,7 @@ def walkchangerevs(repo, revs, makefilematcher, prepare):
         stopiteration = False
         for windowsize in increasingwindows():
             nrevs = []
-            for i in range(windowsize):
+            for i in pycompat.xrange(windowsize):
                 rev = next(it, None)
                 if rev is None:
                     stopiteration = True
@@ -1076,7 +1009,7 @@ def backuppath(ui, repo, filepath):
     return origvfs.join(filepath)
 
 
-class _containsnode:
+class _containsnode(object):
     """proxy __contains__(node) to container.__contains__ which accepts revs"""
 
     def __init__(self, repo, revcontainer):
@@ -1117,7 +1050,7 @@ def cleanupnodes(
         return
 
     # translate mapping's other forms
-    if not hasattr(replacements, 'items'):
+    if not util.safehasattr(replacements, b'items'):
         replacements = {(n,): () for n in replacements}
     else:
         # upgrading non tuple "source" to tuple ones for BC
@@ -1247,7 +1180,7 @@ def cleanupnodes(
                 obsolete.createmarkers(
                     repo, rels, operation=operation, metadata=metadata
                 )
-        elif phases.supportarchived(repo) and mayusearchived:
+        elif phases.supportinternal(repo) and mayusearchived:
             # this assume we do not have "unstable" nodes above the cleaned ones
             allreplaced = set()
             for ns in replacements.keys():
@@ -1270,7 +1203,7 @@ def cleanupnodes(
                 )
 
 
-def addremove(repo, matcher, prefix, uipathfn, opts=None, open_tr=None):
+def addremove(repo, matcher, prefix, uipathfn, opts=None):
     if opts is None:
         opts = {}
     m = matcher
@@ -1278,9 +1211,9 @@ def addremove(repo, matcher, prefix, uipathfn, opts=None, open_tr=None):
     try:
         similarity = float(opts.get(b'similarity') or 0)
     except ValueError:
-        raise error.InputError(_(b'similarity must be a number'))
+        raise error.Abort(_(b'similarity must be a number'))
     if similarity < 0 or similarity > 100:
-        raise error.InputError(_(b'similarity must be between 0 and 100'))
+        raise error.Abort(_(b'similarity must be between 0 and 100'))
     similarity /= 100.0
 
     ret = 0
@@ -1330,9 +1263,7 @@ def addremove(repo, matcher, prefix, uipathfn, opts=None, open_tr=None):
         repo, m, added + unknown, removed + deleted, similarity, uipathfn
     )
 
-    if not dry_run and (unknown or forgotten or deleted or renames):
-        if open_tr is not None:
-            open_tr()
+    if not dry_run:
         _markchanges(repo, unknown + forgotten, deleted, renames)
 
     for f in rejected:
@@ -1395,18 +1326,18 @@ def _interestingfiles(repo, matcher):
         ignored=False,
         full=False,
     )
-    for abs, st in walkresults.items():
-        entry = dirstate.get_entry(abs)
-        if (not entry.any_tracked) and audit_path.check(abs):
+    for abs, st in pycompat.iteritems(walkresults):
+        dstate = dirstate[abs]
+        if dstate == b'?' and audit_path.check(abs):
             unknown.append(abs)
-        elif (not entry.removed) and not st:
+        elif dstate != b'r' and not st:
             deleted.append(abs)
-        elif entry.removed and st:
+        elif dstate == b'r' and st:
             forgotten.append(abs)
         # for finding renames
-        elif entry.removed and not st:
+        elif dstate == b'r' and not st:
             removed.append(abs)
-        elif entry.added:
+        elif dstate == b'a':
             added.append(abs)
 
     return added, unknown, deleted, removed, forgotten
@@ -1442,7 +1373,7 @@ def _markchanges(repo, unknown, deleted, renames):
     with repo.wlock():
         wctx.forget(deleted)
         wctx.add(unknown)
-        for new, old in renames.items():
+        for new, old in pycompat.iteritems(renames):
             wctx.copy(old, new)
 
 
@@ -1524,11 +1455,10 @@ def dirstatecopy(ui, repo, wctx, src, dst, dryrun=False, cwd=None):
     """
     origsrc = repo.dirstate.copied(src) or src
     if dst == origsrc:  # copying back a copy?
-        entry = repo.dirstate.get_entry(dst)
-        if (entry.added or not entry.tracked) and not dryrun:
+        if repo.dirstate[dst] not in b'mn' and not dryrun:
             repo.dirstate.set_tracked(dst)
     else:
-        if repo.dirstate.get_entry(origsrc).added and origsrc == src:
+        if repo.dirstate[origsrc] == b'a' and origsrc == src:
             if not ui.quiet:
                 ui.warn(
                     _(
@@ -1537,7 +1467,7 @@ def dirstatecopy(ui, repo, wctx, src, dst, dryrun=False, cwd=None):
                     )
                     % (repo.pathto(origsrc, cwd), repo.pathto(dst, cwd))
                 )
-            if not repo.dirstate.get_entry(dst).tracked and not dryrun:
+            if repo.dirstate[dst] in b'?r' and not dryrun:
                 wctx.add([dst])
         elif not dryrun:
             wctx.copy(origsrc, dst)
@@ -1568,10 +1498,13 @@ def movedirstate(repo, newctx, match=None):
     # Merge old parent and old working dir copies
     oldcopies = copiesmod.pathcopies(newctx, oldctx, match)
     oldcopies.update(copies)
-    copies = {dst: oldcopies.get(src, src) for dst, src in oldcopies.items()}
+    copies = {
+        dst: oldcopies.get(src, src)
+        for dst, src in pycompat.iteritems(oldcopies)
+    }
     # Adjust the dirstate copies
-    for dst, src in copies.items():
-        if src not in newctx or dst in newctx or not ds.get_entry(dst).added:
+    for dst, src in pycompat.iteritems(copies):
+        if src not in newctx or dst in newctx or ds[dst] != b'a':
             src = None
         ds.copy(src, dst)
     repo._quick_access_changeid_invalidate()
@@ -1626,7 +1559,7 @@ def writerequires(opener, requirements):
             fp.write(b"%s\n" % r)
 
 
-class filecachesubentry:
+class filecachesubentry(object):
     def __init__(self, path, stat):
         self.path = path
         self.cachestat = None
@@ -1677,11 +1610,12 @@ class filecachesubentry:
     def stat(path):
         try:
             return util.cachestat(path)
-        except FileNotFoundError:
-            pass
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
 
 
-class filecacheentry:
+class filecacheentry(object):
     def __init__(self, paths, stat=True):
         self._entries = []
         for path in paths:
@@ -1699,7 +1633,7 @@ class filecacheentry:
             entry.refresh()
 
 
-class filecache:
+class filecache(object):
     """A property like decorator that tracks files under .hg/ for updates.
 
     On first access, the files defined as arguments are stat()ed and the
@@ -1728,9 +1662,6 @@ class filecache:
     def __init__(self, *paths):
         self.paths = paths
 
-    def tracked_paths(self, obj):
-        return [self.join(obj, path) for path in self.paths]
-
     def join(self, obj, fname):
         """Used to compute the runtime path of a cached file.
 
@@ -1743,10 +1674,6 @@ class filecache:
     def __call__(self, func):
         self.func = func
         self.sname = func.__name__
-        # XXX We should be using a unicode string instead of bytes for the main
-        # name (and the _filecache key). The fact we use bytes is a remains
-        # from Python2, since the name is derived from an attribute name a
-        # `str` is a better fit now that we support Python3 only
         self.name = pycompat.sysbytes(self.sname)
         return self
 
@@ -1763,7 +1690,7 @@ class filecache:
             if entry.changed():
                 entry.obj = self.func(obj)
         else:
-            paths = self.tracked_paths(obj)
+            paths = [self.join(obj, path) for path in self.paths]
 
             # We stat -before- creating the object so our cache doesn't lie if
             # a writer modified between the time we read and stat
@@ -1782,7 +1709,7 @@ class filecache:
         if self.name not in obj._filecache:
             # we add an entry for the missing value because X in __dict__
             # implies X in _filecache
-            paths = self.tracked_paths(obj)
+            paths = [self.join(obj, path) for path in self.paths]
             ce = filecacheentry(paths, False)
             obj._filecache[self.name] = ce
         else:
@@ -1860,7 +1787,7 @@ def extdatasource(repo, source):
     return data
 
 
-class progress:
+class progress(object):
     def __init__(self, ui, updatebar, topic, unit=b"", total=None):
         self.ui = ui
         self.pos = 0
@@ -1920,17 +1847,12 @@ def gdinitconfig(ui):
 
 
 def gddeltaconfig(ui):
-    """helper function to know if incoming deltas should be optimized
-
-    The `format.generaldelta` config is an old form of the config that also
-    implies that incoming delta-bases should be never be trusted. This function
-    exists for this purpose.
-    """
+    """helper function to know if incoming delta should be optimised"""
     # experimental config: format.generaldelta
     return ui.configbool(b'format', b'generaldelta')
 
 
-class simplekeyvaluefile:
+class simplekeyvaluefile(object):
     """A simple file with key=value lines
 
     Keys must be alphanumerics and start with a letter, values must not
@@ -2269,9 +2191,6 @@ def unhidehashlikerevs(repo, specs, hiddentype):
 
     returns a repo object with the required changesets unhidden
     """
-    if not specs:
-        return repo
-
     if not repo.filtername or not repo.ui.configbool(
         b'experimental', b'directaccess'
     ):
@@ -2368,44 +2287,3 @@ def format_bookmark_revspec(mark):
         mark,
         mark,
     )
-
-
-def ismember(ui, username, userlist):
-    """Check if username is a member of userlist.
-
-    If userlist has a single '*' member, all users are considered members.
-    Can be overridden by extensions to provide more complex authorization
-    schemes.
-    """
-    return userlist == [b'*'] or username in userlist
-
-
-RESOURCE_HIGH = 3
-RESOURCE_MEDIUM = 2
-RESOURCE_LOW = 1
-RESOURCE_DEFAULT = 0
-
-RESOURCE_MAPPING = {
-    b'default': RESOURCE_DEFAULT,
-    b'low': RESOURCE_LOW,
-    b'medium': RESOURCE_MEDIUM,
-    b'high': RESOURCE_HIGH,
-}
-
-DEFAULT_RESOURCE = RESOURCE_MEDIUM
-
-
-def get_resource_profile(ui, dimension=None):
-    """return the resource profile for a dimension
-
-    If no dimension is specified, the generic value is returned"""
-    generic_name = ui.config(b'usage', b'resources')
-    value = RESOURCE_MAPPING.get(generic_name, RESOURCE_DEFAULT)
-    if value == RESOURCE_DEFAULT:
-        value = DEFAULT_RESOURCE
-    if dimension is not None:
-        sub_name = ui.config(b'usage', b'resources.%s' % dimension)
-        sub_value = RESOURCE_MAPPING.get(sub_name, RESOURCE_DEFAULT)
-        if sub_value != RESOURCE_DEFAULT:
-            value = sub_value
-    return value

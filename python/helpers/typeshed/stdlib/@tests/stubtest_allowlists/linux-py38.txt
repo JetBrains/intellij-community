@@ -1,0 +1,6 @@
+# `eventmask` argument exists at runtime, but is not correctly recognized
+# while being inspected by stubtest. Fixed in Python 3.10.
+select.epoll.register
+
+# doesn't exist on linux
+msilib(.[a-z]+)?

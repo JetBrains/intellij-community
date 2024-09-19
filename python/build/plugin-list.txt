@@ -13,6 +13,7 @@ intellij.grazie
 intellij.markdown
 intellij.platform.langInjection
 intellij.properties
+intellij.restructuredtext
 intellij.searchEverywhereMl
 intellij.marketplaceMl
 intellij.settingsSync

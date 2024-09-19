@@ -9,6 +9,9 @@ import java.util.Set;
 final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
   private static final Set<String> ourFreeLicenseEligibleProducts = Set.of("QA", "RR");
 
+  private volatile long myLastModificationCount = -1;
+  private volatile boolean mySendingAllowed = false;
+
   @Override
   public boolean isEAP() {
     return ConsentOptions.getInstance().isEAP();
@@ -32,6 +35,15 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
 
   @Override
   public boolean isSendingUsageStatsAllowed() {
-    return ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
+    long modificationCount = ConsentOptions.getInstance().getModificationCount();
+    if (myLastModificationCount == modificationCount) {
+      return mySendingAllowed;
+    }
+
+    boolean allowedNow = ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
+    mySendingAllowed = allowedNow;
+    myLastModificationCount = modificationCount;
+
+    return allowedNow;
   }
 }

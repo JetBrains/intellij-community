@@ -130,6 +130,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   @ApiStatus.Internal
   public static final String CLOSE_REASON_RESET_FILTERS = "ResetFilters";
 
+  private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
   private static final String SPLITTER_SERVICE_KEY = "ShowUsagesActions.splitterServiceKey";
   private static final String PREVIEW_PROPERTY_KEY = "ShowUsagesActions.previewPropertyKey";
 
@@ -923,7 +924,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       setAdvertiser(advertiserComponent).
       setMovable(true).
       setResizable(true).
-      setCancelKeyEnabled(true);
+      setCancelKeyEnabled(true).
+      setDimensionServiceKey(DIMENSION_SERVICE_KEY);
 
     PropertiesComponent properties = PropertiesComponent.getInstance(project);
     boolean addCodePreview = properties.isValueSet(PREVIEW_PROPERTY_KEY);
@@ -979,6 +981,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
           properties.setValue(PREVIEW_PROPERTY_KEY, state);
           cancel(popupRef.get(), actionHandler, CLOSE_REASON_PREVIEW);
 
+          WindowStateService.getInstance().putSize(DIMENSION_SERVICE_KEY, null);
           showElementUsages(parameters, actionHandler);
         }
       }
@@ -1432,10 +1435,21 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     table.setSize(rectangle.width, rectangle.height - minHeight);
     if (dataSize > 0) ScrollingUtil.ensureSelectionExists(table);
 
+    Dimension savedSize = WindowStateService.getInstance().getSize(DIMENSION_SERVICE_KEY);
     JBSplitter splitter = popup.getUserData(JBSplitter.class);
 
+    if (savedSize != null) {
+      rectangle.width = Math.min(savedSize.width, rectangle.width);
+    }
+
     if (splitter != null) {
-      rectangle.height += splitter.getDividerWidth() + splitter.getSecondComponent().getMinimumSize().height;
+      int newHeight = rectangle.height + splitter.getDividerWidth() + splitter.getSecondComponent().getMinimumSize().height;
+      if (savedSize != null) {
+        savedSize.height -= popup.getAdComponentHeight();
+        newHeight = Math.max(newHeight, savedSize.height);
+      }
+
+      rectangle.height = newHeight;
     }
 
     popup.setSize(rectangle.getSize());

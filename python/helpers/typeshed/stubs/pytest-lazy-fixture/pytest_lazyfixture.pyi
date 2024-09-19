@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from typing import Any, overload
-from typing_extensions import TypeGuard
+from typing_extensions import TypeIs
 
 class LazyFixture:
     name: str
@@ -11,4 +11,4 @@ class LazyFixture:
 def lazy_fixture(names: str) -> LazyFixture: ...
 @overload
 def lazy_fixture(names: Iterable[str]) -> list[LazyFixture] | Any: ...
-def is_lazy_fixture(val: object) -> TypeGuard[LazyFixture]: ...
+def is_lazy_fixture(val: object) -> TypeIs[LazyFixture]: ...

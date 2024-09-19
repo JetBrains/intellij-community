@@ -78,9 +78,12 @@ public final class VirtualEnvSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
   }
 
   @Override
-  public boolean isValidSdkPath(@NotNull File file) {
-    if (!super.isValidSdkPath(file)) return false;
-    return PythonSdkUtil.getVirtualEnvRoot(file.getPath()) != null;
+  public boolean isValidSdkPath(@NotNull Path path) {
+    if (!super.isValidSdkPath(path)) {
+      return false;
+    }
+
+    return PythonSdkUtil.getVirtualEnvRoot(path.toString()) != null;
   }
 
   @Override

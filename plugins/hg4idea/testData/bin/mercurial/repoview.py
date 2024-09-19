@@ -6,6 +6,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import copy
 import weakref
@@ -14,6 +15,11 @@ from .i18n import _
 from .node import (
     hex,
     nullrev,
+)
+from .pycompat import (
+    delattr,
+    getattr,
+    setattr,
 )
 from . import (
     error,
@@ -160,10 +166,10 @@ def computeimpactable(repo, visibilityexceptions=None):
     firstmutable = len(cl)
     roots = repo._phasecache.nonpublicphaseroots(repo)
     if roots:
-        firstmutable = min(firstmutable, min(roots))
+        firstmutable = min(firstmutable, min(cl.rev(r) for r in roots))
     # protect from nullrev root
     firstmutable = max(0, firstmutable)
-    return frozenset(range(firstmutable, len(cl)))
+    return frozenset(pycompat.xrange(firstmutable, len(cl)))
 
 
 # function to compute filtered set
@@ -204,18 +210,16 @@ def extrafilter(ui):
     subsettable = repoviewutil.subsettable
 
     if combine(b'base') not in filtertable:
-        for base_name in _basefiltername:
+        for name in _basefiltername:
 
-            def extrafilteredrevs(repo, *args, name=base_name, **kwargs):
+            def extrafilteredrevs(repo, *args, **kwargs):
                 baserevs = filtertable[name](repo, *args, **kwargs)
                 extrarevs = frozenset(repo.revs(frevs))
                 return baserevs | extrarevs
 
-            filtertable[combine(base_name)] = extrafilteredrevs
-            if base_name in subsettable:
-                subsettable[combine(base_name)] = combine(
-                    subsettable[base_name]
-                )
+            filtertable[combine(name)] = extrafilteredrevs
+            if name in subsettable:
+                subsettable[combine(name)] = combine(subsettable[name])
     return fid
 
 
@@ -258,10 +262,10 @@ def wrapchangelog(unfichangelog, filteredrevs):
     return cl
 
 
-class filteredchangelogmixin:
+class filteredchangelogmixin(object):
     def tiprev(self):
         """filtered version of revlog.tiprev"""
-        for i in range(len(self) - 1, -2, -1):
+        for i in pycompat.xrange(len(self) - 1, -2, -1):
             if i not in self.filteredrevs:
                 return i
 
@@ -273,7 +277,7 @@ class filteredchangelogmixin:
         """filtered version of revlog.__iter__"""
 
         def filterediter():
-            for i in range(len(self)):
+            for i in pycompat.xrange(len(self)):
                 if i not in self.filteredrevs:
                     yield i
 
@@ -291,12 +295,13 @@ class filteredchangelogmixin:
         This returns a version of 'revs' to be used thereafter by the caller.
         In particular, if revs is an iterator, it is converted into a set.
         """
-        if hasattr(revs, '__next__'):
+        safehasattr = util.safehasattr
+        if safehasattr(revs, '__next__'):
             # Note that inspect.isgenerator() is not true for iterators,
             revs = set(revs)
 
         filteredrevs = self.filteredrevs
-        if hasattr(revs, 'first'):  # smartset
+        if safehasattr(revs, 'first'):  # smartset
             offenders = revs & filteredrevs
         else:
             offenders = filteredrevs.intersection(revs)
@@ -304,10 +309,6 @@ class filteredchangelogmixin:
         for rev in offenders:
             raise error.FilteredIndexError(rev)
         return revs
-
-    def _head_node_ids(self):
-        # no Rust fast path implemented yet, so just loop in Python
-        return [self.node(r) for r in self.headrevs()]
 
     def headrevs(self, revs=None):
         if revs is None:
@@ -361,7 +362,7 @@ class filteredchangelogmixin:
         return super(filteredchangelogmixin, self).flags(rev)
 
 
-class repoview:
+class repoview(object):
     """Provide a read/write view of a repo through a filtered changelog
 
     This object is used to access a filtered version of a repository without
@@ -397,9 +398,6 @@ class repoview:
     """
 
     def __init__(self, repo, filtername, visibilityexceptions=None):
-        if filtername is None:
-            msg = "repoview should have a non-None filtername"
-            raise error.ProgrammingError(msg)
         object.__setattr__(self, '_unfilteredrepo', repo)
         object.__setattr__(self, 'filtername', filtername)
         object.__setattr__(self, '_clcachekey', None)
@@ -423,7 +421,7 @@ class repoview:
         with util.timedcm('repo filter for %s', self.filtername):
             revs = filterrevs(unfi, self.filtername, self._visibilityexceptions)
         cl = self._clcache
-        newkey = (unfilen, unfinode, hash(revs), unfichangelog.is_delaying)
+        newkey = (unfilen, unfinode, hash(revs), unfichangelog._delayed)
         # if cl.index is not unfiindex, unfi.changelog would be
         # recreated, and our clcache refers to garbage object
         if cl is not None and (

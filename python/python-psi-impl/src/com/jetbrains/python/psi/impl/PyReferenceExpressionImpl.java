@@ -18,6 +18,7 @@ import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType;
 
 /**
@@ -203,7 +203,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (qualified && typeFromTargets instanceof PyNoneType) {
       return null;
     }
-    final Ref<PyType> descriptorType = getDescriptorType(typeFromTargets, context);
+    final Ref<PyType> descriptorType = PyDescriptorTypeUtil.getDescriptorType(this, typeFromTargets, context);
     if (descriptorType != null) {
       return descriptorType.get();
     }
@@ -223,23 +223,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return getCalleeType(callExpression, PyResolveContext.defaultContext(context));
     }
     return null;
-  }
-
-  @Nullable
-  private Ref<PyType> getDescriptorType(@Nullable PyType typeFromTargets, @NotNull TypeEvalContext context) {
-    if (!isQualified()) return null;
-    final PyClassLikeType targetType = as(typeFromTargets, PyClassLikeType.class);
-    if (targetType == null || targetType.isDefinition()) return null;
-    final PyResolveContext resolveContext = PyResolveContext.noProperties(context);
-    final List<? extends RatedResolveResult> members = targetType.resolveMember(PyNames.GET, this, AccessDirection.READ,
-                                                                                resolveContext);
-    if (members == null || members.isEmpty()) return null;
-    final PyType type = StreamEx.of(members)
-      .map(RatedResolveResult::getElement)
-      .select(PyCallable.class)
-      .map(context::getReturnType)
-      .collect(PyTypeUtil.toUnion());
-    return Ref.create(type);
   }
 
   @Nullable
@@ -375,15 +358,30 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         PyType qualifierType = context.getType(qualifier);
         boolean possiblyParameterizedQualifier = !(qualifierType instanceof PyModuleType || qualifierType instanceof PyImportedModuleType);
         if (possiblyParameterizedQualifier && PyTypeChecker.hasGenerics(type, context)) {
-          final var substitutions =
-            PyTypeChecker.unifyGenericCall(qualifier, Collections.emptyMap(), context);
+          if (qualifierType instanceof PyCollectionType collectionType && collectionType.isDefinition()) {
+            if (type != null) {
+              PyType typeWithSubstitutions = PyTypeChecker.parameterizeType(type, List.of(), context);
+              if (typeWithSubstitutions != null) {
+                return typeWithSubstitutions;
+              }
+            }
+          }
+          final var substitutions = PyTypeChecker.unifyGenericCall(qualifier, Collections.emptyMap(), context);
           if (substitutions != null) {
-            final PyType substituted = PyTypeChecker.substitute(type, substitutions, context);
+            var substitutionsWithDefaults = PyTypeChecker.getSubstitutionsWithDefaults(substitutions);
+            final PyType substituted = PyTypeChecker.substitute(type, substitutionsWithDefaults, context);
             if (substituted != null) {
               return substituted;
             }
           }
         }
+      }
+    }
+
+    if (type instanceof PyClassType classType && !(type instanceof PyCollectionType)) {
+      PyType parameterizedType = PyTypingTypeProvider.tryParameterizeClassWithDefaults(classType, anchor, false, context);
+      if (parameterizedType instanceof PyCollectionType collectionType) {
+        return collectionType;
       }
     }
 
@@ -488,19 +486,19 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
             return readWriteInstruction.getType(context, anchor);
           }
           if (instr instanceof ConditionalInstruction conditionalInstruction) {
-             if (context.getType((PyTypedElement)conditionalInstruction.getCondition()) instanceof PyNarrowedType narrowedType) {
-               PyExpression[] arguments = narrowedType.getOriginal().getArguments();
-               if (arguments.length > 0) {
-                 var firstArgument = arguments[0];
-                 if (firstArgument instanceof PyReferenceExpression) {
+             if (context.getType((PyTypedElement)conditionalInstruction.getCondition()) instanceof PyNarrowedType narrowedType
+                 && narrowedType.isBound()) {
+               var arguments = narrowedType.getOriginal().getArguments(null);
+               if (!arguments.isEmpty()) {
+                 var firstArgument = arguments.get(0);
+                 PyType type = narrowedType.getNarrowedType();
+                 if (firstArgument instanceof PyReferenceExpression && type != null) {
                    return PyTypeAssertionEvaluator.createAssertionType(
                      context.getType(firstArgument),
-                     narrowedType.getNarrowedType(),
+                     type,
                      conditionalInstruction.getResult() ^ narrowedType.getNegated(),
-                     false,
                      narrowedType.getTypeIs(),
-                     context,
-                     null);
+                     context);
                  }
                }
              }

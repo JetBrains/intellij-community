@@ -127,7 +127,7 @@ public final class DanglingJavadocInspection extends BaseInspection {
     @Override
     public void visitDocComment(@NotNull PsiDocComment comment) {
       super.visitDocComment(comment);
-      if (JavaDocUtil.isDanglingDocComment(comment, ignoreCopyright)) {
+      if (JavaDocUtil.shouldRunInspectionOnOldMarkdownComment(comment) && JavaDocUtil.isDanglingDocComment(comment, ignoreCopyright)) {
         registerError(comment.getFirstChild(), comment.isMarkdownComment());
       }
     }

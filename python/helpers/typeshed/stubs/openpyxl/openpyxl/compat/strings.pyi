@@ -1,6 +1,6 @@
 import sys
-from typing_extensions import Final
+from typing import Final
 
 VER: Final[sys._version_info]
 
-def safe_string(value): ...
+def safe_string(value: object) -> str: ...

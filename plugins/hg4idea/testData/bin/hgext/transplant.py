@@ -13,6 +13,7 @@ possibly in another repository. The transplant is done using 'diff' patches.
 Transplanted patches are recorded in .hg/transplant/transplants, as a
 map from a changeset hash to its hash in the source repository.
 '''
+from __future__ import absolute_import
 
 import os
 
@@ -36,6 +37,7 @@ from mercurial import (
     pycompat,
     registrar,
     revset,
+    scmutil,
     smartset,
     state as statemod,
     util,
@@ -75,13 +77,13 @@ configitem(
 )
 
 
-class transplantentry:
+class transplantentry(object):
     def __init__(self, lnode, rnode):
         self.lnode = lnode
         self.rnode = rnode
 
 
-class transplants:
+class transplants(object):
     def __init__(self, path=None, transplantfile=None, opener=None):
         self.path = path
         self.transplantfile = transplantfile
@@ -106,7 +108,7 @@ class transplants:
             if not os.path.isdir(self.path):
                 os.mkdir(self.path)
             fp = self.opener(self.transplantfile, b'w')
-            for list in self.transplants.values():
+            for list in pycompat.itervalues(self.transplants):
                 for t in list:
                     l, r = map(hex, (t.lnode, t.rnode))
                     fp.write(l + b':' + r + b'\n')
@@ -128,7 +130,7 @@ class transplants:
             self.dirty = True
 
 
-class transplanter:
+class transplanter(object):
     def __init__(self, ui, repo, opts):
         self.ui = ui
         self.repo = repo
@@ -817,8 +819,8 @@ def _dotransplant(ui, repo, *revs, **opts):
 
     sourcerepo = opts.get(b'source')
     if sourcerepo:
-        path = urlutil.get_unique_pull_path_obj(b'transplant', ui, sourcerepo)
-        peer = hg.peer(repo, opts, path)
+        u = urlutil.get_unique_pull_path(b'transplant', repo, ui, sourcerepo)[0]
+        peer = hg.peer(repo, opts, u)
         heads = pycompat.maplist(peer.lookup, opts.get(b'branch', ()))
         target = set(heads)
         for r in revs:
@@ -843,7 +845,7 @@ def _dotransplant(ui, repo, *revs, **opts):
         if opts.get(b'prune'):
             prune = {
                 source[r].node()
-                for r in logcmdutil.revrange(source, opts.get(b'prune'))
+                for r in scmutil.revrange(source, opts.get(b'prune'))
             }
             matchfn = lambda x: tf(x) and x not in prune
         else:
@@ -851,7 +853,7 @@ def _dotransplant(ui, repo, *revs, **opts):
         merges = pycompat.maplist(source.lookup, opts.get(b'merge', ()))
         revmap = {}
         if revs:
-            for r in logcmdutil.revrange(source, revs):
+            for r in scmutil.revrange(source, revs):
                 revmap[int(r)] = source[r].node()
         elif opts.get(b'all') or not merges:
             if source != repo:

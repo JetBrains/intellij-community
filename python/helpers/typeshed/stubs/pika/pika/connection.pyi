@@ -2,7 +2,8 @@ import abc
 from _typeshed import Incomplete
 from collections.abc import Callable
 from logging import Logger
-from typing_extensions import Final, Self
+from typing import Final
+from typing_extensions import Self
 
 from .callback import CallbackManager
 from .channel import Channel

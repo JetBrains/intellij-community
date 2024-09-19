@@ -124,6 +124,7 @@ Configs:
       corruption before returning metadata
 
 """
+from __future__ import absolute_import
 
 import os
 import time
@@ -317,31 +318,31 @@ def uisetup(ui):
     changegroup.cgpacker = shallowbundle.shallowcg1packer
 
     extensions.wrapfunction(
-        changegroup, '_addchangegroupfiles', shallowbundle.addchangegroupfiles
+        changegroup, b'_addchangegroupfiles', shallowbundle.addchangegroupfiles
     )
     extensions.wrapfunction(
-        changegroup, 'makechangegroup', shallowbundle.makechangegroup
+        changegroup, b'makechangegroup', shallowbundle.makechangegroup
     )
-    extensions.wrapfunction(localrepo, 'makestore', storewrapper)
-    extensions.wrapfunction(exchange, 'pull', exchangepull)
-    extensions.wrapfunction(merge, 'applyupdates', applyupdates)
-    extensions.wrapfunction(merge, '_checkunknownfiles', checkunknownfiles)
-    extensions.wrapfunction(context.workingctx, '_checklookup', checklookup)
-    extensions.wrapfunction(scmutil, '_findrenames', findrenames)
+    extensions.wrapfunction(localrepo, b'makestore', storewrapper)
+    extensions.wrapfunction(exchange, b'pull', exchangepull)
+    extensions.wrapfunction(merge, b'applyupdates', applyupdates)
+    extensions.wrapfunction(merge, b'_checkunknownfiles', checkunknownfiles)
+    extensions.wrapfunction(context.workingctx, b'_checklookup', checklookup)
+    extensions.wrapfunction(scmutil, b'_findrenames', findrenames)
     extensions.wrapfunction(
-        copies, '_computeforwardmissing', computeforwardmissing
+        copies, b'_computeforwardmissing', computeforwardmissing
     )
-    extensions.wrapfunction(dispatch, 'runcommand', runcommand)
-    extensions.wrapfunction(repair, '_collectbrokencsets', _collectbrokencsets)
-    extensions.wrapfunction(context.changectx, 'filectx', filectx)
-    extensions.wrapfunction(context.workingctx, 'filectx', workingfilectx)
-    extensions.wrapfunction(patch, 'trydiff', trydiff)
-    extensions.wrapfunction(hg, 'verify', _verify)
+    extensions.wrapfunction(dispatch, b'runcommand', runcommand)
+    extensions.wrapfunction(repair, b'_collectbrokencsets', _collectbrokencsets)
+    extensions.wrapfunction(context.changectx, b'filectx', filectx)
+    extensions.wrapfunction(context.workingctx, b'filectx', workingfilectx)
+    extensions.wrapfunction(patch, b'trydiff', trydiff)
+    extensions.wrapfunction(hg, b'verify', _verify)
     scmutil.fileprefetchhooks.add(b'remotefilelog', _fileprefetchhook)
 
     # disappointing hacks below
-    extensions.wrapfunction(scmutil, 'getrenamedfn', getrenamedfn)
-    extensions.wrapfunction(revset, 'filelog', filelogrevset)
+    extensions.wrapfunction(scmutil, b'getrenamedfn', getrenamedfn)
+    extensions.wrapfunction(revset, b'filelog', filelogrevset)
     revset.symbols[b'filelog'] = revset.filelog
 
 
@@ -374,7 +375,7 @@ def cloneshallow(orig, ui, repo, *args, **opts):
             else:
                 return orig(self, *args, **kwargs)
 
-        extensions.wrapfunction(exchange, 'pull', pull_shallow)
+        extensions.wrapfunction(exchange, b'pull', pull_shallow)
 
         # Wrap the stream logic to add requirements and to pass include/exclude
         # patterns around.
@@ -393,14 +394,14 @@ def cloneshallow(orig, ui, repo, *args, **opts):
                 else:
                     return orig()
 
-            extensions.wrapfunction(remote, 'stream_out', stream_out_shallow)
+            extensions.wrapfunction(remote, b'stream_out', stream_out_shallow)
 
         def stream_wrap(orig, op):
             setup_streamout(op.repo, op.remote)
             return orig(op)
 
         extensions.wrapfunction(
-            streamclone, 'maybeperformlegacystreamclone', stream_wrap
+            streamclone, b'maybeperformlegacystreamclone', stream_wrap
         )
 
         def canperformstreamclone(orig, pullop, bundle2=False):
@@ -408,7 +409,9 @@ def cloneshallow(orig, ui, repo, *args, **opts):
             # bundle2 flavor of streamclones, so force us to use
             # v1 instead.
             if b'v2' in pullop.remotebundle2caps.get(b'stream', []):
-                pullop.remotebundle2caps[b'stream'] = []
+                pullop.remotebundle2caps[b'stream'] = [
+                    c for c in pullop.remotebundle2caps[b'stream'] if c != b'v2'
+                ]
             if bundle2:
                 return False, None
             supported, requirements = orig(pullop, bundle2=bundle2)
@@ -417,7 +420,7 @@ def cloneshallow(orig, ui, repo, *args, **opts):
             return supported, requirements
 
         extensions.wrapfunction(
-            streamclone, 'canperformstreamclone', canperformstreamclone
+            streamclone, b'canperformstreamclone', canperformstreamclone
         )
 
     try:
@@ -425,7 +428,7 @@ def cloneshallow(orig, ui, repo, *args, **opts):
     finally:
         if opts.get('shallow'):
             for r in repos:
-                if hasattr(r, 'fileservice'):
+                if util.safehasattr(r, b'fileservice'):
                     r.fileservice.close()
 
 
@@ -517,7 +520,7 @@ def checkunknownfiles(orig, repo, wctx, mctx, force, mresult, *args, **kwargs):
 
 
 # Prefetch files before status attempts to look at their size and contents
-def checklookup(orig, self, files, mtime_boundary):
+def checklookup(orig, self, files):
     repo = self._repo
     if isenabled(repo):
         prefetchfiles = []
@@ -527,7 +530,7 @@ def checklookup(orig, self, files, mtime_boundary):
                     prefetchfiles.append((f, hex(parent.filenode(f))))
         # batch fetch the needed files from the server
         repo.fileservice.prefetch(prefetchfiles)
-    return orig(self, files, mtime_boundary)
+    return orig(self, files)
 
 
 # Prefetch the logic that compares added and removed files for renames
@@ -583,7 +586,7 @@ def runcommand(orig, lui, repo, *args, **kwargs):
 # prevent strip from stripping remotefilelogs
 def _collectbrokencsets(orig, repo, files, striprev):
     if isenabled(repo):
-        files = [f for f in files if not repo.shallowmatch(f)]
+        files = list([f for f in files if not repo.shallowmatch(f)])
     return orig(repo, files, striprev)
 
 
@@ -721,7 +724,7 @@ def onetimeclientsetup(ui):
             )
 
     extensions.wrapfunction(
-        remotefilelog.remotefilelog, 'addrawrevision', addrawrevision
+        remotefilelog.remotefilelog, b'addrawrevision', addrawrevision
     )
 
     def changelogadd(orig, self, *args, **kwargs):
@@ -749,7 +752,7 @@ def onetimeclientsetup(ui):
         del pendingfilecommits[:]
         return node
 
-    extensions.wrapfunction(changelog.changelog, 'add', changelogadd)
+    extensions.wrapfunction(changelog.changelog, b'add', changelogadd)
 
 
 def getrenamedfn(orig, repo, endrev=None):
@@ -904,7 +907,7 @@ def gcclient(ui, cachepath):
         if not isenabled(repo):
             continue
 
-        if not hasattr(repo, 'name'):
+        if not util.safehasattr(repo, b'name'):
             ui.warn(
                 _(b"repo %s is a misconfigured remotefilelog repo\n") % path
             )
@@ -1034,7 +1037,7 @@ def wcpprefetch(ui, repo, **kwargs):
     bgprefetchrevs = revdatelimit(ui, bgprefetchrevs)
 
     def anon(unused_success):
-        if hasattr(repo, 'ranprefetch') and repo.ranprefetch:
+        if util.safehasattr(repo, b'ranprefetch') and repo.ranprefetch:
             return
         repo.ranprefetch = True
         repo.backgroundprefetch(bgprefetchrevs, repack=bgrepack)
@@ -1080,10 +1083,10 @@ def exchangepull(orig, repo, remote, *args, **kwargs):
             source, heads=heads, common=common, bundlecaps=bundlecaps, **kwargs
         )
 
-    if hasattr(remote, '_callstream'):
+    if util.safehasattr(remote, b'_callstream'):
         remote._localrepo = repo
-    elif hasattr(remote, 'getbundle'):
-        extensions.wrapfunction(remote, 'getbundle', localgetbundle)
+    elif util.safehasattr(remote, b'getbundle'):
+        extensions.wrapfunction(remote, b'getbundle', localgetbundle)
 
     return orig(repo, remote, *args, **kwargs)
 

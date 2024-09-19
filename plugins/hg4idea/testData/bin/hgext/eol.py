@@ -91,6 +91,7 @@ See :hg:`help patterns` for more information about the glob patterns
 used.
 """
 
+from __future__ import absolute_import
 
 import os
 import re
@@ -185,7 +186,7 @@ filters = {
 }
 
 
-class eolfile:
+class eolfile(object):
     def __init__(self, ui, root, data):
         self._decode = {
             b'LF': b'to-lf',
@@ -309,7 +310,7 @@ def _checkhook(ui, repo, node, headsonly):
     ensureenabled(ui)
     files = set()
     revs = set()
-    for rev in range(repo[node].rev(), len(repo)):
+    for rev in pycompat.xrange(repo[node].rev(), len(repo)):
         revs.add(rev)
         if headsonly:
             ctx = repo[rev]
@@ -378,7 +379,7 @@ def reposetup(ui, repo):
 
     if not repo.local():
         return
-    for name, fn in filters.items():
+    for name, fn in pycompat.iteritems(filters):
         repo.adddatafilter(name, fn)
 
     ui.setconfig(b'patch', b'eol', b'auto', b'eol')
@@ -421,31 +422,30 @@ def reposetup(ui, repo):
                 wlock = None
                 try:
                     wlock = self.wlock()
-                    with self.dirstate.changing_files(self):
-                        for f in self.dirstate:
-                            if not self.dirstate.get_entry(f).maybe_clean:
+                    for f in self.dirstate:
+                        if self.dirstate[f] != b'n':
+                            continue
+                        if oldeol is not None:
+                            if not oldeol.match(f) and not neweol.match(f):
                                 continue
-                            if oldeol is not None:
-                                if not oldeol.match(f) and not neweol.match(f):
-                                    continue
-                                oldkey = None
-                                for pattern, key, m in oldeol.patterns:
-                                    if m(f):
-                                        oldkey = key
-                                        break
-                                newkey = None
-                                for pattern, key, m in neweol.patterns:
-                                    if m(f):
-                                        newkey = key
-                                        break
-                                if oldkey == newkey:
-                                    continue
-                            # all normal files need to be looked at again since
-                            # the new .hgeol file specify a different filter
-                            self.dirstate.set_possibly_dirty(f)
-                        # Write the cache to update mtime and cache .hgeol
-                        with self.vfs(b"eol.cache", b"w") as f:
-                            f.write(hgeoldata)
+                            oldkey = None
+                            for pattern, key, m in oldeol.patterns:
+                                if m(f):
+                                    oldkey = key
+                                    break
+                            newkey = None
+                            for pattern, key, m in neweol.patterns:
+                                if m(f):
+                                    newkey = key
+                                    break
+                            if oldkey == newkey:
+                                continue
+                        # all normal files need to be looked at again since
+                        # the new .hgeol file specify a different filter
+                        self.dirstate.set_possibly_dirty(f)
+                    # Write the cache to update mtime and cache .hgeol
+                    with self.vfs(b"eol.cache", b"w") as f:
+                        f.write(hgeoldata)
                 except errormod.LockUnavailable:
                     # If we cannot lock the repository and clear the
                     # dirstate, then a commit might not see all files

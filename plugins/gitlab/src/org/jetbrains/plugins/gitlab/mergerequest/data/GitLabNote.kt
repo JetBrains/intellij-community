@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
+import com.intellij.collaboration.async.Change
+import com.intellij.collaboration.async.Deleted
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
@@ -162,7 +164,7 @@ class GitLabMergeRequestDraftNoteImpl(
   private val glMetadata: GitLabServerMetadata?,
   private val project: GitLabProjectCoordinates,
   private val mr: GitLabMergeRequest,
-  private val eventSink: suspend (GitLabNoteEvent<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
+  private val eventSink: suspend (Change<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
   private val noteData: GitLabMergeRequestDraftNoteRestDTO,
   override val author: GitLabUserDTO
 ) : GitLabMergeRequestDraftNote, MutableGitLabNote {
@@ -205,10 +207,10 @@ class GitLabMergeRequestDraftNoteImpl(
         withContext(Dispatchers.IO) {
           // Shouldn't require extra check, delete and get draft notes was introduced in
           // the same update
-          api.rest.deleteDraftNote(project, mr.iid, noteData.id.restId.toLong())
+          api.rest.deleteDraftNote(project, mr.iid, noteData.id.restId.toLong()).body()
         }
       }
-      eventSink(GitLabNoteEvent.Deleted(id))
+      eventSink(Deleted { it.id == id })
     }
   }
 

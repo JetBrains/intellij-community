@@ -44,11 +44,13 @@ You can specify the encoding by config option::
 
 It is useful for the users who want to commit with UTF-8 log message.
 '''
+from __future__ import absolute_import
 
 import os
 import sys
 
 from mercurial.i18n import _
+from mercurial.pycompat import getattr, setattr
 from mercurial import (
     encoding,
     error,
@@ -73,7 +75,7 @@ configitem(
     default=lambda: encoding.encoding,
 )
 
-_encoding: str = ""  # see extsetup
+_encoding = None  # see extsetup
 
 
 def decode(arg):
@@ -81,7 +83,7 @@ def decode(arg):
         uarg = arg.decode(_encoding)
         if arg == uarg.encode(_encoding):
             return uarg
-        raise UnicodeError("Not local encoding")
+        raise UnicodeError(b"Not local encoding")
     elif isinstance(arg, tuple):
         return tuple(map(decode, arg))
     elif isinstance(arg, list):
@@ -93,7 +95,7 @@ def decode(arg):
 
 
 def encode(arg):
-    if isinstance(arg, str):
+    if isinstance(arg, pycompat.unicode):
         return arg.encode(_encoding)
     elif isinstance(arg, tuple):
         return tuple(map(encode, arg))
@@ -110,8 +112,8 @@ def appendsep(s):
     try:
         us = decode(s)
     except UnicodeError:
-        us = s  # TODO: how to handle this bytes case??
-    if us and us[-1] not in ':/\\':
+        us = s
+    if us and us[-1] not in b':/\\':
         s += pycompat.ossep
     return s
 
@@ -129,12 +131,12 @@ def basewrapper(func, argtype, enc, dec, args, kwds):
     except UnicodeError:
         raise error.Abort(
             _(b"[win32mbcs] filename conversion failed with %s encoding\n")
-            % encoding.strtolocal(_encoding)
+            % _encoding
         )
 
 
 def wrapper(func, args, kwds):
-    return basewrapper(func, str, encode, decode, args, kwds)
+    return basewrapper(func, pycompat.unicode, encode, decode, args, kwds)
 
 
 def reversewrapper(func, args, kwds):
@@ -147,13 +149,13 @@ def wrapperforlistdir(func, args, kwds):
     if args:
         args = list(args)
         args[0] = appendsep(args[0])
-    if 'path' in kwds:
-        kwds['path'] = appendsep(kwds['path'])
+    if b'path' in kwds:
+        kwds[b'path'] = appendsep(kwds[b'path'])
     return func(*args, **kwds)
 
 
-def wrapname(name: str, wrapper):
-    module, name = name.rsplit('.', 1)
+def wrapname(name, wrapper):
+    module, name = name.rsplit(b'.', 1)
     module = sys.modules[module]
     func = getattr(module, name)
 
@@ -167,7 +169,7 @@ def wrapname(name: str, wrapper):
 # List of functions to be wrapped.
 # NOTE: os.path.dirname() and os.path.basename() are safe because
 #       they use result of os.path.split()
-funcs = '''os.path.join os.path.split os.path.splitext
+funcs = b'''os.path.join os.path.split os.path.splitext
  os.path.normpath os.makedirs mercurial.util.endswithsep
  mercurial.util.splitpath mercurial.util.fscasesensitive
  mercurial.util.fspath mercurial.util.pconvert mercurial.util.normpath
@@ -177,11 +179,11 @@ funcs = '''os.path.join os.path.split os.path.splitext
 # These functions are required to be called with local encoded string
 # because they expects argument is local encoded string and cause
 # problem with unicode string.
-rfuncs = '''mercurial.encoding.upper mercurial.encoding.lower
+rfuncs = b'''mercurial.encoding.upper mercurial.encoding.lower
  mercurial.util._filenamebytestr'''
 
 # List of Windows specific functions to be wrapped.
-winfuncs = '''os.path.splitunc'''
+winfuncs = b'''os.path.splitunc'''
 
 # codec and alias names of sjis and big5 to be faked.
 problematic_encodings = b'''big5 big5-tw csbig5 big5hkscs big5-hkscs
@@ -199,7 +201,7 @@ def extsetup(ui):
         return
     # determine encoding for filename
     global _encoding
-    _encoding = encoding.strfromlocal(ui.config(b'win32mbcs', b'encoding'))
+    _encoding = ui.config(b'win32mbcs', b'encoding')
     # fake is only for relevant environment.
     if _encoding.lower() in problematic_encodings.split():
         for f in funcs.split():
@@ -207,16 +209,15 @@ def extsetup(ui):
         if pycompat.iswindows:
             for f in winfuncs.split():
                 wrapname(f, wrapper)
-        wrapname("mercurial.util.listdir", wrapperforlistdir)
-        wrapname("mercurial.windows.listdir", wrapperforlistdir)
+        wrapname(b"mercurial.util.listdir", wrapperforlistdir)
+        wrapname(b"mercurial.windows.listdir", wrapperforlistdir)
         # wrap functions to be called with local byte string arguments
         for f in rfuncs.split():
             wrapname(f, reversewrapper)
         # Check sys.args manually instead of using ui.debug() because
         # command line options is not yet applied when
         # extensions.loadall() is called.
-        if '--debug' in sys.argv:
+        if b'--debug' in sys.argv:
             ui.writenoi18n(
-                b"[win32mbcs] activated with encoding: %s\n"
-                % encoding.strtolocal(_encoding)
+                b"[win32mbcs] activated with encoding: %s\n" % _encoding
             )

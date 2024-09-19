@@ -41,7 +41,7 @@ class A4:
 class B4(A4):
     b: str
 
-replace(B4(), <arg4>)
+replace(B4(), b=<arg4>)
 
 
 @dataclass

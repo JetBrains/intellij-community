@@ -1,10 +1,10 @@
-from _typeshed import Incomplete, Unused
-from typing import ClassVar
-from typing_extensions import Literal, TypeAlias
+from _typeshed import ConvertibleToFloat, Incomplete, Unused
+from typing import ClassVar, Literal
+from typing_extensions import TypeAlias
 
 from openpyxl.chart.axis import ChartLines
 from openpyxl.chart.label import DataLabelList
-from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool, _ConvertibleToFloat
+from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool
 from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.nested import NestedBool, NestedFloat, NestedMinMax, NestedNoneSet, NestedSet, _NestedNoneSetParam
 from openpyxl.descriptors.serialisable import Serialisable
@@ -38,7 +38,7 @@ class PieChart(_PieChartBase):
     extLst: Typed[ExtensionList, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
-        self, firstSliceAng: _HasTagAndGet[_ConvertibleToFloat] | _ConvertibleToFloat = 0, extLst: Unused = None, **kw
+        self, firstSliceAng: _HasTagAndGet[ConvertibleToFloat] | ConvertibleToFloat = 0, extLst: Unused = None, **kw
     ) -> None: ...
 
 class PieChart3D(_PieChartBase):
@@ -62,8 +62,8 @@ class DoughnutChart(_PieChartBase):
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        firstSliceAng: _HasTagAndGet[_ConvertibleToFloat] | _ConvertibleToFloat = 0,
-        holeSize: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = 10,
+        firstSliceAng: _HasTagAndGet[ConvertibleToFloat] | ConvertibleToFloat = 0,
+        holeSize: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = 10,
         extLst: Unused = None,
         **kw,
     ) -> None: ...
@@ -96,9 +96,9 @@ class ProjectedPieChart(_PieChartBase):
         ofPieType: _HasTagAndGet[_ProjectedPieChartOfPieType] | _ProjectedPieChartOfPieType = "pie",
         gapWidth: Incomplete | None = None,
         splitType: _NestedNoneSetParam[_ProjectedPieChartSplitType] = "auto",
-        splitPos: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        splitPos: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
         custSplit: CustomSplit | None = None,
-        secondPieSize: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = 75,
+        secondPieSize: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = 75,
         serLines: ChartLines | None = None,
         extLst: Unused = None,
         **kw,

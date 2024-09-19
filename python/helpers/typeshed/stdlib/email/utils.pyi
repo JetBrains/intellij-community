@@ -1,10 +1,11 @@
 import datetime
 import sys
 from _typeshed import Unused
+from collections.abc import Iterable
 from email import _ParamType
 from email.charset import Charset
 from typing import overload
-from typing_extensions import TypeAlias
+from typing_extensions import TypeAlias, deprecated
 
 __all__ = [
     "collapse_rfc2231_value",
@@ -28,9 +29,21 @@ _PDTZ: TypeAlias = tuple[int, int, int, int, int, int, int, int, int, int | None
 
 def quote(str: str) -> str: ...
 def unquote(str: str) -> str: ...
-def parseaddr(addr: str | None) -> tuple[str, str]: ...
+
+if sys.version_info >= (3, 13):
+    def parseaddr(addr: str | list[str], *, strict: bool = True) -> tuple[str, str]: ...
+
+else:
+    def parseaddr(addr: str) -> tuple[str, str]: ...
+
 def formataddr(pair: tuple[str | None, str], charset: str | Charset = "utf-8") -> str: ...
-def getaddresses(fieldvalues: list[str]) -> list[tuple[str, str]]: ...
+
+if sys.version_info >= (3, 13):
+    def getaddresses(fieldvalues: Iterable[str], *, strict: bool = True) -> list[tuple[str, str]]: ...
+
+else:
+    def getaddresses(fieldvalues: Iterable[str]) -> list[tuple[str, str]]: ...
+
 @overload
 def parsedate(data: None) -> None: ...
 @overload
@@ -54,6 +67,10 @@ def formatdate(timeval: float | None = None, localtime: bool = False, usegmt: bo
 def format_datetime(dt: datetime.datetime, usegmt: bool = False) -> str: ...
 
 if sys.version_info >= (3, 12):
+    @overload
+    def localtime(dt: datetime.datetime | None = None) -> datetime.datetime: ...
+    @overload
+    @deprecated("The `isdst` parameter does nothing and will be removed in Python 3.14.")
     def localtime(dt: datetime.datetime | None = None, isdst: Unused = None) -> datetime.datetime: ...
 
 else:

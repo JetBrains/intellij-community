@@ -1,7 +1,7 @@
 from collections.abc import Callable, Sequence
 from decimal import Decimal
-from typing import Any, overload
-from typing_extensions import Literal, Self
+from typing import Any, Literal, overload
+from typing_extensions import Self
 
 from wtforms.fields.core import Field, _Filter, _FormT, _Validator, _Widget
 from wtforms.form import BaseForm

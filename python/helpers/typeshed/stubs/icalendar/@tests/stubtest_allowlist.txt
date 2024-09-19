@@ -1,0 +1,9 @@
+# Command line app
+icalendar\.cli
+
+# Tests
+icalendar\.tests(\..*)?
+
+# Methods that use `int` to mean `bool`.
+icalendar\.cal\.Component\.get_inline
+icalendar\.cal\.Component\.set_inline

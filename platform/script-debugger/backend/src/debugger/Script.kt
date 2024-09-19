@@ -44,6 +44,9 @@ interface Script : UserDataHolderEx {
   var sourceMap: SourceMap?
 
   @get:ApiStatus.Internal
+  val sourceMapUrl: String?
+
+  @get:ApiStatus.Internal
   val url: Url
 
   @get:ApiStatus.Internal

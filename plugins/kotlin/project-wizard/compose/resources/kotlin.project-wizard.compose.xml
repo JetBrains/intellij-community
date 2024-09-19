@@ -1,5 +1,9 @@
 <idea-plugin package="org.jetbrains.kotlin.tools.composeProjectWizard">
 
+  <dependencies>
+    <module name="kotlin.project-wizard.idea"/>
+  </dependencies>
+
 <!--  <extensionPoints>-->
 <!--    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.ideaWizardService" area="IDEA_PROJECT"-->
 <!--                    interface="org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaWizardService"-->

@@ -5,6 +5,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import contextlib
 import errno
@@ -12,6 +13,7 @@ import os
 import sys
 
 from .i18n import _
+from .pycompat import getattr
 from . import (
     demandimport,
     encoding,
@@ -39,14 +41,13 @@ def pythonhook(ui, repo, htype, hname, funcname, args, throw):
 
     if callable(funcname):
         obj = funcname
-        funcname = obj.__module__ + "." + obj.__name__
+        funcname = pycompat.sysbytes(obj.__module__ + "." + obj.__name__)
     else:
-        funcname = pycompat.sysstr(funcname)
-        d = funcname.rfind('.')
+        d = funcname.rfind(b'.')
         if d == -1:
             raise error.HookLoadError(
                 _(b'%s hook is invalid: "%s" not in a module')
-                % (hname, stringutil.forcebytestr(funcname))
+                % (hname, funcname)
             )
         modname = funcname[:d]
         oldpaths = sys.path
@@ -89,30 +90,27 @@ def pythonhook(ui, repo, htype, hname, funcname, args, throw):
                         )
                     else:
                         tracebackhint = None
-                    msg = _(b'%s hook is invalid: import of "%s" failed')
-                    msg %= (
-                        stringutil.forcebytestr(hname),
-                        stringutil.forcebytestr(modname),
+                    raise error.HookLoadError(
+                        _(b'%s hook is invalid: import of "%s" failed')
+                        % (hname, modname),
+                        hint=tracebackhint,
                     )
-                    raise error.HookLoadError(msg, hint=tracebackhint)
         sys.path = oldpaths
         try:
-            for p in funcname.split('.')[1:]:
+            for p in funcname.split(b'.')[1:]:
                 obj = getattr(obj, p)
         except AttributeError:
             raise error.HookLoadError(
                 _(b'%s hook is invalid: "%s" is not defined')
-                % (hname, stringutil.forcebytestr(funcname))
+                % (hname, funcname)
             )
         if not callable(obj):
             raise error.HookLoadError(
                 _(b'%s hook is invalid: "%s" is not callable')
-                % (hname, stringutil.forcebytestr(funcname))
+                % (hname, funcname)
             )
 
-    ui.note(
-        _(b"calling hook %s: %s\n") % (hname, stringutil.forcebytestr(funcname))
-    )
+    ui.note(_(b"calling hook %s: %s\n") % (hname, funcname))
     starttime = util.timer()
 
     try:
@@ -137,7 +135,7 @@ def pythonhook(ui, repo, htype, hname, funcname, args, throw):
             b'pythonhook',
             b'pythonhook-%s: %s finished in %0.2f seconds\n',
             htype,
-            stringutil.forcebytestr(funcname),
+            funcname,
             duration,
         )
     if r:
@@ -169,7 +167,7 @@ def _exthook(ui, repo, htype, name, cmd, args, throw):
     else:
         env[b'HGPLAIN'] = b''
 
-    for k, v in args.items():
+    for k, v in pycompat.iteritems(args):
         # transaction changes can accumulate MBs of data, so skip it
         # for external hooks
         if k == b'changes':
@@ -193,11 +191,6 @@ def _exthook(ui, repo, htype, name, cmd, args, throw):
     else:
         cwd = encoding.getcwd()
     r = ui.system(cmd, environ=env, cwd=cwd, blockedtag=b'exthook-%s' % (name,))
-
-    if repo is not None and repo.currentwlock() is None:
-        repo.invalidatedirstate()
-    if repo is not None and repo.currentlock() is None:
-        repo.invalidate()
 
     duration = util.timer() - starttime
     ui.log(
@@ -350,12 +343,11 @@ def runhooks(ui, repo, htype, hooks, throw=False, **args):
                     if repo:
                         path = os.path.join(repo.root, path)
                     try:
-                        mod_name = 'hghook.%s' % pycompat.sysstr(hname)
-                        mod = extensions.loadpath(path, mod_name)
+                        mod = extensions.loadpath(path, b'hghook.%s' % hname)
                     except Exception:
                         ui.write(_(b"loading %s hook failed:\n") % hname)
                         raise
-                    hookfn = getattr(mod, pycompat.sysstr(cmd))
+                    hookfn = getattr(mod, cmd)
                 else:
                     hookfn = cmd[7:].strip()
                 r, raised = pythonhook(

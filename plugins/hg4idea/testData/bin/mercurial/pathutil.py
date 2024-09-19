@@ -1,15 +1,10 @@
+from __future__ import absolute_import
+
 import contextlib
 import errno
 import os
 import posixpath
 import stat
-
-from typing import (
-    Any,
-    Callable,
-    Iterator,
-    Optional,
-)
 
 from .i18n import _
 from . import (
@@ -20,15 +15,25 @@ from . import (
     util,
 )
 
+if pycompat.TYPE_CHECKING:
+    from typing import (
+        Any,
+        Callable,
+        Iterator,
+        Optional,
+    )
+
+
 rustdirs = policy.importrust('dirstate', 'Dirs')
 parsers = policy.importmod('parsers')
 
 
-def _lowerclean(s: bytes) -> bytes:
+def _lowerclean(s):
+    # type: (bytes) -> bytes
     return encoding.hfsignoreclean(s.lower())
 
 
-class pathauditor:
+class pathauditor(object):
     """ensure that a filesystem path contains no banned components.
     the following properties of a path are checked:
 
@@ -53,7 +58,7 @@ class pathauditor:
 
     def __init__(self, root, callback=None, realfs=True, cached=False):
         self.audited = set()
-        self.auditeddir = dict()
+        self.auditeddir = set()
         self.root = root
         self._realfs = realfs
         self._cached = cached
@@ -63,84 +68,74 @@ class pathauditor:
         else:
             self.normcase = lambda x: x
 
-    def __call__(self, path: bytes, mode: Optional[Any] = None) -> None:
+    def __call__(self, path, mode=None):
+        # type: (bytes, Optional[Any]) -> None
         """Check the relative path.
         path may contain a pattern (e.g. foodir/**.txt)"""
 
         path = util.localpath(path)
-        if path in self.audited:
+        normpath = self.normcase(path)
+        if normpath in self.audited:
             return
         # AIX ignores "/" at end of path, others raise EISDIR.
         if util.endswithsep(path):
-            raise error.InputError(
-                _(b"path ends in directory separator: %s") % path
-            )
+            raise error.Abort(_(b"path ends in directory separator: %s") % path)
         parts = util.splitpath(path)
         if (
             os.path.splitdrive(path)[0]
             or _lowerclean(parts[0]) in (b'.hg', b'.hg.', b'')
             or pycompat.ospardir in parts
         ):
-            raise error.InputError(
-                _(b"path contains illegal component: %s") % path
-            )
+            raise error.Abort(_(b"path contains illegal component: %s") % path)
         # Windows shortname aliases
-        if b"~" in path:
-            for p in parts:
-                if b"~" in p:
-                    first, last = p.split(b"~", 1)
-                    if last.isdigit() and first.upper() in [b"HG", b"HG8B6C"]:
-                        raise error.InputError(
-                            _(b"path contains illegal component: %s") % path
-                        )
+        for p in parts:
+            if b"~" in p:
+                first, last = p.split(b"~", 1)
+                if last.isdigit() and first.upper() in [b"HG", b"HG8B6C"]:
+                    raise error.Abort(
+                        _(b"path contains illegal component: %s") % path
+                    )
         if b'.hg' in _lowerclean(path):
             lparts = [_lowerclean(p) for p in parts]
             for p in b'.hg', b'.hg.':
                 if p in lparts[1:]:
                     pos = lparts.index(p)
                     base = os.path.join(*parts[:pos])
-                    raise error.InputError(
+                    raise error.Abort(
                         _(b"path '%s' is inside nested repo %r")
                         % (path, pycompat.bytestr(base))
                     )
 
-        if self._realfs:
-            # It's important that we check the path parts starting from the root.
-            # We don't want to add "foo/bar/baz" to auditeddir before checking if
-            # there's a "foo/.hg" directory. This also means we won't accidentally
-            # traverse a symlink into some other filesystem (which is potentially
-            # expensive to access).
-            for prefix in finddirs_rev_noroot(path):
-                if prefix in self.auditeddir:
-                    res = self.auditeddir[prefix]
-                else:
-                    res = pathauditor._checkfs_exists(
-                        self.root, prefix, path, self.callback
-                    )
-                    if self._cached:
-                        self.auditeddir[prefix] = res
-                if not res:
-                    break
+        normparts = util.splitpath(normpath)
+        assert len(parts) == len(normparts)
+
+        parts.pop()
+        normparts.pop()
+        # It's important that we check the path parts starting from the root.
+        # We don't want to add "foo/bar/baz" to auditeddir before checking if
+        # there's a "foo/.hg" directory. This also means we won't accidentally
+        # traverse a symlink into some other filesystem (which is potentially
+        # expensive to access).
+        for i in range(len(parts)):
+            prefix = pycompat.ossep.join(parts[: i + 1])
+            normprefix = pycompat.ossep.join(normparts[: i + 1])
+            if normprefix in self.auditeddir:
+                continue
+            if self._realfs:
+                self._checkfs(prefix, path)
+            if self._cached:
+                self.auditeddir.add(normprefix)
 
         if self._cached:
-            self.audited.add(path)
+            self.audited.add(normpath)
 
-    @staticmethod
-    def _checkfs_exists(
-        root,
-        prefix: bytes,
-        path: bytes,
-        callback: Optional[Callable[[bytes], bool]] = None,
-    ):
-        """raise exception if a file system backed check fails.
-
-        Return a bool that indicates that the directory (or file) exists."""
-        curpath = os.path.join(root, prefix)
+    def _checkfs(self, prefix, path):
+        # type: (bytes, bytes) -> None
+        """raise exception if a file system backed check fails"""
+        curpath = os.path.join(self.root, prefix)
         try:
             st = os.lstat(curpath)
         except OSError as err:
-            if err.errno == errno.ENOENT:
-                return False
             # EINVAL can be raised as invalid path syntax under win32.
             # They must be ignored for patterns can be checked too.
             if err.errno not in (errno.ENOENT, errno.ENOTDIR, errno.EINVAL):
@@ -155,12 +150,12 @@ class pathauditor:
             elif stat.S_ISDIR(st.st_mode) and os.path.isdir(
                 os.path.join(curpath, b'.hg')
             ):
-                if not callback or not callback(curpath):
+                if not self.callback or not self.callback(curpath):
                     msg = _(b"path '%s' is inside nested repo %r")
                     raise error.Abort(msg % (path, pycompat.bytestr(prefix)))
-        return True
 
-    def check(self, path: bytes) -> bool:
+    def check(self, path):
+        # type: (bytes) -> bool
         try:
             self(path)
             return True
@@ -180,20 +175,9 @@ class pathauditor:
                 self.auditeddir.clear()
                 self._cached = False
 
-    def clear_audit_cache(self):
-        """reset all audit cache
 
-        intended for debug and performance benchmark purposes"""
-        self.audited.clear()
-        self.auditeddir.clear()
-
-
-def canonpath(
-    root: bytes,
-    cwd: bytes,
-    myname: bytes,
-    auditor: Optional[pathauditor] = None,
-) -> bytes:
+def canonpath(root, cwd, myname, auditor=None):
+    # type: (bytes, bytes, bytes, Optional[pathauditor]) -> bytes
     """return the canonical path of myname, given cwd and root
 
     >>> def check(root, cwd, myname):
@@ -295,7 +279,8 @@ def canonpath(
         )
 
 
-def normasprefix(path: bytes) -> bytes:
+def normasprefix(path):
+    # type: (bytes) -> bytes
     """normalize the specified path as path prefix
 
     Returned value can be used safely for "p.startswith(prefix)",
@@ -318,7 +303,8 @@ def normasprefix(path: bytes) -> bytes:
         return path
 
 
-def finddirs(path: bytes) -> Iterator[bytes]:
+def finddirs(path):
+    # type: (bytes) -> Iterator[bytes]
     pos = path.rfind(b'/')
     while pos != -1:
         yield path[:pos]
@@ -326,34 +312,29 @@ def finddirs(path: bytes) -> Iterator[bytes]:
     yield b''
 
 
-def finddirs_rev_noroot(path: bytes) -> Iterator[bytes]:
-    pos = path.find(pycompat.ossep)
-    while pos != -1:
-        yield path[:pos]
-        pos = path.find(pycompat.ossep, pos + 1)
-
-
-class dirs:
+class dirs(object):
     '''a multiset of directory names from a set of file paths'''
 
-    def __init__(self, map, only_tracked=False):
+    def __init__(self, map, skip=None):
         """
         a dict map indicates a dirstate while a list indicates a manifest
         """
         self._dirs = {}
         addpath = self.addpath
-        if isinstance(map, dict) and only_tracked:
-            for f, s in map.items():
-                if s.state != b'r':
+        if isinstance(map, dict) and skip is not None:
+            for f, s in pycompat.iteritems(map):
+                if s.state != skip:
                     addpath(f)
-        elif only_tracked:
-            msg = b"`only_tracked` is only supported with a dict source"
-            raise error.ProgrammingError(msg)
+        elif skip is not None:
+            raise error.ProgrammingError(
+                b"skip character is only supported with a dict source"
+            )
         else:
             for f in map:
                 addpath(f)
 
-    def addpath(self, path: bytes) -> None:
+    def addpath(self, path):
+        # type: (bytes) -> None
         dirs = self._dirs
         for base in finddirs(path):
             if base.endswith(b'/'):
@@ -365,7 +346,8 @@ class dirs:
                 return
             dirs[base] = 1
 
-    def delpath(self, path: bytes) -> None:
+    def delpath(self, path):
+        # type: (bytes) -> None
         dirs = self._dirs
         for base in finddirs(path):
             if dirs[base] > 1:
@@ -376,11 +358,12 @@ class dirs:
     def __iter__(self):
         return iter(self._dirs)
 
-    def __contains__(self, d: bytes) -> bool:
+    def __contains__(self, d):
+        # type: (bytes) -> bool
         return d in self._dirs
 
 
-if hasattr(parsers, 'dirs'):
+if util.safehasattr(parsers, 'dirs'):
     dirs = parsers.dirs
 
 if rustdirs is not None:
@@ -391,4 +374,4 @@ if rustdirs is not None:
 # rather not let our internals know that we're thinking in posix terms
 # - instead we'll let them be oblivious.
 join = posixpath.join
-dirname: Callable[[bytes], bytes] = posixpath.dirname
+dirname = posixpath.dirname  # type: Callable[[bytes], bytes]

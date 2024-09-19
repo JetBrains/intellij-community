@@ -1,11 +1,11 @@
 # Subversion 1.4/1.5 Python API backend
 #
 # Copyright(C) 2007 Daniel Holth et al
+from __future__ import absolute_import
 
 import codecs
 import locale
 import os
-import pickle
 import re
 import xml.dom.minidom
 
@@ -26,6 +26,7 @@ from mercurial.utils import (
 
 from . import common
 
+pickle = util.pickle
 stringio = util.stringio
 propertycache = util.propertycache
 urlerr = util.urlerr
@@ -47,14 +48,11 @@ NoRepo = common.NoRepo
 # these bindings.
 
 try:
-    # pytype: disable=import-error
     import svn
     import svn.client
     import svn.core
     import svn.ra
     import svn.delta
-
-    # pytype: enable=import-error
     from . import transport
     import warnings
 
@@ -183,7 +181,7 @@ def optrev(number):
     return optrev
 
 
-class changedpath:
+class changedpath(object):
     def __init__(self, p):
         self.copyfrom_path = p.copyfrom_path
         self.copyfrom_rev = p.copyfrom_rev
@@ -205,7 +203,7 @@ def get_log_child(
     def receiver(orig_paths, revnum, author, date, message, pool):
         paths = {}
         if orig_paths is not None:
-            for k, v in orig_paths.items():
+            for k, v in pycompat.iteritems(orig_paths):
                 paths[k] = changedpath(v)
         pickle.dump((paths, revnum, author, date, message), fp, protocol)
 
@@ -251,7 +249,7 @@ def debugsvnlog(ui, **opts):
         get_log_child(ui.fout, *args)
 
 
-class logstream:
+class logstream(object):
     """Interruptible revision log iterator."""
 
     def __init__(self, stdout):
@@ -300,7 +298,7 @@ class directlogstream(list):
         def receiver(orig_paths, revnum, author, date, message, pool):
             paths = {}
             if orig_paths is not None:
-                for k, v in orig_paths.items():
+                for k, v in pycompat.iteritems(orig_paths):
                     paths[k] = changedpath(v)
             self.append((paths, revnum, author, date, message))
 
@@ -367,6 +365,32 @@ protomap = {
 }
 
 
+class NonUtf8PercentEncodedBytes(Exception):
+    pass
+
+
+# Subversion paths are Unicode. Since the percent-decoding is done on
+# UTF-8-encoded strings, percent-encoded bytes are interpreted as UTF-8.
+def url2pathname_like_subversion(unicodepath):
+    if pycompat.ispy3:
+        # On Python 3, we have to pass unicode to urlreq.url2pathname().
+        # Percent-decoded bytes get decoded using UTF-8 and the 'replace' error
+        # handler.
+        unicodepath = urlreq.url2pathname(unicodepath)
+        if u'\N{REPLACEMENT CHARACTER}' in unicodepath:
+            raise NonUtf8PercentEncodedBytes
+        else:
+            return unicodepath
+    else:
+        # If we passed unicode on Python 2, it would be converted using the
+        # latin-1 encoding. Therefore, we pass UTF-8-encoded bytes.
+        unicodepath = urlreq.url2pathname(unicodepath.encode('utf-8'))
+        try:
+            return unicodepath.decode('utf-8')
+        except UnicodeDecodeError:
+            raise NonUtf8PercentEncodedBytes
+
+
 def issvnurl(ui, url):
     try:
         proto, path = url.split(b'://', 1)
@@ -389,15 +413,9 @@ def issvnurl(ui, url):
                     % pycompat.sysbytes(fsencoding)
                 )
                 return False
-
-            # Subversion paths are Unicode. Since it does percent-decoding on
-            # UTF-8-encoded strings, percent-encoded bytes are interpreted as
-            # UTF-8.
-            # On Python 3, we have to pass unicode to urlreq.url2pathname().
-            # Percent-decoded bytes get decoded using UTF-8 and the 'replace'
-            # error handler.
-            unicodepath = urlreq.url2pathname(unicodepath)
-            if u'\N{REPLACEMENT CHARACTER}' in unicodepath:
+            try:
+                unicodepath = url2pathname_like_subversion(unicodepath)
+            except NonUtf8PercentEncodedBytes:
                 ui.warn(
                     _(
                         b'Subversion does not support non-UTF-8 '
@@ -405,7 +423,6 @@ def issvnurl(ui, url):
                     )
                 )
                 return False
-
             # Below, we approximate how Subversion checks the path. On Unix, we
             # should therefore convert the path to bytes using `fsencoding`
             # (like Subversion does). On Windows, the right thing would
@@ -713,7 +730,7 @@ class svn_source(converter_source):
             )
             files = [
                 n
-                for n, e in entries.items()
+                for n, e in pycompat.iteritems(entries)
                 if e.kind == svn.core.svn_node_file
             ]
             self.removed = set()
@@ -725,13 +742,7 @@ class svn_source(converter_source):
     def getchanges(self, rev, full):
         # reuse cache from getchangedfiles
         if self._changescache[0] == rev and not full:
-            # TODO: add type hints to avoid this warning, instead of
-            #  suppressing it:
-            #     No attribute '__iter__' on None [attribute-error]
-
-            # pytype: disable=attribute-error
             (files, copies) = self._changescache[1]
-            # pytype: enable=attribute-error
         else:
             (files, copies) = self._getchanges(rev, full)
             # caller caches the result, so free it here to release memory
@@ -809,7 +820,7 @@ class svn_source(converter_source):
                     origpaths = []
                 copies = [
                     (e.copyfrom_path, e.copyfrom_rev, p)
-                    for p, e in origpaths.items()
+                    for p, e in pycompat.iteritems(origpaths)
                     if e.copyfrom_path
                 ]
                 # Apply moves/copies from more specific to general
@@ -840,7 +851,7 @@ class svn_source(converter_source):
                 # be represented in mercurial.
                 addeds = {
                     p: e.copyfrom_path
-                    for p, e in origpaths.items()
+                    for p, e in pycompat.iteritems(origpaths)
                     if e.action == b'A' and e.copyfrom_path
                 }
                 badroots = set()
@@ -1129,7 +1140,7 @@ class svn_source(converter_source):
             parents = []
             # check whether this revision is the start of a branch or part
             # of a branch renaming
-            orig_paths = sorted(orig_paths.items())
+            orig_paths = sorted(pycompat.iteritems(orig_paths))
             root_paths = [
                 (p, e) for p, e in orig_paths if self.module.startswith(p)
             ]
@@ -1291,7 +1302,7 @@ class svn_source(converter_source):
             path += b'/'
         return (
             (path + p)
-            for p, e in entries.items()
+            for p, e in pycompat.iteritems(entries)
             if e.kind == svn.core.svn_node_file
         )
 

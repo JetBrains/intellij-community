@@ -1,9 +1,8 @@
-from _typeshed import Incomplete, Unused
-from typing import ClassVar, NoReturn, overload
-from typing_extensions import Literal
+from _typeshed import ConvertibleToInt, Incomplete, Unused
+from typing import ClassVar, Literal, NoReturn, overload
 
 from openpyxl.descriptors import Strict
-from openpyxl.descriptors.base import Alias, Bool, Integer, String, Typed, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.base import Alias, Bool, Integer, String, Typed, _ConvertibleToBool
 from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.nested import NestedInteger, NestedText
 from openpyxl.descriptors.serialisable import Serialisable
@@ -24,7 +23,7 @@ class NumVal(Serialisable):
     idx: Integer[Literal[False]]
     formatCode: NestedText[str, Literal[True]]
     v: Incomplete
-    def __init__(self, idx: _ConvertibleToInt, formatCode: object = None, v: Incomplete | None = None) -> None: ...
+    def __init__(self, idx: ConvertibleToInt, formatCode: object = None, v: Incomplete | None = None) -> None: ...
 
 class NumData(Serialisable):
     formatCode: NestedText[str, Literal[True]]
@@ -35,7 +34,7 @@ class NumData(Serialisable):
     def __init__(
         self,
         formatCode: object = None,
-        ptCount: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None,
+        ptCount: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None,
         pt=(),
         extLst: Unused = None,
     ) -> None: ...
@@ -52,7 +51,7 @@ class StrVal(Serialisable):
     tagname: ClassVar[str]
     idx: Integer[Literal[False]]
     v: NestedText[str, Literal[False]]
-    def __init__(self, idx: _ConvertibleToInt = 0, v: object = None) -> None: ...
+    def __init__(self, idx: ConvertibleToInt = 0, v: object = None) -> None: ...
 
 class StrData(Serialisable):
     tagname: ClassVar[str]
@@ -61,7 +60,7 @@ class StrData(Serialisable):
     extLst: Typed[ExtensionList, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
-        self, ptCount: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None, pt=(), extLst: Unused = None
+        self, ptCount: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None, pt=(), extLst: Unused = None
     ) -> None: ...
 
 class StrRef(Serialisable):
@@ -89,7 +88,7 @@ class MultiLevelStrData(Serialisable):
     lvl: Incomplete
     extLst: Typed[ExtensionList, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
-    def __init__(self, ptCount: _ConvertibleToInt | None = None, lvl=(), extLst: Unused = None) -> None: ...
+    def __init__(self, ptCount: ConvertibleToInt | None = None, lvl=(), extLst: Unused = None) -> None: ...
 
 class MultiLevelStrRef(Serialisable):
     tagname: ClassVar[str]

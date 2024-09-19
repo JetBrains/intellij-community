@@ -13,6 +13,7 @@ This contains helper routines that are independent of the SCM core and
 hide platform-specific details from the core.
 """
 
+from __future__ import absolute_import, print_function
 
 import abc
 import collections
@@ -20,12 +21,11 @@ import contextlib
 import errno
 import gc
 import hashlib
-import io
 import itertools
 import locale
 import mmap
 import os
-import pickle  # provides util.pickle symbol
+import platform as pyplatform
 import re as remod
 import shutil
 import stat
@@ -34,20 +34,15 @@ import time
 import traceback
 import warnings
 
-from typing import (
-    Any,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Tuple,
-)
-
 from .node import hex
 from .thirdparty import attr
 from .pycompat import (
+    delattr,
+    getattr,
     open,
+    setattr,
 )
+from .node import hex
 from hgdemandimport import tracing
 from . import (
     encoding,
@@ -62,16 +57,16 @@ from .utils import (
     hashutil,
     procutil,
     stringutil,
+    urlutil,
 )
 
-# keeps pyflakes happy
-assert [
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Tuple,
-]
+if pycompat.TYPE_CHECKING:
+    from typing import (
+        Iterator,
+        List,
+        Optional,
+        Tuple,
+    )
 
 
 base85 = policy.importmod('base85')
@@ -82,9 +77,10 @@ b85encode = base85.b85encode
 
 cookielib = pycompat.cookielib
 httplib = pycompat.httplib
+pickle = pycompat.pickle
 safehasattr = pycompat.safehasattr
 socketserver = pycompat.socketserver
-bytesio = io.BytesIO
+bytesio = pycompat.bytesio
 # TODO deprecate stringio name, as it is a lie on Python 3.
 stringio = bytesio
 xmlrpclib = pycompat.xmlrpclib
@@ -148,7 +144,8 @@ unlink = platform.unlink
 username = platform.username
 
 
-def setumask(val: int) -> None:
+def setumask(val):
+    # type: (int) -> None
     '''updates the umask. used by chg server'''
     if pycompat.iswindows:
         return
@@ -161,6 +158,11 @@ def setumask(val: int) -> None:
 compengines = compression.compengines
 SERVERROLE = compression.SERVERROLE
 CLIENTROLE = compression.CLIENTROLE
+
+try:
+    recvfds = osutil.recvfds
+except AttributeError:
+    pass
 
 # Python compatibility
 
@@ -188,7 +190,7 @@ if _dowarn:
     warnings.filterwarnings('default', '', DeprecationWarning, 'mercurial')
     warnings.filterwarnings('default', '', DeprecationWarning, 'hgext')
     warnings.filterwarnings('default', '', DeprecationWarning, 'hgext3rd')
-if _dowarn:
+if _dowarn and pycompat.ispy3:
     # silence warning emitted by passing user string to re.sub()
     warnings.filterwarnings(
         'ignore', 'bad escape', DeprecationWarning, 'mercurial'
@@ -232,7 +234,7 @@ for k in DIGESTS_BY_STRENGTH:
     assert k in DIGESTS
 
 
-class digester:
+class digester(object):
     """helper to compute digests.
 
     This helper can be used to compute one or more digests given their name.
@@ -280,7 +282,7 @@ class digester:
         return None
 
 
-class digestchecker:
+class digestchecker(object):
     """file handle wrapper that additionally checks content against a given
     size and digests.
 
@@ -330,7 +332,7 @@ except NameError:
 _chunksize = 4096
 
 
-class bufferedinputpipe:
+class bufferedinputpipe(object):
     """a manually buffered input pipe
 
     Python will not let us use buffered IO and lazy reading with 'polling' at
@@ -441,21 +443,14 @@ class bufferedinputpipe:
 
 
 def mmapread(fp, size=None):
-    """Read a file content using mmap
-
-    The responsability of checking the file system is mmap safe is the
-    responsability of the caller.
-
-    In some case, a normal string might be returned.
-    """
     if size == 0:
         # size of 0 to mmap.mmap() means "all data"
         # rather than "zero bytes", so special case that.
         return b''
     elif size is None:
         size = 0
-    fd = getattr(fp, 'fileno', lambda: fp)()
     try:
+        fd = getattr(fp, 'fileno', lambda: fp)()
         return mmap.mmap(fd, size, access=mmap.ACCESS_READ)
     except ValueError:
         # Empty files cannot be mmapped, but mmapread should still work.  Check
@@ -465,7 +460,7 @@ def mmapread(fp, size=None):
         raise
 
 
-class fileobjectproxy:
+class fileobjectproxy(object):
     """A proxy around file objects that tells a watcher when events occur.
 
     This type is intended to only be used for testing purposes. Think hard
@@ -655,12 +650,12 @@ class observedbufferedinputpipe(bufferedinputpipe):
     ``read()`` and ``readline()``.
     """
 
-    def _fillbuffer(self, size=_chunksize):
-        res = super(observedbufferedinputpipe, self)._fillbuffer(size=size)
+    def _fillbuffer(self):
+        res = super(observedbufferedinputpipe, self)._fillbuffer()
 
         fn = getattr(self._input._observer, 'osread', None)
         if fn:
-            fn(res, size)
+            fn(res, _chunksize)
 
         return res
 
@@ -701,7 +696,7 @@ PROXIED_SOCKET_METHODS = {
 }
 
 
-class socketproxy:
+class socketproxy(object):
     """A proxy around a socket that tells a watcher when events occur.
 
     This is like ``fileobjectproxy`` except for sockets.
@@ -824,7 +819,7 @@ class socketproxy:
         )
 
 
-class baseproxyobserver:
+class baseproxyobserver(object):
     def __init__(self, fh, name, logdata, logdataapis):
         self.fh = fh
         self.name = name
@@ -1230,8 +1225,6 @@ def versiontuple(v=None, n=4):
     if n == 4:
         return (vints[0], vints[1], vints[2], extra)
 
-    raise error.ProgrammingError(b"invalid version part request: %d" % n)
-
 
 def cachefunc(func):
     '''cache the result of function calls'''
@@ -1264,7 +1257,7 @@ def cachefunc(func):
     return f
 
 
-class cow:
+class cow(object):
     """helper class to make copy-on-write easier
 
     Call preparewrite before doing any writes.
@@ -1289,14 +1282,14 @@ class sortdict(collections.OrderedDict):
 
     >>> d1 = sortdict([(b'a', 0), (b'b', 1)])
     >>> d2 = d1.copy()
-    >>> list(d2.items())
-    [('a', 0), ('b', 1)]
+    >>> d2
+    sortdict([('a', 0), ('b', 1)])
     >>> d2.update([(b'a', 2)])
     >>> list(d2.keys()) # should still be in last-set order
     ['b', 'a']
     >>> d1.insert(1, b'a.5', 0.5)
-    >>> list(d1.items())
-    [('a', 0), ('a.5', 0.5), ('b', 1)]
+    >>> d1
+    sortdict([('a', 0), ('a.5', 0.5), ('b', 1)])
     """
 
     def __setitem__(self, key, value):
@@ -1308,7 +1301,7 @@ class sortdict(collections.OrderedDict):
         # __setitem__() isn't called as of PyPy 5.8.0
         def update(self, src, **f):
             if isinstance(src, dict):
-                src = src.items()
+                src = pycompat.iteritems(src)
             for k, v in src:
                 self[k] = v
             for k in f:
@@ -1357,7 +1350,7 @@ class cowsortdict(cow, sortdict):
     """
 
 
-class transactional:  # pytype: disable=ignored-metaclass
+class transactional(object):  # pytype: disable=ignored-metaclass
     """Base class for making a transactional type into a context manager."""
 
     __metaclass__ = abc.ABCMeta
@@ -1408,7 +1401,7 @@ def nullcontextmanager(enter_result=None):
     yield enter_result
 
 
-class _lrucachenode:
+class _lrucachenode(object):
     """A node in a doubly linked list.
 
     Holds a reference to nodes on either side as well as a key-value
@@ -1432,7 +1425,7 @@ class _lrucachenode:
         self.cost = 0
 
 
-class lrucachedict:
+class lrucachedict(object):
     """Dict that caches most recent accesses and sets.
 
     The dict consists of an actual backing dict - indexed by original
@@ -1535,6 +1528,7 @@ class lrucachedict:
                 raise
             return default
 
+        assert node is not None  # help pytype
         value = node.value
         self.totalcost -= node.cost
         node.markempty()
@@ -1562,6 +1556,7 @@ class lrucachedict:
         """
         try:
             node = self._cache[k]
+            assert node is not None  # help pytype
             return node.value
         except KeyError:
             if default is _notset:
@@ -1620,8 +1615,12 @@ class lrucachedict:
         # a non-empty node.
         n = self._head.prev
 
+        assert n is not None  # help pytype
+
         while n.key is _notset:
             n = n.prev
+
+        assert n is not None  # help pytype
 
         key, value = n.key, n.value
 
@@ -1632,7 +1631,7 @@ class lrucachedict:
 
         return key, value
 
-    def _movetohead(self, node: _lrucachenode):
+    def _movetohead(self, node):
         """Mark a node as the newest, making it the new head.
 
         When a node is accessed, it becomes the freshest entry in the LRU
@@ -1679,7 +1678,7 @@ class lrucachedict:
 
         self._head = node
 
-    def _addcapacity(self) -> _lrucachenode:
+    def _addcapacity(self):
         """Add a node to the circular linked list.
 
         The new node is inserted before the head node.
@@ -1757,7 +1756,7 @@ def lrucachefunc(func):
     return f
 
 
-class propertycache:
+class propertycache(object):
     def __init__(self, func):
         self.func = func
         self.name = func.__name__
@@ -1820,7 +1819,7 @@ def never(fn):
     return False
 
 
-def nogc(func=None) -> Any:
+def nogc(func):
     """disable garbage collector
 
     Python's garbage collector triggers a GC each time a certain number of
@@ -1833,27 +1832,15 @@ def nogc(func=None) -> Any:
     This garbage collector issue have been fixed in 2.7. But it still affect
     CPython's performance.
     """
-    if func is None:
-        return _nogc_context()
-    else:
-        return _nogc_decorator(func)
 
-
-@contextlib.contextmanager
-def _nogc_context():
-    gcenabled = gc.isenabled()
-    gc.disable()
-    try:
-        yield
-    finally:
-        if gcenabled:
-            gc.enable()
-
-
-def _nogc_decorator(func):
     def wrapper(*args, **kwargs):
-        with _nogc_context():
+        gcenabled = gc.isenabled()
+        gc.disable()
+        try:
             return func(*args, **kwargs)
+        finally:
+            if gcenabled:
+                gc.enable()
 
     return wrapper
 
@@ -1863,7 +1850,8 @@ if pycompat.ispypy:
     nogc = lambda x: x
 
 
-def pathto(root: bytes, n1: bytes, n2: bytes) -> bytes:
+def pathto(root, n1, n2):
+    # type: (bytes, bytes, bytes) -> bytes
     """return the relative path from one place to another.
     root should use os.sep to separate directories
     n1 should use os.sep to separate directories
@@ -2074,7 +2062,8 @@ _winreservednames = {
 _winreservedchars = b':*?"<>|'
 
 
-def checkwinfilename(path: bytes) -> Optional[bytes]:
+def checkwinfilename(path):
+    # type: (bytes) -> Optional[bytes]
     r"""Check that the base-relative path is a valid filename on Windows.
     Returns None if the path is ok, or a UI string describing the problem.
 
@@ -2140,7 +2129,7 @@ timer = getattr(time, "perf_counter", None)
 if pycompat.iswindows:
     checkosfilename = checkwinfilename
     if not timer:
-        timer = time.clock  # pytype: disable=module-attr
+        timer = time.clock
 else:
     # mercurial.windows doesn't have platform.checkosfilename
     checkosfilename = platform.checkosfilename  # pytype: disable=module-attr
@@ -2168,7 +2157,8 @@ def makelock(info, pathname):
     os.close(ld)
 
 
-def readlock(pathname: bytes) -> bytes:
+def readlock(pathname):
+    # type: (bytes) -> bytes
     try:
         return readlink(pathname)
     except OSError as why:
@@ -2191,7 +2181,8 @@ def fstat(fp):
 # File system features
 
 
-def fscasesensitive(path: bytes) -> bool:
+def fscasesensitive(path):
+    # type: (bytes) -> bool
     """
     Return true if the given path is on a case-sensitive filesystem
 
@@ -2216,8 +2207,6 @@ def fscasesensitive(path: bytes) -> bool:
 
 
 _re2_input = lambda x: x
-# google-re2 will need to be tell to not output error on its own
-_re2_options = None
 try:
     import re2  # pytype: disable=import-error
 
@@ -2226,22 +2215,10 @@ except ImportError:
     _re2 = False
 
 
-def has_re2():
-    """return True is re2 is available, False otherwise"""
-    if _re2 is None:
-        _re._checkre2()
-    return _re2
-
-
-class _re:
-    @staticmethod
-    def _checkre2():
+class _re(object):
+    def _checkre2(self):
         global _re2
         global _re2_input
-        global _re2_options
-        if _re2 is not None:
-            # we already have the answer
-            return
 
         check_pattern = br'\[([^\[]+)\]'
         check_input = b'[ui]'
@@ -2257,12 +2234,6 @@ class _re:
             check_input = pycompat.sysstr(check_input)
             _re2 = bool(re2.match(check_pattern, check_input))
             _re2_input = pycompat.sysstr
-        try:
-            quiet = re2.Options()
-            quiet.log_errors = False
-            _re2_options = quiet
-        except AttributeError:
-            pass
 
     def compile(self, pat, flags=0):
         """Compile a regular expression, using re2 if possible
@@ -2278,12 +2249,7 @@ class _re:
             if flags & remod.MULTILINE:
                 pat = b'(?m)' + pat
             try:
-                input_regex = _re2_input(pat)
-                if _re2_options is not None:
-                    compiled = re2.compile(input_regex, options=_re2_options)
-                else:
-                    compiled = re2.compile(input_regex)
-                return compiled
+                return re2.compile(_re2_input(pat))
             except re2.error:
                 pass
         return remod.compile(pat, flags)
@@ -2309,7 +2275,8 @@ re = _re()
 _fspathcache = {}
 
 
-def fspath(name: bytes, root: bytes) -> bytes:
+def fspath(name, root):
+    # type: (bytes, bytes) -> bytes
     """Get name in the case stored in the filesystem
 
     The name should be relative to root, and be normcase-ed for efficiency.
@@ -2353,7 +2320,8 @@ def fspath(name: bytes, root: bytes) -> bytes:
     return b''.join(result)
 
 
-def checknlink(testfile: bytes) -> bool:
+def checknlink(testfile):
+    # type: (bytes) -> bool
     '''check whether hardlink count reporting works properly'''
 
     # testfile may be open, so we need a separate file for checking to
@@ -2386,7 +2354,8 @@ def checknlink(testfile: bytes) -> bool:
                 pass
 
 
-def endswithsep(path: bytes) -> bool:
+def endswithsep(path):
+    # type: (bytes) -> bool
     '''Check path ends with os.sep or os.altsep.'''
     return bool(  # help pytype
         path.endswith(pycompat.ossep)
@@ -2395,7 +2364,8 @@ def endswithsep(path: bytes) -> bool:
     )
 
 
-def splitpath(path: bytes) -> List[bytes]:
+def splitpath(path):
+    # type: (bytes) -> List[bytes]
     """Split path by os.sep.
     Note that this function does not use os.altsep because this is
     an alternative of simple "xxx.split(os.sep)".
@@ -2447,7 +2417,7 @@ def mktempcopy(name, emptyok=False, createmode=None, enforcewritable=False):
     return temp
 
 
-class filestat:
+class filestat(object):
     """help to exactly detect change of a file
 
     'stat' attribute is result of 'os.stat()' if specified 'path'
@@ -2462,7 +2432,9 @@ class filestat:
     def frompath(cls, path):
         try:
             stat = os.stat(path)
-        except FileNotFoundError:
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                raise
             stat = None
         return cls(stat)
 
@@ -2539,17 +2511,19 @@ class filestat:
         advanced = (old.stat[stat.ST_MTIME] + 1) & 0x7FFFFFFF
         try:
             os.utime(path, (advanced, advanced))
-        except PermissionError:
-            # utime() on the file created by another user causes EPERM,
-            # if a process doesn't have appropriate privileges
-            return False
+        except OSError as inst:
+            if inst.errno == errno.EPERM:
+                # utime() on the file created by another user causes EPERM,
+                # if a process doesn't have appropriate privileges
+                return False
+            raise
         return True
 
     def __ne__(self, other):
         return not self == other
 
 
-class atomictempfile:
+class atomictempfile(object):
     """writable file object that atomically updates a file
 
     All writes will go to a temporary copy of the original file. Call
@@ -2578,7 +2552,6 @@ class atomictempfile:
         # delegated methods
         self.read = self._fp.read
         self.write = self._fp.write
-        self.writelines = self._fp.writelines
         self.seek = self._fp.seek
         self.tell = self._fp.tell
         self.fileno = self._fp.fileno
@@ -2607,7 +2580,7 @@ class atomictempfile:
             self._fp.close()
 
     def __del__(self):
-        if hasattr(self, '_fp'):  # constructor actually did something
+        if safehasattr(self, '_fp'):  # constructor actually did something
             self.discard()
 
     def __enter__(self):
@@ -2620,17 +2593,8 @@ class atomictempfile:
             self.close()
 
 
-def tryrmdir(f):
-    try:
-        removedirs(f)
-    except OSError as e:
-        if e.errno != errno.ENOENT and e.errno != errno.ENOTEMPTY:
-            raise
-
-
-def unlinkpath(
-    f: bytes, ignoremissing: bool = False, rmdir: bool = True
-) -> None:
+def unlinkpath(f, ignoremissing=False, rmdir=True):
+    # type: (bytes, bool, bool) -> None
     """unlink and remove the directory if it is empty"""
     if ignoremissing:
         tryunlink(f)
@@ -2644,21 +2608,18 @@ def unlinkpath(
             pass
 
 
-def tryunlink(f: bytes) -> bool:
-    """Attempt to remove a file, ignoring FileNotFoundError.
-
-    Returns False in case the file did not exit, True otherwise
-    """
+def tryunlink(f):
+    # type: (bytes) -> None
+    """Attempt to remove a file, ignoring ENOENT errors."""
     try:
         unlink(f)
-        return True
-    except FileNotFoundError:
-        return False
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise
 
 
-def makedirs(
-    name: bytes, mode: Optional[int] = None, notindexed: bool = False
-) -> None:
+def makedirs(name, mode=None, notindexed=False):
+    # type: (bytes, Optional[int], bool) -> None
     """recursive directory creation with parent mode inheritance
 
     Newly created directories are marked as "not to be indexed by
@@ -2687,22 +2648,25 @@ def makedirs(
         os.chmod(name, mode)
 
 
-def readfile(path: bytes) -> bytes:
+def readfile(path):
+    # type: (bytes) -> bytes
     with open(path, b'rb') as fp:
         return fp.read()
 
 
-def writefile(path: bytes, text: bytes) -> None:
+def writefile(path, text):
+    # type: (bytes, bytes) -> None
     with open(path, b'wb') as fp:
         fp.write(text)
 
 
-def appendfile(path: bytes, text: bytes) -> None:
+def appendfile(path, text):
+    # type: (bytes, bytes) -> None
     with open(path, b'ab') as fp:
         fp.write(text)
 
 
-class chunkbuffer:
+class chunkbuffer(object):
     """Allow arbitrary sized chunks of data to be efficiently read from an
     iterator over chunks of arbitrary size."""
 
@@ -2807,7 +2771,7 @@ def filechunkiter(f, size=131072, limit=None):
         yield s
 
 
-class cappedreader:
+class cappedreader(object):
     """A file object proxy that allows reading up to N bytes.
 
     Given a source file object, instances of this type allow reading up to
@@ -2858,7 +2822,8 @@ def unitcountfn(*unittable):
     return go
 
 
-def processlinerange(fromline: int, toline: int) -> Tuple[int, int]:
+def processlinerange(fromline, toline):
+    # type: (int, int) -> Tuple[int, int]
     """Check that linerange <fromline>:<toline> makes sense and return a
     0-based range.
 
@@ -2894,7 +2859,7 @@ bytecount = unitcountfn(
 )
 
 
-class transformingwriter:
+class transformingwriter(object):
     """Writable file wrapper to transform data by function"""
 
     def __init__(self, fp, encode):
@@ -2917,11 +2882,13 @@ class transformingwriter:
 _eolre = remod.compile(br'\r*\n')
 
 
-def tolf(s: bytes) -> bytes:
+def tolf(s):
+    # type: (bytes) -> bytes
     return _eolre.sub(b'\n', s)
 
 
-def tocrlf(s: bytes) -> bytes:
+def tocrlf(s):
+    # type: (bytes) -> bytes
     return _eolre.sub(b'\r\n', s)
 
 
@@ -2938,19 +2905,61 @@ else:
     fromnativeeol = pycompat.identity
     nativeeolwriter = pycompat.identity
 
+if pyplatform.python_implementation() == b'CPython' and sys.version_info < (
+    3,
+    0,
+):
+    # There is an issue in CPython that some IO methods do not handle EINTR
+    # correctly. The following table shows what CPython version (and functions)
+    # are affected (buggy: has the EINTR bug, okay: otherwise):
+    #
+    #                | < 2.7.4 | 2.7.4 to 2.7.12 | >= 3.0
+    #   --------------------------------------------------
+    #    fp.__iter__ | buggy   | buggy           | okay
+    #    fp.read*    | buggy   | okay [1]        | okay
+    #
+    # [1]: fixed by changeset 67dc99a989cd in the cpython hg repo.
+    #
+    # Here we workaround the EINTR issue for fileobj.__iter__. Other methods
+    # like "read*" work fine, as we do not support Python < 2.7.4.
+    #
+    # Although we can workaround the EINTR issue for fp.__iter__, it is slower:
+    # "for x in fp" is 4x faster than "for x in iter(fp.readline, '')" in
+    # CPython 2, because CPython 2 maintains an internal readahead buffer for
+    # fp.__iter__ but not other fp.read* methods.
+    #
+    # On modern systems like Linux, the "read" syscall cannot be interrupted
+    # when reading "fast" files like on-disk files. So the EINTR issue only
+    # affects things like pipes, sockets, ttys etc. We treat "normal" (S_ISREG)
+    # files approximately as "fast" files and use the fast (unsafe) code path,
+    # to minimize the performance impact.
 
-# TODO delete since workaround variant for Python 2 no longer needed.
-def iterfile(fp):
-    return fp
+    def iterfile(fp):
+        fastpath = True
+        if type(fp) is file:
+            fastpath = stat.S_ISREG(os.fstat(fp.fileno()).st_mode)
+        if fastpath:
+            return fp
+        else:
+            # fp.readline deals with EINTR correctly, use it as a workaround.
+            return iter(fp.readline, b'')
 
 
-def iterlines(iterator: Iterable[bytes]) -> Iterator[bytes]:
+else:
+    # PyPy and CPython 3 do not have the EINTR issue thus no workaround needed.
+    def iterfile(fp):
+        return fp
+
+
+def iterlines(iterator):
+    # type: (Iterator[bytes]) -> Iterator[bytes]
     for chunk in iterator:
         for line in chunk.splitlines():
             yield line
 
 
-def expandpath(path: bytes) -> bytes:
+def expandpath(path):
+    # type: (bytes) -> bytes
     return os.path.expanduser(os.path.expandvars(path))
 
 
@@ -2980,6 +2989,54 @@ def interpolate(prefix, mapping, s, fn=None, escape_prefix=False):
     return r.sub(lambda x: fn(mapping[x.group()[1:]]), s)
 
 
+def getport(*args, **kwargs):
+    msg = b'getport(...) moved to mercurial.utils.urlutil'
+    nouideprecwarn(msg, b'6.0', stacklevel=2)
+    return urlutil.getport(*args, **kwargs)
+
+
+def url(*args, **kwargs):
+    msg = b'url(...) moved to mercurial.utils.urlutil'
+    nouideprecwarn(msg, b'6.0', stacklevel=2)
+    return urlutil.url(*args, **kwargs)
+
+
+def hasscheme(*args, **kwargs):
+    msg = b'hasscheme(...) moved to mercurial.utils.urlutil'
+    nouideprecwarn(msg, b'6.0', stacklevel=2)
+    return urlutil.hasscheme(*args, **kwargs)
+
+
+def hasdriveletter(*args, **kwargs):
+    msg = b'hasdriveletter(...) moved to mercurial.utils.urlutil'
+    nouideprecwarn(msg, b'6.0', stacklevel=2)
+    return urlutil.hasdriveletter(*args, **kwargs)
+
+
+def urllocalpath(*args, **kwargs):
+    msg = b'urllocalpath(...) moved to mercurial.utils.urlutil'
+    nouideprecwarn(msg, b'6.0', stacklevel=2)
+    return urlutil.urllocalpath(*args, **kwargs)
+
+
+def checksafessh(*args, **kwargs):
+    msg = b'checksafessh(...) moved to mercurial.utils.urlutil'
+    nouideprecwarn(msg, b'6.0', stacklevel=2)
+    return urlutil.checksafessh(*args, **kwargs)
+
+
+def hidepassword(*args, **kwargs):
+    msg = b'hidepassword(...) moved to mercurial.utils.urlutil'
+    nouideprecwarn(msg, b'6.0', stacklevel=2)
+    return urlutil.hidepassword(*args, **kwargs)
+
+
+def removeauth(*args, **kwargs):
+    msg = b'removeauth(...) moved to mercurial.utils.urlutil'
+    nouideprecwarn(msg, b'6.0', stacklevel=2)
+    return urlutil.removeauth(*args, **kwargs)
+
+
 timecount = unitcountfn(
     (1, 1e3, _(b'%.0f s')),
     (100, 1, _(b'%.1f s')),
@@ -2998,7 +3055,7 @@ timecount = unitcountfn(
 
 
 @attr.s
-class timedcmstats:
+class timedcmstats(object):
     """Stats information produced by the timedcm context manager on entering."""
 
     # the starting value of the timer as a float (meaning and resulution is
@@ -3078,7 +3135,8 @@ _sizeunits = (
 )
 
 
-def sizetoint(s: bytes) -> int:
+def sizetoint(s):
+    # type: (bytes) -> int
     """Convert a space specifier to a byte count.
 
     >>> sizetoint(b'30')
@@ -3098,7 +3156,7 @@ def sizetoint(s: bytes) -> int:
         raise error.ParseError(_(b"couldn't parse size: %s") % s)
 
 
-class hooks:
+class hooks(object):
     """A collection of hook functions that can be used to extend a
     function's behavior. Hooks are called in lexicographic order,
     based on the names of their sources."""
@@ -3245,7 +3303,10 @@ def uvarintdecodestream(fh):
 
     The passed argument is anything that has a ``.read(N)`` method.
 
-    >>> from io import BytesIO
+    >>> try:
+    ...     from StringIO import StringIO as BytesIO
+    ... except ImportError:
+    ...     from io import BytesIO
     >>> uvarintdecodestream(BytesIO(b'\\x00'))
     0
     >>> uvarintdecodestream(BytesIO(b'\\x01'))
@@ -3300,7 +3361,8 @@ def with_lc_ctype():
         yield
 
 
-def _estimatememory() -> Optional[int]:
+def _estimatememory():
+    # type: () -> Optional[int]
     """Provide an estimate for the available system memory in Bytes.
 
     If no estimate can be provided on the platform, returns None.

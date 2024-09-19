@@ -4,6 +4,7 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
+from __future__ import absolute_import
 
 import os
 
@@ -14,6 +15,7 @@ from mercurial import (
     error,
     localrepo,
     match,
+    pycompat,
     scmutil,
     sparse,
     util,
@@ -267,7 +269,7 @@ def wraprepo(repo):
             mfrevlog = mfl.getstorage(b'')
             if base is not None:
                 mfdict = mfl[repo[base].manifestnode()].read()
-                skip = set(mfdict.items())
+                skip = set(pycompat.iteritems(mfdict))
             else:
                 skip = set()
 
@@ -297,7 +299,7 @@ def wraprepo(repo):
                 else:
                     mfdict = mfl[mfnode].read()
 
-                diff = mfdict.items()
+                diff = pycompat.iteritems(mfdict)
                 if pats:
                     diff = (pf for pf in diff if m(pf[0]))
                 if sparsematch:
@@ -340,7 +342,7 @@ def wraprepo(repo):
     repo.excludepattern = repo.ui.configlist(
         b"remotefilelog", b"excludepattern", None
     )
-    if not hasattr(repo, 'connectionpool'):
+    if not util.safehasattr(repo, 'connectionpool'):
         repo.connectionpool = connectionpool.connectionpool(repo)
 
     if repo.includepattern or repo.excludepattern:

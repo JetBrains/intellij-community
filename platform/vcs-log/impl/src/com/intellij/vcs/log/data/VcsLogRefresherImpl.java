@@ -171,6 +171,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
   @Override
   public void initialize() {
+    if (myInitialized.get()) return;
     mySingleTaskController.request(RefreshRequest.INITIALIZE);
   }
 

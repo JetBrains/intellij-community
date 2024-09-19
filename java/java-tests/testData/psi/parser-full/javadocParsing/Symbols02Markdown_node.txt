@@ -17,6 +17,8 @@ java.FILE
               <empty list>
         WHITE_SPACE
         DOC_COMMENT_DATA
+        DOC_INLINE_CODE_FENCE
+        DOC_COMMENT_DATA
         DOC_SHARP
         DOC_COMMENT_DATA
         DOC_LPAREN
@@ -26,6 +28,8 @@ java.FILE
         DOC_COMMENT_DATA
         DOC_LBRACKET
         DOC_RBRACKET
+        DOC_COMMENT_DATA
+        DOC_COMMA
         DOC_COMMENT_DATA
       WHITE_SPACE
       DOC_COMMENT_LEADING_ASTERISKS

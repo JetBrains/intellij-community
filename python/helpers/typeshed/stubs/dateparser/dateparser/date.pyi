@@ -2,8 +2,8 @@ import collections
 from collections.abc import Callable, Iterable, Iterator
 from datetime import datetime
 from re import Pattern
-from typing import ClassVar, overload
-from typing_extensions import Literal, TypeAlias
+from typing import ClassVar, Literal, overload
+from typing_extensions import TypeAlias
 
 from dateparser import _Settings
 from dateparser.conf import Settings

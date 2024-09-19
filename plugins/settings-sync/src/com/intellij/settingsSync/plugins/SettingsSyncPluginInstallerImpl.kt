@@ -3,6 +3,7 @@ package com.intellij.settingsSync.plugins
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -34,30 +35,33 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
   }
 
   private fun installCollected(installers: List<PluginDownloader>) {
-    val pluginsRequiredRestart = mutableListOf<String>()
-    var settingsChanged = false
-    val settings = SettingsSyncSettings.getInstance()
-    for (installer in installers) {
-      try {
-        if (!install(installer)) {
-          pluginsRequiredRestart.add(installer.pluginName)
+    ApplicationManager.getApplication().invokeLater {
+      val pluginsRequiredRestart = mutableListOf<String>()
+      var settingsChanged = false
+      val settings = SettingsSyncSettings.getInstance()
+      for (installer in installers) {
+        try {
+          if (!install(installer)) {
+            pluginsRequiredRestart.add(installer.pluginName)
+          }
+          LOG.info("Setting sync installed plugin ID: ${installer.id.idString}")
         }
-        LOG.info("Setting sync installed plugin ID: ${installer.id.idString}")
-      } catch (ex: Exception) {
+        catch (ex: Exception) {
 
-        // currently, we don't install plugins that have missing dependencies.
-        // TODO: toposort plugin with dependencies.
-        // TODO: Skip installation dependent plugins, if any dependency fails to install.
-        LOG.warn("An exception occurred while installing plugin ${installer.id.idString}. Will disable syncing this plugin")
-        settings.setSubcategoryEnabled(SettingsCategory.PLUGINS, installer.id.idString, false)
-        settingsChanged = true
+          // currently, we don't install plugins that have missing dependencies.
+          // TODO: toposort plugin with dependencies.
+          // TODO: Skip installation dependent plugins, if any dependency fails to install.
+          LOG.warn("An exception occurred while installing plugin ${installer.id.idString}. Will disable syncing this plugin", ex)
+          settings.setSubcategoryEnabled(SettingsCategory.PLUGINS, installer.id.idString, false)
+          settingsChanged = true
+        }
       }
-    }
-    if (settingsChanged){
-      SettingsSyncEvents.getInstance().fireCategoriesChanged()
-    }
-    if (pluginsRequiredRestart.size > 0) {
-      SettingsSyncEvents.getInstance().fireRestartRequired(RestartForPluginInstall(pluginsRequiredRestart))
+      if (settingsChanged) {
+        SettingsSyncEvents.getInstance().fireCategoriesChanged()
+      }
+      if (pluginsRequiredRestart.size > 0) {
+        SettingsSyncEvents.getInstance().fireRestartRequired(RestartForPluginInstall(pluginsRequiredRestart))
+      }
     }
   }
 

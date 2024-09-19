@@ -28,7 +28,10 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
     val file = myFixture.file!!
     val editor = myFixture.editor
     val providerInfo = InlayProviderPassInfo(provider, "provider.id", enabledOptions)
-    val pass = DeclarativeInlayHintsPass(file, editor, listOf(providerInfo), isPreview = false)
+    val pass = ActionUtil.underModalProgress(project, "") {
+      DeclarativeInlayHintsPass(file, editor, listOf(providerInfo), isPreview = false)
+    }
+
     applyPassAndCheckResult(pass, sourceText, expectedText)
   }
 
@@ -37,8 +40,9 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
     val fileName = "preview." + (language.associatedFileType?.defaultExtension ?: error("language must have extension"))
     myFixture.configureByText(fileName, InlayDumpUtil.removeHints(previewText))
 
-    val pass = DeclarativeInlayHintsPassFactory.createPassForPreview(myFixture.file, myFixture.editor, provider, providerId,
-                                                                     emptyMap(), false)
+    val pass = ActionUtil.underModalProgress(project, "") {
+      DeclarativeInlayHintsPassFactory.createPassForPreview(myFixture.file, myFixture.editor, provider, providerId, emptyMap(), false)
+    }
     applyPassAndCheckResult(pass, previewText, expectedText)
   }
 

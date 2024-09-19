@@ -7,6 +7,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lang.java.lexer.JavaDocLexer;
 import com.intellij.lang.java.lexer.JavaLexer;
+import com.intellij.lang.java.lexer.JavaTypeEscapeLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -35,6 +36,11 @@ public class JavaParserDefinition implements ParserDefinition {
 
   public static @NotNull Lexer createLexer(@NotNull LanguageLevel level) {
     return new JavaLexer(level);
+  }
+
+  /** @return A lexer which handles JEP-467 bracket escapes when parsing Java types */
+  public static @NotNull Lexer createLexerWithMarkdownEscape(@NotNull LanguageLevel level) {
+    return new JavaTypeEscapeLexer(new JavaLexer(level));
   }
 
   public static @NotNull Lexer createDocLexer(@NotNull LanguageLevel level) {

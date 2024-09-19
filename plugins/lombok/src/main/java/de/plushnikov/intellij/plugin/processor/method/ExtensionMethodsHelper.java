@@ -138,7 +138,10 @@ public final class ExtensionMethodsHelper {
 
     for (int i = 1, length = parameters.length; i < length; i++) {
       PsiParameter parameter = parameters[i];
-      lightMethod.addParameter(new LombokLightParameter(parameter.getName(), substitutor.substitute(parameter.getType()), lightMethod, JavaLanguage.INSTANCE));
+      final LombokLightParameter lombokLightParameter =
+        new LombokLightParameter(parameter.getName(), substitutor.substitute(parameter.getType()), lightMethod, JavaLanguage.INSTANCE);
+      lombokLightParameter.setParent(lightMethod);
+      lightMethod.addParameter(lombokLightParameter);
     }
 
     PsiClassType[] thrownTypes = staticMethod.getThrowsList().getReferencedTypes();

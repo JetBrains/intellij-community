@@ -1,5 +1,5 @@
-from typing import Any, ClassVar
-from typing_extensions import Literal, TypeAlias
+from typing import Any, ClassVar, Literal
+from typing_extensions import TypeAlias
 
 from .TiffImagePlugin import TiffImageFile
 

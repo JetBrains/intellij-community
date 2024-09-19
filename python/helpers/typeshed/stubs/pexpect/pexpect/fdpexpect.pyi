@@ -1,32 +1,36 @@
-from _typeshed import Incomplete
+from _typeshed import FileDescriptorLike
+from collections.abc import Iterable
+from typing import AnyStr
 
-from .spawnbase import SpawnBase
+from .spawnbase import SpawnBase, _Logfile
 
-class fdspawn(SpawnBase):
-    args: Incomplete
-    command: Incomplete
-    child_fd: Incomplete
+__all__ = ["fdspawn"]
+
+class fdspawn(SpawnBase[AnyStr]):
+    args: None
+    command: None
+    child_fd: int
     own_fd: bool
     closed: bool
-    name: Incomplete
-    use_poll: Incomplete
+    name: str
+    use_poll: bool
     def __init__(
         self,
-        fd,
-        args: Incomplete | None = None,
-        timeout: int = 30,
+        fd: FileDescriptorLike,
+        args: None = None,
+        timeout: float | None = 30,
         maxread: int = 2000,
-        searchwindowsize: Incomplete | None = None,
-        logfile: Incomplete | None = None,
-        encoding: Incomplete | None = None,
+        searchwindowsize: int | None = None,
+        logfile: _Logfile | None = None,
+        encoding: str | None = None,
         codec_errors: str = "strict",
         use_poll: bool = False,
     ) -> None: ...
     def close(self) -> None: ...
     def isalive(self) -> bool: ...
     def terminate(self, force: bool = False) -> None: ...
-    def send(self, s: str | bytes) -> bytes: ...
-    def sendline(self, s: str | bytes) -> bytes: ...
+    def send(self, s: str | bytes) -> int: ...
+    def sendline(self, s: str | bytes) -> int: ...
     def write(self, s) -> None: ...
-    def writelines(self, sequence) -> None: ...
-    def read_nonblocking(self, size: int = 1, timeout: int | None = -1) -> bytes: ...
+    def writelines(self, sequence: Iterable[str | bytes]) -> None: ...
+    def read_nonblocking(self, size: int = 1, timeout: float | None = -1) -> AnyStr: ...

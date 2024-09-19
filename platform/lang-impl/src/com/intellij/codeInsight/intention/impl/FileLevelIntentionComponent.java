@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.IntentionSource;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -66,13 +67,13 @@ public final class FileLevelIntentionComponent extends EditorNotificationPanel {
             @Override
             public void handlePanelActionClick(@NotNull EditorNotificationPanel panel, @NotNull HyperlinkEvent event) {
               PsiDocumentManager.getInstance(project).commitAllDocuments();
-              ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
+              ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text, IntentionSource.FILE_LEVEL_ACTIONS);
             }
 
             @Override
             public void handleQuickFixClick(@NotNull Editor editor, @NotNull PsiFile psiFile) {
               PsiDocumentManager.getInstance(project).commitAllDocuments();
-              ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
+              ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text, IntentionSource.FILE_LEVEL_ACTIONS);
             }
 
             @Override
@@ -121,7 +122,7 @@ public final class FileLevelIntentionComponent extends EditorNotificationPanel {
             PsiFile psiFile = filePointer.getElement();
             if (psiFile == null) return true;
             CachedIntentions cachedIntentions = new CachedIntentions(project, psiFile, editor);
-            IntentionListStep step = new IntentionListStep(null, editor, psiFile, project, cachedIntentions);
+            IntentionListStep step = new IntentionListStep(null, editor, psiFile, project, cachedIntentions, IntentionSource.FILE_LEVEL_ACTIONS);
             HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
             IntentionActionWithTextCaching actionWithTextCaching = cachedIntentions.wrapAction(descriptor, psiFile, psiFile, editor);
             if (step.hasSubstep(actionWithTextCaching)) {

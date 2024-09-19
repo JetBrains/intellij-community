@@ -1,3 +1,2 @@
 psycopg2.pool.AbstractConnectionPool.(closeall|getconn|putconn)
-psycopg2.(extras|_range).RangeAdapter.name
-psycopg2.(_psycopg|extensions).connection.async  # async is a reserved keyword in Python 3.7
+psycopg2.(_psycopg|extensions).connection.async  # async is a reserved keyword

@@ -2,8 +2,7 @@ from typing import Protocol
 
 from .._distutils.command.build import build as _build
 
-class build(_build):
-    def get_sub_commands(self): ...
+class build(_build): ...
 
 class SubCommand(Protocol):
     editable_mode: bool

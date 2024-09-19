@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.util.List;
  * @deprecated use {@link BackgroundUpdateHighlightersUtil} instead
  */
 @Deprecated
+@ApiStatus.Internal
 public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   private volatile TextEditorHighlightingPass myCachedShowAutoImportPass; // cache to avoid re-creating it multiple times
   @Override

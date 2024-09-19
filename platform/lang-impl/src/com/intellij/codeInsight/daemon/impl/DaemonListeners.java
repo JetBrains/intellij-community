@@ -72,6 +72,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -302,7 +303,7 @@ public final class DaemonListeners implements Disposable {
         if (document == null) {
           return;
         }
-        // when the file becomes un-highlighteable, clear all highlighters from previous HighlightPasses
+        // when the file becomes un-highlightable, clear all highlighters from previous HighlightPasses
         removeAllHighlightersFromHighlightPasses(document, project);
       }
     });
@@ -399,7 +400,11 @@ public final class DaemonListeners implements Disposable {
           }
         }
       }));
-    HeavyProcessLatch.INSTANCE.addListener(this, __ -> stopDaemon(true, "re-scheduled to execute after heavy processing finished"));
+    HeavyProcessLatch.INSTANCE.addListener(this, op -> {
+      if (!HeavyProcessLatch.Type.Syncing.equals(op.getType())) {
+        stopDaemon(true, "re-scheduled to execute after heavy processing finished");
+      }
+    });
   }
 
   private static void removeAllHighlightersFromHighlightPasses(@NotNull Document document, @NotNull Project project) {
@@ -440,12 +445,12 @@ public final class DaemonListeners implements Disposable {
       MarkupModel documentMarkupModel = DocumentMarkupModel.forDocument(editor.getDocument(), myProject, false);
       List<RangeHighlighter> toRemove = documentMarkupModel == null ? List.of() : ContainerUtil.filter(documentMarkupModel.getAllHighlighters(), highlighter -> {
         HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
-        return info != null && (info.isFromInspection() || info.isFromAnnotator() || info.isFromHighlightVisitor());
+        return info != null && (info.isFromInspection() || info.isFromAnnotator() || info.isFromHighlightVisitor() || info.isInjectionRelated());
       });
       for (RangeHighlighter highlighter : toRemove) {
         HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
         if (info != null) {
-          UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, myProject, info);
+          UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrorsInEDT(highlighter, myProject, info);
         }
       }
     }
@@ -563,10 +568,7 @@ public final class DaemonListeners implements Disposable {
       if (!myDaemonCodeAnalyzer.isRunning()) {
         return;
       }
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("cancelling code highlighting by command: " + event.getCommand());
-      }
-      stopDaemon(false, "Command start");
+      stopDaemon(false, ObjectUtils.notNull(event.getCommandName(), "command started"));
     }
 
     private static Document extractDocumentFromCommand(@NotNull CommandEvent event) {

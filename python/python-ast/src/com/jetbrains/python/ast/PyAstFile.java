@@ -17,7 +17,6 @@ package com.jetbrains.python.ast;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
 import com.jetbrains.python.ast.docstring.DocStringUtilCore;
 import com.jetbrains.python.psi.FutureFeature;
@@ -41,28 +40,12 @@ public interface PyAstFile extends PyAstElement, PsiFile, PyAstDocStringOwner, A
     return stmts;
   }
 
-  List<? extends PyAstTargetExpression> getTopLevelAttributes();
-
-  @Nullable
-  default PyAstTargetExpression findTopLevelAttribute(@NotNull String name) {
-    return findByName(name, getTopLevelAttributes());
-  }
-
   LanguageLevel getLanguageLevel();
 
   /**
    * Return true if the file contains a 'from __future__ import ...' statement with given feature.
    */
   boolean hasImportFromFuture(FutureFeature feature);
-
-  private static <T extends PsiNamedElement> T findByName(@NotNull String name, @NotNull List<T> namedElements) {
-    for (T namedElement : namedElements) {
-      if (name.equals(namedElement.getName())) {
-        return namedElement;
-      }
-    }
-    return null;
-  }
 
   @ApiStatus.Internal
   default boolean isAcceptedFor(@NotNull Class<?> visitorClass) {

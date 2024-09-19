@@ -427,12 +427,23 @@ fun <T : CommandChain> T.stopPowerSave(): T = apply {
   addCommand("${CMD_PREFIX}stopPowerSave")
 }
 
+fun <T : CommandChain> T.searchEverywhere(
+  tab: CommonSearchEverywhereTabs,
+  textToInsert: String = "",
+  textToType: String = "",
+  close: Boolean = false,
+  selectFirst: Boolean = false,
+  warmup: Boolean = false,
+  startThoughAction: Boolean = false,
+): T = searchEverywhere(tab.tabId, textToInsert, textToType, close, selectFirst, warmup, startThoughAction)
+
 fun <T : CommandChain> T.searchEverywhere(tab: String = "all",
                                           textToInsert: String = "",
                                           textToType: String = "",
                                           close: Boolean = false,
                                           selectFirst: Boolean = false,
-                                          warmup: Boolean = false): T = apply {
+                                          warmup: Boolean = false,
+  startThoughAction: Boolean = false): T = apply {
   val closeOnOpenArgument = when {
     close -> "-close"
     else -> ""
@@ -446,10 +457,11 @@ fun <T : CommandChain> T.searchEverywhere(tab: String = "all",
     else -> ""
   }
   val warmupText = if(warmup) "|WARMUP" else ""
+  val startThroughActionText = if (startThoughAction) "|START_THROUGH_ACTION" else ""
   if (selectFirstArgument.isNotEmpty() && closeOnOpenArgument.isNotEmpty()) {
     throw Exception("selectFirst=true argument will be ignored since close=true and SE will be closed first")
   }
-  addCommand("${CMD_PREFIX}searchEverywhere", "-tab $tab $closeOnOpenArgument $selectFirstArgument $argumentForTyping|$textToInsert$warmupText")
+  addCommand("${CMD_PREFIX}searchEverywhere", "-tab $tab $closeOnOpenArgument $selectFirstArgument $argumentForTyping|$textToInsert$warmupText$startThroughActionText")
 }
 
 fun <T : CommandChain> T.selectFileInProjectView(relativePath: String): T = apply {

@@ -18,6 +18,7 @@ Remember to update https://mercurial-scm.org/wiki/HelpStyleGuide
 when adding support for new constructs.
 """
 
+from __future__ import absolute_import
 
 import re
 
@@ -349,7 +350,7 @@ def findtables(blocks):
             # position in bytes
             columns = [
                 x
-                for x in range(len(div))
+                for x in pycompat.xrange(len(div))
                 if div[x : x + 1] == b'=' and (x == 0 or div[x - 1 : x] == b' ')
             ]
             rows = []
@@ -769,7 +770,7 @@ def filtersections(blocks, section):
                 if llen and llen != plen:
                     collapse = False
                 s = []
-                for j in range(3, plen - 1):
+                for j in pycompat.xrange(3, plen - 1):
                     parent = parents[j]
                     if j >= llen or lastparents[j] != parent:
                         s.append(len(blocks))

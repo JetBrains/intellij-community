@@ -1,0 +1,63 @@
+<idea-plugin package="com.intellij.restructuredtext">
+  <name>ReStructuredText</name>
+  <id>org.jetbrains.plugins.rest</id>
+  <description>This plugin enables support for reStructuredText files (*.rst)</description>
+  <vendor>JetBrains</vendor>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
+  <content>
+    <!-- If the Python plugin is enabled in an IDE, the optional module below offers features that require a Python interpreter
+    and Python language support. These include HTML previews of reStructuredText files formatted by the `docutils` module,
+    Python syntax highlighting in code blocks, Sphinx documentation support, and more.-->
+    <module name="intellij.restructuredtext.python"/>
+  </content>
+
+  <extensions defaultExtensionNs="com.intellij">
+
+    <fileType name="ReST" language="ReST" extensions="rst" implementationClass="com.intellij.restructuredtext.RestFileType"
+              fieldName="INSTANCE"/>
+    <lang.syntaxHighlighterFactory language="ReST"
+                                   implementationClass="com.intellij.restructuredtext.RestHighlighterFactory"/>
+    <lang.parserDefinition language="ReST" implementationClass="com.intellij.restructuredtext.parsing.RestParserDefinition"/>
+    <colorSettingsPage implementation="com.intellij.restructuredtext.RestColorsPage"/>
+
+    <completion.contributor language="ReST"
+                            implementationClass="com.intellij.restructuredtext.completion.DirectiveCompletionContributor"/>
+    <completion.contributor language="ReST"
+                            implementationClass="com.intellij.restructuredtext.completion.OptionCompletionContributor"/>
+    <completion.contributor language="ReST"
+                            implementationClass="com.intellij.restructuredtext.completion.ReferenceCompletionContributor"/>
+    <gotoDeclarationHandler implementation="com.intellij.restructuredtext.RestGotoProvider" order="FIRST"/>
+    <lang.psiStructureViewFactory language="ReST"
+                                  implementationClass="com.intellij.restructuredtext.structureView.RestStructureViewFactory"/>
+    <annotator language="ReST" implementationClass="com.intellij.restructuredtext.validation.RestAnnotatingVisitor"/>
+    <lang.formatter language="ReST" implementationClass="com.intellij.restructuredtext.formatter.RestFormattingModelBuilder"/>
+    <codeInsight.fillParagraph language="ReST" implementationClass="com.intellij.restructuredtext.actions.RestFillParagraphHandler"/>
+
+    <additionalTextAttributes scheme="Default" file="colorSchemes/RestDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/RestDarcula.xml"/>
+
+    <lang.elementManipulator forClass="com.intellij.restructuredtext.psi.RestLine"
+                             implementationClass="com.intellij.restructuredtext.psi.RestLineManipulator"/>
+
+    <indexPatternBuilder implementation="com.intellij.restructuredtext.RestIndexPatternBuilder"/>
+    <todoIndexer filetype="ReST" implementationClass="com.intellij.restructuredtext.RestTodoIndexer"/>
+
+    <fileEditorProvider implementation="com.intellij.restructuredtext.editor.RestEditorProvider"/>
+    <applicationService serviceImplementation="com.intellij.restructuredtext.python.editor.RestSettings"/>
+
+    <editorHighlighterProvider filetype="ReST" implementationClass="com.intellij.restructuredtext.RestEditorHighlighterProvider"/>
+
+    <completion.contributor language="ReST"
+                            implementationClass="com.intellij.restructuredtext.completion.SphinxDirectiveCompletionContributor"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.spellchecker">
+    <support language="ReST" implementationClass="com.intellij.restructuredtext.spellchecker.RestSpellcheckerStrategy"/>
+  </extensions>
+
+
+</idea-plugin>

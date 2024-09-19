@@ -2,7 +2,7 @@
 import os
 import sys
 
-from parse_metadata import read_stubtest_settings
+from _metadata import read_stubtest_settings
 
 platform = sys.platform
 distributions = sys.argv[1:]

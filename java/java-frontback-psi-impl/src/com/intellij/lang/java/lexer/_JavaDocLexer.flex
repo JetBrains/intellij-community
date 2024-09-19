@@ -136,6 +136,22 @@ LEADING_TOKEN_MARKDOWN="///"
       (\\\() { yybegin(COMMENT_DATA); return myTokenTypes.commentData(); }
       (\\\)) { yybegin(COMMENT_DATA); return myTokenTypes.commentData(); }
 
+      [,] {
+          yybegin(COMMENT_DATA);
+          if(myMarkdownMode) {
+            return myTokenTypes.comma();
+          }
+          return myTokenTypes.commentData();
+      }
+
+      "`" {
+         yybegin(COMMENT_DATA);
+          if(myMarkdownMode) {
+            return myTokenTypes.inlineCodeFence();
+          }
+          return myTokenTypes.commentData();
+      }
+
       "#" {
         yybegin(COMMENT_DATA);
         if(myMarkdownMode) {

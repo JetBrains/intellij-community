@@ -5,15 +5,18 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import re
 import uuid
 
 from .i18n import _
+from .pycompat import getattr
 from . import (
     error,
     pycompat,
     util,
+    wireprotoserver,
     wireprototypes,
     wireprotov1peer,
     wireprotov1server,
@@ -46,7 +49,7 @@ def _forwardoutput(ui, pipe, warn=False):
                 display(_(b"remote: "), l, b'\n')
 
 
-class doublepipe:
+class doublepipe(object):
     """Operate a side-channel pipe in addition of a main one
 
     The side-channel pipe contains server output to be forwarded to the user
@@ -129,7 +132,7 @@ class doublepipe:
             if sideready:
                 _forwardoutput(self._ui, self._side)
             if mainready:
-                meth = getattr(self._main, pycompat.sysstr(methname))
+                meth = getattr(self._main, methname)
                 if data is None:
                     return meth()
                 else:
@@ -176,9 +179,7 @@ def _cleanuppipes(ui, pipei, pipeo, pipee, warn):
         ui.develwarn(b'missing close on SSH connection created at:\n%s' % warn)
 
 
-def _makeconnection(
-    ui, sshcmd, args, remotecmd, path, sshenv=None, remotehidden=False
-):
+def _makeconnection(ui, sshcmd, args, remotecmd, path, sshenv=None):
     """Create an SSH connection to a server.
 
     Returns a tuple of (process, stdin, stdout, stderr) for the
@@ -188,12 +189,8 @@ def _makeconnection(
         sshcmd,
         args,
         procutil.shellquote(
-            b'%s -R %s serve --stdio%s'
-            % (
-                _serverquote(remotecmd),
-                _serverquote(path),
-                b' --hidden' if remotehidden else b'',
-            )
+            b'%s -R %s serve --stdio'
+            % (_serverquote(remotecmd), _serverquote(path))
         ),
     )
 
@@ -291,6 +288,10 @@ def _performhandshake(ui, stdin, stdout, stderr):
     # Generate a random token to help identify responses to version 2
     # upgrade request.
     token = pycompat.sysbytes(str(uuid.uuid4()))
+    upgradecaps = [
+        (b'proto', wireprotoserver.SSHV2),
+    ]
+    upgradecaps = util.urlreq.urlencode(upgradecaps)
 
     try:
         pairsarg = b'%s-%s' % (b'0' * 40, b'0' * 40)
@@ -300,6 +301,11 @@ def _performhandshake(ui, stdin, stdout, stderr):
             b'pairs %d\n' % len(pairsarg),
             pairsarg,
         ]
+
+        # Request upgrade to version 2 if configured.
+        if ui.configbool(b'experimental', b'sshpeer.advertise-v2'):
+            ui.debug(b'sending upgrade request: %s %s\n' % (token, upgradecaps))
+            handshake.insert(0, b'upgrade %s %s\n' % (token, upgradecaps))
 
         if requestlog:
             ui.debug(b'devel-peer-request: hello+between\n')
@@ -359,6 +365,24 @@ def _performhandshake(ui, stdin, stdout, stderr):
             if l.startswith(b'capabilities:'):
                 caps.update(l[:-1].split(b':')[1].split())
                 break
+    elif protoname == wireprotoserver.SSHV2:
+        # We see a line with number of bytes to follow and then a value
+        # looking like ``capabilities: *``.
+        line = stdout.readline()
+        try:
+            valuelen = int(line)
+        except ValueError:
+            badresponse()
+
+        capsline = stdout.read(valuelen)
+        if not capsline.startswith(b'capabilities: '):
+            badresponse()
+
+        ui.debug(b'remote: %s\n' % capsline)
+
+        caps.update(capsline.split(b':')[1].split())
+        # Trailing newline.
+        stdout.read(1)
 
     # Error if we couldn't find capabilities, this means:
     #
@@ -377,16 +401,7 @@ def _performhandshake(ui, stdin, stdout, stderr):
 
 class sshv1peer(wireprotov1peer.wirepeer):
     def __init__(
-        self,
-        ui,
-        path,
-        proc,
-        stdin,
-        stdout,
-        stderr,
-        caps,
-        autoreadstderr=True,
-        remotehidden=False,
+        self, ui, url, proc, stdin, stdout, stderr, caps, autoreadstderr=True
     ):
         """Create a peer from an existing SSH connection.
 
@@ -397,7 +412,8 @@ class sshv1peer(wireprotov1peer.wirepeer):
         ``autoreadstderr`` denotes whether to automatically read from
         stderr and to forward its output.
         """
-        super().__init__(ui, path=path, remotehidden=remotehidden)
+        self._url = url
+        self.ui = ui
         # self._subprocess is unused. Keeping a handle on the process
         # holds a reference and prevents it from being garbage collected.
         self._subprocess = proc
@@ -414,7 +430,6 @@ class sshv1peer(wireprotov1peer.wirepeer):
         self._caps = caps
         self._autoreadstderr = autoreadstderr
         self._initstack = b''.join(util.getstackframes(1))
-        self._remotehidden = remotehidden
 
     # Commands that have a "framed" response where the first line of the
     # response contains the length of that response.
@@ -425,10 +440,13 @@ class sshv1peer(wireprotov1peer.wirepeer):
     # Begin of ipeerconnection interface.
 
     def url(self):
-        return self.path.loc
+        return self._url
 
     def local(self):
         return None
+
+    def peer(self):
+        return self
 
     def canpush(self):
         return True
@@ -483,10 +501,10 @@ class sshv1peer(wireprotov1peer.wirepeer):
             else:
                 wireargs[k] = args[k]
                 del args[k]
-        for k, v in sorted(wireargs.items()):
+        for k, v in sorted(pycompat.iteritems(wireargs)):
             self._pipeo.write(b"%s %d\n" % (k, len(v)))
             if isinstance(v, dict):
-                for dk, dv in v.items():
+                for dk, dv in pycompat.iteritems(v):
                     self._pipeo.write(b"%s %d\n" % (dk, len(dv)))
                     self._pipeo.write(dv)
             else:
@@ -583,16 +601,15 @@ class sshv1peer(wireprotov1peer.wirepeer):
             self._readerr()
 
 
-def _make_peer(
-    ui,
-    path,
-    proc,
-    stdin,
-    stdout,
-    stderr,
-    autoreadstderr=True,
-    remotehidden=False,
-):
+class sshv2peer(sshv1peer):
+    """A peer that speakers version 2 of the transport protocol."""
+
+    # Currently version 2 is identical to version 1 post handshake.
+    # And handshake is performed before the peer is instantiated. So
+    # we need no custom code.
+
+
+def makepeer(ui, path, proc, stdin, stdout, stderr, autoreadstderr=True):
     """Make a peer instance from existing pipes.
 
     ``path`` and ``proc`` are stored on the eventual peer instance and may
@@ -622,7 +639,17 @@ def _make_peer(
             stderr,
             caps,
             autoreadstderr=autoreadstderr,
-            remotehidden=remotehidden,
+        )
+    elif protoname == wireprototypes.SSHV2:
+        return sshv2peer(
+            ui,
+            path,
+            proc,
+            stdin,
+            stdout,
+            stderr,
+            caps,
+            autoreadstderr=autoreadstderr,
         )
     else:
         _cleanuppipes(ui, stdout, stdin, stderr, warn=None)
@@ -631,18 +658,16 @@ def _make_peer(
         )
 
 
-def make_peer(
-    ui, path, create, intents=None, createopts=None, remotehidden=False
-):
+def instance(ui, path, create, intents=None, createopts=None):
     """Create an SSH peer.
 
     The returned object conforms to the ``wireprotov1peer.wirepeer`` interface.
     """
-    u = urlutil.url(path.loc, parsequery=False, parsefragment=False)
+    u = urlutil.url(path, parsequery=False, parsefragment=False)
     if u.scheme != b'ssh' or not u.host or u.path is None:
-        raise error.RepoError(_(b"couldn't parse location %s") % path.loc)
+        raise error.RepoError(_(b"couldn't parse location %s") % path)
 
-    urlutil.checksafessh(path.loc)
+    urlutil.checksafessh(path)
 
     if u.passwd is not None:
         raise error.RepoError(_(b'password in URL not supported'))
@@ -682,18 +707,10 @@ def make_peer(
             raise error.RepoError(_(b'could not create remote repo'))
 
     proc, stdin, stdout, stderr = _makeconnection(
-        ui,
-        sshcmd,
-        args,
-        remotecmd,
-        remotepath,
-        sshenv,
-        remotehidden=remotehidden,
+        ui, sshcmd, args, remotecmd, remotepath, sshenv
     )
 
-    peer = _make_peer(
-        ui, path, proc, stdin, stdout, stderr, remotehidden=remotehidden
-    )
+    peer = makepeer(ui, path, proc, stdin, stdout, stderr)
 
     # Finally, if supported by the server, notify it about our own
     # capabilities.

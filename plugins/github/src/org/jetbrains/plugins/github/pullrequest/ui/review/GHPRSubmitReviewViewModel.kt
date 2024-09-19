@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
@@ -39,7 +40,7 @@ internal class GHPRSubmitReviewViewModelImpl(parentCs: CoroutineScope,
                                              private val dataProvider: GHPRReviewDataProvider,
                                              override val viewerIsAuthor: Boolean,
                                              private val pendingReview: GHPullRequestPendingReview?,
-                                             private val onDone: () -> Unit)
+                                             private val onDone: suspend () -> Unit)
   : GHPRSubmitReviewViewModel {
   private val cs = parentCs.childScope()
 
@@ -90,6 +91,8 @@ internal class GHPRSubmitReviewViewModelImpl(parentCs: CoroutineScope,
   }
 
   override fun cancel() {
-    onDone()
+    cs.launch {
+      onDone()
+    }
   }
 }

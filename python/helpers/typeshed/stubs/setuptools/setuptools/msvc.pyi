@@ -1,6 +1,8 @@
+import sys
 from _typeshed import Incomplete
+from typing import Final
 
-PLAT_SPEC_TO_RUNTIME: dict[str, str]
+PLAT_SPEC_TO_RUNTIME: Final[dict[str, str]]
 
 def msvc14_get_vc_env(plat_spec: str) -> dict[str, Incomplete]: ...
 
@@ -17,7 +19,11 @@ class PlatformInfo:
     def cross_dir(self, forcex86: bool = False): ...
 
 class RegistryInfo:
-    HKEYS: Incomplete
+    if sys.platform == "win32":
+        HKEYS: Final[tuple[int, int, int, int]]
+    else:
+        HKEYS: Final[tuple[None, None, None, None]]
+
     pi: Incomplete
     def __init__(self, platform_info) -> None: ...
     @property
@@ -87,7 +93,7 @@ class EnvironmentInfo:
     pi: Incomplete
     ri: Incomplete
     si: Incomplete
-    def __init__(self, arch, vc_ver: Incomplete | None = None, vc_min_ver: int = 0) -> None: ...
+    def __init__(self, arch, vc_ver: Incomplete | None = None, vc_min_ver: float = 0) -> None: ...
     @property
     def vs_ver(self): ...
     @property

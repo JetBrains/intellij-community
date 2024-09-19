@@ -31,6 +31,7 @@ amend modified chunks into the corresponding non-public changesets.
 #  * Converge getdraftstack() with other code in core
 #  * move many attributes on fixupstate to be private
 
+from __future__ import absolute_import
 
 import collections
 
@@ -83,7 +84,7 @@ colortable = {
 defaultdict = collections.defaultdict
 
 
-class nullui:
+class nullui(object):
     """blank ui object doing nothing"""
 
     debugflag = False
@@ -97,7 +98,7 @@ class nullui:
         return nullfunc
 
 
-class emptyfilecontext:
+class emptyfilecontext(object):
     """minimal filecontext representing an empty file"""
 
     def __init__(self, repo):
@@ -277,7 +278,7 @@ def overlaycontext(memworkingcopy, ctx, parents=None, extra=None, desc=None):
     )
 
 
-class filefixupstate:
+class filefixupstate(object):
     """state needed to apply fixups to a single file
 
     internally, it keeps file contents of several revisions and a linelog.
@@ -299,7 +300,7 @@ class filefixupstate:
         4. read results from "finalcontents", or call getfinalcontent
     """
 
-    def __init__(self, fctxs, path, ui=None, **opts):
+    def __init__(self, fctxs, path, ui=None, opts=None):
         """([fctx], ui or None) -> None
 
         fctxs should be linear, and sorted by topo order - oldest first.
@@ -308,7 +309,7 @@ class filefixupstate:
         self.fctxs = fctxs
         self.path = path
         self.ui = ui or nullui()
-        self.opts = opts
+        self.opts = opts or {}
 
         # following fields are built from fctxs. they exist for perf reason
         self.contents = [f.data() for f in fctxs]
@@ -375,7 +376,7 @@ class filefixupstate:
                     % (short(self.fctxs[idx].node()), a1, a2, len(blines))
                 )
             self.linelog.replacelines(rev, a1, a2, b1, b2)
-        if self.opts.get('edit_lines', False):
+        if self.opts.get(b'edit_lines', False):
             self.finalcontents = self._checkoutlinelogwithedits()
         else:
             self.finalcontents = self._checkoutlinelog()
@@ -424,7 +425,7 @@ class filefixupstate:
                 newfixups.append((fixuprev, a1, a2, b1, b2))
         elif a2 - a1 == b2 - b1 or b1 == b2:
             # 1:1 line mapping, or chunk was deleted
-            for i in range(a1, a2):
+            for i in pycompat.xrange(a1, a2):
                 rev, linenum = annotated[i]
                 if rev > 1:
                     if b1 == b2:  # deletion, simply remove that single line
@@ -451,7 +452,7 @@ class filefixupstate:
         """
         llog = linelog.linelog()
         a, alines = b'', []
-        for i in range(len(self.contents)):
+        for i in pycompat.xrange(len(self.contents)):
             b, blines = self.contents[i], self.contentlines[i]
             llrev = i * 2 + 1
             chunks = self._alldiffchunks(a, b, alines, blines)
@@ -463,7 +464,7 @@ class filefixupstate:
     def _checkoutlinelog(self):
         """() -> [str]. check out file contents from linelog"""
         contents = []
-        for i in range(len(self.contents)):
+        for i in pycompat.xrange(len(self.contents)):
             rev = (i + 1) * 2
             self.linelog.annotate(rev)
             content = b''.join(map(self._getline, self.linelog.annotateresult))
@@ -605,9 +606,9 @@ class filefixupstate:
         a1, a2, b1, b2 = chunk
         aidxs, bidxs = [0] * (a2 - a1), [0] * (b2 - b1)
         for idx, fa1, fa2, fb1, fb2 in fixups:
-            for i in range(fa1, fa2):
+            for i in pycompat.xrange(fa1, fa2):
                 aidxs[i - a1] = (max(idx, 1) - 1) // 2
-            for i in range(fb1, fb2):
+            for i in pycompat.xrange(fb1, fb2):
                 bidxs[i - b1] = (max(idx, 1) - 1) // 2
 
         fm.startitem()
@@ -637,7 +638,7 @@ class filefixupstate:
             )
             fm.data(path=self.path, linetype=linetype)
 
-        for i in range(a1, a2):
+        for i in pycompat.xrange(a1, a2):
             writeline(
                 aidxs[i - a1],
                 b'-',
@@ -645,7 +646,7 @@ class filefixupstate:
                 b'deleted',
                 b'diff.deleted',
             )
-        for i in range(b1, b2):
+        for i in pycompat.xrange(b1, b2):
             writeline(
                 bidxs[i - b1],
                 b'+',
@@ -655,7 +656,7 @@ class filefixupstate:
             )
 
 
-class fixupstate:
+class fixupstate(object):
     """state needed to run absorb
 
     internally, it keeps paths and filefixupstates.
@@ -668,7 +669,7 @@ class fixupstate:
         4. call commit, to commit changes to hg database
     """
 
-    def __init__(self, stack, ui=None, **opts):
+    def __init__(self, stack, ui=None, opts=None):
         """([ctx], ui or None) -> None
 
         stack: should be linear, and sorted by topo order - oldest first.
@@ -676,7 +677,7 @@ class fixupstate:
         """
         assert stack
         self.ui = ui or nullui()
-        self.opts = opts
+        self.opts = opts or {}
         self.stack = stack
         self.repo = stack[-1].repo().unfiltered()
 
@@ -696,7 +697,7 @@ class fixupstate:
         self.paths = []
         # but if --edit-lines is used, the user may want to edit files
         # even if they are not modified
-        editopt = self.opts.get('edit_lines')
+        editopt = self.opts.get(b'edit_lines')
         if not self.status.modified and editopt and match:
             interestingpaths = match.files()
         else:
@@ -720,7 +721,7 @@ class fixupstate:
                 continue
             seenfctxs.update(fctxs[1:])
             self.fctxmap[path] = ctx2fctx
-            fstate = filefixupstate(fctxs, path, ui=self.ui, **self.opts)
+            fstate = filefixupstate(fctxs, path, ui=self.ui, opts=self.opts)
             if fm is not None:
                 fm.startitem()
                 fm.plain(b'showing changes for ')
@@ -733,7 +734,7 @@ class fixupstate:
 
     def apply(self):
         """apply fixups to individual filefixupstates"""
-        for path, state in self.fixupmap.items():
+        for path, state in pycompat.iteritems(self.fixupmap):
             if self.ui.debugflag:
                 self.ui.write(_(b'applying fixups to %s\n') % path)
             state.apply()
@@ -741,7 +742,10 @@ class fixupstate:
     @property
     def chunkstats(self):
         """-> {path: chunkstats}. collect chunkstats from filefixupstates"""
-        return {path: state.chunkstats for path, state in self.fixupmap.items()}
+        return {
+            path: state.chunkstats
+            for path, state in pycompat.iteritems(self.fixupmap)
+        }
 
     def commit(self):
         """commit changes. update self.finalnode, self.replacemap"""
@@ -759,7 +763,7 @@ class fixupstate:
         chunkstats = self.chunkstats
         if ui.verbose:
             # chunkstats for each file
-            for path, stat in chunkstats.items():
+            for path, stat in pycompat.iteritems(chunkstats):
                 if stat[0]:
                     ui.write(
                         _(b'%s: %d of %d chunk(s) applied\n')
@@ -842,7 +846,7 @@ class fixupstate:
         repo = self.repo
         needupdate = [
             (name, self.replacemap[hsh])
-            for name, hsh in repo._bookmarks.items()
+            for name, hsh in pycompat.iteritems(repo._bookmarks)
             if hsh in self.replacemap
         ]
         changes = []
@@ -873,7 +877,7 @@ class fixupstate:
         # be slow. in absorb's case, no need to invalidate fsmonitorstate.
         noop = lambda: 0
         restore = noop
-        if hasattr(dirstate, '_fsmonitorstate'):
+        if util.safehasattr(dirstate, '_fsmonitorstate'):
             bak = dirstate._fsmonitorstate.invalidate
 
             def restore():
@@ -881,7 +885,7 @@ class fixupstate:
 
             dirstate._fsmonitorstate.invalidate = noop
         try:
-            with dirstate.changing_parents(self.repo):
+            with dirstate.parentchange():
                 dirstate.rebuild(ctx.node(), ctx.manifest(), self.paths)
         finally:
             restore()
@@ -905,7 +909,7 @@ class fixupstate:
         # ctx changes more files (not a subset of memworkingcopy)
         if not set(ctx.files()).issubset(set(memworkingcopy)):
             return False
-        for path, content in memworkingcopy.items():
+        for path, content in pycompat.iteritems(memworkingcopy):
             if path not in pctx or path not in ctx:
                 return False
             fctx = ctx[path]
@@ -948,7 +952,7 @@ class fixupstate:
     def _cleanupoldcommits(self):
         replacements = {
             k: ([v] if v is not None else [])
-            for k, v in self.replacemap.items()
+            for k, v in pycompat.iteritems(self.replacemap)
         }
         if replacements:
             scmutil.cleanupnodes(
@@ -998,7 +1002,7 @@ def overlaydiffcontext(ctx, chunks):
         if not path or not info:
             continue
         patchmap[path].append(info)
-    for path, patches in patchmap.items():
+    for path, patches in pycompat.iteritems(patchmap):
         if path not in ctx or not patches:
             continue
         patches.sort(reverse=True)
@@ -1009,7 +1013,7 @@ def overlaydiffcontext(ctx, chunks):
     return overlaycontext(memworkingcopy, ctx)
 
 
-def absorb(ui, repo, stack=None, targetctx=None, pats=None, **opts):
+def absorb(ui, repo, stack=None, targetctx=None, pats=None, opts=None):
     """pick fixup chunks from targetctx, apply them to stack.
 
     if targetctx is None, the working copy context will be used.
@@ -1036,21 +1040,18 @@ def absorb(ui, repo, stack=None, targetctx=None, pats=None, **opts):
         targetctx = repo[None]
     if pats is None:
         pats = ()
-
-    state = fixupstate(stack, ui=ui, **opts)
-    matcher = scmutil.match(targetctx, pats, pycompat.byteskwargs(opts))
-    if opts.get('interactive'):
+    if opts is None:
+        opts = {}
+    state = fixupstate(stack, ui=ui, opts=opts)
+    matcher = scmutil.match(targetctx, pats, opts)
+    if opts.get(b'interactive'):
         diff = patch.diff(repo, stack[-1].node(), targetctx.node(), matcher)
         origchunks = patch.parsepatch(diff)
         chunks = cmdutil.recordfilter(ui, origchunks, matcher)[0]
         targetctx = overlaydiffcontext(stack[-1], chunks)
-    if opts.get('edit_lines'):
-        # If we're going to open the editor, don't ask the user to confirm
-        # first
-        opts['apply_changes'] = True
     fm = None
-    if opts.get('print_changes') or not opts.get('apply_changes'):
-        fm = ui.formatter(b'absorb', pycompat.byteskwargs(opts))
+    if opts.get(b'print_changes') or not opts.get(b'apply_changes'):
+        fm = ui.formatter(b'absorb', opts)
     state.diffwith(targetctx, matcher, fm)
     if fm is not None:
         fm.startitem()
@@ -1065,7 +1066,7 @@ def absorb(ui, repo, stack=None, targetctx=None, pats=None, **opts):
             fm.context(ctx=ctx)
             fm.data(linetype=b'changeset')
             fm.write(b'node', b'%-7.7s ', ctx.hex(), label=b'absorb.node')
-            descfirstline = stringutil.firstline(ctx.description())
+            descfirstline = ctx.description().splitlines()[0]
             fm.write(
                 b'descfirstline',
                 b'%s\n',
@@ -1073,9 +1074,9 @@ def absorb(ui, repo, stack=None, targetctx=None, pats=None, **opts):
                 label=b'absorb.description',
             )
         fm.end()
-    if not opts.get('dry_run'):
+    if not opts.get(b'dry_run'):
         if (
-            not opts.get('apply_changes')
+            not opts.get(b'apply_changes')
             and state.ctxaffected
             and ui.promptchoice(
                 b"apply changes (y/N)? $$ &Yes $$ &No", default=1
@@ -1153,10 +1154,12 @@ def absorbcmd(ui, repo, *pats, **opts):
 
     Returns 0 on success, 1 if all chunks were ignored and nothing amended.
     """
+    opts = pycompat.byteskwargs(opts)
+
     with repo.wlock(), repo.lock():
-        if not opts['dry_run']:
+        if not opts[b'dry_run']:
             cmdutil.checkunfinished(repo)
 
-        state = absorb(ui, repo, pats=pats, **opts)
+        state = absorb(ui, repo, pats=pats, opts=opts)
         if sum(s[0] for s in state.chunkstats.values()) == 0:
             return 1

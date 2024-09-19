@@ -9,6 +9,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,13 +23,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @ApiStatus.Internal
-public final class ConsentOptions {
+public final class ConsentOptions implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance(ConsentOptions.class);
   private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
   private static final String RECONFIRM_CONSENTS_PROPERTY = "test.force.reconfirm.consents";
@@ -38,6 +40,13 @@ public final class ConsentOptions {
   private final BooleanSupplier myIsEap;
   private String myProductCode;
   private Set<String> myPluginCodes = Set.of();
+
+  private final AtomicLong myModificationCount = new AtomicLong();
+
+  @Override
+  public long getModificationCount() {
+    return myModificationCount.get();
+  }
 
   private static @NotNull Path getDefaultConsentsFile() {
     return PathManager.getCommonDataPath()
@@ -248,9 +257,10 @@ public final class ConsentOptions {
       if (applyServerChangesToConfirmedConsents(confirmed, fromServer)) {
         myBackend.writeConfirmedConsents(confirmedConsentToExternalString(confirmed.values().stream()));
       }
+      myModificationCount.incrementAndGet();
     }
     catch (Exception e) {
-      LOG.info(e);
+      LOG.info("Unable to apply server consents", e);
     }
   }
 
@@ -341,9 +351,10 @@ public final class ConsentOptions {
           allConfirmed.put(consent.getId(), consent);
         }
         myBackend.writeConfirmedConsents(confirmedConsentToExternalString(allConfirmed.values().stream()));
+        myModificationCount.incrementAndGet();
       }
       catch (IOException e) {
-        LOG.info(e);
+        LOG.info("Unable to save confirmed consents", e);
       }
       // Android Studio addition:
       // Update the Android Studio metrics after saving consents in case the IJ Statistics consent

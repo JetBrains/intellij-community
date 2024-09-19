@@ -1,6 +1,6 @@
-from _typeshed import Incomplete
-from typing import ClassVar
-from typing_extensions import Literal, TypeAlias
+from _typeshed import ConvertibleToInt, Incomplete
+from typing import ClassVar, Literal, Protocol
+from typing_extensions import TypeAlias
 
 from openpyxl.descriptors.base import (
     Alias,
@@ -10,12 +10,12 @@ from openpyxl.descriptors.base import (
     NoneSet,
     String,
     _ConvertibleToBool,
-    _ConvertibleToInt,
     _ConvertibleToMultiCellRange,
 )
 from openpyxl.descriptors.nested import NestedText
 from openpyxl.descriptors.serialisable import Serialisable
-from openpyxl.worksheet.cell_range import MultiCellRange
+from openpyxl.worksheet.cell_range import CellRange, MultiCellRange
+from openpyxl.xml.functions import Element
 
 _DataValidationType: TypeAlias = Literal["whole", "decimal", "list", "date", "time", "textLength", "custom"]
 _DataValidationErrorStyle: TypeAlias = Literal["stop", "warning", "information"]
@@ -35,6 +35,9 @@ _DataValidationImeMode: TypeAlias = Literal[
 _DataValidationOperator: TypeAlias = Literal[
     "between", "notBetween", "equal", "notEqual", "lessThan", "lessThanOrEqual", "greaterThan", "greaterThanOrEqual"
 ]
+
+class _HasCoordinate(Protocol):
+    coordinate: str | CellRange
 
 def collapse_cell_addresses(cells, input_ranges=()): ...
 def expand_cell_ranges(range_string): ...
@@ -69,7 +72,7 @@ class DataValidation(Serialisable):
         showErrorMessage: _ConvertibleToBool | None = False,
         showInputMessage: _ConvertibleToBool | None = False,
         showDropDown: _ConvertibleToBool | None = False,
-        allowBlank: _ConvertibleToBool | None = False,
+        allowBlank: _ConvertibleToBool = False,
         sqref: _ConvertibleToMultiCellRange = (),
         promptTitle: str | None = None,
         errorStyle: _DataValidationErrorStyle | Literal["none"] | None = None,
@@ -78,10 +81,10 @@ class DataValidation(Serialisable):
         errorTitle: str | None = None,
         imeMode: _DataValidationImeMode | Literal["none"] | None = None,
         operator: _DataValidationOperator | Literal["none"] | None = None,
-        allow_blank: Incomplete | None = False,
+        allow_blank: _ConvertibleToBool | None = None,
     ) -> None: ...
     def add(self, cell) -> None: ...
-    def __contains__(self, cell): ...
+    def __contains__(self, cell: _HasCoordinate | str | CellRange) -> bool: ...
 
 class DataValidationList(Serialisable):
     tagname: ClassVar[str]
@@ -94,8 +97,8 @@ class DataValidationList(Serialisable):
     def __init__(
         self,
         disablePrompts: _ConvertibleToBool | None = None,
-        xWindow: _ConvertibleToInt | None = None,
-        yWindow: _ConvertibleToInt | None = None,
+        xWindow: ConvertibleToInt | None = None,
+        yWindow: ConvertibleToInt | None = None,
         count: Incomplete | None = None,
         dataValidation=(),
     ) -> None: ...
@@ -103,4 +106,4 @@ class DataValidationList(Serialisable):
     def count(self) -> int: ...
     def __len__(self) -> int: ...
     def append(self, dv) -> None: ...
-    def to_tree(self, tagname: str | None = None): ...  # type: ignore[override]
+    def to_tree(self, tagname: str | None = None) -> Element: ...  # type: ignore[override]

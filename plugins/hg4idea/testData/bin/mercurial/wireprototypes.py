@@ -3,12 +3,14 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 from .node import (
     bin,
     hex,
 )
 from .i18n import _
+from .pycompat import getattr
 from .thirdparty import attr
 from . import (
     error,
@@ -19,6 +21,10 @@ from .utils import compression
 
 # Names of the SSH protocol implementations.
 SSHV1 = b'ssh-v1'
+# These are advertised over the wire. Increment the counters at the end
+# to reflect BC breakages.
+SSHV2 = b'exp-ssh-v2-0003'
+HTTP_WIREPROTO_V2 = b'exp-http-v2-0003'
 
 NARROWCAP = b'exp-narrow-1'
 ELLIPSESCAP1 = b'exp-ellipses-1'
@@ -31,21 +37,30 @@ TRANSPORTS = {
         b'transport': b'ssh',
         b'version': 1,
     },
+    SSHV2: {
+        b'transport': b'ssh',
+        # TODO mark as version 2 once all commands are implemented.
+        b'version': 1,
+    },
     b'http-v1': {
         b'transport': b'http',
         b'version': 1,
     },
+    HTTP_WIREPROTO_V2: {
+        b'transport': b'http',
+        b'version': 2,
+    },
 }
 
 
-class bytesresponse:
+class bytesresponse(object):
     """A wire protocol response consisting of raw bytes."""
 
     def __init__(self, data):
         self.data = data
 
 
-class ooberror:
+class ooberror(object):
     """wireproto reply: failure of a batch of operation
 
     Something failed during a batch call. The error message is stored in
@@ -56,7 +71,7 @@ class ooberror:
         self.message = message
 
 
-class pushres:
+class pushres(object):
     """wireproto reply: success with simple integer return
 
     The call was successful and returned an integer contained in `self.res`.
@@ -67,7 +82,7 @@ class pushres:
         self.output = output
 
 
-class pusherr:
+class pusherr(object):
     """wireproto reply: failure
 
     The call failed. The `self.res` attribute contains the error message.
@@ -78,7 +93,7 @@ class pusherr:
         self.output = output
 
 
-class streamres:
+class streamres(object):
     """wireproto reply: binary stream
 
     The call was successful and the result is a stream.
@@ -95,7 +110,7 @@ class streamres:
         self.prefer_uncompressed = prefer_uncompressed
 
 
-class streamreslegacy:
+class streamreslegacy(object):
     """wireproto reply: uncompressed binary stream
 
     The call was successful and the result is a stream.
@@ -242,7 +257,7 @@ class baseprotocolhandler(interfaceutil.Interface):
         """
 
 
-class commandentry:
+class commandentry(object):
     """Represents a declared wire protocol command."""
 
     def __init__(
@@ -366,7 +381,9 @@ def supportedcompengines(ui, role):
     # No explicit config. Filter out the ones that aren't supposed to be
     # advertised and return default ordering.
     if not configengines:
-        attr = 'serverpriority' if role == util.SERVERROLE else 'clientpriority'
+        attr = (
+            b'serverpriority' if role == util.SERVERROLE else b'clientpriority'
+        )
         return [
             e for e in compengines if getattr(e.wireprotosupport(), attr) > 0
         ]
@@ -403,7 +420,7 @@ def supportedcompengines(ui, role):
 
 
 @attr.s
-class encodedresponse:
+class encodedresponse(object):
     """Represents response data that is already content encoded.
 
     Wire protocol version 2 only.
@@ -417,7 +434,7 @@ class encodedresponse:
 
 
 @attr.s
-class alternatelocationresponse:
+class alternatelocationresponse(object):
     """Represents a response available at an alternate location.
 
     Instances are sent in place of actual response objects when the server
@@ -436,7 +453,7 @@ class alternatelocationresponse:
 
 
 @attr.s
-class indefinitebytestringresponse:
+class indefinitebytestringresponse(object):
     """Represents an object to be encoded to an indefinite length bytestring.
 
     Instances are initialized from an iterable of chunks, with each chunk being

@@ -11,8 +11,10 @@ The :hg:`releasenotes` command provided by this extension makes the
 process simpler by automating it.
 """
 
+from __future__ import absolute_import
 
 import difflib
+import errno
 import re
 
 from mercurial.i18n import _
@@ -22,9 +24,10 @@ from mercurial import (
     cmdutil,
     config,
     error,
-    logcmdutil,
     minirst,
+    pycompat,
     registrar,
+    scmutil,
     util,
 )
 from mercurial.utils import (
@@ -38,7 +41,7 @@ command = registrar.command(cmdtable)
 try:
     # Silence a warning about python-Levenshtein.
     #
-    # We don't need the performance that much and it gets annoying in tests.
+    # We don't need the the performance that much and it get anoying in tests.
     import warnings
 
     with warnings.catch_warnings():
@@ -49,7 +52,7 @@ try:
             module="fuzzywuzzy.fuzz",
         )
 
-        import fuzzywuzzy.fuzz as fuzz  # pytype: disable=import-error
+        import fuzzywuzzy.fuzz as fuzz
 
         fuzz.token_set_ratio
 except ImportError:
@@ -69,13 +72,13 @@ DEFAULT_SECTIONS = [
     (b'api', _(b'API Changes')),
 ]
 
-RE_DIRECTIVE = re.compile(br'^\.\. ([a-zA-Z0-9_]+)::\s*([^$]+)?$', re.MULTILINE)
+RE_DIRECTIVE = re.compile(br'^\.\. ([a-zA-Z0-9_]+)::\s*([^$]+)?$')
 RE_ISSUE = br'\bissue ?[0-9]{4,6}(?![0-9])\b'
 
 BULLET_SECTION = _(b'Other Changes')
 
 
-class parsedreleasenotes:
+class parsedreleasenotes(object):
     def __init__(self):
         self.sections = {}
 
@@ -168,14 +171,14 @@ class parsedreleasenotes:
                 self.addnontitleditem(section, paragraphs)
 
 
-class releasenotessections:
+class releasenotessections(object):
     def __init__(self, ui, repo=None):
         if repo:
             sections = util.sortdict(DEFAULT_SECTIONS)
             custom_sections = getcustomadmonitions(repo)
             if custom_sections:
                 sections.update(custom_sections)
-            self._sections = list(sections.items())
+            self._sections = list(pycompat.iteritems(sections))
         else:
             self._sections = list(DEFAULT_SECTIONS)
 
@@ -664,16 +667,17 @@ def releasenotes(ui, repo, file_=None, **opts):
     admonitions (if any).
     """
 
+    opts = pycompat.byteskwargs(opts)
     sections = releasenotessections(ui, repo)
 
-    cmdutil.check_incompatible_arguments(opts, 'list', ['rev', 'check'])
+    cmdutil.check_incompatible_arguments(opts, b'list', [b'rev', b'check'])
 
-    if opts.get('list'):
+    if opts.get(b'list'):
         return _getadmonitionlist(ui, sections)
 
-    rev = opts.get('rev')
-    revs = logcmdutil.revrange(repo, [rev or b'not public()'])
-    if opts.get('check'):
+    rev = opts.get(b'rev')
+    revs = scmutil.revrange(repo, [rev or b'not public()'])
+    if opts.get(b'check'):
         return checkadmonitions(ui, repo, sections.names(), revs)
 
     incoming = parsenotesfromrevisions(repo, sections.names(), revs)
@@ -685,7 +689,10 @@ def releasenotes(ui, repo, file_=None, **opts):
     try:
         with open(file_, b'rb') as fh:
             notes = parsereleasenotesfile(sections, fh.read())
-    except FileNotFoundError:
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            raise
+
         notes = parsedreleasenotes()
 
     notes.merge(ui, incoming)

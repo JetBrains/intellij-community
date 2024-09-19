@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.javadoc;
 
+import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
@@ -226,7 +227,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
 
     private static boolean hasDeprecatedComment(PsiJavaDocumentedElement documentedElement, boolean checkContent) {
       final PsiDocComment comment = documentedElement.getDocComment();
-      if (comment == null) {
+      if (comment == null || !JavaDocUtil.shouldRunInspectionOnOldMarkdownComment(comment)) {
         return false;
       }
       final PsiDocTag deprecatedTag = comment.findTagByName("deprecated");

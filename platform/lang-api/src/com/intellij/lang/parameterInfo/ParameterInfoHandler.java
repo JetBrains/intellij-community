@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -73,6 +74,13 @@ public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElemen
    * {@link #updateParameterInfo(Object, UpdateParameterInfoContext)}.</p>
    */
   void updateUI(ParameterType p, @NotNull ParameterInfoUIContext context);
+
+  default @Nullable JComponent createBottomComponent() {
+    return null;
+  }
+
+  default void updateBottomComponent(@NotNull JComponent component) {
+  }
 
   default boolean supportsOverloadSwitching() { return false; }
   default void dispose(@NotNull DeleteParameterInfoContext context) {}

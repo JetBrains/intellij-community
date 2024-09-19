@@ -15,11 +15,14 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.visible.CommitCountStageKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgVcs;
@@ -37,6 +40,8 @@ import org.zmlx.hg4idea.util.HgVersion;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.LOG_CMD_EXEC_ERROR;
 
 public class HgLogCommand {
 
@@ -87,6 +92,19 @@ public class HgLogCommand {
    * @param limit Pass -1 to set no limits on history
    */
   public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd) {
+    try {
+      return executeOrFail(hgFile, limit, includeFiles, argsForCmd);
+    }
+    catch (VcsException e) {
+      VcsNotifier.getInstance(myProject).notifyError(LOG_CMD_EXEC_ERROR,
+                                                     HgBundle.message("hg4idea.error.log.command.execution"),
+                                                     e.getMessage());
+      return Collections.emptyList();
+    }
+  }
+
+  public final List<HgFileRevision> executeOrFail(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd)
+    throws VcsException {
     if ((limit <= 0 && limit != -1) || hgFile == null) {
       return Collections.emptyList();
     }
@@ -97,8 +115,8 @@ public class HgLogCommand {
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
     HgCommandResult result = execute(hgFile.getRepo(), template, limit, originalHgFile, argsForCmd);
 
-    return HgHistoryUtil.getCommitRecords(myProject, result,
-                                          new HgFileRevisionLogParser(myProject, originalHgFile, myVersion));
+    return HgHistoryUtil.getCommitRecordsOrFail(myProject, result,
+                                                new HgFileRevisionLogParser(myProject, originalHgFile, myVersion));
   }
 
   private @NotNull List<String> createArguments(@NotNull String template, int limit, @Nullable HgFile hgFile, @Nullable List<String> argsForCmd) {

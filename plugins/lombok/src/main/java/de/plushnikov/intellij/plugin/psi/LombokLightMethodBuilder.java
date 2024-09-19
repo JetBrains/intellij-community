@@ -44,6 +44,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
           new LombokLightModifierList(manager),
           new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST),
           new LightTypeParameterListBuilder(manager, JavaLanguage.INSTANCE));
+    getModifierList().withParent(this);
     setBaseIcon(LombokIcons.Nodes.LombokMethod);
   }
 
@@ -92,6 +93,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
 
   public LombokLightMethodBuilder withParameter(@NotNull LombokLightParameter psiParameter) {
     addParameter(psiParameter);
+    psiParameter.setParent(this);
     return this;
   }
 

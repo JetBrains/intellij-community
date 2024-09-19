@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from _typeshed import ReadableBuffer
 from datetime import date, datetime, time
-from typing import Any, List, Tuple, Union
-from typing_extensions import Literal, assert_type
+from typing import Any, List, Literal, Tuple, Union
+from typing_extensions import assert_type
 
 from openpyxl.descriptors import Strict
 from openpyxl.descriptors.base import (
@@ -208,7 +208,7 @@ with_descriptors.descriptor = 0  # type: ignore
 
 
 with_descriptors.typed_not_none = ""
-with_descriptors.typed_not_none = None  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.typed_not_none = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 with_descriptors.typed_not_none = 0  # type: ignore
 
 with_descriptors.typed_none = ""
@@ -220,23 +220,23 @@ with_descriptors.typed_none = 0  # type: ignore
 with_descriptors.set_tuple = "a"
 with_descriptors.set_tuple = 0
 with_descriptors.set_tuple = 0.0
-with_descriptors.set_tuple = None  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
-with_descriptors.set_tuple = "none"  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
-with_descriptors.set_tuple = object()  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.set_tuple = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.set_tuple = "none"  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.set_tuple = object()  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 
 with_descriptors.set_list = "a"
 with_descriptors.set_list = 0
 with_descriptors.set_list = 0.0
-with_descriptors.set_list = None  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.set_list = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 with_descriptors.set_list = "none"  # can't check literals validity
-with_descriptors.set_list = object()  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.set_list = object()  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 
 with_descriptors.set_tuple_none = "a"
 with_descriptors.set_tuple_none = 0
 with_descriptors.set_tuple_none = 0.0
 with_descriptors.set_tuple_none = None
-with_descriptors.set_tuple_none = "none"  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
-with_descriptors.set_tuple_none = object()  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.set_tuple_none = "none"  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.set_tuple_none = object()  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 
 
 with_descriptors.noneset_tuple = "a"
@@ -244,14 +244,14 @@ with_descriptors.noneset_tuple = 0
 with_descriptors.noneset_tuple = 0.0
 with_descriptors.noneset_tuple = None
 with_descriptors.noneset_tuple = "none"
-with_descriptors.noneset_tuple = object()  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.noneset_tuple = object()  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 
 with_descriptors.noneset_list = "a"
 with_descriptors.noneset_list = 0
 with_descriptors.noneset_list = 0.0
 with_descriptors.noneset_list = None
 with_descriptors.noneset_list = "none"
-with_descriptors.noneset_list = object()  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.noneset_list = object()  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 
 
 # NOTE: Can't validate tuple length in a generic manner
@@ -267,7 +267,7 @@ with_descriptors.length_list = ""  # type: ignore
 
 
 with_descriptors.match_pattern_str = ""
-with_descriptors.match_pattern_str = None  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.match_pattern_str = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 with_descriptors.match_pattern_str = b""  # type: ignore
 with_descriptors.match_pattern_str = 0  # type: ignore
 
@@ -277,7 +277,7 @@ with_descriptors.match_pattern_str_none = b""  # type: ignore
 with_descriptors.match_pattern_str_none = 0  # type: ignore
 
 with_descriptors.match_pattern_bytes = b""
-with_descriptors.match_pattern_bytes = None  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.match_pattern_bytes = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 with_descriptors.match_pattern_bytes = ""  # type: ignore
 with_descriptors.match_pattern_bytes = 0  # type: ignore
 
@@ -289,8 +289,8 @@ with_descriptors.match_pattern_bytes_none = 0  # type: ignore
 
 with_descriptors.convertible_not_none = 0
 with_descriptors.convertible_not_none = "0"
-with_descriptors.convertible_not_none = None  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
-with_descriptors.convertible_not_none = object()  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.convertible_not_none = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.convertible_not_none = object()  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 
 with_descriptors.convertible_none = 0
 with_descriptors.convertible_none = "0"
@@ -301,7 +301,7 @@ with_descriptors.convertible_none = object()  # FIXME: False negative(?) in pyri
 with_descriptors.minmax_float = 0
 with_descriptors.minmax_float = "0"
 with_descriptors.minmax_float = 0.0
-with_descriptors.minmax_float = None  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.minmax_float = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 with_descriptors.minmax_float = object()  # type: ignore
 
 with_descriptors.minmax_float_none = 0
@@ -313,7 +313,7 @@ with_descriptors.minmax_float_none = object()  # type: ignore
 with_descriptors.minmax_int = 0
 with_descriptors.minmax_int = "0"
 with_descriptors.minmax_int = 0.0
-with_descriptors.minmax_int = None  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.minmax_int = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 with_descriptors.minmax_int = object()  # type: ignore
 
 with_descriptors.minmax_int_none = 0
@@ -340,7 +340,7 @@ with_descriptors.bool_none = object()  # type: ignore
 
 with_descriptors.datetime_not_none = datetime(0, 0, 0)
 with_descriptors.datetime_not_none = ""
-with_descriptors.datetime_not_none = None  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.datetime_not_none = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 with_descriptors.datetime_not_none = 0  # type: ignore
 with_descriptors.datetime_not_none = date(0, 0, 0)  # type: ignore
 with_descriptors.datetime_not_none = time()  # type: ignore
@@ -354,7 +354,7 @@ with_descriptors.datetime_none = time()  # type: ignore
 
 
 with_descriptors.string_not_none = ""
-with_descriptors.string_not_none = None  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.string_not_none = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 with_descriptors.string_not_none = 0  # type: ignore
 
 with_descriptors.string_none = ""
@@ -366,8 +366,8 @@ with_descriptors.float_not_none = 0
 with_descriptors.float_not_none = 0.0
 with_descriptors.float_not_none = "0"
 with_descriptors.float_not_none = b"0"
-with_descriptors.float_not_none = None  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
-with_descriptors.float_not_none = object()  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.float_not_none = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.float_not_none = object()  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 
 with_descriptors.float_none = 0
 with_descriptors.float_none = 0.0
@@ -381,8 +381,8 @@ with_descriptors.integer_not_none = 0
 with_descriptors.integer_not_none = 0.0
 with_descriptors.integer_not_none = "0"
 with_descriptors.integer_not_none = b"0"
-with_descriptors.integer_not_none = None  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
-with_descriptors.integer_not_none = object()  # pyright: ignore[reportGeneralTypeIssues] # false negative in mypy
+with_descriptors.integer_not_none = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.integer_not_none = object()  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
 
 with_descriptors.integer_none = 0
 with_descriptors.integer_none = 0.0

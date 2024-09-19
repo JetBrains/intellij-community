@@ -35,6 +35,7 @@ fragment mergeRequest on MergeRequest {
   state
   draft
 
+  shouldRemoveSourceBranch
   shouldBeRebased
   rebaseInProgress
 

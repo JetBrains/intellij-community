@@ -14,6 +14,7 @@ PIL\..+?\.logger
 # Loop variables leaked in global scope
 PIL.BmpImagePlugin.BmpImageFile.k
 PIL.BmpImagePlugin.BmpImageFile.v
+PIL.DdsImagePlugin.item
 PIL.Image.enum
 PIL.Image.item
 PIL.ImageCms.flag

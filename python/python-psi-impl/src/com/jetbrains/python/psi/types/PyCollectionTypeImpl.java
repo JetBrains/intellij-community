@@ -30,7 +30,7 @@ import java.util.List;
 
 
 public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectionType {
-  @NotNull private final List<PyType> myElementTypes;
+  @NotNull protected final List<PyType> myElementTypes;
 
   public PyCollectionTypeImpl(@NotNull PyClass source, boolean isDefinition, @NotNull List<? extends PyType> elementTypes) {
     super(source, isDefinition);

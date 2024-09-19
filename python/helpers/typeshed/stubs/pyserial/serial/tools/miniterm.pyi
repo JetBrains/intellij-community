@@ -33,6 +33,7 @@ if sys.platform == "win32":
     class Console(ConsoleBase):
         fncodes: dict[str, str]
         navcodes: dict[str, str]
+        def __del__(self) -> None: ...
 
 else:
     class Console(ConsoleBase):

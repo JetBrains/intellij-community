@@ -71,11 +71,13 @@ specified by --flag option are exported as ``{flags}`` keyword::
 You can set patchbomb to always ask for confirmation by setting
 ``patchbomb.confirm`` to true.
 '''
+from __future__ import absolute_import
 
 import email.encoders as emailencoders
 import email.mime.base as emimebase
 import email.mime.multipart as emimemultipart
 import email.utils as eutil
+import errno
 import os
 import socket
 
@@ -89,7 +91,6 @@ from mercurial import (
     error,
     formatter,
     hg,
-    logcmdutil,
     mail,
     patch,
     pycompat,
@@ -361,12 +362,7 @@ def _getpatches(repo, revs, **opts):
             ui.warn(_(b'warning: working directory has uncommitted changes\n'))
         output = stringio()
         cmdutil.exportfile(
-            repo,
-            [r],
-            output,
-            opts=patch.difffeatureopts(
-                ui, pycompat.byteskwargs(opts), git=True
-            ),
+            repo, [r], output, opts=patch.difffeatureopts(ui, opts, git=True)
         )
         yield output.getvalue().split(b'\n')
 
@@ -537,7 +533,7 @@ def _getpatchmsgs(repo, sender, revs, patchnames=None, **opts):
 def _getoutgoing(repo, dest, revs):
     '''Return the revisions present locally but not in dest'''
     ui = repo.ui
-    paths = urlutil.get_push_paths(repo, ui, [dest] if dest else None)
+    paths = urlutil.get_push_paths(repo, ui, [dest])
     safe_paths = [urlutil.hidepassword(p.rawloc) for p in paths]
     ui.status(_(b'comparing with %s\n') % b','.join(safe_paths))
 
@@ -816,7 +812,7 @@ def email(ui, repo, *revs, **opts):
             raise error.Abort(_(b"bookmark '%s' not found") % bookmark)
         revs = scmutil.bookmarkrevs(repo, bookmark)
 
-    revs = logcmdutil.revrange(repo, revs)
+    revs = scmutil.revrange(repo, revs)
     if outgoing:
         revs = _getoutgoing(repo, dest, revs)
     if bundle:
@@ -988,8 +984,9 @@ def email(ui, repo, *revs, **opts):
             try:
                 generator.flatten(m, False)
                 ui.write(b'\n')
-            except BrokenPipeError:
-                pass
+            except IOError as inst:
+                if inst.errno != errno.EPIPE:
+                    raise
         else:
             if not sendmail:
                 sendmail = mail.connect(ui, mbox=mbox)

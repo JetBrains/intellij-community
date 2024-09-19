@@ -168,11 +168,11 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
                                         HighlightSeverity.ERROR);
     long elapsed = System.currentTimeMillis() - start;
 
-    assertEquals(0, errors.size());
+    assertSize(0, errors);
     if (!run.get()) {
       fail(ThreadDumper.dumpThreadsToString());
     }
-    assertTrue("Elapsed: "+elapsed, elapsed >= SLEEP);
+    assertTrue("Elapsed: " + elapsed, elapsed >= SLEEP);
   }
 
   public void testAddRemoveHighlighterRaceInIncorrectAnnotatorsWhichUseFileRecursiveVisit() {
@@ -385,7 +385,12 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     long start = System.currentTimeMillis();
-    myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, checkHighlighted);
+    try {
+      myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, checkHighlighted);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     if (!success.get()) {
       List<RangeHighlighter> errors = ContainerUtil.filter(markupModel.getAllHighlighters(), highlighter -> HighlightInfo.fromRangeHighlighter(highlighter) != null && HighlightInfo.fromRangeHighlighter(highlighter).getSeverity() == HighlightSeverity.ERROR);
       long elapsed = System.currentTimeMillis() - start;
@@ -919,9 +924,41 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
         assertEquals(MyFileLevelAnnotator.MSG, info.getDescription());
 
         backspace();
-        assertEquals(MyFileLevelAnnotator.MSG, assertOneElement(highlightErrors()).getDescription());
+      }
+    });
+  }
+
+  public static class MyFileLevelAnnotatorWithConstantlyChangingDescription extends MyRecordingAnnotator {
+    private static final String MSG = "xxxzz: ";
+
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiFile) {
+        holder.newAnnotation(HighlightSeverity.ERROR, MSG+element.getText().substring(0, Math.min(10, element.getTextLength()))).fileLevel().create();
+        iDidIt();
+      }
+      LOG.debug(getClass()+".annotate("+element+") = "+didIDoIt());
+    }
+    static boolean isMine(HighlightInfo info) {
+      return info.getDescription().startsWith(MSG);
+    }
+  }
+
+  public void testFileLevelAnnotationDoesNotDuplicateOnTypingEventWhenItsDescriptionIsConstantlyChanging() {
+    configureByText(PlainTextFileType.INSTANCE, "<caret>");
+
+    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new MyFileLevelAnnotatorWithConstantlyChangingDescription()}, () -> {
+      for (int i=0; i<100; i++) {
+        assertTrue(MyFileLevelAnnotatorWithConstantlyChangingDescription.isMine(assertOneElement(highlightErrors())));
+        HighlightInfo info = assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+        assertTrue(MyFileLevelAnnotatorWithConstantlyChangingDescription.isMine(info));
+
+        type('2');
+        assertTrue(MyFileLevelAnnotatorWithConstantlyChangingDescription.isMine(assertOneElement(highlightErrors())));
         info = assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
-        assertEquals(MyFileLevelAnnotator.MSG, info.getDescription());
+        assertTrue(MyFileLevelAnnotatorWithConstantlyChangingDescription.isMine(info));
+
+        backspace();
       }
     });
   }

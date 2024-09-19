@@ -1,4 +1,4 @@
-version = "3.3.*"
+version = "3.4.*"
 upstream_repository = "https://github.com/paramiko/paramiko"
 # Requires a version of cryptography where cryptography.hazmat.primitives.ciphers.Cipher is generic
 requires = ["cryptography>=37.0.0"]

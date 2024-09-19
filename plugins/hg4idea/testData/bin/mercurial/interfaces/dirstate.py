@@ -1,3 +1,5 @@
+from __future__ import absolute_import, print_function
+
 import contextlib
 
 from . import util as interfaceutil
@@ -12,7 +14,6 @@ class idirstate(interfaceutil.Interface):
         sparsematchfn,
         nodeconstants,
         use_dirstate_v2,
-        use_tracked_hint=False,
     ):
         """Create a new dirstate object.
 
@@ -24,15 +25,6 @@ class idirstate(interfaceutil.Interface):
     # TODO: all these private methods and attributes should be made
     # public or removed from the interface.
     _ignore = interfaceutil.Attribute("""Matcher for ignored files.""")
-    is_changing_any = interfaceutil.Attribute(
-        """True if any changes in progress."""
-    )
-    is_changing_parents = interfaceutil.Attribute(
-        """True if parents changes in progress."""
-    )
-    is_changing_files = interfaceutil.Attribute(
-        """True if file tracking changes in progress."""
-    )
 
     def _ignorefiles():
         """Return a list of files containing patterns to ignore."""
@@ -44,7 +36,7 @@ class idirstate(interfaceutil.Interface):
     _checkexec = interfaceutil.Attribute("""Callable for checking exec bits.""")
 
     @contextlib.contextmanager
-    def changing_parents(repo):
+    def parentchange():
         """Context manager for handling dirstate parents.
 
         If an exception occurs in the scope of the context manager,
@@ -52,26 +44,16 @@ class idirstate(interfaceutil.Interface):
         released.
         """
 
-    @contextlib.contextmanager
-    def changing_files(repo):
-        """Context manager for handling dirstate files.
-
-        If an exception occurs in the scope of the context manager,
-        the incoherent dirstate won't be written when wlock is
-        released.
+    def pendingparentchange():
+        """Returns true if the dirstate is in the middle of a set of changes
+        that modify the dirstate parent.
         """
 
     def hasdir(d):
         pass
 
     def flagfunc(buildfallback):
-        """build a callable that returns flags associated with a filename
-
-        The information is extracted from three possible layers:
-        1. the file system if it supports the information
-        2. the "fallback" information stored in the dirstate if any
-        3. a more expensive mechanism inferring the flags from the parents.
-        """
+        pass
 
     def getcwd():
         """Return the path from which a canonical path is calculated.
@@ -84,8 +66,16 @@ class idirstate(interfaceutil.Interface):
     def pathto(f, cwd=None):
         pass
 
-    def get_entry(path):
-        """return a DirstateItem for the associated path"""
+    def __getitem__(key):
+        """Return the current state of key (a filename) in the dirstate.
+
+        States are:
+          n  normal
+          m  needs merging
+          r  marked for removal
+          a  marked for addition
+          ?  not tracked
+        """
 
     def __contains__(key):
         """Check if bytestring `key` is known to the dirstate."""
@@ -116,14 +106,14 @@ class idirstate(interfaceutil.Interface):
     def setparents(p1, p2=None):
         """Set dirstate parents to p1 and p2.
 
-        When moving from two parents to one, "merged" entries a
+        When moving from two parents to one, 'm' merged entries a
         adjusted to normal and previous copy records discarded and
         returned by the call.
 
         See localrepo.setparents()
         """
 
-    def setbranch(branch, transaction):
+    def setbranch(branch):
         pass
 
     def invalidate():
@@ -141,6 +131,36 @@ class idirstate(interfaceutil.Interface):
 
     def copies():
         pass
+
+    def normal(f, parentfiledata=None):
+        """Mark a file normal and clean.
+
+        parentfiledata: (mode, size, mtime) of the clean file
+
+        parentfiledata should be computed from memory (for mode,
+        size), as or close as possible from the point where we
+        determined the file was clean, to limit the risk of the
+        file having been changed by an external process between the
+        moment where the file was determined to be clean and now."""
+        pass
+
+    def normallookup(f):
+        '''Mark a file normal, but possibly dirty.'''
+
+    def otherparent(f):
+        '''Mark as coming from the other parent, always dirty.'''
+
+    def add(f):
+        '''Mark a file added.'''
+
+    def remove(f):
+        '''Mark a file removed.'''
+
+    def merge(f):
+        '''Mark a file merged.'''
+
+    def drop(f):
+        '''Drop a file from the dirstate'''
 
     def normalize(path, isknown=False, ignoremissing=False):
         """
@@ -165,6 +185,13 @@ class idirstate(interfaceutil.Interface):
 
     def rebuild(parent, allfiles, changedfiles=None):
         pass
+
+    def identity():
+        """Return identity of dirstate it to detect changing in storage
+
+        If identity of previous dirstate is equal to this, writing
+        changes based on the former dirstate out can keep consistency.
+        """
 
     def write(tr):
         pass
@@ -213,7 +240,11 @@ class idirstate(interfaceutil.Interface):
         return files in the dirstate (in whatever state) filtered by match
         """
 
-    def verify(m1, m2, p1, narrow_matcher=None):
-        """
-        check the dirstate contents against the parent manifest and yield errors
-        """
+    def savebackup(tr, backupname):
+        '''Save current dirstate into backup file'''
+
+    def restorebackup(tr, backupname):
+        '''Restore dirstate by backup file'''
+
+    def clearbackup(tr, backupname):
+        '''Clear backup file'''

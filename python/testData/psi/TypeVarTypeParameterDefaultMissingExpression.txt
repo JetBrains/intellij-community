@@ -1,0 +1,25 @@
+PyFile:TypeVarTypeParameterDefaultMissingExpression.py
+  PyClass: Foo
+    PsiElement(Py:CLASS_KEYWORD)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('Foo')
+    PyTypeParameterList
+      PsiElement(Py:LBRACKET)('[')
+      PyTypeParameter
+        PsiElement(Py:IDENTIFIER)('T')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:EQ)('=')
+        PsiErrorElement:Expression expected
+          <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(Py:RBRACKET)(']')
+    PyArgumentList
+      <empty list>
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace(' ')
+    PyStatementList
+      PyExpressionStatement
+        PyNoneLiteralExpression
+          PsiElement(Py:DOT)('.')
+          PsiElement(Py:DOT)('.')
+          PsiElement(Py:DOT)('.')

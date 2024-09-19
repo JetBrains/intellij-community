@@ -56,6 +56,9 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
                                                                          lastImport.getTextRange().getEndOffset())));
       }
     }
+    else if (elementType == PyElementTypes.MATCH_STATEMENT) {
+      foldMatchStatement(node, descriptors);
+    }
     else if (elementType == PyElementTypes.STATEMENT_LIST) {
       foldStatementList(node, descriptors);
     }
@@ -129,6 +132,36 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     }
   }
 
+  private static void foldMatchStatement(@NotNull ASTNode node, @NotNull List<FoldingDescriptor> descriptors) {
+    TextRange nodeRange = node.getTextRange();
+    if (nodeRange.isEmpty()) {
+      return;
+    }
+
+    IElementType elType = node.getElementType();
+    if (elType == PyElementTypes.MATCH_STATEMENT) {
+      ASTNode colon = node.findChildByType(PyTokenTypes.COLON);
+      foldSegment(node, descriptors, nodeRange, colon);
+    }
+  }
+
+  private static void foldSegment(@NotNull ASTNode node, @NotNull List<FoldingDescriptor> descriptors, @NotNull TextRange nodeRange, @Nullable ASTNode colon) {
+    int nodeEnd = nodeRange.getEndOffset();
+    if (colon != null && nodeEnd - (colon.getStartOffset() + 1) > 1) {
+      CharSequence chars = node.getChars();
+      int nodeStart = nodeRange.getStartOffset();
+      int foldStart = colon.getStartOffset() + 1;
+      int foldEnd = nodeEnd;
+      while (foldEnd > Math.max(nodeStart, foldStart + 1) && Character.isWhitespace(chars.charAt(foldEnd - nodeStart - 1))) {
+        foldEnd--;
+      }
+      descriptors.add(new FoldingDescriptor(node, new TextRange(foldStart, foldEnd)));
+    }
+    else if (nodeRange.getLength() > 1) { // only for ranges at least 1 char wide
+      descriptors.add(new FoldingDescriptor(node, nodeRange));
+    }
+  }
+
   private static void foldStatementList(ASTNode node, List<FoldingDescriptor> descriptors) {
     final TextRange nodeRange = node.getTextRange();
     if (nodeRange.isEmpty()) {
@@ -136,27 +169,14 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     }
 
     final IElementType elType = node.getTreeParent().getElementType();
-    if (elType == PyElementTypes.FUNCTION_DECLARATION || elType == PyElementTypes.CLASS_DECLARATION || ifFoldBlocks(node, elType)) {
-      final ASTNode colon = node.getTreeParent().findChildByType(PyTokenTypes.COLON);
-      final int nodeEnd = nodeRange.getEndOffset();
-      if (colon != null && nodeEnd - (colon.getStartOffset() + 1) > 1) {
-        final CharSequence chars = node.getChars();
-        final int nodeStart = nodeRange.getStartOffset();
-        final int foldStart = colon.getStartOffset() + 1;
-        int foldEnd = nodeEnd;
-        while (foldEnd > Math.max(nodeStart, foldStart + 1) && Character.isWhitespace(chars.charAt(foldEnd - nodeStart - 1))) {
-          foldEnd--;
-        }
-        descriptors.add(new FoldingDescriptor(node, new TextRange(foldStart, foldEnd)));
-      }
-      else if (nodeRange.getLength() > 1) { // only for ranges at least 1 char wide
-        descriptors.add(new FoldingDescriptor(node, nodeRange));
-      }
+    if (elType == PyElementTypes.FUNCTION_DECLARATION || elType == PyElementTypes.CLASS_DECLARATION || checkFoldBlocks(node, elType)) {
+      ASTNode colon = node.getTreeParent().findChildByType(PyTokenTypes.COLON);
+      foldSegment(node, descriptors, nodeRange, colon);
     }
   }
 
-  private static boolean ifFoldBlocks(ASTNode statementList, IElementType parentType) {
-    if (!PyElementTypes.PARTS.contains(parentType) && parentType != PyElementTypes.WITH_STATEMENT) {
+  private static boolean checkFoldBlocks(@NotNull ASTNode statementList, @NotNull IElementType parentType) {
+    if (!PyElementTypes.PARTS.contains(parentType) && parentType != PyElementTypes.WITH_STATEMENT && parentType != PyElementTypes.CASE_CLAUSE) {
       return false;
     }
     PsiElement element = statementList.getPsi();

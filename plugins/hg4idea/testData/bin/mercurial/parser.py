@@ -16,16 +16,18 @@
 # an action is a tree node name, a tree label, and an optional match
 # __call__(program) parses program into a labeled tree
 
+from __future__ import absolute_import, print_function
 
 from .i18n import _
 from . import (
     error,
+    pycompat,
     util,
 )
 from .utils import stringutil
 
 
-class parser:
+class parser(object):
     def __init__(self, elements, methods=None):
         self._elements = elements
         self._methods = methods
@@ -214,11 +216,7 @@ def unescapestr(s):
         return stringutil.unescapestr(s)
     except ValueError as e:
         # mangle Python's exception into our format
-        # TODO: remove this suppression.  For some reason, pytype 2021.09.09
-        #   thinks .lower() is being called on Union[ValueError, bytes].
-        # pytype: disable=attribute-error
-        raise error.ParseError(stringutil.forcebytestr(e).lower())
-        # pytype: enable=attribute-error
+        raise error.ParseError(pycompat.bytestr(e).lower())
 
 
 def _prettyformat(tree, leafnodes, level, lines):
@@ -415,7 +413,7 @@ def parseerrordetail(inst):
         return inst.message
 
 
-class alias:
+class alias(object):
     """Parsed result of alias"""
 
     def __init__(self, name, args, err, replacement):
@@ -429,7 +427,7 @@ class alias:
         self.warned = False
 
 
-class basealiasrules:
+class basealiasrules(object):
     """Parsing and expansion rule set of aliases
 
     This is a helper for fileset/revset/template aliases. A concrete rule set

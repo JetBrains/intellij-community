@@ -236,7 +236,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   private static void assertOrder(@NotNull PsiJavaFile file, @NonNls String @NotNull ... expectedOrder) {
     PsiImportStatementBase[] statements = file.getImportList().getAllImportStatements();
 
-    assertEquals(expectedOrder.length, statements.length);
+    assertSize(expectedOrder.length, statements);
     for (int i = 0; i < statements.length; i++) {
       PsiImportStatementBase statement = statements[i];
       String text = StringUtil.trimEnd(StringUtil.trimStart(statement.getText(), "import "), ";");
@@ -296,7 +296,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     type(" ");
     backspace();
 
-    assertEquals(1, highlightErrors().size());
+    assertSize(1, highlightErrors());
     UIUtil.dispatchAllInvocationEvents();
 
     int offset = getEditor().getCaretModel().getOffset();
@@ -349,7 +349,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
     assertEmpty(highlightErrors());
 
-    assertEquals(2, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+    assertSize(2, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
   }
 
   public void testEnsureOptimizeImportsWhenInspectionReportsErrors() throws Exception {
@@ -364,7 +364,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
     List<HighlightInfo> errs = highlightErrors();
     //error corresponding to too short class name
-    assertEquals(1, errs.size());
+    assertSize(1, errs);
 
     assertOneImportAdded("java.util.List");
 
@@ -434,9 +434,9 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     List<HighlightInfo> errs = highlightErrors();
 
     //error in import list
-    assertEquals(1, errs.size());
+    assertSize(1, errs);
 
-    assertEquals(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+    assertSize(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
 
     type("/* */");
     doHighlighting();
@@ -505,7 +505,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
 
     List<HighlightInfo> errs = highlightErrors();
-    assertEquals(1, errs.size());
+    assertSize(1, errs);
 
     assertNoImportsAdded();
     type("/* */");
@@ -554,7 +554,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     CodeInsightWorkspaceSettings.getInstance(getProject()).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
 
-    assertEquals(1, highlightErrors().size());
+    assertSize(1, highlightErrors());
   }
 
   public void testAutoImportIgnoresUnresolvedImportReferences() throws ExecutionException, InterruptedException {

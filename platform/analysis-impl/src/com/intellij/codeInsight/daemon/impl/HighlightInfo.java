@@ -73,6 +73,7 @@ public class HighlightInfo implements Segment {
   private static final byte UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK = 0x20;
 
   // this HighlightInfo was created during visiting PsiElement with this range
+  @Deprecated
   private RangeMarker visitingRange;
 
   @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK, UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK})
@@ -138,7 +139,7 @@ public class HighlightInfo implements Segment {
   private final @NotNull HighlightSeverity severity;
   private final GutterMark gutterIconRenderer;
   private final ProblemGroup myProblemGroup;
-  volatile Object toolId; // inspection.getShortName() in case when the inspection generated this info
+  volatile Object toolId; // inspection.getShortName() in case when the inspection generated this info; Class<Annotator> in case of annotators, etc
   private int group;
   /**
    * Quick fix text range: the range within which the Alt-Enter should open the quick fix popup.
@@ -372,7 +373,7 @@ public class HighlightInfo implements Segment {
     return highlighter;
   }
 
-  public void setHighlighter(@Nullable RangeHighlighterEx highlighter) {
+  public void setHighlighter(@NotNull RangeHighlighterEx highlighter) {
     this.highlighter = highlighter;
   }
 
@@ -468,9 +469,7 @@ public class HighlightInfo implements Segment {
     if (obj == this) return true;
     if (!(obj instanceof HighlightInfo info)) return false;
 
-    return info.startOffset == startOffset &&
-           info.endOffset == endOffset &&
-           attributesEqual(info);
+    return equalsByActualOffset(info);
   }
 
   protected boolean equalsByActualOffset(@NotNull HighlightInfo info) {
@@ -497,11 +496,14 @@ public class HighlightInfo implements Segment {
 
   @Override
   public @NonNls String toString() {
-    String s = "HighlightInfo(" + startOffset + "," + endOffset + ")";
-    if (getActualStartOffset() != startOffset || getActualEndOffset() != endOffset) {
-      s += "; actual: (" + getActualStartOffset() + "," + getActualEndOffset() + ")";
+    String s = "HighlightInfo(" + getStartOffset() + "," + getEndOffset() + ")";
+    if (isFileLevelAnnotation()) {
+      s+=" (file level)";
     }
-    if (highlighter != null) s += " text='" + getText() + "'";
+    if (getStartOffset() != startOffset || getEndOffset() != endOffset) {
+      s += "; created as: (" + startOffset + "," + endOffset + ")";
+    }
+    if (highlighter != null) s += " text='" + StringUtil.first(getText(), 40, true) + "'";
     if (getDescription() != null) s += ", description='" + getDescription() + "'";
     s += "; severity=" + getSeverity();
     synchronized (this) {
@@ -1082,13 +1084,20 @@ public class HighlightInfo implements Segment {
   void setUnresolvedReferenceQuickFixesComputed() {
     setFlag(UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK, true);
   }
+  @ApiStatus.Internal
   boolean isFromAnnotator() {
-    return toolId instanceof Class<?> c && Annotator.class.isAssignableFrom(c);
+    return HighlightInfoUpdaterImpl.isAnnotatorToolId(toolId);
   }
+  @ApiStatus.Internal
   boolean isFromInspection() {
-    return toolId instanceof String;
+    return HighlightInfoUpdaterImpl.isInspectionToolId(toolId);
   }
+  @ApiStatus.Internal
   boolean isFromHighlightVisitor() {
-    return toolId instanceof Class<?> c && HighlightVisitor.class.isAssignableFrom(c);
+    return HighlightInfoUpdaterImpl.isHighlightVisitorToolId(toolId);
+  }
+  @ApiStatus.Internal
+  boolean isInjectionRelated() {
+    return HighlightInfoUpdaterImpl.isInjectionRelated(toolId);
   }
 }

@@ -25,6 +25,7 @@ The following config options can influence operation.
    performed.
 """
 
+from __future__ import absolute_import
 
 from mercurial.i18n import _
 from mercurial.node import nullrev

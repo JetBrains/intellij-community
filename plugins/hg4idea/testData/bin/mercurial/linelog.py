@@ -18,6 +18,7 @@ number in the file at the introducing revision. When an insertion or
 deletion is performed on the file, a jump instruction is used to patch
 in a new body of annotate information.
 """
+from __future__ import absolute_import, print_function
 
 import abc
 import struct
@@ -33,7 +34,7 @@ class LineLogError(Exception):
 
 
 @attr.s
-class lineinfo:
+class lineinfo(object):
     # Introducing revision of this line.
     rev = attr.ib()
     # Line number for this line in its introducing revision.
@@ -43,16 +44,16 @@ class lineinfo:
 
 
 @attr.s
-class annotateresult:
+class annotateresult(object):
     rev = attr.ib()
-    lines = attr.ib(type=bytearray)
+    lines = attr.ib()
     _eof = attr.ib()
 
     def __iter__(self):
         return iter(self.lines)
 
 
-class _llinstruction:  # pytype: disable=ignored-metaclass
+class _llinstruction(object):  # pytype: disable=ignored-metaclass
 
     __metaclass__ = abc.ABCMeta
 
@@ -233,7 +234,7 @@ def _decodeone(data, offset):
     raise NotImplementedError(b'Unimplemented opcode %r' % opcode)
 
 
-class linelog:
+class linelog(object):
     """Efficient cache for per-line history information."""
 
     def __init__(self, program=None, maxrev=0):
@@ -293,7 +294,7 @@ class linelog:
                 % (expected, numentries)
             )
         instructions = [_eof(0, 0)]
-        for offset in range(1, numentries):
+        for offset in pycompat.xrange(1, numentries):
             instructions.append(_decodeone(buf, offset * _llentry.size))
         return cls(instructions, maxrev=maxrev)
 
@@ -349,7 +350,7 @@ class linelog:
             tgt = oldproglen + (b2 - b1 + 1)
             # Jump to skip the insert if we're at an older revision.
             appendinst(_jl(rev, tgt))
-            for linenum in range(b1, b2):
+            for linenum in pycompat.xrange(b1, b2):
                 if _internal_blines is None:
                     bappend(lineinfo(rev, linenum, programlen()))
                     appendinst(_line(rev, linenum))
@@ -447,7 +448,7 @@ class linelog:
         # only take as many steps as there are instructions in the
         # program - if we don't find an EOF or our stop-line before
         # then, something is badly broken.
-        for step in range(len(self._program)):
+        for step in pycompat.xrange(len(self._program)):
             inst = self._program[pc]
             nextpc = pc + 1
             if isinstance(inst, _jump):

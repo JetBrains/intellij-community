@@ -1,4 +1,4 @@
-version = "2.8.*"
+version = "2.9.*"
 upstream_repository = "https://github.com/dateutil/dateutil"
 partial_stub = true
 

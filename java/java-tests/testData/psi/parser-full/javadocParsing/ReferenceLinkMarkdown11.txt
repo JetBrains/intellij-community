@@ -9,25 +9,40 @@ PsiJavaFile:ReferenceLinkMarkdown11.java
         PsiDocToken:DOC_LBRACKET('[')
         PsiElement(DOC_METHOD_OR_FIELD_REF)
           PsiElement(DOC_REFERENCE_HOLDER)
-            PsiJavaCodeReferenceElement:java.util.HashMap
-              PsiJavaCodeReferenceElement:java.util
+            PsiJavaCodeReferenceElement:java.lang.String
+              PsiJavaCodeReferenceElement:java.lang
                 PsiJavaCodeReferenceElement:java
                   PsiIdentifier:java('java')
                   PsiReferenceParameterList
                     <empty list>
                 PsiJavaToken:DOT('.')
-                PsiIdentifier:util('util')
+                PsiIdentifier:lang('lang')
                 PsiReferenceParameterList
                   <empty list>
               PsiJavaToken:DOT('.')
-              PsiIdentifier:HashMap('HashMap')
+              PsiIdentifier:String('String')
               PsiReferenceParameterList
                 <empty list>
           PsiDocToken:DOC_TAG_VALUE_SHARP_TOKEN('#')
-          PsiDocToken:DOC_TAG_VALUE_TOKEN('toString')
+          PsiDocToken:DOC_TAG_VALUE_TOKEN('copyValueOf')
           PsiDocToken:DOC_LPAREN('(')
           PsiElement(DOC_TAG_VALUE_ELEMENT)
-            <empty list>
+            PsiElement(DOC_TYPE_HOLDER)
+              PsiTypeElement:char\[\]
+                PsiTypeElement:char
+                  PsiKeyword:char('char')
+                PsiJavaToken:LBRACKET('\[')
+                PsiJavaToken:RBRACKET('\]')
+            PsiDocToken:DOC_COMMA(',')
+            PsiElement(DOC_TYPE_HOLDER)
+              PsiWhiteSpace(' ')
+              PsiTypeElement:int
+                PsiKeyword:int('int')
+            PsiDocToken:DOC_COMMA(',')
+            PsiElement(DOC_TYPE_HOLDER)
+              PsiWhiteSpace(' ')
+              PsiTypeElement:int
+                PsiKeyword:int('int')
           PsiDocToken:DOC_RPAREN(')')
         PsiDocToken:DOC_RBRACKET(']')
     PsiWhiteSpace('\n')

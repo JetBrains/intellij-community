@@ -1,10 +1,8 @@
-from typing import Any
-
-from braintree.validation_error_collection import ValidationErrorCollection as ValidationErrorCollection
+from braintree.validation_error_collection import ValidationErrorCollection
 
 class Errors:
-    errors: Any
-    size: Any
+    errors: ValidationErrorCollection
+    size = errors.deep_size
     def __init__(self, data) -> None: ...
     @property
     def deep_errors(self): ...

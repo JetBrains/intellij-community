@@ -1,5 +1,4 @@
-from typing import Any
-from typing_extensions import Literal
+from typing import Any, Literal
 
 from .abstract.attrDef import AttrDef as AttrDef
 from .abstract.attribute import (

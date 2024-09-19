@@ -1,10 +1,12 @@
-from _typeshed import Incomplete, SupportsRichComparison
+from _typeshed import Incomplete, SupportsRichComparison, sentinel
 from collections import deque
-from collections.abc import Callable, Container, Iterable, Sequence
-from typing_extensions import Self, TypeAlias
+from collections.abc import Callable, Container, Iterable, Iterator, Mapping, MutableMapping, Sequence
+from typing import Any
+from typing_extensions import Self, TypeAlias, deprecated
 
-from jsonschema import _utils, protocols
-from jsonschema._types import TypeChecker
+from ._types import TypeChecker
+from ._utils import Unset
+from .protocols import Validator
 
 _RelevanceFuncType: TypeAlias = Callable[[ValidationError], SupportsRichComparison]
 
@@ -19,24 +21,24 @@ class _Error(Exception):
     relative_schema_path: deque[str | int]
     context: list[ValidationError] | None
     cause: Exception | None
-    validator: protocols.Validator | None
-    validator_value: Incomplete
-    instance: Incomplete
-    schema: Incomplete
+    validator: Validator | Unset
+    validator_value: Any | Unset
+    instance: Any | Unset
+    schema: Mapping[str, Any] | bool | Unset
     parent: _Error | None
     def __init__(
         self,
         message: str,
-        validator: _utils.Unset | None | protocols.Validator = ...,
-        path: Sequence[str | int] = (),
-        cause: Incomplete | None = None,
+        validator: str | Unset = sentinel,
+        path: Iterable[str | int] = (),
+        cause: Exception | None = None,
         context: Sequence[ValidationError] = (),
-        validator_value=...,
-        instance: Incomplete = ...,
-        schema: Incomplete = ...,
-        schema_path: Sequence[str | int] = (),
+        validator_value: Any | Unset = sentinel,
+        instance: Any | Unset = sentinel,
+        schema: Mapping[str, Any] | bool | Unset = sentinel,
+        schema_path: Iterable[str | int] = (),
         parent: _Error | None = None,
-        type_checker: _utils.Unset | TypeChecker = ...,
+        type_checker: TypeChecker | Unset = sentinel,
     ) -> None: ...
     @classmethod
     def create_from(cls, other: _Error) -> Self: ...
@@ -72,12 +74,13 @@ class FormatError(Exception):
     def __init__(self, message, cause: Incomplete | None = None) -> None: ...
 
 class ErrorTree:
-    errors: Incomplete
-    def __init__(self, errors=()) -> None: ...
-    def __contains__(self, index): ...
+    errors: MutableMapping[str, ValidationError]
+    def __init__(self, errors: Iterable[ValidationError] = ()) -> None: ...
+    def __contains__(self, index: object) -> bool: ...
     def __getitem__(self, index): ...
-    def __setitem__(self, index, value) -> None: ...
-    def __iter__(self): ...
+    @deprecated("ErrorTree.__setitem__ is deprecated without replacement.")
+    def __setitem__(self, index: str | int, value: ErrorTree) -> None: ...
+    def __iter__(self) -> Iterator[str]: ...
     def __len__(self) -> int: ...
     @property
     def total_errors(self): ...

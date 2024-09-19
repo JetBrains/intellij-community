@@ -11,7 +11,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.flavors.PyFlavorAndData;
+import com.jetbrains.python.sdk.flavors.PyFlavorData;
+import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +59,7 @@ public final class PythonMockSdk {
     Sdk sdk = ProjectJdkTable.getInstance().createSdk(sdkName, sdkType);
     SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setHomePath(sdkPath + "/bin/python");
+    sdkModificator.setSdkAdditionalData(new PythonSdkAdditionalData(new PyFlavorAndData(PyFlavorData.Empty.INSTANCE, VirtualEnvSdkFlavor.getInstance())));
     sdkModificator.setVersionString(toVersionString(level));
 
     createRoots(sdkPath, level).forEach(vFile -> {

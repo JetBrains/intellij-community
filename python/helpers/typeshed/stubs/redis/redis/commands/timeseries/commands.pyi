@@ -1,4 +1,5 @@
-from typing_extensions import Literal, TypeAlias
+from typing import Literal
+from typing_extensions import TypeAlias
 
 _Key: TypeAlias = bytes | str | memoryview
 

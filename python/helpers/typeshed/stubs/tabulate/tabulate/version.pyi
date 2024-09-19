@@ -1,4 +1,4 @@
-from typing_extensions import Final
+from typing import Final
 
 version: Final[str]
 __version__: Final[str]

@@ -1,11 +1,11 @@
 from _typeshed import Incomplete
 from collections.abc import Awaitable, Callable, Mapping
 from types import TracebackType
-from typing import Any, Generic
+from typing import Any, Generic, TypeVar
 from typing_extensions import Self
 
 from redis.asyncio.client import ResponseCallbackT
-from redis.asyncio.connection import BaseParser, Connection, Encoder
+from redis.asyncio.connection import AbstractConnection, BaseParser, Connection, Encoder
 from redis.asyncio.parser import CommandsParser
 from redis.client import AbstractRedis
 from redis.cluster import AbstractRedisCluster, LoadBalancer
@@ -14,13 +14,65 @@ from redis.cluster import AbstractRedisCluster, LoadBalancer
 # from redis.commands import AsyncRedisClusterCommands
 from redis.commands.core import _StrType
 from redis.credentials import CredentialProvider
+from redis.exceptions import ResponseError
 from redis.retry import Retry
 from redis.typing import AnyKeyT, EncodableT, KeyT
 
+TargetNodesT = TypeVar("TargetNodesT", str, ClusterNode, list[ClusterNode], dict[Any, ClusterNode])  # noqa: Y001
+
 # It uses `DefaultParser` in real life, but it is a dynamic base class.
-class ClusterParser(BaseParser): ...
+class ClusterParser(BaseParser):
+    def on_disconnect(self) -> None: ...
+    def on_connect(self, connection: AbstractConnection) -> None: ...
+    async def can_read_destructive(self) -> bool: ...
+    async def read_response(self, disable_decoding: bool = False) -> EncodableT | ResponseError | list[EncodableT] | None: ...
 
 class RedisCluster(AbstractRedis, AbstractRedisCluster, Generic[_StrType]):  # TODO: AsyncRedisClusterCommands
+    @classmethod
+    def from_url(
+        cls,
+        url: str,
+        *,
+        host: str | None = None,
+        port: str | int = 6379,
+        # Cluster related kwargs
+        startup_nodes: list[ClusterNode] | None = None,
+        require_full_coverage: bool = True,
+        read_from_replicas: bool = False,
+        reinitialize_steps: int = 5,
+        cluster_error_retry_attempts: int = 3,
+        connection_error_retry_attempts: int = 3,
+        max_connections: int = 2147483648,
+        # Client related kwargs
+        db: str | int = 0,
+        path: str | None = None,
+        credential_provider: CredentialProvider | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        client_name: str | None = None,
+        # Encoding related kwargs
+        encoding: str = "utf-8",
+        encoding_errors: str = "strict",
+        decode_responses: bool = False,
+        # Connection related kwargs
+        health_check_interval: float = 0,
+        socket_connect_timeout: float | None = None,
+        socket_keepalive: bool = False,
+        socket_keepalive_options: Mapping[int, int | bytes] | None = None,
+        socket_timeout: float | None = None,
+        retry: Retry | None = None,
+        retry_on_error: list[Exception] | None = None,
+        # SSL related kwargs
+        ssl: bool = False,
+        ssl_ca_certs: str | None = None,
+        ssl_ca_data: str | None = None,
+        ssl_cert_reqs: str = "required",
+        ssl_certfile: str | None = None,
+        ssl_check_hostname: bool = False,
+        ssl_keyfile: str | None = None,
+        address_remap: Callable[[str, int], tuple[str, int]] | None = None,
+    ) -> Self: ...
+
     retry: Retry | None
     connection_kwargs: dict[str, Any]
     nodes_manager: NodesManager
@@ -34,6 +86,7 @@ class RedisCluster(AbstractRedis, AbstractRedisCluster, Generic[_StrType]):  # T
     command_flags: dict[str, str]
     response_callbacks: Incomplete
     result_callbacks: dict[str, Callable[[Incomplete, Incomplete], Incomplete]]
+
     def __init__(
         self,
         host: str | None = None,
@@ -98,8 +151,6 @@ class RedisCluster(AbstractRedis, AbstractRedisCluster, Generic[_StrType]):  # T
     def set_response_callback(self, command: str, callback: ResponseCallbackT) -> None: ...
     async def execute_command(self, *args: EncodableT, **kwargs: Any) -> Any: ...
     def pipeline(self, transaction: Any | None = None, shard_hint: Any | None = None) -> ClusterPipeline[_StrType]: ...
-    @classmethod
-    def from_url(cls, url: str, **kwargs) -> Self: ...
 
 class ClusterNode:
     host: str

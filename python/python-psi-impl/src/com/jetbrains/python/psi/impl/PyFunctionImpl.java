@@ -187,7 +187,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     }
     allMappedParameters.putAll(mappedExplicitParameters);
 
-    return getCallType(receiver, allMappedParameters, context);
+    return getCallType(receiver, callSite, allMappedParameters, context);
   }
 
   private static @Nullable PyType derefType(@NotNull Ref<PyType> typeRef, @NotNull PyTypeProvider typeProvider) {
@@ -200,13 +200,15 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public @Nullable PyType getCallType(@Nullable PyExpression receiver,
+                                      @Nullable PyCallSiteExpression callSiteExpression,
                                       @NotNull Map<PyExpression, PyCallableParameter> parameters,
                                       @NotNull TypeEvalContext context) {
-    return analyzeCallType(PyUtil.getReturnTypeToAnalyzeAsCallType(this, context), receiver, parameters, context);
+    return analyzeCallType(PyUtil.getReturnTypeToAnalyzeAsCallType(this, context), receiver, callSiteExpression, parameters, context);
   }
 
   private @Nullable PyType analyzeCallType(@Nullable PyType type,
                                            @Nullable PyExpression receiver,
+                                           @Nullable PyCallSiteExpression callSiteExpression,
                                            @NotNull Map<PyExpression, PyCallableParameter> parameters,
                                            @NotNull TypeEvalContext context) {
     if (PyTypeChecker.hasGenerics(type, context)) {
@@ -221,7 +223,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         }
         final var substitutionsWithUnresolvedReturnGenerics =
           PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(getParameters(context), type, substitutions, context);
-        type = PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);
+        final var substitutionsWithDefaults = PyTypeChecker.getSubstitutionsWithDefaults(substitutionsWithUnresolvedReturnGenerics);
+        type = PyTypeChecker.substitute(type, substitutionsWithDefaults, context);
       }
       else {
         type = null;
@@ -233,7 +236,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (type != null && isDynamicallyEvaluated(parameters.values(), context)) {
       type = PyUnionType.createWeakType(type);
     }
-    return type;
+    return PyNarrowedType.Companion.bindIfNeeded(type, callSiteExpression);
   }
 
   @Override

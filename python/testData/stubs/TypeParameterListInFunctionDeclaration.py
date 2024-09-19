@@ -1,2 +1,2 @@
-def foo[T, U: str, *Ts, **P](a: T, b: U):
+def foo[T, U: str, M = int, N: float = list, *Ts, **P](a: T, b: U):
     pass

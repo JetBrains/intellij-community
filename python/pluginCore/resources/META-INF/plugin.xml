@@ -50,7 +50,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.grazie"/>
     <module name="intellij.python.langInjection"/>
     <module name="intellij.python.markdown"/>
-    <module name="intellij.python.reStructuredText"/>
     <module name="intellij.python.terminal"/>
   </content>
 
@@ -625,6 +624,10 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
     <registryKey key="python.new.interpreter.creation.ui" defaultValue="true"
                  description="Enable new UI for adding Python interpreter in New Project dialog."/>
+
+    <!-- Parameter Info -->
+    <registryKey key="python.parameter.info.show.all.hints" defaultValue="false"
+                 description="Show type hints for all parameters in parameter info window"/>
   </extensions>
 
   <extensionPoints>
@@ -817,6 +820,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
     <customPackageIdentifier implementation="com.jetbrains.python.namespacePackages.PyNamespacePackageCustomIdentifier"/>
     <pyRootTypeProvider implementation="com.jetbrains.python.namespacePackages.PyNamespacePackageRootProvider"/>
+    <pep8ProblemSuppressor implementation="com.jetbrains.python.validation.Pep8TypeParameterProblemSuppressor"/>
 
     <!-- Experimental packaging extensions-->
     <pySdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkProvider"/>

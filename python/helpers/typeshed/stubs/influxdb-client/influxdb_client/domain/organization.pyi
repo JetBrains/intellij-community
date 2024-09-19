@@ -7,7 +7,7 @@ class Organization:
     def __init__(
         self,
         links: Incomplete | None = None,
-        id: Incomplete | None = None,
+        id: str | None = None,
         name: Incomplete | None = None,
         default_storage_type: str | None = None,
         description: Incomplete | None = None,
@@ -20,9 +20,9 @@ class Organization:
     @links.setter
     def links(self, links) -> None: ...
     @property
-    def id(self): ...
+    def id(self) -> str: ...
     @id.setter
-    def id(self, id) -> None: ...
+    def id(self, id: str) -> None: ...
     @property
     def name(self): ...
     @name.setter

@@ -18,6 +18,7 @@ data class GitLabProjectDTO(
   val sshUrlToRepo: @NlsSafe String?,
   val onlyAllowMergeIfAllDiscussionsAreResolved: Boolean,
   val onlyAllowMergeIfPipelineSucceeds: Boolean,
+  @SinceGitLab("12.5") val removeSourceBranchAfterMerge: Boolean,
   @SinceGitLab("13.1") val allowMergeOnSkippedPipeline: Boolean,
   @SinceGitLab("16.8") val allowsMultipleMergeRequestAssignees: Boolean?,
   @SinceGitLab("16.8") val allowsMultipleMergeRequestReviewers: Boolean?,

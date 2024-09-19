@@ -22,7 +22,7 @@ com.intellij.lang.javascript.inspections.JSPotentiallyInvalidConstructorUsageIns
 com.intellij.lang.javascript.inspections.JSSuspiciousNameCombinationInspection
 com.intellij.lang.javascript.inspections.UnterminatedStatementJSInspection
 com.intellij.psi.css.inspections.CssUnknownPropertyInspection
-com.intellij.python.reStructuredText.inspections.RestRoleInspection
+com.intellij.restructuredtext.python.inspections.RestRoleInspection
 com.intellij.spellchecker.inspections.SpellCheckingInspection
 com.jetbrains.php.lang.inspections.PhpUndefinedClassInspection
 com.jetbrains.php.lang.inspections.PhpUndefinedVariableInspection

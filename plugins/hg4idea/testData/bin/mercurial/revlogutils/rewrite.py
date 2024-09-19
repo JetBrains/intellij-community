@@ -51,14 +51,14 @@ from . import (
 )
 
 
-def v1_censor(rl, tr, censor_nodes, tombstone=b''):
+def v1_censor(rl, tr, censornode, tombstone=b''):
     """censors a revision in a "version 1" revlog"""
     assert rl._format_version == constants.REVLOGV1, rl._format_version
 
     # avoid cycle
     from .. import revlog
 
-    censor_revs = set(rl.rev(node) for node in censor_nodes)
+    censorrev = rl.rev(censornode)
     tombstone = storageutil.packmeta({b'censored': tombstone}, b'')
 
     # Rewriting the revlog in place is hard. Our strategy for censoring is
@@ -72,29 +72,24 @@ def v1_censor(rl, tr, censor_nodes, tombstone=b''):
         radix=rl.radix,
         postfix=b'tmpcensored',
         censorable=True,
-        data_config=rl.data_config,
-        delta_config=rl.delta_config,
-        feature_config=rl.feature_config,
-        may_inline=rl._inline,
     )
-    # inline splitting will prepare some transaction work that will get
-    # confused by the final file move. So if there is a risk of not being
-    # inline at the end, we prevent the new revlog to be inline in the first
-    # place.
-    assert not (newrl._inline and not rl._inline)
+    newrl._format_version = rl._format_version
+    newrl._format_flags = rl._format_flags
+    newrl._generaldelta = rl._generaldelta
+    newrl._parse_index = rl._parse_index
 
     for rev in rl.revs():
         node = rl.node(rev)
         p1, p2 = rl.parents(node)
 
-        if rev in censor_revs:
+        if rev == censorrev:
             newrl.addrawrevision(
                 tombstone,
                 tr,
-                rl.linkrev(rev),
+                rl.linkrev(censorrev),
                 p1,
                 p2,
-                node,
+                censornode,
                 constants.REVIDX_ISCENSORED,
             )
 
@@ -114,7 +109,7 @@ def v1_censor(rl, tr, censor_nodes, tombstone=b''):
                     b'revision having delta stored'
                 )
                 raise error.Abort(m)
-            rawtext = rl._inner._chunk(rev)
+            rawtext = rl._chunk(rev)
         else:
             rawtext = rl.rawdata(rev)
 
@@ -127,23 +122,19 @@ def v1_censor(rl, tr, censor_nodes, tombstone=b''):
         tr.addbackup(rl._datafile, location=b'store')
 
     rl.opener.rename(newrl._indexfile, rl._indexfile)
-    if newrl._inline:
-        assert rl._inline
-    else:
-        assert not rl._inline
+    if not rl._inline:
         rl.opener.rename(newrl._datafile, rl._datafile)
 
     rl.clearcaches()
-    chunk_cache = rl._loadindex()
-    rl._load_inner(chunk_cache)
+    rl._loadindex()
 
 
-def v2_censor(revlog, tr, censor_nodes, tombstone=b''):
+def v2_censor(revlog, tr, censornode, tombstone=b''):
     """censors a revision in a "version 2" revlog"""
     assert revlog._format_version != REVLOGV0, revlog._format_version
     assert revlog._format_version != REVLOGV1, revlog._format_version
 
-    censor_revs = {revlog.rev(node) for node in censor_nodes}
+    censor_revs = {revlog.rev(censornode)}
     _rewrite_v2(revlog, tr, censor_revs, tombstone)
 
 
@@ -243,7 +234,7 @@ def _precompute_rewritten_delta(
     dc = deltas.deltacomputer(revlog)
     rewritten_entries = {}
     first_excl_rev = min(excluded_revs)
-    with revlog.reading():
+    with revlog._segmentfile._open_read() as dfh:
         for rev in range(first_excl_rev, len(old_index)):
             if rev in excluded_revs:
                 # this revision will be preserved as is, so we don't need to
@@ -259,7 +250,7 @@ def _precompute_rewritten_delta(
                 rewritten_entries[rev] = (nullrev, 0, 0, COMP_MODE_PLAIN)
             else:
 
-                text = revlog.rawdata(rev)
+                text = revlog.rawdata(rev, _df=dfh)
                 info = revlogutils.revisioninfo(
                     node=entry[ENTRY_NODE_ID],
                     p1=revlog.node(entry[ENTRY_PARENT_1]),
@@ -270,7 +261,7 @@ def _precompute_rewritten_delta(
                     flags=entry[ENTRY_DATA_OFFSET] & 0xFFFF,
                 )
                 d = dc.finddeltainfo(
-                    info, excluded_bases=excluded_revs, target_rev=rev
+                    info, dfh, excluded_bases=excluded_revs, target_rev=rev
                 )
                 default_comp = revlog._docket.default_compression_header
                 comp_mode, d = deltas.delta_compression(default_comp, d)
@@ -548,7 +539,7 @@ def _reorder_filelog_parents(repo, fl, to_fix):
             util.copyfile(
                 rl.opener.join(index_file),
                 rl.opener.join(new_file_path),
-                checkambig=rl.data_config.check_ambig,
+                checkambig=rl._checkambig,
             )
 
             with rl.opener(new_file_path, mode=b"r+") as fp:
@@ -598,9 +589,7 @@ def _is_revision_affected_inner(
     except error.CensoredNodeError:
         # We don't care about censored nodes as they never carry metadata
         return False
-
-    # raw text can be a `memoryview`, which doesn't implement `startswith`
-    has_meta = bytes(raw_text[:2]) == b'\x01\n'
+    has_meta = raw_text.startswith(b'\x01\n')
     if metadata_cache is not None:
         metadata_cache[filerev] = has_meta
     if has_meta:
@@ -783,7 +772,13 @@ def filter_delta_issue6528(revlog, deltas_iter):
                 (base_rev, delta),
                 flags,
             )
-            return deltacomputer.buildtext(revinfo)
+            # cached by the global "writing" context
+            assert revlog._writinghandles is not None
+            if revlog._inline:
+                fh = revlog._writinghandles[0]
+            else:
+                fh = revlog._writinghandles[1]
+            return deltacomputer.buildtext(revinfo, fh)
 
         is_affected = _is_revision_affected_fast_inner(
             is_censored,
@@ -811,6 +806,8 @@ def filter_delta_issue6528(revlog, deltas_iter):
 def repair_issue6528(
     ui, repo, dry_run=False, to_report=None, from_report=None, paranoid=False
 ):
+    from .. import store  # avoid cycle
+
     @contextlib.contextmanager
     def context():
         if dry_run or to_report:  # No need for locking
@@ -826,9 +823,9 @@ def repair_issue6528(
 
     with context():
         files = list(
-            entry
-            for entry in repo.store.data_entries()
-            if entry.is_revlog and entry.is_filelog
+            (file_type, path)
+            for (file_type, path, _e, _s) in repo.store.datafiles()
+            if path.endswith(b'.i') and file_type & store.FILEFLAGS_FILELOG
         )
 
         progress = ui.makeprogress(
@@ -838,10 +835,15 @@ def repair_issue6528(
         )
         found_nothing = True
 
-        for entry in files:
+        for file_type, path in files:
+            if (
+                not path.endswith(b'.i')
+                or not file_type & store.FILEFLAGS_FILELOG
+            ):
+                continue
             progress.increment()
-            filename = entry.target_id
-            fl = _filelog_from_filename(repo, entry.target_id)
+            filename = _get_filename_from_filelog_index(path)
+            fl = _filelog_from_filename(repo, filename)
 
             # Set of filerevs (or hex filenodes if `to_report`) that need fixing
             to_fix = set()
@@ -857,8 +859,8 @@ def repair_issue6528(
                         node = binascii.hexlify(fl.node(filerev))
                         raise error.Abort(msg % (filename, node))
                 if affected:
-                    msg = b"found affected revision %d for file '%s'\n"
-                    ui.warn(msg % (filerev, filename))
+                    msg = b"found affected revision %d for filelog '%s'\n"
+                    ui.warn(msg % (filerev, path))
                     found_nothing = False
                     if not dry_run:
                         if to_report:

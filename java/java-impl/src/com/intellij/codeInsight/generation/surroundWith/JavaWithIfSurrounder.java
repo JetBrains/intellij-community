@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +22,7 @@ public class JavaWithIfSurrounder extends JavaStatementsModCommandSurrounder {
   protected void surroundStatements(@NotNull ActionContext context,
                                     @NotNull PsiElement container,
                                     @NotNull PsiElement @NotNull [] statements,
-                                    @NotNull ModPsiUpdater updater) throws IncorrectOperationException {
+                                    @NotNull ModPsiUpdater updater) {
     PsiIfStatement ifStatement = surroundStatements(context.project(), container, statements, "");
     if (ifStatement == null) return;
     ifStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(ifStatement);
@@ -32,7 +31,7 @@ public class JavaWithIfSurrounder extends JavaStatementsModCommandSurrounder {
     final PsiJavaToken lParenth = ifStatement.getLParenth();
     assert lParenth != null;
     final TextRange range = lParenth.getTextRange();
-    updater.moveCaretTo(range.getEndOffset());
+    updater.select(TextRange.from(range.getEndOffset(), 0));
   }
 
   public PsiIfStatement surroundStatements(Project project, PsiElement container, PsiElement[] statements, String condition) {

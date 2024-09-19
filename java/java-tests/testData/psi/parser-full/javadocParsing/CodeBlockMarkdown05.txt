@@ -1,0 +1,17 @@
+PsiJavaFile:CodeBlockMarkdown05.java
+  PsiDocComment
+    PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+    PsiWhiteSpace(' ')
+    PsiMarkdownCodeBlock:
+      PsiDocToken:DOC_INLINE_CODE_FENCE('`')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' According to markdown rules')
+      PsiDocToken:DOC_COMMENT_DATA(',')
+      PsiDocToken:DOC_COMMENT_DATA(' this is inline')
+      PsiWhiteSpace('\n')
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiDocToken:DOC_COMMENT_DATA(' ')
+      PsiDocToken:DOC_INLINE_CODE_FENCE('`')
+  PsiImportList
+    <empty list>

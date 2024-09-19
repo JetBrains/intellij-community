@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.remoting
 
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.util.Key
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
@@ -71,15 +73,17 @@ interface ActionRemoteBehaviorSpecification {
 
 
   companion object {
-    fun ActionRemoteBehaviorSpecification.getActionBehavior(useDeclaredBehaviour: Boolean = false): ActionRemoteBehavior {
-      val declaredBehavior = getBehavior()
-      if (useDeclaredBehaviour) return declaredBehavior
-      if (!(PlatformUtils.isRider() || PlatformUtils.isCLion())) return declaredBehavior
+    val REMOTE_UPDATE_KEY = Key.create<Boolean>("REMOTE_UPDATE_KEY")
 
-      return when (declaredBehavior) {
-        ActionRemoteBehavior.BackendOnly -> ActionRemoteBehavior.FrontendThenBackend
-        ActionRemoteBehavior.Disabled -> ActionRemoteBehavior.FrontendThenBackend
-        else -> declaredBehavior
+    fun AnAction.getActionBehavior(useDeclaredBehaviour: Boolean = false): ActionRemoteBehavior? {
+      val behavior = (this as? ActionRemoteBehaviorSpecification)?.getBehavior()
+      val isRiderOrCLion = PlatformUtils.isRider() || PlatformUtils.isCLion()
+      return when {
+        useDeclaredBehaviour || !isRiderOrCLion -> behavior
+        templatePresentation.getClientProperty(REMOTE_UPDATE_KEY) == true -> ActionRemoteBehavior.FrontendThenBackend
+        behavior == ActionRemoteBehavior.BackendOnly -> ActionRemoteBehavior.FrontendOnly
+        behavior == ActionRemoteBehavior.Disabled -> ActionRemoteBehavior.FrontendOnly
+        else -> behavior
       }
     }
   }

@@ -1,6 +1,7 @@
 import ssl
 from collections.abc import Iterable
-from typing_extensions import NotRequired, TypeAlias, TypedDict
+from typing import TypedDict
+from typing_extensions import NotRequired, TypeAlias
 
 _Payload: TypeAlias = str | bytes | bytearray | float
 

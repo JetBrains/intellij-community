@@ -1,7 +1,6 @@
 import logging
 from collections.abc import Mapping, Sequence
-from typing import IO, ClassVar
-from typing_extensions import TypedDict
+from typing import IO, ClassVar, TypedDict
 
 from .util import Context
 

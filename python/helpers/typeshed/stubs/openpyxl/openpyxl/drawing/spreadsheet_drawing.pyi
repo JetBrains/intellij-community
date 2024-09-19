@@ -1,8 +1,8 @@
-from _typeshed import Incomplete
-from typing import ClassVar
-from typing_extensions import Literal, TypeAlias
+from _typeshed import ConvertibleToInt, Incomplete
+from typing import ClassVar, Literal
+from typing_extensions import TypeAlias
 
-from openpyxl.descriptors.base import Alias, Bool, NoneSet, Typed, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.base import Alias, Bool, NoneSet, Typed, _ConvertibleToBool
 from openpyxl.descriptors.nested import NestedText
 from openpyxl.descriptors.serialisable import Serialisable
 from openpyxl.drawing.connector import Shape
@@ -26,7 +26,7 @@ class AnchorMarker(Serialisable):
     row: NestedText[int, Literal[False]]
     rowOff: NestedText[int, Literal[False]]
     def __init__(
-        self, col: _ConvertibleToInt = 0, colOff: _ConvertibleToInt = 0, row: _ConvertibleToInt = 0, rowOff: _ConvertibleToInt = 0
+        self, col: ConvertibleToInt = 0, colOff: ConvertibleToInt = 0, row: ConvertibleToInt = 0, rowOff: ConvertibleToInt = 0
     ) -> None: ...
 
 class _AnchorBase(Serialisable):

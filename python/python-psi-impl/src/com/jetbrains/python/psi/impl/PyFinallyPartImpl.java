@@ -18,7 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyFinallyPart;
 
-public class PyFinallyPartImpl extends PyStatementPartImpl implements PyFinallyPart{
+public class PyFinallyPartImpl extends PyElementImpl implements PyFinallyPart {
   public PyFinallyPartImpl(ASTNode astNode) {
     super(astNode);
   }

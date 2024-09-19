@@ -5,7 +5,9 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
+import errno
 import struct
 
 from .i18n import _
@@ -14,18 +16,17 @@ from .node import (
     hex,
     short,
 )
+from .pycompat import getattr
 from . import (
     encoding,
     error,
     obsutil,
     pycompat,
-    requirements,
     scmutil,
     txnutil,
     util,
 )
 from .utils import (
-    stringutil,
     urlutil,
 )
 
@@ -35,9 +36,11 @@ from .utils import (
 # custom styles
 activebookmarklabel = b'bookmarks.active bookmarks.current'
 
+BOOKMARKS_IN_STORE_REQUIREMENT = b'bookmarksinstore'
+
 
 def bookmarksinstore(repo):
-    return requirements.BOOKMARKS_IN_STORE_REQUIREMENT in repo.requirements
+    return BOOKMARKS_IN_STORE_REQUIREMENT in repo.requirements
 
 
 def bookmarksvfs(repo):
@@ -57,7 +60,7 @@ def _getbkfile(repo):
     return fp
 
 
-class bmstore:
+class bmstore(object):
     r"""Storage for bookmarks.
 
     This object should do all bookmark-related reads and writes, so
@@ -99,8 +102,8 @@ class bmstore:
                                 if nrefs[-2] > refspec:
                                     # bookmarks weren't sorted before 4.5
                                     nrefs.sort()
-                    except ValueError:
-                        # binascii.Error (ValueError subclass):
+                    except (TypeError, ValueError):
+                        # TypeError:
                         # - bin(...)
                         # ValueError:
                         # - node in nm, for non-20-bytes entry
@@ -112,8 +115,9 @@ class bmstore:
                             _(b'malformed line in %s: %r\n')
                             % (bookmarkspath, pycompat.bytestr(line))
                         )
-        except FileNotFoundError:
-            pass
+        except IOError as inst:
+            if inst.errno != errno.ENOENT:
+                raise
         self._active = _readactive(repo, self)
 
     @property
@@ -135,7 +139,7 @@ class bmstore:
         return iter(self._refmap)
 
     def iteritems(self):
-        return self._refmap.items()
+        return pycompat.iteritems(self._refmap)
 
     def items(self):
         return self._refmap.items()
@@ -209,11 +213,7 @@ class bmstore:
         The transaction is then responsible for updating the file content."""
         location = b'' if bookmarksinstore(self._repo) else b'plain'
         tr.addfilegenerator(
-            b'bookmarks',
-            (b'bookmarks',),
-            self._write,
-            location=location,
-            post_finalize=True,
+            b'bookmarks', (b'bookmarks',), self._write, location=location
         )
         tr.hookargs[b'bookmark_moved'] = b'1'
 
@@ -248,7 +248,7 @@ class bmstore:
         self._aclean = True
 
     def _write(self, fp):
-        for name, node in sorted(self._refmap.items()):
+        for name, node in sorted(pycompat.iteritems(self._refmap)):
             fp.write(b"%s %s\n" % (hex(node), encoding.fromlocal(name)))
         self._clean = True
         self._repo.invalidatevolatilesets()
@@ -340,7 +340,7 @@ def _readactive(repo, marks):
     # No readline() in osutil.posixfile, reading everything is
     # cheap.
     content = repo.vfs.tryread(b'bookmarks.current')
-    mark = encoding.tolocal(stringutil.firstline(content))
+    mark = encoding.tolocal((content.splitlines() or [b''])[0])
     if mark == b'' or mark not in marks:
         mark = None
     return mark
@@ -416,7 +416,7 @@ def headsforactive(repo):
         )
     name = repo._activebookmark.split(b'@', 1)[0]
     heads = []
-    for mark, n in repo._bookmarks.items():
+    for mark, n in pycompat.iteritems(repo._bookmarks):
         if mark.split(b'@', 1)[0] == name:
             heads.append(n)
     return heads
@@ -474,7 +474,7 @@ def listbinbookmarks(repo):
     marks = getattr(repo, '_bookmarks', {})
 
     hasnode = repo.changelog.hasnode
-    for k, v in marks.items():
+    for k, v in pycompat.iteritems(marks):
         # don't expose local divergent bookmarks
         if hasnode(v) and not isdivergent(k):
             yield k, v
@@ -680,25 +680,8 @@ def binarydecode(repo, stream):
     return books
 
 
-def mirroring_remote(ui, repo, remotemarks):
-    """computes the bookmark changes that set the local bookmarks to
-    remotemarks"""
-    changed = []
-    localmarks = repo._bookmarks
-    for (b, id) in remotemarks.items():
-        if id != localmarks.get(b, None) and id in repo:
-            changed.append((b, id, ui.debug, _(b"updating bookmark %s\n") % b))
-    for b in localmarks:
-        if b not in remotemarks:
-            changed.append(
-                (b, None, ui.debug, _(b"removing bookmark %s\n") % b)
-            )
-    return changed
-
-
-def merging_from_remote(ui, repo, remotemarks, path, explicit=()):
-    """computes the bookmark changes that merge remote bookmarks into the
-    local bookmarks, based on comparebookmarks"""
+def updatefromremote(ui, repo, remotemarks, path, trfunc, explicit=()):
+    ui.debug(b"checking for updated bookmarks\n")
     localmarks = repo._bookmarks
     (
         addsrc,
@@ -769,20 +752,6 @@ def merging_from_remote(ui, repo, remotemarks, path, explicit=()):
                 _(b"remote bookmark %s points to locally missing %s\n")
                 % (b, hex(scid)[:12])
             )
-    return changed
-
-
-def updatefromremote(
-    ui, repo, remotemarks, path, trfunc, explicit=(), mode=None
-):
-    if mode == b'ignore':
-        # This should move to an higher level to avoid fetching bookmark at all
-        return
-    ui.debug(b"checking for updated bookmarks\n")
-    if mode == b'mirror':
-        changed = mirroring_remote(ui, repo, remotemarks)
-    else:
-        changed = merging_from_remote(ui, repo, remotemarks, path, explicit)
 
     if changed:
         tr = trfunc()
@@ -791,14 +760,11 @@ def updatefromremote(
         for b, node, writer, msg in sorted(changed, key=key):
             changes.append((b, node))
             writer(msg)
-        repo._bookmarks.applychanges(repo, tr, changes)
+        localmarks.applychanges(repo, tr, changes)
 
 
-def incoming(ui, repo, peer, mode=None):
+def incoming(ui, repo, peer):
     """Show bookmarks incoming from other to repo"""
-    if mode == b'ignore':
-        ui.status(_(b"bookmarks exchange disabled with this path\n"))
-        return 0
     ui.status(_(b"searching for changed bookmarks\n"))
 
     with peer.commandexecutor() as e:
@@ -810,6 +776,9 @@ def incoming(ui, repo, peer, mode=None):
                 },
             ).result()
         )
+
+    r = comparebookmarks(repo, remotemarks, repo._bookmarks)
+    addsrc, adddst, advsrc, advdst, diverge, differ, invalid, same = r
 
     incomings = []
     if ui.debugflag:
@@ -826,36 +795,18 @@ def incoming(ui, repo, peer, mode=None):
         def add(b, id, st):
             incomings.append(b"   %-25s %s\n" % (b, getid(id)))
 
-    if mode == b'mirror':
-        localmarks = repo._bookmarks
-        allmarks = set(remotemarks.keys()) | set(localmarks.keys())
-        for b in sorted(allmarks):
-            loc = localmarks.get(b)
-            rem = remotemarks.get(b)
-            if loc == rem:
-                continue
-            elif loc is None:
-                add(b, hex(rem), _(b'added'))
-            elif rem is None:
-                add(b, hex(repo.nullid), _(b'removed'))
-            else:
-                add(b, hex(rem), _(b'changed'))
-    else:
-        r = comparebookmarks(repo, remotemarks, repo._bookmarks)
-        addsrc, adddst, advsrc, advdst, diverge, differ, invalid, same = r
-
-        for b, scid, dcid in addsrc:
-            # i18n: "added" refers to a bookmark
-            add(b, hex(scid), _(b'added'))
-        for b, scid, dcid in advsrc:
-            # i18n: "advanced" refers to a bookmark
-            add(b, hex(scid), _(b'advanced'))
-        for b, scid, dcid in diverge:
-            # i18n: "diverged" refers to a bookmark
-            add(b, hex(scid), _(b'diverged'))
-        for b, scid, dcid in differ:
-            # i18n: "changed" refers to a bookmark
-            add(b, hex(scid), _(b'changed'))
+    for b, scid, dcid in addsrc:
+        # i18n: "added" refers to a bookmark
+        add(b, hex(scid), _(b'added'))
+    for b, scid, dcid in advsrc:
+        # i18n: "advanced" refers to a bookmark
+        add(b, hex(scid), _(b'advanced'))
+    for b, scid, dcid in diverge:
+        # i18n: "diverged" refers to a bookmark
+        add(b, hex(scid), _(b'diverged'))
+    for b, scid, dcid in differ:
+        # i18n: "changed" refers to a bookmark
+        add(b, hex(scid), _(b'changed'))
 
     if not incomings:
         ui.status(_(b"no changed bookmarks found\n"))
@@ -1072,7 +1023,7 @@ def _printbookmarks(ui, repo, fm, bmarks):
     hexfn = fm.hexfunc
     if len(bmarks) == 0 and fm.isplain():
         ui.status(_(b"no bookmarks set\n"))
-    for bmark, (n, prefix, label) in sorted(bmarks.items()):
+    for bmark, (n, prefix, label) in sorted(pycompat.iteritems(bmarks)):
         fm.startitem()
         fm.context(repo=repo)
         if not ui.quiet:

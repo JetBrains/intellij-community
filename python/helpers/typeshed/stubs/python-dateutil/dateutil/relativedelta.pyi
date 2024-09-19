@@ -1,11 +1,11 @@
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from typing import SupportsFloat, TypeVar, overload
 from typing_extensions import Self, TypeAlias
 
 # See #9817 for why we reexport this here
 from ._common import weekday as weekday
 
-_DateT = TypeVar("_DateT", date, datetime)
+_DateT = TypeVar("_DateT", bound=date)
 # Work around attribute and type having the same name.
 _Weekday: TypeAlias = weekday
 

@@ -1,21 +1,8 @@
-from _typeshed import Incomplete, Unused
-from typing import ClassVar, overload
-from typing_extensions import Literal, TypeAlias
+from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete, Unused
+from typing import ClassVar, Literal, overload
+from typing_extensions import TypeAlias
 
-from openpyxl.descriptors.base import (
-    Alias,
-    Bool,
-    Float,
-    Integer,
-    MinMax,
-    NoneSet,
-    Set,
-    String,
-    Typed,
-    _ConvertibleToBool,
-    _ConvertibleToFloat,
-    _ConvertibleToInt,
-)
+from openpyxl.descriptors.base import Alias, Bool, Float, Integer, MinMax, NoneSet, Set, String, Typed, _ConvertibleToBool
 from openpyxl.descriptors.excel import Coordinate, ExtensionList, Percentage
 from openpyxl.descriptors.serialisable import Serialisable
 from openpyxl.styles.colors import Color
@@ -351,7 +338,7 @@ class PositiveSize2D(Serialisable):
     width: Alias
     cy: Integer[Literal[False]]
     height: Alias
-    def __init__(self, cx: _ConvertibleToInt, cy: _ConvertibleToInt) -> None: ...
+    def __init__(self, cx: ConvertibleToInt, cy: ConvertibleToInt) -> None: ...
 
 class Transform2D(Serialisable):
     tagname: ClassVar[str]
@@ -366,7 +353,7 @@ class Transform2D(Serialisable):
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        rot: _ConvertibleToInt | None = None,
+        rot: ConvertibleToInt | None = None,
         flipH: _ConvertibleToBool | None = None,
         flipV: _ConvertibleToBool | None = None,
         off: Point2D | None = None,
@@ -388,7 +375,7 @@ class GroupTransform2D(Serialisable):
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        rot: _ConvertibleToInt | None = 0,
+        rot: ConvertibleToInt | None = 0,
         flipH: _ConvertibleToBool | None = None,
         flipV: _ConvertibleToBool | None = None,
         off: Point2D | None = None,
@@ -402,7 +389,7 @@ class SphereCoords(Serialisable):
     lat: Integer[Literal[False]]
     lon: Integer[Literal[False]]
     rev: Integer[Literal[False]]
-    def __init__(self, lat: _ConvertibleToInt, lon: _ConvertibleToInt, rev: _ConvertibleToInt) -> None: ...
+    def __init__(self, lat: ConvertibleToInt, lon: ConvertibleToInt, rev: ConvertibleToInt) -> None: ...
 
 class Camera(Serialisable):
     tagname: ClassVar[str]
@@ -413,7 +400,7 @@ class Camera(Serialisable):
     def __init__(
         self,
         prst: _CameraPrst,
-        fov: _ConvertibleToInt | None = None,
+        fov: ConvertibleToInt | None = None,
         zoom: Percentage | None = None,
         rot: SphereCoords | None = None,
     ) -> None: ...
@@ -430,14 +417,14 @@ class Vector3D(Serialisable):
     dx: Integer[Literal[False]]
     dy: Integer[Literal[False]]
     dz: Integer[Literal[False]]
-    def __init__(self, dx: _ConvertibleToInt, dy: _ConvertibleToInt, dz: _ConvertibleToInt) -> None: ...
+    def __init__(self, dx: ConvertibleToInt, dy: ConvertibleToInt, dz: ConvertibleToInt) -> None: ...
 
 class Point3D(Serialisable):
     tagname: ClassVar[str]
     x: Integer[Literal[False]]
     y: Integer[Literal[False]]
     z: Integer[Literal[False]]
-    def __init__(self, x: _ConvertibleToInt, y: _ConvertibleToInt, z: _ConvertibleToInt) -> None: ...
+    def __init__(self, x: ConvertibleToInt, y: ConvertibleToInt, z: ConvertibleToInt) -> None: ...
 
 class Backdrop(Serialisable):
     anchor: Typed[Point3D, Literal[False]]
@@ -460,7 +447,7 @@ class Bevel(Serialisable):
     w: Integer[Literal[False]]
     h: Integer[Literal[False]]
     prst: NoneSet[_BevelPrst]
-    def __init__(self, w: _ConvertibleToInt, h: _ConvertibleToInt, prst: _BevelPrst | Literal["none"] | None = None) -> None: ...
+    def __init__(self, w: ConvertibleToInt, h: ConvertibleToInt, prst: _BevelPrst | Literal["none"] | None = None) -> None: ...
 
 class Shape3D(Serialisable):
     namespace: ClassVar[str]
@@ -476,8 +463,8 @@ class Shape3D(Serialisable):
     def __init__(
         self,
         z: Coordinate[bool] | None = None,
-        extrusionH: _ConvertibleToInt | None = None,
-        contourW: _ConvertibleToInt | None = None,
+        extrusionH: ConvertibleToInt | None = None,
+        contourW: ConvertibleToInt | None = None,
         prstMaterial: _Shape3DPrstMaterial | Literal["none"] | None = None,
         bevelT: Bevel | None = None,
         bevelB: Bevel | None = None,
@@ -494,8 +481,8 @@ class Path2D(Serialisable):
     extrusionOk: Bool[Literal[True]]
     def __init__(
         self,
-        w: _ConvertibleToFloat,
-        h: _ConvertibleToFloat,
+        w: ConvertibleToFloat,
+        h: ConvertibleToFloat,
         fill: _Path2DFill | Literal["none"] | None = None,
         stroke: _ConvertibleToBool | None = None,
         extrusionOk: _ConvertibleToBool | None = None,
@@ -522,7 +509,7 @@ class AdjPoint2D(Serialisable):
 class ConnectionSite(Serialisable):
     ang: MinMax[float, Literal[False]]
     pos: Typed[AdjPoint2D, Literal[False]]
-    def __init__(self, ang: _ConvertibleToFloat, pos: AdjPoint2D) -> None: ...
+    def __init__(self, ang: ConvertibleToFloat, pos: AdjPoint2D) -> None: ...
 
 class ConnectionSiteList(Serialisable):
     cxn: Typed[ConnectionSite, Literal[True]]
@@ -580,7 +567,7 @@ class FontReference(Serialisable):
 
 class StyleMatrixReference(Serialisable):
     idx: Integer[Literal[False]]
-    def __init__(self, idx: _ConvertibleToInt) -> None: ...
+    def __init__(self, idx: ConvertibleToInt) -> None: ...
 
 class ShapeStyle(Serialisable):
     lnRef: Typed[StyleMatrixReference, Literal[False]]

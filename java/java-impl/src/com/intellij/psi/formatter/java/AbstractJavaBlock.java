@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.jsp.JspClassLevelDeclarationStatementType;
 import com.intellij.psi.jsp.JspCodeBlockType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -303,7 +304,12 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     if (childNodeType == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();
-    if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) return Indent.getSpaceIndent(1);
+    if (childNodeType == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
+      if(PsiUtil.isInMarkdownDocComment(child.getPsi())) {
+        return Indent.getNoneIndent();
+      }
+      return Indent.getSpaceIndent(1);
+    }
     if (child.getPsi() instanceof PsiFile) return Indent.getNoneIndent();
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent, indentOptions);

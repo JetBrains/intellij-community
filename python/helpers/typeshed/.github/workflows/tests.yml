@@ -22,70 +22,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  file-consistency:
-    name: Check file consistency
+  typeshed-structure:
+    name: Check typeshed structure
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: requirements-tests.txt
-      - run: pip install -r requirements-tests.txt
-      - run: python ./tests/check_consistent.py
-
-  new-syntax:
-    name: Ensure new syntax usage
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-      - run: ./tests/check_new_syntax.py
-
-  ruff:
-    name: Lint with Ruff
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: chartboost/ruff-action@v1
-        with:
-          version: "0.1.0" # must match .pre-commit-config.yaml and requirements-test.txt
-
-  flake8:
-    name: Lint with Flake8
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: requirements-tests.txt
-      - run: pip install -r requirements-tests.txt
-      - run: flake8 --color always
+          python-version: "3.12"
+      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run: uv pip install -r requirements-tests.txt --system
+      - run: python ./tests/check_typeshed_structure.py
 
   pytype:
     name: Run pytype against the stubs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
+          # Max supported Python version as of pytype 2024.2.27.
           python-version: "3.11"
-          cache: pip
-          cache-dependency-path: requirements-tests.txt
-      - run: pip install -r requirements-tests.txt
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run: uv pip install -r requirements-tests.txt --system
       - name: Install external dependencies for 3rd-party stubs
         run: |
           DEPENDENCIES=$(python tests/get_external_stub_requirements.py)
           if [ -n "$DEPENDENCIES" ]; then
             echo "Installing packages: $DEPENDENCIES"
-            pip install $DEPENDENCIES
+            uv pip install $DEPENDENCIES --system
           fi
-      - run: pip freeze --all
+      - run: uv pip freeze
       - run: ./tests/pytype_test.py --print-stderr
 
   mypy:
@@ -94,22 +62,22 @@ jobs:
     strategy:
       matrix:
         platform: ["linux", "win32", "darwin"]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: requirements-tests.txt
-      - run: pip install -r requirements-tests.txt
+      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run: uv pip install -r requirements-tests.txt --system
       - run: python ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }}
 
-  # Run mypy slightly differently on the py312 stubs,
-  # as at least one non-types dependency (greenlet) can't be installed on Python 3.12 yet
-  mypy-312:
-    name: Run mypy against the stubs (3.12)
+  # Run this as a separate job, as the other versions in the matrix are
+  # (and should be) run *using* the Python version we're testing the stubs for,
+  # but we can't install all our non-types dependencies on py313 yet
+  mypy-313:
+    name: Run mypy against the 3.13 stubs
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -117,25 +85,26 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: requirements-tests.txt
-      - run: pip install -r requirements-tests.txt
-      - run: python ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=3.12
+          python-version: 3.12
+          allow-prereleases: true
+      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run: uv pip install -r requirements-tests.txt --system
+      - run: python ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=3.13
 
   regression-tests:
     name: Run mypy on the test cases
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
+          # Use py311 for now, as py312 seems to be around 30s slower in CI
+          # TODO: figure out why that is (#11590)
           python-version: "3.11"
-          cache: pip
-          cache-dependency-path: requirements-tests.txt
-      - run: pip install -r requirements-tests.txt
+      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run: uv pip install -r requirements-tests.txt --system
       - run: python ./tests/regr_test.py --all --verbosity QUIET
 
   pyright:
@@ -144,60 +113,54 @@ jobs:
     strategy:
       matrix:
         python-platform: ["Linux", "Windows", "Darwin"]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: requirements-tests.txt
+          python-version: "3.12"
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Install typeshed test-suite requirements
         # Install these so we can run `get_external_stub_requirements.py`
-        run: pip install -r requirements-tests.txt
+        run: uv pip install -r requirements-tests.txt --system
       - name: Create an isolated venv for testing
-        run: python -m venv .venv
+        run: uv venv .venv
       - name: Install 3rd-party stub dependencies
         run: |
           DEPENDENCIES=$(python tests/get_external_stub_requirements.py)
           if [ -n "$DEPENDENCIES" ]; then
             source .venv/bin/activate
             echo "Installing packages: $DEPENDENCIES"
-            pip install $DEPENDENCIES
+            uv pip install $DEPENDENCIES
           fi
       - name: Activate the isolated venv for the rest of the job
         run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
       - name: List 3rd-party stub dependencies installed
-        run: pip freeze --all
-      - name: Get pyright version
-        uses: SebRollen/toml-action@v1.0.2
-        id: pyright_version
-        with:
-          file: "pyproject.toml"
-          field: "tool.typeshed.pyright_version"
+        run: uv pip freeze
       - name: Run pyright with basic settings on all the stubs
-        uses: jakebailey/pyright-action@v1
+        uses: jakebailey/pyright-action@v2
         with:
-          version: ${{ steps.pyright_version.outputs.value }}
+          version: PATH
           python-platform: ${{ matrix.python-platform }}
           python-version: ${{ matrix.python-version }}
-          no-comments: ${{ matrix.python-version != '3.11' || matrix.python-platform != 'Linux' }} # Having each job create the same comment is too noisy.
+          annotate: ${{ matrix.python-version == '3.12' && matrix.python-platform == 'Linux' }} # Having each job create the same comment is too noisy.
       - name: Run pyright with stricter settings on some of the stubs
-        uses: jakebailey/pyright-action@v1
+        uses: jakebailey/pyright-action@v2
         with:
-          version: ${{ steps.pyright_version.outputs.value }}
+          version: PATH
           python-platform: ${{ matrix.python-platform }}
           python-version: ${{ matrix.python-version }}
-          no-comments: ${{ matrix.python-version != '3.11' || matrix.python-platform != 'Linux' }} # Having each job create the same comment is too noisy.
+          annotate: ${{ matrix.python-version == '3.12' && matrix.python-platform == 'Linux' }} # Having each job create the same comment is too noisy.
           project: ./pyrightconfig.stricter.json
       - name: Run pyright on the test cases
-        uses: jakebailey/pyright-action@v1
+        uses: jakebailey/pyright-action@v2
         with:
-          version: ${{ steps.pyright_version.outputs.value }}
+          version: PATH
           python-platform: ${{ matrix.python-platform }}
           python-version: ${{ matrix.python-version }}
-          no-comments: ${{ matrix.python-version != '3.11' || matrix.python-platform != 'Linux' }} # Having each job create the same comment is too noisy.
+          annotate: ${{ matrix.python-version == '3.12' && matrix.python-platform == 'Linux' }} # Having each job create the same comment is too noisy.
           project: ./pyrightconfig.testcases.json
 
   stub-uploader:
@@ -213,13 +176,13 @@ jobs:
         with:
           repository: typeshed-internal/stub_uploader
           path: stub_uploader
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: stub_uploader/requirements.txt
+          python-version: "3.12"
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Run tests
         run: |
           cd stub_uploader
-          pip install -r requirements.txt
+          uv pip install -r requirements.txt --system
           python -m pytest tests

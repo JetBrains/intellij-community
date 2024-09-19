@@ -1,10 +1,10 @@
-from _typeshed import Unused
-from typing import ClassVar
-from typing_extensions import Literal, TypeAlias
+from _typeshed import ConvertibleToFloat, ConvertibleToInt, Unused
+from typing import ClassVar, Literal
+from typing_extensions import TypeAlias
 
 from openpyxl.chart.picture import PictureOptions
 from openpyxl.chart.shapes import GraphicalProperties
-from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool, _ConvertibleToFloat, _ConvertibleToInt
+from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool
 from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.nested import NestedBool, NestedInteger, NestedMinMax, NestedNoneSet, _NestedNoneSetParam
 from openpyxl.descriptors.serialisable import Serialisable
@@ -26,7 +26,7 @@ class Marker(Serialisable):
     def __init__(
         self,
         symbol: _NestedNoneSetParam[_MarkerSymbol] = None,
-        size: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        size: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
         spPr: GraphicalProperties | None = None,
         extLst: Unused = None,
     ) -> None: ...
@@ -45,11 +45,11 @@ class DataPoint(Serialisable):
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        idx: _HasTagAndGet[_ConvertibleToInt] | _ConvertibleToInt,
+        idx: _HasTagAndGet[ConvertibleToInt] | ConvertibleToInt,
         invertIfNegative: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
         marker: Marker | None = None,
         bubble3D: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
-        explosion: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None,
+        explosion: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None,
         spPr: GraphicalProperties | None = None,
         pictureOptions: PictureOptions | None = None,
         extLst: Unused = None,

@@ -1,14 +1,11 @@
-from _typeshed import Incomplete, Unused
+from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete, Unused
 from datetime import datetime
-from re import Pattern
-from typing import ClassVar, overload
-from typing_extensions import Literal, TypeAlias
+from typing import ClassVar, Final, Literal, overload
+from typing_extensions import TypeAlias
 
-from openpyxl.descriptors import Strict
 from openpyxl.descriptors.base import (
     Alias,
     Bool,
-    Convertible,
     DateTime,
     Float,
     Integer,
@@ -18,13 +15,9 @@ from openpyxl.descriptors.base import (
     String,
     Typed,
     _ConvertibleToBool,
-    _ConvertibleToFloat,
-    _ConvertibleToInt,
 )
 from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.serialisable import Serialisable
-
-from ..descriptors.base import _N
 
 _SortConditionSortBy: TypeAlias = Literal["value", "cellColor", "fontColor", "icon"]
 _IconSet: TypeAlias = Literal[
@@ -50,6 +43,7 @@ _SortStateSortMethod: TypeAlias = Literal["stroke", "pinYin"]
 _CustomFilterOperator: TypeAlias = Literal[
     "equal", "lessThan", "lessThanOrEqual", "notEqual", "greaterThanOrEqual", "greaterThan"
 ]
+_StringFilterOperator: TypeAlias = Literal["contains", "startswith", "endswith", "wildcard"]
 _FiltersCalendarType: TypeAlias = Literal[
     "gregorian",
     "gregorianUs",
@@ -119,9 +113,9 @@ class SortCondition(Serialisable):
         descending: _ConvertibleToBool | None = None,
         sortBy: _SortConditionSortBy | Literal["none"] | None = None,
         customList: str | None = None,
-        dxfId: _ConvertibleToInt | None = None,
+        dxfId: ConvertibleToInt | None = None,
         iconSet: _IconSet | Literal["none"] | None = None,
-        iconId: _ConvertibleToInt | None = None,
+        iconId: ConvertibleToInt | None = None,
     ) -> None: ...
 
 class SortState(Serialisable):
@@ -148,13 +142,13 @@ class IconFilter(Serialisable):
     tagname: ClassVar[str]
     iconSet: Set[_IconSet]
     iconId: Integer[Literal[True]]
-    def __init__(self, iconSet: _IconSet, iconId: _ConvertibleToInt | None = None) -> None: ...
+    def __init__(self, iconSet: _IconSet, iconId: ConvertibleToInt | None = None) -> None: ...
 
 class ColorFilter(Serialisable):
     tagname: ClassVar[str]
     dxfId: Integer[Literal[True]]
     cellColor: Bool[Literal[True]]
-    def __init__(self, dxfId: _ConvertibleToInt | None = None, cellColor: _ConvertibleToBool | None = None) -> None: ...
+    def __init__(self, dxfId: ConvertibleToInt | None = None, cellColor: _ConvertibleToBool | None = None) -> None: ...
 
 class DynamicFilter(Serialisable):
     tagname: ClassVar[str]
@@ -166,30 +160,38 @@ class DynamicFilter(Serialisable):
     def __init__(
         self,
         type: _DynamicFilterType,
-        val: _ConvertibleToFloat | None = None,
+        val: ConvertibleToFloat | None = None,
         valIso: datetime | str | None = None,
-        maxVal: _ConvertibleToFloat | None = None,
+        maxVal: ConvertibleToFloat | None = None,
         maxValIso: datetime | str | None = None,
-    ) -> None: ...
-
-class CustomFilterValueDescriptor(Convertible[float | str, _N]):
-    pattern: Pattern[str]
-    expected_type: type[float | str]
-    @overload  # type:ignore[override]  # Different restrictions
-    def __set__(
-        self: CustomFilterValueDescriptor[Literal[True]], instance: Serialisable | Strict, value: str | _ConvertibleToFloat | None
-    ) -> None: ...
-    @overload
-    def __set__(
-        self: CustomFilterValueDescriptor[Literal[False]], instance: Serialisable | Strict, value: str | _ConvertibleToFloat
     ) -> None: ...
 
 class CustomFilter(Serialisable):
     tagname: ClassVar[str]
-    operator: NoneSet[_CustomFilterOperator]
-    val: Incomplete
+    val: String[Literal[False]]
+    operator: Set[_CustomFilterOperator]
+    def __init__(self, operator: _CustomFilterOperator = "equal", val: str | None = None) -> None: ...
+    def convert(self) -> BlankFilter | NumberFilter | StringFilter: ...
+
+class BlankFilter(CustomFilter):
+    def __init__(self, **kw: Unused) -> None: ...
+    @property
+    def operator(self) -> Literal["notEqual"]: ...  # type: ignore[override]
+    @property
+    def val(self) -> Literal[" "]: ...  # type: ignore[override]
+
+class NumberFilter(CustomFilter):
+    val: Float[Literal[False]]  # type: ignore[assignment]
+    def __init__(self, operator: _CustomFilterOperator = "equal", val: ConvertibleToFloat | None = None) -> None: ...
+
+string_format_mapping: Final[dict[_StringFilterOperator, str]]
+
+class StringFilter(CustomFilter):
+    operator: Set[_StringFilterOperator]  # type: ignore[assignment]
+    val: String[Literal[False]]
+    exclude: Bool[Literal[False]]
     def __init__(
-        self, operator: _CustomFilterOperator | Literal["none"] | None = None, val: Incomplete | None = None
+        self, operator: _StringFilterOperator = "contains", val: str | None = None, exclude: _ConvertibleToBool = False
     ) -> None: ...
 
 class CustomFilters(Serialisable):
@@ -197,7 +199,7 @@ class CustomFilters(Serialisable):
     _and: Bool[Literal[True]]  # Not private. Avoids name clash
     customFilter: Incomplete
     __elements__: ClassVar[tuple[str, ...]]
-    def __init__(self, _and: _ConvertibleToBool | None = False, customFilter=()) -> None: ...
+    def __init__(self, _and: _ConvertibleToBool | None = None, customFilter=()) -> None: ...
 
 class Top10(Serialisable):
     tagname: ClassVar[str]
@@ -211,16 +213,16 @@ class Top10(Serialisable):
         top: _ConvertibleToBool | None = None,
         percent: _ConvertibleToBool | None = None,
         *,
-        val: _ConvertibleToFloat,
-        filterVal: _ConvertibleToFloat | None = None,
+        val: ConvertibleToFloat,
+        filterVal: ConvertibleToFloat | None = None,
     ) -> None: ...
     @overload
     def __init__(
         self,
         top: _ConvertibleToBool | None,
         percent: _ConvertibleToBool | None,
-        val: _ConvertibleToFloat,
-        filterVal: _ConvertibleToFloat | None = None,
+        val: ConvertibleToFloat,
+        filterVal: ConvertibleToFloat | None = None,
     ) -> None: ...
 
 class DateGroupItem(Serialisable):
@@ -235,24 +237,24 @@ class DateGroupItem(Serialisable):
     @overload
     def __init__(
         self,
-        year: _ConvertibleToInt,
-        month: _ConvertibleToFloat | None = None,
-        day: _ConvertibleToFloat | None = None,
-        hour: _ConvertibleToFloat | None = None,
-        minute: _ConvertibleToFloat | None = None,
-        second: _ConvertibleToInt | None = None,
+        year: ConvertibleToInt,
+        month: ConvertibleToFloat | None = None,
+        day: ConvertibleToFloat | None = None,
+        hour: ConvertibleToFloat | None = None,
+        minute: ConvertibleToFloat | None = None,
+        second: ConvertibleToInt | None = None,
         *,
         dateTimeGrouping: _DateGroupItemDateTimeGrouping,
     ) -> None: ...
     @overload
     def __init__(
         self,
-        year: _ConvertibleToInt,
-        month: _ConvertibleToFloat | None,
-        day: _ConvertibleToFloat | None,
-        hour: _ConvertibleToFloat | None,
-        minute: _ConvertibleToFloat | None,
-        second: _ConvertibleToInt | None,
+        year: ConvertibleToInt,
+        month: ConvertibleToFloat | None,
+        day: ConvertibleToFloat | None,
+        hour: ConvertibleToFloat | None,
+        minute: ConvertibleToFloat | None,
+        second: ConvertibleToInt | None,
         dateTimeGrouping: _DateGroupItemDateTimeGrouping,
     ) -> None: ...
 
@@ -287,7 +289,7 @@ class FilterColumn(Serialisable):
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        colId: _ConvertibleToInt,
+        colId: ConvertibleToInt,
         hiddenButton: _ConvertibleToBool | None = False,
         showButton: _ConvertibleToBool | None = True,
         filters: Filters | None = None,

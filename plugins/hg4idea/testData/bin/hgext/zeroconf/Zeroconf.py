@@ -1,3 +1,5 @@
+from __future__ import absolute_import, print_function
+
 """ Multicast DNS Service Discovery for Python, v0.12
     Copyright (C) 2003, Paul Scott-Murphy
 
@@ -231,7 +233,7 @@ class BadDomainNameCircular(BadDomainName):
 # implementation classes
 
 
-class DNSEntry:
+class DNSEntry(object):
     """A DNS entry"""
 
     def __init__(self, name, type, clazz):
@@ -292,7 +294,7 @@ class DNSQuestion(DNSEntry):
     """A DNS question entry"""
 
     def __init__(self, name, type, clazz):
-        if isinstance(name, str):
+        if pycompat.ispy3 and isinstance(name, str):
             name = name.encode('ascii')
         if not name.endswith(b".local."):
             raise NonLocalNameException(name)
@@ -506,7 +508,7 @@ class DNSService(DNSRecord):
         return self.toString(b"%s:%s" % (self.server, self.port))
 
 
-class DNSIncoming:
+class DNSIncoming(object):
     """Object representation of an incoming DNS packet"""
 
     def __init__(self, data):
@@ -702,7 +704,7 @@ class DNSIncoming:
         return result
 
 
-class DNSOutgoing:
+class DNSOutgoing(object):
     """Object representation of an outgoing packet"""
 
     def __init__(self, flags, multicast=1):
@@ -768,7 +770,7 @@ class DNSOutgoing:
 
     def writeString(self, value, length):
         """Writes a string to the packet"""
-        format = '!' + str(length) + 's'
+        format = b'!' + str(length) + b's'
         self.data.append(struct.pack(format, value))
         self.size += length
 
@@ -864,7 +866,7 @@ class DNSOutgoing:
         return b''.join(self.data)
 
 
-class DNSCache:
+class DNSCache(object):
     """A cache of DNS entries"""
 
     def __init__(self):
@@ -982,7 +984,7 @@ class Engine(threading.Thread):
         self.condition.release()
 
 
-class Listener:
+class Listener(object):
     """A Listener is used by this module to listen on the multicast
     group to which DNS messages are sent, allowing the implementation
     to cache information as it arrives.
@@ -1127,7 +1129,7 @@ class ServiceBrowser(threading.Thread):
                 event(self.zeroconf)
 
 
-class ServiceInfo:
+class ServiceInfo(object):
     """Service information"""
 
     def __init__(
@@ -1386,7 +1388,7 @@ class ServiceInfo:
         return result
 
 
-class Zeroconf:
+class Zeroconf(object):
     """Implementation of Zeroconf Multicast DNS Service Discovery
 
     Supports registration, unregistration, queries and browsing.
@@ -1859,7 +1861,7 @@ if __name__ == '__main__':
     info = ServiceInfo(
         b"_http._tcp.local.",
         b"My Service Name._http._tcp.local.",
-        socket.inet_aton("127.0.0.1"),
+        socket.inet_aton(b"127.0.0.1"),
         1234,
         0,
         0,

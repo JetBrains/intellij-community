@@ -1,17 +1,17 @@
-from _typeshed import Incomplete
+from collections.abc import Iterable
 from re import Pattern
-from typing_extensions import Final
+from typing import Final
 
 from openpyxl import _Decodable
 from openpyxl.workbook.workbook import Workbook
-from openpyxl.worksheet.header_footer import HeaderFooterItem
+from openpyxl.worksheet.header_footer import HeaderFooter, HeaderFooterItem
 
 INVALID_TITLE_REGEX: Final[Pattern[str]]
 
-def avoid_duplicate_name(names, value): ...
+def avoid_duplicate_name(names: Iterable[str], value: str) -> str: ...
 
 class _WorkbookChild:
-    HeaderFooter: Incomplete
+    HeaderFooter: HeaderFooter
     def __init__(self, parent: Workbook | None = None, title: str | _Decodable | None = None) -> None: ...
     @property
     def parent(self) -> Workbook | None: ...

@@ -2,15 +2,14 @@
 package com.intellij.diff.settings
 
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
+import com.intellij.diff.impl.DiffSettingsHolder.IncludeInNavigationHistory
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.bindValue
-import com.intellij.ui.dsl.builder.labelTable
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.dsl.builder.*
 import javax.swing.JLabel
 
 internal class DiffSettingsConfigurable : BoundSearchableConfigurable(
@@ -37,6 +36,17 @@ internal class DiffSettingsConfigurable : BoundSearchableConfigurable(
         row {
           checkBox(message("settings.go.to.the.next.file.after.reaching.last.change"))
             .bindSelected(diffSettings::isGoToNextFileOnNextDifference)
+        }
+        row {
+          label(message("settings.diffIncludedInHistory"))
+          comboBox(IncludeInNavigationHistory.entries, SimpleListCellRenderer.create("") { option ->
+            when (option) {
+              IncludeInNavigationHistory.Always -> message("settings.diffIncludedInHistory.always")
+              IncludeInNavigationHistory.OnlyIfOpen -> message("settings.diffIncludedInHistory.onlyIfOpen")
+              IncludeInNavigationHistory.Never -> message("settings.diffIncludedInHistory.never")
+              null -> ""
+            }
+          }).bindItem(diffSettings::isIncludedInNavigationHistory.toNullableProperty())
         }
       }
       group(message("settings.merge.text")) {

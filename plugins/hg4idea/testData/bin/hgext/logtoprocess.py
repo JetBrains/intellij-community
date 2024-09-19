@@ -32,6 +32,7 @@ not ensure that they exit cleanly.
 
 """
 
+from __future__ import absolute_import
 
 import os
 
@@ -44,7 +45,7 @@ from mercurial.utils import procutil
 testedwith = b'ships-with-hg-core'
 
 
-class processlogger:
+class processlogger(object):
     """Map log events to external commands
 
     Arguments are passed on as environment variables.

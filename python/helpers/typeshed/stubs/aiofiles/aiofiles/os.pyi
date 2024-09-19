@@ -27,6 +27,7 @@ __all__ = [
     "scandir",
     "access",
     "wrap",
+    "getcwd",
 ]
 
 if sys.platform != "win32":
@@ -118,6 +119,7 @@ async def listdir(path: int, *, loop: AbstractEventLoop | None = ..., executor: 
 async def access(
     path: FileDescriptorOrPath, mode: int, *, dir_fd: int | None = None, effective_ids: bool = False, follow_symlinks: bool = True
 ) -> bool: ...
+async def getcwd() -> str: ...
 
 if sys.platform != "win32":
     from os import statvfs_result

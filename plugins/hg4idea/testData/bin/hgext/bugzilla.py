@@ -291,6 +291,7 @@ All the above add a comment to the Bugzilla bug record of the form::
     Changeset commit comment. Bug 1234.
 '''
 
+from __future__ import absolute_import
 
 import json
 import re
@@ -434,7 +435,7 @@ configitem(
 )
 
 
-class bzaccess:
+class bzaccess(object):
     '''Base class for access to Bugzilla.'''
 
     def __init__(self, ui):
@@ -690,7 +691,7 @@ class bzmysql_3_0(bzmysql_2_18):
 # Bugzilla via XMLRPC interface.
 
 
-class cookietransportrequest:
+class cookietransportrequest(object):
     """A Transport request method that retains cookies over its lifetime.
 
     The regular xmlrpclib transports ignore cookies. Which causes
@@ -766,13 +767,13 @@ class cookietransportrequest:
 # inheritance with a new-style class.
 class cookietransport(cookietransportrequest, xmlrpclib.Transport):
     def __init__(self, use_datetime=0):
-        if hasattr(xmlrpclib.Transport, "__init__"):
+        if util.safehasattr(xmlrpclib.Transport, "__init__"):
             xmlrpclib.Transport.__init__(self, use_datetime)
 
 
 class cookiesafetransport(cookietransportrequest, xmlrpclib.SafeTransport):
     def __init__(self, use_datetime=0):
-        if hasattr(xmlrpclib.Transport, "__init__"):
+        if util.safehasattr(xmlrpclib.Transport, "__init__"):
             xmlrpclib.SafeTransport.__init__(self, use_datetime)
 
 
@@ -1095,7 +1096,7 @@ class bzrestapi(bzaccess):
         pass
 
 
-class bugzilla:
+class bugzilla(object):
     # supported versions of bugzilla. different versions have
     # different schemas.
     _versions = {

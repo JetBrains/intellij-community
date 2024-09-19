@@ -6,11 +6,13 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 # import wsgiref.validate
 
 from ..thirdparty import attr
 from .. import (
+    encoding,
     error,
     pycompat,
     util,
@@ -20,7 +22,7 @@ from ..utils import (
 )
 
 
-class multidict:
+class multidict(object):
     """A dict like object that can store multiple values for a key.
 
     Used to store parsed request parameters.
@@ -76,11 +78,11 @@ class multidict:
         return vals[0]
 
     def asdictoflists(self):
-        return {k: list(v) for k, v in self._items.items()}
+        return {k: list(v) for k, v in pycompat.iteritems(self._items)}
 
 
 @attr.s(frozen=True)
-class parsedrequest:
+class parsedrequest(object):
     """Represents a parsed WSGI request.
 
     Contains both parsed parameters as well as a handle on the input stream.
@@ -159,16 +161,24 @@ def parserequestfromenv(env, reponame=None, altbaseurl=None, bodyfh=None):
     # TODO enable this once we fix internal violations.
     # wsgiref.validate.check_environ(env)
 
-    # PEP-0333 states that environment keys and values are native strings.
-    # The code points for the Unicode strings on Python 3 must be between
-    # \00000-\000FF. We deal with bytes in Mercurial, so mass convert string
-    # keys and values to bytes.
-    def tobytes(s):
-        if not isinstance(s, str):
-            return s
-        return s.encode('iso8859-1')
+    # PEP-0333 states that environment keys and values are native strings
+    # (bytes on Python 2 and str on Python 3). The code points for the Unicode
+    # strings on Python 3 must be between \00000-\000FF. We deal with bytes
+    # in Mercurial, so mass convert string keys and values to bytes.
+    if pycompat.ispy3:
 
-    env = {tobytes(k): tobytes(v) for k, v in env.items()}
+        def tobytes(s):
+            if not isinstance(s, str):
+                return s
+            if pycompat.iswindows:
+                # This is what mercurial.encoding does for os.environ on
+                # Windows.
+                return encoding.strtolocal(s)
+            else:
+                # This is what is documented to be used for os.environ on Unix.
+                return pycompat.fsencode(s)
+
+        env = {tobytes(k): tobytes(v) for k, v in pycompat.iteritems(env)}
 
     # Some hosting solutions are emulating hgwebdir, and dispatching directly
     # to an hgweb instance using this environment variable.  This was always
@@ -302,7 +312,7 @@ def parserequestfromenv(env, reponame=None, altbaseurl=None, bodyfh=None):
     # perform case normalization for us. We just rewrite underscore to dash
     # so keys match what likely went over the wire.
     headers = []
-    for k, v in env.items():
+    for k, v in pycompat.iteritems(env):
         if k.startswith(b'HTTP_'):
             headers.append((k[len(b'HTTP_') :].replace(b'_', b'-'), v))
 
@@ -348,7 +358,7 @@ def parserequestfromenv(env, reponame=None, altbaseurl=None, bodyfh=None):
     )
 
 
-class offsettrackingwriter:
+class offsettrackingwriter(object):
     """A file object like object that is append only and tracks write count.
 
     Instances are bound to a callable. This callable is called with data
@@ -381,7 +391,7 @@ class offsettrackingwriter:
         return self._offset
 
 
-class wsgiresponse:
+class wsgiresponse(object):
     """Represents a response to a WSGI request.
 
     A response consists of a status line, headers, and a body.
@@ -478,7 +488,6 @@ class wsgiresponse:
             self._bodybytes is None
             and self._bodygen is None
             and not self._bodywillwrite
-            and self._req.method != b'HEAD'
         ):
             raise error.ProgrammingError(b'response body not defined')
 
@@ -588,8 +597,6 @@ class wsgiresponse:
                 yield chunk
         elif self._bodywillwrite:
             self._bodywritefn = write
-        elif self._req.method == b'HEAD':
-            pass
         else:
             error.ProgrammingError(b'do not know how to send body')
 

@@ -5,13 +5,13 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 from ..thirdparty import attr
 from ..interfaces import repository
 
 # See mercurial.revlogutils.constants for doc
 COMP_MODE_INLINE = 2
-RANK_UNKNOWN = -1
 
 
 def offset_type(offset, type):
@@ -34,7 +34,6 @@ def entry(
     sidedata_offset=0,
     sidedata_compressed_length=0,
     sidedata_compression_mode=COMP_MODE_INLINE,
-    rank=RANK_UNKNOWN,
 ):
     """Build one entry from symbolic name
 
@@ -57,17 +56,16 @@ def entry(
         sidedata_compressed_length,
         data_compression_mode,
         sidedata_compression_mode,
-        rank,
     )
 
 
 @attr.s(slots=True, frozen=True)
-class revisioninfo:
+class revisioninfo(object):
     """Information about a revision that allows building its fulltext
     node:       expected hash of the revision
-    p1, p2:     parent revs of the revision (as node)
+    p1, p2:     parent revs of the revision
     btext:      built text cache consisting of a one-element list
-    cachedelta: (baserev, uncompressed_delta, usage_mode) or None
+    cachedelta: (baserev, uncompressed_delta) or None
     flags:      flags associated to the revision storage
 
     One of btext[0] or cachedelta must be set.

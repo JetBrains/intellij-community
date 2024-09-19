@@ -5,8 +5,10 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import difflib
+import errno
 
 from .i18n import _
 
@@ -34,7 +36,7 @@ def matchlines(body, regexp):
         yield linenum, mstart - lstart, mend - lstart, body[lstart:lend]
 
 
-class linestate:
+class linestate(object):
     def __init__(self, line, linenum, colstart, colend):
         self.line = line
         self.linenum = linenum
@@ -66,19 +68,19 @@ def difflinestates(a, b):
     sm = difflib.SequenceMatcher(None, a, b)
     for tag, alo, ahi, blo, bhi in sm.get_opcodes():
         if tag == 'insert':
-            for i in range(blo, bhi):
+            for i in pycompat.xrange(blo, bhi):
                 yield (b'+', b[i])
         elif tag == 'delete':
-            for i in range(alo, ahi):
+            for i in pycompat.xrange(alo, ahi):
                 yield (b'-', a[i])
         elif tag == 'replace':
-            for i in range(alo, ahi):
+            for i in pycompat.xrange(alo, ahi):
                 yield (b'-', a[i])
-            for i in range(blo, bhi):
+            for i in pycompat.xrange(blo, bhi):
                 yield (b'+', b[i])
 
 
-class grepsearcher:
+class grepsearcher(object):
     """Search files and revisions for lines matching the given pattern
 
     Options:
@@ -157,8 +159,9 @@ class grepsearcher:
             fctx = ctx[fn]
             try:
                 return fctx.data()
-            except FileNotFoundError:
-                pass
+            except IOError as e:
+                if e.errno != errno.ENOENT:
+                    raise
         else:
             flog = self._getfile(fn)
             fnode = ctx.filenode(fn)

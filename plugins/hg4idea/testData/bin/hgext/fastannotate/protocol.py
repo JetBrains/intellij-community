@@ -4,6 +4,7 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
+from __future__ import absolute_import
 
 import contextlib
 import os
@@ -14,6 +15,7 @@ from mercurial import (
     error,
     extensions,
     hg,
+    pycompat,
     util,
     wireprotov1peer,
     wireprotov1server,
@@ -101,7 +103,7 @@ def _registerwireprotocommand():
 
 def serveruisetup(ui):
     _registerwireprotocommand()
-    extensions.wrapfunction(wireprotov1server, '_capabilities', _capabilities)
+    extensions.wrapfunction(wireprotov1server, b'_capabilities', _capabilities)
 
 
 # client-side
@@ -138,10 +140,12 @@ def peersetup(ui, peer):
         def getannotate(self, path, lastnode=None):
             if not self.capable(b'getannotate'):
                 ui.warn(_(b'remote peer cannot provide annotate cache\n'))
-                return None, None
+                yield None, None
             else:
                 args = {b'path': path, b'lastnode': lastnode or b''}
-                return args, _parseresponse
+                f = wireprotov1peer.future()
+                yield args, f
+                yield _parseresponse(f.value)
 
     peer.__class__ = fastannotatepeer
 
@@ -151,11 +155,8 @@ def annotatepeer(repo):
     ui = repo.ui
 
     remotedest = ui.config(b'fastannotate', b'remotepath', b'default')
-    remotepath = urlutil.get_unique_pull_path_obj(
-        b'fastannotate',
-        ui,
-        remotedest,
-    )
+    r = urlutil.get_unique_pull_path(b'fastannotate', repo, ui, remotedest)
+    remotepath = r[0]
     peer = hg.peer(ui, {}, remotepath)
 
     try:
@@ -191,7 +192,7 @@ def clientfetch(repo, paths, lastnodemap=None, peer=None):
         for result in results:
             r = result.result()
             # TODO: pconvert these paths on the server?
-            r = {util.pconvert(p): v for p, v in r.items()}
+            r = {util.pconvert(p): v for p, v in pycompat.iteritems(r)}
             for path in sorted(r):
                 # ignore malicious paths
                 if not path.startswith(b'fastannotate/') or b'/../' in (

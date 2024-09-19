@@ -101,6 +101,7 @@ annotate cache greatly. Run "debugbuildlinkrevcache" before
 #
 # * format changes to the revmap file (maybe use length-encoding
 #   instead of null-terminated file paths at least?)
+from __future__ import absolute_import
 
 from mercurial.i18n import _
 from mercurial import (

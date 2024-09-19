@@ -1,8 +1,8 @@
-from _typeshed import Incomplete
-from typing import ClassVar
-from typing_extensions import Literal, TypeAlias
+from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete
+from typing import ClassVar, Literal
+from typing_extensions import TypeAlias
 
-from openpyxl.descriptors.base import Alias, Integer, NoneSet, Typed, _ConvertibleToBool, _ConvertibleToFloat, _ConvertibleToInt
+from openpyxl.descriptors.base import Alias, Integer, NoneSet, Typed, _ConvertibleToBool
 from openpyxl.descriptors.nested import NestedString, NestedText, _NestedNoneSetParam
 from openpyxl.descriptors.serialisable import Serialisable
 from openpyxl.styles.colors import Color
@@ -20,7 +20,7 @@ class PhoneticProperties(Serialisable):
     alignment: NoneSet[_PhoneticPropertiesAlignment]
     def __init__(
         self,
-        fontId: _ConvertibleToInt,
+        fontId: ConvertibleToInt,
         type: _PhoneticPropertiesType | Literal["none"] | None = None,
         alignment: _PhoneticPropertiesAlignment | Literal["none"] | None = None,
     ) -> None: ...
@@ -33,7 +33,7 @@ class PhoneticText(Serialisable):
     eb: Integer[Literal[False]]
     t: NestedText[str, Literal[False]]
     text: Alias
-    def __init__(self, sb: _ConvertibleToInt, eb: _ConvertibleToInt, t: object = None) -> None: ...
+    def __init__(self, sb: ConvertibleToInt, eb: ConvertibleToInt, t: object = None) -> None: ...
 
 class InlineFont(Font):
     tagname: ClassVar[str]
@@ -57,8 +57,8 @@ class InlineFont(Font):
     def __init__(
         self,
         rFont: object = None,
-        charset: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None,
-        family: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        charset: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None,
+        family: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
         b: _HasTagAndGet[_ConvertibleToBool] | _ConvertibleToBool = None,
         i: _HasTagAndGet[_ConvertibleToBool] | _ConvertibleToBool = None,
         strike: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
@@ -67,7 +67,7 @@ class InlineFont(Font):
         condense: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
         extend: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
         color: Color | None = None,
-        sz: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        sz: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
         u: _NestedNoneSetParam[_FontU] = None,
         vertAlign: _NestedNoneSetParam[_FontVertAlign] = None,
         scheme: _NestedNoneSetParam[_FontScheme] = None,

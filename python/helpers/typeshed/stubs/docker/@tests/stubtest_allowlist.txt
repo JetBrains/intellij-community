@@ -1,0 +1,16 @@
+# additional requirements are needed, e.g. win32 apis
+docker.transport.NpipeHTTPAdapter
+docker.transport.NpipeSocket
+docker.transport.SSHHTTPAdapter
+docker.transport.npipeconn
+docker.transport.npipesocket
+docker.transport.sshconn
+
+# model is always set by child classes
+docker.models.resource.Collection.model
+
+# keyword arguments are now unsupported
+docker.api.container.ContainerApiMixin.start
+
+# Internal-use module for types shared by multiple modules.
+docker._types

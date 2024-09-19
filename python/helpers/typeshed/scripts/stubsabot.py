@@ -17,7 +17,7 @@ import textwrap
 import urllib.parse
 import zipfile
 from collections.abc import Iterator, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
 from typing import Annotated, Any, ClassVar, NamedTuple
@@ -33,7 +33,7 @@ from termcolor import colored
 TYPESHED_OWNER = "python"
 TYPESHED_API_URL = f"https://api.github.com/repos/{TYPESHED_OWNER}/typeshed"
 
-STUBSABOT_LABEL = "stubsabot"
+STUBSABOT_LABEL = "bot: stubsabot"
 
 
 class ActionLevel(enum.IntEnum):
@@ -48,7 +48,7 @@ class ActionLevel(enum.IntEnum):
         try:
             return cls[cmd_arg]
         except KeyError:
-            raise argparse.ArgumentTypeError(f'Argument must be one of "{list(cls.__members__)}"')
+            raise argparse.ArgumentTypeError(f'Argument must be one of "{list(cls.__members__)}"') from None
 
     nothing = 0, "make no changes"
     local = 1, "make changes that affect local repo"
@@ -79,6 +79,7 @@ def read_typeshed_stub_metadata(stub_path: Path) -> StubInfo:
 
 @dataclass
 class PypiReleaseDownload:
+    distribution: str
     url: str
     packagetype: Annotated[str, "Should hopefully be either 'bdist_wheel' or 'sdist'"]
     filename: str
@@ -105,13 +106,14 @@ def _best_effort_version(version: VersionString) -> packaging.version.Version:
 class PypiInfo:
     distribution: str
     pypi_root: str
-    releases: dict[VersionString, list[ReleaseDownload]]
-    info: dict[str, Any]
+    releases: dict[VersionString, list[ReleaseDownload]] = field(repr=False)
+    info: dict[str, Any] = field(repr=False)
 
     def get_release(self, *, version: VersionString) -> PypiReleaseDownload:
         # prefer wheels, since it's what most users will get / it's pretty easy to mess up MANIFEST
         release_info = sorted(self.releases[version], key=lambda x: bool(x["packagetype"] == "bdist_wheel"))[-1]
         return PypiReleaseDownload(
+            distribution=self.distribution,
             url=release_info["url"],
             packagetype=release_info["packagetype"],
             filename=release_info["filename"],
@@ -170,6 +172,54 @@ class NoUpdate:
         return f"Skipping {self.distribution}: {self.reason}"
 
 
+def all_py_files_in_source_are_in_py_typed_dirs(source: zipfile.ZipFile | tarfile.TarFile) -> bool:
+    py_typed_dirs: list[Path] = []
+    all_python_files: list[Path] = []
+    py_file_suffixes = {".py", ".pyi"}
+
+    # Obtain an iterator over all files in the zipfile/tarfile.
+    # Filter out empty __init__.py files: this reduces false negatives
+    # in cases like this:
+    #
+    # repo_root/
+    # ├─ src/
+    # |  ├─ pkg/
+    # |  |  ├─ __init__.py          <-- This file is empty
+    # |  |  ├─ subpkg/
+    # |  |  |  ├─ __init__.py
+    # |  |  |  ├─ libraryfile.py
+    # |  |  |  ├─ libraryfile2.py
+    # |  |  |  ├─ py.typed
+    if isinstance(source, zipfile.ZipFile):
+        path_iter = (
+            Path(zip_info.filename)
+            for zip_info in source.infolist()
+            if ((not zip_info.is_dir()) and not (Path(zip_info.filename).name == "__init__.py" and zip_info.file_size == 0))
+        )
+    else:
+        path_iter = (
+            Path(tar_info.path)
+            for tar_info in source
+            if (tar_info.isfile() and not (Path(tar_info.name).name == "__init__.py" and tar_info.size == 0))
+        )
+
+    for path in path_iter:
+        if path.suffix in py_file_suffixes:
+            all_python_files.append(path)
+        elif path.name == "py.typed":
+            py_typed_dirs.append(path.parent)
+
+    if not py_typed_dirs:
+        return False
+    if not all_python_files:
+        return False
+
+    for path in all_python_files:
+        if not any(py_typed_dir in path.parents for py_typed_dir in py_typed_dirs):
+            return False
+    return True
+
+
 async def release_contains_py_typed(release_to_download: PypiReleaseDownload, *, session: aiohttp.ClientSession) -> bool:
     async with session.get(release_to_download.url) as response:
         body = io.BytesIO(await response.read())
@@ -178,13 +228,20 @@ async def release_contains_py_typed(release_to_download: PypiReleaseDownload, *,
     if packagetype == "bdist_wheel":
         assert release_to_download.filename.endswith(".whl")
         with zipfile.ZipFile(body) as zf:
-            return any(Path(f).name == "py.typed" for f in zf.namelist())
+            return all_py_files_in_source_are_in_py_typed_dirs(zf)
     elif packagetype == "sdist":
-        assert release_to_download.filename.endswith(".tar.gz")
-        with tarfile.open(fileobj=body, mode="r:gz") as zf:
-            return any(Path(f).name == "py.typed" for f in zf.getnames())
+        # sdist defaults to `.tar.gz` on Lunix and to `.zip` on Windows:
+        # https://docs.python.org/3.11/distutils/sourcedist.html
+        if release_to_download.filename.endswith(".tar.gz"):
+            with tarfile.open(fileobj=body, mode="r:gz") as zf:
+                return all_py_files_in_source_are_in_py_typed_dirs(zf)
+        elif release_to_download.filename.endswith(".zip"):
+            with zipfile.ZipFile(body) as zf:
+                return all_py_files_in_source_are_in_py_typed_dirs(zf)
+        else:
+            raise AssertionError(f"Package file {release_to_download.filename!r} does not end with '.tar.gz' or '.zip'")
     else:
-        raise AssertionError(f"Unknown package type: {packagetype!r}")
+        raise AssertionError(f"Unknown package type for {release_to_download.distribution}: {packagetype!r}")
 
 
 async def find_first_release_with_py_typed(pypi_info: PypiInfo, *, session: aiohttp.ClientSession) -> PypiReleaseDownload | None:
@@ -242,12 +299,12 @@ def get_github_api_headers() -> Mapping[str, str]:
 
 
 @dataclass
-class GithubInfo:
+class GitHubInfo:
     repo_path: str
-    tags: list[dict[str, Any]]
+    tags: list[dict[str, Any]] = field(repr=False)
 
 
-async def get_github_repo_info(session: aiohttp.ClientSession, stub_info: StubInfo) -> GithubInfo | None:
+async def get_github_repo_info(session: aiohttp.ClientSession, stub_info: StubInfo) -> GitHubInfo | None:
     """
     If the project represented by `stub_info` is hosted on GitHub,
     return information regarding the project as it exists on GitHub.
@@ -255,7 +312,7 @@ async def get_github_repo_info(session: aiohttp.ClientSession, stub_info: StubIn
     Else, return None.
     """
     if stub_info.upstream_repository:
-        # We have various sanity checks for the upstream_repository field in tests/parse_metadata.py,
+        # We have various sanity checks for the upstream_repository field in tests/_metadata.py,
         # so no need to repeat all of them here
         split_url = urllib.parse.urlsplit(stub_info.upstream_repository)
         if split_url.netloc == "github.com":
@@ -266,11 +323,11 @@ async def get_github_repo_info(session: aiohttp.ClientSession, stub_info: StubIn
                 if response.status == 200:
                     tags: list[dict[str, Any]] = await response.json()
                     assert isinstance(tags, list)
-                    return GithubInfo(repo_path=url_path, tags=tags)
+                    return GitHubInfo(repo_path=url_path, tags=tags)
     return None
 
 
-class GithubDiffInfo(NamedTuple):
+class GitHubDiffInfo(NamedTuple):
     repo_path: str
     old_tag: str
     new_tag: str
@@ -279,7 +336,7 @@ class GithubDiffInfo(NamedTuple):
 
 async def get_diff_info(
     session: aiohttp.ClientSession, stub_info: StubInfo, pypi_version: packaging.version.Version
-) -> GithubDiffInfo | None:
+) -> GitHubDiffInfo | None:
     """Return a tuple giving info about the diff between two releases, if possible.
 
     Return `None` if the project isn't hosted on GitHub,
@@ -313,7 +370,7 @@ async def get_diff_info(
         old_tag = versions_to_tags[old_version]
 
     diff_url = f"https://github.com/{github_info.repo_path}/compare/{old_tag}...{new_tag}"
-    return GithubDiffInfo(repo_path=github_info.repo_path, old_tag=old_tag, new_tag=new_tag, diff_url=diff_url)
+    return GitHubDiffInfo(repo_path=github_info.repo_path, old_tag=old_tag, new_tag=new_tag, diff_url=diff_url)
 
 
 FileInfo: TypeAlias = dict[str, Any]
@@ -323,7 +380,7 @@ def _plural_s(num: int, /) -> str:
     return "s" if num != 1 else ""
 
 
-@dataclass
+@dataclass(repr=False)
 class DiffAnalysis:
     MAXIMUM_NUMBER_OF_FILES_TO_LIST: ClassVar[int] = 7
     py_files: list[FileInfo]
@@ -343,11 +400,10 @@ class DiffAnalysis:
 
     @functools.cached_property
     def public_files_added(self) -> Sequence[str]:
-        return [
-            file["filename"]
-            for file in self.py_files
-            if not re.match("_[^_]", Path(file["filename"]).name) and file["status"] == "added"
-        ]
+        def is_public(path: Path) -> bool:
+            return not re.match(r"_[^_]", path.name) and not path.name.startswith("test_")
+
+        return [file["filename"] for file in self.py_files if is_public(Path(file["filename"])) and file["status"] == "added"]
 
     @functools.cached_property
     def typeshed_files_deleted(self) -> Sequence[str]:
@@ -444,11 +500,12 @@ async def determine_action(stub_path: Path, session: aiohttp.ClientSession) -> U
 
     relevant_version = obsolete_since.version if obsolete_since else latest_version
 
-    project_urls = pypi_info.info["project_urls"] or {}
+    project_urls: dict[str, str] = pypi_info.info["project_urls"] or {}
     maybe_links: dict[str, str | None] = {
         "Release": f"{pypi_info.pypi_root}/{relevant_version}",
         "Homepage": project_urls.get("Homepage"),
         "Repository": stub_info.upstream_repository,
+        "Typeshed stubs": f"https://github.com/{TYPESHED_OWNER}/typeshed/tree/main/stubs/{stub_info.distribution}",
         "Changelog": project_urls.get("Changelog") or project_urls.get("Changes") or project_urls.get("Change Log"),
     }
     links = {k: v for k, v in maybe_links.items() if v is not None}
@@ -487,7 +544,7 @@ async def determine_action(stub_path: Path, session: aiohttp.ClientSession) -> U
     )
 
 
-@functools.lru_cache()
+@functools.lru_cache
 def get_origin_owner() -> str:
     output = subprocess.check_output(["git", "remote", "get-url", "origin"], text=True).strip()
     match = re.match(r"(git@github.com:|https://github.com/)(?P<owner>[^/]+)/(?P<repo>[^/\s]+)", output)

@@ -1,0 +1,121 @@
+# Error: is inconsistent
+# ======================
+# The drawOn method violates LSP all over the place and it's usually
+# optional parameters that only exist in a base class and some of them
+# are internal only like _sW, so we've decided to omit these, in order
+# to get less noise from derived classes that don't have these parameters
+reportlab\.platypus\.(doctemplate\.|flowables\.)?[A-Za-z_]+\.drawOn
+
+# similary the wrap/split methods use inconsistent names for their
+# parameters, so we decided to make them positional-only
+reportlab.graphics.shapes.Drawing.wrap
+reportlab\.platypus\.(doctemplate\.|flowables\.|tableofcontents\.)?[A-Za-z_]+\.split
+reportlab\.platypus\.(doctemplate\.|flowables\.|tableofcontents\.)?[A-Za-z_]+\.wrap
+reportlab.platypus.multicol.MultiCol.split
+reportlab.platypus.multicol.MultiCol.wrap
+reportlab.platypus.para.FastPara.split
+reportlab.platypus.para.FastPara.wrap
+reportlab.platypus.para.Para.split
+reportlab.platypus.para.Para.wrap
+reportlab.platypus.paragraph.Paragraph.split
+reportlab.platypus.paragraph.Paragraph.wrap
+reportlab.platypus.tables.Table.split
+reportlab.platypus.tables.Table.wrap
+
+# these have an optional extra argument which isn't consistently used
+# among subclasses, so we pretend it doesn't exist for now
+reportlab.platypus.flowables._ContainerSpace.getSpaceAfter
+reportlab.platypus.flowables._ContainerSpace.getSpaceBefore
+
+# this has an internal __boundary__ argument which confuses stubtest
+# we've decided to just get rid of the argument in the stub entirely
+reportlab.platypus.Frame.drawBoundary
+reportlab.platypus.frames.Frame.drawBoundary
+
+# this is just a case-insenstive version of dict and changes in parameter
+# names and them changing from positional-only to keyword or positional
+# is entirely untintentional, for simplicity we assume these methods
+# work the same as in the base class, there is only one exception
+# where the signature actually is more restrictive in CIDict
+reportlab.lib.utils.CIDict.get
+reportlab.lib.utils.CIDict.pop
+reportlab.lib.utils.CIDict.setdefault
+
+# these have a __module__ argument which confuses stubtest
+reportlab.lib.testutils.rlSkip
+reportlab.lib.testutils.rlSkipIf
+reportlab.lib.testutils.rlSkipUnless
+
+# __map__ argument confuses stubtest
+reportlab.lib.styles.str2alignment
+
+# __new__ just forwards the arguments to the super class
+# it doesn't actually accept arbitrary arguments
+reportlab.platypus.doctemplate.PTCycle.__new__
+
+# type[Canvas] is a _CanvasMaker, for some reason stubtest trips up
+reportlab.platypus.BaseDocTemplate.build
+reportlab.platypus.SimpleDocTemplate.build
+reportlab.platypus.doctemplate.BaseDocTemplate.build
+reportlab.platypus.doctemplate.SimpleDocTemplate.build
+reportlab.platypus.tableofcontents.SimpleIndex.getCanvasMaker
+
+
+# Error: not present in stub
+# ==========================
+# loop variables that weren't cleaned up
+reportlab.lib.fonts.v
+reportlab.graphics.barcode.code93.k
+reportlab.graphics.barcode.code93.v
+reportlab.graphics.barcode.qrencoder.i
+reportlab.lib.fonts.k
+reportlab.lib.pdfencrypt.i
+
+# *-imports that cause a mess we don't want to propagate
+reportlab.graphics.charts.lineplots.pi
+reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.EVEN_ODD
+reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.FILL_EVEN_ODD
+reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.FILL_NON_ZERO
+reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.NON_ZERO_WINDING
+reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.STATE_DEFAULTS
+reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.decimalSymbol
+reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.pi
+reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.shapeChecking
+reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.verbose
+
+# messed up __all__ which contains just a string
+reportlab.graphics.barcode.qr.C
+reportlab.graphics.barcode.qr.Q
+reportlab.graphics.barcode.qr.W
+reportlab.graphics.barcode.qr.__all__
+reportlab.graphics.barcode.qr.d
+reportlab.graphics.barcode.qr.e
+reportlab.graphics.barcode.qr.g
+reportlab.graphics.barcode.qr.i
+reportlab.graphics.barcode.qr.o
+reportlab.graphics.barcode.qr.r
+reportlab.graphics.barcode.qr.t
+
+# spelling mistake in __all__
+reportlab.graphics.barcode.ecc200datamatrix.ECC200datamatrix
+
+# wasn't removed from __all__ by accident
+reportlab.graphics.barcode.eanbc.isEanString
+
+
+# Error: is not present at runtime
+# ================================
+# These can have arbitrary attributes, so we add a __getattr__
+reportlab.lib.abag.ABag.__getattr__
+reportlab.lib.styles.PropertySet.__getattr__
+
+# Only exists on renderPM backend
+reportlab.graphics.utils.processGlyph
+
+
+# Error: failed to find stubs
+# ===========================
+# Modules that are only used for testing
+reportlab.graphics.testdrawings
+reportlab.graphics.testshapes
+reportlab.graphics.barcode.test

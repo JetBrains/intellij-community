@@ -13,10 +13,10 @@
 
 #include "util.h"
 
-#if PY_VERSION_HEX >= 0x030C00A5
-#define PYLONG_VALUE(o) ((PyLongObject *)o)->long_value.ob_digit[0]
-#else
+#ifdef IS_PY3K
 #define PYLONG_VALUE(o) ((PyLongObject *)o)->ob_digit[0]
+#else
+#define PYLONG_VALUE(o) PyInt_AS_LONG(o)
 #endif
 
 /*
@@ -100,7 +100,11 @@ static int _addpath(PyObject *dirs, PyObject *path)
 		}
 
 		/* Force Python to not reuse a small shared int. */
+#ifdef IS_PY3K
 		val = PyLong_FromLong(0x1eadbeef);
+#else
+		val = PyInt_FromLong(0x1eadbeef);
+#endif
 
 		if (val == NULL)
 			goto bail;
@@ -157,7 +161,7 @@ bail:
 	return ret;
 }
 
-static int dirs_fromdict(PyObject *dirs, PyObject *source, bool only_tracked)
+static int dirs_fromdict(PyObject *dirs, PyObject *source, char skipchar)
 {
 	PyObject *key, *value;
 	Py_ssize_t pos = 0;
@@ -167,14 +171,13 @@ static int dirs_fromdict(PyObject *dirs, PyObject *source, bool only_tracked)
 			PyErr_SetString(PyExc_TypeError, "expected string key");
 			return -1;
 		}
-		if (only_tracked) {
+		if (skipchar) {
 			if (!dirstate_tuple_check(value)) {
 				PyErr_SetString(PyExc_TypeError,
 				                "expected a dirstate tuple");
 				return -1;
 			}
-			if (!(((dirstateItemObject *)value)->flags &
-			      dirstate_flag_wc_tracked))
+			if (((dirstateItemObject *)value)->state == skipchar)
 				continue;
 		}
 
@@ -215,17 +218,15 @@ static int dirs_fromiter(PyObject *dirs, PyObject *source)
  * Calculate a refcounted set of directory names for the files in a
  * dirstate.
  */
-static int dirs_init(dirsObject *self, PyObject *args, PyObject *kwargs)
+static int dirs_init(dirsObject *self, PyObject *args)
 {
 	PyObject *dirs = NULL, *source = NULL;
-	int only_tracked = 0;
+	char skipchar = 0;
 	int ret = -1;
-	static char *keywords_name[] = {"map", "only_tracked", NULL};
 
 	self->dict = NULL;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|Oi:__init__",
-	                                 keywords_name, &source, &only_tracked))
+	if (!PyArg_ParseTuple(args, "|Oc:__init__", &source, &skipchar))
 		return -1;
 
 	dirs = PyDict_New();
@@ -236,10 +237,10 @@ static int dirs_init(dirsObject *self, PyObject *args, PyObject *kwargs)
 	if (source == NULL)
 		ret = 0;
 	else if (PyDict_Check(source))
-		ret = dirs_fromdict(dirs, source, (bool)only_tracked);
-	else if (only_tracked)
+		ret = dirs_fromdict(dirs, source, skipchar);
+	else if (skipchar)
 		PyErr_SetString(PyExc_ValueError,
-		                "`only_tracked` is only supported "
+		                "skip character is only supported "
 		                "with a dict source");
 	else
 		ret = dirs_fromiter(dirs, source);

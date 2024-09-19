@@ -4,10 +4,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyTypeParameterStub;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
@@ -59,6 +59,16 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   @Override
+  public @Nullable String getDefaultExpressionText() {
+    PyTypeParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getDefaultExpressionText();
+    }
+
+    return PyTypeParameter.super.getDefaultExpressionText();
+  }
+
+  @Override
   @NotNull
   public PyTypeParameter.Kind getKind() {
     PyTypeParameterStub stub = getStub();
@@ -97,5 +107,10 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
       return new PyClassTypeImpl(pyClass, false);
     }
     return null;
+  }
+
+  @Override
+  public @Nullable String getQualifiedName() {
+    return QualifiedNameFinder.getQualifiedName(this);
   }
 }

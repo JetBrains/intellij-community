@@ -1,6 +1,6 @@
 from collections.abc import Callable
-from typing import Any, TypeVar, overload
-from typing_extensions import Literal, TypeAlias
+from typing import Any, Literal, TypeVar, overload
+from typing_extensions import TypeAlias
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 _Actions: TypeAlias = Literal["default", "error", "ignore", "always", "module", "once"]
@@ -19,7 +19,7 @@ class ClassicAdapter:
     def __call__(self, wrapped: _F) -> Callable[[_F], _F]: ...
 
 @overload
-def deprecated(__wrapped: _F) -> _F: ...
+def deprecated(wrapped: _F, /) -> _F: ...
 @overload
 def deprecated(
     reason: str = ..., *, version: str = ..., action: _Actions | None = ..., category: type[Warning] | None = ...

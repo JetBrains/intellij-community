@@ -1,2 +1,0 @@
-# looks like developer tooling that's not part of the public API
-stdlib_list.fetch

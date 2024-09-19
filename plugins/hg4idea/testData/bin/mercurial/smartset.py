@@ -5,7 +5,9 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
+from .pycompat import getattr
 from . import (
     encoding,
     error,
@@ -19,7 +21,7 @@ def _typename(o):
     return pycompat.sysbytes(type(o).__name__).lstrip(b'_')
 
 
-class abstractsmartset:
+class abstractsmartset(object):
     def __nonzero__(self):
         """True if the smartset is not empty"""
         raise NotImplementedError()
@@ -136,7 +138,7 @@ class abstractsmartset:
 
         This is part of the mandatory API for smartset."""
         # builtin cannot be cached. but do not needs to
-        if cache and hasattr(condition, '__code__'):
+        if cache and util.safehasattr(condition, b'__code__'):
             condition = util.cachefunc(condition)
         return filteredset(self, condition, condrepr)
 
@@ -151,11 +153,11 @@ class abstractsmartset:
         # but start > stop is allowed, which should be an empty set.
         ys = []
         it = iter(self)
-        for x in range(start):
+        for x in pycompat.xrange(start):
             y = next(it, None)
             if y is None:
                 break
-        for x in range(stop - start):
+        for x in pycompat.xrange(stop - start):
             y = next(it, None)
             if y is None:
                 break
@@ -358,10 +360,10 @@ class baseset(abstractsmartset):
         return s
 
     def __and__(self, other):
-        return self._fastsetop(other, '__and__')
+        return self._fastsetop(other, b'__and__')
 
     def __sub__(self, other):
-        return self._fastsetop(other, '__sub__')
+        return self._fastsetop(other, b'__sub__')
 
     def _slice(self, start, stop):
         # creating new list should be generally cheaper than iterating items
@@ -667,9 +669,9 @@ class addset(abstractsmartset):
         # try to use our own fast iterator if it exists
         self._trysetasclist()
         if self._ascending:
-            attr = 'fastasc'
+            attr = b'fastasc'
         else:
-            attr = 'fastdesc'
+            attr = b'fastdesc'
         it = getattr(self, attr)
         if it is not None:
             return it()
@@ -991,7 +993,7 @@ class _spanset(abstractsmartset):
     """Duck type for baseset class which represents a range of revisions and
     can work lazily and without having all the range in memory
 
-    Note that spanset(x, y) behave almost like range(x, y) except for two
+    Note that spanset(x, y) behave almost like xrange(x, y) except for two
     notable points:
     - when x < y it will be automatically descending,
     - revision filtered with this repoview will be skipped.
@@ -1029,13 +1031,13 @@ class _spanset(abstractsmartset):
             return self.fastdesc()
 
     def fastasc(self):
-        iterrange = range(self._start, self._end)
+        iterrange = pycompat.xrange(self._start, self._end)
         if self._hiddenrevs:
             return self._iterfilter(iterrange)
         return iter(iterrange)
 
     def fastdesc(self):
-        iterrange = range(self._end - 1, self._start - 1, -1)
+        iterrange = pycompat.xrange(self._end - 1, self._start - 1, -1)
         if self._hiddenrevs:
             return self._iterfilter(iterrange)
         return iter(iterrange)
@@ -1126,16 +1128,13 @@ class fullreposet(_spanset):
         This boldly assumes the other contains valid revs only.
         """
         # other not a smartset, make is so
-        if not hasattr(other, 'isascending'):
+        if not util.safehasattr(other, b'isascending'):
             # filter out hidden revision
             # (this boldly assumes all smartset are pure)
             #
             # `other` was used with "&", let's assume this is a set like
             # object.
-            other = baseset(other)
-
-        if self._hiddenrevs:
-            other = other - self._hiddenrevs
+            other = baseset(other - self._hiddenrevs)
 
         other.sort(reverse=self.isdescending())
         return other

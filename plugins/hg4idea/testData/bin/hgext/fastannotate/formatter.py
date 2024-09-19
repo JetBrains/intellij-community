@@ -4,6 +4,7 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
+from __future__ import absolute_import
 
 from mercurial.node import (
     hex,
@@ -19,7 +20,7 @@ from mercurial.utils import dateutil
 
 # imitating mercurial.commands.annotate, not using the vanilla formatter since
 # the data structures are a bit different, and we have some fast paths.
-class defaultformatter:
+class defaultformatter(object):
     """the default formatter that does leftpad and support some common flags"""
 
     def __init__(self, ui, repo, opts):
@@ -93,7 +94,7 @@ class defaultformatter:
 
         # buffered output
         result = b''
-        for i in range(len(annotatedresult)):
+        for i in pycompat.xrange(len(annotatedresult)):
             for j, p in enumerate(pieces):
                 sep = self.funcmap[j][1]
                 padding = b' ' * (maxwidths[j] - len(p[i]))
@@ -148,7 +149,7 @@ class jsonformatter(defaultformatter):
 
         result = b''
         lasti = len(annotatedresult) - 1
-        for i in range(len(annotatedresult)):
+        for i in pycompat.xrange(len(annotatedresult)):
             result += b'\n {\n'
             for j, p in enumerate(pieces):
                 k, vs = p

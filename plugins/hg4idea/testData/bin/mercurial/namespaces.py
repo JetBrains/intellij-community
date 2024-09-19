@@ -1,5 +1,8 @@
+from __future__ import absolute_import
+
 from .i18n import _
 from . import (
+    pycompat,
     registrar,
     templatekw,
     util,
@@ -16,7 +19,7 @@ def tolist(val):
         return [val]
 
 
-class namespaces:
+class namespaces(object):
     """provides an interface to register and operate on multiple namespaces. See
     the namespace class below for details on the namespace object.
 
@@ -84,7 +87,7 @@ class namespaces:
         return self._names.get(namespace, default)
 
     def items(self):
-        return self._names.items()
+        return pycompat.iteritems(self._names)
 
     iteritems = items
 
@@ -117,14 +120,14 @@ class namespaces:
 
         Raises a KeyError if there is no such node.
         """
-        for ns, v in self._names.items():
+        for ns, v in pycompat.iteritems(self._names):
             n = v.singlenode(repo, name)
             if n:
                 return n
         raise KeyError(_(b'no such name: %s') % name)
 
 
-class namespace:
+class namespace(object):
     """provides an interface to a namespace
 
     Namespaces are basically generic many-to-many mapping between some

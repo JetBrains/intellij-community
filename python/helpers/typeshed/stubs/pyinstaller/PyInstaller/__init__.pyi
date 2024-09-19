@@ -1,4 +1,5 @@
-from typing_extensions import Final, LiteralString
+from typing import Final
+from typing_extensions import LiteralString
 
 from PyInstaller import compat as compat
 

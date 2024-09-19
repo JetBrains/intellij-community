@@ -5,6 +5,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import ctypes
 import ctypes.wintypes as wintypes
@@ -13,13 +14,6 @@ import msvcrt
 import os
 import random
 import subprocess
-
-from typing import (
-    List,
-    NoReturn,
-    Optional,
-    Tuple,
-)
 
 from . import (
     encoding,
@@ -363,7 +357,7 @@ _kernel32.PeekNamedPipe.argtypes = [
 _kernel32.PeekNamedPipe.restype = _BOOL
 
 
-def _raiseoserror(name: bytes) -> NoReturn:
+def _raiseoserror(name):
     # Force the code to a signed int to avoid an 'int too large' error.
     # See https://bugs.python.org/issue28474
     code = _kernel32.GetLastError()
@@ -375,7 +369,7 @@ def _raiseoserror(name: bytes) -> NoReturn:
     )
 
 
-def _getfileinfo(name: bytes) -> _BY_HANDLE_FILE_INFORMATION:
+def _getfileinfo(name):
     fh = _kernel32.CreateFileA(
         name,
         0,
@@ -396,7 +390,7 @@ def _getfileinfo(name: bytes) -> _BY_HANDLE_FILE_INFORMATION:
         _kernel32.CloseHandle(fh)
 
 
-def checkcertificatechain(cert: bytes, build: bool = True) -> bool:
+def checkcertificatechain(cert, build=True):
     """Tests the given certificate to see if there is a complete chain to a
     trusted root certificate.  As a side effect, missing certificates are
     downloaded and installed unless ``build=False``.  True is returned if a
@@ -446,7 +440,7 @@ def checkcertificatechain(cert: bytes, build: bool = True) -> bool:
         _crypt32.CertFreeCertificateContext(certctx)
 
 
-def oslink(src: bytes, dst: bytes) -> None:
+def oslink(src, dst):
     try:
         if not _kernel32.CreateHardLinkA(dst, src, None):
             _raiseoserror(src)
@@ -454,12 +448,12 @@ def oslink(src: bytes, dst: bytes) -> None:
         _raiseoserror(src)
 
 
-def nlinks(name: bytes) -> int:
+def nlinks(name):
     '''return number of hardlinks for the given file'''
     return _getfileinfo(name).nNumberOfLinks
 
 
-def samefile(path1: bytes, path2: bytes) -> bool:
+def samefile(path1, path2):
     '''Returns whether path1 and path2 refer to the same file or directory.'''
     res1 = _getfileinfo(path1)
     res2 = _getfileinfo(path2)
@@ -470,14 +464,14 @@ def samefile(path1: bytes, path2: bytes) -> bool:
     )
 
 
-def samedevice(path1: bytes, path2: bytes) -> bool:
+def samedevice(path1, path2):
     '''Returns whether path1 and path2 are on the same device.'''
     res1 = _getfileinfo(path1)
     res2 = _getfileinfo(path2)
     return res1.dwVolumeSerialNumber == res2.dwVolumeSerialNumber
 
 
-def peekpipe(pipe) -> int:
+def peekpipe(pipe):
     handle = msvcrt.get_osfhandle(pipe.fileno())  # pytype: disable=module-attr
     avail = _DWORD()
 
@@ -492,14 +486,14 @@ def peekpipe(pipe) -> int:
     return avail.value
 
 
-def lasterrorwaspipeerror(err) -> bool:
+def lasterrorwaspipeerror(err):
     if err.errno != errno.EINVAL:
         return False
     err = _kernel32.GetLastError()
     return err == _ERROR_BROKEN_PIPE or err == _ERROR_NO_DATA
 
 
-def testpid(pid: int) -> bool:
+def testpid(pid):
     """return True if pid is still running or unable to
     determine, False otherwise"""
     h = _kernel32.OpenProcess(_PROCESS_QUERY_INFORMATION, False, pid)
@@ -513,7 +507,7 @@ def testpid(pid: int) -> bool:
     return _kernel32.GetLastError() != _ERROR_INVALID_PARAMETER
 
 
-def executablepath() -> bytes:
+def executablepath():
     '''return full path of hg.exe'''
     size = 600
     buf = ctypes.create_string_buffer(size + 1)
@@ -527,7 +521,7 @@ def executablepath() -> bytes:
     return buf.value
 
 
-def getvolumename(path: bytes) -> Optional[bytes]:
+def getvolumename(path):
     """Get the mount point of the filesystem from a directory or file
     (best-effort)
 
@@ -548,7 +542,7 @@ def getvolumename(path: bytes) -> Optional[bytes]:
     return buf.value
 
 
-def getfstype(path: bytes) -> Optional[bytes]:
+def getfstype(path):
     """Get the filesystem type name from a directory or file (best-effort)
 
     Returns None if we are unsure. Raises OSError on ENOENT, EPERM, etc.
@@ -579,7 +573,7 @@ def getfstype(path: bytes) -> Optional[bytes]:
     return name.value
 
 
-def getuser() -> bytes:
+def getuser():
     '''return name of current user'''
     size = _DWORD(300)
     buf = ctypes.create_string_buffer(size.value + 1)
@@ -588,10 +582,10 @@ def getuser() -> bytes:
     return buf.value
 
 
-_signalhandler: List[_SIGNAL_HANDLER] = []
+_signalhandler = []
 
 
-def setsignalhandler() -> None:
+def setsignalhandler():
     """Register a termination handler for console events including
     CTRL+C. python signal handlers do not work well with socket
     operations.
@@ -608,7 +602,7 @@ def setsignalhandler() -> None:
         raise ctypes.WinError()  # pytype: disable=module-attr
 
 
-def hidewindow() -> None:
+def hidewindow():
     def callback(hwnd, pid):
         wpid = _DWORD()
         _user32.GetWindowThreadProcessId(hwnd, ctypes.byref(wpid))
@@ -621,7 +615,7 @@ def hidewindow() -> None:
     _user32.EnumWindows(_WNDENUMPROC(callback), pid)
 
 
-def termsize() -> Tuple[int, int]:
+def termsize():
     # cmd.exe does not handle CR like a unix console, the CR is
     # counted in the line length. On 80 columns consoles, if 80
     # characters are written, the following CR won't apply on the
@@ -642,7 +636,7 @@ def termsize() -> Tuple[int, int]:
     return width, height
 
 
-def enablevtmode() -> bool:
+def enablevtmode():
     """Enable virtual terminal mode for the associated console.  Return True if
     enabled, else False."""
 
@@ -668,7 +662,7 @@ def enablevtmode() -> bool:
     return True
 
 
-def spawndetached(args: List[bytes]) -> int:
+def spawndetached(args):
     # No standard library function really spawns a fully detached
     # process under win32 because they allocate pipes or other objects
     # to handle standard streams communications. Passing these objects
@@ -710,7 +704,7 @@ def spawndetached(args: List[bytes]) -> int:
     return pi.dwProcessId
 
 
-def unlink(f: bytes) -> None:
+def unlink(f):
     '''try to implement POSIX' unlink semantics on Windows'''
 
     if os.path.isdir(f):
@@ -739,13 +733,14 @@ def unlink(f: bytes) -> None:
     # callers to recreate f immediately while having other readers do their
     # implicit zombie filename blocking on a temporary name.
 
-    for tries in range(10):
+    for tries in pycompat.xrange(10):
         temp = b'%s-%08x' % (f, random.randint(0, 0xFFFFFFFF))
         try:
-            os.rename(f, temp)
+            os.rename(f, temp)  # raises OSError EEXIST if temp exists
             break
-        except FileExistsError:
-            pass
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
     else:
         raise IOError(errno.EEXIST, "No usable temporary filename found")
 
@@ -765,7 +760,7 @@ def unlink(f: bytes) -> None:
             pass
 
 
-def makedir(path: bytes, notindexed: bool) -> None:
+def makedir(path, notindexed):
     os.mkdir(path)
     if notindexed:
         _kernel32.SetFileAttributesA(path, _FILE_ATTRIBUTE_NOT_CONTENT_INDEXED)

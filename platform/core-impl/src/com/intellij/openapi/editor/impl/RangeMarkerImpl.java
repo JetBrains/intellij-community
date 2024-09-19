@@ -18,10 +18,12 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx {
   private static final Logger LOG = Logger.getInstance(RangeMarkerImpl.class);
@@ -429,7 +431,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   public long getScalarRange() {
     RangeMarkerTree.RMNode<?> node = myNode;
     if (node == null) {
-      return -1;
+      return myId;
     }
     long range = node.toScalarRange();
     int delta = node.computeDeltaUpToRoot();
@@ -440,7 +442,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   long toScalarRange() {
     RangeMarkerTree.RMNode<?> node = myNode;
     if (node == null) {
-      return -1;
+      return myId;
     }
     return node.toScalarRange();
   }
@@ -466,5 +468,16 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     int endOffset = Math.max(startOffset, TextRangeScalarUtil.endOffset(range));
     // piggyback myId to store offsets, to conserve memory
     myId = TextRangeScalarUtil.toScalarRange(startOffset, endOffset); // avoid invalid range
+  }
+
+  @TestOnly
+  public static void runAssertingInternalInvariants(@NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    RedBlackTree.VERIFY = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      RedBlackTree.VERIFY = false;
+    }
   }
 }

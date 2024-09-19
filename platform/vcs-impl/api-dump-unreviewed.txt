@@ -7533,6 +7533,7 @@ c:com.intellij.openapi.vcs.ui.CommitMessage
 - s:getEditor(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Editor
 - getEditorField():com.intellij.ui.EditorTextField
 - getText():java.lang.String
+- s:isCommitMessage(com.intellij.openapi.editor.Document):Z
 - s:isCommitMessage(com.intellij.psi.PsiElement):Z
 - requestFocusInMessage():V
 - setChangesSupplier(java.util.function.Supplier):V

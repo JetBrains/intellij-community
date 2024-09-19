@@ -1,7 +1,18 @@
-from typing import Any
+from _typeshed import Unused
+from _typeshed.wsgi import WSGIApplication
+from collections.abc import Callable, Iterable
+from typing import Any, Literal
 
-from waitress.server import create_server as create_server
+from waitress.adjustments import _AdjustmentsParams
+from waitress.server import BaseWSGIServer
 
-def serve(app: Any, **kw: Any) -> None: ...
-def serve_paste(app: Any, global_conf: Any, **kw: Any) -> int: ...
-def profile(cmd: Any, globals: Any, locals: Any, sort_order: tuple[str, ...], callers: bool) -> None: ...
+def serve(
+    app: WSGIApplication,
+    *,
+    _server: Callable[..., BaseWSGIServer] = ...,
+    _quiet: bool = False,
+    _profile: bool = False,
+    **kw: _AdjustmentsParams,
+) -> None: ...
+def serve_paste(app: WSGIApplication, global_conf: Unused, **kw: _AdjustmentsParams) -> Literal[0]: ...
+def profile(cmd: str, globals: dict[str, Any], locals: dict[str, Any], sort_order: Iterable[str], callers: bool) -> None: ...

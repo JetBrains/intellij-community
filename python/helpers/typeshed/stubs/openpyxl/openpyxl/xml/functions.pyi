@@ -1,8 +1,8 @@
 from _typeshed import Incomplete
 from re import Pattern
-from typing_extensions import Final
+from typing import Final
 
-# Can actually be imported from a mix of xml, lxml, et_xmlfile as defusedxml
+# Can actually be imported from a mix of xml, lxml, et_xmlfile and defusedxml
 # But et_xmlfile is untyped. openpyxl does not directly depend on lxml/lxml-stubs.
 # And forcing a dependency on defusedxml felt overkill as it just wraps xml
 # So for typing purposes, let's pretend xml is the only dependency.

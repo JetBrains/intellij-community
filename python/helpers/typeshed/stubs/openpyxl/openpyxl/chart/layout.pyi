@@ -1,8 +1,8 @@
-from _typeshed import Unused
-from typing import ClassVar
-from typing_extensions import Literal, TypeAlias
+from _typeshed import ConvertibleToFloat, Unused
+from typing import ClassVar, Literal
+from typing_extensions import TypeAlias
 
-from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToFloat
+from openpyxl.descriptors.base import Alias, Typed
 from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.nested import NestedMinMax, NestedNoneSet, NestedSet, _NestedNoneSetParam
 from openpyxl.descriptors.serialisable import Serialisable
@@ -34,10 +34,10 @@ class ManualLayout(Serialisable):
         yMode: _NestedNoneSetParam[_ManualLayoutMode] = None,
         wMode: _HasTagAndGet[_ManualLayoutMode] | _ManualLayoutMode = "factor",
         hMode: _HasTagAndGet[_ManualLayoutMode] | _ManualLayoutMode = "factor",
-        x: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
-        y: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
-        w: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
-        h: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        x: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
+        y: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
+        w: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
+        h: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
         extLst: Unused = None,
     ) -> None: ...
 

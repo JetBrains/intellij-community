@@ -1,35 +1,17 @@
-# SPDX-License-Identifier: MIT
+from __future__ import absolute_import, division, print_function
 
 
-class FrozenError(AttributeError):
+class FrozenInstanceError(AttributeError):
     """
-    A frozen/immutable instance or attribute have been attempted to be
-    modified.
+    A frozen/immutable instance has been attempted to be modified.
 
     It mirrors the behavior of ``namedtuples`` by using the same error message
-    and subclassing `AttributeError`.
-
-    .. versionadded:: 20.1.0
-    """
-
-    msg = "can't set attribute"
-    args = [msg]
-
-
-class FrozenInstanceError(FrozenError):
-    """
-    A frozen instance has been attempted to be modified.
+    and subclassing :exc:`AttributeError`.
 
     .. versionadded:: 16.1.0
     """
-
-
-class FrozenAttributeError(FrozenError):
-    """
-    A frozen attribute has been attempted to be modified.
-
-    .. versionadded:: 20.1.0
-    """
+    msg = "can't set attribute"
+    args = [msg]
 
 
 class AttrsAttributeNotFoundError(ValueError):
@@ -55,38 +37,3 @@ class DefaultAlreadySetError(RuntimeError):
 
     .. versionadded:: 17.1.0
     """
-
-
-class UnannotatedAttributeError(RuntimeError):
-    """
-    A class with ``auto_attribs=True`` has an ``attr.ib()`` without a type
-    annotation.
-
-    .. versionadded:: 17.3.0
-    """
-
-
-class PythonTooOldError(RuntimeError):
-    """
-    It was attempted to use an ``attrs`` feature that requires a newer Python
-    version.
-
-    .. versionadded:: 18.2.0
-    """
-
-
-class NotCallableError(TypeError):
-    """
-    A ``attr.ib()`` requiring a callable has been set with a value
-    that is not callable.
-
-    .. versionadded:: 19.2.0
-    """
-
-    def __init__(self, msg, value):
-        super(TypeError, self).__init__(msg, value)
-        self.msg = msg
-        self.value = value
-
-    def __str__(self):
-        return str(self.msg)

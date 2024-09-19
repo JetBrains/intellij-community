@@ -39,7 +39,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
-import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivityKt;
 import com.intellij.openapi.util.NlsContexts;
@@ -464,7 +463,7 @@ public final class PluginManagerConfigurable
               LOG.info("Main plugin repository is not available ('" + e.getMessage() + "'). Please check your network settings.");
             }
 
-            for (String host : UpdateSettings.getInstance().getPluginHosts()) {
+            for (String host : RepositoryHelper.getCustomPluginRepositoryHosts()) {
               List<PluginNode> allDescriptors = customRepositoriesMap.get(host);
               if (allDescriptors != null) {
                 String groupName = IdeBundle.message("plugins.configurable.repository.0", host);
@@ -544,7 +543,7 @@ public final class PluginManagerConfigurable
             attributes.add(SearchWords.TAG.getValue());
             attributes.add(SearchWords.SORT_BY.getValue());
             attributes.add(SearchWords.VENDOR.getValue());
-            if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
+            if (!RepositoryHelper.getCustomPluginRepositoryHosts().isEmpty()) {
               attributes.add(SearchWords.REPOSITORY.getValue());
             }
             attributes.add(SearchWords.STAFF_PICKS.getValue());
@@ -600,7 +599,7 @@ public final class PluginManagerConfigurable
                 }
                 yield myVendorsSorted;
               }
-              case REPOSITORY -> UpdateSettings.getInstance().getPluginHosts();
+              case REPOSITORY -> RepositoryHelper.getCustomPluginRepositoryHosts();
               case INTERNAL, SUGGESTED, STAFF_PICKS -> null;
             };
           }

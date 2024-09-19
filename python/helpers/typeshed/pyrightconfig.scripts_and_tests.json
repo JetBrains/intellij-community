@@ -6,8 +6,6 @@
         "tests",
     ],
     "typeCheckingMode": "strict",
-    // Runtime libraries used by typeshed are not all py.typed
-    "useLibraryCodeForTypes": true,
     // More of a lint. Unwanted for typeshed's own code.
     "reportImplicitStringConcatenation": "none",
     // Extra strict settings

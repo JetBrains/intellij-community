@@ -5,12 +5,17 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import stat
 
 from ..i18n import _
+from ..pycompat import getattr
 from .. import (
+    changelog,
     error,
+    filelog,
+    manifest,
     metadata,
     pycompat,
     requirements,
@@ -43,7 +48,32 @@ def get_sidedata_helpers(srcrepo, dstrepo):
     return sidedatamod.get_sidedata_helpers(srcrepo, dstrepo._wanted_sidedata)
 
 
-def _copyrevlog(tr, destrepo, oldrl, entry):
+def _revlogfrompath(repo, rl_type, path):
+    """Obtain a revlog from a repo path.
+
+    An instance of the appropriate class is returned.
+    """
+    if rl_type & store.FILEFLAGS_CHANGELOG:
+        return changelog.changelog(repo.svfs)
+    elif rl_type & store.FILEFLAGS_MANIFESTLOG:
+        mandir = b''
+        if b'/' in path:
+            mandir = path.rsplit(b'/', 1)[0]
+        return manifest.manifestrevlog(
+            repo.nodeconstants, repo.svfs, tree=mandir
+        )
+    else:
+        # drop the extension and the `data/` prefix
+        path_part = path.rsplit(b'.', 1)[0].split(b'/', 1)
+        if len(path_part) < 2:
+            msg = _(b'cannot recognize revlog from filename: %s')
+            msg %= path
+            raise error.Abort(msg)
+        path = path_part[1]
+        return filelog.filelog(repo.svfs, path)
+
+
+def _copyrevlog(tr, destrepo, oldrl, rl_type, unencodedname):
     """copy all relevant files for `oldrl` into `destrepo` store
 
     Files are copied "as is" without any transformation. The copy is performed
@@ -51,7 +81,7 @@ def _copyrevlog(tr, destrepo, oldrl, entry):
     content is compatible with format of the destination repository.
     """
     oldrl = getattr(oldrl, '_revlog', oldrl)
-    newrl = entry.get_revlog_instance(destrepo)
+    newrl = _revlogfrompath(destrepo, rl_type, unencodedname)
     newrl = getattr(newrl, '_revlog', newrl)
 
     oldvfs = oldrl.opener
@@ -69,8 +99,7 @@ def _copyrevlog(tr, destrepo, oldrl, entry):
     if copydata:
         util.copyfile(olddata, newdata)
 
-    if entry.is_filelog:
-        unencodedname = entry.main_file_path()
+    if rl_type & store.FILEFLAGS_FILELOG:
         destrepo.svfs.fncache.add(unencodedname)
         if copydata:
             destrepo.svfs.fncache.add(unencodedname[:-2] + b'.d')
@@ -85,18 +114,18 @@ UPGRADE_ALL_REVLOGS = frozenset(
 )
 
 
-def matchrevlog(revlogfilter, entry):
+def matchrevlog(revlogfilter, rl_type):
     """check if a revlog is selected for cloning.
 
     In other words, are there any updates which need to be done on revlog
     or it can be blindly copied.
 
     The store entry is checked against the passed filter"""
-    if entry.is_changelog:
+    if rl_type & store.FILEFLAGS_CHANGELOG:
         return UPGRADE_CHANGELOG in revlogfilter
-    elif entry.is_manifestlog:
+    elif rl_type & store.FILEFLAGS_MANIFESTLOG:
         return UPGRADE_MANIFEST in revlogfilter
-    assert entry.is_filelog
+    assert rl_type & store.FILEFLAGS_FILELOG
     return UPGRADE_FILELOGS in revlogfilter
 
 
@@ -105,20 +134,19 @@ def _perform_clone(
     dstrepo,
     tr,
     old_revlog,
-    entry,
+    rl_type,
+    unencoded,
     upgrade_op,
     sidedata_helpers,
     oncopiedrevision,
 ):
     """returns the new revlog object created"""
     newrl = None
-    revlog_path = entry.main_file_path()
-    if matchrevlog(upgrade_op.revlogs_to_process, entry):
+    if matchrevlog(upgrade_op.revlogs_to_process, rl_type):
         ui.note(
-            _(b'cloning %d revisions from %s\n')
-            % (len(old_revlog), revlog_path)
+            _(b'cloning %d revisions from %s\n') % (len(old_revlog), unencoded)
         )
-        newrl = entry.get_revlog_instance(dstrepo)
+        newrl = _revlogfrompath(dstrepo, rl_type, unencoded)
         old_revlog.clone(
             tr,
             newrl,
@@ -129,10 +157,10 @@ def _perform_clone(
         )
     else:
         msg = _(b'blindly copying %s containing %i revisions\n')
-        ui.note(msg % (revlog_path, len(old_revlog)))
-        _copyrevlog(tr, dstrepo, old_revlog, entry)
+        ui.note(msg % (unencoded, len(old_revlog)))
+        _copyrevlog(tr, dstrepo, old_revlog, rl_type, unencoded)
 
-        newrl = entry.get_revlog_instance(dstrepo)
+        newrl = _revlogfrompath(dstrepo, rl_type, unencoded)
     return newrl
 
 
@@ -173,11 +201,22 @@ def _clonerevlogs(
 
     # Perform a pass to collect metadata. This validates we can open all
     # source files and allows a unified progress bar to be displayed.
-    for entry in alldatafiles:
-        if not entry.is_revlog:
+    for rl_type, unencoded, encoded, size in alldatafiles:
+        if not rl_type & store.FILEFLAGS_REVLOG_MAIN:
             continue
 
-        rl = entry.get_revlog_instance(srcrepo)
+        # the store.walk function will wrongly pickup transaction backup and
+        # get confused. As a quick fix for 5.9 release, we ignore those.
+        # (this is not a module constants because it seems better to keep the
+        # hack together)
+        skip_undo = (
+            b'undo.backup.00changelog.i',
+            b'undo.backup.00manifest.i',
+        )
+        if unencoded in skip_undo:
+            continue
+
+        rl = _revlogfrompath(srcrepo, rl_type, unencoded)
 
         info = rl.storageinfo(
             exclusivefiles=True,
@@ -194,19 +233,19 @@ def _clonerevlogs(
         srcrawsize += rawsize
 
         # This is for the separate progress bars.
-        if entry.is_changelog:
-            changelogs[entry.target_id] = entry
+        if rl_type & store.FILEFLAGS_CHANGELOG:
+            changelogs[unencoded] = (rl_type, rl)
             crevcount += len(rl)
             csrcsize += datasize
             crawsize += rawsize
-        elif entry.is_manifestlog:
-            manifests[entry.target_id] = entry
+        elif rl_type & store.FILEFLAGS_MANIFESTLOG:
+            manifests[unencoded] = (rl_type, rl)
             mcount += 1
             mrevcount += len(rl)
             msrcsize += datasize
             mrawsize += rawsize
-        elif entry.is_filelog:
-            filelogs[entry.target_id] = entry
+        elif rl_type & store.FILEFLAGS_FILELOG:
+            filelogs[unencoded] = (rl_type, rl)
             fcount += 1
             frevcount += len(rl)
             fsrcsize += datasize
@@ -251,15 +290,14 @@ def _clonerevlogs(
         )
     )
     progress = srcrepo.ui.makeprogress(_(b'file revisions'), total=frevcount)
-    for target_id, entry in sorted(filelogs.items()):
-        oldrl = entry.get_revlog_instance(srcrepo)
-
+    for unencoded, (rl_type, oldrl) in sorted(filelogs.items()):
         newrl = _perform_clone(
             ui,
             dstrepo,
             tr,
             oldrl,
-            entry,
+            rl_type,
+            unencoded,
             upgrade_op,
             sidedata_helpers,
             oncopiedrevision,
@@ -292,14 +330,14 @@ def _clonerevlogs(
     progress = srcrepo.ui.makeprogress(
         _(b'manifest revisions'), total=mrevcount
     )
-    for target_id, entry in sorted(manifests.items()):
-        oldrl = entry.get_revlog_instance(srcrepo)
+    for unencoded, (rl_type, oldrl) in sorted(manifests.items()):
         newrl = _perform_clone(
             ui,
             dstrepo,
             tr,
             oldrl,
-            entry,
+            rl_type,
+            unencoded,
             upgrade_op,
             sidedata_helpers,
             oncopiedrevision,
@@ -331,14 +369,14 @@ def _clonerevlogs(
     progress = srcrepo.ui.makeprogress(
         _(b'changelog revisions'), total=crevcount
     )
-    for target_id, entry in sorted(changelogs.items()):
-        oldrl = entry.get_revlog_instance(srcrepo)
+    for unencoded, (rl_type, oldrl) in sorted(changelogs.items()):
         newrl = _perform_clone(
             ui,
             dstrepo,
             tr,
             oldrl,
-            entry,
+            rl_type,
+            unencoded,
             upgrade_op,
             sidedata_helpers,
             oncopiedrevision,
@@ -369,7 +407,7 @@ def _files_to_copy_post_revlog_clone(srcrepo):
     are cloned"""
     for path, kind, st in sorted(srcrepo.store.vfs.readdir(b'', stat=True)):
         # don't copy revlogs as they are already cloned
-        if store.is_revlog_file(path):
+        if store.revlog_type(path) is not None:
             continue
         # Skip transaction related files.
         if path.startswith(b'undo'):
@@ -446,15 +484,6 @@ def upgrade(ui, srcrepo, dstrepo, upgrade_op):
         ui.status(_(b'downgrading from dirstate-v2 to v1\n'))
         upgrade_dirstate(ui, srcrepo, upgrade_op, b'v2', b'v1')
         upgrade_op.removed_actions.remove(upgrade_actions.dirstatev2)
-
-    if upgrade_actions.dirstatetrackedkey in upgrade_op.upgrade_actions:
-        ui.status(_(b'create dirstate-tracked-hint file\n'))
-        upgrade_tracked_hint(ui, srcrepo, upgrade_op, add=True)
-        upgrade_op.upgrade_actions.remove(upgrade_actions.dirstatetrackedkey)
-    elif upgrade_actions.dirstatetrackedkey in upgrade_op.removed_actions:
-        ui.status(_(b'remove dirstate-tracked-hint file\n'))
-        upgrade_tracked_hint(ui, srcrepo, upgrade_op, add=False)
-        upgrade_op.removed_actions.remove(upgrade_actions.dirstatetrackedkey)
 
     if not (upgrade_op.upgrade_actions or upgrade_op.removed_actions):
         return
@@ -604,45 +633,17 @@ def upgrade_dirstate(ui, srcrepo, upgrade_op, old, new):
         util.copyfile(
             srcrepo.vfs.join(b'requires'), backupvfs.join(b'requires')
         )
-        try:
-            util.copyfile(
-                srcrepo.vfs.join(b'dirstate'), backupvfs.join(b'dirstate')
-            )
-        except FileNotFoundError:
-            # The dirstate does not exist on an empty repo or a repo with no
-            # revision checked out
-            pass
+        util.copyfile(
+            srcrepo.vfs.join(b'dirstate'), backupvfs.join(b'dirstate')
+        )
 
     assert srcrepo.dirstate._use_dirstate_v2 == (old == b'v2')
-    use_v2 = new == b'v2'
-    if use_v2:
-        # Write the requirements *before* upgrading
-        scmutil.writereporequirements(srcrepo, upgrade_op.new_requirements)
-
+    srcrepo.dirstate._map._use_dirstate_tree = True
     srcrepo.dirstate._map.preload()
-    srcrepo.dirstate._use_dirstate_v2 = use_v2
-    srcrepo.dirstate._map._use_dirstate_v2 = use_v2
+    srcrepo.dirstate._use_dirstate_v2 = new == b'v2'
+    srcrepo.dirstate._map._use_dirstate_v2 = srcrepo.dirstate._use_dirstate_v2
     srcrepo.dirstate._dirty = True
-    try:
-        srcrepo.vfs.unlink(b'dirstate')
-    except FileNotFoundError:
-        # The dirstate does not exist on an empty repo or a repo with no
-        # revision checked out
-        pass
-
+    srcrepo.vfs.unlink(b'dirstate')
     srcrepo.dirstate.write(None)
-    if not use_v2:
-        # Remove the v2 requirement *after* downgrading
-        scmutil.writereporequirements(srcrepo, upgrade_op.new_requirements)
-
-
-def upgrade_tracked_hint(ui, srcrepo, upgrade_op, add):
-    if add:
-        srcrepo.dirstate._use_tracked_hint = True
-        srcrepo.dirstate._dirty = True
-        srcrepo.dirstate._dirty_tracked_set = True
-        srcrepo.dirstate.write(None)
-    if not add:
-        srcrepo.dirstate.delete_tracked_hint()
 
     scmutil.writereporequirements(srcrepo, upgrade_op.new_requirements)

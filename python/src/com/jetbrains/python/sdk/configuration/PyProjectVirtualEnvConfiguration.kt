@@ -35,20 +35,21 @@ import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.getInterpreterVersion
 
 @RequiresEdt
-fun createVirtualEnvSynchronously(baseSdk: Sdk?,
-                                  existingSdks: List<Sdk>,
-                                  venvRoot: String,
-                                  projectBasePath: String?,
-                                  project: Project?,
-                                  module: Module?,
-                                  context: UserDataHolder = UserDataHolderBase(),
-                                  inheritSitePackages: Boolean = false,
-                                  makeShared: Boolean = false,
-                                  targetPanelExtension: TargetPanelExtension? = null): Sdk? {
-  if (baseSdk == null) return null
+fun createVirtualEnvSynchronously(
+  baseSdk: Sdk,
+  existingSdks: List<Sdk>,
+  venvRoot: String,
+  projectBasePath: String?,
+  project: Project?,
+  module: Module?,
+  context: UserDataHolder = UserDataHolderBase(),
+  inheritSitePackages: Boolean = false,
+  makeShared: Boolean = false,
+  targetPanelExtension: TargetPanelExtension? = null,
+): Result<Sdk> {
   val targetEnvironmentConfiguration = baseSdk.targetEnvConfiguration
   val installedSdk: Sdk = if (targetEnvironmentConfiguration == null) {
-    installSdkIfNeeded(baseSdk, module, existingSdks, context) ?: return null
+    installSdkIfNeeded(baseSdk, module, existingSdks, context).getOrElse { return Result.failure(it) }
   }
   else {
     baseSdk
@@ -77,7 +78,8 @@ fun createVirtualEnvSynchronously(baseSdk: Sdk?,
   val venvSdk = targetEnvironmentConfiguration.let {
     if (it == null) {
       // here is the local machine case
-      createSdkByGenerateTask(task, existingSdks, installedSdk, associatedPath, null) ?: return null
+      createSdkByGenerateTask(task, existingSdks, installedSdk, associatedPath, null)
+      ?: return Result.failure(Throwable("Error calling createSdkByGenerateTask"))
     }
     else {
       val homePath = ProgressManager.getInstance().run(task)
@@ -97,7 +99,7 @@ fun createVirtualEnvSynchronously(baseSdk: Sdk?,
     // If we would like to store preferred paths for non-local targets we need to use some key to identify the exact target.
     PySdkSettings.instance.onVirtualEnvCreated(installedSdk, FileUtil.toSystemIndependentName(venvRoot), projectPath)
   }
-  return venvSdk
+  return Result.success(venvSdk)
 }
 
 fun findPreferredVirtualEnvBaseSdk(existingBaseSdks: List<Sdk>): Sdk? {
@@ -110,12 +112,14 @@ fun findPreferredVirtualEnvBaseSdk(existingBaseSdks: List<Sdk>): Sdk? {
   }
 }
 
-internal fun createSdkForTarget(project: Project?,
-                                environmentConfiguration: TargetEnvironmentConfiguration,
-                                interpreterPath: String,
-                                existingSdks: Collection<Sdk>,
-                                targetPanelExtension: TargetPanelExtension?,
-                                sdkName: String? = null): Sdk {
+internal fun createSdkForTarget(
+  project: Project?,
+  environmentConfiguration: TargetEnvironmentConfiguration,
+  interpreterPath: String,
+  existingSdks: Collection<Sdk>,
+  targetPanelExtension: TargetPanelExtension?,
+  sdkName: String? = null,
+): Sdk {
   // TODO [targets] Should flavor be more flexible?
   val data = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, PyAddSdkPanelBase.virtualEnvSdkFlavor)).also {
     it.interpreterPath = interpreterPath

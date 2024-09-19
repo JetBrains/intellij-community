@@ -12,7 +12,7 @@ class FormField(Field, Generic[_BoundFormT]):
     form: _BoundFormT
     separator: str
     def __init__(
-        self: FormField[_BoundFormT],
+        self: FormField[_BoundFormT],  # pyright: ignore[reportInvalidTypeVarUse]  #11780
         form_class: type[_BoundFormT],
         label: str | None = None,
         validators: None = None,

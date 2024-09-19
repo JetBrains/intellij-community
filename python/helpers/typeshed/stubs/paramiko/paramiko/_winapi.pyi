@@ -42,6 +42,7 @@ if sys.platform == "win32":
         def __exit__(
             self, exc_type: type[BaseException] | None, exc_val: BaseException | None, tb: TracebackType | None
         ) -> None: ...
+
     READ_CONTROL: int
     STANDARD_RIGHTS_REQUIRED: int
     STANDARD_RIGHTS_READ: int

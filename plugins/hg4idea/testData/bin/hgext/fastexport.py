@@ -7,6 +7,7 @@
 # The format specification for fast-import streams can be found at
 # https://git-scm.com/docs/git-fast-import#_input_format
 
+from __future__ import absolute_import
 import re
 
 from mercurial.i18n import _
@@ -14,7 +15,7 @@ from mercurial.node import hex, nullrev
 from mercurial.utils import stringutil
 from mercurial import (
     error,
-    logcmdutil,
+    pycompat,
     registrar,
     scmutil,
 )
@@ -45,9 +46,9 @@ def convert_to_git_user(authormap, user, rev):
             % rev
         )
     if user_person:
-        return b'"%s" <%s>' % (user_person, user_email)
+        return b'"' + user_person + b'" <' + user_email + b'>'
     else:
-        return b"<%s>" % user_email
+        return b"<" + user_email + b">"
 
 
 def convert_to_git_date(date):
@@ -68,10 +69,10 @@ def convert_to_git_ref(branch):
     return b"refs/heads/" + branch
 
 
-def write_data(buf, data, add_newline=False):
+def write_data(buf, data, skip_newline):
     buf.append(b"data %d\n" % len(data))
     buf.append(data)
-    if add_newline or data[-1:] != b"\n":
+    if not skip_newline or data[-1:] != b"\n":
         buf.append(b"\n")
 
 
@@ -102,7 +103,7 @@ def export_commit(ui, repo, rev, marks, authormap):
             marks[filerev] = mark
             data = filectx.data()
             buf = [b"blob\n", b"mark :%d\n" % mark]
-            write_data(buf, data, True)
+            write_data(buf, data, False)
             ui.write(*buf, keepprogressbar=True)
             del buf
 
@@ -121,7 +122,7 @@ def export_commit(ui, repo, rev, marks, authormap):
             convert_to_git_date(ctx.date()),
         ),
     ]
-    write_data(buf, ctx.description())
+    write_data(buf, ctx.description(), True)
     if parents:
         buf.append(b"from :%d\n" % marks[parents[0].hex()])
     if len(parents) == 2:
@@ -175,20 +176,22 @@ def fastexport(ui, repo, *revs, **opts):
     It can be piped into corresponding import routines like "git fast-import".
     Incremental dumps can be created by using marks files.
     """
-    revs += tuple(opts.get("rev", []))
+    opts = pycompat.byteskwargs(opts)
+
+    revs += tuple(opts.get(b"rev", []))
     if not revs:
         revs = scmutil.revrange(repo, [b":"])
     else:
-        revs = logcmdutil.revrange(repo, revs)
+        revs = scmutil.revrange(repo, revs)
     if not revs:
         raise error.Abort(_(b"no revisions matched"))
-    authorfile = opts.get("authormap")
+    authorfile = opts.get(b"authormap")
     if authorfile:
         authormap = convcmd.readauthormap(ui, authorfile)
     else:
         authormap = {}
 
-    import_marks = opts.get("import_marks")
+    import_marks = opts.get(b"import_marks")
     marks = {}
     if import_marks:
         with open(import_marks, "rb") as import_marks_file:
@@ -206,7 +209,7 @@ def fastexport(ui, repo, *revs, **opts):
             export_commit(ui, repo, rev, marks, authormap)
             progress.increment()
 
-    export_marks = opts.get("export_marks")
+    export_marks = opts.get(b"export_marks")
     if export_marks:
         with open(export_marks, "wb") as export_marks_file:
             output_marks = [None] * len(marks)

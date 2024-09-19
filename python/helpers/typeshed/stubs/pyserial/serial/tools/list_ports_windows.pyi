@@ -35,6 +35,7 @@ if sys.platform == "win32":
         ClassGuid: ctypes._CField[Incomplete, Incomplete, Incomplete]
         DevInst: ctypes._CField[Incomplete, Incomplete, Incomplete]
         Reserved: ctypes._CField[Incomplete, Incomplete, Incomplete]
+
     PSP_DEVINFO_DATA: type[ctypes._Pointer[SP_DEVINFO_DATA]]
     PSP_DEVICE_INTERFACE_DETAIL_DATA = ctypes.c_void_p
     setupapi: ctypes.WinDLL

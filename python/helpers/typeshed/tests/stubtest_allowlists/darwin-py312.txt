@@ -1,8 +1,0 @@
-# These entries looks like a `setup-python` bug:
-(dbm.gnu)?
-(_?locale.bind_textdomain_codeset)?
-(_?locale.bindtextdomain)?
-(_?locale.dcgettext)?
-(_?locale.dgettext)?
-(_?locale.gettext)?
-(_?locale.textdomain)?

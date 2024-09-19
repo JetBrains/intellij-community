@@ -252,6 +252,21 @@ public final class PyCustomType implements PyClassLikeType {
     }
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PyCustomType type)) return false;
+    return myInstanceType == type.myInstanceType &&
+           myTypesToMimicAsSuperTypes == type.myTypesToMimicAsSuperTypes &&
+           Objects.equals(myTypesToMimic, type.myTypesToMimic) &&
+           Objects.equals(myQualifiedName, type.myQualifiedName);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myInstanceType, myTypesToMimicAsSuperTypes, myQualifiedName, myTypesToMimic);
+  }
+
 
   /**
    * Predicate that filters resolve candidates using {@link #myFilter}

@@ -5,6 +5,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import collections
 import gc
@@ -19,7 +20,7 @@ from . import (
 )
 
 
-class repoloader:
+class repoloader(object):
     """Load repositories in background thread
 
     This is designed for a forking server. A cached repo cannot be obtained
@@ -119,8 +120,7 @@ def _warmupcache(repo):
     repo.obsstore.children
     for name in obsolete.cachefuncs:
         obsolete.getrevs(repo, name)
-    # ensure the phase cache is fully initialized
-    repo._phasecache.phase(repo, repo.changelog.tiprev())
+    repo._phasecache.loadphaserevs(repo)
 
 
 # TODO: think about proper API of attaching preloaded attributes
@@ -130,7 +130,7 @@ def copycache(srcrepo, destrepo):
     srcfilecache = srcrepo._filecache
     if b'changelog' in srcfilecache:
         destfilecache[b'changelog'] = ce = srcfilecache[b'changelog']
-        ce.obj.opener = ce.obj._inner.opener = destrepo.svfs
+        ce.obj.opener = ce.obj._realopener = destrepo.svfs
     if b'obsstore' in srcfilecache:
         destfilecache[b'obsstore'] = ce = srcfilecache[b'obsstore']
         ce.obj.svfs = destrepo.svfs

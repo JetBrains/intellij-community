@@ -14,8 +14,15 @@ import java.util.*
 
 @State(name = "DiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))], category = SettingsCategory.CODE)
 class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
+  enum class IncludeInNavigationHistory {
+    Always,
+    OnlyIfOpen,
+    Never;
+  }
+
   data class SharedSettings(
-    var GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE: Boolean = true
+    var GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE: Boolean = true,
+    var IS_INCLUDED_IN_NAVIGATION_HISTORY: IncludeInNavigationHistory = IncludeInNavigationHistory.OnlyIfOpen
   )
 
   data class PlaceSettings(
@@ -34,6 +41,11 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
     var isGoToNextFileOnNextDifference: Boolean
       get()      = SHARED_SETTINGS.GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE
       set(value) { SHARED_SETTINGS.GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE = value }
+
+    // TODO: Trigger IdeDocumentHistoryImpl#removeInvalidFilesFrom on change somehow
+    var isIncludedInNavigationHistory: IncludeInNavigationHistory
+      get()      = SHARED_SETTINGS.IS_INCLUDED_IN_NAVIGATION_HISTORY
+      set(value) { SHARED_SETTINGS.IS_INCLUDED_IN_NAVIGATION_HISTORY = value }
 
     var isSyncBinaryEditorSettings: Boolean
       get()      = PLACE_SETTINGS.SYNC_BINARY_EDITOR_SETTINGS

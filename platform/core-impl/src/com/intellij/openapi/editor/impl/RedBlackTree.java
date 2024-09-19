@@ -14,7 +14,7 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
   // this "extends AtomicInteger" thing is for supporting modCounter.
   // I couldn't make it "volatile int" field because Unsafe.getAndAddInt is since jdk8 only, and "final AtomicInteger" field would be too many indirections
 
-  public static boolean VERIFY;
+  static boolean VERIFY;
   private static final int INDENT_STEP = 4;
   private int nodeSize; // number of nodes
   protected Node<K> root;

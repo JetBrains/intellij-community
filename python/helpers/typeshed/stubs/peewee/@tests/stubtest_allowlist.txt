@@ -1,25 +1,16 @@
-peewee.DQ.__invert__
-peewee.DateField.day
-peewee.DateField.month
-peewee.DateField.year
-peewee.DateTimeField.day
-peewee.DateTimeField.hour
-peewee.DateTimeField.minute
-peewee.DateTimeField.month
-peewee.DateTimeField.second
-peewee.DateTimeField.year
+# Stubtest doesn't recognize __ as indicating positional-only arg at runtime
+# https://github.com/python/mypy/issues/15302
 peewee.Model.insert
 peewee.Model.replace
 peewee.Model.update
-peewee.TimeField.hour
-peewee.TimeField.minute
-peewee.TimeField.second
-peewee.TimestampField.day
-peewee.TimestampField.hour
-peewee.TimestampField.minute
-peewee.TimestampField.month
-peewee.TimestampField.second
-peewee.TimestampField.year
+# Wrapped with @Node.copy which changes the signature to "def (self, *args, **kwargs)"
+peewee.DQ.__invert__
 peewee.Window.as_groups
 peewee.Window.as_range
 peewee.Window.as_rows
+
+# Ignore missing playhouse modules and names we don't currently provide
+playhouse\.\w+?
+playhouse.flask_utils.PaginatedQuery
+playhouse.flask_utils.get_\w+
+playhouse.flask_utils.object_list

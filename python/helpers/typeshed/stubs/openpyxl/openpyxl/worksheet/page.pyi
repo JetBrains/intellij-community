@@ -1,8 +1,8 @@
-from _typeshed import Incomplete
-from typing import ClassVar
-from typing_extensions import Literal, Self, TypeAlias
+from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete
+from typing import ClassVar, Literal
+from typing_extensions import Self, TypeAlias
 
-from openpyxl.descriptors.base import Bool, Float, Integer, NoneSet, _ConvertibleToBool, _ConvertibleToFloat, _ConvertibleToInt
+from openpyxl.descriptors.base import Bool, Float, Integer, NoneSet, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable, _ChildSerialisableTreeElement
 from openpyxl.worksheet.properties import PageSetupProperties
 
@@ -36,11 +36,11 @@ class PrintPageSetup(Serialisable):
         self,
         worksheet: Incomplete | None = None,
         orientation: _PrintPageSetupOrientation | Literal["none"] | None = None,
-        paperSize: _ConvertibleToInt | None = None,
-        scale: _ConvertibleToInt | None = None,
-        fitToHeight: _ConvertibleToInt | None = None,
-        fitToWidth: _ConvertibleToInt | None = None,
-        firstPageNumber: _ConvertibleToInt | None = None,
+        paperSize: ConvertibleToInt | None = None,
+        scale: ConvertibleToInt | None = None,
+        fitToHeight: ConvertibleToInt | None = None,
+        fitToWidth: ConvertibleToInt | None = None,
+        firstPageNumber: ConvertibleToInt | None = None,
         useFirstPageNumber: _ConvertibleToBool | None = None,
         paperHeight: Incomplete | None = None,
         paperWidth: Incomplete | None = None,
@@ -50,9 +50,9 @@ class PrintPageSetup(Serialisable):
         draft: _ConvertibleToBool | None = None,
         cellComments: _PrintPageSetupCellComments | Literal["none"] | None = None,
         errors: _PrintPageSetupErrors | Literal["none"] | None = None,
-        horizontalDpi: _ConvertibleToInt | None = None,
-        verticalDpi: _ConvertibleToInt | None = None,
-        copies: _ConvertibleToInt | None = None,
+        horizontalDpi: ConvertibleToInt | None = None,
+        verticalDpi: ConvertibleToInt | None = None,
+        copies: ConvertibleToInt | None = None,
         id: Incomplete | None = None,
     ) -> None: ...
     def __bool__(self) -> bool: ...
@@ -96,10 +96,10 @@ class PageMargins(Serialisable):
     footer: Float[Literal[False]]
     def __init__(
         self,
-        left: _ConvertibleToFloat = 0.75,
-        right: _ConvertibleToFloat = 0.75,
-        top: _ConvertibleToFloat = 1,
-        bottom: _ConvertibleToFloat = 1,
-        header: _ConvertibleToFloat = 0.5,
-        footer: _ConvertibleToFloat = 0.5,
+        left: ConvertibleToFloat = 0.75,
+        right: ConvertibleToFloat = 0.75,
+        top: ConvertibleToFloat = 1,
+        bottom: ConvertibleToFloat = 1,
+        header: ConvertibleToFloat = 0.5,
+        footer: ConvertibleToFloat = 0.5,
     ) -> None: ...

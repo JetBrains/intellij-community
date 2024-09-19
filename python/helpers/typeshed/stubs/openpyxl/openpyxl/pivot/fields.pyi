@@ -1,40 +1,29 @@
-from _typeshed import Incomplete
+from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete
 from datetime import datetime
-from typing import ClassVar, overload
-from typing_extensions import Literal
+from typing import ClassVar, Literal, overload
 
-from openpyxl.descriptors.base import (
-    Bool,
-    DateTime,
-    Float,
-    Integer,
-    String,
-    Typed,
-    _ConvertibleToBool,
-    _ConvertibleToFloat,
-    _ConvertibleToInt,
-)
+from openpyxl.descriptors.base import Bool, DateTime, Float, Integer, String, Typed, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable
 
 class Index(Serialisable):
     tagname: ClassVar[str]
     v: Integer[Literal[True]]
-    def __init__(self, v: _ConvertibleToInt | None = 0) -> None: ...
+    def __init__(self, v: ConvertibleToInt | None = 0) -> None: ...
 
 class Tuple(Serialisable):
-    fld: Integer[Literal[False]]
-    hier: Integer[Literal[False]]
+    fld: Integer[Literal[True]]
+    hier: Integer[Literal[True]]
     item: Integer[Literal[False]]
-    def __init__(self, fld: _ConvertibleToInt, hier: _ConvertibleToInt, item: _ConvertibleToInt) -> None: ...
+    def __init__(self, fld: ConvertibleToInt, hier: ConvertibleToInt, item: ConvertibleToInt) -> None: ...
 
 class TupleList(Serialisable):
     c: Integer[Literal[True]]
     tpl: Typed[Tuple, Literal[False]]
     __elements__: ClassVar[tuple[str, ...]]
     @overload
-    def __init__(self, c: _ConvertibleToInt | None = None, *, tpl: Tuple) -> None: ...
+    def __init__(self, c: ConvertibleToInt | None = None, *, tpl: Tuple) -> None: ...
     @overload
-    def __init__(self, c: _ConvertibleToInt | None, tpl: Tuple) -> None: ...
+    def __init__(self, c: ConvertibleToInt | None, tpl: Tuple) -> None: ...
 
 class Missing(Serialisable):
     tagname: ClassVar[str]
@@ -59,8 +48,8 @@ class Missing(Serialisable):
         u: _ConvertibleToBool | None = None,
         f: _ConvertibleToBool | None = None,
         c: str | None = None,
-        cp: _ConvertibleToInt | None = None,
-        _in: _ConvertibleToInt | None = None,
+        cp: ConvertibleToInt | None = None,
+        _in: ConvertibleToInt | None = None,
         bc: Incomplete | None = None,
         fc: Incomplete | None = None,
         i: _ConvertibleToBool | None = None,
@@ -92,12 +81,12 @@ class Number(Serialisable):
         tpls=(),
         x=(),
         *,
-        v: _ConvertibleToFloat,
+        v: ConvertibleToFloat,
         u: _ConvertibleToBool | None = None,
         f: _ConvertibleToBool | None = None,
         c: str | None = None,
-        cp: _ConvertibleToInt | None = None,
-        _in: _ConvertibleToInt | None = None,
+        cp: ConvertibleToInt | None = None,
+        _in: ConvertibleToInt | None = None,
         bc: Incomplete | None = None,
         fc: Incomplete | None = None,
         i: _ConvertibleToBool | None = None,
@@ -110,12 +99,12 @@ class Number(Serialisable):
         self,
         tpls,
         x,
-        v: _ConvertibleToFloat,
+        v: ConvertibleToFloat,
         u: _ConvertibleToBool | None = None,
         f: _ConvertibleToBool | None = None,
         c: str | None = None,
-        cp: _ConvertibleToInt | None = None,
-        _in: _ConvertibleToInt | None = None,
+        cp: ConvertibleToInt | None = None,
+        _in: ConvertibleToInt | None = None,
         bc: Incomplete | None = None,
         fc: Incomplete | None = None,
         i: _ConvertibleToBool | None = None,
@@ -151,8 +140,8 @@ class Error(Serialisable):
         u: _ConvertibleToBool | None = None,
         f: _ConvertibleToBool | None = None,
         c: str | None = None,
-        cp: _ConvertibleToInt | None = None,
-        _in: _ConvertibleToInt | None = None,
+        cp: ConvertibleToInt | None = None,
+        _in: ConvertibleToInt | None = None,
         bc: Incomplete | None = None,
         fc: Incomplete | None = None,
         i: _ConvertibleToBool | None = None,
@@ -169,8 +158,8 @@ class Error(Serialisable):
         u: _ConvertibleToBool | None = None,
         f: _ConvertibleToBool | None = None,
         c: str | None = None,
-        cp: _ConvertibleToInt | None = None,
-        _in: _ConvertibleToInt | None = None,
+        cp: ConvertibleToInt | None = None,
+        _in: ConvertibleToInt | None = None,
         bc: Incomplete | None = None,
         fc: Incomplete | None = None,
         i: _ConvertibleToBool | None = None,
@@ -195,7 +184,7 @@ class Boolean(Serialisable):
         u: _ConvertibleToBool | None = None,
         f: _ConvertibleToBool | None = None,
         c: str | None = None,
-        cp: _ConvertibleToInt | None = None,
+        cp: ConvertibleToInt | None = None,
     ) -> None: ...
 
 class Text(Serialisable):
@@ -223,8 +212,8 @@ class Text(Serialisable):
         u: _ConvertibleToBool | None = None,
         f: _ConvertibleToBool | None = None,
         c: Incomplete | None = None,
-        cp: _ConvertibleToInt | None = None,
-        _in: _ConvertibleToInt | None = None,
+        cp: ConvertibleToInt | None = None,
+        _in: ConvertibleToInt | None = None,
         bc: Incomplete | None = None,
         fc: Incomplete | None = None,
         i: _ConvertibleToBool | None = None,
@@ -249,5 +238,5 @@ class DateTimeField(Serialisable):
         u: _ConvertibleToBool | None = None,
         f: _ConvertibleToBool | None = None,
         c: str | None = None,
-        cp: _ConvertibleToInt | None = None,
+        cp: ConvertibleToInt | None = None,
     ) -> None: ...

@@ -1,0 +1,5 @@
+version = "2.0.*"
+# Requires a version of numpy with a `py.typed` file
+# TODO: stubtest errors when using numpy 2
+requires = ["numpy>=1.20,<2"]
+upstream_repository = "https://github.com/shapely/shapely"

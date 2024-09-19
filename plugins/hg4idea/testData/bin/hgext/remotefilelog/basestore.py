@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+
+import errno
 import os
 import shutil
 import stat
@@ -18,7 +21,7 @@ from . import (
 )
 
 
-class basestore:
+class basestore(object):
     def __init__(self, repo, path, reponame, shared=False):
         """Creates a remotefilelog store object for the given repo name.
 
@@ -145,7 +148,7 @@ class basestore:
 
         filenamemap = self._resolvefilenames(existing.keys())
 
-        for filename, sha in filenamemap.items():
+        for filename, sha in pycompat.iteritems(filenamemap):
             yield (filename, existing[sha])
 
     def _resolvefilenames(self, hashes):
@@ -170,7 +173,7 @@ class basestore:
 
         # Scan the changelog until we've found every file name
         cl = self.repo.unfiltered().changelog
-        for rev in range(len(cl) - 1, -1, -1):
+        for rev in pycompat.xrange(len(cl) - 1, -1, -1):
             if not missingfilename:
                 break
             files = cl.readfiles(cl.node(rev))
@@ -343,7 +346,10 @@ class basestore:
                 count += 1
                 try:
                     pathstat = os.stat(path)
-                except FileNotFoundError:
+                except OSError as e:
+                    # errno.ENOENT = no such file or directory
+                    if e.errno != errno.ENOENT:
+                        raise
                     msg = _(
                         b"warning: file %s was removed by another process\n"
                     )
@@ -358,7 +364,10 @@ class basestore:
                 else:
                     try:
                         shallowutil.unlinkfile(path)
-                    except FileNotFoundError:
+                    except OSError as e:
+                        # errno.ENOENT = no such file or directory
+                        if e.errno != errno.ENOENT:
+                            raise
                         msg = _(
                             b"warning: file %s was removed by another "
                             b"process\n"
@@ -381,7 +390,10 @@ class basestore:
                 atime, oldpath, oldpathstat = queue.get()
                 try:
                     shallowutil.unlinkfile(oldpath)
-                except FileNotFoundError:
+                except OSError as e:
+                    # errno.ENOENT = no such file or directory
+                    if e.errno != errno.ENOENT:
+                        raise
                     msg = _(
                         b"warning: file %s was removed by another process\n"
                     )
@@ -402,7 +414,7 @@ class basestore:
         )
 
 
-class baseunionstore:
+class baseunionstore(object):
     def __init__(self, *args, **kwargs):
         # If one of the functions that iterates all of the stores is about to
         # throw a KeyError, try this many times with a full refresh between
@@ -415,7 +427,7 @@ class baseunionstore:
 
     def markforrefresh(self):
         for store in self.stores:
-            if hasattr(store, 'markforrefresh'):
+            if util.safehasattr(store, b'markforrefresh'):
                 store.markforrefresh()
 
     @staticmethod

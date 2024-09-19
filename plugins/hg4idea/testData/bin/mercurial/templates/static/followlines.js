@@ -50,13 +50,13 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.classList.add('btn-followlines');
         var plusSpan = document.createElement('span');
         plusSpan.classList.add('followlines-plus');
-        plusSpan.innerHTML = '&plus;';
+        plusSpan.textContent = '+';
         btn.appendChild(plusSpan);
         var br = document.createElement('br');
         btn.appendChild(br);
         var minusSpan = document.createElement('span');
         minusSpan.classList.add('followlines-minus');
-        minusSpan.innerHTML = '&minus;';
+        minusSpan.textContent = '−';
         btn.appendChild(minusSpan);
         return btn;
     }

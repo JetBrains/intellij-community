@@ -1,10 +1,12 @@
 from _typeshed import Incomplete, Unused
 from collections import defaultdict
 from logging import Logger
-from typing_extensions import Final
+from typing import Final
 
 from .annotations import AnnotationDict
 from .encryption import StandardSecurityHandler
+from .fpdf import FPDF
+from .image_datastructures import RasterImageInfo
 from .syntax import Name, PDFArray, PDFContentStream, PDFObject, PDFString
 
 LOGGER: Logger
@@ -38,19 +40,6 @@ class PDFFont(PDFObject):
         d_w: Incomplete | None = None,
         w: Incomplete | None = None,
     ) -> None: ...
-
-class PDFFontDescriptor(PDFObject):
-    type: Name
-    ascent: Incomplete
-    descent: Incomplete
-    cap_height: Incomplete
-    flags: Incomplete
-    font_b_box: Incomplete
-    italic_angle: Incomplete
-    stem_v: Incomplete
-    missing_width: Incomplete
-    font_name: Incomplete | None
-    def __init__(self, ascent, descent, cap_height, flags, font_b_box, italic_angle, stem_v, missing_width) -> None: ...
 
 class CIDSystemInfo(PDFObject):
     registry: PDFString
@@ -185,12 +174,23 @@ class PDFXrefAndTrailer(ContentWithoutID):
     def serialize(self, _security_handler: StandardSecurityHandler | None = None) -> str: ...
 
 class OutputProducer:
-    fpdf: Incomplete
+    fpdf: FPDF
     pdf_objs: list[Incomplete]
     obj_id: int
     offsets: dict[Incomplete, Incomplete]
     trace_labels_per_obj_id: dict[Incomplete, Incomplete]
     sections_size_per_trace_label: defaultdict[Incomplete, int]
     buffer: bytearray
-    def __init__(self, fpdf) -> None: ...
+    def __init__(self, fpdf: FPDF) -> None: ...
     def bufferize(self) -> bytearray: ...
+
+def stream_content_for_raster_image(
+    info: RasterImageInfo,
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    keep_aspect_ratio: bool = False,
+    scale: float = 1,
+    pdf_height_to_flip: float | None = None,
+) -> str: ...

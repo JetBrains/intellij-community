@@ -27,6 +27,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
+/**
+ * Might be used for application-wide overriding of [ReaderModeSettings.kt] defaults.
+ * Useful when some product requires a different default value.
+ */
 interface ReaderModeDefaultsOverride {
 
   companion object {

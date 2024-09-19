@@ -414,14 +414,19 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-27148
   public void testNamedTupleSpecial() {
-    final List<String> suggested = doTestByText("""
-                                                  from collections import namedtuple
-                                                  class Cat1(namedtuple("Cat", "name age")):
-                                                      pass
-                                                  c1 = Cat1("name", 5)
-                                                  c1.<caret>""");
-    assertNotNull(suggested);
-    assertContainsElements(suggested, PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES);
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final List<String> suggested = doTestByText("""
+                                                      from collections import namedtuple
+                                                      class Cat1(namedtuple("Cat", "name age")):
+                                                          pass
+                                                      c1 = Cat1("name", 5)
+                                                      c1.<caret>""");
+        assertNotNull(suggested);
+        assertContainsElements(suggested, PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES);
+      }
+    );
   }
 
   // PY-33254, PY-12339, PY-40834

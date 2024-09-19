@@ -5,18 +5,14 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import difflib
 import re
 import struct
 
-from typing import (
-    List,
-    Tuple,
-)
 
-
-def splitnewlines(text: bytes) -> List[bytes]:
+def splitnewlines(text):
     '''like str.splitlines, but only split on newlines.'''
     lines = [l + b'\n' for l in text.split(b'\n')]
     if lines:
@@ -27,9 +23,7 @@ def splitnewlines(text: bytes) -> List[bytes]:
     return lines
 
 
-def _normalizeblocks(
-    a: List[bytes], b: List[bytes], blocks
-) -> List[Tuple[int, int, int]]:
+def _normalizeblocks(a, b, blocks):
     prev = None
     r = []
     for curr in blocks:
@@ -64,7 +58,7 @@ def _normalizeblocks(
     return r
 
 
-def bdiff(a: bytes, b: bytes) -> bytes:
+def bdiff(a, b):
     a = bytes(a).splitlines(True)
     b = bytes(b).splitlines(True)
 
@@ -91,7 +85,7 @@ def bdiff(a: bytes, b: bytes) -> bytes:
     return b"".join(bin)
 
 
-def blocks(a: bytes, b: bytes) -> List[Tuple[int, int, int, int]]:
+def blocks(a, b):
     an = splitnewlines(a)
     bn = splitnewlines(b)
     d = difflib.SequenceMatcher(None, an, bn).get_matching_blocks()
@@ -99,7 +93,7 @@ def blocks(a: bytes, b: bytes) -> List[Tuple[int, int, int, int]]:
     return [(i, i + n, j, j + n) for (i, j, n) in d]
 
 
-def fixws(text: bytes, allws: bool) -> bytes:
+def fixws(text, allws):
     if allws:
         text = re.sub(b'[ \t\r]+', b'', text)
     else:

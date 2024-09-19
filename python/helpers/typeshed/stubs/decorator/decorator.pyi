@@ -4,8 +4,8 @@ from collections.abc import Callable, Iterator
 from contextlib import _GeneratorContextManager
 from inspect import Signature, getfullargspec as getfullargspec, iscoroutinefunction as iscoroutinefunction
 from re import Pattern
-from typing import Any, TypeVar
-from typing_extensions import Literal, ParamSpec
+from typing import Any, Literal, TypeVar
+from typing_extensions import ParamSpec
 
 _C = TypeVar("_C", bound=Callable[..., Any])
 _Func = TypeVar("_Func", bound=Callable[..., Any])

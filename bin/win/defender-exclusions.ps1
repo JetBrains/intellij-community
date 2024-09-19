@@ -29,6 +29,7 @@ try {
         }
       } catch [System.Management.Automation.ItemNotFoundException] {
       } catch [System.Management.Automation.DriveNotFoundException] {
+      } catch [System.Management.Automation.WildcardPatternException] {
       }
     }
 
@@ -51,7 +52,7 @@ try {
 
   Set-MpPreference -ExclusionPath $exclusions
 } catch {
-  Write-Host $_.Exception.Message
+  Write-Host "$($_.Exception.GetType()): $($_.Exception.Message)"
   Write-Host $_.ScriptStackTrace
   exit 1
 }

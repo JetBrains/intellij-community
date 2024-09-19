@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import os
 import time
 
@@ -9,6 +11,7 @@ from mercurial import (
     lock as lockmod,
     mdiff,
     policy,
+    pycompat,
     scmutil,
     util,
     vfs,
@@ -49,7 +52,7 @@ def backgroundrepack(repo, incremental=True, packsonly=False):
 
 def fullrepack(repo, options=None):
     """If ``packsonly`` is True, stores creating only loose objects are skipped."""
-    if hasattr(repo, 'shareddatastores'):
+    if util.safehasattr(repo, 'shareddatastores'):
         datasource = contentstore.unioncontentstore(*repo.shareddatastores)
         historysource = metadatastore.unionmetadatastore(
             *repo.sharedhistorystores, allowincomplete=True
@@ -67,7 +70,7 @@ def fullrepack(repo, options=None):
             options=options,
         )
 
-    if hasattr(repo.manifestlog, 'datastore'):
+    if util.safehasattr(repo.manifestlog, 'datastore'):
         localdata, shareddata = _getmanifeststores(repo)
         lpackpath, ldstores, lhstores = localdata
         spackpath, sdstores, shstores = shareddata
@@ -107,7 +110,7 @@ def incrementalrepack(repo, options=None):
     """This repacks the repo by looking at the distribution of pack files in the
     repo and performing the most minimal repack to keep the repo in good shape.
     """
-    if hasattr(repo, 'shareddatastores'):
+    if util.safehasattr(repo, 'shareddatastores'):
         packpath = shallowutil.getcachepackpath(
             repo, constants.FILEPACK_CATEGORY
         )
@@ -120,7 +123,7 @@ def incrementalrepack(repo, options=None):
             options=options,
         )
 
-    if hasattr(repo.manifestlog, 'datastore'):
+    if util.safehasattr(repo.manifestlog, 'datastore'):
         localdata, shareddata = _getmanifeststores(repo)
         lpackpath, ldstores, lhstores = localdata
         spackpath, sdstores, shstores = shareddata
@@ -346,7 +349,7 @@ def _computeincrementalpack(files, opts):
 
     # Group the packs by generation (i.e. by size)
     generations = []
-    for i in range(len(limits)):
+    for i in pycompat.xrange(len(limits)):
         generations.append([])
 
     sizes = {}
@@ -486,18 +489,18 @@ def keepset(repo, keyfn, lastkeepkeys=None):
         if type(m) is dict:
             # m is a result of diff of two manifests and is a dictionary that
             # maps filename to ((newnode, newflag), (oldnode, oldflag)) tuple
-            for filename, diff in m.items():
+            for filename, diff in pycompat.iteritems(m):
                 if diff[0][0] is not None:
                     keepkeys.add(keyfn(filename, diff[0][0]))
         else:
             # m is a manifest object
-            for filename, filenode in m.items():
+            for filename, filenode in pycompat.iteritems(m):
                 keepkeys.add(keyfn(filename, filenode))
 
     return keepkeys
 
 
-class repacker:
+class repacker(object):
     """Class for orchestrating the repack of data and history information into a
     new format.
     """
@@ -593,7 +596,7 @@ class repacker:
         maxchainlen = ui.configint(b'packs', b'maxchainlen', 1000)
 
         byfile = {}
-        for entry in ledger.entries.values():
+        for entry in pycompat.itervalues(ledger.entries):
             if entry.datasource:
                 byfile.setdefault(entry.filename, {})[entry.node] = entry
 
@@ -601,7 +604,7 @@ class repacker:
         repackprogress = ui.makeprogress(
             _(b"repacking data"), unit=self.unit, total=len(byfile)
         )
-        for filename, entries in sorted(byfile.items()):
+        for filename, entries in sorted(pycompat.iteritems(byfile)):
             repackprogress.update(count)
 
             ancestors = {}
@@ -748,14 +751,14 @@ class repacker:
         ui = self.repo.ui
 
         byfile = {}
-        for entry in ledger.entries.values():
+        for entry in pycompat.itervalues(ledger.entries):
             if entry.historysource:
                 byfile.setdefault(entry.filename, {})[entry.node] = entry
 
         progress = ui.makeprogress(
             _(b"repacking history"), unit=self.unit, total=len(byfile)
         )
-        for filename, entries in sorted(byfile.items()):
+        for filename, entries in sorted(pycompat.iteritems(byfile)):
             ancestors = {}
             nodes = list(node for node in entries)
 
@@ -818,7 +821,7 @@ class repacker:
         return sortednodes
 
 
-class repackledger:
+class repackledger(object):
     """Storage for all the bookkeeping that happens during a repack. It contains
     the list of revisions being repacked, what happened to each revision, and
     which source store contained which revision originally (for later cleanup).
@@ -866,7 +869,7 @@ class repackledger:
         self.created.add(value)
 
 
-class repackentry:
+class repackentry(object):
     """Simple class representing a single revision entry in the repackledger."""
 
     __slots__ = (
@@ -895,7 +898,7 @@ class repackentry:
 
 
 def repacklockvfs(repo):
-    if hasattr(repo, 'name'):
+    if util.safehasattr(repo, 'name'):
         # Lock in the shared cache so repacks across multiple copies of the same
         # repo are coordinated.
         sharedcachepath = shallowutil.getcachepackpath(

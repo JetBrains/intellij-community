@@ -42,9 +42,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.io.File;
+import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 
@@ -182,7 +184,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
     List<SelectVisibleRootAction> rootActions = new ArrayList<>();
     if (myColorManager.hasMultiplePaths()) {
       for (VirtualFile root : ContainerUtil.sorted(roots, FILE_BY_NAME_COMPARATOR)) {
-        rootActions.add(new SelectVisibleRootAction(root, rootActions));
+        rootActions.add(new SelectVisibleRootAction(root));
       }
     }
     List<AnAction> structureActions = new ArrayList<>();
@@ -294,16 +296,19 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
   }
 
   private final class SelectVisibleRootAction extends DumbAwareToggleAction {
-    final CheckboxIcon.WithColor myIcon;
-    final VirtualFile myRoot;
-    final List<SelectVisibleRootAction> myAllActions;
+    private final Icon mySelectedIcon;
+    private final Icon myDeselectedIcon;
 
-    SelectVisibleRootAction(@NotNull VirtualFile root, @NotNull List<SelectVisibleRootAction> allActions) {
+    final VirtualFile myRoot;
+
+    SelectVisibleRootAction(@NotNull VirtualFile root) {
       super(null, root.getPresentableUrl(), null);
       getTemplatePresentation().setText(root.getName(), false);
       myRoot = root;
-      myAllActions = allActions;
-      myIcon = CheckboxIcon.createAndScaleCheckbox(myColorManager.getRootColor(myRoot));
+
+      Color color = myColorManager.getRootColor(myRoot);
+      mySelectedIcon = CheckboxIcon.createAndScaleCheckbox(color, true);
+      myDeselectedIcon = CheckboxIcon.createAndScaleCheckbox(color, false);
       getTemplatePresentation().setIcon(JBUIScale.scaleIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE))); // see PopupFactoryImpl.calcMaxIconSize
     }
 
@@ -328,9 +333,6 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
       else {
         setVisible(myRoot, state);
       }
-      for (SelectVisibleRootAction action : myAllActions) {
-        action.updateIcon();
-      }
     }
 
     private static int getModifier() {
@@ -341,15 +343,11 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
 
-      updateIcon();
-      e.getPresentation().setIcon(myIcon);
+      boolean isSelected = isVisible(myRoot) && isEnabled();
+      e.getPresentation().setIcon(isSelected ? mySelectedIcon : myDeselectedIcon);
       var modifierText = InputEvent.getModifiersExText(getModifier() << 6);
       var tooltip = VcsLogBundle.message("vcs.log.filter.tooltip.click.to.see.only", modifierText, e.getPresentation().getText());
       e.getPresentation().putClientProperty(TOOL_TIP_TEXT_KEY, tooltip);
-    }
-
-    private void updateIcon() {
-      myIcon.prepare(isVisible(myRoot) && isEnabled());
     }
 
     private boolean isEnabled() {

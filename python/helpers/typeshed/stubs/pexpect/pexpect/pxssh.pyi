@@ -1,31 +1,38 @@
-from _typeshed import Incomplete
+from _typeshed import FileDescriptorOrPath
+from os import _Environ
+from typing import AnyStr, Literal
 
-from pexpect import ExceptionPexpect, spawn
+from .exceptions import ExceptionPexpect
+from .pty_spawn import spawn
+from .spawnbase import _Logfile
+
+__all__ = ["ExceptionPxssh", "pxssh"]
 
 class ExceptionPxssh(ExceptionPexpect): ...
 
-class pxssh(spawn):
+class pxssh(spawn[AnyStr]):
     name: str
     UNIQUE_PROMPT: str
-    PROMPT: Incomplete
+    PROMPT: str
     PROMPT_SET_SH: str
     PROMPT_SET_CSH: str
-    SSH_OPTS: Incomplete
+    PROMPT_SET_ZSH: str
+    SSH_OPTS: str
     force_password: bool
-    debug_command_string: Incomplete
-    options: Incomplete
+    debug_command_string: bool
+    options: dict[str, str]
     def __init__(
         self,
-        timeout: int = 30,
+        timeout: float | None = 30,
         maxread: int = 2000,
-        searchwindowsize: Incomplete | None = None,
-        logfile: Incomplete | None = None,
-        cwd: Incomplete | None = None,
-        env: Incomplete | None = None,
+        searchwindowsize: int | None = None,
+        logfile: _Logfile | None = None,
+        cwd: FileDescriptorOrPath | None = None,
+        env: _Environ[str] | None = None,
         ignore_sighup: bool = True,
         echo: bool = True,
-        options={},
-        encoding: Incomplete | None = None,
+        options: dict[str, str] = {},
+        encoding: str | None = None,
         codec_errors: str = "strict",
         debug_command_string: bool = False,
         use_poll: bool = False,
@@ -36,24 +43,24 @@ class pxssh(spawn):
     def login(
         self,
         server,
-        username: Incomplete | None = None,
+        username: str | None = None,
         password: str = "",
         terminal_type: str = "ansi",
         original_prompt: str = "[#$]",
-        login_timeout: int = 10,
-        port: Incomplete | None = None,
+        login_timeout: float | None = 10,
+        port: int | None = None,
         auto_prompt_reset: bool = True,
-        ssh_key: Incomplete | None = None,
+        ssh_key: FileDescriptorOrPath | Literal[True] | None = None,
         quiet: bool = True,
         sync_multiplier: int = 1,
         check_local_ip: bool = True,
         password_regex: str = "(?i)(?:password:)|(?:passphrase for key)",
-        ssh_tunnels={},
+        ssh_tunnels: dict[str, list[str | int]] = {},
         spawn_local_ssh: bool = True,
         sync_original_prompt: bool = True,
-        ssh_config: Incomplete | None = None,
+        ssh_config: FileDescriptorOrPath | None = None,
         cmd: str = "ssh",
     ): ...
     def logout(self) -> None: ...
-    def prompt(self, timeout: int = -1): ...
+    def prompt(self, timeout: float | None = -1): ...
     def set_unique_prompt(self): ...

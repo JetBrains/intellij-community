@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from collections.abc import Mapping
-from typing import Any
-from typing_extensions import Literal, TypeAlias
+from typing import Any, Literal
+from typing_extensions import TypeAlias
 
 from .aggregation import AggregateRequest, AggregateResult, Cursor
 from .query import Query

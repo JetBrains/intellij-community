@@ -1,7 +1,6 @@
 from _typeshed import _BufferWithLen
 from socket import socket
-from typing import TypeVar, overload
-from typing_extensions import Literal
+from typing import Literal, TypeVar, overload
 
 from Xlib import error
 from Xlib._typing import ErrorHandler

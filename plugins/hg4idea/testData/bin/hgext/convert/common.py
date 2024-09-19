@@ -4,11 +4,12 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
+from __future__ import absolute_import
 
 import base64
 import datetime
+import errno
 import os
-import pickle
 import re
 import shlex
 import subprocess
@@ -24,6 +25,7 @@ from mercurial import (
 )
 from mercurial.utils import procutil
 
+pickle = util.pickle
 propertycache = util.propertycache
 
 
@@ -33,7 +35,7 @@ def _encodeornone(d):
     return d.encode('latin1')
 
 
-class _shlexpy3proxy:
+class _shlexpy3proxy(object):
     def __init__(self, l):
         self._l = l
 
@@ -54,25 +56,45 @@ class _shlexpy3proxy:
 
 def shlexer(data=None, filepath=None, wordchars=None, whitespace=None):
     if data is None:
-        data = open(filepath, b'r', encoding='latin1')
+        if pycompat.ispy3:
+            data = open(filepath, b'r', encoding='latin1')
+        else:
+            data = open(filepath, b'r')
     else:
         if filepath is not None:
             raise error.ProgrammingError(
                 b'shlexer only accepts data or filepath, not both'
             )
-        data = data.decode('latin1')
+        if pycompat.ispy3:
+            data = data.decode('latin1')
     l = shlex.shlex(data, infile=filepath, posix=True)
     if whitespace is not None:
         l.whitespace_split = True
-        l.whitespace += whitespace.decode('latin1')
+        if pycompat.ispy3:
+            l.whitespace += whitespace.decode('latin1')
+        else:
+            l.whitespace += whitespace
     if wordchars is not None:
-        l.wordchars += wordchars.decode('latin1')
-    return _shlexpy3proxy(l)
+        if pycompat.ispy3:
+            l.wordchars += wordchars.decode('latin1')
+        else:
+            l.wordchars += wordchars
+    if pycompat.ispy3:
+        return _shlexpy3proxy(l)
+    return l
+
+
+if pycompat.ispy3:
+    base64_encodebytes = base64.encodebytes
+    base64_decodebytes = base64.decodebytes
+else:
+    base64_encodebytes = base64.encodestring
+    base64_decodebytes = base64.decodestring
 
 
 def encodeargs(args):
     def encodearg(s):
-        lines = base64.encodebytes(s)
+        lines = base64_encodebytes(s)
         lines = [l.splitlines()[0] for l in pycompat.iterbytestr(lines)]
         return b''.join(lines)
 
@@ -81,7 +103,7 @@ def encodeargs(args):
 
 
 def decodeargs(s):
-    s = base64.decodebytes(s)
+    s = base64_decodebytes(s)
     return pickle.loads(s)
 
 
@@ -106,7 +128,7 @@ class NoRepo(Exception):
 SKIPREV = b'SKIP'
 
 
-class commit:
+class commit(object):
     def __init__(
         self,
         author,
@@ -136,7 +158,7 @@ class commit:
         self.ctx = ctx  # for hg to hg conversions
 
 
-class converter_source:
+class converter_source(object):
     """Conversion source interface"""
 
     def __init__(self, ui, repotype, path=None, revs=None):
@@ -225,7 +247,7 @@ class converter_source:
         if not encoding:
             encoding = self.encoding or b'utf-8'
 
-        if isinstance(s, str):
+        if isinstance(s, pycompat.unicode):
             return s.encode("utf-8")
         try:
             return s.decode(pycompat.sysstr(encoding)).encode("utf-8")
@@ -286,7 +308,7 @@ class converter_source:
         return True
 
 
-class converter_sink:
+class converter_sink(object):
     """Conversion sink (target) interface"""
 
     def __init__(self, ui, repotype, path):
@@ -382,7 +404,7 @@ class converter_sink:
         raise NotImplementedError
 
 
-class commandline:
+class commandline(object):
     def __init__(self, ui, command):
         self.ui = ui
         self.command = command
@@ -396,7 +418,7 @@ class commandline:
     def _cmdline(self, cmd, *args, **kwargs):
         kwargs = pycompat.byteskwargs(kwargs)
         cmdline = [self.command, cmd] + list(args)
-        for k, v in kwargs.items():
+        for k, v in pycompat.iteritems(kwargs):
             if len(k) == 1:
                 cmdline.append(b'-' + k)
             else:
@@ -527,9 +549,11 @@ class mapfile(dict):
             return
         try:
             fp = open(self.path, b'rb')
-        except FileNotFoundError:
+        except IOError as err:
+            if err.errno != errno.ENOENT:
+                raise
             return
-        for i, line in enumerate(fp):
+        for i, line in enumerate(util.iterfile(fp)):
             line = line.splitlines()[0].rstrip()
             if not line:
                 # Ignore blank lines
@@ -567,10 +591,8 @@ class mapfile(dict):
 
 def makedatetimestamp(t):
     """Like dateutil.makedate() but for time t instead of current time"""
-    tz = round(
+    delta = datetime.datetime.utcfromtimestamp(
         t
-        - datetime.datetime.fromtimestamp(t)
-        .replace(tzinfo=datetime.timezone.utc)
-        .timestamp()
-    )
+    ) - datetime.datetime.fromtimestamp(t)
+    tz = delta.days * 86400 + delta.seconds
     return t, tz

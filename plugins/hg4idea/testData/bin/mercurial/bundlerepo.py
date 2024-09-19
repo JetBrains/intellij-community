@@ -11,8 +11,8 @@ This provides a read-only repository interface to bundles as if they
 were part of the actual repository.
 """
 
+from __future__ import absolute_import
 
-import contextlib
 import os
 import shutil
 
@@ -89,7 +89,7 @@ class bundlerevlog(revlog.revlog):
                     )
 
             if not self.index.has_node(deltabase):
-                raise error.LookupError(
+                raise LookupError(
                     deltabase, self.display_id, _(b'unknown delta base')
                 )
 
@@ -109,15 +109,7 @@ class bundlerevlog(revlog.revlog):
             self.bundlerevs.add(n)
             n += 1
 
-    @contextlib.contextmanager
-    def reading(self):
-        if self.repotiprev < 0:
-            yield
-        else:
-            with super().reading() as x:
-                yield x
-
-    def _chunk(self, rev):
+    def _chunk(self, rev, df=None):
         # Warning: in case of bundle, the diff is against what we stored as
         # delta base, not against rev - 1
         # XXX: could use some caching
@@ -138,7 +130,7 @@ class bundlerevlog(revlog.revlog):
 
         return mdiff.textdiff(self.rawdata(rev1), self.rawdata(rev2))
 
-    def _rawtext(self, node, rev):
+    def _rawtext(self, node, rev, _df=None):
         if rev is None:
             rev = self.rev(node)
         validated = False
@@ -147,11 +139,8 @@ class bundlerevlog(revlog.revlog):
         iterrev = rev
         # reconstruct the revision if it is from a changegroup
         while iterrev > self.repotiprev:
-            if (
-                self._inner._revisioncache
-                and self._inner._revisioncache[1] == iterrev
-            ):
-                rawtext = self._inner._revisioncache[2]
+            if self._revisioncache and self._revisioncache[1] == iterrev:
+                rawtext = self._revisioncache[2]
                 break
             chain.append(iterrev)
             iterrev = self.index[iterrev][3]
@@ -159,8 +148,7 @@ class bundlerevlog(revlog.revlog):
             rawtext = b''
         elif rawtext is None:
             r = super(bundlerevlog, self)._rawtext(
-                self.node(iterrev),
-                iterrev,
+                self.node(iterrev), iterrev, _df=_df
             )
             __, rawtext, validated = r
         if chain:
@@ -207,8 +195,6 @@ class bundlemanifest(bundlerevlog, manifest.manifestrevlog):
         dirlogstarts=None,
         dir=b'',
     ):
-        # XXX manifestrevlog is not actually a revlog , so mixing it with
-        # bundlerevlog is not a good idea.
         manifest.manifestrevlog.__init__(self, nodeconstants, opener, tree=dir)
         bundlerevlog.__init__(
             self,
@@ -260,7 +246,7 @@ class bundlepeer(localrepo.localpeer):
 class bundlephasecache(phases.phasecache):
     def __init__(self, *args, **kwargs):
         super(bundlephasecache, self).__init__(*args, **kwargs)
-        if hasattr(self, 'opener'):
+        if util.safehasattr(self, 'opener'):
             self.opener = vfsmod.readonlyvfs(self.opener)
 
     def write(self):
@@ -269,10 +255,9 @@ class bundlephasecache(phases.phasecache):
     def _write(self, fp):
         raise NotImplementedError
 
-    def _updateroots(self, repo, phase, newroots, tr, invalidate=True):
-        self._phaseroots[phase] = newroots
-        if invalidate:
-            self.invalidate()
+    def _updateroots(self, phase, newroots, tr):
+        self.phaseroots[phase] = newroots
+        self.invalidate()
         self.dirty = True
 
 
@@ -286,7 +271,7 @@ def _getfilestarts(cgunpacker):
     return filespos
 
 
-class bundlerepository:
+class bundlerepository(object):
     """A repository instance that is a union of a local repo and a bundle.
 
     Instances represent a read-only repository composed of a local repository
@@ -305,28 +290,24 @@ class bundlerepository:
 
         self.ui.setconfig(b'phases', b'publish', False, b'bundlerepo')
 
-        # dict with the mapping 'filename' -> position in the changegroup.
-        self._cgfilespos = {}
-        self._bundlefile = None
-        self._cgunpacker = None
         self.tempfile = None
         f = util.posixfile(bundlepath, b"rb")
         bundle = exchange.readbundle(self.ui, f, bundlepath)
 
         if isinstance(bundle, bundle2.unbundle20):
             self._bundlefile = bundle
+            self._cgunpacker = None
 
             cgpart = None
             for part in bundle.iterparts(seekable=True):
-                if part.type == b'phase-heads':
-                    self._handle_bundle2_phase_part(bundle, part)
-                elif part.type == b'changegroup':
+                if part.type == b'changegroup':
                     if cgpart:
                         raise NotImplementedError(
                             b"can't process multiple changegroups"
                         )
                     cgpart = part
-                    self._handle_bundle2_cg_part(bundle, part)
+
+                self._handlebundle2part(bundle, part)
 
             if not cgpart:
                 raise error.Abort(_(b"No changegroups found"))
@@ -339,19 +320,21 @@ class bundlerepository:
             cgpart.seek(0, os.SEEK_SET)
 
         elif isinstance(bundle, changegroup.cg1unpacker):
-            self._handle_bundle1(bundle, bundlepath)
+            if bundle.compressed():
+                f = self._writetempbundle(
+                    bundle.read, b'.hg10un', header=b'HG10UN'
+                )
+                bundle = exchange.readbundle(self.ui, f, bundlepath, self.vfs)
+
+            self._bundlefile = bundle
+            self._cgunpacker = bundle
         else:
             raise error.Abort(
-                _(b'bundle type %r cannot be read') % type(bundle)
+                _(b'bundle type %s cannot be read') % type(bundle)
             )
 
-    def _handle_bundle1(self, bundle, bundlepath):
-        if bundle.compressed():
-            f = self._writetempbundle(bundle.read, b'.hg10un', header=b'HG10UN')
-            bundle = exchange.readbundle(self.ui, f, bundlepath, self.vfs)
-
-        self._bundlefile = bundle
-        self._cgunpacker = bundle
+        # dict with the mapping 'filename' -> position in the changegroup.
+        self._cgfilespos = {}
 
         self.firstnewrev = self.changelog.repotiprev + 1
         phases.retractboundary(
@@ -361,20 +344,11 @@ class bundlerepository:
             [ctx.node() for ctx in self[self.firstnewrev :]],
         )
 
-    def _handle_bundle2_cg_part(self, bundle, part):
-        assert part.type == b'changegroup'
+    def _handlebundle2part(self, bundle, part):
+        if part.type != b'changegroup':
+            return
+
         cgstream = part
-        targetphase = part.params.get(b'targetphase')
-        try:
-            targetphase = int(targetphase)
-        except TypeError:
-            pass
-        if targetphase is None:
-            targetphase = phases.draft
-        if targetphase not in phases.allphases:
-            m = _(b'unsupported targetphase: %d')
-            m %= targetphase
-            raise error.Abort(m)
         version = part.params.get(b'version', b'01')
         legalcgvers = changegroup.supportedincomingversions(self)
         if version not in legalcgvers:
@@ -384,21 +358,6 @@ class bundlerepository:
             cgstream = self._writetempbundle(part.read, b'.cg%sun' % version)
 
         self._cgunpacker = changegroup.getunbundler(version, cgstream, b'UN')
-
-        self.firstnewrev = self.changelog.repotiprev + 1
-        phases.retractboundary(
-            self,
-            None,
-            targetphase,
-            [ctx.node() for ctx in self[self.firstnewrev :]],
-        )
-
-    def _handle_bundle2_phase_part(self, bundle, part):
-        assert part.type == b'phase-heads'
-
-        unfi = self.unfiltered()
-        headsbyphase = phases.binarydecode(part)
-        phases.updatephases(unfi, lambda: None, headsbyphase)
 
     def _writetempbundle(self, readfn, suffix, header=b''):
         """Write a temporary file to disk"""
@@ -500,8 +459,8 @@ class bundlerepository:
     def cancopy(self):
         return False
 
-    def peer(self, path=None, remotehidden=False):
-        return bundlepeer(self, path=path, remotehidden=remotehidden)
+    def peer(self):
+        return bundlepeer(self)
 
     def getcwd(self):
         return encoding.getcwd()  # always outside the repo
@@ -575,8 +534,6 @@ def makebundlerepository(ui, repopath, bundlepath):
     try:
         repo = localrepo.instance(ui, repopath, create=False)
         tempparent = None
-    except error.RequirementError:
-        raise  # no fallback if the backing repo is unsupported
     except error.RepoError:
         tempparent = pycompat.mkdtemp()
         try:
@@ -594,7 +551,7 @@ def makebundlerepository(ui, repopath, bundlepath):
     return repo
 
 
-class bundletransactionmanager:
+class bundletransactionmanager(object):
     def transaction(self):
         return None
 
@@ -742,9 +699,7 @@ def getremotechanges(
                 },
             ).result()
 
-        pullop = exchange.pulloperation(
-            bundlerepo, peer, path=None, heads=reponodes
-        )
+        pullop = exchange.pulloperation(bundlerepo, peer, heads=reponodes)
         pullop.trmanager = bundletransactionmanager()
         exchange._pullapplyphases(pullop, remotephases)
 

@@ -42,6 +42,7 @@ object NewUINotebookDiffEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val CODE_AND_CODE_BOTTOM_GRAY_HEIGHT = 60
   override val INNER_CELL_TOOLBAR_HEIGHT = 24
   override val cellBorderHeight = JBUI.scale(20)
+  override val distanceBetweenCells: Int = JBUI.scale(16)
   override val aboveFirstCellDelimiterHeight: Int = JBUI.scale(20)
   override val SPACER_HEIGHT = cellBorderHeight / 2
   override val EXECUTION_TIME_HEIGHT = 0  // not used in the jupyter diff viewer

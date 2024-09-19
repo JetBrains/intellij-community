@@ -5,43 +5,34 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import errno
 import getpass
-import msvcrt  # pytype: disable=import-error
+import msvcrt
 import os
 import re
 import stat
 import string
 import sys
-import typing
-import winreg  # pytype: disable=import-error
-
-from typing import (
-    AnyStr,
-    BinaryIO,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    NoReturn,
-    Optional,
-    Pattern,
-    Sequence,
-    Tuple,
-    Union,
-)
 
 from .i18n import _
+from .pycompat import getattr
 from . import (
     encoding,
     error,
     policy,
     pycompat,
-    typelib,
     win32,
 )
 
+try:
+    import _winreg as winreg  # pytype: disable=import-error
+
+    winreg.CloseKey
+except ImportError:
+    # py2 only
+    import winreg  # pytype: disable=import-error
 
 osutil = policy.importmod('osutil')
 
@@ -60,16 +51,10 @@ split = os.path.split
 testpid = win32.testpid
 unlink = win32.unlink
 
-if typing.TYPE_CHECKING:
-
-    def split(p: bytes) -> Tuple[bytes, bytes]:
-        raise NotImplementedError
+umask = 0o022
 
 
-umask: int = 0o022
-
-
-class mixedfilemodewrapper:
+class mixedfilemodewrapper(object):
     """Wraps a file handle when it is opened in read/write mode.
 
     fopen() and fdopen() on Windows have a specific-to-Windows requirement
@@ -146,7 +131,7 @@ class mixedfilemodewrapper:
         return self._fp.readlines(*args, **kwargs)
 
 
-class fdproxy:
+class fdproxy(object):
     """Wraps osutil.posixfile() to override the name attribute to reflect the
     underlying file name.
     """
@@ -178,7 +163,8 @@ def posixfile(name, mode=b'r', buffering=-1):
 
         # PyFile_FromFd() ignores the name, and seems to report fp.name as the
         # underlying file descriptor.
-        fp = fdproxy(name, fp)
+        if pycompat.ispy3:
+            fp = fdproxy(name, fp)
 
         # The position when opening in append mode is implementation defined, so
         # make it consistent with other platforms, which position at EOF.
@@ -189,7 +175,7 @@ def posixfile(name, mode=b'r', buffering=-1):
             return mixedfilemodewrapper(fp)
 
         return fp
-    except WindowsError as err:  # pytype: disable=name-error
+    except WindowsError as err:
         # convert to a friendlier exception
         raise IOError(
             err.errno, '%s: %s' % (encoding.strfromlocal(name), err.strerror)
@@ -200,7 +186,15 @@ def posixfile(name, mode=b'r', buffering=-1):
 listdir = osutil.listdir
 
 
-def get_password() -> bytes:
+# copied from .utils.procutil, remove after Python 2 support was dropped
+def _isatty(fp):
+    try:
+        return fp.isatty()
+    except AttributeError:
+        return False
+
+
+def get_password():
     """Prompt for password with echo off, using Windows getch().
 
     This shouldn't be called directly- use ``ui.getpass()`` instead, which
@@ -222,7 +216,7 @@ def get_password() -> bytes:
     return encoding.unitolocal(pw)
 
 
-class winstdout(typelib.BinaryIO_Proxy):
+class winstdout(object):
     """Some files on Windows misbehave.
 
     When writing to a broken pipe, EINVAL instead of EPIPE may be raised.
@@ -231,8 +225,9 @@ class winstdout(typelib.BinaryIO_Proxy):
     error may happen. Python 3 already works around that.
     """
 
-    def __init__(self, fp: BinaryIO):
+    def __init__(self, fp):
         self.fp = fp
+        self.throttle = not pycompat.ispy3 and _isatty(fp)
 
     def __getattr__(self, key):
         return getattr(self.fp, key)
@@ -245,7 +240,17 @@ class winstdout(typelib.BinaryIO_Proxy):
 
     def write(self, s):
         try:
-            return self.fp.write(s)
+            if not self.throttle:
+                return self.fp.write(s)
+            # This is workaround for "Not enough space" error on
+            # writing large size of data to console.
+            limit = 16000
+            l = len(s)
+            start = 0
+            while start < l:
+                end = start + limit
+                self.fp.write(s[start:end])
+                start = end
         except IOError as inst:
             if inst.errno != 0 and not win32.lasterrorwaspipeerror(inst):
                 raise
@@ -261,11 +266,11 @@ class winstdout(typelib.BinaryIO_Proxy):
             raise IOError(errno.EPIPE, 'Broken pipe')
 
 
-def openhardlinks() -> bool:
+def openhardlinks():
     return True
 
 
-def parsepatchoutput(output_line: bytes) -> bytes:
+def parsepatchoutput(output_line):
     """parses the output produced by patch and returns the filename"""
     pf = output_line[14:]
     if pf[0] == b'`':
@@ -273,9 +278,7 @@ def parsepatchoutput(output_line: bytes) -> bytes:
     return pf
 
 
-def sshargs(
-    sshcmd: bytes, host: bytes, user: Optional[bytes], port: Optional[bytes]
-) -> bytes:
+def sshargs(sshcmd, host, user, port):
     '''Build argument list for ssh or Plink'''
     pflag = b'plink' in sshcmd.lower() and b'-P' or b'-p'
     args = user and (b"%s@%s" % (user, host)) or host
@@ -290,28 +293,23 @@ def sshargs(
     return args
 
 
-def setflags(f: bytes, l: bool, x: bool) -> None:
+def setflags(f, l, x):
     pass
 
 
-def copymode(
-    src: bytes,
-    dst: bytes,
-    mode: Optional[bytes] = None,
-    enforcewritable: bool = False,
-) -> None:
+def copymode(src, dst, mode=None, enforcewritable=False):
     pass
 
 
-def checkexec(path: bytes) -> bool:
+def checkexec(path):
     return False
 
 
-def checklink(path: bytes) -> bool:
+def checklink(path):
     return False
 
 
-def setbinary(fd) -> None:
+def setbinary(fd):
     # When run without console, pipes may expose invalid
     # fileno(), usually set to -1.
     fno = getattr(fd, 'fileno', None)
@@ -319,28 +317,27 @@ def setbinary(fd) -> None:
         msvcrt.setmode(fno(), os.O_BINARY)  # pytype: disable=module-attr
 
 
-def pconvert(path: bytes) -> bytes:
+def pconvert(path):
     return path.replace(pycompat.ossep, b'/')
 
 
-def localpath(path: bytes) -> bytes:
+def localpath(path):
     return path.replace(b'/', b'\\')
 
 
-def normpath(path: bytes) -> bytes:
+def normpath(path):
     return pconvert(os.path.normpath(path))
 
 
-def normcase(path: bytes) -> bytes:
+def normcase(path):
     return encoding.upper(path)  # NTFS compares via upper()
 
 
-DRIVE_RE_B: Pattern[bytes] = re.compile(b'^[a-z]:')
-DRIVE_RE_S: Pattern[str] = re.compile('^[a-z]:')
+DRIVE_RE_B = re.compile(b'^[a-z]:')
+DRIVE_RE_S = re.compile('^[a-z]:')
 
 
-# TODO: why is this accepting str?
-def abspath(path: AnyStr) -> AnyStr:
+def abspath(path):
     abs_path = os.path.abspath(path)  # re-exports
     # Python on Windows is inconsistent regarding the capitalization of drive
     # letter and this cause issue with various path comparison along the way.
@@ -356,15 +353,15 @@ def abspath(path: AnyStr) -> AnyStr:
 
 
 # see posix.py for definitions
-normcasespec: int = encoding.normcasespecs.upper
+normcasespec = encoding.normcasespecs.upper
 normcasefallback = encoding.upperfallback
 
 
-def samestat(s1: os.stat_result, s2: os.stat_result) -> bool:
+def samestat(s1, s2):
     return False
 
 
-def shelltocmdexe(path: bytes, env: Mapping[bytes, bytes]) -> bytes:
+def shelltocmdexe(path, env):
     r"""Convert shell variables in the form $var and ${var} inside ``path``
     to %var% form.  Existing Windows style variables are left unchanged.
 
@@ -489,11 +486,11 @@ def shelltocmdexe(path: bytes, env: Mapping[bytes, bytes]) -> bytes:
 # the number of backslashes that precede double quotes and add another
 # backslash before every double quote (being careful with the double
 # quote we've appended to the end)
-_quotere: Optional[Pattern[bytes]] = None
+_quotere = None
 _needsshellquote = None
 
 
-def shellquote(s: bytes) -> bytes:
+def shellquote(s):
     r"""
     >>> shellquote(br'C:\Users\xyz')
     '"C:\\Users\\xyz"'
@@ -523,24 +520,24 @@ def shellquote(s: bytes) -> bytes:
     return b'"%s"' % _quotere.sub(br'\1\1\\\2', s)
 
 
-def _unquote(s: bytes) -> bytes:
+def _unquote(s):
     if s.startswith(b'"') and s.endswith(b'"'):
         return s[1:-1]
     return s
 
 
-def shellsplit(s: bytes) -> List[bytes]:
+def shellsplit(s):
     """Parse a command string in cmd.exe way (best-effort)"""
     return pycompat.maplist(_unquote, pycompat.shlexsplit(s, posix=False))
 
 
 # if you change this stub into a real check, please try to implement the
 # username and groupname functions above, too.
-def isowner(st: os.stat_result) -> bool:
+def isowner(st):
     return True
 
 
-def findexe(command: bytes) -> Optional[bytes]:
+def findexe(command):
     """Find executable for command searching like cmd.exe does.
     If command is a basename then PATH is searched for command.
     PATH isn't searched if command is an absolute or relative path.
@@ -551,7 +548,7 @@ def findexe(command: bytes) -> Optional[bytes]:
     if os.path.splitext(command)[1].lower() in pathexts:
         pathexts = [b'']
 
-    def findexisting(pathcommand: bytes) -> Optional[bytes]:
+    def findexisting(pathcommand):
         """Will append extension (if needed) and return existing file"""
         for ext in pathexts:
             executable = pathcommand + ext
@@ -572,7 +569,7 @@ def findexe(command: bytes) -> Optional[bytes]:
 _wantedkinds = {stat.S_IFREG, stat.S_IFLNK}
 
 
-def statfiles(files: Sequence[bytes]) -> Iterator[Optional[os.stat_result]]:
+def statfiles(files):
     """Stat each file in files. Yield each stat, or None if a file
     does not exist or has a type we don't care about.
 
@@ -592,48 +589,37 @@ def statfiles(files: Sequence[bytes]) -> Iterator[Optional[os.stat_result]]:
                     for n, k, s in listdir(dir, True)
                     if getkind(s.st_mode) in _wantedkinds
                 }
-            except (FileNotFoundError, NotADirectoryError):
+            except OSError as err:
+                # Python >= 2.5 returns ENOENT and adds winerror field
+                # EINVAL is raised if dir is not a directory.
+                if err.errno not in (errno.ENOENT, errno.EINVAL, errno.ENOTDIR):
+                    raise
                 dmap = {}
             cache = dircache.setdefault(dir, dmap)
         yield cache.get(base, None)
 
 
-def username(uid: Optional[int] = None) -> Optional[bytes]:
+def username(uid=None):
     """Return the name of the user with the given uid.
 
     If uid is None, return the name of the current user."""
     if not uid:
-        try:
-            return pycompat.fsencode(getpass.getuser())
-        except ModuleNotFoundError:
-            # getpass.getuser() checks for a few environment variables first,
-            # but if those aren't set, imports pwd and calls getpwuid(), none of
-            # which exists on Windows.
-            pass
+        return pycompat.fsencode(getpass.getuser())
     return None
 
 
-def groupname(gid: Optional[int] = None) -> Optional[bytes]:
+def groupname(gid=None):
     """Return the name of the group with the given gid.
 
     If gid is None, return the name of the current group."""
     return None
 
 
-def readlink(pathname: bytes) -> bytes:
-    path = pycompat.fsdecode(pathname)
-    try:
-        link = os.readlink(path)
-    except ValueError as e:
-        # On py2, os.readlink() raises an AttributeError since it is
-        # unsupported.  On py3, reading a non-link raises a ValueError.  Simply
-        # treat this as the error the locking code has been expecting up to now
-        # until an effort can be made to enable symlink support on Windows.
-        raise AttributeError(e)
-    return pycompat.fsencode(link)
+def readlink(pathname):
+    return pycompat.fsencode(os.readlink(pycompat.fsdecode(pathname)))
 
 
-def removedirs(name: bytes) -> None:
+def removedirs(name):
     """special version of os.removedirs that does not remove symlinked
     directories or junction points if they actually contain files"""
     if listdir(name):
@@ -652,41 +638,39 @@ def removedirs(name: bytes) -> None:
         head, tail = os.path.split(head)
 
 
-def rename(src: bytes, dst: bytes) -> None:
+def rename(src, dst):
     '''atomically rename file src to dst, replacing dst if it exists'''
     try:
         os.rename(src, dst)
-    except FileExistsError:
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
         unlink(dst)
         os.rename(src, dst)
 
 
-def gethgcmd() -> List[bytes]:
+def gethgcmd():
     return [encoding.strtolocal(arg) for arg in [sys.executable] + sys.argv[:1]]
 
 
-def groupmembers(name: bytes) -> List[bytes]:
+def groupmembers(name):
     # Don't support groups on Windows for now
     raise KeyError
 
 
-def isexec(f: bytes) -> bool:
+def isexec(f):
     return False
 
 
-class cachestat:
-    def __init__(self, path: bytes) -> None:
+class cachestat(object):
+    def __init__(self, path):
         pass
 
-    def cacheable(self) -> bool:
+    def cacheable(self):
         return False
 
 
-def lookupreg(
-    key: bytes,
-    valname: Optional[bytes] = None,
-    scope: Optional[Union[int, Iterable[int]]] = None,
-) -> Optional[bytes]:
+def lookupreg(key, valname=None, scope=None):
     """Look up a key/value name in the Windows registry.
 
     valname: value name. If unspecified, the default value for the key
@@ -696,48 +680,39 @@ def lookupreg(
     LOCAL_MACHINE).
     """
     if scope is None:
-        # pytype: disable=module-attr
         scope = (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE)
-        # pytype: enable=module-attr
     elif not isinstance(scope, (list, tuple)):
         scope = (scope,)
     for s in scope:
         try:
-            # pytype: disable=module-attr
             with winreg.OpenKey(s, encoding.strfromlocal(key)) as hkey:
-                # pytype: enable=module-attr
-                name = None
-                if valname is not None:
-                    name = encoding.strfromlocal(valname)
-                # pytype: disable=module-attr
+                name = valname and encoding.strfromlocal(valname) or valname
                 val = winreg.QueryValueEx(hkey, name)[0]
-                # pytype: enable=module-attr
-
                 # never let a Unicode string escape into the wild
                 return encoding.unitolocal(val)
         except EnvironmentError:
             pass
 
 
-expandglobs: bool = True
+expandglobs = True
 
 
-def statislink(st: Optional[os.stat_result]) -> bool:
+def statislink(st):
     '''check whether a stat result is a symlink'''
     return False
 
 
-def statisexec(st: Optional[os.stat_result]) -> bool:
+def statisexec(st):
     '''check whether a stat result is an executable file'''
     return False
 
 
-def poll(fds) -> List:
+def poll(fds):
     # see posix.py for description
     raise NotImplementedError()
 
 
-def readpipe(pipe) -> bytes:
+def readpipe(pipe):
     """Read all available data from a pipe."""
     chunks = []
     while True:
@@ -753,5 +728,5 @@ def readpipe(pipe) -> bytes:
     return b''.join(chunks)
 
 
-def bindunixsocket(sock, path: bytes) -> NoReturn:
+def bindunixsocket(sock, path):
     raise NotImplementedError('unsupported platform')

@@ -35,6 +35,7 @@ class GitLabMergeRequestDTO(
   val targetProject: GitLabProjectDTO,
   val sourceProject: GitLabProjectDTO?, // Is null when the source project is a private fork or is unavailable
   val userPermissions: GitLabMergeRequestPermissionsDTO,
+  val shouldRemoveSourceBranch: Boolean?,
   val shouldBeRebased: Boolean,
   val rebaseInProgress: Boolean,
   @SinceGitLab("13.5") approvedBy: UserCoreConnection,

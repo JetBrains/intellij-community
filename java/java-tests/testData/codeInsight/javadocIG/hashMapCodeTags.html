@@ -1,0 +1,86 @@
+<html><head><base href="placeholder"></head><body><div class='definition'><pre><span style="color:#000080;font-weight:bold;">class</span> <span style="color:#000000;">InfoGen</span><span style="">&lt;</span><span style="color:#20999d;">K</span><span style="">, </span><span style="color:#20999d;">V</span><span style="">&gt;</span></pre></div><div class='content'>
+  Hash table based implementation of the <code><span style="">Map</span></code> interface.  This
+  implementation provides all of the optional map operations, and permits
+  <code><span style="color:#000080;font-weight:bold;">null</span></code> values and the <code><span style="color:#000080;font-weight:bold;">null</span></code> key.  (The <code><span style="">HashMap</span></code>
+  class is roughly equivalent to <code><span style="">Hashtable</span></code>, except that it is
+  unsynchronized and permits nulls.)  This class makes no guarantees as to
+  the order of the map; in particular, it does not guarantee that the order
+  will remain constant over time.
+
+  <p>This implementation provides constant-time performance for the basic
+  operations (<code><span style="">get</span></code> and <code><span style="">put</span></code>), assuming the hash function
+  disperses the elements properly among the buckets.  Iteration over
+  collection views requires time proportional to the "capacity" of the
+  <code><span style="">HashMap</span></code> instance (the number of buckets) plus its size (the number
+  of key-value mappings).  Thus, it's very important not to set the initial
+  capacity too high (or the load factor too low) if iteration performance is
+  important.
+
+  <p>An instance of <code><span style="">HashMap</span></code> has two parameters that affect its
+  performance: <i>initial capacity</i> and <i>load factor</i>.  The
+  <i>capacity</i> is the number of buckets in the hash table, and the initial
+  capacity is simply the capacity at the time the hash table is created.  The
+  <i>load factor</i> is a measure of how full the hash table is allowed to
+  get before its capacity is automatically increased.  When the number of
+  entries in the hash table exceeds the product of the load factor and the
+  current capacity, the hash table is <i>rehashed</i> (that is, internal data
+  structures are rebuilt) so that the hash table has approximately twice the
+  number of buckets.
+
+  <p>As a general rule, the default load factor (.75) offers a good
+  tradeoff between time and space costs.  Higher values decrease the
+  space overhead but increase the lookup cost (reflected in most of
+  the operations of the <code><span style="">HashMap</span></code> class, including
+  <code><span style="">get</span></code> and <code><span style="">put</span></code>).  The expected number of entries in
+  the map and its load factor should be taken into account when
+  setting its initial capacity, so as to minimize the number of
+  rehash operations.  If the initial capacity is greater than the
+  maximum number of entries divided by the load factor, no rehash
+  operations will ever occur.
+
+  <p>If many mappings are to be stored in a <code><span style="">HashMap</span></code>
+  instance, creating it with a sufficiently large capacity will allow
+  the mappings to be stored more efficiently than letting it perform
+  automatic rehashing as needed to grow the table.  Note that using
+  many keys with the same <code><span style="">hashCode()</span></code> is a sure way to slow
+  down performance of any hash table. To ameliorate impact, when keys
+  are <a href="psi_element://java.lang.Comparable"><code><span style="color:#0000ff;">Comparable</span></code></a>, this class may use comparison order among
+  keys to help break ties.
+
+  <p><strong>Note that this implementation is not synchronized.</strong>
+  If multiple threads access a hash map concurrently, and at least one of
+  the threads modifies the map structurally, it <i>must</i> be
+  synchronized externally.  (A structural modification is any operation
+  that adds or deletes one or more mappings; merely changing the value
+  associated with a key that an instance already contains is not a
+  structural modification.)  This is typically accomplished by
+  synchronizing on some object that naturally encapsulates the map.
+
+  If no such object exists, the map should be "wrapped" using the
+  <a href="psi_element://java.util.Collections#synchronizedMap(java.util.Map)"><code><span style="color:#0000ff;">Collections</span><span style="">.</span><span style="color:#0000ff;">synchronizedMap</span></code></a>
+  method.  This is best done at creation time, to prevent accidental
+  unsynchronized access to the map:<pre>
+    Map m = Collections.synchronizedMap(new HashMap(...));</pre>
+
+  <p>The iterators returned by all of this class's "collection view methods"
+  are <i>fail-fast</i>: if the map is structurally modified at any time after
+  the iterator is created, in any way except through the iterator's own
+  <code><span style="">remove</span></code> method, the iterator will throw a
+  <a href="psi_element://java.util.ConcurrentModificationException"><code><span style="color:#0000ff;">ConcurrentModificationException</span></code></a>.  Thus, in the face of concurrent
+  modification, the iterator fails quickly and cleanly, rather than risking
+  arbitrary, non-deterministic behavior at an undetermined time in the
+  future.
+
+  <p>Note that the fail-fast behavior of an iterator cannot be guaranteed
+  as it is, generally speaking, impossible to make any hard guarantees in the
+  presence of unsynchronized concurrent modification.  Fail-fast iterators
+  throw <code><span style="">ConcurrentModificationException</span></code> on a best-effort basis.
+  Therefore, it would be wrong to write a program that depended on this
+  exception for its correctness: <i>the fail-fast behavior of iterators
+  should be used only to detect bugs.</i>
+
+  <p>This class is a member of the
+  <a href="/java.base/java/util/package-summary.html#CollectionsFramework">
+  Java Collections Framework</a>.
+
+  </div><table class='sections'><p><tr><td valign='top' class='section'><p>Since:</td><td valign='top'><p>   1.2</td><tr><td valign='top' class='section'><p>See Also:</td><td valign='top'><p><a href="psi_element://java.lang.Object#hashCode()"><code><span style="color:#0000ff;">Object</span><span style="">.</span><span style="color:#0000ff;">hashCode</span><span style="">()</span></code></a>,<br><a href="psi_element://java.util.Collection"><code><span style="color:#0000ff;">Collection</span></code></a>,<br><a href="psi_element://java.util.Map"><code><span style="color:#0000ff;">Map</span></code></a>,<br><a href="psi_element://java.util.TreeMap"><code><span style="color:#0000ff;">TreeMap</span></code></a>,<br><a href="psi_element://java.util.Hashtable"><code><span style="color:#0000ff;">Hashtable</span></code></a></td><tr><td valign='top' class='section'><p>Author:</td><td valign='top'><p>Doug Lea, Josh Bloch, Arthur van Hoff, Neal Gafter</td><tr><td valign='top' class='section'><p>Type parameters:</td><td valign='top'><code>&lt;<span style="color:#20999d;">K</span>&gt;</code> &ndash;  the type of keys maintained by this map  <br><code>&lt;<span style="color:#20999d;">V</span>&gt;</code> &ndash;  the type of mapped values  </td></table>

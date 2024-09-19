@@ -6,6 +6,7 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
+from __future__ import absolute_import
 
 import os
 import sys
@@ -27,32 +28,31 @@ if libdir != '@' 'LIBDIR' '@':
 # to the documentation.
 if getattr(sys, 'frozen', None) == 'console_exe':
     vi = sys.version_info
-    appdata = os.environ.get('APPDATA')
-    if appdata:
-        sys.path.append(
-            os.path.join(
-                appdata,
-                'Python',
-                'Python%d%d' % (vi[0], vi[1]),
-                'site-packages',
-            )
+    sys.path.append(
+        os.path.join(
+            os.environ['APPDATA'],
+            'Python',
+            'Python%d%d' % (vi[0], vi[1]),
+            'site-packages',
         )
-
-try:
-    from hgdemandimport import tracing
-except ImportError:
-    sys.stderr.write(
-        "abort: couldn't find mercurial libraries in [%s]\n"
-        % ' '.join(sys.path)
     )
-    sys.stderr.write("(check your install and PYTHONPATH)\n")
-    sys.exit(-1)
+
+from hgdemandimport import tracing
 
 with tracing.log('hg script'):
     # enable importing on demand to reduce startup time
-    import hgdemandimport
+    try:
+        if sys.version_info[0] < 3 or sys.version_info >= (3, 6):
+            import hgdemandimport
 
-    hgdemandimport.enable()
+            hgdemandimport.enable()
+    except ImportError:
+        sys.stderr.write(
+            "abort: couldn't find mercurial libraries in [%s]\n"
+            % ' '.join(sys.path)
+        )
+        sys.stderr.write("(check your install and PYTHONPATH)\n")
+        sys.exit(-1)
 
     from mercurial import dispatch
 

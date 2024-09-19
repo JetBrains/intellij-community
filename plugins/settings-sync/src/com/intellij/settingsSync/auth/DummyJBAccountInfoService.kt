@@ -1,5 +1,6 @@
 package com.intellij.settingsSync.auth
 
+import com.intellij.ide.gdpr.Version
 import com.intellij.settingsSync.SettingsSyncEvents
 import com.intellij.ui.JBAccountInfoService
 import java.util.concurrent.CompletableFuture
@@ -30,6 +31,10 @@ object DummyJBAccountInfoService : JBAccountInfoService {
 
   override fun issueTrialLicense(productCode: String,
                                  consentOptions: List<String>): CompletableFuture<JBAccountInfoService.LicenseListResult> {
+    TODO("Not yet implemented")
+  }
+
+  override fun recordAgreementAcceptance(productCode: String, documentName: String, acceptedVersion: Version): CompletableFuture<JBAccountInfoService.AgreementAcceptanceResult> {
     TODO("Not yet implemented")
   }
 

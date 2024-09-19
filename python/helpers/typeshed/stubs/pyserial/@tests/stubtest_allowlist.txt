@@ -26,6 +26,11 @@ serial.basestring
 serial.serialutil.basestring
 serial.serialutil.iterbytes
 serial.serialutil.to_bytes
+serial.serialutil.unicode
+serial.tools.hexlify_codec.unicode
+serial.tools.miniterm.raw_input
+serial.tools.miniterm.unichr
+serial.urlhandler.protocol_hwgrep.basestring
 
 # Deprecated aliases
 serial.SerialBase.applySettingsDict

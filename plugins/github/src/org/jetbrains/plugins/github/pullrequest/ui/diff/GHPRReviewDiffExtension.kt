@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.diff
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.viewer.showCodeReview
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
@@ -20,7 +21,6 @@ import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
@@ -65,7 +65,7 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
 
             viewer.showCodeReview({ locationToLine, lineToLocations ->
                                     DiffEditorModel(this, changeVm, locationToLine, lineToLocations)
-                                  }, GHPREditorReviewModel.KEY, { createRenderer(it) })
+                                  }, { createRenderer(it) })
           }
         }
       }.cancelOnDispose(viewer)
@@ -79,19 +79,13 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
   }
 }
 
-internal interface GHPREditorReviewModel : CodeReviewEditorModel<GHPREditorMappedComponentModel>,
-                                           CodeReviewEditorGutterControlsModel.WithMultilineComments {
-  companion object {
-    val KEY: Key<GHPREditorReviewModel> = Key.create("GitHub.Editor.Gutter.Review.Model")
-  }
-}
-
 private class DiffEditorModel(
   cs: CoroutineScope,
   private val diffVm: GHPRDiffChangeViewModel,
   private val locationToLine: (DiffLineLocation) -> Int?,
-  private val lineToLocation: (Int) -> DiffLineLocation?
-) : GHPREditorReviewModel {
+  private val lineToLocation: (Int) -> DiffLineLocation?,
+) : CodeReviewEditorModel<GHPREditorMappedComponentModel>,
+    CodeReviewCommentableEditorModel.WithMultilineComments {
 
   private val threads = diffVm.threads.mapModelsToViewModels { MappedThread(cs, it) }.stateInNow(cs, emptyList())
   private val newComments = diffVm.newComments.mapModelsToViewModels { MappedNewComment(it) }.stateInNow(cs, emptyList())

@@ -15,18 +15,20 @@
  */
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.google.common.collect.RangeSet;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> implements PyTargetExpressionStub {
+public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTargetExpression> implements PyTargetExpressionStub {
   private final String myName;
   private final InitializerType myInitializerType;
   private final QualifiedName myInitializer;
@@ -44,8 +46,9 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
                                     @Nullable String annotation,
                                     boolean hasAssignedValue,
                                     CustomTargetExpressionStub customStub,
-                                    StubElement parent) {
-    super(parent, PyStubElementTypes.TARGET_EXPRESSION);
+                                    StubElement parent,
+                                    @NotNull RangeSet<Version> versions) {
+    super(parent, PyStubElementTypes.TARGET_EXPRESSION, versions);
     myName = name;
     myTypeComment = typeComment;
     myAnnotation = annotation;
@@ -62,11 +65,12 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
                                     final InitializerType initializerType,
                                     final QualifiedName initializer,
                                     final boolean qualified,
-                                    @Nullable String typeComment, 
+                                    @Nullable String typeComment,
                                     @Nullable String annotation,
                                     boolean hasAssignedValue,
-                                    final StubElement parentStub) {
-    super(parentStub, PyStubElementTypes.TARGET_EXPRESSION);
+                                    final StubElement parentStub,
+                                    @NotNull RangeSet<Version> versions) {
+    super(parentStub, PyStubElementTypes.TARGET_EXPRESSION, versions);
     myName = name;
     myTypeComment = typeComment;
     myAnnotation = annotation;

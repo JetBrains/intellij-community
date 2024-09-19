@@ -1,4 +1,4 @@
-from _typeshed import ReadableBuffer
+from _typeshed import FileDescriptorOrPath, ReadableBuffer
 from collections.abc import Callable, Sequence
 from typing import IO, Any
 
@@ -32,7 +32,7 @@ class ECDSAKey(PKey):
         self,
         msg: Message | None = None,
         data: ReadableBuffer | None = None,
-        filename: str | None = None,
+        filename: FileDescriptorOrPath | None = None,
         password: str | None = None,
         vals: tuple[EllipticCurvePrivateKey, EllipticCurvePublicKey] | None = None,
         file_obj: IO[str] | None = None,
@@ -47,7 +47,7 @@ class ECDSAKey(PKey):
     def can_sign(self) -> bool: ...
     def sign_ssh_data(self, data: bytes, algorithm: str | None = None) -> Message: ...
     def verify_ssh_sig(self, data: bytes, msg: Message) -> bool: ...
-    def write_private_key_file(self, filename: str, password: str | None = None) -> None: ...
+    def write_private_key_file(self, filename: FileDescriptorOrPath, password: str | None = None) -> None: ...
     def write_private_key(self, file_obj: IO[str], password: str | None = None) -> None: ...
     @classmethod
     def generate(

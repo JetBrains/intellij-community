@@ -262,6 +262,9 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if ((state == null || state.isFinished()) && cachedIntentions != null && !myEditor.isDisposed()) {
       IntentionsUI.getInstance(myProject).update(cachedIntentions, actionsChanged);
+      if (PassExecutorService.LOG.isDebugEnabled()) {
+        PassExecutorService.LOG.debug("ShowIntentionsPass id="+getId()+" applied; intentions="+cachedIntentions);
+      }
     }
   }
 

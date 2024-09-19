@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,13 +27,19 @@ public class JavaDocMarkdownEnterHandler extends EnterHandlerDelegateAdapter {
     PsiElement caretElement = file.findElementAt(caretOffset.get());
     if (caretElement == null) return Result.Continue;
 
-    PsiElement currentElement = caretElement.getPrevSibling();
     // EOL whitespace is not useful, we only need the tokens behind it
-    if (currentElement instanceof PsiWhiteSpace) {
-      currentElement = currentElement.getPrevSibling();
+    if (caretElement instanceof PsiWhiteSpace) {
+      // In multiline whitespaces, check cursor position to check whether the handler should trigger
+      String whitespaces = caretElement.getText();
+      int end = caretOffset.get() - caretElement.getTextOffset();
+      if (StringUtil.countChars(whitespaces, '\n', 0, end, false) > 0) {
+        return Result.Continue;
+      }
+      
+      caretElement = caretElement.getPrevSibling();
     }
 
-    if (!shouldInsertLeadingTokens(currentElement)) {
+    if (!shouldInsertLeadingTokens(caretElement)) {
       return Result.Continue;
     }
     Document document = editor.getDocument();

@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.lexer.BasicJavaLexer;
 import com.intellij.lang.java.lexer.JavaDocLexer;
+import com.intellij.lang.java.lexer.JavaTypeEscapeLexer;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -68,7 +69,7 @@ public interface JavaDocElementType {
   ILazyParseableElementType DOC_TYPE_HOLDER = new BasicJavaDocElementType.DocTypeHolderElementType(
     () -> JavaParser.INSTANCE,
     (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(level),
-    (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level)
+    (level) -> (JavaTypeEscapeLexer)JavaParserDefinition.createLexerWithMarkdownEscape(level)
   );
 
   ILazyParseableElementType DOC_COMMENT = new BasicJavaDocElementType.DocCommentElementType(

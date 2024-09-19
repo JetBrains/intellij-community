@@ -7,8 +7,8 @@ from typing_extensions import ParamSpec, TypeAlias
 from flask import Flask
 from flask.testing import FlaskClient
 
-from .namespace import Namespace
-from .test_client import SocketIOTestClient
+from .namespace import Namespace as Namespace
+from .test_client import SocketIOTestClient as SocketIOTestClient
 
 _P = ParamSpec("_P")
 _R_co = TypeVar("_R_co", covariant=True)
@@ -54,7 +54,7 @@ class SocketIO:
     def on_error_default(self, exception_handler: _ExceptionHandler[_R_co]) -> _ExceptionHandler[_R_co]: ...
     def on_event(self, message: str, handler: _Handler[[Incomplete], object], namespace: str | None = None) -> None: ...
     @overload
-    def event(self, __event_handler: _Handler[_P, _R_co]) -> _Handler[_P, _R_co]: ...
+    def event(self, event_handler: _Handler[_P, _R_co], /) -> _Handler[_P, _R_co]: ...
     @overload
     def event(self, namespace: str | None = None, *args, **kwargs) -> _HandlerDecorator: ...
     def on_namespace(self, namespace_handler: Namespace) -> None: ...
@@ -96,9 +96,9 @@ class SocketIO:
         port: int | None = None,
         *,
         debug: bool = True,
-        use_reloader: bool,
+        use_reloader: bool = ...,
         reloader_options: dict[str, Incomplete] = {},
-        log_output: bool,
+        log_output: bool = ...,
         allow_unsafe_werkzeug: bool = False,
         **kwargs,
     ) -> None: ...

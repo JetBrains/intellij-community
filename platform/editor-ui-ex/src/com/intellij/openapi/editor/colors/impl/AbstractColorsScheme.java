@@ -169,7 +169,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @Override
   public abstract Object clone();
 
-  public void copyTo(AbstractColorsScheme newScheme) {
+  public void copyTo(@NotNull AbstractColorsScheme newScheme) {
     if (consoleFontPreferences instanceof DelegatingFontPreferences) {
       newScheme.setUseEditorFontPreferencesInConsole();
     }

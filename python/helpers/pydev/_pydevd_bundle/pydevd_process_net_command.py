@@ -1,36 +1,73 @@
+import json
 import os
 import sys
 import traceback
 
-from _pydev_bundle import pydev_log
-from _pydevd_bundle import pydevd_traceproperty, pydevd_dont_trace, pydevd_utils
-import pydevd_tracing
 import pydevd_file_utils
+import pydevd_tracing
+from _pydev_bundle import pydev_log
+from _pydev_imps._pydev_saved_modules import threading
+from _pydevd_bundle import pydevd_traceproperty, pydevd_dont_trace, pydevd_utils
+from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_class
-from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, CMD_THREAD_KILL,
-    CMD_THREAD_SUSPEND, pydevd_find_thread_by_id, CMD_THREAD_RUN, InternalRunThread, CMD_STEP_INTO, CMD_STEP_OVER,
-    CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, InternalStepThread, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT,
-    CMD_SMART_STEP_INTO, InternalSetNextStatementThread, CMD_RELOAD_CODE, ReloadCodeCommand, CMD_CHANGE_VARIABLE,
-    InternalChangeVariable, CMD_GET_VARIABLE, InternalGetVariable, CMD_GET_ARRAY, InternalGetArray, CMD_GET_COMPLETIONS,
-    InternalGetCompletions, CMD_GET_FRAME, InternalGetFrame, CMD_SET_BREAK, file_system_encoding, CMD_REMOVE_BREAK,
-    CMD_EVALUATE_EXPRESSION, CMD_EXEC_EXPRESSION, InternalEvaluateExpression, CMD_CONSOLE_EXEC, InternalConsoleExec,
-    CMD_SET_PY_EXCEPTION, CMD_GET_FILE_CONTENTS, CMD_SET_PROPERTY_TRACE, CMD_ADD_EXCEPTION_BREAK,
-    CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE, CMD_ADD_DJANGO_EXCEPTION_BREAK, CMD_REMOVE_DJANGO_EXCEPTION_BREAK,
-    CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions,
-    CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE,
-    CMD_SHOW_RETURN_VALUES, CMD_SET_UNIT_TEST_DEBUGGING_MODE, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription,
-    InternalLoadFullValue, CMD_LOAD_FULL_VALUE, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS,
-    InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS, CMD_GET_SMART_STEP_INTO_VARIANTS,
-    CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR, CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, NetCommand,
-    CMD_SET_PROTOCOL, CMD_PYDEVD_JSON_CONFIG, InternalGetThreadStack, InternalSmartStepInto, InternalGetSmartStepIntoVariants,
-    CMD_DATAVIEWER_ACTION, InternalDataViewerAction, CMD_TABLE_EXEC, InternalTableCommand, CMD_INTERRUPT_DEBUG_CONSOLE, CMD_SET_USER_TYPE_RENDERERS)
+from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS,
+                                        CMD_THREAD_SUSPEND, pydevd_find_thread_by_id,
+                                        CMD_THREAD_RUN, CMD_STEP_INTO, CMD_STEP_OVER,
+                                        CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE,
+                                        InternalStepThread, CMD_RUN_TO_LINE,
+                                        CMD_SET_NEXT_STATEMENT,
+                                        CMD_SMART_STEP_INTO,
+                                        InternalSetNextStatementThread, CMD_RELOAD_CODE,
+                                        ReloadCodeCommand,
+                                        CMD_CHANGE_VARIABLE,
+                                        InternalChangeVariable, CMD_GET_VARIABLE,
+                                        InternalGetVariable, CMD_GET_ARRAY,
+                                        InternalGetArray,
+                                        CMD_GET_COMPLETIONS,
+                                        InternalGetCompletions, CMD_GET_FRAME,
+                                        InternalGetFrame, CMD_SET_BREAK,
+                                        file_system_encoding,
+                                        CMD_REMOVE_BREAK,
+                                        CMD_EVALUATE_EXPRESSION, CMD_EXEC_EXPRESSION,
+                                        InternalEvaluateExpression, CMD_CONSOLE_EXEC,
+                                        InternalConsoleExec,
+                                        CMD_SET_PY_EXCEPTION, CMD_GET_FILE_CONTENTS,
+                                        CMD_SET_PROPERTY_TRACE, CMD_ADD_EXCEPTION_BREAK,
+                                        CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE,
+                                        CMD_ADD_DJANGO_EXCEPTION_BREAK,
+                                        CMD_REMOVE_DJANGO_EXCEPTION_BREAK,
+                                        CMD_EVALUATE_CONSOLE_EXPRESSION,
+                                        InternalEvaluateConsoleExpression,
+                                        InternalConsoleGetCompletions,
+                                        CMD_RUN_CUSTOM_OPERATION,
+                                        InternalRunCustomOperation,
+                                        CMD_IGNORE_THROWN_EXCEPTION_AT,
+                                        CMD_ENABLE_DONT_TRACE,
+                                        CMD_SHOW_RETURN_VALUES,
+                                        CMD_SET_UNIT_TEST_DEBUGGING_MODE,
+                                        CMD_GET_DESCRIPTION,
+                                        InternalGetDescription,
+                                        InternalLoadFullValue, CMD_LOAD_FULL_VALUE,
+                                        CMD_PROCESS_CREATED_MSG_RECEIVED,
+                                        CMD_REDIRECT_OUTPUT,
+                                        CMD_GET_NEXT_STATEMENT_TARGETS,
+                                        InternalGetNextStatementTargets,
+                                        CMD_SET_PROJECT_ROOTS,
+                                        CMD_GET_SMART_STEP_INTO_VARIANTS,
+                                        CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR,
+                                        CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS,
+                                        NetCommand,
+                                        CMD_SET_PROTOCOL, CMD_PYDEVD_JSON_CONFIG,
+                                        InternalGetThreadStack, InternalSmartStepInto,
+                                        InternalGetSmartStepIntoVariants,
+                                        CMD_DATAVIEWER_ACTION, InternalDataViewerAction,
+                                        CMD_TABLE_EXEC, InternalTableCommand,
+                                        CMD_INTERRUPT_DEBUG_CONSOLE,
+                                        CMD_SET_USER_TYPE_RENDERERS)
 from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder,
                                              dict_keys, STATE_RUN,
                                              NEXT_VALUE_SEPARATOR, IS_WINDOWS,
                                              get_current_thread_id)
-from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
-from _pydev_imps._pydev_saved_modules import threading
-import json
 from _pydevd_bundle.pydevd_user_type_renderers import parse_set_type_renderers_message
 
 
@@ -897,13 +934,14 @@ def process_net_command(py_db, cmd_id, seq, text):
                     parameters = text.split('\t')
                     thread_id, frame_id, init_command, command_type = parameters[:4]
 
-                    start_index, end_index = None, None
+                    start_index, end_index, format = None, None, None
 
-                    if len(parameters) >= 6:
+                    if len(parameters) >= 7:
                         start_index = int(parameters[4])
                         end_index = int(parameters[5])
+                        format = parameters[6]
 
-                    int_cmd = InternalTableCommand(seq, thread_id, frame_id, init_command, command_type, start_index, end_index)
+                    int_cmd = InternalTableCommand(seq, thread_id, frame_id, init_command, command_type, start_index, end_index, format)
                     py_db.post_internal_command(int_cmd, thread_id)
                 except:
                     traceback.print_exc()

@@ -1,14 +1,14 @@
 from _typeshed import SliceableBuffer
 from collections.abc import Sequence
-from typing import Protocol
-from typing_extensions import Literal, TypeAlias
+from typing import Literal, Protocol
+from typing_extensions import TypeAlias
 
 _FourIntSequence: TypeAlias = Sequence[int]
 _TwoIntSequence: TypeAlias = Sequence[int]
 
 class _Kid(Protocol):
     def toRaw(self) -> bytes: ...
-    def __str__(self, __indent: str = "") -> str: ...
+    def __str__(self, indent: str = "", /) -> str: ...
 
 # Used by other types referenced in https://pyinstaller.org/en/stable/spec-files.html#spec-file-operation
 class VSVersionInfo:

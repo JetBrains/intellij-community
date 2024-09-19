@@ -1,13 +1,24 @@
-from _typeshed import Incomplete
+from _typeshed import sentinel
 from _typeshed.wsgi import WSGIEnvironment
-from collections.abc import ItemsView, Iterator, KeysView, MutableMapping, ValuesView
+from collections.abc import Callable, Collection, ItemsView, Iterator, KeysView, MutableMapping, ValuesView
 from datetime import date, datetime, timedelta
-from typing import TypeVar, overload
-from typing_extensions import Literal
+from hashlib import _Hash
+from typing import Any, Literal, Protocol, TypeVar, overload
+from typing_extensions import TypeAlias
 
 from webob.descriptors import _AsymmetricProperty
+from webob.request import Request
+from webob.response import Response
 
 _T = TypeVar("_T")
+# we accept both the official spelling and the one used in the WebOb docs
+# the implementation compares after lower() so technically there are more
+# valid spellings, but it seems more natural to support these two spellings
+_SameSitePolicy: TypeAlias = Literal["Strict", "Lax", "None", "strict", "lax", "none"]
+
+class _Serializer(Protocol):
+    def loads(self, appstruct: Any, /) -> bytes: ...
+    def dumps(self, bstruct: bytes, /) -> Any: ...
 
 class RequestCookies(MutableMapping[str, str]):
     def __init__(self, environ: WSGIEnvironment) -> None: ...
@@ -30,9 +41,9 @@ class Cookie(dict[str, Morsel]):
     def __init__(self, input: str | None = None) -> None: ...
     def load(self, data: str) -> None: ...
     def add(self, key: str | bytes, val: str | bytes) -> Morsel: ...
-    def __setitem__(self, key: str | bytes, val: str | bytes) -> Morsel: ...  # type:ignore[override]
+    def __setitem__(self, key: str | bytes, val: str | bytes) -> Morsel: ...  # type: ignore[override]
     def serialize(self, full: bool = True) -> str: ...
-    def values(self) -> list[Morsel]: ...  # type:ignore[override]
+    def values(self) -> list[Morsel]: ...  # type: ignore[override]
     def __str__(self, full: bool = True) -> str: ...
 
 class Morsel(dict[bytes, bytes | bool | None]):
@@ -61,7 +72,7 @@ class Morsel(dict[bytes, bytes | bool | None]):
     def secure(self) -> bool | None: ...
     @secure.setter
     def secure(self, v: bool) -> None: ...
-    samesite: _AsymmetricProperty[bytes | None, Literal["strict", "lax", "none"] | None]
+    samesite: _AsymmetricProperty[bytes | None, _SameSitePolicy | None]
     def serialize(self, full: bool = True) -> str: ...
     def __str__(self, full: bool = True) -> str: ...
 
@@ -74,75 +85,98 @@ def make_cookie(
     secure: bool = False,
     httponly: bool = False,
     comment: str | None = None,
-    samesite: Literal["strict", "lax", "none"] | None = None,
+    samesite: _SameSitePolicy | None = None,
 ) -> str: ...
 
 class JSONSerializer:
-    def dumps(self, appstruct): ...
-    def loads(self, bstruct): ...
+    def dumps(self, appstruct: Any) -> bytes: ...
+    def loads(self, bstruct: bytes | str) -> Any: ...
 
 class Base64Serializer:
-    serializer: Incomplete
-    def __init__(self, serializer: Incomplete | None = None) -> None: ...
-    def dumps(self, appstruct): ...
-    def loads(self, bstruct): ...
+    serializer: _Serializer
+    def __init__(self, serializer: _Serializer | None = None) -> None: ...
+    def dumps(self, appstruct: Any) -> bytes: ...
+    def loads(self, bstruct: bytes) -> Any: ...
 
 class SignedSerializer:
-    salt: Incomplete
-    secret: Incomplete
-    hashalg: Incomplete
-    salted_secret: Incomplete
-    digestmod: Incomplete
-    digest_size: Incomplete
-    serializer: Incomplete
-    def __init__(self, secret, salt, hashalg: str = "sha512", serializer: Incomplete | None = None) -> None: ...
-    def dumps(self, appstruct): ...
-    def loads(self, bstruct): ...
+    salt: str
+    secret: str
+    hashalg: str
+    salted_secret: bytes
+    digestmod: Callable[[bytes], _Hash]
+    digest_size: int
+    serializer: _Serializer
+    def __init__(self, secret: str, salt: str, hashalg: str = "sha512", serializer: _Serializer | None = None) -> None: ...
+    def dumps(self, appstruct: Any) -> bytes: ...
+    def loads(self, bstruct: bytes) -> Any: ...
 
 class CookieProfile:
-    cookie_name: Incomplete
-    secure: Incomplete
-    max_age: Incomplete
-    httponly: Incomplete
-    samesite: Incomplete
-    path: Incomplete
-    domains: Incomplete
-    serializer: Incomplete
-    request: Incomplete
+    cookie_name: str
+    secure: bool
+    max_age: int | timedelta | None
+    httponly: bool | None
+    samesite: _SameSitePolicy | None
+    path: str
+    domains: Collection[str] | None
+    serializer: _Serializer
+    request: Request | None
     def __init__(
         self,
-        cookie_name,
+        cookie_name: str,
         secure: bool = False,
-        max_age: Incomplete | None = None,
-        httponly: Incomplete | None = None,
-        samesite: Incomplete | None = None,
+        max_age: int | timedelta | None = None,
+        httponly: bool | None = None,
+        samesite: _SameSitePolicy | None = None,
         path: str = "/",
-        domains: Incomplete | None = None,
-        serializer: Incomplete | None = None,
+        # even though the docs claim any iterable is fine, that is
+        # clearly not the case judging by the implementation
+        domains: Collection[str] | None = None,
+        serializer: _Serializer | None = None,
     ) -> None: ...
-    def __call__(self, request): ...
-    def bind(self, request): ...
-    def get_value(self): ...
-    def set_cookies(self, response, value, domains=..., max_age=..., path=..., secure=..., httponly=..., samesite=...): ...
-    def get_headers(self, value, domains=..., max_age=..., path=..., secure=..., httponly=..., samesite=...): ...
+    def __call__(self, request: Request) -> CookieProfile: ...
+    def bind(self, request: Request) -> CookieProfile: ...
+    def get_value(self) -> Any | None: ...
+    def set_cookies(
+        self,
+        response: Response,
+        value: Any,
+        domains: Collection[str] = sentinel,
+        max_age: int | timedelta | None = sentinel,
+        path: str = sentinel,
+        secure: bool = sentinel,
+        httponly: bool = sentinel,
+        samesite: _SameSitePolicy | None = sentinel,
+    ) -> Response: ...
+    def get_headers(
+        self,
+        value: Any,
+        domains: Collection[str] = sentinel,
+        max_age: int | timedelta | None = sentinel,
+        path: str = sentinel,
+        secure: bool = sentinel,
+        httponly: bool = sentinel,
+        samesite: _SameSitePolicy | None = sentinel,
+    ) -> list[tuple[str, str]]: ...
 
 class SignedCookieProfile(CookieProfile):
-    secret: Incomplete
-    salt: Incomplete
-    hashalg: Incomplete
-    original_serializer: Incomplete
+    secret: str
+    salt: str
+    hashalg: str
+    serializer: SignedSerializer
+    original_serializer: _Serializer
     def __init__(
         self,
-        secret,
-        salt,
-        cookie_name,
+        secret: str,
+        salt: str,
+        cookie_name: str,
         secure: bool = False,
-        max_age: Incomplete | None = None,
+        max_age: int | timedelta | None = None,
         httponly: bool = False,
-        samesite: Incomplete | None = None,
+        samesite: _SameSitePolicy | None = None,
         path: str = "/",
-        domains: Incomplete | None = None,
+        domains: Collection[str] | None = None,
         hashalg: str = "sha512",
-        serializer: Incomplete | None = None,
+        serializer: _Serializer | None = None,
     ) -> None: ...
-    def bind(self, request): ...
+    def __call__(self, request: Request) -> SignedCookieProfile: ...
+    def bind(self, request: Request) -> SignedCookieProfile: ...

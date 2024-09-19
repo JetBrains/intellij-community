@@ -5,6 +5,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import os
 import stat as statmod
@@ -33,7 +34,7 @@ if pycompat.isdarwin:
     attrkinds[lib.VFIFO] = statmod.S_IFIFO
     attrkinds[lib.VSOCK] = statmod.S_IFSOCK
 
-    class stat_res:
+    class stat_res(object):
         def __init__(self, st_mode, st_mtime, st_size):
             self.st_mode = st_mode
             self.st_mtime = st_mtime
@@ -57,7 +58,7 @@ if pycompat.isdarwin:
                 ofs = cur.name_info.attr_dataoffset
                 str_lgt = cur.name_info.attr_length
                 base_ofs = ffi.offsetof(b'val_attrs_t', b'name_info')
-                name = bytes(
+                name = str(
                     ffi.buffer(
                         ffi.cast(b"char*", cur) + base_ofs + ofs, str_lgt - 1
                     )

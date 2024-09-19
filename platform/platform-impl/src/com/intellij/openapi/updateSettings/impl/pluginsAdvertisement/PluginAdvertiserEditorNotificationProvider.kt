@@ -239,14 +239,16 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
     private fun guessPluginIdFromFile(extensionOrFileName: String): String? {
       // only some of the popular extensions
       return when (extensionOrFileName) {
-        "*.sql" -> "com.intellij.database"
+        "*.css" -> "com.intellij.css"
+        "*.go" -> "org.jetbrains.plugins.go"
         "*.js" -> "JavaScript"
         "*.jsx" -> "JavaScript"
+        "*.php" -> "com.jetbrains.php"
+        "*.rb" -> "org.jetbrains.plugins.ruby"
+        "*.rs" -> "com.jetbrains.rust"
+        "*.sql" -> "com.intellij.database"
         "*.ts" -> "JavaScript"
         "*.tsx" -> "JavaScript"
-        "*.css" -> "com.intellij.css"
-        "*.php" -> "com.jetbrains.php"
-        "*.ruby" -> "org.jetbrains.plugins.ruby"
         "*.vue" -> "org.jetbrains.plugins.vue"
         else -> null
       }

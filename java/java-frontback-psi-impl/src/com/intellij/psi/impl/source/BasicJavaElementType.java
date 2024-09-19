@@ -251,10 +251,10 @@ public interface BasicJavaElementType {
   final class JavaDummyElementType extends ILazyParseableElementType implements ICompositeElementType, ParentProviderElementType {
     private static final Set<IElementType> PARENT_ELEMENT_TYPES = Collections.singleton(BASIC_DUMMY_ELEMENT);
     private final Function<LanguageLevel, JavaDocLexer> javaDocLexer;
-    private final Function<LanguageLevel, BasicJavaLexer> javaLexer;
+    private final Function<LanguageLevel, ? extends Lexer> javaLexer;
 
     public JavaDummyElementType(@NotNull Function<LanguageLevel, JavaDocLexer> lexer,
-                                @NotNull Function<LanguageLevel, BasicJavaLexer> javaLexer) {
+                                @NotNull Function<LanguageLevel, Lexer> javaLexer) {
       super("DUMMY_ELEMENT", JavaLanguage.INSTANCE);
       javaDocLexer = lexer;
       this.javaLexer = javaLexer;

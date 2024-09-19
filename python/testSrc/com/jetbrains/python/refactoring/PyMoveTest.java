@@ -427,6 +427,32 @@ public class PyMoveTest extends PyTestCase {
     });
   }
 
+  public void testMoveSymbolFromTopLevelModuleToNewPackageCreatesInitPy() {
+    doComparingDirectories(testDir -> {
+      moveSymbols(testDir, "pkg/subpkg/b.py", "MyClass");
+    });
+  }
+
+  //PY-44858
+  public void testMoveNotCreateInitPyForNamespacePackagesToAnotherDirectory() {
+    doMoveSymbolsTest("pkg/subpkg/B/module_b.py", "myfunc");
+  }
+
+  //PY-44858
+  public void testMoveNotCreateInitPyForNamespacePackagesInSameDirectory() {
+    doMoveSymbolsTest("pkg/subpkg/module_b.py", "myfunc");
+  }
+
+  //PY-44858
+  public void testMoveNotCreateInitPyForNamespacePackagesToParentDirectory() {
+    doMoveSymbolsTest("pkg/subpkg/B/module_b.py", "myfunc");
+  }
+
+  //PY-44858
+  public void testMoveNotCreateInitPyForNamespacePackagesToChildDirectory() {
+    doMoveSymbolsTest("pkg/subpkg/A/B/module_b.py", "myfunc");
+  }
+
   // PY-23968
   public void testUpdatingNamesInFromImportsRespectsOrder() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;

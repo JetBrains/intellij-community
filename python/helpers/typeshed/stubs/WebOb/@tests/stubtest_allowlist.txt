@@ -119,7 +119,7 @@ webob.cachecontrol.UpdateDict.setdefault
 # These need to be ignored due to how WebOb decided to let people know
 # that certain methods on `NestedMultiDict` should not be called since
 # they are immutable, compared to a MultiDict, but still can be used
-# interchangeably in some parts of the API. So they re-use generic functions
+# interchangeably in some parts of the API. So they reuse generic functions
 # that accept any parameters and assign them to methods which should still
 # satisfy the same interface. The type annotations enforce the correct
 # input arguments instead of the generic ones.
@@ -137,6 +137,17 @@ webob.request.AdhocAttrMixin.__setattr__
 # make sense to annotate them and pretend they're part of the API.
 webob.request.BaseRequest.__init__
 
+# We needed to add a dummy *_: _P.args in order to support ParamSpec
+webob.dec.wsgify.middleware
+webob.dec._MiddlewareFactory.__call__
+
+# We renamed some of the arguments in positional only overloads for greater
+# clarity about what the arguments mean, stubtest should probably be a bit
+# more lenient here, since this is only unsafe if that overload accepts
+# arbitrary named arguments, that could overlap with the argument in that
+# specific position
+webob.dec.wsgify.__call__
+
 # Error: is not present at runtime
 # =============================
 # This attribute is there to help mypy type narrow NoVars based on its static
@@ -148,6 +159,6 @@ webob.multidict.NoVars.__bool__
 # so the type annotation is technically wrong, however I am unsure about
 # whether the ResponseBodyFile would satisfy some of the IO Protocols if
 # `write` was defined as a Callable instance attribute. It's hard to come up
-# with a use-case where the distinction matters, besides inherting from
+# with a use-case where the distinction matters, besides inheriting from
 # the class and overwriting the __init__ and forgetting to populate `write`.
 webob.response.ResponseBodyFile.write

@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionSource;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -39,7 +40,7 @@ public final class ApplyIntentionAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
-    ShowIntentionActionsHandler.chooseActionAndInvoke(myFile, myEditor, myAction, myAction.getText());
+    ShowIntentionActionsHandler.chooseActionAndInvoke(myFile, myEditor, myAction, myAction.getText(), IntentionSource.SEARCH_EVERYWHERE);
   }
 
   public String getName() {

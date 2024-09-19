@@ -10,8 +10,9 @@
 # Eventually, it could take care of updating (adding/removing/moving)
 # tags too.
 
+from __future__ import absolute_import
 
-import binascii
+import errno
 import io
 
 from .node import (
@@ -21,16 +22,15 @@ from .node import (
     short,
 )
 from .i18n import _
-from .revlogutils.constants import ENTRY_NODE_ID
 from . import (
     encoding,
     error,
     match as matchmod,
+    pycompat,
     scmutil,
     util,
 )
 from .utils import stringutil
-
 
 # Tags computation can be expensive and caches exist to make it fast in
 # the common case.
@@ -80,34 +80,6 @@ from .utils import stringutil
 # Tags associated with multiple changesets have an entry for each changeset.
 # The most recent changeset (in terms of revlog ordering for the head
 # setting it) for each tag is last.
-
-
-def warm_cache(repo):
-    """ensure the cache is properly filled"""
-    unfi = repo.unfiltered()
-    fnodescache = hgtagsfnodescache(unfi)
-    validated_fnodes = set()
-    unknown_entries = set()
-    flog = None
-
-    entries = enumerate(repo.changelog.index)
-    node_revs = ((e[ENTRY_NODE_ID], rev) for (rev, e) in entries)
-
-    for node, rev in node_revs:
-        fnode = fnodescache.getfnode(node=node, rev=rev)
-        if fnode != repo.nullid:
-            if fnode not in validated_fnodes:
-                if flog is None:
-                    flog = repo.file(b'.hgtags')
-                if flog.hasnode(fnode):
-                    validated_fnodes.add(fnode)
-                else:
-                    unknown_entries.add(node)
-
-    if unknown_entries:
-        fnodescache.refresh_invalid_nodes(unknown_entries)
-
-    fnodescache.write()
 
 
 def fnoderevs(ui, repo, revs):
@@ -220,9 +192,10 @@ def findglobaltags(ui, repo):
         _updatetags(cachetags, alltags)
         return alltags
 
-    has_node = repo.changelog.index.has_node
     for head in reversed(heads):  # oldest to newest
-        assert has_node(head), b"tag cache returned bogus head %s" % short(head)
+        assert repo.changelog.index.has_node(
+            head
+        ), b"tag cache returned bogus head %s" % short(head)
     fnodes = _filterfnodes(tagfnode, reversed(heads))
     alltags = _tagsfromfnodes(ui, repo, fnodes)
 
@@ -270,7 +243,9 @@ def readlocaltags(ui, repo, alltags, tagtypes):
     '''Read local tags in repo. Update alltags and tagtypes.'''
     try:
         data = repo.vfs.read(b"localtags")
-    except FileNotFoundError:
+    except IOError as inst:
+        if inst.errno != errno.ENOENT:
+            raise
         return
 
     # localtags is in the local encoding; re-encode to UTF-8 on
@@ -330,7 +305,7 @@ def _readtaghist(ui, repo, lines, fn, recode=None, calcnodelines=False):
             name = recode(name)
         try:
             nodebin = bin(nodehex)
-        except binascii.Error:
+        except TypeError:
             dbg(b"node '%s' is not well formed" % nodehex)
             continue
 
@@ -380,7 +355,7 @@ def _updatetags(filetags, alltags, tagtype=None, tagtypes=None):
     if tagtype is None:
         assert tagtypes is None
 
-    for name, nodehist in filetags.items():
+    for name, nodehist in pycompat.iteritems(filetags):
         if name not in alltags:
             alltags[name] = nodehist
             if tagtype is not None:
@@ -463,11 +438,7 @@ def _readtagcache(ui, repo):
     if (
         cacherev == tiprev
         and cachenode == tipnode
-        and cachehash
-        == scmutil.combined_filtered_and_obsolete_hash(
-            repo,
-            tiprev,
-        )
+        and cachehash == scmutil.filteredhash(repo, tiprev)
     ):
         tags = _readtags(ui, repo, cachelines, cachefile.name)
         cachefile.close()
@@ -475,14 +446,7 @@ def _readtagcache(ui, repo):
     if cachefile:
         cachefile.close()  # ignore rest of file
 
-    valid = (
-        tiprev,
-        tipnode,
-        scmutil.combined_filtered_and_obsolete_hash(
-            repo,
-            tiprev,
-        ),
-    )
+    valid = (tiprev, tipnode, scmutil.filteredhash(repo, tiprev))
 
     repoheads = repo.heads()
     # Case 2 (uncommon): empty repo; get out quickly and don't bother
@@ -520,7 +484,7 @@ def _readtagcache(ui, repo):
     return (repoheads, cachefnode, valid, None, True)
 
 
-def _getfnodes(ui, repo, nodes=None, revs=None):
+def _getfnodes(ui, repo, nodes):
     """return .hgtags fnodes for a list of changeset nodes
 
     Return value is a {node: fnode} mapping. There will be no entry for nodes
@@ -531,26 +495,11 @@ def _getfnodes(ui, repo, nodes=None, revs=None):
     cachefnode = {}
     validated_fnodes = set()
     unknown_entries = set()
-
-    if nodes is None and revs is None:
-        raise error.ProgrammingError("need to specify either nodes or revs")
-    elif nodes is not None and revs is None:
-        to_rev = repo.changelog.index.rev
-        nodes_revs = ((n, to_rev(n)) for n in nodes)
-    elif nodes is None and revs is not None:
-        to_node = repo.changelog.node
-        nodes_revs = ((to_node(r), r) for r in revs)
-    else:
-        msg = "need to specify only one of nodes or revs"
-        raise error.ProgrammingError(msg)
-
-    flog = None
-    for node, rev in nodes_revs:
-        fnode = fnodescache.getfnode(node=node, rev=rev)
+    for node in nodes:
+        fnode = fnodescache.getfnode(node)
+        flog = repo.file(b'.hgtags')
         if fnode != repo.nullid:
             if fnode not in validated_fnodes:
-                if flog is None:
-                    flog = repo.file(b'.hgtags')
                 if flog.hasnode(fnode):
                     validated_fnodes.add(fnode)
                 else:
@@ -559,7 +508,7 @@ def _getfnodes(ui, repo, nodes=None, revs=None):
 
     if unknown_entries:
         fixed_nodemap = fnodescache.refresh_invalid_nodes(unknown_entries)
-        for node, fnode in fixed_nodemap.items():
+        for node, fnode in pycompat.iteritems(fixed_nodemap):
             if fnode != repo.nullid:
                 cachefnode[node] = fnode
 
@@ -601,7 +550,7 @@ def _writetagcache(ui, repo, valid, cachetags):
     # we keep them in UTF-8 throughout this module.  If we converted
     # them local encoding on input, we would lose info writing them to
     # the cache.
-    for (name, (node, hist)) in sorted(cachetags.items()):
+    for (name, (node, hist)) in sorted(pycompat.iteritems(cachetags)):
         for n in hist:
             cachefile.write(b"%s %s\n" % (hex(n), name))
         cachefile.write(b"%s %s\n" % (hex(node), name))
@@ -704,7 +653,9 @@ def _tag(
 
     try:
         fp = repo.wvfs(b'.hgtags', b'rb+')
-    except FileNotFoundError:
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            raise
         fp = repo.wvfs(b'.hgtags', b'ab')
     else:
         prevtags = fp.read()
@@ -716,9 +667,8 @@ def _tag(
 
     repo.invalidatecaches()
 
-    with repo.dirstate.changing_files(repo):
-        if b'.hgtags' not in repo.dirstate:
-            repo[None].add([b'.hgtags'])
+    if b'.hgtags' not in repo.dirstate:
+        repo[None].add([b'.hgtags'])
 
     m = matchmod.exact([b'.hgtags'])
     tagnode = repo.commit(
@@ -736,7 +686,7 @@ _fnodesrecsize = 4 + 20  # changeset fragment + filenode
 _fnodesmissingrec = b'\xff' * 24
 
 
-class hgtagsfnodescache:
+class hgtagsfnodescache(object):
     """Persistent cache mapping revisions to .hgtags filenodes.
 
     The cache is an array of records. Each item in the array corresponds to
@@ -799,7 +749,7 @@ class hgtagsfnodescache:
             # TODO: zero fill entire record, because it's invalid not missing?
             self._raw.extend(b'\xff' * (wantedlen - rawlen))
 
-    def getfnode(self, node, computemissing=True, rev=None):
+    def getfnode(self, node, computemissing=True):
         """Obtain the filenode of the .hgtags file at a specified revision.
 
         If the value is in the cache, the entry will be validated and returned.
@@ -814,8 +764,8 @@ class hgtagsfnodescache:
         if node == self._repo.nullid:
             return node
 
-        if rev is None:
-            rev = self._repo.changelog.rev(node)
+        ctx = self._repo[node]
+        rev = ctx.rev()
 
         self.lookupcount += 1
 
@@ -858,7 +808,7 @@ class hgtagsfnodescache:
             # There is some no-merge changeset where p1 is null and p2 is set
             # Processing them as merge is just slower, but still gives a good
             # result.
-            p2node = cl.node(p2rev)
+            p2node = cl.node(p1rev)
             p2fnode = self.getfnode(p2node, computemissing=False)
             if p1fnode != p2fnode:
                 # we cannot rely on readfast because we don't know against what
@@ -963,28 +913,3 @@ class hgtagsfnodescache:
             )
         finally:
             lock.release()
-
-
-def clear_cache_on_disk(repo):
-    """function used by the perf extension to "tags" cache"""
-    repo.cachevfs.tryunlink(_filename(repo))
-
-
-# a small attribute to help `hg perf::tags` to detect a fixed version.
-clear_cache_fnodes_is_working = True
-
-
-def clear_cache_fnodes(repo):
-    """function used by the perf extension to clear "file node cache"""
-    repo.cachevfs.tryunlink(_fnodescachefile)
-
-
-def forget_fnodes(repo, revs):
-    """function used by the perf extension to prune some entries from the fnodes
-    cache"""
-    missing_1 = b'\xff' * 4
-    missing_2 = b'\xff' * 20
-    cache = hgtagsfnodescache(repo.unfiltered())
-    for r in revs:
-        cache._writeentry(r * _fnodesrecsize, missing_1, missing_2)
-    cache.write()

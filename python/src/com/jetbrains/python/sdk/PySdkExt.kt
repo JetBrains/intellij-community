@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressManager
@@ -225,9 +226,11 @@ fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
 }
 
 
-fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath: String?): Sdk? {
-  if (!sdkSeemsValid) return null
-  val homePath = this.homePath ?: return null
+// For Java only
+internal fun PyDetectedSdk.setupAssociatedLogged(existingSdks: List<Sdk>, associatedModulePath: String?): Sdk? = setupAssociated(existingSdks, associatedModulePath).getOrLogException(LOGGER)
+fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath: String?): Result<Sdk> {
+  if (!sdkSeemsValid) return Result.failure(Throwable("sdk not valid"))
+  val homePath = this.homePath ?: return Result.failure(Throwable("homePath os null"))
   val suggestedName = suggestAssociatedSdkName(homePath, associatedModulePath) ?: homePath
   val sdk = SdkConfigurationUtil.createSdk(existingSdks, homePath, PythonSdkType.getInstance(), null, suggestedName)
 
@@ -244,7 +247,7 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath:
     }
   }
   PythonSdkType.getInstance().setupSdkPaths(sdk)
-  return sdk
+  return Result.success(sdk)
 }
 
 var Module.pythonSdk: Sdk?
@@ -396,8 +399,9 @@ private fun Sdk.containsModuleName(module: Module?): Boolean {
 fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   val existingData = sdkAdditionalData as? PythonSdkAdditionalData
   if (existingData != null) return existingData
-  val flavor = PythonSdkFlavor.getFlavor(homePath)
-  val newData = PythonSdkAdditionalData(flavor?.let { if (it.supportsEmptyData()) it else null })
+  val homePath = Path.of(homePath ?: error("homePath is null for $this"))
+  val flavor = PythonSdkFlavor.tryDetectFlavorByLocalPath(homePath) ?: error("No flavor detected for $homePath sdk")
+  val newData = PythonSdkAdditionalData(if (flavor.supportsEmptyData()) flavor else null)
   val modificator = sdkModificator
   modificator.sdkAdditionalData = newData
   val application = ApplicationManager.getApplication()

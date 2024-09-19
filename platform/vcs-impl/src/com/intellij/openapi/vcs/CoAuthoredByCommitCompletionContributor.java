@@ -28,7 +28,7 @@ public class CoAuthoredByCommitCompletionContributor extends CompletionContribut
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
-    if (document.getUserData(CommitMessage.DATA_KEY) == null) return;
+    if (!CommitMessage.isCommitMessage(document)) return;
 
     String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
     CompletionResultSet prefixed = result.withPrefixMatcher(new PlainPrefixMatcher(prefix, true));

@@ -107,12 +107,10 @@ public final class HtmlReferenceProvider extends PsiReferenceProvider {
         ) ||
          ( attrName.equalsIgnoreCase(HREF_ATTRIBUTE_NAME) &&
            ( tagName.equalsIgnoreCase("a") ||
-             tagName.equalsIgnoreCase("area") ||
-             StringUtil.endsWithIgnoreCase(tagName, "link")
+          tagName.equalsIgnoreCase("area") ||
+          tagName.equalsIgnoreCase("link")
          )
-         ) ||
-         (attrName.equalsIgnoreCase("to") && StringUtil.endsWithIgnoreCase(tagName, "link")
-         ) ||
+        ) ||
            ( attrName.equalsIgnoreCase(USEMAP_ATTR_NAME) &&
          (tagName.equalsIgnoreCase(SizeReference.IMAGE_TAG_NAME) ||
           tagName.equalsIgnoreCase("object"))
@@ -250,8 +248,7 @@ public final class HtmlReferenceProvider extends PsiReferenceProvider {
                ("poster".equals(localName) && "video".equalsIgnoreCase(tag.getName()))) {
         refs = PathReferenceManager.getInstance().createReferences(element, false, false, true);
       }
-      else if ((HREF_ATTRIBUTE_NAME.equalsIgnoreCase(localName) || "to".equalsIgnoreCase(localName)) &&
-               (StringUtil.endsWithIgnoreCase(tag.getName(), "link"))) {
+      else if (HREF_ATTRIBUTE_NAME.equalsIgnoreCase(localName) && "link".equalsIgnoreCase(tag.getName())) {
         if (!HtmlUtil.hasHtmlPrefix(text)) {
           FileType[] fileTypes = findFileTypeByRel(tag.getAttributeValue("rel"));
           String typeValue = tag.getAttributeValue("type");
@@ -299,7 +296,7 @@ public final class HtmlReferenceProvider extends PsiReferenceProvider {
   public static String[] getAttributeValues() {
     return new String[] {SRC_ATTR_NAME, HREF_ATTRIBUTE_NAME, USEMAP_ATTR_NAME, "action", "background", "width", "height", "type", "bgcolor", "color", "vlink",
       "link", "alink", "text", "name", HtmlUtil.ID_ATTRIBUTE_NAME, HtmlUtil.CLASS_ATTRIBUTE_NAME, FOR_ATTR_NAME, MicrodataUtil.ITEM_REF, "data", "poster", "srcset",
-      LABELLEDBY, "to"
+      LABELLEDBY
     };
   }
 

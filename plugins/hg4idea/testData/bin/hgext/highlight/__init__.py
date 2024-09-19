@@ -26,6 +26,7 @@ Pygments will try very hard to identify the file type from content and any
 match (even matches with a low confidence score) will be used.
 """
 
+from __future__ import absolute_import
 
 from . import highlight
 from mercurial.hgweb import (
@@ -101,8 +102,8 @@ def generate_css(web):
 def extsetup(ui):
     # monkeypatch in the new version
     extensions.wrapfunction(
-        webcommands, '_filerevision', filerevision_highlight
+        webcommands, b'_filerevision', filerevision_highlight
     )
-    extensions.wrapfunction(webcommands, 'annotate', annotate_highlight)
+    extensions.wrapfunction(webcommands, b'annotate', annotate_highlight)
     webcommands.highlightcss = generate_css
     webcommands.__all__.append(b'highlightcss')

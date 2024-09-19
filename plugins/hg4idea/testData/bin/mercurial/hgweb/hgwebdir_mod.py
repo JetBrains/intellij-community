@@ -6,6 +6,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import gc
 import os
@@ -268,7 +269,7 @@ def indexentries(
     return templateutil.mappinggenerator(_indexentriesgen, args=args)
 
 
-class hgwebdir:
+class hgwebdir(object):
     """HTTP server for multiple repositories.
 
     Given a configuration, different repositories will be served depending
@@ -284,7 +285,6 @@ class hgwebdir:
         self.lastrefresh = 0
         self.motd = None
         self.refresh()
-        self.requests_count = 0
         if not baseui:
             # set up environment for new ui
             extensions.loadall(self.ui)
@@ -341,10 +341,6 @@ class hgwebdir:
 
         self.repos = repos
         self.ui = u
-        self.gc_full_collect_rate = self.ui.configint(
-            b'experimental', b'web.full-garbage-collection-rate'
-        )
-        self.gc_full_collections_done = 0
         encoding.encoding = self.ui.config(b'web', b'encoding')
         self.style = self.ui.config(b'web', b'style')
         self.templatepath = self.ui.config(
@@ -387,38 +383,23 @@ class hgwebdir:
             finally:
                 # There are known cycles in localrepository that prevent
                 # those objects (and tons of held references) from being
-                # collected through normal refcounting.
-                # In some cases, the resulting memory consumption can
-                # be tamed by performing explicit garbage collections.
-                # In presence of actual leaks or big long-lived caches, the
-                # impact on performance of such collections can become a
-                # problem, hence the rate shouldn't be set too low.
-                # See "Collecting the oldest generation" in
-                # https://devguide.python.org/garbage_collector
-                # for more about such trade-offs.
-                rate = self.gc_full_collect_rate
-
-                # this is not thread safe, but the consequence (skipping
-                # a garbage collection) is arguably better than risking
-                # to have several threads perform a collection in parallel
-                # (long useless wait on all threads).
-                self.requests_count += 1
-                if rate > 0 and self.requests_count % rate == 0:
-                    gc.collect()
-                    self.gc_full_collections_done += 1
-                else:
-                    gc.collect(generation=1)
+                # collected through normal refcounting. We mitigate those
+                # leaks by performing an explicit GC on every request.
+                # TODO remove this once leaks are fixed.
+                # TODO only run this on requests that create localrepository
+                # instances instead of every request.
+                gc.collect()
 
     def _runwsgi(self, req, res):
-        self.refresh()
-
-        csp, nonce = cspvalues(self.ui)
-        if csp:
-            res.headers[b'Content-Security-Policy'] = csp
-
-        virtual = req.dispatchpath.strip(b'/')
-        tmpl = self.templater(req, nonce)
         try:
+            self.refresh()
+
+            csp, nonce = cspvalues(self.ui)
+            if csp:
+                res.headers[b'Content-Security-Policy'] = csp
+
+            virtual = req.dispatchpath.strip(b'/')
+            tmpl = self.templater(req, nonce)
             ctype = tmpl.render(b'mimetype', {b'encoding': encoding.encoding})
 
             # Global defaults. These can be overridden by any handler.
@@ -460,9 +441,12 @@ class hgwebdir:
                 if real:
                     # Re-parse the WSGI environment to take into account our
                     # repository path component.
-                    uenv = {
-                        k.decode('latin1'): v for k, v in req.rawenv.items()
-                    }
+                    uenv = req.rawenv
+                    if pycompat.ispy3:
+                        uenv = {
+                            k.decode('latin1'): v
+                            for k, v in pycompat.iteritems(uenv)
+                        }
                     req = requestmod.parserequestfromenv(
                         uenv,
                         reponame=virtualrepo,

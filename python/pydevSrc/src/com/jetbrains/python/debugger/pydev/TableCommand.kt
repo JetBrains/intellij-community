@@ -22,7 +22,7 @@ class TableCommand(debugger: RemoteDebugger?,
     payload.add(initExpr).add(commandType.name)
 
     tableCommandParameters?.asSafely<PyDevCommandParameters>()?.let {
-      payload.add(it.start).add(it.end)
+      payload.add(it.start).add(it.end).add(it.format ?: "null")
     }
   }
 

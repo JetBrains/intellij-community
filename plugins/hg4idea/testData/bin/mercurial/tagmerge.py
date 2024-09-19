@@ -71,6 +71,7 @@
 #         - put blocks whose nodes come all from p2 first
 #     - write the tag blocks in the sorted order
 
+from __future__ import absolute_import
 
 from .i18n import _
 from . import (

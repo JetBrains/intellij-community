@@ -1,28 +1,57 @@
+# pyright: reportInvalidStubStatement=none
+
+import sys
+from _typeshed import StrPath, SupportsKeysAndGetItem, SupportsWrite
+from argparse import Namespace
 from collections.abc import Callable, Iterable, Sequence
 from logging import Logger
-from typing import Any, TypeVar
+from typing import Any, Protocol, TypeVar
 from typing_extensions import ParamSpec, TypeAlias
 
 import flask
 from flask_sqlalchemy import SQLAlchemy
 
 _T = TypeVar("_T")
+_T_contra = TypeVar("_T_contra", contravariant=True)
 _P = ParamSpec("_P")
 _ConfigureCallback: TypeAlias = Callable[[Config], Config]
+_AlembicConfigValue: TypeAlias = Any
 
 alembic_version: tuple[int, int, int]
 log: Logger
 
+# TODO: Use _typeshed.SupportsFlush when it's available in type checkers.
+class _SupportsWriteAndFlush(SupportsWrite[_T_contra], Protocol):
+    def flush(self) -> object: ...
+
 class Config:  # should inherit from alembic.config.Config which is not possible yet
     template_directory: str | None
-    def __init__(self, *args, **kwargs) -> None: ...
+    # Same as alembic.config.Config + template_directory kwarg
+    def __init__(
+        self,
+        file_: StrPath | None = None,
+        ini_section: str = "alembic",
+        # Same as buffer argument in TextIOWrapper.__init__.buffer
+        output_buffer: _SupportsWriteAndFlush[str] | None = None,
+        # Same as stream argument in alembic.util.messaging
+        stdout: SupportsWrite[str] = sys.stdout,
+        cmd_opts: Namespace | None = None,
+        config_args: SupportsKeysAndGetItem[str, _AlembicConfigValue] | Iterable[tuple[str, _AlembicConfigValue]] = ...,
+        attributes: (
+            SupportsKeysAndGetItem[_AlembicConfigValue, _AlembicConfigValue]
+            | Iterable[tuple[_AlembicConfigValue, _AlembicConfigValue]]
+            | None
+        ) = None,
+        *,
+        template_directory: str | None = None,
+    ) -> None: ...
     def get_template_directory(self) -> str: ...
 
 class Migrate:
     configure_callbacks: list[_ConfigureCallback]
     db: SQLAlchemy | None
     directory: str
-    alembic_ctx_kwargs: dict[str, Any]
+    alembic_ctx_kwargs: dict[str, _AlembicConfigValue]
     def __init__(
         self,
         app: flask.Flask | None = None,
@@ -31,7 +60,7 @@ class Migrate:
         command: str = "db",
         compare_type: bool = True,
         render_as_batch: bool = True,
-        **kwargs,
+        **kwargs: _AlembicConfigValue,
     ) -> None: ...
     def init_app(
         self,
@@ -41,13 +70,13 @@ class Migrate:
         command: str | None = None,
         compare_type: bool | None = None,
         render_as_batch: bool | None = None,
-        **kwargs,
+        **kwargs: _AlembicConfigValue,
     ) -> None: ...
     def configure(self, f: _ConfigureCallback) -> _ConfigureCallback: ...
-    def call_configure_callbacks(self, config: Config): ...
+    def call_configure_callbacks(self, config: Config) -> Config: ...
     def get_config(
         self, directory: str | None = None, x_arg: str | Sequence[str] | None = None, opts: Iterable[str] | None = None
-    ): ...
+    ) -> Config: ...
 
 def catch_errors(f: Callable[_P, _T]) -> Callable[_P, _T]: ...
 def list_templates() -> None: ...
@@ -103,4 +132,7 @@ def history(
 def heads(directory: str | None = None, verbose: bool = False, resolve_dependencies: bool = False) -> None: ...
 def branches(directory: str | None = None, verbose: bool = False) -> None: ...
 def current(directory: str | None = None, verbose: bool = False) -> None: ...
-def stamp(directory: str | None = None, revision: str = "head", sql: bool = False, tag: str | None = None) -> None: ...
+def stamp(
+    directory: str | None = None, revision: str = "head", sql: bool = False, tag: str | None = None, purge: bool = False
+) -> None: ...
+def check(directory: str | None = None) -> None: ...

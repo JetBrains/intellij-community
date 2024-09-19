@@ -24,11 +24,20 @@ public class JDComment {
   private List<String> mySinceList;
   private String myDeprecated;
   private boolean myMultiLineComment;
-  private String myFirstLine = "/**";
-  private String myEndLine = "*/";
 
-  public JDComment(@NotNull CommentFormatter formatter) {
+  private final boolean myMarkdown;
+  private String myFirstLine;
+  private String myEndLine;
+  private final String myLeadingLine;
+
+
+  public JDComment(@NotNull CommentFormatter formatter, boolean isMarkdown) {
     myFormatter = formatter;
+    myMarkdown = isMarkdown;
+
+    myFirstLine = myMarkdown ? "///" : "/**";
+    myEndLine =  myMarkdown ? "" : "*/";
+    myLeadingLine = myMarkdown ? "/// " : " * ";
   }
 
   protected static boolean isNull(@Nullable String s) {
@@ -57,8 +66,8 @@ public class JDComment {
   public @Nullable String generate(@NotNull String indent) {
     final String prefix;
 
-    if (myFormatter.getSettings().JD_LEADING_ASTERISKS_ARE_ENABLED) {
-      prefix = indent + " * ";
+    if (myMarkdown || myFormatter.getSettings().JD_LEADING_ASTERISKS_ARE_ENABLED) {
+      prefix = indent + myLeadingLine;
     } else {
       prefix = indent;
     }
@@ -66,7 +75,7 @@ public class JDComment {
     StringBuilder sb = new StringBuilder();
 
     if (!isNull(myDescription)) {
-      sb.append(myFormatter.getParser().formatJDTagDescription(myDescription, prefix));
+      sb.append(myFormatter.getParser().formatJDTagDescription(myDescription, prefix, getIsMarkdown()));
 
       if (myFormatter.getSettings().JD_ADD_BLANK_AFTER_DESCRIPTION) {
         sb.append(prefix);
@@ -80,7 +89,7 @@ public class JDComment {
 
     if (!isNull(myUnknownList) && myFormatter.getSettings().JD_KEEP_INVALID_TAGS) {
       for (String aUnknownList : myUnknownList) {
-        sb.append(myFormatter.getParser().formatJDTagDescription(aUnknownList, prefix, continuationPrefix));
+        sb.append(myFormatter.getParser().formatJDTagDescription(aUnknownList, prefix, continuationPrefix, getIsMarkdown()));
       }
     }
 
@@ -88,7 +97,7 @@ public class JDComment {
       JDTag tag = JDTag.SEE;
       for (String aSeeAlsoList : mySeeAlsoList) {
         StringBuilder tagDescription = myFormatter.getParser()
-          .formatJDTagDescription(aSeeAlsoList, prefix + tag.getWithEndWhitespace(), continuationPrefix);
+          .formatJDTagDescription(aSeeAlsoList, prefix + tag.getWithEndWhitespace(), continuationPrefix, getIsMarkdown());
         sb.append(tagDescription);
       }
     }
@@ -97,7 +106,7 @@ public class JDComment {
       JDTag tag = JDTag.SINCE;
       for (String since : mySinceList) {
         StringBuilder tagDescription = myFormatter.getParser()
-          .formatJDTagDescription(since, prefix + tag.getWithEndWhitespace(), continuationPrefix);
+          .formatJDTagDescription(since, prefix + tag.getWithEndWhitespace(), continuationPrefix, getIsMarkdown());
         sb.append(tagDescription);
       }
     }
@@ -105,7 +114,7 @@ public class JDComment {
     if (myDeprecated != null) {
       JDTag tag = JDTag.DEPRECATED;
       StringBuilder tagDescription = myFormatter.getParser()
-        .formatJDTagDescription(myDeprecated, prefix + tag.getWithEndWhitespace(), continuationPrefix);
+        .formatJDTagDescription(myDeprecated, prefix + tag.getWithEndWhitespace(), continuationPrefix, getIsMarkdown());
       sb.append(tagDescription);
     }
 
@@ -120,9 +129,10 @@ public class JDComment {
       sb.append(prefix).append('\n');
     }
 
-    if (myMultiLineComment && myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS
+    if (!myMarkdown && (myMultiLineComment &&
+        myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS
         || !myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS
-        || sb.indexOf("\n") != sb.length() - 1) // If comment has become multiline after formatting - it must be shown as multiline.
+        || sb.indexOf("\n") != sb.length() - 1)) // If comment has become multiline after formatting - it must be shown as multiline.
                                                 // Last symbol is always '\n', so we need to check if there is one more LF symbol before it.
     {
       sb.insert(0, myFirstLine + '\n');
@@ -160,6 +170,10 @@ public class JDComment {
   public void addSince(@NotNull String since) {
     if (mySinceList == null) mySinceList = new ArrayList<>();
     mySinceList.add(since);
+  }
+
+  public boolean getIsMarkdown() {
+    return myMarkdown;
   }
 
   public void setDeprecated(@Nullable String deprecated) {

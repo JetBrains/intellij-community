@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,30 @@ public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner
 
   @Nullable
   default PyAstExpression getBoundExpression() {
-    return PsiTreeUtil.getChildOfType(this, PyAstExpression.class);
+    PsiElement element = StreamEx.of(getChildren())
+      .findFirst(child -> {
+        PsiElement e = PsiTreeUtil.skipWhitespacesBackward(child);
+        return e != null && e.getNode().getElementType() == PyTokenTypes.COLON;
+      })
+      .orElse(null);
+    if (element instanceof PyAstExpression expression) {
+      return expression;
+    }
+    return null;
+  }
+
+  @Nullable
+  default PyAstExpression getDefaultExpression() {
+    PsiElement element = StreamEx.of(getChildren())
+      .findFirst(child -> {
+        PsiElement e = PsiTreeUtil.skipWhitespacesBackward(child);
+        return e != null && e.getNode().getElementType() == PyTokenTypes.EQ;
+      })
+      .orElse(null);
+    if (element instanceof PyAstExpression expression) {
+      return expression;
+    }
+    return null;
   }
 
   /**
@@ -56,6 +80,16 @@ public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner
     PyAstExpression boundExpression = getBoundExpression();
     if (boundExpression != null) {
       return boundExpression.getText();
+    }
+
+    return null;
+  }
+
+  @Nullable
+  default String getDefaultExpressionText() {
+    PyAstExpression defaultExpression = getDefaultExpression();
+    if (defaultExpression != null) {
+      return defaultExpression.getText();
     }
 
     return null;

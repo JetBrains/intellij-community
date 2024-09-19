@@ -9,15 +9,15 @@ VERSION: str
 core: Incomplete
 
 class Intent(IntEnum):
-    PERCEPTUAL: int
-    RELATIVE_COLORIMETRIC: int
-    SATURATION: int
-    ABSOLUTE_COLORIMETRIC: int
+    PERCEPTUAL = 0
+    RELATIVE_COLORIMETRIC = 1
+    SATURATION = 2
+    ABSOLUTE_COLORIMETRIC = 3
 
 class Direction(IntEnum):
-    INPUT: int
-    OUTPUT: int
-    PROOF: int
+    INPUT = 0
+    OUTPUT = 1
+    PROOF = 2
 
 FLAGS: Incomplete
 

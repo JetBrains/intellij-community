@@ -9,18 +9,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.Map;
 import java.util.StringJoiner;
@@ -39,6 +39,8 @@ public final class FileStatusMap implements Disposable {
                                                                        "and accept the daemon unresponsiveness/blinking/slowdowns.";
   private final Project myProject;
   private final Map<@NotNull Document, FileStatus> myDocumentToStatusMap = new WeakHashMap<>(); // all dirty if absent
+  // the ranges of last DocumentEvents united; used for "should I really remove invalid PSI highlighters from this range" heuristic
+  private final /*non-static*/Key<RangeMarker> COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY = Key.create("COMPOSITE_DOCUMENT_CHANGE_KEY");
   private volatile boolean myAllowDirt = true;
 
   FileStatusMap(@NotNull Project project) {
@@ -74,13 +76,7 @@ public final class FileStatusMap implements Disposable {
   public void setErrorFoundFlag(@NotNull Project project, @NotNull Document document, boolean errorFound) {
     //GHP has found error. Flag is used by ExternalToolPass to decide whether to run or not
     synchronized(myDocumentToStatusMap) {
-      FileStatus status = myDocumentToStatusMap.get(document);
-      if (status == null){
-        if (!errorFound) return;
-        status = new FileStatus(project);
-        myDocumentToStatusMap.put(document, status);
-      }
-      status.errorFound = errorFound;
+      myDocumentToStatusMap.computeIfAbsent(document, __->new FileStatus(project)).errorFound = errorFound;
     }
   }
 
@@ -121,46 +117,44 @@ public final class FileStatusMap implements Disposable {
       return true;
     }
 
-    private void combineScopesWith(@NotNull TextRange scope, int fileLength, @NotNull Document document) {
-      dirtyScopes.replaceAll((__, oldScope) -> {
-        RangeMarker newScope = combineScopes(oldScope, scope, fileLength, document);
-        if (newScope != oldScope && oldScope != null) {
-          oldScope.dispose();
-        }
-        return newScope;
-      });
+    private void combineScopesWith(@NotNull TextRange scope, @NotNull Document document) {
+      dirtyScopes.replaceAll((__, oldScope) -> combineScopes(oldScope, scope, document));
     }
 
-    private static @NotNull RangeMarker combineScopes(@Nullable RangeMarker old, @NotNull TextRange scope, int textLength, @NotNull Document document) {
-      if (scope.equalsToRange(0, textLength)) return WHOLE_FILE_DIRTY_MARKER;
+    private static final TextRange WHOLE_FILE_TEXT_RANGE = new UnfairTextRange(-1, -1);
+    private static @NotNull RangeMarker combineScopes(@Nullable RangeMarker old, @NotNull TextRange scope, @NotNull Document document) {
+      if (scope == WHOLE_FILE_TEXT_RANGE || old == WHOLE_FILE_DIRTY_MARKER) {
+        return WHOLE_FILE_DIRTY_MARKER;
+      }
       if (old == null) {
         return document.createRangeMarker(scope);
       }
-      if (old == WHOLE_FILE_DIRTY_MARKER) return old;
       TextRange oldRange = old.getTextRange();
       TextRange union = scope.union(oldRange);
       if (old.isValid() && union.equals(oldRange)) {
         return old;
       }
-      if (union.getEndOffset() > textLength) {
-        union = union.intersection(new TextRange(0, textLength));
+      if (union.getEndOffset() > document.getTextLength()) {
+        if (union.getStartOffset() == 0) {
+          return WHOLE_FILE_DIRTY_MARKER;
+        }
+        union =  union.intersection(new TextRange(0, document.getTextLength()));
       }
       assert union != null;
+      old.dispose();
       return document.createRangeMarker(union);
     }
 
     @Override
+    @NonNls
     public String toString() {
-      @NonNls StringBuilder s = new StringBuilder();
-      s.append("defensivelyMarked = ").append(defensivelyMarked);
-      s.append("; wolfPassFinished = ").append(wolfPassFinished);
-      s.append("; errorFound = ").append(errorFound);
-      s.append("; dirtyScopes: (");
-      dirtyScopes.forEach((passId, rangeMarker) ->
-        s.append(" pass: ").append(passId).append(" -> ").append(rangeMarker == WHOLE_FILE_DIRTY_MARKER ? "Whole file" : rangeMarker).append(";")
-      );
-      s.append(")");
-      return s.toString();
+      return
+        (defensivelyMarked ? "defensivelyMarked = "+defensivelyMarked : "")
+        +(wolfPassFinished ? "" : "; wolfPassFinished = "+wolfPassFinished)
+        +(errorFound ? "; errorFound = "+errorFound : "")
+        +(dirtyScopes.isEmpty() ? "" : "; dirtyScopes: ("+
+        StringUtil.join(dirtyScopes.int2ObjectEntrySet(), e ->
+          " pass: "+e.getIntKey()+" -> "+(e.getValue() == WHOLE_FILE_DIRTY_MARKER ? "Whole file" : e.getValue()), ";") +")");
     }
 
     private void setDirtyScope(int passId, @Nullable RangeMarker scope) {
@@ -200,6 +194,9 @@ public final class FileStatusMap implements Disposable {
       }
       else if (status.dirtyScopes.containsKey(passId)) {
         status.setDirtyScope(passId, null);
+      }
+      if (status.allDirtyScopesAreNull()) {
+        disposeDirtyDocumentRangeStorage(document);
       }
     }
   }
@@ -269,7 +266,10 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  void markFileScopeDirty(@NotNull Document document, @NotNull TextRange scope, int fileLength, @NotNull @NonNls Object reason) {
+  void markWholeFileScopeDirty(@NotNull Document document, @NotNull @NonNls Object reason) {
+    markFileScopeDirty(document, FileStatus.WHOLE_FILE_TEXT_RANGE, reason);
+  }
+  void markFileScopeDirty(@NotNull Document document, @NotNull TextRange scope, @NotNull @NonNls Object reason) {
     assertAllowModifications();
     log("Mark scope dirty: ",scope,reason);
     synchronized(myDocumentToStatusMap) {
@@ -278,7 +278,7 @@ public final class FileStatusMap implements Disposable {
       if (status.defensivelyMarked) {
         status.defensivelyMarked = false;
       }
-      status.combineScopesWith(scope, fileLength, document);
+      status.combineScopesWith(scope, document);
     }
   }
 
@@ -291,12 +291,7 @@ public final class FileStatusMap implements Disposable {
 
   public String toString(@NotNull Document document) {
     synchronized (myDocumentToStatusMap) {
-      if (myDocumentToStatusMap.containsKey(document)) {
-        return myDocumentToStatusMap.get(document).toString();
-      }
-      else {
-        return "";
-      }
+      return String.valueOf(myDocumentToStatusMap.get(document));
     }
   }
 
@@ -396,6 +391,42 @@ public final class FileStatusMap implements Disposable {
         joiner.add(String.valueOf(o));
       }
       LOG.debug(joiner.toString());
+    }
+  }
+
+  // store any Document change and combine it with every previous one to form one big dirty change
+  void addDocumentDirtyRange(@NotNull DocumentEvent event) {
+    Document document = event.getDocument();
+    RangeMarker oldRange = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
+    if (oldRange != WHOLE_FILE_DIRTY_MARKER && oldRange != null && oldRange.isValid() && oldRange.getTextRange().containsRange(event.getOffset(), event.getOffset()+event.getNewLength())) {
+      // optimisation: the change is inside the RangeMarker which should take care of the change by itself
+      return;
+    }
+    TextRange scope = new TextRange(event.getOffset(), Math.min(event.getOffset() + event.getNewLength(), document.getTextLength()));
+    RangeMarker combined = oldRange == WHOLE_FILE_DIRTY_MARKER || event.isWholeTextReplaced() ||
+                           scope.getStartOffset() == 0 && scope.getEndOffset() == document.getTextLength() ? WHOLE_FILE_DIRTY_MARKER :
+                           FileStatus.combineScopes(oldRange, scope, document);
+    if (combined != WHOLE_FILE_DIRTY_MARKER) {
+      combined.setGreedyToRight(true);
+      combined.setGreedyToLeft(true);
+    }
+    document.putUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY, combined);
+  }
+
+  // get one big dirty region united from all small document changes before highlighting finished
+  @NotNull
+  TextRange getCompositeDocumentDirtyRange(@NotNull Document document) {
+    RangeMarker change = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
+    return change == WHOLE_FILE_DIRTY_MARKER ? new TextRange(0, document.getTextLength()) :
+           change == null || !change.isValid() ? TextRange.EMPTY_RANGE :
+           change.getTextRange();
+  }
+  @ApiStatus.Internal
+  public void disposeDirtyDocumentRangeStorage(@NotNull Document document) {
+    RangeMarker marker = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
+    if (marker != null) {
+      marker.dispose();
+      document.putUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY, null);
     }
   }
 }

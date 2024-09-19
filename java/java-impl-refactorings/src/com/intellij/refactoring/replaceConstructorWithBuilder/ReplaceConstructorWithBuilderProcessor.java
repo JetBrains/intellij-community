@@ -289,11 +289,12 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
+    PsiClass anchor = myConstructors[0].getContainingClass();
     final PsiClass builderClass =
       psiFacade.findClass(StringUtil.getQualifiedName(myPackageName, myClassName), GlobalSearchScope.projectScope(myProject));
     if (builderClass == null) {
       if (!myCreateNewBuilderClass) {
-        conflicts.putValue(null, JavaRefactoringBundle.message("replace.constructor.builder.error.selected.class.was.not.found"));
+        conflicts.putValue(anchor, JavaRefactoringBundle.message("replace.constructor.builder.error.selected.class.was.not.found", myClassName));
       }
     } else if (myCreateNewBuilderClass){
       conflicts.putValue(builderClass,
@@ -306,7 +307,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
 
     final PsiMethod commonConstructor = getMostCommonConstructor();
     if (commonConstructor == null) {
-      conflicts.putValue(null, JavaRefactoringBundle.message("replace.constructor.builder.error.no.constructor.chain"));
+      conflicts.putValue(anchor, JavaRefactoringBundle.message("replace.constructor.builder.error.no.constructor.chain"));
     }
 
     return showConflicts(conflicts, refUsages.get());

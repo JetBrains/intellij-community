@@ -4,6 +4,21 @@ from functools import total_ordering as total_ordering
 
 NO_DEFAULT: Incomplete
 
+def inspect_formatargspec(
+    args,
+    varargs=None,
+    varkw=None,
+    defaults=None,
+    kwonlyargs=(),
+    kwonlydefaults={},
+    annotations={},
+    formatarg=...,
+    formatvarargs=...,
+    formatvarkw=...,
+    formatvalue=...,
+    formatreturns=...,
+    formatannotation=...,
+): ...
 def get_module_callables(mod, ignore: Incomplete | None = None): ...
 def mro_items(type_obj): ...
 def dir_dict(obj, raise_exc: bool = False): ...

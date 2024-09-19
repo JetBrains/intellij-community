@@ -5,19 +5,11 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import, print_function
 
 import calendar
 import datetime
 import time
-
-from typing import (
-    Callable,
-    Dict,
-    Iterable,
-    Optional,
-    Tuple,
-    Union,
-)
 
 from ..i18n import _
 from .. import (
@@ -26,17 +18,17 @@ from .. import (
     pycompat,
 )
 
-# keeps pyflakes happy
-assert [
-    Callable,
-    Dict,
-    Iterable,
-    Optional,
-    Tuple,
-    Union,
-]
+if pycompat.TYPE_CHECKING:
+    from typing import (
+        Callable,
+        Dict,
+        Iterable,
+        Optional,
+        Tuple,
+        Union,
+    )
 
-hgdate = Tuple[float, int]  # (unixtime, offset)
+    hgdate = Tuple[float, int]  # (unixtime, offset)
 
 # used by parsedate
 defaultdateformats = (
@@ -81,7 +73,8 @@ extendeddateformats = defaultdateformats + (
 )
 
 
-def makedate(timestamp: Optional[float] = None) -> hgdate:
+def makedate(timestamp=None):
+    # type: (Optional[float]) -> hgdate
     """Return a unix timestamp (or the current time) as a (unixtime,
     offset) tuple based off the local timezone."""
     if timestamp is None:
@@ -91,21 +84,15 @@ def makedate(timestamp: Optional[float] = None) -> hgdate:
         raise error.InputError(
             _(b"negative timestamp: %d") % timestamp, hint=hint
         )
-    tz = round(
+    delta = datetime.datetime.utcfromtimestamp(
         timestamp
-        - datetime.datetime.fromtimestamp(
-            timestamp,
-        )
-        .replace(tzinfo=datetime.timezone.utc)
-        .timestamp()
-    )
+    ) - datetime.datetime.fromtimestamp(timestamp)
+    tz = delta.days * 86400 + delta.seconds
     return timestamp, tz
 
 
-def datestr(
-    date: Optional[hgdate] = None,
-    format: bytes = b'%a %b %d %H:%M:%S %Y %1%2',
-) -> bytes:
+def datestr(date=None, format=b'%a %b %d %H:%M:%S %Y %1%2'):
+    # type: (Optional[hgdate], bytes) -> bytes
     """represent a (unixtime, offset) tuple as a localized time.
     unixtime is seconds since the epoch, and offset is the time zone's
     number of seconds away from UTC.
@@ -142,12 +129,14 @@ def datestr(
     return s
 
 
-def shortdate(date: Optional[hgdate] = None) -> bytes:
+def shortdate(date=None):
+    # type: (Optional[hgdate]) -> bytes
     """turn (timestamp, tzoff) tuple into iso 8631 date."""
     return datestr(date, format=b'%Y-%m-%d')
 
 
-def parsetimezone(s: bytes) -> Tuple[Optional[int], bytes]:
+def parsetimezone(s):
+    # type: (bytes) -> Tuple[Optional[int], bytes]
     """find a trailing timezone, if any, in string, and return a
     (offset, remainder) pair"""
     s = pycompat.bytestr(s)
@@ -182,11 +171,8 @@ def parsetimezone(s: bytes) -> Tuple[Optional[int], bytes]:
     return None, s
 
 
-def strdate(
-    string: bytes,
-    format: bytes,
-    defaults: Optional[Dict[bytes, Tuple[bytes, bytes]]] = None,
-) -> hgdate:
+def strdate(string, format, defaults=None):
+    # type: (bytes, bytes, Optional[Dict[bytes, Tuple[bytes, bytes]]]) -> hgdate
     """parse a localized time string and return a (unixtime, offset) tuple.
     if the string cannot be parsed, ValueError is raised."""
     if defaults is None:
@@ -228,11 +214,8 @@ def strdate(
     return unixtime, offset
 
 
-def parsedate(
-    date: Union[bytes, hgdate],
-    formats: Optional[Iterable[bytes]] = None,
-    bias: Optional[Dict[bytes, bytes]] = None,
-) -> hgdate:
+def parsedate(date, formats=None, bias=None):
+    # type: (Union[bytes, hgdate], Optional[Iterable[bytes]], Optional[Dict[bytes, bytes]]) -> hgdate
     """parse a localized date/time and return a (unixtime, offset) tuple.
 
     The date may be a "unixtime offset" string or in one of the specified
@@ -321,7 +304,8 @@ def parsedate(
     return when, offset
 
 
-def matchdate(date: bytes) -> Callable[[float], bool]:
+def matchdate(date):
+    # type: (bytes) -> Callable[[float], bool]
     """Return a function that matches a given date match specifier
 
     Formats include:
@@ -350,11 +334,13 @@ def matchdate(date: bytes) -> Callable[[float], bool]:
     False
     """
 
-    def lower(date: bytes) -> float:
+    def lower(date):
+        # type: (bytes) -> float
         d = {b'mb': b"1", b'd': b"1"}
         return parsedate(date, extendeddateformats, d)[0]
 
-    def upper(date: bytes) -> float:
+    def upper(date):
+        # type: (bytes) -> float
         d = {b'mb': b"12", b'HI': b"23", b'M': b"59", b'S': b"59"}
         for days in (b"31", b"30", b"29"):
             try:

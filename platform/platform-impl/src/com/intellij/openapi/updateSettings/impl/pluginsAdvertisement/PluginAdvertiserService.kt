@@ -665,8 +665,12 @@ fun tryUltimate(
   if (Registry.`is`("ide.try.ultimate.automatic.installation") && project != null) {
     eventSource.logTryUltimate(project, pluginId)
     project.service<UltimateInstallationService>().install(pluginId, suggestedIde)
-  } else {
-    fallback?.invoke() ?: eventSource.openDownloadPageAndLog(project = project, url = suggestedIde.defaultDownloadUrl, pluginId = pluginId)
+  }
+  else {
+    fallback?.invoke() ?: eventSource.openDownloadPageAndLog(project = project,
+                                                             url = suggestedIde.defaultDownloadUrl,
+                                                             suggestedIde = suggestedIde,
+                                                             pluginId = pluginId)
   }
 }
 

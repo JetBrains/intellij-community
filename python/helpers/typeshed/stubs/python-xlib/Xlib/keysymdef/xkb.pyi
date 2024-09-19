@@ -1,4 +1,4 @@
-from typing_extensions import Final
+from typing import Final
 
 XK_ISO_Lock: Final = 0xFE01
 XK_ISO_Level2_Latch: Final = 0xFE02

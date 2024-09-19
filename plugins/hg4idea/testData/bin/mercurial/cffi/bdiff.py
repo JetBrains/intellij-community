@@ -5,13 +5,9 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import struct
-
-from typing import (
-    List,
-    Tuple,
-)
 
 from ..pure.bdiff import *
 from . import _bdiff  # pytype: disable=import-error
@@ -20,7 +16,7 @@ ffi = _bdiff.ffi
 lib = _bdiff.lib
 
 
-def blocks(sa: bytes, sb: bytes) -> List[Tuple[int, int, int, int]]:
+def blocks(sa, sb):
     a = ffi.new(b"struct bdiff_line**")
     b = ffi.new(b"struct bdiff_line**")
     ac = ffi.new(b"char[]", str(sa))
@@ -34,7 +30,7 @@ def blocks(sa: bytes, sb: bytes) -> List[Tuple[int, int, int, int]]:
         count = lib.bdiff_diff(a[0], an, b[0], bn, l)
         if count < 0:
             raise MemoryError
-        rl = [(0, 0, 0, 0)] * count
+        rl = [None] * count
         h = l.next
         i = 0
         while h:
@@ -48,7 +44,7 @@ def blocks(sa: bytes, sb: bytes) -> List[Tuple[int, int, int, int]]:
     return rl
 
 
-def bdiff(sa: bytes, sb: bytes) -> bytes:
+def bdiff(sa, sb):
     a = ffi.new(b"struct bdiff_line**")
     b = ffi.new(b"struct bdiff_line**")
     ac = ffi.new(b"char[]", str(sa))

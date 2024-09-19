@@ -1,5 +1,5 @@
 import sys
-from typing_extensions import Final
+from typing import Final
 
 if sys.platform == "win32":
     from . import win32

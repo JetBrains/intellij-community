@@ -8,6 +8,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import os
 
@@ -26,7 +27,7 @@ urlerr = util.urlerr
 urlreq = util.urlreq
 
 # moved here from url.py to avoid a cycle
-class httpsendfile:
+class httpsendfile(object):
     """This is a wrapper around the objects returned by python's "open".
 
     Its purpose is to send file-like objects via HTTP.
@@ -93,7 +94,7 @@ def readauthforuri(ui, uri, user):
     bestuser = None
     bestlen = 0
     bestauth = None
-    for group, auth in groups.items():
+    for group, auth in pycompat.iteritems(groups):
         if user and user != auth.get(b'username', user):
             # If a username was set in the URI, the entry username
             # must either match it or be unset

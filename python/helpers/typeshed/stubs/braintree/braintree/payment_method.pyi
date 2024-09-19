@@ -1,8 +1,6 @@
 from _typeshed import Incomplete
 
-from braintree.address import Address as Address
-from braintree.configuration import Configuration as Configuration
-from braintree.resource import Resource as Resource
+from braintree.resource import Resource
 
 class PaymentMethod(Resource):
     @staticmethod

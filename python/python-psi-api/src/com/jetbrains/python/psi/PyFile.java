@@ -39,7 +39,6 @@ public interface PyFile extends PyAstFile, PyElement, PsiFile, PyDocStringOwner,
   @NotNull
   List<PyFunction> getTopLevelFunctions();
 
-  @Override
   List<PyTargetExpression> getTopLevelAttributes();
 
   @Nullable
@@ -48,10 +47,9 @@ public interface PyFile extends PyAstFile, PyElement, PsiFile, PyDocStringOwner,
   @Nullable
   PyClass findTopLevelClass(@NonNls @NotNull String name);
 
-  @Override
   @Nullable
   default PyTargetExpression findTopLevelAttribute(@NotNull String name) {
-    return (PyTargetExpression)PyAstFile.super.findTopLevelAttribute(name);
+    return null;
   }
 
   @NotNull

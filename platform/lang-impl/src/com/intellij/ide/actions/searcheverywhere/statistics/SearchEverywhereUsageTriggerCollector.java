@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere.statistics;
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
@@ -8,14 +8,16 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCollector {
 
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 17);
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 18);
 
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
@@ -87,17 +89,22 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
   public static final LongEventField TIME_TO_FIRST_RESULT_LAST_QUERY = EventFields.Long("timeToFirstResultLastQuery");
   public static final StringEventField LAST_TAB_ID = EventFields.String("lastTabId", ourTabs);
   public static final LongEventField DURATION_MS = EventFields.Long("durationMs");
+  public static final LongEventField DURATION_FROM_ACTION_START_MS = EventFields.Long("durationFromActionStartMs");
+  public static final LongEventField DURATION_TO_FIRST_RESULT_FROM_ACTION_START_MS = EventFields.Long("durationToFirstResultFromActionStartMs");
+  public static final LongEventField DURATION_TO_FIRST_RESULT_LAST_QUERY_FROM_ACTION_START_MS = EventFields.Long("durationToFirstResultLastQueryFromActionStartMs");
+  public static final BooleanEventField DIALOG_WAS_CANCELLED = EventFields.Boolean("dialogWasCancelled");
   public static final IntEventField ML_EXPERIMENT_VERSION = EventFields.Int("mlExperimentVersion");
   public static final IntEventField ML_EXPERIMENT_GROUP = EventFields.Int("mlExperimentGroup");
   public static final VarargEventId SESSION_FINISHED = GROUP.registerVarargEvent(
     "sessionFinished", TYPED_NAVIGATION_KEYS, TYPED_SYMBOL_KEYS,
     TIME_TO_FIRST_RESULT, FIRST_TAB_ID, TIME_TO_FIRST_RESULT_LAST_QUERY, LAST_TAB_ID, DURATION_MS,
+    DURATION_FROM_ACTION_START_MS, DURATION_TO_FIRST_RESULT_FROM_ACTION_START_MS, DURATION_TO_FIRST_RESULT_LAST_QUERY_FROM_ACTION_START_MS,
+    DIALOG_WAS_CANCELLED,
     ML_EXPERIMENT_GROUP, ML_EXPERIMENT_VERSION
   );
-  public static final BooleanEventField PREVIEW_STATE = EventFields.Boolean("previewState");
-  public static final VarargEventId PREVIEW_SWITCHED = GROUP.registerVarargEvent("previewSwitched", PREVIEW_STATE);
-  public static final BooleanEventField PREVIEW_CLOSED_STATE = EventFields.Boolean("previewClosed");
-  public static final VarargEventId PREVIEW_CLOSED = GROUP.registerVarargEvent("previewClosed", PREVIEW_CLOSED_STATE);
+
+  public static final EventId1<Boolean> PREVIEW_SWITCHED = GROUP.registerEvent("previewSwitched", EventFields.Boolean("previewState"));
+  public static final EventId1<Boolean> PREVIEW_CLOSED = GROUP.registerEvent("previewClosed", EventFields.Boolean("previewClosed"));
 
   @Override
   public EventLogGroup getGroup() {
@@ -106,6 +113,7 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
 
   @NotNull
   public static String getReportableContributorID(@NotNull SearchEverywhereContributor<?> contributor) {
+    //noinspection rawtypes
     Class<? extends SearchEverywhereContributor> clazz = contributor.getClass();
     PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(clazz);
     return pluginInfo.isDevelopedByJetBrains() ? contributor.getSearchProviderId() : NOT_REPORTABLE_CONTRIBUTOR_ID;

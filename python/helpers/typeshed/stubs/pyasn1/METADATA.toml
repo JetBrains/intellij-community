@@ -1,2 +1,2 @@
-version = "0.5.*"
+version = "0.6.*"
 upstream_repository = "https://github.com/pyasn1/pyasn1"

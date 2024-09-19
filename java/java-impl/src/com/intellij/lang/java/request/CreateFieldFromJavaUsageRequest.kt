@@ -20,23 +20,23 @@ internal class CreateFieldFromJavaUsageRequest(
   private val useAnchor: Boolean
 ) : CreateFieldRequest {
 
-  private val myReference = reference.createSmartPointer()
+  private val myReferencePointer = reference.createSmartPointer()
 
-  override fun isValid(): Boolean = myReference.element?.referenceName != null
+  override fun isValid(): Boolean = reference?.referenceName != null
 
-  val reference: PsiReferenceExpression get() = myReference.element!!
+  internal val reference: PsiReferenceExpression? get() = myReferencePointer.element
 
-  val anchor: PsiElement? get() = if (useAnchor) reference else null
+  internal val anchor: PsiElement? get() = if (useAnchor) reference else null
 
   override fun getAnnotations(): Collection<AnnotationRequest> = emptyList()
 
   override fun getModifiers(): Collection<JvmModifier> = modifiers
 
-  override fun getFieldName(): @NlsSafe String = reference.referenceName!!
+  override fun getFieldName(): @NlsSafe String = reference?.referenceName ?: ""
 
-  override fun getFieldType(): List<ExpectedJavaType> = guessExpectedTypes(reference, false).map(::ExpectedJavaType)
+  override fun getFieldType(): List<ExpectedJavaType> = reference?.let { guessExpectedTypes(it, false).map(::ExpectedJavaType) } ?: listOf()
 
-  override fun getTargetSubstitutor(): PsiJvmSubstitutor = PsiJvmSubstitutor(reference.project, getTargetSubstitutor(reference))
+  override fun getTargetSubstitutor(): PsiJvmSubstitutor = PsiJvmSubstitutor(myReferencePointer.project, getTargetSubstitutor(reference))
 
   override fun isConstant(): Boolean = isConstant
 

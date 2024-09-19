@@ -8,6 +8,7 @@
 
 '''command to display statistics about repository history'''
 
+from __future__ import absolute_import, division
 
 import datetime
 import os
@@ -52,17 +53,18 @@ def changedlines(ui, repo, ctx1, ctx2, fmatch):
 
 def countrate(ui, repo, amap, *pats, **opts):
     """Calculate stats"""
-    if opts.get('dateformat'):
+    opts = pycompat.byteskwargs(opts)
+    if opts.get(b'dateformat'):
 
         def getkey(ctx):
             t, tz = ctx.date()
             date = datetime.datetime(*time.gmtime(float(t) - tz)[:6])
             return encoding.strtolocal(
-                date.strftime(encoding.strfromlocal(opts['dateformat']))
+                date.strftime(encoding.strfromlocal(opts[b'dateformat']))
             )
 
     else:
-        tmpl = opts.get('oldtemplate') or opts.get('template')
+        tmpl = opts.get(b'oldtemplate') or opts.get(b'template')
         tmpl = logcmdutil.maketemplater(ui, repo, tmpl)
 
         def getkey(ctx):
@@ -79,7 +81,7 @@ def countrate(ui, repo, amap, *pats, **opts):
         rev = ctx.rev()
         key = getkey(ctx).strip()
         key = amap.get(key, key)  # alias remap
-        if opts.get('changesets'):
+        if opts.get(b'changesets'):
             rate[key] = (rate.get(key, (0,))[0] + 1, 0)
         else:
             parents = ctx.parents()
@@ -95,11 +97,11 @@ def countrate(ui, repo, amap, *pats, **opts):
 
     wopts = logcmdutil.walkopts(
         pats=pats,
-        opts=pycompat.byteskwargs(opts),
-        revspec=opts['rev'],
-        date=opts['date'],
-        include_pats=opts['include'],
-        exclude_pats=opts['exclude'],
+        opts=opts,
+        revspec=opts[b'rev'],
+        date=opts[b'date'],
+        include_pats=opts[b'include'],
+        exclude_pats=opts[b'exclude'],
     )
     revs, makefilematcher = logcmdutil.makewalker(repo, wopts)
     for ctx in scmutil.walkchangerevs(repo, revs, makefilematcher, prep):

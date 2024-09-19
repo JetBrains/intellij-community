@@ -1,18 +1,17 @@
+from __future__ import absolute_import
+
 import contextlib
+import errno
 import os
 
 from mercurial.node import sha1nodeconstants
 from mercurial import (
-    dirstatemap,
     error,
     extensions,
     match as matchmod,
     pycompat,
     scmutil,
     util,
-)
-from mercurial.dirstateutils import (
-    timestamp,
 )
 from mercurial.interfaces import (
     dirstate as intdirstate,
@@ -21,9 +20,6 @@ from mercurial.interfaces import (
 
 from . import gitutil
 
-
-DirstateItem = dirstatemap.DirstateItem
-propertycache = util.propertycache
 pygit2 = gitutil.get_pygit2()
 
 
@@ -32,7 +28,7 @@ def readpatternfile(orig, filepath, warn, sourceinfo=False):
         return orig(filepath, warn, sourceinfo=False)
     result = []
     warnings = []
-    with open(filepath, 'rb') as fp:
+    with open(filepath, b'rb') as fp:
         for l in fp:
             l = l.strip()
             if not l or l.startswith(b'#'):
@@ -47,7 +43,7 @@ def readpatternfile(orig, filepath, warn, sourceinfo=False):
     return result, warnings
 
 
-extensions.wrapfunction(matchmod, 'readpatternfile', readpatternfile)
+extensions.wrapfunction(matchmod, b'readpatternfile', readpatternfile)
 
 
 _STATUS_MAP = {}
@@ -72,29 +68,14 @@ if pygit2:
 
 
 @interfaceutil.implementer(intdirstate.idirstate)
-class gitdirstate:
-    def __init__(self, ui, vfs, gitrepo, use_dirstate_v2):
+class gitdirstate(object):
+    def __init__(self, ui, root, gitrepo):
         self._ui = ui
-        self._root = os.path.dirname(vfs.base)
-        self._opener = vfs
+        self._root = os.path.dirname(root)
         self.git = gitrepo
         self._plchangecallbacks = {}
         # TODO: context.poststatusfixup is bad and uses this attribute
         self._dirty = False
-        self._mapcls = dirstatemap.dirstatemap
-        self._use_dirstate_v2 = use_dirstate_v2
-
-    @propertycache
-    def _map(self):
-        """Return the dirstate contents (see documentation for dirstatemap)."""
-        self._map = self._mapcls(
-            self._ui,
-            self._opener,
-            self._root,
-            sha1nodeconstants,
-            self._use_dirstate_v2,
-        )
-        return self._map
 
     def p1(self):
         try:
@@ -163,13 +144,6 @@ class gitdirstate:
             [],
             [],
         )
-
-        try:
-            mtime_boundary = timestamp.get_fs_now(self._opener)
-        except OSError:
-            # In largefiles or readonly context
-            mtime_boundary = None
-
         gstatus = self.git.status()
         for path, status in gstatus.items():
             path = pycompat.fsencode(path)
@@ -221,7 +195,6 @@ class gitdirstate:
             scmutil.status(
                 modified, added, removed, deleted, unknown, ignored, clean
             ),
-            mtime_boundary,
         )
 
     def flagfunc(self, buildfallback):
@@ -233,13 +206,6 @@ class gitdirstate:
         return os.path.dirname(
             os.path.dirname(pycompat.fsencode(self.git.path))
         )
-
-    def get_entry(self, path):
-        """return a DirstateItem for the associated path"""
-        entry = self._map.get(path)
-        if entry is None:
-            return DirstateItem()
-        return entry
 
     def normalize(self, path):
         normed = util.normcase(path)
@@ -260,12 +226,7 @@ class gitdirstate:
     # # TODO what the heck is this
     _filecache = set()
 
-    def is_changing_parents(self):
-        # TODO: we need to implement the context manager bits and
-        # correctly stage/revert index edits.
-        return False
-
-    def is_changing_any(self):
+    def pendingparentchange(self):
         # TODO: we need to implement the context manager bits and
         # correctly stage/revert index edits.
         return False
@@ -296,7 +257,7 @@ class gitdirstate:
             if match(p):
                 yield p
 
-    def set_clean(self, f, parentfiledata):
+    def set_clean(self, f, parentfiledata=None):
         """Mark a file normal and clean."""
         # TODO: for now we just let libgit2 re-stat the file. We can
         # clearly do better.
@@ -322,13 +283,22 @@ class gitdirstate:
             # TODO construct the stat info from the status object?
             try:
                 s = os.stat(os.path.join(cwd, path))
-            except FileNotFoundError:
+            except OSError as e:
+                if e.errno != errno.ENOENT:
+                    raise
                 continue
             r[path] = s
         return r
 
-    def set_tracked(self, f, reset_copy=False):
-        # TODO: support copies and reset_copy=True
+    def savebackup(self, tr, backupname):
+        # TODO: figure out a strategy for saving index backups.
+        pass
+
+    def restorebackup(self, tr, backupname):
+        # TODO: figure out a strategy for saving index backups.
+        pass
+
+    def set_tracked(self, f):
         uf = pycompat.fsdecode(f)
         if uf in self.git.index:
             return False
@@ -381,7 +351,7 @@ class gitdirstate:
         pass
 
     @contextlib.contextmanager
-    def changing_parents(self, repo):
+    def parentchange(self):
         # TODO: track this maybe?
         yield
 
@@ -389,7 +359,11 @@ class gitdirstate:
         # TODO: should this be added to the dirstate interface?
         self._plchangecallbacks[category] = callback
 
-    def setbranch(self, branch, transaction):
+    def clearbackup(self, tr, backupname):
+        # TODO
+        pass
+
+    def setbranch(self, branch):
         raise error.Abort(
             b'git repos do not support branches. try using bookmarks'
         )

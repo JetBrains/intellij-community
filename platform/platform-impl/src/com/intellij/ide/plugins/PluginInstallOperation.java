@@ -149,17 +149,14 @@ public final class PluginInstallOperation {
     }
     if (!unknownNodes) return;
 
-    List<String> hosts = RepositoryHelper.getPluginHosts();
     Map<PluginId, PluginNode> allPlugins = new HashMap<>();
-    for (String host : hosts) {
-      if (host != null) {
-        try {
-          for (PluginNode descriptor : RepositoryHelper.loadPlugins(host, null, myIndicator)) {
-            allPlugins.put(descriptor.getPluginId(), descriptor);
-          }
+    for (String host : RepositoryHelper.getCustomPluginRepositoryHosts()) {
+      try {
+        for (PluginNode descriptor : RepositoryHelper.loadPlugins(host, null, myIndicator)) {
+          allPlugins.put(descriptor.getPluginId(), descriptor);
         }
-        catch (IOException ignored) {
-        }
+      }
+      catch (IOException ignored) {
       }
     }
 

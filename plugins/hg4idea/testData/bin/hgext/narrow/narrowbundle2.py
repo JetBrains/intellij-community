@@ -5,7 +5,9 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
+import errno
 import struct
 
 from mercurial.i18n import _
@@ -19,10 +21,10 @@ from mercurial import (
     repair,
     requirements,
     scmutil,
-    transaction,
     util,
     wireprototypes,
 )
+from mercurial.utils import stringutil
 
 _NARROWACL_SECTION = b'narrowacl'
 _CHANGESPECPART = b'narrow:changespec'
@@ -259,8 +261,7 @@ def _handlechangespec(op, inpart):
     # will currently always be there when using the core+narrowhg server, but
     # other servers may include a changespec part even when not widening (e.g.
     # because we're deepening a shallow repo).
-    if hasattr(repo, 'setnewnarrowpats'):
-        op.gettransaction()
+    if util.safehasattr(repo, 'setnewnarrowpats'):
         repo.setnewnarrowpats()
 
 
@@ -294,7 +295,16 @@ def handlechangegroup_widen(op, inpart):
     finally:
         f.close()
 
-    transaction.cleanup_undo_files(repo.ui.warn, repo.vfs_map)
+    # remove undo files
+    for undovfs, undofile in repo.undofiles():
+        try:
+            undovfs.unlink(undofile)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                ui.warn(
+                    _(b'error removing %s: %s\n')
+                    % (undovfs.join(undofile), stringutil.forcebytestr(e))
+                )
 
     # Remove partial backup only if there were no exceptions
     op._widen_uninterr.__exit__(None, None, None)
@@ -333,9 +343,9 @@ def setup():
 
     def wrappedcghandler(op, inpart):
         origcghandler(op, inpart)
-        if hasattr(op, '_widen_bundle'):
+        if util.safehasattr(op, '_widen_bundle'):
             handlechangegroup_widen(op, inpart)
-        if hasattr(op, '_bookmarksbackup'):
+        if util.safehasattr(op, '_bookmarksbackup'):
             localrepo.localrepository._bookmarks.set(
                 op.repo, op._bookmarksbackup
             )

@@ -23,6 +23,9 @@ This also has some limitations compared to the Python 2 implementation:
   enabled.
 """
 
+# This line is unnecessary, but it satisfies test-check-py3-compat.t.
+from __future__ import absolute_import
+
 import contextlib
 import importlib.util
 import sys
@@ -31,28 +34,28 @@ from . import tracing
 
 _deactivated = False
 
+# Python 3.5's LazyLoader doesn't work for some reason.
+# https://bugs.python.org/issue26186 is a known issue with extension
+# importing. But it appears to not have a meaningful effect with
+# Mercurial.
+_supported = sys.version_info[0:2] >= (3, 6)
+
 
 class _lazyloaderex(importlib.util.LazyLoader):
     """This is a LazyLoader except it also follows the _deactivated global and
     the ignore list.
     """
 
-    _HAS_DYNAMIC_ATTRIBUTES = True  # help pytype not flag self.loader
-
     def exec_module(self, module):
         """Make the module load lazily."""
         with tracing.log('demandimport %s', module):
             if _deactivated or module.__name__ in ignores:
-                # Reset the loader on the module as super() does (issue6725)
-                module.__spec__.loader = self.loader
-                module.__loader__ = self.loader
-
                 self.loader.exec_module(module)
             else:
                 super().exec_module(module)
 
 
-class LazyFinder:
+class LazyFinder(object):
     """A wrapper around a ``MetaPathFinder`` that makes loaders lazy.
 
     ``sys.meta_path`` finders have their ``find_spec()`` called to locate a
@@ -89,7 +92,7 @@ class LazyFinder:
         return getattr(object.__getattribute__(self, "_finder"), name)
 
     def __delattr__(self, name):
-        return delattr(object.__getattribute__(self, "_finder"), name)
+        return delattr(object.__getattribute__(self, "_finder"))
 
     def __setattr__(self, name, value):
         return setattr(object.__getattribute__(self, "_finder"), name, value)
@@ -142,6 +145,9 @@ def disable():
 
 
 def enable():
+    if not _supported:
+        return
+
     new_finders = []
     for finder in sys.meta_path:
         new_finders.append(

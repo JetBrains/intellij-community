@@ -39,6 +39,7 @@ For convenience, the extension adds these schemes by default::
 You can override a predefined scheme by defining a new scheme with the
 same name.
 """
+from __future__ import absolute_import
 
 import os
 import re
@@ -67,7 +68,7 @@ testedwith = b'ships-with-hg-core'
 _partre = re.compile(br'{(\d+)\}')
 
 
-class ShortRepository:
+class ShortRepository(object):
     def __init__(self, url, scheme, templater):
         self.scheme = scheme
         self.templater = templater
@@ -80,25 +81,9 @@ class ShortRepository:
     def __repr__(self):
         return b'<ShortRepository: %s>' % self.scheme
 
-    def make_peer(self, ui, path, *args, **kwargs):
-        new_url = self.resolve(path.rawloc)
-        path = path.copy(new_raw_location=new_url)
-        cls = hg.peer_schemes.get(path.url.scheme)
-        if cls is not None:
-            return cls.make_peer(ui, path, *args, **kwargs)
-        return None
-
     def instance(self, ui, url, create, intents=None, createopts=None):
         url = self.resolve(url)
-        u = urlutil.url(url)
-        scheme = u.scheme or b'file'
-        if scheme in hg.peer_schemes:
-            cls = hg.peer_schemes[scheme]
-        elif scheme in hg.repo_schemes:
-            cls = hg.repo_schemes[scheme]
-        else:
-            cls = hg.LocalFactory
-        return cls.instance(
+        return hg._peerlookup(url).instance(
             ui, url, create, intents=intents, createopts=createopts
         )
 
@@ -135,41 +120,32 @@ schemes = {
 }
 
 
-def _check_drive_letter(scheme: bytes) -> None:
-    """check if a scheme conflict with a Windows drive letter"""
-    if (
-        pycompat.iswindows
-        and len(scheme) == 1
-        and scheme.isalpha()
-        and os.path.exists(b'%s:\\' % scheme)
-    ):
-        msg = _(b'custom scheme %s:// conflicts with drive letter %s:\\\n')
-        msg %= (scheme, scheme.upper())
-        raise error.Abort(msg)
-
-
 def extsetup(ui):
     schemes.update(dict(ui.configitems(b'schemes')))
     t = templater.engine(templater.parse)
     for scheme, url in schemes.items():
-        _check_drive_letter(scheme)
-        url_scheme = urlutil.url(url).scheme
-        if url_scheme in hg.peer_schemes:
-            hg.peer_schemes[scheme] = ShortRepository(url, scheme, t)
-        else:
-            hg.repo_schemes[scheme] = ShortRepository(url, scheme, t)
+        if (
+            pycompat.iswindows
+            and len(scheme) == 1
+            and scheme.isalpha()
+            and os.path.exists(b'%s:\\' % scheme)
+        ):
+            raise error.Abort(
+                _(
+                    b'custom scheme %s:// conflicts with drive '
+                    b'letter %s:\\\n'
+                )
+                % (scheme, scheme.upper())
+            )
+        hg.schemes[scheme] = ShortRepository(url, scheme, t)
 
-    extensions.wrapfunction(urlutil, 'hasdriveletter', hasdriveletter)
+    extensions.wrapfunction(urlutil, b'hasdriveletter', hasdriveletter)
 
 
 @command(b'debugexpandscheme', norepo=True)
 def expandscheme(ui, url, **opts):
     """given a repo path, provide the scheme-expanded path"""
-    scheme = urlutil.url(url).scheme
-    if scheme in hg.peer_schemes:
-        cls = hg.peer_schemes[scheme]
-    else:
-        cls = hg.repo_schemes.get(scheme)
-    if cls is not None and isinstance(cls, ShortRepository):
-        url = cls.resolve(url)
+    repo = hg._peerlookup(url)
+    if isinstance(repo, ShortRepository):
+        url = repo.resolve(url)
     ui.write(url + b'\n')

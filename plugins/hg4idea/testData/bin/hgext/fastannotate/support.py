@@ -5,7 +5,9 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
+from mercurial.pycompat import getattr
 from mercurial import (
     context as hgcontext,
     dagop,
@@ -21,7 +23,7 @@ from . import (
 )
 
 
-class _lazyfctx:
+class _lazyfctx(object):
     """delegates to fctx but do not construct fctx when unnecessary"""
 
     def __init__(self, repo, node, path):
@@ -128,8 +130,8 @@ def _remotefctxannotate(orig, self, follow=False, skiprevs=None, diffopts=None):
 
 
 def replacehgwebannotate():
-    extensions.wrapfunction(hgweb.webutil, 'annotate', _hgwebannotate)
+    extensions.wrapfunction(hgweb.webutil, b'annotate', _hgwebannotate)
 
 
 def replacefctxannotate():
-    extensions.wrapfunction(hgcontext.basefilectx, 'annotate', _fctxannotate)
+    extensions.wrapfunction(hgcontext.basefilectx, b'annotate', _fctxannotate)

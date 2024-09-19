@@ -1,24 +1,26 @@
-from _typeshed import Incomplete
+import subprocess
+from _typeshed import StrOrBytesPath
+from collections.abc import Callable
+from os import _Environ
+from typing import AnyStr
 
-from .spawnbase import SpawnBase
+from .spawnbase import SpawnBase, _Logfile
 
-class PopenSpawn(SpawnBase):
-    crlf: Incomplete
-    proc: Incomplete
-    pid: Incomplete
+class PopenSpawn(SpawnBase[AnyStr]):
+    proc: subprocess.Popen[AnyStr]
     closed: bool
     def __init__(
         self,
         cmd,
-        timeout: int = 30,
+        timeout: float | None = 30,
         maxread: int = 2000,
-        searchwindowsize: Incomplete | None = None,
-        logfile: Incomplete | None = None,
-        cwd: Incomplete | None = None,
-        env: Incomplete | None = None,
-        encoding: Incomplete | None = None,
+        searchwindowsize: int | None = None,
+        logfile: _Logfile | None = None,
+        cwd: StrOrBytesPath | None = None,
+        env: _Environ[str] | None = None,
+        encoding: str | None = None,
         codec_errors: str = "strict",
-        preexec_fn: Incomplete | None = None,
+        preexec_fn: Callable[[], None] | None = None,
     ) -> None: ...
     flag_eof: bool
     def read_nonblocking(self, size, timeout): ...
@@ -26,8 +28,6 @@ class PopenSpawn(SpawnBase):
     def writelines(self, sequence) -> None: ...
     def send(self, s): ...
     def sendline(self, s: str = ""): ...
-    exitstatus: Incomplete
-    signalstatus: Incomplete
     terminated: bool
     def wait(self): ...
     def kill(self, sig) -> None: ...

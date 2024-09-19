@@ -2,8 +2,8 @@ from collections.abc import Callable, Sequence
 from contextlib import AbstractContextManager
 from stat import S_IMODE as S_IMODE
 from types import TracebackType
-from typing import IO
-from typing_extensions import Literal, Self, TypeAlias
+from typing import IO, Literal
+from typing_extensions import Self, TypeAlias
 
 import paramiko
 from paramiko import AuthenticationException as AuthenticationException

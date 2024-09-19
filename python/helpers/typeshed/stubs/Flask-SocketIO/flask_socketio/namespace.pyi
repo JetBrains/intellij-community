@@ -24,7 +24,7 @@ class _Namespace(_BaseNamespace, Protocol):
     ): ...
     def send(
         self,
-        data: Incomplete,
+        data,
         to=None,
         room: str | None = None,
         skip_sid=None,
@@ -65,7 +65,7 @@ class Namespace(_Namespace):
     ) -> _T | tuple[str, int]: ...
     def send(  # type: ignore[override]
         self,
-        data: Incomplete,
+        data,
         room: str | None = None,
         include_self: bool = True,
         namespace: str | None = None,

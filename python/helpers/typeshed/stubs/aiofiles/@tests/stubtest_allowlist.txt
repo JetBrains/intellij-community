@@ -89,7 +89,3 @@ aiofiles.tempfile.temptypes.AsyncSpooledTemporaryFile.isatty
 aiofiles.tempfile.temptypes.AsyncSpooledTemporaryFile.rollover
 aiofiles.tempfile.temptypes.AsyncSpooledTemporaryFile.tell
 aiofiles.tempfile.temptypes.AsyncTemporaryDirectory.cleanup
-
-# Metaclass differs:
-aiofiles.base.AiofilesContextManager
-aiofiles.tempfile.AiofilesContextManagerTempDir

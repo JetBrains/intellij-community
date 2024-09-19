@@ -1,8 +1,8 @@
 import sys
 from collections.abc import Callable, Iterable
 from ctypes import c_long
-from typing import SupportsInt, TypeVar
-from typing_extensions import Literal, TypeAlias
+from typing import Literal, SupportsInt, TypeVar
+from typing_extensions import TypeAlias
 
 from ._generic import GenericListener as _GenericListener
 from ._mouse_event import (

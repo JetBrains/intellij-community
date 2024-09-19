@@ -60,10 +60,10 @@ fun Release.selectInstallations(installers: List<BinaryInstaller>): List<BinaryI
 }
 
 @RequiresEdt
-fun <T> installBinary(installation: BinaryInstallation, project: Project?, postInstall: () -> T? = { null }): T? {
+fun <T> installBinary(installation: BinaryInstallation, project: Project?, postInstall: () -> T? = { null }): Result<T> {
   val (release, binary, installer) = installation
   try {
-    return ProgressManager.getInstance().run(
+    return Result.success(ProgressManager.getInstance().run(
       object : Task.WithResult<T, Exception>(project, PyBundle.message("python.sdk.installing", release.title), true) {
         override fun compute(indicator: ProgressIndicator): T? {
           installer.install(binary, indicator) {
@@ -73,14 +73,14 @@ fun <T> installBinary(installation: BinaryInstallation, project: Project?, postI
           return postInstall()
         }
       }
-    )
+    ))
   }
   catch (ex: BinaryInstallerException) {
     LOGGER.info(ex)
     BinaryInstallerUsagesCollector.logInstallerException(project, installation.release, ex)
     showErrorNotification(project, release, ex)
+    return Result.failure(ex)
   }
-  return null
 }
 
 private fun showErrorNotification(project: Project?, release: Release, ex: BinaryInstallerException) {

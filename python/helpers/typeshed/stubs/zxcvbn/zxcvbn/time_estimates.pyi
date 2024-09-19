@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing_extensions import Literal, TypedDict
+from typing import Literal, TypedDict
 
 class _TimeEstimate(TypedDict):
     crack_times_seconds: _CrackTimeSeconds

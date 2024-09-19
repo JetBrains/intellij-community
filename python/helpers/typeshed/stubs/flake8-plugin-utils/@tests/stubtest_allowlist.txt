@@ -1,6 +1,0 @@
-flake8_plugin_utils
-flake8_plugin_utils.plugin
-flake8_plugin_utils.utils
-flake8_plugin_utils.utils.assertions
-flake8_plugin_utils.utils.constants
-flake8_plugin_utils.utils.equiv_nodes

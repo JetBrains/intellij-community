@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0 # must match requirements-tests.txt
+    rev: v4.6.0 # must match requirements-tests.txt
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -8,37 +8,44 @@ repos:
       - id: check-toml
       - id: check-merge-conflict
       - id: mixed-line-ending
+        args: [--fix=lf]
       - id: check-case-conflict
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.9.1 # must match requirements-tests.txt
-    hooks:
-      - id: black
-        language_version: python3.10
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0 # must match requirements-tests.txt
-    hooks:
-      - id: isort
-        name: isort (python)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.0 # must match requirements-tests.txt and tests.yml
+    rev: v0.5.4 # must match requirements-tests.txt
     hooks:
       - id: ruff
-        args: [--exit-non-zero-on-fix, --fix-only]
+        name: Run ruff on stubs, tests and scripts
+        args: ["--exit-non-zero-on-fix"]
+      - id: ruff
+        # Very few rules are useful to run on our test cases;
+        # we explicitly enumerate them here:
+        name: Run ruff on the test cases
+        args:
+          - "--exit-non-zero-on-fix"
+          - "--select=FA,I,RUF100"
+          - "--no-force-exclude"
+          - "--unsafe-fixes"
+        files: '.*test_cases/.+\.py$'
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 24.4.2 # must match requirements-tests.txt
+    hooks:
+      - id: black
   - repo: https://github.com/pycqa/flake8
-    rev: 6.1.0 # must match requirements-tests.txt
+    rev: 7.1.0 # must match requirements-tests.txt
     hooks:
       - id: flake8
         additional_dependencies:
-          - "flake8-bugbear==23.9.16" # must match requirements-tests.txt
-          - "flake8-noqa==1.3.2" # must match requirements-tests.txt
-          - "flake8-pyi==23.10.0" # must match requirements-tests.txt
+          - "flake8-noqa==1.4.0" # must match requirements-tests.txt
+          - "flake8-pyi==24.6.0" # must match requirements-tests.txt
         types: [file]
         types_or: [python, pyi]
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
 
 ci:
   autofix_commit_msg: "[pre-commit.ci] auto fixes from pre-commit.com hooks"
   autofix_prs: true
   autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
   autoupdate_schedule: quarterly
-  skip: [flake8]
   submodules: false

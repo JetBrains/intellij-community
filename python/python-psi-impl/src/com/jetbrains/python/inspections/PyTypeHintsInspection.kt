@@ -38,6 +38,7 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.*
@@ -240,6 +241,24 @@ class PyTypeHintsInspection : PyInspection() {
 
     override fun visitPyFunction(node: PyFunction) {
       super.visitPyFunction(node)
+
+      val returnType = myTypeEvalContext.getReturnType(node);
+      if (returnType is PyNarrowedType) {
+        val parameters = node.getParameters(myTypeEvalContext)
+        if (parameters.size == 0) {
+          registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.type.hints.typeIs.has.zero.arguments"))
+        }
+        else if (returnType.typeIs) {
+          val parameter = parameters[0]
+          val parameterType = parameter.getType(myTypeEvalContext)
+          if (!PyTypeChecker.match(parameterType, returnType.narrowedType, myTypeEvalContext)) {
+            registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.type.hints.typeIs.does.not.match",
+                                                 PythonDocumentationProvider.getTypeName(returnType.narrowedType, myTypeEvalContext),
+                                                 PythonDocumentationProvider.getTypeName(parameterType, myTypeEvalContext)))
+          }
+        }
+      }
+
 
       checkTypeCommentAndParameters(node)
     }
@@ -742,7 +761,7 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkGenericParameters(index: PyExpression) {
       val parameters = (index as? PyTupleExpression)?.elements ?: arrayOf(index)
       val genericParameters = mutableSetOf<PsiElement>()
-
+      var lastIsDefault = false
       parameters.forEach {
         if (it !is PyReferenceExpression && it !is PyStarExpression && it !is PySubscriptionExpression) {
           registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables"),
@@ -762,9 +781,34 @@ class PyTypeHintsInspection : PyInspection() {
               registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables"),
                               ProblemHighlightType.GENERIC_ERROR)
             }
+
+            if (type is PyTypeParameterType) {
+              val typeVarDeclaration = type.declarationElement
+              if (hasDefault(typeVarDeclaration)) {
+                lastIsDefault = true
+              } else if (lastIsDefault) {
+                registerProblem(it,
+                                PyPsiBundle.message("INSP.type.hints.non.default.type.vars.cannot.follow.defaults"),
+                                ProblemHighlightType.GENERIC_ERROR)
+              }
+            }
           }
         }
       }
+    }
+
+    private fun hasDefault(declarationElement: PyQualifiedNameOwner?): Boolean {
+      if (declarationElement is PyTargetExpression) {
+        val expression = PyTypingAliasStubType.getAssignedValueStubLike(declarationElement)
+        if (expression is PyCallExpression) {
+          expression.arguments.forEach {
+            if (it is PyKeywordArgument && it.keyword.equals("default") && it.valueExpression != null) {
+              return true
+            }
+          }
+        }
+      }
+      return false
     }
 
     private fun checkCallableParameters(index: PyExpression) {

@@ -4,7 +4,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyForPart;
 
-public class PyForPartImpl extends PyStatementPartImpl implements PyForPart {
+public class PyForPartImpl extends PyElementImpl implements PyForPart {
   public PyForPartImpl(ASTNode astNode) {
     super(astNode);
   }

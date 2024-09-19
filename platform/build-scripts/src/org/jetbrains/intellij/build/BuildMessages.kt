@@ -43,4 +43,6 @@ interface BuildMessages: System.Logger {
   fun getDebugLog(): String?
 
   fun close()
+
+  fun startWritingFileToBuildLog(artifactPath: String)
 }

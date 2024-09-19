@@ -1,6 +1,6 @@
-from typing import Any
+from _typeshed import Incomplete
 
-from braintree.attribute_getter import AttributeGetter as AttributeGetter
+from braintree.attribute_getter import AttributeGetter
 
 text_type = str
 raw_type = bytes
@@ -8,5 +8,5 @@ raw_type = bytes
 class Resource(AttributeGetter):
     @staticmethod
     def verify_keys(params, signature) -> None: ...
-    gateway: Any
+    gateway: Incomplete
     def __init__(self, gateway, attributes) -> None: ...

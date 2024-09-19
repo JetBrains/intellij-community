@@ -17,7 +17,9 @@ PsiJavaFile:Symbols05Markdown.java
             PsiReferenceParameterList
               <empty list>
         PsiWhiteSpace(' ')
-        PsiDocToken:DOC_COMMENT_DATA('~`!@')
+        PsiDocToken:DOC_COMMENT_DATA('~')
+        PsiDocToken:DOC_INLINE_CODE_FENCE('`')
+        PsiDocToken:DOC_COMMENT_DATA('!@')
         PsiDocToken:DOC_SHARP('#')
         PsiDocToken:DOC_COMMENT_DATA('$%^&*')
         PsiDocToken:DOC_LPAREN('(')
@@ -27,7 +29,9 @@ PsiJavaFile:Symbols05Markdown.java
         PsiDocToken:DOC_COMMENT_DATA('}')
         PsiDocToken:DOC_LBRACKET('[')
         PsiDocToken:DOC_RBRACKET(']')
-        PsiDocToken:DOC_COMMENT_DATA('":;'?><,./')
+        PsiDocToken:DOC_COMMENT_DATA('":;'?><')
+        PsiDocToken:DOC_COMMA(',')
+        PsiDocToken:DOC_COMMENT_DATA('./')
         PsiDocToken:DOC_INLINE_TAG_END('}')
       PsiDocToken:DOC_COMMENT_DATA(' Yes!')
       PsiWhiteSpace('\n')

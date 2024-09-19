@@ -2,8 +2,8 @@ from _typeshed import Incomplete, SupportsRead, SupportsWrite, Unused
 from collections.abc import Callable, Iterable, Iterator, MutableMapping, Sequence
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, ClassVar, Protocol, SupportsBytes
-from typing_extensions import Literal, Self, TypeAlias, TypeGuard
+from typing import Any, ClassVar, Final, Literal, Protocol, SupportsBytes
+from typing_extensions import Self, TypeAlias, TypeGuard
 
 from PIL.PyAccess import PyAccess
 
@@ -34,7 +34,12 @@ _Color: TypeAlias = (
 )
 
 class _Writeable(SupportsWrite[bytes], Protocol):
-    def seek(self, __offset: int) -> Any: ...
+    def seek(self, offset: int, /) -> Any: ...
+
+# Ref: https://numpy.org/doc/stable/reference/arrays.interface.html#python-side
+class _SupportsArrayInterface(Protocol):
+    @property
+    def __array_interface__(self) -> dict[str, Any]: ...
 
 class DecompressionBombWarning(RuntimeWarning): ...
 class DecompressionBombError(Exception): ...
@@ -51,84 +56,84 @@ USE_CFFI_ACCESS: bool
 def isImageType(t: object) -> TypeGuard[Image]: ...
 
 class Transpose(IntEnum):
-    FLIP_LEFT_RIGHT: Literal[0]
-    FLIP_TOP_BOTTOM: Literal[1]
-    ROTATE_90: Literal[2]
-    ROTATE_180: Literal[3]
-    ROTATE_270: Literal[4]
-    TRANSPOSE: Literal[5]
-    TRANSVERSE: Literal[6]
+    FLIP_LEFT_RIGHT = 0
+    FLIP_TOP_BOTTOM = 1
+    ROTATE_90 = 2
+    ROTATE_180 = 3
+    ROTATE_270 = 4
+    TRANSPOSE = 5
+    TRANSVERSE = 6
 
 # All Transpose items
-FLIP_LEFT_RIGHT: Literal[0]
-FLIP_TOP_BOTTOM: Literal[1]
-ROTATE_90: Literal[2]
-ROTATE_180: Literal[3]
-ROTATE_270: Literal[4]
-TRANSPOSE: Literal[5]
-TRANSVERSE: Literal[6]
+FLIP_LEFT_RIGHT: Final = 0
+FLIP_TOP_BOTTOM: Final = 1
+ROTATE_90: Final = 2
+ROTATE_180: Final = 3
+ROTATE_270: Final = 4
+TRANSPOSE: Final = 5
+TRANSVERSE: Final = 6
 
 class Transform(IntEnum):
-    AFFINE: Literal[0]
-    EXTENT: Literal[1]
-    PERSPECTIVE: Literal[2]
-    QUAD: Literal[3]
-    MESH: Literal[4]
+    AFFINE = 0
+    EXTENT = 1
+    PERSPECTIVE = 2
+    QUAD = 3
+    MESH = 4
 
 # All Transform items
-AFFINE: Literal[0]
-EXTENT: Literal[1]
-PERSPECTIVE: Literal[2]
-QUAD: Literal[3]
-MESH: Literal[4]
+AFFINE: Final = 0
+EXTENT: Final = 1
+PERSPECTIVE: Final = 2
+QUAD: Final = 3
+MESH: Final = 4
 
 class Resampling(IntEnum):
-    NEAREST: Literal[0]
-    LANCZOS: Literal[1]
-    BILINEAR: Literal[2]
-    BICUBIC: Literal[3]
-    BOX: Literal[4]
-    HAMMING: Literal[5]
+    NEAREST = 0
+    LANCZOS = 1
+    BILINEAR = 2
+    BICUBIC = 3
+    BOX = 4
+    HAMMING = 5
 
 # All Resampling items
-NEAREST: Literal[0]
-LANCZOS: Literal[1]
-BILINEAR: Literal[2]
-BICUBIC: Literal[3]
-BOX: Literal[4]
-HAMMING: Literal[5]
+NEAREST: Final = 0
+LANCZOS: Final = 1
+BILINEAR: Final = 2
+BICUBIC: Final = 3
+BOX: Final = 4
+HAMMING: Final = 5
 
 class Dither(IntEnum):
-    NONE: Literal[0]
-    ORDERED: Literal[1]
-    RASTERIZE: Literal[2]
-    FLOYDSTEINBERG: Literal[3]
+    NONE = 0
+    ORDERED = 1
+    RASTERIZE = 2
+    FLOYDSTEINBERG = 3
 
 # All Dither items
-NONE: Literal[0]
-ORDERED: Literal[1]
-RASTERIZE: Literal[2]
-FLOYDSTEINBERG: Literal[3]
+NONE: Final = 0
+ORDERED: Final = 1
+RASTERIZE: Final = 2
+FLOYDSTEINBERG: Final = 3
 
 class Palette(IntEnum):
-    WEB: Literal[0]
-    ADAPTIVE: Literal[1]
+    WEB = 0
+    ADAPTIVE = 1
 
 # All Palette items
-WEB: Literal[0]
-ADAPTIVE: Literal[1]
+WEB: Final = 0
+ADAPTIVE: Final = 1
 
 class Quantize(IntEnum):
-    MEDIANCUT: Literal[0]
-    MAXCOVERAGE: Literal[1]
-    FASTOCTREE: Literal[2]
-    LIBIMAGEQUANT: Literal[3]
+    MEDIANCUT = 0
+    MAXCOVERAGE = 1
+    FASTOCTREE = 2
+    LIBIMAGEQUANT = 3
 
 # All Quantize items
-MEDIANCUT: Literal[0]
-MAXCOVERAGE: Literal[1]
-FASTOCTREE: Literal[2]
-LIBIMAGEQUANT: Literal[3]
+MEDIANCUT: Final = 0
+MAXCOVERAGE: Final = 1
+FASTOCTREE: Final = 2
+LIBIMAGEQUANT: Final = 3
 
 ID: list[str]
 OPEN: dict[str, Any]
@@ -294,7 +299,9 @@ class ImageTransformHandler: ...
 def new(mode: _Mode, size: tuple[int, int], color: _Color = 0) -> Image: ...
 def frombytes(mode: _Mode, size: tuple[int, int], data, decoder_name: str = "raw", *args) -> Image: ...
 def frombuffer(mode: _Mode, size: tuple[int, int], data, decoder_name: str = "raw", *args) -> Image: ...
-def fromarray(obj, mode: _Mode | None = None) -> Image: ...
+
+# If the __array_interface__ has "strides", then `obj` must also support `tobytes` or `tostring`, but we can't enforce that
+def fromarray(obj: _SupportsArrayInterface, mode: _Mode | None = None) -> Image: ...
 def fromqimage(im) -> Image: ...
 def fromqpixmap(im) -> Image: ...
 def open(

@@ -2,8 +2,8 @@ from _typeshed import Incomplete
 from collections.abc import Callable, Coroutine, Iterable, Mapping, Sequence
 from contextlib import AbstractContextManager
 from types import TracebackType
-from typing import Any, ClassVar, Generic, TypeVar, overload
-from typing_extensions import Literal, ParamSpec, Self
+from typing import Any, ClassVar, Generic, Literal, TypeVar, overload
+from typing_extensions import ParamSpec, Self
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 _AF = TypeVar("_AF", bound=Callable[..., Coroutine[Any, Any, Any]])
@@ -66,7 +66,7 @@ class _Call(tuple[Any, ...]):
         from_kall: bool = True,
     ) -> None: ...
     def __eq__(self, other: object) -> bool: ...
-    def __ne__(self, __other: object) -> bool: ...
+    def __ne__(self, other: object, /) -> bool: ...
     def __call__(self, *args: Any, **kwargs: Any) -> _Call: ...
     def __getattr__(self, attr: str) -> Any: ...
     @property
@@ -177,7 +177,7 @@ class _patch(Generic[_T]):
     kwargs: Mapping[str, Any]
     additional_patchers: Any
     def __init__(
-        self: _patch[_T],
+        self: _patch[_T],  # pyright: ignore[reportInvalidTypeVarUse]  #11780
         getter: Callable[[], Any],
         attribute: str,
         new: _T,
@@ -204,7 +204,7 @@ class _patch(Generic[_T]):
     is_local: bool
     def __enter__(self) -> _T: ...
     def __exit__(
-        self, __exc_type: type[BaseException] | None, __exc_value: BaseException | None, __traceback: TracebackType | None
+        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None, /
     ) -> None: ...
     def start(self) -> _T: ...
     def stop(self) -> None: ...
@@ -227,7 +227,7 @@ class _patcher:
     TEST_PREFIX: str
     dict: type[_patch_dict]
     @overload
-    def __call__(  # type: ignore[misc]
+    def __call__(
         self,
         target: Any,
         *,
@@ -257,7 +257,7 @@ class _patcher:
         **kwargs: Any,
     ) -> _patch[_T]: ...
     @overload
-    def object(  # type: ignore[misc]
+    def object(
         self,
         target: Any,
         attribute: str,

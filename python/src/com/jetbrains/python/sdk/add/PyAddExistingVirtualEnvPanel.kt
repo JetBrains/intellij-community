@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk.add
 
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -61,7 +62,7 @@ open class PyAddExistingVirtualEnvPanel(private val project: Project?,
 
   override fun getOrCreateSdk(): Sdk? {
     return when (val sdk = sdkComboBox.selectedSdk) {
-      is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath)?.apply {
+      is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath).getOrLogException(LOGGER)?.apply {
         if (!makeSharedField.isSelected) {
           associateWithModule(module, newProjectPath)
         }

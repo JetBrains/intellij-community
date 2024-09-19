@@ -3,6 +3,7 @@ package com.intellij.platform.whatsNew
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.text.nullize
 
 internal class WhatsNewContentVersionChecker {
   companion object {
@@ -25,8 +26,8 @@ internal class WhatsNewContentVersionChecker {
         return false
       }
 
-      val result = newVersion > savedVersion || (newVersion.releaseInfoEquals(savedVersion) && newVersion.hash != savedVersion.hash)
-      LOG.info("Comparing versions $newVersion > $savedVersion: $result.")
+      val result = shouldShowWhatsNew(savedVersion, newVersion)
+      LOG.info("Comparing versions $newVersion and $savedVersion: $result.")
       return result
     }
 
@@ -38,6 +39,18 @@ internal class WhatsNewContentVersionChecker {
       }
 
       PropertiesComponent.getInstance().setValue(LAST_SHOWN_EAP_VERSION_PROP, version.toString())
+    }
+
+    internal fun shouldShowWhatsNew(
+      storedVersion: WhatsNewContent.ContentVersion,
+      newVersion: WhatsNewContent.ContentVersion): Boolean {
+      if (storedVersion.hash.nullize() != null && newVersion.hash.nullize() != null) {
+        // If both versions have hashes, then show any new content.
+        return storedVersion.hash != newVersion.hash
+      }
+
+      // At least one of the versions doesn't have a hash: compare them by versions directly, preferring the newest.
+      return newVersion > storedVersion
     }
   }
 }

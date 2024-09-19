@@ -48,6 +48,8 @@ public class JavaFoldingTest extends JavaFoldingTestCase {
 
   public void testJavadocComments() { doTest(); }
 
+  public void testJavadocMarkdownComments() { doTest(); }
+
   public void testEditingImports() {
     configure("""
                 import java.util.List;

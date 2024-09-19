@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.lexer.BasicJavaLexer;
 import com.intellij.lang.java.lexer.JavaDocLexer;
+import com.intellij.lang.java.lexer.JavaTypeEscapeLexer;
 import com.intellij.lang.java.parser.BasicJavaDocParser;
 import com.intellij.lang.java.parser.BasicJavaParser;
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
@@ -125,11 +126,11 @@ public interface BasicJavaDocElementType {
 
     private final @NotNull Supplier<? extends BasicJavaParser> myJavaThinParser;
     private final Function<LanguageLevel, JavaDocLexer> javaDocLexer;
-    private final Function<LanguageLevel, BasicJavaLexer> javaLexer;
+    private final Function<LanguageLevel, JavaTypeEscapeLexer> javaLexer;
 
     public DocTypeHolderElementType(@NotNull Supplier<? extends BasicJavaParser> parser,
                                     @NotNull Function<LanguageLevel, JavaDocLexer> docLexerFunction,
-                                    @NotNull Function<LanguageLevel, BasicJavaLexer> javaLexer) {
+                                    @NotNull Function<LanguageLevel, JavaTypeEscapeLexer> javaLexer) {
       super("DOC_TYPE_HOLDER", BASIC_DOC_TYPE_HOLDER);
       this.myJavaThinParser = parser;
       this.javaDocLexer = docLexerFunction;

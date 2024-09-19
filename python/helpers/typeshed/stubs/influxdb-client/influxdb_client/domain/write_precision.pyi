@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
-from typing import Any, ClassVar
-from typing_extensions import Final, Literal, TypeAlias
+from typing import Any, ClassVar, Final, Literal
+from typing_extensions import TypeAlias
 
 _WritePrecision: TypeAlias = Literal["ms", "s", "us", "ns"]  # noqa: Y047
 

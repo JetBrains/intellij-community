@@ -5,6 +5,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import copy
 import mimetypes
@@ -13,6 +14,7 @@ import re
 
 from ..i18n import _
 from ..node import hex, short
+from ..pycompat import getattr
 
 from .common import (
     ErrorResponse,
@@ -45,7 +47,7 @@ __all__ = []
 commands = {}
 
 
-class webcommand:
+class webcommand(object):
     """Decorator used to register a web command handler.
 
     The decorator takes as its positional arguments the name/path the
@@ -227,7 +229,7 @@ def _search(web):
 
         def revgen():
             cl = web.repo.changelog
-            for i in range(len(web.repo) - 1, 0, -100):
+            for i in pycompat.xrange(len(web.repo) - 1, 0, -100):
                 l = []
                 for j in cl.revs(max(0, i - 99), i):
                     ctx = web.repo[j]
@@ -516,7 +518,7 @@ def changeset(web):
 rev = webcommand(b'rev')(changeset)
 
 
-def decodepath(path: bytes) -> bytes:
+def decodepath(path):
     """Hook for mapping a path in the repository to a path in the
     working copy.
 
@@ -561,7 +563,7 @@ def manifest(web):
     l = len(path)
     abspath = b"/" + path
 
-    for full, n in mf.items():
+    for full, n in pycompat.iteritems(mf):
         # the virtual path (working copy path) used for the full
         # (repository) path
         f = decodepath(full)
@@ -614,9 +616,7 @@ def manifest(web):
             yield {
                 b"parity": next(parity),
                 b"path": path,
-                # pytype: disable=wrong-arg-types
                 b"emptydirs": b"/".join(emptydirs),
-                # pytype: enable=wrong-arg-types
                 b"basename": d,
             }
 
@@ -1048,9 +1048,7 @@ def annotate(web):
             }
 
     diffopts = webutil.difffeatureopts(web.req, web.repo.ui, b'annotate')
-    diffopts = {
-        k: getattr(diffopts, pycompat.sysstr(k)) for k in diffopts.defaults
-    }
+    diffopts = {k: getattr(diffopts, k) for k in diffopts.defaults}
 
     return web.sendtemplate(
         b'fileannotate',
@@ -1299,9 +1297,6 @@ def archive(web):
             b'sendresponse() should not emit data if writing later'
         )
 
-    if web.req.method == b'HEAD':
-        return []
-
     bodyfh = web.res.getbodyfile()
 
     archival.archive(
@@ -1523,7 +1518,7 @@ def help(web):
 
         early, other = [], []
         primary = lambda s: s.partition(b'|')[0]
-        for c, e in commands.table.items():
+        for c, e in pycompat.iteritems(commands.table):
             doc = _getdoc(e)
             if b'DEPRECATED' in doc or c.startswith(b'debug'):
                 continue

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-public interface PyClassStub extends NamedStub<PyClass> {
+public interface PyClassStub extends NamedStub<PyClass>, PyVersionSpecificStub {
 
   /**
    * @return a {@code Map} which contains imported class names as keys and their original names as values.

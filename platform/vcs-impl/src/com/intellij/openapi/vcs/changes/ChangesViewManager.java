@@ -433,7 +433,7 @@ public class ChangesViewManager implements ChangesViewEx,
     private final @NotNull ChangesViewManager myChangesViewManager;
     private final @NotNull VcsConfiguration myVcsConfiguration;
 
-    private final @NotNull BorderLayoutPanel myMainPanel;
+    private final @NotNull Wrapper myMainPanelContent;
     private final @NotNull BorderLayoutPanel myContentPanel;
     private final @NotNull ChangesViewPanel myChangesPanel;
     private final @NotNull ChangesListView myView;
@@ -498,7 +498,8 @@ public class ChangesViewManager implements ChangesViewEx,
         }
       };
       myContentPanel.addToCenter(myCommitPanelSplitter);
-      myMainPanel = simplePanel(myContentPanel)
+      myMainPanelContent = new Wrapper(myContentPanel);
+      JPanel mainPanel = simplePanel(myMainPanelContent)
         .addToBottom(myProgressLabel);
 
       myEditorDiffPreview = new ChangesViewEditorDiffPreview();
@@ -522,7 +523,7 @@ public class ChangesViewManager implements ChangesViewEx,
         return true;
       });
 
-      setContent(myMainPanel);
+      setContent(mainPanel);
 
       busConnection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
         @Override
@@ -658,9 +659,7 @@ public class ChangesViewManager implements ChangesViewEx,
         mySplitterComponent = new PreviewDiffSplitterComponent(myProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
 
         mySplitterComponent.setFirstComponent(myContentPanel);
-        myMainPanel.addToCenter(mySplitterComponent);
-        myMainPanel.revalidate();
-        myMainPanel.repaint();
+        myMainPanelContent.setContent(mySplitterComponent);
       }
 
       @Override
@@ -668,9 +667,7 @@ public class ChangesViewManager implements ChangesViewEx,
         Disposer.dispose(myProcessor);
 
         if (!ChangesViewToolWindowPanel.this.myDisposed) {
-          myMainPanel.addToCenter(myContentPanel);
-          myMainPanel.revalidate();
-          myMainPanel.repaint();
+          myMainPanelContent.setContent(myContentPanel);
         }
       }
 

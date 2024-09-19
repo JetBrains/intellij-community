@@ -80,9 +80,6 @@ internal sealed class WhatsNewContent {
       }
     }
 
-    fun releaseInfoEquals(other: ContentVersion): Boolean =
-      year == other.year && release == other.release && eap == other.eap
-
     override operator fun compareTo(other: ContentVersion): Int {
       val result = compareValuesBy(this, other, { it.year }, { Version.parseVersion(it.release) })
       return when {

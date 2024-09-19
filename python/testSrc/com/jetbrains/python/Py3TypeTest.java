@@ -323,7 +323,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorAsend() {
-    doTest("Awaitable[int]",
+    doTest("Coroutine[Any, Any, int]",
            """
              async def asyncgen():
                  yield 42
@@ -1845,6 +1845,23 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  // PY-75961
+  public void testTypeGuardNotAppliedForUnresolvedType() {
+    doTest("list[object]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+             def is_str_list(val: List[object]) -> TypeGuard[Unresolved]:
+                 return all(isinstance(x, str) for x in val)                          
+                          
+             def func1(val: List[object]):
+                 if is_str_list(val):
+                     expr = val
+             """);
+  }
+
+
   public void testTypeGuardCannotBeReturned() {
     myFixture.configureByText(PythonFileType.INSTANCE, """
              from typing import List
@@ -1924,8 +1941,8 @@ public class Py3TypeTest extends PyTestCase {
 
 
 
-  public void testTypeGuardBool() {
-    doTest("bool",
+  public void testTypeGuardPresentation() {
+    doTest("TypeGuard[list[str]]",
            """
              from typing import List
              from typing import TypeGuard
@@ -1939,6 +1956,88 @@ public class Py3TypeTest extends PyTestCase {
                  expr = is_str_list(val)
              """);
   }
+
+  public void testTypeIsPresentation() {
+    doTest("TypeIs[list[str]]",
+           """
+             from typing import List
+             from typing_extensions import TypeIs
+
+
+             def is_str_list(val: List[object]) -> TypeIs[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+
+
+             def func1(val: List[object]):
+                 expr = is_str_list(val)
+             """);
+  }
+
+  public void testTypeGuardIsErasedOnReturn() {
+    doTest("bool",
+           """
+             from typing import List
+             from typing_extensions import TypeIs
+
+             def is_str_list(val: List[object]) -> TypeIs[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+
+             def func1(val: List[object]):
+                 return is_str_list(val)
+             
+             expr = func1([])
+             """);
+  }
+
+  public void testTypeAliasesWithTypeIs() {
+    doTest("list[str]", """
+      from typing import List
+      from typing_extensions import TypeIs
+      
+      MyTypeIs = TypeIs[List[str]]
+
+      def is_str_list(val: List[object]) -> MyTypeIs:
+          return all(isinstance(x, str) for x in val)
+
+      def func1(val: List[object]):
+          if is_str_list(val):
+              expr = val
+      """);
+  }
+
+  public void testTypeAliasWithGenericTypeIs() {
+    doTest("list[str]", """
+      from typing import List
+      from typing_extensions import TypeIs
+      
+      type MyTypeIs[T] = TypeIs[T]
+
+      def is_str_list(val: List[object]) -> MyTypeIs[List[str]]:
+          return all(isinstance(x, str) for x in val)
+
+      def func1(val: List[object]):
+          if is_str_list(val):
+              expr = val
+      """);
+  }
+
+  public void testTypeIsWithGenerics() {
+    doTest("tuple[str, str]", """
+      from typing_extensions import TypeIs
+      from typing import TypeVar
+      
+      T = TypeVar("T")
+      
+      def is_two_element_tuple(val: tuple[T, ...]) -> TypeIs[tuple[T, T]]:
+          return len(val) == 2
+      
+      
+      def func7(names: tuple[str, ...]):
+          if is_two_element_tuple(names):
+              expr = names
+      """);
+  }
+
 
   public void testTypeGuardListInStringLiteral() {
     doTest("list[str]",
@@ -2044,7 +2143,6 @@ public class Py3TypeTest extends PyTestCase {
                  name: str
                  age: int
                                 
-                                
              def is_person(val: dict) -> TypeGuard[Person]:
                  try:
                      return isinstance(val["name"], str) and isinstance(val["age"], int)
@@ -2057,6 +2155,20 @@ public class Py3TypeTest extends PyTestCase {
                      expr = val
                  else:
                      print("Not a person!")""");
+  }
+
+  public void testTypeIsInCallable() {
+    doTest("str", """
+      from typing import Callable
+      from typing import assert_type
+      from typing_extensions import TypeIs
+     
+      def takes_narrower(x: int | str, narrower: Callable[[object], TypeIs[int]]):
+          if narrower(x):
+              pass
+          else:
+              expr = x
+     """);
   }
 
   public void testTypeGuardDoubleCheckNegation() {
@@ -2106,17 +2218,45 @@ public class Py3TypeTest extends PyTestCase {
            """
              from typing import List
              from typing_extensions import TypeIs
-                          
-                          
+             
              def is_str_list(val: List[object]) -> TypeIs[List[str]]:
                  return all(isinstance(x, str) for x in val)
-                          
+             
              def func1(val: List[int] | List[str]):
                  if not is_str_list(val):
                      expr = val
                  else:
                      pass
              """);
+  }
+
+  public void testHandleGenericReturnType() {
+    doTest("list[str]", """
+      from typing import List
+      
+      def create_list_of_type[T](item: T, count: int) -> List[T]:
+          return [item] * count
+      
+      expr = create_list_of_type("foo", 3)
+      """);
+  }
+
+  public void testHandleGenericWithAliasesReturnType() {
+    doTest("int | None", """
+      from typing import Dict, TypeAlias, TypeVar
+      
+      V = TypeVar("V")
+      
+      StringDict = Dict[str, V]
+      
+      def create_dict_of_type[T](item: T,) -> StringDict[T]:
+          return {"foo": item}
+      
+      
+      dict = create_dict_of_type(23)
+      
+      expr = dict.get("foo")
+      """);
   }
 
   public void testNoReturn() {
@@ -2379,6 +2519,256 @@ public class Py3TypeTest extends PyTestCase {
              def foo(**x: Unpack[Movie]):
                  expr = x
              """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromDescriptor() {
+    doTest("list", """
+      import typing
+
+      class MyDescriptor[T]:
+          def __init__(self, requested_type: typing.Type[T]):
+              self.requested_type = requested_type
+          def __get__(self, instance: typing.Any, owner: typing.Any) -> T:
+              raise Exception("Not implemented")
+      
+      class Test:
+          member = MyDescriptor(list)
+          def foo(self):
+              test = self.member
+              expr = test
+      """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromDescriptorWithTypeAnnotationOnly() {
+    doTest("list", """
+      from typing import Type, Any
+      
+      class MyDescriptor[T]:
+          def __get__(self, instance: typing.Any, owner: typing.Any) -> T:
+              raise Exception("Not implemented")
+     
+      class Test:
+          member: MyDescriptor[list]
+          def foo(self):
+              test = self.member
+              expr = test
+      """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromDescriptorWithTypeAnnotationPriority() {
+    doTest("list", """
+      from typing import Type, Any
+      
+      class MyDescriptor[T]:
+          def __init__(self, requested_type: Type[T]):
+              self.requested_type = requested_type
+          def __get__(self, instance: Any, owner: Any) -> T:
+              raise Exception("Not implemented")
+      
+      class Test:
+          member: MyDescriptor[list] = MyDescriptor(str)
+          def foo(self):
+              test = self.member
+              expr = test
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaInstance() {
+    doTest("int", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> str: # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> T: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      foo = Foo()
+      expr = foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaInstanceReturnsExplicitAny() {
+    doTest("Any", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> str: # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> Any: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      foo = Foo()
+      expr = foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaClass() {
+    doTest("int", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> T: # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> str: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      expr = Foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaClassReturnsExplicitAny() {
+    doTest("Any", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> Any: # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> str: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      expr = Foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaClassReturnsNothing() {
+    doTest("None", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any): # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> T: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      expr = Foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromParameterizedOnInheritanceDescriptorWithTypeAnnotationOnly() {
+    doTest("str", """
+      from typing import Any
+      
+      class MyDescriptor[T]:
+          def __get__(self, instance: Any, owner: Any) -> T:
+              ...
+      
+      class StrDescriptor(MyDescriptor[str]):
+          pass
+      
+      class Test:
+          member: StrDescriptor
+      
+          def foo(self):
+              test = self.member
+              expr = test
+      """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromDescriptorDefinedWithTypeAnnotationInExternalFileAccessViaInstance() {
+    doMultiFileTest("str", """
+      from a import Test
+
+      test = Test()
+      expr = test.member
+      """);
+  }
+
+  // PY-71748
+  public void testDictDunderEqAppliedFromLeftToRightByDefault() {
+    doTest("int", """
+      class A:
+        def __eq__(self, other: Any) -> int: ...
+      
+      class B:
+        def __eq__(self, other: Any) -> str: ...
+      
+      a = A()
+      b = B()
+      expr = a == b
+      """);
+  }
+
+  // PY-71748
+  public void testDictDunderNeAppliedFromLeftToRightByDefault() {
+    doTest("int", """
+      class A:
+        def __ne__(self, other: Any) -> int: ...
+      
+      class B:
+        def __ne__(self, other: Any) -> str: ...
+      
+      a = A()
+      b = B()
+      expr = a != b
+      """);
+  }
+
+  // PY-34617
+  public void testTopLevelFunctionUnderVersionCheck() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> {
+      doMultiFileTest("str",
+                      """
+                        from mod import foo
+                        expr = foo()
+                        """);
+    });
+  }
+
+  // PY-34617
+  public void testClassMethodUnderVersionCheck() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
+      doMultiFileTest("float",
+                      """
+                        from mod import Foo
+                        expr = Foo().foo()
+                        """);
+    });
   }
 
   private void doTest(final String expectedType, final String text) {

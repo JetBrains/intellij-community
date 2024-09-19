@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import sys
 
-from parse_metadata import read_dependencies
+from _metadata import read_dependencies
 
 distributions = sys.argv[1:]
 if not distributions:

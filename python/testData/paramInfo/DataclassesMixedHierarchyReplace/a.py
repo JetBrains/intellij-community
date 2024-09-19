@@ -28,7 +28,7 @@ class B3(A3):
     def __init__(self, b: str):
         self.a = 10
 
-replace(B3("1"), <arg3>)
+replace(B3("1"), a=<arg3>)
 
 
 @dataclass
@@ -39,7 +39,7 @@ class A4:
 class B4(A4):
     b: str
 
-replace(B4(), <arg4>)
+replace(B4(), b=<arg4>)
 
 
 @dataclass

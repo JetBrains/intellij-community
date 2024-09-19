@@ -65,7 +65,9 @@ internal class TerminalWidgetImpl(
     view = if (options.shellIntegration?.commandBlockIntegration != null) {
       val session = BlockTerminalSession(settings, BlockTerminalColorPalette(), options.shellIntegration)
       Disposer.register(this, session)
-      BlockTerminalView(project, session, settings, terminalTitle)
+      BlockTerminalView(project, session, settings, terminalTitle).also {
+        installResponsivenessReporter(project, checkNotNull(options.startupMoment), session)
+      }
     }
     else {
       OldPlainTerminalView(project, settings, terminalTitle)

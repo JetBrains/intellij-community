@@ -1,8 +1,0 @@
-# CPython bug; waiting on https://github.com/python/cpython/pull/109790 to be backported
-ntpath.isdir
-os.path.isdir
-
-# Undocumented internal method, not really for public consumption.
-# (Hard to add types for unless we add stubs for the undocumented _overlapped module...)
-asyncio.IocpProactor.finish_socket_func
-asyncio.windows_events.IocpProactor.finish_socket_func

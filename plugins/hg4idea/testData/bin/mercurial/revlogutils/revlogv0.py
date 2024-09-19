@@ -4,6 +4,7 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
+from __future__ import absolute_import
 
 
 from ..node import sha1nodeconstants
@@ -15,6 +16,7 @@ from ..i18n import _
 from .. import (
     error,
     node,
+    pycompat,
     revlogutils,
     util,
 )
@@ -44,6 +46,12 @@ class revlogoldindex(list):
         parent_rev_2=node.nullrev,
         node_id=sha1nodeconstants.nullid,
     )
+
+    @property
+    def nodemap(self):
+        msg = b"index.nodemap is deprecated, use index.[has_node|rev|get_rev]"
+        util.nouideprecwarn(msg, b'5.3', stacklevel=2)
+        return self._nodemap
 
     @util.propertycache
     def _nodemap(self):
@@ -76,7 +84,7 @@ class revlogoldindex(list):
     def __delitem__(self, i):
         if not isinstance(i, slice) or not i.stop == -1 or i.step is not None:
             raise ValueError(b"deleting slices only supports a:-1 with step 1")
-        for r in range(i.start, len(self)):
+        for r in pycompat.xrange(i.start, len(self)):
             del self._nodemap[self[r][7]]
         super(revlogoldindex, self).__delitem__(i)
 

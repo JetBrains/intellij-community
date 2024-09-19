@@ -31,5 +31,16 @@
             icon="AllIcons.Actions.Diff">
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
     </action>
+
+    <action id="Code.Review.Editor.New.Comment"
+            class="com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorNewCommentAction">
+      <keyboard-shortcut first-keystroke="control shift X" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse" remove="true"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse (Mac OS X)" remove="true"/>
+      <keyboard-shortcut first-keystroke="meta shift X" keymap="Eclipse (Mac OS X)" remove="true"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Emacs" remove="true"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+      <add-to-group group-id="Diff.EditorPopupMenu" anchor="last"/>
+    </action>
   </actions>
 </idea-plugin>

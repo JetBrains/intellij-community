@@ -1,7 +1,7 @@
 # https://pyinstaller.org/en/stable/advanced-topics.html#the-toc-and-tree-classes
 from collections.abc import Iterable, Sequence
-from typing import ClassVar
-from typing_extensions import Literal, LiteralString, Self, SupportsIndex, TypeAlias
+from typing import ClassVar, Literal, SupportsIndex
+from typing_extensions import LiteralString, Self, TypeAlias
 
 _TypeCode: TypeAlias = Literal["DEPENDENCY", "SYMLINK", "DATA", "BINARY", "EXECUTABLE", "EXTENSION", "OPTION"]
 _TOCTuple: TypeAlias = tuple[str, str | None, _TypeCode | None]

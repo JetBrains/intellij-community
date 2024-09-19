@@ -1,766 +1,784 @@
+from typing import Final
+
 class ErrorCodes:
     class Address:
-        CannotBeBlank: str
-        CompanyIsInvalid: str
-        CompanyIsTooLong: str
-        CountryCodeAlpha2IsNotAccepted: str
-        CountryCodeAlpha3IsNotAccepted: str
-        CountryCodeNumericIsNotAccepted: str
-        CountryNameIsNotAccepted: str
-        ExtendedAddressIsInvalid: str
-        ExtendedAddressIsTooLong: str
-        FirstNameIsInvalid: str
-        FirstNameIsTooLong: str
-        InconsistentCountry: str
-        IsInvalid: str
-        LastNameIsInvalid: str
-        LastNameIsTooLong: str
-        LocalityIsInvalid: str
-        LocalityIsTooLong: str
-        PostalCodeInvalidCharacters: str
-        PostalCodeIsInvalid: str
-        PostalCodeIsRequired: str
-        PostalCodeIsRequiredForCardBrandAndProcessor: str
-        PostalCodeIsTooLong: str
-        RegionIsInvalid: str
-        RegionIsTooLong: str
-        StateIsInvalidForSellerProtection: str
-        StreetAddressIsInvalid: str
-        StreetAddressIsRequired: str
-        StreetAddressIsTooLong: str
-        TooManyAddressesPerCustomer: str
+        CannotBeBlank: Final = "81801"
+        CompanyIsInvalid: Final = "91821"
+        CompanyIsTooLong: Final = "81802"
+        CountryCodeAlpha2IsNotAccepted: Final = "91814"
+        CountryCodeAlpha3IsNotAccepted: Final = "91816"
+        CountryCodeNumericIsNotAccepted: Final = "91817"
+        CountryNameIsNotAccepted: Final = "91803"
+        ExtendedAddressIsInvalid: Final = "91823"
+        ExtendedAddressIsTooLong: Final = "81804"
+        FirstNameIsInvalid: Final = "91819"
+        FirstNameIsTooLong: Final = "81805"
+        InconsistentCountry: Final = "91815"
+        IsInvalid: Final = "91828"
+        LastNameIsInvalid: Final = "91820"
+        LastNameIsTooLong: Final = "81806"
+        LocalityIsInvalid: Final = "91824"
+        LocalityIsTooLong: Final = "81807"
+        PostalCodeInvalidCharacters: Final = "81813"
+        PostalCodeIsInvalid: Final = "91826"
+        PostalCodeIsRequired: Final = "81808"
+        PostalCodeIsRequiredForCardBrandAndProcessor: Final = "81828"
+        PostalCodeIsTooLong: Final = "81809"
+        RegionIsInvalid: Final = "91825"
+        RegionIsTooLong: Final = "81810"
+        StateIsInvalidForSellerProtection: Final = "81827"
+        StreetAddressIsInvalid: Final = "91822"
+        StreetAddressIsRequired: Final = "81811"
+        StreetAddressIsTooLong: Final = "81812"
+        TooManyAddressesPerCustomer: Final = "91818"
+
+    class AndroidPay:
+        AndroidPayCardsAreNotAccepted: Final = "83708"
 
     class ApplePay:
-        ApplePayCardsAreNotAccepted: str
-        CustomerIdIsRequiredForVaulting: str
-        TokenIsInUse: str
-        PaymentMethodNonceConsumed: str
-        PaymentMethodNonceUnknown: str
-        PaymentMethodNonceLocked: str
-        PaymentMethodNonceCardTypeIsNotAccepted: str
-        CannotUpdateApplePayCardUsingPaymentMethodNonce: str
-        NumberIsRequired: str
-        ExpirationMonthIsRequired: str
-        ExpirationYearIsRequired: str
-        CryptogramIsRequired: str
-        DecryptionFailed: str
-        Disabled: str
-        MerchantNotConfigured: str
-        MerchantKeysAlreadyConfigured: str
-        MerchantKeysNotConfigured: str
-        CertificateInvalid: str
-        CertificateMismatch: str
-        InvalidToken: str
-        PrivateKeyMismatch: str
-        KeyMismatchStoringCertificate: str
+        ApplePayCardsAreNotAccepted: Final = "83501"
+        CustomerIdIsRequiredForVaulting: Final = "83502"
+        TokenIsInUse: Final = "93503"
+        PaymentMethodNonceConsumed: Final = "93504"
+        PaymentMethodNonceUnknown: Final = "93505"
+        PaymentMethodNonceLocked: Final = "93506"
+        PaymentMethodNonceCardTypeIsNotAccepted: Final = "83518"
+        CannotUpdateApplePayCardUsingPaymentMethodNonce: Final = "93507"
+        NumberIsRequired: Final = "93508"
+        ExpirationMonthIsRequired: Final = "93509"
+        ExpirationYearIsRequired: Final = "93510"
+        CryptogramIsRequired: Final = "93511"
+        DecryptionFailed: Final = "83512"
+        Disabled: Final = "93513"
+        MerchantNotConfigured: Final = "93514"
+        MerchantKeysAlreadyConfigured: Final = "93515"
+        MerchantKeysNotConfigured: Final = "93516"
+        CertificateInvalid: Final = "93517"
+        CertificateMismatch: Final = "93519"
+        InvalidToken: Final = "83520"
+        PrivateKeyMismatch: Final = "93521"
+        KeyMismatchStoringCertificate: Final = "93522"
+        CustomerIdIsInvalid: Final = "93528"
+        BillingAddressFormatIsInvalid: Final = "93529"
 
     class AuthorizationFingerprint:
-        MissingFingerprint: str
-        InvalidFormat: str
-        SignatureRevoked: str
-        InvalidCreatedAt: str
-        InvalidPublicKey: str
-        InvalidSignature: str
-        OptionsNotAllowedWithoutCustomer: str
+        MissingFingerprint: Final = "93201"
+        InvalidFormat: Final = "93202"
+        SignatureRevoked: Final = "93203"
+        InvalidCreatedAt: Final = "93204"
+        InvalidPublicKey: Final = "93205"
+        InvalidSignature: Final = "93206"
+        OptionsNotAllowedWithoutCustomer: Final = "93207"
 
     class ClientToken:
-        MakeDefaultRequiresCustomerId: str
-        VerifyCardRequiresCustomerId: str
-        FailOnDuplicatePaymentMethodRequiresCustomerId: str
-        CustomerDoesNotExist: str
-        ProxyMerchantDoesNotExist: str
-        UnsupportedVersion: str
-        MerchantAccountDoesNotExist: str
+        CustomerDoesNotExist: Final = "92804"
+        FailOnDuplicatePaymentMethodRequiresCustomerId: Final = "92803"
+        InvalidDomainFormat: Final = "92011"
+        MakeDefaultRequiresCustomerId: Final = "92801"
+        MerchantAccountDoesNotExist: Final = "92807"
+        ProxyMerchantDoesNotExist: Final = "92805"
+        TooManyDomains: Final = "92810"
+        UnsupportedVersion: Final = "92806"
+        VerifyCardRequiresCustomerId: Final = "92802"
 
     class CreditCard:
-        BillingAddressConflict: str
-        BillingAddressFormatIsInvalid: str
-        BillingAddressIdIsInvalid: str
-        CannotUpdateCardUsingPaymentMethodNonce: str
-        CardholderNameIsTooLong: str
-        CreditCardTypeIsNotAccepted: str
-        CreditCardTypeIsNotAcceptedBySubscriptionMerchantAccount: str
-        CustomerIdIsInvalid: str
-        CustomerIdIsRequired: str
-        CvvIsInvalid: str
-        CvvIsRequired: str
-        CvvVerificationFailed: str
-        DuplicateCardExists: str
-        ExpirationDateConflict: str
-        ExpirationDateIsInvalid: str
-        ExpirationDateIsRequired: str
-        ExpirationDateYearIsInvalid: str
-        ExpirationMonthIsInvalid: str
-        ExpirationYearIsInvalid: str
-        InvalidParamsForCreditCardUpdate: str
-        InvalidVenmoSDKPaymentMethodCode: str
-        NumberHasInvalidLength: str
-        NumberLengthIsInvalid: str
-        NumberIsInvalid: str
-        NumberIsProhibited: str
-        NumberIsRequired: str
-        NumberMustBeTestNumber: str
-        PaymentMethodConflict: str
-        PaymentMethodIsNotACreditCard: str
-        PaymentMethodNonceCardTypeIsNotAccepted: str
-        PaymentMethodNonceConsumed: str
-        PaymentMethodNonceLocked: str
-        PaymentMethodNonceUnknown: str
-        PostalCodeVerificationFailed: str
-        TokenInvalid: str
-        TokenFormatIsInvalid: str
-        TokenIsInUse: str
-        TokenIsNotAllowed: str
-        TokenIsRequired: str
-        TokenIsTooLong: str
-        VenmoSDKPaymentMethodCodeCardTypeIsNotAccepted: str
-        VerificationNotSupportedOnThisMerchantAccount: str
-        VerificationAccountTypeIsInvald: str
-        VerificationAccountTypeNotSupported: str
+        BillingAddressConflict: Final = "91701"
+        BillingAddressFormatIsInvalid: Final = "91744"
+        BillingAddressIdIsInvalid: Final = "91702"
+        CannotUpdateCardUsingPaymentMethodNonce: Final = "91735"
+        CardholderNameIsTooLong: Final = "81723"
+        CreditCardTypeIsNotAccepted: Final = "81703"
+        CreditCardTypeIsNotAcceptedBySubscriptionMerchantAccount: Final = "81718"
+        CustomerIdIsInvalid: Final = "91705"
+        CustomerIdIsRequired: Final = "91704"
+        CvvIsInvalid: Final = "81707"
+        CvvIsRequired: Final = "81706"
+        CvvVerificationFailed: Final = "81736"
+        DuplicateCardExists: Final = "81724"
+        ExpirationDateConflict: Final = "91708"
+        ExpirationDateIsInvalid: Final = "81710"
+        ExpirationDateIsRequired: Final = "81709"
+        ExpirationDateYearIsInvalid: Final = "81711"
+        ExpirationMonthIsInvalid: Final = "81712"
+        ExpirationYearIsInvalid: Final = "81713"
+        InvalidParamsForCreditCardUpdate: Final = "91745"
+        InvalidVenmoSDKPaymentMethodCode: Final = "91727"
+        NumberHasInvalidLength: Final = "81716"
+        NumberLengthIsInvalid: Final = "81716"
+        NumberIsInvalid: Final = "81715"
+        NumberIsProhibited: Final = "81750"
+        NumberIsRequired: Final = "81714"
+        NumberMustBeTestNumber: Final = "81717"
+        PaymentMethodConflict: Final = "81725"
+        PaymentMethodIsNotACreditCard: Final = "91738"
+        PaymentMethodNonceCardTypeIsNotAccepted: Final = "91734"
+        PaymentMethodNonceConsumed: Final = "91731"
+        PaymentMethodNonceLocked: Final = "91733"
+        PaymentMethodNonceUnknown: Final = "91732"
+        PostalCodeVerificationFailed: Final = "81737"
+        TokenInvalid: Final = "91718"
+        TokenFormatIsInvalid: Final = "91718"
+        TokenIsInUse: Final = "91719"
+        TokenIsNotAllowed: Final = "91721"
+        TokenIsRequired: Final = "91722"
+        TokenIsTooLong: Final = "91720"
+        VenmoSDKPaymentMethodCodeCardTypeIsNotAccepted: Final = "91726"
+        VerificationNotSupportedOnThisMerchantAccount: Final = "91730"
+        VerificationAccountTypeIsInvald: Final = "91757"
+        VerificationAccountTypeNotSupported: Final = "91758"
 
         class Options:
-            UpdateExistingTokenIsInvalid: str
-            UpdateExistingTokenNotAllowed: str
-            VerificationAmountCannotBeNegative: str
-            VerificationAmountFormatIsInvalid: str
-            VerificationAmountIsTooLarge: str
-            VerificationAmountNotSupportedByProcessor: str
-            VerificationMerchantAccountIdIsInvalid: str
-            VerificationMerchantAccountIsForbidden: str
-            VerificationMerchantAccountIsSuspended: str
-            VerificationMerchantAccountCannotBeSubMerchantAccount: str
+            UpdateExistingTokenIsInvalid: Final = "91723"
+            UpdateExistingTokenNotAllowed: Final = "91729"
+            VerificationAmountCannotBeNegative: Final = "91739"
+            VerificationAmountFormatIsInvalid: Final = "91740"
+            VerificationAmountIsTooLarge: Final = "91752"
+            VerificationAmountNotSupportedByProcessor: Final = "91741"
+            VerificationMerchantAccountIdIsInvalid: Final = "91728"
+            VerificationMerchantAccountIsForbidden: Final = "91743"
+            VerificationMerchantAccountIsSuspended: Final = "91742"
+            VerificationMerchantAccountCannotBeSubMerchantAccount: Final = "91755"
 
     class Customer:
-        CompanyIsTooLong: str
-        CustomFieldIsInvalid: str
-        CustomFieldIsTooLong: str
-        EmailIsInvalid: str
-        EmailFormatIsInvalid: str
-        EmailIsRequired: str
-        EmailIsTooLong: str
-        FaxIsTooLong: str
-        FirstNameIsTooLong: str
-        IdIsInUse: str
-        IdIsInvalid: str
-        IdIsNotAllowed: str
-        IdIsRequired: str
-        IdIsTooLong: str
-        LastNameIsTooLong: str
-        PhoneIsTooLong: str
-        VaultedPaymentInstrumentNonceBelongsToDifferentCustomer: str
-        WebsiteIsInvalid: str
-        WebsiteFormatIsInvalid: str
-        WebsiteIsTooLong: str
+        CompanyIsTooLong: Final = "81601"
+        CustomFieldIsInvalid: Final = "91602"
+        CustomFieldIsTooLong: Final = "81603"
+        EmailIsInvalid: Final = "81604"
+        EmailFormatIsInvalid: Final = "81604"
+        EmailIsRequired: Final = "81606"
+        EmailIsTooLong: Final = "81605"
+        FaxIsTooLong: Final = "81607"
+        FirstNameIsTooLong: Final = "81608"
+        IdIsInUse: Final = "91609"
+        IdIsInvalid: Final = "91610"
+        IdIsNotAllowed: Final = "91611"
+        IdIsRequired: Final = "91613"
+        IdIsTooLong: Final = "91612"
+        LastNameIsTooLong: Final = "81613"
+        PhoneIsTooLong: Final = "81614"
+        VaultedPaymentInstrumentNonceBelongsToDifferentCustomer: Final = "91617"
+        WebsiteIsInvalid: Final = "81616"
+        WebsiteFormatIsInvalid: Final = "81616"
+        WebsiteIsTooLong: Final = "81615"
 
     class Descriptor:
-        DynamicDescriptorsDisabled: str
-        InternationalNameFormatIsInvalid: str
-        InternationalPhoneFormatIsInvalid: str
-        NameFormatIsInvalid: str
-        PhoneFormatIsInvalid: str
-        UrlFormatIsInvalid: str
+        DynamicDescriptorsDisabled: Final = "92203"
+        InternationalNameFormatIsInvalid: Final = "92204"
+        InternationalPhoneFormatIsInvalid: Final = "92205"
+        NameFormatIsInvalid: Final = "92201"
+        PhoneFormatIsInvalid: Final = "92202"
+        UrlFormatIsInvalid: Final = "92206"
 
     class Dispute:
-        CanOnlyAddEvidenceToOpenDispute: str
-        CanOnlyRemoveEvidenceFromOpenDispute: str
-        CanOnlyAddEvidenceDocumentToDispute: str
-        CanOnlyAcceptOpenDispute: str
-        CanOnlyFinalizeOpenDispute: str
-        CanOnlyCreateEvidenceWithValidCategory: str
-        EvidenceContentDateInvalid: str
-        EvidenceContentTooLong: str
-        EvidenceContentARNTooLong: str
-        EvidenceContentPhoneTooLong: str
-        EvidenceCategoryTextOnly: str
-        EvidenceCategoryDocumentOnly: str
-        EvidenceCategoryNotForReasonCode: str
-        EvidenceCategoryDuplicate: str
-        EvidenceContentEmailInvalid: str
-        DigitalGoodsMissingEvidence: str
-        DigitalGoodsMissingDownloadDate: str
-        NonDisputedPriorTransactionEvidenceMissingARN: str
-        NonDisputedPriorTransactionEvidenceMissingDate: str
-        RecurringTransactionEvidenceMissingDate: str
-        RecurringTransactionEvidenceMissingARN: str
-        ValidEvidenceRequiredToFinalize: str
+        CanOnlyAddEvidenceToOpenDispute: Final = "95701"
+        CanOnlyRemoveEvidenceFromOpenDispute: Final = "95702"
+        CanOnlyAddEvidenceDocumentToDispute: Final = "95703"
+        CanOnlyAcceptOpenDispute: Final = "95704"
+        CanOnlyFinalizeOpenDispute: Final = "95705"
+        CanOnlyCreateEvidenceWithValidCategory: Final = "95706"
+        EvidenceContentDateInvalid: Final = "95707"
+        EvidenceContentTooLong: Final = "95708"
+        EvidenceContentARNTooLong: Final = "95709"
+        EvidenceContentPhoneTooLong: Final = "95710"
+        EvidenceCategoryTextOnly: Final = "95711"
+        EvidenceCategoryDocumentOnly: Final = "95712"
+        EvidenceCategoryNotForReasonCode: Final = "95713"
+        EvidenceCategoryDuplicate: Final = "95714"
+        EvidenceContentEmailInvalid: Final = "95715"
+        DigitalGoodsMissingEvidence: Final = "95720"
+        DigitalGoodsMissingDownloadDate: Final = "95721"
+        NonDisputedPriorTransactionEvidenceMissingARN: Final = "95722"
+        NonDisputedPriorTransactionEvidenceMissingDate: Final = "95723"
+        RecurringTransactionEvidenceMissingDate: Final = "95724"
+        RecurringTransactionEvidenceMissingARN: Final = "95725"
+        ValidEvidenceRequiredToFinalize: Final = "95726"
 
     class DocumentUpload:
-        KindIsInvalid: str
-        FileIsTooLarge: str
-        FileTypeIsInvalid: str
-        FileIsMalformedOrEncrypted: str
-        FileIsTooLong: str
-        FileIsEmpty: str
+        KindIsInvalid: Final = "84901"
+        FileIsTooLarge: Final = "84902"
+        FileTypeIsInvalid: Final = "84903"
+        FileIsMalformedOrEncrypted: Final = "84904"
+        FileIsTooLong: Final = "84905"
+        FileIsEmpty: Final = "84906"
 
     class Merchant:
-        CountryCannotBeBlank: str
-        CountryCodeAlpha2IsInvalid: str
-        CountryCodeAlpha2IsNotAccepted: str
-        CountryCodeAlpha3IsInvalid: str
-        CountryCodeAlpha3IsNotAccepted: str
-        CountryCodeNumericIsInvalid: str
-        CountryCodeNumericIsNotAccepted: str
-        CountryNameIsInvalid: str
-        CountryNameIsNotAccepted: str
-        CurrenciesAreInvalid: str
-        EmailFormatIsInvalid: str
-        EmailIsRequired: str
-        InconsistentCountry: str
-        PaymentMethodsAreInvalid: str
-        PaymentMethodsAreNotAllowed: str
-        MerchantAccountExistsForCurrency: str
-        CurrencyIsRequired: str
-        CurrencyIsInvalid: str
-        NoMerchantAccounts: str
-        MerchantAccountExistsForId: str
+        CountryCannotBeBlank: Final = "83603"
+        CountryCodeAlpha2IsInvalid: Final = "93607"
+        CountryCodeAlpha2IsNotAccepted: Final = "93606"
+        CountryCodeAlpha3IsInvalid: Final = "93605"
+        CountryCodeAlpha3IsNotAccepted: Final = "93604"
+        CountryCodeNumericIsInvalid: Final = "93609"
+        CountryCodeNumericIsNotAccepted: Final = "93608"
+        CountryNameIsInvalid: Final = "93611"
+        CountryNameIsNotAccepted: Final = "93610"
+        CurrenciesAreInvalid: Final = "93614"
+        EmailFormatIsInvalid: Final = "93602"
+        EmailIsRequired: Final = "83601"
+        InconsistentCountry: Final = "93612"
+        PaymentMethodsAreInvalid: Final = "93613"
+        PaymentMethodsAreNotAllowed: Final = "93615"
+        MerchantAccountExistsForCurrency: Final = "93616"
+        CurrencyIsRequired: Final = "93617"
+        CurrencyIsInvalid: Final = "93618"
+        NoMerchantAccounts: Final = "93619"
+        MerchantAccountExistsForId: Final = "93620"
 
     class MerchantAccount:
-        IdFormatIsInvalid: str
-        IdIsInUse: str
-        IdIsNotAllowed: str
-        IdIsTooLong: str
-        MasterMerchantAccountIdIsInvalid: str
-        MasterMerchantAccountIdIsRequired: str
-        MasterMerchantAccountMustBeActive: str
-        TosAcceptedIsRequired: str
-        CannotBeUpdated: str
-        IdCannotBeUpdated: str
-        MasterMerchantAccountIdCannotBeUpdated: str
-        Declined: str
-        DeclinedMasterCardMatch: str
-        DeclinedOFAC: str
-        DeclinedFailedKYC: str
-        DeclinedSsnInvalid: str
-        DeclinedSsnMatchesDeceased: str
+        IdFormatIsInvalid: Final = "82603"
+        IdIsInUse: Final = "82604"
+        IdIsNotAllowed: Final = "82605"
+        IdIsTooLong: Final = "82602"
+        MasterMerchantAccountIdIsInvalid: Final = "82607"
+        MasterMerchantAccountIdIsRequired: Final = "82606"
+        MasterMerchantAccountMustBeActive: Final = "82608"
+        TosAcceptedIsRequired: Final = "82610"
+        CannotBeUpdated: Final = "82674"
+        IdCannotBeUpdated: Final = "82675"
+        MasterMerchantAccountIdCannotBeUpdated: Final = "82676"
+        Declined: Final = "82626"
+        DeclinedMasterCardMatch: Final = "82622"
+        DeclinedOFAC: Final = "82621"
+        DeclinedFailedKYC: Final = "82623"
+        DeclinedSsnInvalid: Final = "82624"
+        DeclinedSsnMatchesDeceased: Final = "82625"
 
         class ApplicantDetails:
-            AccountNumberIsRequired: str
-            CompanyNameIsInvalid: str
-            CompanyNameIsRequiredWithTaxId: str
-            DateOfBirthIsRequired: str
-            Declined: str
-            DeclinedMasterCardMatch: str
-            DeclinedOFAC: str
-            DeclinedFailedKYC: str
-            DeclinedSsnInvalid: str
-            DeclinedSsnMatchesDeceased: str
-            EmailAddressIsInvalid: str
-            FirstNameIsInvalid: str
-            FirstNameIsRequired: str
-            LastNameIsInvalid: str
-            LastNameIsRequired: str
-            PhoneIsInvalid: str
-            RoutingNumberIsInvalid: str
-            RoutingNumberIsRequired: str
-            SsnIsInvalid: str
-            TaxIdIsInvalid: str
-            TaxIdIsRequiredWithCompanyName: str
-            DateOfBirthIsInvalid: str
-            EmailAddressIsRequired: str
-            AccountNumberIsInvalid: str
-            TaxIdMustBeBlank: str
+            AccountNumberIsRequired: Final = "82614"
+            CompanyNameIsInvalid: Final = "82631"
+            CompanyNameIsRequiredWithTaxId: Final = "82633"
+            DateOfBirthIsRequired: Final = "82612"
+            Declined: Final = "82626"
+            DeclinedMasterCardMatch: Final = "82622"
+            DeclinedOFAC: Final = "82621"
+            DeclinedFailedKYC: Final = "82623"
+            DeclinedSsnInvalid: Final = "82624"
+            DeclinedSsnMatchesDeceased: Final = "82625"
+            EmailAddressIsInvalid: Final = "82616"
+            FirstNameIsInvalid: Final = "82627"
+            FirstNameIsRequired: Final = "82609"
+            LastNameIsInvalid: Final = "82628"
+            LastNameIsRequired: Final = "82611"
+            PhoneIsInvalid: Final = "82636"
+            RoutingNumberIsInvalid: Final = "82635"
+            RoutingNumberIsRequired: Final = "82613"
+            SsnIsInvalid: Final = "82615"
+            TaxIdIsInvalid: Final = "82632"
+            TaxIdIsRequiredWithCompanyName: Final = "82634"
+            DateOfBirthIsInvalid: Final = "82663"
+            EmailAddressIsRequired: Final = "82665"
+            AccountNumberIsInvalid: Final = "82670"
+            TaxIdMustBeBlank: Final = "82673"
 
             class Address:
-                LocalityIsRequired: str
-                PostalCodeIsInvalid: str
-                PostalCodeIsRequired: str
-                RegionIsRequired: str
-                StreetAddressIsInvalid: str
-                StreetAddressIsRequired: str
-                RegionIsInvalid: str
+                LocalityIsRequired: Final = "82618"
+                PostalCodeIsInvalid: Final = "82630"
+                PostalCodeIsRequired: Final = "82619"
+                RegionIsRequired: Final = "82620"
+                StreetAddressIsInvalid: Final = "82629"
+                StreetAddressIsRequired: Final = "82617"
+                RegionIsInvalid: Final = "82664"
 
         class Individual:
-            FirstNameIsRequired: str
-            LastNameIsRequired: str
-            DateOfBirthIsRequired: str
-            SsnIsInvalid: str
-            EmailAddressIsInvalid: str
-            FirstNameIsInvalid: str
-            LastNameIsInvalid: str
-            PhoneIsInvalid: str
-            DateOfBirthIsInvalid: str
-            EmailAddressIsRequired: str
+            FirstNameIsRequired: Final = "82637"
+            LastNameIsRequired: Final = "82638"
+            DateOfBirthIsRequired: Final = "82639"
+            SsnIsInvalid: Final = "82642"
+            EmailAddressIsInvalid: Final = "82643"
+            FirstNameIsInvalid: Final = "82644"
+            LastNameIsInvalid: Final = "82645"
+            PhoneIsInvalid: Final = "82656"
+            DateOfBirthIsInvalid: Final = "82666"
+            EmailAddressIsRequired: Final = "82667"
 
             class Address:
-                StreetAddressIsRequired: str
-                LocalityIsRequired: str
-                PostalCodeIsRequired: str
-                RegionIsRequired: str
-                StreetAddressIsInvalid: str
-                PostalCodeIsInvalid: str
-                RegionIsInvalid: str
+                StreetAddressIsRequired: Final = "82657"
+                LocalityIsRequired: Final = "82658"
+                PostalCodeIsRequired: Final = "82659"
+                RegionIsRequired: Final = "82660"
+                StreetAddressIsInvalid: Final = "82661"
+                PostalCodeIsInvalid: Final = "82662"
+                RegionIsInvalid: Final = "82668"
 
         class Business:
-            DbaNameIsInvalid: str
-            LegalNameIsInvalid: str
-            LegalNameIsRequiredWithTaxId: str
-            TaxIdIsInvalid: str
-            TaxIdIsRequiredWithLegalName: str
-            TaxIdMustBeBlank: str
+            DbaNameIsInvalid: Final = "82646"
+            LegalNameIsInvalid: Final = "82677"
+            LegalNameIsRequiredWithTaxId: Final = "82669"
+            TaxIdIsInvalid: Final = "82647"
+            TaxIdIsRequiredWithLegalName: Final = "82648"
+            TaxIdMustBeBlank: Final = "82672"
 
             class Address:
-                StreetAddressIsInvalid: str
-                PostalCodeIsInvalid: str
-                RegionIsInvalid: str
+                StreetAddressIsInvalid: Final = "82685"
+                PostalCodeIsInvalid: Final = "82686"
+                RegionIsInvalid: Final = "82684"
 
         class Funding:
-            RoutingNumberIsRequired: str
-            AccountNumberIsRequired: str
-            RoutingNumberIsInvalid: str
-            AccountNumberIsInvalid: str
-            DestinationIsInvalid: str
-            DestinationIsRequired: str
-            EmailAddressIsInvalid: str
-            EmailAddressIsRequired: str
-            MobilePhoneIsInvalid: str
-            MobilePhoneIsRequired: str
+            RoutingNumberIsRequired: Final = "82640"
+            AccountNumberIsRequired: Final = "82641"
+            RoutingNumberIsInvalid: Final = "82649"
+            AccountNumberIsInvalid: Final = "82671"
+            DestinationIsInvalid: Final = "82679"
+            DestinationIsRequired: Final = "82678"
+            EmailAddressIsInvalid: Final = "82681"
+            EmailAddressIsRequired: Final = "82680"
+            MobilePhoneIsInvalid: Final = "82683"
+            MobilePhoneIsRequired: Final = "82682"
 
     class OAuth:
-        InvalidGrant: str
-        InvalidCredentials: str
-        InvalidScope: str
-        InvalidRequest: str
-        UnsupportedGrantType: str
+        InvalidGrant: Final = "93801"
+        InvalidCredentials: Final = "93802"
+        InvalidScope: Final = "93803"
+        InvalidRequest: Final = "93804"
+        UnsupportedGrantType: Final = "93805"
 
     class Verification:
-        ThreeDSecureAuthenticationIdIsInvalid: str
-        ThreeDSecureAuthenticationIdDoesntMatchNonceThreeDSecureAuthentication: str
-        ThreeDSecureTransactionPaymentMethodDoesntMatchThreeDSecureAuthenticationPaymentMethod: str
-        ThreeDSecureAuthenticationIdWithThreeDSecurePassThruIsInvalid: str
-        ThreeDSecureAuthenticationFailed: str
-        ThreeDSecureTokenIsInvalid: str
-        ThreeDSecureVerificationDataDoesntMatchVerify: str
-        MerchantAccountDoesNotSupport3DSecure: str
-        MerchantAcountDoesNotMatch3DSecureMerchantAccount: str
-        AmountDoesNotMatch3DSecureAmount: str
+        ThreeDSecureAuthenticationIdIsInvalid: Final = "942196"
+        ThreeDSecureAuthenticationIdDoesntMatchNonceThreeDSecureAuthentication: Final = "942198"
+        ThreeDSecureTransactionPaymentMethodDoesntMatchThreeDSecureAuthenticationPaymentMethod: Final = "942197"
+        ThreeDSecureAuthenticationIdWithThreeDSecurePassThruIsInvalid: Final = "942199"
+        ThreeDSecureAuthenticationFailed: Final = "94271"
+        ThreeDSecureTokenIsInvalid: Final = "94268"
+        ThreeDSecureVerificationDataDoesntMatchVerify: Final = "94270"
+        MerchantAccountDoesNotSupport3DSecure: Final = "942169"
+        MerchantAcountDoesNotMatch3DSecureMerchantAccount: Final = "94284"
+        AmountDoesNotMatch3DSecureAmount: Final = "94285"
 
         class ThreeDSecurePassThru:
-            EciFlagIsRequired: str
-            EciFlagIsInvalid: str
-            CavvIsRequired: str
-            ThreeDSecureVersionIsRequired: str
-            ThreeDSecureVersionIsInvalid: str
-            AuthenticationResponseIsInvalid: str
-            DirectoryResponseIsInvalid: str
-            CavvAlgorithmIsInvalid: str
+            EciFlagIsRequired: Final = "942113"
+            EciFlagIsInvalid: Final = "942114"
+            CavvIsRequired: Final = "942116"
+            ThreeDSecureVersionIsRequired: Final = "942117"
+            ThreeDSecureVersionIsInvalid: Final = "942119"
+            AuthenticationResponseIsInvalid: Final = "942120"
+            DirectoryResponseIsInvalid: Final = "942121"
+            CavvAlgorithmIsInvalid: Final = "942122"
 
         class Options:
-            AmountCannotBeNegative: str
-            AmountFormatIsInvalid: str
-            AmountIsTooLarge: str
-            AmountNotSupportedByProcessor: str
-            MerchantAccountIdIsInvalid: str
-            MerchantAccountIsSuspended: str
-            MerchantAccountIsForbidden: str
-            MerchantAccountCannotBeSubMerchantAccount: str
-            AccountTypeIsInvalid: str
-            AccountTypeNotSupported: str
+            AmountCannotBeNegative: Final = "94201"
+            AmountFormatIsInvalid: Final = "94202"
+            AmountIsTooLarge: Final = "94207"
+            AmountNotSupportedByProcessor: Final = "94203"
+            MerchantAccountIdIsInvalid: Final = "94204"
+            MerchantAccountIsSuspended: Final = "94205"
+            MerchantAccountIsForbidden: Final = "94206"
+            MerchantAccountCannotBeSubMerchantAccount: Final = "94208"
+            AccountTypeIsInvalid: Final = "942184"
+            AccountTypeNotSupported: Final = "942185"
 
     class PaymentMethod:
-        CannotForwardPaymentMethodType: str
-        PaymentMethodParamsAreRequired: str
-        NonceIsInvalid: str
-        NonceIsRequired: str
-        CustomerIdIsRequired: str
-        CustomerIdIsInvalid: str
-        PaymentMethodNonceConsumed: str
-        PaymentMethodNonceUnknown: str
-        PaymentMethodNonceLocked: str
-        PaymentMethodNoLongerSupported: str
-        AuthExpired: str
-        CannotHaveFundingSourceWithoutAccessToken: str
-        InvalidFundingSourceSelection: str
-        CannotUpdatePayPalAccountUsingPaymentMethodNonce: str
+        CannotForwardPaymentMethodType: Final = "93106"
+        PaymentMethodParamsAreRequired: Final = "93101"
+        NonceIsInvalid: Final = "93102"
+        NonceIsRequired: Final = "93103"
+        CustomerIdIsRequired: Final = "93104"
+        CustomerIdIsInvalid: Final = "93105"
+        PaymentMethodNonceConsumed: Final = "93107"
+        PaymentMethodNonceUnknown: Final = "93108"
+        PaymentMethodNonceLocked: Final = "93109"
+        PaymentMethodNoLongerSupported: Final = "93117"
+        AuthExpired: Final = "92911"
+        CannotHaveFundingSourceWithoutAccessToken: Final = "92912"
+        InvalidFundingSourceSelection: Final = "92913"
+        CannotUpdatePayPalAccountUsingPaymentMethodNonce: Final = "92914"
 
         class Options:
-            UsBankAccountVerificationMethodIsInvalid: str
+            UsBankAccountVerificationMethodIsInvalid: Final = "93121"
 
     class PayPalAccount:
-        CannotHaveBothAccessTokenAndConsentCode: str
-        CannotVaultOneTimeUsePayPalAccount: str
-        ConsentCodeOrAccessTokenIsRequired: str
-        CustomerIdIsRequiredForVaulting: str
-        InvalidParamsForPayPalAccountUpdate: str
-        PayPalAccountsAreNotAccepted: str
-        PayPalCommunicationError: str
-        PaymentMethodNonceConsumed: str
-        PaymentMethodNonceLocked: str
-        PaymentMethodNonceUnknown: str
-        TokenIsInUse: str
+        CannotHaveBothAccessTokenAndConsentCode: Final = "82903"
+        CannotVaultOneTimeUsePayPalAccount: Final = "82902"
+        ConsentCodeOrAccessTokenIsRequired: Final = "82901"
+        CustomerIdIsRequiredForVaulting: Final = "82905"
+        InvalidParamsForPayPalAccountUpdate: Final = "92915"
+        PayPalAccountsAreNotAccepted: Final = "82904"
+        PayPalCommunicationError: Final = "92910"
+        PaymentMethodNonceConsumed: Final = "92907"
+        PaymentMethodNonceLocked: Final = "92909"
+        PaymentMethodNonceUnknown: Final = "92908"
+        TokenIsInUse: Final = "92906"
 
     class SettlementBatchSummary:
-        CustomFieldIsInvalid: str
-        SettlementDateIsInvalid: str
-        SettlementDateIsRequired: str
+        CustomFieldIsInvalid: Final = "82303"
+        SettlementDateIsInvalid: Final = "82302"
+        SettlementDateIsRequired: Final = "82301"
 
     class SEPAMandate:
-        TypeIsRequired: str
-        IBANInvalidCharacter: str
-        BICInvalidCharacter: str
-        BICLengthIsInvalid: str
-        BICUnsupportedCountry: str
-        IBANUnsupportedCountry: str
-        IBANInvalidFormat: str
-        BillingAddressConflict: str
-        BillingAddressIdIsInvalid: str
-        TypeIsInvalid: str
+        TypeIsRequired: Final = "93304"
+        IBANInvalidCharacter: Final = "83305"
+        BICInvalidCharacter: Final = "83306"
+        BICLengthIsInvalid: Final = "83307"
+        BICUnsupportedCountry: Final = "83308"
+        IBANUnsupportedCountry: Final = "83309"
+        IBANInvalidFormat: Final = "83310"
+        BillingAddressConflict: Final = "93311"
+        BillingAddressIdIsInvalid: Final = "93312"
+        TypeIsInvalid: Final = "93313"
 
     class EuropeBankAccount:
-        BICIsRequired: str
-        IBANIsRequired: str
-        AccountHolderNameIsRequired: str
+        BICIsRequired: Final = "83302"
+        IBANIsRequired: Final = "83303"
+        AccountHolderNameIsRequired: Final = "83301"
+
+    class SepaDirectDebitAccount:
+        SepaDebitAccountPaymentMethodMandateTypeIsNotSupported: Final = "87115"
+        SepaDebitAccountPaymentMethodCustomerIdIsInvalid: Final = "87116"
+        SepaDebitAccountPaymentMethodCustomerIdIsRequired: Final = "87117"
 
     class Subscription:
-        BillingDayOfMonthCannotBeUpdated: str
-        BillingDayOfMonthIsInvalid: str
-        BillingDayOfMonthMustBeNumeric: str
-        CannotAddDuplicateAddonOrDiscount: str
-        CannotEditCanceledSubscription: str
-        CannotEditExpiredSubscription: str
-        CannotEditPriceChangingFieldsOnPastDueSubscription: str
-        FirstBillingDateCannotBeInThePast: str
-        FirstBillingDateCannotBeUpdated: str
-        FirstBillingDateIsInvalid: str
-        IdIsInUse: str
-        InconsistentNumberOfBillingCycles: str
-        InconsistentStartDate: str
-        InvalidRequestFormat: str
-        MerchantAccountDoesNotSupportInstrumentType: str
-        MerchantAccountIdIsInvalid: str
-        MismatchCurrencyISOCode: str
-        NumberOfBillingCyclesCannotBeBlank: str
-        NumberOfBillingCyclesIsTooSmall: str
-        NumberOfBillingCyclesMustBeGreaterThanZero: str
-        NumberOfBillingCyclesMustBeNumeric: str
-        PaymentMethodNonceCardTypeIsNotAccepted: str
-        PaymentMethodNonceInstrumentTypeDoesNotSupportSubscriptions: str
-        PaymentMethodNonceIsInvalid: str
-        PaymentMethodNonceNotAssociatedWithCustomer: str
-        PaymentMethodNonceUnvaultedCardIsNotAccepted: str
-        PaymentMethodTokenCardTypeIsNotAccepted: str
-        PaymentMethodTokenInstrumentTypeDoesNotSupportSubscriptions: str
-        PaymentMethodTokenIsInvalid: str
-        PaymentMethodTokenNotAssociatedWithCustomer: str
-        PlanBillingFrequencyCannotBeUpdated: str
-        PlanIdIsInvalid: str
-        PriceCannotBeBlank: str
-        PriceFormatIsInvalid: str
-        PriceIsTooLarge: str
-        StatusIsCanceled: str
-        TokenFormatIsInvalid: str
-        TrialDurationFormatIsInvalid: str
-        TrialDurationIsRequired: str
-        TrialDurationUnitIsInvalid: str
+        BillingDayOfMonthCannotBeUpdated: Final = "91918"
+        BillingDayOfMonthIsInvalid: Final = "91914"
+        BillingDayOfMonthMustBeNumeric: Final = "91913"
+        CannotAddDuplicateAddonOrDiscount: Final = "91911"
+        CannotEditCanceledSubscription: Final = "81901"
+        CannotEditExpiredSubscription: Final = "81910"
+        CannotEditPriceChangingFieldsOnPastDueSubscription: Final = "91920"
+        FirstBillingDateCannotBeInThePast: Final = "91916"
+        FirstBillingDateCannotBeUpdated: Final = "91919"
+        FirstBillingDateIsInvalid: Final = "91915"
+        IdIsInUse: Final = "81902"
+        InconsistentNumberOfBillingCycles: Final = "91908"
+        InconsistentStartDate: Final = "91917"
+        InvalidRequestFormat: Final = "91921"
+        MerchantAccountDoesNotSupportInstrumentType: Final = "91930"
+        MerchantAccountIdIsInvalid: Final = "91901"
+        MismatchCurrencyISOCode: Final = "91923"
+        NumberOfBillingCyclesCannotBeBlank: Final = "91912"
+        NumberOfBillingCyclesIsTooSmall: Final = "91909"
+        NumberOfBillingCyclesMustBeGreaterThanZero: Final = "91907"
+        NumberOfBillingCyclesMustBeNumeric: Final = "91906"
+        PaymentMethodNonceCardTypeIsNotAccepted: Final = "91924"
+        PaymentMethodNonceInstrumentTypeDoesNotSupportSubscriptions: Final = "91929"
+        PaymentMethodNonceIsInvalid: Final = "91925"
+        PaymentMethodNonceNotAssociatedWithCustomer: Final = "91926"
+        PaymentMethodNonceUnvaultedCardIsNotAccepted: Final = "91927"
+        PaymentMethodTokenCardTypeIsNotAccepted: Final = "91902"
+        PaymentMethodTokenInstrumentTypeDoesNotSupportSubscriptions: Final = "91928"
+        PaymentMethodTokenIsInvalid: Final = "91903"
+        PaymentMethodTokenNotAssociatedWithCustomer: Final = "91905"
+        PlanBillingFrequencyCannotBeUpdated: Final = "91922"
+        PlanIdIsInvalid: Final = "91904"
+        PriceCannotBeBlank: Final = "81903"
+        PriceFormatIsInvalid: Final = "81904"
+        PriceIsTooLarge: Final = "81923"
+        StatusIsCanceled: Final = "81905"
+        TokenFormatIsInvalid: Final = "81906"
+        TrialDurationFormatIsInvalid: Final = "81907"
+        TrialDurationIsRequired: Final = "81908"
+        TrialDurationUnitIsInvalid: Final = "81909"
 
         class Modification:
-            AmountCannotBeBlank: str
-            AmountIsInvalid: str
-            AmountIsTooLarge: str
-            CannotEditModificationsOnPastDueSubscription: str
-            CannotUpdateAndRemove: str
-            ExistingIdIsIncorrectKind: str
-            ExistingIdIsInvalid: str
-            ExistingIdIsRequired: str
-            IdToRemoveIsIncorrectKind: str
-            IdToRemoveIsNotPresent: str
-            InconsistentNumberOfBillingCycles: str
-            InheritedFromIdIsInvalid: str
-            InheritedFromIdIsRequired: str
-            Missing: str
-            NumberOfBillingCyclesCannotBeBlank: str
-            NumberOfBillingCyclesIsInvalid: str
-            NumberOfBillingCyclesMustBeGreaterThanZero: str
-            QuantityCannotBeBlank: str
-            QuantityIsInvalid: str
-            QuantityMustBeGreaterThanZero: str
-            IdToRemoveIsInvalid: str
+            AmountCannotBeBlank: Final = "92003"
+            AmountIsInvalid: Final = "92002"
+            AmountIsTooLarge: Final = "92023"
+            CannotEditModificationsOnPastDueSubscription: Final = "92022"
+            CannotUpdateAndRemove: Final = "92015"
+            ExistingIdIsIncorrectKind: Final = "92020"
+            ExistingIdIsInvalid: Final = "92011"
+            ExistingIdIsRequired: Final = "92012"
+            IdToRemoveIsIncorrectKind: Final = "92021"
+            IdToRemoveIsNotPresent: Final = "92016"
+            InconsistentNumberOfBillingCycles: Final = "92018"
+            InheritedFromIdIsInvalid: Final = "92013"
+            InheritedFromIdIsRequired: Final = "92014"
+            Missing: Final = "92024"
+            NumberOfBillingCyclesCannotBeBlank: Final = "92017"
+            NumberOfBillingCyclesIsInvalid: Final = "92005"
+            NumberOfBillingCyclesMustBeGreaterThanZero: Final = "92019"
+            QuantityCannotBeBlank: Final = "92004"
+            QuantityIsInvalid: Final = "92001"
+            QuantityMustBeGreaterThanZero: Final = "92010"
+            IdToRemoveIsInvalid: Final = "92025"
 
     class Transaction:
-        AdjustmentAmountMustBeGreaterThanZero: str
-        AmountCannotBeNegative: str
-        AmountDoesNotMatch3DSecureAmount: str
-        AmountIsInvalid: str
-        AmountFormatIsInvalid: str
-        AmountIsRequired: str
-        AmountIsTooLarge: str
-        AmountMustBeGreaterThanZero: str
-        AmountNotSupportedByProcessor: str
-        BillingAddressConflict: str
-        BillingPhoneNumberIsInvalid: str
-        CannotBeVoided: str
-        CannotCancelRelease: str
-        CannotCloneCredit: str
-        CannotCloneMarketplaceTransaction: str
-        CannotCloneTransactionWithPayPalAccount: str
-        CannotCloneTransactionWithVaultCreditCard: str
-        CannotCloneUnsuccessfulTransaction: str
-        CannotCloneVoiceAuthorizations: str
-        CannotHoldInEscrow: str
-        CannotPartiallyRefundEscrowedTransaction: str
-        CannotRefundCredit: str
-        CannotRefundSettlingTransaction: str
-        CannotRefundUnlessSettled: str
-        CannotRefundWithPendingMerchantAccount: str
-        CannotRefundWithSuspendedMerchantAccount: str
-        CannotReleaseFromEscrow: str
-        CannotSimulateTransactionSettlement: str
-        CannotSubmitForPartialSettlement: str
-        CannotSubmitForSettlement: str
-        CannotUpdateTransactionDetailsNotSubmittedForSettlement: str
-        ChannelIsTooLong: str
-        CreditCardIsRequired: str
-        CustomFieldIsInvalid: str
-        CustomFieldIsTooLong: str
-        CustomerDefaultPaymentMethodCardTypeIsNotAccepted: str
-        CustomerDoesNotHaveCreditCard: str
-        CustomerIdIsInvalid: str
-        DiscountAmountCannotBeNegative: str
-        DiscountAmountFormatIsInvalid: str
-        DiscountAmountIsTooLarge: str
-        ExchangeRateQuoteIdIsTooLong: str
-        FailedAuthAdjustmentAllowRetry: str
-        FailedAuthAdjustmentHardDecline: str
-        FinalAuthSubmitForSettlementForDifferentAmount: str
-        HasAlreadyBeenRefunded: str
-        LineItemsExpected: str
-        MerchantAccountDoesNotMatch3DSecureMerchantAccount: str
-        MerchantAccountDoesNotSupportMOTO: str
-        MerchantAccountDoesNotSupportRefunds: str
-        MerchantAccountIdDoesNotMatchSubscription: str
-        MerchantAccountIdIsInvalid: str
-        MerchantAccountIsSuspended: str
-        NoNetAmountToPerformAuthAdjustment: str
-        OrderIdIsTooLong: str
-        PayPalAuthExpired: str
-        PayPalNotEnabled: str
-        PayPalVaultRecordMissingData: str
-        PaymentInstrumentNotSupportedByMerchantAccount: str
-        PaymentInstrumentTypeIsNotAccepted: str
-        PaymentInstrumentWithExternalVaultIsInvalid: str
-        PaymentMethodConflict: str
-        PaymentMethodConflictWithVenmoSDK: str
-        PaymentMethodDoesNotBelongToCustomer: str
-        PaymentMethodDoesNotBelongToSubscription: str
-        PaymentMethodNonceCardTypeIsNotAccepted: str
-        PaymentMethodNonceConsumed: str
-        PaymentMethodNonceHasNoValidPaymentInstrumentType: str
-        PaymentMethodNonceLocked: str
-        PaymentMethodNonceUnknown: str
-        PaymentMethodTokenCardTypeIsNotAccepted: str
-        PaymentMethodTokenIsInvalid: str
-        ProcessorAuthorizationCodeCannotBeSet: str
-        ProcessorAuthorizationCodeIsInvalid: str
-        ProcessorDoesNotSupportAuths: str
-        ProcessorDoesNotSupportAuthAdjustment: str
-        ProcessorDoesNotSupportCredits: str
-        ProcessorDoesNotSupportIncrementalAuth: str
-        ProcessorDoesNotSupportMotoForCardType: str
-        ProcessorDoesNotSupportPartialAuthReversal: str
-        ProcessorDoesNotSupportPartialSettlement: str
-        ProcessorDoesNotSupportUpdatingDescriptor: str
-        ProcessorDoesNotSupportUpdatingOrderId: str
-        ProcessorDoesNotSupportUpdatingTransactionDetails: str
-        ProcessorDoesNotSupportVoiceAuthorizations: str
-        ProductSkuIsInvalid: str
-        PurchaseOrderNumberIsInvalid: str
-        PurchaseOrderNumberIsTooLong: str
-        RefundAmountIsTooLarge: str
-        RefundAuthHardDeclined: str
-        RefundAuthSoftDeclined: str
-        ScaExemptionInvalid: str
-        ServiceFeeAmountCannotBeNegative: str
-        ServiceFeeAmountFormatIsInvalid: str
-        ServiceFeeAmountIsTooLarge: str
-        ServiceFeeAmountNotAllowedOnMasterMerchantAccount: str
-        ServiceFeeIsNotAllowedOnCredits: str
-        ServiceFeeNotAcceptedForPayPal: str
-        SettlementAmountIsLessThanServiceFeeAmount: str
-        SettlementAmountIsTooLarge: str
-        ShippingAddressDoesntMatchCustomer: str
-        ShippingAmountCannotBeNegative: str
-        ShippingAmountFormatIsInvalid: str
-        ShippingAmountIsTooLarge: str
-        ShippingMethodIsInvalid: str
-        ShippingPhoneNumberIsInvalid: str
-        ShipsFromPostalCodeInvalidCharacters: str
-        ShipsFromPostalCodeIsInvalid: str
-        ShipsFromPostalCodeIsTooLong: str
-        SubMerchantAccountRequiresServiceFeeAmount: str
-        SubscriptionDoesNotBelongToCustomer: str
-        SubscriptionIdIsInvalid: str
-        SubscriptionStatusMustBePastDue: str
-        TaxAmountCannotBeNegative: str
-        TaxAmountFormatIsInvalid: str
-        TaxAmountIsRequiredForAibSwedish: str
-        TaxAmountIsTooLarge: str
-        ThreeDSecureAuthenticationFailed: str
-        ThreeDSecureAuthenticationIdDoesntMatchNonceThreeDSecureAuthentication: str
-        ThreeDSecureAuthenticationIdIsInvalid: str
-        ThreeDSecureAuthenticationIdWithThreeDSecurePassThruIsInvalid: str
-        ThreeDSecureAuthenticationResponseIsInvalid: str
-        ThreeDSecureCavvAlgorithmIsInvalid: str
-        ThreeDSecureCavvIsRequired: str
-        ThreeDSecureDirectoryResponseIsInvalid: str
-        ThreeDSecureEciFlagIsInvalid: str
-        ThreeDSecureEciFlagIsRequired: str
-        ThreeDSecureMerchantAccountDoesNotSupportCardType: str
-        ThreeDSecureTokenIsInvalid: str
-        ThreeDSecureTransactionDataDoesntMatchVerify: str
-        ThreeDSecureTransactionPaymentMethodDoesntMatchThreeDSecureAuthenticationPaymentMethod: str
-        ThreeDSecureXidIsRequired: str
-        TooManyLineItems: str
-        TransactionIsNotEligibleForAdjustment: str
-        TransactionMustBeInStateAuthorized: str
-        TransactionSourceIsInvalid: str
-        TypeIsInvalid: str
-        TypeIsRequired: str
-        UnsupportedVoiceAuthorization: str
-        UsBankAccountNonceMustBePlaidVerified: str
-        UsBankAccountNotVerified: str
+        AdjustmentAmountMustBeGreaterThanZero: Final = "95605"
+        AmountCannotBeNegative: Final = "81501"
+        AmountDoesNotMatch3DSecureAmount: Final = "91585"
+        AmountIsInvalid: Final = "81503"
+        AmountFormatIsInvalid: Final = "81503"
+        AmountIsRequired: Final = "81502"
+        AmountIsTooLarge: Final = "81528"
+        AmountMustBeGreaterThanZero: Final = "81531"
+        AmountNotSupportedByProcessor: Final = "815193"
+        BillingAddressConflict: Final = "91530"
+        BillingPhoneNumberIsInvalid: Final = "915206"
+        CannotBeVoided: Final = "91504"
+        CannotCancelRelease: Final = "91562"
+        CannotCloneCredit: Final = "91543"
+        CannotCloneMarketplaceTransaction: Final = "915137"
+        CannotCloneTransactionWithPayPalAccount: Final = "91573"
+        CannotCloneTransactionWithVaultCreditCard: Final = "91540"
+        CannotCloneUnsuccessfulTransaction: Final = "91542"
+        CannotCloneVoiceAuthorizations: Final = "91541"
+        CannotHoldInEscrow: Final = "91560"
+        CannotPartiallyRefundEscrowedTransaction: Final = "91563"
+        CannotRefundCredit: Final = "91505"
+        CannotRefundSettlingTransaction: Final = "91574"
+        CannotRefundUnlessSettled: Final = "91506"
+        CannotRefundWithPendingMerchantAccount: Final = "91559"
+        CannotRefundWithSuspendedMerchantAccount: Final = "91538"
+        CannotReleaseFromEscrow: Final = "91561"
+        CannotSimulateTransactionSettlement: Final = "91575"
+        CannotSubmitForPartialSettlement: Final = "915103"
+        CannotSubmitForSettlement: Final = "91507"
+        CannotUpdateTransactionDetailsNotSubmittedForSettlement: Final = "915129"
+        ChannelIsTooLong: Final = "91550"
+        CreditCardIsRequired: Final = "91508"
+        CustomFieldIsInvalid: Final = "91526"
+        CustomFieldIsTooLong: Final = "81527"
+        CustomerDefaultPaymentMethodCardTypeIsNotAccepted: Final = "81509"
+        CustomerDoesNotHaveCreditCard: Final = "91511"
+        CustomerIdIsInvalid: Final = "91510"
+        DiscountAmountCannotBeNegative: Final = "915160"
+        DiscountAmountFormatIsInvalid: Final = "915159"
+        DiscountAmountIsTooLarge: Final = "915161"
+        ExchangeRateQuoteIdIsTooLong: Final = "915229"
+        FailedAuthAdjustmentAllowRetry: Final = "95603"
+        FailedAuthAdjustmentHardDecline: Final = "95602"
+        FinalAuthSubmitForSettlementForDifferentAmount: Final = "95601"
+        HasAlreadyBeenRefunded: Final = "91512"
+        LineItemsExpected: Final = "915158"
+        MerchantAccountDoesNotMatch3DSecureMerchantAccount: Final = "91584"
+        MerchantAccountDoesNotSupportMOTO: Final = "91558"
+        MerchantAccountDoesNotSupportRefunds: Final = "91547"
+        MerchantAccountIdDoesNotMatchSubscription: Final = "915180"
+        MerchantAccountIdIsInvalid: Final = "91513"
+        MerchantAccountIsSuspended: Final = "91514"
+        NoNetAmountToPerformAuthAdjustment: Final = "95606"
+        OrderIdIsTooLong: Final = "91501"
+        PayPalAuthExpired: Final = "91579"
+        PayPalNotEnabled: Final = "91576"
+        PayPalVaultRecordMissingData: Final = "91583"
+        PaymentInstrumentNotSupportedByMerchantAccount: Final = "91577"
+        PaymentInstrumentTypeIsNotAccepted: Final = "915101"
+        PaymentInstrumentWithExternalVaultIsInvalid: Final = "915176"
+        PaymentMethodConflict: Final = "91515"
+        PaymentMethodConflictWithVenmoSDK: Final = "91549"
+        PaymentMethodDoesNotBelongToCustomer: Final = "91516"
+        PaymentMethodDoesNotBelongToSubscription: Final = "91527"
+        PaymentMethodNonceCardTypeIsNotAccepted: Final = "91567"
+        PaymentMethodNonceConsumed: Final = "91564"
+        PaymentMethodNonceHasNoValidPaymentInstrumentType: Final = "91569"
+        PaymentMethodNonceLocked: Final = "91566"
+        PaymentMethodNonceUnknown: Final = "91565"
+        PaymentMethodTokenCardTypeIsNotAccepted: Final = "91517"
+        PaymentMethodTokenIsInvalid: Final = "91518"
+        ProcessorAuthorizationCodeCannotBeSet: Final = "91519"
+        ProcessorAuthorizationCodeIsInvalid: Final = "81520"
+        ProcessorDoesNotSupportAuths: Final = "915104"
+        ProcessorDoesNotSupportAuthAdjustment: Final = "915222"
+        ProcessorDoesNotSupportCredits: Final = "91546"
+        ProcessorDoesNotSupportIncrementalAuth: Final = "915220"
+        ProcessorDoesNotSupportMotoForCardType: Final = "915195"
+        ProcessorDoesNotSupportPartialAuthReversal: Final = "915221"
+        ProcessorDoesNotSupportPartialSettlement: Final = "915102"
+        ProcessorDoesNotSupportUpdatingDescriptor: Final = "915108"
+        ProcessorDoesNotSupportUpdatingOrderId: Final = "915107"
+        ProcessorDoesNotSupportUpdatingTransactionDetails: Final = "915130"
+        ProcessorDoesNotSupportVoiceAuthorizations: Final = "91545"
+        ProductSkuIsInvalid: Final = "915202"
+        PurchaseOrderNumberIsInvalid: Final = "91548"
+        PurchaseOrderNumberIsTooLong: Final = "91537"
+        RefundAmountIsTooLarge: Final = "91521"
+        RefundAuthHardDeclined: Final = "915200"
+        RefundAuthSoftDeclined: Final = "915201"
+        ScaExemptionInvalid: Final = "915213"
+        ServiceFeeAmountCannotBeNegative: Final = "91554"
+        ServiceFeeAmountFormatIsInvalid: Final = "91555"
+        ServiceFeeAmountIsTooLarge: Final = "91556"
+        ServiceFeeAmountNotAllowedOnMasterMerchantAccount: Final = "91557"
+        ServiceFeeIsNotAllowedOnCredits: Final = "91552"
+        ServiceFeeNotAcceptedForPayPal: Final = "91578"
+        SettlementAmountIsLessThanServiceFeeAmount: Final = "91551"
+        SettlementAmountIsTooLarge: Final = "91522"
+        ShippingAddressDoesntMatchCustomer: Final = "91581"
+        ShippingAmountCannotBeNegative: Final = "915163"
+        ShippingAmountFormatIsInvalid: Final = "915162"
+        ShippingAmountIsTooLarge: Final = "915164"
+        ShippingMethodIsInvalid: Final = "915203"
+        ShippingPhoneNumberIsInvalid: Final = "915204"
+        ShipsFromPostalCodeInvalidCharacters: Final = "915167"
+        ShipsFromPostalCodeIsInvalid: Final = "915166"
+        ShipsFromPostalCodeIsTooLong: Final = "915165"
+        SubMerchantAccountRequiresServiceFeeAmount: Final = "91553"
+        SubscriptionDoesNotBelongToCustomer: Final = "91529"
+        SubscriptionIdIsInvalid: Final = "91528"
+        SubscriptionStatusMustBePastDue: Final = "91531"
+        TaxAmountCannotBeNegative: Final = "81534"
+        TaxAmountFormatIsInvalid: Final = "81535"
+        TaxAmountIsRequiredForAibSwedish: Final = "815224"
+        TaxAmountIsTooLarge: Final = "81536"
+        ThreeDSecureAuthenticationFailed: Final = "81571"
+        ThreeDSecureAuthenticationIdDoesntMatchNonceThreeDSecureAuthentication: Final = "915198"
+        ThreeDSecureAuthenticationIdIsInvalid: Final = "915196"
+        ThreeDSecureAuthenticationIdWithThreeDSecurePassThruIsInvalid: Final = "915199"
+        ThreeDSecureAuthenticationResponseIsInvalid: Final = "915120"
+        ThreeDSecureCavvAlgorithmIsInvalid: Final = "915122"
+        ThreeDSecureCavvIsRequired: Final = "915116"
+        ThreeDSecureDirectoryResponseIsInvalid: Final = "915121"
+        ThreeDSecureEciFlagIsInvalid: Final = "915114"
+        ThreeDSecureEciFlagIsRequired: Final = "915113"
+        ThreeDSecureMerchantAccountDoesNotSupportCardType: Final = "915131"
+        ThreeDSecureTokenIsInvalid: Final = "91568"
+        ThreeDSecureTransactionDataDoesntMatchVerify: Final = "91570"
+        ThreeDSecureTransactionPaymentMethodDoesntMatchThreeDSecureAuthenticationPaymentMethod: Final = "915197"
+        ThreeDSecureXidIsRequired: Final = "915115"
+        TooManyLineItems: Final = "915157"
+        TransactionIsNotEligibleForAdjustment: Final = "915219"
+        TransactionMustBeInStateAuthorized: Final = "915218"
+        TransactionSourceIsInvalid: Final = "915133"
+        TypeIsInvalid: Final = "91523"
+        TypeIsRequired: Final = "91524"
+        UnsupportedVoiceAuthorization: Final = "91539"
+        UsBankAccountNonceMustBePlaidVerified: Final = "915171"
+        UsBankAccountNotVerified: Final = "915172"
 
         class ExternalVault:
-            StatusIsInvalid: str
-            StatusWithPreviousNetworkTransactionIdIsInvalid: str
-            CardTypeIsInvalid: str
-            PreviousNetworkTransactionIdIsInvalid: str
+            StatusIsInvalid: Final = "915175"
+            StatusWithPreviousNetworkTransactionIdIsInvalid: Final = "915177"
+            CardTypeIsInvalid: Final = "915178"
+            PreviousNetworkTransactionIdIsInvalid: Final = "915179"
 
         class Options:
-            SubmitForSettlementIsRequiredForCloning: str
-            SubmitForSettlementIsRequiredForPayPalUnilateral: str
-            UseBillingForShippingDisabled: str
-            VaultIsDisabled: str
+            SubmitForSettlementIsRequiredForCloning: Final = "91544"
+            SubmitForSettlementIsRequiredForPayPalUnilateral: Final = "91582"
+            UseBillingForShippingDisabled: Final = "91572"
+            VaultIsDisabled: Final = "91525"
 
             class PayPal:
-                CustomFieldTooLong: str
+                CustomFieldTooLong: Final = "91580"
 
             class CreditCard:
-                AccountTypeIsInvalid: str
-                AccountTypeNotSupported: str
-                AccountTypeDebitDoesNotSupportAuths: str
+                AccountTypeIsInvalid: Final = "915184"
+                AccountTypeNotSupported: Final = "915185"
+                AccountTypeDebitDoesNotSupportAuths: Final = "915186"
 
         class Industry:
-            IndustryTypeIsInvalid: str
+            IndustryTypeIsInvalid: Final = "93401"
 
             class Lodging:
-                EmptyData: str
-                FolioNumberIsInvalid: str
-                CheckInDateIsInvalid: str
-                CheckOutDateIsInvalid: str
-                CheckOutDateMustFollowCheckInDate: str
-                UnknownDataField: str
-                RoomRateMustBeGreaterThanZero: str
-                RoomRateFormatIsInvalid: str
-                RoomRateIsTooLarge: str
-                RoomTaxMustBeGreaterThanZero: str
-                RoomTaxFormatIsInvalid: str
-                RoomTaxIsTooLarge: str
-                NoShowIndicatorIsInvalid: str
-                AdvancedDepositIndicatorIsInvalid: str
-                FireSafetyIndicatorIsInvalid: str
-                PropertyPhoneIsInvalid: str
+                EmptyData: Final = "93402"
+                FolioNumberIsInvalid: Final = "93403"
+                CheckInDateIsInvalid: Final = "93404"
+                CheckOutDateIsInvalid: Final = "93405"
+                CheckOutDateMustFollowCheckInDate: Final = "93406"
+                UnknownDataField: Final = "93407"
+                RoomRateMustBeGreaterThanZero: Final = "93433"
+                RoomRateFormatIsInvalid: Final = "93434"
+                RoomRateIsTooLarge: Final = "93435"
+                RoomTaxMustBeGreaterThanZero: Final = "93436"
+                RoomTaxFormatIsInvalid: Final = "93437"
+                RoomTaxIsTooLarge: Final = "93438"
+                NoShowIndicatorIsInvalid: Final = "93439"
+                AdvancedDepositIndicatorIsInvalid: Final = "93440"
+                FireSafetyIndicatorIsInvalid: Final = "93441"
+                PropertyPhoneIsInvalid: Final = "93442"
 
             class TravelCruise:
-                EmptyData: str
-                UnknownDataField: str
-                TravelPackageIsInvalid: str
-                DepartureDateIsInvalid: str
-                LodgingCheckInDateIsInvalid: str
-                LodgingCheckOutDateIsInvalid: str
+                EmptyData: Final = "93408"
+                UnknownDataField: Final = "93409"
+                TravelPackageIsInvalid: Final = "93410"
+                DepartureDateIsInvalid: Final = "93411"
+                LodgingCheckInDateIsInvalid: Final = "93412"
+                LodgingCheckOutDateIsInvalid: Final = "93413"
 
             class TravelFlight:
-                EmptyData: str
-                UnknownDataField: str
-                CustomerCodeIsTooLong: str
-                FareAmountCannotBeNegative: str
-                FareAmountFormatIsInvalid: str
-                FareAmountIsTooLarge: str
-                FeeAmountCannotBeNegative: str
-                FeeAmountFormatIsInvalid: str
-                FeeAmountIsTooLarge: str
-                IssuedDateFormatIsInvalid: str
-                IssuingCarrierCodeIsTooLong: str
-                PassengerMiddleInitialIsTooLong: str
-                RestrictedTicketIsRequired: str
-                TaxAmountCannotBeNegative: str
-                TaxAmountFormatIsInvalid: str
-                TaxAmountIsTooLarge: str
-                TicketNumberIsTooLong: str
-                LegsExpected: str
-                TooManyLegs: str
+                EmptyData: Final = "93414"
+                UnknownDataField: Final = "93415"
+                CustomerCodeIsTooLong: Final = "93416"
+                FareAmountCannotBeNegative: Final = "93417"
+                FareAmountFormatIsInvalid: Final = "93418"
+                FareAmountIsTooLarge: Final = "93419"
+                FeeAmountCannotBeNegative: Final = "93420"
+                FeeAmountFormatIsInvalid: Final = "93421"
+                FeeAmountIsTooLarge: Final = "93422"
+                IssuedDateFormatIsInvalid: Final = "93423"
+                IssuingCarrierCodeIsTooLong: Final = "93424"
+                PassengerMiddleInitialIsTooLong: Final = "93425"
+                RestrictedTicketIsRequired: Final = "93426"
+                TaxAmountCannotBeNegative: Final = "93427"
+                TaxAmountFormatIsInvalid: Final = "93428"
+                TaxAmountIsTooLarge: Final = "93429"
+                TicketNumberIsTooLong: Final = "93430"
+                LegsExpected: Final = "93431"
+                TooManyLegs: Final = "93432"
 
             class Leg:
                 class TravelFlight:
-                    ArrivalAirportCodeIsTooLong: str
-                    ArrivalTimeFormatIsInvalid: str
-                    CarrierCodeIsTooLong: str
-                    ConjunctionTicketIsTooLong: str
-                    CouponNumberIsTooLong: str
-                    DepartureAirportCodeIsTooLong: str
-                    DepartureTimeFormatIsInvalid: str
-                    ExchangeTicketIsTooLong: str
-                    FareAmountCannotBeNegative: str
-                    FareAmountFormatIsInvalid: str
-                    FareAmountIsTooLarge: str
-                    FareBasisCodeIsTooLong: str
-                    FeeAmountCannotBeNegative: str
-                    FeeAmountFormatIsInvalid: str
-                    FeeAmountIsTooLarge: str
-                    ServiceClassIsTooLong: str
-                    TaxAmountCannotBeNegative: str
-                    TaxAmountFormatIsInvalid: str
-                    TaxAmountIsTooLarge: str
-                    TicketNumberIsTooLong: str
+                    ArrivalAirportCodeIsTooLong: Final = "96301"
+                    ArrivalTimeFormatIsInvalid: Final = "96302"
+                    CarrierCodeIsTooLong: Final = "96303"
+                    ConjunctionTicketIsTooLong: Final = "96304"
+                    CouponNumberIsTooLong: Final = "96305"
+                    DepartureAirportCodeIsTooLong: Final = "96306"
+                    DepartureTimeFormatIsInvalid: Final = "96307"
+                    ExchangeTicketIsTooLong: Final = "96308"
+                    FareAmountCannotBeNegative: Final = "96309"
+                    FareAmountFormatIsInvalid: Final = "96310"
+                    FareAmountIsTooLarge: Final = "96311"
+                    FareBasisCodeIsTooLong: Final = "96312"
+                    FeeAmountCannotBeNegative: Final = "96313"
+                    FeeAmountFormatIsInvalid: Final = "96314"
+                    FeeAmountIsTooLarge: Final = "96315"
+                    ServiceClassIsTooLong: Final = "96316"
+                    TaxAmountCannotBeNegative: Final = "96317"
+                    TaxAmountFormatIsInvalid: Final = "96318"
+                    TaxAmountIsTooLarge: Final = "96319"
+                    TicketNumberIsTooLong: Final = "96320"
 
             class AdditionalCharge:
-                KindIsInvalid: str
-                KindMustBeUnique: str
-                AmountMustBeGreaterThanZero: str
-                AmountFormatIsInvalid: str
-                AmountIsTooLarge: str
-                AmountIsRequired: str
+                KindIsInvalid: Final = "96601"
+                KindMustBeUnique: Final = "96602"
+                AmountMustBeGreaterThanZero: Final = "96603"
+                AmountFormatIsInvalid: Final = "96604"
+                AmountIsTooLarge: Final = "96605"
+                AmountIsRequired: Final = "96606"
 
         class LineItem:
-            CommodityCodeIsTooLong: str
-            DescriptionIsTooLong: str
-            DiscountAmountFormatIsInvalid: str
-            DiscountAmountIsTooLarge: str
-            DiscountAmountCannotBeNegative: str
-            KindIsInvalid: str
-            KindIsRequired: str
-            NameIsRequired: str
-            NameIsTooLong: str
-            ProductCodeIsTooLong: str
-            QuantityFormatIsInvalid: str
-            QuantityIsRequired: str
-            QuantityIsTooLarge: str
-            TotalAmountFormatIsInvalid: str
-            TotalAmountIsRequired: str
-            TotalAmountIsTooLarge: str
-            TotalAmountMustBeGreaterThanZero: str
-            UnitAmountFormatIsInvalid: str
-            UnitAmountIsRequired: str
-            UnitAmountIsTooLarge: str
-            UnitAmountMustBeGreaterThanZero: str
-            UnitOfMeasureIsTooLarge: str
-            UnitTaxAmountFormatIsInvalid: str
-            UnitTaxAmountIsTooLarge: str
-            UnitTaxAmountCannotBeNegative: str
-            TaxAmountFormatIsInvalid: str
-            TaxAmountIsTooLarge: str
-            TaxAmountCannotBeNegative: str
+            CommodityCodeIsTooLong: Final = "95801"
+            DescriptionIsTooLong: Final = "95803"
+            DiscountAmountCannotBeNegative: Final = "95806"
+            DiscountAmountFormatIsInvalid: Final = "95804"
+            DiscountAmountIsTooLarge: Final = "95805"
+            KindIsInvalid: Final = "95807"
+            KindIsRequired: Final = "95808"
+            NameIsRequired: Final = "95822"
+            NameIsTooLong: Final = "95823"
+            ProductCodeIsTooLong: Final = "95809"
+            QuantityFormatIsInvalid: Final = "95810"
+            QuantityIsRequired: Final = "95811"
+            QuantityIsTooLarge: Final = "95812"
+            TaxAmountCannotBeNegative: Final = "95829"
+            TaxAmountFormatIsInvalid: Final = "95827"
+            TaxAmountIsTooLarge: Final = "95828"
+            TotalAmountFormatIsInvalid: Final = "95813"
+            TotalAmountIsRequired: Final = "95814"
+            TotalAmountIsTooLarge: Final = "95815"
+            TotalAmountMustBeGreaterThanZero: Final = "95816"
+            UPCCodeIsMissing: Final = "95830"
+            UPCCodeIsTooLong: Final = "95831"
+            UPCTypeIsInvalid: Final = "95833"
+            UPCTypeIsMissing: Final = "95832"
+            UnitAmountFormatIsInvalid: Final = "95817"
+            UnitAmountIsRequired: Final = "95818"
+            UnitAmountIsTooLarge: Final = "95819"
+            UnitAmountMustBeGreaterThanZero: Final = "95820"
+            UnitOfMeasureIsTooLarge: Final = "95821"
+            UnitTaxAmountCannotBeNegative: Final = "95826"
+            UnitTaxAmountFormatIsInvalid: Final = "95824"
+            UnitTaxAmountIsTooLarge: Final = "95825"
 
     class UsBankAccountVerification:
-        NotConfirmable: str
-        MustBeMicroTransfersVerification: str
-        AmountsDoNotMatch: str
-        TooManyConfirmationAttempts: str
-        UnableToConfirmDepositAmounts: str
-        InvalidDepositAmounts: str
+        NotConfirmable: Final = "96101"
+        MustBeMicroTransfersVerification: Final = "96102"
+        AmountsDoNotMatch: Final = "96103"
+        TooManyConfirmationAttempts: Final = "96104"
+        UnableToConfirmDepositAmounts: Final = "96105"
+        InvalidDepositAmounts: Final = "96106"
 
     class RiskData:
-        CustomerBrowserIsTooLong: str
-        CustomerDeviceIdIsTooLong: str
-        CustomerLocationZipInvalidCharacters: str
-        CustomerLocationZipIsInvalid: str
-        CustomerLocationZipIsTooLong: str
-        CustomerTenureIsTooLong: str
+        CustomerBrowserIsTooLong: Final = "94701"
+        CustomerDeviceIdIsTooLong: Final = "94702"
+        CustomerLocationZipInvalidCharacters: Final = "94703"
+        CustomerLocationZipIsInvalid: Final = "94704"
+        CustomerLocationZipIsTooLong: Final = "94705"
+        CustomerTenureIsTooLong: Final = "94706"

@@ -1,4 +1,4 @@
-from _typeshed import ReadableBuffer
+from _typeshed import FileDescriptorOrPath, ReadableBuffer
 from typing import IO
 
 from paramiko.message import Message
@@ -10,7 +10,7 @@ class Ed25519Key(PKey):
         self,
         msg: Message | None = None,
         data: ReadableBuffer | None = None,
-        filename: str | None = None,
+        filename: FileDescriptorOrPath | None = None,
         password: str | None = None,
         file_obj: IO[str] | None = None,
     ) -> None: ...

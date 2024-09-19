@@ -1,4 +1,4 @@
-from typing_extensions import Final, Literal
+from typing import Final, Literal
 
 from Xlib.display import Display
 from Xlib.error import XError

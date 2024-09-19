@@ -1,0 +1,38 @@
+PyFile:TypeVarTupleTypeParameterDefaultInClassDeclaration.py
+  PyClass: Qux
+    PsiElement(Py:CLASS_KEYWORD)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('Qux')
+    PyTypeParameterList
+      PsiElement(Py:LBRACKET)('[')
+      PyTypeParameter
+        PsiElement(Py:MULT)('*')
+        PsiElement(Py:IDENTIFIER)('Ts')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:EQ)('=')
+        PsiWhiteSpace(' ')
+        PyStarExpression
+          PsiElement(Py:MULT)('*')
+          PySubscriptionExpression
+            PyReferenceExpression: tuple
+              PsiElement(Py:IDENTIFIER)('tuple')
+            PsiElement(Py:LBRACKET)('[')
+            PyTupleExpression
+              PyReferenceExpression: int
+                PsiElement(Py:IDENTIFIER)('int')
+              PsiElement(Py:COMMA)(',')
+              PsiWhiteSpace(' ')
+              PyReferenceExpression: bool
+                PsiElement(Py:IDENTIFIER)('bool')
+            PsiElement(Py:RBRACKET)(']')
+      PsiElement(Py:RBRACKET)(']')
+    PyArgumentList
+      <empty list>
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace(' ')
+    PyStatementList
+      PyExpressionStatement
+        PyNoneLiteralExpression
+          PsiElement(Py:DOT)('.')
+          PsiElement(Py:DOT)('.')
+          PsiElement(Py:DOT)('.')

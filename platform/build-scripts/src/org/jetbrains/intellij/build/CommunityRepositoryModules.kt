@@ -267,9 +267,8 @@ object CommunityRepositoryModules {
   }
 
   val supportedFfmpegPresets: PersistentList<SupportedDistribution> = persistentListOf(
-    // todo notarization
-    //SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64),
-    //SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
+    SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64),
+    SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
     SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64),
     SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64),
   )
@@ -495,12 +494,6 @@ object CommunityRepositoryModules {
       // Add ffmpeg and javacpp
       spec.withModuleLibrary("ffmpeg", "intellij.android.streaming",  "ffmpeg-$ffmpegVersion.jar")
       spec.withModuleLibrary("ffmpeg-javacpp", "intellij.android.streaming", "javacpp-$javacppVersion.jar")
-
-      // todo notarization
-      spec.excludeModuleLibrary("ffmpeg-macos-aarch64", "intellij.android.streaming")
-      spec.excludeModuleLibrary("ffmpeg-macos-x64", "intellij.android.streaming")
-      spec.excludeModuleLibrary("javacpp-macos-aarch64", "intellij.android.streaming")
-      spec.excludeModuleLibrary("javacpp-macos-x64", "intellij.android.streaming")
 
       // include only required as platform-dependent binaries
       for ((supportedOs, supportedArch) in supportedFfmpegPresets) {

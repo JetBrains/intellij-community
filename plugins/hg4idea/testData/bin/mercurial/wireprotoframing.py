@@ -9,11 +9,13 @@
 # protocol. For details about the protocol, see
 # `hg help internals.wireprotocol`.
 
+from __future__ import absolute_import
 
 import collections
 import struct
 
 from .i18n import _
+from .pycompat import getattr
 from .thirdparty import attr
 from . import (
     encoding,
@@ -121,7 +123,7 @@ ARGUMENT_RECORD_HEADER = struct.Struct('<HH')
 
 def humanflags(mapping, value):
     """Convert a numeric flags value to a human value, using a mapping table."""
-    namemap = {v: k for k, v in mapping.items()}
+    namemap = {v: k for k, v in pycompat.iteritems(mapping)}
     flags = []
     val = 1
     while value >= val:
@@ -133,7 +135,7 @@ def humanflags(mapping, value):
 
 
 @attr.s(slots=True)
-class frameheader:
+class frameheader(object):
     """Represents the data in a frame header."""
 
     length = attr.ib()
@@ -145,7 +147,7 @@ class frameheader:
 
 
 @attr.s(slots=True, repr=False)
-class frame:
+class frame(object):
     """Represents a parsed frame."""
 
     requestid = attr.ib()
@@ -158,7 +160,7 @@ class frame:
     @encoding.strmethod
     def __repr__(self):
         typename = b'<unknown 0x%02x>' % self.typeid
-        for name, value in FRAME_TYPES.items():
+        for name, value in pycompat.iteritems(FRAME_TYPES):
             if value == self.typeid:
                 typename = name
                 break
@@ -588,7 +590,7 @@ def createtextoutputframe(
     )
 
 
-class bufferingcommandresponseemitter:
+class bufferingcommandresponseemitter(object):
     """Helper object to emit command response frames intelligently.
 
     Raw command response data is likely emitted in chunks much smaller
@@ -698,7 +700,7 @@ class bufferingcommandresponseemitter:
 # mechanism.
 
 
-class identityencoder:
+class identityencoder(object):
     """Encoder for the "identity" stream encoding profile."""
 
     def __init__(self, ui):
@@ -714,7 +716,7 @@ class identityencoder:
         return b''
 
 
-class identitydecoder:
+class identitydecoder(object):
     """Decoder for the "identity" stream encoding profile."""
 
     def __init__(self, ui, extraobjs):
@@ -727,7 +729,7 @@ class identitydecoder:
         return data
 
 
-class zlibencoder:
+class zlibencoder(object):
     def __init__(self, ui):
         import zlib
 
@@ -748,7 +750,7 @@ class zlibencoder:
         return res
 
 
-class zlibdecoder:
+class zlibdecoder(object):
     def __init__(self, ui, extraobjs):
         import zlib
 
@@ -760,10 +762,15 @@ class zlibdecoder:
         self._decompressor = zlib.decompressobj()
 
     def decode(self, data):
+        # Python 2's zlib module doesn't use the buffer protocol and can't
+        # handle all bytes-like types.
+        if not pycompat.ispy3 and isinstance(data, bytearray):
+            data = bytes(data)
+
         return self._decompressor.decompress(data)
 
 
-class zstdbaseencoder:
+class zstdbaseencoder(object):
     def __init__(self, level):
         from . import zstd
 
@@ -791,7 +798,7 @@ class zstd8mbencoder(zstdbaseencoder):
         super(zstd8mbencoder, self).__init__(3)
 
 
-class zstdbasedecoder:
+class zstdbasedecoder(object):
     def __init__(self, maxwindowsize):
         from . import zstd
 
@@ -841,7 +848,7 @@ def populatestreamencoders():
     STREAM_ENCODERS_ORDER.append(b'identity')
 
 
-class stream:
+class stream(object):
     """Represents a logical unidirectional series of frames."""
 
     def __init__(self, streamid, active=False):
@@ -994,7 +1001,7 @@ DEFAULT_PROTOCOL_SETTINGS = {
 }
 
 
-class serverreactor:
+class serverreactor(object):
     """Holds state of a server handling frame-based protocol requests.
 
     This class is the "brain" of the unified frame-based protocol server
@@ -1682,7 +1689,7 @@ class serverreactor:
         return self._makeerrorresult(_(b'server already errored'))
 
 
-class commandrequest:
+class commandrequest(object):
     """Represents a request to run a command."""
 
     def __init__(self, requestid, name, args, datafh=None, redirect=None):
@@ -1694,7 +1701,7 @@ class commandrequest:
         self.state = b'pending'
 
 
-class clientreactor:
+class clientreactor(object):
     """Holds state of a client issuing frame-based protocol requests.
 
     This is like ``serverreactor`` but for client-side state.

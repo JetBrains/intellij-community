@@ -4,6 +4,7 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
+from __future__ import absolute_import
 
 import os
 import zlib
@@ -81,7 +82,7 @@ def buildtemprevlog(repo, file):
         os.remove(temppath)
     r = filelog.filelog(repo.svfs, b'temprevlog')
 
-    class faket:
+    class faket(object):
         def add(self, a, b, c):
             pass
 
@@ -210,7 +211,7 @@ def verifyremotefilelog(ui, path, **opts):
                 continue
             filepath = os.path.join(root, file)
             size, firstnode, mapping = parsefileblob(filepath, decompress)
-            for p1, p2, linknode, copyfrom in mapping.values():
+            for p1, p2, linknode, copyfrom in pycompat.itervalues(mapping):
                 if linknode == sha1nodeconstants.nullid:
                     actualpath = os.path.relpath(root, path)
                     key = fileserverclient.getcachekey(

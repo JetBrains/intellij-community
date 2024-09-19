@@ -4,8 +4,10 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
+from __future__ import absolute_import
 
 import collections
+import errno
 import os
 import stat
 import struct
@@ -101,7 +103,7 @@ def sumdicts(*dicts):
     """
     result = collections.defaultdict(lambda: 0)
     for dict in dicts:
-        for k, v in dict.items():
+        for k, v in pycompat.iteritems(dict):
             result[k] += v
     return result
 
@@ -109,7 +111,7 @@ def sumdicts(*dicts):
 def prefixkeys(dict, prefix):
     """Returns ``dict`` with ``prefix`` prepended to all its keys."""
     result = {}
-    for k, v in dict.items():
+    for k, v in pycompat.iteritems(dict):
         result[prefix + k] = v
     return result
 
@@ -158,7 +160,7 @@ def _buildpackmeta(metadict):
     length limit is exceeded
     """
     metabuf = b''
-    for k, v in sorted((metadict or {}).items()):
+    for k, v in sorted(pycompat.iteritems((metadict or {}))):
         if len(k) != 1:
             raise error.ProgrammingError(b'packmeta: illegal key: %s' % k)
         if len(v) > 0xFFFE:
@@ -174,8 +176,8 @@ def _buildpackmeta(metadict):
 
 
 _metaitemtypes = {
-    constants.METAKEYFLAG: (int, int),
-    constants.METAKEYSIZE: (int, int),
+    constants.METAKEYFLAG: (int, pycompat.long),
+    constants.METAKEYSIZE: (int, pycompat.long),
 }
 
 
@@ -186,7 +188,7 @@ def buildpackmeta(metadict):
     and METAKEYFLAG will be dropped if its value is 0.
     """
     newmeta = {}
-    for k, v in (metadict or {}).items():
+    for k, v in pycompat.iteritems(metadict or {}):
         expectedtype = _metaitemtypes.get(k, (bytes,))
         if not isinstance(v, expectedtype):
             raise error.ProgrammingError(b'packmeta: wrong type of key %s' % k)
@@ -207,7 +209,7 @@ def parsepackmeta(metabuf):
     integers.
     """
     metadict = _parsepackmeta(metabuf)
-    for k, v in metadict.items():
+    for k, v in pycompat.iteritems(metadict):
         if k in _metaitemtypes and int in _metaitemtypes[k]:
             metadict[k] = bin2int(v)
     return metadict
@@ -247,7 +249,7 @@ def parsesizeflags(raw):
         index = raw.index(b'\0')
     except ValueError:
         raise BadRemotefilelogHeader(
-            b"unexpected remotefilelog header: illegal format"
+            "unexpected remotefilelog header: illegal format"
         )
     header = raw[:index]
     if header.startswith(b'v'):
@@ -267,7 +269,7 @@ def parsesizeflags(raw):
         size = int(header)
     if size is None:
         raise BadRemotefilelogHeader(
-            b"unexpected remotefilelog header: no size found"
+            "unexpected remotefilelog header: no size found"
         )
     return index + 1, size, flags
 
@@ -358,8 +360,9 @@ def writefile(path, content, readonly=False):
     if not os.path.exists(dirname):
         try:
             os.makedirs(dirname)
-        except FileExistsError:
-            pass
+        except OSError as ex:
+            if ex.errno != errno.EEXIST:
+                raise
 
     fd, temp = tempfile.mkstemp(prefix=b'.%s-' % filename, dir=dirname)
     os.close(fd)
@@ -452,14 +455,14 @@ def readpath(stream):
 def readnodelist(stream):
     rawlen = readexactly(stream, constants.NODECOUNTSIZE)
     nodecount = struct.unpack(constants.NODECOUNTSTRUCT, rawlen)[0]
-    for i in range(nodecount):
+    for i in pycompat.xrange(nodecount):
         yield readexactly(stream, constants.NODESIZE)
 
 
 def readpathlist(stream):
     rawlen = readexactly(stream, constants.PATHCOUNTSIZE)
     pathcount = struct.unpack(constants.PATHCOUNTSTRUCT, rawlen)[0]
-    for i in range(pathcount):
+    for i in pycompat.xrange(pathcount):
         yield readpath(stream)
 
 
@@ -517,8 +520,9 @@ def mkstickygroupdir(ui, path):
         for path in reversed(missingdirs):
             try:
                 os.mkdir(path)
-            except FileExistsError:
-                pass
+            except OSError as ex:
+                if ex.errno != errno.EEXIST:
+                    raise
 
         for path in missingdirs:
             setstickygroupdir(path, gid, ui.warn)

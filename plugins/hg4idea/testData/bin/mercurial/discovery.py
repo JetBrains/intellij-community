@@ -5,6 +5,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import functools
 
@@ -18,8 +19,6 @@ from . import (
     bookmarks,
     branchmap,
     error,
-    node as nodemod,
-    obsolete,
     phases,
     pycompat,
     scmutil,
@@ -74,7 +73,7 @@ def findcommonincoming(repo, remote, heads=None, force=False, ancestorsof=None):
     return (list(common), anyinc, heads or list(srvheads))
 
 
-class outgoing:
+class outgoing(object):
     """Represents the result of a findcommonoutgoing() call.
 
     Members:
@@ -99,62 +98,29 @@ class outgoing:
     def __init__(
         self, repo, commonheads=None, ancestorsof=None, missingroots=None
     ):
-        # at most one of them must not be set
-        if commonheads is not None and missingroots is not None:
-            m = 'commonheads and missingroots arguments are mutually exclusive'
-            raise error.ProgrammingError(m)
+        # at least one of them must not be set
+        assert None in (commonheads, missingroots)
         cl = repo.changelog
-        unfi = repo.unfiltered()
-        ucl = unfi.changelog
-        to_node = ucl.node
-        missing = None
-        common = None
-        arg_anc = ancestorsof
         if ancestorsof is None:
             ancestorsof = cl.heads()
-
-        # XXX-perf: do we need all this to be node-list? They would be simpler
-        # as rev-num sets (and smartset)
-        if missingroots == [nodemod.nullrev] or missingroots == []:
-            commonheads = [repo.nullid]
-            common = set()
-            if arg_anc is None:
-                missing = [to_node(r) for r in cl]
-            else:
-                missing_rev = repo.revs('::%ln', missingroots, ancestorsof)
-                missing = [to_node(r) for r in missing_rev]
-        elif missingroots is not None:
+        if missingroots:
+            discbases = []
+            for n in missingroots:
+                discbases.extend([p for p in cl.parents(n) if p != repo.nullid])
             # TODO remove call to nodesbetween.
-            missing_rev = repo.revs('%ln::%ln', missingroots, ancestorsof)
-            ancestorsof = [to_node(r) for r in ucl.headrevs(missing_rev)]
-            parent_revs = ucl.parentrevs
-            common_legs = set()
-            for r in missing_rev:
-                p1, p2 = parent_revs(r)
-                if p1 not in missing_rev:
-                    common_legs.add(p1)
-                if p2 not in missing_rev:
-                    common_legs.add(p2)
-            common_legs.discard(nodemod.nullrev)
-            if not common_legs:
-                commonheads = [repo.nullid]
-                common = set()
-            else:
-                commonheads_revs = unfi.revs(
-                    'heads(%ld::%ld)',
-                    common_legs,
-                    common_legs,
-                )
-                commonheads = [to_node(r) for r in commonheads_revs]
-                common = ucl.ancestors(commonheads_revs, inclusive=True)
-            missing = [to_node(r) for r in missing_rev]
+            # TODO populate attributes on outgoing instance instead of setting
+            # discbases.
+            csets, roots, heads = cl.nodesbetween(missingroots, ancestorsof)
+            included = set(csets)
+            ancestorsof = heads
+            commonheads = [n for n in discbases if n not in included]
         elif not commonheads:
             commonheads = [repo.nullid]
         self.commonheads = commonheads
         self.ancestorsof = ancestorsof
         self._revlog = cl
-        self._common = common
-        self._missing = missing
+        self._common = None
+        self._missing = None
         self.excluded = []
 
     def _computecommonmissing(self):
@@ -174,6 +140,17 @@ class outgoing:
         if self._missing is None:
             self._computecommonmissing()
         return self._missing
+
+    @property
+    def missingheads(self):
+        util.nouideprecwarn(
+            b'outgoing.missingheads never contained what the name suggests and '
+            b'was renamed to outgoing.ancestorsof. check your code for '
+            b'correctness.',
+            b'5.5',
+            stacklevel=2,
+        )
+        return self.ancestorsof
 
 
 def findcommonoutgoing(
@@ -202,7 +179,7 @@ def findcommonoutgoing(
     og.commonheads, _any, _hds = commoninc
 
     # compute outgoing
-    mayexclude = phases.hassecret(repo) or repo.obsstore
+    mayexclude = repo._phasecache.phaseroots[phases.secret] or repo.obsstore
     if not mayexclude:
         og.ancestorsof = onlyheads or repo.heads()
     elif onlyheads is None:
@@ -224,12 +201,7 @@ def findcommonoutgoing(
         if len(missing) == len(allmissing):
             ancestorsof = onlyheads
         else:  # update missing heads
-            to_rev = repo.changelog.index.rev
-            to_node = repo.changelog.node
-            excluded_revs = [to_rev(r) for r in excluded]
-            onlyheads_revs = [to_rev(r) for r in onlyheads]
-            new_heads = phases.new_heads(repo, onlyheads_revs, excluded_revs)
-            ancestorsof = [to_node(r) for r in new_heads]
+            ancestorsof = phases.newheads(repo, onlyheads, excluded)
         og.ancestorsof = ancestorsof
     if portable:
         # recompute common and ancestorsof as if -r<rev> had been given for
@@ -276,7 +248,7 @@ def _headssummary(pushop):
 
     knownnode = cl.hasnode  # do not use nodemap until it is filtered
     # A. register remote heads of branches which are in outgoing set
-    for branch, heads in remotemap.items():
+    for branch, heads in pycompat.iteritems(remotemap):
         # don't add head info about branches which we don't have locally
         if branch not in branches:
             continue
@@ -300,14 +272,14 @@ def _headssummary(pushop):
         repo,
         (
             (branch, heads[1])
-            for branch, heads in headssum.items()
+            for branch, heads in pycompat.iteritems(headssum)
             if heads[0] is not None
         ),
     )
     newmap.update(repo, (ctx.rev() for ctx in missingctx))
-    for branch, newheads in newmap.items():
+    for branch, newheads in pycompat.iteritems(newmap):
         headssum[branch][1][:] = newheads
-    for branch, items in headssum.items():
+    for branch, items in pycompat.iteritems(headssum):
         for l in items:
             if l is not None:
                 l.sort()
@@ -418,7 +390,9 @@ def checkheads(pushop):
         headssum = _oldheadssummary(repo, remoteheads, outgoing, inc)
     pushop.pushbranchmap = headssum
     newbranches = [
-        branch for branch, heads in headssum.items() if heads[0] is None
+        branch
+        for branch, heads in pycompat.iteritems(headssum)
+        if heads[0] is None
     ]
     # 1. Check for new branches on the remote.
     if newbranches and not newbranch:  # new branch requires --new-branch
@@ -582,16 +556,12 @@ def _postprocessobsolete(pushop, futurecommon, candidate_newhs):
     if len(localcandidate) == 1:
         return unknownheads | set(candidate_newhs), set()
 
-    obsrevs = obsolete.getrevs(unfi, b'obsolete')
-    futurenonobsolete = frozenset(futurecommon) - obsrevs
-
     # actually process branch replacement
     while localcandidate:
         nh = localcandidate.pop()
-        r = torev(nh)
         current_branch = unfi[nh].branch()
         # run this check early to skip the evaluation of the whole branch
-        if ispublic(r) or r not in obsrevs:
+        if torev(nh) in futurecommon or ispublic(torev(nh)):
             newhs.add(nh)
             continue
 
@@ -613,7 +583,7 @@ def _postprocessobsolete(pushop, futurecommon, candidate_newhs):
         # * if we have no markers to push to obsolete it.
         if (
             any(ispublic(r) for r in branchrevs)
-            or any(torev(n) in futurenonobsolete for n in branchnodes)
+            or any(torev(n) in futurecommon for n in branchnodes)
             or any(not hasoutmarker(n) for n in branchnodes)
         ):
             newhs.add(nh)

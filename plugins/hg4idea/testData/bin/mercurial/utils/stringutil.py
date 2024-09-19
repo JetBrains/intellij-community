@@ -7,17 +7,13 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import ast
 import codecs
 import re as remod
 import textwrap
 import types
-
-from typing import (
-    Optional,
-    overload,
-)
 
 from ..i18n import _
 from ..thirdparty import attr
@@ -35,16 +31,6 @@ _regexescapemap = {ord(i): (b'\\' + i).decode('latin1') for i in _respecial}
 regexbytesescapemap = {i: (b'\\' + i) for i in _respecial}
 
 
-@overload
-def reescape(pat: bytes) -> bytes:
-    ...
-
-
-@overload
-def reescape(pat: str) -> str:
-    ...
-
-
 def reescape(pat):
     """Drop-in replacement for re.escape."""
     # NOTE: it is intentional that this works on unicodes and not
@@ -60,12 +46,12 @@ def reescape(pat):
     return pat.encode('latin1')
 
 
-def pprint(o, bprefix: bool = False, indent: int = 0, level: int = 0) -> bytes:
+def pprint(o, bprefix=False, indent=0, level=0):
     """Pretty print an object."""
     return b''.join(pprintgen(o, bprefix=bprefix, indent=indent, level=level))
 
 
-def pprintgen(o, bprefix: bool = False, indent: int = 0, level: int = 0):
+def pprintgen(o, bprefix=False, indent=0, level=0):
     """Pretty print an object to a generator of atoms.
 
     ``bprefix`` is a flag influencing whether bytestrings are preferred with
@@ -265,7 +251,7 @@ def pprintgen(o, bprefix: bool = False, indent: int = 0, level: int = 0):
         yield pycompat.byterepr(o)
 
 
-def prettyrepr(o) -> bytes:
+def prettyrepr(o):
     """Pretty print a representation of a possibly-nested object"""
     lines = []
     rs = pycompat.byterepr(o)
@@ -278,11 +264,7 @@ def prettyrepr(o) -> bytes:
         q1 = rs.find(b'<', p1 + 1)
         if q1 < 0:
             q1 = len(rs)
-            # pytype: disable=wrong-arg-count
-            # TODO: figure out why pytype doesn't recognize the optional start
-            #  arg
         elif q1 > p1 + 1 and rs.startswith(b'=', q1 - 1):
-            # pytype: enable=wrong-arg-count
             # backtrack for ' field=<'
             q0 = rs.rfind(b' ', p1 + 1, q1 - 1)
         if q0 < 0:
@@ -296,7 +278,7 @@ def prettyrepr(o) -> bytes:
     return b'\n'.join(b'  ' * l + s for l, s in lines)
 
 
-def buildrepr(r) -> bytes:
+def buildrepr(r):
     """Format an optional printable representation from unexpanded bits
 
     ========  =================================
@@ -320,12 +302,12 @@ def buildrepr(r) -> bytes:
         return pprint(r)
 
 
-def binary(s: bytes) -> bool:
+def binary(s):
     """return true if a string is binary data"""
     return bool(s and b'\0' in s)
 
 
-def _splitpattern(pattern: bytes):
+def _splitpattern(pattern):
     if pattern.startswith(b're:'):
         return b're', pattern[3:]
     elif pattern.startswith(b'literal:'):
@@ -333,7 +315,7 @@ def _splitpattern(pattern: bytes):
     return b'literal', pattern
 
 
-def stringmatcher(pattern: bytes, casesensitive: bool = True):
+def stringmatcher(pattern, casesensitive=True):
     """
     accepts a string, possibly starting with 're:' or 'literal:' prefix.
     returns the matcher name, pattern, and matcher function.
@@ -394,7 +376,7 @@ def stringmatcher(pattern: bytes, casesensitive: bool = True):
     raise error.ProgrammingError(b'unhandled pattern kind: %s' % kind)
 
 
-def substringregexp(pattern: bytes, flags: int = 0):
+def substringregexp(pattern, flags=0):
     """Build a regexp object from a string pattern possibly starting with
     're:' or 'literal:' prefix.
 
@@ -446,7 +428,7 @@ def substringregexp(pattern: bytes, flags: int = 0):
     raise error.ProgrammingError(b'unhandled pattern kind: %s' % kind)
 
 
-def shortuser(user: bytes) -> bytes:
+def shortuser(user):
     """Return a short representation of a user name or email address."""
     f = user.find(b'@')
     if f >= 0:
@@ -463,7 +445,7 @@ def shortuser(user: bytes) -> bytes:
     return user
 
 
-def emailuser(user: bytes) -> bytes:
+def emailuser(user):
     """Return the user portion of an email address."""
     f = user.find(b'@')
     if f >= 0:
@@ -474,7 +456,7 @@ def emailuser(user: bytes) -> bytes:
     return user
 
 
-def email(author: bytes) -> bytes:
+def email(author):
     '''get email of author.'''
     r = author.find(b'>')
     if r == -1:
@@ -482,7 +464,7 @@ def email(author: bytes) -> bytes:
     return author[author.find(b'<') + 1 : r]
 
 
-def person(author: bytes) -> bytes:
+def person(author):
     """Returns the name before an email address,
     interpreting it as per RFC 5322
 
@@ -511,7 +493,7 @@ def person(author: bytes) -> bytes:
 
 
 @attr.s(hash=True)
-class mailmapping:
+class mailmapping(object):
     """Represents a username/email key or value in
     a mailmap file"""
 
@@ -627,7 +609,7 @@ def parsemailmap(mailmapcontent):
     return mailmap
 
 
-def mapname(mailmap, author: bytes) -> bytes:
+def mapname(mailmap, author):
     """Returns the author field according to the mailmap cache, or
     the original author field.
 
@@ -678,7 +660,7 @@ def mapname(mailmap, author: bytes) -> bytes:
 _correctauthorformat = remod.compile(br'^[^<]+\s<[^<>]+@[^<>]+>$')
 
 
-def isauthorwellformed(author: bytes) -> bool:
+def isauthorwellformed(author):
     """Return True if the author field is well formed
     (ie "Contributor Name <contrib@email.dom>")
 
@@ -700,38 +682,21 @@ def isauthorwellformed(author: bytes) -> bool:
     return _correctauthorformat.match(author) is not None
 
 
-def firstline(text: bytes) -> bytes:
-    """Return the first line of the input"""
-    # Try to avoid running splitlines() on the whole string
-    i = text.find(b'\n')
-    if i != -1:
-        text = text[:i]
-    try:
-        return text.splitlines()[0]
-    except IndexError:
-        return b''
-
-
-def ellipsis(text: bytes, maxlength: int = 400) -> bytes:
+def ellipsis(text, maxlength=400):
     """Trim string to at most maxlength (default: 400) columns in display."""
     return encoding.trim(text, maxlength, ellipsis=b'...')
 
 
-def escapestr(s: bytes) -> bytes:
-    # "bytes" is also a typing shortcut for bytes, bytearray, and memoryview
+def escapestr(s):
     if isinstance(s, memoryview):
         s = bytes(s)
     # call underlying function of s.encode('string_escape') directly for
     # Python 3 compatibility
-    # pytype: disable=bad-return-type
-    return codecs.escape_encode(s)[0]  # pytype: disable=module-attr
-    # pytype: enable=bad-return-type
+    return codecs.escape_encode(s)[0]
 
 
-def unescapestr(s: bytes) -> bytes:
-    # pytype: disable=bad-return-type
-    return codecs.escape_decode(s)[0]  # pytype: disable=module-attr
-    # pytype: enable=bad-return-type
+def unescapestr(s):
+    return codecs.escape_decode(s)[0]
 
 
 def forcebytestr(obj):
@@ -744,7 +709,7 @@ def forcebytestr(obj):
         return pycompat.bytestr(encoding.strtolocal(str(obj)))
 
 
-def uirepr(s: bytes) -> bytes:
+def uirepr(s):
     # Avoid double backslash in Windows path repr()
     return pycompat.byterepr(pycompat.bytestr(s)).replace(b'\\\\', b'\\')
 
@@ -770,7 +735,7 @@ def _MBTextWrapper(**kwargs):
         def _cutdown(self, ucstr, space_left):
             l = 0
             colwidth = encoding.ucolwidth
-            for i in range(len(ucstr)):
+            for i in pycompat.xrange(len(ucstr)):
                 l += colwidth(ucstr[i])
                 if space_left < l:
                     return (ucstr[:i], ucstr[i:])
@@ -858,9 +823,7 @@ def _MBTextWrapper(**kwargs):
     return tw(**kwargs)
 
 
-def wrap(
-    line: bytes, width: int, initindent: bytes = b'', hangindent: bytes = b''
-) -> bytes:
+def wrap(line, width, initindent=b'', hangindent=b''):
     maxindent = max(len(hangindent), len(initindent))
     if width <= maxindent:
         # adjust for weird terminal size
@@ -897,7 +860,7 @@ _booleans = {
 }
 
 
-def parsebool(s: bytes) -> Optional[bool]:
+def parsebool(s):
     """Parse s into a boolean.
 
     If s is not a valid boolean, returns None.
@@ -905,8 +868,7 @@ def parsebool(s: bytes) -> Optional[bool]:
     return _booleans.get(s.lower(), None)
 
 
-# TODO: make arg mandatory (and fix code below?)
-def parselist(value: Optional[bytes]):
+def parselist(value):
     """parse a configuration value as a list of comma/space separated strings
 
     >>> parselist(b'this,is "a small" ,test')
@@ -996,7 +958,9 @@ def parselist(value: Optional[bytes]):
     return result or []
 
 
-def evalpythonliteral(s: bytes):
+def evalpythonliteral(s):
     """Evaluate a string containing a Python literal expression"""
     # We could backport our tokenizer hack to rewrite '' to u'' if we want
-    return ast.literal_eval(s.decode('latin1'))
+    if pycompat.ispy3:
+        return ast.literal_eval(s.decode('latin1'))
+    return ast.literal_eval(s)

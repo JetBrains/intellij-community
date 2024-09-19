@@ -7,6 +7,7 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -42,10 +43,11 @@ internal class GitLabMergeRequestsListViewModelImpl(
   override val repository: String,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   tokenRefreshFlow: Flow<Unit>,
-  private val loaderSupplier: (CoroutineScope, GitLabMergeRequestsFiltersValue) -> ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>
+  private val loaderSupplier: (CoroutineScope, GitLabMergeRequestsFiltersValue) -> ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>,
 ) : GitLabMergeRequestsListViewModel {
 
-  private val scope = parentCs.childScope()
+  private val scope = parentCs.childScope("GL MR List VM")
+  private val requestMoreLauncher = SingleCoroutineLauncher(scope.childScope("Request More"))
 
   private val loaderFlow: Flow<ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>> =
     filterVm.searchState
@@ -60,7 +62,7 @@ internal class GitLabMergeRequestsListViewModelImpl(
   override val error: Flow<Throwable?> = loaderFlow.flatMapLatest { loader -> loader.stateFlow.map { it.error } }.modelFlow(scope, LOG)
 
   override fun requestMore() {
-    scope.launch {
+    requestMoreLauncher.launch {
       loaderFlow.first().loadMore()
     }
   }

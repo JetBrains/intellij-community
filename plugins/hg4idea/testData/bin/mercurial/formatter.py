@@ -105,11 +105,11 @@ bar
 baz: foo, bar
 """
 
+from __future__ import absolute_import, print_function
 
 import contextlib
 import itertools
 import os
-import pickle
 
 from .i18n import _
 from .node import (
@@ -133,6 +133,8 @@ from .utils import (
     stringutil,
 )
 
+pickle = util.pickle
+
 
 def isprintable(obj):
     """Check if the given object can be directly passed in to formatter's
@@ -141,10 +143,10 @@ def isprintable(obj):
     Returns False if the object is unsupported or must be pre-processed by
     formatdate(), formatdict(), or formatlist().
     """
-    return isinstance(obj, (type(None), bool, int, int, float, bytes))
+    return isinstance(obj, (type(None), bool, int, pycompat.long, float, bytes))
 
 
-class _nullconverter:
+class _nullconverter(object):
     '''convert non-primitive data types to be processed by formatter'''
 
     # set to True if context object should be stored as item
@@ -175,7 +177,7 @@ class _nullconverter:
         return list(data)
 
 
-class baseformatter:
+class baseformatter(object):
 
     # set to True if the formater output a strict format that does not support
     # arbitrary output in the stream.
@@ -293,11 +295,11 @@ class _nestedformatter(baseformatter):
 def _iteritems(data):
     '''iterate key-value pairs in stable order'''
     if isinstance(data, dict):
-        return sorted(data.items())
+        return sorted(pycompat.iteritems(data))
     return data
 
 
-class _plainconverter:
+class _plainconverter(object):
     '''convert non-primitive data types to text'''
 
     storecontext = False
@@ -452,7 +454,7 @@ class jsonformatter(baseformatter):
         self._out.write(b"\n]\n")
 
 
-class _templateconverter:
+class _templateconverter(object):
     '''convert non-primitive data types to be processed by templater'''
 
     storecontext = True
@@ -541,7 +543,7 @@ class templateformatter(baseformatter):
 
 
 @attr.s(frozen=True)
-class templatespec:
+class templatespec(object):
     ref = attr.ib()
     tmpl = attr.ib()
     mapfile = attr.ib()
@@ -558,7 +560,8 @@ def reference_templatespec(ref, refargs=None):
 
 
 def literal_templatespec(tmpl):
-    assert not isinstance(tmpl, str), b'tmpl must not be a str'
+    if pycompat.ispy3:
+        assert not isinstance(tmpl, str), b'tmpl must not be a str'
     return templatespec(b'', tmpl, None)
 
 

@@ -10,6 +10,7 @@
 The feature provided by this extension has been moved into core Mercurial as
 :hg:`commit --interactive`.'''
 
+from __future__ import absolute_import
 
 from mercurial.i18n import _
 from mercurial import (

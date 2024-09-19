@@ -1,4 +1,4 @@
-from typing_extensions import Literal
+from typing import Literal
 
 PY2: Literal[False]
 PY3: Literal[True]

@@ -3861,14 +3861,6 @@ f:com.intellij.codeInsight.daemon.impl.DaemonTooltipRendererProvider
 - calcTooltipRenderer(java.util.Collection):com.intellij.codeInsight.hint.TooltipRenderer
 f:com.intellij.codeInsight.daemon.impl.DaemonTooltipWithActionRendererKt
 - sf:getRunActionCustomShortcutSet():com.intellij.openapi.actionSystem.CustomShortcutSet
-f:com.intellij.codeInsight.daemon.impl.DefaultHighlightInfoProcessor
-- com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor
-- <init>():V
-- allHighlightsForRangeAreProduced(com.intellij.codeInsight.daemon.impl.HighlightingSession,J,java.util.List):V
-- highlightsInsideVisiblePartAreProduced(com.intellij.codeInsight.daemon.impl.HighlightingSession,com.intellij.openapi.editor.Editor,java.util.List,com.intellij.openapi.util.TextRange,com.intellij.openapi.util.TextRange,I):V
-- highlightsOutsideVisiblePartAreProduced(com.intellij.codeInsight.daemon.impl.HighlightingSession,com.intellij.openapi.editor.Editor,java.util.List,com.intellij.openapi.util.TextRange,com.intellij.openapi.util.TextRange,I):V
-- infoIsAvailable(com.intellij.codeInsight.daemon.impl.HighlightingSession,com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.openapi.util.TextRange,com.intellij.openapi.util.TextRange,I):V
-- progressIsAdvanced(com.intellij.codeInsight.daemon.impl.HighlightingSession,com.intellij.openapi.editor.Editor,D):V
 f:com.intellij.codeInsight.daemon.impl.EditCleanupProfileIntentionAction
 - com.intellij.codeInsight.intention.IntentionAction
 - sf:INSTANCE:com.intellij.codeInsight.daemon.impl.EditCleanupProfileIntentionAction
@@ -4081,18 +4073,6 @@ f:com.intellij.codeInsight.daemon.impl.LineMarkersPass
 - doCollectInformation(com.intellij.openapi.progress.ProgressIndicator):V
 - s:getMarkerProviders(com.intellij.lang.Language,com.intellij.openapi.project.Project):java.util.List
 - s:queryLineMarkers(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document):java.util.Collection
-f:com.intellij.codeInsight.daemon.impl.LocalInspectionsPass
-- com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass
-- getInfos():java.util.List
-f:com.intellij.codeInsight.daemon.impl.LocalInspectionsPass$InspectionHighlightInfoType
-- com.intellij.codeInsight.daemon.impl.HighlightInfoType$HighlightInfoTypeImpl
-f:com.intellij.codeInsight.daemon.impl.LocalInspectionsPassFactory
-- com.intellij.codeHighlighting.MainHighlightingPassFactory
-- com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
-- <init>():V
-- createHighlightingPass(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.codeHighlighting.TextEditorHighlightingPass
-- createMainHighlightingPass(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor):com.intellij.codeHighlighting.TextEditorHighlightingPass
-- registerHighlightingPassFactory(com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar,com.intellij.openapi.project.Project):V
 f:com.intellij.codeInsight.daemon.impl.MainPassesRunner
 - <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.codeInspection.InspectionProfile):V
 - runMainPasses(java.util.List):java.util.Map
@@ -7293,6 +7273,19 @@ f:com.intellij.codeInsight.hints.settings.providers.ParameterInlaySettingsProvid
 - createModels(com.intellij.openapi.project.Project,com.intellij.lang.Language):java.util.List
 - getDependencies():java.util.Collection
 - getSupportedLanguages(com.intellij.openapi.project.Project):java.util.Collection
+*e:com.intellij.codeInsight.intention.IntentionSource
+- java.lang.Enum
+- sf:CONTEXT_ACTIONS:com.intellij.codeInsight.intention.IntentionSource
+- sf:CUSTOM_SHORTCUT:com.intellij.codeInsight.intention.IntentionSource
+- sf:DAEMON_TOOLTIP:com.intellij.codeInsight.intention.IntentionSource
+- sf:FILE_LEVEL_ACTIONS:com.intellij.codeInsight.intention.IntentionSource
+- sf:FLOATING_TOOLBAR:com.intellij.codeInsight.intention.IntentionSource
+- sf:LIGHT_BULB:com.intellij.codeInsight.intention.IntentionSource
+- sf:OTHER:com.intellij.codeInsight.intention.IntentionSource
+- sf:PROBLEMS_VIEW:com.intellij.codeInsight.intention.IntentionSource
+- sf:SEARCH_EVERYWHERE:com.intellij.codeInsight.intention.IntentionSource
+- s:valueOf(java.lang.String):com.intellij.codeInsight.intention.IntentionSource
+- s:values():com.intellij.codeInsight.intention.IntentionSource[]
 f:com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction
 - com.intellij.codeInsight.actions.BaseCodeInsightAction
 - com.intellij.codeInsight.hint.HintManagerImpl$ActionToIgnore
@@ -7314,7 +7307,8 @@ com.intellij.codeInsight.intention.impl.AbstractIntentionPopup
 - com.intellij.openapi.Disposable
 - a:close():V
 - a:isVisible():Z
-- a:show(com.intellij.codeInsight.intention.impl.IntentionHintComponent,com.intellij.ui.awt.RelativePoint,java.util.function.Consumer):V
+- a:show(com.intellij.codeInsight.intention.impl.IntentionHintComponent,com.intellij.ui.awt.RelativePoint,java.util.function.Consumer,com.intellij.codeInsight.intention.IntentionSource):V
+- bs:show$default(com.intellij.codeInsight.intention.impl.AbstractIntentionPopup,com.intellij.codeInsight.intention.impl.IntentionHintComponent,com.intellij.ui.awt.RelativePoint,java.util.function.Consumer,com.intellij.codeInsight.intention.IntentionSource,I,java.lang.Object):V
 f:com.intellij.codeInsight.intention.impl.AssignShortcutToIntentionAction
 - com.intellij.codeInsight.intention.impl.AbstractEditIntentionShortcutAction
 - <init>(com.intellij.codeInsight.intention.IntentionAction):V
@@ -7462,6 +7456,7 @@ c:com.intellij.codeInsight.intention.impl.IntentionListStep
 - com.intellij.openapi.ui.popup.SpeedSearchFilter
 - <init>(com.intellij.codeInsight.intention.impl.IntentionHintComponent$IntentionPopup,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.impl.CachedIntentions):V
 - <init>(com.intellij.codeInsight.intention.impl.IntentionHintComponent$IntentionPopup,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.impl.IntentionContainer):V
+- p:<init>(com.intellij.codeInsight.intention.impl.IntentionHintComponent$IntentionPopup,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.impl.IntentionContainer,com.intellij.codeInsight.intention.IntentionSource):V
 - canceled():V
 - p:chooseActionAndInvoke(com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching,com.intellij.psi.PsiFile,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
 - getActionsWithSubActions():java.util.Map
@@ -7500,6 +7495,8 @@ f:com.intellij.codeInsight.intention.impl.IntentionShortcutManager$Companion
 - f:getInstance():com.intellij.codeInsight.intention.impl.IntentionShortcutManager
 f:com.intellij.codeInsight.intention.impl.IntentionShortcutUtils
 - sf:invokeAsAction(com.intellij.codeInsight.intention.IntentionAction,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
+- sf:invokeAsAction(com.intellij.codeInsight.intention.IntentionAction,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.codeInsight.intention.IntentionSource):V
+- bs:invokeAsAction$default(com.intellij.codeInsight.intention.IntentionAction,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.codeInsight.intention.IntentionSource,I,java.lang.Object):V
 com.intellij.codeInsight.intention.impl.IntentionsOrderProvider
 - sf:EXTENSION:com.intellij.lang.LanguageExtension
 - a:getSortedIntentions(com.intellij.codeInsight.intention.impl.CachedIntentions,java.util.List):java.util.List
@@ -7543,6 +7540,8 @@ c:com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 - s:availableFor(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction):Z
 - s:chooseActionAndInvoke(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction,java.lang.String):Z
 - s:chooseActionAndInvoke(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction,java.lang.String,I):Z
+- s:chooseActionAndInvoke(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction,java.lang.String,I,com.intellij.codeInsight.intention.IntentionSource):Z
+- s:chooseActionAndInvoke(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction,java.lang.String,com.intellij.codeInsight.intention.IntentionSource):Z
 - s:chooseBetweenHostAndInjected(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.util.TripleFunction):com.intellij.openapi.util.Pair
 - s:chooseBetweenHostAndInjected(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.util.TripleFunction):com.intellij.openapi.util.Pair
 - s:chooseFileForAction(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.codeInsight.intention.IntentionAction):com.intellij.openapi.util.Pair
@@ -10627,6 +10626,7 @@ f:com.intellij.execution.console.ConsoleFoldingSettings
 - s:getSettings():com.intellij.execution.console.ConsoleFoldingSettings
 - getState():com.intellij.execution.console.ConsoleFoldingSettings$MyBean
 - loadState(com.intellij.execution.console.ConsoleFoldingSettings$MyBean):V
+- noStateLoaded():V
 - shouldFoldLine(java.lang.String):Z
 f:com.intellij.execution.console.ConsoleFoldingSettings$MyBean
 - addedNegative:java.util.List
@@ -13972,18 +13972,6 @@ c:com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 - isEmptyPatternSupported():Z
 f:com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor$Companion
 - f:createLanguageFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
-f:com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreview
-- com.intellij.openapi.actionSystem.AnAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreviewToolbar
-- com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
-- <init>():V
-- getAutoHideable():Z
-- isApplicable(com.intellij.openapi.actionSystem.DataContext):Z
-- register(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
 f:com.intellij.ide.actions.searcheverywhere.ContributorDefinedTabsCustomizationStrategy
 - <init>():V
 - getSeparateTabContributors(java.util.List):java.util.List
@@ -14081,20 +14069,11 @@ f:com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributo
 - setSelected(java.lang.Object,Z):V
 f:com.intellij.ide.actions.searcheverywhere.PreviewAction
 - com.intellij.openapi.project.DumbAwareToggleAction
-- sf:Companion:com.intellij.ide.actions.searcheverywhere.PreviewAction$Companion
 - <init>():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.searcheverywhere.PreviewAction$Companion
-- f:togglePreview(Z):V
-f:com.intellij.ide.actions.searcheverywhere.PreviewActionKt
-- sf:PREVIEW_ACTION_ID:java.lang.String
-f:com.intellij.ide.actions.searcheverywhere.PreviewExperiment
-- sf:INSTANCE:com.intellij.ide.actions.searcheverywhere.PreviewExperiment
-- f:isExperimentEnabled():Z
-- f:isExperimentEnabled2024_1():Z
 *:com.intellij.ide.actions.searcheverywhere.PromoAction
 - a:getCallToAction():java.lang.String
 - a:getPromotedProductIcon():javax.swing.Icon
@@ -14521,45 +14500,6 @@ f:com.intellij.ide.actions.searcheverywhere.setesting.TestSearchEverywhereAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
-- sf:COMMAND_COMPLETED:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- sf:COMMAND_USED:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:CONTRIBUTOR_ID_FIELD:com.intellij.internal.statistic.eventLog.events.StringEventField
-- sf:CONTRIBUTOR_ITEM_SELECTED:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- sf:CURRENT_TAB_FIELD:com.intellij.internal.statistic.eventLog.events.StringEventField
-- sf:DIALOG_CLOSED:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:DIALOG_OPEN:com.intellij.internal.statistic.eventLog.events.EventId2
-- sf:DURATION_MS:com.intellij.internal.statistic.eventLog.events.LongEventField
-- sf:FIRST_TAB_ID:com.intellij.internal.statistic.eventLog.events.StringEventField
-- sf:GROUP_NAVIGATE:com.intellij.internal.statistic.eventLog.events.EventId1
-- sf:HAS_ONLY_SIMILAR_ELEMENT:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:HAS_ONLY_SIMILAR_ITEM_SHOWN:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:IS_ELEMENT_SEMANTIC:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:IS_ONLY_MORE:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:ITEM_NUMBER_BEFORE_MORE:com.intellij.internal.statistic.eventLog.events.IntEventField
-- sf:LAST_TAB_ID:com.intellij.internal.statistic.eventLog.events.StringEventField
-- sf:ML_EXPERIMENT_GROUP:com.intellij.internal.statistic.eventLog.events.IntEventField
-- sf:ML_EXPERIMENT_VERSION:com.intellij.internal.statistic.eventLog.events.IntEventField
-- sf:MORE_ITEM_SELECTED:com.intellij.internal.statistic.eventLog.events.EventId
-- sf:MORE_ITEM_SHOWN:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- sf:PREVIEW_CLOSED:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- sf:PREVIEW_CLOSED_STATE:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:PREVIEW_STATE:com.intellij.internal.statistic.eventLog.events.BooleanEventField
-- sf:PREVIEW_SWITCHED:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- sf:SELECTED_ITEM_NUMBER:com.intellij.internal.statistic.eventLog.events.IntEventField
-- sf:SESSION_FINISHED:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- sf:TAB_SWITCHED:com.intellij.internal.statistic.eventLog.events.VarargEventId
-- sf:TIME_TO_FIRST_RESULT:com.intellij.internal.statistic.eventLog.events.LongEventField
-- sf:TIME_TO_FIRST_RESULT_LAST_QUERY:com.intellij.internal.statistic.eventLog.events.LongEventField
-- sf:TYPED_NAVIGATION_KEYS:com.intellij.internal.statistic.eventLog.events.IntEventField
-- sf:TYPED_SYMBOL_KEYS:com.intellij.internal.statistic.eventLog.events.IntEventField
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- s:getReportableContributorID(com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor):java.lang.String
-f:com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector
-- com.intellij.openapi.Disposable
-- s:createAndStart(javax.swing.JTextField,com.intellij.ide.actions.searcheverywhere.statistics.SearchPerformanceTracker,com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService,com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector
-- dispose():V
 f:com.intellij.ide.bookmark.BookmarkBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier

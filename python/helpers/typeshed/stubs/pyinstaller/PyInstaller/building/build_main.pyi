@@ -1,6 +1,6 @@
 from _typeshed import Incomplete, StrPath
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, Literal
 
 from PyInstaller.building import _PyiBlockCipher
 from PyInstaller.building.datastruct import Target, _TOCTuple
@@ -39,4 +39,5 @@ class Analysis(Target):
         win_private_assemblies: bool = False,
         noarchive: bool = False,
         module_collection_mode: Incomplete | None = None,
+        optimize: Literal[-1, 0, 1, 2] | None = -1,
     ) -> None: ...

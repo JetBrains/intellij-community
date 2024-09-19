@@ -71,3 +71,6 @@ analyze.py
 
 # pyenv local python version
 .python-version
+
+# deliberately local test configuration files
+stdlib/@tests/stubtest_allowlists/*.local

@@ -1,21 +1,36 @@
 from _typeshed import Incomplete
+from dataclasses import dataclass
 from io import BytesIO
 from logging import Logger
 from types import TracebackType
-from typing import Any
-from typing_extensions import Literal, TypeAlias
+from typing import Any, Literal
+from typing_extensions import TypeAlias
 
 from PIL import Image
+
+from .image_datastructures import ImageCache, ImageInfo, VectorImageInfo
+from .svg import SVGObject
 
 _ImageFilter: TypeAlias = Literal["AUTO", "FlateDecode", "DCTDecode", "JPXDecode"]
 
 RESAMPLE: Image.Resampling
+
+@dataclass
+class ImageSettings:
+    compression_level: int = -1
+
 LOGGER: Logger
 SUPPORTED_IMAGE_FILTERS: tuple[_ImageFilter, ...]
+SETTINGS: ImageSettings
+
 TIFFBitRevTable: list[int]
 
+def preload_image(
+    image_cache: ImageCache, name: str | BytesIO | Image.Image, dims: tuple[float, float] | None = None
+) -> tuple[str, BytesIO | Image.Image | None, ImageInfo]: ...
 def load_image(filename): ...
 def is_iccp_valid(iccp, filename) -> bool: ...
+def get_svg_info(filename: str, img: BytesIO, image_cache: ImageCache) -> tuple[str, SVGObject, VectorImageInfo]: ...
 
 # Returned dict could be typed as a TypedDict.
 def get_img_info(

@@ -27,7 +27,22 @@ java.FILE
           DOC_TAG_VALUE_TOKEN
           DOC_LPAREN
           DOC_TAG_VALUE_ELEMENT
-            <empty list>
+            DOC_TYPE_HOLDER
+              TYPE
+                TYPE
+                  CHAR_KEYWORD
+                LBRACKET
+                RBRACKET
+            DOC_COMMA
+            DOC_TYPE_HOLDER
+              WHITE_SPACE
+              TYPE
+                INT_KEYWORD
+            DOC_COMMA
+            DOC_TYPE_HOLDER
+              WHITE_SPACE
+              TYPE
+                INT_KEYWORD
           DOC_RPAREN
         DOC_RBRACKET
     WHITE_SPACE

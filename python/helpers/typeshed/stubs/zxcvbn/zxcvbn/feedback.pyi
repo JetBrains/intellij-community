@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing_extensions import Literal, TypedDict
+from typing import Literal, TypedDict
 
 from .matching import _Match
 

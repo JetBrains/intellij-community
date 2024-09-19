@@ -9,4 +9,8 @@
 uwsgi.SymbolsImporter
 uwsgi.SymbolsZipImporter
 uwsgi.ZipImporter
-uwsgi.route
+# These may or may not exist depending on how the CI is feeling
+# at any given point in time
+(uwsgi\.i_am_the_lord)?
+(uwsgi\.lord_scroll)?
+(uwsgi\.scrolls)?

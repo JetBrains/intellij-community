@@ -2,8 +2,8 @@ from _typeshed import Incomplete, SupportsGetItem, SupportsItems
 from collections.abc import Iterable
 from datetime import datetime, timedelta
 from numbers import Integral
-from typing import Any
-from typing_extensions import Literal, Self, TypeAlias
+from typing import Any, Literal
+from typing_extensions import Self, TypeAlias
 
 from influxdb_client.domain.write_precision import _WritePrecision
 
@@ -18,7 +18,7 @@ class Point:
     def measurement(measurement: str) -> Point: ...
     @staticmethod
     def from_dict(
-        dictionary: SupportsGetItem[str, Any],
+        dictionary: SupportsGetItem[str, Any],  # TODO: Use SupportsContainsAndGetItem
         write_precision: _WritePrecision = "ns",
         *,
         record_measurement_name: str | None = ...,
@@ -37,3 +37,4 @@ class Point:
     def write_precision(self) -> _WritePrecision: ...
     @classmethod
     def set_str_rep(cls, rep_function: Any) -> None: ...
+    def __eq__(self, other: object) -> bool: ...

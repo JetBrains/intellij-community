@@ -1,6 +1,6 @@
 from datetime import datetime
 from re import Pattern
-from typing_extensions import Final
+from typing import Final
 
 MAC_EPOCH: Final[datetime]
 WINDOWS_EPOCH: Final[datetime]

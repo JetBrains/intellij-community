@@ -5,21 +5,26 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import gettext as gettextmod
 import locale
 import os
 import sys
 
-from typing import (
-    List,
-)
-
+from .pycompat import getattr
 from .utils import resourceutil
 from . import (
     encoding,
     pycompat,
 )
+
+if pycompat.TYPE_CHECKING:
+    from typing import (
+        Callable,
+        List,
+    )
+
 
 # modelled after templater.templatepath:
 if getattr(sys, 'frozen', None) is not None:
@@ -64,7 +69,8 @@ except AttributeError:
 _msgcache = {}  # encoding: {message: translation}
 
 
-def gettext(message: bytes) -> bytes:
+def gettext(message):
+    # type: (bytes) -> bytes
     """Translate message.
 
     The message is looked up in the catalog to get a Unicode string,
@@ -80,9 +86,9 @@ def gettext(message: bytes) -> bytes:
 
     cache = _msgcache.setdefault(encoding.encoding, {})
     if message not in cache:
-        if type(message) is str:
+        if type(message) is pycompat.unicode:
             # goofy unicode docstrings in test
-            paragraphs: List[str] = message.split(u'\n\n')
+            paragraphs = message.split(u'\n\n')  # type: List[pycompat.unicode]
         else:
             # should be ascii, but we have unicode docstrings in test, which
             # are converted to utf-8 bytes on Python 3.
@@ -115,10 +121,6 @@ def _plain():
 
 
 if _plain():
-
-    def _(message: bytes) -> bytes:
-        return message
-
-
+    _ = lambda message: message  # type: Callable[[bytes], bytes]
 else:
     _ = gettext

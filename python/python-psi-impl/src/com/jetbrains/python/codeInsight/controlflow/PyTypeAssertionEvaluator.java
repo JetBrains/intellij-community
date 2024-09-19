@@ -138,34 +138,31 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   public static Ref<PyType> createAssertionType(@Nullable PyType initial,
                                                 @Nullable PyType suggested,
                                                 boolean positive,
-                                                boolean transformToDefinition,
                                                 boolean isStrict,
-                                                @NotNull TypeEvalContext context,
-                                                @Nullable PyExpression typeElement) {
-    final PyType transformedType = transformTypeFromAssertion(suggested, transformToDefinition, context, typeElement);
+                                                @NotNull TypeEvalContext context) {
     // non-strict type guard
     if (!isStrict) return Ref.create((positive) ? suggested : initial);
     if (positive) {
       if (!(initial instanceof PyUnionType) &&
           !(initial instanceof PyStructuralType) &&
           !PyTypeChecker.isUnknown(initial, context) &&
-          PyTypeChecker.match(transformedType, initial, context)) {
+          PyTypeChecker.match(suggested, initial, context)) {
         return Ref.create(initial);
       }
       if (initial instanceof PyUnionType unionType) {
         if (!unionType.isWeak()) {
-          var matched = unionType.getMembers().stream().filter((member) -> match(member, transformedType, context)).toList();
+          var matched = unionType.getMembers().stream().filter((member) -> match(member, suggested, context)).toList();
           if (!matched.isEmpty()) {
             return Ref.create(PyUnionType.union(matched));
           }
         }
       }
-      return Ref.create(transformedType);
+      return Ref.create(suggested);
     }
     else if (initial instanceof PyUnionType) {
-      return Ref.create(((PyUnionType)initial).exclude(transformedType, context));
+      return Ref.create(((PyUnionType)initial).exclude(suggested, context));
     }
-    else if (match(initial, transformedType, context)) {
+    else if (match(initial, suggested, context)) {
       return null;
     }
     return Ref.create(initial);
@@ -180,6 +177,12 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   @Nullable
   private static PyType transformTypeFromAssertion(@Nullable PyType type, boolean transformToDefinition, @NotNull TypeEvalContext context,
                                                    @Nullable PyExpression typeElement) {
+    /*
+     * We need to distinguish:
+     *   if isinstance(x, (int, str)):
+     * And:
+     *   if isinstance(x, (1, "")):
+     */
     if (type instanceof PyTupleType tupleType) {
       final List<PyType> members = new ArrayList<>();
       final int count = tupleType.getElementCount();
@@ -227,12 +230,10 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       @Override
       public Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
         return createAssertionType(context.getType(target),
-                                   suggestedType.apply(context),
+                                   transformTypeFromAssertion(suggestedType.apply(context), transformToDefinition, context, typeElement),
                                    positive,
-                                   transformToDefinition,
                                    /*isStrict*/ true,
-                                   context,
-                                   typeElement);
+                                   context);
       }
     };
 

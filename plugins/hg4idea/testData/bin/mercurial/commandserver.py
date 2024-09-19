@@ -5,17 +5,26 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
+import errno
 import gc
 import os
 import random
-import selectors
 import signal
 import socket
 import struct
 import traceback
 
+try:
+    import selectors
+
+    selectors.BaseSelector
+except ImportError:
+    from .thirdparty import selectors2 as selectors
+
 from .i18n import _
+from .pycompat import getattr
 from . import (
     encoding,
     error,
@@ -31,7 +40,7 @@ from .utils import (
 )
 
 
-class channeledoutput:
+class channeledoutput(object):
     """
     Write data to out in the following format:
 
@@ -60,7 +69,7 @@ class channeledoutput:
         return getattr(self.out, attr)
 
 
-class channeledmessage:
+class channeledmessage(object):
     """
     Write encoded message and metadata to out in the following format:
 
@@ -89,7 +98,7 @@ class channeledmessage:
         return getattr(self._cout, attr)
 
 
-class channeledinput:
+class channeledinput(object):
     """
     Read data from in_.
 
@@ -192,7 +201,7 @@ def _selectmessageencoder(ui):
     )
 
 
-class server:
+class server(object):
     """
     Listens for commands on fin, runs them and writes the output on a channel
     based stream to fout.
@@ -331,7 +340,7 @@ class server:
             # any kind of interaction must use server channels, but chg may
             # replace channels by fully functional tty files. so nontty is
             # enforced only if cin is a channel.
-            if not hasattr(self.cin, 'fileno'):
+            if not util.safehasattr(self.cin, b'fileno'):
                 ui.setconfig(b'ui', b'nontty', b'true', b'commandserver')
 
         req = dispatch.request(
@@ -383,7 +392,7 @@ class server:
         if self.cmsg:
             hellomsg += b'message-encoding: %s\n' % self.cmsg.encoding
         hellomsg += b'pid: %d' % procutil.getpid()
-        if hasattr(os, 'getpgid'):
+        if util.safehasattr(os, b'getpgid'):
             hellomsg += b'\n'
             hellomsg += b'pgid: %d' % os.getpgid(0)
 
@@ -442,7 +451,7 @@ def setuplogging(ui, repo=None, fp=None):
         u.setlogger(b'cmdserver', logger)
 
 
-class pipeservice:
+class pipeservice(object):
     def __init__(self, ui, repo, opts):
         self.ui = ui
         self.repo = repo
@@ -492,8 +501,9 @@ def _serverequest(ui, repo, conn, createcmdserver, prereposetups):
         # known exceptions are caught by dispatch.
         except error.Abort as inst:
             ui.error(_(b'abort: %s\n') % inst.message)
-        except BrokenPipeError:
-            pass
+        except IOError as inst:
+            if inst.errno != errno.EPIPE:
+                raise
         except KeyboardInterrupt:
             pass
         finally:
@@ -511,11 +521,12 @@ def _serverequest(ui, repo, conn, createcmdserver, prereposetups):
         fin.close()
         try:
             fout.close()  # implicit flush() may cause another EPIPE
-        except BrokenPipeError:
-            pass
+        except IOError as inst:
+            if inst.errno != errno.EPIPE:
+                raise
 
 
-class unixservicehandler:
+class unixservicehandler(object):
     """Set of pluggable operations for unix-mode services
 
     Almost all methods except for createcmdserver() are called in the main
@@ -549,7 +560,7 @@ class unixservicehandler:
         return server(self.ui, repo, fin, fout, prereposetups)
 
 
-class unixforkingservice:
+class unixforkingservice(object):
     """
     Listens on unix domain socket and forks server per connection
     """
@@ -558,7 +569,7 @@ class unixforkingservice:
         self.ui = ui
         self.repo = repo
         self.address = opts[b'address']
-        if not hasattr(socket, 'AF_UNIX'):
+        if not util.safehasattr(socket, b'AF_UNIX'):
             raise error.Abort(_(b'unsupported platform'))
         if not self.address:
             raise error.Abort(_(b'no socket path specified with --address'))
@@ -587,7 +598,7 @@ class unixforkingservice:
         o = socket.socketpair(socket.AF_UNIX, socket.SOCK_DGRAM)
         self._mainipc, self._workeripc = o
         self._servicehandler.bindsocket(self._sock, self.address)
-        if hasattr(procutil, 'unblocksignal'):
+        if util.safehasattr(procutil, b'unblocksignal'):
             procutil.unblocksignal(signal.SIGCHLD)
         o = signal.signal(signal.SIGCHLD, self._sigchldhandler)
         self._oldsigchldhandler = o
@@ -634,7 +645,15 @@ class unixforkingservice:
                 # waiting for recv() will receive ECONNRESET.
                 self._unlinksocket()
                 exiting = True
-            events = selector.select(timeout=h.pollinterval)
+            try:
+                events = selector.select(timeout=h.pollinterval)
+            except OSError as inst:
+                # selectors2 raises ETIMEDOUT if timeout exceeded while
+                # handling signal interrupt. That's probably wrong, but
+                # we can easily get around it.
+                if inst.errno != errno.ETIMEDOUT:
+                    raise
+                events = []
             if not events:
                 # only exit if we completed all queued requests
                 if exiting:
@@ -646,7 +665,12 @@ class unixforkingservice:
 
     def _acceptnewconnection(self, sock, selector):
         h = self._servicehandler
-        conn, _addr = sock.accept()
+        try:
+            conn, _addr = sock.accept()
+        except socket.error as inst:
+            if inst.args[0] == errno.EINTR:
+                return
+            raise
 
         # Future improvement: On Python 3.7, maybe gc.freeze() can be used
         # to prevent COW memory from being touched by GC.
@@ -679,7 +703,12 @@ class unixforkingservice:
 
     def _handlemainipc(self, sock, selector):
         """Process messages sent from a worker"""
-        path = sock.recv(32768)  # large enough to receive path
+        try:
+            path = sock.recv(32768)  # large enough to receive path
+        except socket.error as inst:
+            if inst.args[0] == errno.EINTR:
+                return
+            raise
         self._repoloader.load(path)
 
     def _sigchldhandler(self, signal, frame):
@@ -689,7 +718,11 @@ class unixforkingservice:
         while self._workerpids:
             try:
                 pid, _status = os.waitpid(-1, options)
-            except ChildProcessError:
+            except OSError as inst:
+                if inst.errno == errno.EINTR:
+                    continue
+                if inst.errno != errno.ECHILD:
+                    raise
                 # no child processes at all (reaped by other waitpid()?)
                 self._workerpids.clear()
                 return

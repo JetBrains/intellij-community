@@ -64,15 +64,18 @@ internal class PromoSpringModuleBuilder : ModuleBuilder(), PromoModuleBuilder {
 
       override fun updateDataModel(): Unit = Unit
       override fun getComponent(): JComponent = panel
+
       override fun validate(): Boolean {
         FUSEventSource.NEW_PROJECT_WIZARD.openDownloadPageAndLog(null, PluginAdvertiserService.ideaUltimate.downloadUrl,
+                                                                 PluginAdvertiserService.ideaUltimate,
                                                                  PluginId.getId(SPRING_PLUGIN_ID))
 
         return false
       }
 
       override fun updateStep() {
-        FUSEventSource.NEW_PROJECT_WIZARD.logIdeSuggested(null, "IU", PluginId.getId(SPRING_PLUGIN_ID))
+        FUSEventSource.NEW_PROJECT_WIZARD.logIdeSuggested(null, PluginAdvertiserService.ideaUltimate.productCode,
+                                                          PluginId.getId(SPRING_PLUGIN_ID))
       }
     }
   }

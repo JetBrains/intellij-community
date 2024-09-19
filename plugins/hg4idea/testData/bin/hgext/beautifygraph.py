@@ -11,12 +11,14 @@
    A terminal with UTF-8 support and monospace narrow text are required.
 '''
 
+from __future__ import absolute_import
 
 from mercurial.i18n import _
 from mercurial import (
     encoding,
     extensions,
     graphmod,
+    pycompat,
     templatekw,
 )
 
@@ -52,7 +54,7 @@ def prettyedge(before, edge, after):
 def convertedges(line):
     line = b' %s ' % line
     pretty = []
-    for idx in range(len(line) - 2):
+    for idx in pycompat.xrange(len(line) - 2):
         pretty.append(
             prettyedge(
                 line[idx : idx + 1],
@@ -103,5 +105,5 @@ def extsetup(ui):
         )
         return
 
-    extensions.wrapfunction(graphmod, 'outputgraph', outputprettygraph)
-    extensions.wrapfunction(templatekw, 'getgraphnode', getprettygraphnode)
+    extensions.wrapfunction(graphmod, b'outputgraph', outputprettygraph)
+    extensions.wrapfunction(templatekw, b'getgraphnode', getprettygraphnode)

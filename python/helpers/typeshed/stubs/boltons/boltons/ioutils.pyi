@@ -2,8 +2,6 @@ import abc
 from _typeshed import Incomplete
 from abc import abstractmethod
 
-text_type = str
-binary_type = bytes
 READ_CHUNK_SIZE: int
 EINVAL: Incomplete
 
@@ -56,6 +54,7 @@ class SpooledIOBase(metaclass=abc.ABCMeta):
     def __eq__(self, other): ...
     def __ne__(self, other): ...
     def __bool__(self): ...
+    def __del__(self) -> None: ...
     __nonzero__: Incomplete
 
 class SpooledBytesIO(SpooledIOBase):

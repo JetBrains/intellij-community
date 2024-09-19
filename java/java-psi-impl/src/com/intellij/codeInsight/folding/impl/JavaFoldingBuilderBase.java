@@ -198,7 +198,19 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     final FoldingDescriptor commentDescriptor = CommentFoldingUtil.getCommentDescriptor(comment, document, processedComments,
                                                                                         element -> isCustomRegionElement(element),
                                                                                         isCollapseCommentByDefault(comment));
-    if (commentDescriptor != null) list.add(commentDescriptor);
+    if (commentDescriptor != null) {
+      if (comment instanceof PsiDocComment && ((PsiDocComment)comment).isMarkdownComment()) {
+        // Hack: Markdown comments aren't documented in the Commenter for the Java language
+        // To avoid the `/** */` tokens, we remove them
+        String placeHolderText = commentDescriptor.getPlaceholderText();
+        if (placeHolderText != null) {
+          placeHolderText = StringUtil.trimEnd(StringUtil.trimStart(placeHolderText, "/**"), "*/");
+          commentDescriptor.setPlaceholderText(placeHolderText);
+        }
+      }
+
+      list.add(commentDescriptor);
+    }
   }
 
   private static void addMethodGenericParametersFolding(@NotNull List<? super FoldingDescriptor> list,

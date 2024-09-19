@@ -8,8 +8,12 @@
 # This was originally copied from the public domain code at
 # http://www.python.org/dev/peps/pep-0333/#the-server-gateway-side
 
+from __future__ import absolute_import
 
-from .. import encoding, pycompat
+import os
+
+from ..pycompat import getattr
+from .. import pycompat
 
 from ..utils import procutil
 
@@ -20,10 +24,7 @@ def launch(application):
     procutil.setbinary(procutil.stdin)
     procutil.setbinary(procutil.stdout)
 
-    environ = {
-        k.decode('iso8859-1'): v.decode('iso8859-1')
-        for k, v in encoding.environ.items()
-    }  # re-exports
+    environ = dict(pycompat.iteritems(os.environ))  # re-exports
     environ.setdefault('PATH_INFO', '')
     if environ.get('SERVER_SOFTWARE', '').startswith('Microsoft-IIS'):
         # IIS includes script_name in PATH_INFO

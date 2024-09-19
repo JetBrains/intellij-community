@@ -3,3 +3,6 @@ keyboard.KeyboardEvent.scan_code
 keyboard._keyboard_event.KeyboardEvent.scan_code
 # TODO: Should this be allowlisted?
 keyboard.__main__
+
+keyboard._canonical_names.basestring
+keyboard._keyboard_event.basestring

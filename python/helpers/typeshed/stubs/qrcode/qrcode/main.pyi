@@ -1,13 +1,37 @@
-from _typeshed import Incomplete
-from typing import Generic, NamedTuple, TypeVar, overload
-from typing_extensions import Literal, TypeAlias
+from _typeshed import ConvertibleToInt, Incomplete
+from typing import Any, Generic, Literal, NamedTuple, TypeVar, overload
+from typing_extensions import TypeAlias
 
-from qrcode.image.base import BaseImage
+from .image.base import BaseImage
+from .util import QRData, _MaskPattern
 
 ModulesType: TypeAlias = list[list[bool | None]]
 precomputed_qr_blanks: dict[int, ModulesType]
 
-def make(data: Incomplete | None = None, **kwargs): ...
+_DefaultImage: TypeAlias = Any  # PilImage if Pillow is installed, PyPNGImage otherwise
+
+@overload
+def make(
+    data: QRData | bytes | str,
+    *,
+    version: ConvertibleToInt | None = None,
+    error_correction: Literal[0, 1, 2, 3] = 0,
+    box_size: ConvertibleToInt = 10,
+    border: ConvertibleToInt = 4,
+    image_factory: None = None,
+    mask_pattern: _MaskPattern | None = None,
+) -> _DefaultImage: ...
+@overload
+def make(
+    data: QRData | bytes | str,
+    *,
+    version: ConvertibleToInt | None = None,
+    error_correction: Literal[0, 1, 2, 3] = 0,
+    box_size: ConvertibleToInt = 10,
+    border: ConvertibleToInt = 4,
+    image_factory: type[GenericImage],
+    mask_pattern: _MaskPattern | None = None,
+) -> GenericImage: ...
 def copy_2d_array(x): ...
 
 class ActiveWithNeighbors(NamedTuple):
@@ -27,28 +51,54 @@ GenericImageLocal = TypeVar("GenericImageLocal", bound=BaseImage)  # noqa: Y001
 
 class QRCode(Generic[GenericImage]):
     modules: ModulesType
-    error_correction: Incomplete
-    box_size: Incomplete
-    border: Incomplete
-    image_factory: Incomplete
+    error_correction: Literal[0, 1, 2, 3]
+    box_size: int
+    border: int
+    image_factory: type[GenericImage] | None
+    @overload
     def __init__(
         self,
-        version: Incomplete | None = None,
-        error_correction=0,
-        box_size: int = 10,
-        border: int = 4,
-        image_factory: type[GenericImage] | None = None,
-        mask_pattern: Incomplete | None = None,
+        version: ConvertibleToInt | None,
+        error_correction: Literal[0, 1, 2, 3],
+        box_size: ConvertibleToInt,
+        border: ConvertibleToInt,
+        image_factory: type[GenericImage],
+        mask_pattern: _MaskPattern | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        version: ConvertibleToInt | None = None,
+        error_correction: Literal[0, 1, 2, 3] = 0,
+        box_size: ConvertibleToInt = 10,
+        border: ConvertibleToInt = 4,
+        *,
+        image_factory: type[GenericImage],
+        mask_pattern: _MaskPattern | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self: QRCode[_DefaultImage],
+        version: ConvertibleToInt | None = None,
+        error_correction: Literal[0, 1, 2, 3] = 0,
+        box_size: ConvertibleToInt = 10,
+        border: ConvertibleToInt = 4,
+        image_factory: None = None,
+        mask_pattern: _MaskPattern | None = None,
     ) -> None: ...
     @property
     def version(self) -> int: ...
+    @version.setter
+    def version(self, value: ConvertibleToInt | None) -> None: ...
     @property
-    def mask_pattern(self): ...
+    def mask_pattern(self) -> _MaskPattern | None: ...
+    @mask_pattern.setter
+    def mask_pattern(self, pattern: _MaskPattern | None) -> None: ...
     modules_count: int
     data_cache: Incomplete
     data_list: Incomplete
     def clear(self) -> None: ...
-    def add_data(self, data, optimize: int = 20) -> None: ...
+    def add_data(self, data: QRData | bytes | str, optimize: int = 20) -> None: ...
     def make(self, fit: bool = True) -> None: ...
     def makeImpl(self, test, mask_pattern) -> None: ...
     def setup_position_probe_pattern(self, row, col) -> None: ...
@@ -57,9 +107,9 @@ class QRCode(Generic[GenericImage]):
     def print_tty(self, out: Incomplete | None = None) -> None: ...
     def print_ascii(self, out: Incomplete | None = None, tty: bool = False, invert: bool = False): ...
     @overload
-    def make_image(self, image_factory: Literal[None] = None, **kwargs) -> GenericImage: ...
+    def make_image(self, image_factory: None = None, **kwargs: Any) -> GenericImage: ...
     @overload
-    def make_image(self, image_factory: type[GenericImageLocal] | None = None, **kwargs) -> GenericImageLocal: ...
+    def make_image(self, image_factory: type[GenericImageLocal], **kwargs: Any) -> GenericImageLocal: ...
     def is_constrained(self, row: int, col: int) -> bool: ...
     def setup_timing_pattern(self) -> None: ...
     def setup_position_adjust_pattern(self) -> None: ...

@@ -1,8 +1,8 @@
 import sys
 from _typeshed import ReadableBuffer
 from collections.abc import Callable, Mapping
-from typing import Any, AnyStr, Generic, TypeVar, overload
-from typing_extensions import Literal, Self, final
+from typing import Any, AnyStr, Generic, Literal, TypeVar, final, overload
+from typing_extensions import Self
 
 from . import _regex
 from ._regex_core import *
@@ -112,7 +112,7 @@ def split(
 ) -> list[str | Any]: ...
 @overload
 def split(
-    pattern: ReadableBuffer | Pattern[bytes],
+    pattern: bytes | Pattern[bytes],
     string: ReadableBuffer,
     maxsplit: int = 0,
     flags: int = 0,
@@ -134,7 +134,7 @@ def splititer(
 ) -> _regex.Splitter[str]: ...
 @overload
 def splititer(
-    pattern: ReadableBuffer | Pattern[bytes],
+    pattern: bytes | Pattern[bytes],
     string: ReadableBuffer,
     maxsplit: int = 0,
     flags: int = 0,
@@ -158,7 +158,7 @@ def findall(
 ) -> list[Any]: ...
 @overload
 def findall(
-    pattern: ReadableBuffer | Pattern[bytes],
+    pattern: bytes | Pattern[bytes],
     string: ReadableBuffer,
     flags: int = 0,
     pos: int | None = None,
@@ -185,7 +185,7 @@ def finditer(
 ) -> _regex.Scanner[str]: ...
 @overload
 def finditer(
-    pattern: ReadableBuffer | Pattern[bytes],
+    pattern: bytes | Pattern[bytes],
     string: ReadableBuffer,
     flags: int = 0,
     pos: int | None = None,
@@ -213,7 +213,7 @@ def sub(
 ) -> str: ...
 @overload
 def sub(
-    pattern: ReadableBuffer | Pattern[bytes],
+    pattern: bytes | Pattern[bytes],
     repl: ReadableBuffer | Callable[[Match[bytes]], ReadableBuffer],
     string: ReadableBuffer,
     count: int = 0,
@@ -241,7 +241,7 @@ def subf(
 ) -> str: ...
 @overload
 def subf(
-    pattern: ReadableBuffer | Pattern[bytes],
+    pattern: bytes | Pattern[bytes],
     format: ReadableBuffer | Callable[[Match[bytes]], ReadableBuffer],
     string: ReadableBuffer,
     count: int = 0,
@@ -269,7 +269,7 @@ def subn(
 ) -> tuple[str, int]: ...
 @overload
 def subn(
-    pattern: ReadableBuffer | Pattern[bytes],
+    pattern: bytes | Pattern[bytes],
     repl: ReadableBuffer | Callable[[Match[bytes]], ReadableBuffer],
     string: ReadableBuffer,
     count: int = 0,
@@ -297,7 +297,7 @@ def subfn(
 ) -> tuple[str, int]: ...
 @overload
 def subfn(
-    pattern: ReadableBuffer | Pattern[bytes],
+    pattern: bytes | Pattern[bytes],
     format: ReadableBuffer | Callable[[Match[bytes]], ReadableBuffer],
     string: ReadableBuffer,
     count: int = 0,
@@ -335,240 +335,242 @@ class Pattern(Generic[AnyStr]):
     def search(
         self: Pattern[str],
         string: str,
-        pos: int = ...,
-        endpos: int = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        partial: bool = False,
+        timeout: float | None = None,
     ) -> Match[str] | None: ...
     @overload
     def search(
         self: Pattern[bytes],
         string: ReadableBuffer,
-        pos: int = ...,
-        endpos: int = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        partial: bool = False,
+        timeout: float | None = None,
     ) -> Match[bytes] | None: ...
     @overload
     def match(
         self: Pattern[str],
         string: str,
-        pos: int = ...,
-        endpos: int = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        partial: bool = False,
+        timeout: float | None = None,
     ) -> Match[str] | None: ...
     @overload
     def match(
         self: Pattern[bytes],
         string: ReadableBuffer,
-        pos: int = ...,
-        endpos: int = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        partial: bool = False,
+        timeout: float | None = None,
     ) -> Match[bytes] | None: ...
     @overload
     def fullmatch(
         self: Pattern[str],
         string: str,
-        pos: int = ...,
-        endpos: int = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        partial: bool = False,
+        timeout: float | None = None,
     ) -> Match[str] | None: ...
     @overload
     def fullmatch(
         self: Pattern[bytes],
         string: ReadableBuffer,
-        pos: int = ...,
-        endpos: int = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        partial: bool = False,
+        timeout: float | None = None,
     ) -> Match[bytes] | None: ...
     @overload
     def split(
-        self: Pattern[str], string: str, maxsplit: int = ..., concurrent: bool | None = ..., timeout: float | None = ...
+        self: Pattern[str], string: str, maxsplit: int = 0, concurrent: bool | None = None, timeout: float | None = None
     ) -> list[str | Any]: ...
     @overload
     def split(
         self: Pattern[bytes],
         string: ReadableBuffer,
-        maxsplit: int = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        maxsplit: int = 0,
+        concurrent: bool | None = None,
+        timeout: float | None = None,
     ) -> list[bytes | Any]: ...
     @overload
     def splititer(
-        self: Pattern[str], string: str, maxsplit: int = ..., concurrent: bool | None = ..., timeout: float | None = ...
+        self: Pattern[str], string: str, maxsplit: int = 0, concurrent: bool | None = None, timeout: float | None = None
     ) -> _regex.Splitter[str]: ...
     @overload
     def splititer(
         self: Pattern[bytes],
         string: ReadableBuffer,
-        maxsplit: int = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        maxsplit: int = 0,
+        concurrent: bool | None = None,
+        timeout: float | None = None,
     ) -> _regex.Splitter[bytes]: ...
     @overload
     def findall(
         self: Pattern[str],
         string: str,
-        pos: int = ...,
-        endpos: int = ...,
-        overlapped: bool = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        pos: int | None = None,
+        endpos: int | None = None,
+        overlapped: bool = False,
+        concurrent: bool | None = None,
+        timeout: float | None = None,
     ) -> list[Any]: ...
     @overload
     def findall(
         self: Pattern[bytes],
         string: ReadableBuffer,
-        pos: int = ...,
-        endpos: int = ...,
-        overlapped: bool = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        pos: int | None = None,
+        endpos: int | None = None,
+        overlapped: bool = False,
+        concurrent: bool | None = None,
+        timeout: float | None = None,
     ) -> list[Any]: ...
     @overload
     def finditer(
         self: Pattern[str],
         string: str,
-        pos: int = ...,
-        endpos: int = ...,
-        overlapped: bool = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        pos: int | None = None,
+        endpos: int | None = None,
+        overlapped: bool = False,
+        concurrent: bool | None = None,
+        partial: bool = False,
+        timeout: float | None = None,
     ) -> _regex.Scanner[str]: ...
     @overload
     def finditer(
         self: Pattern[bytes],
         string: ReadableBuffer,
-        pos: int = ...,
-        endpos: int = ...,
-        overlapped: bool = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        pos: int | None = None,
+        endpos: int | None = None,
+        overlapped: bool = False,
+        concurrent: bool | None = None,
+        partial: bool = False,
+        timeout: float | None = None,
     ) -> _regex.Scanner[bytes]: ...
     @overload
     def sub(
         self: Pattern[str],
         repl: str | Callable[[Match[str]], str],
         string: str,
-        count: int = ...,
-        flags: int = ...,
-        pos: int | None = ...,
-        endpos: int | None = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        count: int = 0,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        timeout: float | None = None,
     ) -> str: ...
     @overload
     def sub(
         self: Pattern[bytes],
         repl: ReadableBuffer | Callable[[Match[bytes]], ReadableBuffer],
         string: ReadableBuffer,
-        count: int = ...,
-        flags: int = ...,
-        pos: int | None = ...,
-        endpos: int | None = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        count: int = 0,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        timeout: float | None = None,
     ) -> bytes: ...
     @overload
     def subf(
         self: Pattern[str],
         format: str | Callable[[Match[str]], str],
         string: str,
-        count: int = ...,
-        flags: int = ...,
-        pos: int | None = ...,
-        endpos: int | None = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        count: int = 0,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        timeout: float | None = None,
     ) -> str: ...
     @overload
     def subf(
         self: Pattern[bytes],
         format: ReadableBuffer | Callable[[Match[bytes]], ReadableBuffer],
         string: ReadableBuffer,
-        count: int = ...,
-        flags: int = ...,
-        pos: int | None = ...,
-        endpos: int | None = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        count: int = 0,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        timeout: float | None = None,
     ) -> bytes: ...
     @overload
     def subn(
         self: Pattern[str],
         repl: str | Callable[[Match[str]], str],
         string: str,
-        count: int = ...,
-        flags: int = ...,
-        pos: int | None = ...,
-        endpos: int | None = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        count: int = 0,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        timeout: float | None = None,
     ) -> tuple[str, int]: ...
     @overload
     def subn(
         self: Pattern[bytes],
         repl: ReadableBuffer | Callable[[Match[bytes]], ReadableBuffer],
         string: ReadableBuffer,
-        count: int = ...,
-        flags: int = ...,
-        pos: int | None = ...,
-        endpos: int | None = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        count: int = 0,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        timeout: float | None = None,
     ) -> tuple[bytes, int]: ...
     @overload
     def subfn(
         self: Pattern[str],
         format: str | Callable[[Match[str]], str],
         string: str,
-        count: int = ...,
-        flags: int = ...,
-        pos: int | None = ...,
-        endpos: int | None = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        count: int = 0,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        timeout: float | None = None,
     ) -> tuple[str, int]: ...
     @overload
     def subfn(
         self: Pattern[bytes],
         format: ReadableBuffer | Callable[[Match[bytes]], ReadableBuffer],
         string: ReadableBuffer,
-        count: int = ...,
-        flags: int = ...,
-        pos: int | None = ...,
-        endpos: int | None = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        count: int = 0,
+        pos: int | None = None,
+        endpos: int | None = None,
+        concurrent: bool | None = None,
+        timeout: float | None = None,
     ) -> tuple[bytes, int]: ...
     @overload
     def scanner(
         self: Pattern[str],
         string: str,
-        pos: int | None = ...,
-        endpos: int | None = ...,
-        overlapped: bool = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        pos: int | None = None,
+        endpos: int | None = None,
+        overlapped: bool = False,
+        concurrent: bool | None = None,
+        partial: bool = False,
+        timeout: float | None = None,
     ) -> _regex.Scanner[str]: ...
     @overload
     def scanner(
         self: Pattern[bytes],
         string: bytes,
-        pos: int | None = ...,
-        endpos: int | None = ...,
-        overlapped: bool = ...,
-        concurrent: bool | None = ...,
-        timeout: float | None = ...,
+        pos: int | None = None,
+        endpos: int | None = None,
+        overlapped: bool = False,
+        concurrent: bool | None = None,
+        partial: bool = False,
+        timeout: float | None = None,
     ) -> _regex.Scanner[bytes]: ...
     def __copy__(self) -> Self: ...
     def __deepcopy__(self) -> Self: ...
     if sys.version_info >= (3, 9):
-        def __class_getitem__(cls, item: Any) -> GenericAlias: ...
+        def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
 
 @final
 class Match(Generic[AnyStr]):
@@ -593,11 +595,11 @@ class Match(Generic[AnyStr]):
     @property
     def fuzzy_changes(self) -> tuple[list[int], list[int], list[int]]: ...
     @overload
-    def group(self, __group: Literal[0] = 0) -> AnyStr: ...
+    def group(self, group: Literal[0] = 0, /) -> AnyStr: ...
     @overload
-    def group(self, __group: int | str = ...) -> AnyStr | Any: ...
+    def group(self, group: int | str = ..., /) -> AnyStr | Any: ...
     @overload
-    def group(self, __group1: int | str, __group2: int | str, *groups: int | str) -> tuple[AnyStr | Any, ...]: ...
+    def group(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[AnyStr | Any, ...]: ...
     @overload
     def groups(self, default: None = None) -> tuple[AnyStr | Any, ...]: ...
     @overload
@@ -607,44 +609,44 @@ class Match(Generic[AnyStr]):
     @overload
     def groupdict(self, default: _T) -> dict[str, AnyStr | _T]: ...
     @overload
-    def span(self, __group: int | str = ...) -> tuple[int, int]: ...
+    def span(self, group: int | str = ..., /) -> tuple[int, int]: ...
     @overload
-    def span(self, __group1: int | str, __group2: int | str, *groups: int | str) -> tuple[tuple[int, int], ...]: ...
+    def span(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[tuple[int, int], ...]: ...
     @overload
-    def spans(self, __group: int | str = ...) -> list[tuple[int, int]]: ...
+    def spans(self, group: int | str = ..., /) -> list[tuple[int, int]]: ...
     @overload
-    def spans(self, __group1: int | str, __group2: int | str, *groups: int | str) -> tuple[list[tuple[int, int]], ...]: ...
+    def spans(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[list[tuple[int, int]], ...]: ...
     @overload
-    def start(self, __group: int | str = ...) -> int: ...
+    def start(self, group: int | str = ..., /) -> int: ...
     @overload
-    def start(self, __group1: int | str, __group2: int | str, *groups: int | str) -> tuple[int, ...]: ...
+    def start(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[int, ...]: ...
     @overload
-    def starts(self, __group: int | str = ...) -> list[int]: ...
+    def starts(self, group: int | str = ..., /) -> list[int]: ...
     @overload
-    def starts(self, __group1: int | str, __group2: int | str, *groups: int | str) -> tuple[list[int], ...]: ...
+    def starts(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[list[int], ...]: ...
     @overload
-    def end(self, __group: int | str = ...) -> int: ...
+    def end(self, group: int | str = ..., /) -> int: ...
     @overload
-    def end(self, __group1: int | str, __group2: int | str, *groups: int | str) -> tuple[int, ...]: ...
+    def end(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[int, ...]: ...
     @overload
-    def ends(self, __group: int | str = ...) -> list[int]: ...
+    def ends(self, group: int | str = ..., /) -> list[int]: ...
     @overload
-    def ends(self, __group1: int | str, __group2: int | str, *groups: int | str) -> tuple[list[int], ...]: ...
+    def ends(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[list[int], ...]: ...
     def expand(self, template: AnyStr) -> AnyStr: ...
     def expandf(self, format: AnyStr) -> AnyStr: ...
     @overload
-    def captures(self, __group: int | str = ...) -> list[AnyStr]: ...
+    def captures(self, group: int | str = ..., /) -> list[AnyStr]: ...
     @overload
-    def captures(self, __group1: int | str, __group2: int | str, *groups: int | str) -> tuple[list[AnyStr], ...]: ...
+    def captures(self, group1: int | str, group2: int | str, /, *groups: int | str) -> tuple[list[AnyStr], ...]: ...
     def capturesdict(self) -> dict[str, list[AnyStr]]: ...
     def detach_string(self) -> None: ...
     def allcaptures(self) -> tuple[list[AnyStr]]: ...
     def allspans(self) -> tuple[list[tuple[int, int]]]: ...
     @overload
-    def __getitem__(self, __key: Literal[0]) -> AnyStr: ...
+    def __getitem__(self, key: Literal[0], /) -> AnyStr: ...
     @overload
-    def __getitem__(self, __key: int | str) -> AnyStr | Any: ...
+    def __getitem__(self, key: int | str, /) -> AnyStr | Any: ...
     def __copy__(self) -> Self: ...
     def __deepcopy__(self) -> Self: ...
     if sys.version_info >= (3, 9):
-        def __class_getitem__(cls, item: Any) -> GenericAlias: ...
+        def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...

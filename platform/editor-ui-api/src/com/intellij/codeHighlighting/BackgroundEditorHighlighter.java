@@ -4,5 +4,5 @@ package com.intellij.codeHighlighting;
 import org.jetbrains.annotations.NotNull;
 
 public interface BackgroundEditorHighlighter {
-  HighlightingPass @NotNull [] createPassesForEditor();
+  @NotNull HighlightingPass @NotNull [] createPassesForEditor();
 }

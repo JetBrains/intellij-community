@@ -9,6 +9,7 @@ class AsyncStrategy(BaseStrategy):
         socket_size: Any
         def __init__(self, ldap_connection) -> None: ...
         def run(self) -> None: ...
+
     sync: bool
     no_real_dsa: bool
     pooled: bool

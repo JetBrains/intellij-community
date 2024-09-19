@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector.logActionBlocked
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -19,8 +20,9 @@ import java.util.concurrent.atomic.AtomicReference
  * or explicitly asks the user if it should proceed in a limited way or cancel (copying, moving, see IDEA-192489, IDEA-240078, IDEA-240078).
  * This case is not handled by this collector.
  */
+@ApiStatus.Internal
 object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("dumb.mode.blocked.functionality", 8)
+  private val GROUP = EventLogGroup("dumb.mode.blocked.functionality", 9)
 
   private val FUNCTIONALITY_SOURCE = EventFields.Enum("functionality", DumbModeBlockedFunctionality::class.java)
   private val EXECUTED_WHEN_SMART = EventFields.Boolean("executed_when_smart")
@@ -28,6 +30,9 @@ object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
                                                                 ActionsEventLogGroup.ACTION_ID,
                                                                 FUNCTIONALITY_SOURCE,
                                                                 EXECUTED_WHEN_SMART)
+
+  private val ACTION_FAILED = GROUP.registerEvent("action.failed.due.to.dumb.mode",
+                                                  ActionsEventLogGroup.ACTION_ID)
 
   fun logActionBlocked(project: Project, actionId: String) {
     lastEqualityObjectReference.set(null)
@@ -74,6 +79,10 @@ object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
     }
     FUNCTIONALITY_BLOCKED.log(project,
                               FUNCTIONALITY_SOURCE.with(functionality))
+  }
+
+  fun logActionFailedToExecute(project: Project, actionId: String?) {
+    ACTION_FAILED.log(project, actionId)
   }
 
   override fun getGroup(): EventLogGroup {

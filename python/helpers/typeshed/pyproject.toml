@@ -1,21 +1,111 @@
 [tool.black]
-line_length = 130
-target_version = ["py310"]
-skip_magic_trailing_comma = true
+line-length = 130
+target-version = ["py310"]
+skip-magic-trailing-comma = true
 # Exclude protobuf files because they have long line lengths
 # Ideally, we could configure Black to allow longer line lengths
 # for just these files, but doesn't seem possible yet.
 force-exclude = ".*_pb2.pyi"
 
-[tool.isort]
-profile = "black"
-combine_as_imports = true
-line_length = 130
-skip = [".git", ".github", ".venv"]
-extra_standard_library = [
+[tool.ruff]
+line-length = 130
+# Oldest supported Python version
+target-version = "py38"
+fix = true
+exclude = [
+    # virtual environment
+    ".env",
+    ".venv",
+    "env",
+    # cache directories, etc.:
+    ".git",
+    ".mypy_cache",
+    ".pytype",
+]
+
+[tool.ruff.lint]
+# Disable all rules on test cases by default:
+# test cases often deliberately contain code
+# that might not be considered idiomatic or modern.
+#
+# Note: some rules that are specifically useful to the test cases
+# are invoked via separate runs of ruff in pre-commit:
+# see our .pre-commit-config.yaml file for details
+exclude = ["**/test_cases/**/*.py"]
+# We still use flake8-pyi and flake8-noqa to check these (see .flake8 config file);
+# tell ruff not to flag these as e.g. "unused noqa comments"
+external = ["F821", "NQA", "Y"]
+select = [
+    "B", # flake8-bugbear
+    "FA", # flake8-future-annotations
+    "I", # isort
+    "RUF", # Ruff-specific and unused-noqa
+    "UP", # pyupgrade
+    # Flake8 base rules
+    "E", # pycodestyle Error
+    "F", # Pyflakes
+    "W", # pycodestyle Warning
+    # PYI: only enable rules that always autofix, avoids duplicate # noqa with flake8-pyi
+    # See https://github.com/plinss/flake8-noqa/issues/22
+    "PYI009", # use `...`, not `pass`, in empty class bodies
+    "PYI010", # function bodies must be empty
+    "PYI012", # class bodies must not contain `pass`
+    "PYI013", # non-empty class bodies must not contain `...`
+    "PYI016", # duplicate union member
+    "PYI020", # quoted annotations are always unnecessary in stubs
+    "PYI025", # always alias `collections.abc.Set` as `AbstractSet` when importing it
+    "PYI032", # use `object`, not `Any`, as the second parameter to `__eq__`
+    "PYI055", # multiple `type[T]` usages in a union
+    "PYI058", # use `Iterator` as the return type for `__iter__` methods
+]
+extend-safe-fixes = [
+    "UP036", # Remove unnecessary `sys.version_info` blocks
+]
+ignore = [
+    ###
+    # Rules that can conflict with the formatter (Black)
+    # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+    ###
+    "E111", # indentation-with-invalid-multiple
+    "E114", # indentation-with-invalid-multiple-comment
+    "E117", # over-indented
+    "W191", # tab-indentation
+    ###
+    # Rules we don't want or don't agree with
+    ###
+    # Slower and more verbose https://github.com/astral-sh/ruff/issues/7871
+    "UP038", # Use `X | Y` in `isinstance` call instead of `(X, Y)`
+    # Used for direct, non-subclass type comparison, for example: `type(val) is str`
+    # see https://github.com/astral-sh/ruff/issues/6465
+    "E721", # Do not compare types, use `isinstance()`
+    ###
+    # False-positives, but already checked by type-checkers
+    ###
+    # Ruff doesn't support multi-file analysis yet: https://github.com/astral-sh/ruff/issues/5295
+    "RUF013", # PEP 484 prohibits implicit `Optional`
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*.pyi" = [
+    # Most flake8-bugbear rules don't apply for third-party stubs like typeshed.
+    # B033 could be slightly useful but Ruff doesn't have per-file select
+    "B", # flake8-bugbear
+    # Rules that are out of the control of stub authors:
+    "E501", # Line too long
+    "E741", # ambiguous variable name
+    "F403", # `from . import *` used; unable to detect undefined names
+    # Stubs can sometimes re-export entire modules.
+    # Issues with using a star-imported name will be caught by type-checkers.
+    "F405", # may be undefined, or defined from star imports
+]
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+combine-as-imports = true
+extra-standard-library = [
     "_typeshed",
     "typing_extensions",
-    # Extra modules not recognized by isort
+    # Extra modules not recognized by Ruff/isort
     "_ast",
     "_bisect",
     "_bootlocale",
@@ -33,6 +123,7 @@ extra_standard_library = [
     "_imp",
     "_json",
     "_locale",
+    "_lsprof",
     "_markupbase",
     "_msi",
     "_operator",
@@ -56,50 +147,7 @@ extra_standard_library = [
     "opcode",
     "pyexpat",
 ]
-known_first_party = ["parse_metadata", "utils"]
-
-[tool.ruff]
-line-length = 130
-# Oldest supported Python version
-target-version = "py37"
-fix = true
-exclude = [
-    # Ignore generated protobuf stubs
-    "*_pb2.pyi",
-    # virtual environment
-    ".env",
-    ".venv",
-    "env",
-    # cache directories, etc.:
-    ".git",
-    ".mypy_cache",
-    ".pytype",
-    ".venv",
-    "env",
-]
-
-# Only enable rules that have safe autofixes;
-# only enable rules that are relevant to stubs
-select = [
-    "F401", # Remove unused imports
-    "FA", # flake8-future-annotations
-    "PYI009", # use `...`, not `pass`, in empty class bodies
-    "PYI010", # function bodies must be empty
-    "PYI012", # class bodies must not contain `pass`
-    "PYI013", # non-empty class bodies must not contain `...`
-    "PYI020", # quoted annotations are always unnecessary in stubs
-    "PYI025", # always alias `collections.abc.Set` as `AbstractSet` when importing it
-    "PYI032", # use `object`, not `Any`, as the second parameter to `__eq__`
-    "UP004", # Remove explicit `object` inheritance
-    "UP006", # PEP-585 autofixes
-    "UP007", # PEP-604 autofixes
-    "UP013", # Class-based syntax for TypedDicts
-    "UP014", # Class-based syntax for NamedTuples
-    "UP019", # Use str over typing.Text
-    "UP035", # import from typing, not typing_extensions, wherever possible
-    "UP039", # don't use parens after a class definition with no bases
-]
+known-first-party = ["_metadata", "_utils"]
 
 [tool.typeshed]
-pyright_version = "1.1.332"
-oldest_supported_python = "3.7"
+oldest_supported_python = "3.8"

@@ -5,12 +5,20 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import binascii
 
 # This ugly style has a noticeable effect in manifest parsing
 hex = binascii.hexlify
-bin = binascii.unhexlify
+# Adapt to Python 3 API changes. If this ends up showing up in
+# profiles, we can use this version only on Python 3, and forward
+# binascii.unhexlify like we used to on Python 2.
+def bin(s):
+    try:
+        return binascii.unhexlify(s)
+    except binascii.Error as e:
+        raise TypeError(e)
 
 
 def short(node):
@@ -24,7 +32,7 @@ nullrev = -1
 wdirrev = 0x7FFFFFFF
 
 
-class sha1nodeconstants:
+class sha1nodeconstants(object):
     nodelen = 20
 
     # In hex, this is '0000000000000000000000000000000000000000'

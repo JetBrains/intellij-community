@@ -1,10 +1,10 @@
-from _typeshed import Unused
-from typing import ClassVar
-from typing_extensions import Literal, TypeAlias
+from _typeshed import ConvertibleToFloat, Unused
+from typing import ClassVar, Literal
+from typing_extensions import TypeAlias
 
 from openpyxl.chart.data_source import NumDataSource
 from openpyxl.chart.shapes import GraphicalProperties
-from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool, _ConvertibleToFloat
+from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool
 from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.nested import NestedBool, NestedFloat, NestedNoneSet, NestedSet, _NestedNoneSetParam
 from openpyxl.descriptors.serialisable import Serialisable
@@ -39,7 +39,7 @@ class ErrorBars(Serialisable):
         noEndCap: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = None,
         plus: NumDataSource | None = None,
         minus: NumDataSource | None = None,
-        val: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
+        val: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
         spPr: GraphicalProperties | None = None,
         extLst: Unused = None,
     ) -> None: ...

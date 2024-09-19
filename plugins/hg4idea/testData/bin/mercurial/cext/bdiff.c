@@ -76,7 +76,8 @@ static PyObject *bdiff(PyObject *self, PyObject *args)
 
 	l.next = NULL;
 
-	if (!PyArg_ParseTuple(args, "y*y*:bdiff", &ba, &bb)) {
+	if (!PyArg_ParseTuple(args, PY23("s*s*:bdiff", "y*y*:bdiff"), &ba,
+	                      &bb)) {
 		return NULL;
 	}
 
@@ -232,7 +233,7 @@ static PyObject *splitnewlines(PyObject *self, PyObject *args)
 	Py_ssize_t nelts = 0, size, i, start = 0;
 	PyObject *result = NULL;
 
-	if (!PyArg_ParseTuple(args, "y#", &text, &size)) {
+	if (!PyArg_ParseTuple(args, PY23("s#", "y#"), &text, &size)) {
 		goto abort;
 	}
 	if (!size) {
@@ -298,7 +299,8 @@ static PyObject *xdiffblocks(PyObject *self, PyObject *args)
 	    NULL, /* priv */
 	};
 
-	if (!PyArg_ParseTuple(args, "y#y#", &a.ptr, &la, &b.ptr, &lb)) {
+	if (!PyArg_ParseTuple(args, PY23("s#s#", "y#y#"), &a.ptr, &la, &b.ptr,
+	                      &lb)) {
 		return NULL;
 	}
 
@@ -335,6 +337,7 @@ static PyMethodDef methods[] = {
 
 static const int version = 3;
 
+#ifdef IS_PY3K
 static struct PyModuleDef bdiff_module = {
     PyModuleDef_HEAD_INIT, "bdiff", mdiff_doc, -1, methods,
 };
@@ -346,3 +349,11 @@ PyMODINIT_FUNC PyInit_bdiff(void)
 	PyModule_AddIntConstant(m, "version", version);
 	return m;
 }
+#else
+PyMODINIT_FUNC initbdiff(void)
+{
+	PyObject *m;
+	m = Py_InitModule3("bdiff", methods, mdiff_doc);
+	PyModule_AddIntConstant(m, "version", version);
+}
+#endif

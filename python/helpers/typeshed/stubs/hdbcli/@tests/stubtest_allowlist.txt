@@ -4,3 +4,7 @@ hdbcli.dbapi.Error.errortext
 hdbcli.dbapi.Warning.errorcode
 hdbcli.dbapi.Warning.errortext
 hdbcli.dbapi.ExecuteManyErrorEntry.rownumber
+
+hdbcli.dbapi.buffer
+hdbcli.dbapi.long
+hdbcli.dbapi.unicode

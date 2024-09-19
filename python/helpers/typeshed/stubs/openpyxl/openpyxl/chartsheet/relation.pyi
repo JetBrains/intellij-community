@@ -1,8 +1,7 @@
-from _typeshed import Incomplete
-from typing import ClassVar
-from typing_extensions import Literal
+from _typeshed import ConvertibleToInt, Incomplete
+from typing import ClassVar, Literal
 
-from openpyxl.descriptors.base import Alias, Integer, _ConvertibleToInt
+from openpyxl.descriptors.base import Alias, Integer
 from openpyxl.descriptors.serialisable import Serialisable
 
 class SheetBackgroundPicture(Serialisable):
@@ -51,22 +50,22 @@ class DrawingHF(Serialisable):
     def __init__(
         self,
         id: Incomplete | None = None,
-        lho: _ConvertibleToInt | None = None,
-        lhe: _ConvertibleToInt | None = None,
-        lhf: _ConvertibleToInt | None = None,
-        cho: _ConvertibleToInt | None = None,
-        che: _ConvertibleToInt | None = None,
-        chf: _ConvertibleToInt | None = None,
-        rho: _ConvertibleToInt | None = None,
-        rhe: _ConvertibleToInt | None = None,
-        rhf: _ConvertibleToInt | None = None,
-        lfo: _ConvertibleToInt | None = None,
-        lfe: _ConvertibleToInt | None = None,
-        lff: _ConvertibleToInt | None = None,
-        cfo: _ConvertibleToInt | None = None,
-        cfe: _ConvertibleToInt | None = None,
-        cff: _ConvertibleToInt | None = None,
-        rfo: _ConvertibleToInt | None = None,
-        rfe: _ConvertibleToInt | None = None,
-        rff: _ConvertibleToInt | None = None,
+        lho: ConvertibleToInt | None = None,
+        lhe: ConvertibleToInt | None = None,
+        lhf: ConvertibleToInt | None = None,
+        cho: ConvertibleToInt | None = None,
+        che: ConvertibleToInt | None = None,
+        chf: ConvertibleToInt | None = None,
+        rho: ConvertibleToInt | None = None,
+        rhe: ConvertibleToInt | None = None,
+        rhf: ConvertibleToInt | None = None,
+        lfo: ConvertibleToInt | None = None,
+        lfe: ConvertibleToInt | None = None,
+        lff: ConvertibleToInt | None = None,
+        cfo: ConvertibleToInt | None = None,
+        cfe: ConvertibleToInt | None = None,
+        cff: ConvertibleToInt | None = None,
+        rfo: ConvertibleToInt | None = None,
+        rfe: ConvertibleToInt | None = None,
+        rff: ConvertibleToInt | None = None,
     ) -> None: ...

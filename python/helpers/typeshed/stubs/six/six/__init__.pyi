@@ -2,23 +2,16 @@ import builtins
 import operator
 import types
 import unittest
-from _typeshed import IdentityFunction, Unused, _KT_contra, _VT_co
+from _typeshed import IdentityFunction, SupportsGetItem, Unused
 from builtins import next as next
 from collections.abc import Callable, ItemsView, Iterable, Iterator as _Iterator, KeysView, Mapping, ValuesView
 from functools import wraps as wraps
 from importlib.util import spec_from_loader as spec_from_loader
 from io import BytesIO as BytesIO, StringIO as StringIO
 from re import Pattern
-from typing import Any, AnyStr, NoReturn, Protocol, TypeVar, overload
-from typing_extensions import Literal
+from typing import Any, AnyStr, Literal, NoReturn, TypeVar, overload
 
 from six import moves as moves
-
-# TODO: We should switch to the _typeshed version of SupportsGetItem
-# once mypy updates its vendored copy of typeshed and makes a new release
-class _SupportsGetItem(Protocol[_KT_contra, _VT_co]):
-    def __contains__(self, __x: Any) -> bool: ...
-    def __getitem__(self, __key: _KT_contra) -> _VT_co: ...
 
 _T = TypeVar("_T")
 _K = TypeVar("_K")
@@ -51,7 +44,7 @@ Iterator = object
 
 def get_method_function(meth: types.MethodType) -> types.FunctionType: ...
 def get_method_self(meth: types.MethodType) -> object: ...
-def get_function_closure(fun: types.FunctionType) -> tuple[types._Cell, ...] | None: ...
+def get_function_closure(fun: types.FunctionType) -> tuple[types.CellType, ...] | None: ...
 def get_function_code(fun: types.FunctionType) -> types.CodeType: ...
 def get_function_defaults(fun: types.FunctionType) -> tuple[Any, ...] | None: ...
 def get_function_globals(fun: types.FunctionType) -> dict[str, Any]: ...
@@ -69,7 +62,7 @@ unichr = chr
 def int2byte(i: int) -> bytes: ...
 
 # Should be `byte2int: operator.itemgetter[int]`. But a bug in mypy prevents using TypeVar in itemgetter.__call__
-def byte2int(obj: _SupportsGetItem[int, _T]) -> _T: ...
+def byte2int(obj: SupportsGetItem[int, _T]) -> _T: ...
 
 indexbytes = operator.getitem
 iterbytes = iter
@@ -115,3 +108,5 @@ class MovedAttribute(_LazyDescr):
 
 def add_move(move: MovedModule | MovedAttribute) -> None: ...
 def remove_move(name: str) -> None: ...
+
+advance_iterator = next

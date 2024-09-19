@@ -1,20 +1,11 @@
-from _typeshed import Incomplete, Unused
+from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete, Unused
 from collections.abc import Iterator
 from re import Pattern
-from typing import ClassVar, TypeVar, overload
-from typing_extensions import Final, Literal, Self
+from typing import ClassVar, Final, Literal, TypeVar, overload
+from typing_extensions import Self
 
 from openpyxl.descriptors import Strict, Typed
-from openpyxl.descriptors.base import (
-    _N,
-    Bool,
-    Integer,
-    MinMax,
-    String,
-    _ConvertibleToBool,
-    _ConvertibleToFloat,
-    _ConvertibleToInt,
-)
+from openpyxl.descriptors.base import _N, Bool, Integer, MinMax, String, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable
 
 _S = TypeVar("_S", bound=Serialisable)
@@ -47,17 +38,17 @@ class Color(Serialisable):
     def __init__(
         self,
         rgb="00000000",
-        indexed: _ConvertibleToInt | None = None,
+        indexed: ConvertibleToInt | None = None,
         auto: _ConvertibleToBool | None = None,
-        theme: _ConvertibleToInt | None = None,
-        tint: _ConvertibleToFloat = 0.0,
-        index: _ConvertibleToInt | None = None,
+        theme: ConvertibleToInt | None = None,
+        tint: ConvertibleToFloat = 0.0,
+        index: ConvertibleToInt | None = None,
         type: Unused = "rgb",
     ) -> None: ...
     @property
     def value(self) -> str | int | bool: ...
     @value.setter
-    def value(self, value: str | _ConvertibleToInt | _ConvertibleToBool) -> None: ...
+    def value(self, value: str | ConvertibleToInt | _ConvertibleToBool) -> None: ...
     def __iter__(self) -> Iterator[tuple[str, str]]: ...
     @property
     def index(self) -> str | int | bool: ...

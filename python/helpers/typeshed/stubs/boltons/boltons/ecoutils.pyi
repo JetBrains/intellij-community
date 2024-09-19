@@ -1,7 +1,6 @@
 from typing import Any
 
 ECO_VERSION: str
-PY_GT_2: bool
 HAVE_URANDOM: bool
 INSTANCE_ID: str
 IS_64BIT: bool
@@ -15,7 +14,6 @@ EXPAT_VERSION: str
 CPU_COUNT: int
 HAVE_THREADING: bool
 HAVE_IPV6: bool
-RLIMIT_NOFILE: int
 RLIMIT_FDS_SOFT: int
 RLIMIT_FDS_HARD: int
 START_TIME_INFO: dict[str, str | float]

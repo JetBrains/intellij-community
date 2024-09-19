@@ -6,7 +6,9 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
+import errno
 import re
 import struct
 
@@ -14,7 +16,6 @@ from ..node import hex
 
 from .. import (
     error,
-    requirements,
     util,
 )
 from . import docket as docket_mod
@@ -23,27 +24,6 @@ from . import docket as docket_mod
 class NodeMap(dict):
     def __missing__(self, x):
         raise error.RevlogError(b'unknown node: %s' % x)
-
-
-def test_race_hook_1():
-    """hook point for test
-
-    This let tests to have things happens between the docket reading and the
-    data reading"""
-    pass
-
-
-def post_stream_cleanup(repo):
-    """The stream clone might needs to remove some file if persisten nodemap
-    was dropped while stream cloning
-    """
-    if requirements.REVLOGV1_REQUIREMENT not in repo.requirements:
-        return
-    if requirements.NODEMAP_REQUIREMENT in repo.requirements:
-        return
-    unfi = repo.unfiltered()
-    delete_nodemap(None, unfi, unfi.changelog)
-    delete_nodemap(None, repo, unfi.manifestlog._rootstore._revlog)
 
 
 def persisted_data(revlog):
@@ -70,11 +50,9 @@ def persisted_data(revlog):
 
     filename = _rawdata_filepath(revlog, docket)
     use_mmap = revlog.opener.options.get(b"persistent-nodemap.mmap")
-
-    test_race_hook_1()
     try:
         with revlog.opener(filename) as fd:
-            if use_mmap and revlog.opener.is_mmap_safe(filename):
+            if use_mmap:
                 try:
                     data = util.buffer(util.mmapread(fd, data_length))
                 except ValueError:
@@ -82,8 +60,11 @@ def persisted_data(revlog):
                     data = b''
             else:
                 data = fd.read(data_length)
-    except FileNotFoundError:
-        return None
+    except (IOError, OSError) as e:
+        if e.errno == errno.ENOENT:
+            return None
+        else:
+            raise
     if len(data) < data_length:
         return None
     return docket, data
@@ -109,7 +90,7 @@ def setup_persistent_nodemap(tr, revlog):
     tr.addfinalize(callback_id, lambda tr: persist_nodemap(tr, revlog))
 
 
-class _NoTransaction:
+class _NoTransaction(object):
     """transaction like object to update the nodemap outside a transaction"""
 
     def __init__(self):
@@ -153,18 +134,14 @@ def update_persistent_nodemap(revlog):
 
 def delete_nodemap(tr, repo, revlog):
     """Delete nodemap data on disk for a given revlog"""
-    prefix = revlog.radix
-    pattern = re.compile(br"(^|/)%s(-[0-9a-f]+\.nd|\.n(\.a)?)$" % prefix)
-    dirpath = revlog.opener.dirname(revlog._indexfile)
-    for f in revlog.opener.listdir(dirpath):
-        if pattern.match(f):
-            repo.svfs.tryunlink(f)
+    if revlog._nodemap_file is None:
+        msg = "calling persist nodemap on a revlog without the feature enabled"
+        raise error.ProgrammingError(msg)
+    repo.svfs.unlink(revlog._nodemap_file)
 
 
 def persist_nodemap(tr, revlog, pending=False, force=False):
     """Write nodemap data on disk for a given revlog"""
-    if len(revlog.index) <= 0:
-        return
     if getattr(revlog, 'filteredrevs', ()):
         raise error.ProgrammingError(
             "cannot persist nodemap of a filtered changelog"
@@ -176,9 +153,9 @@ def persist_nodemap(tr, revlog, pending=False, force=False):
             msg = "calling persist nodemap on a revlog without the feature enabled"
             raise error.ProgrammingError(msg)
 
-    can_incremental = hasattr(revlog.index, "nodemap_data_incremental")
+    can_incremental = util.safehasattr(revlog.index, "nodemap_data_incremental")
     ondisk_docket = revlog._nodemap_docket
-    feed_data = hasattr(revlog.index, "update_nodemap_data")
+    feed_data = util.safehasattr(revlog.index, "update_nodemap_data")
     use_mmap = revlog.opener.options.get(b"persistent-nodemap.mmap")
 
     data = None
@@ -205,12 +182,12 @@ def persist_nodemap(tr, revlog, pending=False, force=False):
                 fd.seek(target_docket.data_length)
                 fd.write(data)
                 if feed_data:
-                    if use_mmap and revlog.opener.is_mmap_safe(datafile):
-                        fd.flush()
-                        new_data = util.buffer(util.mmapread(fd, new_length))
-                    else:
+                    if use_mmap:
                         fd.seek(0)
                         new_data = fd.read(new_length)
+                    else:
+                        fd.flush()
+                        new_data = util.buffer(util.mmapread(fd, new_length))
             target_docket.data_length = new_length
             target_docket.data_unused = new_unused
 
@@ -218,7 +195,7 @@ def persist_nodemap(tr, revlog, pending=False, force=False):
         # otherwise fallback to a full new export
         target_docket = NodeMapDocket()
         datafile = _rawdata_filepath(revlog, target_docket)
-        if hasattr(revlog.index, "nodemap_data_all"):
+        if util.safehasattr(revlog.index, "nodemap_data_all"):
             data = revlog.index.nodemap_data_all()
         else:
             data = persistent_data(revlog.index)
@@ -238,11 +215,11 @@ def persist_nodemap(tr, revlog, pending=False, force=False):
         with revlog.opener(datafile, b'w+') as fd:
             fd.write(data)
             if feed_data:
-                if use_mmap and revlog.opener.is_mmap_safe(datafile):
+                if use_mmap:
+                    new_data = data
+                else:
                     fd.flush()
                     new_data = util.buffer(util.mmapread(fd, len(data)))
-                else:
-                    new_data = data
         target_docket.data_length = len(data)
     target_docket.tip_rev = revlog.tiprev()
     target_docket.tip_node = revlog.node(target_docket.tip_rev)
@@ -302,7 +279,7 @@ S_VERSION = struct.Struct(">B")
 S_HEADER = struct.Struct(">BQQQQ")
 
 
-class NodeMapDocket:
+class NodeMapDocket(object):
     """metadata associated with persistent nodemap data
 
     The persistent data may come from disk or be on their way to disk.
@@ -613,10 +590,10 @@ def parse_data(data):
 def check_data(ui, index, data):
     """verify that the provided nodemap data are valid for the given idex"""
     ret = 0
-    ui.status((b"revisions in index:   %d\n") % len(index))
+    ui.status((b"revision in index:   %d\n") % len(index))
     root, __ = parse_data(data)
     all_revs = set(_all_revisions(root))
-    ui.status((b"revisions in nodemap: %d\n") % len(all_revs))
+    ui.status((b"revision in nodemap: %d\n") % len(all_revs))
     for r in range(len(index)):
         if r not in all_revs:
             msg = b"  revision missing from nodemap: %d\n" % r
@@ -639,7 +616,7 @@ def check_data(ui, index, data):
 
     if all_revs:
         for r in sorted(all_revs):
-            msg = b"  extra revisions in  nodemap: %d\n" % r
+            msg = b"  extra revision in  nodemap: %d\n" % r
             ui.write_err(msg)
         ret = 1
     return ret

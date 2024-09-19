@@ -21,7 +21,8 @@ public final class ProductCodeRuleValidator extends CustomValidationRule {
     "RD",
     "RM",
     "RR",
-    "AS"
+    "AS",
+    "QA"
   );
 
   @NotNull

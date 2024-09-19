@@ -1,8 +1,6 @@
-from typing import Any
-
 from ._distutils.extension import Extension as _Extension
 
-have_pyrex: Any
+def have_pyrex() -> bool: ...
 
 class Extension(_Extension):
     py_limited_api: bool

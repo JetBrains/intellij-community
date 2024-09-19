@@ -1,8 +1,8 @@
-from _typeshed import Incomplete
-from typing import ClassVar, overload
-from typing_extensions import Literal, Self
+from _typeshed import ConvertibleToInt, Incomplete
+from typing import ClassVar, Literal, overload
+from typing_extensions import Self
 
-from openpyxl.descriptors.base import Alias, Bool, Integer, String, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.base import Alias, Bool, Integer, String, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable
 
 from ..xml._functions_overloads import _SupportsIterAndAttribAndTextAndGet
@@ -40,11 +40,11 @@ class WorkbookProtection(Serialisable):
         revisionsAlgorithmName: str | None = None,
         revisionsHashValue: Incomplete | None = None,
         revisionsSaltValue: Incomplete | None = None,
-        revisionsSpinCount: _ConvertibleToInt | None = None,
+        revisionsSpinCount: ConvertibleToInt | None = None,
         workbookAlgorithmName: str | None = None,
         workbookHashValue: Incomplete | None = None,
         workbookSaltValue: Incomplete | None = None,
-        workbookSpinCount: _ConvertibleToInt | None = None,
+        workbookSpinCount: ConvertibleToInt | None = None,
     ) -> None: ...
     @overload
     def set_workbook_password(self, value: str = "", already_hashed: Literal[False] = False) -> None: ...
@@ -88,5 +88,5 @@ class FileSharing(Serialisable):
         algorithmName: str | None = None,
         hashValue: Incomplete | None = None,
         saltValue: Incomplete | None = None,
-        spinCount: _ConvertibleToInt | None = None,
+        spinCount: ConvertibleToInt | None = None,
     ) -> None: ...

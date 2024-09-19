@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 // IMPL class hardcoding logic to react to errors/warnings found during highlighting
 // DO NOT USE directly
+@ApiStatus.Obsolete
 public abstract class HighlightInfoProcessor {
   // HInfos for visible part of file/block are produced.
   // Will remove all range-highlighters from there and replace them with passed infos

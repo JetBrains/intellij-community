@@ -1,4 +1,4 @@
-from typing_extensions import Literal
+from typing import Literal
 
 implementation: str
 null: Literal[b""]

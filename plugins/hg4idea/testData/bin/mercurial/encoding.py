@@ -5,20 +5,14 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import, print_function
 
 import locale
 import os
 import re
-import typing
 import unicodedata
 
-from typing import (
-    Any,
-    Callable,
-    Text,
-    TypeVar,
-)
-
+from .pycompat import getattr
 from . import (
     error,
     policy,
@@ -27,7 +21,22 @@ from . import (
 
 from .pure import charencode as charencodepure
 
-_Tlocalstr = TypeVar('_Tlocalstr', bound='localstr')
+if pycompat.TYPE_CHECKING:
+    from typing import (
+        Any,
+        Callable,
+        List,
+        Text,
+        Type,
+        TypeVar,
+        Union,
+    )
+
+    # keep pyflakes happy
+    for t in (Any, Callable, List, Text, Type, Union):
+        assert t
+
+    _Tlocalstr = TypeVar('_Tlocalstr', bound='localstr')
 
 charencode = policy.importmod('charencode')
 
@@ -38,7 +47,8 @@ _jsonescapeu8fast = charencode.jsonescapeu8fast
 
 _sysstr = pycompat.sysstr
 
-unichr = chr
+if pycompat.ispy3:
+    unichr = chr
 
 # These unicode characters are ignored by HFS+ (Apple Technote 1150,
 # "Unicode Subtleties"), so we need to ignore them in some places for
@@ -52,7 +62,8 @@ _ignore = [
 assert all(i.startswith((b"\xe2", b"\xef")) for i in _ignore)
 
 
-def hfsignoreclean(s: bytes) -> bytes:
+def hfsignoreclean(s):
+    # type: (bytes) -> bytes
     """Remove codepoints ignored by HFS+ from s.
 
     >>> hfsignoreclean(u'.h\u200cg'.encode('utf-8'))
@@ -68,23 +79,11 @@ def hfsignoreclean(s: bytes) -> bytes:
 
 # encoding.environ is provided read-only, which may not be used to modify
 # the process environment
-_nativeenviron = os.supports_bytes_environ
-if _nativeenviron:
+_nativeenviron = not pycompat.ispy3 or os.supports_bytes_environ
+if not pycompat.ispy3:
+    environ = os.environ  # re-exports
+elif _nativeenviron:
     environ = os.environb  # re-exports
-    if pycompat.sysplatform == b'OpenVMS':
-        # workaround for a bug in VSI 3.10 port
-        # os.environb is only populated with a few Predefined symbols
-        def newget(self, key, default=None):
-            # pytype on linux does not understand OpenVMS special modules
-            import _decc  # pytype: disable=import-error
-
-            v = _decc.getenv(key, None)
-            if isinstance(key, bytes):
-                return default if v is None else v.encode('latin-1')
-            else:
-                return default if v is None else v
-
-        environ.__class__.get = newget
 else:
     # preferred encoding isn't known yet; use utf-8 to avoid unicode error
     # and recreate it once encoding is settled
@@ -100,7 +99,7 @@ _encodingrewrites = {
 # cp65001 is a Windows variant of utf-8, which isn't supported on Python 2.
 # No idea if it should be rewritten to the canonical name 'utf-8' on Python 3.
 # https://bugs.python.org/issue13216
-if pycompat.iswindows:
+if pycompat.iswindows and not pycompat.ispy3:
     _encodingrewrites[b'cp65001'] = b'utf-8'
 
 try:
@@ -123,9 +122,10 @@ class localstr(bytes):
         s._utf8 = u
         return s
 
-    if typing.TYPE_CHECKING:
+    if pycompat.TYPE_CHECKING:
         # pseudo implementation to help pytype see localstr() constructor
-        def __init__(self, u: bytes, l: bytes) -> None:
+        def __init__(self, u, l):
+            # type: (bytes, bytes) -> None
             super(localstr, self).__init__(l)
             self._utf8 = u
 
@@ -144,7 +144,8 @@ class safelocalstr(bytes):
     """
 
 
-def tolocal(s: bytes) -> bytes:
+def tolocal(s):
+    # type: (bytes) -> bytes
     """
     Convert a string from internal UTF-8 to local encoding
 
@@ -212,7 +213,8 @@ def tolocal(s: bytes) -> bytes:
         )
 
 
-def fromlocal(s: bytes) -> bytes:
+def fromlocal(s):
+    # type: (bytes) -> bytes
     """
     Convert a string from the local character encoding to UTF-8
 
@@ -238,22 +240,23 @@ def fromlocal(s: bytes) -> bytes:
             b"decoding near '%s': %s!" % (sub, pycompat.bytestr(inst))
         )
     except LookupError as k:
-        raise error.Abort(
-            pycompat.bytestr(k), hint=b"please check your locale settings"
-        )
+        raise error.Abort(k, hint=b"please check your locale settings")
 
 
-def unitolocal(u: str) -> bytes:
+def unitolocal(u):
+    # type: (Text) -> bytes
     """Convert a unicode string to a byte string of local encoding"""
     return tolocal(u.encode('utf-8'))
 
 
-def unifromlocal(s: bytes) -> str:
+def unifromlocal(s):
+    # type: (bytes) -> Text
     """Convert a byte string of local encoding to a unicode string"""
     return fromlocal(s).decode('utf-8')
 
 
-def unimethod(bytesfunc: Callable[[Any], bytes]) -> Callable[[Any], str]:
+def unimethod(bytesfunc):
+    # type: (Callable[[Any], bytes]) -> Callable[[Any], Text]
     """Create a proxy method that forwards __unicode__() and __str__() of
     Python 3 to __bytes__()"""
 
@@ -266,12 +269,25 @@ def unimethod(bytesfunc: Callable[[Any], bytes]) -> Callable[[Any], str]:
 # converter functions between native str and byte string. use these if the
 # character encoding is not aware (e.g. exception message) or is known to
 # be locale dependent (e.g. date formatting.)
-strtolocal = unitolocal
-strfromlocal = unifromlocal
-strmethod = unimethod
+if pycompat.ispy3:
+    strtolocal = unitolocal
+    strfromlocal = unifromlocal
+    strmethod = unimethod
+else:
+
+    def strtolocal(s):
+        # type: (str) -> bytes
+        return s  # pytype: disable=bad-return-type
+
+    def strfromlocal(s):
+        # type: (bytes) -> str
+        return s  # pytype: disable=bad-return-type
+
+    strmethod = pycompat.identity
 
 
-def lower(s: bytes) -> bytes:
+def lower(s):
+    # type: (bytes) -> bytes
     """best-effort encoding-aware case-folding of local string s"""
     try:
         return asciilower(s)
@@ -290,12 +306,11 @@ def lower(s: bytes) -> bytes:
     except UnicodeError:
         return s.lower()  # we don't know how to fold this except in ASCII
     except LookupError as k:
-        raise error.Abort(
-            pycompat.bytestr(k), hint=b"please check your locale settings"
-        )
+        raise error.Abort(k, hint=b"please check your locale settings")
 
 
-def upper(s: bytes) -> bytes:
+def upper(s):
+    # type: (bytes) -> bytes
     """best-effort encoding-aware case-folding of local string s"""
     try:
         return asciiupper(s)
@@ -303,7 +318,8 @@ def upper(s: bytes) -> bytes:
         return upperfallback(s)
 
 
-def upperfallback(s: Any) -> Any:
+def upperfallback(s):
+    # type: (Any) -> Any
     try:
         if isinstance(s, localstr):
             u = s._utf8.decode("utf-8")
@@ -317,15 +333,13 @@ def upperfallback(s: Any) -> Any:
     except UnicodeError:
         return s.upper()  # we don't know how to fold this except in ASCII
     except LookupError as k:
-        raise error.Abort(
-            pycompat.bytestr(k), hint=b"please check your locale settings"
-        )
+        raise error.Abort(k, hint=b"please check your locale settings")
 
 
 if not _nativeenviron:
     # now encoding and helper functions are available, recreate the environ
     # dict to be exported to other modules
-    if pycompat.iswindows:
+    if pycompat.iswindows and pycompat.ispy3:
 
         class WindowsEnviron(dict):
             """`os.environ` normalizes environment variables to uppercase on windows"""
@@ -341,34 +355,36 @@ if not _nativeenviron:
 
 DRIVE_RE = re.compile(b'^[a-z]:')
 
-# os.getcwd() on Python 3 returns string, but it has os.getcwdb() which
-# returns bytes.
-if pycompat.iswindows:
-    # Python 3 on Windows issues a DeprecationWarning about using the bytes
-    # API when os.getcwdb() is called.
-    #
-    # Additionally, py3.8+ uppercases the drive letter when calling
-    # os.path.realpath(), which is used on ``repo.root``.  Since those
-    # strings are compared in various places as simple strings, also call
-    # realpath here.  See https://bugs.python.org/issue40368
-    #
-    # However this is not reliable, so lets explicitly make this drive
-    # letter upper case.
-    #
-    # note: we should consider dropping realpath here since it seems to
-    # change the semantic of `getcwd`.
+if pycompat.ispy3:
+    # os.getcwd() on Python 3 returns string, but it has os.getcwdb() which
+    # returns bytes.
+    if pycompat.iswindows:
+        # Python 3 on Windows issues a DeprecationWarning about using the bytes
+        # API when os.getcwdb() is called.
+        #
+        # Additionally, py3.8+ uppercases the drive letter when calling
+        # os.path.realpath(), which is used on ``repo.root``.  Since those
+        # strings are compared in various places as simple strings, also call
+        # realpath here.  See https://bugs.python.org/issue40368
+        #
+        # However this is not reliable, so lets explicitly make this drive
+        # letter upper case.
+        #
+        # note: we should consider dropping realpath here since it seems to
+        # change the semantic of `getcwd`.
 
-    def getcwd():
-        cwd = os.getcwd()  # re-exports
-        cwd = os.path.realpath(cwd)
-        cwd = strtolocal(cwd)
-        if DRIVE_RE.match(cwd):
-            cwd = cwd[0:1].upper() + cwd[1:]
-        return cwd
+        def getcwd():
+            cwd = os.getcwd()  # re-exports
+            cwd = os.path.realpath(cwd)
+            cwd = strtolocal(cwd)
+            if DRIVE_RE.match(cwd):
+                cwd = cwd[0:1].upper() + cwd[1:]
+            return cwd
 
-
+    else:
+        getcwd = os.getcwdb  # re-exports
 else:
-    getcwd = os.getcwdb  # re-exports
+    getcwd = os.getcwd  # re-exports
 
 # How to treat ambiguous-width characters. Set to 'wide' to treat as wide.
 _wide = _sysstr(
@@ -378,12 +394,14 @@ _wide = _sysstr(
 )
 
 
-def colwidth(s: bytes) -> int:
+def colwidth(s):
+    # type: (bytes) -> int
     """Find the column width of a string for display in the local encoding"""
     return ucolwidth(s.decode(_sysstr(encoding), 'replace'))
 
 
-def ucolwidth(d: Text) -> int:
+def ucolwidth(d):
+    # type: (Text) -> int
     """Find the column width of a Unicode string for display"""
     eaw = getattr(unicodedata, 'east_asian_width', None)
     if eaw is not None:
@@ -391,22 +409,19 @@ def ucolwidth(d: Text) -> int:
     return len(d)
 
 
-def getcols(s: bytes, start: int, c: int) -> bytes:
+def getcols(s, start, c):
+    # type: (bytes, int, int) -> bytes
     """Use colwidth to find a c-column substring of s starting at byte
     index start"""
-    for x in range(start + c, len(s)):
+    for x in pycompat.xrange(start + c, len(s)):
         t = s[start:x]
         if colwidth(t) == c:
             return t
     raise ValueError('substring not found')
 
 
-def trim(
-    s: bytes,
-    width: int,
-    ellipsis: bytes = b'',
-    leftside: bool = False,
-) -> bytes:
+def trim(s, width, ellipsis=b'', leftside=False):
+    # type: (bytes, int, bytes, bool) -> bytes
     """Trim string 's' to at most 'width' columns (including 'ellipsis').
 
     If 'leftside' is True, left side of string 's' is trimmed.
@@ -490,24 +505,20 @@ def trim(
     if width <= 0:  # no enough room even for ellipsis
         return ellipsis[: width + len(ellipsis)]
 
-    chars = list(u)
     if leftside:
-        chars.reverse()
-    width_so_far = 0
-    for i, c in enumerate(chars):
-        width_so_far += ucolwidth(c)
-        if width_so_far > width:
-            break
-    chars = chars[:i]
-    if leftside:
-        chars.reverse()
-    u = u''.join(chars).encode(_sysstr(encoding))
-    if leftside:
-        return ellipsis + u
-    return u + ellipsis
+        uslice = lambda i: u[i:]
+        concat = lambda s: ellipsis + s
+    else:
+        uslice = lambda i: u[:-i]
+        concat = lambda s: s + ellipsis
+    for i in pycompat.xrange(1, len(u)):
+        usub = uslice(i)
+        if ucolwidth(usub) <= width:
+            return concat(usub.encode(_sysstr(encoding)))
+    return ellipsis  # no enough room for multi-column characters
 
 
-class normcasespecs:
+class normcasespecs(object):
     """what a platform's normcase does to ASCII strings
 
     This is specified per platform, and should be consistent with what normcase
@@ -524,7 +535,8 @@ class normcasespecs:
     other = 0
 
 
-def jsonescape(s: Any, paranoid: Any = False) -> Any:
+def jsonescape(s, paranoid=False):
+    # type: (Any, Any) -> Any
     """returns a string suitable for JSON
 
     JSON is problematic for us because it doesn't support non-Unicode
@@ -579,12 +591,16 @@ def jsonescape(s: Any, paranoid: Any = False) -> Any:
 
 # We need to decode/encode U+DCxx codes transparently since invalid UTF-8
 # bytes are mapped to that range.
-_utf8strict = r'surrogatepass'
+if pycompat.ispy3:
+    _utf8strict = r'surrogatepass'
+else:
+    _utf8strict = r'strict'
 
 _utf8len = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3, 4]
 
 
-def getutf8char(s: bytes, pos: int) -> bytes:
+def getutf8char(s, pos):
+    # type: (bytes, int) -> bytes
     """get the next full utf-8 character in the given string, starting at pos
 
     Raises a UnicodeError if the given location does not start a valid
@@ -602,7 +618,8 @@ def getutf8char(s: bytes, pos: int) -> bytes:
     return c
 
 
-def toutf8b(s: bytes) -> bytes:
+def toutf8b(s):
+    # type: (bytes) -> bytes
     """convert a local, possibly-binary string into UTF-8b
 
     This is intended as a generic method to preserve data when working
@@ -651,7 +668,7 @@ def toutf8b(s: bytes) -> bytes:
             pass
 
     s = pycompat.bytestr(s)
-    r = bytearray()
+    r = b""
     pos = 0
     l = len(s)
     while pos < l:
@@ -667,10 +684,11 @@ def toutf8b(s: bytes) -> bytes:
             c = unichr(0xDC00 + ord(s[pos])).encode('utf-8', _utf8strict)
             pos += 1
         r += c
-    return bytes(r)
+    return r
 
 
-def fromutf8b(s: bytes) -> bytes:
+def fromutf8b(s):
+    # type: (bytes) -> bytes
     """Given a UTF-8b string, return a local, possibly-binary string.
 
     return the original binary string. This
@@ -705,7 +723,7 @@ def fromutf8b(s: bytes) -> bytes:
     # helper again to walk the string without "decoding" it.
 
     s = pycompat.bytestr(s)
-    r = bytearray()
+    r = b""
     pos = 0
     l = len(s)
     while pos < l:
@@ -715,4 +733,4 @@ def fromutf8b(s: bytes) -> bytes:
         if b"\xed\xb0\x80" <= c <= b"\xed\xb3\xbf":
             c = pycompat.bytechr(ord(c.decode("utf-8", _utf8strict)) & 0xFF)
         r += c
-    return bytes(r)
+    return r

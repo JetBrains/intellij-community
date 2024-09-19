@@ -157,7 +157,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
   public void testWholeFileInspection() throws Exception {
     configureByFile(DaemonRespondToChangesTest.BASE_PATH + "FieldCanBeLocal.java");
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
-    assertEquals(1, infos.size());
+    assertSize(1, infos);
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
 
     ctrlW();
@@ -172,7 +172,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     type("0");
 
     infos = doHighlighting(HighlightSeverity.WARNING);
-    assertEquals(1, infos.size());
+    assertSize(1, infos);
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
   }
 
@@ -423,7 +423,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
   private static final AtomicInteger toSleepMs = new AtomicInteger(0);
   private static final String SWEARING = "No swearing";
 
-  private void checkSwearingHighlightIsVisibleImmediately() {
+  private void checkSwearingHighlightIsVisibleImmediately() throws Exception {
     @Language("JAVA")
     String text = """
       class X /* */ {
@@ -474,7 +474,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     }
   }
 
-  public void testAddInspectionProblemToProblemHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {
+  public void testAddInspectionProblemToProblemHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() throws Exception {
     registerInspection(new MySwearingInspection());
     checkSwearingHighlightIsVisibleImmediately();
   }
@@ -771,7 +771,10 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         // invoke later because we are checking this flag in EDT below, and
         // we do not want a race between contextFinishedCallback.accept(context); in inspection thread
         // and querying markup model in EDT
-        ApplicationManager.getApplication().invokeLater(() -> slowToolFinished.set(true));
+        ApplicationManager.getApplication().invokeLater(() -> {
+          //System.out.println("slow finished ");
+          slowToolFinished.set(true);
+        });
       }
       @NotNull
       @Override
@@ -779,11 +782,13 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         return new JavaElementVisitor() {
           @Override
           public void visitField(@NotNull PsiField field) {
+            //System.out.println("slow visit field "+field + Thread.currentThread());
             holder.registerProblem(field.getNameIdentifier(), fieldWarningText.get());
           }
 
           @Override
           public void visitElement(@NotNull PsiElement element) {
+            //System.out.println("slow visit "+element + Thread.currentThread());
             // stall every other element to exacerbate latency problems if the order is wrong
             TimeoutUtil.sleep(stallMs.get());
           }
@@ -800,7 +805,11 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         // invoke later because we are checking this flag in EDT below, and
         // we do not want a race between contextFinishedCallback.accept(context); in inspection thread
         // and querying markup model in EDT
-        ApplicationManager.getApplication().invokeLater(() -> fastToolFinished.set(true));
+        //System.out.println("fast about to finished ");
+        ApplicationManager.getApplication().invokeLater(() -> {
+          //System.out.println("fast finished ");
+          fastToolFinished.set(true);
+        });
       }
       @NotNull
       @Override
@@ -808,9 +817,15 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         return new JavaElementVisitor() {
           @Override
           public void visitComment(@NotNull PsiComment comment) {
+            //System.out.println("fast visit comment "+comment + Thread.currentThread());
             if (comment.getText().contains("xxx") && !comment.getContainingFile().getText().substring(comment.getTextOffset()+2).contains("//")) {
               holder.registerProblem(comment, fastToolText, ProblemHighlightType.WARNING);
             }
+          }
+
+          @Override
+          public void visitElement(@NotNull PsiElement element) {
+            //System.out.println("fast visit "+element + Thread.currentThread());
           }
         };
       }
@@ -830,6 +845,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     fieldWarningText.set("Aha, field, finally!");
     stallMs.set(100);
     type("// another comment");
+    //System.out.println("-------------");
     fastToolFinished.set(false);
     slowToolFinished.set(false);
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
@@ -852,9 +868,9 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         if (fastToolFinished.get() && !slowToolFinished.get()) {
           fastToolFinishedFaster = true;
-          boolean found = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0, myEditor.getDocument().getTextLength(),
+          boolean fastFound = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, 0, myEditor.getDocument().getTextLength(),
                           info -> !fastToolText.equals(info.getDescription()));
-          if (found) {
+          if (fastFound) {
             fail("Inspection must have removed its own obsolete highlights as soon as it's finished, but got:" +
                  StringUtil.join(model.getAllHighlighters(), Object::toString, "\n   ")+"; thread dump:\n"+ThreadDumper.dumpThreadsToString());
           }
@@ -951,7 +967,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
               }
               fieldIdentifierVisited.set(true);
             }
-            super.visitIdentifier(identifier);
           }
 
           @Override
@@ -1054,7 +1069,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
 
               holder.registerProblem(identifier, "XXX", ProblemHighlightType.WARNING);
             }
-            super.visitIdentifier(identifier);
           }
         };
       }

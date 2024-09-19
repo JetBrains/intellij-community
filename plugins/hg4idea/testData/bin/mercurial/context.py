@@ -5,7 +5,9 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
+import errno
 import filecmp
 import os
 import stat
@@ -15,6 +17,10 @@ from .node import (
     hex,
     nullrev,
     short,
+)
+from .pycompat import (
+    getattr,
+    open,
 )
 from . import (
     dagop,
@@ -28,26 +34,23 @@ from . import (
     patch,
     pathutil,
     phases,
+    pycompat,
     repoview,
     scmutil,
     sparse,
     subrepo,
     subrepoutil,
-    testing,
     util,
 )
 from .utils import (
     dateutil,
     stringutil,
 )
-from .dirstateutils import (
-    timestamp,
-)
 
 propertycache = util.propertycache
 
 
-class basectx:
+class basectx(object):
     """A basectx object represents the common logic for its children:
     changectx: read-only context that is already present in the repo,
     workingctx: a context that represents the working directory and can
@@ -119,7 +122,7 @@ class basectx:
         deleted, unknown, ignored = s.deleted, s.unknown, s.ignored
         deletedset = set(deleted)
         d = mf1.diff(mf2, match=match, clean=listclean)
-        for fn, value in d.items():
+        for fn, value in pycompat.iteritems(d):
             if fn in deletedset:
                 continue
             if value is None:
@@ -679,14 +682,6 @@ class changectx(basectx):
         """Return a list of byte bookmark names."""
         return self._repo.nodebookmarks(self._node)
 
-    def fast_rank(self):
-        repo = self._repo
-        if self._maybe_filtered:
-            cl = repo.changelog
-        else:
-            cl = repo.unfiltered().changelog
-        return cl.fast_rank(self._rev)
-
     def phase(self):
         return self._repo._phasecache.phase(self._repo, self._rev)
 
@@ -792,7 +787,7 @@ class changectx(basectx):
         return self.walk(match)
 
 
-class basefilectx:
+class basefilectx(object):
     """A filecontext object represents the common logic for its children:
     filectx: read-only access to a filerevision that is already present
              in the repo,
@@ -988,16 +983,6 @@ class basefilectx:
             if self._repo._encodefilterpats:
                 # can't rely on size() because wdir content may be decoded
                 return self._filelog.cmp(self._filenode, fctx.data())
-            # filelog.size() has two special cases:
-            # - censored metadata
-            # - copy/rename tracking
-            # The first is detected by peaking into the delta,
-            # the second is detected by abusing parent order
-            # in the revlog index as flag bit. This leaves files using
-            # the dummy encoding and non-standard meta attributes.
-            # The following check is a special case for the empty
-            # metadata block used if the raw file content starts with '\1\n'.
-            # Cases of arbitrary metadata flags are currently mishandled.
             if self.size() - 4 == fctx.size():
                 # size() can match:
                 # if file data starts with '\1\n', empty metadata block is
@@ -1566,11 +1551,11 @@ class workingctx(committablectx):
     def __iter__(self):
         d = self._repo.dirstate
         for f in d:
-            if d.get_entry(f).tracked:
+            if d[f] != b'r':
                 yield f
 
     def __contains__(self, key):
-        return self._repo.dirstate.get_entry(key).tracked
+        return self._repo.dirstate[key] not in b"?r"
 
     def hex(self):
         return self._repo.nodeconstants.wdirhex
@@ -1593,7 +1578,7 @@ class workingctx(committablectx):
         if p2node is None:
             p2node = self._repo.nodeconstants.nullid
         dirstate = self._repo.dirstate
-        with dirstate.changing_parents(self._repo):
+        with dirstate.parentchange():
             copies = dirstate.setparents(p1node, p2node)
             pctx = self._repo[p1node]
             if copies:
@@ -1734,7 +1719,9 @@ class workingctx(committablectx):
     def copy(self, source, dest):
         try:
             st = self._repo.wvfs.lstat(dest)
-        except FileNotFoundError:
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                raise
             self._repo.ui.warn(
                 _(b"%s does not exist!\n") % self._repo.dirstate.pathto(dest)
             )
@@ -1806,14 +1793,13 @@ class workingctx(committablectx):
             sane.append(f)
         return sane
 
-    def _checklookup(self, files, mtime_boundary):
+    def _checklookup(self, files):
         # check for any possibly clean files
         if not files:
-            return [], [], [], []
+            return [], [], []
 
         modified = []
         deleted = []
-        clean = []
         fixup = []
         pctx = self._parents[0]
         # do a full compare of any files that might have changed
@@ -1827,18 +1813,8 @@ class workingctx(committablectx):
                     or pctx[f].cmp(self[f])
                 ):
                     modified.append(f)
-                elif mtime_boundary is None:
-                    clean.append(f)
                 else:
-                    s = self[f].lstat()
-                    mode = s.st_mode
-                    size = s.st_size
-                    file_mtime = timestamp.reliable_mtime_of(s, mtime_boundary)
-                    if file_mtime is not None:
-                        cache_info = (mode, size, file_mtime)
-                        fixup.append((f, cache_info))
-                    else:
-                        clean.append(f)
+                    fixup.append(f)
             except (IOError, OSError):
                 # A file become inaccessible in between? Mark it as deleted,
                 # matching dirstate behavior (issue5584).
@@ -1848,47 +1824,51 @@ class workingctx(committablectx):
                 # it's in the dirstate.
                 deleted.append(f)
 
-        return modified, deleted, clean, fixup
+        return modified, deleted, fixup
 
     def _poststatusfixup(self, status, fixup):
         """update dirstate for files that are actually clean"""
-        testing.wait_on_cfg(self._repo.ui, b'status.pre-dirstate-write-file')
-        dirstate = self._repo.dirstate
         poststatus = self._repo.postdsstatus()
-        if fixup:
-            if dirstate.is_changing_parents:
-                normal = lambda f, pfd: dirstate.update_file(
-                    f,
-                    p1_tracked=True,
-                    wc_tracked=True,
-                )
-            else:
-                normal = dirstate.set_clean
-            for f, pdf in fixup:
-                normal(f, pdf)
-        if poststatus or self._repo.dirstate._dirty:
+        if fixup or poststatus or self._repo.dirstate._dirty:
             try:
+                oldid = self._repo.dirstate.identity()
+
                 # updating the dirstate is optional
                 # so we don't wait on the lock
                 # wlock can invalidate the dirstate, so cache normal _after_
                 # taking the lock
-                pre_dirty = dirstate._dirty
                 with self._repo.wlock(False):
-                    assert self._repo.dirstate is dirstate
-                    post_dirty = dirstate._dirty
-                    if post_dirty:
-                        tr = self._repo.currenttransaction()
-                        dirstate.write(tr)
-                    elif pre_dirty:
-                        # the wlock grabbing detected that dirtate changes
-                        # needed to be dropped
-                        m = b'skip updating dirstate: identity mismatch\n'
-                        self._repo.ui.debug(m)
-                    if poststatus:
-                        for ps in poststatus:
-                            ps(self, status)
+                    dirstate = self._repo.dirstate
+                    if dirstate.identity() == oldid:
+                        if fixup:
+                            if dirstate.pendingparentchange():
+                                normal = lambda f: dirstate.update_file(
+                                    f, p1_tracked=True, wc_tracked=True
+                                )
+                            else:
+                                normal = dirstate.set_clean
+                            for f in fixup:
+                                normal(f)
+                            # write changes out explicitly, because nesting
+                            # wlock at runtime may prevent 'wlock.release()'
+                            # after this block from doing so for subsequent
+                            # changing files
+                            tr = self._repo.currenttransaction()
+                            self._repo.dirstate.write(tr)
+
+                        if poststatus:
+                            for ps in poststatus:
+                                ps(self, status)
+                    else:
+                        # in this case, writing changes out breaks
+                        # consistency, because .hg/dirstate was
+                        # already changed simultaneously after last
+                        # caching (see also issue5584 for detail)
+                        self._repo.ui.debug(
+                            b'skip updating dirstate: identity mismatch\n'
+                        )
             except error.LockError:
-                dirstate.invalidate()
+                pass
             finally:
                 # Even if the wlock couldn't be grabbed, clear out the list.
                 self._repo.clearpostdsstatus()
@@ -1898,27 +1878,21 @@ class workingctx(committablectx):
         subrepos = []
         if b'.hgsub' in self:
             subrepos = sorted(self.substate)
-        dirstate = self._repo.dirstate
-        with dirstate.running_status(self._repo):
-            cmp, s, mtime_boundary = dirstate.status(
-                match, subrepos, ignored=ignored, clean=clean, unknown=unknown
-            )
+        cmp, s = self._repo.dirstate.status(
+            match, subrepos, ignored=ignored, clean=clean, unknown=unknown
+        )
 
-            # check for any possibly clean files
-            fixup = []
-            if cmp:
-                modified2, deleted2, clean_set, fixup = self._checklookup(
-                    cmp, mtime_boundary
-                )
-                s.modified.extend(modified2)
-                s.deleted.extend(deleted2)
+        # check for any possibly clean files
+        fixup = []
+        if cmp:
+            modified2, deleted2, fixup = self._checklookup(cmp)
+            s.modified.extend(modified2)
+            s.deleted.extend(deleted2)
 
-                if clean_set and clean:
-                    s.clean.extend(clean_set)
-                if fixup and clean:
-                    s.clean.extend((f for f, _ in fixup))
+            if fixup and clean:
+                s.clean.extend(fixup)
 
-            self._poststatusfixup(s, fixup)
+        self._poststatusfixup(s, fixup)
 
         if match.always():
             # cache for performance
@@ -2043,10 +2017,10 @@ class workingctx(committablectx):
     def matches(self, match):
         match = self._repo.narrowmatch(match)
         ds = self._repo.dirstate
-        return sorted(f for f in ds.matches(match) if ds.get_entry(f).tracked)
+        return sorted(f for f in ds.matches(match) if ds[f] != b'r')
 
     def markcommitted(self, node):
-        with self._repo.dirstate.changing_parents(self._repo):
+        with self._repo.dirstate.parentchange():
             for f in self.modified() + self.added():
                 self._repo.dirstate.update_file(
                     f, p1_tracked=True, wc_tracked=True
@@ -2162,7 +2136,9 @@ class workingfilectx(committablefilectx):
         t, tz = self._changectx.date()
         try:
             return (self._repo.wvfs.lstat(self._path)[stat.ST_MTIME], tz)
-        except FileNotFoundError:
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                raise
             return (t, tz)
 
     def exists(self):
@@ -2421,7 +2397,7 @@ class overlayworkingctx(committablectx):
         # Test that each new directory to be created to write this path from p2
         # is not a file in p1.
         components = path.split(b'/')
-        for i in range(len(components)):
+        for i in pycompat.xrange(len(components)):
             component = b"/".join(components[0:i])
             if component in self:
                 fail(path, component)
@@ -3104,7 +3080,7 @@ class metadataonlyctx(committablectx):
         return scmutil.status(modified, added, removed, [], [], [], [])
 
 
-class arbitraryfilectx:
+class arbitraryfilectx(object):
     """Allows you to use filectx-like functions on a file in an arbitrary
     location on disk, possibly not in the working directory.
     """
@@ -3135,11 +3111,13 @@ class arbitraryfilectx:
         return util.readfile(self._path)
 
     def decodeddata(self):
-        return util.readfile(self._path)
+        with open(self._path, b"rb") as f:
+            return f.read()
 
     def remove(self):
         util.unlink(self._path)
 
     def write(self, data, flags, **kwargs):
         assert not flags
-        util.writefile(self._path, data)
+        with open(self._path, b"wb") as f:
+            f.write(data)

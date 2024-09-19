@@ -1,10 +1,11 @@
 from collections.abc import Iterable
-from typing import overload
-from typing_extensions import Literal, Self
+from typing import Literal, overload
+from typing_extensions import Self
 
 from openpyxl.cell.text import InlineFont
 from openpyxl.descriptors import Strict, String, Typed
 from openpyxl.descriptors.serialisable import _ChildSerialisableTreeElement
+from openpyxl.xml.functions import Element
 
 class TextBlock(Strict):
     font: Typed[InlineFont, Literal[False]]
@@ -12,10 +13,11 @@ class TextBlock(Strict):
 
     def __init__(self, font: InlineFont, text: str) -> None: ...
     def __eq__(self, other: TextBlock) -> bool: ...  # type: ignore[override]
+    def to_tree(self) -> Element: ...
 
 class CellRichText(list[str | TextBlock]):
     @overload
-    def __init__(self, __args: list[str] | list[TextBlock] | list[str | TextBlock] | tuple[str | TextBlock, ...]) -> None: ...
+    def __init__(self, args: list[str] | list[TextBlock] | list[str | TextBlock] | tuple[str | TextBlock, ...], /) -> None: ...
     @overload
     def __init__(self, *args: str | TextBlock) -> None: ...
     @classmethod
@@ -24,3 +26,4 @@ class CellRichText(list[str | TextBlock]):
     def append(self, arg: str | TextBlock) -> None: ...
     def extend(self, arg: Iterable[str | TextBlock]) -> None: ...
     def as_list(self) -> list[str]: ...
+    def to_tree(self) -> Element: ...

@@ -1,21 +1,13 @@
 import datetime
 import io
-from _typeshed import (
-    ExcInfo,
-    Incomplete,
-    ReadableBuffer,
-    SupportsItems,
-    SupportsKeysAndGetItem,
-    SupportsNoArgReadline,
-    SupportsRead,
-)
+import sys
+from _typeshed import ExcInfo, ReadableBuffer, SupportsItems, SupportsKeysAndGetItem, SupportsNoArgReadline, SupportsRead
 from _typeshed.wsgi import WSGIApplication, WSGIEnvironment
-from cgi import FieldStorage
 from collections.abc import Iterable, Mapping
 from re import Pattern
 from tempfile import _TemporaryFileWrapper
-from typing import IO, Any, ClassVar, Protocol, TypeVar, overload
-from typing_extensions import Literal, Self, TypeAlias, TypedDict
+from typing import IO, Any, ClassVar, Literal, Protocol, TypedDict, TypeVar, overload
+from typing_extensions import Self, TypeAlias
 
 from webob.acceptparse import _AcceptCharsetProperty, _AcceptEncodingProperty, _AcceptLanguageProperty, _AcceptProperty
 from webob.byterange import Range
@@ -26,6 +18,11 @@ from webob.etag import IfRange, IfRangeDate, _ETagProperty
 from webob.headers import EnvironHeaders
 from webob.multidict import GetDict, MultiDict, NestedMultiDict, NoVars
 from webob.response import Response, _HTTPHeader
+
+if sys.version_info >= (3, 13):
+    _FieldStorage: TypeAlias = Any
+else:
+    from cgi import FieldStorage as _FieldStorage
 
 _T = TypeVar("_T")
 _HTTPMethod: TypeAlias = Literal["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH"]
@@ -42,7 +39,9 @@ class _RequestCacheControlDict(TypedDict, total=False):
     no_transform: bool
     max_age: int
 
-class _FieldStorageWithFile(FieldStorage):
+# On py313 this subclasses `Any`, hence the type: ignore.
+# This is needed for the regr_test.py script, which uses --disallow-subclassing-any
+class _FieldStorageWithFile(_FieldStorage):  # type: ignore[misc]
     file: IO[bytes]
     filename: str
 
@@ -55,8 +54,11 @@ class BaseRequest:
     environ: WSGIEnvironment
     method: _HTTPMethod
     def __init__(self, environ: WSGIEnvironment, **kw: Any) -> None: ...
-    def encget(self, key: str, default: Any = ..., encattr: str | None = None) -> Any: ...
-    def encset(self, key: str, val: Any, encattr: str | None = None) -> None: ...
+    @overload
+    def encget(self, key: str, default: _T, encattr: str | None = None) -> str | _T: ...
+    @overload
+    def encget(self, key: str, *, encattr: str | None = None) -> str: ...
+    def encset(self, key: str, val: str, encattr: str | None = None) -> None: ...
     @property
     def charset(self) -> str | None: ...
     def decode(self, charset: str | None = None, errors: str = "strict") -> Self: ...
@@ -96,7 +98,10 @@ class BaseRequest:
     @path_info.setter
     def path_info(self, value: str | None) -> None: ...
     uscript_name: str  # bw compat
-    upath_info = path_info  # bw compat
+    @property
+    def upath_info(self) -> str | None: ...  # bw compat
+    @upath_info.setter
+    def upath_info(self, value: str | None) -> None: ...  # bw compat
     content_type: str | None
     headers: _AsymmetricProperty[EnvironHeaders, SupportsItems[str, str] | Iterable[tuple[str, str]]]
     @property
@@ -166,7 +171,7 @@ class BaseRequest:
     ]
     max_forwards: int | None
     pragma: str | None
-    range: _AsymmetricPropertyWithDelete[Range, tuple[int, int | None] | list[int | None] | str | None]
+    range: _AsymmetricPropertyWithDelete[Range | None, tuple[int, int | None] | list[int | None] | list[int] | str | None]
     referer: str | None
     referrer: str | None
     user_agent: str | None
@@ -198,20 +203,31 @@ class BaseRequest:
         base_url: str | None = None,
         headers: Mapping[str, str] | None = None,
         POST: str | bytes | Mapping[Any, Any] | Mapping[Any, _ListOrTuple[Any]] | None = None,
-        **kw,
+        **kw: Any,
     ) -> Self: ...
 
 class LegacyRequest(BaseRequest):
-    uscript_name: Incomplete
-    upath_info: Incomplete
-    def encget(self, key, default=..., encattr: Incomplete | None = None): ...
+    @property
+    def uscript_name(self) -> str: ...
+    @uscript_name.setter
+    def uscript_name(self, value: str) -> None: ...
+    @property  # type:ignore[override]
+    def upath_info(self) -> str: ...
+    @upath_info.setter
+    def upath_info(self, value: str) -> None: ...
+    def encget(self, key: str, default: Any = ..., encattr: str | None = None) -> Any: ...
 
 class AdhocAttrMixin:
     def __setattr__(self, attr: str, value: Any) -> None: ...
     def __getattr__(self, attr: str) -> Any: ...
     def __delattr__(self, attr: str) -> None: ...
 
-class Request(AdhocAttrMixin, BaseRequest): ...
+class Request(AdhocAttrMixin, BaseRequest):
+    # this is so Request doesn't count as callable, it's not very pretty
+    # but we run into trouble with overlapping overloads in wsgify if we
+    # don't exclude __call__ from arbitrary attribute access
+    __call__: None
+
 class DisconnectionError(IOError): ...
 
 def environ_from_url(path: str) -> WSGIEnvironment: ...
@@ -235,4 +251,4 @@ class Transcoder:
     errors: str
     def __init__(self, charset: str, errors: str = "strict") -> None: ...
     def transcode_query(self, q: str) -> str: ...
-    def transcode_fs(self, fs: FieldStorage, content_type: str) -> io.BytesIO: ...
+    def transcode_fs(self, fs: _FieldStorage, content_type: str) -> io.BytesIO: ...

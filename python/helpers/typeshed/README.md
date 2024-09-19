@@ -10,9 +10,10 @@ Typeshed contains external type annotations for the Python standard library
 and Python builtins, as well as third party packages as contributed by
 people external to those projects.
 
-This data can e.g. be used for static analysis, type checking or type inference.
+This data can e.g. be used for static analysis, type checking, type inference,
+and autocompletion.
 
-For information on how to use `typeshed`, read below.  Information for
+For information on how to use typeshed, read below.  Information for
 contributors can be found in [CONTRIBUTING.md](CONTRIBUTING.md).  **Please read
 it before submitting pull requests; do not report issues with annotations to
 the project the stubs are for, but instead report them here to typeshed.**
@@ -20,9 +21,7 @@ the project the stubs are for, but instead report them here to typeshed.**
 Further documentation on stub files, typeshed, and Python's typing system in
 general, can also be found at https://typing.readthedocs.io/en/latest/.
 
-Typeshed fully supports Python versions 3.8 and up. Support for Python 3.7
-is limited: see https://github.com/python/typeshed/issues/10113
-for details.
+Typeshed supports Python versions 3.8 and up.
 
 ## Using
 
@@ -32,15 +31,15 @@ If you're just using a type checker ([mypy](https://github.com/python/mypy/),
 developing it, you don't need to interact with the typeshed repo at
 all: a copy of standard library part of typeshed is bundled with type checkers.
 And type stubs for third party packages and modules you are using can
-be installed from PyPI. For example, if you are using `six` and `requests`,
+be installed from PyPI. For example, if you are using `html5lib` and `requests`,
 you can install the type stubs using
 
 ```bash
-$ pip install types-six types-requests
+$ pip install types-html5lib types-requests
 ```
 
 These PyPI packages follow [PEP 561](http://www.python.org/dev/peps/pep-0561/)
-and are automatically released (multiple times a day, when needed) by
+and are automatically released (up to once a day) by
 [typeshed internal machinery](https://github.com/typeshed-internal/stub_uploader).
 
 Type checkers should be able to use these stub packages when installed. For more
@@ -51,13 +50,11 @@ details, see the documentation for your type checker.
 Version numbers of third-party stub packages consist of at least four parts.
 All parts of the stub version, except for the last part, correspond to the
 version of the runtime package being stubbed. For example, if the `types-foo`
-package has version `1.2.0.7`, this guarantees that the `types-foo` package
+package has version `1.2.0.20240309`, this guarantees that the `types-foo` package
 contains stubs targeted against `foo==1.2.*` and tested against the latest
 version of `foo` matching that specifier. In this example, the final element
-of the version (7) indicates that this is the eighth revision of the stubs for
-`foo==1.2.*`. If an update to the stubs were pushed (but the stubs were still
-aiming to provide annotations for `foo==1.2.*`), then the version of
-`types-foo` would increment to `1.2.0.8`.
+of the version number (20240309) indicates that the stub package was pushed on
+March 9, 2024.
 
 At typeshed, we try to keep breaking changes to a minimum. However, due to the
 nature of stubs, any version bump can introduce changes that might make your
@@ -102,7 +99,7 @@ a problem arises that can't easily be fixed.
 ### The `_typeshed` package
 
 typeshed includes a package `_typeshed` as part of the standard library.
-This package and its submodules contains utility types, but is not
+This package and its submodules contain utility types, but are not
 available at runtime. For more information about how to use this package,
 [see the `stdlib/_typeshed` directory](https://github.com/python/typeshed/tree/main/stdlib/_typeshed).
 

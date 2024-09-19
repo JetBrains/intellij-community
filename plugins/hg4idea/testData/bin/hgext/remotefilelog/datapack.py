@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import struct
 import zlib
 
@@ -7,6 +9,7 @@ from mercurial.node import (
 )
 from mercurial.i18n import _
 from mercurial import (
+    pycompat,
     util,
 )
 from . import (
@@ -231,7 +234,7 @@ class datapack(basepack.basepack):
 
         # Scan forward to find the first non-same entry, which is the upper
         # bound.
-        for i in range(fanoutkey + 1, params.fanoutcount):
+        for i in pycompat.xrange(fanoutkey + 1, params.fanoutcount):
             end = fanout[i] + params.indexstart
             if end != start:
                 break
@@ -452,7 +455,7 @@ class mutabledatapack(basepack.mutablebasepack):
 
     def createindex(self, nodelocations, indexoffset):
         entries = sorted(
-            (n, db, o, s) for n, (db, o, s) in self.entries.items()
+            (n, db, o, s) for n, (db, o, s) in pycompat.iteritems(self.entries)
         )
 
         rawindex = b''

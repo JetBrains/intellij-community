@@ -187,16 +187,6 @@
             class="org.jetbrains.plugins.github.api.GHRequestExecutorBreaker$Action"
             text="Break GitHub API Requests"/>
 
-    <action id="Github.PullRequest.Diff.Comment.Create"
-            class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRReviewEditorCreateCommentAction">
-      <keyboard-shortcut first-keystroke="control shift X" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse" remove="true"/>
-      <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse (Mac OS X)" remove="true"/>
-      <keyboard-shortcut first-keystroke="meta shift X" keymap="Eclipse (Mac OS X)" remove="true"/>
-      <keyboard-shortcut first-keystroke="control shift X" keymap="Emacs" remove="true"/>
-      <add-to-group group-id="Diff.EditorPopupMenu"/>
-    </action>
-
     <group id="Github.PullRequest.Diff.Thread.View.Options"
            class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsToggleAction"
            icon="AllIcons.Actions.Show"

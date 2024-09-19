@@ -5,11 +5,13 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import abc
 import types
 
 from .i18n import _
+from .pycompat import getattr
 from . import (
     error,
     pycompat,
@@ -30,7 +32,7 @@ class TemplateNotFound(error.Abort):
     pass
 
 
-class wrapped:  # pytype: disable=ignored-metaclass
+class wrapped(object):  # pytype: disable=ignored-metaclass
     """Object requiring extra conversion prior to displaying or processing
     as value
 
@@ -107,7 +109,7 @@ class wrapped:  # pytype: disable=ignored-metaclass
         """
 
 
-class mappable:  # pytype: disable=ignored-metaclass
+class mappable(object):  # pytype: disable=ignored-metaclass
     """Object which can be converted to a single template mapping"""
 
     __metaclass__ = abc.ABCMeta
@@ -280,7 +282,7 @@ class hybrid(wrapped):
 
     def getmember(self, context, mapping, key):
         # TODO: maybe split hybrid list/dict types?
-        if not hasattr(self._values, 'get'):
+        if not util.safehasattr(self._values, b'get'):
             raise error.ParseError(_(b'not a dictionary'))
         key = unwrapastype(context, mapping, key, self._keytype)
         return self._wrapvalue(key, self._values.get(key))
@@ -300,16 +302,16 @@ class hybrid(wrapped):
     def _wrapvalue(self, key, val):
         if val is None:
             return
-        if hasattr(val, '_makemap'):
+        if util.safehasattr(val, b'_makemap'):
             # a nested hybrid list/dict, which has its own way of map operation
             return val
         return hybriditem(None, key, val, self._makemap)
 
     def filter(self, context, mapping, select):
-        if hasattr(self._values, 'get'):
+        if util.safehasattr(self._values, b'get'):
             values = {
                 k: v
-                for k, v in self._values.items()
+                for k, v in pycompat.iteritems(self._values)
                 if select(self._wrapvalue(k, v))
             }
         else:
@@ -340,8 +342,11 @@ class hybrid(wrapped):
     def tovalue(self, context, mapping):
         # TODO: make it non-recursive for trivial lists/dicts
         xs = self._values
-        if hasattr(xs, 'get'):
-            return {k: unwrapvalue(context, mapping, v) for k, v in xs.items()}
+        if util.safehasattr(xs, b'get'):
+            return {
+                k: unwrapvalue(context, mapping, v)
+                for k, v in pycompat.iteritems(xs)
+            }
         return [unwrapvalue(context, mapping, x) for x in xs]
 
 
@@ -533,7 +538,7 @@ class _mappingsequence(wrapped):
             items.append(
                 {
                     k: unwrapvalue(context, lm, v)
-                    for k, v in nm.items()
+                    for k, v in pycompat.iteritems(nm)
                     if k not in knownres
                 }
             )
@@ -711,7 +716,7 @@ def compatdict(
     This exists for backward compatibility with the old-style template. Use
     hybriddict() for new template keywords.
     """
-    c = [{key: k, value: v} for k, v in data.items()]
+    c = [{key: k, value: v} for k, v in pycompat.iteritems(data)]
     f = _showcompatlist(context, mapping, name, c, plural, separator)
     return hybriddict(data, key=key, value=value, fmt=fmt, gen=f)
 
@@ -857,7 +862,7 @@ def flatten(context, mapping, thing):
         )
     elif thing is None:
         pass
-    elif not hasattr(thing, '__iter__'):
+    elif not util.safehasattr(thing, b'__iter__'):
         yield pycompat.bytestr(thing)
     else:
         for i in thing:
@@ -867,7 +872,7 @@ def flatten(context, mapping, thing):
                 yield i
             elif i is None:
                 pass
-            elif not hasattr(i, '__iter__'):
+            elif not util.safehasattr(i, b'__iter__'):
                 yield pycompat.bytestr(i)
             else:
                 for j in flatten(context, mapping, i):

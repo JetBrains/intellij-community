@@ -2,6 +2,7 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
+import com.intellij.codeInsight.intention.IntentionSource
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.IntentionListStep
@@ -87,7 +88,6 @@ internal class ShowProblemsViewQuickFixesAction : AnAction() {
     }
   }
 
-
   private fun isEnabled(event: AnActionEvent, problem: HighlightingProblem): Boolean {
     return getCachedIntentions(event, problem, false) != null
   }
@@ -95,9 +95,10 @@ internal class ShowProblemsViewQuickFixesAction : AnAction() {
   private fun actionPerformed(event: AnActionEvent, problem: HighlightingProblem) {
     val intentions = getCachedIntentions(event, problem, true) ?: return
     val editor: Editor = intentions.editor ?: return
+
     if (intentions.offset >= 0) editor.caretModel.moveToOffset(intentions.offset.coerceAtMost(editor.document.textLength))
     show(event, JBPopupFactory.getInstance().createListPopup(
-      object : IntentionListStep(null, editor, intentions.file, intentions.file.project, intentions) {
+      object : IntentionListStep(null, editor, intentions.file, intentions.file.project, intentions, IntentionSource.PROBLEMS_VIEW) {
         override fun chooseActionAndInvoke(cachedAction: IntentionActionWithTextCaching, file: PsiFile, project: Project, editor: Editor?) {
           editor?.contentComponent?.requestFocus()
           // hack until doWhenFocusSettlesDown will work as expected

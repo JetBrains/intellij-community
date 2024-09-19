@@ -1,11 +1,12 @@
-from _typeshed import Incomplete, SupportsIter
+from _typeshed import ConvertibleToInt, Incomplete, SupportsIter
 from collections.abc import Iterator
-from typing import Any, ClassVar, Protocol
-from typing_extensions import Final, Self
+from typing import Any, ClassVar, Final, Protocol
+from typing_extensions import Self
 
 from openpyxl.descriptors import MetaSerialisable
+from openpyxl.xml.functions import Element
 
-from ..xml._functions_overloads import _HasAttrib, _HasGet, _HasText, _SupportsFindChartLines
+from ..xml._functions_overloads import _HasAttrib, _HasGet, _HasTagAndGet, _HasText, _SupportsFindChartLines
 
 # For any override directly re-using Serialisable.from_tree
 class _ChildSerialisableTreeElement(_HasAttrib, _HasText, SupportsIter[Incomplete], Protocol): ...
@@ -21,7 +22,7 @@ class Serialisable(metaclass=MetaSerialisable):
     __elements__: ClassVar[tuple[str, ...]]
     __namespaced__: ClassVar[tuple[tuple[str, str], ...]]
     idx_base: int
-    # Needs overrides in many sub-classes. But a lot of subclasses are instanciated without overriding it, so can't be abstract
+    # Needs overrides in many sub-classes. But a lot of subclasses are instantiated without overriding it, so can't be abstract
     # Subclasses "overrides" this property with a ClassVar, and Serialisable is too widely used,
     # so it can't be typed as NoReturn either without introducing many false-positives.
     @property
@@ -34,10 +35,17 @@ class Serialisable(metaclass=MetaSerialisable):
     # Use _ChildSerialisableTreeElement instead for child classes that reuse Serialisable.from_tree directly.
     @classmethod
     def from_tree(cls, node: _SerialisableTreeElement) -> Self | None: ...
-    def to_tree(self, tagname: str | None = None, idx: Incomplete | None = None, namespace: str | None = None): ...
+    # Note: To respect the Liskov substitution principle, idx is a type union of all child class requirements.
+    # Use Unused instead for child classes that reuse Serialisable.to_tree directly.
+    def to_tree(
+        self,
+        tagname: str | None = None,
+        idx: _HasTagAndGet[ConvertibleToInt] | ConvertibleToInt | None = None,
+        namespace: str | None = None,
+    ) -> Element: ...
     def __iter__(self) -> Iterator[tuple[str, str]]: ...
-    def __eq__(self, other): ...
-    def __ne__(self, other): ...
+    def __eq__(self, other: object) -> bool: ...
+    def __ne__(self, other: object) -> bool: ...
     def __hash__(self) -> int: ...
     def __add__(self, other): ...
     def __copy__(self): ...

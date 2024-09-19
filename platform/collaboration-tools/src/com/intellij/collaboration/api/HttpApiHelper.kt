@@ -12,9 +12,12 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Image
 import java.net.URI
 import java.net.http.HttpClient
+import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.util.*
 import javax.imageio.ImageIO
+import javax.net.ssl.SSLSession
 
 @ApiStatus.Experimental
 interface HttpApiHelper {
@@ -60,6 +63,23 @@ private val defaultRequestConfigurer = CompoundRequestConfigurer(listOf(
   CommonHeadersConfigurer()
 ))
 
+private class BlockingMappingBodyHttpResponse<T, R>(
+  private val response: HttpResponse<T>,
+  private val mapper: (T) -> R
+): HttpResponse<R> {
+  private val previousResponse: Optional<HttpResponse<R?>?> = response.previousResponse().map { BlockingMappingBodyHttpResponse(it, mapper) }
+  private val body: R = mapper(response.body())
+
+  override fun statusCode(): Int = response.statusCode()
+  override fun request(): HttpRequest? = response.request()
+  override fun previousResponse(): Optional<HttpResponse<R?>?> = previousResponse
+  override fun headers(): HttpHeaders? = response.headers()
+  override fun sslSession(): Optional<SSLSession?>? = response.sslSession()
+  override fun uri(): URI? = response.uri()
+  override fun version(): HttpClient.Version? = response.version()
+  override fun body(): R? = body
+}
+
 private class HttpApiHelperImpl(
   private val logger: Logger,
   private val clientFactory: HttpClientFactory,
@@ -75,10 +95,11 @@ private class HttpApiHelperImpl(
   override fun request(uri: URI): HttpRequest.Builder = HttpRequest.newBuilder(uri).apply(requestConfigurer::configure)
 
   override suspend fun <T> sendAndAwaitCancellable(request: HttpRequest, bodyHandler: HttpResponse.BodyHandler<T>): HttpResponse<out T> {
-    val cancellableBodyHandler = CancellableWrappingBodyHandler(bodyHandler)
+    val cancellableBodyHandler = CancellableWrappingBodyHandler(LazyBodyHandler(bodyHandler))
     return try {
       logger.debug(request.logName())
-      client.sendAsync(request, cancellableBodyHandler).await()
+      val response = client.sendAsync(request, cancellableBodyHandler).await()
+      BlockingMappingBodyHttpResponse(response) { it() }
     }
     catch (ce: CancellationException) {
       cancellableBodyHandler.cancel()

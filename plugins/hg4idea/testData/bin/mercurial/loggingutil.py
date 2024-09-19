@@ -6,11 +6,13 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import errno
 
 from . import (
     encoding,
+    pycompat,
 )
 
 from .utils import (
@@ -53,7 +55,7 @@ def openlogfile(ui, vfs, name, maxfiles=0, maxsize=0):
         else:
             if st.st_size >= maxsize:
                 path = vfs.join(name)
-                for i in range(maxfiles - 1, 1, -1):
+                for i in pycompat.xrange(maxfiles - 1, 1, -1):
                     rotate(
                         oldpath=b'%s.%d' % (path, i - 1),
                         newpath=b'%s.%d' % (path, i),
@@ -72,7 +74,7 @@ def _matchevent(event, tracked):
     return b'*' in tracked or event in tracked
 
 
-class filelogger:
+class filelogger(object):
     """Basic logger backed by physical file with optional rotation"""
 
     def __init__(self, vfs, name, tracked, maxfiles=0, maxsize=0):
@@ -103,7 +105,7 @@ class filelogger:
             )
 
 
-class fileobjectlogger:
+class fileobjectlogger(object):
     """Basic logger backed by file-like object"""
 
     def __init__(self, fp, tracked):
@@ -128,7 +130,7 @@ class fileobjectlogger:
             )
 
 
-class proxylogger:
+class proxylogger(object):
     """Forward log events to another logger to be set later"""
 
     def __init__(self):

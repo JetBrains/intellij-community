@@ -14,6 +14,7 @@ This extension is deprecated. You should use :hg:`log -r
 "children(REV)"` instead.
 '''
 
+from __future__ import absolute_import
 
 from mercurial.i18n import _
 from mercurial import (
@@ -21,6 +22,7 @@ from mercurial import (
     logcmdutil,
     pycompat,
     registrar,
+    scmutil,
 )
 
 templateopts = cmdutil.templateopts
@@ -67,17 +69,16 @@ def children(ui, repo, file_=None, **opts):
     See :hg:`help log` and :hg:`help revsets.children`.
 
     """
-    rev = opts.get('rev')
-    ctx = logcmdutil.revsingle(repo, rev)
+    opts = pycompat.byteskwargs(opts)
+    rev = opts.get(b'rev')
+    ctx = scmutil.revsingle(repo, rev)
     if file_:
         fctx = repo.filectx(file_, changeid=ctx.rev())
         childctxs = [fcctx.changectx() for fcctx in fctx.children()]
     else:
         childctxs = ctx.children()
 
-    displayer = logcmdutil.changesetdisplayer(
-        ui, repo, pycompat.byteskwargs(opts)
-    )
+    displayer = logcmdutil.changesetdisplayer(ui, repo, opts)
     for cctx in childctxs:
         displayer.show(cctx)
     displayer.close()

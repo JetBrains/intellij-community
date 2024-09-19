@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -53,7 +54,7 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   private static @Nullable PythonSdkFlavor<?> computeFlavor(@Nullable String sdkPath) {
     if (sdkPath != null) {
       for (var flavor : getApplicableFlavors(sdkPath.contains("\\"))) {
-        if (flavor.isValidSdkPath(new File(sdkPath))) {
+        if (flavor.isValidSdkPath(Path.of(sdkPath))) {
           return flavor;
         }
       }

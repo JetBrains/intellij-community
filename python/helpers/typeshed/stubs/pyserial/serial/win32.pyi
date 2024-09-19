@@ -13,6 +13,7 @@ if sys.platform == "win32":
         nLength: _CField[Incomplete, Incomplete, Incomplete]
         lpSecurityDescriptor: _CField[Incomplete, Incomplete, Incomplete]
         bInheritHandle: _CField[Incomplete, Incomplete, Incomplete]
+
     LPSECURITY_ATTRIBUTES: type[_Pointer[_SECURITY_ATTRIBUTES]]
     CreateEvent: _NamedFuncPointer
     CreateFile: _NamedFuncPointer
@@ -28,6 +29,7 @@ if sys.platform == "win32":
         OffsetHigh: _CField[Incomplete, Incomplete, Incomplete]
         Pointer: _CField[Incomplete, Incomplete, Incomplete]
         hEvent: _CField[Incomplete, Incomplete, Incomplete]
+
     OVERLAPPED: TypeAlias = _OVERLAPPED
 
     class _COMSTAT(Structure):
@@ -41,6 +43,7 @@ if sys.platform == "win32":
         fReserved: _CField[Incomplete, Incomplete, Incomplete]
         cbInQue: _CField[Incomplete, Incomplete, Incomplete]
         cbOutQue: _CField[Incomplete, Incomplete, Incomplete]
+
     COMSTAT: TypeAlias = _COMSTAT
 
     class _DCB(Structure):
@@ -72,6 +75,7 @@ if sys.platform == "win32":
         EofChar: _CField[Incomplete, Incomplete, Incomplete]
         EvtChar: _CField[Incomplete, Incomplete, Incomplete]
         wReserved1: _CField[Incomplete, Incomplete, Incomplete]
+
     DCB: TypeAlias = _DCB
 
     class _COMMTIMEOUTS(Structure):
@@ -80,6 +84,7 @@ if sys.platform == "win32":
         ReadTotalTimeoutConstant: _CField[Incomplete, Incomplete, Incomplete]
         WriteTotalTimeoutMultiplier: _CField[Incomplete, Incomplete, Incomplete]
         WriteTotalTimeoutConstant: _CField[Incomplete, Incomplete, Incomplete]
+
     COMMTIMEOUTS: TypeAlias = _COMMTIMEOUTS
 
     GetLastError: _NamedFuncPointer
@@ -159,4 +164,5 @@ if sys.platform == "win32":
     class N11_OVERLAPPED4DOLLAR_484DOLLAR_49E(Structure):
         Offset: _CField[Incomplete, Incomplete, Incomplete]
         OffsetHigh: _CField[Incomplete, Incomplete, Incomplete]
+
     PVOID: TypeAlias = c_void_p

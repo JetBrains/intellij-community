@@ -1,0 +1,11 @@
+assertpy.collection.Iterable
+assertpy.contains.str_types
+assertpy.contains.xrange
+assertpy.dynamic.Iterable
+assertpy.exception.Iterable
+assertpy.extracting.Iterable
+assertpy.extracting.str_types
+assertpy.file.str_types
+assertpy.helpers.Iterable
+assertpy.string.Iterable
+assertpy.string.str_types

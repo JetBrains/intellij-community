@@ -5,17 +5,18 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-import weakref
+from __future__ import absolute_import
 
 from .i18n import _
+from .pycompat import getattr
 from . import (
     error,
     match as matchmod,
     merge,
     mergestate as mergestatemod,
+    requirements,
     scmutil,
     sparse,
-    txnutil,
     util,
 )
 
@@ -108,24 +109,23 @@ def validatepatterns(pats):
     and patterns that are loaded from sources that use the internal,
     prefixed pattern representation (but can't necessarily be fully trusted).
     """
-    with util.timedcm('narrowspec.validatepatterns(pats size=%d)', len(pats)):
-        if not isinstance(pats, set):
-            raise error.ProgrammingError(
-                b'narrow patterns should be a set; got %r' % pats
-            )
+    if not isinstance(pats, set):
+        raise error.ProgrammingError(
+            b'narrow patterns should be a set; got %r' % pats
+        )
 
-        for pat in pats:
-            if not pat.startswith(VALID_PREFIXES):
-                # Use a Mercurial exception because this can happen due to user
-                # bugs (e.g. manually updating spec file).
-                raise error.Abort(
-                    _(b'invalid prefix on narrow pattern: %s') % pat,
-                    hint=_(
-                        b'narrow patterns must begin with one of '
-                        b'the following: %s'
-                    )
-                    % b', '.join(VALID_PREFIXES),
+    for pat in pats:
+        if not pat.startswith(VALID_PREFIXES):
+            # Use a Mercurial exception because this can happen due to user
+            # bugs (e.g. manually updating spec file).
+            raise error.Abort(
+                _(b'invalid prefix on narrow pattern: %s') % pat,
+                hint=_(
+                    b'narrow patterns must begin with one of '
+                    b'the following: %s'
                 )
+                % b', '.join(VALID_PREFIXES),
+            )
 
 
 def format(includes, excludes):
@@ -169,84 +169,60 @@ def parseconfig(ui, spec):
 def load(repo):
     # Treat "narrowspec does not exist" the same as "narrowspec file exists
     # and is empty".
-    spec = None
-    if txnutil.mayhavepending(repo.root):
-        pending_path = b"%s.pending" % FILENAME
-        if repo.svfs.exists(pending_path):
-            spec = repo.svfs.tryread(FILENAME)
-    if spec is None:
-        spec = repo.svfs.tryread(FILENAME)
+    spec = repo.svfs.tryread(FILENAME)
     return parseconfig(repo.ui, spec)
 
 
 def save(repo, includepats, excludepats):
-    repo = repo.unfiltered()
-
     validatepatterns(includepats)
     validatepatterns(excludepats)
     spec = format(includepats, excludepats)
-
-    tr = repo.currenttransaction()
-    if tr is None:
-        m = "changing narrow spec outside of a transaction"
-        raise error.ProgrammingError(m)
-    else:
-        # the roundtrip is sometime different
-        # not taking any chance for now
-        value = parseconfig(repo.ui, spec)
-        reporef = weakref.ref(repo)
-
-        def clean_pending(tr):
-            r = reporef()
-            if r is not None:
-                r._pending_narrow_pats = None
-
-        tr.addpostclose(b'narrow-spec', clean_pending)
-        tr.addabort(b'narrow-spec', clean_pending)
-        repo._pending_narrow_pats = value
-
-        def write_spec(f):
-            f.write(spec)
-
-        tr.addfilegenerator(
-            # XXX think about order at some point
-            b"narrow-spec",
-            (FILENAME,),
-            write_spec,
-            location=b'store',
-        )
+    repo.svfs.write(FILENAME, spec)
 
 
 def copytoworkingcopy(repo):
-    repo = repo.unfiltered()
-    tr = repo.currenttransaction()
-    spec = format(*repo.narrowpats)
-    if tr is None:
-        m = "changing narrow spec outside of a transaction"
-        raise error.ProgrammingError(m)
-    else:
+    spec = repo.svfs.read(FILENAME)
+    repo.vfs.write(DIRSTATE_FILENAME, spec)
 
-        reporef = weakref.ref(repo)
 
-        def clean_pending(tr):
-            r = reporef()
-            if r is not None:
-                r._pending_narrow_pats_dirstate = None
+def savebackup(repo, backupname):
+    if requirements.NARROW_REQUIREMENT not in repo.requirements:
+        return
+    svfs = repo.svfs
+    svfs.tryunlink(backupname)
+    util.copyfile(svfs.join(FILENAME), svfs.join(backupname), hardlink=True)
 
-        tr.addpostclose(b'narrow-spec-dirstate', clean_pending)
-        tr.addabort(b'narrow-spec-dirstate', clean_pending)
-        repo._pending_narrow_pats_dirstate = repo.narrowpats
 
-        def write_spec(f):
-            f.write(spec)
+def restorebackup(repo, backupname):
+    if requirements.NARROW_REQUIREMENT not in repo.requirements:
+        return
+    util.rename(repo.svfs.join(backupname), repo.svfs.join(FILENAME))
 
-        tr.addfilegenerator(
-            # XXX think about order at some point
-            b"narrow-spec-dirstate",
-            (DIRSTATE_FILENAME,),
-            write_spec,
-            location=b'plain',
+
+def savewcbackup(repo, backupname):
+    if requirements.NARROW_REQUIREMENT not in repo.requirements:
+        return
+    vfs = repo.vfs
+    vfs.tryunlink(backupname)
+    # It may not exist in old repos
+    if vfs.exists(DIRSTATE_FILENAME):
+        util.copyfile(
+            vfs.join(DIRSTATE_FILENAME), vfs.join(backupname), hardlink=True
         )
+
+
+def restorewcbackup(repo, backupname):
+    if requirements.NARROW_REQUIREMENT not in repo.requirements:
+        return
+    # It may not exist in old repos
+    if repo.vfs.exists(backupname):
+        util.rename(repo.vfs.join(backupname), repo.vfs.join(DIRSTATE_FILENAME))
+
+
+def clearwcbackup(repo, backupname):
+    if requirements.NARROW_REQUIREMENT not in repo.requirements:
+        return
+    repo.vfs.tryunlink(backupname)
 
 
 def restrictpatterns(req_includes, req_excludes, repo_includes, repo_excludes):
@@ -320,13 +296,10 @@ def checkworkingcopynarrowspec(repo):
     # Avoid infinite recursion when updating the working copy
     if getattr(repo, '_updatingnarrowspec', False):
         return
-    storespec = repo.narrowpats
-    wcspec = repo._pending_narrow_pats_dirstate
-    if wcspec is None:
-        oldspec = repo.vfs.tryread(DIRSTATE_FILENAME)
-        wcspec = parseconfig(repo.ui, oldspec)
+    storespec = repo.svfs.tryread(FILENAME)
+    wcspec = repo.vfs.tryread(DIRSTATE_FILENAME)
     if wcspec != storespec:
-        raise error.StateError(
+        raise error.Abort(
             _(b"working copy's narrowspec is stale"),
             hint=_(b"run 'hg tracked --update-working-copy'"),
         )
@@ -338,30 +311,21 @@ def updateworkingcopy(repo, assumeclean=False):
     When assumeclean=True, files that are not known to be clean will also
     be deleted. It is then up to the caller to make sure they are clean.
     """
-    old = repo._pending_narrow_pats_dirstate
-    if old is None:
-        oldspec = repo.vfs.tryread(DIRSTATE_FILENAME)
-        oldincludes, oldexcludes = parseconfig(repo.ui, oldspec)
-    else:
-        oldincludes, oldexcludes = old
-    newincludes, newexcludes = repo.narrowpats
+    oldspec = repo.vfs.tryread(DIRSTATE_FILENAME)
+    newspec = repo.svfs.tryread(FILENAME)
     repo._updatingnarrowspec = True
 
+    oldincludes, oldexcludes = parseconfig(repo.ui, oldspec)
+    newincludes, newexcludes = parseconfig(repo.ui, newspec)
     oldmatch = match(repo.root, include=oldincludes, exclude=oldexcludes)
     newmatch = match(repo.root, include=newincludes, exclude=newexcludes)
     addedmatch = matchmod.differencematcher(newmatch, oldmatch)
     removedmatch = matchmod.differencematcher(oldmatch, newmatch)
 
-    assert repo.currentwlock() is not None
     ds = repo.dirstate
-    with ds.running_status(repo):
-        lookup, status, _mtime_boundary = ds.status(
-            removedmatch,
-            subrepos=[],
-            ignored=True,
-            clean=True,
-            unknown=True,
-        )
+    lookup, status = ds.status(
+        removedmatch, subrepos=[], ignored=True, clean=True, unknown=True
+    )
     trackeddirty = status.modified + status.added
     clean = status.clean
     if assumeclean:

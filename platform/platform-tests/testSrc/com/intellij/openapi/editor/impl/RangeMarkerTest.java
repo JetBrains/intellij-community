@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -992,6 +993,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     RangeMarker m3 = document.createRangeMarker(2, 5);
     assertEquals(2, ((DocumentImpl)document).getRangeMarkersNodeSize());
     deleteString(document, 4, 5);
+    DaemonCodeAnalyzerImpl.getInstanceEx(getProject()).getFileStatusMap().disposeDirtyDocumentRangeStorage(document);
     assertTrue(m1.isValid());
     assertTrue(m2.isValid());
     assertTrue(m3.isValid());
@@ -1009,6 +1011,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertEquals(2, ((DocumentImpl)document).getRangeMarkersSize());
     assertEquals(2, ((DocumentImpl)document).getRangeMarkersNodeSize());
   }
+
   public void testRangeHighlightersRecreateBug() {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
 
@@ -1672,13 +1675,14 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       });
   }
 
-  private void createRemoveCheck(Supplier<? extends RangeMarker> creator, Consumer<? super RangeMarker> remover) {
+  private static void createRemoveCheck(Supplier<? extends RangeMarker> creator, Consumer<? super RangeMarker> remover) {
     RangeMarker marker = creator.get();
     assertTrue(marker.isValid());
     TextRange range = marker.getTextRange();
     remover.accept(marker);
     assertFalse(marker.isValid());
     assertEquals(range, marker.getTextRange());
+    assertEquals(TextRangeScalarUtil.toScalarRange(range), ((RangeMarkerImpl)marker).getScalarRange());
   }
 
   public void testInvalidOffsetMustThrow() {

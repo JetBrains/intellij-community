@@ -227,6 +227,9 @@ class UISettingsState : BaseState() {
   @get:OptionTag("SHOW_BREAKPOINTS_OVER_LINE_NUMBERS")
   var showBreakpointsOverLineNumbers: Boolean by property(true)
 
+  @get:OptionTag("SHOW_PREVIEW_IN_SEARCH_EVERYWHERE")
+  var showPreviewInSearchEverywhere: Boolean by property(false)
+
   @Suppress("FunctionName")
   fun _incrementModificationCount(): Unit = incrementModificationCount()
 }

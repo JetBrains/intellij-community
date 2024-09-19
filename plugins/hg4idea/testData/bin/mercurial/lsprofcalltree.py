@@ -10,6 +10,7 @@ This software may be used and distributed according to the terms
 of the GNU General Public License, incorporated herein by reference.
 """
 
+from __future__ import absolute_import
 
 from . import pycompat
 
@@ -26,7 +27,7 @@ def label(code):
         )
 
 
-class KCacheGrind:
+class KCacheGrind(object):
     def __init__(self, profiler):
         self.data = profiler.getstats()
         self.out_file = None

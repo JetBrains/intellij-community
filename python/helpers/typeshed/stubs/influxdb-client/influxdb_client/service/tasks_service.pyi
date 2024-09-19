@@ -1,5 +1,8 @@
 from _typeshed import Incomplete
+from multiprocessing.pool import ApplyResult
+from typing import Literal, overload
 
+from influxdb_client.domain.tasks import Tasks
 from influxdb_client.service._base_service import _BaseService
 
 class TasksService(_BaseService):
@@ -19,8 +22,66 @@ class TasksService(_BaseService):
     def delete_tasks_id_runs_id(self, task_id, run_id, **kwargs): ...
     def delete_tasks_id_runs_id_with_http_info(self, task_id, run_id, **kwargs): ...
     async def delete_tasks_id_runs_id_async(self, task_id, run_id, **kwargs): ...
-    def get_tasks(self, **kwargs): ...
-    def get_tasks_with_http_info(self, **kwargs): ...
+    @overload
+    def get_tasks(
+        self,
+        *,
+        async_req: Literal[True],
+        urlopen_kw=...,
+        zap_trace_span: str = ...,
+        name: str = ...,
+        after: str = ...,
+        user: str = ...,
+        org: str = ...,
+        org_id: str = ...,
+        limit: int = ...,
+        type: str = ...,
+    ) -> ApplyResult[Tasks]: ...
+    @overload
+    def get_tasks(
+        self,
+        *,
+        async_req: Literal[False] = ...,
+        urlopen_kw=...,
+        zap_trace_span: str = ...,
+        name: str = ...,
+        after: str = ...,
+        user: str = ...,
+        org: str = ...,
+        org_id: str = ...,
+        limit: int = ...,
+        type: str = ...,
+    ) -> Tasks: ...
+    @overload
+    def get_tasks_with_http_info(
+        self,
+        *,
+        async_req: Literal[True],
+        urlopen_kw=...,
+        zap_trace_span: str = ...,
+        name: str = ...,
+        after: str = ...,
+        user: str = ...,
+        org: str = ...,
+        org_id: str = ...,
+        limit: int = ...,
+        type: str = ...,
+    ) -> ApplyResult[Tasks]: ...
+    @overload
+    def get_tasks_with_http_info(
+        self,
+        *,
+        async_req: Literal[False] = ...,
+        urlopen_kw=...,
+        zap_trace_span: str = ...,
+        name: str = ...,
+        after: str = ...,
+        user: str = ...,
+        org: str = ...,
+        org_id: str = ...,
+        limit: int = ...,
+        type: str = ...,
+    ) -> Tasks: ...
     async def get_tasks_async(self, **kwargs): ...
     def get_tasks_id(self, task_id, **kwargs): ...
     def get_tasks_id_with_http_info(self, task_id, **kwargs): ...

@@ -1,7 +1,6 @@
 from _typeshed import Incomplete
 from enum import IntEnum
-from typing import ClassVar
-from typing_extensions import Literal
+from typing import ClassVar, Literal
 
 from .ImageFile import ImageFile
 

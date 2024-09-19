@@ -16,10 +16,11 @@ class ShellStartupOptions private constructor(builder: Builder) {
   val widget: TerminalWidget? = builder.widget
   val shellIntegration: ShellIntegration? = builder.shellIntegration
   val envVariables: Map<String, String> = builder.envVariables
+  internal val startupMoment: TerminalStartupMoment? = builder.startupMoment
 
   fun builder(): Builder {
     return Builder(workingDirectory, shellCommand, commandHistoryFileProvider, initialTermSize,
-                   widget, shellIntegration, envVariables)
+                   widget, shellIntegration, envVariables, startupMoment)
   }
 
   override fun toString(): String {
@@ -34,7 +35,8 @@ class ShellStartupOptions private constructor(builder: Builder) {
                                      var initialTermSize: TermSize?,
                                      var widget: TerminalWidget?,
                                      var shellIntegration: ShellIntegration? = null,
-                                     var envVariables: Map<String, String> = createEnvVariablesMap()) {
+                                     var envVariables: Map<String, String> = createEnvVariablesMap(),
+                                     internal var startupMoment: TerminalStartupMoment? = null) {
 
     constructor() : this(null, null, null, null, null)
 
@@ -45,6 +47,8 @@ class ShellStartupOptions private constructor(builder: Builder) {
     fun initialTermSize(initialTermSize: TermSize?) = also { this.initialTermSize = initialTermSize }
     fun widget(widget: TerminalWidget?) = also { this.widget = widget }
     fun shellIntegration(shellIntegration: ShellIntegration?) = also { this.shellIntegration = shellIntegration }
+    @JvmName("startupMoment")
+    internal fun startupMoment(startupMoment: TerminalStartupMoment?) = also { this.startupMoment = startupMoment }
 
     fun modify(modifier: (Builder) -> Unit): Builder = also {
       modifier(this)

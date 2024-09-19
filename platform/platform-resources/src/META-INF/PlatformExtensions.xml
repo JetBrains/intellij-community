@@ -804,7 +804,7 @@ Android Studio: don't register IntelliJ fork -->
                         serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
 
     <applicationService serviceInterface="com.intellij.util.PerformanceAssertions"
-                        serviceImplementation="com.intellij.util.PerformanceAssertionsImpl"/>
+                        serviceImplementation="com.intellij.codeInsight.daemon.impl.PerformanceAssertionsImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorFactory"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorFactoryImpl" preload="notHeadless"/>
@@ -1039,6 +1039,16 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.ReadmeShownUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileChooser.impl.FileChooserUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.editor.markup.InspectionsFUS"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.build.BuildToolsCollector"/>
+
+    <fileTypeUsageSchemaDescriptor schema="DotBazelFile"
+                                   implementationClass="com.intellij.internal.statistic.collectors.fus.build.DotBazelFileTypeUsageSchemaDescriptor"/>
+    <fileTypeUsageSchemaDescriptor schema="BazelBuildFile"
+                                   implementationClass="com.intellij.internal.statistic.collectors.fus.build.BazelBuildFileTypeUsageSchemaDescriptor"/>
+    <fileTypeUsageSchemaDescriptor schema="BazelWorkspaceFile"
+                                   implementationClass="com.intellij.internal.statistic.collectors.fus.build.BazelWorkspaceFileTypeUsageSchemaDescriptor"/>
+    <fileTypeUsageSchemaDescriptor schema="BazelModuleFile"
+                                   implementationClass="com.intellij.internal.statistic.collectors.fus.build.BazelModuleFileTypeUsageSchemaDescriptor"/>
 
     <applicationService
       serviceImplementation="com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence"
@@ -1744,10 +1754,6 @@ Android Studio: b/285867050 -->
     <registryKey key="search.everywhere.preview"
                  defaultValue="true"
                  description="Enables preview of the selected element in the Search Everywhere"/>
-
-    <registryKey key="search.everywhere.preview.default"
-                 defaultValue="false"
-                 description="Show preview of the selected element in the Search Everywhere by default"/>
 
     <registryKey key="search.everywhere.recents"
                  defaultValue="true"

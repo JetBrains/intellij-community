@@ -5,6 +5,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import io
 import os
@@ -62,14 +63,12 @@ def peersetup(ui, peer):
                 raise error.Abort(
                     b'configured remotefile server does not support getfile'
                 )
-
-            def decode(d):
-                code, data = d.split(b'\0', 1)
-                if int(code):
-                    raise error.LookupError(file, node, data)
-                return data
-
-            return {b'file': file, b'node': node}, decode
+            f = wireprotov1peer.future()
+            yield {b'file': file, b'node': node}, f
+            code, data = f.value.split(b'\0', 1)
+            if int(code):
+                raise error.LookupError(file, node, data)
+            yield data
 
         @wireprotov1peer.batchable
         def x_rfl_getflogheads(self, path):
@@ -78,11 +77,10 @@ def peersetup(ui, peer):
                     b'configured remotefile server does not '
                     b'support getflogheads'
                 )
-
-            def decode(d):
-                return d.split(b'\n') if d else []
-
-            return {b'path': path}, decode
+            f = wireprotov1peer.future()
+            yield {b'path': path}, f
+            heads = f.value.split(b'\n') if f.value else []
+            yield heads
 
         def _updatecallstreamopts(self, command, opts):
             if command != b'getbundle':
@@ -92,7 +90,7 @@ def peersetup(ui, peer):
                 not in self.capabilities()
             ):
                 return
-            if not hasattr(self, '_localrepo'):
+            if not util.safehasattr(self, '_localrepo'):
                 return
             if (
                 constants.SHALLOWREPO_REQUIREMENT
@@ -132,14 +130,14 @@ def peersetup(ui, peer):
 
         def _callstream(self, command, **opts):
             supertype = super(remotefilepeer, self)
-            if not hasattr(supertype, '_sendrequest'):
+            if not util.safehasattr(supertype, '_sendrequest'):
                 self._updatecallstreamopts(command, pycompat.byteskwargs(opts))
             return super(remotefilepeer, self)._callstream(command, **opts)
 
     peer.__class__ = remotefilepeer
 
 
-class cacheconnection:
+class cacheconnection(object):
     """The connection for communicating with the remote cache. Performs
     gets and sets by communicating with an external process that has the
     cache-specific implementation.
@@ -302,7 +300,7 @@ def _getfiles_threaded(
     pipeo.flush()
 
 
-class fileserverclient:
+class fileserverclient(object):
     """A client for requesting files from the remote file server."""
 
     def __init__(self, repo):
@@ -517,7 +515,7 @@ class fileserverclient:
             # returns cache misses.  This enables tests to run easily
             # and may eventually allow us to be a drop in replacement
             # for the largefiles extension.
-            class simplecache:
+            class simplecache(object):
                 def __init__(self):
                     self.missingids = []
                     self.connected = True
@@ -641,7 +639,9 @@ class fileserverclient:
             self._lfsprefetch(fileids)
 
     def _lfsprefetch(self, fileids):
-        if not _lfsmod or not hasattr(self.repo.svfs, 'lfslocalblobstore'):
+        if not _lfsmod or not util.safehasattr(
+            self.repo.svfs, b'lfslocalblobstore'
+        ):
             return
         if not _lfsmod.wrapper.candownload(self.repo):
             return

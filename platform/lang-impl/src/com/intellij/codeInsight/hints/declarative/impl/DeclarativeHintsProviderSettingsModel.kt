@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -96,6 +97,7 @@ class DeclarativeHintsProviderSettingsModel(
 
   override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language = language
 
+  @RequiresBackgroundThread
   override fun collectData(editor: Editor, file: PsiFile): Runnable {
     val providerId = providerDescription.requiredProviderId()
 
@@ -111,7 +113,8 @@ class DeclarativeHintsProviderSettingsModel(
       isEnabled
     }
 
-    val pass = DeclarativeInlayHintsPass(file, editor, listOf(InlayProviderPassInfo(object : InlayHintsProvider {
+    val pass =
+      DeclarativeInlayHintsPass(file, editor, listOf(InlayProviderPassInfo(object : InlayHintsProvider {
       override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector {
         return object: OwnBypassCollector {
           override fun collectHintsForFile(file: PsiFile, sink: InlayTreeSink) {
@@ -125,7 +128,6 @@ class DeclarativeHintsProviderSettingsModel(
         }
       }
     }, providerId, enabledOptions)), false, !enabled)
-
 
     pass.doCollectInformation(EmptyProgressIndicator())
     return Runnable {

@@ -7,6 +7,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import errno
 
@@ -21,7 +22,6 @@ from . import (
     namespaces,
     pathutil,
     pycompat,
-    requirements as requirementsmod,
     url,
     util,
     vfs as vfsmod,
@@ -34,7 +34,7 @@ urlerr = util.urlerr
 urlreq = util.urlreq
 
 
-class httprangereader:
+class httprangereader(object):
     def __init__(self, url, opener):
         # we assume opener has HTTPRangeHandler
         self.url = url
@@ -119,7 +119,7 @@ class _HTTPRangeHandler(urlreq.basehandler):
 
     def http_error_416(self, req, fp, code, msg, hdrs):
         # HTTP's Range Not Satisfiable error
-        raise _RangeError('Requested Range Not Satisfiable')
+        raise _RangeError(b'Requested Range Not Satisfiable')
 
 
 def build_opener(ui, authinfo):
@@ -134,13 +134,13 @@ def build_opener(ui, authinfo):
 
         def __call__(self, path, mode=b'r', *args, **kw):
             if mode not in (b'r', b'rb'):
-                raise IOError('Permission denied')
+                raise IOError(b'Permission denied')
             f = b"/".join((self.base, urlreq.quote(path)))
             return httprangereader(f, urlopener)
 
-        def join(self, path, *insidef):
+        def join(self, path):
             if path:
-                return pathutil.join(self.base, path, *insidef)
+                return pathutil.join(self.base, path)
             else:
                 return self.base
 
@@ -181,7 +181,9 @@ class statichttprepository(
 
         try:
             requirements = set(self.vfs.read(b'requires').splitlines())
-        except FileNotFoundError:
+        except IOError as inst:
+            if inst.errno != errno.ENOENT:
+                raise
             requirements = set()
 
             # check if it is a non-empty old-style repository
@@ -189,13 +191,12 @@ class statichttprepository(
                 fp = self.vfs(b"00changelog.i")
                 fp.read(1)
                 fp.close()
-            except FileNotFoundError:
+            except IOError as inst:
+                if inst.errno != errno.ENOENT:
+                    raise
                 # we do not care about empty old-style repositories here
                 msg = _(b"'%s' does not appear to be an hg repository") % path
                 raise error.RepoError(msg)
-        if requirementsmod.SHARESAFE_REQUIREMENT in requirements:
-            storevfs = vfsclass(self.vfs.join(b'store'))
-            requirements |= set(storevfs.read(b'requires').splitlines())
 
         supportedrequirements = localrepo.gathersupportedrequirements(ui)
         localrepo.ensurerequirementsrecognized(
@@ -225,7 +226,6 @@ class statichttprepository(
         self.encodepats = None
         self.decodepats = None
         self._transref = None
-        self._dirstate = None
 
     def _restrictcapabilities(self, caps):
         caps = super(statichttprepository, self)._restrictcapabilities(caps)
@@ -237,13 +237,13 @@ class statichttprepository(
     def local(self):
         return False
 
-    def peer(self, path=None, remotehidden=False):
-        return statichttppeer(self, path=path, remotehidden=remotehidden)
+    def peer(self):
+        return statichttppeer(self)
 
     def wlock(self, wait=True):
         raise error.LockUnavailable(
             0,
-            pycompat.sysstr(_(b'lock not available')),
+            _(b'lock not available'),
             b'lock',
             _(b'cannot lock static-http repository'),
         )
@@ -251,7 +251,7 @@ class statichttprepository(
     def lock(self, wait=True):
         raise error.LockUnavailable(
             0,
-            pycompat.sysstr(_(b'lock not available')),
+            _(b'lock not available'),
             b'lock',
             _(b'cannot lock static-http repository'),
         )
@@ -260,12 +260,7 @@ class statichttprepository(
         pass  # statichttprepository are read only
 
 
-def make_peer(
-    ui, path, create, intents=None, createopts=None, remotehidden=False
-):
+def instance(ui, path, create, intents=None, createopts=None):
     if create:
         raise error.Abort(_(b'cannot create new static-http repository'))
-    url = path.loc[7:]
-    return statichttprepository(ui, url).peer(
-        path=path, remotehidden=remotehidden
-    )
+    return statichttprepository(ui, path[7:])

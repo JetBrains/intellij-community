@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.impl.exceptions.ApplyChangesFromException
+import kotlinx.collections.immutable.PersistentSet
 import java.util.*
 
 internal class ApplyChangesFromOperation(val target: MutableEntityStorageImpl, val diff: MutableEntityStorageImpl) {
@@ -223,7 +224,7 @@ internal class ApplyChangesFromOperation(val target: MutableEntityStorageImpl, v
     newEntityId: ParentEntityId,
     addedChildrenMap: MutableMap<ConnectionId, MutableList<ChildEntityId>>,
     removedChildrenMap: MutableMap<ConnectionId, MutableList<ChildEntityId>>,
-    childrenOrdering: Map<ConnectionId, LinkedHashSet<ChildEntityId>>?,
+    childrenOrdering: Map<ConnectionId, PersistentSet<ChildEntityId>>?,
   ) {
     // Children from target store with connectionIds of affected references
     val existingChildrenOfAffectedIds: MutableMap<ConnectionId, List<ChildEntityId>> = HashMap()

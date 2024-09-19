@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationRequests
+import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.util.coroutines.childScope
@@ -408,7 +409,16 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
             .preserveCaret(true)
           if (extendedNavigatable == null) {
             if (file == null) {
-              LOG.warn("Cannot navigate to invalid PsiElement (psiElement=$psiElement, selected=$selected)")
+              val navigatable = psiElement as? Navigatable
+              if (navigatable != null) {
+                // Navigation items from rd protocol often lack .containingFile or other PSI extensions, and are only expected to be
+                // navigated through the Navigatable API.
+                // This fallback is for items like that.
+                val navRequest = RawNavigationRequest(navigatable, true)
+                project.serviceAsync<NavigationService>().navigate(navRequest, navigationOptions)
+              } else {
+                LOG.warn("Cannot navigate to invalid PsiElement (psiElement=$psiElement, selected=$selected)")
+              }
             }
             else {
               createSourceNavigationRequest(element = psiElement, file = file, searchText = searchText)?.let {

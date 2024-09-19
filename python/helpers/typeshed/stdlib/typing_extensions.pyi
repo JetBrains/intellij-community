@@ -381,6 +381,7 @@ else:
             def __ror__(self, other: Any) -> _SpecialForm: ...
 
 if sys.version_info >= (3, 12):
+    from collections.abc import Buffer as Buffer
     from types import get_original_bases as get_original_bases
     from typing import TypeAliasType as TypeAliasType, override as override
 else:
@@ -402,6 +403,7 @@ else:
         # It's writable on types, but not on instances of TypeAliasType.
         @property
         def __module__(self) -> str | None: ...  # type: ignore[override]
+        # Returns typing._GenericAlias, which isn't stubbed.
         def __getitem__(self, parameters: Any) -> Any: ...
         if sys.version_info >= (3, 10):
             def __or__(self, right: Any) -> _SpecialForm: ...
@@ -414,13 +416,18 @@ else:
         def __buffer__(self, flags: int, /) -> memoryview: ...
 
 if sys.version_info >= (3, 13):
+    from types import CapsuleType as CapsuleType
     from typing import (
+        NoDefault as NoDefault,
         ParamSpec as ParamSpec,
+        ReadOnly as ReadOnly,
+        TypeIs as TypeIs,
         TypeVar as TypeVar,
         TypeVarTuple as TypeVarTuple,
         get_protocol_members as get_protocol_members,
         is_protocol as is_protocol,
     )
+    from warnings import deprecated as deprecated
 else:
     def is_protocol(tp: type, /) -> bool: ...
     def get_protocol_members(tp: type, /) -> frozenset[str]: ...
@@ -516,11 +523,11 @@ else:
         def has_default(self) -> bool: ...
         def __typing_prepare_subst__(self, alias: Any, args: Any) -> tuple[Any, ...]: ...
 
+    ReadOnly: _SpecialForm
+    TypeIs: _SpecialForm
+
 class Doc:
     documentation: str
     def __init__(self, documentation: str, /) -> None: ...
     def __hash__(self) -> int: ...
     def __eq__(self, other: object) -> bool: ...
-
-ReadOnly: _SpecialForm
-TypeIs: _SpecialForm

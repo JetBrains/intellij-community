@@ -13,20 +13,21 @@ import com.intellij.openapi.components.SettingsCategory
 
 
 object ImportSettingsEventsCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("import.settings", 4)
+  private val GROUP = EventLogGroup("import.settings", 5)
   override fun getGroup(): EventLogGroup = GROUP
   private val UNKNOWN = "UNKNOWN"
   private val FOLDER = "FOLDER"
 
   // Lists/enums:
   private val ALLOWED_JB_IDES: List<String> = IDEData.IDE_MAP.keys.plus(UNKNOWN).toList()
-  private val EXTERNAL_IDES: List<String> = TransferableIdeId.entries.map { it.name }
   private val CATEGORIES: List<SettingsCategory> = SettingsCategory.entries.minus(SettingsCategory.OTHER).toList()
 
   // items supporting 'multiple' (with configure/showAll link)
   private val ITEMS_MULTIPLE_IDS = listOf(
+    com.intellij.ide.startup.importSettings.transfer.TransferableSetting.UI_ID,
     com.intellij.ide.startup.importSettings.transfer.TransferableSetting.KEYMAP_ID,
     com.intellij.ide.startup.importSettings.transfer.TransferableSetting.PLUGINS_ID,
+    com.intellij.ide.startup.importSettings.transfer.TransferableSetting.RECENT_PROJECTS_ID,
     SettingsCategory.PLUGINS.name
   )
 
@@ -74,7 +75,7 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
 
 
   private val JB_IDE_VALUES = EventFields.StringList("jbIdeValues", ALLOWED_JB_IDES, "Supported JB IDEs")
-  private val EXTERNAL_IDE_VALUES = EventFields.StringList("externalIdeValues", EXTERNAL_IDES, "Supported external IDEs")
+  private val EXTERNAL_IDE_VALUES = EventFields.EnumList<TransferableIdeId>("externalIdeValues", "Supported external IDEs")
   private val FIRST_PAGE_BUTTONS = EventFields.Enum<ProductPageButton>("productPageButton", "Buttons on the first page")
   private val SECOND_PAGE_BUTTONS = EventFields.Enum<ConfigurePageButton>("configurePageButton", "Buttons on the second page")
   private val IMPORT_TYPES = EventFields.Enum<ImportType>("importTypes", "Import type")
@@ -99,7 +100,7 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
   private val externalIdeValues = GROUP.registerEvent("external.ide.values", EXTERNAL_IDE_VALUES, "external IDEs available for import")
   private val productPageButton = GROUP.registerEvent("page.product.button", FIRST_PAGE_BUTTONS, "Button pressed on the product page")
   private val jbIdeSelectedValue = GROUP.registerEvent("page.product.selected.jb.ide", EventFields.String("jbIde", ALLOWED_JB_IDES), "JB IDE selected")
-  private val externalIdeSelectedValue = GROUP.registerEvent("external.ide.selected.value", EventFields.String("externalIde", EXTERNAL_IDES), "External IDE selected")
+  private val externalIdeSelectedValue = GROUP.registerEvent("external.ide.selected.value", EventFields.Enum<TransferableIdeId>("externalIde"), "External IDE selected")
   private val productPageTimeSpent = GROUP.registerEvent("page.product.time.spent", EventFields.DurationMs)
 
   private val productPageDropdownClicked = GROUP.registerEvent("page.product.dropdown.clicked",
@@ -217,7 +218,7 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
     configurePageButton.log(ConfigurePageButton.NEXT)
   }
 
-  fun externalIdes(extIdes: List<String>) {
+  fun externalIdes(extIdes: List<TransferableIdeId>) {
     externalIdeValues.log(extIdes)
   }
 
@@ -247,7 +248,7 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
       jbIdeSelectedValue.log(UNKNOWN)
   }
 
-  fun externalSelected(externalId: String) {
+  fun externalSelected(externalId: TransferableIdeId) {
     productPageButton.log(ProductPageButton.EXTERNAL)
     configurePageShown.log(ImportType.EXTERNAL)
     externalIdeSelectedValue.log(externalId)

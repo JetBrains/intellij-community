@@ -1,0 +1,19 @@
+_winapi.GetLongPathName
+_winapi.GetShortPathName
+ntpath.exists
+os.path.exists
+
+# Undocumented internal method, not really for public consumption.
+# (Hard to add types for unless we add stubs for the undocumented _overlapped module...)
+asyncio.IocpProactor.finish_socket_func
+asyncio.windows_events.IocpProactor.finish_socket_func
+
+# pathlib functions that rely on modules that don't exist on Windows
+pathlib.Path.owner
+pathlib.Path.group
+
+# Modules that don't exist on Windows
+crypt
+nis
+ossaudiodev
+spwd

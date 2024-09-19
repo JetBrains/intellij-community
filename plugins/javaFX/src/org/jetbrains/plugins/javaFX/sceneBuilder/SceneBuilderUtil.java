@@ -19,14 +19,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class SceneBuilderUtil {
   private static final Logger LOG = Logger.getInstance(SceneBuilderUtil.class);
 
   static final String SCENE_BUILDER_VERSION = "11.0.6";
-  static final String JAVAFX_VERSION = "17.0.2";
+  static final String JAVAFX_VERSION = "17.0.12";
   static final String SCENE_BUILDER_KIT_FULL_NAME = "scenebuilderkit-" + SCENE_BUILDER_VERSION + ".jar";
 
   public static final String[] JAVAFX_ARTIFACTS = {
@@ -61,7 +60,7 @@ final class SceneBuilderUtil {
       final Path javaFxJar = Paths.get(PathUtil.getJarPathForClass(SceneBuilderUtil.class));
       boolean isDevMode = Files.isDirectory(javaFxJar);
       final Path sceneBuilder = getSceneBuilder11Path();
-      final Path sceneBuilderImpl = getJarPath(isDevMode ? "intellij.javaFX.sceneBuilder" : "rt/sceneBuilderBridge.jar", javaFxJar);
+      final Path sceneBuilderImpl = getJarPath(isDevMode ? "intellij.javaFX.sceneBuilder" : "../rt/sceneBuilderBridge.jar", javaFxJar);
 
       try {
         Class.forName(JavaFxCommonNames.JAVAFX_SCENE_NODE);

@@ -14,16 +14,16 @@ string_field = StringField(validators=(Optional(), Email()))
 string_field.validate(form, (Optional(), Email()))
 
 # but not on Field
-field = Field(validators=(Optional(), Email()))  # type:ignore
-field.validate(form, (Optional(), Email()))  # type:ignore
+field = Field(validators=(Optional(), Email()))  # type: ignore
+field.validate(form, (Optional(), Email()))  # type: ignore
 
 # unless we only pass the Field validator
 Field(validators=(Optional(),))
 field.validate(form, (Optional(),))
 
 # DateField should accept Field validators but not StringField validators
-date_field = DateField(validators=(Optional(), Email()))  # type:ignore
-date_field.validate(form, (Optional(), Email()))  # type:ignore
+date_field = DateField(validators=(Optional(), Email()))  # type: ignore
+date_field.validate(form, (Optional(), Email()))  # type: ignore
 DateField(validators=(Optional(),))
 
 # for lists we can't be as strict so we won't get type errors here

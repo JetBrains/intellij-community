@@ -2,8 +2,8 @@ from abc import ABCMeta
 from collections.abc import ItemsView, Mapping, ValuesView
 from io import StringIO as StringIO
 from re import Pattern
-from typing import Any, TypeVar
-from typing_extensions import Final, Literal, SupportsIndex, TypeGuard
+from typing import Any, Final, SupportsIndex, TypeVar
+from typing_extensions import TypeGuard
 from urllib.parse import parse_qs, quote, unquote, urlencode as urlencode, urlparse as urlparse
 
 _KT = TypeVar("_KT")
@@ -13,8 +13,8 @@ url_quote = quote
 url_unquote = unquote
 url_parse_qs = parse_qs
 
-PY2: Final[Literal[False]]
-PY3: Final[Literal[True]]
+PY2: Final = False
+PY3: Final = True
 RE_NUM: Final[Pattern[str]]
 ON_LINUX: Final[bool]
 ON_OSX: Final[bool]
@@ -45,5 +45,5 @@ def to_digit(value: str) -> int: ...
 def get_linux_version(release_str: str) -> tuple[int, int, int]: ...
 
 HAVE_SIGNAL: Final[bool]
-EINTR_IS_EXPOSED: Final[Literal[False]]
+EINTR_IS_EXPOSED: Final = False
 LINUX_VERSION: tuple[int, int, int] | None

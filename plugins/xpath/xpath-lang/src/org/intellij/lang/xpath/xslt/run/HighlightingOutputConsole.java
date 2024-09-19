@@ -17,10 +17,9 @@ package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.EditorHighlighterProvider;
@@ -90,7 +89,7 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
 
     @Nullable
     private EditorEx getEditor() {
-        return (EditorEx)((DataProvider)myConsole).getData(LangDataKeys.EDITOR.getName());
+      return (EditorEx)((ConsoleViewImpl)myConsole).getEditor();
     }
 
     @Override

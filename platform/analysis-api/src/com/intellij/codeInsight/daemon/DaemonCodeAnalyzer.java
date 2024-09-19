@@ -82,11 +82,7 @@ public abstract class DaemonCodeAnalyzer {
     }
 
     /**
-     * Fired when the background code analysis is stopped.
-     * <p>
-     * Analysis can be stopped because either it was completed, or it was canceled (for various reasons).
-     * If it was canceled, the {@link DaemonListener#daemonCancelEventOccurred(String)} is called at least once
-     * between {@link DaemonListener#daemonStarting(Collection)} and this method invocations.
+     * Fired when the background code analysis is stopped because it was completed successfully without exceptions.
      *
      * @param fileEditors The list of files analyzed during the current execution of the daemon.
      */

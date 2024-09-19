@@ -1,12 +1,8 @@
-from typing import Any
-
-from braintree.error_result import ErrorResult as ErrorResult
-from braintree.successful_result import SuccessfulResult as SuccessfulResult
-from braintree.transaction import Transaction as Transaction
+from _typeshed import Incomplete
 
 class TestingGateway:
-    gateway: Any
-    config: Any
+    gateway: Incomplete
+    config: Incomplete
     def __init__(self, gateway) -> None: ...
     def make_past_due(self, subscription_id, number_of_days_past_due: int = 1) -> None: ...
     def escrow_transaction(self, transaction_id) -> None: ...

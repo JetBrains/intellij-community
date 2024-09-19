@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from collections.abc import Container, Sequence
-from typing import Any, overload
-from typing_extensions import Literal, TypeAlias
+from typing import Any, Literal, overload
+from typing_extensions import TypeAlias
 
 from .Image import Image
 from .ImageColor import _Ink

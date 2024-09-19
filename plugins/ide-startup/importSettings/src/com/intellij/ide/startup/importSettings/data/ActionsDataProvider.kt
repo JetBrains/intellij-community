@@ -253,7 +253,8 @@ class ExtActionsDataProvider(override val productService: ExternalProductService
     get() = productService.products()
   override val other: List<Product>? = null
   override fun productSelected(contributor: SettingsContributor) {
-    ImportSettingsEventsCollector.externalSelected((contributor as Product).id)
+    val product = contributor as? ExternalProductInfo ?: return
+    ImportSettingsEventsCollector.externalSelected(product.transferableId)
   }
 }
 

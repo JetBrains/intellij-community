@@ -144,7 +144,8 @@ static PyObject *patchedsize(PyObject *self, PyObject *args)
 	Py_ssize_t patchlen;
 	char *bin;
 
-	if (!PyArg_ParseTuple(args, "ly#", &orig, &bin, &patchlen)) {
+	if (!PyArg_ParseTuple(args, PY23("ls#", "ly#"), &orig, &bin,
+	                      &patchlen)) {
 		return NULL;
 	}
 
@@ -181,6 +182,7 @@ static PyMethodDef methods[] = {
 
 static const int version = 1;
 
+#ifdef IS_PY3K
 static struct PyModuleDef mpatch_module = {
     PyModuleDef_HEAD_INIT, "mpatch", mpatch_doc, -1, methods,
 };
@@ -201,3 +203,13 @@ PyMODINIT_FUNC PyInit_mpatch(void)
 
 	return m;
 }
+#else
+PyMODINIT_FUNC initmpatch(void)
+{
+	PyObject *m;
+	m = Py_InitModule3("mpatch", methods, mpatch_doc);
+	mpatch_Error =
+	    PyErr_NewException("mercurial.cext.mpatch.mpatchError", NULL, NULL);
+	PyModule_AddIntConstant(m, "version", version);
+}
+#endif

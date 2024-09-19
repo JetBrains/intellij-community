@@ -1,2 +1,2 @@
-version = "2.0.*"
+version = "3.0.3"  # keep micro version pinned, changes often
 upstream_repository = "https://github.com/kiorky/croniter"

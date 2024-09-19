@@ -216,6 +216,12 @@ public final class QualifiedNameFinder {
           return classQName + "." + name;
         }
       }
+      if (owner instanceof PyTypeAliasStatement typeAliasStatement) {
+        final String typeQName = typeAliasStatement.getQualifiedName();
+        if (typeQName != null) {
+          return typeQName + "." + name;
+        }
+      }
       else if (owner instanceof PyFile) {
         if (builtinCache.isBuiltin(element)) {
           return name;

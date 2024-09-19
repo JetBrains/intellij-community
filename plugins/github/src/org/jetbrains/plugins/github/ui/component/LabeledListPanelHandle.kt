@@ -140,7 +140,9 @@ internal class LabeledListPanelHandle<T : Any>(cs: CoroutineScope,
       if (current.isNotEmpty()) {
         emit(Result.success(current))
       }
-      selectableItems.mapNotNull { it.result }.first().let { emit(it) }
+      selectableItems
+        .mapNotNull { it.result?.map { items -> current + items.filter { item -> !current.contains(item) } } }
+        .first().let { emit(it) }
     }
   }
 }

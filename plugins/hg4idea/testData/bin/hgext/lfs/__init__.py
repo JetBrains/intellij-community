@@ -120,6 +120,7 @@ Configs::
     usercache = /path/to/global/cache
 """
 
+from __future__ import absolute_import
 
 import sys
 
@@ -136,7 +137,6 @@ from mercurial import (
     filelog,
     filesetlang,
     localrepo,
-    logcmdutil,
     minifileset,
     pycompat,
     revlog,
@@ -256,28 +256,25 @@ def _reposetup(ui, repo):
     if b'lfs' not in repo.requirements:
 
         def checkrequireslfs(ui, repo, **kwargs):
-            with repo.lock():
-                if b'lfs' in repo.requirements:
-                    return 0
+            if b'lfs' in repo.requirements:
+                return 0
 
-                last = kwargs.get('node_last')
-                if last:
-                    s = repo.set(b'%n:%n', bin(kwargs['node']), bin(last))
-                else:
-                    s = repo.set(b'%n', bin(kwargs['node']))
-                match = repo._storenarrowmatch
-                for ctx in s:
-                    # TODO: is there a way to just walk the files in the commit?
-                    if any(
-                        ctx[f].islfs()
-                        for f in ctx.files()
-                        if f in ctx and match(f)
-                    ):
-                        repo.requirements.add(b'lfs')
-                        repo.features.add(repository.REPO_FEATURE_LFS)
-                        scmutil.writereporequirements(repo)
-                        repo.prepushoutgoinghooks.add(b'lfs', wrapper.prepush)
-                        break
+            last = kwargs.get('node_last')
+            if last:
+                s = repo.set(b'%n:%n', bin(kwargs['node']), bin(last))
+            else:
+                s = repo.set(b'%n', bin(kwargs['node']))
+            match = repo._storenarrowmatch
+            for ctx in s:
+                # TODO: is there a way to just walk the files in the commit?
+                if any(
+                    ctx[f].islfs() for f in ctx.files() if f in ctx and match(f)
+                ):
+                    repo.requirements.add(b'lfs')
+                    repo.features.add(repository.REPO_FEATURE_LFS)
+                    scmutil.writereporequirements(repo)
+                    repo.prepushoutgoinghooks.add(b'lfs', wrapper.prepush)
+                    break
 
         ui.setconfig(b'hooks', b'commit.lfs', checkrequireslfs, b'lfs')
         ui.setconfig(
@@ -342,7 +339,7 @@ def wrapfilelog(filelog):
     wrapfunction(filelog, 'size', wrapper.filelogsize)
 
 
-@eh.wrapfunction(localrepo, 'resolverevlogstorevfsoptions')
+@eh.wrapfunction(localrepo, b'resolverevlogstorevfsoptions')
 def _resolverevlogstorevfsoptions(orig, ui, requirements, features):
     opts = orig(ui, requirements, features)
     for name, module in extensions.extensions(ui):
@@ -399,7 +396,7 @@ def lfsfiles(context, mapping):
     def pointer(v):
         # In the file spec, version is first and the other keys are sorted.
         sortkeyfunc = lambda x: (x[0] != b'version', x)
-        items = sorted(pointers[v].items(), key=sortkeyfunc)
+        items = sorted(pycompat.iteritems(pointers[v]), key=sortkeyfunc)
         return util.sortdict(items)
 
     makemap = lambda v: {
@@ -420,7 +417,7 @@ def lfsfiles(context, mapping):
 def debuglfsupload(ui, repo, **opts):
     """upload lfs blobs added by the working copy parent or given revisions"""
     revs = opts.get('rev', [])
-    pointers = wrapper.extractpointers(repo, logcmdutil.revrange(repo, revs))
+    pointers = wrapper.extractpointers(repo, scmutil.revrange(repo, revs))
     wrapper.uploadblobs(repo, pointers)
 
 

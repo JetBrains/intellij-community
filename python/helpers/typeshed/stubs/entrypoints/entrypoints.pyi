@@ -1,13 +1,8 @@
-import sys
 from collections.abc import Iterator, Sequence
 from configparser import ConfigParser
+from re import Pattern
 from typing import Any
 from typing_extensions import Self
-
-if sys.version_info >= (3, 8):
-    from re import Pattern
-else:
-    from re import Pattern
 
 entry_point_pattern: Pattern[str]
 file_in_zip_pattern: Pattern[str]

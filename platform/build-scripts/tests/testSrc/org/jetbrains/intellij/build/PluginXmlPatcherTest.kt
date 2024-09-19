@@ -186,12 +186,12 @@ class PluginXmlPatcherTest {
     """.trimIndent(),
     """
     <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-      <name>Database Tools and SQL for WebStorm &amp; RustRover</name>
+      <name>Database Tools and SQL for WebStorm</name>
       <id>com.intellij.database</id>
       <version>x-plugin-version</version>
       <idea-version since-build="new-since" until-build="new-until" />
       <product-descriptor code="PDB" release-date="X-RELEASE-DATE-X" release-version="X-RELEASE-VERSION-X" />
-      <description>The Database Tools and SQL plugin for WebStorm and RustRover allows you to query, create, and manage databases and provides full SQL language support.
+      <description>The Database Tools and SQL plugin for WebStorm allows you to query, create, and manage databases and provides full SQL language support.
             &lt;br&gt;&lt;br&gt;
             The plugin provides all the same features as &lt;a href=&quot;https://www.jetbrains.com/datagrip/&quot;&gt;DataGrip&lt;/a&gt;, the standalone JetBrains IDE for databases.
     Owners of an active DataGrip subscription can download the plugin for free.

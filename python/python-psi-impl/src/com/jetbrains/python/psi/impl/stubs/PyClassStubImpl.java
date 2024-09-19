@@ -1,8 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.google.common.collect.RangeSet;
+import com.intellij.openapi.util.Version;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
+public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implements PyClassStub {
 
   @Nullable
   private final String myName;
@@ -49,8 +50,9 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
                          @Nullable String docString,
                          @Nullable String deprecationMessage,
                          @NotNull IStubElementType stubElementType,
+                         @NotNull RangeSet<Version> versions,
                          @Nullable PyCustomClassStub customStub) {
-    super(parentStub, stubElementType);
+    super(parentStub, stubElementType, versions);
     myName = name;
     mySuperClasses = superClasses;
     mySuperClassesText = superClassesText;

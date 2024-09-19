@@ -2,8 +2,8 @@ import datetime
 from _typeshed import Incomplete
 from collections import defaultdict
 from collections.abc import Callable, Container, Iterable, Iterator, Mapping, Sequence
-from typing import Any, TypeVar, overload
-from typing_extensions import Literal, Self, TypeAlias
+from typing import Any, Literal, TypeVar, overload
+from typing_extensions import Self, TypeAlias
 from urllib.parse import ParseResult, SplitResult
 
 from vobject.base import VBase
@@ -33,7 +33,7 @@ class DAVObject:
         name: str | None = None,
         id: str | None = None,
         props: Mapping[Incomplete, Incomplete] | None = None,
-        **extra: Incomplete,
+        **extra,
     ) -> None: ...
     @property
     def canonical_url(self) -> str: ...
@@ -70,14 +70,10 @@ class Principal(DAVObject):
 class Calendar(DAVObject):
     def get_supported_components(self) -> list[Incomplete]: ...
     def save_with_invites(self, ical: str, attendees, **attendeeoptions) -> None: ...
-    def save_event(
-        self, ical: str | None = None, no_overwrite: bool = False, no_create: bool = False, **ical_data: Incomplete
-    ) -> Event: ...
-    def save_todo(
-        self, ical: str | None = None, no_overwrite: bool = False, no_create: bool = False, **ical_data: Incomplete
-    ) -> Todo: ...
+    def save_event(self, ical: str | None = None, no_overwrite: bool = False, no_create: bool = False, **ical_data) -> Event: ...
+    def save_todo(self, ical: str | None = None, no_overwrite: bool = False, no_create: bool = False, **ical_data) -> Todo: ...
     def save_journal(
-        self, ical: str | None = None, no_overwrite: bool = False, no_create: bool = False, **ical_data: Incomplete
+        self, ical: str | None = None, no_overwrite: bool = False, no_create: bool = False, **ical_data
     ) -> Journal: ...
     add_event = save_event
     add_todo = save_todo

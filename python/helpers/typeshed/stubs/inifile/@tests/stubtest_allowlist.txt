@@ -6,6 +6,7 @@ inifile.iter_from_file
 inifile.iteritems
 inifile.reraise
 inifile.string_types
+inifile.text_type
 
 # Attributes that should be treated as read-only and thus are annotated
 # with @property

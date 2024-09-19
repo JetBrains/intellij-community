@@ -1,39 +1,40 @@
 from _typeshed import Incomplete, Unused
 from collections.abc import Callable
 from types import ModuleType
-from typing import Any, Generic, TypeVar, overload
+from typing import ClassVar, Generic, TypeVar, overload
 from typing_extensions import Self
 from unittest import TestLoader, TestSuite
 
 from .. import Command
 
 _T = TypeVar("_T")
+_R = TypeVar("_R")
 
 class ScanningLoader(TestLoader):
     def __init__(self) -> None: ...
     def loadTestsFromModule(self, module: ModuleType, pattern: Incomplete | None = None) -> list[TestSuite]: ...  # type: ignore[override]
 
-class NonDataProperty(Generic[_T]):
-    fget: Callable[..., _T]
-    def __init__(self, fget: Callable[..., _T]) -> None: ...
+class NonDataProperty(Generic[_T, _R]):
+    fget: Callable[[_T], _R]
+    def __init__(self, fget: Callable[[_T], _R]) -> None: ...
     @overload
     def __get__(self, obj: None, objtype: Unused = None) -> Self: ...
     @overload
-    def __get__(self, obj: Any, objtype: Unused = None) -> _T: ...
+    def __get__(self, obj: _T, objtype: Unused = None) -> _R: ...
 
 class test(Command):
     description: str
-    user_options: Any
-    test_suite: Any
-    test_module: Any
-    test_loader: Any
-    test_runner: Any
+    user_options: ClassVar[list[tuple[str, str, str]]]
+    test_suite: Incomplete
+    test_module: Incomplete
+    test_loader: Incomplete
+    test_runner: Incomplete
     def initialize_options(self) -> None: ...
     def finalize_options(self) -> None: ...
     @NonDataProperty
     def test_args(self) -> list[str]: ...
     def with_project_on_sys_path(self, func) -> None: ...
-    def project_on_sys_path(self, include_dists=[]): ...
+    def project_on_sys_path(self, include_dists=()): ...
     @staticmethod
     def paths_on_pythonpath(paths) -> None: ...
     @staticmethod

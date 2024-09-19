@@ -11,8 +11,10 @@ bookmarks were previously located.
 
 """
 
+from __future__ import absolute_import
 
 import collections
+import errno
 import os
 import weakref
 
@@ -66,13 +68,13 @@ sharednamespaces = {
 
 # Journal recording, register hooks and storage object
 def extsetup(ui):
-    extensions.wrapfunction(dispatch, 'runcommand', runcommand)
-    extensions.wrapfunction(bookmarks.bmstore, '_write', recordbookmarks)
+    extensions.wrapfunction(dispatch, b'runcommand', runcommand)
+    extensions.wrapfunction(bookmarks.bmstore, b'_write', recordbookmarks)
     extensions.wrapfilecache(
         localrepo.localrepository, b'dirstate', wrapdirstate
     )
-    extensions.wrapfunction(hg, 'postshare', wrappostshare)
-    extensions.wrapfunction(hg, 'copystore', unsharejournal)
+    extensions.wrapfunction(hg, b'postshare', wrappostshare)
+    extensions.wrapfunction(hg, b'copystore', unsharejournal)
 
 
 def reposetup(ui, repo):
@@ -103,7 +105,7 @@ def _setupdirstate(repo, dirstate):
 def wrapdirstate(orig, repo):
     """Make journal storage available to the dirstate object"""
     dirstate = orig(repo)
-    if hasattr(repo, 'journal'):
+    if util.safehasattr(repo, 'journal'):
         _setupdirstate(repo, dirstate)
     return dirstate
 
@@ -112,7 +114,7 @@ def recorddirstateparents(dirstate, old, new):
     """Records all dirstate parent changes in the journal."""
     old = list(old)
     new = list(new)
-    if hasattr(dirstate, 'journalstorage'):
+    if util.safehasattr(dirstate, 'journalstorage'):
         # only record two hashes if there was a merge
         oldhashes = old[:1] if old[1] == dirstate._nodeconstants.nullid else old
         newhashes = new[:1] if new[1] == dirstate._nodeconstants.nullid else new
@@ -125,12 +127,9 @@ def recorddirstateparents(dirstate, old, new):
 def recordbookmarks(orig, store, fp):
     """Records all bookmark changes in the journal."""
     repo = store._repo
-    if hasattr(repo, 'journal'):
+    if util.safehasattr(repo, 'journal'):
         oldmarks = bookmarks.bmstore(repo)
-        all_marks = set(b for b, n in oldmarks.items())
-        all_marks.update(b for b, n in store.items())
-        for mark in sorted(all_marks):
-            value = store.get(mark, repo.nullid)
+        for mark, value in pycompat.iteritems(store):
             oldvalue = oldmarks.get(mark, repo.nullid)
             if value != oldvalue:
                 repo.journal.record(bookmarktype, mark, oldvalue, value)
@@ -142,7 +141,9 @@ def _readsharedfeatures(repo):
     """A set of shared features for this repository"""
     try:
         return set(repo.vfs.read(b'shared').splitlines())
-    except FileNotFoundError:
+    except IOError as inst:
+        if inst.errno != errno.ENOENT:
+            raise
         return set()
 
 
@@ -166,7 +167,7 @@ def _mergeentriesiter(*iterables, **kwargs):
             pass
 
     while iterable_map:
-        value, key, it = order(iterable_map.values())
+        value, key, it = order(pycompat.itervalues(iterable_map))
         yield value
         try:
             iterable_map[key][0] = next(it)
@@ -185,7 +186,11 @@ def wrappostshare(orig, sourcerepo, destrepo, **kwargs):
 
 def unsharejournal(orig, ui, repo, repopath):
     """Copy shared journal entries into this repo when unsharing"""
-    if repo.path == repopath and repo.shared() and hasattr(repo, 'journal'):
+    if (
+        repo.path == repopath
+        and repo.shared()
+        and util.safehasattr(repo, 'journal')
+    ):
         sharedrepo = hg.sharedreposource(repo)
         sharedfeatures = _readsharedfeatures(repo)
         if sharedrepo and sharedfeatures > {b'journal'}:
@@ -278,7 +283,7 @@ class journalentry(
     __str__ = encoding.strmethod(__bytes__)
 
 
-class journalstorage:
+class journalstorage(object):
     """Storage for journal entries
 
     Entries are divided over two files; one with entries that pertain to the
@@ -566,12 +571,8 @@ def journal(ui, repo, *args, **opts):
         )
         fm.write(b'newnodes', b'%s', formatnodes(entry.newhashes))
         fm.condwrite(ui.verbose, b'user', b' %-8s', entry.user)
-
-        # ``name`` is bytes, or None only if 'all' was an option.
         fm.condwrite(
-            # pytype: disable=attribute-error
             opts.get(b'all') or name.startswith(b're:'),
-            # pytype: enable=attribute-error
             b'name',
             b'  %-8s',
             entry.name,

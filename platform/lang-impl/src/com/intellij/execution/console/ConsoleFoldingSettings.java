@@ -133,6 +133,11 @@ public final class ConsoleFoldingSettings implements PersistentStateComponent<Co
 
   }
 
+  @Override
+  public void noStateLoaded() {
+    loadState(new MyBean());
+  }
+
   public static final class MyBean {
     public List<String> addedPositive = new ArrayList<>();
     public List<String> addedNegative = new ArrayList<>();

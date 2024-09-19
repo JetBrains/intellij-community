@@ -1,10 +1,9 @@
-from _typeshed import Unused
-from typing import ClassVar
-from typing_extensions import Literal
+from _typeshed import ConvertibleToFloat, ConvertibleToInt, Unused
+from typing import ClassVar, Literal
 
 from openpyxl.chart.picture import PictureOptions
 from openpyxl.chart.shapes import GraphicalProperties
-from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool, _ConvertibleToFloat, _ConvertibleToInt
+from openpyxl.descriptors.base import Alias, Typed, _ConvertibleToBool
 from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.nested import NestedBool, NestedInteger, NestedMinMax
 from openpyxl.descriptors.serialisable import Serialisable
@@ -27,12 +26,12 @@ class View3D(Serialisable):
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        rotX: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = 15,
-        hPercent: _HasTagAndGet[_ConvertibleToFloat | None] | _ConvertibleToFloat | None = None,
-        rotY: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = 20,
-        depthPercent: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None,
+        rotX: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = 15,
+        hPercent: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
+        rotY: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = 20,
+        depthPercent: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None,
         rAngAx: _HasTagAndGet[_ConvertibleToBool | None] | _ConvertibleToBool | None = True,
-        perspective: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None,
+        perspective: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None,
         extLst: Unused = None,
     ) -> None: ...
 
@@ -46,7 +45,7 @@ class Surface(Serialisable):
     __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        thickness: _HasTagAndGet[_ConvertibleToInt | None] | _ConvertibleToInt | None = None,
+        thickness: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None,
         spPr: GraphicalProperties | None = None,
         pictureOptions: PictureOptions | None = None,
         extLst: Unused = None,

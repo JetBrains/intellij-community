@@ -36,12 +36,13 @@ Examples::
   maxfiles = 3
 
   [blackbox]
-  # Include microseconds in log entries with %f (see Python function
+  # Include nanoseconds in log entries with %f (see Python function
   # datetime.datetime.strftime)
   date-format = %Y-%m-%d @ %H:%M:%S.%f
 
 """
 
+from __future__ import absolute_import
 
 import re
 
@@ -67,10 +68,49 @@ testedwith = b'ships-with-hg-core'
 cmdtable = {}
 command = registrar.command(cmdtable)
 
+configtable = {}
+configitem = registrar.configitem(configtable)
+
+configitem(
+    b'blackbox',
+    b'dirty',
+    default=False,
+)
+configitem(
+    b'blackbox',
+    b'maxsize',
+    default=b'1 MB',
+)
+configitem(
+    b'blackbox',
+    b'logsource',
+    default=False,
+)
+configitem(
+    b'blackbox',
+    b'maxfiles',
+    default=7,
+)
+configitem(
+    b'blackbox',
+    b'track',
+    default=lambda: [b'*'],
+)
+configitem(
+    b'blackbox',
+    b'ignore',
+    default=lambda: [b'chgserver', b'cmdserver', b'extension'],
+)
+configitem(
+    b'blackbox',
+    b'date-format',
+    default=b'%Y/%m/%d %H:%M:%S',
+)
+
 _lastlogger = loggingutil.proxylogger()
 
 
-class blackboxlogger:
+class blackboxlogger(object):
     def __init__(self, ui, repo):
         self._repo = repo
         self._trackedevents = set(ui.configlist(b'blackbox', b'track'))
@@ -98,15 +138,7 @@ class blackboxlogger:
 
     def _log(self, ui, event, msg, opts):
         default = ui.configdate(b'devel', b'default-date')
-        dateformat = ui.config(b'blackbox', b'date-format')
-        debug_to_stderr = ui.configbool(b'blackbox', b'debug.to-stderr')
-        if dateformat:
-            date = dateutil.datestr(default, dateformat)
-        else:
-            # We want to display milliseconds (more precision seems
-            # unnecessary).  Since %.3f is not supported, use %f and truncate
-            # microseconds.
-            date = dateutil.datestr(default, b'%Y-%m-%d %H:%M:%S.%f')[:-3]
+        date = dateutil.datestr(default, ui.config(b'blackbox', b'date-format'))
         user = procutil.getuser()
         pid = b'%d' % procutil.getpid()
         changed = b''
@@ -131,10 +163,7 @@ class blackboxlogger:
                 maxfiles=self._maxfiles,
                 maxsize=self._maxsize,
             ) as fp:
-                msg = fmt % args
-                fp.write(msg)
-                if debug_to_stderr:
-                    ui.write_err(msg)
+                fp.write(fmt % args)
         except (IOError, OSError) as err:
             # deactivate this to avoid failed logging again
             self._trackedevents.clear()
@@ -186,8 +215,6 @@ def blackbox(ui, repo, *revs, **opts):
         return
 
     limit = opts.get('limit')
-    assert limit is not None  # help pytype
-
     fp = repo.vfs(b'blackbox.log', b'r')
     lines = fp.read().split(b'\n')
 
@@ -197,14 +224,8 @@ def blackbox(ui, repo, *revs, **opts):
         if count >= limit:
             break
 
-        # count the commands by matching lines like:
-        # 2013/01/23 19:13:36 root>
-        # 2013/01/23 19:13:36 root (1234)>
-        # 2013/01/23 19:13:36 root @0000000000000000000000000000000000000000 (1234)>
-        # 2013-01-23 19:13:36.000 root @0000000000000000000000000000000000000000 (1234)>
-        if re.match(
-            br'^\d{4}[-/]\d{2}[-/]\d{2} \d{2}:\d{2}:\d{2}(.\d*)? .*> .*', line
-        ):
+        # count the commands by matching lines like: 2013/01/23 19:13:36 root>
+        if re.match(br'^\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} .*> .*', line):
             count += 1
         output.append(line)
 

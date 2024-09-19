@@ -43,6 +43,7 @@ option to ``sqlite`` to enable new repositories to use SQLite for storage.
 #     --extra-config-opt extensions.sqlitestore= \
 #     --extra-config-opt storage.new-repo-backend=sqlite
 
+from __future__ import absolute_import
 
 import sqlite3
 import struct
@@ -80,7 +81,7 @@ from mercurial.utils import (
 )
 
 try:
-    from mercurial import zstd  # pytype: disable=import-error
+    from mercurial import zstd
 
     zstd.__version__
 except ImportError:
@@ -264,7 +265,7 @@ class SQLiteStoreError(error.StorageError):
 
 
 @attr.s
-class revisionentry:
+class revisionentry(object):
     rid = attr.ib()
     rev = attr.ib()
     node = attr.ib()
@@ -278,7 +279,7 @@ class revisionentry:
 
 @interfaceutil.implementer(repository.irevisiondelta)
 @attr.s(slots=True)
-class sqliterevisiondelta:
+class sqliterevisiondelta(object):
     node = attr.ib()
     p1node = attr.ib()
     p2node = attr.ib()
@@ -294,14 +295,14 @@ class sqliterevisiondelta:
 
 @interfaceutil.implementer(repository.iverifyproblem)
 @attr.s(frozen=True)
-class sqliteproblem:
+class sqliteproblem(object):
     warning = attr.ib(default=None)
     error = attr.ib(default=None)
     node = attr.ib(default=None)
 
 
 @interfaceutil.implementer(repository.ifilestorage)
-class sqlitefilestore:
+class sqlitefilestore(object):
     """Implements storage for an individual tracked path."""
 
     def __init__(self, db, path, compression):
@@ -396,7 +397,7 @@ class sqlitefilestore:
         return len(self._revisions)
 
     def __iter__(self):
-        return iter(range(len(self._revisions)))
+        return iter(pycompat.xrange(len(self._revisions)))
 
     def hasnode(self, node):
         if node == sha1nodeconstants.nullid:
@@ -428,25 +429,6 @@ class sqlitefilestore:
 
         entry = self._revisions[self._revtonode[rev]]
         return entry.p1rev, entry.p2rev
-
-    def ancestors(self, revs, stoprev=0, inclusive=False):
-        """Generate the ancestors of 'revs' in reverse revision order.
-        Does not generate revs lower than stoprev.
-
-        See the documentation for ancestor.lazyancestors for more details."""
-
-        # first, make sure start revisions aren't filtered
-        revs = list(revs)
-        checkrev = self.node
-        for r in revs:
-            checkrev(r)
-
-        return ancestor.lazyancestors(
-            self.parentrevs,
-            revs,
-            stoprev=stoprev,
-            inclusive=inclusive,
-        )
 
     def rev(self, node):
         if node == sha1nodeconstants.nullid:
@@ -608,7 +590,6 @@ class sqlitefilestore:
         assumehaveparentrevisions=False,
         deltamode=repository.CG_DELTAMODE_STD,
         sidedata_helpers=None,
-        debug_info=None,
     ):
         if nodesorder not in (b'nodes', b'storage', b'linear', None):
             raise error.ProgrammingError(
@@ -810,11 +791,7 @@ class sqlitefilestore:
 
         return not empty
 
-    def censorrevision(self, tr, censor_nodes, tombstone=b''):
-        for node in censor_nodes:
-            self._censor_one_revision(tr, node, tombstone=tombstone)
-
-    def _censor_one_revision(self, tr, censornode, tombstone):
+    def censorrevision(self, tr, censornode, tombstone=b''):
         tombstone = storageutil.packmeta({b'censored': tombstone}, b'')
 
         # This restriction is cargo culted from revlogs and makes no sense for
@@ -1273,7 +1250,7 @@ def newreporequirements(orig, ui, createopts):
 
 
 @interfaceutil.implementer(repository.ilocalrepositoryfilestorage)
-class sqlitefilestorage:
+class sqlitefilestorage(object):
     """Repository file storage backed by SQLite."""
 
     def file(self, path):
@@ -1334,11 +1311,11 @@ def verifierinit(orig, self, *args, **kwargs):
 def extsetup(ui):
     localrepo.featuresetupfuncs.add(featuresetup)
     extensions.wrapfunction(
-        localrepo, 'newreporequirements', newreporequirements
+        localrepo, b'newreporequirements', newreporequirements
     )
-    extensions.wrapfunction(localrepo, 'makefilestorage', makefilestorage)
-    extensions.wrapfunction(localrepo, 'makemain', makemain)
-    extensions.wrapfunction(verify.verifier, '__init__', verifierinit)
+    extensions.wrapfunction(localrepo, b'makefilestorage', makefilestorage)
+    extensions.wrapfunction(localrepo, b'makemain', makemain)
+    extensions.wrapfunction(verify.verifier, b'__init__', verifierinit)
 
 
 def reposetup(ui, repo):

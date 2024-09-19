@@ -190,7 +190,7 @@ internal class VariablesHighlightingVisitor(holder: HighlightInfoHolder, binding
                 highlightName(elementToHighlight, KotlinHighlightInfoTypeSemanticNames.PARAMETER)
             }
 
-            if (descriptor is PropertyDescriptor && hasCustomPropertyDeclaration(descriptor) && (declaration as? KtProperty)?.nameIdentifier != elementToHighlight) { // KtProperty was highlighted in DeclarationHighlightingVisitor
+            if (descriptor is PropertyDescriptor && hasCustomPropertyDeclaration(descriptor) && (declaration as? KtProperty)?.nameIdentifier != elementToHighlight && elementToHighlight !is KtSimpleNameExpression) { // KtProperty was highlighted in DeclarationHighlightingVisitor
                 val isStaticDeclaration = DescriptorUtils.isStaticDeclaration(descriptor)
                 highlightName(
                     elementToHighlight,

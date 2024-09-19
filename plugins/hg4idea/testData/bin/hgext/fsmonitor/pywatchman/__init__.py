@@ -26,6 +26,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# no unicode literals
+from __future__ import absolute_import, division, print_function
+
 import inspect
 import math
 import os
@@ -92,9 +95,7 @@ if os.name == "nt":
 
     LPDWORD = ctypes.POINTER(wintypes.DWORD)
 
-    _kernel32 = ctypes.windll.kernel32  # pytype: disable=module-attr
-
-    CreateFile = _kernel32.CreateFileA
+    CreateFile = ctypes.windll.kernel32.CreateFileA
     CreateFile.argtypes = [
         wintypes.LPSTR,
         wintypes.DWORD,
@@ -106,11 +107,11 @@ if os.name == "nt":
     ]
     CreateFile.restype = wintypes.HANDLE
 
-    CloseHandle = _kernel32.CloseHandle
+    CloseHandle = ctypes.windll.kernel32.CloseHandle
     CloseHandle.argtypes = [wintypes.HANDLE]
     CloseHandle.restype = wintypes.BOOL
 
-    ReadFile = _kernel32.ReadFile
+    ReadFile = ctypes.windll.kernel32.ReadFile
     ReadFile.argtypes = [
         wintypes.HANDLE,
         wintypes.LPVOID,
@@ -120,7 +121,7 @@ if os.name == "nt":
     ]
     ReadFile.restype = wintypes.BOOL
 
-    WriteFile = _kernel32.WriteFile
+    WriteFile = ctypes.windll.kernel32.WriteFile
     WriteFile.argtypes = [
         wintypes.HANDLE,
         wintypes.LPVOID,
@@ -130,15 +131,15 @@ if os.name == "nt":
     ]
     WriteFile.restype = wintypes.BOOL
 
-    GetLastError = _kernel32.GetLastError
+    GetLastError = ctypes.windll.kernel32.GetLastError
     GetLastError.argtypes = []
     GetLastError.restype = wintypes.DWORD
 
-    SetLastError = _kernel32.SetLastError
+    SetLastError = ctypes.windll.kernel32.SetLastError
     SetLastError.argtypes = [wintypes.DWORD]
     SetLastError.restype = None
 
-    FormatMessage = _kernel32.FormatMessageA
+    FormatMessage = ctypes.windll.kernel32.FormatMessageA
     FormatMessage.argtypes = [
         wintypes.DWORD,
         wintypes.LPVOID,
@@ -150,9 +151,9 @@ if os.name == "nt":
     ]
     FormatMessage.restype = wintypes.DWORD
 
-    LocalFree = _kernel32.LocalFree
+    LocalFree = ctypes.windll.kernel32.LocalFree
 
-    GetOverlappedResult = _kernel32.GetOverlappedResult
+    GetOverlappedResult = ctypes.windll.kernel32.GetOverlappedResult
     GetOverlappedResult.argtypes = [
         wintypes.HANDLE,
         ctypes.POINTER(OVERLAPPED),
@@ -161,7 +162,9 @@ if os.name == "nt":
     ]
     GetOverlappedResult.restype = wintypes.BOOL
 
-    GetOverlappedResultEx = getattr(_kernel32, "GetOverlappedResultEx", None)
+    GetOverlappedResultEx = getattr(
+        ctypes.windll.kernel32, "GetOverlappedResultEx", None
+    )
     if GetOverlappedResultEx is not None:
         GetOverlappedResultEx.argtypes = [
             wintypes.HANDLE,
@@ -172,7 +175,7 @@ if os.name == "nt":
         ]
         GetOverlappedResultEx.restype = wintypes.BOOL
 
-    WaitForSingleObjectEx = _kernel32.WaitForSingleObjectEx
+    WaitForSingleObjectEx = ctypes.windll.kernel32.WaitForSingleObjectEx
     WaitForSingleObjectEx.argtypes = [
         wintypes.HANDLE,
         wintypes.DWORD,
@@ -180,7 +183,7 @@ if os.name == "nt":
     ]
     WaitForSingleObjectEx.restype = wintypes.DWORD
 
-    CreateEvent = _kernel32.CreateEventA
+    CreateEvent = ctypes.windll.kernel32.CreateEventA
     CreateEvent.argtypes = [
         LPDWORD,
         wintypes.BOOL,
@@ -190,7 +193,7 @@ if os.name == "nt":
     CreateEvent.restype = wintypes.HANDLE
 
     # Windows Vista is the minimum supported client for CancelIoEx.
-    CancelIoEx = _kernel32.CancelIoEx
+    CancelIoEx = ctypes.windll.kernel32.CancelIoEx
     CancelIoEx.argtypes = [wintypes.HANDLE, ctypes.POINTER(OVERLAPPED)]
     CancelIoEx.restype = wintypes.BOOL
 
@@ -299,7 +302,7 @@ class CommandError(WatchmanError):
         )
 
 
-class Transport:
+class Transport(object):
     """communication transport to the watchman server"""
 
     buf = None
@@ -344,7 +347,7 @@ class Transport:
             self.buf.append(b)
 
 
-class Codec:
+class Codec(object):
     """communication encoding for the watchman server"""
 
     transport = None
@@ -689,9 +692,9 @@ class CLIProcessTransport(Transport):
         if self.closed:
             self.close()
             self.closed = False
-        proc = self._connect()
-        res = proc.stdin.write(data)
-        proc.stdin.close()
+        self._connect()
+        res = self.proc.stdin.write(data)
+        self.proc.stdin.close()
         self.closed = True
         return res
 
@@ -857,7 +860,7 @@ class JsonCodec(Codec):
         self.transport.write(cmd + b"\n")
 
 
-class client:
+class client(object):
     """Handles the communication with the watchman service"""
 
     sockpath = None
@@ -986,12 +989,8 @@ class client:
                 # if invoked via an application with graphical user interface,
                 # this call will cause a brief command window pop-up.
                 # Using the flag STARTF_USESHOWWINDOW to avoid this behavior.
-
-                # pytype: disable=module-attr
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                # pytype: enable=module-attr
-
                 args["startupinfo"] = startupinfo
 
             p = subprocess.Popen(cmd, **args)
@@ -1028,11 +1027,7 @@ class client:
         if self.transport == CLIProcessTransport:
             kwargs["binpath"] = self.binpath
 
-        # Only CLIProcessTransport has the binpath kwarg
-        # pytype: disable=wrong-keyword-args
         self.tport = self.transport(self.sockpath, self.timeout, **kwargs)
-        # pytype: enable=wrong-keyword-args
-
         self.sendConn = self.sendCodec(self.tport)
         self.recvConn = self.recvCodec(self.tport)
         self.pid = os.getpid()

@@ -1,6 +1,6 @@
 from _typeshed import Incomplete, SupportsWrite
 from collections.abc import Iterable, Mapping
-from typing import Generic, NoReturn, TypeVar, overload
+from typing import NoReturn, TypeVar, overload
 
 from .std import tqdm as std_tqdm
 
@@ -8,7 +8,7 @@ __all__ = ["tqdm_tk", "ttkrange", "tqdm", "trange"]
 
 _T = TypeVar("_T")
 
-class tqdm_tk(std_tqdm[_T], Generic[_T]):
+class tqdm_tk(std_tqdm[_T]):
     @overload
     def __init__(
         self,

@@ -4,16 +4,21 @@
 # GNU General Public License version 2 or any later version.
 
 
+from __future__ import absolute_import, print_function
+
 import bz2
 import collections
 import zlib
 
+from ..pycompat import getattr
 from .. import (
     error,
     i18n,
     pycompat,
 )
 from . import stringutil
+
+safehasattr = pycompat.safehasattr
 
 
 _ = i18n._
@@ -29,7 +34,7 @@ compewireprotosupport = collections.namedtuple(
 )
 
 
-class propertycache:
+class propertycache(object):
     def __init__(self, func):
         self.func = func
         self.name = func.__name__
@@ -44,7 +49,7 @@ class propertycache:
         obj.__dict__[self.name] = value
 
 
-class compressormanager:
+class compressormanager(object):
     """Holds registrations of various compression engines.
 
     This class essentially abstracts the differences between compression
@@ -182,7 +187,7 @@ class compressormanager:
         """
         assert role in (SERVERROLE, CLIENTROLE)
 
-        attr = 'serverpriority' if role == SERVERROLE else 'clientpriority'
+        attr = b'serverpriority' if role == SERVERROLE else b'clientpriority'
 
         engines = [self._engines[e] for e in self._wiretypes.values()]
         if onlyavailable:
@@ -216,7 +221,7 @@ class compressormanager:
 compengines = compressormanager()
 
 
-class compressionengine:
+class compressionengine(object):
     """Base class for compression engines.
 
     Compression engines must implement the interface defined by this class.
@@ -335,9 +340,9 @@ class compressionengine:
         raise NotImplementedError()
 
 
-class _CompressedStreamReader:
+class _CompressedStreamReader(object):
     def __init__(self, fh):
-        if hasattr(fh, 'unbufferedread'):
+        if safehasattr(fh, 'unbufferedread'):
             self._reader = fh.unbufferedread
         else:
             self._reader = fh.read
@@ -479,7 +484,7 @@ class _zlibengine(compressionengine):
     def decompressorreader(self, fh):
         return _GzipCompressedStreamReader(fh)
 
-    class zlibrevlogcompressor:
+    class zlibrevlogcompressor(object):
         def __init__(self, level=None):
             self._level = level
 
@@ -623,7 +628,7 @@ class _noopengine(compressionengine):
     def decompressorreader(self, fh):
         return fh
 
-    class nooprevlogcompressor:
+    class nooprevlogcompressor(object):
         def compress(self, data):
             return None
 
@@ -695,7 +700,7 @@ class _zstdengine(compressionengine):
     def decompressorreader(self, fh):
         return _ZstdCompressedStreamReader(fh, self._module)
 
-    class zstdrevlogcompressor:
+    class zstdrevlogcompressor(object):
         def __init__(self, zstd, level=3):
             # TODO consider omitting frame magic to save 4 bytes.
             # This writes content sizes into the frame header. That is
@@ -779,7 +784,7 @@ def bundlecompressiontopics():
 
     # We need to format the docstring. So use a dummy object/type to hold it
     # rather than mutating the original.
-    class docobject:
+    class docobject(object):
         pass
 
     for name in compengines:

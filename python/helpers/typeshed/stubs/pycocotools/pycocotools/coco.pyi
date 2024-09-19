@@ -1,8 +1,8 @@
 from _typeshed import Incomplete
 from collections.abc import Collection, Sequence
 from pathlib import Path
-from typing import Generic, TypeVar, overload
-from typing_extensions import Literal, TypeAlias, TypedDict
+from typing import Generic, Literal, TypedDict, TypeVar, overload
+from typing_extensions import TypeAlias
 
 from . import _EncodedRLE
 

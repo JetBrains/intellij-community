@@ -2,8 +2,7 @@
 
 from _typeshed import StrOrBytesPath, StrPath
 from collections.abc import Callable, Iterable
-from typing import Any
-from typing_extensions import Final, Literal
+from typing import Any, Final, Literal
 
 from PyInstaller import HOMEPATH as HOMEPATH
 from PyInstaller.depend.imphookapi import PostGraphAPI

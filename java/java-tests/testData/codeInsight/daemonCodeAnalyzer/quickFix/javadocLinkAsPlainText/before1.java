@@ -1,4 +1,4 @@
-// "Replace URL with HTML link" "true-preview"
+// "Replace URL with link" "true-preview"
 
 /**
  * abc https://en.wikipedia.org/<caret> def

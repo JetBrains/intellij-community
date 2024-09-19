@@ -1,5 +1,5 @@
 from enum import Enum
 
 class DeliveryMode(Enum):
-    Transient: int
-    Persistent: int
+    Transient = 1
+    Persistent = 2

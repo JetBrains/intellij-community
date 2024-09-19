@@ -17,28 +17,30 @@ We store the data on disk in cbor, for which we use the CBOR format to encode
 the data.
 """
 
+from __future__ import absolute_import
 
 import contextlib
-
-from typing import (
-    Any,
-    Dict,
-)
 
 from .i18n import _
 
 from . import (
     error,
+    pycompat,
     util,
 )
 from .utils import cborutil
 
-# keeps pyflakes happy
-for t in (Any, Dict):
-    assert t
+if pycompat.TYPE_CHECKING:
+    from typing import (
+        Any,
+        Dict,
+    )
+
+    for t in (Any, Dict):
+        assert t
 
 
-class cmdstate:
+class cmdstate(object):
     """a wrapper class to store the state of commands like `rebase`, `graft`,
     `histedit`, `shelve` etc. Extensions can also use this to write state files.
 
@@ -59,7 +61,8 @@ class cmdstate:
         self._repo = repo
         self.fname = fname
 
-    def read(self) -> Dict[bytes, Any]:
+    def read(self):
+        # type: () -> Dict[bytes, Any]
         """read the existing state file and return a dict of data stored"""
         return self._read()
 
@@ -100,7 +103,7 @@ class cmdstate:
         return self._repo.vfs.exists(self.fname)
 
 
-class _statecheck:
+class _statecheck(object):
     """a utility class that deals with multistep operations like graft,
     histedit, bisect, update etc and check whether such commands
     are in an unfinished conditition or not and return appropriate message
@@ -364,7 +367,6 @@ addunfinished(
     fname=b'bisect.state',
     allowcommit=True,
     reportonly=True,
-    cmdhint=_(b"use 'hg bisect --reset'"),
     statushint=_(
         b'To mark the changeset good:    hg bisect --good\n'
         b'To mark the changeset bad:     hg bisect --bad\n'

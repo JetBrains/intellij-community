@@ -1,7 +1,7 @@
 from _typeshed import Incomplete, ReadableBuffer
 from collections.abc import Callable, Iterable, Iterator
 from re import Pattern
-from typing import Any, Generic, TypeVar, overload
+from typing import Any, Literal, TypeVar, overload
 from typing_extensions import Self, TypeAlias
 
 from . import BeautifulSoup
@@ -234,7 +234,7 @@ class Tag(PageElement):
     sourceline: int | None
     sourcepos: int | None
     known_xml: bool | None
-    attrs: dict[str, str]
+    attrs: dict[str, str | Any]
     contents: list[PageElement]
     hidden: bool
     can_be_empty_element: bool | None
@@ -295,25 +295,33 @@ class Tag(PageElement):
         self,
         encoding: str = "utf-8",
         indent_level: int | None = None,
-        formatter: str | Formatter = "minimal",
+        formatter: Literal["html", "html5", "minimal"] | Formatter | None = "minimal",
         errors: str = "xmlcharrefreplace",
     ) -> bytes: ...
     def decode(
         self,
         indent_level: int | None = None,
         eventual_encoding: str = "utf-8",
-        formatter: str | Formatter = "minimal",
+        formatter: Literal["html", "html5", "minimal"] | Formatter | None = "minimal",
         iterator: Iterator[PageElement] | None = None,
     ) -> str: ...
     @overload
-    def prettify(self, encoding: str, formatter: str | Formatter = "minimal") -> bytes: ...
+    def prettify(self, encoding: str, formatter: Literal["html", "html5", "minimal"] | Formatter | None = "minimal") -> bytes: ...
     @overload
-    def prettify(self, encoding: None = None, formatter: str | Formatter = "minimal") -> str: ...
+    def prettify(
+        self, encoding: None = None, formatter: Literal["html", "html5", "minimal"] | Formatter | None = "minimal"
+    ) -> str: ...
     def decode_contents(
-        self, indent_level: int | None = None, eventual_encoding: str = "utf-8", formatter: str | Formatter = "minimal"
+        self,
+        indent_level: int | None = None,
+        eventual_encoding: str = "utf-8",
+        formatter: Literal["html", "html5", "minimal"] | Formatter | None = "minimal",
     ) -> str: ...
     def encode_contents(
-        self, indent_level: int | None = None, encoding: str = "utf-8", formatter: str | Formatter = "minimal"
+        self,
+        indent_level: int | None = None,
+        encoding: str = "utf-8",
+        formatter: Literal["html", "html5", "minimal"] | Formatter | None = "minimal",
     ) -> bytes: ...
     def renderContents(self, encoding: str = "utf-8", prettyPrint: bool = False, indentLevel: int = 0) -> bytes: ...
     def find(
@@ -372,7 +380,7 @@ class SoupStrainer:
     searchTag = search_tag
     def search(self, markup: PageElement | Iterable[PageElement]): ...
 
-class ResultSet(list[_PageElementT], Generic[_PageElementT]):
+class ResultSet(list[_PageElementT]):
     source: SoupStrainer
     @overload
     def __init__(self, source: SoupStrainer) -> None: ...

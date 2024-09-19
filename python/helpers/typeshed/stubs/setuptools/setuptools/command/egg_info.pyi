@@ -1,5 +1,5 @@
 from _typeshed import Incomplete
-from typing_extensions import Final
+from typing import ClassVar, Final
 
 from .. import Command, SetuptoolsDeprecationWarning
 from .._distutils.filelist import FileList as _FileList
@@ -21,14 +21,13 @@ class InfoCommon:
 
 class egg_info(InfoCommon, Command):
     description: str
-    user_options: Incomplete
-    boolean_options: Incomplete
-    negative_opt: Incomplete
+    user_options: ClassVar[list[tuple[str, str, str]]]
+    boolean_options: ClassVar[list[str]]
+    negative_opt: ClassVar[dict[str, str]]
     egg_base: Incomplete
     egg_name: Incomplete
     egg_info: Incomplete
     egg_version: Incomplete
-    broken_egg_info: bool
     def initialize_options(self) -> None: ...
     @property
     def tag_svn_revision(self) -> None: ...
@@ -59,13 +58,13 @@ class FileList(_FileList):
 
 class manifest_maker(sdist):
     template: str
-    use_defaults: int
-    prune: int
-    manifest_only: int
-    force_manifest: int
+    use_defaults: bool
+    prune: bool
+    manifest_only: bool
+    force_manifest: bool
     def initialize_options(self) -> None: ...
     def finalize_options(self) -> None: ...
-    filelist: Incomplete
+    filelist: FileList
     def run(self) -> None: ...
     def write_manifest(self) -> None: ...
     def warn(self, msg) -> None: ...

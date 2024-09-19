@@ -1,0 +1,2 @@
+# doesn't exist on linux
+msilib(.[a-z]+)?

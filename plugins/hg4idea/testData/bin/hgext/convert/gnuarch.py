@@ -5,6 +5,7 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
+from __future__ import absolute_import
 
 import os
 import shutil
@@ -27,7 +28,7 @@ from . import common
 
 
 class gnuarch_source(common.converter_source, common.commandline):
-    class gnuarch_rev:
+    class gnuarch_rev(object):
         def __init__(self, rev):
             self.rev = rev
             self.summary = b''

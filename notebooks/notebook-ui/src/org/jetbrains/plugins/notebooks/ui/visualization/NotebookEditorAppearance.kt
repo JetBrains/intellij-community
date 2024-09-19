@@ -61,6 +61,7 @@ interface NotebookEditorAppearanceSizes {
 
   val cellBorderHeight: Int
   val aboveFirstCellDelimiterHeight: Int
+  val distanceBetweenCells: Int
 
   fun getCellLeftLineWidth(editor: Editor): Int
   fun getCellLeftLineHoverWidth(): Int
@@ -114,6 +115,7 @@ object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val CODE_AND_CODE_TOP_GRAY_HEIGHT = JBUI.scale(6)
   override val CODE_AND_CODE_BOTTOM_GRAY_HEIGHT = JBUI.scale(6)
   override val INNER_CELL_TOOLBAR_HEIGHT = JBUI.scale(24)
+  override val distanceBetweenCells = JBUI.scale(16)
   override val cellBorderHeight = JBUI.scale(16)
   override val aboveFirstCellDelimiterHeight = JBUI.scale(24)
   override val SPACER_HEIGHT = JBUI.scale(cellBorderHeight / 2)

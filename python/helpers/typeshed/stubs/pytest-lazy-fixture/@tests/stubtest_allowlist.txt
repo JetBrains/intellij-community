@@ -10,3 +10,4 @@ pytest_lazyfixture.copy_metafunc
 
 # Compat:
 pytest_lazyfixture.PY3
+pytest_lazyfixture.string_type

@@ -11,10 +11,10 @@
 allowing operations like diff and log with revsets.
 """
 
-import contextlib
-
+from __future__ import absolute_import
 
 from .i18n import _
+from .pycompat import getattr
 
 from . import (
     changelog,
@@ -71,7 +71,6 @@ class unionrevlog(revlog.revlog):
                 _sds,
                 _dcm,
                 _sdcm,
-                rank,
             ) = rev
             flags = _start & 0xFFFF
 
@@ -108,24 +107,10 @@ class unionrevlog(revlog.revlog):
                 0,  # sidedata size
                 revlog_constants.COMP_MODE_INLINE,
                 revlog_constants.COMP_MODE_INLINE,
-                rank,
             )
             self.index.append(e)
             self.bundlerevs.add(n)
             n += 1
-
-    @contextlib.contextmanager
-    def reading(self):
-        if 0 <= len(self.bundlerevs) < len(self.index):
-            read_1 = super().reading
-        else:
-            read_1 = util.nullcontextmanager
-        if 0 < len(self.bundlerevs):
-            read_2 = self.revlog2.reading
-        else:
-            read_2 = util.nullcontextmanager
-        with read_1(), read_2():
-            yield
 
     def _chunk(self, rev):
         if rev <= self.repotiprev:
@@ -144,7 +129,7 @@ class unionrevlog(revlog.revlog):
 
         return mdiff.textdiff(self.rawdata(rev1), self.rawdata(rev2))
 
-    def _revisiondata(self, nodeorrev, raw=False):
+    def _revisiondata(self, nodeorrev, _df=None, raw=False):
         if isinstance(nodeorrev, int):
             rev = nodeorrev
             node = self.node(rev)
@@ -158,21 +143,9 @@ class unionrevlog(revlog.revlog):
             func = revlog2._revisiondata
         else:
             func = super(unionrevlog, self)._revisiondata
-        return func(node, raw=raw)
+        return func(node, _df=_df, raw=raw)
 
-    def addrevision(
-        self,
-        text,
-        transaction,
-        link,
-        p1,
-        p2,
-        cachedelta=None,
-        node=None,
-        flags=revlog.REVIDX_DEFAULT_FLAGS,
-        deltacomputer=None,
-        sidedata=None,
-    ):
+    def addrevision(self, text, transaction, link, p1=None, p2=None, d=None):
         raise NotImplementedError
 
     def addgroup(
@@ -183,8 +156,7 @@ class unionrevlog(revlog.revlog):
         alwayscache=False,
         addrevisioncb=None,
         duplicaterevisioncb=None,
-        debug_info=None,
-        delta_base_reuse_policy=None,
+        maybemissingparents=False,
     ):
         raise NotImplementedError
 
@@ -205,8 +177,6 @@ class unionchangelog(unionrevlog, changelog.changelog):
 
 class unionmanifest(unionrevlog, manifest.manifestrevlog):
     def __init__(self, nodeconstants, opener, opener2, linkmapper):
-        # XXX manifestrevlog is not actually a revlog , so mixing it with
-        # bundlerevlog is not a good idea.
         manifest.manifestrevlog.__init__(self, nodeconstants, opener)
         manifest2 = manifest.manifestrevlog(nodeconstants, opener2)
         unionrevlog.__init__(
@@ -238,7 +208,7 @@ class unionpeer(localrepo.localpeer):
         return False
 
 
-class unionrepository:
+class unionrepository(object):
     """Represents the union of data in 2 repositories.
 
     Instances are not usable if constructed directly. Use ``instance()``
@@ -286,8 +256,8 @@ class unionrepository:
     def cancopy(self):
         return False
 
-    def peer(self, path=None, remotehidden=False):
-        return unionpeer(self, path=None, remotehidden=remotehidden)
+    def peer(self):
+        return unionpeer(self)
 
     def getcwd(self):
         return encoding.getcwd()  # always outside the repo

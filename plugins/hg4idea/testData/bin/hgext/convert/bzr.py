@@ -8,6 +8,7 @@
 # This module is for handling Breezy imports or `brz`, but it's also compatible
 # with Bazaar or `bzr`, that was formerly known as Bazaar-NG;
 # it cannot access `bar` repositories, but they were never used very much.
+from __future__ import absolute_import
 
 import os
 
@@ -15,6 +16,7 @@ from mercurial.i18n import _
 from mercurial import (
     demandimport,
     error,
+    pycompat,
     util,
 )
 from . import common
@@ -23,33 +25,24 @@ from . import common
 # these do not work with demandimport, blacklist
 demandimport.IGNORES.update(
     [
-        'breezy.transactions',
-        'breezy.urlutils',
-        'ElementPath',
+        b'breezy.transactions',
+        b'breezy.urlutils',
+        b'ElementPath',
     ]
 )
 
 try:
     # bazaar imports
-    # pytype: disable=import-error
     import breezy.bzr.bzrdir
     import breezy.errors
     import breezy.revision
     import breezy.revisionspec
-
-    # pytype: enable=import-error
 
     bzrdir = breezy.bzr.bzrdir
     errors = breezy.errors
     revision = breezy.revision
     revisionspec = breezy.revisionspec
     revisionspec.RevisionSpec
-
-    try:
-        # brz 3.3.0 (revno: 7614.2.2)
-        from breezy.transport import NoSuchFile
-    except ImportError:
-        from breezy.errors import NoSuchFile
 except ImportError:
     pass
 
@@ -159,7 +152,7 @@ class bzr_source(common.converter_source):
 
         try:
             kind = revtree.kind(name)
-        except NoSuchFile:
+        except breezy.errors.NoSuchFile:
             return None, None
         if kind not in supportedkinds:
             # the file is not available anymore - was deleted
@@ -217,7 +210,7 @@ class bzr_source(common.converter_source):
             if not branch.supports_tags():
                 return {}
             tagdict = branch.tags.get_tag_dict()
-            for name, rev in tagdict.items():
+            for name, rev in pycompat.iteritems(tagdict):
                 bytetags[self.recode(name)] = rev
         return bytetags
 

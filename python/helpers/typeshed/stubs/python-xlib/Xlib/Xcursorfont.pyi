@@ -1,4 +1,4 @@
-from typing_extensions import Final
+from typing import Final
 
 num_glyphs: Final = 154
 X_cursor: Final = 0

@@ -44,25 +44,23 @@ public final class CustomPluginRepositoryService implements PluginRepositoryAuth
 
     Map<PluginId, PluginNode> latestCustomPluginsAsMap = new HashMap<>();
     Map<String, List<PluginNode>> customRepositoryPluginsMap = new HashMap<>();
-    for (String host : RepositoryHelper.getPluginHosts()) {
-      if (host != null) {
-        try {
-          List<PluginNode> descriptors = RepositoryHelper.loadPlugins(host, null, null);
-          for (PluginNode descriptor : descriptors) {
-            PluginId pluginId = descriptor.getPluginId();
-            IdeaPluginDescriptor savedDescriptor = latestCustomPluginsAsMap.get(pluginId);
-            if (savedDescriptor == null || VersionComparatorUtil.compare(descriptor.getVersion(), savedDescriptor.getVersion()) > 0) {
-              latestCustomPluginsAsMap.put(pluginId, descriptor);
-            }
+    for (String host : RepositoryHelper.getCustomPluginRepositoryHosts()) {
+      try {
+        List<PluginNode> descriptors = RepositoryHelper.loadPlugins(host, null, null);
+        for (PluginNode descriptor : descriptors) {
+          PluginId pluginId = descriptor.getPluginId();
+          IdeaPluginDescriptor savedDescriptor = latestCustomPluginsAsMap.get(pluginId);
+          if (savedDescriptor == null || VersionComparatorUtil.compare(descriptor.getVersion(), savedDescriptor.getVersion()) > 0) {
+            latestCustomPluginsAsMap.put(pluginId, descriptor);
           }
-          customRepositoryPluginsMap.put(host, descriptors);
         }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          LOG.info("Failed to load plugins from " + host, e);
-        }
+        customRepositoryPluginsMap.put(host, descriptors);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.info("Failed to load plugins from " + host, e);
       }
     }
 

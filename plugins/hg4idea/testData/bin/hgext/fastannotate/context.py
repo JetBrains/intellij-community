@@ -5,6 +5,7 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
+from __future__ import absolute_import
 
 import collections
 import contextlib
@@ -12,7 +13,9 @@ import os
 
 from mercurial.i18n import _
 from mercurial.pycompat import (
+    getattr,
     open,
+    setattr,
 )
 from mercurial.node import (
     bin,
@@ -73,7 +76,7 @@ def _decorate(fctx):
     linecount = text.count(b'\n')
     if text and not text.endswith(b'\n'):
         linecount += 1
-    return ([(fctx, i) for i in range(linecount)], text)
+    return ([(fctx, i) for i in pycompat.xrange(linecount)], text)
 
 
 # extracted from mercurial.context.basefilectx.annotate. slightly modified
@@ -149,10 +152,7 @@ def encodedir(path):
 
 def hashdiffopts(diffopts):
     diffoptstr = stringutil.pprint(
-        sorted(
-            (k, getattr(diffopts, pycompat.sysstr(k)))
-            for k in mdiff.diffopts.defaults
-        )
+        sorted((k, getattr(diffopts, k)) for k in mdiff.diffopts.defaults)
     )
     return hex(hashutil.sha1(diffoptstr).digest())[:6]
 
@@ -160,7 +160,7 @@ def hashdiffopts(diffopts):
 _defaultdiffopthash = hashdiffopts(mdiff.defaultopts)
 
 
-class annotateopts:
+class annotateopts(object):
     """like mercurial.mdiff.diffopts, but is for annotate
 
     followrename: follow renames, like "hg annotate -f"
@@ -168,13 +168,14 @@ class annotateopts:
     """
 
     defaults = {
-        'diffopts': None,
-        'followrename': True,
-        'followmerge': True,
+        b'diffopts': None,
+        b'followrename': True,
+        b'followmerge': True,
     }
 
     def __init__(self, **opts):
-        for k, v in self.defaults.items():
+        opts = pycompat.byteskwargs(opts)
+        for k, v in pycompat.iteritems(self.defaults):
             setattr(self, k, opts.get(k, v))
 
     @util.propertycache
@@ -196,7 +197,7 @@ class annotateopts:
 defaultopts = annotateopts()
 
 
-class _annotatecontext:
+class _annotatecontext(object):
     """do not use this class directly as it does not use lock to protect
     writes. use "with annotatecontext(...)" instead.
     """
@@ -322,7 +323,7 @@ class _annotatecontext:
                     b'(resolved fctx: %s)\n'
                     % (
                         self.path,
-                        stringutil.pprint(hasattr(revfctx, 'node')),
+                        stringutil.pprint(util.safehasattr(revfctx, b'node')),
                     )
                 )
             return self.annotatedirectly(revfctx, showpath, showlines)
@@ -577,13 +578,13 @@ class _annotatecontext:
         result = [None] * len(annotateresult)
         # {(rev, linenum): [lineindex]}
         key2idxs = collections.defaultdict(list)
-        for i in range(len(result)):
+        for i in pycompat.xrange(len(result)):
             key2idxs[(revs[i], annotateresult[i][1])].append(i)
         while key2idxs:
             # find an unresolved line and its linelog rev to annotate
             hsh = None
             try:
-                for (rev, _linenum), idxs in key2idxs.items():
+                for (rev, _linenum), idxs in pycompat.iteritems(key2idxs):
                     if revmap.rev2flag(rev) & revmapmod.sidebranchflag:
                         continue
                     hsh = annotateresult[idxs[0]][0]
@@ -594,7 +595,7 @@ class _annotatecontext:
                 # the remaining key2idxs are not in main branch, resolving them
                 # using the hard way...
                 revlines = {}
-                for (rev, linenum), idxs in key2idxs.items():
+                for (rev, linenum), idxs in pycompat.iteritems(key2idxs):
                     if rev not in revlines:
                         hsh = annotateresult[idxs[0]][0]
                         if self.ui.debugflag:
@@ -783,7 +784,7 @@ def _unlinkpaths(paths):
             pass
 
 
-class pathhelper:
+class pathhelper(object):
     """helper for getting paths for lockfile, linelog and revmap"""
 
     def __init__(self, repo, path, opts=defaultopts):

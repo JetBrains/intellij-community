@@ -12,8 +12,18 @@ from pathlib import Path
 from textwrap import dedent
 from typing import NoReturn
 
-from parse_metadata import NoSuchStubError, get_recursive_requirements, read_metadata
-from utils import PYTHON_VERSION, colored, get_mypy_req, make_venv, print_error, print_success_msg
+from _metadata import NoSuchStubError, get_recursive_requirements, read_metadata
+from _utils import (
+    PYTHON_VERSION,
+    allowlist_stubtest_arguments,
+    allowlists_path,
+    colored,
+    get_mypy_req,
+    print_divider,
+    print_error,
+    print_success_msg,
+    tests_path,
+)
 
 
 def run_stubtest(
@@ -24,10 +34,10 @@ def run_stubtest(
         metadata = read_metadata(dist_name)
     except NoSuchStubError as e:
         parser.error(str(e))
-    print(f"{dist_name}... ", end="")
+    print(f"{dist_name}... ", end="", flush=True)
 
     stubtest_settings = metadata.stubtest_settings
-    if stubtest_settings.skipped:
+    if stubtest_settings.skip:
         print(colored("skipping", "yellow"))
         return True
 
@@ -44,16 +54,22 @@ def run_stubtest(
     with tempfile.TemporaryDirectory() as tmp:
         venv_dir = Path(tmp)
         try:
-            pip_exe, python_exe = make_venv(venv_dir)
-        except Exception:
-            print_error("fail")
-            raise
+            subprocess.run(["uv", "venv", venv_dir, "--seed"], capture_output=True, check=True)
+        except subprocess.CalledProcessError as e:
+            print_command_failure("Failed to create a virtualenv (likely a bug in uv?)", e)
+            return False
+        if sys.platform == "win32":
+            pip_exe = str(venv_dir / "Scripts" / "pip.exe")
+            python_exe = str(venv_dir / "Scripts" / "python.exe")
+        else:
+            pip_exe = str(venv_dir / "bin" / "pip")
+            python_exe = str(venv_dir / "bin" / "python")
         dist_extras = ", ".join(stubtest_settings.extras)
         dist_req = f"{dist_name}[{dist_extras}]=={metadata.version}"
 
         # If tool.stubtest.stubtest_requirements exists, run "pip install" on it.
         if stubtest_settings.stubtest_requirements:
-            pip_cmd = [pip_exe, "install"] + stubtest_settings.stubtest_requirements
+            pip_cmd = [pip_exe, "install", *stubtest_settings.stubtest_requirements]
             try:
                 subprocess.run(pip_cmd, check=True, capture_output=True)
             except subprocess.CalledProcessError as e:
@@ -67,7 +83,13 @@ def run_stubtest(
         # TODO: Maybe find a way to cache these in CI
         dists_to_install = [dist_req, get_mypy_req()]
         dists_to_install.extend(requirements.external_pkgs)  # Internal requirements are added to MYPYPATH
-        pip_cmd = [pip_exe, "install"] + dists_to_install
+
+        # Since the "gdb" Python package is available only inside GDB, it is not
+        # possible to install it through pip, so stub tests cannot install it.
+        if dist_name == "gdb":
+            dists_to_install[:] = dists_to_install[1:]
+
+        pip_cmd = [pip_exe, "install", *dists_to_install]
         try:
             subprocess.run(pip_cmd, check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
@@ -87,6 +109,7 @@ def run_stubtest(
             *ignore_missing_stub,
             *packages_to_check,
             *modules_to_check,
+            *allowlist_stubtest_arguments(dist_name),
         ]
 
         stubs_dir = dist.parent
@@ -100,42 +123,51 @@ def run_stubtest(
         # "bisect" to see which variables are actually needed.
         stubtest_env = os.environ | {"MYPYPATH": mypypath, "MYPY_FORCE_COLOR": "1"}
 
-        allowlist_path = dist / "@tests/stubtest_allowlist.txt"
-        if allowlist_path.exists():
-            stubtest_cmd.extend(["--allowlist", str(allowlist_path)])
-        platform_allowlist = dist / f"@tests/stubtest_allowlist_{sys.platform}.txt"
-        if platform_allowlist.exists():
-            stubtest_cmd.extend(["--allowlist", str(platform_allowlist)])
-
         # Perform some black magic in order to run stubtest inside uWSGI
         if dist_name == "uWSGI":
             if not setup_uwsgi_stubtest_command(dist, venv_dir, stubtest_cmd):
+                return False
+
+        if dist_name == "gdb":
+            if not setup_gdb_stubtest_command(venv_dir, stubtest_cmd):
                 return False
 
         try:
             subprocess.run(stubtest_cmd, env=stubtest_env, check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
             print_error("fail")
+
+            print_divider()
+            print("Commands run:")
             print_commands(dist, pip_cmd, stubtest_cmd, mypypath)
+
+            print_divider()
+            print("Command output:\n")
             print_command_output(e)
 
-            print("Python version: ", file=sys.stderr)
+            print_divider()
+            print("Python version: ", end="", flush=True)
             ret = subprocess.run([sys.executable, "-VV"], capture_output=True)
             print_command_output(ret)
-
-            print("Ran with the following environment:", file=sys.stderr)
+            print("\nRan with the following environment:")
             ret = subprocess.run([pip_exe, "freeze", "--all"], capture_output=True)
             print_command_output(ret)
 
-            if allowlist_path.exists():
-                print(
-                    f'To fix "unused allowlist" errors, remove the corresponding entries from {allowlist_path}', file=sys.stderr
-                )
-                print(file=sys.stderr)
+            print_divider()
+            main_allowlist_path = allowlists_path(dist_name) / "stubtest_allowlist.txt"
+            if main_allowlist_path.exists():
+                print(f'To fix "unused allowlist" errors, remove the corresponding entries from {main_allowlist_path}')
+                print()
             else:
-                print(f"Re-running stubtest with --generate-allowlist.\nAdd the following to {allowlist_path}:", file=sys.stderr)
-                ret = subprocess.run(stubtest_cmd + ["--generate-allowlist"], env=stubtest_env, capture_output=True)
+                print(f"Re-running stubtest with --generate-allowlist.\nAdd the following to {main_allowlist_path}:")
+                ret = subprocess.run([*stubtest_cmd, "--generate-allowlist"], env=stubtest_env, capture_output=True)
                 print_command_output(ret)
+
+            print_divider()
+            print(f"Upstream repository: {metadata.upstream_repository}")
+            print(f"Typeshed source code: https://github.com/python/typeshed/tree/main/stubs/{dist.name}")
+
+            print_divider()
 
             return False
         else:
@@ -144,6 +176,88 @@ def run_stubtest(
     if verbose:
         print_commands(dist, pip_cmd, stubtest_cmd, mypypath)
 
+    return True
+
+
+def setup_gdb_stubtest_command(venv_dir: Path, stubtest_cmd: list[str]) -> bool:
+    """
+    Use wrapper scripts to run stubtest inside gdb.
+    The wrapper script is used to pass the arguments to the gdb script.
+    """
+    if sys.platform == "win32":
+        print_error("gdb is not supported on Windows")
+        return False
+
+    try:
+        gdb_version = subprocess.check_output(["gdb", "--version"], text=True, stderr=subprocess.STDOUT)
+    except FileNotFoundError:
+        print_error("gdb is not installed")
+        return False
+    if "Python scripting is not supported in this copy of GDB" in gdb_version:
+        print_error("Python scripting is not supported in this copy of GDB")
+        return False
+
+    gdb_script = venv_dir / "gdb_stubtest.py"
+    wrapper_script = venv_dir / "gdb_wrapper.py"
+    gdb_script_contents = dedent(
+        f"""
+        import json
+        import os
+        import site
+        import sys
+        import traceback
+
+        from glob import glob
+
+        # Add the venv site-packages to sys.path. gdb doesn't use the virtual environment.
+        # Taken from https://github.com/pwndbg/pwndbg/blob/83d8d95b576b749e888f533ce927ad5a77fb957b/gdbinit.py#L37
+        site_pkgs_path = glob(os.path.join({str(venv_dir)!r}, "lib/*/site-packages"))[0]
+        site.addsitedir(site_pkgs_path)
+
+        exit_code = 1
+        try:
+            # gdb wraps stdout and stderr without a .fileno
+            # colored output in mypy tries to access .fileno()
+            sys.stdout.fileno = sys.__stdout__.fileno
+            sys.stderr.fileno = sys.__stderr__.fileno
+
+            from mypy.stubtest import main
+
+            sys.argv = json.loads(os.environ.get("STUBTEST_ARGS"))
+            exit_code = main()
+        except Exception:
+            traceback.print_exc()
+        finally:
+            gdb.execute(f"quit {{exit_code}}")
+        """
+    )
+    gdb_script.write_text(gdb_script_contents)
+
+    wrapper_script_contents = dedent(
+        f"""
+        import json
+        import os
+        import subprocess
+        import sys
+
+        stubtest_env = os.environ | {{"STUBTEST_ARGS": json.dumps(sys.argv)}}
+        gdb_cmd = [
+            "gdb",
+            "--quiet",
+            "--nx",
+            "--batch",
+            "--command",
+            {str(gdb_script)!r},
+        ]
+        r = subprocess.run(gdb_cmd, env=stubtest_env)
+        sys.exit(r.returncode)
+        """
+    )
+    wrapper_script.write_text(wrapper_script_contents)
+
+    # replace "-m mypy.stubtest" in stubtest_cmd with the path to our wrapper script
+    assert stubtest_cmd[1:3] == ["-m", "mypy.stubtest"]
+    stubtest_cmd[1:3] = [str(wrapper_script)]
     return True
 
 
@@ -161,7 +275,7 @@ def setup_uwsgi_stubtest_command(dist: Path, venv_dir: Path, stubtest_cmd: list[
     so both scripts will be cleaned up after this function
     has been executed.
     """
-    uwsgi_ini = dist / "@tests/uwsgi.ini"
+    uwsgi_ini = tests_path(dist.name) / "uwsgi.ini"
 
     if sys.platform == "win32":
         print_error("uWSGI is not supported on Windows")
@@ -224,23 +338,21 @@ def setup_uwsgi_stubtest_command(dist: Path, venv_dir: Path, stubtest_cmd: list[
 
 
 def print_commands(dist: Path, pip_cmd: list[str], stubtest_cmd: list[str], mypypath: str) -> None:
-    print(file=sys.stderr)
-    print(" ".join(pip_cmd), file=sys.stderr)
-    print(f"MYPYPATH={mypypath}", " ".join(stubtest_cmd), file=sys.stderr)
-    print(file=sys.stderr)
+    print()
+    print(" ".join(pip_cmd))
+    print(f"MYPYPATH={mypypath}", " ".join(stubtest_cmd))
 
 
 def print_command_failure(message: str, e: subprocess.CalledProcessError) -> None:
     print_error("fail")
-    print(file=sys.stderr)
-    print(message, file=sys.stderr)
+    print()
+    print(message)
     print_command_output(e)
 
 
 def print_command_output(e: subprocess.CalledProcessError | subprocess.CompletedProcess[bytes]) -> None:
-    print(e.stdout.decode(), end="", file=sys.stderr)
-    print(e.stderr.decode(), end="", file=sys.stderr)
-    print(file=sys.stderr)
+    print(e.stdout.decode(), end="")
+    print(e.stderr.decode(), end="")
 
 
 def main() -> NoReturn:
