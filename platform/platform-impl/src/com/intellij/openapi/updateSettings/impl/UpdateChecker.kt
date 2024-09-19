@@ -70,10 +70,7 @@ private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
   @OptIn(ExperimentalCoroutinesApi::class)
   private val limitedDispatcher = Dispatchers.IO.limitedParallelism(1)
 
-  /**
-   * For scheduled update checks.
-   */
-  fun updateAndShowResult(showResults: Boolean = false): ActionCallback {
+  fun updateAndShowResult(showResults: Boolean): ActionCallback {
     val callback = ActionCallback()
     coroutineScope.launch(limitedDispatcher) {
       doUpdateAndShowResult(
@@ -139,10 +136,11 @@ object UpdateChecker {
    */
   @JvmStatic
   fun updateAndShowResult(): ActionCallback =
-    service<UpdateCheckerHelper>().updateAndShowResult()
+    service<UpdateCheckerHelper>().updateAndShowResult(showResults = true)
 
+  @ApiStatus.Internal
   fun getUpdates(): ActionCallback =
-    service<UpdateCheckerHelper>().updateAndShowResult(false)
+    service<UpdateCheckerHelper>().updateAndShowResult(showResults = false)
 
   /**
    * For manual update checks (Help | Check for Updates, Settings | Updates | Check Now)
