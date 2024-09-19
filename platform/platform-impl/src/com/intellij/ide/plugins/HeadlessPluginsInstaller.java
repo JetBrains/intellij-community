@@ -27,6 +27,7 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
 
   @Override
   public int getRequiredModality() {
+    //noinspection MagicConstant (workaround for IDEA-359236)
     return NOT_IN_EDT;
   }
 
