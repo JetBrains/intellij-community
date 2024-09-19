@@ -11,7 +11,7 @@ private val COMPONENTS_CONTAINER = Key<EditorEmbeddedComponentContainer>("COMPON
 internal class EditorEmbeddedComponentContainer(private val editor: EditorEx) : Disposable {
 
   init {
-    editor.contentComponent.layout = EditorEmbeddedComponentLayoutManager(editor.scrollPane)
+    editor.contentComponent.layout = EditorEmbeddedComponentLayoutManager(editor)
     editor.putUserData(COMPONENTS_CONTAINER, this)
   }
 

@@ -1,26 +1,24 @@
 package com.intellij.notebooks.visualization.ui
 
+import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
-import java.awt.Component
-import java.awt.Container
-import java.awt.Dimension
-import java.awt.LayoutManager2
-import java.awt.Rectangle
-import java.util.HashMap
+import java.awt.*
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 import kotlin.math.min
 
-internal class EditorEmbeddedComponentLayoutManager(editorScrollPane: JScrollPane) : LayoutManager2 {
-  private val constraints: MutableMap<JComponent?, Constraint?> = HashMap<JComponent?, Constraint?>()
-  private val myEditorScrollPane: JScrollPane = editorScrollPane
+internal class EditorEmbeddedComponentLayoutManager(private val editor: EditorEx) : LayoutManager2 {
+  private val constraints: MutableList<Pair<JComponent, Constraint>> = mutableListOf()
+  private val myEditorScrollPane: JScrollPane
+    get() = editor.scrollPane
 
-  override fun addLayoutComponent(comp: Component?, constraints: Any?) {
+  override fun addLayoutComponent(comp: Component, constraints: Any?) {
     if (constraints !is Constraint) return
-    this.constraints.put(comp as JComponent?, constraints)
+    val insertIndex = this.constraints.binarySearchBy(constraints.order) { pair -> pair.second.order }.let { if (it < 0) -it - 1 else it }
+    this.constraints.add(insertIndex, comp as JComponent to constraints)
   }
 
   override fun maximumLayoutSize(target: Container?): Dimension {
@@ -43,7 +41,9 @@ internal class EditorEmbeddedComponentLayoutManager(editorScrollPane: JScrollPan
   }
 
   override fun removeLayoutComponent(comp: Component?) {
-    this.constraints.remove(comp as JComponent?)
+    this.constraints.indexOfFirst { it.second == comp }
+      .takeIf { it >= 0 }
+      ?.let { this.constraints.removeAt(it) }
   }
 
   override fun preferredLayoutSize(parent: Container?): Dimension {
@@ -56,10 +56,12 @@ internal class EditorEmbeddedComponentLayoutManager(editorScrollPane: JScrollPan
 
   override fun layoutContainer(parent: Container) {
     synchronized(parent.treeLock) {
-      val visibleWidth = maxOf(myEditorScrollPane.getViewport().getWidth() - myEditorScrollPane.getVerticalScrollBar().getWidth(), 0)
-      for (entry in constraints.entries) {
-        val component: JComponent = entry.key!!
-        synchronizeBoundsWithInlay(entry.value!!, component, visibleWidth)
+      keepScrollingPositionWhile(editor) {
+        val visibleWidth = maxOf(myEditorScrollPane.getViewport().getWidth() - myEditorScrollPane.getVerticalScrollBar().getWidth(), 0)
+        for (entry in constraints) {
+          val component: JComponent = entry.first
+          synchronizeBoundsWithInlay(entry.second, component, visibleWidth)
+        }
       }
     }
   }
@@ -98,6 +100,8 @@ internal class EditorEmbeddedComponentLayoutManager(editorScrollPane: JScrollPan
 
     val isFullWidth: Boolean
 
+    val order: Int
+
   }
 
   class InlayConstraint internal constructor(
@@ -111,6 +115,9 @@ internal class EditorEmbeddedComponentLayoutManager(editorScrollPane: JScrollPan
     override fun update() {
       inlay.update()
     }
+
+    override val order: Int
+      get() = inlay.offset
   }
 
   class CustomFoldingConstraint internal constructor(
@@ -128,5 +135,8 @@ internal class EditorEmbeddedComponentLayoutManager(editorScrollPane: JScrollPan
       // Here we have to call it once again to get correct bounds.
       JupyterBoundsChangeHandler.get(customFoldRegion.editor)!!.boundsChanged()
     }
+
+    override val order: Int
+      get() = customFoldRegion.startOffset
   }
 }
