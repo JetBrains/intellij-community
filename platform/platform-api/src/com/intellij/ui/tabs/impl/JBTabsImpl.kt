@@ -474,6 +474,7 @@ open class JBTabsImpl internal constructor(
       }
     }.addTo(this)
     scrollBarChangeListener = ChangeListener { updateTabsOffsetFromScrollBar() }
+    setTabsPosition(tabsPosition)
   }
 
   @Internal
@@ -1373,7 +1374,6 @@ open class JBTabsImpl internal constructor(
 
     assert(visibleInfos.isEmpty())
     visibleInfos.addAll(tabs)
-    setTabsPosition(tabsPosition) // update the divider visibility
     resetTabsCache()
   }
 
