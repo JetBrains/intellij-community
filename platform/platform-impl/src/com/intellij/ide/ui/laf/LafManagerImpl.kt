@@ -720,8 +720,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       val interFont = defaultInterFont
       LOG.debug { "patchLafFonts: using Inter font with size ${interFont.size2D}" }
       initFontDefaults(uiDefaults, interFont)
-      LOG.debug { "patchLafFonts: setting the default scale factor $defaultUserScaleFactor" }
-      setUserScaleFactor(defaultUserScaleFactor)
+      val userScaleFactor = defaultUserScaleFactor
+      LOG.debug { "patchLafFonts: setting the default scale factor $userScaleFactor" }
+      setUserScaleFactor(userScaleFactor)
     }
     else {
       restoreOriginalFontDefaults(uiDefaults)
