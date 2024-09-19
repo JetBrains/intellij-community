@@ -16343,7 +16343,6 @@ f:com.intellij.openapi.updateSettings.impl.UpdateChecker
 - sf:getPlatformUpdates():com.intellij.openapi.updateSettings.impl.PlatformUpdates
 - sf:getPlatformUpdates(com.intellij.openapi.updateSettings.impl.UpdateSettings):com.intellij.openapi.updateSettings.impl.PlatformUpdates
 - sf:getPluginUpdates():java.util.Collection
-- f:getUpdates():com.intellij.openapi.util.ActionCallback
 - sf:loadProductData(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.updateSettings.impl.Product
 - sf:saveDisabledToUpdatePlugins():V
 - sf:updateAndShowResult():com.intellij.openapi.util.ActionCallback
