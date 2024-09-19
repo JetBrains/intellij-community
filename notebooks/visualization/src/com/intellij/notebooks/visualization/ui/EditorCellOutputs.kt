@@ -8,7 +8,6 @@ import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFacto
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactoryGetter
 import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
-import com.intellij.notebooks.visualization.outputs.OUTPUT_LISTENER
 import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
 import com.intellij.notebooks.visualization.outputs.impl.InnerComponent
 import com.intellij.notebooks.visualization.outputs.impl.SurroundingComponent
@@ -65,7 +64,7 @@ class EditorCellOutputs(
   }
 
   private val outerComponent = SurroundingComponent.create(editor, innerComponent).also {
-    DataManager.registerDataProvider(it, NotebookCellDataProvider(editor, it, { cell.interval }))
+    DataManager.registerDataProvider(it, NotebookCellDataProvider(editor, it) { cell.interval })
   }
 
   internal var inlay: Inlay<*>? = null
@@ -190,8 +189,6 @@ class EditorCellOutputs(
     factory: NotebookOutputComponentFactory<*, K>,
     outputDataKey: K,
   ): NotebookOutputComponentFactory.CreatedComponent<*>? {
-    val lines = cell.interval.lines
-    ApplicationManager.getApplication().messageBus.syncPublisher(OUTPUT_LISTENER).beforeOutputCreated(editor, lines.last)
     val result = try {
       factory.createComponent(editor, outputDataKey)
     }
@@ -210,7 +207,6 @@ class EditorCellOutputs(
         Disposer.register(editor.disposable, disposable)
       }
     }
-    ApplicationManager.getApplication().messageBus.syncPublisher(OUTPUT_LISTENER).outputCreated(editor, lines.last)
     return result
   }
 

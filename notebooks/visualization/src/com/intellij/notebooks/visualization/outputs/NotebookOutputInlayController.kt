@@ -1,24 +1,13 @@
 package com.intellij.notebooks.visualization.outputs
 
+import com.intellij.notebooks.visualization.outputs.impl.SurroundingComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.util.asSafely
-import com.intellij.util.messages.Topic
-import com.intellij.notebooks.visualization.outputs.impl.SurroundingComponent
 import javax.swing.JComponent
-
-// ToDo: merge with NotebookOutputListener
-interface OutputListener {
-  fun beforeOutputCreated(editor: Editor, line: Int) {}
-  fun outputCreated(editor: Editor, line: Int) {}
-  fun outputSizeUpdated(editor: Editor, line: Int?) {}
-}
-
-val OUTPUT_LISTENER: Topic<OutputListener> = Topic.create("OutputAdded", OutputListener::class.java)
 
 val EditorCustomElementRenderer.notebookInlayOutputComponent: JComponent?
   get() = asSafely<JComponent>()?.components?.firstOrNull()?.asSafely<SurroundingComponent>()
