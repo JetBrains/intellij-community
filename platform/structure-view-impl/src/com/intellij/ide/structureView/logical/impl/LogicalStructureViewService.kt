@@ -34,10 +34,6 @@ class LogicalStructureViewService(
       override fun isRootNodeShown(): Boolean {
         return false
       }
-
-      override fun createStructureView(fileEditor: FileEditor?, project: Project): StructureView {
-        return super.createStructureView(fileEditor, project)
-      }
     }
   }
 
