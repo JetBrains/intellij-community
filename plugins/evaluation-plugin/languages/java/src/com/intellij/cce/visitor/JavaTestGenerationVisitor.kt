@@ -2,6 +2,7 @@ package com.intellij.cce.visitor
 
 import com.intellij.cce.core.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
+import com.intellij.openapi.roots.TestSourcesFilter
 import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
@@ -17,7 +18,10 @@ class JavaTestGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor
 
   override fun visitJavaFile(file: PsiJavaFile) {
     codeFragment = CodeFragment(file.textOffset, file.textLength)
-    
+
+    if (TestSourcesFilter.isTestSources(file.virtualFile, file.project)) {
+      return
+    }
     super.visitJavaFile(file)
   }
 
