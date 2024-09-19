@@ -2,6 +2,7 @@ package org.jetbrains.intellij.build.mps
 
 import org.jetbrains.intellij.build.*
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.plus
 import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.LibraryPackMode
@@ -41,25 +42,28 @@ class MPSProperties : JetBrainsProductProperties() {
 
         productLayout.addPlatformSpec(javaCompiler)
 
-        productLayout.bundledPluginModules.add("intellij.java.plugin")
-        productLayout.bundledPluginModules.add("intellij.java.ide.customization")
-        productLayout.bundledPluginModules.add("intellij.copyright")
-        productLayout.bundledPluginModules.add("intellij.properties")
-        productLayout.bundledPluginModules.add("intellij.properties.resource.bundle.editor")
-        productLayout.bundledPluginModules.add("intellij.terminal")
-        productLayout.bundledPluginModules.add("intellij.emojipicker")
-        productLayout.bundledPluginModules.add("intellij.settingsSync")
-        productLayout.bundledPluginModules.add("intellij.tasks.core")
-        productLayout.bundledPluginModules.add("intellij.vcs.git")
-        productLayout.bundledPluginModules.add("intellij.vcs.svn")
-        productLayout.bundledPluginModules.add("intellij.vcs.github.community")
-        productLayout.bundledPluginModules.add("intellij.ant")
-        productLayout.bundledPluginModules.add("intellij.sh")
-        productLayout.bundledPluginModules.add("intellij.vcs.changeReminder")
-        productLayout.bundledPluginModules.add("intellij.markdown")
-        productLayout.bundledPluginModules.add("intellij.grazie")
-        productLayout.bundledPluginModules.add("intellij.laf.macos")
-        productLayout.bundledPluginModules.add("intellij.laf.win10")
+        productLayout.bundledPluginModules +=
+        sequenceOf(
+            "intellij.java.plugin",
+            "intellij.java.ide.customization",
+            "intellij.copyright",
+            "intellij.properties",
+            "intellij.properties.resource.bundle.editor",
+            "intellij.terminal",
+            "intellij.emojipicker",
+            "intellij.settingsSync",
+            "intellij.tasks.core",
+            "intellij.vcs.git",
+            "intellij.vcs.svn",
+            "intellij.vcs.github.community",
+            "intellij.ant",
+            "intellij.sh",
+            "intellij.vcs.changeReminder",
+            "intellij.markdown",
+            "intellij.grazie",
+            "intellij.laf.macos",
+            "intellij.laf.win10"
+        )
 
         productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
         productLayout.buildAllCompatiblePlugins = false
