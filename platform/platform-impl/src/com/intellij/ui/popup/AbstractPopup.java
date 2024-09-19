@@ -48,7 +48,6 @@ import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -73,14 +72,12 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.im.InputMethodRequests;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.UI;
-import static com.intellij.ui.mac.foundation.Foundation.executeOnMainThread;
 import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
@@ -1276,8 +1273,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     }
 
-    final Window window = getContentWindow(myContent);
-
     if (myResizable) {
       final JRootPane root = myContent.getRootPane();
       final IdeGlassPaneImpl glass = new IdeGlassPaneImpl(root);
@@ -1294,9 +1289,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         myResizeListeners.forEach(Runnable::run);
       });
       myResizeListener = resizeListener;
-      if (SystemInfo.isMac && roundedCornerParams != null) {
-        applyMouseEnteredExitedWorkaround(window, glass);
-      }
     }
 
     setIsMovable(myMovable);
@@ -1305,6 +1297,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     myPopup.setRequestFocus(myRequestFocus);
 
+    final Window window = getContentWindow(myContent);
     if (window instanceof IdeFrame) {
       LOG.warn("Lightweight popup is shown using AbstractPopup class. But this class is not supposed to work with lightweight popups.");
     }
@@ -1458,55 +1451,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myOpeningTime = System.currentTimeMillis();
 
     afterShowSync();
-  }
-
-  private void applyMouseEnteredExitedWorkaround(@NotNull Window window, @NotNull IdeGlassPaneImpl glass) {
-    // On macOS, when using rounded corners, the entered/exit events sometimes never arrive.
-    // As a result, the "peer under cursor" static property (sun.lwawt.LWWindowPeer.lastCommonMouseEventPeer) may be wrong or null.
-    // This prevents the cursor manager from figuring out the correct current cursor, so our "resize" cursor never appears.
-    // To work around this, we send a fake MOUSE_ENTERED event when the popup receives a mouse move event
-    // if the peer under the cursor is wrong at that moment.
-    // Note that there's another bug somewhere: even if we set the correct cursor and the correct peer,
-    // the cursor manager sets the correct macOS cursor, sometimes it still never appears.
-    // That is another issue that may or may not be related to this mess.
-    var workaround = new MouseAdapter() {
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        var peer = MacUtil.getPlatformPeer(window);
-        if (peer == null) return;
-        try {
-          Method method = peer.getClass().getMethod(
-            "notifyMouseEvent", int.class, long.class, int.class,
-            int.class, int.class, int.class, int.class,
-            int.class, int.class, boolean.class,
-            byte[].class
-          );
-          executeOnMainThread(true, false, () -> {
-            var peerUnderCursor = MacUtil.getPeerUnderCursor(peer);
-            try {
-              // This check must be on the AppKit thread,
-              // or else we risk spamming MOUSE_ENTERED events from the EDT
-              // until the first event is processed, and the peer under cursor actually changes.
-              if (peerUnderCursor != peer) {
-                method.invoke(
-                  peer, MOUSE_ENTERED, e.getWhen(), e.getButton(),
-                  e.getX(), e.getY(), e.getXOnScreen(), e.getYOnScreen(),
-                  (e.getModifiers() | e.getModifiersEx()), e.getClickCount(), e.isPopupTrigger(),
-                  null
-                );
-              }
-            }
-            catch (Throwable ex) {
-              LOG.debug(ex);
-            }
-          });
-        }
-        catch (Throwable ex) {
-          LOG.debug(ex);
-        }
-      }
-    };
-    glass.addMouseMotionPreprocessor(workaround, this);
   }
 
   public void notifyListeners() {
