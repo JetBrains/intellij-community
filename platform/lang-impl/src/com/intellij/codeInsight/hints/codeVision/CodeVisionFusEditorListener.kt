@@ -1,12 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.codeVision
 
+import com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector.PROVIDER_STORAGE_KEY
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.lang.Language
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.util.removeUserData
 import java.util.concurrent.ConcurrentHashMap
 
 class CodeVisionFusEditorListener : EditorFactoryListener {
@@ -21,6 +26,14 @@ class CodeVisionFusEditorListener : EditorFactoryListener {
     if (histogramBuilder != null) {
       val fusData: CodeVisionFusData = histogramBuilder.flush()
       project.service<CodeVisionHistogramReporter>().submitToFus(document, textLength, fusData)
+    }
+  }
+}
+
+internal class CodeVisionPluginListener : DynamicPluginListener {
+  override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+    for (editor in EditorFactory.getInstance().allEditors) {
+      editor.removeUserData(PROVIDER_STORAGE_KEY)
     }
   }
 }
