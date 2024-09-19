@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -189,6 +190,7 @@ final class ImmutableCollectionModelUtils {
       PsiMethodCallExpression call = model.myCall;
       PsiType type = call.getType();
       if (type == null) return;
+      type = PsiTypesUtil.removeExternalAnnotations(type);
       String[] names = getNameSuggestions(call, type);
       if (names.length == 0) return;
       String name = names[0];
