@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.TextWithMnemonic
+import com.intellij.ui.EditorTextField
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.DslLabel
@@ -74,7 +75,8 @@ private val ALLOWED_LABEL_COMPONENTS = listOf(
   JTable::class,
   JTextComponent::class,
   JTree::class,
-  SegmentedButtonComponent::class
+  SegmentedButtonComponent::class,
+  EditorTextField::class
 )
 
 /**
