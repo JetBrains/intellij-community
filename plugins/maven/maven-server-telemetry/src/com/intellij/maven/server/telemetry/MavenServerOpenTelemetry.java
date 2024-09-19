@@ -33,6 +33,11 @@ public interface MavenServerOpenTelemetry {
 
   <T, R> List<R> execute(boolean inParallel, @NotNull Collection<T> collection, @NotNull Function<T, R> method);
 
+  <T, R> List<R> executeWithSpan(@NotNull String spanName,
+                                 boolean inParallel,
+                                 @NotNull Collection<T> collection,
+                                 @NotNull Function<T, R> method);
+
   byte[] shutdown();
 
   static MavenServerOpenTelemetry of(@NotNull LongRunningTaskInput input) {
@@ -54,6 +59,14 @@ final class MavenServerOpenTelemetryNoop implements MavenServerOpenTelemetry {
   @Override
   public <T, R> List<R> execute(boolean inParallel, @NotNull Collection<T> collection, @NotNull Function<T, R> method) {
     return ParallelRunnerForServer.execute(inParallel, collection, method);
+  }
+
+  @Override
+  public <T, R> List<R> executeWithSpan(@NotNull String spanName,
+                                        boolean inParallel,
+                                        @NotNull Collection<T> collection,
+                                        @NotNull Function<T, R> method) {
+    return execute(inParallel, collection, method);
   }
 
   @Override
@@ -128,6 +141,16 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
     // all spans in pool common threads do not get attached to parent span and get lost
     // so: either wrap the function or rewrite ParallelRunnerForServer to not use common pool
     return ParallelRunnerForServer.execute(inParallel, collection, context.wrapFunction(method));
+  }
+
+  @Override
+  public <T, R> List<R> executeWithSpan(@NotNull String spanName,
+                                        boolean inParallel,
+                                        @NotNull Collection<T> collection,
+                                        @NotNull Function<T, R> method) {
+    return callWithSpan(spanName, () ->
+      execute(inParallel, collection, method)
+    );
   }
 
   public <T> T callWithSpan(@NotNull String spanName, @NotNull Function<Span, T> fn) {
