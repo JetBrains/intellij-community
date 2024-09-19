@@ -2679,6 +2679,158 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; comparing(java.util.function.Function&lt;? super T,? extends U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; comparing(java.util.function.Function&lt;? super T,? extends U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2/*"/>
+  </item>
+  <item
+    name='java.util.Comparator java.util.Comparator&lt;T&gt; comparing(java.util.function.Function&lt;? super T,? extends U&gt;, java.util.Comparator&lt;? super U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item
+    name='java.util.Comparator java.util.Comparator&lt;T&gt; comparing(java.util.function.Function&lt;? super T,? extends U&gt;, java.util.Comparator&lt;? super U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Comparator java.util.Comparator&lt;T&gt; comparing(java.util.function.Function&lt;? super T,? extends U&gt;, java.util.Comparator&lt;? super U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; comparingDouble(java.util.function.ToDoubleFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; comparingDouble(java.util.function.ToDoubleFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; comparingInt(java.util.function.ToIntFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; comparingInt(java.util.function.ToIntFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; comparingLong(java.util.function.ToLongFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; comparingLong(java.util.function.ToLongFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; naturalOrder()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; nullsFirst(java.util.Comparator&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Nullable' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; nullsFirst(java.util.Comparator&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; nullsLast(java.util.Comparator&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Nullable' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; nullsLast(java.util.Comparator&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; reverseOrder()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; reversed()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparing(java.util.Comparator&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparing(java.util.Comparator&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparing(java.util.function.Function&lt;? super T,? extends U&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparing(java.util.function.Function&lt;? super T,? extends U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2/*"/>
+  </item>
+  <item
+    name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparing(java.util.function.Function&lt;? super T,? extends U&gt;, java.util.Comparator&lt;? super U&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparing(java.util.function.Function&lt;? super T,? extends U&gt;, java.util.Comparator&lt;? super U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparing(java.util.function.Function&lt;? super T,? extends U&gt;, java.util.Comparator&lt;? super U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparingDouble(java.util.function.ToDoubleFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparingDouble(java.util.function.ToDoubleFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparingInt(java.util.function.ToIntFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparingInt(java.util.function.ToIntFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparingLong(java.util.function.ToLongFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; thenComparingLong(java.util.function.ToLongFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.Date Date(int, int, int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>

@@ -18,7 +18,6 @@ public class DataFlowInspection9Test extends DataFlowInspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
   }
 
-  public void testNullabilityJdk9() { doTest();}
   public void testMutabilityJdk9() { doTest();}
   public void testMutabilityInferred() { doTest(); }
   public void testObjectsRequireNonNullElse() { doTest(); }
