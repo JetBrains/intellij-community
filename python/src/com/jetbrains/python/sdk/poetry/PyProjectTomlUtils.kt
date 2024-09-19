@@ -35,7 +35,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiElementFilter
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PythonSdkRunCommandService
+import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.add.v2.PythonSelectableInterpreter
 import com.jetbrains.python.sdk.poetry.VersionType.Companion.getVersionType
@@ -210,7 +210,7 @@ private class PyProjectTomlPostStartupActivity : ProjectActivity {
     readAction {
       tomlFile.findDocument()?.addDocumentListener(object : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {
-          project.service<PythonSdkRunCommandService>().cs.launch {
+          service<PythonSdkCoroutineService>().cs.launch {
             val newVersion = findPythonVersion(tomlFile, project) ?: return@launch
             val oldVersion = PyProjectTomlPythonVersionsService.instance.getVersionString(module)
             if (oldVersion != newVersion) {

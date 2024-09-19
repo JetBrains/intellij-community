@@ -5,14 +5,12 @@ import com.intellij.execution.RunCanceledByUserException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.packaging.IndicatedProcessOutputListener
 import com.jetbrains.python.packaging.PyExecutionException
-import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.pathString
@@ -20,12 +18,6 @@ import kotlin.io.path.pathString
 internal object Logger {
   val LOG = logger<Logger>()
 }
-
-/**
- * Used for CoroutineScope in com.jetbrains.python.sdk
- */
-@Service(Service.Level.PROJECT)
-internal class PythonSdkRunCommandService(val cs: CoroutineScope)
 
 /**
  * Runs a command line operation in a background thread.

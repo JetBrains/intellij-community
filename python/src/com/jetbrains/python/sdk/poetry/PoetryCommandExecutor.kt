@@ -145,7 +145,7 @@ private fun runCommand(projectPath: Path, command: String, vararg args: String):
 }
 
 internal fun runPoetryInBackground(module: Module, args: List<String>, @NlsSafe description: String) {
-  module.project.service<PythonSdkRunCommandService>().cs.launch {
+  service<PythonSdkCoroutineService>().cs.launch {
     withBackgroundProgress(module.project, "$description...", true) {
       val sdk = module.pythonSdk ?: return@withBackgroundProgress
       try {

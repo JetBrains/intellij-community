@@ -548,8 +548,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <!-- Poetry -->
     <editorFactoryListener implementation="com.jetbrains.python.sdk.poetry.PyProjectTomlWatcher"/>
 
-    <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryConfigLoader" order="last"/>
-
     <!-- Targets API -->
     <registryKey key="enable.conda.on.targets" defaultValue="false" description="Enables Conda configuration on targets."/>
     <registryKey key="python.packaging.tool.use.project.location.as.working.dir" defaultValue="false"
