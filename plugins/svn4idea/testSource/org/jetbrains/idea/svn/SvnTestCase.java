@@ -356,7 +356,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     String branchUrl = myRepoUrl + "/branches/b1";
 
     withDisabledChangeListManager(() -> {
-      deleteRecursively(new File(myWorkingCopyDir.getPath() + File.separator + ".svn").toPath());
+      runWithRetries(() -> {
+        deleteRecursively(new File(myWorkingCopyDir.getPath() + File.separator + ".svn").toPath());
+      });
       refreshVfs();
 
       runInAndVerifyIgnoreOutput("co", mainUrl, myWorkingCopyDir.getPath());
