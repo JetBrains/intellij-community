@@ -119,80 +119,96 @@ public class Maven40ProjectResolver {
     request.setUpdateSnapshots(myUpdateSnapshots);
 
     Collection<Maven40ExecutionResult> executionResults = new ArrayList<>();
-    List<ProjectBuildingResultInfo> buildingResultInfos = new ArrayList<>();
+
     myEmbedder.executeWithMavenSession(request, myWorkspaceMap, myLongRunningTask.getIndicator(), session -> {
-      try {
-        List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults " + files.size(), () ->
-          getProjectBuildingResults(request, files, session));
-
-        // TODO: Cache does not work actually
-        //fillSessionCache(session, session.getRepositorySession(), buildingResults);
-
-        boolean runInParallel = myResolveInParallel;
-        Map<File, String> fileToNewDependencyHash = new ConcurrentHashMap<>();
-        myTelemetry.executeWithSpan("dependencyHashes",
-                                    runInParallel,
-                                    buildingResults, br -> {
-            String newDependencyHash = Maven40EffectivePomDumper.dependencyHash(br.getProject());
-            if (null != newDependencyHash) {
-              fileToNewDependencyHash.put(br.getPomFile(), newDependencyHash);
-            }
-            return br;
-          }
-        );
-
-        for (ProjectBuildingResult buildingResult : buildingResults) {
-          MavenProject project = buildingResult.getProject();
-          File pomFile = buildingResult.getPomFile();
-
-          if (project == null) {
-            executionResults.add(new Maven40ExecutionResult(pomFile, buildingResult.getProblems()));
-            continue;
-          }
-
-          String previousDependencyHash = myPomHashMap.getDependencyHash(buildingResult.getPomFile());
-          String newDependencyHash = fileToNewDependencyHash.get(pomFile);
-          if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
-            Maven40ExecutionResult res = new Maven40ExecutionResult(project, null, new ArrayList<>(), new ArrayList<>());
-            res.setDependencyHash(previousDependencyHash);
-            res.setDependencyResolutionSkipped(true);
-            executionResults.add(res);
-            continue;
-          }
-
-          List<Exception> exceptions = new ArrayList<>();
-
-          loadExtensions(project, exceptions);
-
-          //project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
-
-          buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newDependencyHash));
-
-          myLongRunningTask.updateTotalRequests(buildingResultInfos.size());
-
-          Collection<Maven40ExecutionResult> execResults =
-            myTelemetry.executeWithSpan("resolveBuildingResults",
-                                        runInParallel,
-                                        buildingResultInfos, br -> {
-                if (myLongRunningTask.isCanceled()) return new Maven40ExecutionResult(Collections.emptyList());
-                Maven40ExecutionResult result = myTelemetry.callWithSpan(
-                  "resolveBuildingResult " + br.buildingResult.getProjectId(), () ->
-                    resolveBuildingResult(session.getRepositorySession(), br.buildingResult, br.exceptions));
-                result.setDependencyHash(br.dependencyHash);
-                myLongRunningTask.incrementFinishedRequests();
-                return result;
-              }
-            );
-
-          executionResults.addAll(execResults);
-        }
-      }
-      catch (Exception e) {
-        executionResults.add(handleException(e));
-      }
+      getExecutionResults(session, files, request, executionResults);
     });
 
     return executionResults;
+  }
+
+  private void getExecutionResults(MavenSession session,
+                                   Set<File> files,
+                                   MavenExecutionRequest request,
+                                   Collection<Maven40ExecutionResult> executionResults) {
+    try {
+
+      List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults " + files.size(), () ->
+        getProjectBuildingResults(request, files, session));
+
+      // TODO: Cache does not work actually
+      //fillSessionCache(session, session.getRepositorySession(), buildingResults);
+
+      boolean runInParallel = myResolveInParallel;
+      Map<File, String> fileToNewDependencyHash = collectHashes(runInParallel, buildingResults);
+
+      List<ProjectBuildingResultInfo> buildingResultInfos = new ArrayList<>();
+
+      for (ProjectBuildingResult buildingResult : buildingResults) {
+
+        MavenProject project = buildingResult.getProject();
+        File pomFile = buildingResult.getPomFile();
+
+        if (project == null) {
+          executionResults.add(new Maven40ExecutionResult(pomFile, buildingResult.getProblems()));
+          continue;
+        }
+
+        String previousDependencyHash = myPomHashMap.getDependencyHash(buildingResult.getPomFile());
+        String newDependencyHash = fileToNewDependencyHash.get(pomFile);
+        if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
+          Maven40ExecutionResult res = new Maven40ExecutionResult(project, null, new ArrayList<>(), new ArrayList<>());
+          res.setDependencyHash(previousDependencyHash);
+          res.setDependencyResolutionSkipped(true);
+          executionResults.add(res);
+          continue;
+        }
+
+        List<Exception> exceptions = new ArrayList<>();
+
+        loadExtensions(project, exceptions);
+
+        //project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
+
+        buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newDependencyHash));
+
+        myLongRunningTask.updateTotalRequests(buildingResultInfos.size());
+
+        Collection<Maven40ExecutionResult> execResults =
+          myTelemetry.executeWithSpan("resolveBuildingResults",
+                                      runInParallel,
+                                      buildingResultInfos, br -> {
+              if (myLongRunningTask.isCanceled()) return new Maven40ExecutionResult(Collections.emptyList());
+              Maven40ExecutionResult result = myTelemetry.callWithSpan(
+                "resolveBuildingResult " + br.buildingResult.getProjectId(), () ->
+                  resolveBuildingResult(session.getRepositorySession(), br.buildingResult, br.exceptions));
+              result.setDependencyHash(br.dependencyHash);
+              myLongRunningTask.incrementFinishedRequests();
+              return result;
+            }
+          );
+
+        executionResults.addAll(execResults);
+      }
+    }
+    catch (Exception e) {
+      executionResults.add(handleException(e));
+    }
+  }
+
+  private @NotNull Map<File, String> collectHashes(boolean runInParallel, List<ProjectBuildingResult> buildingResults) {
+    Map<File, String> fileToNewDependencyHash = new ConcurrentHashMap<>();
+    myTelemetry.executeWithSpan("dependencyHashes",
+                                runInParallel,
+                                buildingResults, br -> {
+        String newDependencyHash = Maven40EffectivePomDumper.dependencyHash(br.getProject());
+        if (null != newDependencyHash) {
+          fileToNewDependencyHash.put(br.getPomFile(), newDependencyHash);
+        }
+        return br;
+      }
+    );
+    return fileToNewDependencyHash;
   }
 
   @NotNull
