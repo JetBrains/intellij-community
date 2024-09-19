@@ -172,7 +172,12 @@ class SettingsSyncBridge(
       }
     }
     catch (e: Throwable) {
-      stopSyncingAndRollback(previousState, e)
+      if (initMode != InitMode.JustInit) {
+        stopSyncingAndRollback(previousState, e)
+      } else {
+        LOG.warn("Cannot sync settings on initialization.", e)
+        SettingsSyncStatusTracker.getInstance().updateOnError(e.localizedMessage ?: e.toString())
+      }
     }
   }
 

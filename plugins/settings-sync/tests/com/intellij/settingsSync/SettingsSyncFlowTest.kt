@@ -454,6 +454,22 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
   }
 
+  @TestFor(issues = ["IJPL-13361"])
+  @Test
+  fun `don't disable sync on startup if connection failed`() = timeoutRunBlockingAndStopBridge {
+    SettingsSyncSettings.getInstance().syncEnabled = true
+    (remoteCommunicator as MockRemoteCommunicator).isConnected = false
+    initSettingsSync(waitForInit = false)
+    Assertions.assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
+    waitUntil("Waiting for bridge to initialize", 2.seconds) {
+      Assertions.assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
+      bridge.isInitialized
+    }
+    Assertions.assertEquals(MockRemoteCommunicator.DISCONNECTED_ERROR, SettingsSyncStatusTracker.getInstance().getErrorMessage())
+
+
+  }
+
   private fun syncSettingsAndWait(event: SyncSettingsEvent = SyncSettingsEvent.SyncRequest) {
     SettingsSyncEvents.getInstance().fireSettingsChanged(event)
     bridge.waitForAllExecuted()

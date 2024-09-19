@@ -54,7 +54,7 @@ internal abstract class SettingsSyncTestBase {
       TestRemoteCommunicator()
     }
     else {
-      MockRemoteCommunicator()
+      MockRemoteCommunicator().apply {this.isConnected = true  }
     }
 
     val serverState = remoteCommunicator.checkServerState()
