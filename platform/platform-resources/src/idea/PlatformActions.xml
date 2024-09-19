@@ -1584,6 +1584,7 @@
     <action id="PreviousWindow" class="com.intellij.openapi.wm.impl.PreviousWindow"/>
 
     <action id="CopyAbsolutePath" class="com.intellij.ide.actions.CopyAbsolutePathProvider" use-shortcut-of="CopyPaths" />
+    <action id="CopyCurrentFileDirectoryRelativePath" class="com.intellij.ide.actions.CopyCurrentFileDirectoryRelativePathProvider"/>
     <action id="CopyFileName" class="com.intellij.ide.actions.CopyFileNameProvider"/>
     <action id="CopyPathWithLineNumber" class="com.intellij.ide.actions.CopyFileWithLineNumberPathProvider"/>
     <action id="CopyContentRootPath" class="com.intellij.ide.actions.CopyContentRootPathProvider"/>
@@ -1593,6 +1594,7 @@
     <group id="CopyReferencePopupGroup" class="com.intellij.ide.actions.CopyReferencePopup" popup="true">
       <group id="CopyFileReference">
         <reference ref="CopyAbsolutePath" />
+        <reference ref="CopyCurrentFileDirectoryRelativePath" />
         <reference ref="CopyFileName" />
         <separator/>
         <reference ref="CopyPathWithLineNumber" />
