@@ -213,7 +213,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   public final class JBHtmlDocument extends HTMLDocument {
     private JBHtmlDocument(StyleSheet styles) {
       super(styles);
-      UIUtil.disableTextLayoutIfNeeded(this);
+      TextLayoutUtil.disableTextLayoutIfNeeded(this);
     }
 
     @Override
