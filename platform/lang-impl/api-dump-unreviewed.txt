@@ -25402,7 +25402,9 @@ a:com.intellij.refactoring.rename.RenameWithOptionalReferencesDialog
 - com.intellij.refactoring.rename.RenameDialog
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor):V
 - p:createCheckboxes(javax.swing.JPanel,java.awt.GridBagConstraints):V
+- p:createSearchForReferencesCheckbox(javax.swing.JPanel,java.awt.GridBagConstraints):V
 - p:doAction():V
+- p:getCbSearchForReferences():javax.swing.JCheckBox
 - pa:getSearchForReferences():Z
 - pa:setSearchForReferences(Z):V
 *a:com.intellij.refactoring.rename.api.FileOperation
