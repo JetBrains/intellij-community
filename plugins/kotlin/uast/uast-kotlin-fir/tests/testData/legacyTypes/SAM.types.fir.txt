@@ -57,7 +57,7 @@ UFile (package = ) [import java.lang.Thread...]
                             ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
                                 UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() java.lang.Void
                             UTypeReferenceExpression (name = java.lang.Runnable) [java.lang.Runnable]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [runRunnable({ ...})] : <ErrorType>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [runRunnable({ ...})] : @org.jetbrains.annotations.NotNull() error.NonExistentClass
                     UIdentifier (Identifier (runRunnable)) [UIdentifier (Identifier (runRunnable))]
                     ULambdaExpression [{ ...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
                         UBlockExpression [{...}] : @org.jetbrains.annotations.NotNull() kotlin.Unit
@@ -72,7 +72,7 @@ UFile (package = ) [import java.lang.Thread...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return UIdentifier (Identifier (r))()]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (r))()] : <ErrorType>
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (r))()]
                         UIdentifier (Identifier (r)) [UIdentifier (Identifier (r))]
         UMethod (name = test1) [public static final fun test1() : void {...}]
             UBlockExpression [{...}] : void

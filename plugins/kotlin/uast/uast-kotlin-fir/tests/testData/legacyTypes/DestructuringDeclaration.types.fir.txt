@@ -13,15 +13,15 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                             ULiteralExpression (value = 1) [1] : int
                     ULocalVariable (name = a) [@org.jetbrains.annotations.NotNull var a: java.lang.String = var268d41a5.UIdentifier (Identifier (component1))()]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                        UQualifiedReferenceExpression [var268d41a5.UIdentifier (Identifier (component1))()] : <ErrorType>
-                            USimpleNameReferenceExpression (identifier = var268d41a5) [var268d41a5] : <ErrorType>
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component1))()] : <ErrorType>
+                        UQualifiedReferenceExpression [var268d41a5.UIdentifier (Identifier (component1))()]
+                            USimpleNameReferenceExpression (identifier = var268d41a5) [var268d41a5]
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component1))()] : T
                                 UIdentifier (Identifier (component1)) [UIdentifier (Identifier (component1))]
                     ULocalVariable (name = b) [@org.jetbrains.annotations.NotNull var b: int = var268d41a5.UIdentifier (Identifier (component2))()]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                        UQualifiedReferenceExpression [var268d41a5.UIdentifier (Identifier (component2))()] : <ErrorType>
-                            USimpleNameReferenceExpression (identifier = var268d41a5) [var268d41a5] : <ErrorType>
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component2))()] : <ErrorType>
+                        UQualifiedReferenceExpression [var268d41a5.UIdentifier (Identifier (component2))()]
+                            USimpleNameReferenceExpression (identifier = var268d41a5) [var268d41a5]
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component2))()] : T
                                 UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
                 UDeclarationsExpression [@org.jetbrains.annotations.NotNull @kotlin.Suppress(names = "UNCHECKED_CAST") var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>...@org.jetbrains.annotations.NotNull var v: java.lang.String = var465978a0.UIdentifier (Identifier (component2))()]
                     ULocalVariable (name = var465978a0) [@org.jetbrains.annotations.NotNull @kotlin.Suppress(names = "UNCHECKED_CAST") var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>]
@@ -35,13 +35,13 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                             UTypeReferenceExpression (name = kotlin.Pair<? extends java.lang.String,? extends java.lang.String>) [kotlin.Pair<? extends java.lang.String,? extends java.lang.String>]
                     ULocalVariable (name = k) [@org.jetbrains.annotations.NotNull var k: java.lang.String = var465978a0.UIdentifier (Identifier (component1))()]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                        UQualifiedReferenceExpression [var465978a0.UIdentifier (Identifier (component1))()] : <ErrorType>
-                            USimpleNameReferenceExpression (identifier = var465978a0) [var465978a0] : <ErrorType>
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component1))()] : <ErrorType>
+                        UQualifiedReferenceExpression [var465978a0.UIdentifier (Identifier (component1))()]
+                            USimpleNameReferenceExpression (identifier = var465978a0) [var465978a0]
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component1))()] : T
                                 UIdentifier (Identifier (component1)) [UIdentifier (Identifier (component1))]
                     ULocalVariable (name = v) [@org.jetbrains.annotations.NotNull var v: java.lang.String = var465978a0.UIdentifier (Identifier (component2))()]
                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                        UQualifiedReferenceExpression [var465978a0.UIdentifier (Identifier (component2))()] : <ErrorType>
-                            USimpleNameReferenceExpression (identifier = var465978a0) [var465978a0] : <ErrorType>
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component2))()] : <ErrorType>
+                        UQualifiedReferenceExpression [var465978a0.UIdentifier (Identifier (component2))()]
+                            USimpleNameReferenceExpression (identifier = var465978a0) [var465978a0]
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component2))()] : T
                                 UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]

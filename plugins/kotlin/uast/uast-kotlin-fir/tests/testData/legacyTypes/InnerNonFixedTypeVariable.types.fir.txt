@@ -3,13 +3,13 @@ UFile (package = ) [public final class InnerNonFixedTypeVariableKt {...]
         UMethod (name = test) [public static final fun test(@org.jetbrains.annotations.NotNull list: java.util.List<? extends java.lang.Object>) : void {...}]
             UParameter (name = list) [@org.jetbrains.annotations.NotNull var list: java.util.List<? extends java.lang.Object>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : <ErrorType>
-                UQualifiedReferenceExpression [list.UIdentifier (Identifier (filterIsInstance))().UIdentifier (Identifier (mapTo))(mutableSetOf(), { ...})] : <ErrorType>
-                    UQualifiedReferenceExpression [list.UIdentifier (Identifier (filterIsInstance))()] : <ErrorType>
+            UBlockExpression [{...}]
+                UQualifiedReferenceExpression [list.UIdentifier (Identifier (filterIsInstance))().UIdentifier (Identifier (mapTo))(mutableSetOf(), { ...})]
+                    UQualifiedReferenceExpression [list.UIdentifier (Identifier (filterIsInstance))()]
                         USimpleNameReferenceExpression (identifier = list) [list] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.Object>
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (filterIsInstance))()] : <ErrorType>
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (filterIsInstance))()] : @org.jetbrains.annotations.NotNull() java.util.List<R>
                             UIdentifier (Identifier (filterIsInstance)) [UIdentifier (Identifier (filterIsInstance))]
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (mapTo))(mutableSetOf(), { ...})] : <ErrorType>
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (mapTo))(mutableSetOf(), { ...})] : @org.jetbrains.annotations.NotNull() C
                         UIdentifier (Identifier (mapTo)) [UIdentifier (Identifier (mapTo))]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [mutableSetOf()] : <ErrorType>
                             UIdentifier (Identifier (mutableSetOf)) [UIdentifier (Identifier (mutableSetOf))]

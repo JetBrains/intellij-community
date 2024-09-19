@@ -67,7 +67,7 @@ UFile (package = ) [import java.lang.Runnable...]
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                             USimpleNameReferenceExpression (identifier = r) [r] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
                             ULiteralExpression (value = true) [true] : boolean
-                        UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression] : <ErrorType>
+                        UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression]
                             UastEmptyExpression [UastEmptyExpression]
                             UastEmptyExpression [UastEmptyExpression]
                     UReturnExpression [return "Fail: " + r] : @org.jetbrains.annotations.NotNull() java.lang.Void
@@ -80,7 +80,7 @@ UFile (package = ) [import java.lang.Runnable...]
                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                             USimpleNameReferenceExpression (identifier = r) [r] : @org.jetbrains.annotations.NotNull() java.lang.Runnable
                             ULiteralExpression (value = false) [false] : boolean
-                        UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression] : <ErrorType>
+                        UBinaryExpression (operator = <other>) [UastEmptyExpression <other> UastEmptyExpression]
                             UastEmptyExpression [UastEmptyExpression]
                             UastEmptyExpression [UastEmptyExpression]
                     UReturnExpression [return "Fail: " + r] : @org.jetbrains.annotations.NotNull() java.lang.Void

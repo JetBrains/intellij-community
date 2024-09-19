@@ -390,6 +390,36 @@ interface UastApiFixtureTestBase {
         compareDeprecatedHiddenProperty(test, Nullable::class.java.name)
     }
 
+    fun checkTypeOfUnresolvedErrorInThrowExpression(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                import kotlin.random.Random
+                class Test {
+                    fun assertDoesNotExist() {
+                        if (Random.nextBoolean()) {
+                            throw UnresolvedError("failed")
+                        }
+                        if (Random.nextBoolean()) {
+                            throw unresolvedVariable
+                        }
+                    }
+                }
+            """.trimIndent()
+        )
+        var count = 0
+        myFixture.file.toUElement()!!.accept(
+            object : AbstractUastVisitor() {
+                override fun visitThrowExpression(node: UThrowExpression): Boolean {
+                    val unresolvedThrowType = node.thrownExpression.getExpressionType()
+                    TestCase.assertNull(unresolvedThrowType)
+                    count++
+                    return super.visitThrowExpression(node)
+                }
+            }
+        )
+        TestCase.assertEquals(2, count)
+    }
+
     private fun compareDeprecatedHiddenProperty(test: UClass, nullness: String) {
         val old_getter = test.methods.find { it.name.startsWith("getPOld") }
             .orFail("cant find old getter")

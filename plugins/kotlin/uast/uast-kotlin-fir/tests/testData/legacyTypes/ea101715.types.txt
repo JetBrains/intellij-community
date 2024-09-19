@@ -4,7 +4,7 @@ UFile (package = ) [public final class Ea101715Kt {...]
             UBlockExpression [{...}] : void
                 UDeclarationsExpression [var a: <ErrorType> = UIdentifier (Identifier (Obj))(555)]
                     ULocalVariable (name = a) [var a: <ErrorType> = UIdentifier (Identifier (Obj))(555)]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [UIdentifier (Identifier (Obj))(555)] : <ErrorType>
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [UIdentifier (Identifier (Obj))(555)]
                             UIdentifier (Identifier (Obj)) [UIdentifier (Identifier (Obj))]
                             ULiteralExpression (value = 555) [555] : int
     UClass (name = Obj) [public final class Obj {...}]

@@ -90,6 +90,15 @@ internal fun toPsiMethod(
     context: KtElement,
     kaCallInfo: KaCallInfo? = null,
 ): PsiMethod? {
+    // Error handling for a case like KTIJ-23503: Outer.<no name provided>.Inner from broken code
+    val nameToCheck = if (functionSymbol is KaConstructorSymbol)
+        functionSymbol.containingClassId?.asSingleFqName()
+    else
+        functionSymbol.callableId?.asSingleFqName()
+    if (nameToCheck?.pathSegments()?.any { it.isSpecial } == true) {
+        return null
+    }
+
     // `inline` w/ `reified` type param from binary dependency,
     // which we can't find source PSI, so fake it
     if (functionSymbol.origin == KaSymbolOrigin.LIBRARY &&
