@@ -12,6 +12,7 @@ import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.xdebugger.impl.evaluate.childCoroutineScope
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
@@ -39,6 +40,7 @@ open class ValueLookupManagerQuickEvaluateHandler : QuickEvaluateHandler() {
     return null
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   override fun createValueHintAsync(project: Project, editor: Editor, point: Point, type: ValueHintType?): CancellableHint {
     if (type == null) {
       return CancellableHint(resolvedPromise(), null)
@@ -126,17 +128,4 @@ private class ValueLookupManagerValueHint(
     }
     super.hideHint()
   }
-}
-
-@OptIn(DelicateCoroutinesApi::class)
-// TODO: migrate to coroutine scopes passed from top
-private fun Editor.childCoroutineScope(name: String): CoroutineScope {
-  val coroutineScope = GlobalScope.childScope(name)
-  val disposable = (this as? EditorImpl)?.disposable ?: project
-  if (disposable != null) {
-    Disposer.register(disposable) {
-      coroutineScope.cancel()
-    }
-  }
-  return coroutineScope
 }
