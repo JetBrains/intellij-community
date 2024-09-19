@@ -2786,6 +2786,16 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-60968
+  public void testCsvDictReaderIteratorType() {
+    doTest("list[dict[str | Any, str | Any]]", """
+          import csv
+          with open("file.csv") as f:
+              reader = csv.DictReader(f)
+              expr = [line for line in reader]
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
