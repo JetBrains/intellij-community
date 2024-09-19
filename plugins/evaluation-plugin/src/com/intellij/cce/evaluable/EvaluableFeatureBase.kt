@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluable
 
+import com.intellij.cce.actions.DatasetRef
 import com.intellij.cce.actions.ProjectActionsDataset
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluation.*

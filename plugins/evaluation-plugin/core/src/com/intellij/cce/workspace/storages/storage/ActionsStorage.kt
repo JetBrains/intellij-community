@@ -3,6 +3,7 @@ package com.intellij.cce.workspace.storages.storage
 
 import com.intellij.cce.actions.FileActions
 import com.intellij.cce.workspace.storages.ensureDirExists
+import java.nio.file.Paths
 
 interface ActionsStorage {
   fun saveActions(actions: FileActions)
@@ -27,7 +28,7 @@ object ActionsStorageFactory {
 
     return when (type) {
       ActionsStorageType.MULTIPLY_FILES -> ActionsMultiplyFilesStorage(storageDir)
-      ActionsStorageType.SINGLE_FILE -> ActionsSingleFileStorage(storageDir)
+      ActionsStorageType.SINGLE_FILE -> ActionsSingleFileStorage(Paths.get(storageDir, "actions"))
     }
   }
 }

@@ -71,7 +71,7 @@ internal class ContextCollectionEvaluationCommand : CompletionEvaluationStarter.
         evaluationRootInfo,
         dataset.project,
         dataset.processor,
-        feature.name
+        feature.name,
       ) {
         override fun prepare(datasetContext: DatasetContext, progress: Progress) {
           val files = runReadAction {

@@ -90,7 +90,8 @@ object ConfigFactory {
         projectName ?: map.getIfExists<String>("projectName")?.handleEnv() ?: resultProjectPath.split('/').last(),
         language ?: map.getAs("language"),
         map.getAs("evaluationRoots"),
-        map.getIfExists<List<String>>("ignoreFileNames")?.toSet() ?: emptySet()
+        map.getIfExists<List<String>>("ignoreFileNames")?.toSet() ?: emptySet(),
+        map.getIfExists<String>("sourceFile"),
       )
       return
     }

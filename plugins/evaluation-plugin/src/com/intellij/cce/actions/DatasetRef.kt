@@ -1,5 +1,7 @@
 package com.intellij.cce.actions
 
+import com.intellij.cce.util.httpGet
+import com.intellij.cce.workspace.storages.storage.ActionsSingleFileStorage
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -13,10 +15,15 @@ sealed interface DatasetRef {
 
   companion object {
     private const val EXISTING_PROTOCOL = "existing:"
+    private const val REMOTE_PROTOCOL = "remote:"
 
     fun parse(ref: String): DatasetRef {
       if (ref.startsWith(EXISTING_PROTOCOL)) {
         return ExistingRef(ref.substring(EXISTING_PROTOCOL.length))
+      }
+
+      if (ref.startsWith(REMOTE_PROTOCOL)) {
+        return RemoteFileRef(ref.substring(REMOTE_PROTOCOL.length))
       }
 
       if (ref.contains(":")) {
@@ -60,5 +67,22 @@ internal data class ExistingRef(override val name: String) : DatasetRef {
     check(path.exists()) {
       "Dataset $name does not exist: $path"
     }
+  }
+}
+
+internal data class RemoteFileRef(private val url: String) : DatasetRef {
+  override val name: String = url
+    .removePrefix("https://huggingface.co/datasets/JetBrains/eval_plugin/resolve/main/")
+    .replace("/", "_")
+
+  override fun prepare(datasetContext: DatasetContext) {
+    val readToken = System.getenv("AIA_EVALUATION_DATASET_READ_TOKEN")
+    check(readToken.isNotBlank()) {
+      "Token for dataset $url should be configured"
+    }
+
+    val content = httpGet(url, readToken)
+    val path = datasetContext.path(name)
+    path.toFile().writeText(content)
   }
 }

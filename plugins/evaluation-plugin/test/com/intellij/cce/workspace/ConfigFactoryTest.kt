@@ -84,6 +84,45 @@ class ConfigFactoryTest {
     }
   }
 
+  @Test
+  fun `test fileDataset serialization`() {
+    deserialize(
+      """
+      {
+        "outputDir": "test_outputDir",
+        "strategy": {},
+        "fileDataset": {
+          "url": "test_url",
+          "chunkSize": 300
+        }
+      }
+      """.trimIndent()
+    ).also {
+      assertEquals("test_url", it.fileDataset?.url)
+      assertEquals(300, it.fileDataset?.chunkSize)
+    }
+  }
+
+  @Test
+  fun `test actions sourceFile serialization`() {
+    deserialize(
+      """
+      {
+        "outputDir": "test_outputDir",
+        "strategy": {},
+        "projectPath": "projectPath",
+        "language": "LANG",
+        "actions": {
+        "evaluationRoots": [],
+          "sourceFile": "test_sourceFile"
+        }
+      }
+      """.trimIndent()
+    ).also {
+      assertEquals("test_sourceFile", it.actions?.sourceFile)
+    }
+  }
+
   private fun deserialize(text: String) =
     ConfigFactory.deserialize(ConfigFactory.createGson(TestStrategySerializer), text, TestStrategySerializer)
 

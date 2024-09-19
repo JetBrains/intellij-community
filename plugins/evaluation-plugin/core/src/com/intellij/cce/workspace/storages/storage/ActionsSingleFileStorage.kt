@@ -6,21 +6,16 @@ import com.intellij.cce.actions.FileActions
 import com.intellij.openapi.diagnostic.logger
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
-class ActionsSingleFileStorage(storageDir: String) : ActionsStorage {
+class ActionsSingleFileStorage(filePath: Path) : ActionsStorage {
   private val LOG = logger<ActionsSingleFileStorage>()
 
-  private val file: File
-
-  init {
-    val filePath = Paths.get(storageDir, "actions")
-    file = if (Files.exists(filePath)) {
-      File(filePath.absolutePathString())
-    } else {
-      Files.createFile(filePath).toFile()
-    }
+  private val file: File = if (Files.exists(filePath)) {
+    File(filePath.absolutePathString())
+  } else {
+    Files.createFile(filePath).toFile()
   }
 
   override fun saveActions(actions: FileActions) {

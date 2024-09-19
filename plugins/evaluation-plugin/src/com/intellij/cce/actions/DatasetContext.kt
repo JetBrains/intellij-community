@@ -20,14 +20,26 @@ class DatasetContext(
 ) {
   private val datasetDir = Paths.get("ml-eval-datasets")
 
-  val actionsStorage: ActionsStorage by lazy {
-    check(actionWorkspace != null) { "It seems that workspace with actions wasn't configured" }
+  /*
+    EvaluationDataset should be extracted into 3 parts - steps, dataset creation and dataset.
+    this will become simpler after refactoring
+   */
+  private var _actionsStorage: ActionsStorage? = null
+  val actionsStorage: ActionsStorage
+    get(): ActionsStorage {
+      if (_actionsStorage == null) {
+        check(actionWorkspace != null) { "It seems that workspace with actions wasn't configured" }
 
-    val directory = actionWorkspace.path().resolve("actions")
-    Files.createDirectories(directory)
-    ActionsStorageFactory.create(directory.toString(), getActionsStorageTypeFromEnv())
+        val directory = actionWorkspace.path().resolve("actions")
+        Files.createDirectories(directory)
+        _actionsStorage = ActionsStorageFactory.create(directory.toString(), getActionsStorageTypeFromEnv())
+      }
+      return _actionsStorage!!
+    }
+
+  fun replaceActionsStorage(storage: ActionsStorage) {
+    _actionsStorage = storage
   }
-
 
   val errorsStorage: FileErrorsStorage = outputWorkspace.errorsStorage
 

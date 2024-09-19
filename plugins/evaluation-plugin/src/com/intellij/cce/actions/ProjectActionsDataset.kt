@@ -20,6 +20,7 @@ import com.intellij.cce.util.text
 import com.intellij.cce.visitor.CodeFragmentBuilder
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.info.FileErrorInfo
+import com.intellij.cce.workspace.storages.storage.ActionsSingleFileStorage
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -34,31 +35,54 @@ open class ProjectActionsDataset(
   private val evaluationRootInfo: EvaluationRootInfo,
   val project: Project,
   val processor: GenerateActionsProcessor,
-  private val featureName: String
+  private val featureName: String,
 ) : EvaluationDataset {
+  private val datasetRef = config.sourceFile?.run { DatasetRef.parse(this) }
+  private var datasetRefIsHandled = false
+
   override val setupSdk: EvaluationStep? = SetupSdkStep.forLanguage(project, Language.resolve(config.language))
   override val checkSdk: EvaluationStep? = CheckProjectSdkStep(project, config.language)
 
   override val preparationDescription: String = "Generating actions by selected files"
 
   override fun prepare(datasetContext: DatasetContext, progress: Progress) {
-    val filesForEvaluation = ReadAction.compute<List<VirtualFile>, Throwable> {
-      FilesHelper.getFilesOfLanguage(project, config.evaluationRoots, config.ignoreFileNames, config.language)
+    if (datasetRef != null) {
+      ensureDataRefIsHandled(datasetContext)
+    } else {
+      val filesForEvaluation = ReadAction.compute<List<VirtualFile>, Throwable> {
+        FilesHelper.getFilesOfLanguage(project, config.evaluationRoots, config.ignoreFileNames, config.language)
+      }
+
+      generateActions(
+        datasetContext,
+        config.language,
+        filesForEvaluation,
+        evaluationRootInfo,
+        progress,
+        filesLimit = this.filesLimit ?: Int.MAX_VALUE,
+        sessionsLimit = this.sessionsLimit ?: Int.MAX_VALUE,
+      )
     }
-    generateActions(
-      datasetContext,
-      config.language,
-      filesForEvaluation,
-      evaluationRootInfo,
-      progress,
-      filesLimit = this.filesLimit ?: Int.MAX_VALUE,
-      sessionsLimit = this.sessionsLimit ?: Int.MAX_VALUE,
-    )
   }
 
-  override fun sessionCount(datasetContext: DatasetContext): Int = datasetContext.actionsStorage.computeSessionsCount()
+  private fun ensureDataRefIsHandled(datasetContext: DatasetContext) {
+    if (!datasetRefIsHandled) {
+      if (datasetRef != null) {
+       datasetRef.prepare(datasetContext)
+       val path = datasetContext.path(datasetRef.name)
+       datasetContext.replaceActionsStorage(ActionsSingleFileStorage(path))
+     }
+      datasetRefIsHandled = true
+    }
+  }
+
+  override fun sessionCount(datasetContext: DatasetContext): Int {
+    ensureDataRefIsHandled(datasetContext)
+    return datasetContext.actionsStorage.computeSessionsCount()
+  }
 
   override fun chunks(datasetContext: DatasetContext): Iterator<EvaluationDatasetChunk> {
+    ensureDataRefIsHandled(datasetContext)
     val files = datasetContext.actionsStorage.getActionFiles()
     return files.shuffled(FILES_RANDOM).asSequence().map { file ->
       val fileActions = datasetContext.actionsStorage.getActions(file)
