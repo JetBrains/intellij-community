@@ -17,10 +17,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 /**
  * Represents an entry in the classpath of a module (as shown in the "Order/Export" page
@@ -83,5 +80,5 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
    * @param initialValue the default value to be returned by the visit process.
    * @return the value returned by the visitor.
    */
-  <R> R accept(@NotNull RootPolicy<R> policy, @Nullable R initialValue);
+  <R> @UnknownNullability R accept(@NotNull RootPolicy<R> policy, @Nullable R initialValue);
 }
