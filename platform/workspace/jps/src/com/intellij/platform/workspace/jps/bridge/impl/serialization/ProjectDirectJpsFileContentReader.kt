@@ -32,12 +32,7 @@ internal class ProjectDirectJpsFileContentReader(
       val loader = getModuleLoader(fileUrl)
       val rootElement = loader.loadRootElement(Path(JpsPathUtil.urlToPath(fileUrl)))
       if (componentName == "DeprecatedModuleOptionManager") {
-        //this duplicates logic from ModuleStateStorageManager.beforeElementLoaded which is used to convert attributes to data in an artificial component
-        val componentTag = JDomSerializationUtil.createComponentElement(componentName)
-        rootElement?.attributes?.forEach { attribute ->
-          componentTag.addContent(Element("option").setAttribute("key", attribute.name).setAttribute("value", attribute.value))
-        }
-        return componentTag
+        return DefaultImlNormalizer.createDeprecatedModuleOptionManager(rootElement)
       }
       return JDomSerializationUtil.findComponent(rootElement, componentName)
     }
