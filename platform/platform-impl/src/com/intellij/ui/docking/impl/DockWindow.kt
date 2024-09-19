@@ -8,6 +8,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
 import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.util.Disposer
@@ -243,9 +244,11 @@ internal class DockWindow(
     }
     frame.addWindowListener(object : WindowAdapter() {
       override fun windowClosing(e: WindowEvent) {
-        container.closeAll()
-        if (uiNotifyConnector != null) {
-          Disposer.dispose(uiNotifyConnector)
+        WriteIntentReadAction.run {
+          container.closeAll()
+          if (uiNotifyConnector != null) {
+            Disposer.dispose(uiNotifyConnector)
+          }
         }
       }
     })
