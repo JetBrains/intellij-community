@@ -12,5 +12,12 @@
     "text": "By subscribing, I understand JetBrains s.r.o. will process my email address for this purpose in accordance with the <a href=\"https://www.jetbrains.com/company/privacy.html\">Privacy Policy</a>. I can withdraw my consent at any time in privacy settings in the JetBrains account.",
     "printableName": "Send me EAP-related feedback requests and surveys",
     "accepted": "false"
+  },
+  {
+    "consentId": "ai.data.collection.and.use.policy",
+    "version": "1.0",
+    "text": "To measure and improve integration with JetBrains AI, we may <a href=\"https://www.jetbrains.com/help/ai/data-collection-and-use-policy.html\">log non-anonymous information</a> about its usage, which includes the full text of inputs sent by the IDE to the large language model and its responses, including source code snippets.",
+    "printableName": "JetBrains AI Data Collection and Use Policy",
+    "accepted": "false"
   }
 ]
