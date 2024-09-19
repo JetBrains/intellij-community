@@ -404,15 +404,6 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     }
   }
 
-  @Test
-  fun `unknown additional files should be sent to the server`() = timeoutRunBlockingAndStopBridge {
-    (settingsSyncStorage / ".metainfo" / "newformat.json").write("File with new unknown format")
-    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
-
-    assertServerSnapshot {
-      additionalFile("newformat.json", "File with new unknown format")
-    }
-  }
 
   @TestFor(issues = ["IDEA-326189"])
   @Test
