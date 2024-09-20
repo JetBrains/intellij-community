@@ -182,6 +182,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(PropertyInitializerInInterfaceFixFactories.convertPropertyInitializerToGetterFixFactory)
         registerFactory(AddGenericUpperBoundFixFactories.upperBoundViolatedFixFactory)
         registerFactory(AddGenericUpperBoundFixFactories.upperBoundViolatedBasedOnJavaAnnotationsFixFactory)
+        registerFactory(DeprecatedTypeParameterSyntaxFixFactories.migrateTypeParameterListFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
