@@ -27,6 +27,7 @@ class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
   val searchField: JTextFieldUI = textField { byType("com.intellij.ide.actions.BigPopupUI${"$"}SearchField") }
   val includeNonProjectItemsCheckBox = checkBox { byAccessibleName("Include non-project items") }
   val openInFindToolWindowButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Open in Find Tool Window") })
+  val previewButton = actionButtonByXpath(xQuery { byAccessibleName("Preview") })
   val searchEverywhereUi = x(SearchEveryWhereUi::class.java) { byType("com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI") }
   val openInRightSplitActionLink = x { byAccessibleName("Open In Right Split") }
 
@@ -66,10 +67,6 @@ class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
   fun closePopup() {
     searchEverywhereUi.closePopup()
     waitFor("Popup is closed") { notPresent() }
-  }
-
-  fun printActions() {
-    println(driver.utility(ActionUtils::class).getActions(searchEverywhereUi.component).map { it.getShortcutSet().getShortcuts().contentToString() })
   }
 
   private fun invokeActionWithShortcut(shortcut: String, chooser: (List<AnAction>) -> AnAction? = { it.singleOrNull() }) {
