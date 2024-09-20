@@ -104,7 +104,11 @@ interface TrustStateListener {
   }
 }
 
-internal const val TRUSTED_PROJECTS_HELP_TOPIC: String = "Project_security"
+/**
+ * Used in MPS
+ */
+@ApiStatus.Internal
+const val TRUSTED_PROJECTS_HELP_TOPIC: String = "Project_security"
 
 private class ShowTrustProjectDialogAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
