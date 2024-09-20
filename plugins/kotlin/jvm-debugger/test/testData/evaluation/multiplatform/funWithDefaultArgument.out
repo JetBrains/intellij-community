@@ -1,33 +1,27 @@
-LineBreakpoint created at jvm.kt:14
-LineBreakpoint created at jvm.kt:19
-LineBreakpoint created at jvm.kt:25
-LineBreakpoint created at jvm.kt:30
-LineBreakpoint created at jvm.kt:36
-LineBreakpoint created at jvm.kt:41
+LineBreakpoint created at jvm.kt:13
+LineBreakpoint created at jvm.kt:18
+LineBreakpoint created at jvm.kt:24
+LineBreakpoint created at jvm.kt:29
 Run Java
 Connected to the target VM
-jvm.kt:14
+jvm.kt:13
 Compile bytecode for defaultValue1()
-jvm.kt:19
+jvm.kt:18
 Compile bytecode for defaultValue1(2)
-jvm.kt:25
+jvm.kt:24
 Compile bytecode for kotlinx.coroutines.runBlocking(
     @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
     coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
 ) {
     defaultValue2()
 }
-jvm.kt:30
+jvm.kt:29
 Compile bytecode for kotlinx.coroutines.runBlocking(
     @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
     coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
 ) {
     defaultValue2(2)
 }
-jvm.kt:36
-Compile bytecode for defaultValue3()
-jvm.kt:41
-Compile bytecode for defaultValue3({2})
 Disconnected from the target VM
 
 Process finished with exit code 0

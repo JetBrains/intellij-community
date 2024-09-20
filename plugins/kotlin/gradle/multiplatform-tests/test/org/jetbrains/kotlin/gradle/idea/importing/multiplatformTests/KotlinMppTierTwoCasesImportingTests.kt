@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingTestsFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.Test
@@ -21,7 +22,7 @@ class KotlinMppTierTwoCasesImportingTests : AbstractKotlinMppGradleImportingTest
     @Test
     fun testTransitiveMppBinaryBinary() {
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
             publish("transitive", "direct")
 
             onlyDependencies(from = ".*consumer.*", to = ".*transitive.*")
@@ -32,7 +33,7 @@ class KotlinMppTierTwoCasesImportingTests : AbstractKotlinMppGradleImportingTest
     @Test
     fun testTransitiveMppSourceBinary() {
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
             publish("transitive")
 
             onlyDependencies(from = ".*consumer.*", to = ".*transitive.*")
@@ -62,7 +63,7 @@ class KotlinMppTierTwoCasesImportingTests : AbstractKotlinMppGradleImportingTest
     @Test
     fun testAdvancedMppLibraryDependencyInIntermediateBinary() {
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
             onlyDependencies(from = ".*consumer.*", to = ".*producer.*")
 
             publish("producer")
@@ -72,7 +73,7 @@ class KotlinMppTierTwoCasesImportingTests : AbstractKotlinMppGradleImportingTest
     @Test
     fun testAndroidConsumerTransitiveMppBinaryBinary() {
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
             publish("transitive", "direct")
 
             onlyDependencies(from = ".*consumer.*", to = ".*transitive.*")

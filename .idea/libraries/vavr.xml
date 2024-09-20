@@ -1,0 +1,23 @@
+<component name="libraryTable">
+  <library name="vavr" type="repository">
+    <properties maven-id="io.vavr:vavr:0.10.4">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/vavr/vavr/0.10.4/vavr-0.10.4.jar">
+          <sha256sum>12622deeea2618b59b284051a9484f1def8ccbebc847c350358f12d325ba9dd5</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/vavr/vavr-match/0.10.4/vavr-match-0.10.4.jar">
+          <sha256sum>d46f96bf59ccd5800261eec5869a6877ee0a37ea781312e6735be55539f50354</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/vavr/vavr/0.10.4/vavr-0.10.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/vavr/vavr-match/0.10.4/vavr-match-0.10.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/vavr/vavr/0.10.4/vavr-0.10.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/vavr/vavr-match/0.10.4/vavr-match-0.10.4-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

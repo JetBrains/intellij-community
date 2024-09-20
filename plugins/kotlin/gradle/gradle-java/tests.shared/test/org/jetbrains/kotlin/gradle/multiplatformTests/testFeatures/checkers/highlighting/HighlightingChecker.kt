@@ -2,11 +2,13 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting
 
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.idea.codeInsight.gradle.HighlightingCheck
 import java.io.File
 
@@ -36,7 +38,7 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
     override fun KotlinMppTestsContext.check() {
         val highlightingConfig = testConfiguration.getConfiguration(HighlightingChecker)
         if (highlightingConfig.skipCodeHighlighting) return
-        val renderedConfig = renderConfiguration()
+
         val highlightingCheck = HighlightingCheck(
             project = testProject,
             projectPath = testProjectRoot.path,
@@ -44,7 +46,7 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
             testLineMarkers = !highlightingConfig.hideLineMarkers,
             testLineMarkerTargetIcons = highlightingConfig.renderLineMarkersTargetIcons,
             severityLevel = highlightingConfig.hideHighlightsBelow,
-            postprocessActualTestData = { actualTestData -> renderedConfig + "\n" + actualTestData }
+            postprocessActualTestData = { text, editor -> postProcessActualTestData(text, editor) },
         )
 
         if (!highlightingConfig.checkLibrarySources) {
@@ -54,7 +56,33 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
             addSourcesJarToWorkspace(librarySources)
             highlightingCheck.invokeOnLibraries(librarySources)
         }
+    }
 
+    private fun KotlinMppTestsContext.markupUpdatingTestFeatureIfAny(): TestFeatureWithFileMarkup<*>? {
+        val enabledHighlightingCompatibleFeatures = enabledFeatures.filterIsInstance<TestFeatureWithFileMarkup<*>>().filter { feature ->
+            val generalChecksConfig = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
+            generalChecksConfig.disableCheckers?.contains(feature) != true
+                    && generalChecksConfig.onlyCheckers?.contains(feature) != false
+        }
+
+        check(enabledHighlightingCompatibleFeatures.size < 2) {
+            """
+                Enabling more than one feature that affects markup is not permitted.
+                Found the following conflicting features: ${enabledHighlightingCompatibleFeatures.joinToString { it::class.java.name }}
+                Reconfigure the conflicting features using disableCheckers/onlyCheckers or disable highlighting in the test.
+                """.trimIndent()
+        }
+
+        return enabledHighlightingCompatibleFeatures.singleOrNull()
+    }
+
+    private fun KotlinMppTestsContext.postProcessActualTestData(actualTestData: String, editor: Editor): String {
+        val renderedConfig = renderConfiguration()
+
+        val actualTestDataWithRestoredMarkup = markupUpdatingTestFeatureIfAny()?.let { testFeature ->
+            with(testFeature) { restoreMarkup(actualTestData, editor) }
+        } ?: actualTestData
+        return renderedConfig + "\n" + actualTestDataWithRestoredMarkup
     }
 
     private fun KotlinMppTestsContext.renderConfiguration(): String {

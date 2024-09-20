@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.test
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import org.jetbrains.kotlin.idea.test.KotlinMultiPlatformProjectDescriptor.PlatformDescriptor
 import java.io.File
 
 /**
@@ -16,20 +17,20 @@ import java.io.File
  * // MAIN (if this file should be configured in the editor)
  * file content
  * ```
- * Platform descriptor names come from  [org.jetbrains.kotlin.idea.test.KotlinMultiPlatformProjectDescriptor.PlatformDescriptor].
+ * Platform descriptor names come from  [PlatformDescriptor].
  * Each file is added to the platform module declared before it.
  *
  * @return a list of all files and a file which was marked as `MAIN` (or `null` if it's absent).
  */
-fun JavaCodeInsightTestFixture.configureMultiPlatformModuleStructure(abstractFilePath: String): KotlinLightMultiplatformCodeInsightFixtureTestCase.TestProjectFiles {
+fun JavaCodeInsightTestFixture.configureMultiPlatformModuleStructure(abstractFilePath: String): MultiplatformTestProjectFiles {
     val map = ModuleStructureSplitter.splitPerModule(File(abstractFilePath))
     var mainFile: VirtualFile? = null
     val allFiles: MutableList<VirtualFile> = mutableListOf()
     map.forEach { (platform, files) ->
-        val platformDescriptor = KotlinMultiPlatformProjectDescriptor.PlatformDescriptor.entries.firstOrNull { it.moduleName.lowercase() == platform.lowercase() }
+        val platformDescriptor = PlatformDescriptor.entries.firstOrNull { it.moduleName.lowercase() == platform.lowercase() }
                                  ?: error("Unrecognized platform: $platform. Expected one of " +
-                                          KotlinMultiPlatformProjectDescriptor.PlatformDescriptor.entries.joinToString(prefix = "[",
-                                                                                                                       postfix = "]") { it.moduleName })
+                                          PlatformDescriptor.entries.joinToString(prefix = "[",
+                                                                                  postfix = "]") { it.moduleName })
 
         for (testFile in files) {
             val virtualFile = VfsTestUtil.createFile(
@@ -42,5 +43,10 @@ fun JavaCodeInsightTestFixture.configureMultiPlatformModuleStructure(abstractFil
             configureFromExistingVirtualFile(virtualFile)
         }
     }
-    return KotlinLightMultiplatformCodeInsightFixtureTestCase.TestProjectFiles(allFiles, mainFile)
+    return MultiplatformTestProjectFiles(allFiles, mainFile)
 }
+
+data class MultiplatformTestProjectFiles(
+    val allFiles: List<VirtualFile>,
+    val mainFile: VirtualFile?,
+)

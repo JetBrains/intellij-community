@@ -156,18 +156,6 @@ public final class KotlinTestUtils {
         return PathUtil.toSystemIndependentName(findAndroidSdk().getAbsolutePath());
     }
 
-    public static void mkdirs(@NotNull File file) {
-        if (file.isDirectory()) {
-            return;
-        }
-        if (!file.mkdirs()) {
-            if (file.exists()) {
-                throw new IllegalStateException("Failed to create " + file + ": file exists and not a directory");
-            }
-            throw new IllegalStateException("Failed to create " + file);
-        }
-    }
-
     @NotNull
     public static File tmpDirForTest(@NotNull String testClassName, @NotNull String testName) throws IOException {
         return normalizeFile(FileUtil.createTempDirectory(testClassName, testName, false));

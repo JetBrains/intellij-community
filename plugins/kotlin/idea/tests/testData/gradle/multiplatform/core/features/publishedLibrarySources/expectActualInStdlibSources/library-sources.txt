@@ -1,7 +1,7 @@
 Gradle:{{space}}org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{kotlin_version}} repo/com/example/stdlib/0.0.1/stdlib-0.0.1-sources.jar stdlib
 Gradle:{{space}}org.jetbrains.kotlin:kotlin-stdlib:{{kotlin_version}} repo/com/example/stdlib-jvm/0.0.1/stdlib-jvm-0.0.1-sources.jar stdlib
 Gradle:{{space}}org.jetbrains.kotlin:kotlin-stdlib-js:{{kotlin_version}} repo/com/example/stdlib-js/0.0.1/stdlib-js-0.0.1-sources.jar stdlib
-Kotlin/Native:{{space}}stdlib repo/com/example/stdlib/stdlib-linuxx64/0.0.1/stdlib-linuxx64-0.0.1-sources.jar stdlib
+Gradle:{{space}}Kotlin/Native:{{space}}stdlib repo/com/example/stdlib/stdlib-linuxx64/0.0.1/stdlib-linuxx64-0.0.1-sources.jar stdlib
 Gradle:{{space}}org.jetbrains.kotlin:kotlin-test:annotationsCommonMain:{{kotlin_version}} repo/com/example/kotlin-test/0.0.1/kotlin-test-0.0.1-sources.jar kotlin-test
 Gradle:{{space}}org.jetbrains.kotlin:kotlin-test:assertionsCommonMain:{{kotlin_version}} repo/com/example/kotlin-test/0.0.1/kotlin-test-0.0.1-sources.jar kotlin-test
 Gradle:{{space}}org.jetbrains.kotlin:kotlin-test:{{kotlin_version}} repo/com/example/kotlin-test-jvm/0.0.1/kotlin-test-jvm-0.0.1-sources.jar kotlin-test

@@ -138,6 +138,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/branched/when/eliminateSubject", pattern = pattern)
             model("${idea}intentions/branched/doubleBangToIfThen", pattern = pattern)
             model("${idea}intentions/introduceVariable", pattern = pattern)
+            model("${idea}intentions/convertToMultiDollarString", pattern = pattern)
 
             //model("${idea}intentions/loopToCallChain", pattern = pattern, isIgnored = true)
             //model("${idea}intentions/loopToCallChain/forEach", pattern = pattern, isIgnored = true)

@@ -1,5 +1,3 @@
-// IGNORE_K2
-// IDEA-358344
 // MODULE: common
 // FILE: common.kt
 
@@ -10,7 +8,6 @@ expect class Platform {
 
 // MODULE: jvm(common)
 // FILE: jvm.kt
-
 
 actual class Platform {
     actual fun name1() = "name1"

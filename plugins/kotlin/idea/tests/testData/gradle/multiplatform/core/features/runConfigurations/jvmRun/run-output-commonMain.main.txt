@@ -1,4 +1,4 @@
-<time>: Executing 'jvmRun -DmainClass=commonMain.CommonMainKt --quiet'...
+<time>: Executing 'jvmRun -DmainClass=commonMain.CommonMainKt --quiet'…
 run: CommonMain
 
 <time>: Execution finished 'jvmRun -DmainClass=commonMain.CommonMainKt --quiet'.

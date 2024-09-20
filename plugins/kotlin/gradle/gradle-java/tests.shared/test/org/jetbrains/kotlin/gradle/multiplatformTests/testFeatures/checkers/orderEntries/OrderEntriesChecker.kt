@@ -216,5 +216,5 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
         "junit:4.13.2"
     )
 
-    private val NATIVE_DISTRIBUTION_LIBRARY_PATTERN = "^Kotlin/Native.*".toRegex()
+    private val NATIVE_DISTRIBUTION_LIBRARY_PATTERN = "^(Gradle: )?Kotlin/Native.*".toRegex()
 }

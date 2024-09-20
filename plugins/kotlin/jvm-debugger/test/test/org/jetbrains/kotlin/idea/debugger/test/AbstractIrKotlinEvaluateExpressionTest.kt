@@ -110,9 +110,6 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
         }
     }
 
-    override fun fragmentCompilerBackend() =
-        FragmentCompilerBackend.JVM
-
     private val exceptions = ConcurrentHashMap<String, Throwable>()
 
     fun doSingleBreakpointTest(path: String) {

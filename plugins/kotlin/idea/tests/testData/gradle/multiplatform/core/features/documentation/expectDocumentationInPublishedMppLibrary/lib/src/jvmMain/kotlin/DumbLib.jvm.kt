@@ -1,3 +1,6 @@
+//region Test configuration
+// - hidden: line markers
+//endregion
 package com.example.dumblib
 
 actual object DumbLib {

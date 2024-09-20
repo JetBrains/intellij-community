@@ -38,6 +38,7 @@ class IdePlatformKindProjectStructure(private val project: Project) {
     fun getLibraryVersionProvider(platformKind: IdePlatformKind): (Library) -> IdeKotlinVersion? {
         return when (platformKind) {
             is CommonIdePlatformKind -> { library ->
+                getLibraryKlibVersion(library, KOTLIN_STDLIB_COMMON_KLIB_PATTERN) ?:
                 getLibraryJarVersion(library, PathUtil.KOTLIN_STDLIB_COMMON_JAR_PATTERN)
             }
             is JvmIdePlatformKind -> { library ->
@@ -51,16 +52,23 @@ class IdePlatformKindProjectStructure(private val project: Project) {
         }
     }
 
-    private fun getLibraryJar(roots: Array<VirtualFile>, jarPattern: Pattern): VirtualFile? {
-        return roots.firstOrNull { jarPattern.matcher(it.name).matches() }
+    private fun getLibrary(roots: Array<VirtualFile>, pattern: Pattern): VirtualFile? {
+        return roots.firstOrNull { pattern.matcher(it.name).matches() }
+    }
+
+    private fun getLibraryKlibVersion(library: Library, klibPattern: Pattern): IdeKotlinVersion? {
+        val libraryKlib = getLibrary(library.getFiles(OrderRootType.CLASSES), klibPattern) ?: return null
+        return IdeKotlinVersion.fromKLibManifest(libraryKlib)
     }
 
     private fun getLibraryJarVersion(library: Library, jarPattern: Pattern): IdeKotlinVersion? {
-        val libraryJar = getLibraryJar(library.getFiles(OrderRootType.CLASSES), jarPattern) ?: return null
+        val libraryJar = getLibrary(library.getFiles(OrderRootType.CLASSES), jarPattern) ?: return null
         return IdeKotlinVersion.fromManifest(libraryJar)
     }
 
     companion object {
+        private val KOTLIN_STDLIB_COMMON_KLIB_PATTERN: Pattern = Pattern.compile("kotlin-stdlib-common.*\\.klib")
+
         @JvmStatic
         fun getInstance(project: Project): IdePlatformKindProjectStructure = project.service()
 

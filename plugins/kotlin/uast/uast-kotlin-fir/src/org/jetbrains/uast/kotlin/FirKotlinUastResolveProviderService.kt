@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.utils.yieldIfNotNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME
 import org.jetbrains.uast.kotlin.internal.*
@@ -219,14 +220,14 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         if (candidates.isEmpty()) return emptySequence()
         return sequence {
             candidates.forEach { candidatePointer ->
-                analyzeForUast(ktExpression) {
+                val psi = analyzeForUast(ktExpression) {
                     val candidate = candidatePointer.restoreSymbol() ?: return@forEach
-                    val psi = when (candidate) {
+                    when (candidate) {
                         is KaVariableSymbol -> psiForUast(candidate)
                         is KaFunctionSymbol -> toPsiMethod(candidate, ktExpression)
-                    }?: return@forEach
-                    yield(psi)
+                    }
                 }
+                yieldIfNotNull(psi)
             }
         }
     }

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.search.GlobalSearchScope
@@ -11,6 +12,8 @@ import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
+import org.jetbrains.kotlin.library.KLIB_MANIFEST_FILE_NAME
+import org.jetbrains.kotlin.library.KLIB_PROPERTY_UNIQUE_NAME
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.lang.manifest.ManifestFileType
 import java.io.ByteArrayInputStream
@@ -96,18 +99,29 @@ class KotlinStdlibIndex : KotlinFileIndexBase() {
 
     override fun getIndexer(): DataIndexer<FqName, Void, FileContent> = INDEXER
 
-    override fun getInputFilter(): DefaultFileTypeSpecificInputFilter = DefaultFileTypeSpecificInputFilter(ManifestFileType.INSTANCE)
+    override fun getInputFilter(): DefaultFileTypeSpecificInputFilter = DefaultFileTypeSpecificInputFilter(
+        ManifestFileType.INSTANCE, PlainTextFileType.INSTANCE
+        )
 
-    override fun getVersion(): Int = 1
+    override fun getVersion(): Int = 2
 
     // TODO: refactor [KotlinFileIndexBase] and get rid of FqName here, it's never a proper fully qualified name, just a String wrapper
     private val INDEXER: DataIndexer<FqName, Void, FileContent> = indexer { fileContent ->
-        if (fileContent.fileType is ManifestFileType) {
-            val manifest = Manifest(ByteArrayInputStream(fileContent.content))
-            val attributes = manifest.mainAttributes
-            attributes.getValue(STDLIB_TAG_MANIFEST_ATTRIBUTE) ?: return@indexer null
-            val libraryName = attributes.getValue(LIBRARY_NAME_MANIFEST_ATTRIBUTE) ?: return@indexer null
-            FqName(libraryName)
-        } else null
+        when {
+          fileContent.fileType is ManifestFileType -> {
+              val manifest = Manifest(ByteArrayInputStream(fileContent.content))
+              val attributes = manifest.mainAttributes
+              attributes.getValue(STDLIB_TAG_MANIFEST_ATTRIBUTE) ?: return@indexer null
+              val libraryName = attributes.getValue(LIBRARY_NAME_MANIFEST_ATTRIBUTE) ?: return@indexer null
+              FqName(libraryName)
+          }
+          fileContent.fileName == KLIB_MANIFEST_FILE_NAME -> {
+              val properties = Properties()
+              ByteArrayInputStream(fileContent.content).use { properties.load(it) }
+              val libraryName = properties.getValue(KLIB_PROPERTY_UNIQUE_NAME) as? String ?: return@indexer null
+              FqName(libraryName)
+          }
+          else -> null
+        }
     }
 }

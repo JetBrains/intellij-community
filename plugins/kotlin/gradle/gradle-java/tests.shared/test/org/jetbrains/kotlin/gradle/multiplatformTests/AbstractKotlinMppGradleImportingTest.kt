@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.enableKmpWasmSupport
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -104,9 +103,10 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         ExecuteRunConfigurationsChecker,
         AllFilesAreUnderContentRootChecker,
         DocumentationChecker,
+        ReferenceTargetChecker,
     )
 
-    private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl()
+    private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl(installedFeatures)
 
     @get:Rule
     val testDescriptionProviderJUnitRule = TestDescriptionProviderJUnitRule(context)
@@ -142,47 +142,33 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
     private fun KotlinMppTestsContextImpl.doTest(runImport: Boolean) {
         runAll(
             {
-                installedFeatures.combineMultipleFailures { feature -> with(feature) { context.beforeTestExecution() } }
-                createProjectSubFile(
-                    "local.properties",
-                    """
-                |sdk.dir=${KotlinTestUtils.getAndroidSdkSystemIndependentPath()}
-                |org.gradle.java.home=${findJdkPath()}
-            """.trimMargin()
-                )
-
+                runForEnabledFeatures { context.beforeTestExecution() }
+                createLocalPropertiesFile()
                 configureByFiles()
-
-                installedFeatures.combineMultipleFailures { feature -> with(feature) { context.beforeImport() } }
-
+                runForEnabledFeatures { context.beforeImport() }
                 if (runImport) importProject()
-
-                installedFeatures.combineMultipleFailures { feature ->
-                    with(feature) {
-                        if (feature !is AbstractTestChecker<*> || isCheckerEnabled(feature)) context.afterImport()
-                    }
-                }
+                runForEnabledFeatures { context.afterImport() }
             },
             {
-                installedFeatures.combineMultipleFailures { feature -> with(feature) { context.afterTestExecution() } }
+                runForEnabledFeatures { context.afterTestExecution() }
             }
         )
     }
 
-    @Suppress("RedundantIf")
-    private fun KotlinMppTestsContextImpl.isCheckerEnabled(checker: AbstractTestChecker<*>): Boolean {
-        // Temporary mute TEST_TASKS checks due to issues with hosts on CI. See KT-56332
-        if (checker is TestTasksChecker) return false
+    private fun KotlinMppTestsContextImpl.runForEnabledFeatures(action: TestFeature<*>.() -> Unit) {
+        enabledFeatures.combineMultipleFailures { feature ->
+            with(feature) { action() }
+        }
+    }
 
-        // Custom checker is always enabled
-        if (checker is CustomImportChecker) return true
-
-        val config = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
-        if (config.disableCheckers != null && checker in config.disableCheckers!!) return false
-        // Highlighting checker should be disabled explicitly, because it's rarely the intention to not run
-        // highlighting when you have sources and say 'onlyCheckers(OrderEntriesCheckers)'
-        if (config.onlyCheckers != null && checker !in config.onlyCheckers!! && checker !is HighlightingChecker) return false
-        return true
+    private fun createLocalPropertiesFile() {
+        createProjectSubFile(
+            "local.properties",
+            """
+                |sdk.dir=${KotlinTestUtils.getAndroidSdkSystemIndependentPath()}
+                |org.gradle.java.home=${findJdkPath()}
+            """.trimMargin()
+        )
     }
 
     final override fun findJdkPath(): String {
@@ -205,7 +191,6 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
             // @Parametrized
             (this as GradleImportingTestCase).gradleVersion = context.gradleVersion.version
             super.setUp()
-            enableKmpWasmSupport()
         }
 
         context.testProject = myProject
