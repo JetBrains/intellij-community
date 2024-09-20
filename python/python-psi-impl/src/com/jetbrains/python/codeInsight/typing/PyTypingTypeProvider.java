@@ -1893,28 +1893,27 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
                                                           @NotNull PsiElement typeHint,
                                                           @NotNull PsiElement element,
                                                           @NotNull Context context) {
-    if (alias instanceof PyTypeAliasStatement typeAliasStatement) {
-      return getParameterizedTypeFromTypeAliasStatement(typeAliasStatement, typeHint, element, context);
-    }
-    if (alias != null && element instanceof PyExpression assignedExpression) {
-      if (typeHint instanceof PySubscriptionExpression subscriptionExpr) {
-        List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
-        PyType assignedType = Ref.deref(getType(assignedExpression, context));
-        if (assignedType != null) {
+    if (element instanceof PyExpression assignedExpression && alias != null) {
+
+      if (alias instanceof PyTypeAliasStatement typeAliasStatement) {
+        return getParameterizedTypeFromTypeAliasStatement(typeAliasStatement, typeHint, assignedExpression, context);
+      }
+
+      PyType assignedType = Ref.deref(getType(assignedExpression, context));
+      if (assignedType != null) {
+        if (typeHint instanceof PySubscriptionExpression subscriptionExpr) {
+          List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
           return PyTypeChecker.parameterizeType(assignedType, indexTypes, context.myContext);
         }
-      }
-      if (typeHint instanceof PyReferenceExpression) {
-        PyType expressionType = Ref.deref(getType(assignedExpression, context));
-        if (expressionType != null && !(expressionType instanceof PyTypeParameterType)) {
-          List<PyTypeParameterType> typeAliasTypeParams =
-            PyTypeChecker.collectGenerics(expressionType, context.getTypeContext()).getAllTypeParameters();
-          if (!typeAliasTypeParams.isEmpty()) {
-            return PyTypeChecker.trySubstituteByDefaultsOnly(expressionType, typeAliasTypeParams, false, context.getTypeContext());
+        if (typeHint instanceof PyReferenceExpression) {
+          if (!(assignedType instanceof PyTypeParameterType)) {
+            List<PyTypeParameterType> typeAliasTypeParams =
+              PyTypeChecker.collectGenerics(assignedType, context.getTypeContext()).getAllTypeParameters();
+            if (!typeAliasTypeParams.isEmpty()) {
+              return PyTypeChecker.parameterizeType(assignedType, List.of(), context.myContext);
+            }
+            return assignedType;
           }
-        }
-        if (expressionType instanceof PyCollectionType) {
-          return expressionType;
         }
       }
     }
@@ -1924,36 +1923,26 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   @Nullable
   private static PyType getParameterizedTypeFromTypeAliasStatement(@NotNull PyTypeAliasStatement typeAliasStatement,
                                                                    @NotNull PsiElement typeHint,
-                                                                   @NotNull PsiElement element,
+                                                                   @NotNull PyExpression assignedExpression,
                                                                    @NotNull Context context) {
-    if (element instanceof PyExpression expression) {
-      if (typeHint instanceof PySubscriptionExpression subscriptionExpression) {
-        final List<PyType> indexTypes = getIndexTypes(subscriptionExpression, context);
-        PyType assignedType = Ref.deref(getType(expression, context));
-        List<PyTypeParameterType> typeParamsFromAliasStmt = collectTypeParametersFromTypeAliasStatement(typeAliasStatement, context);
-        if (assignedType != null && !typeParamsFromAliasStmt.isEmpty()) {
+    PyType assignedType = Ref.deref(getType(assignedExpression, context));
+    if (assignedType != null) {
+      List<PyType> indexTypes = typeHint instanceof PySubscriptionExpression subscriptionExpr
+                                ? getIndexTypes(subscriptionExpr, context)
+                                : Collections.emptyList();
 
-          PyTypeChecker.GenericSubstitutions substitutions =
-            PyTypeChecker.mapTypeParametersToSubstitutions(new PyTypeChecker.GenericSubstitutions(),
-                                                           typeParamsFromAliasStmt,
-                                                           indexTypes,
-                                                           Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY,
-                                                           Option.USE_DEFAULTS);
+      List<PyTypeParameterType> typeAliasTypeParams = collectTypeParametersFromTypeAliasStatement(typeAliasStatement, context);
+      if (!typeAliasTypeParams.isEmpty()) {
+        PyTypeChecker.GenericSubstitutions substitutions =
+          PyTypeChecker.mapTypeParametersToSubstitutions(new PyTypeChecker.GenericSubstitutions(),
+                                                         typeAliasTypeParams,
+                                                         indexTypes,
+                                                         Option.USE_DEFAULTS,
+                                                         Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
 
-          if (substitutions == null) return null;
-          var substitutionsWithDefaults = PyTypeChecker.getSubstitutionsWithDefaults(substitutions);
-          return PyTypeChecker.substitute(assignedType, substitutionsWithDefaults, context.getTypeContext());
-        }
+        return substitutions != null ? PyTypeChecker.substitute(assignedType, substitutions, context.myContext) : null;
       }
-      else if (typeHint instanceof PyReferenceExpression) {
-        List<PyTypeParameterType> typeAliasTypeParams = collectTypeParametersFromTypeAliasStatement(typeAliasStatement, context);
-        if (!typeAliasTypeParams.isEmpty()) {
-          PyType operandType = Ref.deref(getType(expression, context));
-          if (operandType != null) {
-            return PyTypeChecker.trySubstituteByDefaultsOnly(operandType, typeAliasTypeParams, false, context.getTypeContext());
-          }
-        }
-      }
+      return assignedType;
     }
     return null;
   }
