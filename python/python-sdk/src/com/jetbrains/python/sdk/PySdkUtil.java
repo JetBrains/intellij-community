@@ -64,18 +64,6 @@ public final class PySdkUtil {
 
   /**
    * Executes a process and returns its stdout and stderr outputs as lists of lines.
-   *
-   * @param homePath process run directory
-   * @param command  command to execute and its arguments
-   * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
-   */
-  @NotNull
-  public static ProcessOutput getProcessOutput(String homePath, @NonNls String[] command) {
-    return getProcessOutput(homePath, command, -1);
-  }
-
-  /**
-   * Executes a process and returns its stdout and stderr outputs as lists of lines.
    * Waits for process for possibly limited duration.
    *
    * @param homePath process run directory
