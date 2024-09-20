@@ -71,8 +71,8 @@ class ValueLookupManagerController(private val project: Project, private val cs:
     cs.launch(Dispatchers.IO) {
       withKernel {
         change {
-          val projectEntity = project.asEntity()
           shared {
+            val projectEntity = project.asEntity()
             val alreadyExists = XDebuggerValueLookupListeningStartedEntity.all().any { it.projectEntity == projectEntity }
             if (!alreadyExists) {
               XDebuggerValueLookupListeningStartedEntity.new {
@@ -92,8 +92,8 @@ class ValueLookupManagerController(private val project: Project, private val cs:
     cs.launch(Dispatchers.IO) {
       withKernel {
         change {
-          val projectEntity = project.asEntity()
           shared {
+            val projectEntity = project.asEntity()
             XDebuggerValueLookupHideHintsRequestEntity.new {
               it[XDebuggerValueLookupHideHintsRequestEntity.Project] = projectEntity
             }
