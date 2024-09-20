@@ -69,7 +69,7 @@ class GitBranchesTreeStructureTest : GitBranchesTreeTest() {
     """.trimMargin())
   }
 
-  fun `test group by directory tree structure with favorites`() = branchesTreeTest(groupByDirectories = false) {
+  fun `test group by directory tree structure with favorites`() = branchesTreeTest {
     setRawState(
       localBranches = listOf(
         branchInfo(GitLocalBranch("aaaa")),
@@ -91,14 +91,19 @@ class GitBranchesTreeStructureTest : GitBranchesTreeTest() {
       | HEAD
       | -LOCAL
       |  BRANCH:favorite
-      |  BRANCH:group/favorite
-      |  BRANCH:a-group/aaaa
+      |  -GROUP:group
+      |   BRANCH:group/favorite
+      |  -GROUP:a-group
+      |   BRANCH:a-group/aaaa
       |  BRANCH:aaaa
       | -REMOTE
-      |  BRANCH:origin/favorite
-      |  BRANCH:origin/group/favorite
-      |  BRANCH:origin/a-group/aaaa
-      |  BRANCH:origin/aa
+      |  -REMOTE:origin
+      |   BRANCH:origin/favorite
+      |   -GROUP:group
+      |    BRANCH:origin/group/favorite
+      |   -GROUP:a-group
+      |    BRANCH:origin/a-group/aaaa
+      |   BRANCH:origin/aa
     """.trimMargin())
   }
 
