@@ -5712,6 +5712,73 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-76076 PY-60968
+  public void testGenericAliasUnderVersionGuard() {
+    doMultiFileStubAwareTest("list[str]", """
+      from mod import f
+      
+      expr = f("foo")
+      """);
+  }
+
+  // PY-76076 PY-60968
+  public void testGenericTypeImportedUnderVersionGuard() {
+    doMultiFileStubAwareTest("list[str]", """
+      from mod import C
+      expr = C().m()
+      """);
+  }
+
+  // PY-76076
+  public void testFunctionDefinitionUnderVersionGuard() {
+    doTest("list[str]", """
+      import sys
+      from typing import TypeVar
+      
+      T = TypeVar("T")
+      
+      if sys.version_info >= (3,):
+          def f(x: T) -> list[T]: ...
+      else:
+          def f(x: T) -> set[T]: ...
+      
+      expr = f("foo")
+      """);
+  }
+
+  // PY-76076
+  public void testClassDefinitionUnderVersionGuard() {
+    doTest("list[str]", """
+      import sys
+      from typing import TypeVar
+      
+      T = TypeVar("T")
+      
+      if sys.version_info >= (3,):
+          class C:
+              def m(self, x: T) -> list[T]: ...
+      else:
+          class C:
+              def m(self, x: T) -> set[T]: ...
+      
+      expr = C().m("foo")
+      """);
+  }
+
+  // PY-76076
+  public void testVariableDefinitionUnderVersionGuard() {
+    doTest("int", """
+      import sys
+      
+      if sys.version_info < (3, 0):
+          x: str = "foo"
+      else:
+          x: int = 42
+      
+      expr = x
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
