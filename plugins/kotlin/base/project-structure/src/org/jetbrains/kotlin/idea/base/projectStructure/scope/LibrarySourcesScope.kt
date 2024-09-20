@@ -24,4 +24,6 @@ internal class LibrarySourcesScope(
     override fun calcHashCode(): Int {
         return 31 * super.calcHashCode() + library.hashCode()
     }
+
+    override fun toString(): String = "LibrarySourcesScope($library)"
 }

@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.psi.search.GlobalSearchScope
@@ -19,7 +19,13 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 
-data class LibrarySourceInfo(override val project: Project, val library: Library, override val binariesModuleInfo: BinaryModuleInfo) :
+data class LibrarySourceInfo(
+    override val project: Project,
+    val library: Library,
+    override val binariesModuleInfo: BinaryModuleInfo,
+    private val topPackageNames: Set<String>,
+    private val entriesVirtualFileSystems: Set<NewVirtualFileSystem>?
+) :
     IdeaModuleInfo, SourceForBinaryModuleInfo {
 
     val source: EntitySource? = library.findLibraryEntity(project.workspaceModel.currentSnapshot)?.entitySource
@@ -29,9 +35,8 @@ data class LibrarySourceInfo(override val project: Project, val library: Library
     override val displayedName: String
         get() = KotlinBaseProjectStructureBundle.message("sources.for.library.0", library.presentableName)
 
-    override fun sourceScope(): GlobalSearchScope {
-        return KotlinSourceFilterScope.librarySources(LibrarySourceScope(project, library), project)
-    }
+    override fun sourceScope(): GlobalSearchScope =
+        KotlinSourceFilterScope.librarySources(LibrarySourceScope(project, topPackageNames, entriesVirtualFileSystems, library), project)
 
     override fun modulesWhoseInternalsAreVisible(): Collection<ModuleInfo> {
         return LibraryInfoCache.getInstance(project)[library]
@@ -43,17 +48,24 @@ data class LibrarySourceInfo(override val project: Project, val library: Library
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = binariesModuleInfo.analyzerServices
 
-    override fun toString() = "LibrarySourceInfo(libraryName=${library.name})"
+    override fun toString(): String = "LibrarySourceInfo(libraryName=${library.name})"
 }
 
 @Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide 'calcHashCode()'
 private class LibrarySourceScope(
     project: Project,
-    private val library: Library
-) : PoweredLibraryScopeBase(project, VirtualFile.EMPTY_ARRAY, library.getFiles(OrderRootType.SOURCES)) {
+    topPackageNames: Set<String>,
+    entriesVirtualFileSystems: Set<NewVirtualFileSystem>?,
+    private val library: Library,
+) : PoweredLibraryScopeBase(
+    project,
+    VirtualFile.EMPTY_ARRAY,
+    library.getFiles(OrderRootType.SOURCES),
+    topPackageNames,
+    entriesVirtualFileSystems
+) {
     override fun getFileRoot(file: VirtualFile): VirtualFile? = myIndex.getSourceRootForFile(file)
-
-    override fun equals(other: Any?) = other is LibrarySourceScope && library == other.library
+    override fun equals(other: Any?): Boolean = other is LibrarySourceScope && library == other.library
     override fun calcHashCode(): Int = library.hashCode()
-    override fun toString() = "LibrarySourceScope($library)"
+    override fun toString(): String = "LibrarySourceScope($library)"
 }

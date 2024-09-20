@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.resolve.jvm.TopPackageNamesProvider
 
 object KotlinPackageIndexUtils {
     private val falseValueProcessor = FileBasedIndex.ValueProcessor<Name?> { _, _ -> false }
@@ -38,6 +39,7 @@ object KotlinPackageIndexUtils {
         packageFqName: FqName,
         searchScope: GlobalSearchScope
     ): Boolean {
+        if (certainlyDoesNotExist(packageFqName, searchScope)) return false
         return !FileBasedIndex.getInstance().processValues(
             KotlinPartialPackageNamesIndex.NAME,
             packageFqName,
@@ -45,6 +47,16 @@ object KotlinPackageIndexUtils {
             falseValueProcessor,
             searchScope
         )
+    }
+
+    private fun certainlyDoesNotExist(
+        packageFqName: FqName,
+        searchScope: GlobalSearchScope
+    ): Boolean {
+        val provider = searchScope as? TopPackageNamesProvider ?: return false
+        val topPackageNames = provider.topPackageNames ?: return false
+        val packageFqNameTopLevelPackage = packageFqName.asString().substringBefore(".")
+        return packageFqNameTopLevelPackage !in topPackageNames
     }
 
     /**
@@ -56,6 +68,8 @@ object KotlinPackageIndexUtils {
      * Follow the contract of [com.intellij.psi.PsiElementFinder#getSubPackages]
      */
     fun getSubpackages(fqName: FqName, scope: GlobalSearchScope, nameFilter: (Name) -> Boolean): Collection<FqName> {
+        if (certainlyDoesNotExist(fqName, scope)) return emptySet()
+
         val result = hashSetOf<FqName>()
 
         // use getValues() instead of processValues() because the latter visits each file in the package and that could be slow if there are a lot of files
