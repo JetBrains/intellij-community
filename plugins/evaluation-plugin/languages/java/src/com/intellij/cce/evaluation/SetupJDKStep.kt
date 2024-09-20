@@ -3,16 +3,15 @@ package com.intellij.cce.evaluation
 
 import com.intellij.application.options.PathMacrosImpl
 import com.intellij.cce.core.Language
+import com.intellij.cce.evaluation.JvmBuildSystem.entries
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -189,8 +188,6 @@ enum class JvmBuildSystem {
   abstract fun accepts(projectFile: VirtualFile): Boolean
 
   companion object {
-    private val logger = logger<JvmBuildSystem>()
-
     val gradleProjectOpenProcessor by lazy {
       ProjectOpenProcessor.EXTENSION_POINT_NAME.findExtensionOrFail(GradleProjectOpenProcessor::class.java)
     }
@@ -204,40 +201,28 @@ enum class JvmBuildSystem {
 
   internal fun refresh(project: Project, projectDir: VirtualFile) {
     val jvmBuildSystem = this
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      {
-        runBlockingCancellable {
-          try {
-            when (jvmBuildSystem) {
-              Gradle -> project.basePath?.let { path ->
-                val file = File(path)
-                println("gradle scheduleProjectRefresh")
-                GradleWarmupConfigurator().prepareEnvironment(file.toPath())
-                GradleWarmupConfigurator().runWarmup(project)
+    runBlockingCancellable {
+      when (jvmBuildSystem) {
+        Gradle -> project.basePath?.let { path ->
+          val file = File(path)
+          println("gradle scheduleProjectRefresh")
+          GradleWarmupConfigurator().prepareEnvironment(file.toPath())
+          GradleWarmupConfigurator().runWarmup(project)
 
-                println("Waiting all invoked later gradle activities...")
-                repeat(10) {
-                  ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
-                }
-              }
-              Maven -> {
-                Logger.getInstance("#org.jetbrains.idea.maven").setLevel(LogLevel.ALL)
-                Registry.get("external.system.auto.import.disabled").setValue(false) // prevent gradle interference
-                mavenProjectOpenProcessor.importProjectAfterwardsAsync(project, projectDir)
-              }
-              JpsIntellij -> {
-                //TODO: consider to add logic? (move JpsJavaExtensionService.getInstance().getOrCreateProjectExtension?)
-              }
-            }
-          } catch (e: Throwable) {
-            logger.error("failed to setup jdk", e)
-            throw e
+          println("Waiting all invoked later gradle activities...")
+          repeat(10) {
+            ApplicationManager.getApplication().invokeAndWait({}, ModalityState.any())
           }
         }
-      },
-      "SetupJDKStep",
-      true,
-      project
-    )
+        Maven -> {
+          Logger.getInstance("#org.jetbrains.idea.maven").setLevel(LogLevel.ALL)
+          Registry.get("external.system.auto.import.disabled").setValue(false) // prevent gradle interference
+          mavenProjectOpenProcessor.importProjectAfterwardsAsync(project, projectDir)
+        }
+        JpsIntellij -> {
+          //TODO: consider to add logic? (move JpsJavaExtensionService.getInstance().getOrCreateProjectExtension?)
+        }
+      }
+    }
   }
 }
