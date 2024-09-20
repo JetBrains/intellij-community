@@ -4,7 +4,6 @@ package com.intellij.openapi.fileChooser.impl;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -28,10 +27,6 @@ final class NativeFileSaverDialogImpl implements FileSaverDialog {
   }
 
   NativeFileSaverDialogImpl(@NotNull FileSaverDescriptor descriptor, Component parent) {
-    if (SystemInfo.isWindows) {
-      System.setProperty("sun.awt.windows.useCommonItemDialog", "true");
-    }
-
     myDescriptor = descriptor;
     myHelper = new FileChooserDialogHelper(descriptor);
     myHelper.setNativeDialogProperties();
