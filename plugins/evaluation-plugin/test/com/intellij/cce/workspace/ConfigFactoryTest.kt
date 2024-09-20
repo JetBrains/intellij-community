@@ -121,6 +121,24 @@ class ConfigFactoryTest {
     ).also {
       assertEquals("test_sourceFile", it.actions?.sourceFile)
     }
+
+    deserialize(
+      """
+      {
+        "outputDir": "test_outputDir",
+        "strategy": {},
+        "projectPath": "projectPath",
+        "language": "LANG",
+        "actions": {
+        "evaluationRoots": [],
+          "sourceFile": null
+        }
+      }
+      """.trimIndent()
+    ).also {
+      assertEquals(null, it.actions?.sourceFile)
+    }
+
   }
 
   private fun deserialize(text: String) =

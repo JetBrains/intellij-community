@@ -101,7 +101,7 @@ object ConfigFactory {
         language ?: map.getAs("language"),
         map.getAs("evaluationRoots"),
         map.getIfExists<List<String>>("ignoreFileNames")?.toSet() ?: emptySet(),
-        map.getIfExists<String>("sourceFile"),
+        map.getIfExists<String?>("sourceFile"),
       )
       return
     }
