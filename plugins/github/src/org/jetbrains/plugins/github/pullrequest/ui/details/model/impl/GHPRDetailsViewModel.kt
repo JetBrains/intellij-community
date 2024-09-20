@@ -6,18 +6,15 @@ import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.collaboration.ui.codereview.issues.processIssueIdsHtml
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
-import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -29,6 +26,10 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWind
 
 @ApiStatus.Experimental
 interface GHPRDetailsViewModel : CodeReviewDetailsViewModel {
+  val project: Project
+  val gitRepository: GitRepository
+  val dataProvider: GHPRDataProvider
+
   val securityService: GHPRSecurityService
   val avatarIconsProvider: IconsProvider<String>
 
@@ -40,19 +41,17 @@ interface GHPRDetailsViewModel : CodeReviewDetailsViewModel {
   val reviewFlowVm: GHPRReviewFlowViewModelImpl
 
   fun openPullRequestInfoAndTimeline(number: Long)
-
-  fun getActionDataContext(): DataContext
 }
 
 internal class GHPRDetailsViewModelImpl(
-  private val project: Project,
+  override val project: Project,
   parentCs: CoroutineScope,
   dataContext: GHPRDataContext,
-  private val dataProvider: GHPRDataProvider,
+  override val dataProvider: GHPRDataProvider,
   details: GHPullRequest,
 ) : GHPRDetailsViewModel {
   private val cs = parentCs.childScope()
-  private val gitRepository = dataContext.repositoryDataService.remoteCoordinates.repository
+  override val gitRepository = dataContext.repositoryDataService.remoteCoordinates.repository
 
   private val detailsState = MutableStateFlow(details)
 
@@ -111,12 +110,4 @@ internal class GHPRDetailsViewModelImpl(
   }
 
   suspend fun destroy() = cs.cancelAndJoinSilently()
-
-  // TODO: Somehow move this to the component factory
-  override fun getActionDataContext(): DataContext =
-    SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, project)
-      .add(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER, dataProvider)
-      .add(GHPRActionKeys.PULL_REQUEST_REPOSITORY, gitRepository)
-      .build()
 }
