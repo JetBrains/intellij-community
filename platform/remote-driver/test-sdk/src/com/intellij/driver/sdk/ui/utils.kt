@@ -35,6 +35,8 @@ interface RectangleRef {
   fun getX(): Double
   fun getY(): Double
   fun getWidth(): Double
+  fun getCenterX(): Double
+  fun getCenterY(): Double
 }
 
 fun printableString(toPrint: String): String {

@@ -24,4 +24,6 @@ class EditorComponentImplBeControl(
   override fun getEditor(): Editor {
     return frontendEditorComponentImpl.getEditor()
   }
+
+  override fun isEditable() = frontendEditorComponentImpl.isEditable()
 }

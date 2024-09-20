@@ -32,7 +32,10 @@ fun Finder.editor(@Language("xpath") xpath: String? = null, action: JEditorUiCom
 }
 
 class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
-  val editor: Editor by lazy { driver.cast(component, EditorComponentImpl::class).getEditor() }
+  private val editorComponent get() = driver.cast(component, EditorComponentImpl::class)
+  val editor: Editor by lazy { editorComponent.getEditor() }
+
+  fun isEditable() = editorComponent.isEditable()
 
   fun getInlayHints(): List<InlayHint> {
     val hints = mutableListOf<InlayHint>()
@@ -149,6 +152,7 @@ interface AiTestIntentionUtils {
 @BeControlClass(EditorComponentImplBeControlBuilder::class)
 interface EditorComponentImpl : Component {
   fun getEditor(): Editor
+  fun isEditable(): Boolean
 }
 
 class EditorTextFieldUiComponent(data: ComponentData) : UiComponent(data) {

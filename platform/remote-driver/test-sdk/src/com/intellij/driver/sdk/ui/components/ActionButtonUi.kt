@@ -13,12 +13,14 @@ class ActionButtonUi(data: ComponentData): UiComponent(data) {
   val actionButtonComponent: ActionButtonComponent get() = driver.cast(component, ActionButtonComponent::class)
   val icon: String get() = actionButtonComponent.getIcon().toString()
   val text: String get() = actionButtonComponent.getPresentation().getText()
+  val isSelected: Boolean get() = actionButtonComponent.isSelected()
 }
 
 @Remote("com.intellij.openapi.actionSystem.impl.ActionButton")
 interface ActionButtonComponent {
   fun getIcon(): Icon
   fun getPresentation(): PresentationRef
+  fun isSelected(): Boolean
 }
 
 @Remote("com.intellij.openapi.actionSystem.Presentation")

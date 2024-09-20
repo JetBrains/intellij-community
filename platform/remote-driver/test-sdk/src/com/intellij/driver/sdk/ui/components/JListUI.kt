@@ -46,8 +46,7 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
       if (offset == null) {
         fixture.clickItemAtIndex(index)
       } else {
-        val cellBounds = driver.withContext(OnDispatcher.EDT) { listComponent.getCellBounds(index, index) }
-        println("cellBounds: ${cellBounds}")
+        val cellBounds = getCellBounds(index)
         val cellOffset = Point(offset.x, offset.y + cellBounds.getY().toInt())
         check(cellBounds.contains(cellOffset)) { "point is out of cell bounds" }
         robot.click(component, cellOffset)
@@ -55,13 +54,19 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
     } ?: throw IllegalArgumentException("item with text $itemText not found, all items: ${items.joinToString(", ")}")
   }
 
+  fun doubleClickItem(itemText: String, fullMatch: Boolean = true) {
+    findItemIndex(itemText, fullMatch)?.let { index ->
+      val cellBounds = getCellBounds(index)
+      doubleClick(Point(cellBounds.getCenterX().toInt(), cellBounds.getCenterY().toInt()))
+    }
+  }
+
   fun hoverItem(itemText: String, fullMatch: Boolean = true, offset: Point? = null) {
     findItemIndex(itemText, fullMatch)?.let { index ->
       if (offset == null) {
         hoverItemAtIndex(index)
       } else {
-        val cellBounds = driver.withContext(OnDispatcher.EDT) { listComponent.getCellBounds(index, index) }
-        println("cellBounds: ${cellBounds}")
+        val cellBounds = getCellBounds(index)
         val cellOffset = Point(offset.x, offset.y + cellBounds.getY().toInt())
         check(cellBounds.contains(cellOffset)) { "point is out of cell bounds" }
         robot.moveMouse(component, cellOffset)
@@ -91,6 +96,9 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
       if (it == -1) null
       else it
     }
+
+  private fun getCellBounds(index: Int): RectangleRef =
+    driver.withContext(OnDispatcher.EDT) { listComponent.getCellBounds(index, index) }
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JListTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)
