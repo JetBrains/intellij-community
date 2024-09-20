@@ -583,6 +583,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         }
       }
     }
+    if (referenceTarget instanceof PyClass pyClass && anchor instanceof PyExpression) {
+      PyCollectionType parameterizedType = parameterizeClassDefaultAware(pyClass, List.of(), context);
+      if (parameterizedType != null) {
+        return Ref.create(parameterizedType.toClass());
+      }
+    }
     return null;
   }
 
@@ -655,7 +661,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       List<PyType> superTypeArguments = superClassType instanceof PyCollectionType parameterized ?
                                         parameterized.getElementTypes() : Collections.emptyList();
       PyTypeParameterMapping mapping =
-        PyTypeParameterMapping.mapByShape(superTypeParameters, superTypeArguments, Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
+        PyTypeParameterMapping.mapByShape(superTypeParameters, superTypeArguments, Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY, Option.USE_DEFAULTS);
       if (mapping != null) {
         for (Couple<PyType> pair : mapping.getMappedTypes()) {
           PyType expectedType = pair.getFirst();
@@ -1863,32 +1869,19 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   @Nullable
-  public static PyType tryParameterizeClassWithDefaults(@NotNull PyClassType classType,
-                                                        @NotNull PyExpression anchor,
-                                                        boolean toInstance,
-                                                        @NotNull TypeEvalContext context) {
-    return staticWithCustomContext(context, customContext -> parameterizeClassWithDefaults(classType, anchor, toInstance, customContext));
-  }
-
-  @Nullable
-  private static PyType parameterizeClassWithDefaults(@NotNull PyClassType classType,
-                                                      @NotNull PyExpression anchor,
-                                                      boolean toInstance,
-                                                      @NotNull Context context) {
-    PyClass pyClass = classType.getPyClass();
+  private static PyCollectionType parameterizeClassDefaultAware(@NotNull PyClass pyClass,
+                                                                @NotNull List<PyType> actualTypeParams,
+                                                                @NotNull Context context) {
     if (isGeneric(pyClass, context.getTypeContext())) {
       PyCollectionType genericDefinitionType =
         doPreventingRecursion(pyClass, false, () -> PyTypeChecker.findGenericDefinitionType(pyClass, context.getTypeContext()));
       if (genericDefinitionType != null && ContainerUtil.exists(genericDefinitionType.getElementTypes(),
                                                                 t -> t instanceof PyTypeParameterType typeParameterType &&
                                                                      typeParameterType.getDefaultType() != null)) {
-        List<PyType> indexTypes = anchor instanceof PySubscriptionExpression subscriptionExpression
-                                  ? getIndexTypes(subscriptionExpression, context)
-                                  : List.of();
 
-        PyType parameterizedType = PyTypeChecker.parameterizeType(genericDefinitionType, indexTypes, context.myContext);
+        PyType parameterizedType = PyTypeChecker.parameterizeType(genericDefinitionType, actualTypeParams, context.myContext);
         if (parameterizedType instanceof PyCollectionType collectionType) {
-          return toInstance ? collectionType.toInstance() : collectionType.toClass();
+          return collectionType;
         }
       }
     }
@@ -1985,9 +1978,9 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         }
         if (operandType != null) {
           if (operandType instanceof PyClassType classType) {
-            PyType parameterizedType = parameterizeClassWithDefaults(classType, subscriptionExpr, true, context);
-            if (parameterizedType instanceof PyCollectionType) {
-              return parameterizedType;
+            PyCollectionType parameterizedType = parameterizeClassDefaultAware(classType.getPyClass(), indexTypes, context);
+            if (parameterizedType != null) {
+              return parameterizedType.toInstance();
             }
           }
           return PyTypeChecker.parameterizeType(operandType, indexTypes, context.getTypeContext());

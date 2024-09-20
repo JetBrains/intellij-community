@@ -650,13 +650,6 @@ public final class PyCallExpressionHelper {
         return new PyCollectionTypeImpl(receiverClass, false, elementTypes);
       }
 
-      if (initOrNewCallType instanceof PyClassType classType) {
-        PyType implicitlyParameterized = PyTypingTypeProvider.tryParameterizeClassWithDefaults(classType, callSite, true, context);
-        if (implicitlyParameterized instanceof PyCollectionType collectionType) {
-          return collectionType.toInstance();
-        }
-      }
-
       return new PyClassTypeImpl(receiverClass, false);
     }
 
