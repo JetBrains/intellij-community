@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.TestDataPath
@@ -6,12 +6,11 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.IncorrectProcessCanceledExceptionHandlingInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectPceHandling")
-class KtIncorrectProcessCanceledExceptionHandlingInspectionTest : IncorrectProcessCanceledExceptionHandlingInspectionTestBase() {
+abstract class KtIncorrectProcessCanceledExceptionHandlingInspectionTestBase : IncorrectProcessCanceledExceptionHandlingInspectionTestBase() {
 
   override fun setUp() {
     super.setUp()
-    addKotlinFile("JvmPlatformAnnotations.kt",  """
+    addKotlinFile("JvmPlatformAnnotations.kt", """
         package kotlin.jvm
         import kotlin.reflect.KClass
         
@@ -19,7 +18,7 @@ class KtIncorrectProcessCanceledExceptionHandlingInspectionTest : IncorrectProce
         @Retention(AnnotationRetention.SOURCE)
         annotation class Throws(vararg val exceptionClasses: KClass<out Throwable>)
       """)
-    addKotlinFile("Throws.kt",  """
+    addKotlinFile("Throws.kt", """
         package kotlin
         
         @SinceKotlin("1.4")
@@ -32,9 +31,18 @@ class KtIncorrectProcessCanceledExceptionHandlingInspectionTest : IncorrectProce
       """)
   }
 
-  private fun addKotlinFile(relativePath: String, @Language("kotlin") fileText: String) {
+  protected fun addKotlinFile(relativePath: String, @Language("kotlin") fileText: String) {
     myFixture.addFileToProject(relativePath, fileText)
   }
+
+  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/incorrectPceHandling"
+
+  override fun getFileExtension() = "kt"
+
+}
+
+@TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectPceHandling")
+class KtIncorrectProcessCanceledExceptionHandlingInspectionTest : KtIncorrectProcessCanceledExceptionHandlingInspectionTestBase() {
 
   fun testIncorrectPceHandlingTests() {
     doTest()
@@ -47,9 +55,73 @@ class KtIncorrectProcessCanceledExceptionHandlingInspectionTest : IncorrectProce
   fun testIncorrectPceHandlingWhenPceCaughtImplicitlyTests() {
     doTest()
   }
+}
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/incorrectPceHandling"
 
-  override fun getFileExtension() = "kt"
+@TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectPceHandling")
+class KtIncorrectCancellationExceptionHandlingInspectionTest : KtIncorrectProcessCanceledExceptionHandlingInspectionTestBase() {
+
+  private val USE_K2_KEY = "idea.kotlin.plugin.use.k2"
+  private var previousK2Property: String? = null
+
+  override fun setUp() {
+    previousK2Property = System.getProperty(USE_K2_KEY)
+    System.setProperty(USE_K2_KEY, "true")
+    super.setUp()
+    myFixture.addClass("""
+      package java.util.concurrent;
+      public class CancellationException extends IllegalStateException {
+        public CancellationException() {}
+        public CancellationException(String message) { super(message); }
+      }
+    """.trimIndent()
+    )
+    addKotlinFile("CancellationException.kt", """
+        package kotlinx.coroutines
+        
+        @SinceKotlin("1.4")
+        typealias CancellationException = java.util.concurrent.CancellationException
+      """)
+    addKotlinFile("SubclassOfCancellationException.kt", """
+        package com.example
+        import kotlinx.coroutines.CancellationException
+        class SubclassOfCancellationException : CancellationException()
+      """)
+  }
+
+  override fun tearDown() {
+    try {
+      val prevK2Property = previousK2Property
+      if (prevK2Property != null) {
+        System.setProperty(USE_K2_KEY, prevK2Property)
+      }
+      else {
+        System.clearProperty(USE_K2_KEY)
+      }
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
+  }
+
+  fun testIncorrectCeHandlingTests() {
+    doTest()
+  }
+
+  fun testIncorrectCeHandlingInSuspendingLambdasTests() {
+    doTest()
+  }
+
+  fun testIncorrectCeHandlingWhenMultipleCatchClausesTests() {
+    doTest()
+  }
+
+  // TODO: disabled - for some reason @Throws cannot be resolved in test data
+  /*fun testIncorrectCeHandlingWhenPceCaughtImplicitlyTests() {
+    doTest()
+  }*/
 
 }

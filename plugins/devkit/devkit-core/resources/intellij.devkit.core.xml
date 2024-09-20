@@ -444,7 +444,7 @@
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IncorrectProcessCanceledExceptionHandlingInspection"
-                     key="inspections.incorrect.process.canceled.exception.handling.display.name"/>
+                     key="inspections.incorrect.cancellation.exception.handling.display.name"/>
 
     <localInspection language="UAST" shortName="StaticInitializationInExtensions" groupPathKey="inspections.group.path"
                      projectType="INTELLIJ_PLUGIN"
@@ -729,6 +729,11 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.quickfix.AddServiceAnnotationProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.cancellationExceptionHandlingChecker"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.CancellationExceptionHandlingChecker"/>
     </extensionPoint>
   </extensionPoints>
 

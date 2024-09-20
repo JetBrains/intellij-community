@@ -86,5 +86,8 @@
     <addServiceAnnotationProvider
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KotlinAddServiceAnnotationProvider"/>
+    <cancellationExceptionHandlingChecker
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCancellationExceptionHandlingChecker"/>
   </extensions>
 </idea-plugin>
