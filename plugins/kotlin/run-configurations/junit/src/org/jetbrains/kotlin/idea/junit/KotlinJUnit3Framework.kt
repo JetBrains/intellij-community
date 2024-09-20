@@ -11,6 +11,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.impl.compiled.ClsFileImpl
+import com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.util.CachedValueProvider
@@ -159,16 +160,21 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
             // circular dependency detected
             val superShortName = superClass.name
             if (superShortName == null || !visitedShortNames.add(superShortName)) return NO
-            if (checkNameMatch(psiJavaFile, TEST_CLASS_FQN, superShortName)) {
+            if (checkNameMatch(psiJavaFile, psiClass, TEST_CLASS_FQN, superShortName)) {
                 return YES
             }
 
             return checkJUnit3TestClass(superClass, shortNamesCache, resolveScope, visitedShortNames)
         }
 
-        private fun checkNameMatch(file: PsiJavaFile, fqNames: Set<String>, shortName: String): Boolean {
+        private fun checkNameMatch(file: PsiJavaFile, psiClass: PsiClass, fqNames: Set<String>, shortName: String): Boolean {
             if (shortName in fqNames || "${file.packageName}.$shortName" in fqNames) return true
-            val importStatements = (file.importList ?: ((file as? ClsFileImpl)?.decompiledPsiFile as? PsiJavaFile)?.importList)?.importStatements ?: return false
+            if (file is ClsFileImpl) {
+                val referenceElements = psiClass.extendsList?.referenceElements?.takeIf { it.size > 0 } ?: return false
+                val referenceElement = referenceElements[0] as? ClsJavaCodeReferenceElementImpl ?: return false
+                return referenceElement.qualifiedName in fqNames
+            }
+            val importStatements = file.importList?.importStatements ?: return false
             for (importStatement in importStatements) {
                 val importedFqName = importStatement.qualifiedName ?: continue
                 if (importedFqName.endsWith(".$shortName") && importedFqName in fqNames) {
