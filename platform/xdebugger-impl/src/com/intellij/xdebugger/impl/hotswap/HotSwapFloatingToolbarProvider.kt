@@ -17,12 +17,14 @@ import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
 import icons.PlatformDebuggerImplIcons
 import kotlinx.coroutines.*
 import java.awt.BorderLayout
+import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -43,6 +45,8 @@ private fun createHelpTooltip(): HelpTooltip =
     .setDescription(XDebuggerBundle.message("xdebugger.hotswap.tooltip.description"))
 
 private fun showFloatingToolbar(): Boolean = HotSwapUiExtension.computeSafeIfAvailable { it.showFloatingToolbar() } != false
+
+private fun collectPopupMenuActions(): DefaultActionGroup? = HotSwapUiExtension.computeSafeIfAvailable { it.popupMenuActions() }
 
 internal class HotSwapModifiedFilesAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
@@ -123,6 +127,7 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
     add(JBLabel(XDebuggerBundle.message("xdebugger.hotswap.code.changed")), BorderLayout.WEST)
     add(button, BorderLayout.CENTER)
     tooltip.installOn(this)
+    installPopupMenu()
   }
 
   fun update(status: HotSwapButtonStatus, presentation: Presentation) {
@@ -145,6 +150,16 @@ private fun updateToolbarVisibility(project: Project) {
   }
 }
 
+private fun JComponent.installPopupMenu() {
+  addMouseListener(object : PopupHandler() {
+    override fun invokePopup(comp: Component?, x: Int, y: Int) {
+      val actions = collectPopupMenuActions() ?: return
+      val popupMenu = ActionManager.getInstance().createActionPopupMenu("HotSwapToolbarPopup", actions)
+      popupMenu.component.show(comp, x, y)
+    }
+  })
+}
+
 internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
   override val autoHideable: Boolean get() = false
   private val hotSwapAction by lazy { HotSwapWithRebuildAction() }
@@ -163,6 +178,9 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
       component.backgroundAlpha = 0.9f
       component.showingTime = SHOWING_TIME_MS
       component.hidingTime = HIDING_TIME_MS
+    }
+    if (component is JComponent) {
+      component.installPopupMenu()
     }
     instance.addListener(ChangesListener(component, project), parentDisposable)
   }
