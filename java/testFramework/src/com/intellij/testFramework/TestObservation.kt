@@ -6,7 +6,10 @@ import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.observation.Observation
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.testFramework.concurrency.waitForPromiseAndPumpEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
@@ -42,6 +45,7 @@ object TestObservation {
     }
     catch (_: TimeoutCancellationException) {
       val activityDump = Observation.dumpAwaitedActivitiesToString()
+      val uncommitedDocuments = dumpUncommitedDocumentsWithTracesToString(project)
       val coroutineDump = dumpCoroutines()
       val threadDump = dumpThreadsToString()
 
@@ -50,6 +54,9 @@ object TestObservation {
         |------ Operation log begin ------
         |$operationLog
         |------- Operation log end -------
+        |--- Uncommited documents begin --
+        |$uncommitedDocuments
+        |---- Uncommited documents end ---
         |------ Activity dump begin ------
         |$activityDump
         |------- Activity dump end -------
@@ -62,6 +69,17 @@ object TestObservation {
       """.trimMargin())
       throw AssertionError("The waiting takes too long. Expected to take no more than $timeout ms.")
     }
+  }
+
+  private fun dumpUncommitedDocumentsWithTracesToString(project: Project): String {
+    if (!Registry.`is`("ide.activity.tracking.enable.debug")) {
+      return "Enable 'ide.activity.tracking.enable.debug' registry option to collect uncommited document traces"
+    }
+    val psiDocumentManager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
+    return psiDocumentManager.uncommitedDocumentsWithTraces.entries
+      .joinToString("\n") {
+        it.key.toString() + ": " + it.value.stackTraceToString()
+      }
   }
 
   @Service(Service.Level.PROJECT)

@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -66,6 +67,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private final DocumentCommitProcessor myDocumentCommitProcessor;
 
   final Set<Document> myUncommittedDocuments = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap());
+  private final Map<Document, Throwable> myUncommittedDocumentTraces = CollectionFactory.createConcurrentWeakMap();
   private final Map<Document, UncommittedInfo> myUncommittedInfos = new ConcurrentHashMap<>();
   private /*non-static*/ final Key<UncommittedInfo> FREE_THREADED_UNCOMMITTED_INFO = Key.create("FREE_THREADED_UNCOMMITTED_INFO");
 
@@ -440,6 +442,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       finally {
         if (success.get()) {
           myUncommittedDocuments.remove(document);
+          myUncommittedDocumentTraces.remove(document);
         }
       }
     });
@@ -508,6 +511,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     PsiFile psiFile = getPsiFile(document);
     if (psiFile == null) {
       myUncommittedDocuments.remove(document);
+      myUncommittedDocumentTraces.remove(document);
       runAfterCommitActions(document);
       return true; // the project must be closing or file deleted
     }
@@ -865,6 +869,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return ArrayUtil.stripTrailingNulls(documents);
   }
 
+  @ApiStatus.Internal
+  public @NotNull Map<Document, Throwable> getUncommitedDocumentsWithTraces() {
+    return Collections.unmodifiableMap(myUncommittedDocumentTraces);
+  }
+
   boolean isInUncommittedSet(@NotNull Document document) {
     return myUncommittedDocuments.contains(getTopLevelDocument(document));
   }
@@ -973,6 +982,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (commitNecessary) {
       assert !(document instanceof DocumentWindow);
       myUncommittedDocuments.add(document);
+      if (Registry.is("ide.activity.tracking.enable.debug")) {
+        myUncommittedDocumentTraces.put(document, new Throwable());
+      }
       if (forceCommit) {
         commitDocument(document);
       }
@@ -1029,6 +1041,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     myUncommittedDocuments.remove(document);
+    myUncommittedDocumentTraces.remove(document);
 
     if (!myProject.isInitialized() || myProject.isDisposed() || myProject.isDefault()) {
       return;
@@ -1138,6 +1151,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   public void clearUncommittedDocuments() {
     myUncommittedInfos.clear();
     myUncommittedDocuments.clear();
+    myUncommittedDocumentTraces.clear();
     mySynchronizer.cleanupForNextTest();
   }
 
