@@ -53,7 +53,9 @@ internal fun initMacApplication(mainScope: CoroutineScope) {
   desktop.setAboutHandler {
     if (LoadingState.COMPONENTS_LOADED.isOccurred) {
       val project = getProject(useDefault = false)
-      AboutAction.perform(project)
+      WriteIntentReadAction.run {
+        AboutAction.perform(project)
+      }
       ActionsCollector.getInstance().record(project, ActionManager.getInstance().getAction("About"), null, null)
     }
   }
