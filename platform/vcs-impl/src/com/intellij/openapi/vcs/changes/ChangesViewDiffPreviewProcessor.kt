@@ -64,7 +64,8 @@ private inline fun <reified T : ChangesBrowserNode<*>> findNodeOfType(node: Chan
   return null
 }
 
-internal class ChangesViewDiffPreviewProcessor(
+@ApiStatus.Internal
+class ChangesViewDiffPreviewProcessor(
   changesView: ChangesTree,
   private val isInEditor: Boolean,
 ) : TreeHandlerDiffRequestProcessor(if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW, changesView,
