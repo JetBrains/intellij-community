@@ -114,7 +114,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
       LOG.debug(
         "Editor params for rendering traffic light: isEditorDispose ", isEditorDispose,
         " isPsiValid ", isPsiValid,
-        " isEditorDispose ", isHighlightingAvailable);
+        " isHighlightingAvailable ", isHighlightingAvailable);
       return isEditorDispose
              || !isPsiValid
              || !isHighlightingAvailable;
