@@ -96,6 +96,18 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     """.trimMargin())
   }
 
+  fun `test empty groups are not shown`() = branchesTreeTest {
+    setState(localBranches = listOf("group-1/match", "group-2/qq"), remoteBranches = listOf())
+    searchTextField.text = "match"
+    assertTree("""
+      |-ROOT
+      | HEAD
+      | -LOCAL
+      |  -GROUP:group-1
+      |   [BRANCH:group-1/match]
+    """.trimMargin())
+  }
+
   fun `test selection of remote`() = branchesTreeTest {
     setState(localBranches = listOf("main"), remoteBranches = listOf("main", "ish/242", "a/242/b", "242", "242/fix"))
 

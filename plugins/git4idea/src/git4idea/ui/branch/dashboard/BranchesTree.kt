@@ -276,7 +276,9 @@ internal abstract class FilteringBranchesTreeBase(
     when (nodeDescriptor) {
       is BranchNodeDescriptor.Branch -> nodeDescriptor.branchInfo.branchName
       is BranchNodeDescriptor.Repository -> nodeDescriptor.displayName
-      else -> null
+      is BranchNodeDescriptor.RemoteGroup -> nodeDescriptor.remote.name
+      is BranchNodeDescriptor.Group -> nodeDescriptor.displayName
+      else -> null // Note that nodes with null text are always matched while filtering the tree
     }
 
   override fun createNode(nodeDescriptor: BranchNodeDescriptor) = BranchTreeNode(nodeDescriptor)
@@ -538,8 +540,12 @@ private class BranchesFilteringSpeedSearch(private val tree: FilteringBranchesTr
   private var matcher = BranchesTreeMatcher(searchTextField.text)
   private var bestMatch: BestMatch? = null
 
+  override fun checkMatching(node: BranchTreeNode): FilteringTree.Matching =
+    if (node.getNodeDescriptor() is BranchNodeDescriptor.Group) FilteringTree.Matching.NONE
+    else super.checkMatching(node)
+
   override fun onMatchingChecked(userObject: BranchNodeDescriptor, matchingFragments: Iterable<TextRange>?, result: FilteringTree.Matching) {
-    if (result == FilteringTree.Matching.NONE || userObject is BranchNodeDescriptor.Group) return
+    if (result == FilteringTree.Matching.NONE) return
     val text = tree.getText(userObject) ?: return
     val singleMatch = matchingFragments?.singleOrNull() ?: return
 
