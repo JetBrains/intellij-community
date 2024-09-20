@@ -56,7 +56,6 @@
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 
   <xi:include href="intellij.platform.feedback.xml"/>
-  <xi:include href="intellij.platform.tips.xml"/>
 
   <xi:include href="/META-INF/IJent.xml"/>
 
