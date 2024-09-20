@@ -17,7 +17,7 @@ val isMessageBusThrowsWhenDisposed: Boolean =
  */
 @get:ApiStatus.Internal
 val isCoroutineWILEnabled: Boolean =
-  System.getProperty("ide.coroutine.write.intent.lock", "false").toBoolean()
+  System.getProperty("ide.coroutine.write.intent.lock", "true").toBoolean()
 
 /**
  * - `false` means exceptions from [com.intellij.util.messages.Topic] subscribers are being logged
