@@ -14,7 +14,7 @@ import com.intellij.util.containers.ContainerUtil
  * calculates all markers and intervals from scratch for each document update
  */
 class NonIncrementalCellLines private constructor(
-  private val document: Document,
+  document: Document,
   private val intervalsGenerator: IntervalsGenerator,
 ) : NotebookCellLines {
 
@@ -91,7 +91,7 @@ class NonIncrementalCellLines private constructor(
     override fun getPriority(): Int = EditorDocumentPriorities.INLAY_MODEL + 1
 
     override fun beforeDocumentChange(event: DocumentEvent) {
-      oldAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.oldLength))
+      oldAffectedCells = getAffectedCells(intervals, event.document, TextRange(event.offset, event.offset + event.oldLength))
 
       catchThrowableAndLog {
         intervalListeners.multicaster.beforeDocumentChange(
@@ -108,9 +108,9 @@ class NonIncrementalCellLines private constructor(
       // ToDo temporary commented, while we are working on PY-76052.
       //ThreadingAssertions.assertWriteAccess()
       val oldIntervals = intervals
-      intervals = intervalsGenerator.makeIntervals(document, event)
 
-      val newAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.newLength))
+      intervals = intervalsGenerator.makeIntervals(event.document, event)
+      val newAffectedCells = getAffectedCells(intervals, event.document, TextRange(event.offset, event.offset + event.newLength))
       val newEvent = createEvent(oldIntervals, intervals, oldAffectedCells, newAffectedCells, event)
       if (event.document.isInBulkUpdate) {
         postponedEvents.add(newEvent)
