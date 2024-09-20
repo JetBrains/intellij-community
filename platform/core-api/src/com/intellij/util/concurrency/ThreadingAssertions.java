@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -32,12 +33,16 @@ public final class ThreadingAssertions {
   @VisibleForTesting
   public static final String MUST_EXECUTE_IN_READ_ACTION =
     "Read access is allowed from inside read-action only (see Application.runReadAction())";
+  private static final String MUST_EXECUTE_IN_READ_ACTION_EXPLICIT =
+    "Read access is allowed from inside explicit read-action only (see Application.runReadAction()). Now implicit WriteIntentReadAction.run() is used.";
   @Internal
   @VisibleForTesting
   public static final String MUST_NOT_EXECUTE_IN_READ_ACTION =
     "Must not execute inside read action";
   private static final String MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION =
     "Access is allowed from write thread only";
+  private static final String MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION_EXPLICIT =
+    "Access is allowed from write thread only with explicit WriteIntentReadAction.run(). Now implicit WriteIntentReadAction.run() is used.";
   @Internal
   @VisibleForTesting
   public static final String MUST_EXECUTE_IN_WRITE_ACTION =
@@ -52,6 +57,8 @@ public final class ThreadingAssertions {
     "Access from Event Dispatch Thread (EDT) is not allowed";
 
   private static final String DOCUMENTATION_URL = "https://jb.gg/ij-platform-threading";
+
+  private static boolean implicitLock = false;
 
   /**
    * Asserts that the current thread is the event dispatch thread.
@@ -111,6 +118,17 @@ public final class ThreadingAssertions {
     if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
       throwThreadAccessException(MUST_EXECUTE_IN_READ_ACTION);
     }
+    else if (isImplicitLockOnEDT() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      reportImplicitRead();
+    }
+  }
+
+  /**
+   * Reports message about implicit read to logger at error level
+   */
+  @Internal
+  public static void reportImplicitRead() {
+    getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_READ_ACTION_EXPLICIT));
   }
 
   /**
@@ -148,6 +166,17 @@ public final class ThreadingAssertions {
     if (!ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
       throwWriteIntentReadAccess();
     }
+    else if (isImplicitLockOnEDT()) {
+      reportImplicitWriteIntent();
+    }
+  }
+
+  /**
+   * Reports message about implicit read to logger at error level
+   */
+  @Internal
+  public static void reportImplicitWriteIntent() {
+    getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION_EXPLICIT));
   }
 
   /**
@@ -187,5 +216,21 @@ public final class ThreadingAssertions {
 
   private static @NotNull String describe(@Nullable Thread o) {
     return o == null ? "null" : o + " " + System.identityHashCode(o);
+  }
+
+  public static boolean isImplicitLockOnEDT() {
+    if (!EDT.isCurrentThreadEdt())
+      return false;
+    Application app = ApplicationManager.getApplication();
+    // Don't report implicit locks for unit tests, too many false positives
+    if (app != null && app.isUnitTestMode())
+      return false;
+    return implicitLock;
+  }
+
+  public static void setImplicitLockOnEDT(boolean implicitLock) {
+    if (!EDT.isCurrentThreadEdt())
+      return;
+    ThreadingAssertions.implicitLock = implicitLock;
   }
 }
