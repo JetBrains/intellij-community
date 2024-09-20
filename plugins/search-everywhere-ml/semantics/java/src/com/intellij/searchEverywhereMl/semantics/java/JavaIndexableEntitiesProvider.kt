@@ -1,9 +1,9 @@
 package com.intellij.searchEverywhereMl.semantics.java
 
-import com.intellij.platform.ml.embeddings.search.indices.EntityId
-import com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider
-import com.intellij.platform.ml.embeddings.search.services.IndexableClass
-import com.intellij.platform.ml.embeddings.search.services.IndexableSymbol
+import com.intellij.platform.ml.embeddings.jvm.indices.EntityId
+import com.intellij.platform.ml.embeddings.indexer.FileIndexableEntitiesProvider
+import com.intellij.platform.ml.embeddings.indexer.entities.IndexableClass
+import com.intellij.platform.ml.embeddings.indexer.entities.IndexableSymbol
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile

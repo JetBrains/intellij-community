@@ -61,7 +61,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.searcheverywhere.ml.fileIndexableEntitiesProvider"
-                    interface="com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider"
+                    interface="com.intellij.platform.ml.embeddings.indexer.FileIndexableEntitiesProvider"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

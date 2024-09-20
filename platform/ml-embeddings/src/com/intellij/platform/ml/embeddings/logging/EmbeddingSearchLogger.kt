@@ -8,9 +8,13 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ml.embeddings.search.indices.IndexType
-import com.intellij.platform.ml.embeddings.search.indices.IndexType.*
-import com.intellij.platform.ml.embeddings.search.services.*
+import com.intellij.platform.ml.embeddings.indexer.IndexId
+import com.intellij.platform.ml.embeddings.indexer.IndexId.*
+import com.intellij.platform.ml.embeddings.jvm.wrappers.ActionEmbeddingsStorageWrapper
+import com.intellij.platform.ml.embeddings.jvm.wrappers.ClassEmbeddingsStorageWrapper
+import com.intellij.platform.ml.embeddings.jvm.wrappers.FileEmbeddingsStorageWrapper
+import com.intellij.platform.ml.embeddings.jvm.wrappers.SymbolEmbeddingsStorageWrapper
+import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettingsImpl
 import kotlin.math.round
 
 internal object EmbeddingSearchLogger : CounterUsagesCollector() {
@@ -21,7 +25,7 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
   private val USED_MEMORY_MB = EventFields.Double("used_memory_mb")
   private val VECTOR_COUNT = EventFields.Long("vector_count")
   private val INDEX_TYPE = EventFields.String("index_type", listOf("actions", "file-based"))
-  private val INDEX = EventFields.Enum("index", IndexType::class.java) { it.name.lowercase() }
+  private val INDEX = EventFields.Enum("index", IndexId::class.java) { it.name.lowercase() }
 
   private val COMMON_FIELDS = arrayOf(INDEX_TYPE, MODEL_VERSION, USED_MEMORY_MB, VECTOR_COUNT, ENABLED_INDICES, EventFields.DurationMs)
 
@@ -48,26 +52,26 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
     INDEXING_SAVED.log(project, getCommonFields(project, forActions) + listOf(EventFields.DurationMs.with(durationMs)))
   }
 
-  suspend fun searchFinished(project: Project?, index: IndexType, durationMs: Long) {
+  suspend fun searchFinished(project: Project?, index: IndexId, durationMs: Long) {
     require(index == ACTIONS || project != null)
     SEARCH_FINISHED.log(project, buildList {
       add(MODEL_VERSION.with(Registry.stringValue("intellij.platform.ml.embeddings.model.version")))
       add(USED_MEMORY_MB.with(
         roundDouble(
           when (index) {
-            ACTIONS -> ActionEmbeddingsStorage.getInstance().index.estimateMemoryUsage()
-            FILES -> FileEmbeddingsStorage.getInstance(project!!).index.estimateMemoryUsage()
-            CLASSES -> ClassEmbeddingsStorage.getInstance(project!!).index.estimateMemoryUsage()
-            SYMBOLS -> SymbolEmbeddingStorage.getInstance(project!!).index.estimateMemoryUsage()
+            ACTIONS -> ActionEmbeddingsStorageWrapper.getInstance().index.estimateMemoryUsage()
+            FILES -> FileEmbeddingsStorageWrapper.getInstance(project!!).index.estimateMemoryUsage()
+            CLASSES -> ClassEmbeddingsStorageWrapper.getInstance(project!!).index.estimateMemoryUsage()
+            SYMBOLS -> SymbolEmbeddingsStorageWrapper.getInstance(project!!).index.estimateMemoryUsage()
           }.toDouble() / BYTES_IN_MEGABYTE
         )
       ))
       add(VECTOR_COUNT.with(
         when (index) {
-          ACTIONS -> ActionEmbeddingsStorage.getInstance().index.getSize()
-          FILES -> FileEmbeddingsStorage.getInstance(project!!).index.getSize()
-          CLASSES -> ClassEmbeddingsStorage.getInstance(project!!).index.getSize()
-          SYMBOLS -> SymbolEmbeddingStorage.getInstance(project!!).index.getSize()
+          ACTIONS -> ActionEmbeddingsStorageWrapper.getInstance().index.getSize()
+          FILES -> FileEmbeddingsStorageWrapper.getInstance(project!!).index.getSize()
+          CLASSES -> ClassEmbeddingsStorageWrapper.getInstance(project!!).index.getSize()
+          SYMBOLS -> SymbolEmbeddingsStorageWrapper.getInstance(project!!).index.getSize()
         }.toLong()
       ))
       add(INDEX.with(index))
@@ -100,11 +104,11 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
   private suspend fun getVectorCount(project: Project?, forActions: Boolean): Long {
     var totalCount = 0L
     val settings = EmbeddingIndexSettingsImpl.getInstance()
-    if (forActions && settings.shouldIndexActions) totalCount += ActionEmbeddingsStorage.getInstance().index.getSize()
+    if (forActions && settings.shouldIndexActions) totalCount += ActionEmbeddingsStorageWrapper.getInstance().index.getSize()
     if (!forActions && project != null) {
-      if (settings.shouldIndexFiles) totalCount += FileEmbeddingsStorage.getInstance(project).index.getSize()
-      if (settings.shouldIndexClasses) totalCount += ClassEmbeddingsStorage.getInstance(project).index.getSize()
-      if (settings.shouldIndexSymbols) totalCount += SymbolEmbeddingStorage.getInstance(project).index.getSize()
+      if (settings.shouldIndexFiles) totalCount += FileEmbeddingsStorageWrapper.getInstance(project).index.getSize()
+      if (settings.shouldIndexClasses) totalCount += ClassEmbeddingsStorageWrapper.getInstance(project).index.getSize()
+      if (settings.shouldIndexSymbols) totalCount += SymbolEmbeddingsStorageWrapper.getInstance(project).index.getSize()
     }
     return totalCount
   }
@@ -112,11 +116,11 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
   private suspend fun getUsedMemory(project: Project?, forActions: Boolean): Double {
     var totalMemory = 0L
     val settings = EmbeddingIndexSettingsImpl.getInstance()
-    if (forActions && settings.shouldIndexActions) totalMemory += ActionEmbeddingsStorage.getInstance().index.estimateMemoryUsage()
+    if (forActions && settings.shouldIndexActions) totalMemory += ActionEmbeddingsStorageWrapper.getInstance().index.estimateMemoryUsage()
     if (!forActions && project != null) {
-      if (settings.shouldIndexFiles) totalMemory += FileEmbeddingsStorage.getInstance(project).index.estimateMemoryUsage()
-      if (settings.shouldIndexClasses) totalMemory += ClassEmbeddingsStorage.getInstance(project).index.estimateMemoryUsage()
-      if (settings.shouldIndexSymbols) totalMemory += SymbolEmbeddingStorage.getInstance(project).index.estimateMemoryUsage()
+      if (settings.shouldIndexFiles) totalMemory += FileEmbeddingsStorageWrapper.getInstance(project).index.estimateMemoryUsage()
+      if (settings.shouldIndexClasses) totalMemory += ClassEmbeddingsStorageWrapper.getInstance(project).index.estimateMemoryUsage()
+      if (settings.shouldIndexSymbols) totalMemory += SymbolEmbeddingsStorageWrapper.getInstance(project).index.estimateMemoryUsage()
     }
     return roundDouble(totalMemory.toDouble() / BYTES_IN_MEGABYTE)
   }

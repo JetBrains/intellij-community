@@ -1,7 +1,7 @@
 package com.intellij.searchEverywhereMl.semantics.providers
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
-import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import com.intellij.platform.ml.embeddings.utils.ScoredText
 
 private const val MIN_SIMILARITY_SCORE = -1
 private const val MAX_SIMILARITY_SCORE = 1

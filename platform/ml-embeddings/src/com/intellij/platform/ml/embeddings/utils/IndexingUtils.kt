@@ -4,7 +4,7 @@ package com.intellij.platform.ml.embeddings.utils
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
+import com.intellij.platform.ml.embeddings.jvm.models.LocalEmbeddingServiceProviderImpl
 import kotlin.math.sqrt
 
 // Equivalent to splitting by the following regexp: "(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])"
@@ -51,7 +51,7 @@ suspend fun generateEmbedding(indexableRepresentation: String, downloadArtifacts
 }
 
 suspend fun generateEmbeddings(texts: List<String>, downloadArtifacts: Boolean = true): List<FloatTextEmbedding>? {
-  return serviceAsync<LocalEmbeddingServiceProvider>().getService(downloadArtifacts)?.embed(texts)?.map { it.normalized() } ?: return null
+  return serviceAsync<LocalEmbeddingServiceProviderImpl>().getService(downloadArtifacts)?.embed(texts)?.map { it.normalized() } ?: return null
 }
 
 fun FloatTextEmbedding.normalized(): FloatTextEmbedding {

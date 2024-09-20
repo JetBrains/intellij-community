@@ -9,8 +9,8 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingStorageManager
-import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingsManager
+import com.intellij.platform.ml.embeddings.indexer.FileBasedEmbeddingIndexer
+import com.intellij.platform.ml.embeddings.actions.ActionEmbeddingStorageManager
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.ExperimentType.ENABLE_SEMANTIC_SEARCH
 import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
@@ -68,7 +68,7 @@ abstract class SearchEverywhereSemanticSettingsBase : SearchEverywhereSemanticSe
       state.filesTabManuallySet = true
       state.manualEnabledInFilesTab = newValue
       if (newValue) {
-        ProjectManager.getInstance().openProjects.forEach { FileBasedEmbeddingsManager.getInstance(it).prepareForSearch() }
+        ProjectManager.getInstance().openProjects.forEach { FileBasedEmbeddingIndexer.getInstance().prepareForSearch(it) }
       }
     }
 
@@ -89,7 +89,7 @@ abstract class SearchEverywhereSemanticSettingsBase : SearchEverywhereSemanticSe
       state.classesTabManuallySet = true
       state.manualEnabledInClassesTab = newValue
       if (newValue) {
-        ProjectManager.getInstance().openProjects.forEach { FileBasedEmbeddingsManager.getInstance(it).prepareForSearch() }
+        ProjectManager.getInstance().openProjects.forEach { FileBasedEmbeddingIndexer.getInstance().prepareForSearch(it) }
       }
       enabledInClassesTabFlow.value = newValue
     }
@@ -115,7 +115,7 @@ abstract class SearchEverywhereSemanticSettingsBase : SearchEverywhereSemanticSe
       state.symbolsTabManuallySet = true
       state.manualEnabledInSymbolsTab = newValue
       if (newValue) {
-        ProjectManager.getInstance().openProjects.forEach { FileBasedEmbeddingsManager.getInstance(it).prepareForSearch() }
+        ProjectManager.getInstance().openProjects.forEach { FileBasedEmbeddingIndexer.getInstance().prepareForSearch(it) }
       }
       enabledInSymbolsTabFlow.value = newValue
     }

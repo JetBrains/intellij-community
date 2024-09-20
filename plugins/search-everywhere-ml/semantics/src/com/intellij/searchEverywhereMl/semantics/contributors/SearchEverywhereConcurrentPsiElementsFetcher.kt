@@ -4,10 +4,8 @@ import com.intellij.ide.actions.SearchEverywherePsiRenderer
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
-import com.intellij.platform.ml.embeddings.search.utils.ScoredText
-import com.intellij.psi.PsiElement
+import com.intellij.platform.ml.embeddings.utils.ScoredText
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.Companion.ORDERED_PRIORITIES
-import com.intellij.searchEverywhereMl.semantics.utils.attachPsiPresentation
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.DescriptorPriority
 
@@ -81,11 +79,11 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
   }
 
   override fun ScoredText.findPriority(): DescriptorPriority {
-    return ORDERED_PRIORITIES.first { similarity > priorityThresholds[it]!! }
+    return ORDERED_PRIORITIES.firstOrNull { similarity > priorityThresholds[it]!! } ?: DescriptorPriority.LOW
   }
 
   companion object {
-    val PRIORITY_THRESHOLDS = (ORDERED_PRIORITIES zip listOf(0.68, 0.5, 0.4)).toMap()
-    private const val DESIRED_RESULTS_COUNT = 10
+    val PRIORITY_THRESHOLDS = (ORDERED_PRIORITIES zip listOf(0.5, 0.4, 0.3)).toMap()
+    private const val DESIRED_RESULTS_COUNT = 50
   }
 }

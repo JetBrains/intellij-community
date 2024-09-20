@@ -1,6 +1,6 @@
 package com.intellij.searchEverywhereMl.semantics.providers
 
-import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import com.intellij.platform.ml.embeddings.utils.ScoredText
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 

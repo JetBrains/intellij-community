@@ -13,8 +13,8 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.platform.ml.embeddings.search.indices.EntityId
-import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
+import com.intellij.platform.ml.embeddings.jvm.indices.EntityId
+import com.intellij.platform.ml.embeddings.jvm.wrappers.ActionEmbeddingsStorageWrapper
 import com.intellij.platform.ml.embeddings.utils.generateEmbeddingBlocking
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_ENABLED
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_HIGH_PRIORITY
@@ -101,7 +101,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
     var embedding: FloatTextEmbedding? = null
     if (action != null) {
       embedding = ActionManager.getInstance().getId(action)?.let { id ->
-        runBlockingMaybeCancellable { ActionEmbeddingsStorage.getInstance().index.lookup(EntityId(id)) }
+        runBlockingMaybeCancellable { ActionEmbeddingsStorageWrapper.getInstance().index.lookup(EntityId(id)) }
       }
     }
     if (embedding == null && actionText != null) {

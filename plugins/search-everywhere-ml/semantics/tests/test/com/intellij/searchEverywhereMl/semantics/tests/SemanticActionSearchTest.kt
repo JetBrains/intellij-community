@@ -5,8 +5,8 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingStorageManager
-import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
+import com.intellij.platform.ml.embeddings.actions.ActionEmbeddingStorageManager
+import com.intellij.platform.ml.embeddings.jvm.wrappers.ActionEmbeddingsStorageWrapper
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 import com.intellij.testFramework.PlatformTestUtil
@@ -15,22 +15,22 @@ import kotlin.time.Duration.Companion.minutes
 
 class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
   private val storage
-    get() = ActionEmbeddingsStorage.getInstance()
+    get() = ActionEmbeddingsStorageWrapper.getInstance()
 
   fun `test basic semantics`() = runTest {
     setupTest("java/IndexProjectAction.java") // open file in the editor to make all actions indexable
 
-    var neighbours = storage.searchNeighbours("delete all breakpoints", 10, 0.5).toIdsSet()
+    var neighbours = storage.searchNeighbours(modelService.embed("delete all breakpoints"), 10, 0.5).toIdsSet()
     assertContainsElements(neighbours, "Debugger.RemoveAllBreakpoints", "Debugger.RemoveAllBreakpointsInFile")
 
-    neighbours = storage.searchNeighbours("fix ide", 10, 0.5).toIdsSet()
+    neighbours = storage.searchNeighbours(modelService.embed("fix ide"), 10, 0.5).toIdsSet()
     assertContainsElements(
       neighbours,
       "CallSaul", // 'Repair IDE' action (don't ask why)
       "ExportImportGroup" // 'Manage IDE Settings' action
     )
 
-    neighbours = storage.searchNeighbours("web explorer", 10, 0.5).toIdsSet()
+    neighbours = storage.searchNeighbours(modelService.embed("web explorer"), 10, 0.5).toIdsSet()
     assertContainsElements(neighbours, "WebBrowser", "BrowseWeb")
   }
 

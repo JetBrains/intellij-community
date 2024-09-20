@@ -7,7 +7,7 @@ import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import com.intellij.platform.ml.embeddings.utils.ScoredText
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.providers.StreamSemanticItemsProvider
 import com.intellij.util.Processor
@@ -86,7 +86,7 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
                 continue
               }
 
-              for (descriptor in itemsProvider.createItemDescriptors(match.text, match.similarity, pattern)) {
+              for (descriptor in itemsProvider.createItemDescriptors(match.id, match.similarity.toDouble(), pattern)) {
                 ensureActive()
                 val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
                 mutex.withLock { prepareDescriptor() }?.let {

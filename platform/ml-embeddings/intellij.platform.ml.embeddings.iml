@@ -354,5 +354,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
   </component>
 </module>

@@ -3,27 +3,31 @@ package com.intellij.searchEverywhereMl.semantics.providers
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel
-import com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbeddingsStorage
-import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import com.intellij.openapi.project.Project
+import com.intellij.platform.ml.embeddings.indexer.IndexId
+import com.intellij.platform.ml.embeddings.indexer.configuration.EmbeddingsConfiguration
+import com.intellij.platform.ml.embeddings.utils.ScoredText
 import com.intellij.platform.ml.embeddings.utils.convertNameToNaturalLanguage
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchScopeUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
 
-abstract class SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWithSimilarity<*>> {
+abstract class SemanticPsiItemsProvider(val project: Project) : StreamSemanticItemsProvider<PsiItemWithSimilarity<*>> {
   lateinit var model: FilteringGotoByModel<*>
   lateinit var searchScope: GlobalSearchScope
 
   private val itemLimit: Int = ITEM_LIMIT
 
-  abstract fun getEmbeddingsStorage(): DiskSynchronizedEmbeddingsStorage<*>
+  abstract val indexId: IndexId
 
   override suspend fun search(pattern: String, similarityThreshold: Double?): List<ScoredText> {
     if (pattern.isBlank()) return emptyList()
-    return getEmbeddingsStorage().searchNeighbours(convertNameToNaturalLanguage(pattern), itemLimit, similarityThreshold)
+    return EmbeddingsConfiguration.getConfiguration().toStorageManagerWrapper()
+      .search(project, indexId, convertNameToNaturalLanguage(pattern), itemLimit, similarityThreshold?.toFloat())
   }
 
   override suspend fun streamSearch(
@@ -31,7 +35,7 @@ abstract class SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWit
     similarityThreshold: Double?,
   ): Flow<ScoredText> {
     if (pattern.isBlank()) return emptyFlow()
-    return getEmbeddingsStorage().streamSearchNeighbours(convertNameToNaturalLanguage(pattern), similarityThreshold)
+    return search(pattern, similarityThreshold).asFlow()
   }
 
   override suspend fun createItemDescriptors(

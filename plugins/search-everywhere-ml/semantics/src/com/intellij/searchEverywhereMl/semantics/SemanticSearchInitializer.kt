@@ -3,8 +3,8 @@ package com.intellij.searchEverywhereMl.semantics
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettings
-import com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettingsImpl
+import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettings
+import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettingsImpl
 import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 
 private class SemanticSearchInitializer : ProjectActivity {

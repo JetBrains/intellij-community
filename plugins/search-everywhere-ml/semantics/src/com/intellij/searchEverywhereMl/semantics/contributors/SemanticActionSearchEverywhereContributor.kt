@@ -16,7 +16,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import com.intellij.platform.ml.embeddings.utils.ScoredText
 import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.Companion.ORDERED_PRIORITIES
@@ -40,7 +40,7 @@ import javax.swing.ListCellRenderer
 /**
  * Contributor that adds semantic search functionality when searching for actions in Search Everywhere.
  * For search logic refer to [com.intellij.searchEverywhereMl.semantics.providers.SemanticActionsProvider].
- * For indexing logic refer to [com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage].
+ * For indexing logic refer to [com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingSearcher].
  * Delegates rendering and data retrieval functionality to [ActionSearchEverywhereContributor].
  * Can work with two types of action providers: server-based and local
  */
@@ -147,7 +147,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
                 continue
               }
 
-              for (descriptor in itemsProvider.createItemDescriptors(match.text, match.similarity, pattern)) {
+              for (descriptor in itemsProvider.createItemDescriptors(match.id, match.similarity.toDouble(), pattern)) {
                 val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
                 mutex.withLock { prepareDescriptor() }?.let {
                   if (noStandardResults && !sentNotification) {
