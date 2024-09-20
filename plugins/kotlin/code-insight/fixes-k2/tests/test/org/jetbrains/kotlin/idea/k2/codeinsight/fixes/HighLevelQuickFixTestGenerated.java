@@ -6129,7 +6129,44 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addGenericUpperBound")
+    public static class AddGenericUpperBound extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addGenericUpperBound/basic.kt");
+        }
+
+        @TestMetadata("boundAlreadyExists.kt")
+        public void testBoundAlreadyExists() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addGenericUpperBound/boundAlreadyExists.kt");
+        }
+
+        @TestMetadata("inferenceTwoParams.kt")
+        public void testInferenceTwoParams() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addGenericUpperBound/inferenceTwoParams.kt");
+        }
+
+        @TestMetadata("paramAsBound.kt")
+        public void testParamAsBound() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addGenericUpperBound/paramAsBound.kt");
+        }
+
+        @TestMetadata("withinDeclaration.kt")
+        public void testWithinDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addGenericUpperBound/withinDeclaration.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/addInline")

@@ -73,7 +73,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/addEmptyArgumentList", pattern = pattern)
             model("$idea/quickfix/addEqEqTrue", pattern = pattern)
             model("$idea/quickfix/addFunModifier", pattern = pattern)
-            model("$idea/quickfix/addGenericUpperBound", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/addGenericUpperBound", pattern = pattern)
             model("$idea/quickfix/addInline", pattern = pattern)
             model("$idea/quickfix/addInlineToReifiedFunctionFix", pattern = pattern)
             model("$idea/quickfix/addIsToWhenCondition", pattern = pattern)
@@ -225,6 +225,11 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             )
             model(
                 "$idea/quickfix/modifiers/addOpenToClassDeclaration",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
+                "$idea/quickfix/addGenericUpperBound",
                 pattern = pattern,
                 testMethodName = testMethodName,
             )

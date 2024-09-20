@@ -180,6 +180,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ConvertKClassToClassFixFactories.initializerTypeMismatchFixFactory)
         registerFactory(ConvertKClassToClassFixFactories.returnTypeMismatchFixFactory)
         registerFactory(PropertyInitializerInInterfaceFixFactories.convertPropertyInitializerToGetterFixFactory)
+        registerFactory(AddGenericUpperBoundFixFactories.upperBoundViolatedFixFactory)
+        registerFactory(AddGenericUpperBoundFixFactories.upperBoundViolatedBasedOnJavaAnnotationsFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

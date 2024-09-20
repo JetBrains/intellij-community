@@ -5,3 +5,4 @@ fun <T, U : T> foo() = 1
 fun <E, F : E> bar() = foo<E, F<caret>>()
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddGenericUpperBoundFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddGenericUpperBoundFix
