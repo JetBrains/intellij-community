@@ -1,14 +1,12 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.tools.testsBootstrap",
-  srcs = glob(['src/**/*.kt', 'src/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
   deps = [
-    "@community//platform/boot:intellij.platform.boot",
     "@libraries//:junit",
     "@libraries//:junit-platform-launcher.provided",
     "@libraries//:junit-jupiter-api.provided",
@@ -16,5 +14,6 @@ kt_jvm_library(
     "@libraries//:serviceMessages",
     "@libraries//:junit-jupiter-engine.provided",
     "@libraries//:opentest4j"
-  ]
+  ],
+  runtime_deps = ["@community//platform/boot:intellij.platform.boot"]
 )

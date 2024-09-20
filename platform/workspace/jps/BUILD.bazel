@@ -1,12 +1,18 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "11",
+  x_optin = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.platform.workspace.jps",
-  srcs = glob(['gen/**/*.kt', 'gen/**/*.java','resources/**/*.kt', 'resources/**/*.java','src/**/*.kt', 'src/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
-  plugins = ["@libraries//:serialization_plugin"],
+  kotlinc_opts = ":custom",
   deps = [
     "@libraries//:kotlin-stdlib",
     "@community//platform/workspace/storage:intellij.platform.workspace.storage",
@@ -21,5 +27,6 @@ kt_jvm_library(
     "@libraries//:opentelemetry-sdk",
     "@libraries//:opentelemetry-semconv",
     "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry"
-  ]
+  ],
+  exports = ["@community//platform/workspace/storage:intellij.platform.workspace.storage"]
 )

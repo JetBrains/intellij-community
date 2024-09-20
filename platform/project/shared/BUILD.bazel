@@ -1,0 +1,17 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.project",
+  visibility = ["//visibility:public"],
+  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@community//platform/kernel/shared:intellij.platform.kernel",
+    "@community//platform/projectModel-api:intellij.platform.projectModel"
+  ]
+)

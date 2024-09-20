@@ -1,0 +1,30 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.usageView.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:jackson-core",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/statistics:intellij.platform.statistics",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/ide-core:intellij.platform.ide.core",
+    "@community//platform/ide-core-impl:intellij.platform.ide.core.impl",
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/indexing-api:intellij.platform.indexing",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@community//platform/analysis-api:intellij.platform.analysis",
+    "@community//platform/core-impl:intellij.platform.core.impl",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@community//platform/usageView:intellij.platform.usageView",
+    "@community//platform/lang-api:intellij.platform.lang",
+    "@community//platform/util/concurrency:intellij.platform.concurrency",
+    "@community//platform/platform-impl:intellij.platform.ide.impl",
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines"
+  ]
+)

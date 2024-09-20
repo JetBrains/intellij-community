@@ -1,0 +1,35 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  x_optin = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi"
+  ]
+)
+
+kt_jvm_library(
+  name = "fleet.rpc",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = ":custom",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@community//fleet/reporting/api:fleet.reporting.api",
+    "@community//fleet/preferences:fleet.preferences",
+    "@libraries//:kotlin-reflect",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:annotations",
+    "@libraries//:kotlinx-coroutines-slf4j",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:rpc-compiler-plugin.provided",
+    "@community//fleet/util/core:fleet.util.core",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv"
+  ]
+)

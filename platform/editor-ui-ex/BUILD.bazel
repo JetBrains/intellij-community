@@ -1,0 +1,27 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.editor.ex",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/core-impl:intellij.platform.core.impl",
+    "@community//platform/indexing-impl:intellij.platform.indexing.impl",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/statistics:intellij.platform.statistics"
+  ],
+  exports = [
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/core-impl:intellij.platform.core.impl"
+  ]
+)

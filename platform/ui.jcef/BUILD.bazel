@@ -1,0 +1,40 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+
+kt_javac_options(
+  name = "custom-javac-options",
+  release = "17",
+  x_ep_disable_all_checks = True,
+  add_exports = [
+    "java.desktop/sun.awt",
+    "java.desktop/java.awt.peer"
+  ]
+)
+
+kt_jvm_library(
+  name = "intellij.platform.ui.jcef",
+  visibility = ["//visibility:public"],
+  srcs = glob(["jcef/**/*.kt", "jcef/**/*.java"]),
+  javac_opts = ":custom-javac-options",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:annotations",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:jcef",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/util-ex:intellij.platform.util.ex",
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@community//platform/ide-core:intellij.platform.ide.core",
+    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
+    "@community//platform/util/concurrency:intellij.platform.concurrency",
+    "@community//platform/platform-api:intellij.platform.ide",
+    "@community//platform/core-impl:intellij.platform.core.impl",
+    "@libraries//:jbr-api",
+    "@community//platform/jbr:intellij.platform.jbr"
+  ],
+  exports = ["@libraries//:jcef"]
+)

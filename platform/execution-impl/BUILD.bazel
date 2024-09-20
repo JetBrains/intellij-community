@@ -1,0 +1,42 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.execution.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/platform-api:intellij.platform.ide",
+    "@community//platform/lang-api:intellij.platform.lang",
+    "@community//platform/statistics:intellij.platform.statistics",
+    "@community//platform/platform-impl:intellij.platform.ide.impl",
+    "@community//platform/macro:intellij.platform.macro",
+    "@libraries//:miglayout-swing",
+    "@libraries//:guava",
+    "@libraries//:streamex",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/platform-util-io-impl:intellij.platform.ide.util.io.impl",
+    "@libraries//:jediterm-core",
+    "@libraries//:jediterm-ui",
+    "@libraries//:pty4j",
+    "@community//platform/execution:intellij.platform.execution",
+    "@community//platform/wsl-impl:intellij.platform.wsl.impl",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/workspace/storage:intellij.platform.workspace.storage",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:jna-platform",
+    "@libraries//:hash4j",
+    "@community//platform/workspace/jps:intellij.platform.workspace.jps",
+    "@community//platform/backend/workspace:intellij.platform.backend.workspace",
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@community//platform/ijent:intellij.platform.ijent",
+    "@community//platform/ijent/impl:intellij.platform.ijent.community.impl",
+    "@libraries//:rd-core",
+    "@community//platform/rd-platform-community:intellij.platform.rd.community",
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines"
+  ],
+  exports = ["@community//platform/macro:intellij.platform.macro"]
+)

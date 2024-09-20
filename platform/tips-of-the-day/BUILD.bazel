@@ -1,0 +1,24 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.tips",
+  visibility = ["//visibility:public"],
+  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@community//platform/platform-impl:intellij.platform.ide.impl",
+    "@community//platform/statistics:intellij.platform.statistics",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@libraries//:jsoup",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:jackson-core",
+    "@libraries//:jackson-databind",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@libraries//:kotlinx-datetime-jvm",
+    "@community//platform/feedback:intellij.platform.feedback"
+  ]
+)

@@ -1,0 +1,24 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.debugger",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@community//platform/lang-api:intellij.platform.lang",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@community//platform/util/concurrency:intellij.platform.concurrency",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@libraries//:kotlin-stdlib"
+  ],
+  exports = [
+    "@community//platform/lang-api:intellij.platform.lang",
+    "@community//platform/util/concurrency:intellij.platform.concurrency"
+  ]
+)

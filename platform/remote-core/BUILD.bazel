@@ -1,0 +1,24 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.remote.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/credential-store:intellij.platform.credentialStore",
+    "@community//platform/util-ex:intellij.platform.util.ex",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlin-reflect",
+    "@libraries//:guava"
+  ],
+  runtime_deps = [
+    "@libraries//:slf4j-api",
+    "@libraries//:slf4j-jdk14"
+  ]
+)

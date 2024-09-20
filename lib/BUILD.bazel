@@ -7,3 +7,11 @@ java_import(
   ],
   visibility = ["//visibility:public"]
 )
+
+java_import(
+  name = "mac",
+  jars = [
+    "eawtstub.jar"
+  ],
+  visibility = ["//visibility:public"]
+)

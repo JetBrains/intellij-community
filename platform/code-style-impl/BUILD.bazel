@@ -1,0 +1,19 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.codeStyle.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/analysis-impl:intellij.platform.analysis.impl",
+    "@community//platform/code-style-api:intellij.platform.codeStyle",
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:streamex",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/editor-ui-api:intellij.platform.editor"
+  ]
+)

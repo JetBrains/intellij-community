@@ -1,9 +1,9 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.idea.community.build.tasks",
-  srcs = glob(['src/**/*.kt', 'src/**/*.java','resources/**/*.kt', 'resources/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   plugins = ["@libraries//:serialization_plugin"],
@@ -24,9 +24,6 @@ kt_jvm_library(
     "@community//platform/util-rt:intellij.platform.util.rt",
     "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
     "@community//platform/diagnostic/telemetry.exporters:intellij.platform.diagnostic.telemetry.exporters",
-    "@libraries//:slf4j-api",
-    "@libraries//:slf4j-jdk14",
-    "@libraries//:bcpkix-jdk18on",
     "@community//platform/build-scripts/downloader:intellij.platform.buildScripts.downloader",
     "@libraries//:annotations",
     "@community//platform/util/base:intellij.platform.util.base",
@@ -34,5 +31,10 @@ kt_jvm_library(
     "@libraries//:serviceMessages",
     "@libraries//:opentelemetry-extension-kotlin",
     "@libraries//:netty-buffer"
+  ],
+  runtime_deps = [
+    "@libraries//:slf4j-api",
+    "@libraries//:slf4j-jdk14",
+    "@libraries//:bcpkix-jdk18on"
   ]
 )

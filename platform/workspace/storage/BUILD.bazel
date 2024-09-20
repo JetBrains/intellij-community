@@ -1,12 +1,21 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "11",
+  x_optin = [
+    "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
+    "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi"
+  ]
+)
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.platform.workspace.storage",
-  srcs = glob(['gen/**/*.kt', 'gen/**/*.java','src/**/*.kt', 'src/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
-  plugins = ["@libraries//:serialization_plugin"],
+  kotlinc_opts = ":custom",
   deps = [
     "@libraries//:kotlin-stdlib",
     "@libraries//:guava",

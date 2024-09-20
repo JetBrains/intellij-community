@@ -1,0 +1,23 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.bootstrap",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/util-class-loader:intellij.platform.util.classLoader",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/service-container:intellij.platform.serviceContainer",
+    "@community//platform/core-impl:intellij.platform.core.impl",
+    "@community//platform/platform-impl:intellij.platform.ide.impl",
+    "@community//platform/boot:intellij.platform.boot",
+    "@libraries//:jbr-api",
+    "@community//platform/runtime/product:intellij.platform.runtime.product",
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@community//platform/diagnostic/telemetry-impl:intellij.platform.diagnostic.telemetry.impl"
+  ],
+  runtime_deps = ["@community//platform/bootstrap/coroutine:intellij.platform.bootstrap.coroutine"]
+)

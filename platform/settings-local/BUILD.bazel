@@ -1,0 +1,41 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  x_optin = ["com.intellij.util.xmlb.SettingsInternalApi"]
+)
+
+kt_jvm_library(
+  name = "intellij.platform.settings.local",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = ":custom",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:annotations",
+    "@community//platform/extensions:intellij.platform.extensions",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/settings:intellij.platform.settings",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl",
+    "@community//platform/ide-core:intellij.platform.ide.core",
+    "@libraries//:kotlinx-serialization-protobuf-jvm",
+    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@libraries//:h2-mvstore",
+    "@libraries//:kotlinx-serialization-cbor-jvm",
+    "@libraries//:jackson-core",
+    "@libraries//:jackson-dataformat-cbor",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
+    "@community//platform/object-serializer:intellij.platform.objectSerializer",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@libraries//:aalto-xml"
+  ]
+)

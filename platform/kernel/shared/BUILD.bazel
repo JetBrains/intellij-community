@@ -1,0 +1,30 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.kernel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/kernel/rpc:intellij.platform.rpc",
+    "@libraries//:rhizomedb-compiler-plugin.provided",
+    "@community//fleet/kernel:fleet.kernel",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:kotlinx-collections-immutable-jvm",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/ide-core:intellij.platform.ide.core",
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines"
+  ],
+  exports = [
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/kernel/rpc:intellij.platform.rpc",
+    "@community//fleet/kernel:fleet.kernel",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:kotlinx-serialization-core-jvm"
+  ]
+)

@@ -1,0 +1,31 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.core.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j8",
+  kotlinc_opts = "//:k8",
+  deps = [
+    "@community//platform/core-api:intellij.platform.core",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/util-class-loader:intellij.platform.util.classLoader",
+    "@libraries//:aalto-xml",
+    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
+    "@libraries//:automaton",
+    "@libraries//:guava",
+    "@community//platform/util/diff:intellij.platform.util.diff",
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines"
+  ],
+  exports = [
+    "@community//platform/core-api:intellij.platform.core",
+    "@libraries//:kotlin-stdlib"
+  ]
+)

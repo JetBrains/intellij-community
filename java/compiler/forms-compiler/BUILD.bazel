@@ -1,12 +1,11 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.java.guiForms.compiler",
-  srcs = glob(['src/**/*.kt', 'src/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
-  plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@community//platform/util/jdom:intellij.platform.util.jdom",
     "@community//platform/forms_rt:intellij.java.guiForms.rt",
@@ -14,5 +13,6 @@ kt_jvm_library(
     "@libraries//:forms",
     "@community//java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil",
     "@libraries//:annotations"
-  ]
+  ],
+  exports = ["@community//java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil"]
 )

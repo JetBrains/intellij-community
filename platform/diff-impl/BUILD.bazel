@@ -1,0 +1,27 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.diff.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/diff-api:intellij.platform.diff",
+    "@community//platform/execution-impl:intellij.platform.execution.impl",
+    "@community//platform/platform-api:intellij.platform.ide",
+    "@community//platform/platform-impl:intellij.platform.ide.impl",
+    "@community//platform/lang-api:intellij.platform.lang",
+    "@libraries//:guava",
+    "@community//platform/statistics:intellij.platform.statistics",
+    "@community//platform/boot:intellij.platform.boot",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/platform-util-io-impl:intellij.platform.ide.util.io.impl",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
+    "@community//platform/util/jdom:intellij.platform.util.jdom"
+  ],
+  exports = ["@community//platform/diff-api:intellij.platform.diff"]
+)

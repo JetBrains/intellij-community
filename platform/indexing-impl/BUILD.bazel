@@ -1,0 +1,32 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.indexing.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/core-impl:intellij.platform.core.impl",
+    "@community//platform/indexing-api:intellij.platform.indexing",
+    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:streamex",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/statistics:intellij.platform.statistics",
+    "@libraries//:HdrHistogram",
+    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@libraries//:guava",
+    "@community//platform/workspace/jps:intellij.platform.workspace.jps",
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@libraries//:caffeine",
+    "@community//platform/util/nanoxml:intellij.platform.util.nanoxml",
+    "@libraries//:aalto-xml",
+    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom"
+  ],
+  exports = ["@community//platform/indexing-api:intellij.platform.indexing"]
+)

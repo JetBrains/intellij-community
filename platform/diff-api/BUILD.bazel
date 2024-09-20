@@ -1,0 +1,24 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.diff",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/util/diff:intellij.platform.util.diff",
+    "@community//platform/ide-core:intellij.platform.ide.core",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@community//platform/analysis-api:intellij.platform.analysis",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@libraries//:kotlin-stdlib"
+  ],
+  exports = [
+    "@community//platform/util/diff:intellij.platform.util.diff",
+    "@community//platform/ide-core:intellij.platform.ide.core"
+  ]
+)

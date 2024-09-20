@@ -1,0 +1,37 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "11",
+  x_optin = ["kotlinx.serialization.ExperimentalSerializationApi"]
+)
+
+kt_jvm_library(
+  name = "intellij.platform.diagnostic.telemetry.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j11",
+  kotlinc_opts = ":custom",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:jackson-core",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:opentelemetry-extension-kotlin",
+    "@community//platform/util:intellij.platform.util",
+    "@libraries//:opentelemetry-exporter-otlp-common",
+    "@libraries//:HdrHistogram",
+    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@community//platform/core-impl:intellij.platform.core.impl",
+    "@community//platform/util/http:intellij.platform.util.http",
+    "@libraries//:kotlinx-serialization-protobuf-jvm",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@community//platform/diagnostic/telemetry.exporters:intellij.platform.diagnostic.telemetry.exporters",
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines"
+  ],
+  exports = ["@community//platform/diagnostic/telemetry.exporters:intellij.platform.diagnostic.telemetry.exporters"]
+)

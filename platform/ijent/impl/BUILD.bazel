@@ -1,0 +1,19 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.ijent.community.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/core-nio-fs:intellij.platform.core.nio.fs",
+    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@community//platform/ijent:intellij.platform.ijent",
+    "@community//platform/eel:intellij.platform.eel"
+  ]
+)

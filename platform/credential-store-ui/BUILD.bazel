@@ -1,0 +1,18 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.credentialStore.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/credential-store-impl:intellij.platform.credentialStore.impl",
+    "@community//platform/platform-api:intellij.platform.ide",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@community//platform/platform-impl:intellij.platform.ide.impl",
+    "@community//platform/core-ui:intellij.platform.core.ui"
+  ],
+  exports = ["@community//platform/credential-store-impl:intellij.platform.credentialStore.impl"]
+)

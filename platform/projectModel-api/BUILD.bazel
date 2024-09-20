@@ -1,12 +1,11 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.platform.projectModel",
-  srcs = glob(['src/**/*.kt', 'src/**/*.java','resources/**/*.kt', 'resources/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@community//platform/core-api:intellij.platform.core",
     "@community//jps/model-api:intellij.platform.jps.model",
@@ -17,5 +16,9 @@ kt_jvm_library(
     "@community//platform/workspace/jps:intellij.platform.workspace.jps",
     "@community//platform/backend/workspace:intellij.platform.backend.workspace",
     "@community//platform/util/xmlDom:intellij.platform.util.xmlDom"
+  ],
+  exports = [
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//jps/model-api:intellij.platform.jps.model"
   ]
 )

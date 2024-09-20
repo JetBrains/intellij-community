@@ -1,0 +1,43 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.analysis.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/analysis-api:intellij.platform.analysis",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/core-impl:intellij.platform.core.impl",
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/extensions:intellij.platform.extensions",
+    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl",
+    "@community//platform/editor-ui-ex:intellij.platform.editor.ex",
+    "@community//platform/indexing-api:intellij.platform.indexing",
+    "@community//platform/indexing-impl:intellij.platform.indexing.impl",
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@libraries//:gson",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/code-style-api:intellij.platform.codeStyle",
+    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
+    "@libraries//:streamex",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@community//platform/util/text-matching:intellij.platform.util.text.matching",
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@libraries//:jackson-databind",
+    "@libraries//:jackson-core",
+    "@libraries//:jackson-module-kotlin",
+    "@community//platform/util-class-loader:intellij.platform.util.classLoader"
+  ],
+  exports = [
+    "@community//platform/analysis-api:intellij.platform.analysis",
+    "@community//platform/core-impl:intellij.platform.core.impl",
+    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl"
+  ]
+)

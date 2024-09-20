@@ -1,0 +1,30 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.ide.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/util/concurrency:intellij.platform.concurrency",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@community//platform/analysis-api:intellij.platform.analysis",
+    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
+    "@community//platform/util-ex:intellij.platform.util.ex",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@community//platform/settings:intellij.platform.settings",
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines"
+  ],
+  exports = ["@community//platform/core-api:intellij.platform.core"]
+)

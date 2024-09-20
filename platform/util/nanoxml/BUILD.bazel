@@ -1,10 +1,9 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.platform.util.nanoxml",
-  srcs = glob(['src/**/*.kt', 'src/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
-  plugins = ["@libraries//:serialization_plugin"]
+  kotlinc_opts = "//:k11"
 )

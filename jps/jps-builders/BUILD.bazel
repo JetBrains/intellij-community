@@ -1,25 +1,22 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.platform.jps.build",
-  srcs = glob(['src/**/*.kt', 'src/**/*.java','resources/**/*.kt', 'resources/**/*.java','gen/**/*.kt', 'gen/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = "//:k11",
-  plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@community//platform/util:intellij.platform.util",
     "@community//platform/forms_rt:intellij.java.guiForms.rt",
     "@community//java/compiler/forms-compiler:intellij.java.guiForms.compiler",
     "@community//java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil",
-    "@community//java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
     "@community//aether-dependency-resolver:intellij.java.aetherDependencyResolver",
     "@libraries//:asm-all",
     "@community//platform/util/jdom:intellij.platform.util.jdom",
     "@community//platform/util/nanoxml:intellij.platform.util.nanoxml",
     "@libraries//:forms",
     "@libraries//:protobuf-java",
-    "@community//java/java-runtime:intellij.java.rt",
     "@community//jps/model-api:intellij.platform.jps.model",
     "@community//jps/model-serialization:intellij.platform.jps.model.serialization",
     "@community//jps/model-impl:intellij.platform.jps.model.impl",
@@ -41,5 +38,14 @@ kt_jvm_library(
     "@libraries//:netty-codec-protobuf",
     "@libraries//:annotations",
     "@libraries//:h2-mvstore"
+  ],
+  exports = [
+    "@community//platform/util:intellij.platform.util",
+    "@community//jps/jps-builders-6:intellij.platform.jps.build.javac.rt",
+    "@community//platform/tracing:intellij.platform.tracing.rt"
+  ],
+  runtime_deps = [
+    "@community//java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
+    "@community//java/java-runtime:intellij.java.rt"
   ]
 )

@@ -1,0 +1,30 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.credentialStore.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/credential-store:intellij.platform.credentialStore",
+    "@community//platform/ide-core:intellij.platform.ide.core",
+    "@community//platform/ide-core-impl:intellij.platform.ide.core.impl",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
+    "@community//platform/remote-core:intellij.platform.remote.core",
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:jna-platform",
+    "@libraries//:guava",
+    "@libraries//:bcpkix-jdk18on",
+    "@libraries//:snakeyaml",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:dbus-java-transport-native-unixsocket",
+    "@libraries//:caffeine"
+  ]
+)

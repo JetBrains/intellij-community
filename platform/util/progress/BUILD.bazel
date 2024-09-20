@@ -1,11 +1,18 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "1.8",
+  x_optin = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.platform.util.progress",
-  srcs = glob(['src/**/*.kt', 'src/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
-  kotlinc_opts = "//:k8",
+  kotlinc_opts = ":custom",
   plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@libraries//:annotations",

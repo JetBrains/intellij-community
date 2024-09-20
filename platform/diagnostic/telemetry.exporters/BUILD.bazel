@@ -1,11 +1,18 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "11",
+  x_optin = ["kotlinx.serialization.ExperimentalSerializationApi"]
+)
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.platform.diagnostic.telemetry.exporters",
-  srcs = glob(['resources/**/*.kt', 'resources/**/*.java','src/**/*.kt', 'src/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
+  kotlinc_opts = ":custom",
   plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@libraries//:kotlin-stdlib",

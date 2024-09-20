@@ -1,0 +1,64 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+
+kt_javac_options(
+  name = "custom-javac-options",
+  release = "17",
+  x_ep_disable_all_checks = True,
+  add_exports = [
+    "java.desktop/sun.swing",
+    "java.desktop/sun.awt"
+  ]
+)
+
+kt_jvm_library(
+  name = "intellij.platform.ide",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = ":custom-javac-options",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/extensions:intellij.platform.extensions",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/forms_rt:intellij.java.guiForms.rt",
+    "@community//platform/platform-resources-en:intellij.platform.resources.en",
+    "@community//platform/icons:intellij.platform.icons",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@community//platform/analysis-api:intellij.platform.analysis",
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@libraries//:jna-platform",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/util-ex:intellij.platform.util.ex",
+    "@community//platform/util/concurrency:intellij.platform.concurrency",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
+    "@libraries//:jcef",
+    "@community//platform/code-style-api:intellij.platform.codeStyle",
+    "@community//platform/credential-store:intellij.platform.credentialStore",
+    "@community//platform/remote-core:intellij.platform.remote.core",
+    "@community//platform/ide-core:intellij.platform.ide.core",
+    "@community//platform/util/text-matching:intellij.platform.util.text.matching",
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@libraries//:jackson-core",
+    "@libraries//:caffeine",
+    "@community//platform/progress/shared:intellij.platform.ide.progress",
+    "@community//platform/util/diff:intellij.platform.util.diff"
+  ],
+  exports = [
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/forms_rt:intellij.java.guiForms.rt",
+    "@community//platform/platform-resources-en:intellij.platform.resources.en",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@community//platform/analysis-api:intellij.platform.analysis",
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@community//platform/credential-store:intellij.platform.credentialStore",
+    "@community//platform/remote-core:intellij.platform.remote.core",
+    "@community//platform/ide-core:intellij.platform.ide.core",
+    "@community//platform/progress/shared:intellij.platform.ide.progress"
+  ]
+)

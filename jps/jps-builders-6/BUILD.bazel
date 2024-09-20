@@ -1,12 +1,11 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.platform.jps.build.javac.rt",
-  srcs = glob(['src/**/*.kt', 'src/**/*.java','gen/**/*.kt', 'gen/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
-  plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@community//platform/util-rt:intellij.platform.util.rt",
     "@libraries//:annotations-java5",

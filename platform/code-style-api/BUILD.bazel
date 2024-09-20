@@ -1,0 +1,18 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.codeStyle",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@community//platform/extensions:intellij.platform.extensions",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/util/concurrency:intellij.platform.concurrency"
+  ]
+)

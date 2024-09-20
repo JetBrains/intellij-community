@@ -1,12 +1,18 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  x_optin = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.platform.backend.workspace",
-  srcs = glob(['src/**/*.kt', 'src/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  kotlinc_opts = ":custom",
   deps = [
     "@libraries//:kotlin-stdlib",
     "@community//platform/workspace/storage:intellij.platform.workspace.storage",

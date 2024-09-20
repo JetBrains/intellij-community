@@ -1,0 +1,40 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  x_optin = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi"
+  ]
+)
+
+kt_jvm_library(
+  name = "fleet.kernel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = ":custom",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@community//fleet/rhizomedb:fleet.rhizomedb",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@libraries//:rhizomedb-compiler-plugin.provided",
+    "@community//fleet/util/core:fleet.util.core",
+    "@community//fleet/rpc:fleet.rpc",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//fleet/preferences:fleet.preferences",
+    "@community//fleet/reporting/api:fleet.reporting.api"
+  ],
+  exports = [
+    "@community//fleet/rhizomedb:fleet.rhizomedb",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@community//fleet/util/core:fleet.util.core",
+    "@community//fleet/rpc:fleet.rpc",
+    "@libraries//:kotlinx-coroutines-core-jvm"
+  ]
+)

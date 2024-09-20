@@ -1,9 +1,9 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.platform.util",
-  srcs = glob(['src/**/*.kt', 'src/**/*.java','resources/**/*.kt', 'resources/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   plugins = ["@libraries//:serialization_plugin"],
@@ -17,8 +17,6 @@ kt_jvm_library(
     "@libraries//:oro",
     "@libraries//:lz4-java",
     "@libraries//:commons-compress",
-    "@libraries//:commons-io",
-    "@libraries//:commons-codec",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:kotlin-stdlib",
     "@community//platform/util/base:intellij.platform.util.base",
@@ -29,5 +27,14 @@ kt_jvm_library(
     "@libraries//:kotlinx-serialization-json-jvm",
     "@libraries//:caffeine",
     "@community//platform/util/troveCompileOnly:intellij.platform.util.troveCompileOnly"
+  ],
+  exports = [
+    "@libraries//:annotations",
+    "@community//platform/util-rt:intellij.platform.util.rt",
+    "@community//platform/util/base:intellij.platform.util.base"
+  ],
+  runtime_deps = [
+    "@libraries//:commons-io",
+    "@libraries//:commons-codec"
   ]
 )

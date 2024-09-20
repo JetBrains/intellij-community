@@ -1,0 +1,13 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.externalSystem.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j8",
+  kotlinc_opts = "//:k8",
+  deps = [
+    "@community//platform/object-serializer/annotations:intellij.platform.objectSerializer.annotations",
+    "@libraries//:annotations"
+  ]
+)

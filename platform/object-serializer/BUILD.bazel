@@ -1,0 +1,27 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.objectSerializer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:ion-java",
+    "@community//platform/util:intellij.platform.util",
+    "@libraries//:kotlin-reflect",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/util-ex:intellij.platform.util.ex",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@community//platform/object-serializer/annotations:intellij.platform.objectSerializer.annotations",
+    "@libraries//:lz4-java",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
+    "@community//platform/settings:intellij.platform.settings"
+  ]
+)

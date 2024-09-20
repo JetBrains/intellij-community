@@ -1,14 +1,24 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  x_optin = [
+    "kotlin.RequiresOptIn",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+    "kotlinx.coroutines.ExperimentalCoroutinesApi"
+  ]
+)
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.platform.buildScripts",
-  srcs = glob(['src/**/*.kt', 'src/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  kotlinc_opts = ":custom",
   plugins = ["@libraries//:serialization_plugin"],
   deps = [
-    "@libraries//:commons-cli",
     "@community//platform/build-scripts/downloader:intellij.platform.buildScripts.downloader",
     "@libraries//:commons-compress",
     "@community//platform/util:intellij.platform.util",
@@ -26,13 +36,10 @@ kt_jvm_library(
     "@libraries//:jackson-jr-objects",
     "@community//plugins/groovy/jps-plugin:intellij.groovy.jps",
     "@community//platform/statistics/config:intellij.platform.statistics.config",
-    "@community//plugins/groovy/rt:intellij.groovy.rt",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:gson",
     "@libraries//:protobuf-java",
-    "@community//plugins/devkit/jps-plugin:intellij.devkit.jps",
     "@libraries//:devkit-runtime-module-repository-jps",
-    "@community//plugins/ui-designer/jps-plugin:intellij.java.guiForms.jps",
     "@community//build/tasks:intellij.idea.community.build.tasks",
     "@community//build/deps:intellij.idea.community.build.dependencies",
     "@community//platform/util/jdom:intellij.platform.util.jdom",
@@ -61,26 +68,32 @@ kt_jvm_library(
     "@libraries//:slf4j-api",
     "@libraries//:apple-notary-api-kotlin-client",
     "@libraries//:structure-intellij",
-    "@libraries//:jaxb-api",
-    "@libraries//:jaxb-runtime",
-    "@libraries//:javax.activation",
     "@libraries//:serviceMessages",
-    "@libraries//:kotlin-reflect",
     "@libraries//:jsoup",
     "@libraries//:asm-all",
     "@libraries//:tools-java",
     "@libraries//:hash4j",
     "@libraries//:jbr-api",
     "@libraries//:kotlinx-serialization-protobuf-jvm",
-    "@libraries//:jackson-module-kotlin",
     "@libraries//:jackson-dataformat-yaml",
     "@libraries//:ion-java",
     "@community//platform/boot:intellij.platform.boot",
     "@community//platform/ijent/buildConstants:intellij.platform.ijent.community.buildConstants",
     "@libraries//:ktor-client-core-jvm",
-    "@libraries//:snakeyaml",
     "@libraries//:netty-all",
     "@libraries//:netty-tcnative-boringssl-static",
     "@community//platform/util/coroutines:intellij.platform.util.coroutines"
+  ],
+  runtime_deps = [
+    "@libraries//:commons-cli",
+    "@community//plugins/groovy/rt:intellij.groovy.rt",
+    "@community//plugins/devkit/jps-plugin:intellij.devkit.jps",
+    "@community//plugins/ui-designer/jps-plugin:intellij.java.guiForms.jps",
+    "@libraries//:jaxb-api",
+    "@libraries//:jaxb-runtime",
+    "@libraries//:javax.activation",
+    "@libraries//:kotlin-reflect",
+    "@libraries//:jackson-module-kotlin",
+    "@libraries//:snakeyaml"
   ]
 )

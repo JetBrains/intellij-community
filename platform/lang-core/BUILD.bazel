@@ -1,0 +1,26 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.lang.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/ide-core:intellij.platform.ide.core",
+    "@community//platform/execution:intellij.platform.execution",
+    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/util-class-loader:intellij.platform.util.classLoader",
+    "@community//platform/util/concurrency:intellij.platform.concurrency",
+    "@community//platform/code-style-api:intellij.platform.codeStyle",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@community//platform/util-ex:intellij.platform.util.ex",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@community//platform/analysis-api:intellij.platform.analysis",
+    "@community//platform/usageView:intellij.platform.usageView"
+  ]
+)

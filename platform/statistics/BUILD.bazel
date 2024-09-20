@@ -1,0 +1,34 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.statistics",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/core-impl:intellij.platform.core.impl",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:annotations",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/statistics/uploader:intellij.platform.statistics.uploader",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/util/concurrency:intellij.platform.concurrency",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@libraries//:jna-platform",
+    "@libraries//:ap-validation",
+    "@community//platform/runtime/product:intellij.platform.runtime.product",
+    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
+    "@community//platform/util-ex:intellij.platform.util.ex",
+    "@libraries//:caffeine",
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@community//platform/ide-core:intellij.platform.ide.core",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@libraries//:jackson-core",
+    "@libraries//:jackson-databind",
+    "@libraries//:jackson-module-kotlin",
+    "@libraries//:kotlin-reflect",
+    "@libraries//:kotlinx-coroutines-core-jvm"
+  ],
+  exports = ["@libraries//:ap-validation"]
+)

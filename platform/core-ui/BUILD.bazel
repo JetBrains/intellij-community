@@ -1,0 +1,16 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.core.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:hash4j"
+  ]
+)

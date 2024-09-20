@@ -1,12 +1,11 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.platform.testFramework.core",
-  srcs = glob(['resources/**/*.kt', 'resources/**/*.java','src/**/*.kt', 'src/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@community//platform/util:intellij.platform.util",
     "@community//platform/util-class-loader:intellij.platform.util.classLoader",

@@ -1,0 +1,45 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+
+kt_javac_options(
+  name = "custom-javac-options",
+  release = "17",
+  x_ep_disable_all_checks = True,
+  add_exports = [
+    "java.desktop/sun.font",
+    "java.desktop/sun.awt.image"
+  ]
+)
+
+kt_jvm_library(
+  name = "intellij.platform.util.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = ":custom-javac-options",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@community//lib:mac",
+    "@community//platform/util:intellij.platform.util",
+    "@libraries//:imgscalr-lib",
+    "@libraries//:jna-platform",
+    "@libraries//:java-compatibility",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/util-ex:intellij.platform.util.ex",
+    "@libraries//:netty-buffer",
+    "@libraries//:caffeine",
+    "@libraries//:aalto-xml",
+    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
+    "@community//platform/util/zip:intellij.platform.util.zip",
+    "@libraries//:jbr-api",
+    "@libraries//:jsvg",
+    "@community//platform/util/rt-java8:intellij.platform.util.rt.java8",
+    "@libraries//:hash4j",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-protobuf-jvm",
+    "@libraries//:h2-mvstore"
+  ]
+)

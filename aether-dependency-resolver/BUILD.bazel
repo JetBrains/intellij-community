@@ -1,12 +1,11 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  visibility = ["//visibility:public"],
   name = "intellij.java.aetherDependencyResolver",
-  srcs = glob(['src/**/*.kt', 'src/**/*.java']),
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = "//:k11",
-  plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@libraries//:annotations",
     "@libraries//:httpmime",
@@ -21,5 +20,12 @@ kt_jvm_library(
     "@libraries//:plexus-utils",
     "@libraries//:commons-codec",
     "@community//platform/util:intellij.platform.util"
+  ],
+  exports = [
+    "@libraries//:httpmime",
+    "@libraries//:commons-logging",
+    "@libraries//:slf4j-api",
+    "@libraries//:slf4j-jdk14",
+    "@libraries//:maven-resolver-provider"
   ]
 )

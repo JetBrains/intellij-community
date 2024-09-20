@@ -1,7 +1,6 @@
 load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
 
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
-load("@rules_kotlin//kotlin:core.bzl", "kt_kotlinc_options")
+load("@community//:build/compiler-options.bzl", "create_javac_options", "create_kotlinc_options")
 
 define_kt_toolchain(
   name = "kotlin_toolchain",
@@ -9,11 +8,11 @@ define_kt_toolchain(
   language_version = "2.0"
 )
 
-kt_javac_options(name="j8", release = "8", x_ep_disable_all_checks = True, visibility = ["//visibility:public"])
-kt_kotlinc_options(name="k8", jvm_target = "1.8", x_optin = ["com.intellij.openapi.util.IntellijInternalApi"], visibility = ["//visibility:public"])
+create_javac_options(name = "j8", release = "8")
+create_kotlinc_options(name="k8", jvm_target="1.8")
 
-kt_javac_options(name="j11", release = "11", x_ep_disable_all_checks = True, visibility = ["//visibility:public"])
-kt_kotlinc_options(name="k11", jvm_target = "11", x_optin = ["com.intellij.openapi.util.IntellijInternalApi", "kotlinx.serialization.ExperimentalSerializationApi"], visibility = ["//visibility:public"])
+create_javac_options(name = "j11", release = "11")
+create_kotlinc_options(name= "k11", jvm_target= "11")
 
-kt_javac_options(name="j17", release = "17", x_ep_disable_all_checks = True, visibility = ["//visibility:public"])
-kt_kotlinc_options(name="k17", jvm_target = "17", x_optin = ["com.intellij.openapi.util.IntellijInternalApi"], visibility = ["//visibility:public"])
+create_javac_options(name = "j17", release = "17")
+create_kotlinc_options(name = "k17", jvm_target = "17")

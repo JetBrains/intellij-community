@@ -1,0 +1,16 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.ijent",
+  visibility = ["//visibility:public"],
+  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
+    "@community//platform/eel:intellij.platform.eel"
+  ],
+  exports = ["@community//platform/eel:intellij.platform.eel"]
+)

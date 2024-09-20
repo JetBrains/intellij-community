@@ -1,0 +1,40 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.externalSystem.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@community//platform/external-system-api:intellij.platform.externalSystem",
+    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl",
+    "@community//platform/platform-impl:intellij.platform.ide.impl",
+    "@community//platform/lang-impl:intellij.platform.lang.impl",
+    "@community//platform/execution-impl:intellij.platform.execution.impl",
+    "@community//platform/testRunner:intellij.platform.testRunner",
+    "@community//platform/configuration-store-impl:intellij.platform.configurationStore.impl",
+    "@libraries//:kotlin-reflect",
+    "@community//platform/object-serializer:intellij.platform.objectSerializer",
+    "@community//platform/object-serializer/annotations:intellij.platform.objectSerializer.annotations",
+    "@community//platform/xdebugger-api:intellij.platform.debugger",
+    "@community//platform/statistics:intellij.platform.statistics",
+    "@community//platform/workspace/jps:intellij.platform.workspace.jps",
+    "@community//platform/workspace/storage:intellij.platform.workspace.storage",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:commons-cli",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/platform-util-io-impl:intellij.platform.ide.util.io.impl",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@community//platform/backend/workspace:intellij.platform.backend.workspace",
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@community//platform/backend/observation:intellij.platform.backend.observation",
+    "@community//platform/settings:intellij.platform.settings",
+    "@libraries//:kotlinx-serialization-core-jvm"
+  ]
+)

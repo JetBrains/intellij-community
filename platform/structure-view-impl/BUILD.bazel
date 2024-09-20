@@ -1,0 +1,32 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.structureView.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/extensions:intellij.platform.extensions",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/platform-resources-en:intellij.platform.resources.en",
+    "@community//platform/icons:intellij.platform.icons",
+    "@libraries//:automaton",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@community//platform/platform-api:intellij.platform.ide",
+    "@community//platform/core-impl:intellij.platform.core.impl",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui:intellij.platform.core.ui"
+  ],
+  exports = [
+    "@community//platform/editor-ui-api:intellij.platform.editor",
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/extensions:intellij.platform.extensions",
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/platform-resources-en:intellij.platform.resources.en",
+    "@community//platform/projectModel-api:intellij.platform.projectModel"
+  ]
+)
