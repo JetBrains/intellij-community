@@ -239,20 +239,8 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
    * or {@code null} if the local file is of incorrect type.
    */
   public @Nullable VirtualFile findLocalByRootPath(@NotNull String rootPath) {
-    return findLocalByRootPath(rootPath, false);
-  }
-
-  /**
-   * Returns a local file of an archive which hosts a root with the given path
-   * (i.e.: "jar:///path/to/jar.jar!/" => file:///path/to/jar.jar),
-   * or {@code null} if the local file is of incorrect type.
-   * @param pathCanonicallyCased {@code true} if the caller guarantees that the path is canonically cased in a case-insensitive FS
-   */
-  @ApiStatus.Internal
-  public @Nullable VirtualFile findLocalByRootPath(@NotNull String rootPath, boolean pathCanonicallyCased) {
     String localPath = extractLocalPath(rootPath);
-    VirtualFileSystem localFS = StandardFileSystems.local();
-    VirtualFile local = pathCanonicallyCased ? localFS.findFileByCanonicallyCasedPath(localPath) : localFS.findFileByPath(localPath);
+    VirtualFile local = StandardFileSystems.local().findFileByPath(localPath);
     return local != null && isCorrectFileType(local) ? local : null;
   }
 

@@ -22,13 +22,6 @@ public interface VirtualFileUrlManager {
   public fun getOrCreateFromUrl(uri: String): VirtualFileUrl
 
   /**
-   * Same as [getOrCreateFromUrl], but the caller guarantees that [uri] is canonically cased if the filesystem is case-insensitive.
-   * This makes modifying the workspace model quicker on case-insensitive filesystems (Windows, macOS).
-   */
-  @ApiStatus.Experimental
-  public fun getOrCreateFromCanonicallyCasedUrl(uri: String): VirtualFileUrl
-
-  /**
    * Returns an existing instance of [VirtualFileUrl] for the given URL or `null` if no instance was registered. 
    */
   public fun findByUrl(uri: String): VirtualFileUrl?

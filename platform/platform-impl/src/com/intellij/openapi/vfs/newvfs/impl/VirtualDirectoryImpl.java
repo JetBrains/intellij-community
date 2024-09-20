@@ -79,12 +79,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private @Nullable VirtualFileSystemEntry findChild(@NotNull String name,
                                                      boolean doRefresh,
                                                      boolean ensureCanonicalName,
-                                                     boolean nameCanonicallyCased,
                                                      @NotNull NewVirtualFileSystem fs) {
     owningPersistentFS().incrementFindChildByNameCount();
 
     updateCaseSensitivityIfUnknown(name);
-    VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, fs, isCaseSensitive(), nameCanonicallyCased);
+    VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, fs, isCaseSensitive());
 
     //noinspection UseVirtualFileEquals
     if (result == NULL_VIRTUAL_FILE) {
@@ -92,7 +91,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     else if (result != null && doRefresh && fs.isDirectory(result) != result.isDirectory()) {
       RefreshQueue.getInstance().refresh(false, false, null, result);
-      result = findChild(name, false, ensureCanonicalName, nameCanonicallyCased, fs);
+      result = findChild(name, false, ensureCanonicalName, fs);
     }
 
     return result;
@@ -113,8 +112,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private @Nullable VirtualFileSystemEntry doFindChild(@NotNull String name,
                                                        boolean ensureCanonicalName,
                                                        @NotNull NewVirtualFileSystem fs,
-                                                       boolean isCaseSensitive,
-                                                       boolean nameCanonicallyCased) {
+                                                       boolean isCaseSensitive) {
     if (name.isEmpty()) {
       return null;
     }
@@ -139,14 +137,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return NULL_VIRTUAL_FILE;
     }
 
-    return findInPersistence(name, ensureCanonicalName, fs, isCaseSensitive, nameCanonicallyCased);
+    return findInPersistence(name, ensureCanonicalName, fs, isCaseSensitive);
   }
 
   private @Nullable VirtualFileSystemEntry findInPersistence(@NotNull String name,
                                                              boolean ensureCanonicalName,
                                                              @NotNull NewVirtualFileSystem fs,
-                                                             boolean isCaseSensitive,
-                                                             boolean nameCanonicallyCased) {
+                                                             boolean isCaseSensitive) {
     VirtualFileSystemEntry child;
     synchronized (myData) {
       // maybe another doFindChild() sneaked in the middle
@@ -158,7 +155,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
       PersistentFS pfs = owningPersistentFS();
-      ChildInfo childInfo = pfs.findChildInfo(this, name, fs, nameCanonicallyCased);
+      ChildInfo childInfo = pfs.findChildInfo(this, name, fs);
       if (childInfo == null) {
         myData.addAdoptedName(name, isCaseSensitive);
         return null;
@@ -357,7 +354,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public @Nullable NewVirtualFile refreshAndFindChild(@NotNull String name) {
-    return findChild(name, true, true, false, getFileSystem());
+    return findChild(name, true, true, getFileSystem());
   }
 
   @Override
@@ -397,7 +394,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     String[] names = owningPersistentFS().listPersisted(this);
     NewVirtualFileSystem fs = getFileSystem();
     for (String name : names) {
-      findChild(name, false, false, false, fs);
+      findChild(name, false, false, fs);
     }
   }
 
@@ -540,13 +537,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public @Nullable VirtualFileSystemEntry findChild(@NotNull String name) {
-    return findChild(name, false, true, false, getFileSystem());
-  }
-
-  @Override
-  @ApiStatus.Internal
-  public @Nullable NewVirtualFile findChildByCanonicallyCasedName(@NotNull String name) {
-    return findChild(name, false, true, true, getFileSystem());
+    return findChild(name, false, true, getFileSystem());
   }
 
   @ApiStatus.Internal
@@ -571,7 +562,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     PersistentFSImpl persistence = owningPersistentFS();
     String name = persistence.getName(id);
-    VirtualFileSystemEntry fileByName = findChild(name, false, false, false, getFileSystem());
+    VirtualFileSystemEntry fileByName = findChild(name, false, false, getFileSystem());
     if (fileByName != null && fileByName.getId() != id) {
       // a child with the same name and different ID was recreated after a refresh session -
       // it doesn't make sense to check it earlier because it is executed outside the VFS' read/write lock

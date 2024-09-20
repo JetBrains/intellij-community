@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.query.Diff
 import com.intellij.platform.workspace.storage.query.CollectionQuery
 import com.intellij.platform.workspace.storage.query.StorageQuery
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -83,15 +82,5 @@ public interface WorkspaceModelInternal: WorkspaceModel {
 
   @ApiStatus.Experimental
   public suspend fun <T> flowOfDiff(query: CollectionQuery<T>): Flow<Diff<T>>
-
-  /**
-   * Returns an instance of [VirtualFileUrlManager] which always assumes
-   * that the URL passed to [VirtualFileUrlManager.getOrCreateFromUrl] is canonically cased.
-   * This is identical to just always calling [VirtualFileUrlManager.getOrCreateFromCanonicallyCasedUrl].
-   * This speeds up replacing the project model on case-insensitive file systems (Windows, macOS).
-   * @see getVirtualFileUrlManager
-   */
-  @ApiStatus.Experimental
-  public fun getCanonicallyCasedVirtualFileUrlManager(): VirtualFileUrlManager
 }
 

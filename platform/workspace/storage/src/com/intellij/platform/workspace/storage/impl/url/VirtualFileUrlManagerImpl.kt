@@ -28,11 +28,6 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return add(uri)
   }
 
-  override fun getOrCreateFromCanonicallyCasedUrl(uri: String): VirtualFileUrl {
-    if (uri.isEmpty()) return getEmptyUrl()
-    return add(uri, urlCanonicallyCased = true)
-  }
-
   override fun findByUrl(uri: String): VirtualFileUrl? {
     return findBySegments(splitNames(uri))
   }
@@ -108,23 +103,19 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   public open val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
     get() = VirtualFileUrlImpl::class.java
 
-  protected open fun createVirtualFileUrl(
-    id: Int,
-    manager: VirtualFileUrlManagerImpl,
-    urlCanonicallyCased: Boolean = false,
-  ): VirtualFileUrl {
+  protected open fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
     return VirtualFileUrlImpl(id, manager)
   }
 
   @Synchronized
   public fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull(FilePathNode::getCachedVirtualFileUrl)
 
-  internal fun add(path: String, parentNode: FilePathNode? = null, urlCanonicallyCased: Boolean = false): VirtualFileUrl {
+  internal fun add(path: String, parentNode: FilePathNode? = null): VirtualFileUrl {
     val segments = splitNames(path)
-    return addSegments(parentNode, segments, urlCanonicallyCased)
+    return addSegments(parentNode, segments)
   }
 
-  private fun addSegments(parentNode: FilePathNode?, segments: List<String>, urlCanonicallyCased: Boolean = false): VirtualFileUrl {
+  private fun addSegments(parentNode: FilePathNode?, segments: List<String>): VirtualFileUrl {
     var latestNode: FilePathNode? = parentNode ?: findRootNode(segments.first())
     val latestElement = segments.size - 1
     for (index in segments.indices) {
@@ -137,7 +128,7 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
         // If it's the latest name of folder or files, save entity Id as node value
         if (index == latestElement) {
           rootNode.addChild(newNode)
-          return newNode.getVirtualFileUrl(this, urlCanonicallyCased)
+          return newNode.getVirtualFileUrl(this)
         }
         latestNode = newNode
         rootNode.addChild(newNode)
@@ -147,7 +138,7 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
       // Handling reuse of the root node
       if (latestNode === findRootNode(latestNode.contentId) && index == 0) {
         if (latestNode.contentId == nameId) {
-          if (latestElement == 0) return latestNode.getVirtualFileUrl(this, urlCanonicallyCased)
+          if (latestElement == 0) return latestNode.getVirtualFileUrl(this)
           continue
         }
       }
@@ -160,11 +151,11 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
         latestNode.addChild(newNode)
         latestNode = newNode
         // If it's the latest name of folder or files, save entity Id as node value
-        if (index == latestElement) return newNode.getVirtualFileUrl(this, urlCanonicallyCased)
+        if (index == latestElement) return newNode.getVirtualFileUrl(this)
       }
       else {
         // If it's the latest name of folder or files, save entity Id as node value
-        if (index == latestElement) return node.getVirtualFileUrl(this, urlCanonicallyCased)
+        if (index == latestElement) return node.getVirtualFileUrl(this)
         latestNode = node
       }
     }
@@ -308,13 +299,10 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
       children?.remove(node)
     }
 
-    fun getVirtualFileUrl(
-      virtualFileUrlManager: VirtualFileUrlManagerImpl,
-      urlCanonicallyCased: Boolean = false,
-    ): VirtualFileUrl {
+    fun getVirtualFileUrl(virtualFileUrlManager: VirtualFileUrlManagerImpl): VirtualFileUrl {
       val cachedValue = virtualFileUrl
       if (cachedValue != null) return cachedValue
-      val url = virtualFileUrlManager.createVirtualFileUrl(nodeId, virtualFileUrlManager, urlCanonicallyCased)
+      val url = virtualFileUrlManager.createVirtualFileUrl(nodeId, virtualFileUrlManager)
       virtualFileUrl = url
       return url
     }

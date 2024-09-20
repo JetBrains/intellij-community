@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.*;
@@ -547,8 +548,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @ApiStatus.Internal
   public ChildInfo findChildInfo(@NotNull VirtualFile parent,
                                  @NotNull String childName,
-                                 @NotNull NewVirtualFileSystem fs,
-                                 boolean childNameCanonicallyCased) {
+                                 @NotNull NewVirtualFileSystem fs) {
     checkReadAccess();
 
     int parentId = fileId(parent);
@@ -583,7 +583,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       //    or it is the new file, and VFS hasn't received the update yet
 
       String canonicalName;
-      if (childNameCanonicallyCased || parent.isCaseSensitive()) {
+      if (parent.isCaseSensitive()) {
         canonicalName = childName;
       }
       else {
@@ -1593,12 +1593,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public @Nullable VirtualFileSystemEntry findRoot(@NotNull String path, @NotNull NewVirtualFileSystem fs) {
-    return findRoot(path, fs, false);
-  }
-
-  @Override
-  @ApiStatus.Internal
-  public @Nullable VirtualFileSystemEntry findRoot(@NotNull String path, @NotNull NewVirtualFileSystem fs, boolean pathCanonicallyCased) {
     if (!myConnected.get()) {
       LOG.info("VFS disconnected. Can't provide root for " + path + " in " + fs);
       return null;
@@ -1623,7 +1617,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       //   path(/x/y/z.jar!/) -> localFile(/x/y/z.jar) -> rootPath(/x/y/z.jar!/)
       //   So this branch is basically assigns rootName to jar-file name (instead of root path)
       //   and attributes to _archive_ attributes, instead of file attributes
-      VirtualFile localFile = afs.findLocalByRootPath(path, pathCanonicallyCased);
+      VirtualFile localFile = afs.findLocalByRootPath(path);
       if (localFile == null) return null;
       rootName = localFile.getName();
       rootPath = afs.getRootPathByLocal(localFile);// '/x/y/z.jar' -> '/x/y/z.jar!/'

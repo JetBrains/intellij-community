@@ -67,8 +67,6 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
   private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
 
-  private val canonicallyCasedVirtualFileUrlManager = CanonicallyCasedVirtualFileUrlManager(virtualFileManager)
-
   override val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current
 
@@ -135,8 +133,6 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     get() = unloadedEntitiesStorage.current
 
   override fun getVirtualFileUrlManager(): VirtualFileUrlManager = virtualFileManager
-
-  override fun getCanonicallyCasedVirtualFileUrlManager(): VirtualFileUrlManager = canonicallyCasedVirtualFileUrlManager
 
   /**
    * Used only in Rider IDE

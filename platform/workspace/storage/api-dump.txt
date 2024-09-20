@@ -416,5 +416,4 @@ com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 - a:findByUrl(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - a:fromPath(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
-- *a:getOrCreateFromCanonicallyCasedUrl(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - a:getOrCreateFromUrl(java.lang.String):com.intellij.platform.workspace.storage.url.VirtualFileUrl

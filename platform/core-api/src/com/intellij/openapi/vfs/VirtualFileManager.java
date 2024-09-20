@@ -232,18 +232,4 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   @ApiStatus.Internal
   public abstract @NotNull CharSequence getVFileName(int nameId);
-
-  /**
-   * Searches for a file specified by the given {@link VirtualFile#getUrl() URL}.
-   * The caller guarantees that the URL is canonically cased if the filesystem is case-insensitive.
-   * This method is faster than {@link VirtualFileSystem#findFileByPath} for case-insensitive filesystems.
-   *
-   * @param url the URL to find file by
-   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
-   * @see VirtualFileSystem#findFileByPath
-   */
-  @ApiStatus.Internal
-  public @Nullable VirtualFile findFileByCanonicallyCasedUrl(@NonNls @NotNull String url) {
-    return findFileByUrl(url);
-  }
 }

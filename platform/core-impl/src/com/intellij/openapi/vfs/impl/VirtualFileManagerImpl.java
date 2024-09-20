@@ -356,32 +356,20 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
 
   @Override
   public VirtualFile findFileByUrl(@NotNull String url) {
-    return findByUrl(url, false, false);
+    return findByUrl(url, false);
   }
 
   @Override
   public VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
-    return findByUrl(url, true, false);
+    return findByUrl(url, true);
   }
 
-  @Override
-  @ApiStatus.Internal
-  public @Nullable VirtualFile findFileByCanonicallyCasedUrl(@NotNull String url) {
-    return findByUrl(url, false, true);
-  }
-
-  private @Nullable VirtualFile findByUrl(@NotNull String url, boolean refresh, boolean urlCanonicallyCased) {
+  private @Nullable VirtualFile findByUrl(@NotNull String url, boolean refresh) {
     int protocolSepIndex = url.indexOf(URLUtil.SCHEME_SEPARATOR);
     VirtualFileSystem fileSystem = protocolSepIndex < 0 ? null : getFileSystem(url.substring(0, protocolSepIndex));
     if (fileSystem == null) return null;
     String path = url.substring(protocolSepIndex + URLUtil.SCHEME_SEPARATOR.length());
-    if (refresh) {
-      return fileSystem.refreshAndFindFileByPath(path);
-    } else if (urlCanonicallyCased) {
-      return fileSystem.findFileByCanonicallyCasedPath(path);
-    } else {
-      return fileSystem.findFileByPath(path);
-    }
+    return refresh ? fileSystem.refreshAndFindFileByPath(path) : fileSystem.findFileByPath(path);
   }
 
   @Override
