@@ -55,7 +55,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   static final Logger LOG = Logger.getInstance(PsiDocumentManagerBase.class);
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
 
-  private final Map<Document, List<Runnable>> myActionsAfterCommit = CollectionFactory.createConcurrentWeakMap();
+  private boolean isInsideCommitHandler = false; //accessed from EDT only
+
+  private final Map<Document, List<Runnable>> documentCommitActions = CollectionFactory.createConcurrentWeakMap();
+  private final Map<Object, Runnable> identifiedAllDocumentCommitActions = new LinkedHashMap<>(); //accessed from EDT only
+  private final List<Runnable> allDocumentCommitActions = new ArrayList<>(); //accessed from EDT only
 
   final Project myProject;
   private final PsiManager myPsiManager;
@@ -287,9 +291,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private final Map<Object, Runnable> actionsWhenAllDocumentsAreCommitted = new LinkedHashMap<>(); //accessed from EDT only
-  private static final Object PERFORM_ALWAYS_KEY = ObjectUtils.sentinel("PERFORM_ALWAYS");
-
   /**
    * Cancel previously registered action and schedules (new) action to be executed when all documents are committed.
    *
@@ -308,8 +309,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (!hasEventSystemEnabledUncommittedDocuments()) {
       if (!isCommitInProgress()) {
         // in case of fireWriteActionFinished() we didn't execute 'actionsWhenAllDocumentsAreCommitted' yet
-        assert actionsWhenAllDocumentsAreCommitted.isEmpty() : actionsWhenAllDocumentsAreCommitted + "; uncommitted docs: " +
-               StringUtil.join(myUncommittedDocuments, document->document+":isEventSystemEnabled="+isEventSystemEnabled(document)+":virtualFile="+getVirtualFile(document), ",");
+        assert identifiedAllDocumentCommitActions.isEmpty() && allDocumentCommitActions.isEmpty() :
+          identifiedAllDocumentCommitActions + "; " + allDocumentCommitActions + "; " +
+          "uncommitted docs: " + StringUtil.join(
+            myUncommittedDocuments,
+            document -> document +
+                        ":isEventSystemEnabled=" + isEventSystemEnabled(document) +
+                        ":virtualFile=" + getVirtualFile(document),
+            ","
+          );
       }
       action.run();
       return true;
@@ -317,19 +325,30 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     assertWeAreOutsideAfterCommitHandler();
 
-    actionsWhenAllDocumentsAreCommitted.put(key, ClientId.decorateRunnable(action));
+    identifiedAllDocumentCommitActions.put(key, ClientId.decorateRunnable(action));
     return false;
   }
 
   @ApiStatus.Internal
   public void addRunOnCommit(@NotNull Document document, @NotNull Runnable action) {
-    List<Runnable> actions = myActionsAfterCommit.computeIfAbsent(document, __ -> ContainerUtil.createConcurrentList());
+    List<Runnable> actions = documentCommitActions.computeIfAbsent(document, __ -> ContainerUtil.createConcurrentList());
     actions.add(ThreadContext.captureThreadContext(action));
   }
 
-  private @NotNull Runnable @NotNull [] getAndClearActionsAfterCommit(@NotNull Document document) {
-    List<Runnable> list = myActionsAfterCommit.remove(document);
-    return list == null ? ArrayUtil.EMPTY_RUNNABLE_ARRAY : list.toArray(ArrayUtil.EMPTY_RUNNABLE_ARRAY);
+  private @NotNull List<Runnable> getAndClearDocumentCommitActions(@NotNull Document document) {
+    List<Runnable> list = documentCommitActions.remove(document);
+    return list == null ? Collections.emptyList() : list;
+  }
+
+  private @NotNull List<Runnable> getAndClearAllDocumentCommitActions() {
+    ThreadingAssertions.assertEventDispatchThread();
+
+    List<Runnable> actions = new ArrayList<>();
+    actions.addAll(identifiedAllDocumentCommitActions.values());
+    actions.addAll(allDocumentCommitActions);
+    identifiedAllDocumentCommitActions.clear();
+    allDocumentCommitActions.clear();
+    return actions;
   }
 
   @Override
@@ -605,12 +624,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       action.run();
       return true;
     }
-    CompositeRunnable actions = (CompositeRunnable)actionsWhenAllDocumentsAreCommitted.get(PERFORM_ALWAYS_KEY);
-    if (actions == null) {
-      actions = new CompositeRunnable();
-      actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, actions);
-    }
-    actions.add(ThreadContext.captureThreadContext(action));
+
+    allDocumentCommitActions.add(ThreadContext.captureThreadContext(action));
 
     if (modality != ModalityState.nonModal() && TransactionGuard.getInstance().isWriteSafeModality(modality)) {
       // this client obviously expects all documents to be committed ASAP even inside modal dialog
@@ -659,15 +674,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private static class CompositeRunnable extends ArrayList<Runnable> implements Runnable {
-    @Override
-    public void run() {
-      for (Runnable runnable : this) {
-        runnable.run();
-      }
-    }
-  }
-
   private void runAfterCommitActions(@NotNull Document document) {
     Application app = ApplicationManager.getApplication();
     if (!app.isDispatchThread() && isEventSystemEnabled(document)) {
@@ -679,12 +685,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       });
       return;
     }
-    Runnable[] list = getAndClearActionsAfterCommit(document);
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-      for (Runnable runnable : list) {
-        runnable.run();
-      }
-    }
+
+    runActions(getAndClearDocumentCommitActions(document));
 
     if (app.isDispatchThread()) {
       runActionsWhenAllCommitted();
@@ -697,26 +699,32 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private void runActionsWhenAllCommitted() {
     ThreadingAssertions.assertEventDispatchThread();
     if (!mayRunActionsWhenAllCommitted()) return;
-    List<Runnable> actions = new ArrayList<>(actionsWhenAllDocumentsAreCommitted.values());
-    beforeCommitHandler();
-    List<Pair<Runnable, Throwable>> exceptions = new ArrayList<>();
+
+    // block adding listeners
+    isInsideCommitHandler = true;
+
     try {
-      for (Runnable action : actions) {
-        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-          action.run();
-        }
-        catch (ProcessCanceledException e) {
-          // some actions are crazy enough to use PCE for their own control flow.
-          // swallow and ignore to not disrupt completely unrelated control flow.
-        }
-        catch (Throwable e) {
-          exceptions.add(Pair.create(action, e));
-        }
-      }
+      runActions(getAndClearAllDocumentCommitActions());
     }
     finally {
       // unblock adding listeners
-      actionsWhenAllDocumentsAreCommitted.clear();
+      isInsideCommitHandler = false;
+    }
+  }
+
+  private static void runActions(@NotNull List<Runnable> actions) {
+    List<Pair<Runnable, Throwable>> exceptions = new ArrayList<>();
+    for (Runnable action : actions) {
+      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        action.run();
+      }
+      catch (ProcessCanceledException e) {
+        // some actions are crazy enough to use PCE for their own control flow.
+        // swallow and ignore to not disrupt completely unrelated control flow.
+      }
+      catch (Throwable e) {
+        exceptions.add(Pair.create(action, e));
+      }
     }
     for (Pair<Runnable, Throwable> pair : exceptions) {
       Runnable action = pair.getFirst();
@@ -728,7 +736,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private boolean mayRunActionsWhenAllCommitted() {
     ThreadingAssertions.assertEventDispatchThread();
     return !isCommitInProgress() &&
-           !actionsWhenAllDocumentsAreCommitted.isEmpty() &&
+           !(identifiedAllDocumentCommitActions.isEmpty() && allDocumentCommitActions.isEmpty()) &&
            !hasEventSystemEnabledUncommittedDocuments();
   }
 
@@ -739,10 +747,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private void beforeCommitHandler() {
-    ThreadingAssertions.assertEventDispatchThread();
-    actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, EmptyRunnable.getInstance()); // to prevent listeners from registering new actions during firing
-  }
   private void assertWeAreOutsideAfterCommitHandler() {
     if (isInsideCommitHandler()) {
       throw new IncorrectOperationException("You must not call performWhenAllCommitted()/cancelAndRunWhenCommitted() from within after-commit handler");
@@ -751,7 +755,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   private boolean isInsideCommitHandler() {
     ThreadingAssertions.assertEventDispatchThread();
-    return actionsWhenAllDocumentsAreCommitted.get(PERFORM_ALWAYS_KEY) == EmptyRunnable.getInstance();
+    return isInsideCommitHandler;
   }
 
   @Override
