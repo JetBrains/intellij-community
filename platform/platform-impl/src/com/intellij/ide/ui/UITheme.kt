@@ -178,6 +178,9 @@ class UITheme internal constructor(
                          warn = warn)
     }
 
+    /**
+     * Loads theme from JSON content, while also (re-)loading its parent scheme from JSON (even if it has been parsed previously)
+     */
     fun loadFromJsonWithParent(data: ByteArray,
                                themeId: @NonNls String,
                                classLoader: ClassLoader,
