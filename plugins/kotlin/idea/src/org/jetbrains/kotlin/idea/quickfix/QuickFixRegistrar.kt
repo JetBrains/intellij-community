@@ -536,9 +536,9 @@ class QuickFixRegistrar : QuickFixContributor {
 
         JAVA_TYPE_MISMATCH.registerFactory(CastExpressionFix.GenericVarianceConversion)
 
-        UPPER_BOUND_VIOLATED.registerFactory(AddGenericUpperBoundFix.Factory)
-        TYPE_INFERENCE_UPPER_BOUND_VIOLATED.registerFactory(AddGenericUpperBoundFix.Factory)
-        UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS.registerFactory(AddGenericUpperBoundFix.Factory)
+        UPPER_BOUND_VIOLATED.registerFactory(AddGenericUpperBoundFixFactory)
+        TYPE_INFERENCE_UPPER_BOUND_VIOLATED.registerFactory(AddGenericUpperBoundFixFactory)
+        UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS.registerFactory(AddGenericUpperBoundFixFactory)
 
         TYPE_MISMATCH.registerFactory(ConvertClassToKClassFixFactory)
 
