@@ -21,7 +21,7 @@ internal fun subscribeForDebuggingStart(cs: CoroutineScope, project: Project, on
   cs.launch(Dispatchers.IO) {
     withKernel {
       XDebuggerValueLookupListeningStartedEntity.each().filter { it.projectEntity.asProject() === project }.collect {
-        withContext(Dispatchers.Main) {
+        withContext(Dispatchers.EDT) {
           onStartListening()
         }
       }
