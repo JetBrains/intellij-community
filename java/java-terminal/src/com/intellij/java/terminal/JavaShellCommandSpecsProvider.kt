@@ -1,11 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.terminal
 
+import com.intellij.execution.vmOptions.VMOption
+import com.intellij.execution.vmOptions.VMOptionKind
+import com.intellij.execution.vmOptions.VMOptionVariant
+import com.intellij.execution.vmOptions.VMOptionsService
 import com.intellij.terminal.completion.spec.ShellCommandSpec
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
+import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellChildOptionsContext
 
 class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
   override fun getCommandSpecs(): List<ShellCommandSpecInfo> {
@@ -14,6 +21,14 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
 }
 
 private fun getSpecs(): ShellCommandSpec = ShellCommandSpec("java") {
+  dynamicOptions { _ ->
+    val javaHomePath = System.getenv("JAVA_HOME") ?: return@dynamicOptions
+    val jdkOptionsData = withContext(Dispatchers.IO) {
+      VMOptionsService.getInstance().getOrComputeOptionsForJdk(javaHomePath).get() ?: return@withContext null
+    } ?: return@dynamicOptions
+    val optionByVariant = jdkOptionsData.options.filter { it.kind == VMOptionKind.Standard || it.kind == VMOptionKind.Product }.groupBy { it.variant }
+    addOptionsFromVM(optionByVariant[VMOptionVariant.X])
+  }
   description(JavaTerminalBundle.message("java.command.terminal.description"))
   option("--help", "-help", "-h") {
     description(JavaTerminalBundle.message("java.command.terminal.help.option.description"))
@@ -52,3 +67,30 @@ private fun getSpecs(): ShellCommandSpec = ShellCommandSpec("java") {
     displayName(JavaTerminalBundle.message("java.command.terminal.argument.main.class.text"))
   }
 }
+
+private fun ShellChildOptionsContext.addOptionsFromVM(optionList: List<VMOption>?) {
+  if (optionList == null) return
+  optionList.forEach { vmOption ->
+    val vmOptionName = "${vmOption.variant.prefix()}${vmOption.optionName}"
+    val vmOptionDescription = vmOption.doc ?: return@forEach
+    option(vmOptionName) {
+      repeatTimes = 1
+      description(vmOptionDescription)
+      if (!KNOWN_X_OPTIONS_WITH_ARGUMENT.contains(vmOptionName)) return@option
+      separator = vmOption.variant.suffix()?.toString() ?: ""
+      argument {
+        displayName(JavaTerminalBundle.message("java.command.terminal.default.argument.text"))
+      }
+    }
+  }
+}
+
+private val KNOWN_X_OPTIONS_WITH_ARGUMENT = setOf(
+  "-Xms",
+  "-Xmx",
+  "-Xmn",
+  "-Xss",
+  "-Xbootclasspath/a:",
+  "-Xlog:",
+  "-Xloggc:",
+)
