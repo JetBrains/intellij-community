@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +34,6 @@ public class JavadocOrderRootType extends PersistentOrderRootType {
     }
   };
   public static String @NotNull [] getUrls(@NotNull OrderEntry entry) {
-    String[] result = entry.accept(GET_JAVADOC_URL_POLICY, null);
-    return (result == null) ? ArrayUtilRt.EMPTY_STRING_ARRAY : result;
+    return entry.accept(GET_JAVADOC_URL_POLICY, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 }
