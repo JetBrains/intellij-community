@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -27,6 +28,7 @@ val isIdeStartupDialogEnabled: Boolean
 
 val isIdeStartupWizardEnabled: Boolean
   get() = !ApplicationManagerEx.isInIntegrationTest() &&
+          !AppMode.isRemoteDevHost() &&
           System.getProperty("intellij.startup.wizard", "true").toBoolean()
 
 @ExperimentalCoroutinesApi
