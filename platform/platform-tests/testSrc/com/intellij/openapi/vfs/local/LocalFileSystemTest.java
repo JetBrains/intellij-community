@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.text.Normalizer;
 import java.util.*;
 
 import static com.intellij.openapi.util.io.IoTestUtil.*;
@@ -1020,8 +1021,19 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assumeTrue("Requires JRE 21+", JavaVersion.current().isAtLeast(21));
     var original = tempDir.newFile("original").toPath();
     var hardLink = Files.createLink(original.resolveSibling("hardLink"), original);
-    var lfs = LocalFileSystem.getInstance();
-    assertThat(lfs.refreshAndFindFileByNioFile(hardLink).getName()).isEqualTo(hardLink.getFileName().toString());
-    assertThat(lfs.refreshAndFindFileByNioFile(original).getName()).isEqualTo(original.getFileName().toString());
+    assertThat(myFS.refreshAndFindFileByNioFile(hardLink).getName()).isEqualTo(hardLink.getFileName().toString());
+    assertThat(myFS.refreshAndFindFileByNioFile(original).getName()).isEqualTo(original.getFileName().toString());
+  }
+
+  @Test
+  public void canonicallyCasedDecomposedName() {
+    assumeTrue("Requires JRE 21+", JavaVersion.current().isAtLeast(21));
+    @SuppressWarnings({"NonAsciiCharacters", "SpellCheckingInspection"}) var name = "schön";
+    var nfdName = Normalizer.normalize(name, Normalizer.Form.NFD);
+    var nfcName = Normalizer.normalize(name, Normalizer.Form.NFC);
+    var nfdFile = tempDir.newFile(nfdName).toPath();
+    var nfcFile = nfdFile.resolveSibling(nfcName);
+    assumeTrue("Filesystem does not support normalization", Files.exists(nfcFile));
+    assertThat(myFS.refreshAndFindFileByNioFile(nfcFile).getName()).isEqualTo(nfdName);
   }
 }

@@ -33,6 +33,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -517,7 +518,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       var nioFile = convertToNioFileAndCheck(file, false);
       if (SystemInfo.isWindows || JavaVersion.current().isAtLeast(21)) {
         var realName = nioFile.toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName().toString();
-        if (originalFileName.equalsIgnoreCase(realName)) {
+        if (
+          originalFileName.equalsIgnoreCase(realName) ||
+          Normalizer.isNormalized(originalFileName, Normalizer.Form.NFC) &&
+          originalFileName.equalsIgnoreCase(Normalizer.normalize(originalFileName, Normalizer.Form.NFC))
+        ) {
           return realName;
         }
       }
