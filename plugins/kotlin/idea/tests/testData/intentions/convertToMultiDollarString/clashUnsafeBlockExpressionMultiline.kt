@@ -1,0 +1,11 @@
+// IS_APPLICABLE: true
+// IGNORE_K1
+// COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+
+fun test() {
+    """
+        bar
+        $${'$'}{foo}<caret>
+        42
+    """.trimIndent()
+}

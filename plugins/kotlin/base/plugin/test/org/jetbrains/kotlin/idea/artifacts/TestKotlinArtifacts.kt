@@ -11,17 +11,22 @@ import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_DEV_CDN_URL
 import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_RELEASE_CDN_URL
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
+import org.jetbrains.kotlin.konan.file.unzipTo
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.TargetSupportException
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.zip.Deflater
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 object TestKotlinArtifacts {
     private val kotlinCLibrariesVersion by lazy {
         val libraryNameToGetVersionFrom = "kotlinc_analysis_api.xml"
-        KotlinMavenUtils.findLibraryVersion(libraryNameToGetVersionFrom)
+        val findLibraryVersion = KotlinMavenUtils.findLibraryVersion(libraryNameToGetVersionFrom)
+        findLibraryVersion
     }
 
     private fun getLibraryFile(groupId: String, artifactId: String, libraryFileName: String): File {
@@ -58,7 +63,29 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinScriptingCompilerImpl: File by lazy { getJar("kotlin-scripting-compiler-impl") }
     @JvmStatic val kotlinScriptingJvm: File by lazy { getJar("kotlin-scripting-jvm") }
     @JvmStatic val kotlinStdlib: File by lazy { getJar("kotlin-stdlib") }
-    @JvmStatic val kotlinStdlibCommon: File by lazy { getJar("kotlin-stdlib-common") }
+    @JvmStatic val kotlinStdlibCommon: File by lazy {
+
+        val baseDir = File(PathManager.getCommunityHomePath()).resolve("out")
+        if (!baseDir.exists()) {
+            baseDir.mkdirs()
+        }
+
+        val artefactName = "kotlin-stdlib-common"
+        val libFile = baseDir.resolve("$artefactName.klib")
+
+        if (!libFile.exists()) {
+            val archiveFile = baseDir.resolve(artefactName)
+            val archiveFilePath = archiveFile.toPath()
+            archiveFile.deleteRecursively()
+            val stdlibAllJar = downloadOrReportUnavailability("kotlin-stdlib", kotlinCLibrariesVersion, suffix = "-all.jar")
+            stdlibAllJar.toPath().unzipTo(archiveFilePath)
+
+            val unpackedCommonMain = archiveFilePath.resolve("commonMain").toFile()
+            unpackedCommonMain.compressDirectoryToZip(libFile)
+        }
+
+        libFile
+    }
     @JvmStatic val kotlinStdlibCommonSources: File by lazy { getSourcesJar("kotlin-stdlib-common") }
     @JvmStatic val kotlinStdlibJdk7: File by lazy { getJar("kotlin-stdlib-jdk7") }
     @JvmStatic val kotlinStdlibJdk7Sources: File by lazy { getSourcesJar("kotlin-stdlib-jdk7") }
@@ -164,6 +191,30 @@ object TestKotlinArtifacts {
         }
         return if (libFile.exists()) libFile else
             throw IOException("Library doesn't exist: $libPath")
+    }
+
+    private fun File.compressDirectoryToZip(targetZipFile: File) {
+        targetZipFile.parentFile.mkdirs()
+        targetZipFile.createNewFile()
+
+        val sourceFolder = this
+
+        ZipOutputStream(targetZipFile.outputStream().buffered()).use { zip ->
+            zip.setLevel(Deflater.NO_COMPRESSION)
+            sourceFolder
+                .walkTopDown()
+                .filter { file -> !file.isDirectory }
+                .forEach { file ->
+                    val suffix = if (file.isDirectory) "/" else ""
+                    val entry = ZipEntry(file.relativeTo(sourceFolder).invariantSeparatorsPath + suffix)
+                    zip.putNextEntry(entry)
+                    if (!file.isDirectory) {
+                        file.inputStream().buffered().use { it.copyTo(zip) }
+                    }
+                    zip.closeEntry()
+                }
+            zip.flush()
+        }
     }
 }
 

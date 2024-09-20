@@ -316,7 +316,7 @@ object KotlinPluginBuilder {
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
       spec.withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection
-      spec.withProjectLibrary("javaslang")
+      spec.withProjectLibrary("vavr")
       spec.withProjectLibrary("javax-inject")
 
       withKotlincInPluginDirectory(spec)

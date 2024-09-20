@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.idea.test.allKotlinFiles
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -248,7 +249,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     fun isTestIgnored(): Boolean {
         val outputFile = getExpectedOutputFile()
-        return outputFile.exists() && isIgnoredTarget(targetBackend(), outputFile)
+        return outputFile.exists() && isIgnoredTarget(TargetBackend.JVM_IR_WITH_IR_EVALUATOR, outputFile)
     }
 
     override fun areLogErrorsIgnored(): Boolean {

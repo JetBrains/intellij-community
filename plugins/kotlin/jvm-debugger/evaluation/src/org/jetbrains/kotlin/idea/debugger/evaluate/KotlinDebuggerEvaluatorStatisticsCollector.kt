@@ -12,7 +12,7 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 
     override fun getGroup(): EventLogGroup = GROUP
 
-    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 5)
+    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 6)
 
     // fields
     private val compilerField = EventFields.Enum<CompilerType>("compiler")
@@ -30,7 +30,6 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
     )
     // no need to record evaluation time, as it reflects what user evaluates, not how effective our evaluation is
     private val evaluationEvent = GROUP.registerEvent("evaluation.result", resultField, compilerField)
-    private val fallbackToOldEvaluatorEvent = GROUP.registerEvent("fallback.to.old.evaluator")
 
     @JvmStatic
     fun logAnalysisAndCompilationResult(
@@ -52,11 +51,6 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
     @JvmStatic
     internal fun logEvaluationResult(project: Project?, evaluationResult: StatisticsEvaluationResult, compilerType: CompilerType) {
         evaluationEvent.log(project, evaluationResult, compilerType)
-    }
-
-    @JvmStatic
-    fun logFallbackToOldEvaluator(project: Project?) {
-        fallbackToOldEvaluatorEvent.log(project)
     }
 }
 

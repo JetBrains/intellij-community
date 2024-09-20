@@ -22,16 +22,9 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
         File(TestMetadataUtil.getTestDataPath(javaClass))
     }
 
-    data class TestProjectFiles(
-        val allFiles: List<VirtualFile>,
-        val mainFile: VirtualFile?,
-    )
-
 
     override fun setUp() {
         super.setUp()
-
-        Registry.get("kotlin.k2.kmp.wasm.enabled").setValue(true, testRootDisposable)
 
         // sync is necessary to detect unexpected disappearances of library files
         VfsTestUtil.syncRefresh()

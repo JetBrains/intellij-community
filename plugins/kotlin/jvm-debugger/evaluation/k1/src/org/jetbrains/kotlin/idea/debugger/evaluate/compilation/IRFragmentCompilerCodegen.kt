@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
+import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.backend.jvm.FacadeClassSourceShimForFragmentCompilation
 import org.jetbrains.kotlin.backend.jvm.JvmGeneratorExtensionsImpl
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
@@ -35,19 +36,6 @@ import org.jetbrains.kotlin.resolve.source.PsiSourceFile
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 
 class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
-
-    override fun initCodegen(
-        classDescriptor: ClassDescriptor,
-        methodDescriptor: FunctionDescriptor,
-        parameterInfo: K1CodeFragmentParameterInfo
-    ) {
-        // NO-OP
-    }
-
-    override fun cleanupCodegen() {
-        // NO-OP
-    }
-
     override fun configureCompiler(compilerConfiguration: CompilerConfiguration) {
         // TODO: Do not understand the implications of DO_NOT_CLEAR_BINDING_CONTEXT,
         //       but enforced by assertions in JvmIrCodegen
@@ -218,3 +206,6 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
             }
     }
 }
+
+internal val OutputFile.internalClassName: String
+    get() = computeInternalClassName(relativePath)

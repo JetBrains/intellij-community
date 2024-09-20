@@ -1,5 +1,3 @@
-// IGNORE_K2
-// IDEA-358344
 // MODULE: common
 // FILE: common.kt
 

@@ -57,7 +57,6 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentComplet
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractK1CodeFragmentHighlightingTest
 import org.jetbrains.kotlin.idea.debugger.test.*
 import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractIrSequenceTraceTestCase
-import org.jetbrains.kotlin.idea.debugger.test.sequence.exec.AbstractIrSequenceTraceWithIREvaluatorTestCase
 import org.jetbrains.kotlin.idea.decompiler.navigation.*
 import org.jetbrains.kotlin.idea.decompiler.stubBuilder.AbstractLoadJavaClsStubTest
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractCommonDecompiledTextTest
@@ -210,17 +209,11 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             }
         }
 
-        testClass<AbstractIrKotlinEvaluateExpressionTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
-            model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
-        }
-
         listOf(
-          AbstractIndyLambdaIrKotlinEvaluateExpressionTest::class,
-          AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest::class,
-          AbstractK1IdeK2CodeKotlinEvaluateExpressionTest::class,
-          AbstractInlineScopesAndK1IdeK2CodeEvaluateExpressionTest::class,
+            AbstractIndyLambdaIrKotlinEvaluateExpressionTest::class,
+            AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest::class,
+            AbstractK1IdeK2CodeKotlinEvaluateExpressionTest::class,
+            AbstractInlineScopesAndK1IdeK2CodeEvaluateExpressionTest::class,
         ).forEach {
             testClass(it) {
                 model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
@@ -298,10 +291,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractIrSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
-            model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
-        }
-
-        testClass<AbstractIrSequenceTraceWithIREvaluatorTestCase> { // TODO: implement mapping logic for terminal operations
             model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
         }
 

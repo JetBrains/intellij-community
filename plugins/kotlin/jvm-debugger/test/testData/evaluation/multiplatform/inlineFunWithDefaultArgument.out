@@ -1,0 +1,11 @@
+LineBreakpoint created at jvm.kt:10
+LineBreakpoint created at jvm.kt:15
+Run Java
+Connected to the target VM
+jvm.kt:10
+Compile bytecode for foo()
+jvm.kt:15
+Compile bytecode for foo({2})
+Disconnected from the target VM
+
+Process finished with exit code 0

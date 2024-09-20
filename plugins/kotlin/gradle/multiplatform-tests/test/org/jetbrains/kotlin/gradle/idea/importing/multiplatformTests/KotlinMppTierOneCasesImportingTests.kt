@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingTestsFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.test.TestMetadata
@@ -45,7 +46,7 @@ class KotlinMppTierOneCasesImportingTests : AbstractKotlinMppGradleImportingTest
             excludeModules(".*kmmLib.*")
 
             publish("kmmLib")
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
         }
     }
 
@@ -73,7 +74,7 @@ class KotlinMppTierOneCasesImportingTests : AbstractKotlinMppGradleImportingTest
             excludeModules(".*kmmLib.*")
 
             publish("kmmLib")
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
         }
     }
 
@@ -93,7 +94,7 @@ class KotlinMppTierOneCasesImportingTests : AbstractKotlinMppGradleImportingTest
             excludeDependencies(".*kmmApp.*") // don't show inter-project dependencies
 
             publish("androidLib")
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
         }
     }
 
@@ -114,7 +115,7 @@ class KotlinMppTierOneCasesImportingTests : AbstractKotlinMppGradleImportingTest
     @Test
     fun testKotlinJvmConsumesKmmLibBinary() {
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
             onlyDependencies(from = ".*kJvm.*", to = ".*kmmLib.*")
             publish("kmmLib")
         }
@@ -131,7 +132,7 @@ class KotlinMppTierOneCasesImportingTests : AbstractKotlinMppGradleImportingTest
     @Test
     fun testPureJavaConsumesKmmLibBinary() {
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
             onlyDependencies(from = ".*javaOnly.*", to = ".*kmmLib.*")
             publish("kmmLib")
         }

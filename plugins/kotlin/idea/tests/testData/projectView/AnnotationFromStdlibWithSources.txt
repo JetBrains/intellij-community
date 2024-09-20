@@ -147,4 +147,4 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/commonMain/kotlin/annotation
      UShortArrayKt
      UShortKt
     +PsiDirectory: META-INF
-   +PsiDirectory: kotlin-stdlib-common.jar
+   +PsiDirectory: kotlin-stdlib-common.klib

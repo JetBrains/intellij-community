@@ -29,10 +29,4 @@ private class K2MppDebuggerCompilerFacility(
     files: List<TestFileWithModule>,
     jvmTarget: JvmTarget,
     compileConfig: TestCompileConfiguration,
-) : MppDebuggerCompilerFacility(project, files, jvmTarget, compileConfig) {
-    override fun analyzeSources(ktFiles: List<KtFile>): Pair<LanguageVersionSettings, AnalysisResult> {
-        return withTestServicesNeededForCodeCompilation(project) {
-            super.analyzeSources(ktFiles)
-        }
-    }
-}
+) : MppDebuggerCompilerFacility(project, files, jvmTarget, compileConfig)
