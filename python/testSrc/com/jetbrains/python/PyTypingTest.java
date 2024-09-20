@@ -5256,8 +5256,20 @@ public class PyTypingTest extends PyTestCase {
   }
 
   // PY-71002
+  public void testTypeAliasOneWithoutDefault() {
+    doTest("dict[Any, str] | list[float]", """
+      from typing import TypeVar, TypeAlias
+      T = TypeVar("T")
+      U = TypeVar("U", default=str)
+      B = TypeVar("B", default=float)
+      Alias : TypeAlias = dict[T, U] | list[B]
+      expr: Alias
+      """);
+  }
+
+  // PY-71002
   public void testNewStyleTypeAliasOneWithoutDefault() {
-    doTest("dict[T, str] | list[float]", """
+    doTest("dict[Any, str] | list[float]", """
       type Alias[T, U = str, B = float] = dict[T, U] | list[B]
       expr: Alias
       """);
@@ -5523,6 +5535,62 @@ public class PyTypingTest extends PyTestCase {
     doTest("Test[Any, Any, bool]", """
       class Test[T = str, T1 = int, T2 = bool]: ...
       expr = Test[Any, Any]()
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasParameterizedInMultipleSteps() {
+    doTest("float | int | str", """
+      from typing import Union
+      type A[T1, T2, T3 = str] = Union[T1, T2, T3]
+      type B[T1, T2 = int] = A[T1, T2]
+      type C[T1] = B[T1]
+      type D = C[float]
+      expr: D
+      """);
+  }
+
+  // PY-71002
+  public void testMixedOldAndNewStyleTypeAliasesParameterizedInMultipleSteps() {
+    doTest("float | int | str", """
+      from typing import Union, TypeVar, TypeAlias
+      T = TypeVar("T")
+      T1 = TypeVar("T1", default=int)
+      type A[T1, T2, T3 = str] = Union[T1, T2, T3]
+      B: TypeAlias = A[T, T1]
+      C: TypeAlias = B[T]
+      type D = C[float]
+      expr: D
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithAssignedSubscriptionExpression() {
+    doTest("dict[int, str]", """
+      type my_dict[K = float, V = bool] = dict[K, V]
+      type myIntStrDict = my_dict[int, str]
+      expr: myIntStrDict
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithAssignedSubscriptionExpressionAliasingUnion() {
+    doTest("bool | list[float]", """
+      type Alias[T = int, U = str] = U | list[T]
+      type Alias2 = Alias[float, bool]
+      expr: Alias2
+      """);
+  }
+
+  // PY-71002
+  public void testOldStyleTypeAliasWithAssignedSubscriptionExpressionAliasingUnion() {
+    doTest("float | list[bool]", """
+      from typing import TypeVar, Generic, TypeAlias
+      T = TypeVar("T", default=int)
+      U = TypeVar("U", default=str)
+      Alias: TypeAlias = U | list[T]
+      Alias2: TypeAlias = Alias[float, bool]
+      expr: Alias2
       """);
   }
 
