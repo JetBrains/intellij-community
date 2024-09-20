@@ -50,9 +50,7 @@ class InlayHintsDumpTest : LightPlatformCodeInsightFixture4TestCase() {
     myFixture.editor.inlayModel.addBlockElement(16, true, true, 0, DummyInlayRenderer("foo"))
 
     fun dumpInlays(indentBlockInlays: Boolean): String =
-      InlayDumpUtil.dumpHintsInternal(text, file = myFixture.file, editor = myFixture.editor, document = myFixture.editor.document,
-                                      renderer = { r, _ -> r as DummyInlayRenderer; r.text },
-                                      indentBlockInlays = indentBlockInlays)
+      InlayDumpUtil.dumpHintsInternal(text, editor = myFixture.editor, renderer = { r, _ -> r as DummyInlayRenderer; r.text }, indentBlockInlays = indentBlockInlays)
 
     val inlayDump = dumpInlays(indentBlockInlays = false)
     val expected = """

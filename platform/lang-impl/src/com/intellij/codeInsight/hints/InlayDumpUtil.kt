@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiFile
 import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.regex.Pattern
@@ -23,18 +22,16 @@ object InlayDumpUtil {
   @Internal
   fun dumpHintsInternal(
     sourceText: String,
+    editor: Editor,
     filter: ((Inlay<*>) -> Boolean)? = null,
     renderer: (EditorCustomElementRenderer, Inlay<*>) -> String = { r, _ -> r.toString() },
-    file: PsiFile,
-    editor: Editor,
-    document: Document,
     // if document has multiple injected files, a proper host offset should be passed
     offsetShift: Int = 0,
-    // if true, indent equal to that of the following line is inserted before block inlays
     indentBlockInlays: Boolean = false,
   ): String {
+    val document = editor.document
     val model = editor.inlayModel
-    val range = file.textRange
+    val range = TextRange(0, document.textLength)
     val inlineElements = model.getInlineElementsInRange(range.startOffset, range.endOffset)
     val afterLineElements = model.getAfterLineEndElementsInRange(range.startOffset, range.endOffset)
     val blockElements = model.getBlockElementsInRange(range.startOffset, range.endOffset)

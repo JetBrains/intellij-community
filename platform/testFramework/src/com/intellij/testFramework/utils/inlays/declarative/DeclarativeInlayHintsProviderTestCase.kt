@@ -60,7 +60,7 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
     }
     pass.applyInformationToEditor()
 
-    val dump = InlayDumpUtil.dumpHintsInternal(previewText, renderer = { renderer, _ ->
+    val dump = InlayDumpUtil.dumpHintsInternal(previewText, editor = myFixture.editor, renderer = { renderer, _ ->
       renderer as DeclarativeInlayRenderer
       renderer.presentationList.getEntries().joinToString(separator = "|") { entry ->
         val text = (entry as TextInlayPresentationEntry).text
@@ -72,7 +72,7 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
           else -> text
         }
       }
-    }, file = myFixture.file!!, editor = myFixture.editor, document = myFixture.getDocument(myFixture.file!!))
+    })
     val expectedTrim = expectedText.trim()
     val dumpTrim = dump.trim()
     if (expectedFile != null) {

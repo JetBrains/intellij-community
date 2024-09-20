@@ -608,9 +608,9 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
 
     val actualText = InlayDumpUtil.dumpHintsInternal(
       file.text,
+      editor,
       { it.renderer is CodeVisionInlayRenderer },
-      { _, inlay -> inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation } },
-      file, editor, myFixture.getDocument(myFixture.file!!)
+      { _, inlay -> inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation } }
     )
 
     assertEquals(after, actualText)

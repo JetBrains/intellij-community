@@ -70,12 +70,12 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
   }
 
   private fun dumpCodeVisionHints(sourceText: String): String {
-    return InlayDumpUtil.dumpHintsInternal(sourceText, {
+    return InlayDumpUtil.dumpHintsInternal(sourceText, myFixture.editor, {
       val rendererSupported = it.renderer is CodeVisionInlayRenderer
       if (onlyCodeVisionHintsAllowed && !rendererSupported) error("renderer not supported")
       rendererSupported
     }, { _, inlay ->
                                              inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation }
-                                           }, myFixture.file!!, myFixture.editor, myFixture.getDocument(myFixture.file!!))
+                                           })
   }
 }
