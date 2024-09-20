@@ -254,9 +254,15 @@ object CodeWithMeClientDownloader {
 
   private val currentlyDownloading = ConcurrentHashMap<Path, CompletableFuture<Boolean>>()
 
+  @Deprecated("Use downloadFrontend() instead")
+  fun downloadClientAndJdk(clientBuildVersion: String, progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
+    val installation = downloadFrontend(clientBuildVersion, progressIndicator) ?: return null
+    return ExtractedJetBrainsClientData(installation.installationHome, (installation as? StandaloneFrontendInstallation)?.jreDir, 
+                                        installation.buildNumber) 
+  }
+  
   @ApiStatus.Experimental
-  fun downloadClientAndJdk(clientBuildVersion: String,
-                           progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
+  fun downloadFrontend(clientBuildVersion: String, progressIndicator: ProgressIndicator): FrontendInstallation? {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val jdkBuildProgressIndicator = progressIndicator.createSubProgress(0.1)
@@ -284,7 +290,7 @@ object CodeWithMeClientDownloader {
     }
 
     val sessionInfo = createSessionInfo(clientBuildVersion, jdkBuild, true)
-    return downloadClientAndJdk(sessionInfo, progressIndicator.createSubProgress(0.9))
+    return downloadFrontendAndJdk(sessionInfo, progressIndicator.createSubProgress(0.9))
   }
 
   /**
@@ -296,13 +302,13 @@ object CodeWithMeClientDownloader {
    * Update this method (any jdk-related stuff) together with:
    *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
    */
-  fun downloadClientAndJdk(clientBuildVersion: String,
-                           jreBuild: String?,
-                           progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData? {
+  fun downloadFrontendAndJdk(clientBuildVersion: String,
+                             jreBuild: String?,
+                             progressIndicator: ProgressIndicator): FrontendInstallation {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val sessionInfo = createSessionInfo(clientBuildVersion, jreBuild, true)
-    return downloadClientAndJdk(sessionInfo, progressIndicator)
+    return downloadFrontendAndJdk(sessionInfo, progressIndicator)
   }
 
   fun isClientDownloaded(
@@ -319,7 +325,7 @@ object CodeWithMeClientDownloader {
     return isAlreadyDownloaded(guestData)
   }
 
-  fun extractedClientData(clientBuildVersion: String): ExtractedJetBrainsClientData? {
+  fun extractedClientData(clientBuildVersion: String): StandaloneFrontendInstallation? {
     if (!isClientDownloaded(clientBuildVersion)) {
       return null
     }
@@ -331,25 +337,25 @@ object CodeWithMeClientDownloader {
       cachesDir = config.clientCachesDir,
       includeInManifest = getJetBrainsClientManifestFilter(clientBuildVersion),
     )
-    return ExtractedJetBrainsClientData(clientDir = guestData.targetPath, jreDir = null, version = clientBuildVersion)
+    return StandaloneFrontendInstallation(installationHome = guestData.targetPath, jreDir = null, buildNumber = clientBuildVersion)
   }
 
 
-  suspend fun downloadClientAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo): ExtractedJetBrainsClientData {
+  suspend fun downloadFrontendAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo): FrontendInstallation {
     return withProgressText(RemoteDevUtilBundle.message("launcher.get.client.info")) {
       coroutineToIndicator {
-        downloadClientAndJdk(sessionInfoResponse, ProgressManager.getInstance().progressIndicator)
+        downloadFrontendAndJdk(sessionInfoResponse, ProgressManager.getInstance().progressIndicator)
       }
     }
   }
 
-  fun downloadClientAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo,
-                           progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData {
+  fun downloadFrontendAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo,
+                             progressIndicator: ProgressIndicator): FrontendInstallation {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val embeddedClientLauncher = createEmbeddedClientLauncherIfAvailable(sessionInfoResponse.clientBuildNumber)
     if (embeddedClientLauncher != null) {
-      return ExtractedJetBrainsClientData(Path(PathManager.getHomePath()), null, sessionInfoResponse.clientBuildNumber)
+      return EmbeddedFrontendInstallation(embeddedClientLauncher)
     }
 
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
@@ -528,7 +534,7 @@ object CodeWithMeClientDownloader {
       if (!guestSucceeded || !jdkSucceeded) error("Guest or jdk was not downloaded")
 
       LOG.info("Download of guest and jdk succeeded")
-      return ExtractedJetBrainsClientData(clientDir = guestData.targetPath, jreDir = jdkData?.targetPath, version = sessionInfoResponse.clientBuildNumber)
+      return StandaloneFrontendInstallation(installationHome = guestData.targetPath, jreDir = jdkData?.targetPath, buildNumber = sessionInfoResponse.clientBuildNumber)
     }
     catch(e: ProcessCanceledException) {
       LOG.info("Download was canceled")
@@ -699,33 +705,36 @@ object CodeWithMeClientDownloader {
   /**
    * Launches client and returns process's lifetime (which will be terminated on process exit)
    */
-  fun runCwmGuestProcessFromDownload(
+  fun runFrontendProcess(
     lifetime: Lifetime,
     url: String,
-    extractedJetBrainsClientData: ExtractedJetBrainsClientData
+    frontendInstallation: FrontendInstallation
   ): Lifetime {
-    if (extractedJetBrainsClientData.clientDir == Path(PathManager.getHomePath())) {
-      //todo: refactor this code to generalize ExtractedJetBrainsClientData and pass EmbeddedClientLauncher instance here explicitly
-      return EmbeddedClientLauncher.create()!!.launch(url, lifetime, NotificationBasedEmbeddedClientErrorReporter(null))
-    }
-    
-    val launcherData = findLauncherUnderCwmGuestRoot(extractedJetBrainsClientData.clientDir)
+    when (frontendInstallation) {
+      is EmbeddedFrontendInstallation -> {
+        return frontendInstallation.frontendLauncher.launch(url, lifetime, NotificationBasedEmbeddedClientErrorReporter(null))
+      }
+      is StandaloneFrontendInstallation -> {
+        val launcherData = findLauncherUnderCwmGuestRoot(frontendInstallation.installationHome)
 
-    if (extractedJetBrainsClientData.jreDir != null) {
-      createSymlinkToJdkFromGuest(extractedJetBrainsClientData.clientDir, extractedJetBrainsClientData.jreDir)
-    }
+        if (frontendInstallation.jreDir != null) {
+          createSymlinkToJdkFromGuest(frontendInstallation.installationHome, frontendInstallation.jreDir)
+        }
 
-    // Update mtime on JRE & CWM Guest roots. The cleanup process will use it later.
-    if (config.clientVersionManagementEnabled) {
-      listOfNotNull(extractedJetBrainsClientData.clientDir, extractedJetBrainsClientData.jreDir).forEach { path ->
-        Files.setLastModifiedTime(path, FileTime.fromMillis(System.currentTimeMillis()))
+        // Update mtime on JRE & CWM Guest roots. The cleanup process will use it later.
+        if (config.clientVersionManagementEnabled) {
+          listOfNotNull(frontendInstallation.installationHome, frontendInstallation.jreDir).forEach { path ->
+            Files.setLastModifiedTime(path, FileTime.fromMillis(System.currentTimeMillis()))
+          }
+        }
+
+        return runJetBrainsClientProcess(launcherData,
+                                         workingDirectory = frontendInstallation.installationHome,
+                                         clientVersion = frontendInstallation.buildNumber,
+                                         url, lifetime)
+
       }
     }
-
-    return runJetBrainsClientProcess(launcherData, 
-                                     workingDirectory = extractedJetBrainsClientData.clientDir,
-                                     clientVersion = extractedJetBrainsClientData.version, 
-                                     url, lifetime)
   }
 
   internal fun runJetBrainsClientProcess(launcherData: JetBrainsClientLauncherData,
