@@ -58,6 +58,8 @@ class KtIncorrectProcessCanceledExceptionHandlingInspectionTest : KtIncorrectCan
 }
 
 
+/*
+Ignored: Analysis API doesn't work correctly with K1, and tests on Aggregator are run in K1 mode (setting system property doesn't change it)
 @TestDataPath("/inspections/incorrectCeHandling")
 class KtIncorrectCancellationExceptionHandlingInspectionTest : KtIncorrectCancellationExceptionHandlingInspectionTestBase() {
 
@@ -78,7 +80,7 @@ class KtIncorrectCancellationExceptionHandlingInspectionTest : KtIncorrectCancel
     )
     addKotlinFile("CancellationException.kt", """
         package kotlinx.coroutines
-        
+
         @SinceKotlin("1.4")
         typealias CancellationException = java.util.concurrent.CancellationException
       """)
@@ -125,3 +127,4 @@ class KtIncorrectCancellationExceptionHandlingInspectionTest : KtIncorrectCancel
   }*/
 
 }
+*/
