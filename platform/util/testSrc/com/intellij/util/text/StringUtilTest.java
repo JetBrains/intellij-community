@@ -1074,6 +1074,9 @@ public class StringUtilTest {
     assertEquals("" + (char)0x0, StringUtil.unescapeAnsiStringCharacters("\\x0"));
     assertEquals("" + (char)0xf, StringUtil.unescapeAnsiStringCharacters("\\xf"));
     assertEquals("" + (char)0xff, StringUtil.unescapeAnsiStringCharacters("\\xff"));
+    assertEquals("" + (char)0xfff, StringUtil.unescapeAnsiStringCharacters("\\xfff"));
+    assertEquals("" + (char)0xffff, StringUtil.unescapeAnsiStringCharacters("\\xffff"));
+    assertEquals("" + (char)0xf, StringUtil.unescapeAnsiStringCharacters("\\x0000000000000000f"));
 
     // 4 digit codepoint
     assertEquals("\u1234", StringUtil.unescapeAnsiStringCharacters("\\u1234"));
