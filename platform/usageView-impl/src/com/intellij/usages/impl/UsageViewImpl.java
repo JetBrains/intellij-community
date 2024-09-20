@@ -1864,8 +1864,8 @@ public class UsageViewImpl implements UsageViewEx {
     return selectionPaths == null ? Collections.emptyList() : ContainerUtil.mapNotNull(selectionPaths, p-> ObjectUtils.tryCast(p.getLastPathComponent(), TreeNode.class));
   }
 
-  private @NotNull List<@NotNull TreeNode> allSelectedNodes() {
-    return TreeUtil.treeNodeTraverser(null).withRoots(selectedNodes()).traverse().toList();
+  private @NotNull JBIterable<TreeNode> traverseNodesRecursively(@NotNull List<TreeNode> roots) {
+    return TreeUtil.treeNodeTraverser(null).withRoots(roots).traverse();
   }
 
   @Override
@@ -2025,24 +2025,23 @@ public class UsageViewImpl implements UsageViewEx {
         selection, o -> o instanceof UsageTargetNode oo ? oo.getTarget() : null);
       sink.set(USAGE_TARGETS_KEY, targets.isEmpty() ? null : targets.toArray(UsageTarget.EMPTY_ARRAY));
 
-      List<TreeNode> selectedNodes = allSelectedNodes();
       DataSink.uiDataSnapshot(sink, TreeUtil.getUserObject(getSelectedNode()));
 
+      List<TreeNode> selectedNodes = selectedNodes();
       sink.lazy(USAGES_KEY, () -> {
-        return selectedUsages(selectedNodes)
-          .toArray(n -> n == 0 ? Usage.EMPTY_ARRAY : new Usage[n]);
+        return selectedUsages(traverseNodesRecursively(selectedNodes))
+          .toArray(Usage.EMPTY_ARRAY);
       });
       sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
-        return selectedUsages(selectedNodes)
-          .filter(usage -> usage instanceof PsiElementUsage)
-          .map(usage -> ((PsiElementUsage)usage).getElement())
-          .filter(element -> element != null)
-          .toArray(PsiElement.ARRAY_FACTORY::create);
+        return selectedUsages(traverseNodesRecursively(selectedNodes))
+          .filter(PsiElementUsage.class)
+          .filterMap(usage -> usage.getElement())
+          .toArray(PsiElement.EMPTY_ARRAY);
       });
       sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
-        return JBIterable.from(selectedNodes)
-          .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() :
-                          o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null)
+        return traverseNodesRecursively(selectedNodes)
+          .filterMap(o -> o instanceof UsageNode oo ? oo.getUsage() :
+                          o instanceof UsageTargetNode oo ? oo.getTarget() : null)
           .flatMap(o -> o instanceof UsageInFile oo ? ContainerUtil.createMaybeSingletonList(oo.getFile()) :
                         o instanceof UsageInFiles oo ? Arrays.asList(oo.getFiles()) :
                         o instanceof UsageTarget oo
@@ -2055,11 +2054,11 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private static @NotNull Stream<@NotNull Usage> selectedUsages(@NotNull List<@NotNull TreeNode> selectedNodes) {
-    return selectedNodes.stream()
-      .filter(node -> node instanceof UsageNode)
-      .map(node -> ((UsageNode)node).getUsage())
-      .distinct();
+  private static @NotNull JBIterable<Usage> selectedUsages(@NotNull JBIterable<@NotNull TreeNode> selectedNodes) {
+    return selectedNodes
+      .filter(UsageNode.class)
+      .map(node -> node.getUsage())
+      .unique();
   }
 
   private final class ButtonPanel extends JPanel {
