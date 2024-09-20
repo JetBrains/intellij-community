@@ -211,25 +211,26 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public void commitAllDocuments() {
     ThreadingAssertions.assertEventDispatchThread();
-    ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
+    WriteIntentReadAction.run((Runnable)() -> {
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
-    if (myUncommittedDocuments.isEmpty()) return;
+      if (myUncommittedDocuments.isEmpty()) return;
 
-    Document[] documents = getUncommittedDocuments();
-    for (Document document : documents) {
-      if (isCommitted(document)) {
-        if (!isEventSystemEnabled(document)) {
-          // another thread has just committed it, everything's fine
-          continue;
+      Document[] documents = getUncommittedDocuments();
+      for (Document document : documents) {
+        if (isCommitted(document)) {
+          if (!isEventSystemEnabled(document)) {
+            // another thread has just committed it, everything's fine
+            continue;
+          }
+          LOG.error("Committed document in uncommitted set: " + document);
         }
-        LOG.error("Committed document in uncommitted set: " + document);
+        if (!doCommit(document) && isEventSystemEnabled(document)) {
+          LOG.error("Couldn't commit " + document);
+        }
       }
-      if (!doCommit(document) && isEventSystemEnabled(document)) {
-        LOG.error("Couldn't commit " + document);
-      }
-    }
-
-    LOG.assertTrue(!hasEventSystemEnabledUncommittedDocuments(), myUncommittedDocuments);
+      LOG.assertTrue(!hasEventSystemEnabledUncommittedDocuments(), myUncommittedDocuments);
+    });
   }
 
   @Override
