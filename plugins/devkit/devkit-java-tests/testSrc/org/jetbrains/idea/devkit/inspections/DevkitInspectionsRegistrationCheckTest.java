@@ -30,7 +30,7 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
               "CancellationCheckInLoops",
               "ThreadingConcurrency",
               "CallingMethodShouldBeRequiresBlockingContext",
-              "IncorrectProcessCanceledExceptionHandling",
+              "IncorrectCancellationExceptionHandling",
               "PotentialDeadlockInServiceInitialization"
     ).sorted().toList();
 

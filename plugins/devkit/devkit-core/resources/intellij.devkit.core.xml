@@ -443,7 +443,7 @@
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="ERROR"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.IncorrectProcessCanceledExceptionHandlingInspection"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.IncorrectCancellationExceptionHandlingInspection"
                      key="inspections.incorrect.cancellation.exception.handling.display.name"/>
 
     <localInspection language="UAST" shortName="StaticInitializationInExtensions" groupPathKey="inspections.group.path"

@@ -23,7 +23,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 // "CE" stands for "cancellation exception", without a specific type meaning
 private val ceClassNames = listOf("com.intellij.openapi.progress.ProcessCanceledException")
 
-internal class IncorrectProcessCanceledExceptionHandlingInspection : DevKitUastInspectionBase() {
+internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInspectionBase() {
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {

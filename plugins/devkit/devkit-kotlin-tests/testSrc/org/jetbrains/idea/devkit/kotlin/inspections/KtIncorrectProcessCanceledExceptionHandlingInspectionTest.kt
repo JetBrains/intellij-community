@@ -3,10 +3,10 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.TestDataPath
 import org.intellij.lang.annotations.Language
-import org.jetbrains.idea.devkit.inspections.IncorrectProcessCanceledExceptionHandlingInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.IncorrectCancellationExceptionHandlingInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
-abstract class KtIncorrectProcessCanceledExceptionHandlingInspectionTestBase : IncorrectProcessCanceledExceptionHandlingInspectionTestBase() {
+abstract class KtIncorrectCancellationExceptionHandlingInspectionTestBase : IncorrectCancellationExceptionHandlingInspectionTestBase() {
 
   override fun setUp() {
     super.setUp()
@@ -35,14 +35,14 @@ abstract class KtIncorrectProcessCanceledExceptionHandlingInspectionTestBase : I
     myFixture.addFileToProject(relativePath, fileText)
   }
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/incorrectPceHandling"
+  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/incorrectCeHandling"
 
   override fun getFileExtension() = "kt"
 
 }
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectPceHandling")
-class KtIncorrectProcessCanceledExceptionHandlingInspectionTest : KtIncorrectProcessCanceledExceptionHandlingInspectionTestBase() {
+@TestDataPath("/inspections/incorrectCeHandling")
+class KtIncorrectProcessCanceledExceptionHandlingInspectionTest : KtIncorrectCancellationExceptionHandlingInspectionTestBase() {
 
   fun testIncorrectPceHandlingTests() {
     doTest()
@@ -58,8 +58,8 @@ class KtIncorrectProcessCanceledExceptionHandlingInspectionTest : KtIncorrectPro
 }
 
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectPceHandling")
-class KtIncorrectCancellationExceptionHandlingInspectionTest : KtIncorrectProcessCanceledExceptionHandlingInspectionTestBase() {
+@TestDataPath("/inspections/incorrectCeHandling")
+class KtIncorrectCancellationExceptionHandlingInspectionTest : KtIncorrectCancellationExceptionHandlingInspectionTestBase() {
 
   private val USE_K2_KEY = "idea.kotlin.plugin.use.k2"
   private var previousK2Property: String? = null
@@ -120,7 +120,7 @@ class KtIncorrectCancellationExceptionHandlingInspectionTest : KtIncorrectProces
   }
 
   // TODO: disabled - for some reason @Throws cannot be resolved in test data
-  /*fun testIncorrectCeHandlingWhenPceCaughtImplicitlyTests() {
+  /*fun testIncorrectCeHandlingWhenCeCaughtImplicitlyTests() {
     doTest()
   }*/
 
