@@ -43,6 +43,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -209,10 +210,13 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
       String homePath = jdk.getHomePath();
 
       if (!SystemInfo.isMac && jdk.getHomePath() != null) {
-        Path path = Path.of(jdk.getHomePath(), "jre");
-        if (Files.isDirectory(path)) {
-          homePath = path.toString();
+        try {
+          Path path = Path.of(jdk.getHomePath(), "jre");
+          if (Files.isDirectory(path)) {
+            homePath = path.toString();
+          }
         }
+        catch (InvalidPathException | SecurityException ignored) { continue; }
       }
       if (jrePaths.add(homePath)) {
         model.add(new CustomJreItem(homePath, null, jdk.getVersionString()));
