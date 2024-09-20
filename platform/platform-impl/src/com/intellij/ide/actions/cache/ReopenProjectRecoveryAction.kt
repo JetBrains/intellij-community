@@ -5,6 +5,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.blockingContext
@@ -44,7 +45,7 @@ abstract class ReopenProjectRecoveryAction : RecoveryAction {
   protected suspend fun closeProject(recoveryScope: RecoveryScope): Path {
     val projectPath = Path.of(recoveryScope.project.basePath!!)
     withContext(Dispatchers.EDT) {
-      blockingContext {
+      writeIntentReadAction {
         val projectManager = ProjectManager.getInstance()
         projectManager.closeAndDispose(recoveryScope.project)
       }
