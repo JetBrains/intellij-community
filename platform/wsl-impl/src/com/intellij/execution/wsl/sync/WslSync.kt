@@ -41,6 +41,7 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
      * [linToWinCopy] determines the sync direction.
      * [filters] allow you to specify which files to include/exclude.
      * [useStubs] dictates whether empty stubs should be created for filtered out files.
+     * [retainUnmatchedFiles] prevents files that exist only in the destination from being removed during sync.
      */
     @JvmOverloads
     fun syncWslFolders(linuxDir: String,
