@@ -69,9 +69,11 @@ internal object AddGenericUpperBoundFixFactory : KotlinIntentionActionsFactory()
         val typeParameterDeclaration =
             (DescriptorToSourceUtils.getSourceFromDescriptor(typeParameterDescriptor) as? KtTypeParameter) ?: return null
 
+        if (typeParameterDeclaration.name == null || typeParameterDeclaration.extendsBound != null) return null
+
         return AddGenericUpperBoundFix(
-            typeParameter = typeParameterDeclaration,
+            element = typeParameterDeclaration,
             renderedUpperBound = IdeDescriptorRenderers.SOURCE_CODE.renderType(upperBound),
-        )
+        ).asIntention()
     }
 }
