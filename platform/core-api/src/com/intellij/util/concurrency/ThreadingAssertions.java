@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,12 +30,18 @@ public final class ThreadingAssertions {
     return Logger.getInstance(ThreadingAssertions.class);
   }
 
+  private static final String DOCUMENTATION_URL = "https://jb.gg/ij-platform-threading";
+
   @Internal
   @VisibleForTesting
   public static final String MUST_EXECUTE_IN_READ_ACTION =
     "Read access is allowed from inside read-action only (see Application.runReadAction())";
   private static final String MUST_EXECUTE_IN_READ_ACTION_EXPLICIT =
-    "Read access is allowed from inside explicit read-action only (see Application.runReadAction()). Now implicit WriteIntentReadAction.run() is used.";
+    "Access is allowed with explicit read lock.\n" +
+    "Now each coroutine scheduled on EDT wrapped in implicit write intent lock (which implies read lock too). This implicit lock will be removed in future releases.\n" +
+    "Please, use explicit lock API like ReadAction.run(), WriteIntentReadAction.run(), readAction() or writeIntentReadAction() to wrap code which needs lock to access model or PSI.\n" +
+    "Please note, that read action API can re-schedule your code to background threads, if you are sure that your code need to be executed on EDT, you need to use write intent read action.\n" +
+    "Also, consult with " + DOCUMENTATION_URL;
   @Internal
   @VisibleForTesting
   public static final String MUST_NOT_EXECUTE_IN_READ_ACTION =
@@ -42,7 +49,10 @@ public final class ThreadingAssertions {
   private static final String MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION =
     "Access is allowed from write thread only";
   private static final String MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION_EXPLICIT =
-    "Access is allowed from write thread only with explicit WriteIntentReadAction.run(). Now implicit WriteIntentReadAction.run() is used.";
+    "Access is allowed from EDT with explicit write intent lock.\n" +
+    "Now each coroutine scheduled on EDT wrapped in implicit write intent lock. This implicit lock will be removed in future releases.\n" +
+    "Please, use explicit lock API like WriteIntentReadAction.run() or writeIntentReadAction() to wrap code which needs lock to modify model or PSI.\n" +
+    "Also, consult with " + DOCUMENTATION_URL;
   @Internal
   @VisibleForTesting
   public static final String MUST_EXECUTE_IN_WRITE_ACTION =
@@ -55,8 +65,6 @@ public final class ThreadingAssertions {
   @VisibleForTesting
   public static final String MUST_NOT_EXECUTE_IN_EDT =
     "Access from Event Dispatch Thread (EDT) is not allowed";
-
-  private static final String DOCUMENTATION_URL = "https://jb.gg/ij-platform-threading";
 
   private static boolean implicitLock = false;
 
@@ -128,7 +136,7 @@ public final class ThreadingAssertions {
    */
   @Internal
   public static void reportImplicitRead() {
-    getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_READ_ACTION_EXPLICIT));
+    getLogger().error(new RuntimeExceptionWithAttachments(MUST_EXECUTE_IN_READ_ACTION_EXPLICIT));
   }
 
   /**
@@ -176,7 +184,7 @@ public final class ThreadingAssertions {
    */
   @Internal
   public static void reportImplicitWriteIntent() {
-    getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION_EXPLICIT));
+    getLogger().error(new RuntimeExceptionWithAttachments(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION_EXPLICIT));
   }
 
   /**
@@ -202,8 +210,12 @@ public final class ThreadingAssertions {
   }
 
   private static @NotNull RuntimeExceptionWithAttachments createThreadAccessException(@NonNls @NotNull String message) {
+    // Don't suggest Read Action on EDT with coroutines, as it rescheduled code
+    boolean skipReadAction = EDT.isCurrentThreadEdt() && ThreadContext.currentThreadContextOrNull() != null;
     return new RuntimeExceptionWithAttachments(
-      message + "; If you access or modify model on EDT consider wrapping your code in WriteIntentReadAction or ReadAction; see " + DOCUMENTATION_URL + " for details" + "\n" + getThreadDetails()
+      message + "; If you access or modify model on EDT consider wrapping your code in WriteIntentReadAction " +
+      (skipReadAction ? "" : " or ReadAction") +
+      "; see " + DOCUMENTATION_URL + " for details" + "\n" + getThreadDetails()
     );
   }
 
