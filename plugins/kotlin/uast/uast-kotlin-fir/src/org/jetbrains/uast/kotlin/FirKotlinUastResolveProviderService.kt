@@ -133,47 +133,51 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     ): List<KotlinUParameter> {
         analyzeForUast(ktLambdaExpression) {
             val anonymousFunctionSymbol = ktLambdaExpression.functionLiteral.symbol
+            val anonymousFunctionSymbolPtr = anonymousFunctionSymbol.createPointer()
             val parameters = mutableListOf<KotlinUParameter>()
             if (includeExplicitParameters && anonymousFunctionSymbol.receiverParameter != null) {
-                val lambdaImplicitReceiverType = anonymousFunctionSymbol.receiverParameter!!.type.asPsiType(
-                    ktLambdaExpression,
-                    allowErrorTypes = false,
-                    KaTypeMappingMode.DEFAULT_UAST,
-                    isAnnotationMethod = false
-                ) ?: UastErrorType
                 parameters.add(
                     KotlinUParameter(
                         UastKotlinPsiParameterBase(
                             name = LAMBDA_THIS_PARAMETER_NAME,
-                            type = lambdaImplicitReceiverType,
                             parent = ktLambdaExpression,
                             ktOrigin = ktLambdaExpression,
-                            language = ktLambdaExpression.language,
                             isVarArgs = false,
                             ktDefaultValue = null
-                        ),
+                        ) {
+                            analyzeForUast(ktLambdaExpression) {
+                                anonymousFunctionSymbolPtr.restoreSymbol()?.receiverParameter?.returnType?.asPsiType(
+                                    ktLambdaExpression,
+                                    allowErrorTypes = false,
+                                    KaTypeMappingMode.DEFAULT_UAST,
+                                    isAnnotationMethod = false
+                                ) ?: UastErrorType
+                            }
+                          },
                         sourcePsi = null,
                         parent
                     )
                 )
             }
-            anonymousFunctionSymbol.valueParameters.mapTo(parameters) { p ->
-                val psiType = p.returnType.asPsiType(
-                    ktLambdaExpression,
-                    allowErrorTypes = false,
-                    KaTypeMappingMode.DEFAULT_UAST,
-                    isAnnotationMethod = false
-                ) ?: UastErrorType
+            anonymousFunctionSymbol.valueParameters.mapTo(parameters) { paramSymbol ->
+                val paramSymbolPtr = paramSymbol.createPointer()
                 KotlinUParameter(
                     UastKotlinPsiParameterBase(
-                        name = p.name.asString(),
-                        type = psiType,
+                        name = paramSymbol.name.asString(),
                         parent = ktLambdaExpression,
                         ktOrigin = ktLambdaExpression,
-                        language = ktLambdaExpression.language,
-                        isVarArgs = p.isVararg,
+                        isVarArgs = paramSymbol.isVararg,
                         ktDefaultValue = null
-                    ),
+                    ) {
+                        analyzeForUast(ktLambdaExpression) {
+                            paramSymbolPtr.restoreSymbol()?.returnType?.asPsiType(
+                                ktLambdaExpression,
+                                allowErrorTypes = false,
+                                KaTypeMappingMode.DEFAULT_UAST,
+                                isAnnotationMethod = false
+                            ) ?: UastErrorType
+                        }
+                    },
                     null,
                     parent
                 )

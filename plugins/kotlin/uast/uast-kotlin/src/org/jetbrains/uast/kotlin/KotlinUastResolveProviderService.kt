@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -149,17 +149,16 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
         val parameters = if (includeExplicitParameters) functionDescriptor.explicitParameters else functionDescriptor.valueParameters
 
-        return parameters.map { p ->
+        return parameters.map { param ->
+            val type = param.type.toPsiType(parent, ktLambdaExpression, PsiTypeConversionConfiguration.create(ktLambdaExpression))
             KotlinUParameter(
                 UastKotlinPsiParameterBase(
-                    name = p.name.asString(),
-                    type = p.type.toPsiType(parent, ktLambdaExpression, PsiTypeConversionConfiguration.create(ktLambdaExpression)),
+                    name = param.name.asString(),
                     parent = ktLambdaExpression,
-                    ktOrigin = ktLambdaExpression,
-                    language = ktLambdaExpression.language,
-                    isVarArgs = p.isVararg,
-                    ktDefaultValue = null
-                ),
+                    isVarArgs = param.isVararg,
+                    ktDefaultValue = null,
+                    ktOrigin = ktLambdaExpression
+                ) { type },
                 null,
                 parent
             )

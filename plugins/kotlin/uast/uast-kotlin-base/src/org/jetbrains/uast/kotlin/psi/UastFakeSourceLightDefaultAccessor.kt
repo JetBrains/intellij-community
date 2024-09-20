@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.psi
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiParameterList
 import com.intellij.psi.impl.light.LightParameterListBuilder
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLazyPart
 import org.jetbrains.uast.getOrBuild
 
@@ -30,16 +32,8 @@ internal class UastFakeSourceLightDefaultAccessor(
                     val parameterList = this
 
                     if (isSetter) {
-                        val type =
-                            baseResolveProviderService.getType(
-                                original,
-                                this@UastFakeSourceLightDefaultAccessor,
-                                isForFake = true
-                            ) ?: UastErrorType
                         val nullability = baseResolveProviderService.nullability(original)
-                        this.addParameter(
-                            UastKotlinPsiSetterParameter(type, parameterList, original, nullability)
-                        )
+                        addParameter(UastKotlinPsiSetterParameter(parameterList, original, nullability))
                     }
                 }
             }

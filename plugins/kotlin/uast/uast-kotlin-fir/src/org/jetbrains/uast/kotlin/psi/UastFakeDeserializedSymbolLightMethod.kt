@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.psi.*
@@ -159,29 +159,43 @@ constructor(
 
                     analyzeForUast(context) l@{
                         val functionSymbol = original.restoreSymbol() ?: return@l
+                        val functionSymbolPtr = functionSymbol.createPointer()
                         (functionSymbol.receiverParameter?.psi as? KtTypeReference)?.let { receiver ->
                             parameterList.addParameter(
                                 UastKotlinPsiParameterBase(
                                     "\$this\$$name",
-                                    functionSymbol.receiverType?.asPsiType(context, allowErrorTypes = true) ?: UastErrorType,
                                     parameterList,
-                                    receiver
-                                )
+                                    isVarArgs = false,
+                                    ktDefaultValue = null,
+                                    ktOrigin = receiver
+                                ) {
+                                    analyzeForUast(context) {
+                                        functionSymbolPtr.restoreSymbol()
+                                            ?.receiverType
+                                            ?.asPsiType(context, allowErrorTypes = true)
+                                            ?: UastErrorType
+                                    }
+                                }
                             )
                         }
 
-                        for (p in functionSymbol.valueParameters) {
-                            val type = p.returnType.asPsiType(context, allowErrorTypes = true) ?: UastErrorType
-                            val adjustedType = if (p.isVararg && type is PsiArrayType)
-                                PsiEllipsisType(type.componentType, type.annotationProvider)
-                            else type
+                        for (valueParamSymbol in functionSymbol.valueParameters) {
+                            val valueParamSymbolPtr = valueParamSymbol.createPointer()
                             parameterList.addParameter(
                                 UastKotlinPsiParameterBase(
-                                    p.name.identifier,
-                                    adjustedType,
+                                    valueParamSymbol.name.identifier,
                                     parameterList,
-                                    (p.psi as? KtElement) ?: context
-                                )
+                                    isVarArgs = false,
+                                    ktDefaultValue = null,
+                                    ktOrigin = (valueParamSymbol.psi as? KtElement) ?: context
+                                ) {
+                                    analyzeForUast(context) {
+                                        valueParamSymbolPtr.restoreSymbol()
+                                            ?.returnType
+                                            ?.asPsiType(context, allowErrorTypes = true)
+                                            ?: UastErrorType
+                                    }
+                                }
                             )
                         }
                     }

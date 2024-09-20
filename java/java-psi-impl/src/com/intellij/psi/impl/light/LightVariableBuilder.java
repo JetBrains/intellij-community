@@ -15,10 +15,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public class LightVariableBuilder<T extends LightVariableBuilder<?>> extends LightElement implements PsiVariable, NavigationItem, OriginInfoAwareElement {
   private final String myName;
-  private final PsiType myType;
+  private final Supplier<? extends PsiType> myTypeSupplier;
   private volatile LightModifierList myModifierList;
   private volatile Icon myBaseIcon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Variable);
   private String myOriginInfo;
@@ -40,7 +41,19 @@ public class LightVariableBuilder<T extends LightVariableBuilder<?>> extends Lig
                               @NotNull Language language, @NotNull LightModifierList modifierList) {
     super(manager, language);
     myName = name;
-    myType = type;
+    myTypeSupplier = () -> type;
+    myModifierList = modifierList;
+  }
+
+  protected LightVariableBuilder(PsiManager manager,
+                                 @NotNull String name,
+                                 @NotNull Supplier<? extends @NotNull PsiType> typeSupplier,
+                                 @NotNull Language language,
+                                 @NotNull LightModifierList modifierList
+  ) {
+    super(manager, language);
+    myName = name;
+    myTypeSupplier = typeSupplier;
     myModifierList = modifierList;
   }
 
@@ -60,7 +73,7 @@ public class LightVariableBuilder<T extends LightVariableBuilder<?>> extends Lig
 
   @Override
   public @NotNull PsiType getType() {
-    return myType;
+    return myTypeSupplier.get();
   }
 
   @Override
