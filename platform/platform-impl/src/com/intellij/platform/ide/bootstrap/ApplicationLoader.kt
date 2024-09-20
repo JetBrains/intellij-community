@@ -279,7 +279,9 @@ private fun CoroutineScope.executeAsyncAppInitListeners() {
   for (extension in point.filterableLazySequence()) {
     val pluginId = extension.pluginDescriptor.pluginId
     val className = extension.implementationClassName
-    if (pluginId != PluginManagerCore.CORE_ID && !asyncAppListenerAllowListForNonCorePlugin.contains(className)) {
+    if (pluginId != PluginManagerCore.CORE_ID &&
+        !asyncAppListenerAllowListForNonCorePlugin.contains(className) &&
+        pluginId.idString != "com.intellij.marketplace") {
       LOG.error(PluginException("$className is not allowed to implement ${point.name}", pluginId))
       continue
     }
