@@ -491,18 +491,6 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.DefaultKeymap"/>
 
-    <applicationService serviceInterface="com.intellij.ide.passwordSafe.PasswordSafe"
-                        serviceImplementation="com.intellij.ide.passwordSafe.impl.PasswordSafeImpl"
-                        testServiceImplementation="com.intellij.ide.passwordSafe.impl.TestPasswordSafeImpl"/>
-
-    <applicationConfigurable parentId="preferences.general" instance="com.intellij.credentialStore.PasswordSafeConfigurable"
-                             bundle="messages.CredentialStoreBundle"
-                             key="password.safe.configurable"
-                             id="application.passwordSafe"/>
-
-    <applicationService serviceInterface="com.intellij.credentialStore.CredentialStoreUiService"
-                        serviceImplementation="com.intellij.credentialStore.CredentialStoreUiServiceImpl"/>
-
     <applicationService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"
                         serviceImplementation="com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ApplicationSchemeManagerFactory"/>
     <projectService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"

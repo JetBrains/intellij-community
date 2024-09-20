@@ -50,6 +50,11 @@
   <xi:include href="/META-INF/LangExtensionPoints.xml"/>
 
   <xi:include href="/META-INF/PlatformExtensions.xml"/>
+
+  <xi:include href="/META-INF/credential-store.xml">
+    <xi:fallback/>
+  </xi:include>
+
   <xi:include href="/META-INF/LangExtensions.xml"/>
   <xi:include href="/META-INF/OpenTelemetryExtensions.xml"/>
 

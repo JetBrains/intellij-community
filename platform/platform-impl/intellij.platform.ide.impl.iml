@@ -56,8 +56,6 @@
     <orderEntry type="library" exported="" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-api" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" scope="RUNTIME" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
@@ -143,5 +141,6 @@
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
     <orderEntry type="module" module-name="fleet.util.core" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="library" scope="RUNTIME" name="bouncy-castle-provider" level="project" />
   </component>
 </module>

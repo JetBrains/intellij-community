@@ -27,7 +27,6 @@ import java.util.*
 private val PLATFORM_API_MODULES = java.util.List.of(
   "intellij.platform.analysis",
   "intellij.platform.builtInServer",
-  "intellij.platform.credentialStore",
   "intellij.platform.diff",
   "intellij.platform.editor",
   "intellij.platform.externalSystem",
@@ -88,6 +87,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.util.commonsLangV2Shim",
 
   "intellij.platform.externalSystem.impl",
+  "intellij.platform.credentialStore.ui",
 
   // do we need it?
   "intellij.platform.sqlite",
