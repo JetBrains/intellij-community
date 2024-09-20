@@ -145,6 +145,7 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
 
 private fun updateToolbarVisibility(project: Project) {
   HotSwapSessionManager.getInstance(project).coroutineScope.launch(Dispatchers.Default) {
+    // Hide toolbar after setting disable
     if (showFloatingToolbar()) return@launch
     HotSwapSessionManager.getInstance(project).notifyUpdate()
   }
@@ -198,11 +199,10 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
         val session = manager.currentSession
         val status = forceStatus ?: session?.currentStatus
 
-        val action = when (status) {
+        when (status) {
           HotSwapVisibleStatus.IN_PROGRESS -> {
             hotSwapAction.status = HotSwapButtonStatus.IN_PROGRESS
             updateActions()
-            return@launch
           }
           HotSwapVisibleStatus.SUCCESS -> {
             hotSwapAction.status = HotSwapButtonStatus.SUCCESS
@@ -211,7 +211,6 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
               delay(NOTIFICATION_TIME_SECONDS.seconds)
               onStatusChanged(null)
             }
-            return@launch
           }
           HotSwapVisibleStatus.NO_CHANGES -> {
             component.scheduleHide()
