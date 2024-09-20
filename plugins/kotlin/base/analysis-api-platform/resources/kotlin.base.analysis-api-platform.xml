@@ -36,5 +36,8 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModuleDependentsProvider"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinGlobalSearchScopeMerger"/>
   </extensions>
 </idea-plugin>

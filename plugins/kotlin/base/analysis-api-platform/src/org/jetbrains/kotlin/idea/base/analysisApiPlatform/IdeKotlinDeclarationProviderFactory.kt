@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclaration
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderMerger
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinFileBasedDeclarationProvider
 import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -60,7 +61,7 @@ internal class IdeKotlinDeclarationProviderMerger(private val project: Project) 
         providers.mergeSpecificProviders<_, IdeKotlinDeclarationProvider>(KotlinCompositeDeclarationProvider.factory) { targetProviders ->
             IdeKotlinDeclarationProvider(
                 project,
-                GlobalSearchScope.union(targetProviders.map { it.scope }),
+                KotlinGlobalSearchScopeMerger.getInstance(project).union(targetProviders.map { it.scope }),
                 contextualModule = null,
             )
         }

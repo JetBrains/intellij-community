@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderBase
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderMerger
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
 import org.jetbrains.kotlin.caches.project.CachedValue
 import org.jetbrains.kotlin.caches.project.getValue
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
@@ -29,7 +30,7 @@ internal class IdeKotlinPackageProviderMerger(private val project: Project) : Ko
         providers.mergeSpecificProviders<_, IdeKotlinPackageProvider>(KotlinCompositePackageProvider.factory) { targetProviders ->
             IdeKotlinPackageProvider(
                 project,
-                GlobalSearchScope.union(targetProviders.map { it.searchScope })
+                KotlinGlobalSearchScopeMerger.getInstance(project).union(targetProviders.map { it.searchScope }),
             )
         }
 }
