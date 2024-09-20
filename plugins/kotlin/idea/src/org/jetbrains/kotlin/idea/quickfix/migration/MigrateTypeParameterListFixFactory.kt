@@ -11,6 +11,6 @@ import org.jetbrains.kotlin.psi.KtTypeParameterList
 internal object MigrateTypeParameterListFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val typeParameterList = diagnostic.psiElement as? KtTypeParameterList ?: return null
-        return MigrateTypeParameterListFix(typeParameterList)
+        return MigrateTypeParameterListFix(typeParameterList).asIntention()
     }
 }
