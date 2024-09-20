@@ -12,7 +12,7 @@ import java.util.regex.Pattern
 
 @Internal
 object InlayDumpUtil {
-  val inlayPattern: Pattern = Pattern.compile("/\\*<# block ([^#]*)#>\\*/(\r\n|\r|\n)|/\\*<#([^#]*)#>\\*/")
+  val inlayPattern: Pattern = Pattern.compile("/\\*<# block (.*?)#>\\*/(\r\n|\r|\n)|/\\*<#(.*?)#>\\*/")
 
   fun removeHints(text: String) : String {
     return inlayPattern.matcher(text).replaceAll("")
