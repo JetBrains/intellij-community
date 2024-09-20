@@ -2789,12 +2789,16 @@ f:com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveActionInfo
 - s:isCodeCleanupOnSaveEnabled(com.intellij.openapi.project.Project):Z
 f:com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveOptions
 - com.intellij.openapi.components.PersistentStateComponent
-- PROFILE:java.lang.String
 - <init>(com.intellij.openapi.project.Project):V
 - getInspectionProfile():com.intellij.codeInspection.ex.InspectionProfileImpl
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveOptions
-- getState():com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveOptions
-- loadState(com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveOptions):V
+- getProfile():java.lang.String
+- getState():com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveOptions$State
+- loadState(com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveOptions$State):V
+- setProfile(java.lang.String):V
+c:com.intellij.codeInsight.actions.onSave.CodeCleanupOnSaveOptions$State
+- PROFILE:java.lang.String
+- <init>():V
 a:com.intellij.codeInsight.actions.onSave.FormatOnSaveActionInfoBase
 - com.intellij.ide.actionsOnSave.ActionOnSaveInfo
 - pa:addApplicableFileTypes(java.util.Collection):V

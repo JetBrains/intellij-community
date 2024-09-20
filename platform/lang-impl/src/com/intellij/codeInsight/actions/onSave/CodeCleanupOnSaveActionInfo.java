@@ -39,7 +39,7 @@ public final class CodeCleanupOnSaveActionInfo extends ActionOnSaveInfoBase {
           CodeInsightBundle.message("actions.on.save.page.checkbox.run.code.cleanup"),
           CODE_CLEANUP_ON_SAVE_PROPERTY,
           CODE_CLEANUP_ON_SAVE_DEFAULT);
-    myProfile = CodeCleanupOnSaveOptions.getInstance(getProject()).PROFILE;
+    myProfile = CodeCleanupOnSaveOptions.getInstance(getProject()).getProfile();
   }
 
   @Override
@@ -124,12 +124,12 @@ public final class CodeCleanupOnSaveActionInfo extends ActionOnSaveInfoBase {
 
   @Override
   protected boolean isModified() {
-    return super.isModified() || !Objects.equals(myProfile, CodeCleanupOnSaveOptions.getInstance(getProject()).PROFILE);
+    return super.isModified() || !Objects.equals(myProfile, CodeCleanupOnSaveOptions.getInstance(getProject()).getProfile());
   }
 
   @Override
   protected void apply() {
     super.apply();
-    CodeCleanupOnSaveOptions.getInstance(getProject()).PROFILE = myProfile;
+    CodeCleanupOnSaveOptions.getInstance(getProject()).setProfile(myProfile);
   }
 }
