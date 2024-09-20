@@ -6,13 +6,15 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.regex.Pattern
 
 @Internal
 object InlayDumpUtil {
-  val inlayPattern: Pattern = Pattern.compile("/\\*<# block (.*?)#>\\*/(\r\n|\r|\n)|/\\*<#(.*?)#>\\*/")
+  val inlayPattern: Pattern = Pattern.compile("""^\h*/\*<# block (.*?)#>\*/\h*(\r\n|\r|\n)|/\*<#(.*?)#>\*/""", Pattern.MULTILINE)
 
   fun removeHints(text: String) : String {
     return inlayPattern.matcher(text).replaceAll("")
@@ -27,7 +29,9 @@ object InlayDumpUtil {
     editor: Editor,
     document: Document,
     // if document has multiple injected files, a proper host offset should be passed
-    offsetShift: Int = 0
+    offsetShift: Int = 0,
+    // if true, indent equal to that of the following line is inserted before block inlays
+    indentBlockInlays: Boolean = false,
   ): String {
     val model = editor.inlayModel
     val range = file.textRange
@@ -47,8 +51,14 @@ object InlayDumpUtil {
             continue
           }
         }
-        val nextOffset = inlay.effectiveOffset(document) + offsetShift
+        val effectiveOffset = inlay.effectiveOffset(document)
+        val nextOffset = effectiveOffset + offsetShift
         append(sourceText.subSequence(currentOffset, nextOffset))
+        if (inlay.type == InlayType.Block && indentBlockInlays) {
+          val belowLineStartOffset = effectiveOffset
+          val indentEndOffset = CharArrayUtil.shiftForward(sourceText, effectiveOffset, " \t")
+          append(sourceText.subSequence(belowLineStartOffset, indentEndOffset))
+        }
         append(inlay.render(renderer))
         currentOffset = nextOffset
       }
