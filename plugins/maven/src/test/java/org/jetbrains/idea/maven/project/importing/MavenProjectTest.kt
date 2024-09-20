@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import kotlinx.coroutines.runBlocking
@@ -626,11 +627,11 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                     <repositories>
                       <repository>
                         <id>one</id>
-                        <url>http://repository.one.com</url>
+                        <url>https://repository.one.com</url>
                       </repository>
                       <repository>
                         <id>two</id>
-                        <url>http://repository.two.com</url>
+                        <url>https://repository.two.com</url>
                       </repository>
                     </repositories>
                     """.trimIndent())
@@ -651,7 +652,7 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                     <repositories>
                       <repository>
                         <id>central</id>
-                        <url>http://my.repository.com</url>
+                        <url>https://my.repository.com</url>
                       </repository>
                     </repositories>
                     """.trimIndent())
@@ -659,11 +660,13 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
     val result = mavenProject.remoteRepositories
     assertEquals(1, result.size)
     assertEquals("central", result[0].id)
-    assertEquals("http://my.repository.com", result[0].url)
+    assertEquals("https://my.repository.com", result[0].url)
   }
 
   @Test
   fun testCollectingRepositoriesFromParent() = runBlocking {
+    //Registry.get("maven.server.debug").setValue(true, testRootDisposable)
+
     val m1 = createModulePom("p1",
                              """
                                        <groupId>test</groupId>
@@ -673,11 +676,11 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                                        <repositories>
                                          <repository>
                                            <id>one</id>
-                                           <url>http://repository.one.com</url>
+                                           <url>https://repository.one.com</url>
                                          </repository>
                                          <repository>
                                            <id>two</id>
-                                           <url>http://repository.two.com</url>
+                                           <url>https://repository.two.com</url>
                                          </repository>
                                        </repositories>
                                        """.trimIndent())

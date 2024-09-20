@@ -12,7 +12,6 @@ import org.apache.maven.*;
 import org.apache.maven.api.*;
 import org.apache.maven.api.services.ArtifactResolver;
 import org.apache.maven.api.services.ArtifactResolverResult;
-import org.apache.maven.api.services.TypeRegistry;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
@@ -35,6 +34,7 @@ import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.plugin.internal.PluginDependenciesResolver;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuildingException;
+import org.apache.maven.resolver.RepositorySystemSessionFactory;
 import org.apache.maven.session.scope.internal.SessionScope;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.DefaultSettingsBuilderFactory;
@@ -580,11 +580,15 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     LegacySupport legacySupport = getComponent(LegacySupport.class);
     MavenSession oldSession = legacySupport.getSession();
 
-    DefaultSessionFactory factory = getComponent(DefaultSessionFactory.class);
 
-    IdeaMavenSessionBuilderSupplier sessionBuilderSupplier =
-      new IdeaMavenSessionBuilderSupplier(repositorySystem, workspaceMap, indicator, request, getComponent(TypeRegistry.class));
-    try (RepositorySystemSession.CloseableSession repositorySystemSession = sessionBuilderSupplier.get().build()) {
+    RepositorySystemSessionFactory coreFactory = getCoreSystemSessionFactory();
+    IdeaRepositorySystemSessionFactory sessionFactory = new IdeaRepositorySystemSessionFactory(
+      coreFactory,
+      workspaceMap, indicator
+    );
+
+    DefaultSessionFactory factory = getComponent(DefaultSessionFactory.class);
+    try (RepositorySystemSession.CloseableSession repositorySystemSession = sessionFactory.newRepositorySessionBuilder(request).build()) {
       MavenSession mavenSession = new MavenSession(repositorySystemSession, request, result);
       InternalSession internalSession = factory.newSession(mavenSession);
 
@@ -592,6 +596,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       internalSession.withRemoteRepositories(request.getRemoteRepositories().stream().map(
         r -> internalSession.getRemoteRepository(RepositoryUtils.toRepo(r))
       ).collect(Collectors.toList()));
+
       mavenSession.setSession(internalSession);
       sessionScope.seed(MavenSession.class, mavenSession);
       sessionScope.seed(Session.class, mavenSession.getSession());
@@ -609,6 +614,22 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
 
     return result;
+  }
+
+  private RepositorySystemSessionFactory getCoreSystemSessionFactory() throws RuntimeException {
+
+    try {
+      DefaultMaven component = getComponent(DefaultMaven.class);
+      Field field = DefaultMaven.class.getDeclaredField("repositorySessionFactory");
+      field.setAccessible(true);
+      return (RepositorySystemSessionFactory)field.get(component);
+    }
+    catch (RuntimeException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
 
