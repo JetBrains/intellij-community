@@ -237,7 +237,12 @@ public final class PyTypeChecker {
       return false;
     }
 
-    final PyType substitution = context.mySubstitutions.typeVars.get(expected);
+    PyType substituted = context.mySubstitutions.typeVars.get(expected);
+    if (expected.getDefaultType() != null && expected.getDefaultType().equals(substituted)) {
+      // Skip default substitution
+      substituted = null;
+    }
+    final PyType substitution = substituted;
     PyType bound = expected.getBound();
     // Promote int in Type[TypeVar('T', int)] to Type[int] before checking that bounds match
     if (expected.isDefinition()) {
@@ -865,7 +870,7 @@ public final class PyTypeChecker {
                                              @NotNull List<PyType> actualTypeParameters,
                                              @NotNull MatchContext context) {
     PyTypeParameterMapping mapping =
-      PyTypeParameterMapping.mapByShape(expectedTypeParameters, actualTypeParameters);
+      PyTypeParameterMapping.mapByShape(expectedTypeParameters, actualTypeParameters, Option.USE_DEFAULTS);
     if (mapping == null) {
       return false;
     }
@@ -950,7 +955,7 @@ public final class PyTypeChecker {
       boolean isAlreadyBound = existingSubstitutions.typeVars.containsKey(returnTypeParam) ||
                                existingSubstitutions.typeVars.containsKey(invert(returnTypeParam));
       if (canGetBoundFromArguments && !isAlreadyBound) {
-        existingSubstitutions.typeVars.put(returnTypeParam, null);
+        existingSubstitutions.typeVars.put(returnTypeParam, returnTypeParam.getDefaultType());
       }
     }
     for (PyParamSpecType paramSpecType : typeParamsFromReturnType.paramSpecs) {
@@ -1391,41 +1396,6 @@ public final class PyTypeChecker {
     return match(expectedType, actualType, context, substitutions);
   }
 
-  @NotNull
-  public static GenericSubstitutions getSubstitutionsWithDefaults(@NotNull GenericSubstitutions substitutions) {
-    Map<PyTypeVarType, PyType> typeVersWithDefaults = new HashMap<>();
-    Map<PyParamSpecType, PyParamSpecType> paramSpecsWithDefaults = new HashMap<>();
-    Map<PyTypeVarTupleType, PyVariadicType> typeVarTuplesWithDefaults = new HashMap<>();
-    substitutions.getTypeVars().forEach((key, value) -> {
-      if (key.getDefaultType() != null && value == null) {
-        typeVersWithDefaults.put(key, key.getDefaultType());
-      }
-      else if (value instanceof PyTypeVarType typeVarType
-               && typeVarType.getDefaultType() != null
-               && !typeVarType.getDefaultType().equals(key)) {
-        typeVersWithDefaults.put(key, typeVarType.getDefaultType());
-      }
-    });
-    substitutions.getParamSpecs().forEach((key, value) -> {
-      if (key.getDefaultType() instanceof PyParamSpecType defaultType
-          && (value == null || key.equals(value))) {
-        paramSpecsWithDefaults.put(key, defaultType);
-      }
-    });
-    substitutions.getTypeVarTuples().forEach((key, value) -> {
-      if (key.getDefaultType() instanceof PyVariadicType variadicType
-          && (value == null
-              || (value instanceof PyUnpackedTupleType unpackedTupleType && unpackedTupleType.getElementTypes().isEmpty())
-              || key.equals(value))) {
-        typeVarTuplesWithDefaults.put(key, variadicType);
-      }
-    });
-    substitutions.typeVars.putAll(typeVersWithDefaults);
-    substitutions.paramSpecs.putAll(paramSpecsWithDefaults);
-    substitutions.typeVarTuples.putAll(typeVarTuplesWithDefaults);
-    return substitutions;
-  }
-
   private static boolean matchContainer(@Nullable PyCallableParameter container, @NotNull List<? extends PyExpression> arguments,
                                         @NotNull GenericSubstitutions substitutions, @NotNull TypeEvalContext context) {
     if (container == null) {
@@ -1683,24 +1653,6 @@ public final class PyTypeChecker {
       }
     }
     return substitutions;
-  }
-
-
-  @ApiStatus.Internal
-  @Nullable
-  public static PyType trySubstituteByDefaultsOnly(@NotNull PyType targetType,
-                                                   List<PyTypeParameterType> typeParameterTypes,
-                                                   boolean unmappedToAny,
-                                                   @NotNull TypeEvalContext context) {
-    if (!typeParameterTypes.isEmpty()) {
-      List<Couple<PyType>> typeParametersToSubstitutions =
-        ContainerUtil.map(typeParameterTypes, typeParameterType
-          -> new Couple<>(typeParameterType, unmappedToAny ? null : typeParameterType));
-      var substitutions = fillSubstitutionsWithTypeParameters(new GenericSubstitutions(), typeParametersToSubstitutions);
-      var subsWithDefaults = getSubstitutionsWithDefaults(substitutions);
-      return substitute(targetType, subsWithDefaults, context);
-    }
-    return null;
   }
 
   @ApiStatus.Internal
