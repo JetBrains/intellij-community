@@ -36,8 +36,8 @@ internal class IdeSerializationContext(
   override val virtualFileUrlManager: VirtualFileUrlManager,
   override val fileContentReader: JpsFileContentReader,
   override val fileInDirectorySourceNames: FileInDirectorySourceNames,
-  private val externalStorageConfigurationManager: ExternalStorageConfigurationManager
+  private val externalStorageConfigurationManager: ExternalStorageConfigurationManager?
 ) : BaseIdeSerializationContext() {
   override val isExternalStorageEnabled: Boolean
-    get() = externalStorageConfigurationManager.isEnabled
+    get() = externalStorageConfigurationManager?.isEnabled == true
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
@@ -38,7 +39,10 @@ import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader.createProjectSerializers
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.DummyParentEntitySource
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
@@ -424,10 +428,14 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     fileContentReader = (project.stateStore as ProjectStoreWithJpsContentReader).createContentReader()
     val externalStoragePath = project.getExternalConfigurationDir()
-    val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(project)
+    val externalStorageConfigurationManager = project.serviceOrNull<ExternalStorageConfigurationManager>()
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(WorkspaceModel.getInstance(project).currentSnapshot)
-    val context = IdeSerializationContext(virtualFileManager, fileContentReader, fileInDirectorySourceNames,
-                                          externalStorageConfigurationManager)
+    val context = IdeSerializationContext(
+      virtualFileUrlManager = virtualFileManager,
+      fileContentReader = fileContentReader,
+      fileInDirectorySourceNames = fileInDirectorySourceNames,
+      externalStorageConfigurationManager = externalStorageConfigurationManager,
+    )
     return createProjectSerializers(configLocation, externalStoragePath, context)
   }
 
