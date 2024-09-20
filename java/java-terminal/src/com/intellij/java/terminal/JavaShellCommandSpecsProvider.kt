@@ -5,6 +5,7 @@ import com.intellij.execution.vmOptions.VMOption
 import com.intellij.execution.vmOptions.VMOptionKind
 import com.intellij.execution.vmOptions.VMOptionVariant
 import com.intellij.execution.vmOptions.VMOptionsService
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +28,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
         VMOptionsService.getInstance().getOrComputeOptionsForJdk(path).get() ?: return@withContext null
       } ?: return@dynamicOptions
       val optionByVariant = jdkOptionsData.options.filter { it.kind == VMOptionKind.Standard || it.kind == VMOptionKind.Product }.groupBy { it.variant }
-      addOptionsFromVM(optionByVariant[VMOptionVariant.X])
+      addXOptionsFromVM(optionByVariant[VMOptionVariant.X])
     }
     description(JavaTerminalBundle.message("java.command.terminal.description"))
     option("--help", "-help", "-h") {
@@ -68,7 +69,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     }
   }
 
-  private fun ShellChildOptionsContext.addOptionsFromVM(optionList: List<VMOption>?) {
+  private fun ShellChildOptionsContext.addXOptionsFromVM(optionList: List<VMOption>?) {
     if (optionList == null) return
     optionList.forEach {
       val presentableName = "${it.variant.prefix()}${it.optionName}"
@@ -77,6 +78,9 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
 
         if (JavaTerminalBundle.isMessageInBundle(it.optionName.getXOptionBundleKey())) {
           description(JavaTerminalBundle.message(it.optionName.getXOptionBundleKey()))
+        } else {
+          LOG.warn("Unknown X option: \"${it.optionName}\". Paste following string into the JavaTerminalBundle.properties:\n" +
+                   "${it.optionName.getXOptionBundleKey()}=${it.doc}")
         }
 
         if (!KNOWN_X_OPTIONS_WITH_ARGUMENT.contains(presentableName)) return@option
@@ -93,7 +97,9 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     "-Xmx",
     "-Xmn",
     "-Xss",
+    "-Xbootclasspath:",
     "-Xbootclasspath/a:",
+    "-Xbootclasspath/p:",
     "-Xlog:",
     "-Xloggc:",
   )
@@ -109,3 +115,5 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     return "java.command.terminal.$name.option.description"
   }
 }
+
+private val LOG = Logger.getInstance(JavaShellCommandSpecsProvider::class.java)
