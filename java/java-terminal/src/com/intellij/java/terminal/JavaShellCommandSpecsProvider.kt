@@ -6,6 +6,7 @@ import com.intellij.execution.vmOptions.VMOptionKind
 import com.intellij.execution.vmOptions.VMOptionVariant
 import com.intellij.execution.vmOptions.VMOptionsService
 import com.intellij.terminal.completion.spec.ShellCommandSpec
+import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
@@ -21,10 +22,10 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
 }
 
 private fun getSpecs(): ShellCommandSpec = ShellCommandSpec("java") {
-  dynamicOptions { _ ->
-    val javaHomePath = System.getenv("JAVA_HOME") ?: return@dynamicOptions
+  dynamicOptions { context ->
+    val path = context.getJrePath() ?: return@dynamicOptions
     val jdkOptionsData = withContext(Dispatchers.IO) {
-      VMOptionsService.getInstance().getOrComputeOptionsForJdk(javaHomePath).get() ?: return@withContext null
+      VMOptionsService.getInstance().getOrComputeOptionsForJdk(path).get() ?: return@withContext null
     } ?: return@dynamicOptions
     val optionByVariant = jdkOptionsData.options.filter { it.kind == VMOptionKind.Standard || it.kind == VMOptionKind.Product }.groupBy { it.variant }
     addOptionsFromVM(optionByVariant[VMOptionVariant.X])
@@ -70,14 +71,17 @@ private fun getSpecs(): ShellCommandSpec = ShellCommandSpec("java") {
 
 private fun ShellChildOptionsContext.addOptionsFromVM(optionList: List<VMOption>?) {
   if (optionList == null) return
-  optionList.forEach { vmOption ->
-    val vmOptionName = "${vmOption.variant.prefix()}${vmOption.optionName}"
-    val vmOptionDescription = vmOption.doc ?: return@forEach
-    option(vmOptionName) {
+  optionList.forEach {
+    val presentableName = "${it.variant.prefix()}${it.optionName}"
+    option(presentableName) {
       repeatTimes = 1
-      description(vmOptionDescription)
-      if (!KNOWN_X_OPTIONS_WITH_ARGUMENT.contains(vmOptionName)) return@option
-      separator = vmOption.variant.suffix()?.toString() ?: ""
+
+      if (JavaTerminalBundle.isMessageInBundle(it.optionName.getXOptionBundleKey())) {
+        description(JavaTerminalBundle.message(it.optionName.getXOptionBundleKey()))
+      }
+
+      if (!KNOWN_X_OPTIONS_WITH_ARGUMENT.contains(presentableName)) return@option
+      separator = it.variant.suffix()?.toString() ?: ""
       argument {
         displayName(JavaTerminalBundle.message("java.command.terminal.default.argument.text"))
       }
@@ -94,3 +98,14 @@ private val KNOWN_X_OPTIONS_WITH_ARGUMENT = setOf(
   "-Xlog:",
   "-Xloggc:",
 )
+
+private suspend fun ShellRuntimeContext.getJrePath(): String? {
+  val result = runShellCommand("java -XshowSettings:properties -version")
+  if (result.exitCode != 0) return null
+  return result.output.split('\n').map { it.trim() }.find { it.startsWith("java.home = ") }?.split(" = ")?.getOrNull(1)
+}
+
+private fun String.getXOptionBundleKey() : String {
+  val name = this.replace(':', '.').trim('.')
+  return "java.command.terminal.$name.option.description"
+}
