@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
@@ -1047,5 +1047,38 @@ public class StringUtilTest {
     assertEquals(Arrays.asList("a\u00A0b"), StringUtil.split("a\u00A0b", spaceSeparator, true, true));
 
     assertEquals(Arrays.asList("  \n\t", " "), StringUtil.split("a  \n\ta ", CharFilter.NOT_WHITESPACE_FILTER, true, true));
+  }
+
+  @Test
+  @SuppressWarnings({"OctalInteger", "UnnecessaryUnicodeEscape"}) // need to test octal numbers and escapes
+  public void testUnescapeAnsiStringCharacters() {
+    assertEquals("'", StringUtil.unescapeAnsiStringCharacters("\\'"));
+    assertEquals("\"", StringUtil.unescapeAnsiStringCharacters("\\\""));
+    assertEquals("?", StringUtil.unescapeAnsiStringCharacters("\\?"));
+    assertEquals("\\", StringUtil.unescapeAnsiStringCharacters("\\\\"));
+    assertEquals("" + (char)0x07, StringUtil.unescapeAnsiStringCharacters("\\a"));
+    assertEquals("" + (char)0x08, StringUtil.unescapeAnsiStringCharacters("\\b"));
+    assertEquals("" + (char)0x0c, StringUtil.unescapeAnsiStringCharacters("\\f"));
+    assertEquals("\n", StringUtil.unescapeAnsiStringCharacters("\\n"));
+    assertEquals("\r", StringUtil.unescapeAnsiStringCharacters("\\r"));
+    assertEquals("\t", StringUtil.unescapeAnsiStringCharacters("\\t"));
+    assertEquals("" + (char)0x0b, StringUtil.unescapeAnsiStringCharacters("\\v"));
+
+    // octal
+    assertEquals("" + (char)00, StringUtil.unescapeAnsiStringCharacters("\\0"));
+    assertEquals("" + (char)01, StringUtil.unescapeAnsiStringCharacters("\\1"));
+    assertEquals("" + (char)012, StringUtil.unescapeAnsiStringCharacters("\\12"));
+    assertEquals("" + (char)0123, StringUtil.unescapeAnsiStringCharacters("\\123"));
+
+    // hex
+    assertEquals("" + (char)0x0, StringUtil.unescapeAnsiStringCharacters("\\x0"));
+    assertEquals("" + (char)0xf, StringUtil.unescapeAnsiStringCharacters("\\xf"));
+    assertEquals("" + (char)0xff, StringUtil.unescapeAnsiStringCharacters("\\xff"));
+
+    // 4 digit codepoint
+    assertEquals("\u1234", StringUtil.unescapeAnsiStringCharacters("\\u1234"));
+
+    // 8 digit codepoint
+    assertEquals("\u0061", StringUtil.unescapeAnsiStringCharacters("\\U00000061"));
   }
 }
