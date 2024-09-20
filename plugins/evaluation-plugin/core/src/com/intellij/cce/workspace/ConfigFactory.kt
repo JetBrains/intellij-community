@@ -10,12 +10,15 @@ import com.intellij.cce.util.getAs
 import com.intellij.cce.util.getIfExists
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
+import com.intellij.openapi.diagnostic.logger
 import org.apache.commons.lang3.text.StrSubstitutor
 import java.lang.reflect.Type
 import java.nio.file.Files
 import java.nio.file.Path
 
 object ConfigFactory {
+  private val LOG = logger<ConfigFactory>()
+
   const val DEFAULT_CONFIG_NAME = "config.json"
   private const val NO_LANGUAGE = "NO LANGUAGE PROVIDED"
 
@@ -32,7 +35,14 @@ object ConfigFactory {
       throw IllegalArgumentException("Config file missing. Config created by path: ${configFile.absolutePath}. Fill settings in config.")
     }
 
-    return deserialize(gson, configFile.readText(), strategySerializer)
+    val configFileContent = configFile.readText()
+
+    return try {
+      deserialize(gson, configFileContent, strategySerializer)
+    } catch (t: Throwable) {
+      LOG.error("Failed to deserialize config. File ${configFile.absolutePath}, content: ${configFileContent}", t)
+      throw t
+    }
   }
 
   fun save(config: Config, directory: Path, name: String = DEFAULT_CONFIG_NAME) {
