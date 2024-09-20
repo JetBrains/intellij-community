@@ -874,11 +874,16 @@ public class StringUtil {
           }
           if (sb.length() != 0) {
             try {
-              long code = Long.parseLong(sb.toString(), radix);
-              //noinspection AssignmentToForLoopParameter
-              idx += sb.length() + suffixLen - 1;
-              // todo: implement UTF-32 support
-              buffer.append((char)code);
+              int code = Integer.parseInt(sb.toString(), radix);
+              if (Character.isValidCodePoint(code)) {
+                //noinspection AssignmentToForLoopParameter
+                idx += sb.length() + suffixLen - 1;
+                // todo: implement UTF-32 support
+                buffer.append(Character.toChars(code));
+              }
+              else {
+                buffer.append('\\').append(ch);
+              }
             }
             catch (NumberFormatException e) {
               buffer.append('\\').append(ch);

@@ -1077,11 +1077,13 @@ public class StringUtilTest {
     assertEquals("" + (char)0xfff, StringUtil.unescapeAnsiStringCharacters("\\xfff"));
     assertEquals("" + (char)0xffff, StringUtil.unescapeAnsiStringCharacters("\\xffff"));
     assertEquals("" + (char)0xf, StringUtil.unescapeAnsiStringCharacters("\\x0000000000000000f"));
+    assertEquals("\\x110000", StringUtil.unescapeAnsiStringCharacters("\\x110000")); // invalid unicode codepoint
 
     // 4 digit codepoint
     assertEquals("\u1234", StringUtil.unescapeAnsiStringCharacters("\\u1234"));
 
     // 8 digit codepoint
     assertEquals("\u0061", StringUtil.unescapeAnsiStringCharacters("\\U00000061"));
+    assertEquals("\\U00110000", StringUtil.unescapeAnsiStringCharacters("\\U00110000")); // invalid unicode codepoint
   }
 }
