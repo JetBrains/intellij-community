@@ -14,6 +14,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,15 +193,32 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
         N treeNode = myNodeCache.get(node);
         newNodes.put(node, treeNode == null ? createNode(node) : treeNode);
       }
-      List<N> oldNodes = new ArrayList<>();
-      for (Map.Entry<U, N> entry : myNodeCache.entrySet()) {
-        if (!newNodes.containsKey(entry.getKey())) oldNodes.add(entry.getValue());
-      }
+      Set<N> nodesToRemove = getNodesToRemove(newNodes);
       myNodeCache = newNodes;
-      for (N node : oldNodes) {
+      for (N node : nodesToRemove) {
         if (node.getParent() != null) removeNodeFromParent(node);
       }
       refilter();
+    }
+
+    private @NotNull Set<N> getNodesToRemove(Map<U, N> newNodes) {
+      Set<N> nodesToRemove = new ReferenceOpenHashSet<>();
+      for (Map.Entry<U, N> entry : myNodeCache.entrySet()) {
+        if (!newNodes.containsKey(entry.getKey())) {
+          N node = entry.getValue();
+          boolean shouldRemove = true;
+          for (TreeNode treeNode : node.getPath()) {
+            if (nodesToRemove.contains(treeNode)) {
+              shouldRemove = false;
+              break;
+            }
+          }
+          if (shouldRemove) {
+            nodesToRemove.add(node);
+          }
+        }
+      }
+      return nodesToRemove;
     }
 
     @Override
@@ -251,7 +269,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     }
 
     private @NotNull Map<U, N> createUserObjectMap() {
-      return myUseIdentityHashing ? new IdentityHashMap<>() : new HashMap<>();
+      return myUseIdentityHashing ? new Reference2ObjectLinkedOpenHashMap<>() : new LinkedHashMap<>();
     }
 
     private boolean equalUserObjects(@Nullable U u1, @Nullable U u2) {

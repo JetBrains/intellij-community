@@ -33,7 +33,6 @@ import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsImplUtil
-import git4idea.branch.GitBranchType
 import git4idea.branch.calcTooltip
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -50,7 +49,6 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
-import java.util.*
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JTree
@@ -399,8 +397,6 @@ internal class FilteringBranchesTree(
   override fun onSpeedSearchUpdateComplete(pattern: String?) {
     updateSpeedSearchBackground()
   }
-
-  override fun useIdentityHashing(): Boolean = false
 
   private fun updateSpeedSearchBackground() {
     val speedSearch = searchModel.speedSearch as? SpeedSearch ?: return
