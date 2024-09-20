@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory
@@ -10,16 +11,14 @@ import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import git4idea.remote.hosting.ui.ResolveConflictsLocallyDialogComponentFactory.showBranchUpdateDialog
 import git4idea.remote.hosting.ui.ResolveConflictsLocallyViewModel
@@ -29,6 +28,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.GHPRRemoveReviewerAction
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError
@@ -37,6 +37,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewM
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
 import java.awt.event.ActionListener
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JScrollPane
 
 internal object GHPRStatusChecksComponentFactory {
@@ -83,8 +84,7 @@ internal object GHPRStatusChecksComponentFactory {
           )
         }
       ))
-      actionManager.createActionToolbar("Github.PullRequest.StatusChecks.Actions", DefaultActionGroup(additionalActions), true)
-      additionalActions.forEach { add(createActionLabel(it, detailsVm)) }
+      add(createAdditionalActionsPanel(additionalActions, detailsVm))
     }
     val scrollableStatusesPanel = ScrollPaneFactory.createScrollPane(statusesPanel, true).apply {
       isOpaque = false
@@ -178,17 +178,24 @@ internal object GHPRStatusChecksComponentFactory {
     }
   }
 
-  private fun createActionLabel(action: AnAction, detailsVm: GHPRDetailsViewModel): JComponent {
-    val dataContext = detailsVm.getActionDataContext()
+  private fun createAdditionalActionsPanel(actions: List<AnAction>, detailsVm: GHPRDetailsViewModel): JComponent =
+    UiDataProvider.wrapComponent(VerticalListPanel().apply {
+      for (action in actions) {
+        add(HorizontalListPanel(8).apply {
+          border = JBUI.Borders.empty(5, 0)
 
-    // TODO: Somehow make this update properly or stop using AnAction...
-    return ActionLink(action.templatePresentation.text) { e ->
-      val event = AnActionEvent.createFromInputEvent(null, "StatusChecksAction", null, dataContext)
-      action.actionPerformed(event)
-    }.apply {
-      icon = action.templatePresentation.icon
-      isEnabled = action.templatePresentation.isEnabled
-      isVisible = action.templatePresentation.isVisible
+          add(JLabel().apply {
+            icon = action.templatePresentation.icon ?: EmptyIcon.ICON_16
+          })
+
+          add(AnActionLink(action, "status").apply {
+            icon = null
+          })
+        })
+      }
+    }) { sink ->
+      sink[CommonDataKeys.PROJECT] = detailsVm.project
+      sink[GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER] = detailsVm.dataProvider
+      sink[GHPRActionKeys.PULL_REQUEST_REPOSITORY] = detailsVm.gitRepository
     }
-  }
 }
