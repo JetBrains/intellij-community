@@ -9,13 +9,9 @@ data class ExecuteProcessBuilderImpl(override val exe: String) : EelExecApi.Exec
   }
 
   override var args: List<String> = listOf()
-    private set
   override var env: Map<String, String> = mapOf()
-    private set
   override var pty: EelExecApi.Pty? = null
-    private set
   override var workingDirectory: String? = null
-    private set
 
   override fun toString(): String =
     "GrpcExecuteProcessBuilder(" +

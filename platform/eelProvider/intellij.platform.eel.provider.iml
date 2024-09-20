@@ -14,5 +14,10 @@
     <orderEntry type="module" module-name="intellij.platform.extensions" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="library" name="pty4j" level="project" />
   </component>
 </module>

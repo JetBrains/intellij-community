@@ -9,7 +9,7 @@ import kotlinx.coroutines.channels.SendChannel
  * Represents some process which was launched via [EelExecApi.executeProcess].
  *
  */
-interface EelProcess {
+interface EelProcess: KillableProcess {
   val pid: EelApi.Pid
 
   /**
@@ -43,28 +43,6 @@ interface EelProcess {
      */
     class StdinClosed : SendStdinError("Stdin closed")
   }
-
-  /**
-   * Sends `SIGINT` on Unix.
-   *
-   * Does nothing yet on Windows.
-   */
-  suspend fun interrupt()
-
-  /**
-   * Sends `SIGTERM` on Unix.
-   *
-   * Calls [`ExitProcess`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-exitprocess) on Windows.
-   */
-  suspend fun terminate()
-
-  /**
-   * Sends `SIGKILL` on Unix.
-   *
-   * Calls [`TerminateProcess`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess)
-   * on Windows.
-   */
-  suspend fun kill()
 
   /**
    * Converts to the JVM [Process] which can be used instead of [EelProcess] for compatibility reasons.
