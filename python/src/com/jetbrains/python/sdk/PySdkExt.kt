@@ -17,11 +17,7 @@ package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.*
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
@@ -43,7 +39,10 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.extensions.failure
 import com.jetbrains.python.PyBundle
@@ -59,12 +58,16 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.ui.PyUiUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import javax.swing.SwingUtilities
+import kotlin.Result
 import kotlin.io.path.div
 import kotlin.io.path.pathString
 
@@ -187,13 +190,22 @@ fun createSdkByGenerateTask(
     throw e
   }
 
-  val suggestedName = suggestedSdkName ?: suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
+  val sdkName = suggestedSdkName ?: if (SwingUtilities.isEventDispatchThread()) {
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), "...") {
+      withContext(Dispatchers.IO) {
+        suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
+      }
+    }
+  }
+  else {
+    suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
+  }
   return SdkConfigurationUtil.setupSdk(
     existingSdks.toTypedArray(),
     homeFile,
     PythonSdkType.getInstance(),
     null,
-    suggestedName)
+    sdkName)
 }
 
 fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {
@@ -378,6 +390,7 @@ fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {
   }
 }
 
+@RequiresBackgroundThread
 internal fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? {
   // please don't forget to update com.jetbrains.python.inspections.PyInterpreterInspection.Visitor#getSuitableSdkFix
   // after changing this method

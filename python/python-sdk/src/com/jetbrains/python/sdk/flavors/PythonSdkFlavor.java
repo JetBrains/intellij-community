@@ -334,6 +334,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   @Nullable
+  @RequiresBackgroundThread(generateAssertion = false) //because of process output
   public String getVersionString(@Nullable String sdkHome) {
     if (sdkHome == null) {
       return null;
@@ -394,6 +395,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   @NotNull
+  @RequiresBackgroundThread(generateAssertion = false) //because of process output
   public LanguageLevel getLanguageLevel(@NotNull String sdkHome) {
     return getLanguageLevelFromVersionString(getVersionString(sdkHome));
   }

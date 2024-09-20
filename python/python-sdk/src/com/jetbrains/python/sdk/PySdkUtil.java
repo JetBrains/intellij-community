@@ -46,8 +46,10 @@ import java.util.Map;
  * Needs not to be instantiated and only holds static methods.
  *
  * @see PythonSdkUtil for Pyhton SDK utilities with no run-time dependencies
+ *
+ * @deprecated please use Kotlin coroutines to run processes in background
  */
-//TODO: rename to PySdkExecuteUtil or PySdkRuntimeUtil
+@Deprecated
 public final class PySdkUtil {
   private static final Logger LOG = Logger.getInstance(PySdkUtil.class);
 

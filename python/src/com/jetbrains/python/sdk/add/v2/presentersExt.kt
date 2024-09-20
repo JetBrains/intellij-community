@@ -3,12 +3,13 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
@@ -53,13 +54,16 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
   catch (e: InvalidPathException) {
     return Result.failure(e)
   }
-  val venvPython = VirtualEnvReader.Instance.findPythonInPythonRoot(dir)?.toString()
+  val venvPython = VirtualEnvReader.Instance.findPythonInPythonRoot(dir)
   if (venvPython == null) {
     return failure(message("commandLine.directoryCantBeAccessed", venvPathOnTarget))
   }
 
   val homeFile = try {
-    StandardFileSystems.local().refreshAndFindFileByPath(venvPython)
+    // refresh needs write action
+    writeAction {
+      VfsUtil.findFile(venvPython, true)
+    }
   }
   catch (e: ExecutionException) {
     return Result.failure(e)
@@ -68,10 +72,13 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
     return failure(message("commandLine.directoryCantBeAccessed", venvPathOnTarget))
   }
 
-  val suggestedName = /*suggestedSdkName ?:*/ suggestAssociatedSdkName(homeFile.path, projectPath.toString())
-  val newSdk = SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeFile,
-                                             PythonSdkType.getInstance(),
-                                             false, null, suggestedName)!!
+  // "suggest name" calls external process and can't be called from EDT
+  val newSdk = withContext(Dispatchers.IO) {
+    val suggestedName = /*suggestedSdkName ?:*/ suggestAssociatedSdkName(homeFile.path, projectPath.toString())
+    SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeFile,
+                                  PythonSdkType.getInstance(),
+                                  false, null, suggestedName)!!
+  }
 
   addSdk(newSdk)
 

@@ -5,9 +5,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +25,11 @@ private class MyService(val coroutineScope: CoroutineScope)
 @RequiresBlockingContext
 internal fun <T : Any> Flow<T>.oneShotConsumer(consumer: Consumer<T>) {
   ApplicationManager.getApplication().service<MyService>().coroutineScope.launch(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
-    consumer.accept(this@oneShotConsumer.first())
+    // Platform doesn't guarantee write intent lock on EDT
+    //todo fix all clients and remove global lock from here
+    val t = this@oneShotConsumer.first()
+    writeIntentReadAction {
+      consumer.accept(t)
+    }
   }
 }

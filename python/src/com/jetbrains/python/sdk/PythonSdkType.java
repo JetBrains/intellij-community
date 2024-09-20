@@ -33,6 +33,7 @@ import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -244,7 +245,7 @@ public final class PythonSdkType extends SdkType {
       return name;
     }
   }
-
+  @RequiresBackgroundThread(generateAssertion = false) //because of process output
   public static @Nullable String suggestBaseSdkName(@NotNull String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
     if (flavor == null) return null;

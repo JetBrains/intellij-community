@@ -4,6 +4,7 @@ package com.jetbrains.python.util
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
@@ -56,7 +57,10 @@ object ShowingMessageErrorSync : ErrorSink {
   override suspend fun emit(value: @NlsSafe String) {
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       thisLogger().warn(value)
-      Messages.showErrorDialog(value, PyBundle.message("python.error"))
+      // Platform doesn't allow dialogs without lock for now, fix later
+      writeIntentReadAction {
+        Messages.showErrorDialog(value, PyBundle.message("python.error"))
+      }
     }
   }
 }
