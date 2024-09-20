@@ -226,5 +226,6 @@
     <orderEntry type="module" module-name="intellij.json.split" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.remoteDev.util" scope="TEST" />
   </component>
 </module>
