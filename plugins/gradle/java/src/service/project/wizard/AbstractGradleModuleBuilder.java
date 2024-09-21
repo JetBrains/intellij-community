@@ -111,6 +111,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private @Nullable String gradleHome;
 
   private boolean isCreatingBuildScriptFile = true;
+  private boolean isCreatingSettingsScriptFile = true;
   private VirtualFile buildScriptFile;
   private VirtualFile settingsScriptFile;
   private GradleBuildScriptBuilder<?> buildScriptBuilder;
@@ -165,12 +166,14 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       buildScriptFile = setupGradleBuildFile(modelContentRootDir);
     }
 
-    settingsScriptFile = setupGradleSettingsFile(
-      rootProjectPath, modelContentRootDir, project.getName(),
-      myProjectId == null ? module.getName() : myProjectId.getArtifactId(),
-      isCreatingNewLinkedProject(),
-      myUseKotlinDSL
-    );
+    if (isCreatingSettingsScriptFile) {
+      settingsScriptFile = setupGradleSettingsFile(
+        rootProjectPath, modelContentRootDir, project.getName(),
+        myProjectId == null ? module.getName() : myProjectId.getArtifactId(),
+        isCreatingNewLinkedProject(),
+        myUseKotlinDSL
+      );
+    }
 
     if (isCreatingBuildScriptFile) {
       buildScriptBuilder = GradleBuildScriptBuilder.create(gradleVersion, myUseKotlinDSL);
@@ -517,6 +520,14 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   public void setGradleHome(@Nullable String path) {
     gradleHome = path;
+  }
+
+  public void setCreatingSettingsScriptFile(boolean creatingSettingsScriptFile) {
+    this.isCreatingSettingsScriptFile = creatingSettingsScriptFile;
+  }
+
+  public boolean isCreatingSettingsScriptFile() {
+    return isCreatingSettingsScriptFile;
   }
 
   public void setCreatingBuildScriptFile(boolean creatingBuildScriptFile) {

@@ -323,6 +323,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             if (parent.shouldGenerateMultipleModules) {
                 val moduleBuilder = GradleKotlinModuleBuilder()
                 moduleBuilder.setCreateEmptyContentRoots(false)
+                moduleBuilder.isCreatingSettingsScriptFile = false
                 moduleBuilder.isCreatingBuildScriptFile = false
                 parent.setupBuilder(moduleBuilder)
                 parent.setupProject(project, moduleBuilder)
