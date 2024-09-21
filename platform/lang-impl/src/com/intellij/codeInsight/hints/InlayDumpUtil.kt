@@ -6,14 +6,14 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.util.TextRange
 import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.regex.Pattern
 
 @Internal
 object InlayDumpUtil {
-  val inlayPattern: Pattern = Pattern.compile("""^\h*/\*<# block (.*?)#>\*/\h*(\r\n|\r|\n)|/\*<#(.*?)#>\*/""", Pattern.MULTILINE)
+  val inlayPattern: Pattern =
+    Pattern.compile("""^\h*/\*<# (block) (.*?)#>\*/\h*(?:\r\n|\r|\n)|/\*<#(.*?)#>\*/""", Pattern.MULTILINE or Pattern.DOTALL)
 
   fun removeHints(text: String) : String {
     return inlayPattern.matcher(text).replaceAll("")
@@ -31,15 +31,14 @@ object InlayDumpUtil {
   ): String {
     val document = editor.document
     val model = editor.inlayModel
-    val range = TextRange(0, document.textLength)
-    val inlineElements = model.getInlineElementsInRange(range.startOffset, range.endOffset)
-    val afterLineElements = model.getAfterLineEndElementsInRange(range.startOffset, range.endOffset)
-    val blockElements = model.getBlockElementsInRange(range.startOffset, range.endOffset)
+    val inlineElements = model.getInlineElementsInRange(0, document.textLength)
+    val afterLineElements = model.getAfterLineEndElementsInRange(0, document.textLength)
+    val blockElements = model.getBlockElementsInRange(0, document.textLength)
     val inlays = mutableListOf<InlayData>()
     inlineElements.mapTo(inlays) { InlayData(it, InlayType.Inline) }
     afterLineElements.mapTo(inlays) { InlayData(it, InlayType.Inline) }
-    blockElements.mapTo(inlays) { InlayData(it, InlayType.Block) }
-    inlays.sortBy { it.effectiveOffset(document) }
+    blockElements.mapTo(inlays) { InlayData(it, InlayType.BlockAbove) }
+    inlays.sortBy { it.anchorOffset(document) }
     return buildString {
       var currentOffset = 0
       for (inlay in inlays) {
@@ -48,12 +47,12 @@ object InlayDumpUtil {
             continue
           }
         }
-        val effectiveOffset = inlay.effectiveOffset(document)
-        val nextOffset = effectiveOffset + offsetShift
+        val inlayAnchorOffset = inlay.anchorOffset(document)
+        val nextOffset = inlayAnchorOffset + offsetShift
         append(sourceText.subSequence(currentOffset, nextOffset))
-        if (inlay.type == InlayType.Block && indentBlockInlays) {
-          val belowLineStartOffset = effectiveOffset
-          val indentEndOffset = CharArrayUtil.shiftForward(sourceText, effectiveOffset, " \t")
+        if (inlay.type == InlayType.BlockAbove && indentBlockInlays) {
+          val belowLineStartOffset = inlayAnchorOffset
+          val indentEndOffset = CharArrayUtil.shiftForward(sourceText, inlayAnchorOffset, " \t")
           append(sourceText.subSequence(belowLineStartOffset, indentEndOffset))
         }
         append(inlay.render(renderer))
@@ -64,9 +63,9 @@ object InlayDumpUtil {
   }
 
   @Internal
-  fun extractEntries(text: String) : List<Pair<Int, String>> {
+  fun extractEntries(text: String) : List<ExtractedInlayInfo> {
     val matcher = inlayPattern.matcher(text)
-    val offsetToContent = ArrayList<Pair<Int, String>>()
+    val extracted = ArrayList<ExtractedInlayInfo>()
     var previousOffsetWithoutInlays = 0
     var previousOffsetWithInlays = 0
     while (matcher.find()) {
@@ -74,21 +73,22 @@ object InlayDumpUtil {
       val endOffset = matcher.end()
       previousOffsetWithoutInlays += startOffset - previousOffsetWithInlays
       previousOffsetWithInlays = endOffset
-      val content = text.subSequence(startOffset, endOffset)
-      if (content.startsWith("/*<# block")) {
-        throw NotImplementedError("Block inlays are not yet supported")
+      val inlayType = when (matcher.group(1)) {
+        "block" -> InlayType.BlockAbove
+        else -> InlayType.Inline
       }
-      val strippedContent = content.substring(5, content.length - 5)
-      offsetToContent.add(previousOffsetWithoutInlays to strippedContent)
+      val inlayOffset = previousOffsetWithoutInlays
+      val content = (matcher.group(2) ?: matcher.group(3) ?: "")
+      extracted.add(ExtractedInlayInfo(inlayOffset, inlayType, content))
     }
-    return offsetToContent
+    return extracted
   }
 
-  internal data class InlayData(val inlay: Inlay<*>, val type: InlayType) {
-    fun effectiveOffset(document: Document): Int {
+  private data class InlayData(val inlay: Inlay<*>, val type: InlayType) {
+    fun anchorOffset(document: Document): Int {
       return when (type) {
         InlayType.Inline -> inlay.offset
-        InlayType.Block -> {
+        InlayType.BlockAbove -> {
           val offset = inlay.offset
           val lineNumber = document.getLineNumber(offset)
           document.getLineStartOffset(lineNumber)
@@ -99,12 +99,12 @@ object InlayDumpUtil {
     fun render(r: (EditorCustomElementRenderer, Inlay<*>) -> String): String {
       return buildString {
         append("/*<# ")
-        if (type == InlayType.Block) {
+        if (type == InlayType.BlockAbove) {
           append("block ")
         }
         append(r(inlay.renderer, inlay))
         append(" #>*/")
-        if (type == InlayType.Block) {
+        if (type == InlayType.BlockAbove) {
           append('\n')
         }
       }
@@ -113,22 +113,16 @@ object InlayDumpUtil {
     override fun toString(): String {
       val renderer = inlay.renderer
       if (renderer !is PresentationRenderer && renderer !is LinearOrderInlayRenderer<*>) error("renderer not supported")
-      return buildString {
-        append("/*<# ")
-        if (type == InlayType.Block) {
-          append("block ")
-        }
-        append(renderer.toString())
-        append(" #>*/")
-        if (type == InlayType.Block) {
-          append('\n')
-        }
-      }
+      return render { r, _ -> r.toString() }
     }
   }
 
+  @Internal
   enum class InlayType {
     Inline,
-    Block
+    BlockAbove
   }
+
+  @Internal
+  data class ExtractedInlayInfo(val offset: Int, val type: InlayType, val content: String)
 }

@@ -84,7 +84,7 @@ class DeclarativeHintsProviderSettingsModel(
       DeclarativeHintsPreviewProvider.getOptionPreview(language, id, caseId, providerDescription.instance)
     }
     if (previewTextWithInlayPlaceholders != null) {
-      val inlayEntries: List<Pair<Int, String>> = InlayDumpUtil.extractEntries(previewTextWithInlayPlaceholders)
+      val inlayEntries: List<InlayDumpUtil.ExtractedInlayInfo> = InlayDumpUtil.extractEntries(previewTextWithInlayPlaceholders)
       file.putUserData(PREVIEW_ENTRIES, PreviewEntries(caseId, inlayEntries))
     }
     return file
@@ -121,8 +121,12 @@ class DeclarativeHintsProviderSettingsModel(
         return object: OwnBypassCollector {
           override fun collectHintsForFile(file: PsiFile, sink: InlayTreeSink) {
             if (previewEntries == null) return
-            for ((offset, content) in previewEntries.offsetToContent) {
-              sink.addPresentation(InlineInlayPosition(offset, true), hasBackground = true) {
+            for ((offset, renderType, content) in previewEntries.inlayInfos) {
+              val pos = when (renderType) {
+                InlayDumpUtil.InlayType.Inline -> InlineInlayPosition(offset, true)
+                InlayDumpUtil.InlayType.BlockAbove -> AboveLineIndentedPosition(offset)
+              }
+              sink.addPresentation(pos, hintFormat = HintFormat.default) {
                 text(content)
               }
             }
@@ -200,7 +204,7 @@ class DeclarativeHintsProviderSettingsModel(
 
   private class MutableOption(val description: InlayProviderOption, var isEnabled: Boolean)
 
-  private class PreviewEntries(val caseId: String?, val offsetToContent: List<Pair<Int, String>>)
+  private class PreviewEntries(val caseId: String?, val inlayInfos: List<InlayDumpUtil.ExtractedInlayInfo>)
 
   private class DefaultSettingsProvider : InlayHintsCustomSettingsProvider<Unit> {
     private val component by lazy { JPanel() }
