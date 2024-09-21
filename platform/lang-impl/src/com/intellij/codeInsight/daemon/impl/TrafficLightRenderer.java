@@ -67,6 +67,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
+  private static final Logger LOG = Logger.getInstance(TrafficLightRenderer.class);
   private final @NotNull Project myProject;
   private final @NotNull Document myDocument;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
@@ -93,6 +94,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       ApplicationManager.getApplication().invokeLater(() -> {
         Editor editor = editorMarkupModel.getEditor();
         if (project.isDisposed() || editor.isDisposed()) {
+          LOG.debug("Traffic light won't be set to editor: project dispose ", project.isDisposed(),
+                    " , editor dispose " + editor.isDisposed());
           Disposer.dispose(tlRenderer); // would be registered in setErrorStripeRenderer() below
           return;
         }
