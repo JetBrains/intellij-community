@@ -8,7 +8,6 @@ import com.google.common.collect.Sets;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -390,10 +389,12 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     ContainerUtil.addAll(fixes, getImportStatementQuickFixes(element));
     ContainerUtil.addAll(fixes, getAddIgnoredIdentifierQuickFixes(qualifiedNames));
     var installPackageQuickFixes = getInstallPackageQuickFixes(node, reference, refName);
+    var isAddedToInstallAllFix = false;
     if (Iterables.size(installPackageQuickFixes) > 0) {
       ContainerUtil.addAll(fixes, installPackageQuickFixes);
       PyPackageInstallAllProblemInfo problemInfo = new PyPackageInstallAllProblemInfo(node, description, hl_type, refName);
       myUnresolvedRefs.add(problemInfo);
+      isAddedToInstallAllFix = true;
     }
 
     if (reference instanceof PySubstitutionChunkReference) {
@@ -401,7 +402,9 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     }
 
     getPluginQuickFixes(fixes, reference);
-    registerProblem(node, description, hl_type, null, rangeInElement, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+    if (!isAddedToInstallAllFix) {
+      registerProblem(node, description, hl_type, null, rangeInElement, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+    }
   }
 
   private boolean isDeclaredInSlots(@NotNull PyType type, @NotNull String attrName) {
