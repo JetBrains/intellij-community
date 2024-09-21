@@ -7469,7 +7469,284 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension")
+    public static class ConvertMemberToExtension extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstract.kt")
+        public void testAbstract() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/abstract.kt");
+        }
+
+        @TestMetadata("abstractProperty.kt")
+        public void testAbstractProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/abstractProperty.kt");
+        }
+
+        @TestMetadata("delegatedProperty.kt")
+        public void testDelegatedProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/delegatedProperty.kt");
+        }
+
+        @TestMetadata("explicitUnit.kt")
+        public void testExplicitUnit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/explicitUnit.kt");
+        }
+
+        @TestMetadata("extension.kt")
+        public void testExtension() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/extension.kt");
+        }
+
+        @TestMetadata("final.kt")
+        public void testFinal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/final.kt");
+        }
+
+        @TestMetadata("funInterface.kt")
+        public void testFunInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/funInterface.kt");
+        }
+
+        @TestMetadata("funInterface2.kt")
+        public void testFunInterface2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/funInterface2.kt");
+        }
+
+        @TestMetadata("funcitonNoName.kt")
+        public void testFuncitonNoName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/funcitonNoName.kt");
+        }
+
+        @TestMetadata("functionType.kt")
+        public void testFunctionType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/functionType.kt");
+        }
+
+        @TestMetadata("genericClass.kt")
+        public void testGenericClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/genericClass.kt");
+        }
+
+        @TestMetadata("genericClassWithInVariance.kt")
+        public void testGenericClassWithInVariance() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/genericClassWithInVariance.kt");
+        }
+
+        @TestMetadata("genericClassWithOutVariance.kt")
+        public void testGenericClassWithOutVariance() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/genericClassWithOutVariance.kt");
+        }
+
+        @TestMetadata("genericClassWithVarianceAndReified.kt")
+        public void testGenericClassWithVarianceAndReified() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/genericClassWithVarianceAndReified.kt");
+        }
+
+        @TestMetadata("genericFun.kt")
+        public void testGenericFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/genericFun.kt");
+        }
+
+        @TestMetadata("genericFunInGenericClass.kt")
+        public void testGenericFunInGenericClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/genericFunInGenericClass.kt");
+        }
+
+        @TestMetadata("genericFunInGenericClassWithUpperBounds.kt")
+        public void testGenericFunInGenericClassWithUpperBounds() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/genericFunInGenericClassWithUpperBounds.kt");
+        }
+
+        @TestMetadata("genericFunParamAfterName.kt")
+        public void testGenericFunParamAfterName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/genericFunParamAfterName.kt");
+        }
+
+        @TestMetadata("inCompanionObject.kt")
+        public void testInCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/inCompanionObject.kt");
+        }
+
+        @TestMetadata("inFunctionBody.kt")
+        public void testInFunctionBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/inFunctionBody.kt");
+        }
+
+        @TestMetadata("inLocalClass.kt")
+        public void testInLocalClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/inLocalClass.kt");
+        }
+
+        @TestMetadata("inObject.kt")
+        public void testInObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/inObject.kt");
+        }
+
+        @TestMetadata("inObjectLiteral.kt")
+        public void testInObjectLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/inObjectLiteral.kt");
+        }
+
+        @TestMetadata("internal.kt")
+        public void testInternal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/internal.kt");
+        }
+
+        @TestMetadata("KDoc.kt")
+        public void testKDoc() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/KDoc.kt");
+        }
+
+        @TestMetadata("localFunction.kt")
+        public void testLocalFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/localFunction.kt");
+        }
+
+        @TestMetadata("nonBlockBodyNoType.kt")
+        public void testNonBlockBodyNoType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/nonBlockBodyNoType.kt");
+        }
+
+        @TestMetadata("nonBlockBodyWithType.kt")
+        public void testNonBlockBodyWithType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/nonBlockBodyWithType.kt");
+        }
+
+        @TestMetadata("open.kt")
+        public void testOpen() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/open.kt");
+        }
+
+        @TestMetadata("outsideFunction.kt")
+        public void testOutsideFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/outsideFunction.kt");
+        }
+
+        @TestMetadata("override.kt")
+        public void testOverride() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/override.kt");
+        }
+
+        @TestMetadata("private.kt")
+        public void testPrivate() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/private.kt");
+        }
+
+        @TestMetadata("privateInInternalClass.kt")
+        public void testPrivateInInternalClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/privateInInternalClass.kt");
+        }
+
+        @TestMetadata("protected.kt")
+        public void testProtected() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/protected.kt");
+        }
+
+        @TestMetadata("public.kt")
+        public void testPublic() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/public.kt");
+        }
+
+        @TestMetadata("publicInInternalClass.kt")
+        public void testPublicInInternalClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/publicInInternalClass.kt");
+        }
+
+        @TestMetadata("publicInPrivateClass.kt")
+        public void testPublicInPrivateClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/publicInPrivateClass.kt");
+        }
+
+        @TestMetadata("secondaryConstructor.kt")
+        public void testSecondaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/secondaryConstructor.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/simple.kt");
+        }
+
+        @TestMetadata("topLevelFunction.kt")
+        public void testTopLevelFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/topLevelFunction.kt");
+        }
+
+        @TestMetadata("typeFqName.kt")
+        public void testTypeFqName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/typeFqName.kt");
+        }
+
+        @TestMetadata("unknownType.kt")
+        public void testUnknownType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/unknownType.kt");
+        }
+
+        @TestMetadata("valWithDefaultGetter.kt")
+        public void testValWithDefaultGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/valWithDefaultGetter.kt");
+        }
+
+        @TestMetadata("valWithGetter.kt")
+        public void testValWithGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/valWithGetter.kt");
+        }
+
+        @TestMetadata("valWithGetterBlockBody.kt")
+        public void testValWithGetterBlockBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/valWithGetterBlockBody.kt");
+        }
+
+        @TestMetadata("varWithDefaultGetterAndSetter.kt")
+        public void testVarWithDefaultGetterAndSetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/varWithDefaultGetterAndSetter.kt");
+        }
+
+        @TestMetadata("varWithDefaultSetter.kt")
+        public void testVarWithDefaultSetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/varWithDefaultSetter.kt");
+        }
+
+        @TestMetadata("varWithGetter.kt")
+        public void testVarWithGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/varWithGetter.kt");
+        }
+
+        @TestMetadata("varWithGetterAndSetter.kt")
+        public void testVarWithGetterAndSetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/varWithGetterAndSetter.kt");
+        }
+
+        @TestMetadata("varWithSetter.kt")
+        public void testVarWithSetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/varWithSetter.kt");
+        }
+
+        @TestMetadata("withImport.kt")
+        public void testWithImport() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/withImport.kt");
+        }
+
+        @TestMetadata("withJavaUsage.kt")
+        public void testWithJavaUsage() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/withJavaUsage.kt");
+        }
+
+        @TestMetadata("withType.kt")
+        public void testWithType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/declarations/convertMemberToExtension/withType.kt");
+        }
+    }
 
 
 

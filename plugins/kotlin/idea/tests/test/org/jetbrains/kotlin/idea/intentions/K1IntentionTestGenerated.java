@@ -10965,14 +10965,29 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/declarations/convertMemberToExtension/genericFunParamAfterName.kt");
             }
 
+            @TestMetadata("inCompanionObject.kt")
+            public void testInCompanionObject() throws Exception {
+                runTest("testData/intentions/declarations/convertMemberToExtension/inCompanionObject.kt");
+            }
+
             @TestMetadata("inFunctionBody.kt")
             public void testInFunctionBody() throws Exception {
                 runTest("testData/intentions/declarations/convertMemberToExtension/inFunctionBody.kt");
             }
 
+            @TestMetadata("inLocalClass.kt")
+            public void testInLocalClass() throws Exception {
+                runTest("testData/intentions/declarations/convertMemberToExtension/inLocalClass.kt");
+            }
+
             @TestMetadata("inObject.kt")
             public void testInObject() throws Exception {
                 runTest("testData/intentions/declarations/convertMemberToExtension/inObject.kt");
+            }
+
+            @TestMetadata("inObjectLiteral.kt")
+            public void testInObjectLiteral() throws Exception {
+                runTest("testData/intentions/declarations/convertMemberToExtension/inObjectLiteral.kt");
             }
 
             @TestMetadata("internal.kt")
@@ -11108,6 +11123,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             @TestMetadata("varWithSetter.kt")
             public void testVarWithSetter() throws Exception {
                 runTest("testData/intentions/declarations/convertMemberToExtension/varWithSetter.kt");
+            }
+
+            @TestMetadata("withImport.kt")
+            public void testWithImport() throws Exception {
+                runTest("testData/intentions/declarations/convertMemberToExtension/withImport.kt");
+            }
+
+            @TestMetadata("withJavaUsage.kt")
+            public void testWithJavaUsage() throws Exception {
+                runTest("testData/intentions/declarations/convertMemberToExtension/withJavaUsage.kt");
             }
 
             @TestMetadata("withType.kt")
