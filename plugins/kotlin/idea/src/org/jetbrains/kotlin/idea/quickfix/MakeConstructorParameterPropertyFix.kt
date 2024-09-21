@@ -16,11 +16,13 @@ internal object MakeConstructorParameterPropertyFixFactory : KotlinIntentionActi
         val ktReference = Errors.UNRESOLVED_REFERENCE.cast(diagnostic).a as? KtNameReferenceExpression ?: return emptyList()
 
         val valOrVar = if (ktReference.getAssignmentByLHS() != null) KotlinValVar.Var else KotlinValVar.Val
-
         val ktParameter = ktReference.getPrimaryConstructorParameterWithSameName() ?: return emptyList()
+        if (ktParameter.hasValOrVar()) return emptyList()
         val containingClass = ktParameter.containingClass()!!
         val className = if (containingClass != ktReference.containingClass()) containingClass.nameAsSafeName.asString() else null
 
-        return listOf(MakeConstructorParameterPropertyFix(ktParameter, className, valOrVar))
+        return listOf(
+            MakeConstructorParameterPropertyFix(ktParameter, valOrVar, className).asIntention()
+        )
     }
 }
