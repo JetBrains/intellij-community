@@ -45,6 +45,11 @@ import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizar
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_KOTLIN_PATH
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_RESOURCES_PATH
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore.Companion.COROUTINES_ARTIFACT_ID
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore.Companion.DATETIME_ARTIFACT_ID
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore.Companion.KOTLINX_GROUP
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore.Companion.SERIALIZATION_JSON_ARTIFACT_ID
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore
 import org.jetbrains.kotlin.tools.projectWizard.core.KotlinAssetsProvider
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
@@ -344,6 +349,10 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         // This is currently only supported for generating new projects!
         private fun setupMultiModuleProjectAssets(project: Project) {
             assert(context.isCreatingNewProject)
+            val librariesVersionStore = KotlinLibrariesCompatibilityStore.getInstance()
+            val datetimeVersion = librariesVersionStore.getLatestVersion(KOTLINX_GROUP, DATETIME_ARTIFACT_ID) ?: ""
+            val coroutinesVersion = librariesVersionStore.getLatestVersion(KOTLINX_GROUP, COROUTINES_ARTIFACT_ID) ?: ""
+            val serializationJsonVersion = librariesVersionStore.getLatestVersion(KOTLINX_GROUP, SERIALIZATION_JSON_ARTIFACT_ID) ?: ""
 
             val templateParameters = mapOf(
                 "PROJECT_NAME" to parent.name,
@@ -351,9 +360,9 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 "KOTLIN_VERSION" to Versions.KOTLIN,
                 "FOOJAY_VERSION" to Versions.GRADLE_PLUGINS.FOOJAY_VERSION,
                 "JVM_VERSION" to (parent.selectedJdkJvmTarget?.toString() ?: "21"),
-                "KOTLINX_DATETIME_VERSION" to Versions.KOTLINX.KOTLINX_DATETIME.toString(),
-                "KOTLINX_SERIALIZATION_JSON_VERSION" to Versions.KOTLINX.KOTLINX_SERIALIZATION_JSON.toString(),
-                "KOTLINX_COROUTINES_VERSION" to Versions.KOTLINX.KOTLINX_COROUTINES.toString(),
+                "KOTLINX_DATETIME_VERSION" to datetimeVersion,
+                "KOTLINX_SERIALIZATION_JSON_VERSION" to serializationJsonVersion,
+                "KOTLINX_COROUTINES_VERSION" to coroutinesVersion,
             )
 
             addAssets(KotlinAssetsProvider.getKotlinGradleIgnoreAssets())
