@@ -2,7 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -88,7 +91,7 @@ object BranchedFoldingUtils {
         }
         lift(expression)
         if (lhs != null && op != null) {
-            expression.replace(psiFactory.createExpressionByPattern("$0 $1 $2", lhs!!, op!!, expression))
+            expression.replace(psiFactory.createExpressionByPattern("$0 $1 $2", lhs, op, expression))
         }
     }
 
@@ -184,7 +187,8 @@ object BranchedFoldingUtils {
      * We say they match when they satisfy the following conditions:
      *  1. They have the same left operands
      *  2. They have the same operation tokens
-     *  3. It satisfies one of the following:
+     *  3. No assignability errors are present
+     *  4. It satisfies one of the following:
      *      - The left operand is nullable and the right is null
      *      - Their operations are the same
      *      - If we cannot find symbols of their operations
@@ -193,6 +197,7 @@ object BranchedFoldingUtils {
      *            they are the same.
      */
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun checkAssignmentsMatch(
         first: KtBinaryExpression,
         second: KtBinaryExpression,
@@ -210,14 +215,23 @@ object BranchedFoldingUtils {
         }
         if (!haveSameLeft(first, second) || first.operationToken != second.operationToken) return false
 
-        // Check if they satisfy the first of condition 3.
-        val isSecondRightNull = second.right?.isNull()
+        val secondRight = second.right
+        // Check if they satisfy the above condition 3.
+        if (secondRight != null && analyze(secondRight) {
+                secondRight
+                    .diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                    .isNotEmpty()
+            }) return false
+
+        // Check if they satisfy the first of condition 4.
+        val isSecondRightNull = secondRight?.isNull()
         if (isSecondRightNull == true && leftType.canBeNull) return true
 
-        // Check if they satisfy the second of condition 3.
+
+        // Check if they satisfy the second of condition 4.
         if (firstOperation != null && firstOperation == second.operationReference.mainReference.resolve()) return true
 
-        // Check if they satisfy the third and fourth of condition 3.
+        // Check if they satisfy the third and fourth of condition 4.
         val rightTypeOfSecond = second.right?.expressionType ?: return false
         if (!leftType.canBeNull && rightTypeOfSecond.canBeNull) return false
         val nonNullableRightTypeOfSecond = rightTypeOfSecond.withNullability(KaTypeNullability.NON_NULLABLE)
