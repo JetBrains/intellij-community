@@ -114,13 +114,12 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
       ProjectJdkTable.getInstance().allJdks,
       file,
       PythonSdkType.getInstance(),
-      null,
+      PyPipEnvSdkAdditionalData(),
       suggestedSdkName(basePath)
     )
 
     ApplicationManager.getApplication().invokeAndWait {
       LOGGER.debug("Adding associated pipenv environment: $path, $basePath")
-      sdk.isPipEnv = true
       sdk.setAssociationToModule(module)
       SdkConfigurationUtil.addSdk(sdk)
     }

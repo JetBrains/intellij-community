@@ -65,15 +65,13 @@ fun setupPoetrySdkUnderProgress(project: Project?,
     }
   }
 
-  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(Path.of(projectPath))).apply {
+  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(Path.of(projectPath)), PyPoetrySdkAdditionalData()).apply {
     module?.let { setAssociationToModule(it) }
-    isPoetry = true
   }
 }
 
-var Sdk.isPoetry: Boolean
+internal val Sdk.isPoetry: Boolean
   get() = sdkAdditionalData is PyPoetrySdkAdditionalData
-  set(value) = setCorrectTypeSdk(this, PyPoetrySdkAdditionalData::class.java, value)
 
 val Module.poetryLock: VirtualFile?
   get() = baseDir?.findChild(POETRY_LOCK)

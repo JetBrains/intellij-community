@@ -68,9 +68,8 @@ val Module.pipFile: VirtualFile?
 /**
  * Tells if the SDK was added as a pipenv.
  */
-var Sdk.isPipEnv: Boolean
+internal val Sdk.isPipEnv: Boolean
   get() = sdkAdditionalData is PyPipEnvSdkAdditionalData
-  set(value) = setCorrectTypeSdk(this, PyPipEnvSdkAdditionalData::class.java, value)
 
 /**
  * The user-set persisted a path to the pipenv executable.
@@ -125,10 +124,9 @@ fun setupPipEnvSdkUnderProgress(project: Project?,
       return  VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(pipEnv))?.toString() ?: FileUtil.join(pipEnv, "bin", "python")
     }
   }
-  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(projectPath))?.apply {
+  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(projectPath), PyPipEnvSdkAdditionalData()).apply {
     // FIXME: multi module project support - associate with module path
     setAssociationToPath(projectPath)
-    isPipEnv = true
   }
 }
 

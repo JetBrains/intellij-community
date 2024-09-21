@@ -178,6 +178,7 @@ fun createSdkByGenerateTask(
   baseSdk: Sdk?,
   associatedProjectPath: String?,
   suggestedSdkName: String?,
+  sdkAdditionalData: PythonSdkAdditionalData? = null
 ): Sdk {
   val homeFile = try {
     val homePath = ProgressManager.getInstance().run(generateSdkHomePath)
@@ -204,7 +205,7 @@ fun createSdkByGenerateTask(
     existingSdks.toTypedArray(),
     homeFile,
     PythonSdkType.getInstance(),
-    null,
+    sdkAdditionalData,
     sdkName)
 }
 
@@ -575,22 +576,3 @@ val Sdk.sdkSeemsValid: Boolean
     if (pythonSdkAdditionalData is PyRemoteSdkAdditionalData) return true
     return pythonSdkAdditionalData.flavorAndData.sdkSeemsValid(this, targetEnvConfiguration)
   }
-
-inline fun <reified T : PythonSdkAdditionalData> setCorrectTypeSdk(sdk: Sdk, additionalDataClass: Class<T>, value: Boolean) {
-  val oldData = sdk.sdkAdditionalData
-  val newData = if (value) {
-    when (oldData) {
-      is PythonSdkAdditionalData -> additionalDataClass.getDeclaredConstructors().first { it.parameterCount == 1 }.newInstance(oldData) as T
-      else -> additionalDataClass.getDeclaredConstructor().newInstance()
-    }
-  }
-  else {
-    when (oldData) {
-      is T -> PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk))
-      else -> oldData
-    }
-  }
-  val modificator = sdk.sdkModificator
-  modificator.sdkAdditionalData = newData
-  ApplicationManager.getApplication().runWriteAction { modificator.commitChanges() }
-}

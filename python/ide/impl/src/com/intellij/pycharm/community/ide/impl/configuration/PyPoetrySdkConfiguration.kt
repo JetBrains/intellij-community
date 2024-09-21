@@ -114,13 +114,12 @@ class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
       ProjectJdkTable.getInstance().allJdks,
       file,
       PythonSdkType.getInstance(),
-      null,
+      PyPoetrySdkAdditionalData(),
       suggestedSdkName(basePath)
     )
 
     ApplicationManager.getApplication().invokeAndWait {
       LOGGER.debug("Adding associated poetry environment: $path, $basePath")
-      sdk.isPoetry = true
       sdk.setAssociationToModule(module)
       SdkConfigurationUtil.addSdk(sdk)
     }
