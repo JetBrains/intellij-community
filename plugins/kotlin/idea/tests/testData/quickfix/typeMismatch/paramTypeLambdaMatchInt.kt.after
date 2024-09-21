@@ -4,5 +4,5 @@ fun int() {
 }
 
 fun i(block: () -> Long) {}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithLambdaFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithLambdaForTypeMismatchFix
 /* IGNORE_K2 */

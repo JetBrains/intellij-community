@@ -710,9 +710,9 @@ class QuickFixRegistrar : QuickFixContributor {
 
         ASSIGN_OPERATOR_AMBIGUITY.registerFactory(AssignOperatorAmbiguityFactory)
 
-        TYPE_MISMATCH.registerFactory(SurroundWithLambdaFix)
-        TYPE_MISMATCH_WARNING.registerFactory(SurroundWithLambdaFix)
-        CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(SurroundWithLambdaFix)
+        TYPE_MISMATCH.registerFactory(SurroundWithLambdaForTypeMismatchFixFactory)
+        TYPE_MISMATCH_WARNING.registerFactory(SurroundWithLambdaForTypeMismatchFixFactory)
+        CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(SurroundWithLambdaForTypeMismatchFixFactory)
 
         NO_SET_METHOD.registerFactory(ChangeToMutableCollectionFix)
 
