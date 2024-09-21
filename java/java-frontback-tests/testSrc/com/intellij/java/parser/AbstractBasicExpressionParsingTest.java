@@ -41,6 +41,7 @@ public abstract class AbstractBasicExpressionParsingTest extends AbstractBasicJa
 
   public void testParenth() { doTest(true); }
   public void testParenth1() { doTest(true); }
+  public void _testParenth2() { doTest(true); }
 
   public void testNewInExprList() { doTest(true); }
 
@@ -90,6 +91,7 @@ public abstract class AbstractBasicExpressionParsingTest extends AbstractBasicJa
   public void testAnonymous2() { doTest(true); }
   public void testIncompleteDecl() { doTest(true); }
   public void testLambdaConfusion() { doTest(true); }
+  public void testNestedLambda() { doTest(true); }
 
   public void testIllegalWildcard() { doTest(true); }
 
