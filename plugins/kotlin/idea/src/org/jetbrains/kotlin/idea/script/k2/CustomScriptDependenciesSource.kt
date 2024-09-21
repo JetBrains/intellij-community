@@ -6,10 +6,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEPENDENCIES_SOURCES
-import org.jetbrains.kotlin.idea.core.script.creteScriptModules
+import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesData
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesSource
@@ -50,13 +50,13 @@ class CustomScriptDependenciesSource(override val project: Project) : ScriptDepe
     }
 
     override suspend fun updateModules(dependencies: ScriptDependenciesData, storage: MutableEntityStorage?) {
-        val storageSnapshot = project.workspaceModel.currentSnapshot
-        val tempStorage = MutableEntityStorage.from(storageSnapshot)
-
-        creteScriptModules(project, dependencies, tempStorage)
+        val updatedStorage = getUpdatedStorage(
+            project, dependencies,
+            { KotlinCustomScriptModuleEntitySource(it) },
+            { KotlinCustomScriptLibraryModuleEntitySource })
 
         project.workspaceModel.update("Updating MainKts Kotlin Scripts modules") {
-            it.applyChangesFrom(tempStorage)
+            it.applyChangesFrom(updatedStorage)
         }
     }
 
@@ -66,4 +66,9 @@ class CustomScriptDependenciesSource(override val project: Project) : ScriptDepe
                 .filterIsInstance<CustomScriptDependenciesSource>().firstOrNull()
                 .safeAs<CustomScriptDependenciesSource>()
     }
+
+    data class KotlinCustomScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl) :
+        KotlinScriptEntitySource(virtualFileUrl)
+
+    object KotlinCustomScriptLibraryModuleEntitySource : KotlinScriptLibraryEntitySource()
 }

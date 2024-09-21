@@ -55,7 +55,7 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
         if (isBinary) {
             if (KotlinPluginModeProvider.isK2Mode()) {
                 val scriptFile = (config.contextualModuleInfo as? ScriptModuleInfo)?.scriptFile
-                scriptFile?.scriptLibraryDependencies(project)?.forEach(::register)
+                scriptFile?.scriptLibraryDependencies(project)?.filter { virtualFile in it.contentScope }?.forEach(::register)
             } else if (ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope().contains(virtualFile)) {
                 if (isLibrarySource) {
                     register(ScriptDependenciesSourceInfo.ForProject(project))

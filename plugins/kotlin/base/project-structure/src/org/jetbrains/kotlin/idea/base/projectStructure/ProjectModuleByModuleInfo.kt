@@ -14,7 +14,6 @@ import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.util.CachedValue
@@ -222,16 +221,12 @@ class KtSourceModuleByModuleInfoForOutsider(
 }
 
 @ApiStatus.Internal
-class KtScriptLibraryModuleByModuleInfo(libraryInfo: LibraryInfo, private val scriptFile: VirtualFile): KtLibraryModuleByModuleInfo(libraryInfo), KaScriptDependencyModule {
-    override val file: KtFile?
-        get() = PsiManager.getInstance(project).findFile(scriptFile) as? KtFile
-}
+class KtScriptLibraryModuleByModuleInfo(libraryInfo: LibraryInfo, override val file: KtFile? = null):
+    KtLibraryModuleByModuleInfo(libraryInfo), KaScriptDependencyModule
 
 @ApiStatus.Internal
-class KtScriptLibrarySourceModuleByModuleInfo(moduleInfo: LibrarySourceInfo, private val scriptFile: VirtualFile): KtLibrarySourceModuleByModuleInfo(moduleInfo), KaScriptDependencyModule{
-    override val file: KtFile?
-        get() = PsiManager.getInstance(project).findFile(scriptFile) as? KtFile
-}
+class KtScriptLibrarySourceModuleByModuleInfo(moduleInfo: LibrarySourceInfo, override val file: KtFile? = null):
+    KtLibrarySourceModuleByModuleInfo(moduleInfo), KaScriptDependencyModule
 
 fun ModuleSourceInfo.collectDependencies(collectionMode: ModuleDependencyCollector.CollectionMode): List<KaModule> {
     val sourceRootType = when (this) {

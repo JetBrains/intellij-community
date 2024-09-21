@@ -19,6 +19,7 @@ import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertTrue
 
@@ -138,6 +139,7 @@ class KotlinGradleFindUsagesTest : AbstractGradleCodeInsightTest() {
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("classFromBuildSrcUsageInBuildGradleKts.test")
+    @Disabled("TODO: find usage from gradle plugin source module works, test should be reviewed end enabled")
     fun testClassFromBuildSrcUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }

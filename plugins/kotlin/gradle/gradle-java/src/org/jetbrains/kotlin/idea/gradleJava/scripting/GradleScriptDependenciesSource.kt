@@ -8,11 +8,12 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEPENDENCIES_SOURCES
+import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
-import org.jetbrains.kotlin.idea.core.script.creteScriptModules
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesData
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesSource
@@ -40,16 +41,21 @@ class GradleScriptModel(
 ) : BaseScriptModel(virtualFile)
 
 open class GradleScriptDependenciesSource(override val project: Project) : ScriptDependenciesSource<GradleScriptModel>(project) {
+    private val gradleEntitySourceFilter: (EntitySource) -> Boolean =
+        { entitySource -> entitySource is KotlinGradleScriptModuleEntitySource || entitySource is KotlinGradleScriptLibraryModuleEntitySource }
+
     override suspend fun updateModules(dependencies: ScriptDependenciesData, storage: MutableEntityStorage?) {
-        val workspaceModel = project.workspaceModel
-        val storageSnapshot = workspaceModel.currentSnapshot
-        val tempStorage = MutableEntityStorage.from(storageSnapshot)
+        val storageWithGradleScriptModules = getUpdatedStorage(
+            project, dependencies,
+            { KotlinGradleScriptModuleEntitySource(it) },
+            { KotlinGradleScriptLibraryModuleEntitySource })
 
-        creteScriptModules(project, dependencies, storage ?: tempStorage)
-
-        if (storage == null) {
+        if (storage != null) {
+            storage.replaceBySource(gradleEntitySourceFilter, storageWithGradleScriptModules)
+        } else {
+            val workspaceModel = project.workspaceModel
             workspaceModel.update("Updating Gradle Kotlin Scripts modules") {
-                it.applyChangesFrom(tempStorage)
+                it.replaceBySource(gradleEntitySourceFilter, storageWithGradleScriptModules)
             }
         }
     }
@@ -91,7 +97,7 @@ open class GradleScriptDependenciesSource(override val project: Project) : Scrip
 
             if (javaProjectSdk != null) {
                 javaProjectSdk.homePath?.let { path ->
-                    sdks.computeIfAbsent(Path.of(path)) { javaProjectSdk  }
+                    sdks.computeIfAbsent(Path.of(path)) { javaProjectSdk }
                 }
             } else if (javaHomePath != null) {
                 sdks.computeIfAbsent(javaHomePath) {
@@ -114,4 +120,9 @@ open class GradleScriptDependenciesSource(override val project: Project) : Scrip
                 .filterIsInstance<GradleScriptDependenciesSource>().firstOrNull()
                 .safeAs<GradleScriptDependenciesSource>()
     }
+
+    data class KotlinGradleScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl) :
+        KotlinScriptEntitySource(virtualFileUrl)
+
+    object KotlinGradleScriptLibraryModuleEntitySource : KotlinScriptLibraryEntitySource()
 }

@@ -3,10 +3,8 @@ package org.jetbrains.kotlin.idea.base.scripting.projectStructure
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.workspaceModel.ide.legacyBridge.findLibraryEntity
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
@@ -14,10 +12,11 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.JvmLibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
-import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySourceK2
+import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.nio.file.Path
 
 internal class ScriptingKaModuleFactory : KaModuleFactory {
@@ -26,23 +25,12 @@ internal class ScriptingKaModuleFactory : KaModuleFactory {
             is ScriptModuleInfo -> KtScriptModuleByModuleInfo(moduleInfo)
             is ScriptDependenciesInfo -> KtScriptDependencyModuleByModuleInfo(moduleInfo)
             is ScriptDependenciesSourceInfo -> KtScriptDependencySourceModuleByModuleInfo(moduleInfo)
-            is JvmLibraryInfo -> moduleInfo.librarySourceFile?.let { file ->
-                val entitySource = moduleInfo.library.findLibraryEntity(moduleInfo.project.workspaceModel.currentSnapshot)?.entitySource
-                if (entitySource is KotlinScriptEntitySourceK2) {
-                    KtScriptLibraryModuleByModuleInfo(moduleInfo, file)
-                } else null
+            is JvmLibraryInfo -> moduleInfo.source?.safeAs<KotlinScriptEntitySource>()?.let {
+                KtScriptLibraryModuleByModuleInfo(moduleInfo)
             }
-
-            is LibrarySourceInfo -> moduleInfo.librarySourceFile?.let { file ->
-                val entitySource = moduleInfo.library.findLibraryEntity(moduleInfo.project.workspaceModel.currentSnapshot)?.entitySource
-
-                if (entitySource is KotlinScriptEntitySourceK2) {
-                    KtScriptLibrarySourceModuleByModuleInfo(moduleInfo, file)
-                } else {
-                    null
-                }
+            is LibrarySourceInfo -> moduleInfo.source?.safeAs<KotlinScriptEntitySource>()?.let {
+                KtScriptLibrarySourceModuleByModuleInfo(moduleInfo)
             }
-
             else -> null
         }
     }

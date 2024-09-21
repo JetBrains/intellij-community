@@ -2,15 +2,19 @@
 package org.jetbrains.kotlin.idea.base.scripting.projectStructure
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.cache.cache
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -143,16 +147,26 @@ data class ScriptModuleInfo(
 internal fun VirtualFile.workspaceEntities(project: Project, snapshot: EntityStorage): Sequence<WorkspaceEntity> {
     val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val virtualFileUrl = toVirtualFileUrl(virtualFileUrlManager)
-    return snapshot.getVirtualFileUrlIndex()
-        .findEntitiesByUrl(virtualFileUrl)
+    return snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl)
+}
+
+internal fun VirtualFile.scriptModuleEntity(project: Project, snapshot: EntityStorage): ModuleEntity? {
+    val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+    val virtualFileUrl = toVirtualFileUrl(virtualFileUrlManager)
+    return snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).firstNotNullOfOrNull { it as? ModuleEntity }
 }
 
 fun VirtualFile.scriptLibraryDependencies(project: Project): Sequence<LibraryInfo> {
-    val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
+    val storage = WorkspaceModel.getInstance(project).currentSnapshot
+    val cache = LibraryInfoCache.getInstance(project)
 
-    return workspaceEntities(project, snapshot).filterIsInstance<LibraryEntity>().flatMap {
-        val library = it.findLibraryBridge(snapshot) ?: return@flatMap emptyList()
-        val libraryInfos = LibraryInfoCache.getInstance(project)[library]
-        libraryInfos
-    }
+    val dependencies = scriptModuleEntity(project, storage)?.dependencies ?: emptyList()
+    return dependencies.asSequence()
+        .mapNotNull {
+            (it as? LibraryDependency)?.library?.resolve(storage)
+        }.mapNotNull {
+            storage.libraryMap.getDataByEntity(it)
+        }.flatMap {
+            cache[it]
+        }
 }
