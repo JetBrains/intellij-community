@@ -196,6 +196,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
 
   fun setEmpty() {
     packageSelected(null)
+    packageListController.setLoadingState(false)
   }
 
   override fun dispose() {

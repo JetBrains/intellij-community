@@ -101,4 +101,7 @@ suspend fun <T> runPackagingOperationOrShowErrorDialog(
     }
     return Result.failure(ex)
   }
+  catch (ex: Throwable) {
+    return Result.failure(ex)
+  }
 }

@@ -140,10 +140,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     manager.repositoryManager.initCaches()
     manager.reloadPackages()
 
-    if (currentSdk != null && currentSdk != previousSdk) {
-
-
-    }
     withContext(Dispatchers.Main) {
       toolWindowPanel?.contentVisible = currentSdk != null
       if (currentSdk == null || currentSdk != previousSdk) {
