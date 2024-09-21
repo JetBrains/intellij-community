@@ -108,24 +108,37 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected PsiElement getNameIdentifier() {
-    final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-    if (currentFile == myElementToRename.getContainingFile()){
+    PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+
+    if (currentFile != null) {
+      //for multiPSI files, try to get psi for required language
+      Language language = myElementToRename.getLanguage();
+      List<@NotNull PsiFile> psiFiles = currentFile.getViewProvider().getAllFiles();
+      Optional<@NotNull PsiFile> psiFile = psiFiles.stream().filter(fileLang -> fileLang.getLanguage().isKindOf(language)).findFirst();
+      if (psiFile.isPresent()) {
+        currentFile = psiFile.get();
+      }
+    }
+
+    if (currentFile == myElementToRename.getContainingFile()) {
       return super.getNameIdentifier();
     }
-    if (currentFile != null) {
-      int offset = myEditor.getCaretModel().getOffset();
-      offset = TargetElementUtil.adjustOffset(currentFile, myEditor.getDocument(), offset);
-      final PsiElement elementAt = currentFile.findElementAt(offset);
-      if (elementAt != null) {
-        final PsiElement referenceExpression = elementAt.getParent();
-        if (referenceExpression != null) {
-          final PsiReference reference = referenceExpression.getReference();
-          if (reference != null && reference.resolve() == myElementToRename) {
-            return elementAt;
-          }
+
+    if (currentFile == null) {
+      return null;
+    }
+
+    int offset = myEditor.getCaretModel().getOffset();
+    offset = TargetElementUtil.adjustOffset(currentFile, myEditor.getDocument(), offset);
+    final PsiElement elementAt = currentFile.findElementAt(offset);
+    if (elementAt != null) {
+      final PsiElement referenceExpression = elementAt.getParent();
+      if (referenceExpression != null) {
+        final PsiReference reference = referenceExpression.getReference();
+        if (reference != null && reference.resolve() == myElementToRename) {
+          return elementAt;
         }
       }
-      return null;
     }
     return null;
   }
