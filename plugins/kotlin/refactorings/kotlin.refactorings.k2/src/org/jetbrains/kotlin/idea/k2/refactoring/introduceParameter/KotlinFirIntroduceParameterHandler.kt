@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor
@@ -167,7 +168,15 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
      * (to be reused in "create parameter from usage" where both type and name are fixed, and computed a bit differently from the regular "introduce parameter")
      */
     @OptIn(KaExperimentalApi::class)
-    fun addParameter(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration, expressionTypeEvaluator: KaSession.()->KaType?, nameSuggester:  KaSession.(KaType)->List<String>) {
+    fun addParameter(
+        project: Project,
+        editor: Editor,
+        expression: KtExpression,
+        targetParent: KtNamedDeclaration,
+        expressionTypeEvaluator: KaSession.() -> KaType?,
+        nameSuggester: KaSession.(KaType) -> List<String>,
+        silently: Boolean = false,
+    ) {
         val physicalExpression = expression.substringContextOrThis
         if (physicalExpression is KtProperty && physicalExpression.isLocal && physicalExpression.nameIdentifier == null) {
             showErrorHintByKey(project, editor, "cannot.refactor.no.expression", INTRODUCE_PARAMETER)
@@ -255,8 +264,9 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
                         && !haveLambdaArgumentsToReplace
                         && expression.extractableSubstringInfo == null
                         && !expression.mustBeParenthesizedInInitializerPosition()
+                        && PsiTreeUtil.isAncestor(introduceParameterDescriptor.callableDescriptor, physicalExpression, true)
 
-                if (isTestMode) {
+                if (isTestMode || silently) {
                     introduceParameterDescriptor.performRefactoring(editor = editor)
                     return
                 }

@@ -139,7 +139,15 @@ object K2CreateParameterFromUsageBuilder {
                     return descriptor
                 }
             }
-            KotlinFirIntroduceParameterHandler(helper).addParameter(project, editor, originalExpression, container, { getExpectedType(originalExpression) }, { _ -> listOf(name) })
+            KotlinFirIntroduceParameterHandler(helper).addParameter(
+                project,
+                editor,
+                originalExpression,
+                container,
+                { getExpectedType(originalExpression) },
+                { _ -> listOf(name) },
+                true
+            )
         }
     }
 }
