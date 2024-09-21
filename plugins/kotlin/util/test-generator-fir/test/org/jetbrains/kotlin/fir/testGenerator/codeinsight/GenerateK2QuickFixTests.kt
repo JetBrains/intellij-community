@@ -134,7 +134,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/kdocMissingDocumentation", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/leakingThis", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/libraries", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/makeConstructorParameterProperty", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/makeConstructorParameterProperty", pattern = pattern)
             model("$idea/quickfix/makePrivateAndOverrideMember", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/makeTypeParameterReified", pattern = pattern)
             model("$idea/quickfix/makeUpperBoundNonNullable", pattern = pattern, isIgnored = true)
