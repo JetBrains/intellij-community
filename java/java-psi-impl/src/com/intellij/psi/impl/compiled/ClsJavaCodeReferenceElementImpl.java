@@ -134,15 +134,15 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     if (resolve == null) return null;
     if (resolve instanceof PsiClass) {
       Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<>();
-      int index = 0;
+      int index = typeElements.length - 1;
       for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiClass)resolve)) {
-        if (index >= typeElements.length) {
+        if (index < 0) {
           substitutionMap.put(parameter, null);
         }
         else {
           substitutionMap.put(parameter, typeElements[index].getType());
         }
-        index++;
+        index--;
       }
       collectOuterClassTypeArgs((PsiClass)resolve, myCanonicalText, substitutionMap);
       return new CandidateInfo(resolve, PsiSubstitutor.createSubstitutor(substitutionMap));

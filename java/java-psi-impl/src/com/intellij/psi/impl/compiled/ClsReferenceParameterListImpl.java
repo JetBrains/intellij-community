@@ -28,7 +28,7 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
     myTypeParameters = new ClsTypeElementImpl[length];
 
     for (int i = 0; i < length; i++) {
-      String s = classParameters[length - i - 1];
+      String s = classParameters[i];
       char variance = ClsTypeElementImpl.VARIANCE_NONE;
       final Matcher extendsMatcher = EXTENDS_PREFIX.matcher(s);
       if (extendsMatcher.find()) {
@@ -47,7 +47,7 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
         }
       }
 
-      myTypeParameters[i] = new ClsTypeElementImpl(this, s, variance, annotations.forTypeArgument(length - i - 1));
+      myTypeParameters[i] = new ClsTypeElementImpl(this, s, variance, annotations.forTypeArgument(i));
     }
   }
 
@@ -78,7 +78,7 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
     if (cachedTypes == null) {
       cachedTypes = PsiType.createArray(myTypeParameters.length);
       for (int i = 0; i < cachedTypes.length; i++) {
-        cachedTypes[cachedTypes.length - i - 1] = myTypeParameters[i].getType();
+        cachedTypes[i] = myTypeParameters[i].getType();
       }
       myTypeParametersCachedTypes = cachedTypes;
     }
