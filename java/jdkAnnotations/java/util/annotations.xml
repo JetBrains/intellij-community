@@ -2203,6 +2203,7 @@
   </item>
   <item name="java.util.Collections java.util.Comparator&lt;T&gt; reverseOrder()">
     <annotation name="org.jetbrains.annotations.NotNull"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -2733,6 +2734,7 @@
   </item>
   <item name='java.util.Comparator java.util.Comparator&lt;T&gt; naturalOrder()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -2759,6 +2761,7 @@
   </item>
   <item name='java.util.Comparator java.util.Comparator&lt;T&gt; reverseOrder()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>

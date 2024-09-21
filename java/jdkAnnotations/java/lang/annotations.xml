@@ -943,6 +943,10 @@
     <annotation name='org.jetbrains.annotations.NonNls'/>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.String CASE_INSENSITIVE_ORDER'>
+      <annotation name='org.jetbrains.annotations.NotNull'/>
+      <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
   <item name='java.lang.String String(byte[])'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
