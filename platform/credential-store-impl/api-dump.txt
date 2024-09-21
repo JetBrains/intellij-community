@@ -1,7 +1,3 @@
-f:com.intellij.credentialStore.CredentialStoreBundle
-- com.intellij.DynamicBundle
-- sf:INSTANCE:com.intellij.credentialStore.CredentialStoreBundle
-- f:getPasswordSafeConfigurable():java.lang.String
 com.intellij.credentialStore.CredentialStoreFactory
 - sf:CREDENTIAL_STORE_FACTORY:com.intellij.openapi.extensions.ExtensionPointName
 - a:create():com.intellij.credentialStore.CredentialStore
