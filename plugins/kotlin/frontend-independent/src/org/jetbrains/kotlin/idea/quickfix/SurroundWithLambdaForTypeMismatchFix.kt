@@ -2,30 +2,30 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.HighPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.buildExpression
 
 class SurroundWithLambdaForTypeMismatchFix(
-    expression: KtExpression
-) : KotlinQuickFixAction<KtExpression>(expression), HighPriorityAction {
+    element: KtExpression,
+) : PsiUpdateModCommandAction<KtExpression>(element), HighPriorityAction {
 
-    override fun getFamilyName() = text
-    override fun getText() = KotlinBundle.message("surround.with.lambda")
+    override fun getFamilyName(): String = KotlinBundle.message("surround.with.lambda")
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val nameReference = element ?: return
-
-        val newExpression = KtPsiFactory(project).buildExpression {
+    override fun invoke(
+        context: ActionContext,
+        element: KtExpression,
+        updater: ModPsiUpdater,
+    ) {
+        val newExpression = KtPsiFactory(context.project).buildExpression {
             appendFixedText("{ ")
-            appendExpression(nameReference)
+            appendExpression(element)
             appendFixedText(" }")
         }
-        nameReference.replace(newExpression)
+        element.replace(newExpression)
     }
 }

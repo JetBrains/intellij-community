@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.KotlinType
@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 internal object SurroundWithLambdaForTypeMismatchFixFactory : KotlinSingleIntentionActionFactory() {
     private val LOG = Logger.getInstance(SurroundWithLambdaForTypeMismatchFix::class.java)
 
-    override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtExpression>? {
+    override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val diagnosticFactory = diagnostic.factory
         val expectedType: KotlinType
         val expressionType: KotlinType
@@ -63,6 +63,6 @@ internal object SurroundWithLambdaForTypeMismatchFixFactory : KotlinSingleIntent
         ) return null
 
         val diagnosticElement = diagnostic.psiElement as KtExpression
-        return SurroundWithLambdaForTypeMismatchFix(diagnosticElement)
+        return SurroundWithLambdaForTypeMismatchFix(diagnosticElement).asIntention()
     }
 }
