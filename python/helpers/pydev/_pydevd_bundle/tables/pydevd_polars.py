@@ -33,17 +33,31 @@ def get_column_types(table):
 
 
 # used by pydevd
-def get_data(table, start_index=None, end_index=None, format=None):
+def get_data(table, start_index=None, end_index=None, format=None, conv_mode=False):
     # type: (pl.DataFrame, int, int) -> str
     with __create_config(format):
+        if conv_mode:
+            return __get_df_slice(table, start_index, end_index).write_csv()
         return table[start_index:end_index]._repr_html_()
 
 
 # used by DSTableCommands
-def display_data(table, start, end):
+def display_data_html(table, start, end):
     # type: (pl.DataFrame, int, int) -> None
     with __create_config():
         print(table[start:end]._repr_html_())
+
+
+def display_data_csv(table, start, end):
+    # type: (pl.DataFrame, int, int) -> None
+    with __create_config():
+        print(__get_df_slice(table, start, end).write_csv())
+
+
+def __get_df_slice(table, start_index, end_index):
+    if 'Series' in str(type(table)):
+        return table[start_index:end_index].to_frame()
+    return table[start_index:end_index]
 
 
 def __create_config(format=None):

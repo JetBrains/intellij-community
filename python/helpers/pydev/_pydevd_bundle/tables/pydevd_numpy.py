@@ -1,5 +1,6 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import numpy as np
+import io
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH = 100000
@@ -46,19 +47,36 @@ def get_column_types(arr):
         TABLE_TYPE_NEXT_VALUE_SEPARATOR.join(cols_types)
 
 
-def get_data(arr, start_index=None, end_index=None, format=None):
+def get_data(arr, start_index=None, end_index=None, format=None, conv_mode=False):
     # type: (Union[np.ndarray, dict], int, int) -> str
     def convert_data_to_html(data, max_cols):
         return repr(_create_table(data, start_index, end_index, format).to_html(notebook=True, max_cols=max_cols))
 
-    return _compute_data(arr, convert_data_to_html, format)
+
+    def convert_data_to_csv(data):
+        return repr(_create_table(data, start_index, end_index, format).to_csv())
+
+    if conv_mode:
+        computed_data = _compute_data(arr, convert_data_to_csv, format, conv_mode)
+    else:
+        computed_data = _compute_data(arr, convert_data_to_html, format, conv_mode)
+    return computed_data
 
 
-def display_data(arr, start_index=None, end_index=None):
+def display_data_html(arr, start_index=None, end_index=None):
     # type: (np.ndarray, int, int) -> None
     def ipython_display(data, max_cols):
         from IPython.display import display, HTML
         display(HTML(_create_table(data, start_index, end_index).to_html(notebook=True, max_cols=max_cols)))
+
+    _compute_data(arr, ipython_display)
+
+
+def display_data_csv(arr, start_index=None, end_index=None):
+    # type: (np.ndarray, int, int) -> None
+    def ipython_display(data):
+        from IPython.display import display
+        display(_create_table(data, start_index, end_index).to_csv())
 
     _compute_data(arr, ipython_display)
 
@@ -153,6 +171,14 @@ class _NpTable:
         html.append('</tbody>\n')
         return html
 
+
+    def to_csv(self):
+        csv_stream = io.StringIO()
+        np.savetxt(csv_stream, self.array, delimiter=',')
+        csv_string = csv_stream.getvalue()
+        return csv_string
+
+
     def slice(self, start_index=None, end_index=None):
         if end_index is not None and start_index is not None:
             self.array = self.array[start_index:end_index]
@@ -243,7 +269,7 @@ def _create_table(command, start_index=None, end_index=None, format=None):
     return _NpTable(np_array, format=format).sort(sort_keys).slice(start_index, end_index)
 
 
-def _compute_data(arr, fun, format=None):
+def _compute_data(arr, fun, format=None, conv_mode=False):
     is_sort_command = type(arr) is dict
     data = arr['data'] if is_sort_command else arr
 
@@ -255,7 +281,10 @@ def _compute_data(arr, fun, format=None):
         arr['data'] = data
         data = arr
 
-    data = fun(data, None)
+    if conv_mode:
+        data = fun(data)
+    else:
+        data = fun(data, None)
 
     if is_pd:
         _reset_pd_options(jb_max_cols, jb_max_colwidth, jb_max_rows, jb_float_options)
