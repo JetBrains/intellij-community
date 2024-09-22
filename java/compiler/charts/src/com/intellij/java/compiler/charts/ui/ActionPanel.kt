@@ -106,21 +106,28 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
     })
 
     // legend
-    val actionGroup = ActionManager.getInstance().getAction("CompilationChartsActionGroup") as? DefaultActionGroup
-    if (actionGroup != null) {
-      actionGroup.addAction(CompilationChartsStatsActionHolder(vm), Constraints.FIRST)
-      val toolbar = ActionManager.getInstance().createActionToolbar(COMPILATION_CHARTS_TOOLBAR_ID, actionGroup, true).apply {
-        targetComponent = this@ActionPanel
-      }
-      addToRight(toolbar.component)
+    val actionManager = ActionManager.getInstance()
+
+    val actionGroup = DefaultActionGroup(
+      CompilationChartsStatsActionHolder(vm),
+      Separator(),
+      actionManager.getAction("CompilationChartsZoomResetAction"),
+      actionManager.getAction("CompilationChartsZoomOutAction"),
+      actionManager.getAction("CompilationChartsZoomInAction"),
+      actionManager.getAction("CompilationChartsScrollToEndAction"),
+    )
+
+    val toolbar = actionManager.createActionToolbar(COMPILATION_CHARTS_TOOLBAR_ID, actionGroup, true).apply {
+      targetComponent = this@ActionPanel
     }
+    addToRight(toolbar.component)
 
     DumbAwareAction.create {
       val focusManager = IdeFocusManager.getInstance(project)
       if (focusManager.getFocusedDescendantFor(this@ActionPanel.component) != null) {
         focusManager.requestFocus(searchField, true)
       }
-    }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).shortcutSet, this@ActionPanel.component)
+    }.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_FIND).shortcutSet, this@ActionPanel.component)
   }
 
   fun updateLabel(set: Set<CompilationChartsViewModel.Modules.EventKey>?, filter: CompilationChartsViewModel.Filter?) {

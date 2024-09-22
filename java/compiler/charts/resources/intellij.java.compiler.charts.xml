@@ -9,26 +9,23 @@
                  description="Show compilation charts" restartRequired="false"/>
   </extensions>
   <actions resource-bundle="messages.CompilationChartsBundle">
-    <group id="CompilationChartsActionGroup" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
-      <separator/>
-      <action id="CompilationChartsZoomResetAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ZoomResetAction"
-              icon="AllIcons.Graph.ActualZoom">
-        <keyboard-shortcut first-keystroke="shift meta EQUALS" keymap="Mac OS X"/>
-        <keyboard-shortcut first-keystroke="shift ctrl EQUALS" keymap="$default"/>
-        <override-text place="CompilationChartsToolbar"/>
-      </action>
-      <action id="CompilationChartsZoomOutAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ZoomOutAction"
-              icon="AllIcons.Graph.ZoomOut" use-shortcut-of="CollapseAll">
-        <override-text place="CompilationChartsToolbar"/>
-      </action>
-      <action id="CompilationChartsZoomInAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ZoomInAction"
-              icon="AllIcons.Graph.ZoomIn" use-shortcut-of="ExpandAll">
-        <override-text place="CompilationChartsToolbar"/>
-      </action>
-      <action id="CompilationChartsScrollToEndAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ScrollToEndAction"
-              icon="AllIcons.Actions.Forward">
-        <override-text place="CompilationChartsToolbar"/>
-      </action>
-    </group>
+    <action id="CompilationChartsZoomResetAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ZoomResetAction"
+            icon="AllIcons.Graph.ActualZoom">
+      <keyboard-shortcut first-keystroke="shift meta EQUALS" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="shift ctrl EQUALS" keymap="$default"/>
+      <override-text place="CompilationChartsToolbar"/>
+    </action>
+    <action id="CompilationChartsZoomOutAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ZoomOutAction"
+            icon="AllIcons.Graph.ZoomOut" use-shortcut-of="CollapseAll">
+      <override-text place="CompilationChartsToolbar"/>
+    </action>
+    <action id="CompilationChartsZoomInAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ZoomInAction"
+            icon="AllIcons.Graph.ZoomIn" use-shortcut-of="ExpandAll">
+      <override-text place="CompilationChartsToolbar"/>
+    </action>
+    <action id="CompilationChartsScrollToEndAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ScrollToEndAction"
+            icon="AllIcons.Actions.Forward">
+      <override-text place="CompilationChartsToolbar"/>
+    </action>
   </actions>
 </idea-plugin>
