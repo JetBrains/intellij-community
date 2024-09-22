@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
@@ -28,3 +29,4 @@ kt_jvm_library(
     "@community//platform/backend/observation:intellij.platform.backend.observation"
   ]
 )
+### auto-generated section `build` end

@@ -5,7 +5,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 internal fun buildFile(out: Path, block: BuildFile.() -> Unit) {
-  val data = BuildFile().apply(block).render()
+  val data = "### auto-generated section `build` start\n" + BuildFile().apply(block).render() + "### auto-generated section `build` end"
   if (runCatching { Files.readString(out) }.getOrNull() != data) {
     Files.writeString(out, data)
   }

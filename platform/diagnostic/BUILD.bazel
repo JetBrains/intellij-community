@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
@@ -13,3 +14,4 @@ kt_jvm_library(
     "@libraries//:intellij-deps-fastutil"
   ]
 )
+### auto-generated section `build` end

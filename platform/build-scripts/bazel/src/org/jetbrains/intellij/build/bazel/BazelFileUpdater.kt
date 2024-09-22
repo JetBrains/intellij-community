@@ -15,10 +15,12 @@ class BazelFileUpdater(private val file: Path) {
 
     val startIndex = fileContent.indexOf(startToken)
     val endIndex = fileContent.indexOf(endToken)
-    require(startIndex != -1 && endIndex != -1) {
-      "Section `$sectionName` doesn't exist in the file $file"
+    if (startIndex == -1 || endIndex == -1) {
+      println("Section `$sectionName` doesn't exist in the file $file")
     }
-    fileContent = fileContent.substring(0, startIndex + startToken.length) + newSection + fileContent.substring(endIndex)
+    else {
+      fileContent = fileContent.substring(0, startIndex + startToken.length) + newSection + fileContent.substring(endIndex)
+    }
   }
 
   fun save() {

@@ -94,7 +94,7 @@ private data class Library(
 
 private class BazelBuildFileGenerator(
   private val projectDir: Path,
-  private val project: JpsProject,
+  project: JpsProject,
   private val productionOnly: Boolean = true,
 ) {
   private val javaExtensionService = JpsJavaExtensionService.getInstance()
@@ -141,7 +141,8 @@ private class BazelBuildFileGenerator(
   private fun generateBazelBuildFiles(module: JpsModule) {
     val moduleDescriptor = getModuleDescriptor(module)
     val contentRoot = moduleDescriptor.contentRoot
-    buildFile(contentRoot.resolve("BUILD.bazel")) {
+    val fileUpdater = BazelFileUpdater(contentRoot.resolve("BUILD.bazel"))
+    buildFile(fileUpdater, "build") {
       load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
       target("kt_jvm_library") {
@@ -159,8 +160,11 @@ private class BazelBuildFileGenerator(
         generateDeps(module)
       }
     }
+    fileUpdater.save()
   }
 
+  // exports doesn't work for kotlin-rules - we decided that it is better just write by hand BUILD file if `java_library` is necessary (add-exports works for java rules)
+  // the code below is not actual
   private fun BuildFile.computeJavacOptions(module: JpsModule, jvmTarget: String): String? {
     val extraJavacOptions = projectJavacSettings.currentCompilerOptions.ADDITIONAL_OPTIONS_OVERRIDE.get(module.name) ?: return null
     val exports = mutableListOf<String>()

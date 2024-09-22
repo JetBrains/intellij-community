@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 
@@ -148,3 +149,4 @@ kt_jvm_library(
     "@community//platform/settings-local:intellij.platform.settings.local"
   ]
 )
+### auto-generated section `build` end

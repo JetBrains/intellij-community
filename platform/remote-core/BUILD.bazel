@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
@@ -22,3 +23,4 @@ kt_jvm_library(
     "@libraries//:slf4j-jdk14"
   ]
 )
+### auto-generated section `build` end

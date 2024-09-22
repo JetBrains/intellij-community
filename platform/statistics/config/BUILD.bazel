@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
@@ -15,3 +16,4 @@ kt_jvm_library(
     "@libraries//:jackson-module-kotlin"
   ]
 )
+### auto-generated section `build` end

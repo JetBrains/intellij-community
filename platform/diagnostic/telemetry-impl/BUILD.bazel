@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
 
@@ -35,3 +36,4 @@ kt_jvm_library(
   ],
   exports = ["@community//platform/diagnostic/telemetry.exporters:intellij.platform.diagnostic.telemetry.exporters"]
 )
+### auto-generated section `build` end

@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
@@ -25,3 +26,4 @@ kt_jvm_library(
     "@community//platform/util/progress:intellij.platform.util.progress"
   ]
 )
+### auto-generated section `build` end

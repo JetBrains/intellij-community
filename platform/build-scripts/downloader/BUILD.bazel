@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
 
@@ -33,3 +34,4 @@ kt_jvm_library(
     "@libraries//:hash4j"
   ]
 )
+### auto-generated section `build` end

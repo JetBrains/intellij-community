@@ -1,18 +1,9 @@
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+load("@rules_java//java:defs.bzl", "java_library")
 
-kt_javac_options(
-  name = "custom-javac-options",
-  release = "17",
-  x_ep_disable_all_checks = True,
-  add_exports = ["java.base/sun.nio.fs"]
-)
-
-kt_jvm_library(
+java_library(
   name = "intellij.platform.core.nio.fs",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = ":custom-javac-options",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.java"]),
+  add_exports = ["java.base/sun.nio.fs"],
   deps = ["@libraries//:annotations"]
 )

@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
@@ -7,3 +8,4 @@ kt_jvm_library(
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8"
 )
+### auto-generated section `build` end

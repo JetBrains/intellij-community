@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
@@ -30,3 +31,4 @@ kt_jvm_library(
   ],
   exports = ["@community//platform/indexing-api:intellij.platform.indexing"]
 )
+### auto-generated section `build` end

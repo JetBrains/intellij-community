@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
@@ -37,3 +38,4 @@ kt_jvm_library(
     "@community//platform/workspace/storage:intellij.platform.workspace.storage"
   ]
 )
+### auto-generated section `build` end

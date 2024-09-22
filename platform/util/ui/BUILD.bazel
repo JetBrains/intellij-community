@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 
@@ -43,3 +44,4 @@ kt_jvm_library(
     "@libraries//:h2-mvstore"
   ]
 )
+### auto-generated section `build` end

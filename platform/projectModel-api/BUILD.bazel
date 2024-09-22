@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
@@ -22,3 +23,4 @@ kt_jvm_library(
     "@community//jps/model-api:intellij.platform.jps.model"
   ]
 )
+### auto-generated section `build` end

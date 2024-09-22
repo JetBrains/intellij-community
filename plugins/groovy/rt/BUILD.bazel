@@ -1,3 +1,4 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
@@ -16,3 +17,4 @@ kt_jvm_library(
     "@community//plugins/groovy/rt-constants:intellij.groovy.constants.rt"
   ]
 )
+### auto-generated section `build` end
