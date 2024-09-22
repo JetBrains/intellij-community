@@ -1,0 +1,29 @@
+<component name="libraryTable">
+  <library name="JUnit5Pioneer" type="repository">
+    <properties maven-id="org.junit-pioneer:junit-pioneer:2.2.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit-pioneer/junit-pioneer/2.2.0/junit-pioneer-2.2.0.jar">
+          <sha256sum>82cb4155f882a2d6eff3ca92d96cce52612aad5345b65b65e1fc82837bb5df4e</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.junit.jupiter:junit-jupiter-params" />
+        <dependency maven-id="org.junit.platform:junit-platform-commons" />
+        <dependency maven-id="org.junit.platform:junit-platform-engine" />
+        <dependency maven-id="org.junit.platform:junit-platform-launcher" />
+        <dependency maven-id="org.opentest4j:opentest4j" />
+        <dependency maven-id="org.junit.jupiter:junit-jupiter-api" />
+        <dependency maven-id="org.apiguardian:apiguardian-api" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit-pioneer/junit-pioneer/2.2.0/junit-pioneer-2.2.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit-pioneer/junit-pioneer/2.2.0/junit-pioneer-2.2.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit-pioneer/junit-pioneer/2.2.0/junit-pioneer-2.2.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
