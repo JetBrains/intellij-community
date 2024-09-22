@@ -10,10 +10,7 @@ import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
+import org.jetbrains.plugins.terminal.block.completion.spec.*
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellChildOptionsContext
 
 class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
@@ -55,6 +52,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
       argument {
         displayName(JavaTerminalBundle.message("java.command.terminal.classpath.option.argument.path.text", ShellCommandUtils.getClassPathSeparator()))
+        suggestions(ShellDataGenerators.fileSuggestionsGenerator())
       }
     }
     option("-showversion", "--show-version") {
@@ -66,6 +64,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
 
     argument {
       displayName(JavaTerminalBundle.message("java.command.terminal.argument.main.class.text"))
+      suggestions(ShellDataGenerators.fileSuggestionsGenerator())
     }
   }
 
