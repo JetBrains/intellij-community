@@ -910,7 +910,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   synchronized void stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
     cancelAllUpdateProgresses(toRestartAlarm, reason);
     boolean restart = toRestartAlarm && !myDisposed;
-    LOG.debug("Stopping process: toRestartAlarm ", toRestartAlarm, " reason ", reason);
+    LOG.debug(
+      "Stopping process: toRestartAlarm ", toRestartAlarm,
+      " myDisposed", myDisposed,
+      " reason ", reason);
     if (restart) {
       scheduleIfNotRunning();
     }
