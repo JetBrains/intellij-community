@@ -1,20 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.eel
 
+import com.google.gson.Gson
 import com.intellij.execution.process.UnixSignal
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelExecApi.Pty
+import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.impl.local.EelLocalExecApi
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.write
-import org.hamcrest.CoreMatchers.*
+import org.hamcrest.CoreMatchers.anyOf
+import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.io.TempDir
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.EnumSource
+import org.junitpioneer.jupiter.cartesian.CartesianTest
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
 import kotlin.test.assertEquals
@@ -24,7 +27,16 @@ import kotlin.test.assertNotEquals
 class EelLocalExecApiTest {
   companion object {
     const val PYTHON_ENV = "PYTHON"
+    private const val PTY_COLS = 42
+    private const val PTY_ROWS = 24
+    private val NEW_LINES = Regex("\r?\n")
   }
+
+  private data class TtySize(val cols: Int, val rows: Int)
+  private data class PythonOutput(
+    val tty: Boolean,
+    val size: TtySize?,
+  )
 
   private val helperContent = EelLocalExecApiTest::class.java.classLoader.getResource("helper.py")!!.readBytes()
 
@@ -43,25 +55,66 @@ class EelLocalExecApiTest {
     KILL, TERMINATE, INTERRUPT, EXIT_WITH_COMMAND
   }
 
+  enum class PTYManagement {
+    NO_PTY, PTY_SIZE_FROM_START, PTY_RESIZE_LATER
+  }
+
 
   /**
-   * Test runs `helper.py` checking stdin/stdout iteration, exit code and signal/termination handling.
+   * Test runs `helper.py` checking stdin/stdout iteration, exit code, tty and signal/termination handling.
    */
-  @ParameterizedTest
-  @EnumSource(ExitType::class)
-  fun testOutput(exitType: ExitType, @TempDir tempDir: Path): Unit = timeoutRunBlocking {
+  @CartesianTest
+  fun testOutput(
+    @CartesianTest.Enum exitType: ExitType,
+    @CartesianTest.Enum ptyManagement: PTYManagement,
+    @TempDir tempDir: Path,
+  ): Unit = timeoutRunBlocking {
     val helperScript = tempDir.resolve("helper.py")
     helperScript.write(helperContent)
 
     val builder = EelExecApi.executeProcessBuilder(python.toString()).args(listOf(helperScript.toString()))
+    builder.pty(when (ptyManagement) {
+                  PTYManagement.NO_PTY -> null
+                  PTYManagement.PTY_SIZE_FROM_START -> Pty(PTY_COLS, PTY_ROWS, true)
+                  PTYManagement.PTY_RESIZE_LATER -> Pty(PTY_COLS - 1, PTY_ROWS - 1, true) // wrong tty size: will resize in the test
+                })
     when (val r = EelLocalExecApi().execute(builder)) {
       is EelExecApi.ExecuteProcessResult.Failure -> Assertions.fail(r.message)
       is EelExecApi.ExecuteProcessResult.Success -> {
         val process = r.process
-        val welcome = process.stdout.receive().decodeToString()
-        // Script starts with tty:False/True, size:[tty size if any]
-        assertThat("Welcome string is wrong", welcome, allOf(containsString("tty"), containsString("size")))
-        println(welcome)
+
+        // Resize tty
+        when (ptyManagement) {
+          PTYManagement.NO_PTY -> {
+            try {
+              process.resizePty(PTY_COLS, PTY_ROWS)
+              Assertions.fail("Exception should have been thrown: process doesn't have pty")
+            }
+            catch (_: EelProcess.ResizePtyError.NoPty) {
+            }
+          }
+          PTYManagement.PTY_SIZE_FROM_START -> Unit
+          PTYManagement.PTY_RESIZE_LATER -> {
+            process.resizePty(PTY_COLS, PTY_ROWS)
+          }
+        }
+
+        // Test tty api
+        // tty might insert "\r\n", we need to remove them. Hence, NEW_LINES.
+        val pyOutputStr = process.stdout.receive().decodeToString().replace(NEW_LINES, "")
+        val pyOutputObj = Gson().fromJson<PythonOutput>(pyOutputStr, PythonOutput::class.java)
+        when (ptyManagement) {
+          PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> {
+            Assertions.assertTrue(pyOutputObj.tty)
+            Assertions.assertEquals(TtySize(PTY_COLS, PTY_ROWS), pyOutputObj.size, "size must be set for tty")
+          }
+          PTYManagement.NO_PTY -> {
+            Assertions.assertFalse(pyOutputObj.tty)
+            Assertions.assertNull(pyOutputObj.size, "size must not be set if no tty")
+          }
+        }
+
+        // Test kill api
         when (exitType) {
           ExitType.KILL -> process.kill()
           ExitType.TERMINATE -> process.terminate()
