@@ -5,17 +5,20 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.ui.JBFont
+import java.awt.Font
 
-class TopLabelBlock(@NlsContexts.Label private val myText: String) : FeedbackBlock, TextDescriptionProvider {
+
+abstract class LabelBlock(@NlsContexts.Label private val myText: String) : FeedbackBlock, TextDescriptionProvider {
 
   private var bottomGap: BottomGap? = null
+
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
       row {
         label(myText)
           .applyToComponent {
-            font = JBFont.h1()
+            font = getLableFont()
           }
       }.apply {
         if (bottomGap != null) {
@@ -32,8 +35,27 @@ class TopLabelBlock(@NlsContexts.Label private val myText: String) : FeedbackBlo
     }
   }
 
-  fun setBottomGap(bottomGap: BottomGap): TopLabelBlock {
+  fun setBottomGap(bottomGap: BottomGap): LabelBlock {
     this.bottomGap = bottomGap
     return this
   }
+
+  abstract fun getLableFont(): Font?
+
+}
+
+class TopLabelBlock(@NlsContexts.Label private val myText: String) : LabelBlock(myText) {
+  override fun getLableFont(): Font? = JBFont.h1()
+}
+
+class H2LabelBlock(@NlsContexts.Label private val myText: String) : LabelBlock(myText) {
+  override fun getLableFont(): Font? = JBFont.h2()
+}
+
+class H3LabelBlock(@NlsContexts.Label private val myText: String) : LabelBlock(myText) {
+  override fun getLableFont(): Font? = JBFont.h3()
+}
+
+class H4LabelBlock(@NlsContexts.Label private val myText: String) : LabelBlock(myText) {
+  override fun getLableFont(): Font? = JBFont.h4()
 }
