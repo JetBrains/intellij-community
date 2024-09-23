@@ -135,6 +135,7 @@ data class BuildOptions(
     const val SOURCES_ARCHIVE_STEP: String = "sources_archive"
     const val SCRAMBLING_STEP: String = "scramble"
     const val NON_BUNDLED_PLUGINS_STEP: String = "non_bundled_plugins"
+    const val LIBRARY_URL_CHECK_STEP: String = "lib_url_check"
 
     /** Build Maven artifacts for IDE modules. */
     const val MAVEN_ARTIFACTS_STEP: String = "maven_artifacts"

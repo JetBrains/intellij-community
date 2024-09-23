@@ -419,7 +419,10 @@ private suspend fun buildProjectArtifacts(platform: PlatformLayout, enabledPlugi
 
 suspend fun buildDistributions(context: BuildContext): Unit = block("build distributions") {
   context.reportDistributionBuildNumber()
-  checkProductProperties(context as BuildContextImpl)
+
+  checkProductProperties(context)
+  checkLibraryUrls(context)
+
   copyDependenciesFile(context)
   logFreeDiskSpace("before compilation", context)
   val pluginsToPublish = getPluginLayoutsByJpsModuleNames(
@@ -519,7 +522,7 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
   }
 }
 
-private suspend fun checkProductProperties(context: BuildContextImpl) {
+private suspend fun checkProductProperties(context: BuildContext) {
   checkProductLayout(context)
 
   val properties = context.productProperties

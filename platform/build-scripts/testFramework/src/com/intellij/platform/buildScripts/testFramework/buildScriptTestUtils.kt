@@ -57,6 +57,7 @@ fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDepend
   options.isTestBuild = true
 
   options.buildStepsToSkip += listOf(
+    BuildOptions.LIBRARY_URL_CHECK_STEP,
     BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP,
     BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP,
     BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP,
