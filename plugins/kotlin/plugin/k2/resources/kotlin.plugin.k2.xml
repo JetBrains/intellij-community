@@ -51,7 +51,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <resolveScopeEnlarger implementation="org.jetbrains.kotlin.idea.base.analysis.builtins.BuiltInsResolveScopeEnlarger" />
+    <resolveScopeEnlarger implementation="org.jetbrains.kotlin.idea.base.analysis.builtins.KotlinBuiltInsResolveScopeEnlarger" />
 
     <applicationActivity implementation="org.jetbrains.kotlin.idea.base.plugin.K2UnsupportedPluginsNotificationActivity"/>
     <notificationGroup id="Plugins Incompatible With Kotlin Plugin in K2 Mode" displayType="BALLOON" bundle="messages.KotlinBasePluginBundle" key="plugins.incompatible.with.k2.title"/>

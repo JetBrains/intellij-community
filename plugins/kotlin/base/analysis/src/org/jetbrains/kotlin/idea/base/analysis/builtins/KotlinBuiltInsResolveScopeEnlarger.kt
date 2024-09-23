@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
  *
  * @see org.jetbrains.kotlin.idea.base.indices.contributors.BuiltInsIndexableSetContributor
  */
-class BuiltInsResolveScopeEnlarger : ResolveScopeEnlarger() {
+class KotlinBuiltInsResolveScopeEnlarger : ResolveScopeEnlarger() {
     override fun getAdditionalResolveScope(
         file: VirtualFile,
         project: Project
