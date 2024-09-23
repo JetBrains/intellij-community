@@ -325,6 +325,31 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/BackingFields.kt"));
         }
 
+        @TestMetadata("classAndCompanionDelegatedProperty.kt")
+        public void testClassAndCompanionDelegatedProperty() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/classAndCompanionDelegatedProperty.kt"));
+        }
+
+        @TestMetadata("classAndCompanionJvmFieldProperty.kt")
+        public void testClassAndCompanionJvmFieldProperty() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/classAndCompanionJvmFieldProperty.kt"));
+        }
+
+        @TestMetadata("classAndCompanionProperty.kt")
+        public void testClassAndCompanionProperty() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/classAndCompanionProperty.kt"));
+        }
+
+        @TestMetadata("classJvmFieldAndCompanionJvmFieldProperty.kt")
+        public void testClassJvmFieldAndCompanionJvmFieldProperty() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/classJvmFieldAndCompanionJvmFieldProperty.kt"));
+        }
+
+        @TestMetadata("classJvmFieldAndCompanionProperty.kt")
+        public void testClassJvmFieldAndCompanionProperty() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/classJvmFieldAndCompanionProperty.kt"));
+        }
+
         @TestMetadata("ClassTypeParameterAnnotation.kt")
         public void testClassTypeParameterAnnotation() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ClassTypeParameterAnnotation.kt"));
