@@ -44,8 +44,14 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
         if (DumbService.getInstance(file.project).isDumb) return false
         if (file.project.isDefault) return false
-        val presentations = SmartList<InlayPresentation>()
-        if (element is PsiModifierListOwner) {
+        if (element is PsiTypeElement && settings.showExternal) {
+          val originalElement = element.originalElement
+          if (originalElement is PsiTypeElement && originalElement is PsiCompiledElement) {
+            val type = originalElement.type
+            collectTypeAnnotations(type, element, sink)
+          }
+        }
+        else if (element is PsiModifierListOwner) {
           var annotations = emptySequence<PsiAnnotation>()
           if (settings.showExternal) {
             annotations += ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(element)
@@ -59,6 +65,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
           }
 
           val shownAnnotations = mutableSetOf<String>()
+          val presentations = SmartList<InlayPresentation>()
           annotations.forEach {
             val nameReferenceElement = it.nameReferenceElement
             if (nameReferenceElement != null && element.modifierList != null &&
@@ -90,6 +97,21 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
           }
         }
         return true
+      }
+
+      private fun collectTypeAnnotations(type: PsiType, anchor: PsiElement, sink: InlayHintsSink) {
+        val manager = ExternalAnnotationsManager.getInstance(project)
+        val presentations = type.annotations.filter(manager::isExternalAnnotation).map(this::annotationPresentation)
+        if (presentations.isNotEmpty()) {
+          val offset = anchor.textRange.startOffset
+          var presentation: InlayPresentation = SequencePresentation(presentations)
+          presentation = MenuOnClickPresentation(presentation, project) {
+            listOf(
+              ToggleSettingsAction(JavaBundle.message("settings.inlay.java.turn.off.external.annotations"), settings::showExternal, settings)
+            )
+          }
+          sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1), false)
+        }
       }
 
       private fun createPresentation(
@@ -235,6 +257,7 @@ class InsertAnnotationAction(
   private val element: PsiModifierListOwner
 ) : AnAction() {
   override fun update(e: AnActionEvent) {
+    e.presentation.isVisible = file.virtualFile?.isInLocalFileSystem == true
     e.presentation.text = JavaBundle.message("settings.inlay.java.insert.annotation")
   }
 

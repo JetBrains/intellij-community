@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -299,6 +300,12 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @Override
   protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.JAVA_CODE_REFERENCE);
+
+    PsiJavaCodeReferenceElement mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
+    PsiReferenceParameterList list = getParameterList();
+    if (list != null) {
+      setMirror(list, mirror.getParameterList());
+    }
   }
 
   @Override

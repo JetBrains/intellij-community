@@ -407,6 +407,28 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   @Override
+  public PsiElement getOriginalElement() {
+    PsiElement parent = getParent();
+    if (parent instanceof PsiVariable) {
+      PsiElement originalVariable = parent.getOriginalElement();
+      if (originalVariable != parent && originalVariable instanceof PsiVariable) {
+        return ((PsiVariable)originalVariable).getTypeElement();
+      }
+    }
+    if (parent instanceof PsiMethod) {
+      PsiElement originalMethod = parent.getOriginalElement();
+      if (originalMethod != parent && originalMethod instanceof PsiMethod) {
+        return ((PsiMethod)originalMethod).getReturnTypeElement();
+      }
+    }
+    if (parent instanceof PsiTypeElement || parent instanceof PsiJavaCodeReferenceElement ||
+        parent instanceof PsiReferenceParameterList) {
+      return PsiImplUtil.getCorrespondingOriginalElementOfType(this, PsiTypeElement.class);
+    }
+    return this;
+  }
+
+  @Override
   public String toString() {
     return "PsiTypeElement:" + getText();
   }
