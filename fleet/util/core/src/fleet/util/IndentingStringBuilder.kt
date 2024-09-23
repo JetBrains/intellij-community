@@ -19,6 +19,10 @@ class IndentingStringBuilder(private val indent: String, private val offset: Str
       stringBuilder.append(string)
     }
 
+    fun appendNoOffset(string: String) {
+      stringBuilder.append(string)
+    }
+
     fun indent(body: Context.() -> Unit) {
       Context(
         indent = indent,
