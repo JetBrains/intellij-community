@@ -45,6 +45,7 @@ class TextMateUserBundlesSettings : SerializablePersistentStateComponent<TextMat
     }
   }
 
+  @Serializable
   data class State(
     @JvmField
     val bundles: Map<String, TextMatePersistentBundle> = emptyMap()
