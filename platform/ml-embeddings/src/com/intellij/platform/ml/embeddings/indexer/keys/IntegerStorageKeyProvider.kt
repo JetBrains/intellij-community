@@ -40,13 +40,6 @@ class IntegerStorageKeyProvider : EmbeddingStorageKeyProvider<Int>, Disposable {
     }
   }
 
-  companion object {
-    private const val ENUMERATOR_FOLDER = "enumerator"
-    private const val ENUMERATOR_FILE = "ids.enum"
-
-    fun getInstance(): IntegerStorageKeyProvider = service()
-  }
-
   override fun dispose() {
     runBlockingMaybeCancellable {
       mutex.withLock {
@@ -55,6 +48,13 @@ class IntegerStorageKeyProvider : EmbeddingStorageKeyProvider<Int>, Disposable {
         }
       }
     }
+  }
+
+  companion object {
+    private const val ENUMERATOR_FOLDER = "enumerator"
+    private const val ENUMERATOR_FILE = "ids.enum"
+
+    fun getInstance(): IntegerStorageKeyProvider = service()
   }
 }
 
