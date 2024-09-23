@@ -26,9 +26,9 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.add.PyAddNewCondaEnvFromFilePanel
-import com.jetbrains.python.sdk.add.target.conda.createCondaSdkAlongWithNewEnv
-import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
+import com.jetbrains.python.sdk.add.v1.PyAddNewCondaEnvFromFilePanel
+import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
+import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.CondaEnvResult
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData

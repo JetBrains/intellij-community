@@ -8,12 +8,12 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.ui.FormBuilder
-import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.newProjectWizard.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
+import com.jetbrains.python.sdk.add.v1.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
-import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
+import com.jetbrains.python.sdk.add.v1.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
@@ -21,7 +21,7 @@ import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.JComboBox
 
-class PyAddNewEnvironmentPanel internal constructor(existingSdks: List<Sdk>, newProjectPath: String?, preferredInterpreterType: PythonInterpreterSelectionMode? = null) : PyAddSdkPanel() {
+internal class PyAddNewEnvironmentPanel internal constructor(existingSdks: List<Sdk>, newProjectPath: String?, preferredInterpreterType: PythonInterpreterSelectionMode? = null) : PyAddSdkPanel() {
 
   @Deprecated(message = "Use constructor without ignored")
   constructor(existingSdks: List<Sdk>, newProjectPath: String?, @Suppress("UNUSED_PARAMETER") ignored: String?) : this(existingSdks, newProjectPath, preferredInterpreterType = null)

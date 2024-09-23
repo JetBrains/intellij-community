@@ -14,7 +14,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
-import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkPanel
+import com.jetbrains.python.sdk.add.v1.PyAddTargetBasedSdkPanel
 import java.util.function.Supplier
 
 class PythonLanguageRuntimeUI(project: Project,

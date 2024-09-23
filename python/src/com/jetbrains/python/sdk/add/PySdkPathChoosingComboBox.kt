@@ -30,7 +30,9 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.add.target.createDetectedSdk
+import com.jetbrains.python.sdk.add.v1.PySdkListCellRendererExt
+import com.jetbrains.python.sdk.add.v1.asComboBoxItem
+import com.jetbrains.python.sdk.add.v1.createDetectedSdk
 import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog
 import java.awt.event.ActionListener
 import java.util.function.Supplier

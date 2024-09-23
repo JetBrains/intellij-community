@@ -15,16 +15,19 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
+import com.jetbrains.python.newProjectWizard.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
-import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
+import com.jetbrains.python.sdk.PyDetectedSdk
+import com.jetbrains.python.sdk.PySdkToInstall
+import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction
 import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
+import com.jetbrains.python.sdk.findBaseSdks
 import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
+import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.ui.pyModalBlocking
 import java.awt.Component
 import javax.swing.Icon
@@ -33,7 +36,7 @@ import javax.swing.JPanel
 
 abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   override val actions: Map<PyAddSdkDialogFlowAction, Boolean>
-    get() = mapOf(OK.enabled())
+    get() = mapOf(PyAddSdkDialogFlowAction.OK.enabled())
 
   override val component: Component
     get() = this
@@ -165,7 +168,7 @@ private fun PySdkPathChoosingComboBox.removeAllItems() {
 
 /**
  * Obtains a list of sdk to be used as a base for a virtual environment on a pool,
- * then fills the [sdkComboBox] on the EDT and chooses [PySdkSettings.preferredVirtualEnvBaseSdk] or prepends it.
+ * then fills the [sdkComboBox] on the EDT and chooses [com.jetbrains.python.sdk.PySdkSettings.preferredVirtualEnvBaseSdk] or prepends it.
  */
 fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
                              existingSdks: List<Sdk>,

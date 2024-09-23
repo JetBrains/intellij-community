@@ -23,8 +23,8 @@ import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.newProject.steps.PyAddExistingSdkPanel
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
-import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
+import com.jetbrains.python.sdk.add.v1.PyAddNewCondaEnvPanel
+import com.jetbrains.python.sdk.add.v1.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.configurePythonSdk
 import java.nio.file.Path

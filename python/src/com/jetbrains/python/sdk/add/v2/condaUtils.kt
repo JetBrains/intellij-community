@@ -13,9 +13,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.add.target.conda.TargetCommandExecutor
-import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
-import com.jetbrains.python.sdk.add.target.conda.createCondaSdkAlongWithNewEnv
+import com.jetbrains.python.sdk.conda.TargetCommandExecutor
+import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
+import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData

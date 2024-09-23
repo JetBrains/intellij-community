@@ -9,7 +9,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeatur
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.icons.PythonIcons
-import com.jetbrains.python.newProject.promotion.PromoProjectGenerator
+import com.jetbrains.python.newProjectWizard.promotion.PromoProjectGenerator
 import javax.swing.Icon
 import javax.swing.JPanel
 

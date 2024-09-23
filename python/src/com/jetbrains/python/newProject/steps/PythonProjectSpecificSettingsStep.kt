@@ -29,8 +29,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.PyNewProjectSettings
 import com.jetbrains.python.newProject.PythonProjectGenerator
-import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.newProject.promotion.PromoProjectGenerator
+import com.jetbrains.python.newProjectWizard.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.newProjectWizard.promotion.PromoProjectGenerator
 import com.jetbrains.python.sdk.PyLazySdk
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
 import com.jetbrains.python.util.ShowingMessageErrorSync

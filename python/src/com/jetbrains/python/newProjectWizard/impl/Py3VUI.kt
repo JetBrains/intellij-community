@@ -9,7 +9,7 @@ import com.jetbrains.python.newProjectWizard.ProjectPathFlow
 import com.jetbrains.python.newProjectWizard.PyV3BaseProjectSettings
 import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificSettings
 import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificUI
-import com.jetbrains.python.sdk.add.PySdkCreator
+import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.util.ShowingMessageErrorSync

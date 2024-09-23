@@ -11,18 +11,15 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.ui.FormBuilder
-import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.Result
-import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.newProjectWizard.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.remote.PyProjectSynchronizer
 import com.jetbrains.python.remote.PyProjectSynchronizerProvider
 import com.jetbrains.python.remote.PythonSshInterpreterManager
@@ -39,7 +36,7 @@ import java.awt.Component
 import javax.swing.JComboBox
 import javax.swing.JComponent
 
-class PyAddExistingSdkPanel(project: Project?,
+internal class PyAddExistingSdkPanel(project: Project?,
                             module: Module?,
                             existingSdks: List<Sdk>,
                             newProjectPath: String?,

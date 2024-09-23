@@ -43,7 +43,7 @@
     <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PythonSourceRootConfigurator" id="sourceRoot"
                                   order="after sdk"/>
     <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.PlatformInspectionProfileConfigurator"/>
-    <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeConfigurator"
+    <directoryProjectConfigurator implementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeConfigurator"
                                   id="welcome" order="last"/>
 
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
@@ -70,8 +70,8 @@
 
     <directoryIndexExcludePolicy implementation="com.intellij.pycharm.community.ide.impl.PyDirectoryIndexExcludePolicy"/>
 
-    <applicationService serviceImplementation="com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeSettings"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeCollector"/>
+    <applicationService serviceImplementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeSettings"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector"/>
     <notificationGroup id="PyCharm Professional Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"
                        bundle="messages.PyCharmCommunityCustomizationBundle" key="notification.group.pro.advertiser"/>
 
@@ -98,13 +98,13 @@
 
   <actions resource-bundle="messages.ActionsBundle">
     <action id="PySwitchSdkAction" class="com.intellij.pycharm.community.ide.impl.configuration.PySwitchSdkAction"/>
-    <action id="NewDirectoryProject" class="com.intellij.pycharm.community.ide.impl.newProject.PyCharmNewProjectAction">
+    <action id="NewDirectoryProject" class="com.intellij.pycharm.community.ide.impl.newProjectWizard.PyCharmNewProjectAction">
       <add-to-group group-id="NewProjectOrModuleGroup"/>
     </action>
 
     <group id="WelcomeScreen.Platform.NewProject">
       <group id="WelcomeScreen.CreateDirectoryProject"
-              class="com.intellij.pycharm.community.ide.impl.newProject.impl.PyV3NewProjectStepAction"/>
+              class="com.intellij.pycharm.community.ide.impl.newProjectWizard.impl.PyV3NewProjectStepAction"/>
       <reference ref="WelcomeScreen.OpenDirectoryProject"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>

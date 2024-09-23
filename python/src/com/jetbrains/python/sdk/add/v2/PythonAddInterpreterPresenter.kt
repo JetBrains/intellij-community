@@ -7,9 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.util.coroutines.flow.mapStateIn
 import com.intellij.util.text.nullize
-import com.jetbrains.python.sdk.add.ProjectLocationContext
-import com.jetbrains.python.sdk.add.ProjectLocationContexts
-import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
+import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.*

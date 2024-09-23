@@ -6,12 +6,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.google.gson.Gson
 import com.intellij.execution.target.*
-import com.intellij.openapi.progress.*
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.extensions.failure
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.add.target.conda.TargetCommandExecutor
-import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
+import com.jetbrains.python.sdk.conda.TargetCommandExecutor
+import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv.Companion.getEnvs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await

@@ -8,10 +8,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector.logPythonNewProjectGenerated
+import com.jetbrains.python.newProjectWizard.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector.logPythonNewProjectGenerated
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.add.PySdkCreator
+import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.statistics.version

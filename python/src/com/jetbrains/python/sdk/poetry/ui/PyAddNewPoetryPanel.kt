@@ -20,11 +20,12 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.newProjectWizard.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addInterpretersAsync
+import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
@@ -40,11 +41,13 @@ import kotlin.io.path.absolutePathString
  * The UI panel for adding the poetry interpreter for the project.
  *
  */
-class PyAddNewPoetryPanel(private val project: Project?,
-                          private val module: Module?,
-                          private val existingSdks: List<Sdk>,
-                          override var newProjectPath: String?,
-                          context: UserDataHolder) : PyAddNewEnvPanel() {
+class PyAddNewPoetryPanel(
+  private val project: Project?,
+  private val module: Module?,
+  private val existingSdks: List<Sdk>,
+  override var newProjectPath: String?,
+  context: UserDataHolder,
+) : PyAddNewEnvPanel() {
   override val envName = "Poetry"
   override val panelName: String get() = PyBundle.message("python.sdk.poetry.environment.panel.title")
 

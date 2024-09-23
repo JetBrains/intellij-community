@@ -12,7 +12,7 @@ import com.jetbrains.env.PyEnvTestSettings
 import com.jetbrains.extensions.failure
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
 import com.jetbrains.python.sdk.VirtualEnvReader
-import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
+import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.Dispatchers

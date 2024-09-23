@@ -4,8 +4,8 @@ package com.jetbrains.env.python.conda
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.jetbrains.env.python.api.PythonType
-import com.jetbrains.python.sdk.add.target.conda.TargetCommandExecutor
-import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
+import com.jetbrains.python.sdk.conda.TargetCommandExecutor
+import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import kotlinx.coroutines.runBlocking
 import org.junit.AssumptionViolatedException
