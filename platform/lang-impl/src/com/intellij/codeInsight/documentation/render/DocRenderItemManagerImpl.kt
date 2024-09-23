@@ -10,7 +10,9 @@ import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.util.containers.toArray
 import com.intellij.util.messages.Topic
+import kotlinx.collections.immutable.toImmutableList
 import java.util.*
 import java.util.function.BooleanSupplier
 import java.util.function.Consumer
@@ -46,7 +48,7 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
 
   override fun getItems(editor: Editor): Collection<DocRenderItem>? {
     val items = editor.getUserData(OWN_ITEMS) ?: return null
-    return Collections.unmodifiableCollection<DocRenderItem>(items)
+    return items
   }
 
   override fun removeAllItems(editor: Editor) {
