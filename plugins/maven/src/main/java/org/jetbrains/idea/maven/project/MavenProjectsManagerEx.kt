@@ -168,6 +168,11 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
         }
       }
     }
+
+    for (mavenProject in projectsToImport.keys) {
+      mavenProject.resetCache()
+    }
+
     return importResult.createdModules
   }
 

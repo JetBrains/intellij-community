@@ -3,10 +3,17 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.runAll
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
+import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.junit.Test
 
 class MavenSnapshotDependenciesTest : MavenMultiVersionImportingTestCase() {
@@ -86,4 +93,38 @@ class MavenSnapshotDependenciesTest : MavenMultiVersionImportingTestCase() {
     assertTrue(fileContentEqual(helper.getTestData(jarSnapshot), helper.getTestData(jarVersion4)))
   }
 
+  @Test
+  fun `test maven cache is not cleared`() = runBlocking {
+    val testCacheKey: Key<String> = Key.create("MavenProject.TEST_CACHE_KEY")
+    val mavenProjectToCachedValue = mutableMapOf<MavenProject, String>()
+
+    class MyMavenProjectResolutionContributor : MavenProjectResolutionContributor {
+      override suspend fun onMavenProjectResolved(project: Project, mavenProject: MavenProject, nativeMavenProject: NativeMavenProjectHolder, embedder: MavenEmbedderWrapper) {
+        mavenProject.putCachedValue(testCacheKey, "testValue")
+      }
+    }
+
+    class MyMavenImporter : MavenImporter("testPluginGroupID", "testPluginArtifactID") {
+      override fun isApplicable(mavenProject: MavenProject?) = true
+
+      override fun process(modifiableModelsProvider: IdeModifiableModelsProvider, module: Module, rootModel: MavenRootModelAdapter, mavenModel: MavenProjectsTree, mavenProject: MavenProject, changes: MavenProjectChanges, mavenProjectToModuleName: Map<MavenProject, String>, postTasks: List<MavenProjectsProcessorTask>) {
+        val value = mavenProject.getCachedValue(testCacheKey)!!
+        mavenProjectToCachedValue.put(mavenProject, value)
+      }
+    }
+
+    ExtensionTestUtil.addExtensions(MavenProjectResolutionContributor.EP_NAME, listOf(MyMavenProjectResolutionContributor()), testRootDisposable)
+    ExtensionTestUtil.addExtensions(MavenImporter.EXTENSION_POINT_NAME, listOf(MyMavenImporter()), testRootDisposable)
+    importProjectAsync("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """.trimIndent())
+
+    val mavenProjects = projectsManager.projects
+    assertSize(1, mavenProjects)
+    val mavenProject = mavenProjects[0]
+    assertEquals("testValue", mavenProjectToCachedValue[mavenProject])
+    assertNull(mavenProject.getCachedValue(testCacheKey))
+  }
 }

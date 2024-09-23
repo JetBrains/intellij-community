@@ -35,7 +35,6 @@ import java.io.*
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
-import kotlin.concurrent.Volatile
 
 class MavenProject(val file: VirtualFile) {
   enum class ConfigFileKind(val myRelativeFilePath: String, val myValueIfMissing: String) {
@@ -49,6 +48,7 @@ class MavenProject(val file: VirtualFile) {
   private var myState: MavenProjectState = MavenProjectState()
 
   private val cache = ConcurrentHashMap<Key<*>, Any>()
+  private val stateCache = ConcurrentHashMap<Key<*>, Any>()
 
   enum class ProcMode {
     BOTH, ONLY, NONE
@@ -158,7 +158,7 @@ class MavenProject(val file: VirtualFile) {
 
   private fun doSetState(state: MavenProjectState) {
     myState = state
-    resetCache()
+    resetStateCache()
   }
 
   class Snapshot internal constructor(private val myState: MavenProjectState) {
@@ -402,7 +402,7 @@ class MavenProject(val file: VirtualFile) {
 
   val filterPropertiesFiles: List<String>
     get() {
-      var res = getCachedValue(FILTERS_CACHE_KEY)
+      var res = getStateCachedValue(FILTERS_CACHE_KEY)
       if (res == null) {
         val propCfg = getPluginGoalConfiguration("org.codehaus.mojo", "properties-maven-plugin", "read-project-properties")
         if (propCfg != null) {
@@ -429,7 +429,7 @@ class MavenProject(val file: VirtualFile) {
           res.addAll(filters)
         }
 
-        res = putCachedValue(FILTERS_CACHE_KEY, res)
+        res = putStateCachedValue(FILTERS_CACHE_KEY, res)
       }
 
       return res
@@ -440,7 +440,13 @@ class MavenProject(val file: VirtualFile) {
       .map { it.description }
       .firstOrNull()
 
-  private fun resetCache() {
+  private fun resetStateCache() {
+    // todo a bit hacky
+    stateCache.clear()
+  }
+
+  @Internal
+  fun resetCache() {
     // todo a bit hacky
     cache.clear()
   }
@@ -453,7 +459,7 @@ class MavenProject(val file: VirtualFile) {
   }
 
   private fun getUnresolvedDependencies(fileExistsPredicate: Predicate<File>?): List<MavenArtifact> {
-    var myUnresolvedDependenciesCache = getCachedValue(UNRESOLVED_DEPENDENCIES_CACHE_KEY)
+    var myUnresolvedDependenciesCache = getStateCachedValue(UNRESOLVED_DEPENDENCIES_CACHE_KEY)
     if (myUnresolvedDependenciesCache == null) {
       val result: MutableList<MavenArtifact> = ArrayList()
       for (each in dependencies) {
@@ -462,14 +468,14 @@ class MavenProject(val file: VirtualFile) {
         if (!resolved) result.add(each)
       }
       myUnresolvedDependenciesCache = result
-      putCachedValue(UNRESOLVED_DEPENDENCIES_CACHE_KEY, myUnresolvedDependenciesCache)
+      putStateCachedValue(UNRESOLVED_DEPENDENCIES_CACHE_KEY, myUnresolvedDependenciesCache)
     }
     return myUnresolvedDependenciesCache
   }
 
   private val unresolvedExtensions: List<MavenArtifact>
     get() {
-      var myUnresolvedExtensionsCache = getCachedValue(UNRESOLVED_EXTENSIONS_CACHE_KEY)
+      var myUnresolvedExtensionsCache = getStateCachedValue(UNRESOLVED_EXTENSIONS_CACHE_KEY)
       if (myUnresolvedExtensionsCache == null) {
         val result: MutableList<MavenArtifact> = ArrayList()
         for (each in myState.extensions) {
@@ -481,7 +487,7 @@ class MavenProject(val file: VirtualFile) {
           }
         }
         myUnresolvedExtensionsCache = result
-        putCachedValue(UNRESOLVED_EXTENSIONS_CACHE_KEY, myUnresolvedExtensionsCache)
+        putStateCachedValue(UNRESOLVED_EXTENSIONS_CACHE_KEY, myUnresolvedExtensionsCache)
       }
       return myUnresolvedExtensionsCache
     }
@@ -492,21 +498,21 @@ class MavenProject(val file: VirtualFile) {
 
   private val unresolvedAnnotationProcessors: List<MavenArtifact>
     get() {
-      var myUnresolvedAnnotationProcessors = getCachedValue(UNRESOLVED_ANNOTATION_PROCESSORS_CACHE_KEY)
+      var myUnresolvedAnnotationProcessors = getStateCachedValue(UNRESOLVED_ANNOTATION_PROCESSORS_CACHE_KEY)
       if (myUnresolvedAnnotationProcessors == null) {
         val result: MutableList<MavenArtifact> = ArrayList()
         for (each in myState.annotationProcessors) {
           if (!each.isResolved) result.add(each)
         }
         myUnresolvedAnnotationProcessors = result
-        putCachedValue(UNRESOLVED_ANNOTATION_PROCESSORS_CACHE_KEY, myUnresolvedAnnotationProcessors)
+        putStateCachedValue(UNRESOLVED_ANNOTATION_PROCESSORS_CACHE_KEY, myUnresolvedAnnotationProcessors)
       }
       return myUnresolvedAnnotationProcessors
     }
 
   private val unresolvedPlugins: List<MavenPlugin>
     get() {
-      var myUnresolvedPluginsCache = getCachedValue(UNRESOLVED_PLUGINS_CACHE_KEY)
+      var myUnresolvedPluginsCache = getStateCachedValue(UNRESOLVED_PLUGINS_CACHE_KEY)
       if (myUnresolvedPluginsCache == null) {
         val result: MutableList<MavenPlugin> = ArrayList()
         for (each in declaredPluginInfos) {
@@ -515,7 +521,7 @@ class MavenProject(val file: VirtualFile) {
           }
         }
         myUnresolvedPluginsCache = result
-        putCachedValue(UNRESOLVED_PLUGINS_CACHE_KEY, myUnresolvedPluginsCache)
+        putStateCachedValue(UNRESOLVED_PLUGINS_CACHE_KEY, myUnresolvedPluginsCache)
       }
       return myUnresolvedPluginsCache
     }
@@ -532,10 +538,10 @@ class MavenProject(val file: VirtualFile) {
 
   @Internal
   fun collectProblems(fileExistsPredicate: Predicate<File>?): List<MavenProjectProblem> {
-    var problemsCache = getCachedValue(PROBLEMS_CACHE_KEY)
+    var problemsCache = getStateCachedValue(PROBLEMS_CACHE_KEY)
     if (problemsCache == null) {
       problemsCache = doCollectProblems(file, fileExistsPredicate)
-      putCachedValue(PROBLEMS_CACHE_KEY, problemsCache)
+      putStateCachedValue(PROBLEMS_CACHE_KEY, problemsCache)
     }
     return problemsCache
   }
@@ -887,10 +893,10 @@ class MavenProject(val file: VirtualFile) {
     }
 
   private fun getPropertiesFromConfig(kind: ConfigFileKind): Map<String, String> {
-    var mavenConfig: Map<String, String>? = getCachedValue(kind.CACHE_KEY)
+    var mavenConfig: Map<String, String>? = getStateCachedValue(kind.CACHE_KEY)
     if (mavenConfig == null) {
       mavenConfig = readConfigFile(MavenUtil.getBaseDir(directoryFile).toFile(), kind)
-      putCachedValue(kind.CACHE_KEY, mavenConfig)
+      putStateCachedValue(kind.CACHE_KEY, mavenConfig)
     }
 
     return mavenConfig
@@ -921,22 +927,36 @@ class MavenProject(val file: VirtualFile) {
 
   val dependencyArtifactIndex: MavenArtifactIndex
     get() {
-      var res: MavenArtifactIndex? = getCachedValue(
-        DEPENDENCIES_CACHE_KEY)
+      var res: MavenArtifactIndex? = getStateCachedValue(DEPENDENCIES_CACHE_KEY)
       if (res == null) {
         res = MavenArtifactIndex.build(dependencies)
-        res = putCachedValue(DEPENDENCIES_CACHE_KEY, res)
+        res = putStateCachedValue(DEPENDENCIES_CACHE_KEY, res)
       }
 
       return res!!
     }
 
+  @Internal
   fun <V> getCachedValue(key: Key<V>): V? {
     return cache[key] as V?
   }
 
+  @Internal
   fun <V> putCachedValue(key: Key<V>, value: V): V {
     val oldValue = cache.putIfAbsent(key, value as Any)
+    if (oldValue != null) {
+      return oldValue as V
+    }
+    return value
+  }
+
+  private fun <V> getStateCachedValue(key: Key<V>): V? {
+    return stateCache[key] as V?
+  }
+
+  // resets with every state change
+  private fun <V> putStateCachedValue(key: Key<V>, value: V): V {
+    val oldValue = stateCache.putIfAbsent(key, value as Any)
     if (oldValue != null) {
       return oldValue as V
     }

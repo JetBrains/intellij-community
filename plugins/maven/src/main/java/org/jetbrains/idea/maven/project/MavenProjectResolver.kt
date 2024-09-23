@@ -23,6 +23,7 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.q
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenConfigBuildIssue.getIssue
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.project.MavenProjectResolutionContributor.Companion.EP_NAME
 import org.jetbrains.idea.maven.project.MavenResolveResultProblemProcessor.BLOCKED_MIRROR_FOR_REPOSITORIES
 import org.jetbrains.idea.maven.project.MavenResolveResultProblemProcessor.MavenResolveProblemHolder
 import org.jetbrains.idea.maven.server.*
@@ -47,14 +48,16 @@ class MavenProjectResolverResult(@JvmField val mavenModel: MavenModel,
                                  @JvmField val unresolvedArtifactIds: MutableSet<MavenId>,
                                  val unresolvedProblems: Collection<MavenProjectProblem>)
 
-private val EP_NAME = ExtensionPointName.create<MavenProjectResolutionContributor>("org.jetbrains.idea.maven.projectResolutionContributor")
-
 @ApiStatus.Internal
 interface MavenProjectResolutionContributor {
   suspend fun onMavenProjectResolved(project: Project,
                                      mavenProject: MavenProject,
                                      nativeMavenProject: NativeMavenProjectHolder,
                                      embedder: MavenEmbedderWrapper)
+
+  companion object {
+    val EP_NAME = ExtensionPointName.create<MavenProjectResolutionContributor>("org.jetbrains.idea.maven.projectResolutionContributor")
+  }
 }
 
 @ApiStatus.Internal
