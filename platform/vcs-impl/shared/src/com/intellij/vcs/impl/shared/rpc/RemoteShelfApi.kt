@@ -8,4 +8,5 @@ import fleet.util.UID
 
 @Rpc
 interface RemoteShelfApi: RemoteApi<Unit> {
+  suspend fun loadChangesAsync(projectId: EID)
 }
