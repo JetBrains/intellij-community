@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -110,7 +111,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
       int caretOffset = myEditor.getCaretModel().getOffset();
       importUnambiguousImports();
-      if (isImportHintEnabled()) {
+      if (isImportHintEnabled() && !(myEditor instanceof ImaginaryEditor)) {
         List<HighlightInfo> visibleHighlights = getVisibleHighlights(myVisibleRange, myProject, myEditor, hasDirtyTextRange);
         // sort by distance to the caret
         visibleHighlights.sort(Comparator.comparingInt(info -> Math.abs(info.getActualStartOffset() - caretOffset)));
