@@ -53,7 +53,6 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  @ApiStatus.Internal
   public CompactVirtualFileSet(@NotNull IntSet fileIds) {
     storage = new IntSetStorage(fileIds);
     if (storage.size() > BIT_SET_LIMIT) {
@@ -62,7 +61,6 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   }
 
   @Override
-  @ApiStatus.Internal
   public boolean containsId(int fileId) {
     if (storage != null) {
       return storage.containsId(fileId);
@@ -76,7 +74,6 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   }
 
   @Override
-  @ApiStatus.Internal
   public int @NotNull [] onlyInternalFileIds() {
     if (storage != null) {
       return storage.toIntArray();
