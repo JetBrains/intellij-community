@@ -74,41 +74,30 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     val jdkOptionsData = withContext(Dispatchers.IO) {
       VMOptionsService.getInstance().getOrComputeOptionsForJdk(path).get() ?: return@withContext null
     } ?: return
-    val variantMap = jdkOptionsData.options
-      .filter { (it.kind == VMOptionKind.Standard || it.kind == VMOptionKind.Product) }
-      .groupBy { it.variant }
-    variantMap[VMOptionVariant.X]?.forEach {
-      val presentableName = "${it.variant.prefix()}${it.optionName}"
-      option(presentableName) {
-        repeatTimes = 1
-
-        if (JavaTerminalBundle.isMessageInBundle(getOptionBundleKey(it.optionName))) {
-          description(JavaTerminalBundle.message(getOptionBundleKey(it.optionName)))
-        }
-        else {
-          LOG.warn("Unknown X option: \"${it.optionName}\". Paste following string into the JavaTerminalBundle.properties:\n" +
-                   "${getOptionBundleKey(it.optionName)}=${it.doc}")
-        }
-
-        if (!KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR.contains(presentableName)) return@option
-        separator = it.variant.suffix()?.toString() ?: ""
-        argument {
-          displayName(JavaTerminalBundle.message("java.command.terminal.default.argument.text"))
-        }
-      }
-    }
-    variantMap[VMOptionVariant.DASH_DASH]?.forEach {
+    jdkOptionsData.options
+      .filter { (it.kind == VMOptionKind.Standard || it.kind == VMOptionKind.Product) &&
+                (it.variant == VMOptionVariant.X || it.variant == VMOptionVariant.DASH_DASH)}
+      .toList()
+      .forEach {
       val optionName = it.optionName
       val presentableName = "${it.variant.prefix()}$optionName"
       option(presentableName) {
         if (!JavaTerminalBundle.isMessageInBundle(getOptionBundleKey(optionName))) {
-          LOG.warn("Unknown DashDash option: \"$optionName\". Provide ${getOptionBundleKey(optionName)} and ${getOptionArgumentBundleKey(optionName)}")
+          LOG.warn("Unknown ${it.variant} option: \"$optionName\". Provide ${getOptionBundleKey(optionName)} and [${getOptionArgumentBundleKey(optionName)}]")
           return@option
         }
         description(JavaTerminalBundle.message(getOptionBundleKey(optionName)))
+
         if (!JavaTerminalBundle.isMessageInBundle(getOptionArgumentBundleKey(optionName))) return@option
-        if (KNOWN_REPETITIVE_OPTIONS.contains(presentableName)) repeatTimes = 0
-        if (KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR.contains(presentableName)) separator = ""
+
+        if(it.variant == VMOptionVariant.DASH_DASH) {
+          if (KNOWN_REPETITIVE_OPTIONS.contains(presentableName)) repeatTimes = 0
+          if (KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR.contains(presentableName)) separator = ""
+        } else if (it.variant == VMOptionVariant.X) {
+          if (!KNOWN_X_OPTIONS_WITH_ARGUMENT.contains(presentableName)) return@option
+          separator = it.variant.suffix()?.toString() ?: ""
+        }
+
         argument {
           displayName(JavaTerminalBundle.message(getOptionArgumentBundleKey(optionName)))
         }
@@ -150,7 +139,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
   private fun getCanonicalOptionName(option: String): String = option.replace(Regex("[:|\\-]"), ".").trim('=', '.')
 }
 
-private val KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR = setOf(
+private val KNOWN_X_OPTIONS_WITH_ARGUMENT = setOf(
   "-Xms",
   "-Xmx",
   "-Xmn",
@@ -160,6 +149,9 @@ private val KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR = setOf(
   "-Xbootclasspath/p:",
   "-Xlog:",
   "-Xloggc:",
+)
+
+private val KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR = setOf(
   "--finalization=",
   "--illegal-access="
 )
