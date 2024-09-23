@@ -4,14 +4,17 @@ package com.intellij.util.io
 import com.intellij.ide.IdeCoreBundle
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.StreamUtil
-import com.intellij.testFramework.junit5.SimpleHttpServer
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.TestFixtures
+import com.intellij.testFramework.junit5.http.localhostHttpServer
+import com.intellij.testFramework.junit5.http.url
 import com.intellij.util.TimeoutUtil
+import com.sun.net.httpserver.HttpServer
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.assertj.core.api.Condition
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.IOException
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
@@ -23,10 +26,12 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Predicate
 import java.util.zip.GZIPOutputStream
 
+@TestFixtures
 @Timeout(value = 5, unit = TimeUnit.SECONDS)
 class HttpRequestsTest {
-  @RegisterExtension
-  private val server: SimpleHttpServer = SimpleHttpServer()
+
+  private val serverFixture: TestFixture<HttpServer> = localhostHttpServer()
+  private val server: HttpServer get() = serverFixture.get()
 
   @Test
   fun redirectLimit() {
