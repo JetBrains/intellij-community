@@ -123,8 +123,8 @@ class LocalArtifactsManager {
     archiveFile.delete()
   }
 
-  private fun removeOutdatedModels() = ensureParentFolderHasSingleChild(modelsRoot)
-  private fun removeOutdatedServers() = ensureParentFolderHasSingleChild(serverRoot)
+  private fun removeOutdatedModels() = removeSiblingsOf(modelsRoot)
+  private fun removeOutdatedServers() = removeSiblingsOf(serverRoot)
   private fun removeSiblingsOf(path: Path) {
     path.parent.listDirectoryEntries().filter { it.name != path.name }.forEach { it.delete(recursively = true) }
   }
