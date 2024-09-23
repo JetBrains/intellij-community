@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.dnd.DragSourceDropEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -29,7 +30,15 @@ public interface DnDSource extends DnDDropActionHandler {
     return null;
   }
 
+  /**
+   * @deprecated Use dragDropEnd(DragSourceDropEvent) method
+   */
+  @Deprecated(forRemoval = true, since = "2025.1")
   default void dragDropEnd() {
+    dragDropEnd(null, null);
+  }
+
+  default void dragDropEnd(@Nullable DnDEvent dragEvent, @Nullable DragSourceDropEvent dropEvent) {
   }
 
   @Override

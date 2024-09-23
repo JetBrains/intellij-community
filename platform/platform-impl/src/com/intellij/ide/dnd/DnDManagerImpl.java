@@ -659,7 +659,7 @@ public final class DnDManagerImpl extends DnDManager {
 
     @Override
     public void dragDropEnd(DragSourceDropEvent dsde) {
-      mySource.dragDropEnd();
+      mySource.dragDropEnd(myCurrentEvent, dsde);
       final DnDTarget target = getLastProcessedTarget();
       if (target != null) {
         target.cleanUpOnLeave();
