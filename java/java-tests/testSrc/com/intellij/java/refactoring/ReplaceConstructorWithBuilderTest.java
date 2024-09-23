@@ -59,6 +59,10 @@ public class ReplaceConstructorWithBuilderTest extends LightMultiFileTestCase {
   public void testGenerics() {
     doTest(true);
   }
+  
+  public void testGenericsImport() {
+    doTest(true);
+  }
 
   public void testImports() {
     doTest(true, null, null, "foo");

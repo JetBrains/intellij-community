@@ -102,9 +102,11 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     final PsiClass psiClass = myConstructors[0].getContainingClass();
     assert psiClass != null;
     final PsiTypeParameterList typeParameterList = psiClass.getTypeParameterList();
-    final String text = "public class " + myClassName + (typeParameterList != null ? typeParameterList.getText() : "") + "{}";
+    final String text = "public class " + myClassName + "{}";
     final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
     final PsiJavaFile newFile = (PsiJavaFile)factory.createFileFromText(myClassName + ".java", JavaFileType.INSTANCE, text);
+    PsiTypeParameterList list = newFile.getClasses()[0].getTypeParameterList();
+    if (list != null && typeParameterList != null) list.replace(typeParameterList);
 
     final PsiFile containingFile = myConstructors[0].getContainingFile();
     final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
