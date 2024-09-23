@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -492,7 +491,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  @ReviseWhenPortedToJDK("21")
   public @NotNull String getCanonicallyCasedName(@NotNull VirtualFile file) {
     var parent = file.getParent();
     if (parent == null || parent.isCaseSensitive()) {
@@ -503,6 +501,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     var t = LOG.isTraceEnabled() ? System.nanoTime() : 0;
     try {
       var nioFile = convertToNioFileAndCheck(file, false);
+      // Don't call toRealPath for Unix,
+      // because UnixPath#toRealPath has a loop in which it resolves the correct casing for every parent directory,
+      // while we do it only for one directory (the direct parent).
+      // See https://github.com/JetBrains/JetBrainsRuntime/blob/e9d570349a20a4755bb80a3a7bbb8ab6a4d989f0/src/java.base/unix/classes/sun/nio/fs/UnixPath.java#L978
       if (SystemInfo.isWindows) {
         var realName = nioFile.toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName().toString();
         if (
@@ -513,8 +515,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
           return realName;
         }
       }
-      // Don't call toRealPath for Unix, because UnixPath#toRealPath lists the directory internally anyway,
-      // see https://github.com/JetBrains/JetBrainsRuntime/blob/e9d570349a20a4755bb80a3a7bbb8ab6a4d989f0/src/java.base/unix/classes/sun/nio/fs/UnixPath.java#L978
       var parentFile = nioFile.getParent();
       if (parentFile != null) {
         var canonicalFileNames = parentFile.toFile().list();
