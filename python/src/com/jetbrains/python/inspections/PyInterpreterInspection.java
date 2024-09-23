@@ -521,7 +521,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PyUiUtil.clearFileLevelInspectionResults(project);
+      PyUiUtil.clearFileLevelInspectionResults(descriptor.getPsiElement().getContainingFile());
       PyProjectSdkConfiguration.INSTANCE.setReadyToUseSdk(project, myModule, mySdk);
     }
   }
@@ -546,7 +546,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PyUiUtil.clearFileLevelInspectionResults(project);
+      PyUiUtil.clearFileLevelInspectionResults(descriptor.getPsiElement().getContainingFile());
       final Sdk newSdk = PySdkExtKt.setupAssociatedLogged(mySdk, myExistingSdks, BasePySdkExtKt.getBasePath(myModule), doAssociate);
       if (newSdk == null) {
         return;

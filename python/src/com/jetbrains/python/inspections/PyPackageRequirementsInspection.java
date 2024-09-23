@@ -404,7 +404,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL);
       if (!checkAdminPermissionsAndConfigureInterpreter(project, descriptor, mySdk)) {
-        PyUiUtil.clearFileLevelInspectionResults(project);
+        PyUiUtil.clearFileLevelInspectionResults(descriptor.getPsiElement().getContainingFile());
         installPackages(project);
       }
     }

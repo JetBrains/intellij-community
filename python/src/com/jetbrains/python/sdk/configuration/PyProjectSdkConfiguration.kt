@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.configuration
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.ide.GeneralSettings
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -135,7 +137,7 @@ private class PyInterpreterInspectionSuppressor : PyInspectionExtension() {
     private var suppress = false
 
     fun suppress(project: Project): Disposable? {
-      PyUiUtil.clearFileLevelInspectionResults(project)
+      DaemonCodeAnalyzer.getInstance(project).restart()
       return if (suppress) null else Suppressor()
     }
   }

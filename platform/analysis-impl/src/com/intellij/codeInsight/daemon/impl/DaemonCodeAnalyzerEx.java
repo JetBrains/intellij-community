@@ -89,14 +89,6 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   @ApiStatus.Internal
   public abstract void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile);
 
-
-  /**
-   * Do not use because manual management of highlights is dangerous and may lead to unexpected flicking/disappearing/stuck highlighters.
-   * Instead, generate file-level infos in your inspection/annotator, and they will be removed automatically when outdated
-   */
-  @ApiStatus.Internal
-  public abstract void cleanAllFileLevelHighlights(int group);
-
   @ApiStatus.Internal
   public abstract boolean hasFileLevelHighlights(int group, @NotNull PsiFile psiFile);
 

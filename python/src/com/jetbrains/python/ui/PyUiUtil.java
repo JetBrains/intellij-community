@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +69,7 @@ public final class PyUiUtil {
     });
   }
 
-  public static void clearFileLevelInspectionResults(@NotNull Project project) {
-    DaemonCodeAnalyzerEx.getInstanceEx(project).cleanAllFileLevelHighlights(Pass.LOCAL_INSPECTIONS);
+  public static void clearFileLevelInspectionResults(@NotNull PsiFile file) {
+    DaemonCodeAnalyzerEx.getInstanceEx(file.getProject()).cleanFileLevelHighlights(Pass.LOCAL_INSPECTIONS, file);
   }
 }

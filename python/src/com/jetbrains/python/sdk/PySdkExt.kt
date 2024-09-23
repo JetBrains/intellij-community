@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.*
 import com.intellij.openapi.application.*
@@ -331,7 +332,7 @@ var Module.pythonSdk: Sdk?
     thisLogger().info("Setting PythonSDK $value to module $this")
     ModuleRootModificationUtil.setModuleSdk(this, value)
     runInEdt {
-      PyUiUtil.clearFileLevelInspectionResults(project)
+      DaemonCodeAnalyzer.getInstance(project).restart()
     }
   }
 
