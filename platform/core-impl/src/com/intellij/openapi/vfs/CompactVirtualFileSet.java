@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -9,6 +9,8 @@ import com.intellij.util.indexing.containers.IntIdsIterator;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -26,19 +28,48 @@ import java.util.*;
  */
 @ApiStatus.Internal
 public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implements VirtualFileSetEx {
+  /** Max weirdFiles.size to convert storage to {@link IntSetStorage} */
+  @VisibleForTesting
   static final int INT_SET_LIMIT = 10;
+  /**
+   * Max storage.size to convert {@link IntSetStorage} impl to either {@link IdBitSetStorage} or {@link PartitionedBitSetStorage}
+   * (depending on ids range)
+   */
+  @VisibleForTesting
   static final int BIT_SET_LIMIT = 1000;
+  /** max fileId range covered by {@link IdBitSetStorage}, to convert it to {@link PartitionedBitSetStorage} */
+  @VisibleForTesting
   static final int PARTITION_BIT_SET_LIMIT = 20000;
-  static final int PARTITION_BIT_SET_THRESHOLD = 25; // 25% of bits are set
-  static final int PARTITION_BIT_SET_PARTITION_SIZE = 2048; // 256 bytes partition size
+  /**
+   * If {@link IdBitSetStorage} covers id range more than PARTITION_BIT_SET_LIMIT, and less than this % of {@link IdBitSetStorage}
+   * bits are set -> convert it to {@link PartitionedBitSetStorage}
+   */
+  private static final int PARTITION_BIT_SET_THRESHOLD = 25; // 25% of bits are set
+  /** Size of (=id range covered by) individual partition in {@link PartitionedBitSetStorage} */
+  private static final int PARTITION_BIT_SET_PARTITION_SIZE = 2048; // =256 bytes per partition
 
-  // all non-VirtualFileWithId files and first several files (up to INT_SET_LIMIT) are stored here
+  /**
+   * First several (=less than INT_SET_LIMIT) files are stored here, then all non-{@link VirtualFileWithId} files are stored
+   * here afterward.
+   * If storage == null, then this set _could_ contain both {@link VirtualFileWithId} and non-{@link VirtualFileWithId} files.
+   * If storage!=null => all {@link VirtualFileWithId} are stored in the storage, as fileIds, and only non-{@link VirtualFileWithId}
+   * files are stored in this set.
+   */
   private final Set<VirtualFile> weirdFiles = new HashSet<>();
-  // When file set become large (>INT_SET_LIMIT), fileIds are stored using IntSetStorage
-  // When file set become very big (>BIT_SET_LIMIT, e.g. whole project files AnalysisScope) a BitSetStorage is used with a bit-mask of their ids
-  // When file ids start to spread out too much, i.e. max - min > PARTITION_BIT_SET_LIMIT && 100*size/(max-min) < PARTITION_BIT_SET_THRESHOLD,
-  // a PartitionedBitSetStorage is used
-  private SetStorage storage;
+  /**
+   * file id storage; an actual implementation is switched in runtime to accommodate actual ids set memory-efficiently.
+   * Could be null if there are very few files in the set (=less than INT_SET_LIMIT), so all of them fit into {@link #weirdFiles}.
+   * <p>
+   * When a file set become large (>INT_SET_LIMIT), fileIds are stored using {@link IntSetStorage}
+   * When a file set become very big (>BIT_SET_LIMIT, e.g. whole project files AnalysisScope) a {@link IdBitSetStorage} is used with a
+   * bit-mask of their ids
+   * When file ids start to spread out too much, i.e.
+   * {@code max - min > PARTITION_BIT_SET_LIMIT && 100*size/(max-min) < PARTITION_BIT_SET_THRESHOLD}
+   * => a {@link PartitionedBitSetStorage} is used
+   */
+  //TODO RC: current implementation only able to adapt to set growing -- but set could also shrink (=remove() method _is_ implemented),
+  //         so we also need 'downward' adaptation
+  private @Nullable SetStorage storage;
   private boolean frozen;
 
   CompactVirtualFileSet() {
