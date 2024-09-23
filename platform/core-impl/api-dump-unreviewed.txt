@@ -120,13 +120,6 @@ f:com.intellij.codeInsight.highlighting.ReadWriteUtil
 c:com.intellij.codeInspection.SuppressionUtilCore
 - sf:SUPPRESS_INSPECTIONS_TAG_NAME:java.lang.String
 - <init>():V
-com.intellij.concurrency.Job
-- sf:NULL_JOB:com.intellij.concurrency.Job
-- a:cancel():V
-- a:isCanceled():Z
-- a:isDone():Z
-- s:nullJob():com.intellij.concurrency.Job
-- a:waitForCompletion(I):Z
 f:com.intellij.concurrency.JobSchedulerImpl
 - <init>():V
 - s:getCPUCoresCount():I
@@ -220,10 +213,6 @@ c:com.intellij.core.CoreInjectedLanguageManager
 - isInjectedViewProvider(com.intellij.psi.FileViewProvider):Z
 - mightHaveInjectedFragmentAtOffset(com.intellij.openapi.editor.Document,I):Z
 - registerMultiHostInjector(com.intellij.lang.injection.MultiHostInjector,com.intellij.openapi.Disposable):V
-c:com.intellij.core.CoreJobLauncher
-- <init>():V
-- invokeConcurrentlyUnderProgress(java.util.List,com.intellij.openapi.progress.ProgressIndicator,Z,Z,com.intellij.util.Processor):Z
-- submitToJobThread(java.lang.Runnable,java.util.function.Consumer):com.intellij.concurrency.Job
 c:com.intellij.core.CoreProjectEnvironment
 - pf:myFileIndexFacade:com.intellij.openapi.roots.FileIndexFacade
 - pf:myPsiManager:com.intellij.psi.impl.PsiManagerImpl

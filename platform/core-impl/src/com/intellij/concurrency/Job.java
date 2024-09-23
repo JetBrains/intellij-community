@@ -8,12 +8,9 @@ package com.intellij.concurrency;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @deprecated Use coroutines.
- */
 @ApiStatus.NonExtendable
-@Deprecated
-public interface Job<T> {
+@ApiStatus.Internal
+public interface Job {
   void cancel();
 
   boolean isCanceled();
@@ -28,8 +25,7 @@ public interface Job<T> {
    */
   boolean waitForCompletion(int millis) throws InterruptedException;
 
-  @SuppressWarnings("unchecked")
-  static <T> Job<T> nullJob() {
+  static Job nullJob() {
     return NULL_JOB;
   }
 

@@ -68,7 +68,7 @@ final class PassExecutorService implements Disposable {
   static final Logger LOG = Logger.getInstance(PassExecutorService.class);
   private static final boolean CHECK_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode();
 
-  private final AtomicReference<@NotNull Map<ScheduledPass, Job<Void>>> mySubmittedPasses = new AtomicReference<>(new ConcurrentHashMap<>());
+  private final AtomicReference<@NotNull Map<ScheduledPass, Job>> mySubmittedPasses = new AtomicReference<>(new ConcurrentHashMap<>());
   private final Project myProject;
   private volatile boolean isDisposed;
 
@@ -102,10 +102,10 @@ final class PassExecutorService implements Disposable {
       // must not wait in EDT because waitFor() might inadvertently steal some work from FJP and try to run it and fail with "must not execute in EDT"
       ThreadingAssertions.assertBackgroundThread();
     }
-    Map<? extends ScheduledPass, ? extends Job<Void>> submittedPasses = mySubmittedPasses.getAndSet(new ConcurrentHashMap<>());
+    Map<? extends ScheduledPass, ? extends Job> submittedPasses = mySubmittedPasses.getAndSet(new ConcurrentHashMap<>());
     try {
-      for (Map.Entry<? extends ScheduledPass, ? extends Job<Void>> entry : submittedPasses.entrySet()) {
-        Job<Void> job = entry.getValue();
+      for (Map.Entry<? extends ScheduledPass, ? extends Job> entry : submittedPasses.entrySet()) {
+        Job job = entry.getValue();
         ScheduledPass pass = entry.getKey();
         pass.myUpdateProgress.cancel(reason);
         job.cancel();
@@ -330,7 +330,7 @@ final class PassExecutorService implements Disposable {
 
   private void submit(@NotNull ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
-      Job<Void> job = JobLauncher.getInstance().submitToJobThread(pass, future -> {
+      Job job = JobLauncher.getInstance().submitToJobThread(pass, future -> {
         try {
           if (!future.isCancelled()) { // for canceled task .get() generates CancellationException which is expensive
             future.get();
@@ -594,10 +594,10 @@ final class PassExecutorService implements Disposable {
   boolean waitFor(long millis) {
     return waitFor(millis, mySubmittedPasses.get());
   }
-  private boolean waitFor(long millis, @NotNull Map<? extends ScheduledPass, ? extends Job<Void>> map) {
+  private boolean waitFor(long millis, @NotNull Map<? extends ScheduledPass, ? extends Job> map) {
     long deadline = System.currentTimeMillis() + millis;
     try {
-      for (Job<Void> job : map.values()) {
+      for (Job job : map.values()) {
         if (!job.waitForCompletion((int)(System.currentTimeMillis() - deadline))) {
           return false;
         }

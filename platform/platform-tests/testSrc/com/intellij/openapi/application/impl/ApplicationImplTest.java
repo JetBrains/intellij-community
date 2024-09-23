@@ -81,9 +81,9 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     try {
       Benchmark.newBenchmark("lock/unlock " + getTestName(false), () -> {
         final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
-        List<Job<Void>> threads = new ArrayList<>(numOfThreads);
+        List<Job> threads = new ArrayList<>(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
-          Job<Void> thread = JobLauncher.getInstance().submitToJobThread(() -> {
+          Job thread = JobLauncher.getInstance().submitToJobThread(() -> {
             assertFalse(application.isReadAccessAllowed());
             for (int i1 = 0; i1 < readIterations; i1++) {
               application.runReadAction(EmptyRunnable.getInstance());
@@ -120,8 +120,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   private static void joinWithTimeout(Future<?> @NotNull ... threads) throws TimeoutException, ExecutionException, InterruptedException {
     ConcurrencyUtil.getAll(20, TimeUnit.SECONDS, Arrays.asList(threads));
   }
-  private static void waitWithTimeout(@NotNull List<? extends Job<?>> threads) throws TimeoutException {
-    for (Job<?> thread : threads) {
+  private static void waitWithTimeout(@NotNull List<? extends Job> threads) throws TimeoutException {
+    for (Job thread : threads) {
       try {
         thread.waitForCompletion(20_000);
       }

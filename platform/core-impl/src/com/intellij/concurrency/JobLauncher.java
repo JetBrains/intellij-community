@@ -88,7 +88,8 @@ public abstract class JobLauncher {
    * This will cause deadlock since this thread pool is an easily exhaustible resource.
    * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)} instead
    */
-  public abstract @NotNull Job<Void> submitToJobThread(final @NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);
+  @ApiStatus.Internal
+  public abstract @NotNull Job submitToJobThread(final @NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);
 
   /**
    * Process each element in {@code items} with {@code thingProcessor} under {@code progress} in a background in an async manner,

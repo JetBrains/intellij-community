@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class JobLauncherImpl extends JobLauncher {
   static final int CORES_FORK_THRESHOLD = 1;
   private static final Logger LOG = Logger.getInstance(JobLauncher.class);
@@ -234,13 +235,13 @@ public final class JobLauncherImpl extends JobLauncher {
   }
 
   @Override
-  public @NotNull Job<Void> submitToJobThread(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
+  public @NotNull Job submitToJobThread(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
     VoidForkJoinTask task = new VoidForkJoinTask(action, myForkJoinPool, onDoneCallback);
     task.submit();
     return task;
   }
 
-  private static final class VoidForkJoinTask implements Job<Void> {
+  private static final class VoidForkJoinTask implements Job {
     private final Runnable myAction;
     private final ForkJoinPool myForkJoinPool;
     private final Consumer<? super Future<?>> myOnDoneCallback;

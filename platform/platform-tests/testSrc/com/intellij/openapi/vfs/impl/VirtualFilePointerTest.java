@@ -602,7 +602,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.isValid());
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
-    Collection<Job<?>> reads = ConcurrentCollectionFactory.createConcurrentSet();
+    Collection<Job> reads = ConcurrentCollectionFactory.createConcurrentSet();
     VirtualFileListener listener = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -641,7 +641,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     }
     finally {
       connection.disconnect();  // unregister listener early
-      for (Job<?> read : reads) {
+      for (Job read : reads) {
         while (!read.isDone()) {
           read.waitForCompletion(1000);
         }
@@ -649,9 +649,9 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     }
   }
 
-  private static void stressRead(VirtualFilePointer pointer, Collection<? super Job<?>> reads) {
+  private static void stressRead(VirtualFilePointer pointer, Collection<? super Job> reads) {
     for (int i = 0; i < 10; i++) {
-      AtomicReference<Job<?>> reference = new AtomicReference<>();
+      AtomicReference<Job> reference = new AtomicReference<>();
       reference.set(JobLauncher.getInstance().submitToJobThread(() -> ApplicationManager.getApplication().runReadAction(() -> {
         VirtualFile file = pointer.getFile();
         if (file != null && !file.isValid()) {
@@ -790,7 +790,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       };
 
       run.set(true);
-      List<Job<?>> jobs = new ArrayList<>(nThreads);
+      List<Job> jobs = new ArrayList<>(nThreads);
       for (int it = 0; it < nThreads; it++) {
         jobs.add(JobLauncher.getInstance().submitToJobThread(read, null));
       }
@@ -800,7 +800,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
 
       run.set(false);
-      for (Job<?> job : jobs) {
+      for (Job job : jobs) {
         job.waitForCompletion(2_000);
       }
       ExceptionUtil.rethrowAll(exception.get());
