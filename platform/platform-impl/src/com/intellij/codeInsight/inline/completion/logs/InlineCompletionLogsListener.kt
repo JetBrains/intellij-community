@@ -47,6 +47,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
 
   override fun onRequest(event: InlineCompletionEventType.Request) {
     holder = Holder()
+    holder.lastInvocationTimestamp = System.currentTimeMillis()
 
     val container = InlineCompletionLogsContainer.create(event.request.editor)
     container.add(REQUEST_ID with event.request.requestId)
