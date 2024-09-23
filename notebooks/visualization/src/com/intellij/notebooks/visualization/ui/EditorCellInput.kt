@@ -17,13 +17,8 @@ class EditorCellInput(
   val interval: NotebookCellLines.Interval
     get() = cell.intervalPointer.get() ?: error("Invalid interval")
 
-  private val shouldShowRunButton =
-    editor.isOrdinaryNotebookEditor() &&
-    editor.notebookAppearance.shouldShowRunButtonInGutter() &&
-    cell.type == NotebookCellLines.CellType.CODE
-
   val runCellButton: EditorCellRunGutterButton? =
-    if (shouldShowRunButton) EditorCellRunGutterButton(editor, cell)
+    if (shouldShowRunButton()) EditorCellRunGutterButton(editor, cell)
     else null
 
   val component: EditorCellViewComponent = componentFactory.createComponent(editor, cell).also { add(it) }
@@ -34,6 +29,12 @@ class EditorCellInput(
 
   var folded = false
     private set
+
+  private fun shouldShowRunButton(): Boolean {
+    return editor.isOrdinaryNotebookEditor() &&
+           editor.notebookAppearance.shouldShowRunButtonInGutter() &&
+           cell.type == NotebookCellLines.CellType.CODE
+  }
 
   private fun getFoldingBounds(): Pair<Int, Int> {
     //For disposed
