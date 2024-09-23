@@ -2,8 +2,9 @@
 package org.jetbrains.plugins.terminal.block.prompt.error
 
 import org.jetbrains.annotations.ApiStatus
+import java.util.EventListener
 
 @ApiStatus.Internal
-interface TerminalPromptErrorStateListener {
+interface TerminalPromptErrorStateListener : EventListener {
   fun errorStateChanged(description: TerminalPromptErrorDescription?)
 }
