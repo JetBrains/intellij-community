@@ -16,11 +16,24 @@ class GradleDebuggerUtil {
   }
 
   static List<String> getProcessOptions() {
-    String options = requireNonNullElse(System.getenv("PROCESS_OPTIONS"), "")
-    return options.split(", ")
+    String envValue = requireNonNullElse(System.getenv("PROCESS_OPTIONS"), "")
+    if (isBlank(envValue)) {
+      return Collections.emptyList()
+    }
+    List<String> options = new ArrayList<>()
+    for (final def option in envValue.split(", ")) {
+      if (!isBlank(option)) {
+        options.add(option.trim())
+      }
+    }
+    return options
   }
 
   private static <T> T requireNonNullElse(T object, T fallback) {
     return (object != null) ? object : Objects.requireNonNull(fallback, "The fallback value must not be null!")
+  }
+
+  private static boolean isBlank(String value) {
+    return value == null || value.trim().isEmpty()
   }
 }
