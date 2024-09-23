@@ -1260,7 +1260,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
       @Override
       public void onCancel() {
-        if (isShowing() && progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress) {
+        if (isShowing() && progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress &&
+            !progressIndicatorWhenSearchStarted.isCanceled()) {
           scheduleResultsUpdate();
         }
       }
