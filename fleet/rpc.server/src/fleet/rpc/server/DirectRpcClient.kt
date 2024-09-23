@@ -8,40 +8,45 @@ import fleet.rpc.client.rpcClient
 import fleet.rpc.core.Serialization
 import fleet.rpc.core.Transport
 import fleet.rpc.core.TransportMessage
-import fleet.tracing.spannedScope
 import fleet.util.UID
-import fleet.util.async.async
-import fleet.util.async.resource
-import fleet.util.async.use
+import fleet.util.async.*
 import fleet.util.channels.channels
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
-suspend fun RequestDispatcher.withDirectRpcClient(serialization: () -> Serialization,
-                                                  interceptor: RpcInterceptor,
-                                                  body: suspend CoroutineScope.(IRpcClient) -> Unit) {
-  spannedScope("withDirectRpcClient") {
+fun RequestDispatcher.directRpcClient(
+  serialization: () -> Serialization,
+  interceptor: RpcInterceptor,
+): Resource<IRpcClient> =
+  resource { cc ->
     val (dispatcherSend, clientReceive) = channels<TransportMessage>(Channel.BUFFERED)
     val (clientSend, dispatcherReceive) = channels<TransportMessage>(Channel.BUFFERED)
     val origin = UID.random()
-    resource<IRpcClient> { continuation ->
-      launch {
-        handleConnection(route = origin,
-                         endpoint = EndpointKind.Client,
-                         send = dispatcherSend,
-                         receive = dispatcherReceive,
-                         presentableName = "directRpcClient")
-      }.use {
-        rpcClient(transport = Transport(outgoing = clientSend, incoming = clientReceive),
-                  serialization = serialization,
-                  origin = origin,
-                  requestInterceptor = interceptor) { rpcClient ->
-          continuation(rpcClient)
-        }
+    launch {
+      handleConnection(route = origin,
+                       endpoint = EndpointKind.Client,
+                       send = dispatcherSend,
+                       receive = dispatcherReceive,
+                       presentableName = "directRpcClient")
+    }.use {
+      rpcClient(transport = Transport(outgoing = clientSend, incoming = clientReceive),
+                serialization = serialization,
+                origin = origin,
+                requestInterceptor = interceptor) { rpcClient ->
+        cc(rpcClient)
       }
-    }.async().use { rpcClientDeferred ->
+    }
+  }.span("directRpcClient")
+
+suspend fun RequestDispatcher.withDirectRpcClient(
+  serialization: () -> Serialization,
+  interceptor: RpcInterceptor,
+  body: suspend CoroutineScope.(IRpcClient) -> Unit,
+) {
+  directRpcClient(serialization, interceptor)
+    .async()
+    .use { rpcClientDeferred ->
       body(promisingRpcClient(rpcClientDeferred))
     }
-  }
 }

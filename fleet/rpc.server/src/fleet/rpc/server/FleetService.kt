@@ -16,7 +16,6 @@ class FleetService private constructor(val serviceId: UID,
     job.join()
   }
 
-  //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.app.fleet.tests"])
   suspend fun terminate(cause: String) {
     terminate(CancellationException(cause))
   }
@@ -50,7 +49,7 @@ class FleetService private constructor(val serviceId: UID,
             }
           }
         }.use { serviceJob ->
-          body(FleetService(providerId, serviceJob))
+          body(FleetService(serviceId = providerId, job = serviceJob))
         }
       }
     }

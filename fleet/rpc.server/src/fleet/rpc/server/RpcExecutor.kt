@@ -28,7 +28,6 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
-//@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.app.fleet.tests"])
 class RpcExecutor private constructor(private val serialization: () -> Serialization,
                                       private val services: RpcServiceLocator,
                                       private val route: UID,
