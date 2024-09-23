@@ -96,7 +96,7 @@ internal class TerminalPromptModelImpl(
   @RequiresEdt
   private fun doUpdatePrompt(renderingInfo: TerminalPromptRenderingInfo) {
     DocumentUtil.writeInRunUndoTransparentAction {
-      document.guardedBlocks.forEach { document.removeGuardedBlock(it) }
+      document.clearGuardedBlocks()
       document.replaceString(0, commandStartOffset, renderingInfo.text)
       document.createGuardedBlock(0, renderingInfo.text.length)
     }
@@ -174,6 +174,10 @@ internal class TerminalPromptModelImpl(
     internal fun MarkupModel.applyHighlighting(highlighting: HighlightingInfo) {
       addRangeHighlighter(highlighting.startOffset, highlighting.endOffset, HighlighterLayer.SYNTAX,
                           highlighting.textAttributesProvider.getTextAttributes(), HighlighterTargetArea.EXACT_RANGE)
+    }
+
+    private fun DocumentEx.clearGuardedBlocks() {
+      this.guardedBlocks.forEach { removeGuardedBlock(it) }
     }
   }
 }
