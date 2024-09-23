@@ -94,18 +94,6 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       }
   }
 
-  private val KNOWN_X_OPTIONS_WITH_ARGUMENT = setOf(
-    "-Xms",
-    "-Xmx",
-    "-Xmn",
-    "-Xss",
-    "-Xbootclasspath:",
-    "-Xbootclasspath/a:",
-    "-Xbootclasspath/p:",
-    "-Xlog:",
-    "-Xloggc:",
-  )
-
   private fun ShellChildOptionsContext.addDoubleDashedOptions() {
     val outputStreamName: @Nls String = JavaTerminalBundle.message("output.stream.name")
     option("--version") {
@@ -138,5 +126,17 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     return "java.command.terminal.$name.option.description"
   }
 }
+
+private val KNOWN_X_OPTIONS_WITH_ARGUMENT = setOf(
+  "-Xms",
+  "-Xmx",
+  "-Xmn",
+  "-Xss",
+  "-Xbootclasspath:",
+  "-Xbootclasspath/a:",
+  "-Xbootclasspath/p:",
+  "-Xlog:",
+  "-Xloggc:",
+)
 
 private val LOG = Logger.getInstance(JavaShellCommandSpecsProvider::class.java)
