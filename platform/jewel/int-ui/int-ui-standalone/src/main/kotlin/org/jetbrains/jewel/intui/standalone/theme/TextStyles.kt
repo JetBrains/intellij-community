@@ -54,7 +54,7 @@ public fun JewelTheme.Companion.createDefaultTextStyle(
     hyphens: Hyphens = Hyphens.Unspecified,
     textMotion: TextMotion? = null,
 ): TextStyle =
-    TextStyle.Default.copy(
+    TextStyle(
         color = color,
         fontSize = fontSize,
         fontWeight = fontWeight,
@@ -108,7 +108,7 @@ public fun JewelTheme.Companion.createDefaultTextStyle(
     hyphens: Hyphens = Hyphens.Unspecified,
     textMotion: TextMotion? = null,
 ): TextStyle =
-    TextStyle.Default.copy(
+    TextStyle(
         brush = brush,
         alpha = alpha,
         fontSize = fontSize,
@@ -162,7 +162,7 @@ public fun JewelTheme.Companion.createEditorTextStyle(
     hyphens: Hyphens = Hyphens.Unspecified,
     textMotion: TextMotion? = null,
 ): TextStyle =
-    TextStyle.Default.copy(
+    TextStyle(
         color = color,
         fontSize = fontSize,
         fontWeight = fontWeight,
@@ -216,7 +216,7 @@ public fun JewelTheme.Companion.createEditorTextStyle(
     hyphens: Hyphens = Hyphens.Unspecified,
     textMotion: TextMotion? = null,
 ): TextStyle =
-    TextStyle.Default.copy(
+    TextStyle(
         brush = brush,
         alpha = alpha,
         fontSize = fontSize,
