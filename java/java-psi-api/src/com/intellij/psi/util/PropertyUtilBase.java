@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.Introspector;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class PropertyUtilBase {
 
@@ -604,9 +605,17 @@ public class PropertyUtilBase {
     VariableKind kind = codeStyleManager.getVariableKind(field);
     String propertyName = codeStyleManager.variableNameToPropertyName(name, kind);
     String setName = suggestSetterName(field);
-    PsiMethod setMethod = factory
-      .createMethodFromText(factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiTypes.voidType()).getText(),
-                            field);
+    
+    PsiMethod setMethod;
+    if (returnSelf) {
+      PsiType[] typeArguments = Stream.of(containingClass.getTypeParameters())
+        .map(factory::createType)
+        .toArray(PsiType[]::new);
+      setMethod = factory.createMethod(setName, factory.createType(containingClass, typeArguments));
+    }
+    else {
+      setMethod = factory.createMethod(setName, PsiTypes.voidType());
+    }
     String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
     PsiParameter param = factory.createParameter(parameterName, AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(field.getModifierList(), field.getType()));
 

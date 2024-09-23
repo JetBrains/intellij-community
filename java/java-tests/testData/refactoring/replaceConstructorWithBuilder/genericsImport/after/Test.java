@@ -9,5 +9,5 @@ public class Test<T extends Serializable> {
         this.clazz = clazz;
     }
 
-  public static final Test<Boolean> BOOLEAN = new Builder().setName("b").setClazz(Boolean.class).createTest();
+  public static final Test<Boolean> BOOLEAN = new Builder<Boolean>().setName("b").setClazz(Boolean.class).createTest();
 }

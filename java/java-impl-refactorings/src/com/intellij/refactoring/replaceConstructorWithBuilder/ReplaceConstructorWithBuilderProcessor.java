@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -40,6 +41,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * @author anna
@@ -146,7 +149,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
 
     super.performRefactoring(usageInfos);
 
-    final PsiMethod method = createMethodSignature(createMethodName());
+    final PsiMethod method = createBuildMethod(createMethodName());
     if (builderClass.findMethodBySignature(method, false) == null) {
       builderClass.add(method);
     }
@@ -225,18 +228,44 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     }
   }
 
-  private PsiMethod createMethodSignature(String createMethodName) {
+  private PsiMethod createBuildMethod(String createMethodName) {
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
-    final StringBuilder buf = new StringBuilder();
+    
+    final PsiClass aClass = myConstructors[0].getContainingClass();
+    assert aClass != null;
+    PsiType[] typeArguments = Stream.of(aClass.getTypeParameters())
+      .map(myElementFactory::createType)
+      .toArray(PsiType[]::new);
+    PsiMethod method = myElementFactory.createMethod(createMethodName, myElementFactory.createType(aClass, typeArguments));
+    
+    final StringBuilder bodyText = new StringBuilder();
     final PsiMethod constructor = getWorkingConstructor();
+    bodyText.append("{\n  return new ").append(constructor.getName());
+    if (typeArguments.length > 0) {
+      if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, aClass)) {
+        bodyText.append("<>");
+      }
+      else {
+        bodyText.append('<');
+        boolean comma = false;
+        for (PsiType argument : typeArguments) {
+          bodyText.append(comma ? ", " : "").append(argument.getCanonicalText());
+          comma = true;
+        }
+        bodyText.append('>');
+      }
+    }
+    bodyText.append("("); 
+    boolean comma = false;
     for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
       final String pureParamName = styleManager.variableNameToPropertyName(parameter.getName(), VariableKind.PARAMETER);
-      if (!buf.isEmpty()) buf.append(", ");
-      buf.append(myParametersMap.get(pureParamName).getFieldName());
+      bodyText.append(comma ? ", " : "").append(myParametersMap.get(pureParamName).getFieldName());
+      comma = true;
     }
-    return myElementFactory.createMethodFromText("public " + constructor.getName() + " " + createMethodName + "(){" +
-                                                 "\n return new " + constructor.getName() + "(" + buf + ");" +
-                                                 "\n}", constructor);
+    bodyText.append(");\n}");
+    PsiCodeBlock body = myElementFactory.createCodeBlockFromText(bodyText.toString(), method);
+    Objects.requireNonNull(method.getBody()).replace(body);
+    return method;
   }
 
   private PsiMethod getWorkingConstructor() {
