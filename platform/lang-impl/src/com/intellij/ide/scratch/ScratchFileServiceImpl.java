@@ -139,7 +139,8 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         RootType rootType = getRootType(file);
-        Document document = FileDocumentManager.getInstance().getDocument(file);
+        // an opened text file already has its document cached
+        Document document = FileDocumentManager.getInstance().getCachedDocument(file);
         if (document == null || rootType == null || rootType.isHidden()) return;
         rootType.fileOpened(file, source);
       }
