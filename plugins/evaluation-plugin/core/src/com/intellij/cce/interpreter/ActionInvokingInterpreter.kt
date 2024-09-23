@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.interpreter
 
 import com.intellij.cce.actions.*
@@ -36,7 +36,7 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
             sessions.add(session)
             sessionHandler(session)
           }
-          isCanceled = handler.onSessionFinished(fileActions.path)
+          isCanceled = handler.onSessionFinished(fileActions.path, fileActions.sessionsCount - sessions.size)
           shouldCompleteToken = filter.shouldCompleteToken()
         }
         is Rename -> actionsInvoker.rename(action.newName)

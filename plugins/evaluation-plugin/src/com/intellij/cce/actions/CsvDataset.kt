@@ -87,7 +87,7 @@ class CsvDataset(
             val session = featureInvoker.callFeature(call.expectedText, call.offset, call.nodeProperties)
             sessions += session
             sessionHandler(session)
-            if (handler.onSessionFinished(name)) {
+            if (handler.onSessionFinished(name, sessionCount - sessions.size)) {
               break
             }
           }

@@ -25,9 +25,9 @@ class InterpretationHandlerImpl(
     actionStats.add(ActionStat(action, System.currentTimeMillis()))
   }
 
-  override fun onSessionFinished(path: String): Boolean {
+  override fun onSessionFinished(path: String, fileSessionsLeft: Int): Boolean {
     completed++
-    updateProgress(path)
+    updateProgress(path, fileSessionsLeft)
     return isCancelled()
   }
 
@@ -56,11 +56,12 @@ class InterpretationHandlerImpl(
     return false
   }
 
-  private fun updateProgress(path: String) {
+  private fun updateProgress(path: String, fileSessionsLeft: Int) {
     val actualSessionsCount = sessionsLimit ?: sessionsCount
     val perMinute = actionStats.count { it.timestamp > Date().time - minInMs }
     val fileName = File(path).name
-    indicator.setProgress(fileName, "$fileName ($completed/$actualSessionsCount sessions, $perMinute act/min)",
+    val limitExceededPostfix = if (isLimitExceeded()) " - limit exceeded; $fileSessionsLeft sessions left in the last file" else ""
+    indicator.setProgress(fileName, "$fileName ($completed/$actualSessionsCount sessions, $perMinute act/min)$limitExceededPostfix",
                           completed.toDouble() / actualSessionsCount)
   }
 }
