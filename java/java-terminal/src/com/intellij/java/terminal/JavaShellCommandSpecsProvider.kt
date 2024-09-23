@@ -107,6 +107,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
         }
         description(JavaTerminalBundle.message(getOptionBundleKey(optionName)))
         if (!JavaTerminalBundle.isMessageInBundle(getOptionArgumentBundleKey(optionName))) return@option
+        if (KNOWN_REPETITIVE_OPTIONS.contains(presentableName)) repeatTimes = 0
         if (KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR.contains(presentableName)) separator = ""
         argument {
           displayName(JavaTerminalBundle.message(getOptionArgumentBundleKey(optionName)))
@@ -161,6 +162,14 @@ private val KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR = setOf(
   "-Xloggc:",
   "--finalization=",
   "--illegal-access="
+)
+
+private val KNOWN_REPETITIVE_OPTIONS = setOf(
+  "--add-opens",
+  "--patch-module",
+  "--limit-modules",
+  "--add-reads",
+  "--add-exports",
 )
 
 private val LOG = Logger.getInstance(JavaShellCommandSpecsProvider::class.java)
