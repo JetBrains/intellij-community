@@ -28,8 +28,6 @@ private fun addCommonVmOptions(is21: Boolean): List<String> {
     return common + listOf(
       "-XX:+UnlockDiagnosticVMOptions",
       "-XX:TieredOldPercentage=100000",
-      // Android Studio (b/357167831) more agressivly cleanup unused soft references
-      "-XX:SoftRefLRUPolicyMSPerMB=50",
     )
   }
   else {
