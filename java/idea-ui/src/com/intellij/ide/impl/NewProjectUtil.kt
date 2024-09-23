@@ -7,7 +7,6 @@ import com.intellij.ide.impl.NewProjectUtil.createFromWizard
 import com.intellij.ide.impl.NewProjectUtil.setCompilerOutputPath
 import com.intellij.ide.impl.OpenProjectTask.Companion.build
 import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
-import com.intellij.ide.impl.ProjectUtil.getOpenProjects
 import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtil.updateLastProjectLocation
 import com.intellij.ide.projectWizard.NewProjectWizardCollector
@@ -42,11 +41,11 @@ import com.intellij.util.TimeoutUtil
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.CancellationException
 
 private val LOG = logger<NewProjectUtil>()
 
+@Suppress("DuplicatedCode")
 internal suspend fun createNewProjectAsync(wizard: AbstractProjectWizard) {
   // warm-up components
   serviceAsync<ProjectManager>().defaultProject
@@ -71,6 +70,7 @@ object NewProjectUtil {
     createNewProject(wizard)
   }
 
+  @Suppress("DuplicatedCode")
   @JvmStatic
   fun createNewProject(wizard: AbstractProjectWizard) {
     // warm-up components
@@ -102,18 +102,17 @@ object NewProjectUtil {
   }
 
   fun setCompilerOutputPath(project: Project, path: String) {
+    val extension = CompilerProjectExtension.getInstance(project) ?: return
     CommandProcessor.getInstance().executeCommand(project, {
+      val canonicalPath = try {
+        FileUtil.resolveShortWindowsName(path)
+      }
+      catch (_: IOException) {
+        path
+      }
+
       ApplicationManager.getApplication().runWriteAction {
-        val extension = CompilerProjectExtension.getInstance(project)
-        if (extension != null) {
-          val canonicalPath = try {
-            FileUtil.resolveShortWindowsName(path)
-          }
-          catch (_: IOException) {
-            path
-          }
-          extension.compilerOutputUrl = VfsUtilCore.pathToUrl(canonicalPath)
-        }
+        extension.compilerOutputUrl = VfsUtilCore.pathToUrl(canonicalPath)
       }
     }, null, null)
   }
@@ -128,18 +127,20 @@ object NewProjectUtil {
 
 private fun doCreate(wizard: AbstractProjectWizard, projectToClose: Project?): Project? {
   val projectFilePath = wizard.newProjectFilePath
-  for (p in getOpenProjects()) {
-    if (isSameProject(Paths.get(projectFilePath), p)) {
-      focusProjectWindow(p, false)
+  val projectManager = ProjectManagerEx.getInstanceEx()
+
+  val projectFile = Path.of(projectFilePath)
+
+  for (p in ProjectUtilCore.getOpenProjects()) {
+    if (isSameProject(projectFile, p)) {
+      focusProjectWindow(project = p, stealFocusIfAppInactive = false)
       return null
     }
   }
 
   val projectBuilder = wizard.projectBuilder
   LOG.debug { "builder $projectBuilder" }
-  val projectManager = ProjectManagerEx.getInstanceEx()
   try {
-    val projectFile = Path.of(projectFilePath)
     val projectDir = if (wizard.storageScheme == StorageScheme.DEFAULT) {
       projectFile.parent ?: throw IOException("Cannot create project in '$projectFilePath': no parent file exists")
     }
@@ -176,7 +177,7 @@ private fun doCreate(wizard: AbstractProjectWizard, projectToClose: Project?): P
     val compileOutput = wizard.newCompileOutput
     setCompilerOutputPath(newProject, compileOutput)
     if (projectBuilder != null) {
-      // validate can require project on disk
+      // validate can require a project on disk
       if (!ApplicationManager.getApplication().isUnitTestMode) {
         newProject.save()
       }
@@ -215,7 +216,7 @@ private fun doCreate(wizard: AbstractProjectWizard, projectToClose: Project?): P
     if (newProject !== projectToClose) {
       updateLastProjectLocation(projectFile)
       val moduleConfigurator = projectBuilder.createModuleConfigurator()
-      val options =  OpenProjectTask {
+      val options = OpenProjectTask {
         project = newProject
         projectName = projectFile.fileName.toString()
         callback = ProjectOpenedCallback { openedProject, module ->

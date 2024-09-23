@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
@@ -127,10 +127,6 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return myCreatedProject;
   }
 
-  protected Project getCreatedProject() {
-    return myCreatedProject;
-  }
-
   private Module createModuleFromWizard(@NotNull Project project) {
     Module createdModule = new NewModuleAction().createModuleFromWizard(project, null, myWizard);
     waitForConfiguration(project);
@@ -161,10 +157,6 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     adjuster.accept(npwStep);
   }
 
-  protected void cancelWizardRun() {
-    throw new CancelWizardException();
-  }
-
   private static class CancelWizardException extends RuntimeException {
   }
 
@@ -193,9 +185,10 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     }
   }
 
-  protected void createWizard(@Nullable Project project) throws IOException {
+  protected void createWizard(@Nullable Project project) {
     setWizard(createWizard(project, contentRoot));
-    UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
+    // to make default selection applied
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   protected Project createProject(Consumer<? super Step> adjuster) throws IOException {

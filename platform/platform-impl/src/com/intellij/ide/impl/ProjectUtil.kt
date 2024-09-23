@@ -15,6 +15,7 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
@@ -176,7 +177,7 @@ object ProjectUtil {
     }
     if (ProjectUtilCore.isValidProjectPath(file)) {
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
-      return ProjectManagerEx.getInstanceEx().openProjectAsync(file, options.copy(runConfigurators = true))
+      return (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options.copy(runConfigurators = true))
     }
 
     if (!options.preventIprLookup && Files.isDirectory(file)) {
@@ -192,7 +193,7 @@ object ProjectUtil {
           }
         }
       }
-      catch (ignore: IOException) {
+      catch (_: IOException) {
       }
     }
 
@@ -216,7 +217,7 @@ object ProjectUtil {
 
     val project: Project?
     if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
-      project = ProjectManagerEx.getInstanceEx().openProjectAsync(
+      project = (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(
         projectStoreBaseDir = file,
         options = options.copy(
           isNewProject = true,
@@ -433,7 +434,7 @@ object ProjectUtil {
       return try {
         Files.isSameFile(projectFile, existingBaseDirPath)
       }
-      catch (ignore: IOException) {
+      catch (_: IOException) {
         false
       }
     }
@@ -442,7 +443,7 @@ object ProjectUtil {
       return try {
         Files.isSameFile(projectFile, projectStore.projectFilePath)
       }
-      catch (ignore: IOException) {
+      catch (_: IOException) {
         false
       }
     }
@@ -613,7 +614,7 @@ object ProjectUtil {
 
   private suspend fun openOrCreateProjectInner(name: String, file: Path): Project? {
     val existingFile = if (isProjectFile(file)) file else null
-    val projectManager = ProjectManagerEx.getInstanceEx()
+    val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
     if (existingFile != null) {
       for (p in projectManager.openProjects) {
         if (isSameProject(existingFile, p)) {
@@ -629,7 +630,7 @@ object ProjectUtil {
         !Files.exists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
       }
     }
-    catch (e: IOException) {
+    catch (_: IOException) {
       false
     }
 
@@ -692,13 +693,13 @@ object ProjectUtil {
     val preferAttach = currentProject != null &&
                        canAttach &&
                        (PlatformUtils.isDataGrip() && !ProjectUtilCore.isValidProjectPath(file))
-    if (preferAttach && attachToProjectAsync(projectToClose = currentProject!!, projectDir = file, callback = null)) {
+    if (preferAttach && attachToProjectAsync(projectToClose = currentProject, projectDir = file, callback = null)) {
       return null
     }
 
     val project = if (canAttach) {
       val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject)
-      ProjectManagerEx.getInstanceEx().openProjectAsync(file, options)
+      (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options)
     }
     else {
       openOrImportAsync(file, OpenProjectTask().withProjectToClose(currentProject))
