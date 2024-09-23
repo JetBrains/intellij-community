@@ -53,8 +53,9 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
 
   private static @Nullable PythonSdkFlavor<?> computeFlavor(@Nullable String sdkPath) {
     if (sdkPath != null) {
+      // FIXME: converge with sdk flavor & use os.isWindows
       for (var flavor : getApplicableFlavors(sdkPath.contains("\\"))) {
-        if (flavor.isValidSdkPath(Path.of(sdkPath))) {
+        if (flavor.isValidSdkPath(sdkPath)) {
           return flavor;
         }
       }

@@ -3,11 +3,10 @@ package com.jetbrains.python.sdk.pipenv
 
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PyFlavorData
-import java.nio.file.Path
 
 object PyPipEnvSdkFlavor : CPythonSdkFlavor<PyFlavorData.Empty>() {
   override fun getIcon() = PIPENV_ICON
   override fun getFlavorDataClass(): Class<PyFlavorData.Empty> = PyFlavorData.Empty::class.java
 
-  override fun isValidSdkPath(path: Path) = false
+  override fun isValidSdkPath(pathStr: String) = false
 }
