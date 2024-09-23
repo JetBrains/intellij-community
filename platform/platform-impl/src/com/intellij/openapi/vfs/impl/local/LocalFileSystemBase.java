@@ -500,29 +500,19 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     var originalFileName = file.getName();
     var t = LOG.isTraceEnabled() ? System.nanoTime() : 0;
     try {
-      var nioFile = convertToNioFileAndCheck(file, false);
-      // Don't call toRealPath for Unix,
-      // because UnixPath#toRealPath has a loop in which it resolves the correct casing for every parent directory,
-      // while we do it only for one directory (the direct parent).
-      // See https://github.com/JetBrains/JetBrainsRuntime/blob/e9d570349a20a4755bb80a3a7bbb8ab6a4d989f0/src/java.base/unix/classes/sun/nio/fs/UnixPath.java#L978
       if (SystemInfo.isWindows) {
-        var realName = nioFile.toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName().toString();
-        if (
-          originalFileName.equalsIgnoreCase(realName) ||
-          Normalizer.isNormalized(originalFileName, Normalizer.Form.NFC) &&
-          originalFileName.equalsIgnoreCase(Normalizer.normalize(originalFileName, Normalizer.Form.NFC))
-        ) {
-          return realName;
-        }
+        return convertToNioFileAndCheck(file, false).toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName().toString();
       }
-      var parentFile = nioFile.getParent();
-      if (parentFile != null) {
-        var canonicalFileNames = parentFile.toFile().list();
-        if (canonicalFileNames != null) {
-          for (var name : canonicalFileNames) {
-            if (name.equalsIgnoreCase(originalFileName)) {
-              return name;
-            }
+      // `Path#toRealPath` resolves the whole path starting from the root, but only the last component is necessary
+      try (var stream = Files.newDirectoryStream(convertToNioFileAndCheck(parent, false))) {
+        for (var path : stream) {
+          var name = path.getFileName().toString();
+          if (
+            originalFileName.equalsIgnoreCase(name) ||
+            Normalizer.isNormalized(originalFileName, Normalizer.Form.NFC) &&
+            originalFileName.equalsIgnoreCase(Normalizer.normalize(name, Normalizer.Form.NFC))
+          ) {
+            return name;
           }
         }
       }
