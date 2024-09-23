@@ -125,7 +125,7 @@ class LocalArtifactsManager {
 
   private fun removeOutdatedModels() = ensureParentFolderHasSingleChild(modelsRoot)
   private fun removeOutdatedServers() = ensureParentFolderHasSingleChild(serverRoot)
-  private fun ensureParentFolderHasSingleChild(path: Path) {
+  private fun removeSiblingsOf(path: Path) {
     path.parent.listDirectoryEntries().filter { it.name != path.name }.forEach { it.delete(recursively = true) }
   }
 
