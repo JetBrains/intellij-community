@@ -7,10 +7,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_OVERRIDE
 import org.jetbrains.kotlin.diagnostics.Errors.OPT_IN_OVERRIDE_ERROR
+import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -18,7 +20,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickF
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Util.asKtClass
 import org.jetbrains.kotlin.idea.quickfix.OptInGeneralUtilsBase.CandidateData
-import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.refactoring.isOpen
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -28,7 +29,9 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
+import org.jetbrains.kotlin.resolve.constants.ConstantValue
 import org.jetbrains.kotlin.resolve.constants.KClassValue
+import org.jetbrains.kotlin.resolve.constants.TypedArrayValue
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
@@ -61,7 +64,8 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
 
         val result = mutableListOf<IntentionAction>()
 
-        val candidates = if (element.containingFile.isScript()) element.collectScriptCandidates() else OptInGeneralUtils.collectCandidates(element)
+        val candidates =
+            if (element.containingFile.isScript()) element.collectScriptCandidates() else OptInGeneralUtils.collectCandidates(element)
 
         fun collectPropagateOptInAnnotationFix(targetElement: KtElement, kind: AddAnnotationFix.Kind): KotlinQuickFixAction<KtElement>? {
             if (targetElement !is KtDeclaration) return null
@@ -98,7 +102,10 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
 
         while (current != null) {
             when {
-                current is KtClassOrObject && closestDeclaration != current -> OptInGeneralUtils.findContainingClassOrObjectCandidate(current)?.addToResult()
+                current is KtClassOrObject && closestDeclaration != current -> OptInGeneralUtils.findContainingClassOrObjectCandidate(
+                    current
+                )?.addToResult()
+
                 current is KtCallExpression -> current.findSamConstructorCallCandidate()?.addToResult()
                 current is KtDeclaration &&
                         (current is KtDeclarationWithBody && !current.isLambda()
@@ -142,7 +149,7 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
 
 }
 
-private object OptInGeneralUtils: OptInGeneralUtilsBase(){
+private object OptInGeneralUtils : OptInGeneralUtilsBase() {
     override fun KtDeclaration.isSubclassOptPropagateApplicable(annotationFqName: FqName): Boolean {
         if (this !is KtClass) return false
 
@@ -155,9 +162,23 @@ private object OptInGeneralUtils: OptInGeneralUtilsBase(){
             val superClassDescriptor = it.asKtClass()?.descriptor ?: return@any false
             val superClassAnnotation =
                 superClassDescriptor.annotations.findAnnotation(OptInNames.SUBCLASS_OPT_IN_REQUIRED_FQ_NAME) ?: return@any false
-            val apiFqName = superClassAnnotation.allValueArguments[OptInNames.OPT_IN_ANNOTATION_CLASS]?.safeAs<KClassValue>()
-                ?.getArgumentType(superClassDescriptor.module)?.fqName
-            apiFqName == annotationFqName
+            val annotationArgument = superClassAnnotation.allValueArguments[OptInNames.OPT_IN_ANNOTATION_CLASS] ?: return false
+            val fqNamesFromArgs = getSubclassArgFqNames(annotationArgument, superClassDescriptor.module)
+            return fqNamesFromArgs.contains(annotationFqName)
+        }
+    }
+
+    private fun getSubclassArgFqNames(argument: ConstantValue<*>, module: ModuleDescriptor): List<FqName> {
+        return when (argument) {
+            // @SubclassOptInRequired for stdlib versions below 2.1
+            is KClassValue -> listOfNotNull(argument.getArgumentType(module).fqName)
+            // @SubclassOptInRequired for stdlib versions 2.1 and above
+            is TypedArrayValue -> argument.value.mapNotNull {
+                val kClassValue = it.safeAs<KClassValue>()
+                val type = kClassValue?.getArgumentType(module)
+                type?.fqName
+            }
+            else -> emptyList()
         }
     }
 
