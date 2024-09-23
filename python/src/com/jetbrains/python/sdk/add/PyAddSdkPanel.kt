@@ -109,7 +109,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
     @JvmStatic
     fun validateSdkComboBox(field: PySdkPathChoosingComboBox, @NlsContexts.Button defaultButtonName: String): ValidationInfo? {
-      return when (val sdk = field.selectedSdk) {
+      return when (val sdk = field.selectedSdkIfExists) {
         null -> ValidationInfo(PySdkBundle.message("python.sdk.field.is.empty"), field)
         is PySdkToInstall -> {
           val message = sdk.getInstallationWarning(defaultButtonName)
