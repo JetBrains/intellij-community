@@ -130,26 +130,28 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
   @Override
   public boolean add(@NotNull VirtualFile file) {
     assertNotFrozen();
-    boolean added;
-    if (file instanceof VirtualFileWithId) {
-      int id = ((VirtualFileWithId)file).getId();
-      if (storage != null) {
-        added = addToStorageWithUpgradeCheck(id);
-      }
-      else {
-        added = weirdFiles.add(file);
-        if (weirdFiles.size() > INT_SET_LIMIT) {
-          convertToIntSet();
-        }
-      }
+
+    if (!(file instanceof VirtualFileWithId)) {
+      return weirdFiles.add(file);
     }
-    else {
-      added = weirdFiles.add(file);
+
+    if (storage == null) {
+      boolean added = weirdFiles.add(file);
+      if (weirdFiles.size() > INT_SET_LIMIT) {
+        convertToIntSet();
+      }
+      return added;
     }
-    return added;
+
+    int id = ((VirtualFileWithId)file).getId();
+    return addToStorageWithUpgradeCheck(id);
   }
 
   private boolean addToStorageWithUpgradeCheck(int fileId) {
+    //TODO RC: current design is complicated.
+    //         Simpler approach is to add the fileId directly to the storage, but each storage impl throws an exception
+    //         (~StorageOverflowException) if it can't accommodate this fileId -> the exception is caught and another
+    //         storage impl is chosen then.
     if (storage instanceof IntSetStorage
         && storage.shouldUpgradeBeforeAdd(fileId)) {
       convertToBitSet();
@@ -184,6 +186,7 @@ public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implem
     IntIterator iterator = storage.intIterator();
     storage = new PartitionedBitSetStorage();
     while (iterator.hasNext()) {
+      //should be addToStorageWithUpgradeCheck(), but there is nothing to upgrade PartitionedBitSetStorage to
       storage.add(iterator.nextInt());
     }
   }
