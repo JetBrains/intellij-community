@@ -17,6 +17,6 @@ UFile (package = ) [public final class UnresolvedKt {...]
             UParameter (name = prop) [@org.jetbrains.annotations.NotNull var prop: error.NonExistentClass]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [UIdentifier (Identifier (UnresolvedBase))(prop)]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [UIdentifier (Identifier (UnresolvedBase))(prop)]
                     UIdentifier (Identifier (UnresolvedBase)) [UIdentifier (Identifier (UnresolvedBase))]
                     USimpleNameReferenceExpression (identifier = prop) [prop] : <ErrorType>
