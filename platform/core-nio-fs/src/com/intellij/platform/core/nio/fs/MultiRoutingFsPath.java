@@ -172,7 +172,21 @@ final class MultiRoutingFsPath implements Path, sun.nio.fs.BasicFileAttributesHo
 
   @Override
   public int compareTo(Path other) {
-    return myDelegate.compareTo(unwrap(other));
+    // The documentation of the method declares that:
+    // * The returned order is provider-specific.
+    // * `compareTo` should never be called for paths with different file systems.
+    // However, the meaning of this machinery is a combination of different file systems into a single one.
+    // It is assumed that every valid path of every underlying file system is a valid path for the other file systems.
+    Path unwrappedOther = unwrap(other);
+    if (unwrappedOther.getClass().isAssignableFrom(myDelegate.getClass())) {
+      return myDelegate.compareTo(unwrappedOther);
+    }
+    else if (myDelegate.getClass().isAssignableFrom(unwrappedOther.getClass())) {
+      return unwrappedOther.compareTo(myDelegate);
+    }
+    else {
+      return myDelegate.compareTo(myDelegate.getFileSystem().getPath(unwrappedOther.toString()));
+    }
   }
 
   @Override
