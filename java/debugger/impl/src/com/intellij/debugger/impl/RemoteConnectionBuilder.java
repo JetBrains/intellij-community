@@ -130,32 +130,12 @@ public class RemoteConnectionBuilder {
         addDebuggerAgent(parameters, myProject, true);
       }
 
-      final boolean forceNoJIT = DebuggerSettings.getInstance().DISABLE_JIT;
-      final String debugKey = System.getProperty(DEBUG_KEY_NAME, "-Xdebug");
-      final boolean needDebugKey = forceNoJIT || !"-Xdebug".equals(debugKey) /*the key is non-standard*/;
+      parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "");
+      parameters.getVMParametersList().replaceOrPrepend("-agentlib:jdwp=", "-agentlib:jdwp=" + _debuggeeRunProperties);
 
-      if (forceNoJIT || needDebugKey) {
-        parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "-Xrunjdwp:" + _debuggeeRunProperties);
-      }
-      else {
-        // use newer JVMTI if available
-        parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "");
-        parameters.getVMParametersList().replaceOrPrepend("-agentlib:jdwp=", "-agentlib:jdwp=" + _debuggeeRunProperties);
-      }
-
-      if (forceNoJIT) {
-        parameters.getVMParametersList().replaceOrPrepend("-Djava.compiler=", "-Djava.compiler=NONE");
-        parameters.getVMParametersList().replaceOrPrepend("-Xnoagent", "-Xnoagent");
-      }
-
-      if (needDebugKey) {
-        parameters.getVMParametersList().replaceOrPrepend(debugKey, debugKey);
-      }
-      else {
-        // deliberately skip outdated parameter because it can disable full-speed debugging for some jdk builds
-        // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6272174
-        parameters.getVMParametersList().replaceOrPrepend("-Xdebug", "");
-      }
+      // deliberately skip outdated parameter because it can disable full-speed debugging for some jdk builds
+      // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6272174
+      parameters.getVMParametersList().replaceOrPrepend("-Xdebug", "");
     });
 
     return new RemoteConnection(useSockets, DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK, address, myServer);
@@ -179,7 +159,6 @@ public class RemoteConnectionBuilder {
   }
 
   private static final String AGENT_JAR_NAME = "debugger-agent.jar";
-  private static final String DEBUG_KEY_NAME = "idea.xdebug.key";
 
   public static void addDebuggerAgent(JavaParameters parameters, @Nullable Project project, boolean checkJdkVersion) {
     if (AsyncStacksUtils.isAgentEnabled()) {
