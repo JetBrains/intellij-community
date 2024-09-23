@@ -4,13 +4,12 @@ package com.jetbrains.python.sdk.flavors
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
-import java.nio.file.Path
 
 class MayaSdkFlavor private constructor() : CPythonSdkFlavor<PyFlavorData.Empty>() {
   override fun getFlavorDataClass(): Class<PyFlavorData.Empty>  = PyFlavorData.Empty::class.java
 
-  override fun isValidSdkPath(path: Path): Boolean {
-    val name = FileUtil.getNameWithoutExtension(path.fileName.toString()).lowercase()
+  override fun isValidSdkPath(pathStr: String): Boolean {
+    val name = FileUtil.getNameWithoutExtension(pathStr).lowercase()
     return name.startsWith("mayapy")
   }
 
