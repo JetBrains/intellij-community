@@ -34,6 +34,7 @@ import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
@@ -234,6 +235,7 @@ public abstract class DialogWrapper {
                           boolean canBeParent,
                           @NotNull IdeModalityType ideModalityType,
                           boolean createSouth) {
+    ThreadingAssertions.assertEventDispatchThread();
     myPeer = parentComponent == null
              ? createPeer(project, canBeParent, project == null ? IdeModalityType.IDE : ideModalityType)
              : createPeer(parentComponent, canBeParent);

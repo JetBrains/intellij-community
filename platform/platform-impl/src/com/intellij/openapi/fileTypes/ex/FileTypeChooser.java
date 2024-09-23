@@ -147,7 +147,10 @@ public final class FileTypeChooser extends DialogWrapper {
    * If fileName is already associated any known file type returns it.
    * Otherwise, asks user to select file type and associates it with fileName extension if any selected.
    * @return Known file type or null. Never returns {@link FileTypes#UNKNOWN}.
+   *
+   * @deprecated Method requires both EDT and BGT. Use {@link #associateFileType(String)} directly
    */
+  @Deprecated(forRemoval = true)
   public static @Nullable FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @Nullable Project project) {
     FileType type = file.getFileType();
     if (type == FileTypes.UNKNOWN) {
@@ -158,7 +161,9 @@ public final class FileTypeChooser extends DialogWrapper {
 
   /**
    * Speculates if file with newName had known file type
+   * @deprecated Method requires both EDT and BGT. Use {@link #associateFileType(String)} directly
    */
+  @Deprecated(forRemoval = true)
   public static @Nullable FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile parent, @NotNull String newName, @Nullable Project project) {
     return getKnownFileTypeOrAssociate(new FakeVirtualFile(parent, newName), project);
   }

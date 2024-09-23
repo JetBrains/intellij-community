@@ -22,6 +22,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -179,9 +180,9 @@ private suspend fun doOpenFile(project: Project?, virtualFile: VirtualFile) {
   }
 
   LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, virtualFile)
-  readAction {
-    FileTypeChooser.getKnownFileTypeOrAssociate(virtualFile, project)
-  } ?: return
+  readAction { virtualFile.fileType }.takeIf { it != FileTypes.UNKNOWN }
+  ?: FileTypeChooser.associateFileType(virtualFile.name)
+  ?: return
   if (project == null || project.isDefault) {
     PlatformProjectOpenProcessor.createTempProjectAndOpenFileAsync(file, OpenProjectTask { projectToClose = project })
   }

@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.impl;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -47,6 +48,7 @@ import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -91,18 +93,19 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
       WindowManagerEx windowManager = getWindowManager();
       if (windowManager != null) {
-        if (project == null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
-          //noinspection deprecation
-          project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+        Window curWindow = ObjectUtils.chooseNotNull(
+          windowManager.getMostRecentFocusedWindow(),
+          KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow());
+        if (project == null && curWindow != null) {
+          project = ProjectUtil.getProjectForWindow(curWindow);
         }
 
         myProject = project;
 
         window = windowManager.suggestParentWindow(project);
         if (window == null) {
-          Window focusedWindow = windowManager.getMostRecentFocusedWindow();
-          if (focusedWindow instanceof IdeFrameImpl) {
-            window = focusedWindow;
+          if (curWindow instanceof IdeFrameImpl) {
+            window = curWindow;
           }
         }
         if (window == null) {
