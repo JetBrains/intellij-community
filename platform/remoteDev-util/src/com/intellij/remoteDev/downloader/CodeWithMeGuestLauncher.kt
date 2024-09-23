@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.remoteDev.RemoteDevUtilBundle
@@ -34,7 +35,7 @@ object CodeWithMeGuestLauncher {
   fun downloadCompatibleClientAndLaunch(
     lifetime: Lifetime?,
     project: Project?,
-    clientBuild: String?,
+    clientBuild: BuildNumber?,
     url: String,
     @NlsContexts.DialogTitle product: String,
     onDone: (Lifetime) -> Unit = {}
@@ -74,8 +75,9 @@ object CodeWithMeGuestLauncher {
       try {
         val sessionInfo = when (uri.scheme) {
           "tcp", "gwws" -> {
-            val clientBuild = uri.fragmentParameters["cb"] ?: error("there is no client build in url")
+            val clientBuildString = uri.fragmentParameters["cb"] ?: error("there is no client build in url")
             val jreBuild = uri.fragmentParameters["jb"] ?: error("there is no jre build in url")
+            val clientBuild = BuildNumber.fromStringOrNull(clientBuildString) ?: error("invalid client build: $clientBuildString")
             val unattendedMode = isUnattendedModeUri(uri)
 
             CodeWithMeClientDownloader.createSessionInfo(clientBuild, jreBuild, unattendedMode)
@@ -114,7 +116,7 @@ object CodeWithMeGuestLauncher {
   }
 
   private fun runAlreadyDownloadedClient(
-    clientBuild: String?,
+    clientBuild: BuildNumber?,
     aLifetime: Lifetime?,
     project: Project?,
     url: String,

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.remoteDev.connection.JetBrainsClientDownloadInfo
 import com.intellij.remoteDev.downloader.exceptions.CodeWithMeUnavailableException
@@ -74,8 +75,9 @@ object ThinClientSessionInfoFetcher {
 
         val sessionInfo = objectMapper.value.reader().readTree(jsonResponseString)
         val jreUrlNode = sessionInfo["compatibleJreUrl"]
+        val hostBuildNumber = sessionInfo["hostBuildNumber"].asText()
         return@connect JetBrainsClientDownloadInfo(
-          hostBuildNumber = sessionInfo["hostBuildNumber"].asText(),
+          hostBuildNumber = BuildNumber.fromStringOrNull(hostBuildNumber) ?: error("Invalid host build number: $hostBuildNumber"),
           compatibleClientUrl = sessionInfo["compatibleClientUrl"].asText(),
           compatibleJreUrl = if (jreUrlNode.isNull) null else jreUrlNode.asText(),
           downloadPgpPublicKeyUrl = sessionInfo["downloadPgpPublicKeyUrl"]?.asText()

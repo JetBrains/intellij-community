@@ -89,9 +89,9 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       LOG.debug("Start embedded client using launcher")
       val workingDirectory = Path(PathManager.getHomePath())
       return CodeWithMeClientDownloader.runJetBrainsClientProcess(
-        launcherData, 
+        launcherData,
         workingDirectory,
-        clientVersion = ApplicationInfo.getInstance().build.asStringWithoutProductCode(),
+        clientBuild = ApplicationInfo.getInstance().build.withoutProductCode(),
         url,
         extraArguments,
         lifetime
