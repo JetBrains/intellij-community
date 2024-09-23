@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.JavaUiBundle;
@@ -96,7 +96,7 @@ public class NewModuleAction extends AnAction implements DumbAware, NewProjectOr
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getEventProject(e) != null);
-    NewProjectAction.updateActionText(this, e);
+    NewProjectAction.Companion.updateActionText$intellij_java_ui(this, e);
   }
 
   @Override
