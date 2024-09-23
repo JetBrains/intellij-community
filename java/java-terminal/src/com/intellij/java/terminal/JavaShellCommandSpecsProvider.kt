@@ -20,7 +20,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
   private fun getSpecs(): ShellCommandSpec = ShellCommandSpec("java") {
     dynamicOptions { terminalContext ->
       val javaContext = JavaShellCommandContext.create(terminalContext) ?: return@dynamicOptions
-      addXOptionsFromVM(javaContext.getJrePath())
+      addOptionsFromVM(javaContext.getJrePath())
       val version = javaContext.getJavaVersion() ?: return@dynamicOptions
       if (version.isAtLeast(11)) {
         addDoubleDashedOptions()
@@ -69,37 +69,56 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     }
   }
 
-  private suspend fun ShellChildOptionsContext.addXOptionsFromVM(path: String?) {
+  private suspend fun ShellChildOptionsContext.addOptionsFromVM(path: String?) {
     if (path == null) return
     val jdkOptionsData = withContext(Dispatchers.IO) {
       VMOptionsService.getInstance().getOrComputeOptionsForJdk(path).get() ?: return@withContext null
     } ?: return
-    jdkOptionsData.options
-      .filter { (it.kind == VMOptionKind.Standard || it.kind == VMOptionKind.Product) && it.variant == VMOptionVariant.X }
-      .forEach {
-        val presentableName = "${it.variant.prefix()}${it.optionName}"
-        option(presentableName) {
-          repeatTimes = 1
+    val variantMap = jdkOptionsData.options
+      .filter { (it.kind == VMOptionKind.Standard || it.kind == VMOptionKind.Product) }
+      .groupBy { it.variant }
+    variantMap[VMOptionVariant.X]?.forEach {
+      val presentableName = "${it.variant.prefix()}${it.optionName}"
+      option(presentableName) {
+        repeatTimes = 1
 
-          if (JavaTerminalBundle.isMessageInBundle(it.optionName.getXOptionBundleKey())) {
-            description(JavaTerminalBundle.message(it.optionName.getXOptionBundleKey()))
-          }
-          else {
-            LOG.warn("Unknown X option: \"${it.optionName}\". Paste following string into the JavaTerminalBundle.properties:\n" +
-                     "${it.optionName.getXOptionBundleKey()}=${it.doc}")
-          }
+        if (JavaTerminalBundle.isMessageInBundle(getOptionBundleKey(it.optionName))) {
+          description(JavaTerminalBundle.message(getOptionBundleKey(it.optionName)))
+        }
+        else {
+          LOG.warn("Unknown X option: \"${it.optionName}\". Paste following string into the JavaTerminalBundle.properties:\n" +
+                   "${getOptionBundleKey(it.optionName)}=${it.doc}")
+        }
 
-          if (!KNOWN_X_OPTIONS_WITH_ARGUMENT.contains(presentableName)) return@option
-          separator = it.variant.suffix()?.toString() ?: ""
-          argument {
-            displayName(JavaTerminalBundle.message("java.command.terminal.default.argument.text"))
-          }
+        if (!KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR.contains(presentableName)) return@option
+        separator = it.variant.suffix()?.toString() ?: ""
+        argument {
+          displayName(JavaTerminalBundle.message("java.command.terminal.default.argument.text"))
         }
       }
+    }
+    variantMap[VMOptionVariant.DASH_DASH]?.forEach {
+      val optionName = it.optionName
+      val presentableName = "${it.variant.prefix()}$optionName"
+      option(presentableName) {
+        if (JavaTerminalBundle.isMessageInBundle(getOptionBundleKey(optionName)) && JavaTerminalBundle.isMessageInBundle(getOptionArgumentBundleKey(optionName))) {
+          description(JavaTerminalBundle.message(getOptionBundleKey(optionName)))
+
+          if (KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR.contains(presentableName)) separator = ""
+
+          argument {
+            displayName(JavaTerminalBundle.message(getOptionArgumentBundleKey(optionName)))
+          }
+        }
+        else {
+          LOG.warn("Unknown DashDash option: \"$optionName\". Provide ${getOptionBundleKey(optionName)} and ${getOptionArgumentBundleKey(optionName)}")
+        }
+      }
+    }
   }
 
   private fun ShellChildOptionsContext.addDoubleDashedOptions() {
-    val outputStreamName: @Nls String = JavaTerminalBundle.message("output.stream.name")
+    val outputStreamName = JavaTerminalBundle.message("output.stream.name")
     option("--version") {
       exclusiveOn = listOf("-version")
       description(JavaTerminalBundle.message("java.command.terminal.version.option.description", outputStreamName))
@@ -125,13 +144,14 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     }
   }
 
-  private fun String.getXOptionBundleKey(): String {
-    val name = this.replace(':', '.').trim('.')
-    return "java.command.terminal.$name.option.description"
-  }
+  private fun getOptionBundleKey(option: String): String = "java.command.terminal.${getCanonicalOptionName(option)}.option.description"
+
+  private fun getOptionArgumentBundleKey(option: String): String = "java.command.terminal.${getCanonicalOptionName(option)}.option.argument.text"
+
+  private fun getCanonicalOptionName(option: String): String = option.replace(Regex("[:|\\-]"), ".").trim('=', '.')
 }
 
-private val KNOWN_X_OPTIONS_WITH_ARGUMENT = setOf(
+private val KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR = setOf(
   "-Xms",
   "-Xmx",
   "-Xmn",
@@ -141,6 +161,7 @@ private val KNOWN_X_OPTIONS_WITH_ARGUMENT = setOf(
   "-Xbootclasspath/p:",
   "-Xlog:",
   "-Xloggc:",
+  "--finalization="
 )
 
 private val LOG = Logger.getInstance(JavaShellCommandSpecsProvider::class.java)
