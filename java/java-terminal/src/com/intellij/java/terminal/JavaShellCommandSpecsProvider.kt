@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.block.completion.spec.*
 import org.jetbrains.plugins.terminal.block.completion.spec.dsl.ShellChildOptionsContext
 
@@ -25,9 +26,11 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
         addDoubleDashedOptions()
       }
     }
+
+    val errorStreamName: @Nls String = JavaTerminalBundle.message("error.stream.name")
     description(JavaTerminalBundle.message("java.command.terminal.description"))
     option("-?", "-help", "-h") {
-      description(JavaTerminalBundle.message("java.command.terminal.help.error.option.description"))
+      description(JavaTerminalBundle.message("java.command.terminal.help.option.description", errorStreamName))
     }
     option("-jar") {
       argument {
@@ -44,7 +47,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       }
     }
     option("-version") {
-      description(JavaTerminalBundle.message("java.command.terminal.version.option.description"))
+      description(JavaTerminalBundle.message("java.command.terminal.version.option.description", errorStreamName))
     }
     option("-classpath", "-cp") {
       description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
@@ -54,7 +57,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       }
     }
     option("-showversion") {
-      description(JavaTerminalBundle.message("java.command.terminal.show.version.option.description"))
+      description(JavaTerminalBundle.message("java.command.terminal.show.version.option.description", errorStreamName))
     }
     argument {
       displayName(JavaTerminalBundle.message("java.command.terminal.argument.main.class.text"))
@@ -104,13 +107,17 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
   )
 
   private fun ShellChildOptionsContext.addDoubleDashedOptions() {
+    val outputStreamName: @Nls String = JavaTerminalBundle.message("output.stream.name")
     option("--version") {
-      description(JavaTerminalBundle.message("java.command.terminal.version.option.description"))
+      exclusiveOn = listOf("-version")
+      description(JavaTerminalBundle.message("java.command.terminal.version.option.description", outputStreamName))
     }
     option("--show-version") {
-      description(JavaTerminalBundle.message("java.command.terminal.show.version.option.description"))
+      exclusiveOn = listOf("-show-version")
+      description(JavaTerminalBundle.message("java.command.terminal.show.version.option.description", outputStreamName))
     }
     option("--dry-run") {
+      exclusiveOn = listOf("-dry-run")
       description(JavaTerminalBundle.message("java.command.terminal.dry.run.option.description"))
     }
     option("--class-path") {
@@ -121,7 +128,8 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       }
     }
     option("--help") {
-      description(JavaTerminalBundle.message("java.command.terminal.help.output.option.description"))
+      exclusiveOn = listOf("-?", "-help", "-h")
+      description(JavaTerminalBundle.message("java.command.terminal.help.option.description", outputStreamName))
     }
   }
 
