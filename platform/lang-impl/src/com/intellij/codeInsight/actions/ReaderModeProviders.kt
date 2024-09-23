@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.SlowOperations
 
 private class HighlightingReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
@@ -94,7 +95,9 @@ private class VisualFormattingLayerReaderModeProvider : ReaderModeProvider {
       VisualFormattingLayerService.disableForEditor(editor)
     }
     if (oldSettings != settings) {
-      val file = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document)
+      val file = SlowOperations.knownIssue("IJPL-162825").use {
+        PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document)
+      }
       if (file != null) {
         DaemonCodeAnalyzer.getInstance(project).restart(file)
       }

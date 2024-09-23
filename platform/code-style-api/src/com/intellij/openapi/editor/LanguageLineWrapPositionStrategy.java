@@ -2,11 +2,13 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,9 +35,11 @@ public final class LanguageLineWrapPositionStrategy extends LanguageExtension<Li
     LineWrapPositionStrategy result = getDefaultImplementation();
     Project project = editor.getProject();
     if (project != null && !project.isDisposed()) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (psiFile != null) {
-        result = INSTANCE.forLanguage(psiFile.getLanguage());
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162826")) {
+        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+        if (psiFile != null) {
+          result = INSTANCE.forLanguage(psiFile.getLanguage());
+        }
       }
     }
     return result;

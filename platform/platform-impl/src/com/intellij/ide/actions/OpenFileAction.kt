@@ -36,6 +36,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
+import com.intellij.util.SlowOperations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -146,11 +147,12 @@ private class ProjectOrFileChooserDescriptor : OpenProjectFileChooserDescriptor(
     return if (file.isDirectory) super.isFileVisible(file, showHiddenFiles) else myStandardDescriptor.isFileVisible(file, showHiddenFiles)
   }
 
-  override fun isFileSelectable(file: VirtualFile?): Boolean {
-    if (file == null) {
-      return false
+  override fun isFileSelectable(file: VirtualFile?): Boolean = when {
+    file == null -> false
+    file.isDirectory -> SlowOperations.knownIssue("IJPL-162827").use {
+      super.isFileSelectable(file)
     }
-    return if (file.isDirectory) super.isFileSelectable(file) else myStandardDescriptor.isFileSelectable(file)
+    else -> myStandardDescriptor.isFileSelectable(file)
   }
 
   override fun isChooseMultiple() = true

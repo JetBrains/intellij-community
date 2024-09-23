@@ -5,6 +5,7 @@ import com.intellij.codeInsight.generation.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.project.DumbAware;
@@ -22,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBInsets;
@@ -150,7 +152,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     myContainerNodes.clear();
 
     ApplicationManager.getApplication().runReadAction(() -> {
-      myTreeModel = buildModel();
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162824")) {
+        myTreeModel = buildModel();
+      }
     });
 
     myTree.setModel(myTreeModel);

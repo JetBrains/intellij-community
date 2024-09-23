@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.SlowOperations
 import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.SwingHelper
 import com.jetbrains.python.PyBundle
@@ -59,17 +60,19 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     val group = DefaultActionGroup()
 
     val interpreterList = PyConfigurableInterpreterList.getInstance(project)
-    val moduleSdksByTypes = groupModuleSdksByTypes(interpreterList.getAllPythonSdks(project, module), module) {
-      !it.sdkSeemsValid ||
-      PythonSdkType.hasInvalidRemoteCredentials(it) ||
-      PythonSdkType.isIncompleteRemote(it) ||
-      !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(it))
+    val moduleSdksByTypes = SlowOperations.knownIssue("PY-76167").use {
+      groupModuleSdksByTypes(interpreterList.getAllPythonSdks(project, module), module) {
+        !it.sdkSeemsValid ||
+        PythonSdkType.hasInvalidRemoteCredentials(it) ||
+        PythonSdkType.isIncompleteRemote(it) ||
+        !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(it))
+      }
     }
 
     val currentSdk = module.pythonSdk
     val model = interpreterList.model
     val targetModuleSitsOn = PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(module)
-    PyRenderedSdkType.values().forEachIndexed { index, type ->
+    PyRenderedSdkType.entries.forEachIndexed { index, type ->
       if (type in moduleSdksByTypes) {
         if (index != 0) group.addSeparator()
         group.addAll(moduleSdksByTypes
@@ -86,7 +89,11 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     if (moduleSdksByTypes.isNotEmpty()) group.addSeparator()
     if (Registry.get("python.use.targets.api").asBoolean()) {
       val addNewInterpreterPopupGroup = DefaultActionGroup(PyBundle.message("python.sdk.action.add.new.interpreter.text"), true)
-      addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(project, module) { switchToSdk(module, it, currentSdk) })
+      addNewInterpreterPopupGroup.addAll(collectAddInterpreterActions(project, module) { sdk ->
+        SlowOperations.knownIssue("PY-76167").use {
+          switchToSdk(module, sdk, currentSdk)
+        }
+      })
       group.add(addNewInterpreterPopupGroup)
       group.addSeparator()
     }
