@@ -130,9 +130,9 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
     ThreadingAssertions.assertEventDispatchThread();
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-335057, EA-843299")) {
       if (!mayAutoImportNow(myFile, true, ThreeState.UNSURE)) return;
-    }
-    for (BooleanSupplier autoImportAction : autoImportActions) {
-      autoImportAction.getAsBoolean();
+      for (BooleanSupplier autoImportAction : autoImportActions) {
+        autoImportAction.getAsBoolean();
+      }
     }
   }
 

@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.LightweightHint
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.enumMapOf
 import com.intellij.util.ui.GraphicsUtil
@@ -75,7 +76,9 @@ class InlayPresentationList(
 
   fun handleClick(e: EditorMouseEvent, pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage, controlDown: Boolean) {
     val entry = findEntryByPoint(fontMetricsStorage, pointInsideInlay) ?: return
-    entry.handleClick(e, this, controlDown)
+    SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
+      entry.handleClick(e, this, controlDown)
+    }
   }
 
   private fun findEntryByPoint(fontMetricsStorage: InlayTextMetricsStorage, pointInsideInlay: Point): InlayPresentationEntry? {

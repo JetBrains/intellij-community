@@ -4,6 +4,7 @@ package com.intellij.ide.util.treeView
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.TreeState.CachedPresentationDataImpl
 import com.intellij.ui.treeStructure.CachingTreePath
+import com.intellij.util.SlowOperations
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -49,7 +50,9 @@ class CachedTreePresentationData(
         val presentation = userObject.presentation
         val children = mutableListOf<CachedTreePresentationData>()
         val iconData = getIconData(presentation.getIcon(false))
-        val extraAttrs = (userObject as? TreeNodeWithCacheableAttributes)?.getCacheableAttributes()
+        val extraAttrs = SlowOperations.knownIssue("IJPL-162819").use {
+          (userObject as? TreeNodeWithCacheableAttributes)?.getCacheableAttributes()
+        }
         val isLeaf = model.isLeaf(node)
         val result = CachedTreePresentationData(
           TreeState.PathElement(TreeState.calcId(userObject), TreeState.calcType(userObject), 0, null),

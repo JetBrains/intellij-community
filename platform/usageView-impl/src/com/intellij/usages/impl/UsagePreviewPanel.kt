@@ -52,6 +52,7 @@ import com.intellij.usages.UsageContextPanel
 import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -167,9 +168,10 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         if (infos != myCachedSelectedUsageInfos // avoid moving viewport
             || !UsageViewPresentation.arePatternsEqual(myCachedSearchPattern, myPresentation.searchPattern)
             || myCachedReplaceString != myPresentation.replaceString || myCachedCaseSensitive != myPresentation.isCaseSensitive) {
-          //maybe readaction
-          WriteIntentReadAction.run {
-            highlight(infos, myEditor!!, project, myShowTooltipBalloon, HighlighterLayer.ADDITIONAL_SYNTAX)
+          SlowOperations.knownIssue("IJPL-162820").use {
+            ReadAction.run<RuntimeException> {
+              highlight(infos, myEditor!!, project, myShowTooltipBalloon, HighlighterLayer.ADDITIONAL_SYNTAX)
+            }
           }
           myCachedSelectedUsageInfos = infos
           myCachedSearchPattern = myPresentation.searchPattern
