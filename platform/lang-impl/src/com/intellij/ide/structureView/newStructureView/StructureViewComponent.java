@@ -83,7 +83,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView {
   private static final Logger LOG = Logger.getInstance(StructureViewComponent.class);
@@ -828,7 +827,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return provider == null ? 2 : provider.getMinimumAutoExpandDepth();
   }
 
-  private StructureViewTreeElement getStructureTreeElement(Object pathComponent) {
+  private static StructureViewTreeElement getStructureTreeElement(Object pathComponent) {
     if (!(pathComponent instanceof DefaultMutableTreeNode node)) return null;
     if (!(node.getUserObject() instanceof AbstractTreeNode<?> abstractTreeNode)) return null;
     if (!(abstractTreeNode.getValue() instanceof StructureViewTreeElement treeElement)) return null;
@@ -994,7 +993,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         if (handled) {
           event.consume();
           return;
-        };
+        }
       }
       super.processMouseEvent(event);
     }
