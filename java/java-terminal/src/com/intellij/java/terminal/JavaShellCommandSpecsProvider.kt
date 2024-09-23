@@ -30,6 +30,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     val errorStreamName: @Nls String = JavaTerminalBundle.message("error.stream.name")
     description(JavaTerminalBundle.message("java.command.terminal.description"))
     option("-?", "-help", "-h") {
+      exclusiveOn = listOf("--help")
       description(JavaTerminalBundle.message("java.command.terminal.help.option.description", errorStreamName))
     }
     option("-jar") {
@@ -47,9 +48,11 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       }
     }
     option("-version") {
+      exclusiveOn = listOf("--version")
       description(JavaTerminalBundle.message("java.command.terminal.version.option.description", errorStreamName))
     }
     option("-classpath", "-cp") {
+      exclusiveOn = listOf("--class-path")
       description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
       argument {
         displayName(JavaTerminalBundle.message("java.command.terminal.classpath.option.argument.path.text", ShellCommandUtils.getClassPathSeparator()))
@@ -57,6 +60,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       }
     }
     option("-showversion") {
+      exclusiveOn = listOf("--show-version")
       description(JavaTerminalBundle.message("java.command.terminal.show.version.option.description", errorStreamName))
     }
     argument {
