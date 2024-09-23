@@ -5,6 +5,12 @@ import com.intellij.history.LocalHistory
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.openapi.Disposable
 
+/**
+ * Provides API access to [LocalHistoryImpl]
+ */
 abstract class LocalHistoryEx : LocalHistory(), Disposable {
+  /**
+   * return null if [LocalHistoryImpl] disabled or not initialized
+   */
   abstract val facade: LocalHistoryFacade?
 }

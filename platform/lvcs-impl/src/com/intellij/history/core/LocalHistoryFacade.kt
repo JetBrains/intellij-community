@@ -23,6 +23,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
+/**
+ * Facade for managing local history operations.
+ *
+ * Provides methods for managing [com.intellij.history.core.changes.Change].
+ * E.g., modifying content, renaming, changing read-only status, moving, and deleting.
+ * It also allows adding and managing system and user labels and aggregate changes by [ActivityId]
+ */
 open class LocalHistoryFacade internal constructor() {
 
   internal val storageDir: Path
