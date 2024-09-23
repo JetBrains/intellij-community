@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.markdown
 
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
+import org.jetbrains.jewel.foundation.code.MimeType
 
 public sealed interface MarkdownBlock {
     @GenerateDataFunctions

@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.markdown
 
+import org.jetbrains.jewel.foundation.code.MimeType
 import org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock

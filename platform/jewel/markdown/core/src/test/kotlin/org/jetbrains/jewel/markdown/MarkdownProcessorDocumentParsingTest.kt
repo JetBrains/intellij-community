@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.markdown
 
+import org.jetbrains.jewel.foundation.code.MimeType
 import org.jetbrains.jewel.markdown.InlineMarkdown.Code
 import org.jetbrains.jewel.markdown.InlineMarkdown.Emphasis
 import org.jetbrains.jewel.markdown.InlineMarkdown.HardLineBreak

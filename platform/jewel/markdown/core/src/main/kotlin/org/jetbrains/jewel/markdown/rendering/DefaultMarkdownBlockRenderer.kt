@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +37,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.jewel.foundation.code.MimeType
+import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote
@@ -339,6 +343,7 @@ public open class DefaultMarkdownBlockRenderer(
 
     @Composable
     override fun render(block: FencedCodeBlock, styling: MarkdownStyling.Code.Fenced) {
+        val mimeType = block.mimeType ?: MimeType.Known.UNKNOWN
         MaybeScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
             Modifier.background(styling.background, styling.shape)
@@ -346,9 +351,9 @@ public open class DefaultMarkdownBlockRenderer(
                 .then(if (styling.fillWidth) Modifier.fillMaxWidth() else Modifier),
         ) {
             Column(Modifier.padding(styling.padding)) {
-                if (block.mimeType != null && styling.infoPosition.verticalAlignment == Alignment.Top) {
+                if (styling.infoPosition.verticalAlignment == Alignment.Top) {
                     FencedBlockInfo(
-                        block.mimeType.displayName(),
+                        mimeType.displayName(),
                         styling.infoPosition.horizontalAlignment
                             ?: error("No horizontal alignment for position ${styling.infoPosition.name}"),
                         styling.infoTextStyle,
@@ -356,18 +361,11 @@ public open class DefaultMarkdownBlockRenderer(
                     )
                 }
 
-                Text(
-                    text = block.content,
-                    style = styling.editorTextStyle,
-                    color = styling.editorTextStyle.color.takeOrElse { LocalContentColor.current },
-                    modifier =
-                        Modifier.focusProperties { canFocus = false }
-                            .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
-                )
+                Code(block.content, mimeType, styling)
 
-                if (block.mimeType != null && styling.infoPosition.verticalAlignment == Alignment.Bottom) {
+                if (styling.infoPosition.verticalAlignment == Alignment.Bottom) {
                     FencedBlockInfo(
-                        block.mimeType.displayName(),
+                        mimeType.displayName(),
                         styling.infoPosition.horizontalAlignment
                             ?: error("No horizontal alignment for position ${styling.infoPosition.name}"),
                         styling.infoTextStyle,
@@ -376,6 +374,24 @@ public open class DefaultMarkdownBlockRenderer(
                 }
             }
         }
+    }
+
+    @Composable
+    private fun Code(content: String, mimeType: MimeType, styling: MarkdownStyling.Code.Fenced) {
+        val annotatedCode by
+            LocalCodeHighlighter.current.highlight(content, mimeType).collectAsState(AnnotatedString(content))
+        CodeText(annotatedCode, styling)
+    }
+
+    @Composable
+    private fun CodeText(annotatedCode: AnnotatedString, styling: MarkdownStyling.Code.Fenced) {
+        Text(
+            text = annotatedCode,
+            style = styling.editorTextStyle,
+            modifier =
+                Modifier.focusProperties { canFocus = false }
+                    .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+        )
     }
 
     @Composable

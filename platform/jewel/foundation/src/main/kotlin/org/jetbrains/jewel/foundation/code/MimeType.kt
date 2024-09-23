@@ -1,13 +1,13 @@
-package org.jetbrains.jewel.markdown
+package org.jetbrains.jewel.foundation.code
 
-import org.jetbrains.jewel.markdown.MimeType.Known.AGSL
-import org.jetbrains.jewel.markdown.MimeType.Known.DART
-import org.jetbrains.jewel.markdown.MimeType.Known.JSON
-import org.jetbrains.jewel.markdown.MimeType.Known.KOTLIN
-import org.jetbrains.jewel.markdown.MimeType.Known.PYTHON
-import org.jetbrains.jewel.markdown.MimeType.Known.RUST
-import org.jetbrains.jewel.markdown.MimeType.Known.TYPESCRIPT
-import org.jetbrains.jewel.markdown.MimeType.Known.YAML
+import org.jetbrains.jewel.foundation.code.MimeType.Known.AGSL
+import org.jetbrains.jewel.foundation.code.MimeType.Known.DART
+import org.jetbrains.jewel.foundation.code.MimeType.Known.JSON
+import org.jetbrains.jewel.foundation.code.MimeType.Known.KOTLIN
+import org.jetbrains.jewel.foundation.code.MimeType.Known.PYTHON
+import org.jetbrains.jewel.foundation.code.MimeType.Known.RUST
+import org.jetbrains.jewel.foundation.code.MimeType.Known.TYPESCRIPT
+import org.jetbrains.jewel.foundation.code.MimeType.Known.YAML
 
 /**
  * Represents the language and dialect of a source snippet, as an RFC 2046 mime type.

@@ -16,6 +16,7 @@ import java.awt.Desktop
 import java.net.URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.markdown.standalone.ProvideMarkdownStyling
 import org.jetbrains.jewel.intui.markdown.standalone.dark
@@ -76,7 +77,7 @@ internal fun MarkdownPreview(modifier: Modifier = Modifier, rawMarkdown: CharSeq
     // Using the values from the GitHub rendering to ensure contrast
     val background = remember(isDark) { if (isDark) Color(0xff0d1117) else Color.White }
 
-    ProvideMarkdownStyling(markdownStyling, blockRenderer) {
+    ProvideMarkdownStyling(markdownStyling, blockRenderer, NoOpCodeHighlighter) {
         val lazyListState = rememberLazyListState()
         VerticallyScrollableContainer(lazyListState, modifier.background(background)) {
             LazyMarkdown(

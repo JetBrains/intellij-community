@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.project.Project
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import icons.IdeSampleIconKeys
@@ -71,7 +72,7 @@ import org.jetbrains.jewel.ui.painter.hints.Stroke
 import org.jetbrains.jewel.ui.theme.colorPalette
 
 @Composable
-internal fun ComponentShowcaseTab() {
+internal fun ComponentShowcaseTab(project: Project) {
     val bgColor by remember(JBColor.PanelBackground.rgb) { mutableStateOf(JBColor.PanelBackground.toComposeColor()) }
 
     VerticallyScrollableContainer {
@@ -84,7 +85,7 @@ internal fun ComponentShowcaseTab() {
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             ColumnOne()
-            ColumnTwo()
+            ColumnTwo(project)
         }
     }
 }
@@ -272,9 +273,9 @@ private fun IconsShowcase() {
 }
 
 @Composable
-private fun RowScope.ColumnTwo() {
+private fun RowScope.ColumnTwo(project: Project) {
     Column(Modifier.trackActivation().weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        MarkdownExample()
+        MarkdownExample(project)
 
         Divider(Orientation.Horizontal)
 
@@ -312,13 +313,13 @@ private fun RowScope.ColumnTwo() {
 }
 
 @Composable
-private fun MarkdownExample() {
+private fun MarkdownExample(project: Project) {
     var enabled by remember { mutableStateOf(true) }
     CheckboxRow("Enabled", enabled, { enabled = it })
 
     val contentColor = if (enabled) JewelTheme.globalColors.text.normal else JewelTheme.globalColors.text.disabled
     CompositionLocalProvider(LocalContentColor provides contentColor) {
-        ProvideMarkdownStyling {
+        ProvideMarkdownStyling(project) {
             Markdown(
                 """
                 |Hi! This is an example of **Markdown** rendering. We support the [CommonMark specs](https://commonmark.org/)

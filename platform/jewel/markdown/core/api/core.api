@@ -121,7 +121,7 @@ public final class org/jetbrains/jewel/markdown/MarkdownBlock$CodeBlock$FencedCo
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getContent ()Ljava/lang/String;
-	public final fun getMimeType-EIRQHX8 ()Ljava/lang/String;
+	public final fun getMimeType-VwCp3SY ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -220,75 +220,6 @@ public final class org/jetbrains/jewel/markdown/MarkdownKt {
 	public static final fun LazyMarkdown (Ljava/util/List;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/lazy/LazyListState;ZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Markdown (Ljava/lang/String;Landroidx/compose/ui/Modifier;ZZLkotlinx/coroutines/CoroutineDispatcher;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Lorg/jetbrains/jewel/markdown/processing/MarkdownProcessor;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Markdown (Ljava/util/List;Ljava/lang/String;Landroidx/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Landroidx/compose/runtime/Composer;II)V
-}
-
-public final class org/jetbrains/jewel/markdown/MimeType {
-	public static final field ATTR_FOLDER_TYPE Ljava/lang/String;
-	public static final field ATTR_ROLE Ljava/lang/String;
-	public static final field ATTR_ROOT_TAG Ljava/lang/String;
-	public static final field VALUE_MANIFEST Ljava/lang/String;
-	public static final field VALUE_RESOURCE Ljava/lang/String;
-	public static final fun base-ip6yS68 (Ljava/lang/String;)Ljava/lang/String;
-	public static final synthetic fun box-impl (Ljava/lang/String;)Lorg/jetbrains/jewel/markdown/MimeType;
-	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
-	public static final fun displayName-impl (Ljava/lang/String;)Ljava/lang/String;
-	public fun equals (Ljava/lang/Object;)Z
-	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
-	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
-	public fun hashCode ()I
-	public static fun hashCode-impl (Ljava/lang/String;)I
-	public fun toString ()Ljava/lang/String;
-	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
-	public final synthetic fun unbox-impl ()Ljava/lang/String;
-}
-
-public final class org/jetbrains/jewel/markdown/MimeType$Known {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/markdown/MimeType$Known;
-	public final fun fromMarkdownLanguageName-HxXrbs8 (Ljava/lang/String;)Ljava/lang/String;
-	public final fun getAGSL-ip6yS68 ()Ljava/lang/String;
-	public final fun getAIDL-ip6yS68 ()Ljava/lang/String;
-	public final fun getC-ip6yS68 ()Ljava/lang/String;
-	public final fun getCPP-ip6yS68 ()Ljava/lang/String;
-	public final fun getDART-ip6yS68 ()Ljava/lang/String;
-	public final fun getGO-ip6yS68 ()Ljava/lang/String;
-	public final fun getGRADLE-ip6yS68 ()Ljava/lang/String;
-	public final fun getGRADLE_KTS-ip6yS68 ()Ljava/lang/String;
-	public final fun getGROOVY-ip6yS68 ()Ljava/lang/String;
-	public final fun getJAVA-ip6yS68 ()Ljava/lang/String;
-	public final fun getJAVASCRIPT-ip6yS68 ()Ljava/lang/String;
-	public final fun getJSON-ip6yS68 ()Ljava/lang/String;
-	public final fun getKOTLIN-ip6yS68 ()Ljava/lang/String;
-	public final fun getMANIFEST-ip6yS68 ()Ljava/lang/String;
-	public final fun getPROGUARD-ip6yS68 ()Ljava/lang/String;
-	public final fun getPROPERTIES-ip6yS68 ()Ljava/lang/String;
-	public final fun getPROTO-ip6yS68 ()Ljava/lang/String;
-	public final fun getPYTHON-ip6yS68 ()Ljava/lang/String;
-	public final fun getREGEX-ip6yS68 ()Ljava/lang/String;
-	public final fun getRESOURCE-ip6yS68 ()Ljava/lang/String;
-	public final fun getRUST-ip6yS68 ()Ljava/lang/String;
-	public final fun getSHELL-ip6yS68 ()Ljava/lang/String;
-	public final fun getSQL-ip6yS68 ()Ljava/lang/String;
-	public final fun getSVG-ip6yS68 ()Ljava/lang/String;
-	public final fun getTEXT-ip6yS68 ()Ljava/lang/String;
-	public final fun getTOML-ip6yS68 ()Ljava/lang/String;
-	public final fun getTYPESCRIPT-ip6yS68 ()Ljava/lang/String;
-	public final fun getUNKNOWN-ip6yS68 ()Ljava/lang/String;
-	public final fun getVERSION_CATALOG-ip6yS68 ()Ljava/lang/String;
-	public final fun getXML-ip6yS68 ()Ljava/lang/String;
-	public final fun getYAML-ip6yS68 ()Ljava/lang/String;
-}
-
-public final class org/jetbrains/jewel/markdown/MimeTypeKt {
-	public static final fun isGradle-K9GpHcc (Ljava/lang/String;)Z
-	public static final fun isJava-K9GpHcc (Ljava/lang/String;)Z
-	public static final fun isKotlin-K9GpHcc (Ljava/lang/String;)Z
-	public static final fun isManifest-K9GpHcc (Ljava/lang/String;)Z
-	public static final fun isProto-K9GpHcc (Ljava/lang/String;)Z
-	public static final fun isRegex-K9GpHcc (Ljava/lang/String;)Z
-	public static final fun isSql-K9GpHcc (Ljava/lang/String;)Z
-	public static final fun isVersionCatalog-K9GpHcc (Ljava/lang/String;)Z
-	public static final fun isXml-K9GpHcc (Ljava/lang/String;)Z
 }
 
 public final class org/jetbrains/jewel/markdown/SemanticsKt {

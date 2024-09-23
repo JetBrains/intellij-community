@@ -105,6 +105,17 @@ public final class org/jetbrains/jewel/bridge/actionSystem/RootDataProviderNode 
 	public fun uiDataSnapshot (Lcom/intellij/openapi/actionSystem/DataSink;)V
 }
 
+public final class org/jetbrains/jewel/bridge/code/highlighting/CodeHighlighterFactory {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/bridge/code/highlighting/CodeHighlighterFactory$Companion;
+	public fun <init> (Lcom/intellij/openapi/project/Project;Lkotlinx/coroutines/CoroutineScope;)V
+	public final fun createHighlighter ()Lorg/jetbrains/jewel/foundation/code/highlighting/CodeHighlighter;
+}
+
+public final class org/jetbrains/jewel/bridge/code/highlighting/CodeHighlighterFactory$Companion {
+	public final fun getInstance (Lcom/intellij/openapi/project/Project;)Lorg/jetbrains/jewel/bridge/code/highlighting/CodeHighlighterFactory;
+}
+
 public final class org/jetbrains/jewel/bridge/icon/IntelliJIconKeyKt {
 	public static final fun fromPlatformIcon (Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey$Companion;Ljavax/swing/Icon;Ljava/lang/Class;)Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public static synthetic fun fromPlatformIcon$default (Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey$Companion;Ljavax/swing/Icon;Ljava/lang/Class;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/icon/IconKey;

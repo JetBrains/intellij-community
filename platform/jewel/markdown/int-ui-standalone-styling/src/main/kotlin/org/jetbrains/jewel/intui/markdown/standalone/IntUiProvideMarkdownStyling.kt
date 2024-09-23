@@ -4,6 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
+import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
+import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.markdown.standalone.styling.dark
 import org.jetbrains.jewel.intui.markdown.standalone.styling.light
@@ -35,12 +38,14 @@ public fun ProvideMarkdownStyling(
                 MarkdownBlockRenderer.light(markdownStyling)
             }
         },
+    codeHighlighter: CodeHighlighter = remember { NoOpCodeHighlighter },
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(
         LocalMarkdownStyling provides markdownStyling,
         LocalMarkdownProcessor provides markdownProcessor,
         LocalMarkdownBlockRenderer provides markdownBlockRenderer,
+        LocalCodeHighlighter provides codeHighlighter,
     ) {
         content()
     }
@@ -51,6 +56,7 @@ public fun ProvideMarkdownStyling(
 public fun ProvideMarkdownStyling(
     markdownStyling: MarkdownStyling,
     markdownBlockRenderer: MarkdownBlockRenderer,
+    codeHighlighter: CodeHighlighter,
     markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor() },
     content: @Composable () -> Unit,
 ) {
@@ -58,6 +64,7 @@ public fun ProvideMarkdownStyling(
         LocalMarkdownStyling provides markdownStyling,
         LocalMarkdownProcessor provides markdownProcessor,
         LocalMarkdownBlockRenderer provides markdownBlockRenderer,
+        LocalCodeHighlighter provides codeHighlighter,
     ) {
         content()
     }

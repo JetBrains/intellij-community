@@ -171,6 +171,89 @@ public final class org/jetbrains/jewel/foundation/actionSystem/ProvideDataKt {
 	public static final fun provideData (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
 }
 
+public final class org/jetbrains/jewel/foundation/code/MimeType {
+	public static final field ATTR_FOLDER_TYPE Ljava/lang/String;
+	public static final field ATTR_ROLE Ljava/lang/String;
+	public static final field ATTR_ROOT_TAG Ljava/lang/String;
+	public static final field VALUE_MANIFEST Ljava/lang/String;
+	public static final field VALUE_RESOURCE Ljava/lang/String;
+	public static final fun base-9EQw4cI (Ljava/lang/String;)Ljava/lang/String;
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lorg/jetbrains/jewel/foundation/code/MimeType;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public static final fun displayName-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/foundation/code/MimeType$Known {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/foundation/code/MimeType$Known;
+	public final fun fromMarkdownLanguageName-YABSuFg (Ljava/lang/String;)Ljava/lang/String;
+	public final fun getAGSL-9EQw4cI ()Ljava/lang/String;
+	public final fun getAIDL-9EQw4cI ()Ljava/lang/String;
+	public final fun getC-9EQw4cI ()Ljava/lang/String;
+	public final fun getCPP-9EQw4cI ()Ljava/lang/String;
+	public final fun getDART-9EQw4cI ()Ljava/lang/String;
+	public final fun getGO-9EQw4cI ()Ljava/lang/String;
+	public final fun getGRADLE-9EQw4cI ()Ljava/lang/String;
+	public final fun getGRADLE_KTS-9EQw4cI ()Ljava/lang/String;
+	public final fun getGROOVY-9EQw4cI ()Ljava/lang/String;
+	public final fun getJAVA-9EQw4cI ()Ljava/lang/String;
+	public final fun getJAVASCRIPT-9EQw4cI ()Ljava/lang/String;
+	public final fun getJSON-9EQw4cI ()Ljava/lang/String;
+	public final fun getKOTLIN-9EQw4cI ()Ljava/lang/String;
+	public final fun getMANIFEST-9EQw4cI ()Ljava/lang/String;
+	public final fun getPROGUARD-9EQw4cI ()Ljava/lang/String;
+	public final fun getPROPERTIES-9EQw4cI ()Ljava/lang/String;
+	public final fun getPROTO-9EQw4cI ()Ljava/lang/String;
+	public final fun getPYTHON-9EQw4cI ()Ljava/lang/String;
+	public final fun getREGEX-9EQw4cI ()Ljava/lang/String;
+	public final fun getRESOURCE-9EQw4cI ()Ljava/lang/String;
+	public final fun getRUST-9EQw4cI ()Ljava/lang/String;
+	public final fun getSHELL-9EQw4cI ()Ljava/lang/String;
+	public final fun getSQL-9EQw4cI ()Ljava/lang/String;
+	public final fun getSVG-9EQw4cI ()Ljava/lang/String;
+	public final fun getTEXT-9EQw4cI ()Ljava/lang/String;
+	public final fun getTOML-9EQw4cI ()Ljava/lang/String;
+	public final fun getTYPESCRIPT-9EQw4cI ()Ljava/lang/String;
+	public final fun getUNKNOWN-9EQw4cI ()Ljava/lang/String;
+	public final fun getVERSION_CATALOG-9EQw4cI ()Ljava/lang/String;
+	public final fun getXML-9EQw4cI ()Ljava/lang/String;
+	public final fun getYAML-9EQw4cI ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/foundation/code/MimeTypeKt {
+	public static final fun isGradle-KcqRzx0 (Ljava/lang/String;)Z
+	public static final fun isJava-KcqRzx0 (Ljava/lang/String;)Z
+	public static final fun isKotlin-KcqRzx0 (Ljava/lang/String;)Z
+	public static final fun isManifest-KcqRzx0 (Ljava/lang/String;)Z
+	public static final fun isProto-KcqRzx0 (Ljava/lang/String;)Z
+	public static final fun isRegex-KcqRzx0 (Ljava/lang/String;)Z
+	public static final fun isSql-KcqRzx0 (Ljava/lang/String;)Z
+	public static final fun isVersionCatalog-KcqRzx0 (Ljava/lang/String;)Z
+	public static final fun isXml-KcqRzx0 (Ljava/lang/String;)Z
+}
+
+public abstract interface class org/jetbrains/jewel/foundation/code/highlighting/CodeHighlighter {
+	public abstract fun highlight-C7ITchA (Ljava/lang/String;Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class org/jetbrains/jewel/foundation/code/highlighting/CodeHighlighterKt {
+	public static final fun getLocalCodeHighlighter ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public final class org/jetbrains/jewel/foundation/code/highlighting/NoOpCodeHighlighter : org/jetbrains/jewel/foundation/code/highlighting/CodeHighlighter {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/foundation/code/highlighting/NoOpCodeHighlighter;
+	public fun highlight-C7ITchA (Ljava/lang/String;Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
+}
+
 public class org/jetbrains/jewel/foundation/lazy/DefaultMacOsSelectableColumnKeybindings : org/jetbrains/jewel/foundation/lazy/DefaultSelectableColumnKeybindings {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/foundation/lazy/DefaultMacOsSelectableColumnKeybindings$Companion;
