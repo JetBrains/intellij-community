@@ -10,6 +10,7 @@ import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
+import org.jetbrains.idea.maven.server.PluginResolutionRequest
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
@@ -39,7 +40,8 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
       val mavenPluginIds = mavenPluginIdsToResolve.map { it.first }
       MavenLog.LOG.info("maven plugin resolution started: $mavenPluginIds")
       val forceUpdate = MavenProjectsManager.getInstance(myProject).forceUpdateSnapshots
-      val resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve, process, eventHandler, false, forceUpdate)
+      val resolutionRequests = mavenPluginIdsToResolve.map { PluginResolutionRequest(it.first, it.second.id, false, emptyList()) }
+      val resolutionResults = embedder.resolvePlugins(resolutionRequests, process, eventHandler, forceUpdate)
       val unresolvedPluginIds = resolutionResults.filter { !it.isResolved }.map { it.mavenPluginId }.toSet()
       MavenLog.LOG.info("maven plugin resolution finished, unresolved: $unresolvedPluginIds")
       val artifacts = resolutionResults.flatMap { it.pluginDependencyArtifacts }

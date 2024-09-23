@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.*
@@ -16,7 +15,6 @@ import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConsole
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper.LongRunningEmbedderTask
 import org.jetbrains.idea.maven.telemetry.getCurrentTelemetryIds
 import org.jetbrains.idea.maven.telemetry.scheduleExportTelemetryTrace
 import org.jetbrains.idea.maven.telemetry.tracer
@@ -138,26 +136,15 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
   }
 
-  suspend fun resolvePlugins(mavenPluginRequests: Collection<Pair<MavenId, NativeMavenProjectHolder>>,
-                             progressReporter: RawProgressReporter?,
-                             eventHandler: MavenEventHandler,
-                             resolvePluginDependencies: Boolean,
-                             forceUpdateSnapshots: Boolean): List<PluginResolutionResponse> {
-    val pluginResolutionRequests = ArrayList<PluginResolutionRequest>()
-    for (mavenPluginRequest in mavenPluginRequests) {
-      val mavenPluginId = mavenPluginRequest.first
-      try {
-        val id = mavenPluginRequest.second.getId()
-        pluginResolutionRequests.add(PluginResolutionRequest(mavenPluginId, id, resolvePluginDependencies))
-      }
-      catch (e: RemoteException) {
-        // do not call handleRemoteError here since this error occurred because of previous remote error
-        MavenLog.LOG.warn("Cannot resolve plugin: $mavenPluginId")
-      }
-    }
+  suspend fun resolvePlugins(
+    resolutionRequests: List<PluginResolutionRequest>,
+    progressReporter: RawProgressReporter?,
+    eventHandler: MavenEventHandler,
+    forceUpdateSnapshots: Boolean,
+  ): List<PluginResolutionResponse> {
     return runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskInput ->
-        embedder.resolvePlugins(taskInput, pluginResolutionRequests, forceUpdateSnapshots, ourToken)
+        embedder.resolvePlugins(taskInput, ArrayList(resolutionRequests), forceUpdateSnapshots, ourToken)
       },
       progressReporter, eventHandler)
   }
@@ -166,8 +153,10 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                     nativeMavenProject: NativeMavenProjectHolder,
                     forceUpdateSnapshots: Boolean): Collection<MavenArtifact> {
     val mavenId = plugin.mavenId
+    val dependencies = plugin.dependencies.map { MavenId(it.groupId, it.artifactId, it.version) }
+    val resolutionRequests = listOf(PluginResolutionRequest(mavenId, nativeMavenProject.id, true, dependencies))
     return runBlockingMaybeCancellable {
-      resolvePlugins(listOf(Pair.create(mavenId, nativeMavenProject)), null, MavenLogEventHandler, true, forceUpdateSnapshots)
+      resolvePlugins(resolutionRequests, null, MavenLogEventHandler, forceUpdateSnapshots)
         .flatMap { resolutionResult: PluginResolutionResponse -> resolutionResult.pluginDependencyArtifacts }.toSet()
     }
   }

@@ -24,6 +24,7 @@ import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cli.internal.extension.model.CoreExtension;
 import org.apache.maven.execution.*;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.building.*;
@@ -881,15 +882,25 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         MavenProject project = RemoteNativeMaven3ProjectHolder.findProjectById(nativeMavenProjectId);
         List<RemoteRepository> remoteRepos = project.getRemotePluginRepositories();
 
+        List<Dependency> dependencies = new ArrayList<>();
+        for (MavenId dependencyId : pluginResolutionRequest.getPluginDependencies()) {
+          Dependency dependency = new Dependency();
+          dependency.setGroupId(dependencyId.getGroupId());
+          dependency.setArtifactId(dependencyId.getArtifactId());
+          dependency.setVersion(dependencyId.getVersion());
+          dependencies.add(dependency);
+        }
+
         PluginResolutionData resolution =
           new PluginResolutionData(
             mavenPluginId,
             pluginResolutionRequest.resolvePluginDependencies(),
+            dependencies,
             remoteRepos);
         resolutions.add(resolution);
       }
       List<PluginResolutionResponse> results = ParallelRunnerForServer.execute(runInParallel, resolutions, resolution ->
-        resolvePlugin(task, resolution.mavenPluginId, resolution.resolveDependencies, resolution.remoteRepos, session)
+        resolvePlugin(task, resolution.mavenPluginId, resolution.resolveDependencies, resolution.dependencies, resolution.remoteRepos, session)
       );
       byte[] telemetryTrace = telemetry.shutdown();
       return new MavenServerResponse<>(new ArrayList<>(results), getLongRunningTaskStatus(longRunningTaskId, token), telemetryTrace);
@@ -899,14 +910,17 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   private static class PluginResolutionData {
     MavenId mavenPluginId;
     boolean resolveDependencies;
+    List<Dependency> dependencies;
     List<RemoteRepository> remoteRepos;
 
     private PluginResolutionData(MavenId mavenPluginId,
                                  boolean resolveDependencies,
+                                 List<Dependency> dependencies,
                                  List<RemoteRepository> remoteRepos) {
       this.mavenPluginId = mavenPluginId;
       this.resolveDependencies = resolveDependencies;
       this.remoteRepos = remoteRepos;
+      this.dependencies = dependencies;
     }
   }
 
@@ -914,6 +928,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   private PluginResolutionResponse resolvePlugin(LongRunningTask task,
                                                  MavenId mavenPluginId,
                                                  boolean resolveDependencies,
+                                                 List<Dependency> dependencies,
                                                  List<RemoteRepository> remoteRepos,
                                                  RepositorySystemSession session) {
     MavenServerStatsCollector.pluginResolve(mavenPluginId.toString());
@@ -927,6 +942,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       plugin.setGroupId(mavenPluginId.getGroupId());
       plugin.setArtifactId(mavenPluginId.getArtifactId());
       plugin.setVersion(mavenPluginId.getVersion());
+      plugin.setDependencies(dependencies);
 
       PluginDependenciesResolver pluginDependenciesResolver = getComponent(PluginDependenciesResolver.class);
 
