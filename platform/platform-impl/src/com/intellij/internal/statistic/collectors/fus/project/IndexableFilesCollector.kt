@@ -7,16 +7,12 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.indexing.FileBasedIndex
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.coroutineContext
-import kotlin.time.Duration.Companion.seconds
 
 private class IndexableFilesCollector : ProjectUsagesCollector() {
   private val GROUP = EventLogGroup("project.indexable.files", 3)
@@ -27,12 +23,6 @@ private class IndexableFilesCollector : ProjectUsagesCollector() {
 
   override suspend fun collect(project: Project): Set<MetricEvent> {
     val context = coroutineContext
-
-    withTimeout(600.seconds) {
-      while (DumbService.isDumb(project)) {
-        delay(1)
-      }
-    }
 
     var allIndexableFiles = 0
     var inContentIndexableFiles = 0
