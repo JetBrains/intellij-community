@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -44,8 +43,8 @@ public final class JythonSdkFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
   }
 
   @Override
-  public boolean isValidSdkPath(@NotNull Path path) {
-    return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(path.getFileName().toString())).startsWith("jython");
+  public boolean isValidSdkPath(@NotNull String pathStr) {
+    return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(pathStr)).startsWith("jython");
   }
 
   @Override
