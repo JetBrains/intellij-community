@@ -4,7 +4,7 @@ package com.intellij.java.terminal
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.util.lang.JavaVersion
 
-internal class JavaShellCommandContext private constructor(private val propertyMap: Map<String, String> = mapOf()) {
+class JavaShellCommandContext private constructor(private val propertyMap: Map<String, String> = mapOf()) {
 
   fun getJrePath(): String? = propertyMap["java.home"]
 
@@ -15,9 +15,10 @@ internal class JavaShellCommandContext private constructor(private val propertyM
 
   companion object {
     private const val PROPERTY_SEPARATOR = " = "
+    const val JAVA_SHOW_SETTINGS_PROPERTIES_VERSION_COMMAND = "java -XshowSettings:properties -version"
 
     suspend fun create(context: ShellRuntimeContext): JavaShellCommandContext? {
-      val result = context.runShellCommand("java -XshowSettings:properties -version")
+      val result = context.runShellCommand(JAVA_SHOW_SETTINGS_PROPERTIES_VERSION_COMMAND)
       if (result.exitCode != 0) return null
       val propertyMap = result.output.split('\n').dropLastWhile { it.isBlank() }.asSequence().map { it.trim() }
         .filter { it.contains(PROPERTY_SEPARATOR) }.mapNotNull {
