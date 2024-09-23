@@ -6,8 +6,11 @@ import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
+import git4idea.branch.GitBranchesTreeTestContext.Companion.NOT_ORIGIN
 import git4idea.branch.GitBranchesTreeTestContext.Companion.ORIGIN
 import git4idea.branch.GitBranchesTreeTestContext.Companion.ORIGIN_URLS
+import git4idea.branch.GitBranchesTreeTestContext.Companion.branchInfo
+import git4idea.branch.GitBranchesTreeTestContext.Companion.tagInfo
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.test.MockGitRepository
@@ -176,15 +179,5 @@ class GitBranchesTreeStructureTest : GitBranchesTreeTest() {
       | -TAG
       |  TAG:tag
     """.trimMargin())
-  }
-
-  private companion object {
-    val NOT_ORIGIN = GitRemote("not-origin", ORIGIN_URLS, ORIGIN_URLS, listOf(), listOf())
-
-    fun branchInfo(branch: GitBranch, isCurrent: Boolean = false, isFavorite: Boolean = false, repositories: List<GitRepository> = emptyList()) =
-      BranchInfo(branch, isCurrent, isFavorite, repositories = repositories)
-
-    fun tagInfo(tag: GitTag, isCurrent: Boolean = false, isFavorite: Boolean = false, repositories: List<GitRepository> = emptyList()) =
-      TagInfo(tag, isCurrent, isFavorite, repositories)
   }
 }

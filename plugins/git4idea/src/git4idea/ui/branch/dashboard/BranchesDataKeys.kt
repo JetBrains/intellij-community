@@ -3,8 +3,5 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.openapi.actionSystem.DataKey
 
-internal val GIT_BRANCHES = DataKey.create<List<BranchInfo>>("GitBranchKey")
-internal val GIT_BRANCH_FILTERS = DataKey.create<List<String>>("GitBranchFilterKey")
-internal val GIT_BRANCH_REMOTES = DataKey.create<Set<RemoteInfo>>("GitBranchRemotesKey")
-internal val GIT_BRANCH_DESCRIPTORS = DataKey.create<Set<BranchNodeDescriptor>>("GitBranchDescriptorsKey")
+internal val GIT_BRANCHES_TREE_SELECTION = DataKey.create<BranchesTreeSelection>("GitBranchesTreeSelection")
 internal val BRANCHES_UI_CONTROLLER = DataKey.create<BranchesDashboardController>("GitBranchesUiControllerKey")

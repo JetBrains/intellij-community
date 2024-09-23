@@ -54,7 +54,6 @@ import com.intellij.vcs.ui.ProgressStripe
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
-import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.FetchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffAction
@@ -62,6 +61,7 @@ import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesActio
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ToggleFavoriteAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.UpdateSelectedBranchAction
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.ActionEvent
@@ -70,6 +70,7 @@ import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.TransferHandler
 import javax.swing.event.TreeSelectionListener
+import javax.swing.tree.TreePath
 
 internal class BranchesDashboardUi(project: Project, private val logUi: BranchesVcsLogUi) : Disposable {
   private val uiController = BranchesDashboardController(project, this)
@@ -114,7 +115,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   internal fun updateLogBranchFilter() {
     val ui = logUi
-    val selectedFilters = filteringTree.getSelectedBranchFilters()
+    val selectedFilters = getSelection().getSelectedBranchFilters()
     val oldFilters = ui.filterUi.filters
     val newFilters = if (selectedFilters.isNotEmpty()) {
       oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(selectedFilters))
@@ -126,7 +127,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   }
 
   internal fun navigateToSelectedBranch(focus: Boolean) {
-    val selectedReference = filteringTree.getSelectedBranchFilters().singleOrNull() ?: return
+    val selectedReference = getSelection().getSelectedBranchFilters().singleOrNull() ?: return
 
     logUi.jumpToBranch(selectedReference, false, focus)
   }
@@ -137,13 +138,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   internal fun isGroupingEnabled(key: GroupingKey) = filteringTree.isGroupingEnabled(key)
 
-  internal fun getSelectedRepositories(branchInfo: BranchInfo): List<GitRepository> {
-    return filteringTree.getSelectedRepositories(branchInfo)
-  }
-
-  internal fun getSelectedRemotes(): Set<RemoteInfo> {
-    return filteringTree.getSelectedRemotes()
-  }
+  internal fun getSelection() = filteringTree.component.getSelection()
 
   internal fun getRootsToFilter(): Set<VirtualFile> {
     val roots = logUi.logData.roots.toSet()
@@ -283,39 +278,11 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   inner class BranchesTreePanel : BorderLayoutPanel(), UiDataProvider, QuickActionProvider {
     override fun uiDataSnapshot(sink: DataSink) {
-      snapshotBranchActionsKeys(sink)
+      snapshotSelectionActionsKeys(sink, filteringTree.component.selectionPaths)
 
-      sink[SELECTED_ITEMS] = filteringTree.component.selectionPaths
-      sink[GIT_BRANCHES] = filteringTree.getSelectedBranches()
-      sink[GIT_BRANCH_FILTERS] = filteringTree.getSelectedBranchFilters()
-      sink[GIT_BRANCH_REMOTES] = filteringTree.getSelectedRemotes()
-      sink[GIT_BRANCH_DESCRIPTORS] = filteringTree.getSelectedBranchNodes()
       sink[BRANCHES_UI_CONTROLLER] = uiController
       sink[VcsLogInternalDataKeys.LOG_UI_PROPERTIES] = logUi.properties
       sink[QuickActionProvider.KEY] = this
-    }
-
-    private fun snapshotBranchActionsKeys(sink: DataSink) {
-      val selectedBranches = filteringTree.getSelectedBranches()
-      if (selectedBranches.isEmpty()) {
-        if (filteringTree.getSelectedBranchFilters().singleOrNull() == VcsLogUtil.HEAD) {
-          sink[GitBranchActionsDataKeys.USE_CURRENT_BRANCH] = true
-        }
-      }
-      else {
-        sink[GitBranchActionsDataKeys.BRANCHES] = selectedBranches.map { it.branch }
-      }
-
-      val selectedBranch = selectedBranches.singleOrNull()
-      if (selectedBranch != null) {
-        val selectedRepositories =
-          BranchesTreeComponent.getSelectedRepositories(selectedBranch, filteringTree.component.selectionPaths)
-            .toList()
-            .ifEmpty(selectedBranch::repositories)
-
-        sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = selectedRepositories
-        sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepositories.singleOrNull()
-      }
     }
 
     override fun getActions(originalProvider: Boolean): List<AnAction> {
@@ -359,6 +326,43 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   override fun dispose() {
     disposeBranchesUi()
+  }
+
+  internal companion object {
+    /**
+     * Note that at the moment [GitBranchActionsDataKeys] are used only for single ref actions.
+     * In other actions [GIT_BRANCHES_TREE_SELECTION] is used
+     *
+     * Also see [git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.createDataContext]
+     */
+    @VisibleForTesting
+    internal fun snapshotSelectionActionsKeys(sink: DataSink, selectionPaths: Array<TreePath>?) {
+      val selection = BranchesTreeSelection(selectionPaths)
+
+      sink[GIT_BRANCHES_TREE_SELECTION] = selection
+      sink[SELECTED_ITEMS] = selectionPaths
+
+      val selectedNode = selection.getSelectedNodes().singleOrNull() ?: return
+      val selectedDescriptor = selectedNode.getNodeDescriptor()
+      if (selection.isHeadSelected()) {
+        sink[GitBranchActionsDataKeys.USE_CURRENT_BRANCH] = true
+      }
+
+      val selectedRef = selectedDescriptor as? BranchNodeDescriptor.Ref ?: return
+
+      when (selectedRef) {
+        is BranchNodeDescriptor.Branch -> {
+          sink[GitBranchActionsDataKeys.BRANCHES] = listOf(selectedRef.branchInfo.branch)
+        }
+        is BranchNodeDescriptor.Tag -> {
+          sink[GitBranchActionsDataKeys.TAGS] = listOf(selectedRef.tagInfo.tag)
+        }
+      }
+
+      val selectedRepositories = BranchesTreeSelection.Companion.getSelectedRepositories(selectedNode)
+      sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = selectedRepositories
+      sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepositories.singleOrNull()
+    }
   }
 }
 

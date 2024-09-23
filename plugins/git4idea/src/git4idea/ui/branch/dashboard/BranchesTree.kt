@@ -31,7 +31,6 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
-import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.branch.calcTooltip
 import git4idea.repo.GitRepository
@@ -118,7 +117,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       
       if (refInfo is BranchInfo) {
         toolTipText =
-          if (refInfo.isLocalBranch) BranchPresentation.getTooltip(getBranchesTooltipData(refInfo.branchName, getSelectedRepositories(value)))
+          if (refInfo.isLocalBranch) BranchPresentation.getTooltip(getBranchesTooltipData(refInfo.branchName, BranchesTreeSelection.getSelectedRepositories(value)))
           else null
 
         val incomingOutgoingState = refInfo.incomingOutgoingState
@@ -172,93 +171,11 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
   override fun hasFocus() = super.hasFocus() || searchField?.textEditor?.hasFocus() ?: false
 
+  fun getSelection(): BranchesTreeSelection = BranchesTreeSelection(selectionPaths)
+
   private fun initDnD() {
     if (!GraphicsEnvironment.isHeadless()) {
       transferHandler = BRANCH_TREE_TRANSFER_HANDLER
-    }
-  }
-
-  fun getSelectedBranches(): List<BranchInfo> {
-    return getSelectedNodes()
-      .mapNotNull { (it.getNodeDescriptor() as? BranchNodeDescriptor.Branch)?.branchInfo }
-      .toList()
-  }
-
-  fun getSelectedNodes(): Sequence<BranchTreeNode> {
-    val paths = selectionPaths ?: return emptySequence()
-    return paths.asSequence()
-      .map(TreePath::getLastPathComponent)
-      .mapNotNull { it as? BranchTreeNode }
-  }
-
-  fun getSelectedRemotes(): Set<RemoteInfo> {
-    val paths = selectionPaths ?: return emptySet()
-    return paths.asSequence()
-      .map(TreePath::getLastPathComponent)
-      .mapNotNull { it as? BranchTreeNode }
-      .mapNotNull {
-        val descriptor = it.getNodeDescriptor()
-        val parentDescriptor = it.parent?.getNodeDescriptor()
-        if (descriptor is BranchNodeDescriptor.RemoteGroup) {
-          RemoteInfo(descriptor.remote.name, (parentDescriptor as? BranchNodeDescriptor.Repository)?.repository)
-        } else null
-      }
-      .toSet()
-  }
-
-  fun getSelectedRepositories(node: BranchTreeNode): List<GitRepository> {
-    var parent: BranchTreeNode? = node
-
-    while (parent != null) {
-      val descriptor = parent.getNodeDescriptor()
-      if (descriptor is BranchNodeDescriptor.Repository) return listOf(descriptor.repository)
-      parent = parent.parent
-    }
-
-    val nodeDescriptor = node.getNodeDescriptor()
-    return (nodeDescriptor as? BranchNodeDescriptor.Branch)?.branchInfo?.repositories ?: emptyList()
-  }
-
-
-  fun getSelectedRepositories(branchInfo: BranchInfo): Set<GitRepository> {
-    return getSelectedRepositories(branchInfo, selectionPaths)
-  }
-
-  companion object {
-    internal fun getSelectedBranches(selectionPaths: Array<TreePath>?): List<BranchInfo> {
-      val paths = selectionPaths ?: return emptyList()
-      return paths.asSequence()
-        .map(TreePath::getLastPathComponent)
-        .mapNotNull { (it as? BranchTreeNode)?.getNodeDescriptor() }
-        .filterIsInstance<BranchNodeDescriptor.Branch>()
-        .map { it.branchInfo }
-        .toList()
-    }
-
-    internal fun getSelectedRepositories(branchInfo: BranchInfo, selectionPaths: Array<TreePath>?): Set<GitRepository> {
-      val paths = selectionPaths ?: return emptySet()
-      return paths.asSequence()
-        .filter {
-          val lastPathComponent = it.lastPathComponent
-          val branchNode = (lastPathComponent as? BranchTreeNode)?.getNodeDescriptor() as? BranchNodeDescriptor.Branch
-          branchNode?.branchInfo == branchInfo
-        }
-        .mapNotNull {
-          val repoNode = findNodeDescriptorInPath(it) { descriptor -> descriptor is BranchNodeDescriptor.Repository }
-          (repoNode as? BranchNodeDescriptor.Repository)?.repository
-        }
-        .toSet()
-    }
-
-    private fun findNodeDescriptorInPath(path: TreePath, condition: (BranchNodeDescriptor) -> Boolean): BranchNodeDescriptor? {
-      var curPath: TreePath? = path
-      while (curPath != null) {
-        val node = curPath.lastPathComponent as? BranchTreeNode
-        if (node != null && condition(node.getNodeDescriptor())) return node.getNodeDescriptor()
-        curPath = curPath.parentPath
-      }
-
-      return null
     }
   }
 }
@@ -360,28 +277,6 @@ internal class FilteringBranchesTree(
     component.addTreeSelectionListener { treeStateHolder.setStateProvider(treeStateProvider) }
   }
 
-  fun getSelectedRepositories(branchInfo: BranchInfo): List<GitRepository> {
-    val selectedRepositories = component.getSelectedRepositories(branchInfo)
-    return if (selectedRepositories.isNotEmpty()) selectedRepositories.toList() else branchInfo.repositories
-  }
-
-  fun getSelectedBranches() = component.getSelectedBranches()
-
-  fun getSelectedBranchFilters(): List<String> {
-    return component.getSelectedNodes()
-      .mapNotNull {
-        when (val descriptor = it.getNodeDescriptor()) {
-          is BranchNodeDescriptor.Branch -> descriptor.branchInfo.branchName
-          BranchNodeDescriptor.Head -> VcsLogUtil.HEAD
-          else -> null
-        }
-      }.toList()
-  }
-
-  fun getSelectedRemotes() = component.getSelectedRemotes()
-
-  fun getSelectedBranchNodes() = component.getSelectedNodes().map(BranchTreeNode::getNodeDescriptor).toSet()
-
   private fun restorePreviouslyExpandedPaths() {
     TreeUtil.restoreExpandedPaths(component, expandedPaths.toList())
   }
@@ -463,7 +358,7 @@ internal class FilteringBranchesTree(
 private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
   override fun createTransferable(tree: JComponent): Transferable? {
     if (tree is BranchesTreeComponent) {
-      val branches = tree.getSelectedBranches()
+      val branches = tree.getSelection().getSelectedBranches()
       if (branches.isEmpty()) return null
 
       return object : TransferableList<BranchInfo>(branches.toList()) {

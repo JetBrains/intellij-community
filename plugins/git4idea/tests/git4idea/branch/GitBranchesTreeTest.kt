@@ -7,10 +7,12 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.ui.FilteringSpeedSearch
 import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
+import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
 import git4idea.repo.GitRemote
+import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.BranchInfo
 import git4idea.ui.branch.dashboard.BranchNodeDescriptor
 import git4idea.ui.branch.dashboard.BranchTreeNode
@@ -30,8 +32,10 @@ internal class GitBranchesTreeTestContext(private val groupByDirectories: Boolea
   val searchTextField = branchesTree.installSearchField()
 
   fun assertTree(expected: String) {
-    assertEquals("Tree state doesn't match expected. Search field - '${searchTextField.text}'", expected.trim(), TreeTestUtil(tree).setSelection(true).toString().trim())
+    assertEquals("Tree state doesn't match expected. Search field - '${searchTextField.text}'", expected.trim(), printTree())
   }
+
+  fun printTree(): String = TreeTestUtil(tree).setSelection(true).toString().trim()
 
   fun setState(
     localBranches: Collection<String>,
@@ -92,6 +96,13 @@ internal class GitBranchesTreeTestContext(private val groupByDirectories: Boolea
   companion object {
     val ORIGIN_URLS = listOf("ssh://origin")
     val ORIGIN = GitRemote(GitRemote.ORIGIN, ORIGIN_URLS, ORIGIN_URLS, listOf(), listOf())
+    val NOT_ORIGIN = GitRemote("not-origin", ORIGIN_URLS, ORIGIN_URLS, listOf(), listOf())
+
+    fun branchInfo(branch: GitBranch, isCurrent: Boolean = false, isFavorite: Boolean = false, repositories: List<GitRepository> = emptyList()) =
+      BranchInfo(branch, isCurrent, isFavorite, repositories = repositories)
+
+    fun tagInfo(tag: GitTag, isCurrent: Boolean = false, isFavorite: Boolean = false, repositories: List<GitRepository> = emptyList()) =
+      TagInfo(tag, isCurrent, isFavorite, repositories)
   }
 }
 

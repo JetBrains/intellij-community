@@ -32,6 +32,10 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
     @JvmName("currentBranch_") get
   var state: Repository.State = Repository.State.NORMAL
     @JvmName("state_") get
+  var remotes: Collection<GitRemote> = emptyList()
+    @JvmName("remotes_") get
+  var tagHolder: GitTagHolder? = null
+    @JvmName("tagHolder_") get
 
   override fun getGitDir(): VirtualFile {
     throw UnsupportedOperationException()
@@ -56,12 +60,10 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
   override fun getCurrentBranch(): GitLocalBranch? = currentBranch
 
   override fun getBranches(): GitBranchesCollection {
-    throw UnsupportedOperationException()
+    return GitBranchesCollection(emptyMap(), emptyMap(), emptyList())
   }
 
-  override fun getRemotes(): Collection<GitRemote> {
-    throw UnsupportedOperationException()
-  }
+  override fun getRemotes(): Collection<GitRemote> = remotes
 
   override fun getBranchTrackInfos(): Collection<GitBranchTrackInfo> {
     throw UnsupportedOperationException()
@@ -75,9 +77,7 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
     throw UnsupportedOperationException()
   }
 
-  override fun isOnBranch(): Boolean {
-    throw UnsupportedOperationException()
-  }
+  override fun isOnBranch(): Boolean = currentBranch != null
 
   override fun getRoot(): VirtualFile {
     return root
@@ -104,11 +104,11 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
   }
 
   override fun getCurrentRevision(): String? {
-    throw UnsupportedOperationException()
+    return "0".repeat(40)
   }
 
   override fun isFresh(): Boolean {
-    throw UnsupportedOperationException()
+    return false
   }
 
   override fun update() {
@@ -128,7 +128,7 @@ class MockGitRepository(private val project: Project, private val root: VirtualF
   }
 
   override fun getTagHolder(): GitTagHolder {
-    return GitTagHolder(this)
+    return tagHolder ?: GitTagHolder(this)
   }
 
   override fun dispose() {

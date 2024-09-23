@@ -23,7 +23,7 @@ f:com.intellij.dvcs.DvcsUtil
 - <init>():V
 - s:addMappingIfSubRoot(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):V
 - s:assertFileExists(java.io.File,java.lang.String):V
-- s:disableActionIfAnyRepositoryIsFresh(com.intellij.openapi.actionSystem.AnActionEvent,java.util.List,java.lang.String):V
+- s:disableActionIfAnyRepositoryIsFresh(com.intellij.openapi.actionSystem.AnActionEvent,java.util.Collection,java.lang.String):V
 - s:ensureAllChildrenInVfs(com.intellij.openapi.vfs.VirtualFile):V
 - s:findVcsRootFor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - s:findVirtualFilesWithRefresh(java.util.List):java.util.List

@@ -97,7 +97,7 @@ internal class BranchesDashboardController(
   }
 
   fun getSelectedRemotes(): Map<GitRepository, Set<GitRemote>> {
-    val selectedRemotes = ui.getSelectedRemotes()
+    val selectedRemotes = ui.getSelection().getSelectedRemotes()
     if (selectedRemotes.isEmpty()) return emptyMap()
 
     val result = hashMapOf<GitRepository, MutableSet<GitRemote>>()
@@ -120,8 +120,6 @@ internal class BranchesDashboardController(
 
     return result
   }
-
-  fun getSelectedRepositories(branchInfo: BranchInfo) = ui.getSelectedRepositories(branchInfo)
 
   fun reloadBranches(): Boolean {
     val forceReload = ui.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)

@@ -32,7 +32,7 @@ const val GIT_SINGLE_REF_ACTION_GROUP = "Git.Branch"
 
 @JvmOverloads
 internal fun createOrCheckoutNewBranch(project: Project,
-                                       repositories: List<GitRepository>,
+                                       repositories: Collection<GitRepository>,
                                        startPoint: String,
                                        @Nls(capitalization = Nls.Capitalization.Title)
                                        title: String = GitBundle.message("branches.create.new.branch.dialog.title"),
@@ -41,7 +41,7 @@ internal fun createOrCheckoutNewBranch(project: Project,
   GitBranchCheckoutOperation(project, repositories).perform(startPoint, options)
 }
 
-internal fun updateBranches(project: Project, repositories: List<GitRepository>, localBranchNames: List<String>) {
+internal fun updateBranches(project: Project, repositories: Collection<GitRepository>, localBranchNames: List<String>) {
   val repoToTrackingInfos =
     repositories.associateWith { it.branchTrackInfos.filter { info -> localBranchNames.contains(info.localBranch.name) } }
   if (repoToTrackingInfos.isEmpty()) return
@@ -97,7 +97,7 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
   })
 }
 
-internal fun isTrackingInfosExist(branchNames: List<String>, repositories: List<GitRepository>) =
+internal fun isTrackingInfosExist(branchNames: List<String>, repositories: Collection<GitRepository>) =
   repositories
     .flatMap(GitRepository::getBranchTrackInfos)
     .any { trackingBranchInfo -> branchNames.any { branchName -> branchName == trackingBranchInfo.localBranch.name } }
