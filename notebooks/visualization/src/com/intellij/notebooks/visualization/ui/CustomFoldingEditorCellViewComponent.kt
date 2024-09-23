@@ -1,6 +1,8 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.notebooks.visualization.UpdateContext
+import com.intellij.notebooks.visualization.ui.EditorEmbeddedComponentLayoutManager.CustomFoldingConstraint
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.CustomFoldRegionRenderer
@@ -10,15 +12,9 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.TestOnly
-import com.intellij.notebooks.visualization.UpdateContext
-import com.intellij.notebooks.visualization.ui.EditorEmbeddedComponentLayoutManager.CustomFoldingConstraint
+import java.awt.*
 import java.awt.AWTEvent.MOUSE_EVENT_MASK
 import java.awt.AWTEvent.MOUSE_MOTION_EVENT_MASK
-import java.awt.BorderLayout
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
 import javax.swing.BoxLayout
@@ -36,14 +32,15 @@ class CustomFoldingEditorCellViewComponent(
   private var gutterActionRenderer: ActionToGutterRendererAdapter? = null
 
   private val bottomContainer = JPanel().apply {
+    isOpaque = false
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
     background = EditorGutterColor.getEditorGutterBackgroundColor(editor as EditorImpl, false)
   }
 
-  private val mainComponent = JPanel().also {
-    it.layout = BorderLayout()
-    it.add(component, BorderLayout.CENTER)
-    it.add(bottomContainer, BorderLayout.SOUTH)
+  private val mainComponent = JPanel(BorderLayout()).apply {
+    isOpaque = false
+    add(component, BorderLayout.CENTER)
+    add(bottomContainer, BorderLayout.SOUTH)
   }
 
   private val presentationToComponent = mutableMapOf<InlayPresentation, JComponent>()
