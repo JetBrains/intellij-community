@@ -18,7 +18,7 @@ internal class ShelfTreeAsyncModel(val project: Project, scope: CoroutineScope)
   override fun fetchData(): MutableList<ShelvedChangeList> {
     val lists = ShelveChangesManager.getInstance(project).allLists
     lists.forEach{ it.loadChangesIfNeeded(project) }
-    return ContainerUtil.sorted<ShelvedChangeList, ShelvedChangeList>(lists, ChangelistComparator)
+    return ContainerUtil.sorted(lists, ChangelistComparator)
   }
 
   override fun buildTreeModelSync(
@@ -27,7 +27,7 @@ internal class ShelfTreeAsyncModel(val project: Project, scope: CoroutineScope)
   ): DefaultTreeModel {
     val showRecycled = ShelveChangesManager.getInstance(project).isShowRecycled
     val modelBuilder = ShelvedTreeModelBuilder(project, grouping)
-    modelBuilder.setShelvedLists(changeLists.filter { it.isDeleted && (showRecycled || it.isRecycled) })
+    modelBuilder.setShelvedLists(changeLists.filter { !it.isDeleted && (showRecycled || !it.isRecycled) })
     modelBuilder.setDeletedShelvedLists(changeLists.filter { it.isDeleted })
     return modelBuilder.build()
   }

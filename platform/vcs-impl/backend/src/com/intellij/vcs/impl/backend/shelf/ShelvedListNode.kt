@@ -33,7 +33,7 @@ internal class ShelvedListNode(val changeList: ShelvedChangeList) : ChangesBrows
     }
   }
 
-  override fun getTextPresentation(): String? {
+  override fun getTextPresentation(): String {
     return getUserObject().toString()
   }
 }

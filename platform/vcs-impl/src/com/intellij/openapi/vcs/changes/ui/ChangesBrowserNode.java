@@ -61,6 +61,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   protected static final int UNVERSIONED_SORT_WEIGHT = 9;
   protected static final int DEFAULT_SORT_WEIGHT = 10;
   protected static final int IGNORED_SORT_WEIGHT = 11;
+  protected static final int DELETED_SORT_WEIGHT = 12;
 
   private static final Color UNKNOWN_COLOR = JBColor.marker("ChangesBrowserNode::UNKNOWN_COLOR");
 

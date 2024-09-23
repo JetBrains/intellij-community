@@ -16,9 +16,9 @@ import com.intellij.util.PathUtil
 import java.awt.Color
 
 internal class ShelvedChangeNode(
-  private val shelvedChange: ShelvedWrapper,
-  private val filePath: FilePath,
-  private val additionalText: String?,
+  val shelvedChange: ShelvedWrapper,
+  val filePath: FilePath,
+  val additionalText: String?,
 ) : ChangesBrowserNode<ShelvedWrapper>(shelvedChange), Comparable<ShelvedChangeNode> {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {

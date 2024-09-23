@@ -10,7 +10,7 @@ import fleet.kernel.DurableEntityType
 import kotlinx.serialization.builtins.serializer
 
 class ShelfEntityTypeProvider : EntityTypeProvider {
-  override fun entityTypes(): List<EntityType<*>> = listOf(ShelvesTreeRootEntity)
+  override fun entityTypes(): List<EntityType<*>> = listOf(ShelvesTreeRootEntity, ShelvedChangeListEntity, ShelvedChangeEntity, TagNodeEntity)
 }
 
 abstract class NodeEntity : Entity {
@@ -25,4 +25,45 @@ abstract class NodeEntity : Entity {
 
 class ShelvesTreeRootEntity(override val eid: EID) : NodeEntity() {
   companion object : DurableEntityType<ShelvesTreeRootEntity>(ShelvesTreeRootEntity::class.java.name, "com.intellij", ::ShelvesTreeRootEntity)
+}
+
+class ShelvedChangeListEntity(override val eid: EID) : NodeEntity() {
+  val name: String by Name
+  val description: String by Description
+  val date: Long by Date
+  val error: String? by Error
+  val isRecycled: Boolean by Recycled
+  val isDeleted: Boolean by Deleted
+
+  val isMarkedToDelete: Boolean by MarkedToDelete
+
+  companion object : DurableEntityType<ShelvedChangeListEntity>(ShelvedChangeListEntity::class.java.name, "com.intellij", ::ShelvedChangeListEntity, NodeEntity) {
+    val Name = requiredValue("name", String.serializer())
+    val Description = requiredValue("description", String.serializer())
+    val Date = requiredValue("date", Long.serializer())
+    val Error = optionalValue("error", String.serializer())
+    val Recycled = requiredValue("recycled", Boolean.serializer())
+    val Deleted = requiredValue("deleted", Boolean.serializer())
+    val MarkedToDelete = requiredValue("markedToDelete", Boolean.serializer())
+  }
+}
+
+class ShelvedChangeEntity(override val eid: EID) : NodeEntity() {
+  val filePath: String by FilePath
+  val additionalText: String? by AdditionalText
+  val fileStatus: String by FileStatus
+
+  companion object : DurableEntityType<ShelvedChangeEntity>(ShelvedChangeEntity::class.java.name, "com.intellij", ::ShelvedChangeEntity, NodeEntity) {
+    val FilePath = requiredValue("filePath", String.serializer())
+    val AdditionalText = optionalValue("originText", String.serializer())
+    val FileStatus = requiredValue("fileStatus", String.serializer())
+  }
+}
+
+class TagNodeEntity(override val eid: EID) : NodeEntity() {
+  val text: String by Text
+
+  companion object : DurableEntityType<TagNodeEntity>(TagNodeEntity::class.java.name, "com.intellij", ::TagNodeEntity, NodeEntity) {
+    val Text = requiredValue("text", String.serializer())
+  }
 }

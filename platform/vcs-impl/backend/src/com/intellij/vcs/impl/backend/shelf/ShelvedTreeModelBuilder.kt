@@ -8,10 +8,10 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapper
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
+import com.intellij.openapi.vcs.changes.ui.TagChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.ApiStatus
-import java.util.ArrayList
-import java.util.Comparator
 
 @ApiStatus.Internal
 class ShelvedTreeModelBuilder(val project: Project, grouping: ChangesGroupingPolicyFactory) : TreeModelBuilder(project, grouping) {
@@ -20,7 +20,9 @@ class ShelvedTreeModelBuilder(val project: Project, grouping: ChangesGroupingPol
   }
 
   fun setDeletedShelvedLists(shelvedLists: List<ShelvedChangeList>) {
-    createShelvedListsWithChangesNode(shelvedLists, createTagNode(VcsBundle.message("shelve.recently.deleted.node")))
+    val tag = ChangesBrowserNode.TagImpl(VcsBundle.message("shelve.recently.deleted.node"))
+    val parentNode = insertTagNode(RecentlyDeletedNode(tag, SimpleTextAttributes.REGULAR_ATTRIBUTES, true))
+    createShelvedListsWithChangesNode(shelvedLists, parentNode)
   }
 
   private fun createShelvedListsWithChangesNode(
@@ -47,5 +49,12 @@ class ShelvedTreeModelBuilder(val project: Project, grouping: ChangesGroupingPol
         insertChangeNode(change, shelvedListNode, ShelvedChangeNode(shelved, filePath, change.getOriginText(project)))
       }
     }
+  }
+}
+
+class RecentlyDeletedNode(userObject: Tag, attributes: SimpleTextAttributes, expandByDefault: Boolean) :
+  TagChangesBrowserNode(userObject, attributes, expandByDefault) {
+  override fun getSortWeight(): Int {
+    return DELETED_SORT_WEIGHT
   }
 }
