@@ -904,7 +904,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     boolean restart = toRestartAlarm && !myDisposed;
     LOG.debug(
       "Stopping process: toRestartAlarm ", toRestartAlarm,
-      " myDisposed", myDisposed,
+      " myDisposed ", myDisposed,
       " reason ", reason);
     if (restart) {
       scheduleIfNotRunning();
@@ -924,6 +924,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     myScheduledUpdateTimestamp = System.nanoTime() + autoReparseDelayNanos;
     // optimisation: this check is to avoid too many re-schedules in case of thousands of event spikes
     boolean isDone = myUpdateRunnableFuture.isDone();
+    LOG.debug("Rescheduling highlighting: isDone ", isDone);
     if (isDone) {
       scheduleUpdateRunnable(autoReparseDelayNanos);
     }
