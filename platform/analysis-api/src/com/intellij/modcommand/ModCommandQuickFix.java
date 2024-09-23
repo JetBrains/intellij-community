@@ -2,6 +2,7 @@
 package com.intellij.modcommand;
 
 import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -9,16 +10,22 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A novel experimental kind of quick-fix that creates a command instead of performing actual modification.
- * Default preview for this fix is based on the command returned from {@link #perform(Project, ProblemDescriptor)}
+ * A quick-fix that creates a ModCommand instead of performing actual modification.
+ * Default preview for this fix is based on the command returned from {@link #perform(Project, ProblemDescriptor)}.
+ * <p>
+ * This class exists mainly to aid conversion of classic {@link LocalQuickFix} implementations to ModCommand API.
+ * In many cases, the easiest way to convert is to extend {@link PsiUpdateModCommandQuickFix}.
+ * <p>
+ * {@code ModCommandQuickFix} subclasses should not implement {@link ModCommandAction} or {@link IntentionAction}
+ * interfaces. If you already have a {@link ModCommandAction} and want to use it as a quick-fix, adapt via
+ * {@link LocalQuickFix#from(ModCommandAction)}.
  * @see ModCommand
+ * @see PsiUpdateModCommandQuickFix
  */
-@ApiStatus.Experimental
 public abstract class ModCommandQuickFix implements LocalQuickFix {
   /**
    * A method that computes the final action of the quick-fix and returns it. Executed in a background read-action.

@@ -2671,7 +2671,7 @@ e:com.intellij.modcommand.ModCommandExecutor$Result
 - getMessage():java.lang.String
 - s:valueOf(java.lang.String):com.intellij.modcommand.ModCommandExecutor$Result
 - s:values():com.intellij.modcommand.ModCommandExecutor$Result[]
-*a:com.intellij.modcommand.ModCommandQuickFix
+a:com.intellij.modcommand.ModCommandQuickFix
 - com.intellij.codeInspection.LocalQuickFix
 - <init>():V
 - f:applyFix(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):V
@@ -3009,7 +3009,7 @@ a:com.intellij.modcommand.PsiBasedModCommandAction
 - p:<init>(java.lang.Class):V
 - pa:invoke(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement,com.intellij.modcommand.ModPsiUpdater):V
 - pf:perform(com.intellij.modcommand.ActionContext,com.intellij.psi.PsiElement):com.intellij.modcommand.ModCommand
-*a:com.intellij.modcommand.PsiUpdateModCommandQuickFix
+a:com.intellij.modcommand.PsiUpdateModCommandQuickFix
 - com.intellij.modcommand.ModCommandQuickFix
 - <init>():V
 - pa:applyFix(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.modcommand.ModPsiUpdater):V
