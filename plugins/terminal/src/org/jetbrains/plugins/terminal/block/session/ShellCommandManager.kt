@@ -4,16 +4,15 @@ package org.jetbrains.plugins.terminal.block.session
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.EventDispatcher
 import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.TerminalCustomCommandListener
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.clearAllAndMoveCursorToTopLeftCorner
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.util.*
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -34,7 +33,7 @@ internal class ShellCommandManager(
     session.model.textBuffer
   )
 
-  private val listeners: CopyOnWriteArrayList<ShellCommandListener> = CopyOnWriteArrayList()
+  private val dispatcher = EventDispatcher.create(ShellCommandListener::class.java)
 
   @Volatile
   private var startedCommand: StartedCommand? = null
@@ -152,25 +151,19 @@ internal class ShellCommandManager(
 
   private fun fireInitialized(rawShellInfo: String) {
     debug { "Shell event: initialized. Shell info: $rawShellInfo" }
-    for (listener in listeners) {
-      listener.shellInfoReceived(rawShellInfo)
-      listener.initialized()
-    }
+    dispatcher.multicaster.shellInfoReceived(rawShellInfo)
+    dispatcher.multicaster.initialized()
     clearTerminal()
   }
 
   private fun firePromptShown() {
     debug { "Shell event: prompt_shown" }
-    for (listener in listeners) {
-      listener.promptShown()
-    }
+    dispatcher.multicaster.promptShown()
   }
 
   private fun fireCommandStarted(startedCommand: StartedCommand) {
     debug { "Shell event: command_started - $startedCommand" }
-    for (listener in listeners) {
-      listener.commandStarted(startedCommand.command)
-    }
+    dispatcher.multicaster.commandStarted(startedCommand.command)
   }
 
   private fun fireCommandFinished(startedCommand: StartedCommand?, exitCode: Int) {
@@ -180,52 +173,40 @@ internal class ShellCommandManager(
     else {
       val event = CommandFinishedEvent(startedCommand.command, exitCode, startedCommand.commandStarted.elapsedNow())
       debug { "Shell event: command_finished - $event" }
-      for (listener in listeners) {
-        listener.commandFinished(event)
-      }
+      dispatcher.multicaster.commandFinished(event)
     }
     clearTerminal()
   }
 
   private fun firePromptStateUpdated(state: TerminalPromptState) {
-    for (listener in listeners) {
-      listener.promptStateUpdated(state)
-    }
+    dispatcher.multicaster.promptStateUpdated(state)
     debug { "Prompt state updated: $state" }
   }
 
   private fun fireCommandHistoryReceived(history: String) {
     debug { "Shell event: command_history of ${history.length} size" }
-    for (listener in listeners) {
-      listener.commandHistoryReceived(history)
-    }
+    dispatcher.multicaster.commandHistoryReceived(history)
   }
 
   private fun fireShellEditorBufferReported(event: List<String>) {
     val buffer = Param.SHELL_EDITOR_BUFFER.getDecodedValue(event.getOrNull(1))
     debug { "Shell event: shell_editor_buffer_reported of ${buffer.length} size" }
-    for (listener in listeners) {
-      listener.commandBufferReceived(buffer)
-    }
+    dispatcher.multicaster.commandBufferReceived(buffer)
   }
 
   private fun fireGeneratorFinished(requestId: Int, result: String, exitCode: Int) {
     debug { "Shell event: generator_finished with requestId $requestId and result of ${result.length} size" }
-    for (listener in listeners) {
-      listener.generatorFinished(GeneratorFinishedEvent(requestId, result, exitCode))
-    }
+    dispatcher.multicaster.generatorFinished(GeneratorFinishedEvent(requestId, result, exitCode))
     clearTerminal()
   }
 
   private fun fireClearInvoked() {
     debug { "Shell event: clear_invoked" }
-    for (listener in listeners) {
-      listener.clearInvoked()
-    }
+    dispatcher.multicaster.clearInvoked()
   }
 
   fun addListener(listener: ShellCommandListener, parentDisposable: Disposable) {
-    TerminalUtil.addItem(listeners, listener, parentDisposable)
+    dispatcher.addListener(listener, parentDisposable)
   }
 
   companion object {
@@ -289,7 +270,7 @@ internal class ShellCommandManager(
   }
 }
 
-internal interface ShellCommandListener {
+internal interface ShellCommandListener : EventListener {
   fun initialized() {}
 
   /**
