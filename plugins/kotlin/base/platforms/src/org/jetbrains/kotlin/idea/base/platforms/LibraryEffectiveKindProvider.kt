@@ -184,9 +184,7 @@ class LibraryEffectiveKindProvider(private val project: Project) {
 
 @Service(Service.Level.APP)
 private class KotlinLibraryKindGistProvider {
-    val kotlinLibraryKindGist: VirtualFileGist<PersistentLibraryKind<*>> by lazy {
-        createGist()
-    }
+    val kotlinLibraryKindGist: VirtualFileGist<PersistentLibraryKind<*>> = createGist()
 
     private fun createGist(): VirtualFileGist<PersistentLibraryKind<*>> = GistManager.getInstance().newVirtualFileGist(
         "kotlin-library-kind",
