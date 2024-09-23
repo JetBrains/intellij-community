@@ -89,7 +89,7 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   protected fun findItemIndex(itemText: String, fullMatch: Boolean): Int? =
-    fixture.collectItems().indexOfFirst {
+    fixture.collectRawItems().indexOfFirst {
       if (fullMatch) it == itemText
       else it.contains(itemText, true)
     }.let {
