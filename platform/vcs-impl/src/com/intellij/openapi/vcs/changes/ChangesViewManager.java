@@ -61,7 +61,10 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
-import com.intellij.vcs.commit.*;
+import com.intellij.vcs.commit.ChangesViewCommitPanel;
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
+import com.intellij.vcs.commit.CommitModeManager;
+import com.intellij.vcs.commit.FixedSizeScrollPanel;
 import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
@@ -543,7 +546,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
       @Override
       protected @NotNull DiffEditorViewer createViewer() {
-        return new ChangesViewDiffPreviewProcessor(ChangesViewToolWindowPanel.this, myView, true);
+        return createDiffPreviewProcessor(true);
       }
 
       @Override
@@ -596,7 +599,7 @@ public class ChangesViewManager implements ChangesViewEx,
       private final PreviewDiffSplitterComponent mySplitterComponent;
 
       private ChangesViewSplitterDiffPreview() {
-        myProcessor = new ChangesViewDiffPreviewProcessor(ChangesViewToolWindowPanel.this, myView, false);
+        myProcessor = createDiffPreviewProcessor(false);
         mySplitterComponent = new PreviewDiffSplitterComponent(myProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
 
         mySplitterComponent.setFirstComponent(myContentPanel);
@@ -621,6 +624,19 @@ public class ChangesViewManager implements ChangesViewEx,
       public void closePreview() {
         mySplitterComponent.closePreview();
       }
+    }
+
+    private ChangesViewDiffPreviewProcessor createDiffPreviewProcessor(boolean isInEditor) {
+
+      ChangesViewDiffPreviewProcessor processor = new ChangesViewDiffPreviewProcessor(myView, isInEditor);
+      this.addListener(new Listener() {
+        @Override
+        public void allowExcludeFromCommitChanged() {
+          processor.setAllowExcludeFromCommit(ChangesViewToolWindowPanel.this.isAllowExcludeFromCommit());
+        }
+      }, processor);
+      processor.setAllowExcludeFromCommit(this.isAllowExcludeFromCommit());
+      return processor;
     }
 
     private void closeEditorPreview(boolean onlyIfEmpty) {
