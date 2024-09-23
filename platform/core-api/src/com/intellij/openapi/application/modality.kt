@@ -18,7 +18,6 @@ suspend fun isModalAwareContext(): Boolean {
   return currentCoroutineContext().contextModality() != ModalityState.any()
 }
 
-@Suppress("CONFLICTING_OVERLOADS") // KT-61878
 fun ModalityState.asContextElement(): CoroutineContext {
   return ModalityStateElement(this)
 }
