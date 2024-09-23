@@ -12,10 +12,12 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +63,9 @@ public final class QuickFixPreviewPanelFactory {
       if (multipleDescriptors && commonFixes.length == 0) {
         partialFixes = view.getProvider().getPartialQuickFixes(myWrapper, tree, tree.getSelectedDescriptors());
       }
-      myEmpty = fillPanel(commonFixes, partialFixes, multipleDescriptors, view);
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162775")) {
+        myEmpty = fillPanel(commonFixes, partialFixes, multipleDescriptors, view);
+      }
     }
 
     public boolean isEmpty() {

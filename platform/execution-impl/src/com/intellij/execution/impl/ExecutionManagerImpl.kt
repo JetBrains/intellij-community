@@ -60,6 +60,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.util.Alarm
+import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
@@ -71,7 +72,6 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.BorderLayout
 import java.io.OutputStream
-import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
@@ -224,7 +224,9 @@ open class ExecutionManagerImpl(private val project: Project, coroutineScope: Co
   override fun startRunProfile(environment: ExecutionEnvironment, starter: () -> Promise<RunContentDescriptor?>) {
     doStartRunProfile(environment) {
       // errors are handled by startRunProfile
-      starter()
+      SlowOperations.knownIssue("IJPL-162793").use {
+        starter()
+      }
         .then { descriptor ->
           if (descriptor != null) {
             descriptor.executionId = environment.executionId
@@ -622,7 +624,9 @@ open class ExecutionManagerImpl(private val project: Project, coroutineScope: Co
           }
 
           val settings = environment.runnerAndConfigurationSettings
-          executeConfiguration(environment, settings != null && settings.isEditBeforeRun)
+          SlowOperations.knownIssue("IJPL-162789").use {
+            executeConfiguration(environment, settings != null && settings.isEditBeforeRun)
+          }
         }
       }
     }, 50)

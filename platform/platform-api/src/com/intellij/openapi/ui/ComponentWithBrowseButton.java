@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -27,6 +28,7 @@ import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps;
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsKt;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -126,7 +128,11 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
 
   private void notifyActionListeners() {
     ActionEvent event = new ActionEvent(myComponent, ActionEvent.ACTION_PERFORMED, "action");
-    for (ActionListener listener: myBrowseButton.getActionListeners()) listener.actionPerformed(event);
+    for (ActionListener listener: myBrowseButton.getActionListeners()) {
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        listener.actionPerformed(event);
+      }
+    }
   }
 
   public final @NotNull Comp getChildComponent() {

@@ -27,6 +27,7 @@ import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -43,6 +44,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -150,11 +152,15 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public void customizeRenderer(SimpleColoredComponent renderer) {
     if (myXBreakpoint != null) {
       renderer.setIcon(myXBreakpoint.getType().getEnabledIcon());
-      renderer.append(XBreakpointUtil.getShortText(myXBreakpoint));
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162794")) {
+        renderer.append(XBreakpointUtil.getShortText(myXBreakpoint));
+      }
     }
     else {
       renderer.setIcon(AllIcons.Debugger.Db_set_breakpoint);
-      renderer.append(getDisplayName());
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162794")) {
+        renderer.append(getDisplayName());
+      }
     }
   }
 
