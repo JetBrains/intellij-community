@@ -144,16 +144,36 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
    * @return true if the member is not from an implicit class or if place and member are both in the same implicit class, false otherwise.
    */
   private static boolean fromImplicitClassOutsideThisClass(@NotNull PsiMember member, @NotNull PsiElement place) {
-    PsiImplicitClass implicitClass = PsiTreeUtil.getParentOfType(member, PsiImplicitClass.class);
+    PsiImplicitClass implicitClass = getImplicitClass(member);
     if (implicitClass == null) {
       return false;
     }
-    PsiImplicitClass placeImplicitClass = PsiTreeUtil.getParentOfType(place, PsiImplicitClass.class);
+    PsiImplicitClass placeImplicitClass = getImplicitClass(place);
     if (placeImplicitClass == null) {
       return true;
     }
     //one of them can be in the copy
     return !member.getManager().areElementsEquivalent(implicitClass, placeImplicitClass);
+  }
+
+  private static @Nullable PsiImplicitClass getImplicitClass(@NotNull PsiElement psiElement) {
+    PsiImplicitClass implicitClass = PsiTreeUtil.getParentOfType(psiElement, PsiImplicitClass.class);
+    if (implicitClass != null) {
+      return implicitClass;
+    }
+    //it can be a light member that doesn't have parents, but let's try with a containing file
+    PsiFile containingFile = psiElement.getContainingFile();
+    if (!(containingFile instanceof PsiJavaFile)) {
+      return null;
+    }
+    PsiClass[] classes = ((PsiJavaFile)containingFile).getClasses();
+    if(classes.length != 1) {
+      return null;
+    }
+    if(!(classes[0] instanceof PsiImplicitClass)) {
+      return null;
+    }
+    return (PsiImplicitClass)classes[0];
   }
 
   @Override

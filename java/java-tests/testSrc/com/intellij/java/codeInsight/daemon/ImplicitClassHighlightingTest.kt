@@ -45,6 +45,10 @@ class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     doTest()
   }
 
+  fun testOverrideRecord() {
+    doTest()
+  }
+
   fun testDuplicateImplicitClass() {
     myFixture.configureByText("T.java", """
       class DuplicateImplicitClass {
