@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.registry.Registry;
@@ -88,7 +89,9 @@ public final class EditSourceOnEnterKeyHandler {
       if (!action.getAsBoolean() && listener != null) {
         // perform previous action if the specified action is failed,
         // it is needed to expand/collapse a tree node
-        listener.actionPerformed(event);
+        try (AccessToken ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          listener.actionPerformed(event);
+        }
       }
     }, ENTER, JComponent.WHEN_FOCUSED);
   }

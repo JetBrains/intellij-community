@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
+import com.intellij.util.SlowOperations
 import com.intellij.util.ui.GraphicsUtil
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.isSoftWrapping
 import org.intellij.plugins.markdown.editor.tables.TableUtils
@@ -67,8 +68,13 @@ internal class VerticalBarPresentation(
   }
 
   private fun shouldShowInlay(): Boolean {
-    if (!row.isValid || editor.isDisposed) {
+    if (editor.isDisposed) {
       return false
+    }
+    SlowOperations.knownIssue("IJPL-162791").use {
+      if (!row.isValid) {
+        return false
+      }
     }
     val table = TableUtils.findTable(row) ?: return false
     return !table.isSoftWrapping(editor)
@@ -99,8 +105,13 @@ internal class VerticalBarPresentation(
   }
 
   override fun paint(graphics: Graphics2D, attributes: TextAttributes) {
-    if (!row.isValid || editor.isDisposed || boundsState == initialState) {
+    if (editor.isDisposed || boundsState == initialState) {
       return
+    }
+    SlowOperations.knownIssue("IJPL-162800").use {
+      if (!row.isValid) {
+        return
+      }
     }
     graphics.useCopy { local ->
       GraphicsUtil.setupAntialiasing(local)
