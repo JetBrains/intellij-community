@@ -28072,12 +28072,6 @@ f:com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolderKt
 - getEntityClass():java.lang.Class
 - getRemovedEntityIteratorBuilders(com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity,com.intellij.openapi.project.Project):java.util.Collection
 - getReplacedEntityIteratorBuilders(com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity,com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity,com.intellij.openapi.project.Project):java.util.Collection
-*c:com.intellij.util.indexing.roots.ModuleIndexableFilesPolicy
-- *sf:Companion:com.intellij.util.indexing.roots.ModuleIndexableFilesPolicy$Companion
-- <init>():V
-- shouldIndexSeparateRoots():Z
-*f:com.intellij.util.indexing.roots.ModuleIndexableFilesPolicy$Companion
-- f:getInstance():com.intellij.util.indexing.roots.ModuleIndexableFilesPolicy
 *f:com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
 - com.intellij.util.indexing.roots.IndexableFilesIterator
 - <init>(com.intellij.openapi.vfs.VirtualFile):V

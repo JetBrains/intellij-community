@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
@@ -15,14 +14,6 @@ import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
 import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
-
-open class ModuleIndexableFilesPolicy {
-  companion object {
-    fun getInstance(): ModuleIndexableFilesPolicy = service<ModuleIndexableFilesPolicy>()
-  }
-
-  open fun shouldIndexSeparateRoots(): Boolean = true
-}
 
 /**
  * @param rootHolder is null when iterator should just iterate all files in module, no explicit root list
