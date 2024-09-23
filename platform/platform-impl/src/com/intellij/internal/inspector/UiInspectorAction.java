@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.internal.inspector.components.HierarchyTree;
 import com.intellij.internal.inspector.components.InspectorWindow;
@@ -16,7 +17,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExpandedItemListCellRendererWrapper;
 import com.intellij.ui.popup.PopupFactoryImpl;
@@ -78,8 +78,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
 
   @Override
   protected void handleClick(@NotNull Component component, @Nullable MouseEvent event) {
-    IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, component);
-    Project project = frame != null ? frame.getProject() : null;
+    Project project = ProjectUtil.getProjectForComponent(component);
     closeAllInspectorWindows();
 
     if (event != null) {

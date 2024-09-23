@@ -17,6 +17,7 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.notebook.editor.BackedVirtualFile;
@@ -61,7 +62,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiCompiledFile;
@@ -1550,15 +1550,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   private static @Nullable Project getProject(@Nullable Window window) {
-    // A window may be not an IdeFrame itself, but owned by an IdeFrame, e.g., FloatingDecorator.
-    var maybeIdeFrame = window;
-    while (maybeIdeFrame != null) {
-      if (maybeIdeFrame instanceof IdeFrame ideFrame) {
-        return ideFrame.getProject();
-      }
-      maybeIdeFrame = maybeIdeFrame.getOwner();
-    }
-    return null;
+    return ProjectUtil.getProjectForComponent(window);
   }
 
   /**

@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -182,11 +183,7 @@ final class ProcessPopup {
     builder.setRequestFocus(requestFocus);
     builder.setBelongsToGlobalPopupStack(false);
     builder.setMinSize(new JBDimension(300, 100));
-    Component frame = ComponentUtil.findUltimateParent(myProgressPanel.getComponent$intellij_platform_ide_impl());
-    Project project = null;
-    if (frame instanceof IdeFrame ideFrame) {
-      project = ideFrame.getProject();
-    }
+    Project project = ProjectUtil.getProjectForComponent(myProgressPanel.getComponent$intellij_platform_ide_impl());
     builder.setDimensionServiceKey(project, DIMENSION_SERVICE_KEY, true);
     builder.setLocateWithinScreenBounds(false);
 

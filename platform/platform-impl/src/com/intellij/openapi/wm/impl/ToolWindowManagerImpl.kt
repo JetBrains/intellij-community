@@ -14,6 +14,7 @@ import com.intellij.ide.UiActivity
 import com.intellij.ide.UiActivityMonitor
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.MaximizeActiveDialogAction
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector
@@ -80,7 +81,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
-import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
@@ -441,14 +441,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       return
     }
 
-    val parent = e.component?.let { ComponentUtil.findUltimateParent(it) }
-    if (parent is IdeFrame) {
-      if ((parent as IdeFrame).project !== project) {
-        resetHoldState()
-        return
-      }
+    val project = ProjectUtil.getProjectForComponent(e.component)
+    if (project != null && project !== this.project) {
+      resetHoldState()
+      return
     }
-
     val vks = getActivateToolWindowVKsMask()
     if (vks == 0) {
       resetHoldState()

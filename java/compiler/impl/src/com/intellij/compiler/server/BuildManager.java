@@ -77,7 +77,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache;
 import com.intellij.platform.backend.workspace.WorkspaceModelCache;
 import com.intellij.serviceContainer.AlreadyDisposedException;
@@ -148,6 +147,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.intellij.ide.impl.ProjectUtil.getProjectForComponent;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public final class BuildManager implements Disposable {
@@ -781,11 +781,7 @@ public final class BuildManager implements Disposable {
       if (window == null) {
         window = ComponentUtil.getActiveWindow();
       }
-
-      Component component = ComponentUtil.findUltimateParent(window);
-      if (component instanceof IdeFrame) {
-        project = ((IdeFrame)component).getProject();
-      }
+      project = getProjectForComponent(window);
     }
 
     return isValidProject(project)? project : null;

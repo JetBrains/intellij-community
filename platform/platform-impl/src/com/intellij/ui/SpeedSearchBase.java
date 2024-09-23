@@ -5,6 +5,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.speedSearch.SpeedSearchAction;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.Disposable;
@@ -22,7 +23,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -965,7 +965,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     if (mySearchPopup == null || !myComponent.isDisplayable()) return;
 
     JRootPane rootPane = myComponent.getRootPane();
-    Project project = rootPane != null && rootPane.getParent() instanceof IdeFrame o ? o.getProject() : null;
+    Project project = ProjectUtil.getProjectForComponent(rootPane);
     if (project != null && !project.isDefault() && !project.isDisposed()) {
       myListenerDisposable = Disposer.newDisposable();
       project.getMessageBus().connect(myListenerDisposable).subscribe(ToolWindowManagerListener.TOPIC, myToolWindowListener);

@@ -671,6 +671,7 @@ object ProjectUtil {
     return w as? IdeFrame
   }
 
+  @JvmStatic
   fun getProjectForWindow(window: Window?): Project? {
     return getRootFrameForWindow(window)?.project
   }
