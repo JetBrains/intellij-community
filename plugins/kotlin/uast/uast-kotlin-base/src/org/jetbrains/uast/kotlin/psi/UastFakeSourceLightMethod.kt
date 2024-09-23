@@ -70,8 +70,8 @@ open class UastFakeSourceLightMethod(
                                 "\$this\$${original.name}",
                                 parameterList,
                                 receiver,
-                                false,
-                                null,
+                                isVarArgs = false,
+                                ktDefaultValue = null,
                             ) {
                                 baseResolveProviderService.resolveToType(receiver, this@UastFakeSourceLightMethod) ?: UastErrorType
                             }

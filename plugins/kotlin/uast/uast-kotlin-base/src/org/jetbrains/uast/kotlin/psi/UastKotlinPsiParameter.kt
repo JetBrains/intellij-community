@@ -26,7 +26,7 @@ class UastKotlinPsiParameter internal constructor(
     val baseResolveService = ApplicationManager.getApplication()
         .getService(BaseKotlinUastResolveProviderService::class.java)
     val type = baseResolveService.getType(ktParameter, containing, isForFake = true) ?: UastErrorType
-    if (isVarArgs && type is PsiArrayType) PsiEllipsisType(type.componentType, type.annotationProvider) else type
+    type.toEllipsisTypeIfNeeded(isVarArgs)
 }) {
     private val annotationsPart = UastLazyPart<Array<PsiAnnotation>>()
 

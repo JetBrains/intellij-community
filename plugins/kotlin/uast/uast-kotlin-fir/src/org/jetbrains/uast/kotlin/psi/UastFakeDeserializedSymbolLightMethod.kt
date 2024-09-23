@@ -190,9 +190,11 @@ constructor(
                                     ktOrigin = (valueParamSymbol.psi as? KtElement) ?: context
                                 ) {
                                     analyzeForUast(context) {
-                                        valueParamSymbolPtr.restoreSymbol()
+                                        val restoredValueSymbol = valueParamSymbolPtr.restoreSymbol()
+                                        restoredValueSymbol
                                             ?.returnType
                                             ?.asPsiType(context, allowErrorTypes = true)
+                                            ?.toEllipsisTypeIfNeeded(restoredValueSymbol.isVararg)
                                             ?: UastErrorType
                                     }
                                 }
