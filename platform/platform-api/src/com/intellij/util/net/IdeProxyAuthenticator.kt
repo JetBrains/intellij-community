@@ -4,7 +4,6 @@ package com.intellij.util.net
 import com.intellij.credentialStore.Credentials
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.SystemProperties
 import java.net.Authenticator
 import java.net.PasswordAuthentication
 
@@ -46,14 +45,25 @@ class IdeProxyAuthenticator(
     val host = getHostNameReliably(requestingHost, requestingSite, requestingURL) ?: "" // TODO remove requestingURL, it is not relevant for proxy _auth_
     val port = requestingPort
 
-    if (RESTORE_OLD_BEHAVIOUR) { // FIXME see flag kdoc
-      // always return known credentials
+    if (requestingScheme.equals("ntlm", ignoreCase = true) ||
+        requestingScheme.equals("Kerberos", ignoreCase = true) ||
+        requestingScheme.equals("Negotiate", ignoreCase = true)) {
+      /**
+       * Always return known credentials for these schemes. Why:
+       * It turns out that the claim about JDK caching valid credentials is not precise ([lastRequest]). For some reason, in case
+       * NTLM or Kerberos auth schemes are used, JDK _may_ ask the authenticator again for credentials, even though the last credentials are
+       * still valid. Probably it happens due to a multistage auth scheme.
+       * If we go the "normal" path instead, we'll conflict with [lastRequest] logic and ask the user credentials again if someone requests
+       * same url twice in a row on current thread.
+       * This is actually the logic of the "old" authenticator implementation ([IdeaWideAuthenticator]).
+       * @see sun.net.www.protocol.http.HttpURLConnection.getHttpProxyAuthentication
+       */
       return proxyAuth.getOrPromptAuthentication(requestingPrompt, host, port)?.toPasswordAuthentication()
     }
 
-    var credentials = proxyAuth.getOrPromptAuthentication(requestingPrompt, host, port)
+    var credentials = proxyAuth.getKnownAuthentication(host, port)
     var key = getKey(credentials)
-    if (lastRequest.get() == key) {
+    if (credentials == null || lastRequest.get() == key) {
       credentials = proxyAuth.getPromptedAuthentication(requestingPrompt, host, port)
       key = getKey(credentials)
     }
@@ -63,22 +73,13 @@ class IdeProxyAuthenticator(
 
   private fun getKey(credentials: Credentials?): String = "$this;c=${credentials.hash()}"
 
-  override fun toString(): String = "Auth@${System.identityHashCode(this).toString(16)}{type=$requestorType, prompt=$requestingPrompt, " +
-                                    "host=$requestingHost, port=$requestingPort, site=$requestingSite, url=$requestingURL}"
+  override fun toString(): String = "Auth@${System.identityHashCode(this).toString(16)}{" +
+                                    "type=$requestorType, scheme=$requestingScheme, protocol=$requestingProtocol, " +
+                                    "prompt=$requestingPrompt, host=$requestingHost, port=$requestingPort, " +
+                                    "site=$requestingSite, url=$requestingURL}"
 
   private companion object {
     private val logger = logger<IdeProxyAuthenticator>()
-
-    /**
-     * FIXME
-     * It turns out that the claim about JDK caching valid credentials is not precise ([lastRequest]). For some reason, in case
-     * NTLM or Kerberos auth schemes are used, JDK _may_ ask the authenticator again for credentials, even though the last credentials are
-     * still valid.
-     * Usually, it does so once for each request, and given that [lastRequest] checks for request equality, it usually works, meaning that we
-     * return known credentials to JDK and it suffices. But if we do two consecutive requests to the same URL, [lastRequest] value will match
-     * and we'll prompt the user to input credentials again. And this is bad.
-     */
-    private val RESTORE_OLD_BEHAVIOUR: Boolean = SystemProperties.getBooleanProperty("idea.proxy.auth.old.behaviour", true)
 
     private fun Credentials.toPasswordAuthentication(): PasswordAuthentication? {
       if (userName == null) return null

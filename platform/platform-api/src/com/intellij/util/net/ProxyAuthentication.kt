@@ -30,9 +30,9 @@ interface ProxyAuthentication {
   }
 
   /**
-   * @return already known credentials if there are any, fallbacks to [getPromptedAuthentication] otherwise.
+   * @return already known credentials if there are any, `null` otherwise.
    */
-  fun getOrPromptAuthentication(prompt: @Nls String, host: String, port: Int): Credentials?
+  fun getKnownAuthentication(host: String, port: Int): Credentials?
 
   /**
    * Always requests authentication from the user for a proxy located at the provided host and port.
@@ -58,6 +58,14 @@ interface ProxyAuthentication {
    */
   fun enablePromptedAuthentication(host: String, port: Int)
 }
+
+/**
+ * @return already known credentials if there are any, or prompts for new credentials otherwise.
+ */
+fun ProxyAuthentication.getOrPromptAuthentication(prompt: @Nls String, host: String, port: Int): Credentials? {
+  return getKnownAuthentication(host, port) ?: getPromptedAuthentication(prompt, host, port)
+}
+
 
 @ApiStatus.Internal
 interface DisabledProxyAuthPromptsManager {
@@ -97,14 +105,13 @@ class PlatformProxyAuthentication(
   private val getCredentialStore: () -> ProxyCredentialStore,
   private val getDisabledPromptsManager: () -> DisabledProxyAuthPromptsManager
 ) : ProxyAuthentication {
-
-  override fun getOrPromptAuthentication(prompt: @Nls String, host: String, port: Int): Credentials? {
-    val knownCredentials = getCredentialStore().getCredentials(host, port)
-    if (knownCredentials != null) {
-      logger.debug { "returning known credentials for $host:$port" }
-      return knownCredentials
+  override fun getKnownAuthentication(host: String, port: Int): Credentials? {
+    val credentials = getCredentialStore().getCredentials(host, port)
+    logger.debug {
+      if (credentials != null) "returning known credentials for $host:$port, credentials=${credentials}"
+      else "no known credentials for $host:$port"
     }
-    return getPromptedAuthentication(prompt, host, port)
+    return credentials
   }
 
   override fun getPromptedAuthentication(prompt: String, host: String, port: Int): Credentials? {
@@ -129,6 +136,7 @@ class PlatformProxyAuthentication(
     val credentialStore = getCredentialStore()
     var result: Credentials? = null
     val login: String = credentialStore.getCredentials(host, port)?.userName ?: ""
+    logger.debug { "prompting auth for $host:$port" }
     runAboveAll {
       val dialog = AuthenticationDialog(
         PopupUtil.getActiveComponent(),
@@ -152,7 +160,7 @@ class PlatformProxyAuthentication(
         getDisabledPromptsManager().disablePromptedAuthentication(host, port)
       }
     }
-    logger.debug { "prompted auth for $host:$port: input=$result" }
+    logger.debug { if (result != null) "prompted auth for $host:$port: $result" else "prompted auth was cancelled" }
     return result
   }
 

@@ -11829,11 +11829,13 @@ com.intellij.util.net.ProxyAuthentication
 - sf:Companion:com.intellij.util.net.ProxyAuthentication$Companion
 - a:enablePromptedAuthentication(java.lang.String,I):V
 - s:getInstance():com.intellij.util.net.ProxyAuthentication
-- a:getOrPromptAuthentication(java.lang.String,java.lang.String,I):com.intellij.credentialStore.Credentials
+- a:getKnownAuthentication(java.lang.String,I):com.intellij.credentialStore.Credentials
 - a:getPromptedAuthentication(java.lang.String,java.lang.String,I):com.intellij.credentialStore.Credentials
 - a:isPromptedAuthenticationCancelled(java.lang.String,I):Z
 f:com.intellij.util.net.ProxyAuthentication$Companion
 - f:getInstance():com.intellij.util.net.ProxyAuthentication
+f:com.intellij.util.net.ProxyAuthenticationKt
+- sf:getOrPromptAuthentication(com.intellij.util.net.ProxyAuthentication,java.lang.String,java.lang.String,I):com.intellij.credentialStore.Credentials
 com.intellij.util.net.ProxyConfiguration
 - sf:Companion:com.intellij.util.net.ProxyConfiguration$Companion
 - s:buildProxyExceptionsMatcher(java.lang.String):java.util.function.Predicate
