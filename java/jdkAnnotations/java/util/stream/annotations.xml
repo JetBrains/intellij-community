@@ -366,6 +366,7 @@
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,java.util.List&lt;T&gt;&gt;&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/2"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,java.util.List&lt;T&gt;&gt;&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;) 0'>
@@ -375,6 +376,7 @@
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;java.lang.Boolean,D&gt;&gt; partitioningBy(java.util.function.Predicate&lt;? super T&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/1"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;java.lang.Boolean,D&gt;&gt; partitioningBy(java.util.function.Predicate&lt;? super T&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 0'>
@@ -388,6 +390,8 @@
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;java.lang.Boolean,java.util.List&lt;T&gt;&gt;&gt; partitioningBy(java.util.function.Predicate&lt;? super T&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/2"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;java.lang.Boolean,java.util.List&lt;T&gt;&gt;&gt; partitioningBy(java.util.function.Predicate&lt;? super T&gt;) 0'>
@@ -414,6 +418,7 @@
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Optional&lt;T&gt;&gt; reducing(java.util.function.BinaryOperator&lt;T&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Optional&lt;T&gt;&gt; reducing(java.util.function.BinaryOperator&lt;T&gt;) 0'>
@@ -476,6 +481,7 @@
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,java.util.List&lt;T&gt;&gt;&gt; groupingByConcurrent(java.util.function.Function&lt;? super T,? extends K&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/2"/>
   </item>
   <item
     name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,java.util.List&lt;T&gt;&gt;&gt; groupingByConcurrent(java.util.function.Function&lt;? super T,? extends K&gt;) 0'>
@@ -1147,10 +1153,33 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; generate(java.util.function.Supplier&lt;? extends T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; generate(java.util.function.Supplier&lt;? extends T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; generate(java.util.function.Supplier&lt;T&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; iterate(T, java.util.function.Predicate&lt;? super T&gt;, java.util.function.UnaryOperator&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; iterate(T, java.util.function.Predicate&lt;? super T&gt;, java.util.function.UnaryOperator&lt;T&gt;) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+  <item
+    name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; iterate(T, java.util.function.Predicate&lt;? super T&gt;, java.util.function.UnaryOperator&lt;T&gt;) 2'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; iterate(T, java.util.function.UnaryOperator&lt;T&gt;)'>
@@ -1204,6 +1233,24 @@
   <item name='java.util.stream.Stream java.util.stream.Stream.Builder&lt;T&gt; builder()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val val="&quot;-&gt;new&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.Stream.Builder java.util.stream.Stream&lt;T&gt; build()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.Stream.Builder java.util.stream.Stream.Builder&lt;T&gt; add(T)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_ -&gt; this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.Stream.Builder void accept(T)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
 </root>

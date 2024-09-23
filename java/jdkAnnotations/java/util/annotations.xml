@@ -3948,13 +3948,32 @@
       <val name="targetIsContainer" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Optional T orElseThrow(java.util.function.Supplier&lt;? extends X&gt;) 0'>
+      <annotation name='org.jetbrains.annotations.NotNull'/>
+      <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='java.util.Optional java.util.Optional&lt;T&gt; empty()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.Optional java.util.Optional&lt;T&gt; filter(java.util.function.Predicate&lt;? super T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
   </item>
+  <item name='java.util.Optional java.util.Optional&lt;T&gt; of(T)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.Optional java.util.Optional&lt;T&gt; of(T) 0'>
     <annotation name='org.intellij.lang.annotations.Flow'>
       <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Optional java.util.Optional&lt;T&gt; ofNullable(T)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.util.Optional java.util.Optional&lt;T&gt; ofNullable(T) 0'>
@@ -3963,13 +3982,29 @@
     </annotation>
   </item>
   <item
+    name='java.util.Optional java.util.Optional&lt;T&gt; or(java.util.function.Supplier&lt;? extends java.util.Optional&lt;? extends T&gt;&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Optional java.util.Optional&lt;T&gt; or(java.util.function.Supplier&lt;? extends java.util.Optional&lt;? extends T&gt;&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item
     name='java.util.Optional java.util.Optional&lt;U&gt; flatMap(java.util.function.Function&lt;? super T,? extends java.util.Optional&lt;? extends U&gt;&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2/*"/>
   </item>
   <item name='java.util.Optional java.util.Optional&lt;U&gt; map(java.util.function.Function&lt;? super T,? extends U&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='java.util.Optional java.util.stream.Stream&lt;T&gt; stream()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.util.Optional void ifPresent(java.util.function.Consumer&lt;? super T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3978,6 +4013,9 @@
   <item name='java.util.Optional void ifPresentOrElse(java.util.function.Consumer&lt;? super T&gt;, java.lang.Runnable) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='java.util.Optional void ifPresentOrElse(java.util.function.Consumer&lt;? super T&gt;, java.lang.Runnable) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Properties java.lang.String getProperty(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
