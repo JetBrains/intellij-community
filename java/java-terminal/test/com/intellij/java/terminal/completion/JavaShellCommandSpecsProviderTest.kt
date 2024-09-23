@@ -40,6 +40,19 @@ class JavaShellCommandSpecsProviderTest : BasePlatformTestCase() {
 
   @Test
   fun `x options are present`() = runBlocking {
+    val fixture = createVMOptionAwareFixture()
+    UsefulTestCase.assertContainsElements(fixture.getCompletionNames(), listOf("-Xsettings", "-Xlint"))
+    UsefulTestCase.assertDoesntContain(fixture.getCompletionNames(), listOf("-Xexperiment", "-Xdiagnose", "-XXadvanced"))
+  }
+
+  @Test
+  fun `double dash options are present`() = runBlocking {
+    val fixture = createVMOptionAwareFixture()
+    UsefulTestCase.assertContainsElements(fixture.getCompletionNames(), listOf("--add-opens", "--add-exports"))
+    UsefulTestCase.assertDoesntContain(fixture.getCompletionNames(), listOf("--add-experimental-exports", "--add-diagnostic-exports", "-XXadvanced"))
+  }
+
+  private fun createVMOptionAwareFixture(): ShellCompletionTestFixture {
     ApplicationManager.getApplication().replaceService(VMOptionsService::class.java, MockVMOptionsService(), testRootDisposable)
     val fixture = ShellCompletionTestFixture.builder(project).mockShellCommandResults { command ->
       if (command == JavaShellCommandContext.JAVA_SHOW_SETTINGS_PROPERTIES_VERSION_COMMAND) {
@@ -47,8 +60,7 @@ class JavaShellCommandSpecsProviderTest : BasePlatformTestCase() {
       }
       return@mockShellCommandResults ShellCommandResult.create("", exitCode = 1)
     }.build()
-    UsefulTestCase.assertContainsElements(fixture.getCompletionNames(), listOf("-Xsettings", "-Xlint"))
-    UsefulTestCase.assertDoesntContain(fixture.getCompletionNames(), listOf("-Xexperiment", "-Xdiagnose", "-XXdoubleDash"))
+    return fixture
   }
 
   private suspend fun ShellCompletionTestFixture.getCompletionNames(): List<String> {
@@ -66,11 +78,14 @@ class JavaShellCommandSpecsProviderTest : BasePlatformTestCase() {
           VMOption("lint", null, null, VMOptionKind.Standard, null, VMOptionVariant.X),
           VMOption("experiment", null, null, VMOptionKind.Experimental, null, VMOptionVariant.X),
           VMOption("diagnose", null, null, VMOptionKind.Diagnostic, null, VMOptionVariant.X),
-          VMOption("doubleDash", null, null, VMOptionKind.Product, null, VMOptionVariant.XX),
+          VMOption("advanced", null, null, VMOptionKind.Product, null, VMOptionVariant.XX),
+          VMOption("add-opens", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH),
+          VMOption("add-exports", null, null, VMOptionKind.Standard, null, VMOptionVariant.DASH_DASH),
+          VMOption("add-experiment-exports", null, null, VMOptionKind.Experimental, null, VMOptionVariant.DASH_DASH),
+          VMOption("add-diagnostic-exports", null, null, VMOptionKind.Experimental, null, VMOptionVariant.DASH_DASH),
         )
         )
       )
     }
-
   }
 }
