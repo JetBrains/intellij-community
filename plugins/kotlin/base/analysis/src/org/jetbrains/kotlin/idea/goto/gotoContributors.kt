@@ -2,13 +2,7 @@
 
 package org.jetbrains.kotlin.idea.goto
 
-import com.intellij.ide.util.gotoByName.AbstractPrimeSymbolNavigationContributor
-import com.intellij.navigation.ChooseByNameContributorEx
-import com.intellij.navigation.ColoredItemPresentation
-import com.intellij.navigation.GotoClassContributor
-import com.intellij.navigation.ItemPresentation
-import com.intellij.navigation.NavigationItem
-import com.intellij.navigation.PsiElementNavigationItem
+import com.intellij.navigation.*
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsSafe
@@ -23,7 +17,10 @@ import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.presentation.*
+import org.jetbrains.kotlin.idea.presentation.KotlinDefaultNamedDeclarationPresentation
+import org.jetbrains.kotlin.idea.presentation.KotlinFunctionPresentation
+import org.jetbrains.kotlin.idea.presentation.getPresentationInContainer
+import org.jetbrains.kotlin.idea.presentation.getPresentationText
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -198,8 +195,6 @@ internal class KotlinGotoFacadeClassContributor : AbstractKotlinGotoSymbolContri
 
     override fun getQualifiedName(item: NavigationItem): String? = (item as? FacadeClass)?.getQualifiedName()
 }
-
-class KotlinGotoPrimeSymbolContributor : AbstractPrimeSymbolNavigationContributor(KotlinPrimeSymbolNameIndex.indexKey)
 
 private fun KtCallableDeclaration.getQualifiedNameInFacade(): String? {
     val name = name ?: return null

@@ -17938,13 +17938,6 @@ f:com.intellij.ide.util.TreeFileChooserFactoryImpl
 com.intellij.ide.util.TypeVisibilityStateHolder
 - a:isVisible(java.lang.Object):Z
 - a:setVisible(java.lang.Object,Z):V
-c:com.intellij.ide.util.gotoByName.AbstractPrimeSymbolNavigationContributor
-- com.intellij.navigation.ChooseByNameContributorEx
-- com.intellij.openapi.project.DumbAware
-- <init>(com.intellij.psi.stubs.StubIndexKey):V
-- f:getIndexKey():com.intellij.psi.stubs.StubIndexKey
-- processElementsWithName(java.lang.String,com.intellij.util.Processor,com.intellij.util.indexing.FindSymbolParameters):V
-- processNames(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):V
 f:com.intellij.ide.util.gotoByName.ActionSearchUtilKt
 - sf:buildMatcher(java.lang.String):com.intellij.util.text.Matcher
 - sf:calcElementWeight(java.lang.Object,java.lang.String,com.intellij.psi.codeStyle.MinusculeMatcher):java.lang.Integer

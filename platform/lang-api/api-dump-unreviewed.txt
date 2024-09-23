@@ -3533,7 +3533,6 @@ com.intellij.lexer.StoppableLexerAdapter$StoppingCondition
 com.intellij.navigation.ChooseByNameContributor
 - sf:CLASS_EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:FILE_EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- sf:PRIME_SYMBOL_EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:SYMBOL_EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getItemsByName(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,Z):com.intellij.navigation.NavigationItem[]
 - a:getNames(com.intellij.openapi.project.Project,Z):java.lang.String[]
