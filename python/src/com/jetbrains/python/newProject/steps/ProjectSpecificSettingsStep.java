@@ -287,10 +287,6 @@ public class ProjectSpecificSettingsStep<T extends PyNewProjectSettings> extends
       panel.add(locationPanel);
       panel.add(createInterpretersPanel(((PythonProjectGenerator<?>)myProjectGenerator).getPreferredEnvironmentType()));
 
-      final JPanel basePanelExtension = ((PythonProjectGenerator<?>)myProjectGenerator).extendBasePanel();
-      if (basePanelExtension != null) {
-        panel.add(basePanelExtension);
-      }
       return panel;
     }
 

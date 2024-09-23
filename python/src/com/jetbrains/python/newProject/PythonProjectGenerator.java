@@ -8,7 +8,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -34,7 +33,6 @@ import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode;
 import com.jetbrains.python.statistics.PyStatisticToolsKt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,19 +86,6 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     myErrorCallback = errorCallback;
   }
 
-
-  /**
-   * Upper part of project generation wizard panel could be customized
-   */
-  @ApiStatus.Internal
-  @Nullable
-  public MainPartUiCustomizer getMainPartUiCustomizer() {
-    return null;
-  }
-
-  public @Nullable JPanel extendBasePanel() throws ProcessCanceledException {
-    return null;
-  }
 
   /**
    * Checks if project type and remote ask allows project creation.
@@ -329,85 +314,36 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   public static @NotNull Future<Void> installFrameworkIfNeeded(final @NotNull Project project,
                                                                final @NotNull String frameworkName,
                                                                final @NotNull String requirement,
-                                                               final @Nullable Sdk sdk,
+                                                               final @NotNull Sdk sdk,
                                                                final boolean forceInstallFramework,
                                                                final @Nullable Runnable callback) {
-    return installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, false, callback);
-  }
-
-  public static @NotNull Future<Void> installFrameworkInBackground(final @NotNull Project project,
-                                                                   final @NotNull String frameworkName,
-                                                                   final @NotNull String requirement,
-                                                                   final @Nullable Sdk sdk,
-                                                                   final boolean forceInstallFramework,
-                                                                   final @Nullable Runnable callback) {
-    return installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, true, callback);
-  }
-
-  private static @NotNull Future<Void> installFrameworkIfNeeded(final @NotNull Project project,
-                                                                final @NotNull String frameworkName,
-                                                                final @NotNull String requirement,
-                                                                final @Nullable Sdk sdk,
-                                                                final boolean forceInstallFramework,
-                                                                boolean asBackgroundTask,
-                                                                final @Nullable Runnable callback) {
 
     var future = new CompletableFuture<Void>();
-    if (sdk == null) {
-      reportPackageInstallationFailure(frameworkName, null);
-      future.completeExceptionally(new RuntimeException(("No SDK provided")));
-      return future;
-    }
 
     // For remote SDK we are not sure if framework exists or not, so we'll check it anyway
     if (forceInstallFramework || PythonSdkUtil.isRemote(sdk)) {
 
-      if (asBackgroundTask) {
-        ProgressManager.getInstance()
-          .run(new Task.Backgroundable(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
-            @Override
-            public void run(final @NotNull ProgressIndicator indicator) {
-              installPackages(frameworkName, forceInstallFramework, indicator, requirement, sdk);
-            }
+      ProgressManager.getInstance()
+        .run(new Task.Modal(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
+          @Override
+          public void run(final @NotNull ProgressIndicator indicator) {
+            installPackages(frameworkName, forceInstallFramework, indicator, requirement, sdk);
+          }
 
-            @Override
-            public void onThrowable(@NotNull Throwable error) {
-              future.completeExceptionally(error);
-            }
+          @Override
+          public void onThrowable(@NotNull Throwable error) {
+            future.completeExceptionally(error);
+          }
 
-            @Override
-            public void onSuccess() {
-              future.complete(null);
-              // Installed / checked successfully, call callback on AWT
-              if (callback != null) {
-                callback.run();
-              }
+          @Override
+          public void onSuccess() {
+            future.complete(null);
+            // Installed / checked successfully, call callback on AWT
+            if (callback != null) {
+              callback.run();
             }
-          });
-      }
-      else {
-        ProgressManager.getInstance()
-          .run(new Task.Modal(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
-            @Override
-            public void run(final @NotNull ProgressIndicator indicator) {
-              installPackages(frameworkName, forceInstallFramework, indicator, requirement, sdk);
-            }
-
-            @Override
-            public void onThrowable(@NotNull Throwable error) {
-              future.completeExceptionally(error);
-            }
-
-            @Override
-            public void onSuccess() {
-              future.complete(null);
-              // Installed / checked successfully, call callback on AWT
-              if (callback != null) {
-                callback.run();
-              }
-            }
-          });
-      }
+          }
+        });
     }
     else {
       future.complete(null);

@@ -136,18 +136,13 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
       row("") {
         comment("", maxLineLength = 60).bindText(locationHint)
       }
-      val uiCustomizer = projectGenerator.mainPartUiCustomizer
       row("") {
         checkBox(message("new.project.git")).bindSelected(createRepository)
         if (projectGenerator.supportsWelcomeScript()) {
           checkBox(message("new.project.welcome")).bindSelected(createScript)
         }
-        uiCustomizer?.checkBoxSection(this)
       }
 
-      uiCustomizer?.let {
-        uiCustomizer.underCheckBoxSection(this)
-      }
 
       panel {
         interpreterPanel.buildPanel(this)
