@@ -76,7 +76,7 @@ internal class ExtendedInfoComponent(private val project: Project?, private val 
 
     val action = advertisement.rightAction.invoke(element)
     if (action != null) {
-      val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.ACTION_SEARCH, context(project))
+      val actionEvent = AnActionEvent.createEvent(action, context(project), null, ActionPlaces.ACTION_SEARCH, ActionUiKind.SEARCH_POPUP, null)
       action.updateIt(actionEvent)
       actionLink.update(actionEvent, action)
       shortcutLabel.updateIt(action)
@@ -185,16 +185,16 @@ fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
   }
 
   val split: (Any) -> AnAction? = fun(item: Any): ExtendedInfoOpenInRightSplitAction? {
-    val actualFile = fileFun.invoke(item)
-    val actualProject = projectFun.invoke(item)
-    val actualPsiElement = psiElement.invoke(item)
-    if (actualFile == null || actualPsiElement == null) return null
-
     return ExtendedInfoOpenInRightSplitAction(
-      SimpleDataContext.builder()
-        .add(CommonDataKeys.PROJECT, actualProject)
-        .add(CommonDataKeys.PSI_ELEMENT, actualPsiElement)
-        .add(CommonDataKeys.VIRTUAL_FILE, actualFile).build())
+      CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
+        sink[CommonDataKeys.PROJECT] = projectFun.invoke(item)
+        sink.lazy(CommonDataKeys.PSI_ELEMENT) {
+          psiElement.invoke(item)
+        }
+        sink.lazy(CommonDataKeys.VIRTUAL_FILE) {
+          fileFun.invoke(item)
+        }
+      })
   }
 
   return ExtendedInfo(path, split)
@@ -208,7 +208,8 @@ private class ExtendedInfoOpenInRightSplitAction(private val dataContext: DataCo
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    ActionUtil.invokeAction(split, dataContext, ActionPlaces.ACTION_SEARCH, null, null)
+    val event = AnActionEvent.createEvent(split, dataContext, null, ActionPlaces.ACTION_SEARCH, ActionUiKind.SEARCH_POPUP, null)
+    ActionUtil.invokeAction(split, event, null)
     val seManager = SearchEverywhereManager.getInstance(dataContext.getData(CommonDataKeys.PROJECT))
     if (seManager.isShown) seManager.currentlyShownUI.closePopup()
   }
