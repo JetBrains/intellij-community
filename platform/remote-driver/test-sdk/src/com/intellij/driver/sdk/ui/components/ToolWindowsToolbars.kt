@@ -31,7 +31,7 @@ class ToolWindowRightToolbarUi(data: ComponentData) : UiComponent(data) {
 }
 
 class StripeButtonUi(data: ComponentData) : UiComponent(data) {
-  private val button: StripeButtonComponent
+  val button: StripeButtonComponent
     get() = driver.cast(component, StripeButtonComponent::class)
 
   fun isSelected() = driver.withContext(OnDispatcher.EDT) {
@@ -70,6 +70,7 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
     fun getId(): String
     fun isActive(): Boolean
     fun isVisible(): Boolean
+    fun stretchWidth(value: Int)
   }
 
   @Remote("com.intellij.ide.actions.ActivateToolWindowAction\$Manager")
