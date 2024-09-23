@@ -603,10 +603,12 @@ c:com.intellij.xdebugger.frame.XValueChildrenList
 - add(java.lang.String,com.intellij.xdebugger.frame.XValue):V
 - addBottomGroup(com.intellij.xdebugger.frame.XValueGroup):V
 - addTopGroup(com.intellij.xdebugger.frame.XValueGroup):V
+- addTopValue(com.intellij.xdebugger.frame.XNamedValue):V
 - s:bottomGroup(com.intellij.xdebugger.frame.XValueGroup):com.intellij.xdebugger.frame.XValueChildrenList
 - getBottomGroups():java.util.List
 - getName(I):java.lang.String
 - getTopGroups():java.util.List
+- getTopValues():java.util.List
 - getValue(I):com.intellij.xdebugger.frame.XValue
 - s:singleton(com.intellij.xdebugger.frame.XNamedValue):com.intellij.xdebugger.frame.XValueChildrenList
 - s:singleton(java.lang.String,com.intellij.xdebugger.frame.XValue):com.intellij.xdebugger.frame.XValueChildrenList

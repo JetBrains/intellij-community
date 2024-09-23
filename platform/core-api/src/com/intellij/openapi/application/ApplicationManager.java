@@ -23,6 +23,10 @@ public class ApplicationManager {
     return ourApplication;
   }
 
+  static {
+    ApplicationStateDebugSupportKt.initApplicationStateDebugSupport();
+  }
+
   @ApiStatus.Internal
   public static void setApplication(@Nullable Application instance) {
     ourApplication = instance;

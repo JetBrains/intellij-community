@@ -13,6 +13,7 @@ import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.tree.ExtraDebugNodesProvider;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -252,6 +253,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       catch (EvaluateException e) {
         node.setErrorMessage(e.getMessage());
       }
+      DebuggerUtilsImpl.forEachSafe(ExtraDebugNodesProvider.getProviders(), p -> p.addExtraNodes(evaluationContext, children));
     }
     catch (InvalidStackFrameException e) {
       LOG.info(e);

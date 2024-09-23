@@ -1,0 +1,10 @@
+<idea-plugin package="org.jetbrains.idea.devkit.debugger">
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
+  <resource-bundle>messages.DevKitDebuggerBundle</resource-bundle>
+  <extensions defaultExtensionNs="com.intellij">
+    <debugger.extraDebugNodesProvider implementation="org.jetbrains.idea.devkit.debugger.DebugeeIdeStateRenderer"/>
+    <registryKey defaultValue="false" description="Show details of a debugee IDE in the variables view" key="devkit.debugger.show.ide.state"/>
+  </extensions>
+</idea-plugin>
