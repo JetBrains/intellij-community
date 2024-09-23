@@ -8220,7 +8220,6 @@ f:com.intellij.openapi.editor.impl.SoftWrapModelImpl
 - paint(java.awt.Graphics,com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType,I,I,I):I
 - propertyChange(java.beans.PropertyChangeEvent):V
 - release():V
-- setSoftWrapPainter(com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter):V
 com.intellij.openapi.editor.impl.TextDrawingCallback
 - a:drawChars(java.awt.Graphics,C[],I,I,I,I,java.awt.Color,com.intellij.openapi.editor.impl.FontInfo):V
 f:com.intellij.openapi.editor.impl.TrailingSpacesStripper
