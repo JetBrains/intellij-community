@@ -167,6 +167,8 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     }
 
     private fun findInjectionInfo(place: KtElement, originalHost: Boolean = true): InjectionInfo? {
+        if (isAnalyzeOff(place.project)) return null
+
         return injectWithExplicitCodeInstruction(place)
             ?: injectWithCall(place)
             ?: injectReturnValue(place)
@@ -174,6 +176,7 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
             ?: injectWithReceiver(place)
             ?: injectWithVariableUsage(place, originalHost)
             ?: injectWithMutation(place)
+            ?: injectWithInfixCall(place)
     }
 
     private val stringMutationOperators: List<KtSingleValueToken> = listOf(KtTokens.EQ, KtTokens.PLUSEQ)
@@ -236,7 +239,7 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 
         if (isAnalyzeOff(host.project)) return null
 
-        val kotlinInjections = Configuration.getProjectInstance(host.project).getInjections(KOTLIN_SUPPORT_ID)
+        val kotlinInjections: List<BaseInjection> = Configuration.getProjectInstance(host.project).getInjections(KOTLIN_SUPPORT_ID)
 
         val calleeName = callee.text
         val possibleNames = collectPossibleNames(kotlinInjections)
@@ -248,13 +251,8 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         for (reference in callee.references) {
             ProgressManager.checkCanceled()
 
-            val resolvedTo = reference.resolve()
-            if (resolvedTo is KtFunction) {
-                val injectionInfo = findInjection(resolvedTo.receiverTypeReference, kotlinInjections)
-                if (injectionInfo != null) {
-                    return injectionInfo
-                }
-            }
+            val resolvedTo = reference.resolve() as? KtFunction ?: continue
+            resolvedTo.receiverTypeReference?.findInjection(kotlinInjections)?.let { return it }
         }
 
         return null
@@ -310,10 +308,33 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
                     return injectionForJavaMethod
                 }
             } else if (resolvedTo is KtFunction) {
-                val injectionForJavaMethod = injectionForKotlinCall(argument, resolvedTo, reference)
-                if (injectionForJavaMethod != null) {
-                    return injectionForJavaMethod
+                val injectionForKotlinFunction = injectionForKotlinCall(argument, resolvedTo, reference)
+                if (injectionForKotlinFunction != null) {
+                    return injectionForKotlinFunction
                 }
+            }
+        }
+
+        return null
+    }
+
+    private fun injectWithInfixCall(host: KtElement): InjectionInfo? {
+        val binaryExpression = host.parent as? KtBinaryExpression ?: return null
+        val left = binaryExpression.left
+        val right = binaryExpression.right
+        if ((host != left || host != right) && binaryExpression.operationToken != KtTokens.IDENTIFIER) return null
+        val operationExpression = binaryExpression.operationReference
+
+        for (reference in operationExpression.references) {
+            ProgressManager.checkCanceled()
+
+            val resolvedTo = resolveReference(reference) as? KtFunction ?: continue
+            when (host) {
+              right -> injectionForKotlinInfixCallParameter(resolvedTo, reference)?.let { return it }
+              left -> {
+                  val injectionInfo = resolvedTo.receiverTypeReference?.findInjection() ?: injectionInfoByAnnotation(resolvedTo)
+                  injectionInfo?.let { return it }
+              }
             }
         }
 
@@ -394,10 +415,22 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         } else {
             ktFunction.valueParameters.getOrNull(argumentIndex)
         } ?: return null
-        val patternInjection = findInjection(ktParameter, Configuration.getProjectInstance(argument.project).getInjections(KOTLIN_SUPPORT_ID))
-        if (patternInjection != null) {
-            return patternInjection
-        }
+        return injectionForKotlinCall(ktParameter, reference, argumentName, argumentIndex)
+    }
+
+    private fun injectionForKotlinInfixCallParameter(ktFunction: KtFunction, reference: PsiReference): InjectionInfo? {
+        val argumentIndex = 0
+        val ktParameter = ktFunction.valueParameters.getOrNull(argumentIndex) ?: return null
+        return injectionForKotlinCall(ktParameter, reference, null, argumentIndex)
+    }
+
+    private fun injectionForKotlinCall(
+        ktParameter: KtParameter,
+        reference: PsiReference,
+        argumentName: Name?,
+        argumentIndex: Int
+    ): InjectionInfo? {
+        ktParameter.findInjection()?.let { return it }
 
         // Found psi element after resolve can be obtained from compiled declaration but annotations parameters are lost there.
         // Search for original descriptor for K1 or symbol for K2 from reference.
@@ -414,6 +447,12 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 
         return null
     }
+
+    private fun KtElement.findInjection(injections: List<BaseInjection>? = null): InjectionInfo? =
+        findInjection(
+            this,
+            injections ?: Configuration.getProjectInstance(this.project).getInjections(KOTLIN_SUPPORT_ID)
+        )?.let { return it }
 
     private fun isAnalyzeOff(project: Project): Boolean {
         return Configuration.getProjectInstance(project).advancedConfiguration.dfaOption == Configuration.DfaOption.OFF
@@ -485,6 +524,9 @@ internal fun isSupportedElement(context: KtElement): Boolean {
     if (context.parent?.isConcatenationExpression() != false) return false // we will handle the top concatenation only, will not handle KtFile-s
     if (context is KtStringTemplateExpression && context.isValidHost) return true
     if (context.isConcatenationExpression()) return true
+    if (context.parent.parent is KtBinaryExpression) {
+        return true
+    }
     return false
 }
 

@@ -38,7 +38,7 @@ internal class KotlinLanguageInjectionContributor : KotlinLanguageInjectionContr
     override fun resolveReference(reference: PsiReference): PsiElement? = allowResolveInDispatchThread { reference.resolve() }
 
     override fun injectionInfoByAnnotation(callableDeclaration: KtCallableDeclaration): InjectionInfo? {
-        val descriptor = callableDeclaration.descriptor ?: return null
+        val descriptor = allowResolveInDispatchThread { callableDeclaration.descriptor } ?: return null
         return injectionInfoByAnnotation(descriptor)
     }
 
