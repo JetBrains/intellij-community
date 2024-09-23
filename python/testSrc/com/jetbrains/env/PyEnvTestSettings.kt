@@ -1,12 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
 import com.intellij.util.SystemProperties
-import com.jetbrains.env.PyEnvTestSettings.Companion.PATH_TO_TEST_ENV_PYTHON_INTERPRETERS
-import com.jetbrains.env.PyTestEnvVars.entries
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.File
@@ -28,12 +24,6 @@ internal data class PyEnvTestSettings(
   val isUnderTeamCity: Boolean,
 ) {
   private val foldersWithPythons: List<File> = listOfNotNull(folderWithCPythons, folderWithCondas).map { File(it) }
-
-  init {
-    // These files might be accessed in tests either directly or via symlinks created by venv
-    val roots = (foldersWithPythons + (additionalInterpreters.map { it.parentFile })).map { it.toString() }.toTypedArray()
-    VfsRootAccess.allowRootAccess(ApplicationManager.getApplication(), *roots)
-  }
 
   /**
    * Paths to all existing python SDKs
