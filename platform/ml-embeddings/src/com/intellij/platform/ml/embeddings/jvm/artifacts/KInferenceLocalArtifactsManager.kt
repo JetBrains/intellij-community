@@ -33,7 +33,7 @@ import kotlin.io.path.name
 /* Service that manages the artifacts for local semantic models */
 @OptIn(ExperimentalCoroutinesApi::class)
 @Service
-class KILocalArtifactsManager {
+class KInferenceLocalArtifactsManager {
   private val root = File(PathManager.getSystemPath())
     .resolve(SEMANTIC_SEARCH_RESOURCES_DIR)
     .resolve(OLD_API_DIR_NAME)
@@ -120,9 +120,9 @@ class KILocalArtifactsManager {
     private const val ARCHIVE_NAME = "semantic-text-search.jar"
     private const val NOTIFICATION_GROUP_ID = "Embedding-based search"
 
-    private val logger = Logger.getInstance(KILocalArtifactsManager::class.java)
+    private val logger = Logger.getInstance(KInferenceLocalArtifactsManager::class.java)
 
-    fun getInstance(): KILocalArtifactsManager = service()
+    fun getInstance(): KInferenceLocalArtifactsManager = service()
 
     private fun showDownloadErrorNotification() {
       NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)

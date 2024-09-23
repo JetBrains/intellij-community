@@ -8,7 +8,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.platform.ml.embeddings.jvm.artifacts.KILocalArtifactsManager
+import com.intellij.platform.ml.embeddings.jvm.artifacts.KInferenceLocalArtifactsManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.launch
@@ -54,7 +54,7 @@ class LocalEmbeddingServiceProviderImpl(cs: CoroutineScope) : LocalEmbeddingServ
           LocalEmbeddingServiceLoader().load(CustomRootDataLoader(testDataPath))
         }
         else {
-          val artifactsManager = KILocalArtifactsManager.getInstance()
+          val artifactsManager = KInferenceLocalArtifactsManager.getInstance()
           if (!artifactsManager.checkArtifactsPresent()) {
             if (!downloadArtifacts) return null
             logger.debug("Downloading model artifacts because requested embedding calculation")

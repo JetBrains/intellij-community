@@ -20,7 +20,7 @@ import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.jvm.models.LocalEmbeddingService
 import com.intellij.platform.ml.embeddings.jvm.indices.EntityId
 import com.intellij.platform.ml.embeddings.jvm.wrappers.ActionEmbeddingsStorageWrapper
-import com.intellij.platform.ml.embeddings.jvm.artifacts.KILocalArtifactsManager
+import com.intellij.platform.ml.embeddings.jvm.artifacts.KInferenceLocalArtifactsManager
 import com.intellij.platform.ml.embeddings.jvm.models.LocalEmbeddingServiceProviderImpl
 import com.intellij.platform.ml.embeddings.utils.normalized
 import com.intellij.platform.util.coroutines.childScope
@@ -132,7 +132,7 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
     withContext(Dispatchers.IO) {
       if (!ApplicationManager.getApplication().isUnitTestMode) {
         launch {
-          KILocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
+          KInferenceLocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
         }
       }
       val indexLoadingStartTime = System.nanoTime()
