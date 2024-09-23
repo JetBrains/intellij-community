@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.invokeAction
+import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.driver.sdk.ui.CellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
@@ -14,10 +15,15 @@ import java.awt.Point
 import javax.swing.JList
 
 /** Locates JList element */
-fun Finder.list(@Language("xpath") xpath: String? = null) = x(xpath ?: xQuery { byType(JList::class.java.name) },
-                                                              JListUiComponent::class.java)
+fun Finder.list(@Language("xpath") xpath: String? = null) =
+  x(xpath ?: xQuery { byType(JList::class.java.name) }, JListUiComponent::class.java)
 
 fun Finder.list(locator: QueryBuilder.() -> String) = x(JListUiComponent::class.java) {locator()}
+
+fun Finder.accessibleList(locator: QueryBuilder.() -> String = { byType(JList::class.java) }) =
+  x(JListUiComponent::class.java) { locator() }.apply {
+    replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class))
+  }
 
 /** Locates JBList element */
 fun Finder.jBlist(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JBList']",
