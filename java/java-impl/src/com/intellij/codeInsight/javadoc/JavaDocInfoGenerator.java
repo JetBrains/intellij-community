@@ -1433,7 +1433,8 @@ public class JavaDocInfoGenerator {
     if (annotations) {
       generateAnnotations(signatureBuffer, variable, SignaturePlace.Javadoc, true, false, true);
     }
-    generateType(signatureBuffer, variable.getType(), variable);
+    PsiType type = variable.getOriginalElement() instanceof PsiVariable original ? original.getType() : variable.getType();
+    generateType(signatureBuffer, type, variable);
     signatureBuffer.append(" ");
     appendStyledSpan(signatureBuffer, getHighlightingManager().getLocalVariableAttributes(), variable.getName());
 
@@ -1628,8 +1629,9 @@ public class JavaDocInfoGenerator {
       buffer.append(NBSP);
     }
 
-    if (method.getReturnType() != null) {
-      generateType(buffer, method.getReturnType(), method, generateLink, isTooltip);
+    PsiType returnType = method.getOriginalElement() instanceof PsiMethod original ? original.getReturnType() : method.getReturnType();
+    if (returnType != null) {
+      generateType(buffer, returnType, method, generateLink, isTooltip);
       buffer.append(NBSP);
     }
     String name = method.getName();
