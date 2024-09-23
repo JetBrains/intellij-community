@@ -3,9 +3,11 @@ package com.intellij.platform.eel.impl.local
 
 import com.intellij.platform.eel.EelExecApi
 import com.pty4j.PtyProcessBuilder
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 
+@ApiStatus.Internal
 class EelLocalExecApi : EelExecApi {
   override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelExecApi.ExecuteProcessResult {
     val args = builder.args.toTypedArray()

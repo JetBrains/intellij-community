@@ -9,6 +9,8 @@ sealed interface EelPlatform {
 
   data object Arm64Darwin : Darwin
   data object Aarch64Linux : Linux
+
+  // TODO: data object Aarch64Windows : Windows
   data object X8664Darwin : Darwin
   data object X8664Linux : Linux
   data object X64Windows : Windows
