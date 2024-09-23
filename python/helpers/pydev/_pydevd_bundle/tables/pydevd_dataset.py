@@ -20,7 +20,7 @@ def get_shape(table):
 # noinspection PyUnresolvedReferences
 def get_head(table):
      # type: (datasets.arrow_dataset.Dataset) -> str
-    return repr(__convert_to_df(table.select([0])).head().to_html(notebook=True, max_cols=None))
+    return repr(__convert_to_df(table.select([0])).head().to_html(notebook=True))
 
 
 # noinspection PyUnresolvedReferences
@@ -39,8 +39,8 @@ def get_data(table, start_index=None, end_index=None, format=None, conv_mode=Fal
     def convert_data_to_csv(data):
         return repr(data.to_csv())
 
-    def convert_data_to_html(data, max_cols):
-        return repr(data.to_html(notebook=True, max_cols=max_cols))
+    def convert_data_to_html(data):
+        return repr(data.to_html(notebook=True))
 
     if conv_mode:
         computed_data = _compute_sliced_data(table, convert_data_to_csv, start_index, end_index, format)
@@ -99,10 +99,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=No
     else:
         table = __convert_to_df(table)
 
-    if conv_mode:
-        data = fun(table)
-    else:
-        data = fun(table, max_cols)
+    data = fun(table)
 
     pd.set_option('display.max_columns', _jb_max_cols)
     pd.set_option('display.max_colwidth', _jb_max_colwidth)

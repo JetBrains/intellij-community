@@ -40,8 +40,8 @@ def get_data(table, start_index=None, end_index=None, format=None, conv_mode=Fal
     def convert_data_to_csv(data):
         return repr(__convert_to_df(data).to_csv())
 
-    def convert_data_to_html(data, max_cols):
-        return repr(__convert_to_df(data).to_html(notebook=True, max_cols=max_cols))
+    def convert_data_to_html(data):
+        return repr(__convert_to_df(data).to_html(notebook=True))
 
     if conv_mode:
         computed_data = _compute_sliced_data(table, convert_data_to_csv, start_index, end_index, format)
@@ -99,10 +99,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=No
     if start_index is not None and end_index is not None:
         table = __get_data_slice(table, start_index, end_index)
 
-    if conv_mode:
-        data = fun(table)
-    else:
-        data = fun(table, max_cols)
+    data = fun(table)
 
     pd.set_option('display.max_columns', _jb_max_cols)
     pd.set_option('display.max_colwidth', _jb_max_colwidth)

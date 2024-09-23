@@ -32,7 +32,7 @@ def get_shape(arr):
 
 def get_head(arr):
     # type: (np.ndarray) -> str
-    return repr(_create_table(arr).head().to_html(notebook=True, max_cols=None))
+    return repr(_create_table(arr).head().to_html(notebook=True))
 
 
 def get_column_types(arr):
@@ -46,8 +46,8 @@ def get_column_types(arr):
 
 def get_data(arr, start_index=None, end_index=None, format=None, conv_mode=False):
     # type: (Union[np.ndarray, dict], int, int) -> str
-    def convert_data_to_html(data, max_cols):
-        return repr(_create_table(data, start_index, end_index, format).to_html(notebook=True, max_cols=max_cols))
+    def convert_data_to_html(data):
+        return repr(_create_table(data, start_index, end_index, format).to_html(notebook=True))
 
     def convert_data_to_csv(data):
         return repr(_create_table(data, start_index, end_index, format).to_csv())
@@ -61,10 +61,9 @@ def get_data(arr, start_index=None, end_index=None, format=None, conv_mode=False
 
 def display_data_html(arr, start_index=None, end_index=None):
     # type: (np.ndarray, int, int) -> None
-    def ipython_display(data, max_cols):
+    def ipython_display(data):
         from IPython.display import display, HTML
-        display(HTML(_create_table(data, start_index, end_index).to_html(notebook=True,
-                                                                         max_cols=max_cols)))
+        display(HTML(_create_table(data, start_index, end_index).to_html(notebook=True)))
 
     _compute_data(arr, ipython_display)
 
@@ -107,7 +106,7 @@ class _NpTable:
 
         return _NpTable(self.array[:5]).sort()
 
-    def to_html(self, notebook, max_cols):
+    def to_html(self, notebook):
         html = ['<table class="dataframe">\n']
 
         # columns names
@@ -119,7 +118,7 @@ class _NpTable:
                     '</thead>\n')
 
         # tbody
-        html += self._collect_values_html(max_cols)
+        html += self._collect_values_html(None)
 
         html.append('</table>\n')
 
@@ -260,10 +259,7 @@ def _compute_data(arr, fun, format=None, conv_mode=False):
         arr['data'] = data
         data = arr
 
-    if conv_mode:
-        data = fun(data)
-    else:
-        data = fun(data, None)
+    data = fun(data)
 
     if is_pd:
         _reset_pd_options(jb_max_cols, jb_max_colwidth, jb_max_rows, jb_float_options)
