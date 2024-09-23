@@ -25,6 +25,7 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JPanel
+import javax.swing.JViewport
 import javax.swing.SwingUtilities
 import kotlin.math.max
 import kotlin.math.min
@@ -113,14 +114,21 @@ class DecoratedEditor private constructor(
       Disposer.register(editor.disposable, this)
     }
 
-    editor.scrollPane.viewport.view = EditorComponentWrapper(editor, editor.contentComponent)
+    editor.scrollPane.viewport.view = EditorComponentWrapper(editor, editor.scrollPane.viewport, editor.contentComponent)
   }
 
   /** The main thing while we need it - to perform updating of underlying components within keepScrollingPositionWhile. */
-  private class EditorComponentWrapper(private val editor: Editor, component: Component) : JPanel(BorderLayout()) {
+  private class EditorComponentWrapper(private val editor: Editor, private val editorViewport: JViewport, component: Component) : JPanel(BorderLayout()) {
     init {
       isOpaque = false
-      add(component, BorderLayout.CENTER)
+      // The reason why we need to wrap into fate viewport is the code in [com/intellij/openapi/editor/impl/EditorImpl.java:2031]
+      //     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
+      // There is expected that the parent of myEditorComponent will be not EditorComponentWrapper, but JViewport.
+      add(object : JViewport() {
+        override fun getViewRect() = editorViewport.viewRect
+      }.apply {
+        view = component
+      }, BorderLayout.CENTER)
     }
 
     override fun validateTree() {
