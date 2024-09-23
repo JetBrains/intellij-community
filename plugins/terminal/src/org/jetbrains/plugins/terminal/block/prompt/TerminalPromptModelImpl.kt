@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.MarkupModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.DocumentUtil
@@ -22,6 +23,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
+import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorDescription
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorStateListener
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
@@ -100,9 +102,8 @@ internal class TerminalPromptModelImpl(
       document.createGuardedBlock(0, renderingInfo.text.length)
     }
     editor.markupModel.removeAllHighlighters()
-    for (highlighting in renderingInfo.highlightings) {
-      editor.markupModel.addRangeHighlighter(highlighting.startOffset, highlighting.endOffset, HighlighterLayer.SYNTAX,
-                                             highlighting.textAttributesProvider.getTextAttributes(), HighlighterTargetArea.EXACT_RANGE)
+    renderingInfo.highlightings.forEach {
+      editor.markupModel.applyHighlighting(it)
     }
 
     val rightPrompt = renderingInfo.rightText
@@ -166,6 +167,13 @@ internal class TerminalPromptModelImpl(
           preventRecursion = false
         }
       }
+    }
+  }
+
+  companion object {
+    private fun MarkupModel.applyHighlighting(highlighting: HighlightingInfo) {
+      addRangeHighlighter(highlighting.startOffset, highlighting.endOffset, HighlighterLayer.SYNTAX,
+                          highlighting.textAttributesProvider.getTextAttributes(), HighlighterTargetArea.EXACT_RANGE)
     }
   }
 }
