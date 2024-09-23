@@ -7,8 +7,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Core of IntelliJ Platform messaging infrastructure. Basic functions:
- *  * allows to [push messages][.syncPublisher];
- *  * allows to [create connections][.connect] for further [subscriptions][MessageBusConnection.subscribe];
+ *  * allows to [push messages][syncPublisher];
+ *  * allows to [create connections][connect] for further [subscriptions][MessageBusConnection.subscribe];
  *
  * Use [com.intellij.openapi.components.ComponentManager.getMessageBus] to obtain one.
  *
