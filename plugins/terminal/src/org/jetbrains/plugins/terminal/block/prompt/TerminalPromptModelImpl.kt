@@ -101,10 +101,8 @@ internal class TerminalPromptModelImpl(
       document.replaceString(0, commandStartOffset, renderingInfo.text)
       document.createGuardedBlock(0, renderingInfo.text.length)
     }
-    editor.markupModel.removeAllHighlighters()
-    renderingInfo.highlightings.forEach {
-      editor.markupModel.applyHighlighting(it)
-    }
+    editor.markupModel.replaceHighlighters(renderingInfo.highlightings)
+  }
 
     val rightPrompt = renderingInfo.rightText
     if (rightPrompt.isNotEmpty()) {
@@ -171,7 +169,14 @@ internal class TerminalPromptModelImpl(
   }
 
   companion object {
-    private fun MarkupModel.applyHighlighting(highlighting: HighlightingInfo) {
+    internal fun MarkupModel.replaceHighlighters(highlightings: List<HighlightingInfo>) {
+      removeAllHighlighters()
+      highlightings.forEach {
+        applyHighlighting(it)
+      }
+    }
+
+    internal fun MarkupModel.applyHighlighting(highlighting: HighlightingInfo) {
       addRangeHighlighter(highlighting.startOffset, highlighting.endOffset, HighlighterLayer.SYNTAX,
                           highlighting.textAttributesProvider.getTextAttributes(), HighlighterTargetArea.EXACT_RANGE)
     }
