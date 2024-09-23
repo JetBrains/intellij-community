@@ -101,17 +101,15 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       val optionName = it.optionName
       val presentableName = "${it.variant.prefix()}$optionName"
       option(presentableName) {
-        if (JavaTerminalBundle.isMessageInBundle(getOptionBundleKey(optionName)) && JavaTerminalBundle.isMessageInBundle(getOptionArgumentBundleKey(optionName))) {
-          description(JavaTerminalBundle.message(getOptionBundleKey(optionName)))
-
-          if (KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR.contains(presentableName)) separator = ""
-
-          argument {
-            displayName(JavaTerminalBundle.message(getOptionArgumentBundleKey(optionName)))
-          }
-        }
-        else {
+        if (!JavaTerminalBundle.isMessageInBundle(getOptionBundleKey(optionName))) {
           LOG.warn("Unknown DashDash option: \"$optionName\". Provide ${getOptionBundleKey(optionName)} and ${getOptionArgumentBundleKey(optionName)}")
+          return@option
+        }
+        description(JavaTerminalBundle.message(getOptionBundleKey(optionName)))
+        if (!JavaTerminalBundle.isMessageInBundle(getOptionArgumentBundleKey(optionName))) return@option
+        if (KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR.contains(presentableName)) separator = ""
+        argument {
+          displayName(JavaTerminalBundle.message(getOptionArgumentBundleKey(optionName)))
         }
       }
     }
@@ -161,7 +159,8 @@ private val KNOWN_OPTIONS_WITH_EMPTY_SEPARATOR = setOf(
   "-Xbootclasspath/p:",
   "-Xlog:",
   "-Xloggc:",
-  "--finalization="
+  "--finalization=",
+  "--illegal-access="
 )
 
 private val LOG = Logger.getInstance(JavaShellCommandSpecsProvider::class.java)
