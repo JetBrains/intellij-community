@@ -26,6 +26,7 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
 
   fun `test when module is created then its pom is unignored`() = runBlocking {
     Registry.get("ide.activity.tracking.enable.debug").setValue(true, testRootDisposable)
+    setSystemProperty("idea.force.commit.on.external.change", "true", testRootDisposable)
 
     // create project
     waitForProjectCreation {
