@@ -1,5 +1,6 @@
 <idea-plugin package="com.intellij.vcs.impl.frontend">
   <dependencies>
+    <module name="intellij.platform.vcs.impl.shared"/>
     <plugin id="com.intellij.platform.experimental.frontend"/>
   </dependencies>
 </idea-plugin>

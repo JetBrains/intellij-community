@@ -4,6 +4,7 @@
 
   <dependencies>
     <module name="intellij.libraries.microba"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
   </dependencies>
 
   <xi:include href="/META-INF/VcsExtensionPoints.xml"/>
