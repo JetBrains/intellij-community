@@ -37,7 +37,7 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     for ((jpsLibrary, jpsModule) in libraries) {
       val libraryName = getLibraryFilename(jpsLibrary)
       if (libraryName !in librariesWithLicenses) {
-        // require licence entry only for a main library (ktor-client), not for sub-libraries
+        // require license entry only for a main library (ktor-client), not for sub-libraries
         if (isImplicitLibrary(libraryName)) {
           continue
         }
@@ -51,9 +51,8 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
       }
     }
   }
-}
 
-private fun isImplicitLibrary(libraryName: String): Boolean {
-  return ((libraryName.startsWith("ktor-") || libraryName.startsWith("io.ktor.")) && libraryName != "ktor-client")
-         || libraryName.startsWith("skiko-awt-runtime-")
+  private fun isImplicitLibrary(libraryName: String): Boolean =
+    (libraryName.startsWith("ktor-") || libraryName.startsWith("io.ktor.")) && libraryName != "ktor-client" ||
+    libraryName.startsWith("skiko-awt-runtime-")
 }

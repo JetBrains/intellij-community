@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
-
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -424,11 +422,8 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
   checkLibraryUrls(context)
 
   copyDependenciesFile(context)
+
   logFreeDiskSpace("before compilation", context)
-  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(
-    modules = context.productProperties.productLayout.pluginModulesToPublish,
-    productLayout = context.productProperties.productLayout,
-  )
   val distributionState = compileAllModulesAndCreateDistributionState(context)
   logFreeDiskSpace("after compilation", context)
 
@@ -437,6 +432,10 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
 
     if (!context.shouldBuildDistributions()) {
       Span.current().addEvent("skip building product distributions because 'intellij.build.target.os' property is set to '${BuildOptions.OS_NONE}'")
+      val pluginsToPublish = getPluginLayoutsByJpsModuleNames(
+        modules = context.productProperties.productLayout.pluginModulesToPublish,
+        productLayout = context.productProperties.productLayout,
+      )
       buildNonBundledPlugins(
         pluginsToPublish = pluginsToPublish,
         compressPluginArchive = context.options.compressZipFiles,
@@ -457,12 +456,14 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
     }
 
     layoutShared(context)
+
     val distDirs = buildOsSpecificDistributions(context)
     launch(Dispatchers.IO) {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
         SoftwareBillOfMaterialsImpl(context = context, distributions = distDirs, distributionFiles = contentReport.bundled().toList()).generate()
       }
     }
+
     if (context.productProperties.buildCrossPlatformDistribution) {
       if (distDirs.size == SUPPORTED_DISTRIBUTIONS.size) {
         context.executeStep(spanBuilder("build cross-platform distribution"), BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
@@ -496,6 +497,7 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
 
     val mavenArtifactsBuilder = MavenArtifactsBuilder(context)
     val builtArtifacts = mutableSetOf<MavenArtifactData>()
+    @Suppress("UsePropertyAccessSyntax")
     if (!platformModules.isEmpty()) {
       mavenArtifactsBuilder.generateMavenArtifacts(
         moduleNamesToPublish = platformModules,
@@ -672,7 +674,7 @@ private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>) {
     }
   }
 
-  // indexing-shared-ultimate has a separate layout for bundled & public plugins
+  // indexing-shared-ultimate has a separate layout for bundled and public plugins
   val duplicateDirectoryNameExceptions = setOf("indexing-shared-ultimate")
 
   val pluginsGroupedByDirectoryName = nonTrivialPlugins.groupBy { it.directoryName to it.bundlingRestrictions }.values

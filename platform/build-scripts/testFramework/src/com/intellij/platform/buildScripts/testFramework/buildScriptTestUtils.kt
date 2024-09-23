@@ -179,46 +179,46 @@ private suspend fun doRunTestBuild(context: suspend () -> BuildContext, traceSpa
   var error: Throwable? = null
   try {
     spanBuilder(traceSpanName).use { span ->
-        val context = context()
-        context.cleanupJarCache()
-        outDir = context.paths.buildOutputDir
-        span.setAttribute("outDir", "$outDir")
-        if (writeTelemetry) {
-          traceFile = TestLoggerFactory.getTestLogDir().resolve("${context.productProperties.baseFileName}-$traceSpanName-trace.json").also {
-            JaegerJsonSpanExporterManager.setOutput(it, addShutDownHook = false)
-          }
+      val context = context()
+      context.cleanupJarCache()
+      outDir = context.paths.buildOutputDir
+      span.setAttribute("outDir", outDir.toString())
+      if (writeTelemetry) {
+        traceFile = TestLoggerFactory.getTestLogDir().resolve("${context.productProperties.baseFileName}-$traceSpanName-trace.json").also {
+          JaegerJsonSpanExporterManager.setOutput(it, addShutDownHook = false)
         }
-        try {
-          build(context)
-          val jetBrainsClientMainModule = context.productProperties.embeddedJetBrainsClientMainModule
-          if (jetBrainsClientMainModule != null && context.generateRuntimeModuleRepository) {
-            val softly = SoftAssertions()
-            RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedProduct(jetBrainsClientMainModule, ProductMode.FRONTEND, context, softly)
-            softly.assertAll()
-          }
+      }
+      try {
+        build(context)
+        val jetBrainsClientMainModule = context.productProperties.embeddedJetBrainsClientMainModule
+        if (jetBrainsClientMainModule != null && context.generateRuntimeModuleRepository) {
+          val softly = SoftAssertions()
+          RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedProduct(jetBrainsClientMainModule, ProductMode.FRONTEND, context, softly)
+          softly.assertAll()
         }
-        catch (e: CancellationException) {
-          throw e
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        if (e !is FileComparisonFailedError) {
+          span.recordException(e)
         }
-        catch (e: Throwable) {
-          if (e !is FileComparisonFailedError) {
-            span.recordException(e)
-          }
-          span.setStatus(StatusCode.ERROR)
+        span.setStatus(StatusCode.ERROR)
 
-          copyDebugLog(context.productProperties, context.messages)
+        copyDebugLog(context.productProperties, context.messages)
 
-          if (ExceptionUtilRt.causedBy(e, HttpConnectTimeoutException::class.java)) {
-            error = TestAbortedException("failed to load data for build scripts", e)
-          }
-          else {
-            error = e
-          }
+        if (ExceptionUtilRt.causedBy(e, HttpConnectTimeoutException::class.java)) {
+          error = TestAbortedException("failed to load data for build scripts", e)
         }
-        finally {
-          // close debug logging to prevent locking of the output directory on Windows
-          context.messages.close()
+        else {
+          error = e
         }
+      }
+      finally {
+        // close debug logging to prevent locking of the output directory on Windows
+        context.messages.close()
+      }
     }
   }
   finally {
