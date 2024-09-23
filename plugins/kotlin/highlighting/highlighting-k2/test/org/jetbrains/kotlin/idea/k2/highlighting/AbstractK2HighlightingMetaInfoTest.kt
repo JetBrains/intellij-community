@@ -23,7 +23,9 @@ import java.io.File
 
 abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfoTest(), KMPTest {
 
+    @Deprecated("Use HIGHLIGHTING_K2_EXTENSION")
     protected val HIGHLIGHTING_FIR_EXTENSION = "highlighting.fir"
+    protected val HIGHLIGHTING_K2_EXTENSION = "highlighting.k2"
 
     override fun getDefaultProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
@@ -62,7 +64,7 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
         return if (InTextDirectivesUtils.isDirectiveDefined(fileContent, IgnoreTests.DIRECTIVES.FIR_IDENTICAL)) {
             super.highlightingFileNameSuffix(testKtFile)
         } else {
-            HIGHLIGHTING_FIR_EXTENSION
+            HIGHLIGHTING_K2_EXTENSION
         }
     }
 
@@ -72,7 +74,7 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             testKtFile.toPath(),
             disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_K2,
-            additionalFilesExtensions = arrayOf(HIGHLIGHTING_EXTENSION, HIGHLIGHTING_FIR_EXTENSION)
+            additionalFilesExtensions = arrayOf(HIGHLIGHTING_EXTENSION, HIGHLIGHTING_K2_EXTENSION)
         ) {
             // warnings are not supported yet
             super.doTest(unused)
@@ -80,7 +82,7 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
             IgnoreTests.cleanUpIdenticalK2TestFile(
                 originalTestFile = testKtFile.getExpectedHighlightingFile(HIGHLIGHTING_EXTENSION),
                 k2Extension = IgnoreTests.FileExtension.FIR,
-                k2TestFile = testKtFile.getExpectedHighlightingFile(HIGHLIGHTING_FIR_EXTENSION),
+                k2TestFile = testKtFile.getExpectedHighlightingFile(HIGHLIGHTING_K2_EXTENSION),
                 additionalFileToMarkFirIdentical = testKtFile
             )
         }
