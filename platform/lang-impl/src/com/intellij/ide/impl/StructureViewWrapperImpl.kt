@@ -32,6 +32,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl.Companion.isLight
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.PersistentFSConstants
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
@@ -228,6 +229,8 @@ class StructureViewWrapperImpl(private val project: Project,
   }
 
   private suspend fun setFile(file: VirtualFile?) {
+    if (file?.fileSystem is NonPhysicalFileSystem) return
+
     suspend fun setFileAndRebuild() = withContext(Dispatchers.EDT) {
       // myFile access on EDT
       myFile = file
