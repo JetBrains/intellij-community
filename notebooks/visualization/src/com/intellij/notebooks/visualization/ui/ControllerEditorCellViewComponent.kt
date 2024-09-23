@@ -20,7 +20,6 @@ class ControllerEditorCellViewComponent(
 
   override fun updateGutterIcons(gutterAction: AnAction?) {
     val inlay = controller.inlay
-    inlay.putUserData(NotebookCellInlayController.GUTTER_ACTION_KEY, gutterAction)
     inlay.update()
   }
 

@@ -91,8 +91,4 @@ interface NotebookCellInlayController {
   fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle, interval: NotebookCellLines.Interval) {}
 
   fun createGutterRendererLineMarker(editor: EditorEx, interval: NotebookCellLines.Interval, cellView: EditorCellView) {}
-
-  companion object {
-    val GUTTER_ACTION_KEY = Key<AnAction>("jupyter.editor.cell.gutter.action")
-  }
 }
