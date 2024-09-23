@@ -35,13 +35,12 @@ data class NativeServerStartupArguments(
   val intraOpThreadsCount: Int = 2,
   val insertThreadsLimit: Int = 4,
   val batchInsertionThreads: Int = 4,
-  var port: Int = 0,
+  val port: Int = 0,
 ) {
   fun combine(): List<String> = listOf(
     "--model-path", modelPath.absolute().toString(),
     "--vocab-path", vocabPath.absolute().toString(),
     "--storage-root", storageRoot.absolute().toString(),
-    "--port", port.toString(),
     "--vector-length", vectorLength.toString(),
     "--index-size-limit", indexSizeLimit.toString(),
     "--batch-size", batchSize.toString(),
@@ -52,6 +51,7 @@ data class NativeServerStartupArguments(
     "--n-threads", intraOpThreadsCount.toString(),
     "--insert-threads-limit", insertThreadsLimit.toString(),
     "--batch-insertion-threads", batchInsertionThreads.toString(),
+    "--port", port.toString(),
   )
 
   override fun toString(): String = combine().joinToString(" ")
