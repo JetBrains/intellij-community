@@ -98,14 +98,16 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
   override fun onHide(event: InlineCompletionEventType.Hide) {
     val container = InlineCompletionLogsContainer.remove(editor) ?: return
     with(holder) {
-      container.add(WAS_SHOWN with wasShown)
-      container.add(SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
       container.add(FINISH_TYPE with event.finishType)
-      container.add(FULL_INSERT_ACTIONS with fullInsertActions)
-      container.add(NEXT_WORD_ACTIONS with nextWordActions)
-      container.add(NEXT_LINE_ACTIONS with nextLineActions)
-      container.add(TOTAL_INSERTED_LENGTH with totalInsertedLength)
-      container.add(TOTAL_INSERTED_LINES with totalInsertedLines)
+      container.add(WAS_SHOWN with wasShown)
+      if (wasShown) {
+        container.add(SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
+        container.add(FULL_INSERT_ACTIONS with fullInsertActions)
+        container.add(NEXT_WORD_ACTIONS with nextWordActions)
+        container.add(NEXT_LINE_ACTIONS with nextLineActions)
+        container.add(TOTAL_INSERTED_LENGTH with totalInsertedLength)
+        container.add(TOTAL_INSERTED_LINES with totalInsertedLines)
+      }
     }
     container.logCurrent() // see doc of this function, it's very fast, and we should wait for its completion
   }
