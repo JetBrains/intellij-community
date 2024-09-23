@@ -231,7 +231,7 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
         .map(PsiSwitchLabelStatementBase::getCaseLabelElementList)
         .filter(Objects::nonNull)
         .flatMap(list -> Arrays.stream(list.getElements()))
-        .anyMatch(element -> element instanceof PsiTypeTestPattern);
+        .anyMatch(element -> element instanceof PsiPrimaryPattern);
       if (checksType) makeChecked();
     }
 

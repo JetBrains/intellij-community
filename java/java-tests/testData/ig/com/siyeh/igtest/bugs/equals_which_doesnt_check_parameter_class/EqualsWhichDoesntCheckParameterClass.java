@@ -159,3 +159,14 @@ final class MyClass implements MyInterface {
   }
 
 }
+record MyRecord(String str) {
+  
+  @Override
+  public boolean equals(Object o) { // "'equals()' should check the class of its parameter" is falsely reported
+    if (this == o) return true;
+    return switch (o) {
+      case MyRecord(String s) when s != null -> Objects.equals(str, s);
+      case null, default -> false;
+    };
+  }
+}
