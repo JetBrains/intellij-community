@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.impl.NewProjectUtil.createFromWizard
 import com.intellij.ide.impl.OpenProjectTask.Companion.build
 import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
 import com.intellij.ide.impl.ProjectUtil.getOpenProjects
@@ -14,9 +15,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.StorageScheme
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -32,6 +33,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IdeUICustomization
@@ -42,49 +44,62 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CancellationException
 
-object NewProjectUtil {
-  private val LOG = Logger.getInstance(NewProjectUtil::class.java)
+private val LOG = logger<NewProjectUtil>()
 
+internal suspend fun createNewProjectAsync(wizard: AbstractProjectWizard) {
+  // warm-up components
+  serviceAsync<ProjectManager>().defaultProject
+
+  val context = wizard.wizardContext
+  val time = System.nanoTime()
+  NewProjectWizardCollector.logOpen(context)
+  if (wizard.showAndGet()) {
+    createFromWizard(wizard)
+    NewProjectWizardCollector.logFinish(context, true, TimeoutUtil.getDurationMillis(time))
+  }
+  else {
+    NewProjectWizardCollector.logFinish(context, false, TimeoutUtil.getDurationMillis(time))
+  }
+}
+
+object NewProjectUtil {
   @JvmStatic
   @Deprecated("Use {@link #createNewProject(AbstractProjectWizard)}, projectToClose param is not used.",
               ReplaceWith("createNewProject(wizard)", "com.intellij.ide.impl.NewProjectUtil.createNewProject"))
-  fun createNewProject(projectToClose: Project?, wizard: AbstractProjectWizard) {
+  fun createNewProject(@Suppress("unused") projectToClose: Project?, wizard: AbstractProjectWizard) {
     createNewProject(wizard)
   }
 
   @JvmStatic
   fun createNewProject(wizard: AbstractProjectWizard) {
-    val title = JavaUiBundle.message("project.new.wizard.progress.title")
     // warm-up components
-    val warmUp = Runnable { ProjectManager.getInstance().defaultProject }
-    val proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(warmUp, title, true, null)
-    var time = 0L
+    ProjectManager.getInstance().defaultProject
     val context = wizard.wizardContext
-    time = System.nanoTime()
+    val time = System.nanoTime()
     NewProjectWizardCollector.logOpen(context)
-    if (proceed && wizard.showAndGet()) {
+    if (wizard.showAndGet()) {
       createFromWizard(wizard)
       NewProjectWizardCollector.logFinish(context, true, TimeoutUtil.getDurationMillis(time))
-      return
     }
-    NewProjectWizardCollector.logFinish(context, false, TimeoutUtil.getDurationMillis(time))
+    else {
+      NewProjectWizardCollector.logFinish(context, false, TimeoutUtil.getDurationMillis(time))
+    }
   }
 
   @JvmOverloads
   @JvmStatic
   fun createFromWizard(wizard: AbstractProjectWizard, projectToClose: Project? = null): Project? {
-    return try {
+    try {
       val newProject = doCreate(wizard, projectToClose)
       NewProjectWizardCollector.logProjectCreated(newProject, wizard.wizardContext)
-      newProject
+      return newProject
     }
     catch (e: IOException) {
       AppUIUtil.invokeOnEdt { Messages.showErrorDialog(e.message, JavaUiBundle.message("dialog.title.project.initialization.failed")) }
-      null
+      return null
     }
   }
 
-  @Throws(IOException::class)
   private fun doCreate(wizard: AbstractProjectWizard, projectToClose: Project?): Project? {
     val projectFilePath = wizard.newProjectFilePath
     for (p in getOpenProjects()) {
@@ -93,10 +108,11 @@ object NewProjectUtil {
         return null
       }
     }
+
     val projectBuilder = wizard.projectBuilder
-    LOG.debug("builder $projectBuilder")
+    LOG.debug { "builder $projectBuilder" }
     val projectManager = ProjectManagerEx.getInstanceEx()
-    return try {
+    try {
       val projectFile = Path.of(projectFilePath)
       val projectDir = if (wizard.storageScheme == StorageScheme.DEFAULT) {
         projectFile.parent ?: throw IOException("Cannot create project in '$projectFilePath': no parent file exists")
@@ -184,19 +200,19 @@ object NewProjectUtil {
             }
           }
         }
-        TrustedPaths.getInstance().setProjectPathTrusted(projectDir, true)
-        runBlockingModalWithRawProgressReporter(
+        runWithModalProgressBlocking(
           owner = ModalTaskOwner.guess(),
           title = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", options.projectName),
         ) {
-          ProjectManagerEx.getInstanceEx().openProjectAsync(projectStoreBaseDir = projectDir, options = options)
+          serviceAsync<TrustedPaths>().setProjectPathTrusted(projectDir, true)
+          (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(projectStoreBaseDir = projectDir, options = options)
         }
       }
       if (!ApplicationManager.getApplication().isUnitTestMode) {
         SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject)
       }
 
-      newProject
+      return newProject
     }
     finally {
       projectBuilder?.cleanup()
@@ -208,11 +224,11 @@ object NewProjectUtil {
       ApplicationManager.getApplication().runWriteAction {
         val extension = CompilerProjectExtension.getInstance(project)
         if (extension != null) {
-          var canonicalPath = path
-          try {
-            canonicalPath = FileUtil.resolveShortWindowsName(path)
+          val canonicalPath = try {
+            FileUtil.resolveShortWindowsName(path)
           }
-          catch (ignored: IOException) {
+          catch (_: IOException) {
+            path
           }
           extension.compilerOutputUrl = VfsUtilCore.pathToUrl(canonicalPath)
         }
