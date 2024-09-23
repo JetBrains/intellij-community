@@ -186,7 +186,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/replaceJvmFieldWithConst", pattern = pattern)
             model("$idea/quickfix/restrictedRetentionForExpressionAnnotation", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/simplifyComparison", pattern = pattern)
-            model("$idea/quickfix/smartCastImpossibleInIfThen", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/smartCastImpossibleInIfThen", pattern = pattern)
             model("$idea/quickfix/specifyOverrideExplicitly", pattern = pattern)
             model("$idea/quickfix/specifySuperExplicitly", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/specifyTypeExplicitly", pattern = pattern, isIgnored = true)
