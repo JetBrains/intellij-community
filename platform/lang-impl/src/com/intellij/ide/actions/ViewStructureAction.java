@@ -70,13 +70,13 @@ public final class ViewStructureAction extends DumbAwareAction {
     project.getMessageBus().syncPublisher(FileStructurePopupListener.TOPIC).stateChanged(true);
     StructureView structureView;
     StructureViewModel treeModel;
-    if (builder instanceof TreeBasedStructureViewBuilder) {
-      structureView = null;
-      treeModel = ((TreeBasedStructureViewBuilder)builder).createStructureViewModel(EditorUtil.getEditorEx(fileEditor));
-    }
-    else if (builder instanceof PhysicalAndLogicalStructureViewBuilder compositeBuilder) {
+    if (builder instanceof PhysicalAndLogicalStructureViewBuilder compositeBuilder) {
       structureView = compositeBuilder.createPhysicalStructureView(fileEditor, project);
       treeModel = createStructureViewModel(project, fileEditor, structureView);
+    }
+    else if (builder instanceof TreeBasedStructureViewBuilder) {
+      structureView = null;
+      treeModel = ((TreeBasedStructureViewBuilder)builder).createStructureViewModel(EditorUtil.getEditorEx(fileEditor));
     }
     else {
       structureView = builder.createStructureView(fileEditor, project);
