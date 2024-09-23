@@ -4,6 +4,7 @@ package com.intellij.ide.impl
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.NewProjectUtil.createFromWizard
+import com.intellij.ide.impl.NewProjectUtil.setCompilerOutputPath
 import com.intellij.ide.impl.OpenProjectTask.Companion.build
 import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
 import com.intellij.ide.impl.ProjectUtil.getOpenProjects
@@ -100,125 +101,6 @@ object NewProjectUtil {
     }
   }
 
-  private fun doCreate(wizard: AbstractProjectWizard, projectToClose: Project?): Project? {
-    val projectFilePath = wizard.newProjectFilePath
-    for (p in getOpenProjects()) {
-      if (isSameProject(Paths.get(projectFilePath), p)) {
-        focusProjectWindow(p, false)
-        return null
-      }
-    }
-
-    val projectBuilder = wizard.projectBuilder
-    LOG.debug { "builder $projectBuilder" }
-    val projectManager = ProjectManagerEx.getInstanceEx()
-    try {
-      val projectFile = Path.of(projectFilePath)
-      val projectDir = if (wizard.storageScheme == StorageScheme.DEFAULT) {
-        projectFile.parent ?: throw IOException("Cannot create project in '$projectFilePath': no parent file exists")
-      }
-      else {
-        projectFile
-      }
-      Files.createDirectories(projectDir)
-      val newProject: Project? = if (projectBuilder == null || !projectBuilder.isUpdate) {
-        val name = wizard.projectName
-        if (projectBuilder == null) {
-          projectManager.newProject(projectFile, build().asNewProject().withProjectName(name))
-        }
-        else {
-          try {
-            projectBuilder.createProject(name, projectFilePath)
-          }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
-            null
-          }
-        }
-      }
-      else {
-        projectToClose
-      }
-
-      if (newProject == null) {
-        return projectToClose
-      }
-
-      val compileOutput = wizard.newCompileOutput
-      setCompilerOutputPath(newProject, compileOutput)
-      if (projectBuilder != null) {
-        // validate can require project on disk
-        if (!ApplicationManager.getApplication().isUnitTestMode) {
-          newProject.save()
-        }
-        if (!projectBuilder.validate(projectToClose, newProject)) {
-          return projectToClose
-        }
-        projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
-      }
-
-      val jdk = wizard.newProjectJdk
-      if (jdk != null) {
-        CommandProcessor.getInstance().executeCommand(newProject, {
-          ApplicationManager.getApplication().runWriteAction {
-            JavaSdkUtil.applyJdkToProject(newProject, jdk)
-          }
-        }, null, null)
-      }
-
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
-        val needToOpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter
-        StartupManager.getInstance(newProject).runAfterOpened {
-          // ensure the dialog is shown after all startup activities are done
-          ApplicationManager.getApplication().invokeLater(
-            {
-              if (needToOpenProjectStructure) {
-                ModulesConfigurator.showDialog(newProject, null, null)
-              }
-              ApplicationManager.getApplication().invokeLater(
-                {
-                  ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)
-                }, ModalityState.nonModal(), newProject.disposed)
-            }, ModalityState.nonModal(), newProject.disposed)
-        }
-      }
-
-      if (newProject !== projectToClose) {
-        updateLastProjectLocation(projectFile)
-        val moduleConfigurator = projectBuilder.createModuleConfigurator()
-        val options =  OpenProjectTask {
-          project = newProject
-          projectName = projectFile.fileName.toString()
-          callback = ProjectOpenedCallback { openedProject, module ->
-            if (openedProject != newProject && module != null) { // project attached
-              ApplicationManager.getApplication().invokeLater {
-                moduleConfigurator?.accept(module)
-              }
-            }
-          }
-        }
-        runWithModalProgressBlocking(
-          owner = ModalTaskOwner.guess(),
-          title = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", options.projectName),
-        ) {
-          serviceAsync<TrustedPaths>().setProjectPathTrusted(projectDir, true)
-          (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(projectStoreBaseDir = projectDir, options = options)
-        }
-      }
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
-        SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject)
-      }
-
-      return newProject
-    }
-    finally {
-      projectBuilder?.cleanup()
-    }
-  }
-
   fun setCompilerOutputPath(project: Project, path: String) {
     CommandProcessor.getInstance().executeCommand(project, {
       ApplicationManager.getApplication().runWriteAction {
@@ -241,5 +123,124 @@ object NewProjectUtil {
               ReplaceWith("JavaSdkUtil.applyJdkToProject(project, jdk)", "com.intellij.openapi.projectRoots.ex.JavaSdkUtil"))
   fun applyJdkToProject(project: Project, jdk: Sdk) {
     JavaSdkUtil.applyJdkToProject(project, jdk)
+  }
+}
+
+private fun doCreate(wizard: AbstractProjectWizard, projectToClose: Project?): Project? {
+  val projectFilePath = wizard.newProjectFilePath
+  for (p in getOpenProjects()) {
+    if (isSameProject(Paths.get(projectFilePath), p)) {
+      focusProjectWindow(p, false)
+      return null
+    }
+  }
+
+  val projectBuilder = wizard.projectBuilder
+  LOG.debug { "builder $projectBuilder" }
+  val projectManager = ProjectManagerEx.getInstanceEx()
+  try {
+    val projectFile = Path.of(projectFilePath)
+    val projectDir = if (wizard.storageScheme == StorageScheme.DEFAULT) {
+      projectFile.parent ?: throw IOException("Cannot create project in '$projectFilePath': no parent file exists")
+    }
+    else {
+      projectFile
+    }
+    Files.createDirectories(projectDir)
+    val newProject: Project? = if (projectBuilder == null || !projectBuilder.isUpdate) {
+      val name = wizard.projectName
+      if (projectBuilder == null) {
+        projectManager.newProject(projectFile, build().asNewProject().withProjectName(name))
+      }
+      else {
+        try {
+          projectBuilder.createProject(name, projectFilePath)
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+          null
+        }
+      }
+    }
+    else {
+      projectToClose
+    }
+
+    if (newProject == null) {
+      return projectToClose
+    }
+
+    val compileOutput = wizard.newCompileOutput
+    setCompilerOutputPath(newProject, compileOutput)
+    if (projectBuilder != null) {
+      // validate can require project on disk
+      if (!ApplicationManager.getApplication().isUnitTestMode) {
+        newProject.save()
+      }
+      if (!projectBuilder.validate(projectToClose, newProject)) {
+        return projectToClose
+      }
+      projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
+    }
+
+    val jdk = wizard.newProjectJdk
+    if (jdk != null) {
+      CommandProcessor.getInstance().executeCommand(newProject, {
+        ApplicationManager.getApplication().runWriteAction {
+          JavaSdkUtil.applyJdkToProject(newProject, jdk)
+        }
+      }, null, null)
+    }
+
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      val needToOpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter
+      StartupManager.getInstance(newProject).runAfterOpened {
+        // ensure the dialog is shown after all startup activities are done
+        ApplicationManager.getApplication().invokeLater(
+          {
+            if (needToOpenProjectStructure) {
+              ModulesConfigurator.showDialog(newProject, null, null)
+            }
+            ApplicationManager.getApplication().invokeLater(
+              {
+                ToolWindowManager.getInstance(newProject).getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)
+              }, ModalityState.nonModal(), newProject.disposed)
+          }, ModalityState.nonModal(), newProject.disposed)
+      }
+    }
+
+    if (newProject !== projectToClose) {
+      updateLastProjectLocation(projectFile)
+      val moduleConfigurator = projectBuilder.createModuleConfigurator()
+      val options =  OpenProjectTask {
+        project = newProject
+        projectName = projectFile.fileName.toString()
+        callback = ProjectOpenedCallback { openedProject, module ->
+          if (openedProject != newProject && module != null) { // project attached
+            ApplicationManager.getApplication().invokeLater {
+              moduleConfigurator?.accept(module)
+            }
+          }
+        }
+      }
+      runWithModalProgressBlocking(
+        owner = ModalTaskOwner.guess(),
+        title = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", options.projectName),
+      ) {
+        serviceAsync<TrustedPaths>().setProjectPathTrusted(projectDir, true)
+        (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(projectStoreBaseDir = projectDir, options = options)
+      }
+    }
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject)
+    }
+
+    return newProject
+  }
+  finally {
+    projectBuilder?.cleanup()
   }
 }
