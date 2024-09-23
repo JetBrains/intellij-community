@@ -2,10 +2,16 @@
 package com.intellij.java.terminal
 
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
+import com.intellij.util.lang.JavaVersion
 
 internal class JavaShellCommandContext private constructor(private val propertyMap: Map<String, String> = mapOf()) {
 
   fun getJrePath(): String? = propertyMap["java.home"]
+
+  fun getJavaVersion(): JavaVersion? {
+    val versionString = propertyMap["java.version"] ?: return null
+    return JavaVersion.tryParse(versionString)
+  }
 
   companion object {
     private const val PROPERTY_SEPARATOR = " = "

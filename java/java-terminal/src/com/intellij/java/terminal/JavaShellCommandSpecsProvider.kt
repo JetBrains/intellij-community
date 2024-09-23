@@ -20,10 +20,14 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     dynamicOptions { terminalContext ->
       val javaContext = JavaShellCommandContext.create(terminalContext) ?: return@dynamicOptions
       addXOptionsFromVM(javaContext.getJrePath())
+      val version = javaContext.getJavaVersion() ?: return@dynamicOptions
+      if (version.isAtLeast(11)) {
+        addDoubleDashedOptions()
+      }
     }
     description(JavaTerminalBundle.message("java.command.terminal.description"))
-    option("--help", "-help", "-h") {
-      description(JavaTerminalBundle.message("java.command.terminal.help.option.description"))
+    option("-?", "-help", "-h") {
+      description(JavaTerminalBundle.message("java.command.terminal.help.error.option.description"))
     }
     option("-jar") {
       argument {
@@ -39,7 +43,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
         displayName(JavaTerminalBundle.message("java.command.terminal.D.option.argument.key.text"))
       }
     }
-    option("--version", "-version") {
+    option("-version") {
       description(JavaTerminalBundle.message("java.command.terminal.version.option.description"))
     }
     option("-classpath", "-cp") {
@@ -49,13 +53,9 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
         suggestions(ShellDataGenerators.fileSuggestionsGenerator())
       }
     }
-    option("-showversion", "--show-version") {
+    option("-showversion") {
       description(JavaTerminalBundle.message("java.command.terminal.show.version.option.description"))
     }
-    option("--dry-run") {
-      description(JavaTerminalBundle.message("java.command.terminal.dry.run.option.description"))
-    }
-
     argument {
       displayName(JavaTerminalBundle.message("java.command.terminal.argument.main.class.text"))
       suggestions(ShellDataGenerators.fileSuggestionsGenerator())
@@ -102,6 +102,28 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     "-Xlog:",
     "-Xloggc:",
   )
+
+  private fun ShellChildOptionsContext.addDoubleDashedOptions() {
+    option("--version") {
+      description(JavaTerminalBundle.message("java.command.terminal.version.option.description"))
+    }
+    option("--show-version") {
+      description(JavaTerminalBundle.message("java.command.terminal.show.version.option.description"))
+    }
+    option("--dry-run") {
+      description(JavaTerminalBundle.message("java.command.terminal.dry.run.option.description"))
+    }
+    option("--class-path") {
+      description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
+      argument {
+        displayName(JavaTerminalBundle.message("java.command.terminal.classpath.option.argument.path.text", ShellCommandUtils.getClassPathSeparator()))
+        suggestions(ShellDataGenerators.fileSuggestionsGenerator())
+      }
+    }
+    option("--help") {
+      description(JavaTerminalBundle.message("java.command.terminal.help.output.option.description"))
+    }
+  }
 
   private fun String.getXOptionBundleKey(): String {
     val name = this.replace(':', '.').trim('.')
