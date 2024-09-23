@@ -4,12 +4,13 @@ package com.jetbrains.env.python.api
 import com.intellij.execution.processTools.getResultStdout
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyEnvTestSettings
 import com.jetbrains.extensions.failure
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
-import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -40,7 +41,7 @@ sealed class PythonType<T : Any>(private val tag: @NonNls String) {
       .firstOrNull { typeMatchesEnv(it, *additionalTags) }
       ?.let { envDir ->
         Result.success(pythonPathToEnvironment(
-           VirtualEnvReader.Instance.findPythonInPythonRoot(envDir)
+          VirtualEnvReader.Instance.findPythonInPythonRoot(envDir)
           ?: error("Can't find python binary in $envDir"), envDir)) // This is a misconfiguration, hence an error
       }
     ?: failure("No python found. See ${PyEnvTestSettings::class} class for more info")
@@ -51,7 +52,14 @@ sealed class PythonType<T : Any>(private val tag: @NonNls String) {
 
   data object VanillaPython3 : PythonType<PathToPythonBinary>("python3") {
     // Python is directly executable
-    override suspend fun pythonPathToEnvironment(pythonBinary: PathToPythonBinary, envDir: Path) = Pair(pythonBinary, AutoCloseable { })
+    override suspend fun pythonPathToEnvironment(pythonBinary: PathToPythonBinary, envDir: Path): Pair<PathToPythonBinary, AutoCloseable> {
+      val disposable = Disposer.newDisposable("Python tests disposable for VfsRootAccess")
+      // We might have python installation outside the project root, but we still need to have access to it.
+      VfsRootAccess.allowRootAccess(disposable, pythonBinary.parent.toString())
+      return Pair(pythonBinary, AutoCloseable {
+        Disposer.dispose(disposable)
+      })
+    }
   }
 
 
