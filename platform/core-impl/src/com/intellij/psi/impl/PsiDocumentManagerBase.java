@@ -612,7 +612,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (modality != ModalityState.nonModal() && TransactionGuard.getInstance().isWriteSafeModality(modality)) {
       // this client obviously expects all documents to be committed ASAP even inside modal dialog
       for (Document document : myUncommittedDocuments) {
-        retainProviderAndCommitAsync(document, "re-added because performWhenAllCommitted(" + modality + ") was called", modality);
+        try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162971")) {
+          retainProviderAndCommitAsync(document, "re-added because performWhenAllCommitted(" + modality + ") was called", modality);
+        }
       }
     }
     return false;

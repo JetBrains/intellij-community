@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -192,7 +194,9 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
       for (FileAnnotation annotation : annotations) {
         try {
           if (reload) {
-            annotation.reload(null);
+            try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162976")) {
+              annotation.reload(null);
+            }
           }
           else {
             annotation.close();

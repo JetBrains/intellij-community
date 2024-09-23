@@ -10,6 +10,7 @@ import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.PathElementIdProvider;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouperKt;
@@ -38,6 +39,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -295,24 +297,27 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   @Override
   public void navigate(final boolean requestFocus) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(getValue());
-    if (module != null) {
-      final VirtualFile file = getVirtualFile();
-      final Project project = getProject();
-      ProjectSettingsService service = ProjectSettingsService.getInstance(myProject);
-      if (ProjectRootsUtil.isModuleContentRoot(file, project)) {
-        service.openModuleSettings(module);
+    Project project = getProject();
+    ProjectSettingsService service = ProjectSettingsService.getInstance(project);
+    Runnable runnable;
+    VirtualFile file = getVirtualFile();
+    try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162972")) {
+      Module module = ModuleUtilCore.findModuleForPsiElement(getValue());
+      if (module == null) {
+        runnable = null;
+      }
+      else if (ProjectRootsUtil.isModuleContentRoot(file, project)) {
+        runnable = () -> service.openModuleSettings(module);
       }
       else if (ProjectRootsUtil.isLibraryRoot(file, project)) {
-        final OrderEntry orderEntry = LibraryUtil.findLibraryEntry(file, module.getProject());
-        if (orderEntry != null) {
-          service.openLibraryOrSdkSettings(orderEntry);
-        }
+        OrderEntry orderEntry = LibraryUtil.findLibraryEntry(file, module.getProject());
+        runnable = orderEntry == null ? null : () -> service.openLibraryOrSdkSettings(orderEntry);
       }
       else {
-        service.openContentEntriesSettings(module);
+        runnable = () -> service.openContentEntriesSettings(module);
       }
     }
+    if (runnable != null) runnable.run();
   }
 
   @Override

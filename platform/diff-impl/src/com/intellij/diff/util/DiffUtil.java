@@ -30,6 +30,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -244,7 +245,10 @@ public final class DiffUtil {
 
   public static void setEditorCodeStyle(@Nullable Project project, @NotNull EditorEx editor, @Nullable DocumentContent content) {
     if (project != null && content != null && editor.getVirtualFile() == null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(content.getDocument());
+      PsiFile psiFile;
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162978")) {
+        psiFile = PsiDocumentManager.getInstance(project).getPsiFile(content.getDocument());
+      }
       CommonCodeStyleSettings.IndentOptions indentOptions = psiFile != null
                                                             ? CodeStyle.getSettings(psiFile).getIndentOptionsByFile(psiFile)
                                                             : CodeStyle.getSettings(project).getIndentOptions(content.getContentType());

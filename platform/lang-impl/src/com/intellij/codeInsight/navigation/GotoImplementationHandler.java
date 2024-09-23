@@ -16,6 +16,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -35,6 +36,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,9 +82,15 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       @Override
       public void onSuccess() {
         super.onSuccess();
-        @Nullable ItemWithPresentation oneElement = getTheOnlyOneElement();
-        if (oneElement != null && oneElement.getItem() instanceof SmartPsiElementPointer<?> &&
-            navigateToElement(((SmartPsiElementPointer<?>)oneElement.getItem()).getElement())) {
+        ItemWithPresentation oneElement = getTheOnlyOneElement();
+        if (oneElement == null || !(oneElement.getItem() instanceof SmartPsiElementPointer<?> o)) {
+          return;
+        }
+        boolean success;
+        try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162968")) {
+          success = navigateToElement(o.getElement());
+        }
+        if (success) {
           myPopup.cancel();
         }
       }
