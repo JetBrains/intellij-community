@@ -1,0 +1,28 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.impl.frontend.shelf.tree
+
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.FontUtil
+import com.intellij.util.PathUtil
+import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
+
+class ShelvedChangeNode(val entity: ShelvedChangeEntity) : EntityChangesBrowserNode<ShelvedChangeEntity>(entity) {
+  override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
+    val path = entity.filePath
+    val directory = StringUtil.defaultIfEmpty(PathUtil.getParentPath(path), VcsBundle.message("shelve.default.path.rendering"))
+    val fileName = StringUtil.defaultIfEmpty(PathUtil.getFileName(path), path)
+    renderer.append(fileName, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.MODIFIED.color))
+    if (entity.additionalText != null) {
+      renderer.append(FontUtil.spaceAndThinSpace() + entity.additionalText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    }
+    if (renderer.isShowFlatten) {
+      renderer.append(FontUtil.spaceAndThinSpace() + FileUtil.toSystemDependentName(directory), SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    }
+    renderer.icon = FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon()
+  }
+}
