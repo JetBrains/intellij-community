@@ -9,9 +9,4 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradlePro
 @UseK2PluginMode
 @GradleProjectTestApplication
 @AssertKotlinPluginMode
-class K2GradleHighlightingTest: AbstractKotlinGradleHighlightingTest() {
-    override fun setUp() {
-        testRootDisposable.enableK2Scripting()
-        super.setUp()
-    }
-}
+class K2GradleHighlightingTest: AbstractKotlinGradleHighlightingTest()

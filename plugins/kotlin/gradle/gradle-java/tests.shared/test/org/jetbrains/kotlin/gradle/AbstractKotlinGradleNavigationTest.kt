@@ -240,6 +240,27 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
             )
             withDirectory("src/main/kotlin")
         }
-    }
 
+        val GRADLE_KOTLIN_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
+            withSettingsFile(useKotlinDsl = true) {
+                setProjectName("GradleKotlinFixture")
+                include(":module1")
+                enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+            }
+            withBuildFile(gradleVersion, useKotlinDsl = true) {
+                withKotlinDsl()
+                withMavenCentral()
+            }
+            withBuildFile(gradleVersion, relativeModulePath = "module1", useKotlinDsl = true) {
+                withKotlinDsl()
+                withMavenCentral()
+            }
+            withFile(
+                "gradle.properties",
+                """
+                kotlin.code.style=official
+                """.trimIndent()
+            )
+        }
+    }
 }
