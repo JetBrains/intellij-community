@@ -550,7 +550,6 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - f:getIncompatibleOs(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.IdeaPluginOsRequirement
 - sf:getLoadedPlugins():java.util.List
 - f:getLoadingError(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.PluginLoadingError
-- f:getNullablePluginSet():com.intellij.ide.plugins.PluginSet
 - sf:getPlugin(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.IdeaPluginDescriptor
 - sf:getPluginByClassName(java.lang.String):com.intellij.openapi.extensions.PluginId
 - sf:getPluginNameAndVendor(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
