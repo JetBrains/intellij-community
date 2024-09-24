@@ -104,8 +104,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "-XX:FlightRecorderOptions=stackdepth=256",
       // Required by instantapps-api.jar (ag/I55803b347).
       "--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED",
-      // Stopgap solution to ensure the Kotlin plugin stays enabled (b/202048599).
-      "-Didea.required.plugins.id=org.jetbrains.kotlin",
       // Enable use of the deprecated SecurityManager (b/302171264).
       "-Djava.security.manager=allow",
       // Configure the feedback URL displayed for IDE startup failures. This system property should match
