@@ -12,7 +12,7 @@ import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.INVALIDATIO
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.NEXT_LINE_ACTIONS
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.NEXT_WORD_ACTIONS
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.RECEIVED_PROPOSAL_LENGTH
-import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.RECEIVED_PROVIDER_PROPOSAL_LINES
+import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.RECEIVED_PROPOSAL_LINES
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.SHOWING_TIME
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.TIME_TO_START_SHOWING
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.TOTAL_INSERTED_LENGTH
@@ -131,7 +131,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
         container.add(TOTAL_INSERTED_LINES with totalInsertedLines)
         variantStates[potentiallySelectedIndex]?.let { state ->
           container.add(RECEIVED_PROPOSAL_LENGTH with state.initialSuggestion.length)
-          container.add(RECEIVED_PROVIDER_PROPOSAL_LINES with state.initialSuggestion.lines().size)
+          container.add(RECEIVED_PROPOSAL_LINES with state.initialSuggestion.lines().size)
           container.add(FINAL_PROPOSAL_LENGTH with state.finalSuggestion.length)
           container.add(FINAL_PROPOSAL_LINE with state.finalSuggestion.lines().size)
         }
@@ -165,7 +165,7 @@ private object FinishingLogs : PhasedLogs(Phase.INLINE_API_FINISHING) {
   val TOTAL_INSERTED_LENGTH = register(EventFields.Int("total_inserted_length", "Total length of inserted text"))
   val TOTAL_INSERTED_LINES = register(EventFields.Int("total_inserted_lines", "Total number of inserted lines"))
   val RECEIVED_PROPOSAL_LENGTH = register(EventFields.Int("received_proposal_length", "Length of proposal that was received from the inline completion provider"))
-  val RECEIVED_PROVIDER_PROPOSAL_LINES = register(EventFields.Int("received_provider_proposal_lines", "Number of lines in proposal that was received from the inline completion provider"))
+  val RECEIVED_PROPOSAL_LINES = register(EventFields.Int("received_proposal_lines", "Number of lines in proposal that was received from the inline completion provider"))
   val FINAL_PROPOSAL_LENGTH = register(EventFields.Int("final_proposal_length", "Length of proposal at finish"))
   val FINAL_PROPOSAL_LINE = register(EventFields.Int("final_proposal_line", "Number of lines in proposal at finish"))
 }
