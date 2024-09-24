@@ -8,9 +8,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -70,6 +72,14 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
 
   fun prepareForSearch(project: Project): Job = cs.launch {
     if (isFileListenerAdded.compareAndSet(false, true)) addFileListener()
+    Disposer.register(project) {
+      runBlockingMaybeCancellable {
+        jobsMutex.withLock {
+          indexingJobs.remove(project)
+          indexedProjects.remove(project)
+        }
+      }
+    }
     val currentJob = jobsMutex.withLock {
       // Cancel previous indexing for this project
       indexingJobs[project]?.cancel()
