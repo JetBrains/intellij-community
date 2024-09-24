@@ -242,6 +242,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return myContextManager;
   }
 
+  @NotNull
   public Project getProject() {
     return getProcess().getProject();
   }
