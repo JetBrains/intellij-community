@@ -6,13 +6,9 @@ import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystem
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSystemProvider
@@ -27,12 +23,9 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
 import java.nio.file.FileSystem
 import java.nio.file.FileSystemAlreadyExistsException
-import java.nio.file.Path
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
-import kotlin.io.path.isSameFileAs
-import kotlin.io.path.pathString
 
 @ApiStatus.Internal
 @VisibleForTesting
@@ -41,25 +34,12 @@ class IjentWslNioFsToggleStrategy(
   private val coroutineScope: CoroutineScope,
 ) {
   private val ownFileSystems = OwnFileSystems(multiRoutingFileSystemProvider)
-  private val enabledInDistros: MutableSet<WSLDistribution> = ContainerUtil.newConcurrentSet()
+  internal val enabledInDistros: MutableSet<WSLDistribution> = ContainerUtil.newConcurrentSet()
 
   init {
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       unregisterAll()
       enabledInDistros.clear()
-    }
-  }
-
-  // TODO Move to ijent.impl?
-  internal class WslEelProvider : EelProvider {
-    override suspend fun getEelApi(path: Path): EelApi? {
-      val service = serviceAsync<IjentWslNioFsToggleStrategy>()
-      for (distro in service.enabledInDistros) {
-        if (distro.uncRootPath.isSameFileAs(path.root)) {
-          return VirtualRootAwareEelApi(path.root, WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false))
-        }
-      }
-      return null
     }
   }
 
@@ -154,24 +134,6 @@ class IjentWslNioFsToggleStrategy(
 
   fun unregisterAll() {
     ownFileSystems.unregisterAll()
-  }
-}
-
-private class VirtualRootAwareEelApi(private val virtualRoot: Path, private val original: EelApi) : EelApi by original {
-  override val exec: EelExecApi get() = VirtualRootAwareEelExecApi(virtualRoot, original.exec)
-
-  private class VirtualRootAwareEelExecApi(private val virtualRoot: Path, private val original: EelExecApi) : EelExecApi by original {
-    override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelExecApi.ExecuteProcessResult {
-      return original.execute(VirtualRootAwareExecuteProcessBuilder(virtualRoot, builder))
-    }
-
-    private class VirtualRootAwareExecuteProcessBuilder(
-      private val virtualRoot: Path,
-      private val original: EelExecApi.ExecuteProcessBuilder,
-    ) : EelExecApi.ExecuteProcessBuilder by original {
-      override val args: List<String> = original.args.map { arg -> arg.removePrefix(virtualRoot.pathString) }
-      override val env: Map<String, String> = original.env.mapValues { (_, value) -> value.removePrefix(virtualRoot.pathString) }
-    }
   }
 }
 

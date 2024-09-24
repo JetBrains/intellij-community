@@ -130,7 +130,7 @@
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>
 
-    <eelProvider implementation="com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggleStrategy$WslEelProvider"/>
+    <eelProvider implementation="com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler$WslEelProvider"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager"
                         serviceImplementation="com.intellij.openapi.project.impl.ProjectManagerImpl"
