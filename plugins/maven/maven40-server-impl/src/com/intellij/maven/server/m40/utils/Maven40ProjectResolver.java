@@ -10,12 +10,10 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.model.Model;
 import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.plugin.LegacySupport;
 import org.apache.maven.project.*;
-import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
@@ -137,7 +135,7 @@ public class Maven40ProjectResolver {
         getProjectBuildingResults(request, files, session));
 
       // TODO: Cache does not work actually
-      //fillSessionCache(session, session.getRepositorySession(), buildingResults);
+      fillSessionCache(session, session.getRepositorySession(), buildingResults);
 
       boolean runInParallel = myResolveInParallel;
       Map<File, String> fileToNewDependencyHash = collectHashes(runInParallel, buildingResults);
@@ -394,21 +392,19 @@ public class Maven40ProjectResolver {
   private static void fillSessionCache(MavenSession mavenSession,
                                        RepositorySystemSession session,
                                        List<ProjectBuildingResult> buildingResults) {
-    if (session instanceof DefaultRepositorySystemSession) {
-      int initialCapacity = (int)(buildingResults.size() * 1.5);
-      Map<MavenId, Model> cacheMavenModelMap = new HashMap<>(initialCapacity);
-      Map<String, MavenProject> mavenProjectMap = new HashMap<>(initialCapacity);
-      for (ProjectBuildingResult result : buildingResults) {
-        if (result.getProblems() != null && !result.getProblems().isEmpty()) continue;
-        Model model = result.getProject().getModel();
-        String key = ArtifactUtils.key(model.getGroupId(), model.getArtifactId(), model.getVersion());
-        mavenProjectMap.put(key, result.getProject());
-        cacheMavenModelMap.put(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()), model);
-      }
-      mavenSession.setProjectMap(mavenProjectMap);
-      ((DefaultRepositorySystemSession)session).setWorkspaceReader(
-        new Maven40WorkspaceReader(session.getWorkspaceReader(), cacheMavenModelMap));
+    int initialCapacity = (int)(buildingResults.size() * 1.5);
+    Map<MavenId, org.apache.maven.api.model.Model> cacheMavenModelMap = new HashMap<>(initialCapacity);
+    Map<String, MavenProject> mavenProjectMap = new HashMap<>(initialCapacity);
+    for (ProjectBuildingResult result : buildingResults) {
+      if (result.getProblems() != null && !result.getProblems().isEmpty()) continue;
+      org.apache.maven.api.model.Model model = result.getProject().getModel().getDelegate();
+      String key = ArtifactUtils.key(model.getGroupId(), model.getArtifactId(), model.getVersion());
+      mavenProjectMap.put(key, result.getProject());
+      cacheMavenModelMap.put(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()), model);
     }
+    mavenSession.setProjectMap(mavenProjectMap);
+    Maven40WorkspaceMapReader reader = (Maven40WorkspaceMapReader)session.getWorkspaceReader();
+    reader.setCacheModelMap(cacheMavenModelMap);
   }
 
   /**

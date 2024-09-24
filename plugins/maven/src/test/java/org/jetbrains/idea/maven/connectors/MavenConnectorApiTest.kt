@@ -18,18 +18,10 @@ class MavenConnectorApiTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() {
     super.setUp()
     projectsManager.initForTests()
-    runBlocking {
-      importProjectAsync("""  <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <packaging>pom</packaging>
-                       <version>1</version>""")
-    }
-
   }
 
   @Test
   fun testResolveProjectsWithProfiles() = runBlocking {
-    needFixForMaven4()
     assumeVersionMoreThan("3.1.0")
     val project = createProjectPom("""
                        <groupId>test</groupId>

@@ -572,7 +572,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                       @NotNull MavenWorkspaceMap workspaceMap,
                                                       @Nullable MavenServerConsoleIndicatorImpl indicator,
                                                       Consumer<MavenSession> runnable) {
-    RepositorySystem repositorySystem = getComponent(RepositorySystem.class);
     DefaultMavenExecutionResult result = new DefaultMavenExecutionResult();
     myImporterSpy.setIndicator(indicator);
 
