@@ -4,9 +4,9 @@ internal object A {
         val m = a.size
         val p = b[0].size
         val result = Array(m) { IntArray(p) }
-        for (i in 0 until m) {
-            for (j in 0 until p) {
-                for (k in 0 until n) {
+        for (i in 0..<m) {
+            for (j in 0..<p) {
+                for (k in 0..<n) {
                     result[i][j] += a[i][k] * b[k][j]
                 }
             }

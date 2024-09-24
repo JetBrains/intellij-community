@@ -2630,6 +2630,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/for/forRangeToRangeUntil.java");
         }
 
+        @TestMetadata("forRangeToRangeUntilOldCompiler.java")
+        public void testForRangeToRangeUntilOldCompiler() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/for/forRangeToRangeUntilOldCompiler.java");
+        }
+
         @TestMetadata("forRangeWithBlock.java")
         public void testForRangeWithBlock() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/for/forRangeWithBlock.java");
