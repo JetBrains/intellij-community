@@ -10,8 +10,12 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.platform.ijent.community.buildConstants.*
+import com.intellij.platform.ijent.community.buildConstants.ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS
+import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
+import com.intellij.platform.ijent.community.buildConstants.IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS
+import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.system.CpuArch
@@ -214,7 +218,7 @@ private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
  * In contrast, the result of this function corresponds to what is written in the source code at current revision.
  */
 @Suppress("FunctionName")
-fun isIjentWslFsEnabledByDefaultForProduct_Reflective(workingDirectory: String?, platformPrefix: String?): Boolean {
+private fun isIjentWslFsEnabledByDefaultForProduct_Reflective(workingDirectory: String?, platformPrefix: String?): Boolean {
   if (workingDirectory == null) return false
   try {
     val buildConstantsClassPath = Path.of(
@@ -226,13 +230,16 @@ fun isIjentWslFsEnabledByDefaultForProduct_Reflective(workingDirectory: String?,
       val systemClassLoader = getSystemClassLoader()
       val kotlinCollectionsClassUri = systemClassLoader.getResource("kotlin/collections/CollectionsKt.class")!!.toURI()
 
-      val path =
-        if (kotlinCollectionsClassUri.scheme.startsWith("jar"))
-          Path.of(kotlinCollectionsClassUri.schemeSpecificPart.substringBefore(".jar!").plus(".jar").removePrefix("file:"))
-        else
-          Path.of(kotlinCollectionsClassUri.schemeSpecificPart).parent.parent.parent.toAbsolutePath()
+      if (kotlinCollectionsClassUri.scheme != "jar") {
+        logger<DevKitApplicationPatcher>().warn("Kotlin stdlib is not in a JAR: $kotlinCollectionsClassUri")
+        return false
+      }
+      val osPath = kotlinCollectionsClassUri.schemeSpecificPart
+        .substringBefore(".jar!")
+        .plus(".jar")
+        .removePrefix(if (SystemInfo.isWindows) "file:/" else "file:")
 
-      path.toUri().toURL()
+      Path.of(osPath).toUri().toURL()
     }
 
     val tmpClassLoader = URLClassLoader(arrayOf(buildConstantsClassPath, kotlinStdlibClassPath), null)
