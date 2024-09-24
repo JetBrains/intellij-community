@@ -1,6 +1,6 @@
-// ERROR: This annotation is not applicable to target 'value parameter'.
-// ERROR: This annotation is not applicable to target 'value parameter'.
-// ERROR: This annotation is not applicable to target 'local variable'.
+// ERROR: This annotation is not applicable to target 'value parameter'. Applicable targets: class, function, property, annotation class, constructor, setter, getter, typealias
+// ERROR: This annotation is not applicable to target 'value parameter'. Applicable targets: class, function, property, annotation class, constructor, setter, getter, typealias
+// ERROR: This annotation is not applicable to target 'local variable'. Applicable targets: class, function, property, annotation class, constructor, setter, getter, typealias
 import javaApi.Anon1
 import javaApi.Anon2
 import javaApi.Anon3
