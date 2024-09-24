@@ -150,6 +150,16 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/ExtensionOnNullable/");
     }
 
+    @TestMetadata("ExtensionOnTypeParameterReceiverType")
+    public void testExtensionOnTypeParameterReceiverType() throws Exception {
+        runTest("../testData/basic/multifile/ExtensionOnTypeParameterReceiverType/");
+    }
+
+    @TestMetadata("ExtensionOnTypeParameterReceiverTypeWithBounds")
+    public void testExtensionOnTypeParameterReceiverTypeWithBounds() throws Exception {
+        runTest("../testData/basic/multifile/ExtensionOnTypeParameterReceiverTypeWithBounds/");
+    }
+
     @TestMetadata("ExtensionsAndGetPrefix")
     public void testExtensionsAndGetPrefix() throws Exception {
         runTest("../testData/basic/multifile/ExtensionsAndGetPrefix/");

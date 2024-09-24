@@ -140,6 +140,16 @@ public class K2AutoImportTestGenerated extends AbstractK2AutoImportTest {
         runTest("../../idea/tests/testData/editor/autoImport/superConstructorCall/");
     }
 
+    @TestMetadata("typeParameterReceiverType")
+    public void testTypeParameterReceiverType() throws Exception {
+        runTest("../../idea/tests/testData/editor/autoImport/typeParameterReceiverType/");
+    }
+
+    @TestMetadata("typeParameterReceiverTypeWithBounds")
+    public void testTypeParameterReceiverTypeWithBounds() throws Exception {
+        runTest("../../idea/tests/testData/editor/autoImport/typeParameterReceiverTypeWithBounds/");
+    }
+
     @TestMetadata("typeReference")
     public void testTypeReference() throws Exception {
         runTest("../../idea/tests/testData/editor/autoImport/typeReference/");

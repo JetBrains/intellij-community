@@ -150,6 +150,16 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/ExtensionOnNullable/");
     }
 
+    @TestMetadata("ExtensionOnTypeParameterReceiverType")
+    public void testExtensionOnTypeParameterReceiverType() throws Exception {
+        runTest("../../completion/testData/basic/multifile/ExtensionOnTypeParameterReceiverType/");
+    }
+
+    @TestMetadata("ExtensionOnTypeParameterReceiverTypeWithBounds")
+    public void testExtensionOnTypeParameterReceiverTypeWithBounds() throws Exception {
+        runTest("../../completion/testData/basic/multifile/ExtensionOnTypeParameterReceiverTypeWithBounds/");
+    }
+
     @TestMetadata("ExtensionsAndGetPrefix")
     public void testExtensionsAndGetPrefix() throws Exception {
         runTest("../../completion/testData/basic/multifile/ExtensionsAndGetPrefix/");

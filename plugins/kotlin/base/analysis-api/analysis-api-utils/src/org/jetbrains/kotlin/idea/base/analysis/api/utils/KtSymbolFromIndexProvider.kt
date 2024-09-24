@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
@@ -296,6 +297,13 @@ class KtSymbolFromIndexProvider private constructor(
 
         if (type is KaIntersectionType) {
             return findAllNamesForTypes(type.conjuncts)
+        }
+
+        if (type is KaTypeParameterType) {
+            // when no explicit upper bounds, we consider `Any` to be an upper bound
+            val upperBounds = type.symbol.upperBounds.ifEmpty { listOf(builtinTypes.any) }
+
+            return findAllNamesForTypes(upperBounds)
         }
 
         if (type !is KaClassType) return emptySet()
