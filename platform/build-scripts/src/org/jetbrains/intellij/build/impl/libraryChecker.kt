@@ -5,7 +5,6 @@ import com.intellij.platform.util.coroutines.mapConcurrent
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpRedirect
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.ResponseException
 import io.ktor.client.request.get
 import io.ktor.client.request.head
 import io.ktor.http.HttpStatusCode
@@ -100,14 +99,11 @@ private fun checkUrls(type: String, urls: Map<String, List<LibraryLicense>>, err
           try {
             val response = if (url.startsWith("https://redocly.com/")) httpClient.get(url) else httpClient.head(url)
             if (response.status != HttpStatusCode.OK) {
-              errors += "${type} URL (${url}) liveliness failed: ${response.status}. ${usedIn(libraries)}"
+              errors += "${type} URL '${url}' error: ${response.status.toString().trim()}. ${usedIn(libraries)}"
             }
           }
-          catch (e: ResponseException) {
-            errors += "${type} URL (${url}) liveliness failed: ${e.response.status}. ${usedIn(libraries)}"
-          }
           catch (e: Exception) {
-            errors += "${type} URL (${url}) liveliness failed: ${e.message}. ${usedIn(libraries)}"
+            errors += "${type} URL '${url}': ${e.javaClass.name}: ${e.message}. ${usedIn(libraries)}"
           }
         }
       }
