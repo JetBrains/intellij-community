@@ -109,7 +109,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
       }
     }
     val state = holder.variantStates[event.variantIndex]!!
-    state.finalSuggestion += event.elements.joinToString("") { it.text }
+    state.finalSuggestion = event.elements.joinToString("") { it.text }
   }
 
   override fun onInvalidated(event: InlineCompletionEventType.Invalidated) {
