@@ -29,6 +29,7 @@ import java.util.function.BiConsumer
 
 @ApiStatus.Internal
 @VisibleForTesting
+// TODO: should be merged with IjentNioFsRegistry
 class IjentWslNioFsToggleStrategy(
   multiRoutingFileSystemProvider: FileSystemProvider,
   private val coroutineScope: CoroutineScope,
