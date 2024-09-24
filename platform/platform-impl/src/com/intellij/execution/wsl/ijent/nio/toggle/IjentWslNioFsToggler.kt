@@ -2,6 +2,7 @@
 package com.intellij.execution.wsl.ijent.nio.toggle
 
 import com.intellij.diagnostic.VMOptions
+import com.intellij.execution.eel.EelApiWithPathsNormalization
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.execution.wsl.WslIjentManager
@@ -15,7 +16,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.provider.EelProvider
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -76,7 +76,10 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
       val enabledDistros = serviceAsync<IjentWslNioFsToggler>().strategy?.enabledInDistros
 
       return enabledDistros?.firstOrNull { distro -> distro.getUNCRootPath().isSameFileAs(path.root) }?.let { distro ->
-        VirtualRootAwareEelApi(path.root.pathString, WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false))
+        EelApiWithPathsNormalization(
+          prefix = path.root.pathString,
+          original = WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false)
+        )
       }
     }
   }
@@ -114,26 +117,6 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
         }
         null
       }
-    }
-  }
-}
-
-
-@Internal
-class VirtualRootAwareEelApi(private val virtualRootPrefix: String, private val original: EelApi) : EelApi by original {
-  override val exec: EelExecApi get() = VirtualRootAwareEelExecApi(virtualRootPrefix, original.exec)
-
-  private class VirtualRootAwareEelExecApi(private val virtualRoot: String, private val original: EelExecApi) : EelExecApi by original {
-    override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelExecApi.ExecuteProcessResult {
-      return original.execute(VirtualRootAwareExecuteProcessBuilder(virtualRoot, builder))
-    }
-
-    private class VirtualRootAwareExecuteProcessBuilder(
-      private val virtualRoot: String,
-      private val original: EelExecApi.ExecuteProcessBuilder,
-    ) : EelExecApi.ExecuteProcessBuilder by original {
-      override val args: List<String> = original.args.map { arg -> arg.removePrefix(virtualRoot) }
-      override val env: Map<String, String> = original.env.mapValues { (_, value) -> value.removePrefix(virtualRoot) }
     }
   }
 }
