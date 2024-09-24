@@ -75,8 +75,14 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
     internal val includedTestLibraries: List<TestProjectLibrary>
         get() = testProjectStructure.libraries.filterNot { it.name in testProjectStructure.excludedLibraries }
 
+    internal val excludedTestLibraries: List<TestProjectLibrary>
+        get() = testProjectStructure.libraries.filter { it.name in testProjectStructure.excludedLibraries }
+
     internal val includedTestModules: List<TestProjectModule>
         get() = testProjectStructure.modules.filterNot { it.name in testProjectStructure.excludedModules }
+
+    internal val excludedTestModules: List<TestProjectModule>
+        get() = testProjectStructure.modules.filter { it.name in testProjectStructure.excludedModules }
 
     internal fun List<CombinableSourceAndClassRootsScope>.combine(): CombinedSourceAndClassRootsScope? =
         CombinedSourceAndClassRootsScope.create(this, project) as? CombinedSourceAndClassRootsScope
