@@ -688,7 +688,10 @@ object CodeWithMeClientDownloader {
         }
 
         val shLauncherNames = listOf("jetbrains_client.sh", "cwm_guest.sh", "intellij_client.sh")
-        return findLauncher(guestRoot, shLauncherNames)
+        val eligibleLaunchers = 
+          if (Registry.`is`("rdct.use.native.client.launcher.on.linux")) listOf("jetbrains_client") + shLauncherNames
+          else shLauncherNames
+        return findLauncher(guestRoot, eligibleLaunchers)
       }
 
       else -> error("Unsupported OS: ${SystemInfo.OS_NAME}")

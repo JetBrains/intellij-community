@@ -16,5 +16,7 @@
                  description="Specify a positive value to make a client process started from an IDE listen for debug connections on that port."/>
     <registryKey key="rdct.embedded.client.debug.suspend" defaultValue="false" 
                  description="Enable this option to suspend a client process started from an IDE until a debugger connects to it."/>
+    <registryKey key="rdct.use.native.client.launcher.on.linux" defaultValue="true"
+                 description="If enabled, the native launcher is used to run JetBrains Client process on Linux instead of jetbrains_client.sh script"/>
   </extensions>
 </idea-plugin>
