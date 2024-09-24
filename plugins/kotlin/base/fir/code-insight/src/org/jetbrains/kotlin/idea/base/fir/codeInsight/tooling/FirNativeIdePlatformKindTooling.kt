@@ -4,11 +4,14 @@ package org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling
 import org.jetbrains.kotlin.idea.base.codeInsight.PsiOnlyKotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractGenericTestIconProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractNativeIdePlatformKindTooling
-import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
+import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import javax.swing.Icon
 
 internal class FirNativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTooling() {
@@ -33,7 +36,31 @@ internal class FirNativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTo
         }
 
         val module = declaration.module ?: return null
-        val moduleName = StableModuleNameProvider.getInstance(module.project).getStableModuleName(module)
-        return getTestIcon(declaration, moduleName)
+
+        /**
+         * Find all target names which are expected to run this test.
+         * For example, consider running a test in 'nativeTest', then we might expect
+         * macosX64, macosArm64, linuxX64, ... target to potentially execute this test class.
+         */
+        val targetNames = listOf(module, *module.implementingModules.toTypedArray())
+            .filter { it.implementingModules.isEmpty() }
+            .map { module -> module.name.substringAfterLast(".").removeSuffix("Test") }
+
+
+        val urls = when (declaration) {
+            is KtClassOrObject -> {
+                listOf("java:suite://${declaration.fqName?.asString()}")
+            }
+
+            is KtNamedFunction -> {
+                val containingClass = declaration.containingClass()
+                val baseName = "java:test://${containingClass?.fqName?.asString()}.${declaration.name}"
+                targetNames.map { targetName -> "$baseName[$targetName]" } + baseName
+            }
+
+            else -> return null
+        }
+
+        return KotlinTestRunLineMarkerContributor.getTestStateIcon(urls, declaration)
     }
 }
