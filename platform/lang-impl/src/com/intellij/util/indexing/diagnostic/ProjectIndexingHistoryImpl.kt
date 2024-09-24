@@ -115,14 +115,13 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   }
 
   fun scanningFinished() {
-    val now = ZonedDateTime.now(ZoneOffset.UTC)
-    timesImpl.updatingEnd = now
     timesImpl.totalUpdatingTime = System.nanoTime() - timesImpl.totalUpdatingTime
+    timesImpl.updatingEnd = timesImpl.updatingStart.plusNanos(timesImpl.totalUpdatingTime)
 
     eventsLock.withLock {
       currentDumbModeStart?.let {
         timesImpl.dumbModeStart = it
-        stopStage(Stage.DumbMode, now.toInstant())
+        stopStage(Stage.DumbMode, timesImpl.updatingEnd.toInstant())
         timesImpl.dumbModeWithPausesDuration = Duration.between(it, timesImpl.updatingEnd)
       }
     }
@@ -150,7 +149,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
    * Some StageEvent may appear between the beginning and end of suspension
    * because it actually takes place only on ProgressIndicator's check.
    * These normalizations move the moment of suspension start from declared to after all other events between it and suspension end:
-   * suspended, event1, ..., eventN, unsuspended -> event1, ..., eventN, suspended, unsuspended
+   * suspended, event1, ..., eventN, unsuspended → event1, ..., eventN, suspended, unsuspended
    *
    * Suspended and unsuspended events appear only in pairs with none in between.
    */
@@ -337,7 +336,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
   }
 
   fun addProviderStatistics(statistics: IndexingFileSetStatistics) {
-    // Convert to Json to release memory occupied by statistic values.
+    // Convert to JSON to release memory occupied by statistic values.
     providerStatistics += statistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio)
 
     for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
@@ -394,15 +393,13 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
 
   fun indexingFinished() {
     writeStagesToDurations()
+    
+    timesImpl.totalUpdatingTime = System.nanoTime() - timesImpl.totalUpdatingTime
+    timesImpl.updatingEnd = timesImpl.updatingStart.plusNanos(timesImpl.totalUpdatingTime)
   }
 
   fun setWasInterrupted() {
     timesImpl.wasInterrupted = true
-  }
-
-  fun finishTotalUpdatingTime() {
-    timesImpl.updatingEnd = ZonedDateTime.now(ZoneOffset.UTC)
-    timesImpl.totalUpdatingTime = System.nanoTime() - timesImpl.totalUpdatingTime
   }
 
   private fun writeStagesToDurations() {

@@ -66,7 +66,7 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
       try {
         providedLimitOfFiles.toInt()
       }
-      catch (ignored: NumberFormatException) {
+      catch (_: NumberFormatException) {
         return false
       }
       return true
@@ -79,7 +79,7 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
           try {
             return providedValue.toInt()
           }
-          catch (ignored: NumberFormatException) {
+          catch (_: NumberFormatException) {
           }
         }
 
@@ -252,7 +252,6 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
         return
       }
       projectDumbIndexingHistory.indexingFinished()
-      projectDumbIndexingHistory.finishTotalUpdatingTime()
       unsavedIndexingActivityHistories.add(projectDumbIndexingHistory)
       coroutineScope.launch { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectDumbIndexingHistory) }
     }
