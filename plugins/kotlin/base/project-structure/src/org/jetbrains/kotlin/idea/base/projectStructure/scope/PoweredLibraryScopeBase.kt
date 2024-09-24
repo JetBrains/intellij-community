@@ -6,9 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.resolve.jvm.TopPackageNamesProvider
 
-internal open class PoweredLibraryScopeBase(
+@ApiStatus.Internal
+open class PoweredLibraryScopeBase(
     project: Project,
     classes: Array<VirtualFile>,
     sources: Array<VirtualFile>,

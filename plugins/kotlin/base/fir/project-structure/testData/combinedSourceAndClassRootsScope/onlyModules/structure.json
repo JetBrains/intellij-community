@@ -1,0 +1,19 @@
+{
+    "modules" : [
+        {
+            "name": "moduleA",
+            "content_roots": ["production"]
+        },
+        {
+            "name": "moduleB",
+            "content_roots": ["production", "tests"]
+        },
+        {
+            "name": "moduleC",
+            "content_roots": [
+                { "path": "src1", "kind": "PRODUCTION" },
+                { "path": "src2", "kind": "PRODUCTION" }
+            ]
+        }
+    ]
+}

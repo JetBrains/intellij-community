@@ -277,6 +277,22 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
     protected fun getCaretPosition(ktFile: KtFile): Int = getCaretPositionOrNull(ktFile) ?: error("Expected `<caret>` in file: $ktFile")
 
     protected fun getCaretPositionOrNull(ktFile: KtFile): Int? = caretProvider.getCaretPosition(ktFile.virtualFile)
+
+    protected fun TestProjectModule.toModule(): Module = modulesByName.getValue(name)
+
+    /**
+     * Returns all content root virtual files in the [TestProjectModule] of the given [kind] while preserving their original order.
+     */
+    protected fun TestProjectModule.contentRootVirtualFilesByKind(kind: TestContentRootKind): List<VirtualFile> {
+        val module = toModule()
+        return contentRoots
+            .zip(moduleContentRoots.getValue(module))
+            .mapNotNull { (testContentRoot, contentRootFile) ->
+                if (testContentRoot.kind == kind) contentRootFile else null
+            }
+    }
+
+    protected fun TestProjectLibrary.toLibrary(): Library = projectLibrariesByName.getValue(name)
 }
 
 private const val CARET_TEXT = "<caret>"

@@ -1,0 +1,12 @@
+{
+    "libraries": [
+        {
+            "name": "libraryA",
+            "roots": ["libraryRoot1", "libraryRoot2"]
+        },
+        {
+            "name": "libraryB",
+            "roots": ["libraryRoot3"]
+        }
+    ]
+}

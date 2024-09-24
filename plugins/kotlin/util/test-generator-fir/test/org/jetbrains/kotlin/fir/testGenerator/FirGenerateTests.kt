@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors.Abstrac
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.sessions.AbstractGlobalSessionInvalidationTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.sessions.AbstractLocalSessionInvalidationTest
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.scope.AbstractCombinedSourceAndClassRootsScopeStructureTest
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.fir.AbstractK2JsBasicCompletionLegacyStdlibTest
 import org.jetbrains.kotlin.idea.fir.actions.AbstractK2AddImportActionTest
@@ -121,6 +122,12 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
 
         testClass<AbstractSealedInheritorsProviderTest> {
             model("sealedInheritors", pattern = DIRECTORY, isRecursive = false)
+        }
+    }
+
+    testGroup("base/fir/project-structure") {
+        testClass<AbstractCombinedSourceAndClassRootsScopeStructureTest> {
+            model("combinedSourceAndClassRootsScope", pattern = DIRECTORY, isRecursive = false)
         }
     }
 

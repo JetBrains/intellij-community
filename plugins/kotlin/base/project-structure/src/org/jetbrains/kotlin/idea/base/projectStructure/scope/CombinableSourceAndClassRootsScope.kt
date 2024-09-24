@@ -5,10 +5,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import it.unimi.dsi.fastutil.objects.Object2IntMap
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * A root-based [GlobalSearchScope] which can be combined into a [CombinedSourceAndClassRootsScope].
  */
+@ApiStatus.Internal
 interface CombinableSourceAndClassRootsScope {
     /**
      * A map from [VirtualFile] roots to an integer which represents the position of the root in the classpath.
