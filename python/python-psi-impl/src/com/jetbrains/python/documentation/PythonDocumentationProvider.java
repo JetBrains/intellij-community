@@ -88,11 +88,17 @@ public class PythonDocumentationProvider implements DocumentationProvider {
         .append(describeClass(cls, context))
         .toString();
     }
+    else if (element instanceof PsiDirectory directory) {
+      return PyPsiBundle.message("QDOC.directory.name", directory.getName());
+    }
+    else if (element instanceof PsiFile file) {
+      return PyPsiBundle.message("QDOC.file.name", file.getName());
+    }
     else if (element instanceof PyExpression) {
       return describeExpression((PyExpression)element, referenceElement, context);
     }
     else if (element instanceof PyTypeParameter typeParameter) {
-      return PyPsiBundle.message("QDOC.type.parameter.name", describeTypeParameter(typeParameter, true,  context));
+      return PyPsiBundle.message("QDOC.type.parameter.name", describeTypeParameter(typeParameter, true, context));
     }
     else if (element instanceof PyTypeAliasStatement typeAliasStatement) {
       return describeTypeAlias(typeAliasStatement, context).toString();
@@ -154,7 +160,8 @@ public class PythonDocumentationProvider implements DocumentationProvider {
         .append(", ")
         .append(PyPsiBundle.message("QDOC.type.parameter.kind"))
         .append(" ")
-        .append(styledSpan(formatTypeWithLinks(context.getType(typeParameter), typeParameter, typeParameter, context), PyHighlighter.PY_ANNOTATION));
+        .append(styledSpan(formatTypeWithLinks(context.getType(typeParameter), typeParameter, typeParameter, context),
+                           PyHighlighter.PY_ANNOTATION));
     }
     return result.toFragment();
   }
