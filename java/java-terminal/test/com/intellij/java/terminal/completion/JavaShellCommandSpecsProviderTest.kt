@@ -24,39 +24,41 @@ class JavaShellCommandSpecsProviderTest : BasePlatformTestCase() {
     val fixture = ShellCompletionTestFixture.builder(project).mockShellCommandResults { _ ->
       return@mockShellCommandResults ShellCommandResult.create("", exitCode = 1)
     }.build()
-    assertSameElements(fixture.getCompletionNames(), listOf("-?", "-help", "-h", "-jar", "-D", "-version", "-classpath", "-cp", "-showversion"))
+    assertSameElements(fixture.getCompletionNames(), listOf("-?", "-help", "-h", "-jar", "-D", "-version", "-classpath", "-cp", "-showversion",
+                                                            "-dsa", "-enablesystemassertions", "-esa", "-disablesystemassertions", "-ea", "-enableassertions", "-da", "-disableassertions", "-agentlib", "-agentpath", "-javaagent"))
   }
 
   @Test
-  fun `double dashed options are present only from java 11`() = runBlocking {
-    val fixture = ShellCompletionTestFixture.builder(project).mockShellCommandResults { command ->
-      if (command == JavaShellCommandContext.JAVA_SHOW_SETTINGS_PROPERTIES_VERSION_COMMAND) {
-        return@mockShellCommandResults ShellCommandResult.create("java.version = 11", exitCode = 0)
-      }
-      return@mockShellCommandResults ShellCommandResult.create("", exitCode = 1)
-    }.build()
-    UsefulTestCase.assertContainsElements(fixture.getCompletionNames(), listOf("--show-version", "--help", "--version", "--dry-run"))
+  fun `java 11 dynamic options are present`() = runBlocking {
+    val fixture = createFixture(11)
+    UsefulTestCase.assertContainsElements(fixture.getCompletionNames(), listOf("--show-version", "--help", "--version", "--dry-run", "--class-path", "--help", "--enable-preview", "-verbose"))
+  }
+
+  @Test
+  fun `java 8 dynamic options are present`() = runBlocking {
+    val fixture = createFixture(8)
+    UsefulTestCase.assertContainsElements(fixture.getCompletionNames(), listOf("-verbose"))
   }
 
   @Test
   fun `x options are present`() = runBlocking {
-    val fixture = createVMOptionAwareFixture()
+    val fixture = createFixture()
     UsefulTestCase.assertContainsElements(fixture.getCompletionNames(), listOf("-Xsettings", "-Xlint"))
     UsefulTestCase.assertDoesntContain(fixture.getCompletionNames(), listOf("-Xexperiment", "-Xdiagnose", "-XXadvanced"))
   }
 
   @Test
   fun `double dash options are present`() = runBlocking {
-    val fixture = createVMOptionAwareFixture()
+    val fixture = createFixture()
     UsefulTestCase.assertContainsElements(fixture.getCompletionNames(), listOf("--add-opens", "--add-exports"))
     UsefulTestCase.assertDoesntContain(fixture.getCompletionNames(), listOf("--add-experimental-exports", "--add-diagnostic-exports", "-XXadvanced"))
   }
 
-  private fun createVMOptionAwareFixture(): ShellCompletionTestFixture {
+  private fun createFixture(javaVersion: Int = 11): ShellCompletionTestFixture {
     ApplicationManager.getApplication().replaceService(VMOptionsService::class.java, MockVMOptionsService(), testRootDisposable)
     val fixture = ShellCompletionTestFixture.builder(project).mockShellCommandResults { command ->
       if (command == JavaShellCommandContext.JAVA_SHOW_SETTINGS_PROPERTIES_VERSION_COMMAND) {
-        return@mockShellCommandResults ShellCommandResult.create("java.home = /jre/home", exitCode = 0)
+        return@mockShellCommandResults ShellCommandResult.create("java.home = /jre/home\njava.version = ${javaVersion}", exitCode = 0)
       }
       return@mockShellCommandResults ShellCommandResult.create("", exitCode = 1)
     }.build()
