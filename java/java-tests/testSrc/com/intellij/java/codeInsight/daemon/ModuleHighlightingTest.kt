@@ -612,11 +612,11 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
     addFile("module-info.java", "module M7 { exports pkg.collision7 to M6; }", M7)
     addFile("module-info.java", "module M { requires M2; requires M4; requires M6; requires lib.auto; }")
-    highlight("test1.java", """<error descr="Package 'pkg.collision2' exists in another module: M2">package pkg.collision2;</error>""")
+    highlight("test1.java", """package <error descr="Package 'pkg.collision2' exists in another module: M2">pkg.collision2</error>;""")
     highlight("test2.java", """package pkg.collision4;""")
     highlight("test3.java", """package pkg.collision7;""")
-    highlight("test4.java", """<error descr="Package 'java.util' exists in another module: java.base">package java.util;</error>""")
-    highlight("test5.java", """<error descr="Package 'pkg.lib2' exists in another module: lib.auto">package pkg.lib2;</error>""")
+    highlight("test4.java", """package <error descr="Package 'java.util' exists in another module: java.base">java.util</error>;""")
+    highlight("test5.java", """package <error descr="Package 'pkg.lib2' exists in another module: lib.auto">pkg.lib2</error>;""")
   }
 
   fun testClashingReads1() {

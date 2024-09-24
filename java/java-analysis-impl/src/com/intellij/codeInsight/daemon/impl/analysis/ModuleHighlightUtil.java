@@ -57,8 +57,10 @@ final class ModuleHighlightUtil {
       if (packageName != null) {
         PsiJavaModule origin = JavaModuleGraphUtil.findOrigin(javaModule, packageName);
         if (origin != null) {
-          String message = JavaErrorBundle.message("module.conflicting.packages", packageName, origin.getName());
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
+          PsiJavaCodeReferenceElement reference = statement.getPackageReference();
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(reference)
+            .descriptionAndTooltip(JavaErrorBundle.message("module.conflicting.packages", packageName, origin.getName()));
         }
       }
     }
