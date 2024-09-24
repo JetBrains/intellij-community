@@ -8,6 +8,7 @@ import com.intellij.driver.sdk.ui.remote.Component
 @Remote("com.intellij.openapi.wm.WindowManager")
 interface WindowManager {
   fun getIdeFrame(project: Project): IdeFrame?
+  fun findVisibleFrame(): IdeFrame?
 }
 
 @Remote("com.intellij.openapi.wm.IdeFrame")
@@ -31,4 +32,8 @@ interface StatusBar {
 
 fun Driver.getIdeFrame(project: Project): IdeFrame? {
   return service<WindowManager>().getIdeFrame(project)
+}
+
+fun Driver.hasIdeFrame(): Boolean {
+  return service<WindowManager>().findVisibleFrame() != null
 }
