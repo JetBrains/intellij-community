@@ -13,11 +13,11 @@ import com.sun.jdi.Value
 import javax.swing.Icon
 
 /**
- * @see com.intellij.openapi.application.ApplicationStateDebugSupport
+ * @see com.intellij.ide.debug.ApplicationStateDebugSupport
  */
-private const val SUPPORT_CLASS_FQN = "com.intellij.openapi.application.ApplicationStateDebugSupport"
+private const val SUPPORT_CLASS_FQN = "com.intellij.ide.debug.ApplicationStateDebugSupport"
 private const val GET_STATE_METHOD_NAME = "getApplicationState"
-private const val GET_STATE_METHOD_SIGNATURE = "()Lcom/intellij/openapi/application/ApplicationDebugState;"
+private const val GET_STATE_METHOD_SIGNATURE = "()Lcom/intellij/ide/debug/ApplicationDebugState;"
 private const val READ_ACTION_ALLOWED_FIELD_NAME = "readActionAllowed"
 private const val WRITE_ACTION_ALLOWED_FIELD_NAME = "writeActionAllowed"
 
