@@ -794,6 +794,7 @@
       <reference ref="FindInPath"/>
       <reference ref="ReplaceInPath"/>
       <separator/>
+      <reference ref="RenameElement"/>
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
       <reference ref="popup@ExpandableBookmarkContextMenu"/>
@@ -850,6 +851,7 @@
       <reference ref="FindInPath"/>
       <reference ref="ReplaceInPath"/>
       <separator/>
+      <reference ref="RenameElement"/>
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
@@ -972,6 +974,7 @@
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="FindUsages"/>
+      <reference ref="RenameElement"/>
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
@@ -982,7 +985,6 @@
       <separator/>
       <reference ref="CompareTwoFiles"/>
     </group>
-
 
     <group id="EditorPopupMenu1.FindRefactor" compact="true">
       <reference ref="FindUsages"/>
@@ -1002,6 +1004,7 @@
 
     <group id="EditorLangPopupMenu">
       <separator/>
+      <reference ref="RenameElement"/>
       <reference ref="RefactoringMenu"/>
       <reference ref="Generate"/>
       <separator/>
