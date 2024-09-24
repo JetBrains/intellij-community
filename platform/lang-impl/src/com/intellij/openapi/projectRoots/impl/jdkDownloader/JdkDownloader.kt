@@ -74,6 +74,19 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
     prepareDownloadTask(project, jdkItem, jdkHome, sdkCreatedCallback)
   }
 
+  override fun pickSdk(
+    sdkTypeId: SdkTypeId,
+    sdkModel: SdkModel,
+    parentComponent: JComponent,
+    selectedSdk: Sdk?,
+  ): SdkDownloadTask? {
+    val dataContext = DataManager.getInstance().getDataContext(parentComponent)
+    val project = CommonDataKeys.PROJECT.getData(dataContext)
+    if (project?.isDisposed == true) return null
+    val (jdkItem, jdkHome) = pickJdkItem(sdkTypeId, parentComponent, dataContext, project, null, ProjectBundle.message("dialog.button.select.jdk")) ?: return null
+    return JdkDownloadTask(jdkItem, JdkInstallRequestInfo(jdkItem, jdkHome), project)
+  }
+
   override fun showDownloadUI(
     sdkTypeId: SdkTypeId,
     sdkModel: SdkModel,
