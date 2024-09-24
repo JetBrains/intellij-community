@@ -239,7 +239,10 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class DeleteBranchAction : BranchesActionBase(icon = AllIcons.Actions.GC) {
+  class DeleteBranchAction : BranchesActionBase(
+    text = messagePointer("action.Git.Delete.Branch.title", 0),
+    icon = AllIcons.Actions.GC
+  ) {
     init {
       shortcutSet = CompositeShortcutSet(KeymapUtil.getActiveKeymapShortcuts("SafeDelete"),
                                          KeymapUtil.getActiveKeymapShortcuts("EditorDeleteToLineStart"))
