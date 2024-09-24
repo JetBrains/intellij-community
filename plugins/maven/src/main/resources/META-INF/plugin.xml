@@ -583,7 +583,6 @@
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenRemoteRepositoriesConfigurator"/>
 
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenEncodingConfigurator"/>
-    <importer implementation="org.jetbrains.idea.maven.importing.MavenIdeaPluginImporter"/>
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenWslTargetConfigurator"/>
 
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadePluginConfigurator"/>
