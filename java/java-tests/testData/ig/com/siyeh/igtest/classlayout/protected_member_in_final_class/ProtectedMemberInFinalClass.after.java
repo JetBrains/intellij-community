@@ -50,3 +50,14 @@ final class Test {
   private void bar3() {
   }
 }
+final class UnresolvedTests extends Unresolved {
+  void test() {
+    new Unresolved() {
+      @Override
+      protected void foo() {}
+    };
+  }
+  
+  @Override
+  protected void foo() {}
+}
