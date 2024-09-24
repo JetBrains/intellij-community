@@ -18,9 +18,7 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.impl.ProcessStreamsSynchronizer;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
@@ -349,6 +347,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
     // Attach extensions
     PythonRunConfigurationExtensionsManager.Companion.getInstance()
       .attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
+
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        targetEnvironment.shutdown();
+      }
+    });
 
     return processHandler;
   }
