@@ -46,6 +46,7 @@ data class ProductInfo(
   }
   
   data class LaunchData(
+    val launcherPath: @NlsSafe String,
     val customCommands: List<CustomCommandLaunchData> = emptyList(),
   )
   

@@ -35,6 +35,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.*
+import kotlin.io.path.exists
 
 @ApiStatus.Internal
 class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 
@@ -84,7 +85,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
   }
 
   fun launch(url: String, extraArguments: List<String>, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
-    val launcherData = findJetBrainsClientLauncher()
+    val launcherData = createLauncherViaIdeExecutable() ?: findOldJetBrainsClientLauncher()
     if (launcherData != null) {
       LOG.debug("Start embedded client using launcher")
       val workingDirectory = Path(PathManager.getHomePath())
@@ -125,35 +126,48 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     return processLifetimeDef
   }
 
-  private fun findJetBrainsClientLauncher(): JetBrainsClientLauncherData? {
+  private fun createLauncherViaIdeExecutable(): JetBrainsClientLauncherData? {
+    val ideHome = Path(PathManager.getHomePath())
+    val productInfoPath = ideHome.resolve(if (SystemInfo.isMac) ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC else ApplicationEx.PRODUCT_INFO_FILE_NAME)
+    if (!productInfoPath.exists()) {
+      LOG.warn("$productInfoPath does not exist")
+      return null
+    }
+    val productInfoData = try {
+      ProductInfo.fromJson(productInfoPath.readText())
+    }
+    catch (e: IOException) {
+      LOG.warn("Failed to parse $productInfoPath: $e", e)
+      return null
+    }
+    val frontendLaunchData = productInfoData.launch.find { launchData -> launchData.customCommands.any { it.commands.contains("thinClient") } }
+    if (frontendLaunchData == null) {
+      LOG.info("Cannot use IDE's launcher because $productInfoPath doesn't have special handling for 'thinClient' command")
+      return null
+    }
+
+    if (SystemInfo.isMac) {
+      val appPath = ideHome.parent
+      if (appPath != null && appPath.name.endsWith(".app")) {
+        CodeWithMeClientDownloader.createLauncherDataForMacOs(appPath)
+      }
+      else {
+        LOG.info("Cannot use launcher because $ideHome doesn't look like a path with installation")
+        null
+      }
+    }
+    val executable = ideHome.resolve(frontendLaunchData.launcherPath)
+    if (!executable.exists()) {
+      LOG.warn("Cannot use IDE's launcher because $executable does not exist")
+      return null
+    }
+    return JetBrainsClientLauncherData(executable, listOf(executable.pathString))
+  }
+  
+  private fun findOldJetBrainsClientLauncher(): JetBrainsClientLauncherData? {
     return when (OS.CURRENT) {
       OS.macOS -> {
-        val homePath = Path(PathManager.getHomePath())
-        val productInfoPath = homePath.resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC)
-        if (!productInfoPath.exists()) {
-          LOG.warn("$productInfoPath does not exist")
-          return null
-        }
-        val productInfoData = try {
-          ProductInfo.fromJson(productInfoPath.readText())
-        }
-        catch (e: IOException) {
-          LOG.warn("Failed to parse $productInfoPath: $e", e)
-          return null
-        }
-        if (productInfoData.launch.none { launchData -> launchData.customCommands.any { it.commands.contains("thinClient") } }) {
-          LOG.info("Cannot use launcher because $productInfoPath doesn't have special handling for 'thinClient' command")
-          return null
-        }
-        
-        val appPath = homePath.parent 
-        if (appPath != null && appPath.name.endsWith(".app")) {
-          CodeWithMeClientDownloader.createLauncherDataForMacOs(appPath)
-        }
-        else {
-          LOG.info("Cannot use launcher because $homePath doesn't look like a path with installation")
-          null
-        }
+        return null
       }
       OS.Windows -> PathManager.findBinFile("jetbrains_client64.exe")?.let { 
         JetBrainsClientLauncherData(it, listOf(it.pathString))
