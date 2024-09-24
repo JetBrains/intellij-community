@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHandler {
   private static final int CLEAN_CACHE_TIME_MS = Integer.getInteger("jcef.remote.osr.clean_cache_time_ms", 10*1000); // 10 sec
-  private static final boolean FORCE_USE_SOFTWARE_RENDERING = SystemInfo.isWayland || Boolean.getBoolean("jcef.remote.force_use_software_rendering");
+  private static final boolean FORCE_USE_SOFTWARE_RENDERING = true; // NOTE: temporary enabled until fixed IJPL-161293
 
   private final Map<String, SharedMemory.WithRaster> mySharedMemCache = new ConcurrentHashMap<>();
   private SharedMemory.WithRaster myCurrentFrame;
