@@ -2509,7 +2509,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testTransitiveProfileDependency() = runBlocking {
-    needFixForMaven4()
     assumeVersionMoreThan("3.1.0")
     createProjectPom("""
                        <groupId>test</groupId>
