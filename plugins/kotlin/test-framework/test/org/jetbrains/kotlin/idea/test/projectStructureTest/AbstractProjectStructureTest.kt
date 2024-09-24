@@ -6,19 +6,13 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.util.io.jarFile
 import com.intellij.util.io.write
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.idea.test.addDependency
-import org.jetbrains.kotlin.idea.test.addRoot
-import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.tooling.core.closure
@@ -27,10 +21,11 @@ import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.Path
-import kotlin.io.path.div
+import kotlin.io.path.isDirectory
 
 typealias ProjectLibrariesByName = Map<String, Library>
 typealias ModulesByName = Map<String, Module>
+typealias ModuleContentRoots = Map<Module, List<VirtualFile>>
 
 /**
  * A multi-module test which builds the project structure from a test data file `structure.json`.
@@ -57,6 +52,10 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
     private lateinit var _modulesByName: ModulesByName
 
     protected val modulesByName: ModulesByName get() = _modulesByName
+
+    private lateinit var _moduleContentRoots: ModuleContentRoots
+
+    protected val moduleContentRoots: ModuleContentRoots get() = _moduleContentRoots
 
     /**
      * Executes the test with a parsed and initialized [testProjectStructure], [projectLibrariesByName], and [modulesByName].
@@ -96,8 +95,15 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
             }
         }
 
-        val modulesByName = testStructure.modules.associate { moduleData ->
-            moduleData.name to createModuleWithSources(moduleData, testDirectory)
+        val modulesByName = mutableMapOf<String, Module>()
+        val moduleContentRoots = mutableMapOf<Module, List<VirtualFile>>()
+
+        testStructure.modules.forEach { testModule ->
+            val contentRootVirtualFiles = mutableListOf<VirtualFile>()
+            val module = createModuleWithSources(testModule, testDirectory, contentRootVirtualFiles)
+
+            modulesByName[testModule.name] = module
+            moduleContentRoots[module] = contentRootVirtualFiles
         }
 
         val duplicateNames = projectLibrariesByName.keys.intersect(modulesByName.keys)
@@ -123,6 +129,7 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
         _testProjectStructure = testStructure
         _projectLibrariesByName = projectLibrariesByName
         _modulesByName = modulesByName
+        _moduleContentRoots = moduleContentRoots
     }
 
     private class LibraryRoot(val classRoot: File, val sourceRoot: File?)
@@ -143,38 +150,55 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
         }
     }
 
-    private fun createModuleWithSources(testModule: TestProjectModule, testDirectory: String): Module {
-        val tmpDir = createTempDirectory().toPath()
-        val module = createModule("$tmpDir/${testModule.name}", moduleType)
+    private fun createModuleWithSources(
+        testModule: TestProjectModule,
+        testDirectory: String,
+        contentRootVirtualFiles: MutableList<VirtualFile>,
+    ): Module {
+        val tmpPath = createTempDirectory().toPath()
+        val module: Module = createModule("$tmpPath/${testModule.name}", moduleType)
+        val rootPath = tmpPath.createDirectory(testModule.name)
 
-        (testModule.sourceSets ?: listOf(null)).forEach { sourceSet ->
-            val contentRoot = tmpDir.createDirectory(sourceSet?.directory ?: "src")
-            val existingSourcesPath = run {
-                val base = Paths.get(testDirectory) / module.name
-                if (sourceSet == null) base else base / sourceSet.directory
-            }
-            processModuleSources(existingSourcesPath , contentRoot)
+        copyModuleContent(testModule, testDirectory, rootPath)
 
-            val srcRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(contentRoot.toFile())!!
-            WriteCommandAction.writeCommandAction(module.project).run<RuntimeException> {
-                srcRoot.refresh(false, true)
-            }
-
-            PsiTestUtil.addSourceContentToRoots(module, srcRoot, /* testSource = */ sourceSet == SourceSet.TEST)
+        val root = getVirtualFile(rootPath.toFile())
+        WriteCommandAction.writeCommandAction(module.project).run<RuntimeException> {
+            root.refresh(false, true)
         }
+
+        val contentRoots =
+            testModule.contentRoots.takeIf { it.isNotEmpty() }
+                ?: listOf(TestContentRoot(null, TestContentRootKind.PRODUCTION))
+
+        contentRoots.forEach { testContentRoot ->
+            val contentRootPath = testContentRoot.path?.let { rootPath.resolve(it) } ?: rootPath
+            require(contentRootPath.isDirectory()) {
+                "Expected the content root directory `$contentRootPath` to exist and be a directory."
+            }
+
+            val contentRoot = getVirtualFile(contentRootPath.toFile())
+            when (testContentRoot.kind) {
+                TestContentRootKind.PRODUCTION -> PsiTestUtil.addSourceRoot(module, contentRoot)
+                TestContentRootKind.TESTS -> PsiTestUtil.addSourceRoot(module, contentRoot, true)
+            }
+
+            contentRootVirtualFiles.add(contentRoot)
+        }
+
         return module
     }
 
     /**
-     * If the [existingSourcesPath] is also a directory in the test case's test data, we should include these sources.
+     * If the [testModule] is also a directory in the test case's test data, we should include these sources.
      */
-    private fun processModuleSources(existingSourcesPath: Path, destinationSrcDir: Path) {
-        val existingSources = existingSourcesPath.toFile()
-        if (existingSources.isDirectory) {
-            existingSources.walk().forEach { file ->
+    private fun copyModuleContent(testModule: TestProjectModule, testDirectory: String, destinationSrcDir: Path) {
+        val moduleRootPath = Path(testDirectory, testModule.name)
+        val moduleRoot = moduleRootPath.toFile()
+        if (moduleRoot.isDirectory) {
+            moduleRoot.walk().forEach { file ->
                 if (file.isDirectory) return@forEach
 
-                val relativePath = existingSourcesPath.relativize(file.toPath())
+                val relativePath = moduleRootPath.relativize(file.toPath())
                 val destinationPath = destinationSrcDir.resolve(relativePath)
 
                 val processedFileText = caretProvider.processFile(file, destinationPath)
