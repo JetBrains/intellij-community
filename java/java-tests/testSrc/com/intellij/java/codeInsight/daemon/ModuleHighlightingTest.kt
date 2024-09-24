@@ -12,12 +12,18 @@ import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescripto
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.javaSettings
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
@@ -31,10 +37,13 @@ import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.workspaceModel.updateProjectModel
+import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.util.jar.JarFile
 
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
@@ -503,6 +512,34 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   }
 
+  fun testExcludedSrc() {
+    val sourceRoot = M2.sourceRoot() ?: throw AssertionFailedError("No source root")
+    VfsTestUtil.createFile(sourceRoot, "java/lang/annotation/TestClass.java", """
+      package java.lang.annotation;     
+      public class TestClass { }
+    """.trimIndent())
+    VfsTestUtil.createFile(sourceRoot, "module-info.java", """
+      module java.base { exports exports java.lang.annotation; }
+    """.trimIndent())
+
+    val altSourceRoot = ApplicationManager.getApplication().runWriteAction(Computable<VirtualFile> { M2.createSourceRoot("alt") })
+                        ?: throw AssertionFailedError("No alt-source root")
+    VfsTestUtil.createFile(altSourceRoot, "module-info.java", """
+      module java.base { exports exports java.lang.annotation; }
+    """.trimIndent())
+
+    ApplicationManager.getApplication().runWriteAction {
+      val model = ModuleRootManager.getInstance(ModuleManager.getInstance(project).findModuleByName(M2.moduleName)!!).getModifiableModel()
+      model.contentEntries[0].addExcludeFolder(altSourceRoot)
+      model.commit()
+    }
+
+    highlight("TestClassA.java", """
+      package java.lang.annotation;     
+      public class TestClassA { }
+    """.trimIndent(), M2)
+  }
+
   fun testAddReadsDependingOnSourceModule() {
     addFile("pkg/m4/C4.java", """
       package pkg.m4;     
@@ -895,6 +932,24 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
                 && !it.name.endsWith("DeclarativeHintsTogglingIntention")}
       .map { it.simpleName }
     assertThat(available).describedAs(availableIntentions.toString()).containsExactlyInAnyOrder(*fixes)
+  }
+
+  private fun ModuleDescriptor.createSourceRoot(srcPathPrefix: String): VirtualFile? {
+    val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
+    val dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///") ?: return null
+    dummyRoot.refresh(false, false)
+    val srcRoot = dummyRoot.createChildDirectory(this, "${srcPathPrefix}-${this.sourceRootName}");
+    val tempFs: TempFileSystem = srcRoot.getFileSystem() as TempFileSystem
+    for (child in srcRoot.getChildren()) {
+      if (!tempFs.exists(child)) {
+        tempFs.createChildFile(this, srcRoot, child.getName())
+      }
+      child.delete(this);
+    }
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      model.addContentEntry(srcRoot).addSourceFolder(srcRoot, JavaSourceRootType.SOURCE)
+    }
+    return srcRoot
   }
   //</editor-fold>
 }
