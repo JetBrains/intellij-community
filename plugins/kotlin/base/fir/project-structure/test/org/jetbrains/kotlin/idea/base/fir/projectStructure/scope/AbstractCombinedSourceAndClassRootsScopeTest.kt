@@ -51,9 +51,9 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
             }
         }
 
-        val productionScopes = testProjectStructure.modules.map { it.createModuleScope(ModuleSourcesScope.SourceRootKind.PRODUCTION) }
-        val testScopes = testProjectStructure.modules.map { it.createModuleScope(ModuleSourcesScope.SourceRootKind.TESTS) }
-        val libraryScopes = testProjectStructure.libraries.map { it.createLibraryScope() }
+        val productionScopes = includedTestModules.map { it.createModuleScope(ModuleSourcesScope.SourceRootKind.PRODUCTION) }
+        val testScopes = includedTestModules.map { it.createModuleScope(ModuleSourcesScope.SourceRootKind.TESTS) }
+        val libraryScopes = includedTestLibraries.map { it.createLibraryScope() }
 
         val combinedProductionScope = productionScopes.combine()
         val combinedTestScope = testScopes.combine()
@@ -68,6 +68,12 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
             combinedScope,
         )
     }
+
+    internal val includedTestLibraries: List<TestProjectLibrary>
+        get() = testProjectStructure.libraries.filterNot { it.name in testProjectStructure.excludedLibraries }
+
+    internal val includedTestModules: List<TestProjectModule>
+        get() = testProjectStructure.modules.filterNot { it.name in testProjectStructure.excludedModules }
 
     internal fun List<CombinableSourceAndClassRootsScope>.combine(): CombinedSourceAndClassRootsScope? =
         CombinedSourceAndClassRootsScope.create(this, project) as? CombinedSourceAndClassRootsScope

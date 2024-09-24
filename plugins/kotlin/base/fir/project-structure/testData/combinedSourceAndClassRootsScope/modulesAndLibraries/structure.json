@@ -7,8 +7,14 @@
         {
             "name": "libraryB",
             "roots": ["libraryRoot3"]
+        },
+        {
+            "name": "unrelatedLibrary",
+            "roots": ["unrelatedLibraryRoot"]
         }
     ],
+    "excluded_libraries": ["unrelatedLibrary"],
+
     "modules" : [
         {
             "name": "moduleA",
@@ -24,6 +30,11 @@
                 { "path": "src1", "kind": "production" },
                 { "path": "src2", "kind": "production" }
             ]
+        },
+        {
+            "name": "unrelatedModule",
+            "content_roots": ["production", "tests"]
         }
-    ]
+    ],
+    "excluded_modules": ["unrelatedModule"]
 }

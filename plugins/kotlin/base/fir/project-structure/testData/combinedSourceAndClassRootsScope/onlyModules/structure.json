@@ -14,6 +14,11 @@
                 { "path": "src1", "kind": "PRODUCTION" },
                 { "path": "src2", "kind": "PRODUCTION" }
             ]
+        },
+        {
+            "name": "unrelatedModule",
+            "content_roots": ["production", "tests"]
         }
-    ]
+    ],
+    "excluded_modules": ["unrelatedModule"]
 }

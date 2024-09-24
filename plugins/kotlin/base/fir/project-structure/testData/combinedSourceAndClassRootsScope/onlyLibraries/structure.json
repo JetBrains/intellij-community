@@ -7,6 +7,11 @@
         {
             "name": "libraryB",
             "roots": ["libraryRoot3"]
+        },
+        {
+            "name": "unrelatedLibrary",
+            "roots": ["unrelatedLibraryRoot"]
         }
-    ]
+    ],
+    "excluded_libraries": ["unrelatedLibrary"]
 }
