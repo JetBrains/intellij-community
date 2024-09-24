@@ -47,7 +47,7 @@ fun untilToExpression(
     return rangeExpression(
         from,
         to,
-        if (isPossibleToUseRangeUntil) "..<" else "until",
+        if (isPossibleToUseRangeUntil) JKOperatorToken.RANGE_UNTIL else JKOperatorToken.UNTIL,
         conversionContext
     )
 }
@@ -61,7 +61,7 @@ fun downToExpression(
     rangeExpression(
         from,
         to,
-        "downTo",
+        JKOperatorToken.DOWN_TO,
         conversionContext
     )
 
@@ -81,15 +81,15 @@ context(KaSession)
 fun rangeExpression(
     from: JKExpression,
     to: JKExpression,
-    operatorName: String,
+    token: JKOperatorToken,
     conversionContext: NewJ2kConverterContext
 ): JKExpression =
     JKBinaryExpression(
         from,
         to,
         JKKtOperatorImpl(
-            JKKtWordOperatorToken(operatorName),
-            conversionContext.symbolProvider.provideMethodSymbol("kotlin.ranges.$operatorName").returnType!!
+            token,
+            conversionContext.symbolProvider.provideMethodSymbol("kotlin.ranges.${token.text}").returnType!!
         )
     )
 

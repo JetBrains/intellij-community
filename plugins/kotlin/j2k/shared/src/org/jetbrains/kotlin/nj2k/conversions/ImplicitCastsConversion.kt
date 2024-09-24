@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.nj2k.symbols.isUnresolved
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.ARITHMETIC_OPERATORS
 import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.BITWISE_LOGICAL_OPERATORS
+import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.RANGE_OPERATORS
 import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.SHIFT_OPERATORS
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -90,6 +91,12 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConver
 
             operator.isEquals() ->
                 if (rightType isStrongerThan leftType) leftOperandCasted else rightOperandCasted
+
+            operator.token in RANGE_OPERATORS && rightType.isFloatingPoint() -> {
+                // A special case when the return type of the right part of a range was changed in BuiltinMembersConversion
+                // (for example, Java's `Math.max` returns `int`, but Kotlin's `max` returns `Double`)
+                rightOperandCasted
+            }
 
             else -> this
         }
