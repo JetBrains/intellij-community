@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class IterableComponentTypeMacro extends Macro {
@@ -39,7 +40,7 @@ public final class IterableComponentTypeMacro extends Macro {
 
     PsiType component = JavaGenericsUtil.getCollectionItemType(expr);
     if (component != null) {
-      return new PsiTypeResult(GenericsUtil.getVariableTypeByExpressionType(component), project);
+      return new PsiTypeResult(PsiTypesUtil.removeExternalAnnotations(GenericsUtil.getVariableTypeByExpressionType(component)), project);
     }
 
     return null;
