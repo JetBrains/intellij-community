@@ -75,6 +75,11 @@ public class K1AutoImportTestGenerated extends AbstractK1AutoImportTest {
         runTest("testData/editor/autoImport/functionReference/");
     }
 
+    @TestMetadata("intersectionReceiverType")
+    public void testIntersectionReceiverType() throws Exception {
+        runTest("testData/editor/autoImport/intersectionReceiverType/");
+    }
+
     @TestMetadata("invoke")
     public void testInvoke() throws Exception {
         runTest("testData/editor/autoImport/invoke/");

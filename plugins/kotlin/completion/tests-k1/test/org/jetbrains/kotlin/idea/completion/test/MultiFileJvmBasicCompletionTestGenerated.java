@@ -140,6 +140,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/ExtensionFunctionOnImportedFunction/");
     }
 
+    @TestMetadata("ExtensionOnIntersectionTypeReceiver")
+    public void testExtensionOnIntersectionTypeReceiver() throws Exception {
+        runTest("../testData/basic/multifile/ExtensionOnIntersectionTypeReceiver/");
+    }
+
     @TestMetadata("ExtensionOnNullable")
     public void testExtensionOnNullable() throws Exception {
         runTest("../testData/basic/multifile/ExtensionOnNullable/");

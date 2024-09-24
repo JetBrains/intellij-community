@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
@@ -292,6 +293,11 @@ class KtSymbolFromIndexProvider private constructor(
         if (type is KaFlexibleType) {
             return findAllNamesForType(type.lowerBound)
         }
+
+        if (type is KaIntersectionType) {
+            return findAllNamesForTypes(type.conjuncts)
+        }
+
         if (type !is KaClassType) return emptySet()
 
         val typeName = type.classId

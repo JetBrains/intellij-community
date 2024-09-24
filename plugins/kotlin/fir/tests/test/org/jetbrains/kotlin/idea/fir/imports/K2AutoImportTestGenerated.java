@@ -75,6 +75,11 @@ public class K2AutoImportTestGenerated extends AbstractK2AutoImportTest {
         runTest("../../idea/tests/testData/editor/autoImport/functionReference/");
     }
 
+    @TestMetadata("intersectionReceiverType")
+    public void testIntersectionReceiverType() throws Exception {
+        runTest("../../idea/tests/testData/editor/autoImport/intersectionReceiverType/");
+    }
+
     @TestMetadata("invoke")
     public void testInvoke() throws Exception {
         runTest("../../idea/tests/testData/editor/autoImport/invoke/");
