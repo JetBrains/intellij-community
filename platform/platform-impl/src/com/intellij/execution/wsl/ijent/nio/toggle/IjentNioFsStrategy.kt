@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
@@ -31,6 +32,7 @@ import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
 import kotlin.io.path.isSameFileAs
+import kotlin.io.path.pathString
 
 @ApiStatus.Internal
 @VisibleForTesting
@@ -54,7 +56,7 @@ class IjentWslNioFsToggleStrategy(
       val service = serviceAsync<IjentWslNioFsToggleStrategy>()
       for (distro in service.enabledInDistros) {
         if (distro.uncRootPath.isSameFileAs(path.root)) {
-          return WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false)
+          return VirtualRootAwareEelApi(path.root, WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false))
         }
       }
       return null
@@ -152,6 +154,24 @@ class IjentWslNioFsToggleStrategy(
 
   fun unregisterAll() {
     ownFileSystems.unregisterAll()
+  }
+}
+
+private class VirtualRootAwareEelApi(private val virtualRoot: Path, private val original: EelApi) : EelApi by original {
+  override val exec: EelExecApi get() = VirtualRootAwareEelExecApi(virtualRoot, original.exec)
+
+  private class VirtualRootAwareEelExecApi(private val virtualRoot: Path, private val original: EelExecApi) : EelExecApi by original {
+    override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelExecApi.ExecuteProcessResult {
+      return original.execute(VirtualRootAwareExecuteProcessBuilder(virtualRoot, builder))
+    }
+
+    private class VirtualRootAwareExecuteProcessBuilder(
+      private val virtualRoot: Path,
+      private val original: EelExecApi.ExecuteProcessBuilder,
+    ) : EelExecApi.ExecuteProcessBuilder by original {
+      override val args: List<String> = original.args.map { arg -> arg.removePrefix(virtualRoot.pathString) }
+      override val env: Map<String, String> = original.env.mapValues { (_, value) -> value.removePrefix(virtualRoot.pathString) }
+    }
   }
 }
 
