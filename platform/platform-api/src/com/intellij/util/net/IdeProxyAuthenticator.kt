@@ -44,7 +44,14 @@ class IdeProxyAuthenticator(
     }
     val host = getHostNameReliably(requestingHost, requestingSite, requestingURL) ?: "" // TODO remove requestingURL, it is not relevant for proxy _auth_
     val port = requestingPort
-    return proxyAuth.getOrPromptAuthentication(requestingPrompt, host, port)?.toPasswordAuthentication()
+
+    val credentials = proxyAuth.getKnownAuthentication(host, port)
+    if (credentials?.userName != null && credentials.password != null) {
+      // TODO condition for password exists because HttpConfigurable does not drop PROXY_AUTHENTICATION flag when it erases the password...
+      //  Historically empty passwords were not supported anyway...
+      return credentials.toPasswordAuthentication()
+    }
+    return proxyAuth.getPromptedAuthentication(requestingPrompt, host, port)?.toPasswordAuthentication()
   }
 
   override fun toString(): String = "Auth@${System.identityHashCode(this).toString(16)}{" +
