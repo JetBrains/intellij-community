@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-core" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-core-jvm:1.8.0-intellij-10">
+    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-core-jvm:1.8.0-intellij-11">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-core-jvm/1.8.0-intellij-10/kotlinx-coroutines-core-jvm-1.8.0-intellij-10.jar">
-          <sha256sum>45cb7601fd1fa844d8da6433b77a59fb68712e17dbac9bf30682677bd5b18b26</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-core-jvm/1.8.0-intellij-11/kotlinx-coroutines-core-jvm-1.8.0-intellij-11.jar">
+          <sha256sum>e7acf96587bc3148db64b5e0adc988fa743f9820a99eb118acb905935ead1bc6</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-core-jvm/1.8.0-intellij-10/kotlinx-coroutines-core-jvm-1.8.0-intellij-10.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-core-jvm/1.8.0-intellij-11/kotlinx-coroutines-core-jvm-1.8.0-intellij-11.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-core-jvm/1.8.0-intellij-10/kotlinx-coroutines-core-jvm-1.8.0-intellij-10-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-core-jvm/1.8.0-intellij-11/kotlinx-coroutines-core-jvm-1.8.0-intellij-11-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
