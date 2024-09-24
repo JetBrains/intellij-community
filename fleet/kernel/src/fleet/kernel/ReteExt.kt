@@ -31,13 +31,13 @@ suspend inline fun <reified T : LegacyEntity> launchOnEachEntity(noinline f: sus
 
 suspend fun <T : Entity> launchOnEachEntity(entityType: EntityType<T>, f: suspend CoroutineScope.(T) -> Unit) {
   entityType.each().launchOnEach { v ->
-    durable { f(v) }
+    f(v)
   }
 }
 
 suspend fun <T : LegacyEntity> launchOnEachEntity(kclass: KClass<T>, f: suspend CoroutineScope.(T) -> Unit) {
   each(kclass).launchOnEach { v ->
-    durable { f(v) }
+    f(v)
   }
 }
 
