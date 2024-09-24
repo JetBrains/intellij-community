@@ -1,0 +1,30 @@
+{
+  "language": "Java",
+  "projectPath": "../../evaluation_projects/calculator-java",
+  "outputDir": "ml-eval-chat-code-generation-java-output",
+  "strategy": {
+    "behaviour": "REMOVE_METHOD_BODY_ASK_TO_GENERATE",
+    "collectContextOnly": false,
+    "minimumInternalApiCallsToConsider": 1
+  },
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ]
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 100,
+    "filesLimit": 1,
+    "order": "LINEAR",
+    "trainTestSplit": 70
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

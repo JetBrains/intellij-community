@@ -8,8 +8,10 @@
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaTestGenerationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaDocGenerationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaCodeGenerationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaCodeGenerationInChatVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaCompletionContextEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaFunctionCallingVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaSelfIdentificationVisitor"/>
+    <apiCallExtractor implementation="com.intellij.cce.visitor.JavaApiCallExtractor"/>
   </extensions>
 </idea-plugin>
