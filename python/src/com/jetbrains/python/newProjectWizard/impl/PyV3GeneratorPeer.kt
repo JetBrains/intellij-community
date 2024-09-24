@@ -11,14 +11,14 @@ import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificUI
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import javax.swing.JComponent
 
-class PyV3GeneratorPeer<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings>(
+internal class PyV3GeneratorPeer<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings>(
   baseSettings: PyV3BaseProjectSettings,
   projectPath: ProjectPathFlow,
   specificUiAndSettings: Pair<PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>, TYPE_SPECIFIC_SETTINGS>?,
   allowedInterpreterTypes:Set<PythonInterpreterSelectionMode>?
 ) : ProjectGeneratorPeer<PyV3BaseProjectSettings> {
   private val settings = baseSettings
-  private val panel: Py3VUI<*> = Py3VUI(settings, projectPath, specificUiAndSettings, allowedInterpreterTypes)
+  private val panel: PyV3VUI<*> = PyV3VUI(settings, projectPath, specificUiAndSettings, allowedInterpreterTypes)
 
 
   override fun getComponent(): JComponent = panel.mainPanel

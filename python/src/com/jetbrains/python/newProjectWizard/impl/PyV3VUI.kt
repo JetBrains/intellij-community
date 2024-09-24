@@ -16,7 +16,7 @@ import com.jetbrains.python.util.ShowingMessageErrorSync
 import javax.swing.JComponent
 
 
-internal class Py3VUI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> @RequiresEdt constructor(
+internal class PyV3VUI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> @RequiresEdt constructor(
   baseSettings: PyV3BaseProjectSettings,
   projectPath: ProjectPathFlow,
   specificUiAndSettings: Pair<PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>, TYPE_SPECIFIC_SETTINGS>?,
