@@ -9,6 +9,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.inlinePrompt.InlinePrompt;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.application.ApplicationManager;
@@ -73,6 +74,9 @@ public final class IdentifierHighlighterPass {
   }
 
   public void doCollectInformation(@NotNull HighlightingSession hostSession) {
+    if (InlinePrompt.isInlinePromptShown(myEditor)) {
+      return;
+    }
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     HighlightUsagesHandlerBase<PsiElement> highlightUsagesHandler = 

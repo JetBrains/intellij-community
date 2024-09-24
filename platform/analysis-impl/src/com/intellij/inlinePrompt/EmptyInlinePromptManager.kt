@@ -5,9 +5,9 @@ import com.intellij.openapi.editor.Editor
 import javax.swing.Icon
 
 internal class EmptyInlinePromptManager : InlinePromptManager {
-  override fun isInlinePromptShown(editor: Editor): Boolean = false
+  override fun isInlinePromptShown(editor: Editor, line: Int?): Boolean = false
 
-  override fun isInlinePromptCodeGenerating(editor: Editor): Boolean = false
+  override fun isInlinePromptCodeGenerating(editor: Editor, line: Int?): Boolean = false
 
   override fun getBulbIcon(): Icon? = null
 }

@@ -1327,21 +1327,11 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - findRange(com.intellij.openapi.vcs.ex.Range):com.intellij.openapi.vcs.ex.Range
 - getRanges():java.util.List
 - a:getReviewRanges():kotlinx.coroutines.flow.StateFlow
-*c:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer
+*Fc:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer
 - com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
 - *sf:Companion:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer$Companion
 - <init>(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel,com.intellij.openapi.editor.Editor,com.intellij.openapi.Disposable,com.intellij.openapi.diff.LineStatusMarkerColorScheme):V
 - b:<init>(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel,com.intellij.openapi.editor.Editor,com.intellij.openapi.Disposable,com.intellij.openapi.diff.LineStatusMarkerColorScheme,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- p:createCopyLineAction(com.intellij.openapi.vcs.ex.Range):com.intellij.openapi.actionSystem.AnAction
-- p:createErrorStripeTextAttributes(B):com.intellij.openapi.editor.markup.TextAttributes
-- p:createNextChangeAction(com.intellij.openapi.vcs.ex.Range):com.intellij.openapi.actionSystem.AnAction
-- p:createPopupPanel(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point,com.intellij.openapi.Disposable):com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel
-- p:createPrevChangeAction(com.intellij.openapi.vcs.ex.Range):com.intellij.openapi.actionSystem.AnAction
-- p:createRevertAction(com.intellij.openapi.vcs.ex.Range):com.intellij.openapi.actionSystem.AnAction
-- p:createShowDiffAction(com.intellij.openapi.vcs.ex.Range):com.intellij.openapi.actionSystem.AnAction
-- p:createToggleByWordDiffAction():com.intellij.openapi.actionSystem.AnAction
-- f:getLineStatusMarkerColorScheme():com.intellij.openapi.diff.LineStatusMarkerColorScheme
-- p:paintGutterMarkers(com.intellij.openapi.editor.Editor,java.util.List,java.awt.Graphics):V
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer$Companion
 - f:render(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel,com.intellij.openapi.editor.Editor,kotlin.coroutines.Continuation):java.lang.Object
 - f:setupIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel,com.intellij.openapi.editor.Editor):V
