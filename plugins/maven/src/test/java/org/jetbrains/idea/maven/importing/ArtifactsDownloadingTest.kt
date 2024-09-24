@@ -188,7 +188,6 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
   @Test
   @Throws(Exception::class)
   fun JavadocsAndSourcesForDepsWithClassifiersAndType() = runBlocking {
-    needFixForMaven4()
     val remoteRepo = FileUtil.toSystemIndependentName(dir.path + "/repo")
     updateSettingsXmlFully("""<settings>
 <mirrors>
@@ -208,11 +207,11 @@ ${VfsUtilCore.pathToUrl(pathTransformer.toRemotePath(remoteRepo)!!)}</url>
     createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-test-sources.jar")
     createDummyArtifact(remoteRepo, "/xxx/yyy/1/yyy-1-test-javadoc.jar")
 
+    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-sources.jar")
+    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-javadoc.jar")
+
     createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-foo-sources.jar")
     createDummyArtifact(remoteRepo, "/xxx/xxx/1/xxx-1-foo-javadoc.jar")
-
-    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-sources.jar")
-    createDummyArtifact(remoteRepo, "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar")
 
     importProjectAsync("""
                     <groupId>test</groupId>
