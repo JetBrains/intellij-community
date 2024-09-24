@@ -30,13 +30,13 @@ interface GHPRAICommentComponentFactory {
     val EP_NAME = ExtensionPointName<GHPRAICommentComponentFactory>("intellij.vcs.github.commentComponentFactory")
   }
 
-  fun createAICommentIn(cs: CoroutineScope, userIcon: Icon, vm: GHPRAICommentViewModel): JComponent
+  fun createAIThreadIn(cs: CoroutineScope, userIcon: Icon, vm: GHPRAICommentViewModel): JComponent
 }
 
 internal class GHPRAICommentEditorInlayRenderer internal constructor(cs: CoroutineScope, userIcon: Icon, vm: GHPRAICommentViewModel)
   : CodeReviewComponentInlayRenderer(Wrapper().apply {
     bindContentIn(cs, GHPRAICommentComponentFactory.EP_NAME.extensionListFlow()) { extensions ->
       val extension = extensions.firstOrNull() ?: return@bindContentIn null
-      extension.createAICommentIn(cs, userIcon, vm)
+      extension.createAIThreadIn(cs, userIcon, vm)
     }
 })
