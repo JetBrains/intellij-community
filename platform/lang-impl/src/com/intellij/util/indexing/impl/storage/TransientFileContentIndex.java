@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/** In-memory index, with persistent index as a 'backend' storage -- so it is not really 'transient' */
 @Internal
 public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwareMapReduceIndex.IndexerIdHolder>
   extends VfsAwareMapReduceIndex<Key, Value, FileCachedData> {
@@ -44,6 +45,7 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
 
             @Override
             public void clearIndexData() {
+              //TODO why we don't clear TransientChangesIndexStorage's in-memory cache?
               indexStorageLayout.clearIndexData();
             }
 

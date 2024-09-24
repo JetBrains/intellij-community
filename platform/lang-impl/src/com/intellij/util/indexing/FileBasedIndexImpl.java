@@ -487,15 +487,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                                 @NotNull IndexConfiguration state,
                                                 @NotNull IndexVersionRegistrationSink registrationStatusSink,
                                                 @NotNull IntSet dirtyFiles) throws Exception {
-    ID<K, V> name = extension.getName();
+    ID<K, V> indexId = extension.getName();
     InputFilter inputFilter = extension.getInputFilter();
 
     UpdatableIndex<K, V, FileContent, ?> index = null;
+    VfsAwareIndexStorageLayout<K, V> layout = null;
 
     int attemptCount = 2;
     for (int attempt = 0; attempt < attemptCount; attempt++) {
       try {
-        VfsAwareIndexStorageLayout<K, V> layout = IndexStorageLayoutLocator.getLayout(extension);
+        layout = IndexStorageLayoutLocator.getLayout(extension);
         index = createIndex(extension, layout);
 
         for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
@@ -505,38 +506,48 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         }
 
-        state.registerIndex(name,
+        state.registerIndex(indexId,
                             index,
                             inputFilter,
-                            version + GlobalIndexFilter.getFiltersVersion(name));
+                            version + GlobalIndexFilter.getFiltersVersion(indexId));
         break;
       }
       catch (Exception e) {
-        boolean lastAttempt = attempt == attemptCount - 1;
-
+        //close the (half-)opened index first:
+        if (index != null) {
+          try {
+            index.dispose();
+          }
+          catch (Throwable t) {
+            LOG.error(t);
+          }
+        }
         try {
-          VfsAwareIndexStorageLayout<K, V> layout = IndexStorageLayoutLocator.getLayout(extension);
+          if (layout == null) {
+            layout = IndexStorageLayoutLocator.getLayout(extension);
+          }
           layout.clearIndexData();
         }
-        catch (Exception layoutEx) {
-          LOG.error(layoutEx);
+        catch (Throwable t) {
+          LOG.error(t);
         }
 
         for (FileBasedIndexInfrastructureExtension ext : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
           try {
-            ext.resetPersistentState(name);
+            ext.resetPersistentState(indexId);
           }
           catch (Exception extEx) {
             LOG.error(extEx);
           }
         }
 
-        registrationStatusSink.setIndexVersionDiff(name, new IndexVersion.IndexVersionDiff.CorruptedRebuild(version));
-        IndexVersion.rewriteVersion(name, version);
-        IndexStatisticGroup.reportIndexRebuild(name, e, true);
+        registrationStatusSink.setIndexVersionDiff(indexId, new IndexVersion.IndexVersionDiff.CorruptedRebuild(version));
+        IndexVersion.rewriteVersion(indexId, version);
+        IndexStatisticGroup.reportIndexRebuild(indexId, e, true);
 
+        boolean lastAttempt = (attempt == attemptCount - 1);
         if (lastAttempt) {
-          state.registerIndexInitializationProblem(name, e);
+          state.registerIndexInitializationProblem(indexId, e);
           if (extension instanceof CustomImplementationFileBasedIndexExtension) {
             ((CustomImplementationFileBasedIndexExtension<?, ?>)extension).handleInitializationError(e);
           }
@@ -1261,7 +1272,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         FileBasedIndex fileBasedIndex = app.getServiceIfCreated(FileBasedIndex.class);
         if (fileBasedIndex instanceof FileBasedIndexImpl fileBasedIndexImpl) {
-          if(calledByShutdownHook) {
+          if (calledByShutdownHook) {
             //prevent unregistering the task from ShutDownTracker if we're already called from ShutDownTracker:
             // (unregister fails if ShutDownTracker's executing is already triggered)
             fileBasedIndexImpl.myShutDownTask = null;

@@ -29,5 +29,9 @@ public interface InvertedIndex<Key, Value, Input> {
 
   void clear() throws StorageException;
 
+  /**
+   * TODO RC: the interface doesn't extend {@link com.intellij.openapi.Disposable}, so the name is misleading -- the method is
+   * better renamed to .close() with interface extending (Auto){@link java.io.Closeable}
+   */
   void dispose();
 }
