@@ -6211,13 +6211,7 @@ f:com.intellij.util.SingletonInstancesCache
 - s:getInstance(java.lang.String,java.lang.ClassLoader):java.lang.Object
 f:com.intellij.util.SlowOperations
 - sf:ACTION_PERFORM:java.lang.String
-- sf:ACTION_UPDATE:java.lang.String
-- sf:FORCE_ASSERT:java.lang.String
-- sf:FORCE_THROW:java.lang.String
 - sf:GENERIC:java.lang.String
-- sf:IDEA_PLUGIN_SANDBOX_MODE:java.lang.String
-- sf:KNOWN_ISSUE:java.lang.String
-- sf:RESET:java.lang.String
 - s:allowSlowOperations(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:allowSlowOperations(com.intellij.util.ThrowableRunnable):V
 - s:allowSlowOperations(java.lang.String):com.intellij.openapi.application.AccessToken
