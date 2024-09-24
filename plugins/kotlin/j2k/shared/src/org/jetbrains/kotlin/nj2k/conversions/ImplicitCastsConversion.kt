@@ -22,7 +22,7 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConver
             is JKVariable -> convertVariable(element)
             is JKCallExpression -> convertMethodCallExpression(element)
             is JKNewExpression -> convertNewExpression(element)
-            is JKBinaryExpression -> return recurse(convertBinaryExpression(element))
+            is JKBinaryExpression -> return recurse(element.convert())
             is JKIfElseExpression -> convertIfElseExpression(element)
             is JKKtAssignmentStatement -> convertAssignmentStatement(element)
             is JKArrayAccessExpression -> convertArrayAccessExpression(element)
@@ -31,73 +31,68 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConver
         return recurse(element)
     }
 
-    private fun convertBinaryExpression(binaryExpression: JKBinaryExpression): JKExpression {
-        fun JKBinaryExpression.convert(): JKBinaryExpression {
-            val leftType = left.calculateType(typeFactory)?.asPrimitiveType() ?: return this
-            val rightType = right.calculateType(typeFactory)?.asPrimitiveType() ?: return this
-            val leftOperandCasted by lazy(LazyThreadSafetyMode.NONE) {
-                JKBinaryExpression(
-                    ::left.detached().let { it.castTo(rightType, strict = true) ?: it },
-                    ::right.detached(),
-                    operator
-                ).withFormattingFrom(this)
-            }
-            val rightOperandCasted by lazy(LazyThreadSafetyMode.NONE) {
-                JKBinaryExpression(
-                    ::left.detached(),
-                    ::right.detached().let { it.castTo(leftType, strict = true) ?: it },
-                    operator
-                ).withFormattingFrom(this)
-            }
-
-            return when {
-                leftType.isBoolean() || rightType.isBoolean() -> this
-
-                operator.token in SHIFT_OPERATORS -> {
-                    val newLeftType = if (leftType.isLong()) JKJavaPrimitiveType.LONG else JKJavaPrimitiveType.INT
-                    JKBinaryExpression(
-                        ::left.detached().let { it.castTo(newLeftType, strict = true) ?: it },
-                        ::right.detached().let { it.castTo(JKJavaPrimitiveType.INT, strict = true) ?: it },
-                        operator
-                    ).withFormattingFrom(this)
-                }
-
-                operator.token in BITWISE_LOGICAL_OPERATORS -> {
-                    val commonSupertype = if (leftType.isLong() || rightType.isLong()) {
-                        JKJavaPrimitiveType.LONG
-                    } else {
-                        JKJavaPrimitiveType.INT
-                    }
-                    JKBinaryExpression(
-                        ::left.detached().let { it.castTo(commonSupertype, strict = true) ?: it },
-                        ::right.detached().let { it.castTo(commonSupertype, strict = true) ?: it },
-                        operator
-                    ).withFormattingFrom(this)
-                }
-
-                leftType.isChar() && rightType.isChar() && operator.token in ARITHMETIC_OPERATORS -> {
-                    JKBinaryExpression(
-                        ::left.detached().let { it.castTo(JKJavaPrimitiveType.INT, strict = true) ?: it },
-                        ::right.detached().let { it.castTo(JKJavaPrimitiveType.INT, strict = true) ?: it },
-                        operator
-                    ).withFormattingFrom(this)
-                }
-
-                leftType.jvmPrimitiveType == rightType.jvmPrimitiveType -> this
-
-                leftType.isChar() -> leftOperandCasted
-
-                rightType.isChar() -> rightOperandCasted
-
-                operator.isEquals() ->
-                    if (rightType isStrongerThan leftType) leftOperandCasted
-                    else rightOperandCasted
-
-                else -> this
-            }
+    fun JKBinaryExpression.convert(): JKBinaryExpression {
+        val leftType = left.calculateType(typeFactory)?.asPrimitiveType() ?: return this
+        val rightType = right.calculateType(typeFactory)?.asPrimitiveType() ?: return this
+        val leftOperandCasted by lazy(LazyThreadSafetyMode.NONE) {
+            JKBinaryExpression(
+                ::left.detached().let { it.castTo(rightType, strict = true) ?: it },
+                ::right.detached(),
+                operator
+            ).withFormattingFrom(this)
+        }
+        val rightOperandCasted by lazy(LazyThreadSafetyMode.NONE) {
+            JKBinaryExpression(
+                ::left.detached(),
+                ::right.detached().let { it.castTo(leftType, strict = true) ?: it },
+                operator
+            ).withFormattingFrom(this)
         }
 
-        return binaryExpression.convert()
+        return when {
+            leftType.isBoolean() || rightType.isBoolean() -> this
+
+            operator.token in SHIFT_OPERATORS -> {
+                val newLeftType = if (leftType.isLong()) JKJavaPrimitiveType.LONG else JKJavaPrimitiveType.INT
+                JKBinaryExpression(
+                    ::left.detached().let { it.castTo(newLeftType, strict = true) ?: it },
+                    ::right.detached().let { it.castTo(JKJavaPrimitiveType.INT, strict = true) ?: it },
+                    operator
+                ).withFormattingFrom(this)
+            }
+
+            operator.token in BITWISE_LOGICAL_OPERATORS -> {
+                val commonSupertype = if (leftType.isLong() || rightType.isLong()) {
+                    JKJavaPrimitiveType.LONG
+                } else {
+                    JKJavaPrimitiveType.INT
+                }
+                JKBinaryExpression(
+                    ::left.detached().let { it.castTo(commonSupertype, strict = true) ?: it },
+                    ::right.detached().let { it.castTo(commonSupertype, strict = true) ?: it },
+                    operator
+                ).withFormattingFrom(this)
+            }
+
+            leftType.isChar() && rightType.isChar() && operator.token in ARITHMETIC_OPERATORS -> {
+                JKBinaryExpression(
+                    ::left.detached().let { it.castTo(JKJavaPrimitiveType.INT, strict = true) ?: it },
+                    ::right.detached().let { it.castTo(JKJavaPrimitiveType.INT, strict = true) ?: it },
+                    operator
+                ).withFormattingFrom(this)
+            }
+
+            leftType.jvmPrimitiveType == rightType.jvmPrimitiveType -> this
+
+            leftType.isChar() -> leftOperandCasted
+
+            rightType.isChar() -> rightOperandCasted
+
+            operator.isEquals() ->
+                if (rightType isStrongerThan leftType) leftOperandCasted else rightOperandCasted
+
+            else -> this
+        }
     }
 
     private fun convertVariable(variable: JKVariable) {
