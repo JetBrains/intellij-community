@@ -2,9 +2,10 @@
 package com.intellij.ide.plugins.auth
 
 
-internal class EnvironmentVariablePluginRepositoryAuthProvider : PluginRepositoryAuthProvider {
-  val repositoryUrl = System.getProperty("idea.plugins.host")
-  val hasRepositoryAuth = System.getenv("IDEA_PLUGINS_HOST_AUTH") != null
+internal class
+EnvironmentVariablePluginRepositoryAuthProvider : PluginRepositoryAuthProvider {
+  val repositoryUrl: String? = System.getProperty("idea.plugins.host")
+  private val hasRepositoryAuth = System.getenv("IDEA_PLUGINS_HOST_AUTH") != null
 
   override fun getAuthHeaders(url: String): Map<String, String> {
     if (!canHandle(url)) return emptyMap()
