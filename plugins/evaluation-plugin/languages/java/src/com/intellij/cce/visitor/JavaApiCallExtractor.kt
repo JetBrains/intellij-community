@@ -2,7 +2,7 @@ package com.intellij.cce.visitor
 
 import com.intellij.cce.core.Language
 import com.intellij.cce.metric.ApiCallExtractor
-import com.intellij.ide.actions.QualifiedNameProvider
+import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.application.smartReadActionBlocking
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
@@ -25,15 +25,6 @@ fun extractCallExpressions(
   return result
 }
 
-fun PsiElement.getQualifiedName(): String? {
-  QualifiedNameProvider.EP_NAME.extensionList.forEach { provider ->
-    val qualifiedName = provider.getQualifiedName(this)
-    if (qualifiedName != null) return qualifiedName
-  }
-  return null
-}
-
-
 class JavaApiCallExtractor : ApiCallExtractor {
   override val language = Language.JAVA
 
@@ -45,7 +36,9 @@ class JavaApiCallExtractor : ApiCallExtractor {
     val psiFile = writeAction { createPsiFile(code, project) }
     return smartReadActionBlocking(project) {
       val callExpressions = extractCallExpressions(psiFile)
-      callExpressions.mapNotNull { it.resolveMethod()?.getQualifiedName() }
+      callExpressions.mapNotNull { psiCallExpression ->
+        psiCallExpression.resolveMethod()?.let { QualifiedNameProviderUtil.getQualifiedName(it) }
+      }
     }
   }
 

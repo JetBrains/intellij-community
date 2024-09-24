@@ -3,6 +3,7 @@ package com.intellij.cce.visitor
 
 import com.intellij.cce.core.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
+import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.application.smartReadActionBlocking
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -51,7 +52,7 @@ class JavaCodeGenerationInChatVisitor : EvaluationVisitor, JavaRecursiveElementV
     val containingFile = resolvedElement.containingFile?.virtualFile ?: return null
     val projectFileIndex = ProjectFileIndex.getInstance(this.project)
     if (projectFileIndex.isInContent(containingFile)) {
-      return resolvedElement.getQualifiedName()
+      return QualifiedNameProviderUtil.getQualifiedName(resolvedElement)
     }
     return null
   }
