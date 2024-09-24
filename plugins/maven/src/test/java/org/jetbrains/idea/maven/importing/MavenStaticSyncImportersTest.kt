@@ -22,15 +22,15 @@ import java.util.stream.Stream
 
 class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {
 
-  private lateinit var myLegacyImporter: MyLegacyImporter
+  private lateinit var myLegacyImporter: MyTestLegacyImporter
   private lateinit var myImporter: MyMavenPluginImporter
 
   override fun setUp() {
     super.setUp()
     myImporter = MyMavenPluginImporter()
-    myLegacyImporter = MyLegacyImporter()
+    myLegacyImporter = MyTestLegacyImporter()
     ExtensionTestUtil.addExtensions(MavenWorkspaceConfigurator.EXTENSION_POINT_NAME, listOf(myImporter, MyAlwaysFailConfigurerDoNotImplementingStaticSyncAware()), testRootDisposable)
-    ExtensionTestUtil.addExtensions(MavenImporter.EXTENSION_POINT_NAME, listOf(MyAlwaysFailLegacyImporter(), myLegacyImporter), testRootDisposable)
+    ExtensionTestUtil.addExtensions(MavenImporter.EXTENSION_POINT_NAME, listOf(MyTestAlwaysFailLegacyImporter(), myLegacyImporter), testRootDisposable)
   }
 
   @Test
@@ -136,7 +136,7 @@ class MyMavenPluginImporter : MavenWorkspaceConfigurator, MavenStaticSyncAware {
 }
 
 
-class MyLegacyImporter : MavenImporter("", ""), MavenStaticSyncAware {
+class MyTestLegacyImporter : MavenImporter("", ""), MavenStaticSyncAware {
 
   val mavenProjects = ArrayList<MavenProject>()
   override fun isApplicable(mavenProject: MavenProject?): Boolean {
@@ -172,7 +172,7 @@ private class MyAlwaysFailConfigurerDoNotImplementingStaticSyncAware : MavenWork
 }
 
 
-private class MyAlwaysFailLegacyImporter : MavenImporter("", "") {
+private class MyTestAlwaysFailLegacyImporter : MavenImporter("", "") {
   override fun isApplicable(mavenProject: MavenProject?): Boolean {
     throw IllegalStateException("Should never be called in static import")
   }

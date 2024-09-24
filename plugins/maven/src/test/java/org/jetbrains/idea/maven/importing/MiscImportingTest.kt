@@ -373,7 +373,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     val disposable: Disposable = Disposer.newDisposable()
     try {
       maskExtensions(MavenImporter.EXTENSION_POINT_NAME,
-                     listOf<MavenImporter>(NameSettingMavenImporter("name-from-properties")),
+                     listOf<MavenImporter>(MyTestNameSettingMavenImporter("name-from-properties")),
                      disposable)
       importProjectAsync("""
                       <groupId>test</groupId>
@@ -391,7 +391,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     assertEquals("name-from-properties", project!!.name)
   }
 
-  private class NameSettingMavenImporter(private val myName: String) : MavenImporter("gid", "id") {
+  private class MyTestNameSettingMavenImporter(private val myName: String) : MavenImporter("gid", "id") {
     override fun customizeUserProperties(project: Project, mavenProject: MavenProject, properties: Properties) {
       properties.setProperty("myName", myName)
     }
