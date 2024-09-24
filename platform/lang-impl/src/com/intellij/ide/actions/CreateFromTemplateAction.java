@@ -103,7 +103,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
                      if (offset != -1 && editor != null && !editor.isDisposed()) {
                        editor.getCaretModel().moveToOffset(offset);
                      }
-                     try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+                     try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
                        postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
                      }
                    }

@@ -20,7 +20,6 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.createSmartPointer
-import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
@@ -169,10 +168,8 @@ class PsiElementDocumentationTarget private constructor(
     })
 
     val imageResolver: DocumentationImageResolver = DocumentationImageResolver { url ->
-      SlowOperations.allowSlowOperations(SlowOperations.GENERIC).use {  // old API fallback
-        dereference()?.targetElement?.let { targetElement ->
-          DocumentationManager.getElementImage(targetElement, url)
-        }
+      dereference()?.targetElement?.let { targetElement ->
+        DocumentationManager.getElementImage(targetElement, url)
       }
     }
   }

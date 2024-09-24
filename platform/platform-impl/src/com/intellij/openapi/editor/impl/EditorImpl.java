@@ -4739,7 +4739,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   private void selectWordAtCaret(boolean honorCamelCase) {
     Caret caret = getCaretModel().getCurrentCaret();
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       caret.selectWordAtCaret(honorCamelCase);
     }
     setMouseSelectionState(MOUSE_SELECTION_STATE_WORD_SELECTED);

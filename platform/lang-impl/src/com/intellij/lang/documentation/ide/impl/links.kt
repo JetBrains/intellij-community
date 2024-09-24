@@ -18,7 +18,6 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.impl.InternalLinkResult
 import com.intellij.platform.backend.documentation.impl.handleLink
 import com.intellij.psi.PsiManager
-import com.intellij.util.SlowOperations
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -68,9 +67,7 @@ internal fun openUrl(project: Project, targetPointer: Pointer<out DocumentationT
 }
 
 private fun handleExternal(project: Project, targetPointer: Pointer<out DocumentationTarget>, url: String): Boolean {
-  return SlowOperations.allowSlowOperations(SlowOperations.GENERIC).use {
-    doHandleExternal(project, targetPointer, url) // old API fallback
-  }
+  return doHandleExternal(project, targetPointer, url) // old API fallback
 }
 
 private fun doHandleExternal(project: Project, targetPointer: Pointer<out DocumentationTarget>, url: String): Boolean {

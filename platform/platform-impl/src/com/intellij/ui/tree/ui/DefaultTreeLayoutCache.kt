@@ -4,7 +4,6 @@ package com.intellij.ui.tree.ui
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.treeStructure.CachingTreePath
-import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Rectangle
@@ -879,9 +878,7 @@ class DefaultTreeLayoutCache(
     if (!Registry.`is`("ide.tree.experimental.layout.cache.debug", false)) {
       return
     }
-    SlowOperations.startSection(SlowOperations.GENERIC).use { // Only for debugging, so slow ops are fine here.
-      InvariantChecker(location).checkInvariants()
-    }
+    InvariantChecker(location).checkInvariants()
   }
 
   private class Location(private val location: String, private vararg val args: Any?) {

@@ -170,7 +170,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final String[] names = suggestNames(replaceAllOccurrences, getLocalVariable());
       boolean started = false;
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
         if (replaceAllOccurrences) {
           int segmentsLimit = Registry.intValue("inplace.rename.segments.limit", -1);
           // Too many occurrences: rename template won't start, see InplaceRefactoring.buildTemplateAndStart

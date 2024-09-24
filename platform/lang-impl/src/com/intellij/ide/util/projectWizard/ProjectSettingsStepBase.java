@@ -174,7 +174,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
-          try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+          try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
             myCallback.consume(ProjectSettingsStepBase.this, getPeer());
           }
         }

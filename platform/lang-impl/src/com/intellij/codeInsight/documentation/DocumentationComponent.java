@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -55,7 +54,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
@@ -130,10 +128,7 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
     @NotNull PsiElement element,
     @NotNull Disposable disposable
   ) {
-    DocumentationRequest request;
-    try (AccessToken ignored = SlowOperations.allowSlowOperations(SlowOperations.GENERIC)) {
-      request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
-    }
+    DocumentationRequest request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
     return DocumentationUtil.documentationComponent(project, request, disposable);
   }
 
