@@ -2,12 +2,18 @@
 package com.intellij.platform.eel.provider
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.impl.local.LocalPosixEelApiImpl
 import com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+
+suspend fun Project.getEelApi(): EelApi {
+  val path = basePath ?: throw IllegalStateException("Cannot find base dir for project")
+  return Path.of(path).getEelApi()
+}
 
 suspend fun Path.getEelApi(): EelApi =
   EP_NAME.extensionList.firstNotNullOfOrNull { it.getEelApi(this) }
