@@ -66,7 +66,11 @@ internal class RightAdhesionScrollBarListener(
 
   fun decrease() = applyZoomTransformation { adjust(viewport, viewport.getMiddlePoint(), ZOOM_OUT_MULTIPLIER) }
 
-  fun reset() = applyZoomTransformation { reset(viewport, viewport.getMiddlePoint()) }
+  fun reset() = applyZoomTransformation {
+    val shouldScrollAfterResetting = viewport.width >= viewport.viewSize.width
+    reset(viewport, viewport.getMiddlePoint())
+    if (shouldScrollAfterResetting) scrollToEnd()
+  }
 
   private fun applyZoomTransformation(transformation: Zoom.() -> Unit) {
     disableShouldScroll()
