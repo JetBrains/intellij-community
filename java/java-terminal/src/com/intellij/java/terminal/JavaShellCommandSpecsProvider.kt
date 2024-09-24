@@ -38,6 +38,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     option("-jar") {
       argument {
         displayName(JavaTerminalBundle.message("java.command.terminal.jar.option.argument.jar.file.text"))
+        suggestions(ShellDataGenerators.fileSuggestionsGenerator())
       }
       description(JavaTerminalBundle.message("java.command.terminal.jar.option.description"))
     }
