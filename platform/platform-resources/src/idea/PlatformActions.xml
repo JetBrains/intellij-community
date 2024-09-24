@@ -428,6 +428,11 @@
     <action id="CloseGotItTooltip" class="com.intellij.openapi.actionSystem.EmptyAction"/>
     <action id="CallSaul" class="com.intellij.ide.actions.cache.CallSaulAction"/>
 
+    <group id="RevealGroup" popup="true" class="com.intellij.ide.actions.RevealGroup">
+      <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
+      <action id="OpenInAssociatedApplication" class="com.intellij.ide.actions.OpenInAssociatedApplicationAction"/>
+    </group>
+
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
@@ -586,11 +591,6 @@
       </group>
 
       <!-- View -->
-      <group id="RevealGroup" popup="true" class="com.intellij.ide.actions.RevealGroup">
-        <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
-        <action id="OpenInAssociatedApplication" class="com.intellij.ide.actions.OpenInAssociatedApplicationAction"/>
-      </group>
-
       <group id="ViewMenu" popup="true" compact="true">
         <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true"/>
         <group id="ViewAppearanceGroup" popup="true">
