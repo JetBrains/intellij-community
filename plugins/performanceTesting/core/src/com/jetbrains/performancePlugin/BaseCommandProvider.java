@@ -121,6 +121,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(ExpandProjectViewCommand.PREFIX, ExpandProjectViewCommand::new),
       Map.entry(DebugToggleBreakpointCommand.PREFIX, DebugToggleBreakpointCommand::new),
       Map.entry(MoveFilesCommand.PREFIX, MoveFilesCommand::new),
+      Map.entry(MoveKotlinDeclarationsCommand.PREFIX, MoveKotlinDeclarationsCommand::new),
       Map.entry(GCCommand.PREFIX, GCCommand::new),
       Map.entry(SetupInlineCompletionListenerCommand.PREFIX, SetupInlineCompletionListenerCommand::new),
       Map.entry(CallInlineCompletionCommand.PREFIX, CallInlineCompletionCommand::new),

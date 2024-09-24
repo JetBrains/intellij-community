@@ -828,6 +828,11 @@ fun <T : CommandChain> T.moveFiles(moveFileData: MoveFilesData): T = apply {
   addCommand("${CMD_PREFIX}moveFiles $jsonData")
 }
 
+fun <T : CommandChain> T.moveDeclarations(moveDeclarationData: MoveDeclarationsData): T = apply {
+  val jsonData = objectMapper.writeValueAsString(moveDeclarationData)
+  addCommand("${CMD_PREFIX}moveDeclarations $jsonData")
+}
+
 fun <T : CommandChain> T.performGC(): T = apply {
   addCommand("${CMD_PREFIX}performGC")
 }
