@@ -1665,7 +1665,7 @@
                      implementationClass="com.siyeh.ig.numeric.BadOddnessInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="BigDecimalEquals" bundle="messages.InspectionGadgetsBundle" key="big.decimal.equals.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.numeric.BigDecimalEqualsInspection" cleanupTool="true"/>
+                     implementationClass="com.siyeh.ig.numeric.BigDecimalEqualsInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="BigDecimalMethodWithoutRoundingCalled" bundle="messages.InspectionGadgetsBundle"
                      key="big.decimal.method.without.rounding.called.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
