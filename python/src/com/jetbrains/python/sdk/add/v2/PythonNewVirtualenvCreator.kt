@@ -16,7 +16,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.newProjectWizard.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.newProjectWizard.validateProjectPathAndGetPath

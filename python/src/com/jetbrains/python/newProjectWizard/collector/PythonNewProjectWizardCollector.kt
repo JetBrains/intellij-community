@@ -7,9 +7,15 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.createAdditio
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.statistics.*
+import com.jetbrains.python.statistics.EXECUTION_TYPE
+import com.jetbrains.python.statistics.INTERPRETER_CREATION_MODE
+import com.jetbrains.python.statistics.INTERPRETER_TYPE
+import com.jetbrains.python.statistics.PYTHON_VERSION
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 object PythonNewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup {
@@ -44,10 +50,12 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
   private val USE_EXISTING_VENV_FIX = GROUP.registerEvent("existing.venv")
 
   @JvmStatic
-  fun logPythonNewProjectGenerated(info: InterpreterStatisticsInfo,
-                                   pythonVersion: LanguageLevel,
-                                   generatorClass: Class<*>,
-                                   additionalData: List<EventPair<*>>) {
+  fun logPythonNewProjectGenerated(
+    info: InterpreterStatisticsInfo,
+    pythonVersion: LanguageLevel,
+    generatorClass: Class<*>,
+    additionalData: List<EventPair<*>>,
+  ) {
     PROJECT_GENERATED_EVENT.log(
       INTERPRETER_TYPE.with(info.type.value),
       EXECUTION_TYPE.with(info.target.value),
@@ -77,12 +85,4 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
     USE_EXISTING_VENV_FIX.log()
   }
 }
-
-data class InterpreterStatisticsInfo(val type: InterpreterType,
-                                     val target: InterpreterTarget,
-                                     val globalSitePackage: Boolean = false,
-                                     val makeAvailableToAllProjects: Boolean = false,
-                                     val previouslyConfigured: Boolean = false,
-                                     val isWSLContext: Boolean = false,
-                                     val creationMode: InterpreterCreationMode = InterpreterCreationMode.NA)
 

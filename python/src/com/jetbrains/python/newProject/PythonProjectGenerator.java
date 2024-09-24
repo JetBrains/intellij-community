@@ -21,7 +21,7 @@ import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
-import com.jetbrains.python.newProjectWizard.collector.InterpreterStatisticsInfo;
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo;
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
