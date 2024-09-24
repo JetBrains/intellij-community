@@ -35,6 +35,10 @@
           },
           {
             "type": "constant",
+            "value": "refactoring"
+          },
+          {
+            "type": "constant",
             "value": "suggestion",
             "documentation": "When this style rule is violated, show it to the user as a suggestion. Suggestions appear as three gray dots under the first two characters."
           },
