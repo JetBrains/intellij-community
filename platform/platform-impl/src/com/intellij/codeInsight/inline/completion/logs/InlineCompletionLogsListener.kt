@@ -164,8 +164,8 @@ private object FinishingLogs : PhasedLogs(Phase.INLINE_API_FINISHING) {
   val NEXT_LINE_ACTIONS = register(EventFields.Int("next_line_actions", "Number of next line inline completion inserts"))
   val TOTAL_INSERTED_LENGTH = register(EventFields.Int("total_inserted_length", "Total length of inserted text"))
   val TOTAL_INSERTED_LINES = register(EventFields.Int("total_inserted_lines", "Total number of inserted lines"))
-  val RECEIVED_PROPOSAL_LENGTH = register(EventFields.Int("received_proposal_length", "Length of proposal that was received from the provider"))
-  val RECEIVED_PROVIDER_PROPOSAL_LINES = register(EventFields.Int("received_provider_proposal_lines", "Number of lines in proposal that was received from the provider"))
+  val RECEIVED_PROPOSAL_LENGTH = register(EventFields.Int("received_proposal_length", "Length of proposal that was received from the inline completion provider"))
+  val RECEIVED_PROVIDER_PROPOSAL_LINES = register(EventFields.Int("received_provider_proposal_lines", "Number of lines in proposal that was received from the inline completion provider"))
   val FINAL_PROPOSAL_LENGTH = register(EventFields.Int("final_proposal_length", "Length of proposal at finish"))
   val FINAL_PROPOSAL_LINE = register(EventFields.Int("final_proposal_line", "Number of lines in proposal at finish"))
 }
