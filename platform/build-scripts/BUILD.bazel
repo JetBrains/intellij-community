@@ -8,12 +8,13 @@ create_kotlinc_options(
   x_optin = [
     "kotlin.RequiresOptIn",
     "kotlinx.serialization.ExperimentalSerializationApi",
-    "kotlinx.coroutines.ExperimentalCoroutinesApi"
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
   ]
 )
 
 kt_jvm_library(
   name = "intellij.platform.buildScripts",
+  module_name = "intellij.platform.buildScripts",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -83,7 +84,7 @@ kt_jvm_library(
     "@libraries//:ktor-client-core-jvm",
     "@libraries//:netty-all",
     "@libraries//:netty-tcnative-boringssl-static",
-    "@community//platform/util/coroutines:intellij.platform.util.coroutines"
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
   ],
   runtime_deps = [
     "@libraries//:commons-cli",
@@ -95,7 +96,7 @@ kt_jvm_library(
     "@libraries//:javax.activation",
     "@libraries//:kotlin-reflect",
     "@libraries//:jackson-module-kotlin",
-    "@libraries//:snakeyaml"
+    "@libraries//:snakeyaml",
   ]
 )
 ### auto-generated section `build` end

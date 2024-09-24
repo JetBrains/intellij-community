@@ -7,12 +7,13 @@ create_kotlinc_options(
   jvm_target = "17",
   x_optin = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
-    "kotlin.ExperimentalStdlibApi"
+    "kotlin.ExperimentalStdlibApi",
   ]
 )
 
 kt_jvm_library(
   name = "fleet.kernel",
+  module_name = "fleet.kernel",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -28,7 +29,7 @@ kt_jvm_library(
     "@community//fleet/rpc:fleet.rpc",
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@community//fleet/preferences:fleet.preferences",
-    "@community//fleet/reporting/api:fleet.reporting.api"
+    "@community//fleet/reporting/api:fleet.reporting.api",
   ],
   exports = [
     "@community//fleet/rhizomedb:fleet.rhizomedb",
@@ -36,7 +37,7 @@ kt_jvm_library(
     "@libraries//:kotlinx-serialization-json-jvm",
     "@community//fleet/util/core:fleet.util.core",
     "@community//fleet/rpc:fleet.rpc",
-    "@libraries//:kotlinx-coroutines-core-jvm"
+    "@libraries//:kotlinx-coroutines-core-jvm",
   ]
 )
 ### auto-generated section `build` end

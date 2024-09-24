@@ -83,7 +83,7 @@ private fun formatValue(value: Any?): String {
   return when (value) {
     is List<*> -> {
       if (value.size > 1) {
-        value.joinToString(separator = ",\n    ", prefix = "[\n    ", postfix = "\n  ]") { formatValue(it) }
+        value.joinToString(separator = ",\n    ", prefix = "[\n    ", postfix = ",\n  ]") { formatValue(it) }
       }
       else {
         value.joinToString(separator = ", ", prefix = "[", postfix = "]") { formatValue(it) }

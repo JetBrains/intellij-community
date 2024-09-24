@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.objectSerializer",
+  module_name = "intellij.platform.objectSerializer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -23,7 +24,7 @@ kt_jvm_library(
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
     "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
-    "@community//platform/settings:intellij.platform.settings"
+    "@community//platform/settings:intellij.platform.settings",
   ]
 )
 ### auto-generated section `build` end

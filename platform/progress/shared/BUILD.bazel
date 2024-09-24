@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.ide.progress",
+  module_name = "intellij.platform.ide.progress",
   visibility = ["//visibility:public"],
   srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -18,7 +19,7 @@ kt_jvm_library(
     "@community//platform/kernel/shared:intellij.platform.kernel",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
-    "@community//platform/project/shared:intellij.platform.project"
+    "@community//platform/project/shared:intellij.platform.project",
   ]
 )
 ### auto-generated section `build` end

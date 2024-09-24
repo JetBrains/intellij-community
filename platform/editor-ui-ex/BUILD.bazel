@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.editor.ex",
+  module_name = "intellij.platform.editor.ex",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
@@ -18,12 +19,12 @@ kt_jvm_library(
     "@libraries//:intellij-deps-fastutil",
     "@community//platform/core-ui:intellij.platform.core.ui",
     "@community//platform/util/jdom:intellij.platform.util.jdom",
-    "@community//platform/statistics:intellij.platform.statistics"
+    "@community//platform/statistics:intellij.platform.statistics",
   ],
   exports = [
     "@community//platform/editor-ui-api:intellij.platform.editor",
     "@community//platform/util:intellij.platform.util",
-    "@community//platform/core-impl:intellij.platform.core.impl"
+    "@community//platform/core-impl:intellij.platform.core.impl",
   ]
 )
 ### auto-generated section `build` end

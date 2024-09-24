@@ -10,6 +10,7 @@ create_kotlinc_options(
 
 kt_jvm_library(
   name = "intellij.platform.diagnostic.telemetry.impl",
+  module_name = "intellij.platform.diagnostic.telemetry.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
@@ -32,7 +33,7 @@ kt_jvm_library(
     "@libraries//:kotlinx-serialization-core-jvm",
     "@community//platform/diagnostic:intellij.platform.diagnostic",
     "@community//platform/diagnostic/telemetry.exporters:intellij.platform.diagnostic.telemetry.exporters",
-    "@community//platform/util/coroutines:intellij.platform.util.coroutines"
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
   ],
   exports = ["@community//platform/diagnostic/telemetry.exporters:intellij.platform.diagnostic.telemetry.exporters"]
 )

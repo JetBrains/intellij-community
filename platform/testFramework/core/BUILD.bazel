@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.testFramework.core",
+  module_name = "intellij.platform.testFramework.core",
   visibility = ["//visibility:public"],
   srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -21,7 +22,7 @@ kt_jvm_library(
     "@libraries//:jackson-core",
     "@libraries//:jackson-databind",
     "@libraries//:jackson-module-kotlin",
-    "@libraries//:httpmime"
+    "@libraries//:httpmime",
   ]
 )
 ### auto-generated section `build` end

@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.util.http",
+  module_name = "intellij.platform.util.http",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
@@ -12,7 +13,7 @@ kt_jvm_library(
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@libraries//:annotations",
     "@libraries//:ktor-client-core-jvm",
-    "@libraries//:ktor-client-java-jvm"
+    "@libraries//:ktor-client-java-jvm",
   ]
 )
 ### auto-generated section `build` end

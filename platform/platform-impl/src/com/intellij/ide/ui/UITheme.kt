@@ -137,6 +137,7 @@ class UITheme internal constructor(
     _providerClassLoader = value
   }
 
+  @JvmName("describe")
   internal fun describe(): UIThemeExportableBean {
     val iconMap = bean.icons?.let {
       val iconMap = LinkedHashMap<String, String>(it.size)

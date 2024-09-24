@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.usageView",
+  module_name = "intellij.platform.usageView",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
@@ -22,7 +23,7 @@ kt_jvm_library(
     "@community//platform/projectModel-api:intellij.platform.projectModel",
     "@community//platform/util/concurrency:intellij.platform.concurrency",
     "@community//platform/analysis-impl:intellij.platform.analysis.impl",
-    "@community//platform/editor-ui-ex:intellij.platform.editor.ex"
+    "@community//platform/editor-ui-ex:intellij.platform.editor.ex",
   ]
 )
 ### auto-generated section `build` end

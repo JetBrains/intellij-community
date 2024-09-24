@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.jps.model.serialization",
+  module_name = "intellij.platform.jps.model.serialization",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
@@ -13,7 +14,7 @@ kt_jvm_library(
     "@libraries//:intellij-deps-fastutil",
     "@community//platform/util/jdom:intellij.platform.util.jdom",
     "@libraries//:opentelemetry-sdk",
-    "@libraries//:opentelemetry-semconv"
+    "@libraries//:opentelemetry-semconv",
   ]
 )
 ### auto-generated section `build` end

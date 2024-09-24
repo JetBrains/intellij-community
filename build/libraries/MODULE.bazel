@@ -3,6 +3,7 @@ module(name = "libraries")
 bazel_dep(name = "rules_kotlin", version = "2.0.0")
 bazel_dep(name = "rules_java", version = "7.11.1")
 bazel_dep(name = "rules_jvm_external", version = "6.4")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 
@@ -43,9 +44,9 @@ maven.install(
     "com.googlecode.plist:dd-plist:1.28",
     "com.h2database:h2-mvstore:2.3.232",
     "com.ibm.icu:icu4j:73.2",
-    "com.intellij.platform:kotlinx-coroutines-core-jvm:1.8.0-intellij-10",
-    "com.intellij.platform:kotlinx-coroutines-debug:1.8.0-intellij-10",
-    "com.intellij.platform:kotlinx-coroutines-slf4j:1.8.0-intellij-10",
+    "com.intellij.platform:kotlinx-coroutines-core-jvm:1.8.0-intellij-11",
+    "com.intellij.platform:kotlinx-coroutines-debug:1.8.0-intellij-11",
+    "com.intellij.platform:kotlinx-coroutines-slf4j:1.8.0-intellij-11",
     "com.jetbrains.fleet:rpc-compiler-plugin:2.0.20-0.1",
     "com.jetbrains.format-ripper:format-ripper:1.1.1",
     "com.jetbrains.fus.reporting:ap-validation:76",
@@ -98,10 +99,10 @@ maven.install(
     "org.apache.commons:commons-compress:1.26.1",
     "org.apache.commons:commons-lang3:3.17.0",
     "org.apache.httpcomponents:httpmime:4.5.14",
-    "org.apache.maven.resolver:maven-resolver-connector-basic:1.4.2",
-    "org.apache.maven.resolver:maven-resolver-transport-file:1.4.2",
-    "org.apache.maven.resolver:maven-resolver-transport-http:1.4.2",
-    "org.apache.maven:maven-resolver-provider:3.8.8",
+    "org.apache.maven.resolver:maven-resolver-connector-basic:1.9.22",
+    "org.apache.maven.resolver:maven-resolver-transport-file:1.9.22",
+    "org.apache.maven.resolver:maven-resolver-transport-http:1.9.22",
+    "org.apache.maven:maven-resolver-provider:3.9.9",
     "org.bidib.com.github.markusbernhardt:proxy-vole:1.1.5",
     "org.bouncycastle:bcpkix-jdk18on:1.78.1",
     "org.codehaus.groovy:groovy-json:3.0.19",
@@ -152,7 +153,7 @@ maven.install(
     "org.spdx:tools-java:1.1.8",
     "org.swinglabs:swingx-core:1.6.2-2",
     "org.yaml:snakeyaml:2.3",
-    "oro:oro:2.0.8"
+    "oro:oro:2.0.8",
   ]
 ### auto-generated section `artifacts` end
 )

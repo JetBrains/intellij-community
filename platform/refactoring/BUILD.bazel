@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.refactoring",
+  module_name = "intellij.platform.refactoring",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
@@ -27,7 +28,7 @@ kt_jvm_library(
     "@community//platform/ide-core-impl:intellij.platform.ide.core.impl",
     "@community//platform/code-style-api:intellij.platform.codeStyle",
     "@community//platform/usageView:intellij.platform.usageView",
-    "@community//platform/lvcs-api:intellij.platform.lvcs"
+    "@community//platform/lvcs-api:intellij.platform.lvcs",
   ]
 )
 ### auto-generated section `build` end

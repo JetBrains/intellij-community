@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.concurrency",
+  module_name = "intellij.platform.concurrency",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -14,7 +15,7 @@ kt_jvm_library(
     "@community//platform/core-api:intellij.platform.core",
     "@libraries//:intellij-deps-fastutil",
     "@community//platform/diagnostic:intellij.platform.diagnostic",
-    "@community//platform/util/coroutines:intellij.platform.util.coroutines"
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
   ]
 )
 ### auto-generated section `build` end

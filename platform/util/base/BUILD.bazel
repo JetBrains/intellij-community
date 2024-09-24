@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.util.base",
+  module_name = "intellij.platform.util.base",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
@@ -13,7 +14,7 @@ kt_jvm_library(
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:kotlin-stdlib",
     "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:kotlinx-coroutines-debug"
+    "@libraries//:kotlinx-coroutines-debug",
   ]
 )
 ### auto-generated section `build` end

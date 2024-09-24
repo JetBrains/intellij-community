@@ -1093,6 +1093,7 @@ open class FileEditorManagerImpl(
    * This method can be invoked from background thread. Of course, UI for returned editors should be accessed from EDT in any case.
    */
   @Suppress("DuplicatedCode")
+  @JvmName("openFileImpl")
   internal fun openFileImpl(
     window: EditorWindow,
     @Suppress("LocalVariableName") _file: VirtualFile,

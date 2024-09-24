@@ -56,6 +56,10 @@ private fun generateCommunityLibraryBuild(projectDir: Path, generator: BazelBuil
   val bazelFileUpdater = BazelFileUpdater(projectDir.resolve("community/build/libraries/BUILD.bazel"))
   buildFile(bazelFileUpdater, "maven-libraries") {
     for (lib in generator.libs.sortedBy { it.targetName }) {
+      if (lib.targetName == "bifurcan" || lib.targetName == "kotlinx-collections-immutable-jvm") {
+        continue
+      }
+
       target("java_library") {
         option("name", lib.targetName)
         option("exports", arrayOf(lib.bazelLabel))
@@ -147,6 +151,7 @@ private class BazelBuildFileGenerator(
 
       target("kt_jvm_library") {
         option("name", module.name)
+        option("module_name", module.name)
         visibility(arrayOf("//visibility:public"))
         option("srcs", glob(computeSources(module, contentRoot)))
 
@@ -171,7 +176,7 @@ private class BazelBuildFileGenerator(
     val regex = Regex("""--add-exports\s+([^=]+)=\S+""")
     val matches = regex.findAll(extraJavacOptions)
     for (match in matches) {
-      exports.add(match.groupValues[1])
+      exports.add(match.groupValues[1] + "=ALL-UNNAMED")
     }
 
     if (exports.isEmpty()) {
@@ -182,8 +187,11 @@ private class BazelBuildFileGenerator(
     val customJavacOptionsName = "custom-javac-options"
     target("kt_javac_options") {
       option("name", customJavacOptionsName)
-      option("release", jvmTarget)
+      // release is not compatible with --add-exports (*** java)
+      require(jvmTarget == "17")
       option("x_ep_disable_all_checks", true)
+      option("x_enable_incremental_compilation", true)
+      option("warn", "off")
       option("add_exports", exports)
     }
     return ":$customJavacOptionsName"

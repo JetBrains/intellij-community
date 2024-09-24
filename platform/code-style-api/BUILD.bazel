@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.codeStyle",
+  module_name = "intellij.platform.codeStyle",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
@@ -14,7 +15,7 @@ kt_jvm_library(
     "@community//platform/projectModel-api:intellij.platform.projectModel",
     "@libraries//:kotlin-stdlib",
     "@community//platform/util/jdom:intellij.platform.util.jdom",
-    "@community//platform/util/concurrency:intellij.platform.concurrency"
+    "@community//platform/util/concurrency:intellij.platform.concurrency",
   ]
 )
 ### auto-generated section `build` end

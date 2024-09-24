@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.analysis.impl",
+  module_name = "intellij.platform.analysis.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
@@ -34,12 +35,12 @@ kt_jvm_library(
     "@libraries//:jackson-databind",
     "@libraries//:jackson-core",
     "@libraries//:jackson-module-kotlin",
-    "@community//platform/util-class-loader:intellij.platform.util.classLoader"
+    "@community//platform/util-class-loader:intellij.platform.util.classLoader",
   ],
   exports = [
     "@community//platform/analysis-api:intellij.platform.analysis",
     "@community//platform/core-impl:intellij.platform.core.impl",
-    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl"
+    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl",
   ]
 )
 ### auto-generated section `build` end

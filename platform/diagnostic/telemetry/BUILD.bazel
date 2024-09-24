@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.diagnostic.telemetry",
+  module_name = "intellij.platform.diagnostic.telemetry",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
@@ -14,7 +15,7 @@ kt_jvm_library(
     "@libraries//:opentelemetry-semconv.provided",
     "@libraries//:opentelemetry-extension-kotlin.provided",
     "@community//platform/util:intellij.platform.util",
-    "@community//platform/diagnostic:intellij.platform.diagnostic"
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
   ],
   exports = ["@community//platform/diagnostic:intellij.platform.diagnostic"]
 )

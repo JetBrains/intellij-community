@@ -656,7 +656,7 @@ public class RecentProjectPanel extends JPanel {
           final long startTime = System.currentTimeMillis();
           boolean pathIsValid;
           try {
-            pathIsValid = !RecentProjectsManagerBase.Companion.isFileSystemPath$intellij_platform_ide_impl(path) || isPathAvailable(path);
+            pathIsValid = !RecentProjectsManagerBase.Companion.isFileSystemPath(path) || isPathAvailable(path);
           }
           catch (Exception e) {
             pathIsValid = false;

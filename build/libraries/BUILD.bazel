@@ -1,6 +1,8 @@
-load("@rules_java//java:defs.bzl", "java_library")
-
+load("@rules_java//java:defs.bzl", "java_library", "java_binary", "java_import")
 load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
+
+load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 
 kt_compiler_plugin(
   name = "serialization_plugin",
@@ -8,6 +10,47 @@ kt_compiler_plugin(
   deps = [
     "@maven//:org_jetbrains_kotlin_kotlin_serialization_compiler_plugin"
   ],
+  visibility = ["//visibility:public"]
+)
+
+java_binary(
+  name = "manifest_updater",
+  srcs = ["ManifestUpdater.java"],
+  main_class = "org.jetbrains.intellij.build.ManifestUpdater",
+  visibility = ["//visibility:public"],
+)
+
+run_binary(
+  name = "kotlinx-collections-immutable-jvm-source",
+  tool = ":manifest_updater",
+  srcs = ["@maven//:org_jetbrains_kotlinx_kotlinx_collections_immutable_jvm"],
+  outs = ["kotlinx.collections.immutable.jvm.jar"],
+  args = [
+    "$(location @maven//:org_jetbrains_kotlinx_kotlinx_collections_immutable_jvm)",
+    "$(location :kotlinx.collections.immutable.jvm.jar)",
+  ],
+)
+
+run_binary(
+  name = "bifurcan-source",
+  tool = ":manifest_updater",
+  srcs = ["@maven//:io_lacuna_bifurcan"],
+  outs = ["bifurcan.jar"],
+  args = [
+    "$(location @maven//:io_lacuna_bifurcan)",
+    "$(location :bifurcan.jar)",
+  ],
+)
+
+kt_jvm_import(
+  name = "kotlinx-collections-immutable-jvm",
+  jars = ["kotlinx.collections.immutable.jvm.jar"],
+  visibility = ["//visibility:public"],
+)
+
+kt_jvm_import(
+  name = "bifurcan",
+  jars = ["bifurcan.jar"],
   visibility = ["//visibility:public"]
 )
 
@@ -70,12 +113,6 @@ java_library(
 java_library(
   name = "bcpkix-jdk18on",
   exports = ["@maven//:org_bouncycastle_bcpkix_jdk18on"],
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "bifurcan",
-  exports = ["@maven//:io_lacuna_bifurcan"],
   visibility = ["//visibility:public"]
 )
 
@@ -453,12 +490,6 @@ java_library(
   name = "kotlin-stdlib.provided",
   exports = ["@maven//:org_jetbrains_kotlin_kotlin_stdlib"],
   neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "kotlinx-collections-immutable-jvm",
-  exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_collections_immutable_jvm"],
   visibility = ["//visibility:public"]
 )
 

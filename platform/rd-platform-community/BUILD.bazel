@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.rd.community",
+  module_name = "intellij.platform.rd.community",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -17,12 +18,12 @@ kt_jvm_library(
     "@libraries//:rd-swing",
     "@community//platform/util/concurrency:intellij.platform.concurrency",
     "@community//platform/core-api:intellij.platform.core",
-    "@community//platform/core-impl:intellij.platform.core.impl"
+    "@community//platform/core-impl:intellij.platform.core.impl",
   ],
   exports = [
     "@libraries//:rd-core",
     "@libraries//:rd-framework",
-    "@libraries//:rd-swing"
+    "@libraries//:rd-swing",
   ]
 )
 ### auto-generated section `build` end

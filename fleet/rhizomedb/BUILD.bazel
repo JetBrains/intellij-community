@@ -10,6 +10,7 @@ create_kotlinc_options(
 
 kt_jvm_library(
   name = "fleet.rhizomedb",
+  module_name = "fleet.rhizomedb",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"]),
   javac_opts = "//:j17",
@@ -19,7 +20,7 @@ kt_jvm_library(
     "@libraries//:kotlin-stdlib",
     "@libraries//:kotlin-reflect",
     "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlinx-collections-immutable-jvm"
+    "@libraries//:kotlinx-collections-immutable-jvm",
   ]
 )
 ### auto-generated section `build` end

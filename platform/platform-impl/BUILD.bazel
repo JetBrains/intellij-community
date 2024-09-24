@@ -4,22 +4,24 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 
 kt_javac_options(
   name = "custom-javac-options",
-  release = "17",
   x_ep_disable_all_checks = True,
+  x_enable_incremental_compilation = True,
+  warn = "off",
   add_exports = [
-    "java.desktop/sun.awt",
-    "java.desktop/sun.font",
-    "java.desktop/java.awt.peer",
-    "jdk.attach/sun.tools.attach",
-    "java.desktop/sun.awt.image",
-    "java.desktop/sun.awt.datatransfer",
-    "java.desktop/sun.swing",
-    "java.base/sun.nio.fs"
+    "java.desktop/sun.awt=ALL-UNNAMED",
+    "java.desktop/sun.font=ALL-UNNAMED",
+    "java.desktop/java.awt.peer=ALL-UNNAMED",
+    "jdk.attach/sun.tools.attach=ALL-UNNAMED",
+    "java.desktop/sun.awt.image=ALL-UNNAMED",
+    "java.desktop/sun.awt.datatransfer=ALL-UNNAMED",
+    "java.desktop/sun.swing=ALL-UNNAMED",
+    "java.base/sun.nio.fs=ALL-UNNAMED",
   ]
 )
 
 kt_jvm_library(
   name = "intellij.platform.ide.impl",
+  module_name = "intellij.platform.ide.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = ":custom-javac-options",
@@ -123,7 +125,7 @@ kt_jvm_library(
     "@community//platform/jbr:intellij.platform.jbr",
     "@community//platform/ui.jcef:intellij.platform.ui.jcef",
     "@community//fleet/util/core:fleet.util.core",
-    "@community//platform/eelProvider:intellij.platform.eel.provider"
+    "@community//platform/eelProvider:intellij.platform.eel.provider",
   ],
   exports = [
     "@community//platform/platform-api:intellij.platform.ide",
@@ -133,7 +135,7 @@ kt_jvm_library(
     "@libraries//:kotlin-stdlib",
     "@community//platform/util/ui:intellij.platform.util.ui",
     "@community//platform/remote-core:intellij.platform.remote.core",
-    "@community//platform/ide-core-impl:intellij.platform.ide.core.impl"
+    "@community//platform/ide-core-impl:intellij.platform.ide.core.impl",
   ],
   runtime_deps = [
     "@libraries//:slf4j-api",
@@ -146,7 +148,8 @@ kt_jvm_library(
     "@libraries//:protobuf-java",
     "@libraries//:jgoodies-common",
     "@libraries//:forms",
-    "@community//platform/settings-local:intellij.platform.settings.local"
+    "@community//platform/settings-local:intellij.platform.settings.local",
+    "@libraries//:bcpkix-jdk18on",
   ]
 )
 ### auto-generated section `build` end

@@ -4,16 +4,18 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 
 kt_javac_options(
   name = "custom-javac-options",
-  release = "17",
   x_ep_disable_all_checks = True,
+  x_enable_incremental_compilation = True,
+  warn = "off",
   add_exports = [
-    "java.desktop/sun.font",
-    "java.desktop/sun.awt.image"
+    "java.desktop/sun.font=ALL-UNNAMED",
+    "java.desktop/sun.awt.image=ALL-UNNAMED",
   ]
 )
 
 kt_jvm_library(
   name = "intellij.platform.util.ui",
+  module_name = "intellij.platform.util.ui",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = ":custom-javac-options",
@@ -41,7 +43,7 @@ kt_jvm_library(
     "@community//platform/diagnostic:intellij.platform.diagnostic",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-protobuf-jvm",
-    "@libraries//:h2-mvstore"
+    "@libraries//:h2-mvstore",
   ]
 )
 ### auto-generated section `build` end

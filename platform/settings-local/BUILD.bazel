@@ -10,6 +10,7 @@ create_kotlinc_options(
 
 kt_jvm_library(
   name = "intellij.platform.settings.local",
+  module_name = "intellij.platform.settings.local",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
@@ -37,7 +38,7 @@ kt_jvm_library(
     "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
     "@community//platform/object-serializer:intellij.platform.objectSerializer",
     "@libraries//:kotlinx-serialization-json-jvm",
-    "@libraries//:aalto-xml"
+    "@libraries//:aalto-xml",
   ]
 )
 ### auto-generated section `build` end

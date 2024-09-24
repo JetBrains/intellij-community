@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.ide.HelpTooltip
@@ -33,11 +33,11 @@ import javax.swing.*
 /**
  * @author Eugene Belyaev
  */
-class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
+class StripeButton internal constructor(@JvmField internal val toolWindow: ToolWindowImpl)
   : AnchoredButton(), UiDataProvider {
   /**
-   * This is analog of Swing mnemonic. We cannot use the standard ones
-   * because it causes typing of "funny" characters into the editor.
+   * This is an analog of Swing mnemonic.
+   * We cannot use the standard ones because it causes typing of "funny" characters into the editor.
    */
   private var mnemonic = 0
   private var pressedWhenSelected = false
@@ -103,8 +103,8 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
 
   /**
    * We are using the trick here: the method does all things that super method does
-   * except firing of the MNEMONIC_CHANGED_PROPERTY event. After that mnemonic
-   * doesn't work via standard Swing rules (processing of Alt keystrokes).
+   * except firing of the MNEMONIC_CHANGED_PROPERTY event.
+   * After that, mnemonic doesn't work via standard Swing rules (processing of Alt keystrokes).
    */
   override fun setMnemonic(mnemonic: Int): Nothing = throw UnsupportedOperationException("use setMnemonic2(int)")
 

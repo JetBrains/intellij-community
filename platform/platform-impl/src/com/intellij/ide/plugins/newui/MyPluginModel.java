@@ -1400,7 +1400,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     Icon icon = myIcons.get(key);
     if (icon == null) {
       icon = PluginLogo.getIcon(descriptor, big, error, disabled);
-      if (icon != PluginLogo.INSTANCE.getDefault$intellij_platform_ide_impl().getIcon(big, error, disabled)) {
+      if (icon != PluginLogo.INSTANCE.getDefault().getIcon(big, error, disabled)) {
         myIcons.put(key, icon);
       }
     }

@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.buildScripts.bazel",
+  module_name = "intellij.platform.buildScripts.bazel",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -12,7 +13,7 @@ kt_jvm_library(
     "@community//jps/model-serialization:intellij.platform.jps.model.serialization",
     "@community//jps/model-api:intellij.platform.jps.model",
     "@community//platform/projectModel-api:intellij.platform.projectModel",
-    "@libraries//:kotlin-jps-plugin-classpath"
+    "@libraries//:kotlin-jps-plugin-classpath",
   ],
   runtime_deps = ["@community//jps/model-impl:intellij.platform.jps.model.impl"]
 )

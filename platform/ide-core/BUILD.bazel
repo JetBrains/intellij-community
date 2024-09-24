@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.ide.core",
+  module_name = "intellij.platform.ide.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
@@ -25,7 +26,7 @@ kt_jvm_library(
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@community//platform/diagnostic:intellij.platform.diagnostic",
     "@community//platform/settings:intellij.platform.settings",
-    "@community//platform/util/coroutines:intellij.platform.util.coroutines"
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
   ],
   exports = ["@community//platform/core-api:intellij.platform.core"]
 )

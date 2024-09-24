@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.remote.core",
+  module_name = "intellij.platform.remote.core",
   visibility = ["//visibility:public"],
   srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -16,11 +17,11 @@ kt_jvm_library(
     "@community//platform/projectModel-api:intellij.platform.projectModel",
     "@libraries//:kotlin-stdlib",
     "@libraries//:kotlin-reflect",
-    "@libraries//:guava"
+    "@libraries//:guava",
   ],
   runtime_deps = [
     "@libraries//:slf4j-api",
-    "@libraries//:slf4j-jdk14"
+    "@libraries//:slf4j-jdk14",
   ]
 )
 ### auto-generated section `build` end

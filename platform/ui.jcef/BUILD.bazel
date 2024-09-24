@@ -4,16 +4,18 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 
 kt_javac_options(
   name = "custom-javac-options",
-  release = "17",
   x_ep_disable_all_checks = True,
+  x_enable_incremental_compilation = True,
+  warn = "off",
   add_exports = [
-    "java.desktop/sun.awt",
-    "java.desktop/java.awt.peer"
+    "java.desktop/sun.awt=ALL-UNNAMED",
+    "java.desktop/java.awt.peer=ALL-UNNAMED",
   ]
 )
 
 kt_jvm_library(
   name = "intellij.platform.ui.jcef",
+  module_name = "intellij.platform.ui.jcef",
   visibility = ["//visibility:public"],
   srcs = glob(["jcef/**/*.kt", "jcef/**/*.java"]),
   javac_opts = ":custom-javac-options",
@@ -35,7 +37,7 @@ kt_jvm_library(
     "@community//platform/platform-api:intellij.platform.ide",
     "@community//platform/core-impl:intellij.platform.core.impl",
     "@libraries//:jbr-api",
-    "@community//platform/jbr:intellij.platform.jbr"
+    "@community//platform/jbr:intellij.platform.jbr",
   ],
   exports = ["@libraries//:jcef"]
 )

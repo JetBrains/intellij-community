@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.codeStyle.impl",
+  module_name = "intellij.platform.codeStyle.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -15,7 +16,7 @@ kt_jvm_library(
     "@libraries//:kotlin-stdlib",
     "@libraries//:streamex",
     "@libraries//:intellij-deps-fastutil",
-    "@community//platform/editor-ui-api:intellij.platform.editor"
+    "@community//platform/editor-ui-api:intellij.platform.editor",
   ]
 )
 ### auto-generated section `build` end

@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.jps.build.javac.rt",
+  module_name = "intellij.platform.jps.build.javac.rt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
   javac_opts = "//:j8",
@@ -15,7 +16,7 @@ kt_jvm_library(
     "@libraries//:jps-javac-extension",
     "@libraries//:netty-buffer",
     "@libraries//:protobuf-java",
-    "@libraries//:netty-codec-protobuf"
+    "@libraries//:netty-codec-protobuf",
   ]
 )
 ### auto-generated section `build` end

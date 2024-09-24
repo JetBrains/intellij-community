@@ -13,6 +13,7 @@ def create_kotlinc_options(name, jvm_target, x_optin = []):
   kt_kotlinc_options(
     name = name,
     jvm_target = jvm_target,
+    x_enable_incremental_compilation = True,
     x_optin = [
       "com.intellij.openapi.util.IntellijInternalApi",
       # it is unusual to have such opt-ins for the entire monorepo,
@@ -22,6 +23,7 @@ def create_kotlinc_options(name, jvm_target, x_optin = []):
       #"org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
     ] + x_optin,
     x_jvm_default = "all",
+    warn = "off",
     visibility=["//visibility:public"],
     include_stdlibs = "none",
   )

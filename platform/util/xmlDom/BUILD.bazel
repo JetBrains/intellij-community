@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.util.xmlDom",
+  module_name = "intellij.platform.util.xmlDom",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
@@ -14,7 +15,7 @@ kt_jvm_library(
     "@libraries//:annotations",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm"
+    "@libraries//:kotlinx-serialization-json-jvm",
   ]
 )
 ### auto-generated section `build` end

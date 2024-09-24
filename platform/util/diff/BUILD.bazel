@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.util.diff",
+  module_name = "intellij.platform.util.diff",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
@@ -12,7 +13,7 @@ kt_jvm_library(
     "@community//platform/util-rt:intellij.platform.util.rt",
     "@libraries//:kotlin-stdlib",
     "@libraries//:annotations",
-    "@libraries//:intellij-deps-fastutil"
+    "@libraries//:intellij-deps-fastutil",
   ]
 )
 ### auto-generated section `build` end

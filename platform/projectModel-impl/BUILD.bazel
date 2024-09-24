@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.projectModel.impl",
+  module_name = "intellij.platform.projectModel.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
   javac_opts = "//:j17",
@@ -28,14 +29,14 @@ kt_jvm_library(
     "@libraries//:opentelemetry-semconv",
     "@libraries//:hash4j",
     "@community//platform/backend/workspace:intellij.platform.backend.workspace",
-    "@community//platform/diagnostic:intellij.platform.diagnostic"
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
   ],
   exports = [
     "@community//platform/projectModel-api:intellij.platform.projectModel",
     "@community//jps/model-serialization:intellij.platform.jps.model.serialization",
     "@community//platform/util-ex:intellij.platform.util.ex",
     "@community//platform/util/concurrency:intellij.platform.concurrency",
-    "@community//platform/workspace/storage:intellij.platform.workspace.storage"
+    "@community//platform/workspace/storage:intellij.platform.workspace.storage",
   ]
 )
 ### auto-generated section `build` end

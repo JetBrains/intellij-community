@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.ide.core.impl",
+  module_name = "intellij.platform.ide.core.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -26,7 +27,7 @@ kt_jvm_library(
     "@community//platform/backend/workspace:intellij.platform.backend.workspace",
     "@community//platform/diagnostic:intellij.platform.diagnostic",
     "@libraries//:hash4j",
-    "@community//platform/backend/observation:intellij.platform.backend.observation"
+    "@community//platform/backend/observation:intellij.platform.backend.observation",
   ]
 )
 ### auto-generated section `build` end

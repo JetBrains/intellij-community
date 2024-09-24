@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.statistics.uploader",
+  module_name = "intellij.platform.statistics.uploader",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -14,7 +15,7 @@ kt_jvm_library(
     "@libraries//:ap-validation",
     "@libraries//:jackson-core",
     "@libraries//:jackson-databind",
-    "@libraries//:jackson-module-kotlin"
+    "@libraries//:jackson-module-kotlin",
   ],
   exports = ["@community//platform/statistics/config:intellij.platform.statistics.config"]
 )

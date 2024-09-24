@@ -3,13 +3,14 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.util.jdom",
+  module_name = "intellij.platform.util.jdom",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = [
     "@libraries//:jaxen",
-    "@libraries//:annotations"
+    "@libraries//:annotations",
   ]
 )
 ### auto-generated section `build` end

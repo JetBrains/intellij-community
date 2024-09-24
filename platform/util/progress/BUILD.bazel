@@ -10,6 +10,7 @@ create_kotlinc_options(
 
 kt_jvm_library(
   name = "intellij.platform.util.progress",
+  module_name = "intellij.platform.util.progress",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
@@ -25,7 +26,7 @@ kt_jvm_library(
     "@community//platform/util/coroutines:intellij.platform.util.coroutines",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm"
+    "@libraries//:kotlinx-serialization-json-jvm",
   ]
 )
 ### auto-generated section `build` end

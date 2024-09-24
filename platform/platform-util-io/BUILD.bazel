@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.ide.util.io",
+  module_name = "intellij.platform.ide.util.io",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
@@ -14,7 +15,7 @@ kt_jvm_library(
     "@libraries//:intellij-deps-fastutil",
     "@community//platform/util/base:intellij.platform.util.base",
     "@libraries//:jna-platform",
-    "@community//platform/diagnostic:intellij.platform.diagnostic"
+    "@community//platform/diagnostic:intellij.platform.diagnostic",
   ]
 )
 ### auto-generated section `build` end

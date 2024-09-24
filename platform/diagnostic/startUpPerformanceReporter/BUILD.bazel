@@ -10,6 +10,7 @@ create_kotlinc_options(
 
 kt_jvm_library(
   name = "intellij.platform.diagnostic.startUpPerformanceReporter",
+  module_name = "intellij.platform.diagnostic.startUpPerformanceReporter",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -31,7 +32,7 @@ kt_jvm_library(
     "@libraries//:kotlinx-serialization-protobuf-jvm",
     "@community//platform/diagnostic/telemetry-impl:intellij.platform.diagnostic.telemetry.impl",
     "@community//platform/diagnostic:intellij.platform.diagnostic",
-    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry"
+    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
   ]
 )
 ### auto-generated section `build` end

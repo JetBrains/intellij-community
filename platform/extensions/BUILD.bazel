@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.extensions",
+  module_name = "intellij.platform.extensions",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
@@ -16,7 +17,7 @@ kt_jvm_library(
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@community//platform/diagnostic:intellij.platform.diagnostic",
     "@libraries//:kotlinx-collections-immutable-jvm",
-    "@libraries//:annotations"
+    "@libraries//:annotations",
   ],
   exports = ["@libraries//:kotlinx-coroutines-core-jvm"]
 )

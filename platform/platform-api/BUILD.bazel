@@ -4,16 +4,18 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 
 kt_javac_options(
   name = "custom-javac-options",
-  release = "17",
   x_ep_disable_all_checks = True,
+  x_enable_incremental_compilation = True,
+  warn = "off",
   add_exports = [
-    "java.desktop/sun.swing",
-    "java.desktop/sun.awt"
+    "java.desktop/sun.swing=ALL-UNNAMED",
+    "java.desktop/sun.awt=ALL-UNNAMED",
   ]
 )
 
 kt_jvm_library(
   name = "intellij.platform.ide",
+  module_name = "intellij.platform.ide",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = ":custom-javac-options",
@@ -47,7 +49,7 @@ kt_jvm_library(
     "@libraries//:jackson-core",
     "@libraries//:caffeine",
     "@community//platform/progress/shared:intellij.platform.ide.progress",
-    "@community//platform/util/diff:intellij.platform.util.diff"
+    "@community//platform/util/diff:intellij.platform.util.diff",
   ],
   exports = [
     "@community//platform/util:intellij.platform.util",
@@ -60,7 +62,7 @@ kt_jvm_library(
     "@community//platform/credential-store:intellij.platform.credentialStore",
     "@community//platform/remote-core:intellij.platform.remote.core",
     "@community//platform/ide-core:intellij.platform.ide.core",
-    "@community//platform/progress/shared:intellij.platform.ide.progress"
+    "@community//platform/progress/shared:intellij.platform.ide.progress",
   ]
 )
 ### auto-generated section `build` end

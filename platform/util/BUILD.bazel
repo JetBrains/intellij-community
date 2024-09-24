@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.util",
+  module_name = "intellij.platform.util",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j8",
@@ -27,16 +28,16 @@ kt_jvm_library(
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
     "@libraries//:caffeine",
-    "@community//platform/util/troveCompileOnly:intellij.platform.util.troveCompileOnly"
+    "@community//platform/util/troveCompileOnly:intellij.platform.util.troveCompileOnly",
   ],
   exports = [
     "@libraries//:annotations",
     "@community//platform/util-rt:intellij.platform.util.rt",
-    "@community//platform/util/base:intellij.platform.util.base"
+    "@community//platform/util/base:intellij.platform.util.base",
   ],
   runtime_deps = [
     "@libraries//:commons-io",
-    "@libraries//:commons-codec"
+    "@libraries//:commons-codec",
   ]
 )
 ### auto-generated section `build` end

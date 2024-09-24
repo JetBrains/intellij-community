@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.groovy.rt",
+  module_name = "intellij.groovy.rt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
@@ -10,11 +11,11 @@ kt_jvm_library(
   deps = [
     "@libraries//:groovy",
     "@libraries//:annotations-java5",
-    "@community//plugins/groovy/rt-constants:intellij.groovy.constants.rt"
+    "@community//plugins/groovy/rt-constants:intellij.groovy.constants.rt",
   ],
   exports = [
     "@libraries//:groovy",
-    "@community//plugins/groovy/rt-constants:intellij.groovy.constants.rt"
+    "@community//plugins/groovy/rt-constants:intellij.groovy.constants.rt",
   ]
 )
 ### auto-generated section `build` end

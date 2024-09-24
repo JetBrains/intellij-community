@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.indexing.impl",
+  module_name = "intellij.platform.indexing.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -27,7 +28,7 @@ kt_jvm_library(
     "@libraries//:caffeine",
     "@community//platform/util/nanoxml:intellij.platform.util.nanoxml",
     "@libraries//:aalto-xml",
-    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom"
+    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
   ],
   exports = ["@community//platform/indexing-api:intellij.platform.indexing"]
 )

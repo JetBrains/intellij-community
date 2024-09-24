@@ -36,7 +36,7 @@ final class PlatformDataValidators extends DataValidators {
     registry.register(PlatformCoreDataKeys.SELECTED_ITEMS, arrayValidator(objectValidator));
     registry.register(PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS, arrayValidator(objectValidator));
 
-    Validator<EditorWindow> editorWindowValidator = (data, dataId, source) -> data.isValid$intellij_platform_ide_impl();
+    Validator<EditorWindow> editorWindowValidator = (data, dataId, source) -> data.isValid();
     registry.register(EditorWindow.DATA_KEY, editorWindowValidator);
   }
 }

@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.rpc",
+  module_name = "intellij.platform.rpc",
   visibility = ["//visibility:public"],
   srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -12,11 +13,11 @@ kt_jvm_library(
     "@libraries//:kotlin-stdlib",
     "@community//fleet/util/logging/api:fleet.util.logging.api",
     "@community//fleet/rpc:fleet.rpc",
-    "@community//platform/core-api:intellij.platform.core"
+    "@community//platform/core-api:intellij.platform.core",
   ],
   exports = [
     "@libraries//:kotlin-stdlib",
-    "@community//fleet/rpc:fleet.rpc"
+    "@community//fleet/rpc:fleet.rpc",
   ]
 )
 ### auto-generated section `build` end

@@ -10,6 +10,7 @@ create_kotlinc_options(
 
 kt_jvm_library(
   name = "intellij.platform.diagnostic.telemetry.exporters",
+  module_name = "intellij.platform.diagnostic.telemetry.exporters",
   visibility = ["//visibility:public"],
   srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
@@ -29,7 +30,7 @@ kt_jvm_library(
     "@libraries//:jackson-databind",
     "@libraries//:jackson-module-kotlin",
     "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-protobuf-jvm"
+    "@libraries//:kotlinx-serialization-protobuf-jvm",
   ]
 )
 ### auto-generated section `build` end

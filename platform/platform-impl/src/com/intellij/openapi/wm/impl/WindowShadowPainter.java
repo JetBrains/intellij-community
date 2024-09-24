@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.ui.AbstractPainter;
@@ -28,7 +28,7 @@ final class WindowShadowPainter extends AbstractPainter {
           if (root != null) {
             Component pane = root.getGlassPane();
             if (pane instanceof IdeGlassPaneImpl) {
-              WindowShadowPainter painter = (WindowShadowPainter)((IdeGlassPaneImpl)pane).getWindowShadowPainter$intellij_platform_ide_impl();
+              WindowShadowPainter painter = (WindowShadowPainter)((IdeGlassPaneImpl)pane).windowShadowPainter;
               if (painter != null && pane == painter.myComponent) {
                 List<Rectangle> shadows = painter.myShadows;
                 painter.myShadows = getShadows(pane, (Window)c);

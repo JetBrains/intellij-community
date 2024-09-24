@@ -36,19 +36,19 @@ class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware, 
     }
 
     EditorWindow window = EditorWindow.DATA_KEY.getData(dataContext);
-    List<EditorWindow> siblings = window == null ? Collections.emptyList() : window.getSiblings$intellij_platform_ide_impl();
+    List<EditorWindow> siblings = window == null ? Collections.emptyList() : window.getSiblings();
     if (siblings.size() != 1) {
       return;
     }
 
     EditorComposite editorComposite = window.getSelectedComposite();
-    FileEntry entry = editorComposite == null ? null : editorComposite.currentStateAsFileEntry$intellij_platform_ide_impl();
+    FileEntry entry = editorComposite == null ? null : editorComposite.currentStateAsFileEntry();
     vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
     if (closeSource) {
       window.closeFile(vFile, true, false);
     }
     ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project))
-      .openFileImpl$intellij_platform_ide_impl(siblings.get(0), vFile, entry, new FileEditorOpenOptions().withRequestFocus());
+      .openFileImpl(siblings.get(0), vFile, entry, new FileEditorOpenOptions().withRequestFocus());
     vFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
   }
 
@@ -77,6 +77,6 @@ class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware, 
     if (!closeSource && FileEditorManagerImpl.forbidSplitFor(vFile)) {
       return false;
     }
-    return window.getSiblings$intellij_platform_ide_impl().size() == 1;
+    return window.getSiblings().size() == 1;
   }
 }

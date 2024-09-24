@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.util.ex",
+  module_name = "intellij.platform.util.ex",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -22,7 +23,7 @@ kt_jvm_library(
     "@libraries//:lz4-java",
     "@community//platform/diagnostic:intellij.platform.diagnostic",
     "@community//platform/util/coroutines:intellij.platform.util.coroutines",
-    "@libraries//:h2-mvstore"
+    "@libraries//:h2-mvstore",
   ]
 )
 ### auto-generated section `build` end

@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.core.impl",
+  module_name = "intellij.platform.core.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j8",
@@ -23,11 +24,11 @@ kt_jvm_library(
     "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
     "@libraries//:opentelemetry-sdk",
     "@libraries//:opentelemetry-semconv",
-    "@community//platform/util/coroutines:intellij.platform.util.coroutines"
+    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
   ],
   exports = [
     "@community//platform/core-api:intellij.platform.core",
-    "@libraries//:kotlin-stdlib"
+    "@libraries//:kotlin-stdlib",
   ]
 )
 ### auto-generated section `build` end

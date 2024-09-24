@@ -39,8 +39,6 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.fileEditor.FileEntryTab
 import com.intellij.ui.*
-import com.intellij.ui.SideBorder.BOTTOM
-import com.intellij.ui.SideBorder.TOP
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.JBTabs
@@ -487,7 +485,7 @@ open class EditorComposite internal constructor(
     get() {
       val editorWithProvider = selectedEditorWithProvider.value ?: return null
       val component = focusWatcher.focusedComponent
-      if (component !is JComponent || !component.isShowing() || !component.isEnabled() || !component.isFocusable()) {
+      if (component !is JComponent || !component.isShowing() || !component.isEnabled || !component.isFocusable) {
         return editorWithProvider.fileEditor.preferredFocusedComponent
       }
       else {
@@ -724,6 +722,7 @@ open class EditorComposite internal constructor(
     dispatcher.multicaster.editorRemoved(editorTypeId)
   }
 
+  @JvmName("currentStateAsFileEntry")
   internal fun currentStateAsFileEntry(): FileEntry? {
     val fileEditorWithProviderList = fileEditorWithProviders.value
     if (fileEditorWithProviderList.isEmpty()) {

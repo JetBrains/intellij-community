@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.execution",
+  module_name = "intellij.platform.execution",
   visibility = ["//visibility:public"],
   srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -20,7 +21,7 @@ kt_jvm_library(
     "@community//platform/editor-ui-api:intellij.platform.editor",
     "@community//platform/core-ui:intellij.platform.core.ui",
     "@community//platform/analysis-api:intellij.platform.analysis",
-    "@libraries//:kotlinx-coroutines-core-jvm"
+    "@libraries//:kotlinx-coroutines-core-jvm",
   ]
 )
 ### auto-generated section `build` end

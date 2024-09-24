@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.idea.community.build.tasks",
+  module_name = "intellij.idea.community.build.tasks",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
@@ -31,12 +32,12 @@ kt_jvm_library(
     "@libraries//:hash4j",
     "@libraries//:serviceMessages",
     "@libraries//:opentelemetry-extension-kotlin",
-    "@libraries//:netty-buffer"
+    "@libraries//:netty-buffer",
   ],
   runtime_deps = [
     "@libraries//:slf4j-api",
     "@libraries//:slf4j-jdk14",
-    "@libraries//:bcpkix-jdk18on"
+    "@libraries//:bcpkix-jdk18on",
   ]
 )
 ### auto-generated section `build` end

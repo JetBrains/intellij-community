@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.statistics.config",
+  module_name = "intellij.platform.statistics.config",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -13,7 +14,7 @@ kt_jvm_library(
     "@libraries//:kotlin-reflect",
     "@libraries//:jackson-core",
     "@libraries//:jackson-databind",
-    "@libraries//:jackson-module-kotlin"
+    "@libraries//:jackson-module-kotlin",
   ]
 )
 ### auto-generated section `build` end

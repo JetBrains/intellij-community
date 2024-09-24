@@ -62,8 +62,6 @@ import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
 import javax.swing.JFrame
 import kotlin.collections.Map.Entry
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -85,6 +83,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     @JvmStatic
     fun getInstanceEx(): RecentProjectsManagerBase = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
 
+    @JvmName("isFileSystemPath")
     internal fun isFileSystemPath(path: String): Boolean = path.indexOf('/') != -1 || path.indexOf('\\') != -1
 
     /**

@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.indexing",
+  module_name = "intellij.platform.indexing",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
@@ -13,7 +14,7 @@ kt_jvm_library(
     "@community//platform/projectModel-api:intellij.platform.projectModel",
     "@community//platform/util/jdom:intellij.platform.util.jdom",
     "@community//platform/util/concurrency:intellij.platform.concurrency",
-    "@libraries//:kotlin-stdlib"
+    "@libraries//:kotlin-stdlib",
   ],
   exports = ["@community//platform/core-api:intellij.platform.core"]
 )

@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.util.text.matching",
+  module_name = "intellij.platform.util.text.matching",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -10,7 +11,7 @@ kt_jvm_library(
   deps = [
     "@libraries//:annotations",
     "@community//platform/util/base:intellij.platform.util.base",
-    "@community//platform/util-rt:intellij.platform.util.rt"
+    "@community//platform/util-rt:intellij.platform.util.rt",
   ]
 )
 ### auto-generated section `build` end

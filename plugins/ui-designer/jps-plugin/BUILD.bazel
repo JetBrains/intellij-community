@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.java.guiForms.jps",
+  module_name = "intellij.java.guiForms.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j11",
@@ -16,7 +17,7 @@ kt_jvm_library(
     "@community//java/compiler/forms-compiler:intellij.java.guiForms.compiler",
     "@community//platform/forms_rt:intellij.java.guiForms.rt",
     "@libraries//:asm-all",
-    "@community//platform/util/jdom:intellij.platform.util.jdom"
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
   ]
 )
 ### auto-generated section `build` end

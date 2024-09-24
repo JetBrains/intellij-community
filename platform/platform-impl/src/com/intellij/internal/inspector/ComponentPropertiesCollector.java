@@ -294,7 +294,7 @@ public final class ComponentPropertiesCollector {
     ToolWindowImpl window;
     if (component instanceof StripeButton stripeButton) {
       // old UI
-      window = stripeButton.getToolWindow$intellij_platform_ide_impl();
+      window = stripeButton.toolWindow;
     }
     else if (component instanceof SquareStripeButton stripeButton) {
       // new UI

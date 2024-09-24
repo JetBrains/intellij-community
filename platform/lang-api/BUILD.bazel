@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.lang",
+  module_name = "intellij.platform.lang",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
@@ -25,7 +26,7 @@ kt_jvm_library(
     "@community//platform/platform-util-io:intellij.platform.ide.util.io",
     "@community//platform/execution:intellij.platform.execution",
     "@community//platform/refactoring:intellij.platform.refactoring",
-    "@community//platform/ml-api:intellij.platform.ml"
+    "@community//platform/ml-api:intellij.platform.ml",
   ],
   exports = [
     "@community//platform/platform-api:intellij.platform.ide",
@@ -36,7 +37,7 @@ kt_jvm_library(
     "@community//platform/analysis-api:intellij.platform.analysis",
     "@community//platform/code-style-api:intellij.platform.codeStyle",
     "@community//platform/execution:intellij.platform.execution",
-    "@community//platform/refactoring:intellij.platform.refactoring"
+    "@community//platform/refactoring:intellij.platform.refactoring",
   ]
 )
 ### auto-generated section `build` end

@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.diff",
+  module_name = "intellij.platform.diff",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
   javac_opts = "//:j17",
@@ -16,11 +17,11 @@ kt_jvm_library(
     "@community//platform/editor-ui-api:intellij.platform.editor",
     "@community//platform/analysis-api:intellij.platform.analysis",
     "@community//platform/projectModel-api:intellij.platform.projectModel",
-    "@libraries//:kotlin-stdlib"
+    "@libraries//:kotlin-stdlib",
   ],
   exports = [
     "@community//platform/util/diff:intellij.platform.util.diff",
-    "@community//platform/ide-core:intellij.platform.ide.core"
+    "@community//platform/ide-core:intellij.platform.ide.core",
   ]
 )
 ### auto-generated section `build` end

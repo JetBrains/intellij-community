@@ -10,6 +10,7 @@ create_kotlinc_options(
 
 kt_jvm_library(
   name = "intellij.platform.buildScripts.downloader",
+  module_name = "intellij.platform.buildScripts.downloader",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -31,7 +32,7 @@ kt_jvm_library(
     "@libraries//:ktor-client-okhttp-jvm",
     "@libraries//:okhttp",
     "@libraries//:ktor-client-core-jvm",
-    "@libraries//:hash4j"
+    "@libraries//:hash4j",
   ]
 )
 ### auto-generated section `build` end

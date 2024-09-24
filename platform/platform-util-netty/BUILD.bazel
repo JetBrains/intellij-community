@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.ide.util.netty",
+  module_name = "intellij.platform.ide.util.netty",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -15,7 +16,7 @@ kt_jvm_library(
     "@libraries//:netty-buffer",
     "@libraries//:netty-codec-http2",
     "@community//platform/platform-util-io:intellij.platform.ide.util.io",
-    "@libraries//:kotlinx-coroutines-core-jvm"
+    "@libraries//:kotlinx-coroutines-core-jvm",
   ]
 )
 ### auto-generated section `build` end

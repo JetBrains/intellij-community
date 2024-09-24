@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "fleet.util.core",
+  module_name = "fleet.util.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -21,7 +22,7 @@ kt_jvm_library(
     "@community//fleet/reporting/api:fleet.reporting.api",
     "@community//fleet/preferences:fleet.preferences",
     "@community//fleet/util/os:fleet.util.os",
-    "@libraries//:slf4j-api"
+    "@libraries//:slf4j-api",
   ],
   exports = [
     "@libraries//:bifurcan",
@@ -29,7 +30,7 @@ kt_jvm_library(
     "@libraries//:kotlinx-serialization-json-jvm",
     "@community//fleet/util/logging/api:fleet.util.logging.api",
     "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlinx-collections-immutable-jvm"
+    "@libraries//:kotlinx-collections-immutable-jvm",
   ]
 )
 ### auto-generated section `build` end

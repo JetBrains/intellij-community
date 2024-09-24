@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -57,7 +57,6 @@ import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 
 @DirtyUI
 public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollapseSupport {
-
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
@@ -500,11 +499,11 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
     if (treeState instanceof DefaultTreeLayoutCache cache) {
       // If the cache decided to invalidate sizes, we need to propagate it here,
       // so super() will query the cache again.
-      if (!cache.isCachedSizeValid$intellij_platform_ide_impl()) {
+      if (!cache.isCachedSizeValid) {
         validCachedPreferredSize = false;
       }
       var result = super.getPreferredSize(c, checkConsistency);
-      cache.setCachedSizeValid$intellij_platform_ide_impl(true);
+      cache.isCachedSizeValid = true;
       return result;
     }
     else {

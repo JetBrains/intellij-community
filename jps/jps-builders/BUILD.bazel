@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.jps.build",
+  module_name = "intellij.platform.jps.build",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
   javac_opts = "//:j11",
@@ -38,16 +39,16 @@ kt_jvm_library(
     "@libraries//:hash4j",
     "@libraries//:netty-codec-protobuf",
     "@libraries//:annotations",
-    "@libraries//:h2-mvstore"
+    "@libraries//:h2-mvstore",
   ],
   exports = [
     "@community//platform/util:intellij.platform.util",
     "@community//jps/jps-builders-6:intellij.platform.jps.build.javac.rt",
-    "@community//platform/tracing:intellij.platform.tracing.rt"
+    "@community//platform/tracing:intellij.platform.tracing.rt",
   ],
   runtime_deps = [
     "@community//java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
-    "@community//java/java-runtime:intellij.java.rt"
+    "@community//java/java-runtime:intellij.java.rt",
   ]
 )
 ### auto-generated section `build` end

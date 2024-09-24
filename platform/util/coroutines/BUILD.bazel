@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.util.coroutines",
+  module_name = "intellij.platform.util.coroutines",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
@@ -11,7 +12,7 @@ kt_jvm_library(
     "@libraries//:annotations",
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-collections-immutable-jvm"
+    "@libraries//:kotlinx-collections-immutable-jvm",
   ]
 )
 ### auto-generated section `build` end

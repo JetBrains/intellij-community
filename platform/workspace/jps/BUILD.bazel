@@ -10,6 +10,7 @@ create_kotlinc_options(
 
 kt_jvm_library(
   name = "intellij.platform.workspace.jps",
+  module_name = "intellij.platform.workspace.jps",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
@@ -27,7 +28,7 @@ kt_jvm_library(
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@libraries//:opentelemetry-sdk",
     "@libraries//:opentelemetry-semconv",
-    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry"
+    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
   ],
   exports = ["@community//platform/workspace/storage:intellij.platform.workspace.storage"]
 )

@@ -3,6 +3,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
   name = "intellij.platform.ide.util.io.impl",
+  module_name = "intellij.platform.ide.util.io.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
@@ -16,7 +17,7 @@ kt_jvm_library(
     "@libraries//:winp",
     "@libraries//:proxy-vole",
     "@libraries//:jna-platform",
-    "@libraries//:jackson-core"
+    "@libraries//:jackson-core",
   ],
   exports = ["@community//platform/platform-util-io:intellij.platform.ide.util.io"]
 )
