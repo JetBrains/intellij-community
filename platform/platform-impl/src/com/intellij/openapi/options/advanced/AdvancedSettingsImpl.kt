@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.KeyedExtensionCollector
@@ -212,7 +213,12 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
 
   init {
     AdvancedSettingBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<AdvancedSettingBean> {
+      override fun extensionAdded(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
+        logger<AdvancedSettingsImpl>().info("Extension added ${pluginDescriptor.pluginId}: ${extension.id}")
+      }
+
       override fun extensionRemoved(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
+        logger<AdvancedSettingsImpl>().info("Extension removed ${pluginDescriptor.pluginId}: ${extension.id}")
         defaultValueCache.remove(extension.id)
       }
     }, this)
@@ -273,8 +279,17 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
   private fun getOption(id: String): AdvancedSettingBean =
     getOptionOrNull(id) ?: throw IllegalArgumentException("Can't find advanced setting ${id}")
 
-  private fun getOptionOrNull(id: String): AdvancedSettingBean? =
-    epCollector.findSingle(id)
+  private fun getOptionOrNull(id: String): AdvancedSettingBean? {
+    val bean = epCollector.findSingle(id)
+    if (bean == null) {
+      if (ApplicationManager.getApplication().isEAP)
+        logger<AdvancedSettingsImpl>().error("Cannot find advanced setting $id", Throwable())
+      else
+        logger<AdvancedSettingsImpl>().warn("Cannot find advanced setting $id", Throwable())
+    }
+    return bean
+  }
+
 
   private fun getSettingAndType(id: String): Pair<Any, AdvancedSettingType> =
     getSetting(id) to getOption(id).type()
