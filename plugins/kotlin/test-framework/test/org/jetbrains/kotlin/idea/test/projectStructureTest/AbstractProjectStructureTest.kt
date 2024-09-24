@@ -132,21 +132,23 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
         _moduleContentRoots = moduleContentRoots
     }
 
-    private class LibraryRoot(val classRoot: File, val sourceRoot: File?)
+    private class LibraryRoot(val classRoot: VirtualFile, val sourceRoot: VirtualFile?)
 
     private fun createLibraryRoot(rootLabel: String, testDirectory: String): LibraryRoot {
         // If the root label is also a directory in the test case's test data, we should compile the JAR from those sources.
         val librarySources = Path(testDirectory, rootLabel).toFile()
 
         return if (librarySources.isDirectory) {
-            val jarFile = KotlinCompilerStandalone(
+            val jar = KotlinCompilerStandalone(
                 listOf(librarySources),
                 target = this.createTempFile("$rootLabel.jar", null),
             ).compile()
 
-            LibraryRoot(jarFile, librarySources)
+            LibraryRoot(getVirtualFile(jar), getVirtualFile(librarySources))
         } else {
-            LibraryRoot(jarFile { }.generateInTempDir().toFile(), null)
+            val jar = jarFile { }.generateInTempDir().toFile()
+
+            LibraryRoot(getVirtualFile(jar), null)
         }
     }
 
