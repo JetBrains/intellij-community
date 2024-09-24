@@ -1072,7 +1072,7 @@ f:com.intellij.ide.dnd.DnDSupport
 - s:createBuilder(javax.swing.JComponent):com.intellij.ide.dnd.DnDSupportBuilder
 - createDraggedImage(com.intellij.ide.dnd.DnDAction,java.awt.Point,com.intellij.ide.dnd.DnDDragStartBean):com.intellij.openapi.util.Pair
 - dispose():V
-- dragDropEnd():V
+- dragDropEnd(com.intellij.ide.dnd.DnDEvent,java.awt.dnd.DragSourceDropEvent):V
 - dropActionChanged(I):V
 - startDragging(com.intellij.ide.dnd.DnDAction,java.awt.Point):com.intellij.ide.dnd.DnDDragStartBean
 - tryDrop(com.intellij.ide.dnd.DnDEvent):Z

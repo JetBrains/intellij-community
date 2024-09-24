@@ -439,6 +439,7 @@ com.intellij.ide.dnd.DnDSource
 - a:canStartDragging(com.intellij.ide.dnd.DnDAction,java.awt.Point):Z
 - createDraggedImage(com.intellij.ide.dnd.DnDAction,java.awt.Point,com.intellij.ide.dnd.DnDDragStartBean):com.intellij.openapi.util.Pair
 - dragDropEnd():V
+- dragDropEnd(com.intellij.ide.dnd.DnDEvent,java.awt.dnd.DragSourceDropEvent):V
 - dropActionChanged(I):V
 - a:startDragging(com.intellij.ide.dnd.DnDAction,java.awt.Point):com.intellij.ide.dnd.DnDDragStartBean
 com.intellij.ide.dnd.DnDTarget
