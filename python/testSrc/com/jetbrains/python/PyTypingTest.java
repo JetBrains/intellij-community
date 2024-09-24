@@ -5712,7 +5712,7 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
-  // PY-76076 PY-60968
+  // PY-76076
   public void testGenericAliasUnderVersionGuard() {
     doMultiFileStubAwareTest("list[str]", """
       from mod import f
@@ -5721,8 +5721,16 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
-  // PY-76076 PY-60968
-  public void testGenericTypeImportedUnderVersionGuard() {
+  // PY-76076
+  public void testGenericMethodReturnTypeImportedUnderVersionGuard() {
+    doMultiFileStubAwareTest("list[str]", """
+      from mod import C
+      expr = C().m()
+      """);
+  }
+
+  // PY-60968
+  public void testGenericMethodReturnTypeImportedUnderVersionGuardInStub() {
     doMultiFileStubAwareTest("list[str]", """
       from mod import C
       expr = C().m()
