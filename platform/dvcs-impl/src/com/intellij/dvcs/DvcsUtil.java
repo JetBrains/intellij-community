@@ -11,6 +11,7 @@ import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -477,18 +478,7 @@ public final class DvcsUtil {
       return root;
     }
 
-    // For libraries, check VCS for the owner module
-    List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
-    Set<VirtualFile> modulesVcsRoots = new HashSet<>();
-    for (OrderEntry entry : entries) {
-      if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
-        VirtualFile moduleVcsRoot = vcsManager.getVcsRootFor(entry.getOwnerModule().getModuleFile());
-        if (moduleVcsRoot != null) {
-          modulesVcsRoots.add(moduleVcsRoot);
-        }
-      }
-    }
-
+    Set<VirtualFile> modulesVcsRoots = ReadAction.compute(() -> findVcsRootForModuleLibrary(project, file));
     if (modulesVcsRoots.isEmpty()) {
       LOG.debug("No library roots");
       return null;
@@ -504,6 +494,25 @@ public final class DvcsUtil {
     }
     LOG.debug("Several library roots, returning " + topRoot);
     return topRoot;
+  }
+
+  /**
+   * IJPL-95268 For libraries, check VCS for the owner module
+   */
+  private static Set<VirtualFile> findVcsRootForModuleLibrary(@NotNull Project project, @NotNull VirtualFile file) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+
+    List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
+    Set<VirtualFile> modulesVcsRoots = new HashSet<>();
+    for (OrderEntry entry : entries) {
+      if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
+        VirtualFile moduleVcsRoot = vcsManager.getVcsRootFor(entry.getOwnerModule().getModuleFile());
+        if (moduleVcsRoot != null) {
+          modulesVcsRoots.add(moduleVcsRoot);
+        }
+      }
+    }
+    return modulesVcsRoots;
   }
 
   /**
