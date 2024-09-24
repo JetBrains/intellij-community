@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
@@ -10,6 +11,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -44,6 +46,16 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
                modulePath.getPathList().contains(getCompilerOutputPath(myModule)));
     //this module and se & xml.bind
     assertSize(3, modulePath.getPathList());
+
+    assertEquals("additional.modules", params4Tests.getModuleName());
+    String commandLine = params4Tests.toCommandLine().getCommandLineString();
+
+    assertTrue("Command line should contain the module name flag (-m or --module) with the correct module name",
+               commandLine.contains("-m additional.modules/p.Main") || commandLine.contains("--module additional.modules/p.Main"));
+    assertTrue("Command line should contain the added modules: --add-modules java.se,java.xml.bind",
+               commandLine.contains("--add-modules java.se,java.xml.bind"));
+    assertTrue("Command line should contain the module path flag (-p or --module-path)",
+               commandLine.contains("-p") || commandLine.contains("--module-path"));
   }
 
   public void testServices() throws ExecutionException {
@@ -65,6 +77,32 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
     
     PathsList modulePath = params4Tests.getModulePath();
     assertSize(3, modulePath.getPathList());
+  }
+
+  public void testExcludedModuleInfo() throws ExecutionException {
+    ApplicationConfiguration configuration = setupConfiguration(getTestName(true), myModule);
+
+    VirtualFile moduleInfoFile = getContentRoot(getTestName(true))
+      .findFileByRelativePath("src/module-info.java");
+    assertNotNull("The file 'src/module-info.java' should exist", moduleInfoFile);
+
+    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
+    ExcludeEntryDescription excludeEntry = new ExcludeEntryDescription(moduleInfoFile, true, false, myProject);
+    WriteAction.runAndWait(() -> compilerConfiguration.getExcludedEntriesConfiguration().addExcludeEntryDescription(excludeEntry));
+
+    ExecutionEnvironment environment =
+      ExecutionEnvironmentBuilder.create(myProject, DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
+    Disposer.register(getTestRootDisposable(), environment);
+    JavaParameters params4Tests =
+      new ApplicationConfiguration.JavaApplicationCommandLineState<>(configuration, environment).createJavaParameters4Test();
+
+    assertNull("The module name should be empty", params4Tests.getModuleName());
+    String commandLine = params4Tests.toCommandLine().getCommandLineString();
+
+    assertTrue("The command line should not contain the module name flag (-m or --module)",
+               !commandLine.contains("-m") && !commandLine.contains("--module"));
+    assertTrue("The command line should not contain the module path flag (-p or --module-path)",
+               !commandLine.contains("-p") && !commandLine.contains("--module-path"));
   }
 
   private ApplicationConfiguration setupConfiguration(String sources, Module module) {

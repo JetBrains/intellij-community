@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
@@ -107,8 +108,12 @@ public abstract class ApplicationCommandLineState<T extends
       if (mainModule != null) {
         boolean inLibrary = mainModule instanceof PsiCompiledElement || mainModule instanceof LightJavaModule;
         if (!inLibrary || ReadAction.compute(() -> JavaModuleGraphUtil.findNonAutomaticDescriptorByModule(module.getModule(), false)) != null) {
-          params.setModuleName(ReadAction.compute(() -> mainModule.getName()));
-          dumbService.runReadActionInSmartMode(() -> JavaParametersUtil.putDependenciesOnModulePath(params, mainModule, false));
+          boolean isExcluded = CompilerConfiguration.getInstance(module.getProject())
+            .isExcludedFromCompilation(mainModule.getContainingFile().getVirtualFile());
+          if(!isExcluded) {
+            params.setModuleName(ReadAction.compute(() -> mainModule.getName()));
+            dumbService.runReadActionInSmartMode(() -> JavaParametersUtil.putDependenciesOnModulePath(params, mainModule, false));
+          }
         }
       }
     }
