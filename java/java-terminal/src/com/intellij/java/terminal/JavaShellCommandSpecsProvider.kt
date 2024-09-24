@@ -23,7 +23,9 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       addOptionsFromVM(javaContext.getJrePath())
       val version = javaContext.getJavaVersion() ?: return@dynamicOptions
       if (version.isAtLeast(11)) {
-        addDoubleDashedOptions()
+        addOptionsFromJava11()
+      } else if (version.isAtLeast(8)) {
+        addOptionsFromJava8()
       }
     }
 
@@ -62,6 +64,30 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     option("-showversion") {
       exclusiveOn = listOf("--show-version")
       description(JavaTerminalBundle.message("java.command.terminal.show.version.option.description", errorStreamName))
+    }
+    option("-dsa", "-enablesystemassertions") {
+      description(JavaTerminalBundle.message("java.command.terminal.disable.system.assertions.option.description"))
+    }
+    option("-esa", "-disablesystemassertions") {
+      description(JavaTerminalBundle.message("java.command.terminal.enable.system.assertions.option.description"))
+    }
+    option("-ea", "-enableassertions") {
+      repeatTimes = 0
+      separator = ":"
+      description(JavaTerminalBundle.message("java.command.terminal.enable.assertions.option.description"))
+      argument {
+        displayName(JavaTerminalBundle.message("java.command.terminal.assertions.option.argument.text"))
+        isOptional = true
+      }
+    }
+    option("-da", "-disableassertions") {
+      repeatTimes = 0
+      description(JavaTerminalBundle.message("java.command.terminal.disable.assertions.option.description"))
+      separator = ":"
+      argument {
+        displayName(JavaTerminalBundle.message("java.command.terminal.assertions.option.argument.text"))
+        isOptional = true
+      }
     }
     argument {
       displayName(JavaTerminalBundle.message("java.command.terminal.argument.main.class.text"))
@@ -105,7 +131,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     }
   }
 
-  private fun ShellChildOptionsContext.addDoubleDashedOptions() {
+  private fun ShellChildOptionsContext.addOptionsFromJava11() {
     val outputStreamName = JavaTerminalBundle.message("output.stream.name")
     option("--version") {
       exclusiveOn = listOf("-version")
@@ -129,6 +155,31 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
     option("--help") {
       exclusiveOn = listOf("-?", "-help", "-h")
       description(JavaTerminalBundle.message("java.command.terminal.help.option.description", outputStreamName))
+    }
+    option("--enable-preview") {
+      description(JavaTerminalBundle.message("java.command.terminal.enable.preview.option.description"))
+    }
+
+    option("-verbose") {
+      description(JavaTerminalBundle.message("java.command.terminal.verbose.option.description"))
+      separator=":"
+      repeatTimes = 0
+      argument {
+        isOptional = true
+        displayName(JavaTerminalBundle.message("java.command.terminal.verbose.option.argument.text.11"))
+      }
+    }
+  }
+
+  private fun ShellChildOptionsContext.addOptionsFromJava8() {
+    option("-verbose") {
+      description(JavaTerminalBundle.message("java.command.terminal.verbose.option.description"))
+      separator=":"
+      repeatTimes = 0
+      argument {
+        isOptional = true
+        displayName(JavaTerminalBundle.message("java.command.terminal.verbose.option.argument.text.8"))
+      }
     }
   }
 
