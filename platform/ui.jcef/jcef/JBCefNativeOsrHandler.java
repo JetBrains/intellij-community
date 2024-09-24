@@ -116,7 +116,10 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
   @Override
   protected Dimension getCurrentFrameSize() {
     SharedMemory.WithRaster frame = myCurrentFrame;
-    return frame == null ? null : new Dimension(frame.getWidth(), frame.getHeight());
+    if (frame == null)
+      return null;
+
+    return new Dimension((int)Math.ceil(frame.getWidth()/getPixelDensity()), (int)Math.ceil(frame.getHeight()/getPixelDensity()));
   }
 
   @Override
