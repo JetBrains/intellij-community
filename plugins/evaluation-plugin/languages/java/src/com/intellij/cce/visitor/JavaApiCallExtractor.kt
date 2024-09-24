@@ -1,12 +1,13 @@
 package com.intellij.cce.visitor
 
+import com.intellij.cce.core.Language
 import com.intellij.cce.metric.ApiCallExtractor
 import com.intellij.ide.actions.QualifiedNameProvider
-import com.intellij.lang.Language
 import com.intellij.openapi.application.smartReadActionBlocking
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.lang.Language as PlatformLanguage
 
 fun extractCallExpressions(
   psiElement: PsiElement,
@@ -34,7 +35,11 @@ fun PsiElement.getQualifiedName(): String? {
 
 
 class JavaApiCallExtractor : ApiCallExtractor {
-  override val language = Language.findLanguageByID("JAVA")!!
+  override val language = Language.JAVA
+
+  companion object {
+    private const val PLATFORM_LANG_ID = "JAVA"
+  }
 
   override suspend fun extractForGeneratedCode(code: String, project: Project): List<String> {
     val psiFile = writeAction { createPsiFile(code, project) }
@@ -47,8 +52,8 @@ class JavaApiCallExtractor : ApiCallExtractor {
   private fun createPsiFile(code: String, project: Project): PsiFile {
     return PsiFileFactory.getInstance(project).createFileFromText(
       "dummy.java",
-      language,
-      code
+      PlatformLanguage.findLanguageByID(PLATFORM_LANG_ID)!!,
+      code,
     )
   }
 }
