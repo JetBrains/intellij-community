@@ -201,7 +201,7 @@ public class MarkerType {
   }, new InheritorsLineMarkerNavigator() {
     @Override
     protected String getMessageForDumbMode() {
-      return JavaBundle.message("notification.navigation.to.overriding.classes");
+      return JavaBundle.message("notification.navigation.to.overriding.methods");
     }
   });
 
@@ -239,7 +239,7 @@ public class MarkerType {
   }, new InheritorsLineMarkerNavigator() {
     @Override
     protected String getMessageForDumbMode() {
-      return JavaBundle.message("notification.navigation.to.overriding.methods");
+      return JavaBundle.message("notification.navigation.to.overriding.classes");
     }
   });
 
