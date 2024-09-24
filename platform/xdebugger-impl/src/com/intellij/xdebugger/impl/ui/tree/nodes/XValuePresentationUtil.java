@@ -15,15 +15,14 @@ import org.jetbrains.annotations.Nullable;
 
 public final class XValuePresentationUtil {
   public static void renderValue(@NotNull @NlsSafe String value, @NotNull ColoredTextContainer text, @NotNull SimpleTextAttributes attributes, int maxLength,
-                                 @Nullable String additionalCharsToEscape) {
+                                 @Nullable String additionalSpecialCharsToHighlight) {
     SimpleTextAttributes escapeAttributes = null;
     int lastOffset = 0;
     int length = maxLength == -1 ? value.length() : Math.min(value.length(), maxLength);
     for (int i = 0; i < length; i++) {
       char ch = value.charAt(i);
-      int additionalCharIndex = -1;
-      if (ch == '\n' || ch == '\r' || ch == '\t' || ch == '\b' || ch == '\f'
-          || (additionalCharsToEscape != null && (additionalCharIndex = additionalCharsToEscape.indexOf(ch)) != -1)) {
+      if (isEscapingSymbol(ch)
+          || (additionalSpecialCharsToHighlight != null && additionalSpecialCharsToHighlight.indexOf(ch) != -1)) {
         if (i > lastOffset) {
           text.append(value.substring(lastOffset, i), attributes);
         }
@@ -39,7 +38,7 @@ public final class XValuePresentationUtil {
           }
         }
 
-        if (additionalCharIndex == -1) {
+        if (isEscapingSymbol(ch)) {
           text.append("\\", escapeAttributes);
         }
 
@@ -52,6 +51,10 @@ public final class XValuePresentationUtil {
     }
   }
 
+  private static boolean isEscapingSymbol(char ch) {
+    return getEscapingSymbol(ch) != ch;
+  }
+
   private static char getEscapingSymbol(char ch) {
     return switch (ch) {
       case '\n' -> 'n';
@@ -59,6 +62,10 @@ public final class XValuePresentationUtil {
       case '\t' -> 't';
       case '\b' -> 'b';
       case '\f' -> 'f';
+      // Java doesn't support two more standard escape symbols \a & \v, but many other languages support them.
+      // So we print them nicely for all languages and hope that it should not negatively affect any language.
+      case 0x07 -> 'a';
+      case 0x0b -> 'v';
       default -> ch;
     };
   }
