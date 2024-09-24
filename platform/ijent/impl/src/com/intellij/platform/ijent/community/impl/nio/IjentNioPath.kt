@@ -2,8 +2,10 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
-import com.intellij.platform.ijent.fs.*
-import java.lang.ref.WeakReference
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
+import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
+import com.intellij.platform.ijent.fs.IjentPath
+import com.intellij.platform.ijent.fs.getOrThrow
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
@@ -62,7 +64,13 @@ class IjentNioPath internal constructor(
     TODO()
 
   override fun startsWith(other: Path): Boolean {
-    val otherIjentPath = other.toIjentPath(isWindows)
+    val otherIjentPath = try {
+      other.toIjentPath(isWindows)
+    }
+    catch (_: InvalidPathException) {
+      return false
+    }
+
     return when (ijentPath) {
       is IjentPath.Absolute -> when (otherIjentPath) {
         is IjentPath.Absolute -> ijentPath.startsWith(otherIjentPath)
