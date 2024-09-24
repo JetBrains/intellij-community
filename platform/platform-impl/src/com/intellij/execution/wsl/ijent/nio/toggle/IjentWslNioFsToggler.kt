@@ -76,7 +76,7 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
       val enabledDistros = serviceAsync<IjentWslNioFsToggler>().strategy?.enabledInDistros
 
       return enabledDistros?.firstOrNull { distro -> distro.getUNCRootPath().isSameFileAs(path.root) }?.let { distro ->
-        VirtualRootAwareEelApi(path.root, WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false))
+        VirtualRootAwareEelApi(path.root.pathString, WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false))
       }
     }
   }
@@ -118,20 +118,22 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   }
 }
 
-private class VirtualRootAwareEelApi(private val virtualRoot: Path, private val original: EelApi) : EelApi by original {
-  override val exec: EelExecApi get() = VirtualRootAwareEelExecApi(virtualRoot, original.exec)
 
-  private class VirtualRootAwareEelExecApi(private val virtualRoot: Path, private val original: EelExecApi) : EelExecApi by original {
+@Internal
+class VirtualRootAwareEelApi(private val virtualRootPrefix: String, private val original: EelApi) : EelApi by original {
+  override val exec: EelExecApi get() = VirtualRootAwareEelExecApi(virtualRootPrefix, original.exec)
+
+  private class VirtualRootAwareEelExecApi(private val virtualRoot: String, private val original: EelExecApi) : EelExecApi by original {
     override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelExecApi.ExecuteProcessResult {
       return original.execute(VirtualRootAwareExecuteProcessBuilder(virtualRoot, builder))
     }
 
     private class VirtualRootAwareExecuteProcessBuilder(
-      private val virtualRoot: Path,
+      private val virtualRoot: String,
       private val original: EelExecApi.ExecuteProcessBuilder,
     ) : EelExecApi.ExecuteProcessBuilder by original {
-      override val args: List<String> = original.args.map { arg -> arg.removePrefix(virtualRoot.pathString) }
-      override val env: Map<String, String> = original.env.mapValues { (_, value) -> value.removePrefix(virtualRoot.pathString) }
+      override val args: List<String> = original.args.map { arg -> arg.removePrefix(virtualRoot) }
+      override val env: Map<String, String> = original.env.mapValues { (_, value) -> value.removePrefix(virtualRoot) }
     }
   }
 }
