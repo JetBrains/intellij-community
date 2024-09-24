@@ -54,7 +54,7 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
       return i + 1;
     }
 
-    boolean matchRoot(@NotNull String candidate) {
+    boolean matchPath(@NotNull String candidate) {
       if (candidate.length() < root.length()) return false;
 
       for (int i = 0; i < root.length(); i++) {
@@ -159,7 +159,7 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
     // However, it's important to check that they override only the registered paths.
     for (Backend backend : myBackends.get()) {
       for (Path candidate : backend.fileSystem.getRootDirectories()) {
-        if (backend.matchRoot(candidate.toString())) {
+        if (backend.matchPath(candidate.toString())) {
           rootDirectories.put(candidate.toString(), new MultiRoutingFsPath(this, candidate));
           break;
         }
@@ -188,10 +188,10 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
   }
 
   @NotNull
-  FileSystem getBackend(@NotNull String root) {
-    // It's important that the backends are sorted by the root length in the reverse order. Otherwise, prefixes won't work correctly.
+  FileSystem getBackend(@NotNull String path) {
+    // It's important that the backends are sorted by the path length in the reverse order. Otherwise, prefixes won't work correctly.
     for (Backend backend : myBackends.get()) {
-      if (backend.matchRoot(root)) {
+      if (backend.matchPath(path)) {
         return backend.fileSystem;
       }
     }

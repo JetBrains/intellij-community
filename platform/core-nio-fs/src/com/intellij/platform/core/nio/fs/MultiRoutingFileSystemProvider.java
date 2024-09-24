@@ -162,7 +162,7 @@ public final class MultiRoutingFileSystemProvider
       path1 = path1.toAbsolutePath();
     }
 
-    FileSystemProvider provider1 = myFileSystem.getBackend(path1.getRoot().toString()).provider();
+    FileSystemProvider provider1 = myFileSystem.getBackend(path1.toString()).provider();
     if (path2 == null) {
       return provider1;
     }
@@ -171,7 +171,7 @@ public final class MultiRoutingFileSystemProvider
       path2 = path2.toAbsolutePath();
     }
 
-    FileSystemProvider provider2 = myFileSystem.getBackend(path2.getRoot().toString()).provider();
+    FileSystemProvider provider2 = myFileSystem.getBackend(path2.toString()).provider();
 
     if (provider1.equals(provider2)) {
       return provider1;
