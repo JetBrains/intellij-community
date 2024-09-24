@@ -273,6 +273,7 @@ c:com.intellij.execution.process.KillableProcessHandler
 - <init>(java.lang.Process,java.lang.String):V
 - <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset):V
 - <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset,java.util.Set):V
+- pf:canDestroyProcessGracefully():Z
 - canKillProcess():Z
 - p:destroyProcessGracefully():Z
 - p:destroyProcessImpl():V

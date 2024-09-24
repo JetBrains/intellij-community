@@ -110,7 +110,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * This method shouldn't be overridden, see {@link #shouldKillProcessSoftly}
    * @see #destroyProcessGracefully
    */
-  private boolean canDestroyProcessGracefully() {
+  protected final boolean canDestroyProcessGracefully() {
     if (processCanBeKilledByOS(myProcess)) {
       if (SystemInfo.isWindows) {
         return hasPty() || myMediatedProcess || canTerminateGracefullyWithWinP();
