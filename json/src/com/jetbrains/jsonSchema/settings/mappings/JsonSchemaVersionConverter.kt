@@ -19,7 +19,7 @@ internal class JsonSchemaVersionConverter : Converter<JsonSchemaVersion?>() {
   }
 
   private fun findSuitableVersion(effectiveSerialisedValue: String): JsonSchemaVersion {
-    return JsonSchemaVersion.entries.asSequence()
+    return JsonSchemaVersion.entries
              .firstOrNull { version -> canBeSerializedInto(version, effectiveSerialisedValue) }
            ?: JsonSchemaVersion.SCHEMA_4
   }
@@ -35,8 +35,8 @@ internal class JsonSchemaVersionConverter : Converter<JsonSchemaVersion?>() {
       JsonSchemaVersion.SCHEMA_7 -> 7
       JsonSchemaVersion.SCHEMA_2019_09 -> 201909
       JsonSchemaVersion.SCHEMA_2020_12 -> 202012
-      else -> 4
     }
+
     return sequenceOf(
       JsonBundle.message("schema.of.version", versionNumber),
       JsonBundle.message("schema.of.version.deprecated", versionNumber)
