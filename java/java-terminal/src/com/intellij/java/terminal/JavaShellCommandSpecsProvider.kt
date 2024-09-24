@@ -90,6 +90,34 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
         isOptional = true
       }
     }
+
+    option("-agentlib") {
+      description(JavaTerminalBundle.message("java.command.terminal.agentlib.option.description"))
+      separator = ":"
+      repeatTimes = 0
+      argument {
+        displayName(JavaTerminalBundle.message("java.command.terminal.agentlib.option.argument.text"))
+      }
+    }
+
+    option("-agentpath") {
+      description(JavaTerminalBundle.message("java.command.terminal.agentpath.option.description"))
+      separator = ":"
+      repeatTimes = 0
+      argument {
+        displayName(JavaTerminalBundle.message("java.command.terminal.agentpath.option.argument.text"))
+      }
+    }
+
+    option("-javaagent") {
+      description(JavaTerminalBundle.message("java.command.terminal.javaagent.option.description"))
+      separator = ":"
+      repeatTimes = 0
+      argument {
+        displayName(JavaTerminalBundle.message("java.command.terminal.agentpath.option.argument.text"))
+      }
+    }
+
     argument {
       displayName(JavaTerminalBundle.message("java.command.terminal.argument.main.class.text"))
       suggestions(ShellDataGenerators.fileSuggestionsGenerator())
