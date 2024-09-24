@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.util.WaitForProgressToShow
+import com.intellij.util.net.ProxyAuthentication.Companion.getInstance
 import com.intellij.util.net.internal.asDisabledProxyAuthPromptsManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -37,10 +38,12 @@ interface ProxyAuthentication {
   /**
    * Always requests authentication from the user for a proxy located at the provided host and port.
    * If the user has refused to do so before, returns null without asking them again.
+   * Authentication prompt is a blocking operation, which may involve (but not limited to) operations on EDT in arbitrary modality state.
    *
    * One may want to first use [getOrPromptAuthentication] to not ask the user for credentials if they are already known.
    *
-   * TODO behaviour in headless mode
+   * TODO behaviour in headless mode. Currently no support is implemented, i.e., this method of [getInstance] always returns `null`.
+   *  But if credentials are already remembered, they will be used in [getKnownAuthentication]/[getOrPromptAuthentication].
    *
    * @param prompt prompt from the authentication request to be shown to the user
    * @return null if the user has refused to provide credentials
@@ -61,6 +64,7 @@ interface ProxyAuthentication {
 
 /**
  * @return already known credentials if there are any, or prompts for new credentials otherwise.
+ * @see ProxyAuthentication.getPromptedAuthentication
  */
 fun ProxyAuthentication.getOrPromptAuthentication(prompt: @Nls String, host: String, port: Int): Credentials? {
   return getKnownAuthentication(host, port) ?: getPromptedAuthentication(prompt, host, port)
