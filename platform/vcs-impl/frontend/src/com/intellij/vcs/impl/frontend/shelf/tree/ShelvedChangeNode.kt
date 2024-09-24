@@ -16,7 +16,8 @@ class ShelvedChangeNode(val entity: ShelvedChangeEntity) : EntityChangesBrowserN
     val path = entity.filePath
     val directory = StringUtil.defaultIfEmpty(PathUtil.getParentPath(path), VcsBundle.message("shelve.default.path.rendering"))
     val fileName = StringUtil.defaultIfEmpty(PathUtil.getFileName(path), path)
-    renderer.append(fileName, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, FileStatus.MODIFIED.color))
+    val fileStatus = FILE_STATUS_MAPPING[entity.fileStatus] ?: FileStatus.MODIFIED
+    renderer.append(fileName, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fileStatus.color))
     if (entity.additionalText != null) {
       renderer.append(FontUtil.spaceAndThinSpace() + entity.additionalText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
     }
@@ -24,5 +25,12 @@ class ShelvedChangeNode(val entity: ShelvedChangeEntity) : EntityChangesBrowserN
       renderer.append(FontUtil.spaceAndThinSpace() + FileUtil.toSystemDependentName(directory), SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
     renderer.icon = FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon()
+  }
+
+  companion object {
+    private val FILE_STATUS_MAPPING: Map<String, FileStatus> = FileStatus::class.java.fields
+      .mapNotNull { it.get(null) }
+      .filterIsInstance<FileStatus>()
+      .associateBy { it.id }
   }
 }
