@@ -6,6 +6,7 @@ import com.intellij.lang.properties.IProperty
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlTag
 import kotlinx.coroutines.runBlocking
@@ -18,15 +19,15 @@ import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem
 import org.junit.Test
 
 class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
-  
+
   override fun setUp() = runBlocking {
     super.setUp()
 
     importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    """.trimIndent())
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                        """.trimIndent())
   }
 
   @Test
@@ -569,8 +570,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testResolutionWithTriggeredProfiles() = runBlocking {
-    needFixForMaven4()
-    updateProjectPom("""
+    importProjectAsync("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -591,10 +591,32 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                            </properties>
                          </profile>
                        </profiles>
-                       <name>${'$'}{<caret>foo}</name>
+                       <name>${'$'}{foo}</name>
                        """.trimIndent())
 
-    updateAllProjects()
+    createProjectPom("""
+      <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <properties>
+                             <foo>value</foo>
+                           </properties>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <activation>
+                             <jdk>[1.5,)</jdk>
+                           </activation>
+                           <properties>
+                             <foo>value</foo>
+                           </properties>
+                         </profile>
+                       </profiles>
+                       <name>${'$'}{<caret>foo}</name>
+""")
 
     assertResolved(projectPom, findTag(projectPom, "project.profiles[1].properties.foo"))
   }
@@ -910,15 +932,16 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        """.trimIndent()
     )
 
-    checkHighlighting(projectPom,
-                      Highlight(text = "xxx"),
-                      Highlight(text = "zzz"),
-                      Highlight(text = "pom.maven.build.timestamp"),
-                      Highlight(text = "parent.maven.build.timestamp"),
-                      Highlight(text = "baseUri"),
-                      Highlight(text = "unknownProperty"),
-                      Highlight(text = "project.version.bar"),
-                      Highlight(text = "project.parentFile.nameXxx"),
+    checkHighlighting(
+      projectPom,
+      Highlight(text = "xxx"),
+      Highlight(text = "zzz"),
+      Highlight(text = "pom.maven.build.timestamp"),
+      Highlight(text = "parent.maven.build.timestamp"),
+      Highlight(text = "baseUri"),
+      Highlight(text = "unknownProperty"),
+      Highlight(text = "project.version.bar"),
+      Highlight(text = "project.parentFile.nameXxx"),
     )
 
   }
