@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import git4idea.GitBranch
 import git4idea.GitTag
 import git4idea.branch.GitBranchUtil
+import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 
 object GitBranchActionsDataKeys {
@@ -26,6 +27,9 @@ object GitBranchActionsDataKeys {
 
   @JvmField
   val USE_CURRENT_BRANCH = DataKey.create<Boolean>("Git.Branches.UseCurrent")
+
+  @JvmField
+  val REMOTE = DataKey.create<GitRemote>("Git.Remote")
 
   @JvmField
   val TAGS = DataKey.create<List<GitTag>>("Git.Tags")

@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitStandardRemoteBranch;
+import git4idea.GitTag;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -152,6 +153,31 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     assertPushNotification(NotificationType.INFORMATION, "Pushed 2 tags to origin", "", notification);
   }
 
+  public void test_tag_no_commits() {
+    GitPushResultNotification notification = pushSingleTagNotification(NEW_REF);
+    assertPushNotification(NotificationType.INFORMATION, "Pushed tag v0.1 to origin", "", notification);
+  }
+
+  public void test_tag_no_commits_up_to_date() {
+    GitPushResultNotification notification = pushSingleTagNotification(UP_TO_DATE);
+    assertPushNotification(NotificationType.INFORMATION, "Everything is up to date", "", notification);
+  }
+
+  public void test_tag_no_commits_already_exists() {
+    GitPushResultNotification notification = pushSingleTagNotification(REJECTED);
+    assertPushNotification(NotificationType.WARNING, "Push rejected", "Push of v0.1 was rejected by the remote", notification);
+  }
+
+  private GitPushResultNotification pushSingleTagNotification(GitPushNativeResult.Type upToDate) {
+    String tagRef = "refs/tags/v0.1";
+    GitPushNativeResult nativeResult = new GitPushNativeResult(upToDate, tagRef);
+    GitPushRepoResult result = GitPushRepoResult.tagPushResult(nativeResult,
+                                                               new GitPushSource.Tag(new GitTag(tagRef)),
+                                                               new GitSpecialRefRemoteBranch(tagRef, remote("origin")));
+    GitPushResultNotification notification = notification(result);
+    return notification;
+  }
+
   private static Map<GitRepository, GitPushRepoResult> singleResult(final GitPushNativeResult.Type type,
                                                                     final String from,
                                                                     final String to,
@@ -193,9 +219,13 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
 
   private static GitRemoteBranch to(String to) {
     int firstSlash = to.indexOf('/');
-    GitRemote remote = new GitRemote(to.substring(0, firstSlash), Collections.emptyList(), Collections.emptyList(),
-                                     Collections.emptyList(), Collections.emptyList());
+    GitRemote remote = remote(to.substring(0, firstSlash));
     return new GitStandardRemoteBranch(remote, to.substring(firstSlash + 1));
+  }
+
+  private static @NotNull GitRemote remote(String name) {
+    return new GitRemote(name, Collections.emptyList(), Collections.emptyList(),
+                         Collections.emptyList(), Collections.emptyList());
   }
 
   private GitPushResultNotification notification(GitPushRepoResult singleResult) {

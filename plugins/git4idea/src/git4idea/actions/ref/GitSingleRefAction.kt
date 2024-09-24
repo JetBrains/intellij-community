@@ -80,7 +80,3 @@ abstract class GitSingleRefAction<T : GitReference>(dynamicText: Supplier<@NlsAc
     }
   }
 }
-
-internal abstract class GitSingleTagAction(dynamicText: Supplier<@NlsActions.ActionText String>) : GitSingleRefAction<GitTag>(dynamicText) {
-  override val refClass = GitTag::class
-}

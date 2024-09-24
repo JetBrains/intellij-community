@@ -54,6 +54,7 @@ import static git4idea.push.GitPushNativeResult.Type.FORCED_UPDATE;
 import static git4idea.push.GitPushNativeResult.Type.NEW_REF;
 import static git4idea.push.GitPushRepoResult.Type.NOT_PUSHED;
 import static git4idea.push.GitPushRepoResult.Type.REJECTED_NO_FF;
+import static git4idea.push.GitPushRepoResult.tagPushResult;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
@@ -288,16 +289,22 @@ public class GitPushOperation {
         }
         else {
           List<GitPushNativeResult> nativeResults = resultWithOutput.parsedResults;
-          final GitPushNativeResult sourceResult = getPushedBranchOrCommit(nativeResults);
-          if (sourceResult == null) {
-            LOG.error("No result for branch or commit among: [" + nativeResults + "]\n" +
-                      "Full result: " + resultWithOutput);
-            continue;
+
+          if (pushSource instanceof GitPushSource.Tag tagPushSource) {
+            repoResult = tagPushResult(ContainerUtil.getOnlyItem(nativeResults), tagPushSource, target.getBranch());
           }
-          List<GitPushNativeResult> tagResults = filter(nativeResults, result ->
-            !result.equals(sourceResult) && (result.getType() == NEW_REF || result.getType() == FORCED_UPDATE));
-          int commits = collectNumberOfPushedCommits(repository.getRoot(), sourceResult);
-          repoResult = GitPushRepoResult.convertFromNative(sourceResult, tagResults, commits, pushSource, target.getBranch());
+          else {
+            GitPushNativeResult sourceResult = getPushedBranchOrCommit(nativeResults);
+            if (sourceResult == null) {
+              LOG.error("No result for branch or commit among: [" + nativeResults + "]\n" +
+                        "Full result: " + resultWithOutput);
+              continue;
+            }
+            List<GitPushNativeResult> tagResults = filter(nativeResults, result ->
+              !result.equals(sourceResult) && (result.getType() == NEW_REF || result.getType() == FORCED_UPDATE));
+            int commits = collectNumberOfPushedCommits(repository.getRoot(), sourceResult);
+            repoResult = GitPushRepoResult.convertFromNative(sourceResult, tagResults, commits, pushSource, target.getBranch());
+          }
         }
       }
       finally {

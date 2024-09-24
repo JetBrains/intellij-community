@@ -66,6 +66,21 @@ public final class GitPushRepoResult {
                                  target.getRemote().getName(), Collections.emptyList(), null, null);
   }
 
+  static @NotNull GitPushRepoResult tagPushResult(
+    @NotNull GitPushNativeResult result, @NotNull GitPushSource.Tag source, @NotNull GitRemoteBranch target
+  ) {
+    Type resultType = convertType(result);
+    List<String> pushedTags;
+    if (resultType == Type.NEW_BRANCH) {
+      pushedTags = List.of(source.getTag().getFullName());
+    } else {
+      pushedTags = Collections.emptyList();
+    }
+    return new GitPushRepoResult(resultType, -1, source.getRevision(),
+                                 target.getFullName(), target.getRemote().getName(), pushedTags,
+                                 result.getReason(), null);
+  }
+
   static @NotNull GitPushRepoResult addUpdateResult(GitPushRepoResult original, GitUpdateResult updateResult) {
     return new GitPushRepoResult(original.getType(), original.getNumberOfPushedCommits(), original.getSourceBranch(),
                                  original.getTargetBranch(), original.getTargetRemote(), original.getPushedTags(),

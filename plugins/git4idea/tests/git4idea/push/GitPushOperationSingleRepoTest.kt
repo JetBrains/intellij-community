@@ -13,6 +13,8 @@ import com.intellij.openapi.vcs.update.FileGroup
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.ContainerUtil
+import git4idea.GitTag
+import git4idea.actions.tag.GitPushTagAction
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
@@ -27,6 +29,7 @@ import org.junit.Before
 import java.io.File
 import java.nio.file.Path
 import java.util.Collections.singletonMap
+import kotlin.Throws
 
 class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   private lateinit var repository: GitRepository
@@ -407,6 +410,42 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val pushedTags = result.pushedTags
     assertEquals(1, pushedTags.size)
     assertEquals("refs/tags/v1", pushedTags[0])
+  }
+
+  fun `test push single tag`() {
+    cd(repository)
+    git("tag v1")
+
+    updateRepositories()
+    val spec = GitPushTagAction.preparePushSpec(GitTag("v1"), repository.remotes.first())
+    val pushResult = GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, false, false).execute()
+    val result = pushResult.results[repository]!!
+    val pushedTags = result.pushedTags
+    assertEquals(NEW_BRANCH, result.type)
+    assertEquals(1, pushedTags.size)
+    assertEquals("refs/tags/v1", pushedTags[0])
+
+    val secondPushResult = GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, false, false).execute()
+    val secondResult = secondPushResult.results[repository]!!
+    assertEmpty(secondResult.pushedTags)
+    assertEquals(UP_TO_DATE, secondResult.type)
+  }
+
+  fun `test push existing tag`() {
+    cd(repository)
+    git("tag v1")
+    git("push origin refs/tags/v1")
+    git("tag --delete v1")
+    makeCommit("msg")
+    git("tag v1")
+
+    updateRepositories()
+    val spec = GitPushTagAction.preparePushSpec(GitTag("v1"), repository.remotes.first())
+    val pushResult = GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, false, false).execute()
+    val result = pushResult.results[repository]!!
+    val pushedTags = result.pushedTags
+    assertEquals(REJECTED_OTHER, result.type)
+    assertEmpty(pushedTags)
   }
 
   fun `test skip pre push hook`() {

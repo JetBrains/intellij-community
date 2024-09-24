@@ -16,6 +16,7 @@ import git4idea.actions.ref.GitCheckoutAction
 import git4idea.actions.ref.GitDeleteRefAction
 import git4idea.actions.ref.GitMergeRefAction
 import git4idea.actions.ref.GitShowDiffWithRefAction
+import git4idea.actions.tag.GitPushTagsActionGroup
 import git4idea.branch.ActionState.Companion.isDisabledAndVisible
 import git4idea.branch.ActionState.Companion.isEnabledAndVisible
 import git4idea.branch.GitBranchesTreeTestContext.Companion.NOT_ORIGIN
@@ -98,6 +99,7 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
       isEnabledAndVisible<GitCheckoutAction>(),
       isEnabledAndVisible<GitShowDiffWithRefAction>(),
       isEnabledAndVisible<GitMergeRefAction>(),
+      isEnabledAndVisible<GitPushTagsActionGroup>(),
       isEnabledAndVisible<GitDeleteRefAction>(),
     ))
   }
@@ -114,6 +116,7 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
 
     assertActions(expected = listOf(
       isEnabledAndVisible<GitShowDiffWithRefAction>(),
+      isEnabledAndVisible<GitPushTagsActionGroup>(),
     ))
   }
 
