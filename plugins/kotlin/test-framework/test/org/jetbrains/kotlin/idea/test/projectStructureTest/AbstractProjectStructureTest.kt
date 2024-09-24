@@ -6,6 +6,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.utils.io.createDirectory
@@ -138,18 +139,20 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
         // If the root label is also a directory in the test case's test data, we should compile the JAR from those sources.
         val librarySources = Path(testDirectory, rootLabel).toFile()
 
-        return if (librarySources.isDirectory) {
-            val jar = KotlinCompilerStandalone(
+        val jarFile = if (librarySources.isDirectory) {
+            KotlinCompilerStandalone(
                 listOf(librarySources),
                 target = this.createTempFile("$rootLabel.jar", null),
             ).compile()
-
-            LibraryRoot(getVirtualFile(jar), getVirtualFile(librarySources))
         } else {
-            val jar = jarFile { }.generateInTempDir().toFile()
-
-            LibraryRoot(getVirtualFile(jar), null)
+            jarFile { }.generateInTempDir().toFile()
         }
+
+        // We need to convert the JAR virtual file into a JAR file system root virtual file. Generally, in IntelliJ, the root of a library
+        // is not the JAR *file* (`file:///.../abc.jar`) but rather the JAR *file system root* (`jar:///.../abc.jar!/`).
+        val jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(getVirtualFile(jarFile))!!
+
+        return LibraryRoot(jarRoot, librarySources.takeIf { it.isDirectory }?.let { getVirtualFile(it) })
     }
 
     private fun createModuleWithSources(
