@@ -180,6 +180,15 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
   public GenerateEqualsWizard(Project project, @NotNull PsiClass aClass, boolean needEquals, boolean needHashCode) {
     super(project, new JavaGenerateEqualsWizardBuilder(aClass, needEquals, needHashCode));
+    if (needEquals && needHashCode) {
+      setTitle(JavaBundle.message("generate.equals.hashcode.wizard.title"));
+    }
+    else if (needEquals) {
+      setTitle(JavaBundle.message("generate.equals.wizard.title"));
+    }
+    else if (needHashCode) {
+      setTitle(JavaBundle.message("generate.hashcode.wizard.title"));
+    }
   }
 
   public PsiField[] getEqualsFields() {
@@ -243,19 +252,17 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
   @Override
   protected void addSteps() {
-    if (myEqualsPanel != null) {
-      addStep(new TemplateChooserStep(myClass, EqualsHashCodeTemplatesManager.getInstance()) {
-        @Override
-        protected void setErrorText(@NlsContexts.DialogMessage @Nullable String errorText, JComponent component) {
-          GenerateEqualsWizard.this.setErrorText(errorText, component);
-        }
+    addStep(new TemplateChooserStep(myClass, EqualsHashCodeTemplatesManager.getInstance(), myEqualsPanel != null) {
+      @Override
+      protected void setErrorText(@NlsContexts.DialogMessage @Nullable String errorText, JComponent component) {
+        GenerateEqualsWizard.this.setErrorText(errorText, component);
+      }
 
-        @Override
-        protected boolean isDisposed() {
-          return GenerateEqualsWizard.this.isDisposed();
-        }
-      });
-    }
+      @Override
+      protected boolean isDisposed() {
+        return GenerateEqualsWizard.this.isDisposed();
+      }
+    });
     super.addSteps();
   }
 

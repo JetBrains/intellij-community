@@ -40,9 +40,15 @@ public abstract class TemplateChooserStep extends StepAdapter {
   private final JComponent myPanel;
   private final ComboBox<String> myComboBox;
   private final EqualsHashCodeTemplatesManagerBase myTemplatesManager;
+  private final boolean myShowEqualsOptions;
   private @Nullable Set<String> myInvalidTemplates = null;
 
   protected TemplateChooserStep(PsiElement contextElement, EqualsHashCodeTemplatesManagerBase templatesManager) {
+    this(contextElement, templatesManager, true);
+  }
+
+  protected TemplateChooserStep(PsiElement contextElement, EqualsHashCodeTemplatesManagerBase templatesManager, boolean showEqualsOptions) {
+    myShowEqualsOptions = showEqualsOptions;
     myPanel = new JPanel(new VerticalFlowLayout());
     final JPanel templateChooserPanel = new JPanel(new BorderLayout());
     final JLabel templateChooserLabel = new JLabel(JavaBundle.message("generate.equals.hashcode.template"));
@@ -129,26 +135,28 @@ public abstract class TemplateChooserStep extends StepAdapter {
     boolean useInstanceof = CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER;
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
-    JLabel label = new JLabel(JavaBundle.message("generate.equals.hashcode.type.comparison.label"));
-    label.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
-    panel.add(label);
-    ContextHelpLabel contextHelp = ContextHelpLabel.create(JavaBundle.message("generate.equals.hashcode.comparison.table"));
-    contextHelp.setBorder(JBUI.Borders.empty(UIUtil.LARGE_VGAP, 2, 0, 0));
-    panel.add(contextHelp);
-    JRadioButton instanceofButton =
-      new JRadioButton(JavaBundle.message("generate.equals.hashcode.instanceof.type.comparison"), useInstanceof);
-    instanceofButton.setBorder(JBUI.Borders.emptyLeft(16));
-    JRadioButton getClassButton =
-      new JRadioButton(JavaBundle.message("generate.equals.hashcode.getclass.type.comparison"), !useInstanceof);
-    getClassButton.setBorder(JBUI.Borders.emptyLeft(16));
-    ButtonGroup group = new ButtonGroup();
-    group.add(instanceofButton);
-    group.add(getClassButton);
-    instanceofButton.addActionListener(e -> CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = true);
-    getClassButton.addActionListener(e -> CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = false);
-    stepPanel.add(panel);
-    stepPanel.add(instanceofButton);
-    stepPanel.add(getClassButton);
+    if (myShowEqualsOptions) {
+      JLabel label = new JLabel(JavaBundle.message("generate.equals.hashcode.type.comparison.label"));
+      label.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
+      panel.add(label);
+      ContextHelpLabel contextHelp = ContextHelpLabel.create(JavaBundle.message("generate.equals.hashcode.comparison.table"));
+      contextHelp.setBorder(JBUI.Borders.empty(UIUtil.LARGE_VGAP, 2, 0, 0));
+      panel.add(contextHelp);
+      JRadioButton instanceofButton =
+        new JRadioButton(JavaBundle.message("generate.equals.hashcode.instanceof.type.comparison"), useInstanceof);
+      instanceofButton.setBorder(JBUI.Borders.emptyLeft(16));
+      JRadioButton getClassButton =
+        new JRadioButton(JavaBundle.message("generate.equals.hashcode.getclass.type.comparison"), !useInstanceof);
+      getClassButton.setBorder(JBUI.Borders.emptyLeft(16));
+      ButtonGroup group = new ButtonGroup();
+      group.add(instanceofButton);
+      group.add(getClassButton);
+      instanceofButton.addActionListener(e -> CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = true);
+      getClassButton.addActionListener(e -> CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = false);
+      stepPanel.add(panel);
+      stepPanel.add(instanceofButton);
+      stepPanel.add(getClassButton);
+    }
 
     final JCheckBox gettersCheckbox = createUseGettersInsteadOfFieldsCheckbox();
     if (gettersCheckbox != null) {
