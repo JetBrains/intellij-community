@@ -34,7 +34,12 @@
         {
             "name": "unrelatedModule",
             "content_roots": ["production", "tests"]
+        },
+        {
+            "name": "dependentModule",
+            "dependencies": ["libraryA", "libraryB", "unrelatedLibrary"],
+            "content_roots": ["production"]
         }
     ],
-    "excluded_modules": ["unrelatedModule"]
+    "excluded_modules": ["unrelatedModule", "dependentModule"]
 }

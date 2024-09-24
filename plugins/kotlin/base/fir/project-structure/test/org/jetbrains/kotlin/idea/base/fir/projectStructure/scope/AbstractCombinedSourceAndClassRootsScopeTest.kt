@@ -23,6 +23,9 @@ import java.io.File
  * implementations can then test these already created scopes, for example to assert that combined roots are correct and in the correct
  * order.
  *
+ * Note that project libraries should be part of at least one module dependency, as the workspace model might exclude them from indices
+ * otherwise. See `UnloadableFileSetData`.
+ *
  * The test is part of `kotlin.base.fir.project-structure` instead of `kotlin.base.project-structure` because tests need to be executed
  * either with the K1 or K2 Kotlin plugin, and the base module assumes neither.
  */
