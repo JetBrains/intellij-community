@@ -13,7 +13,10 @@ import org.jetbrains.plugins.gradle.service.execution.loadApplicationInitScript
  * @author Vladislav.Soroka
  */
 open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironmentProvider<ApplicationConfiguration>() {
-  override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean = task.runProfile is ApplicationConfiguration
+
+  override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean {
+    return task.runProfile.javaClass == ApplicationConfiguration::class.java
+  }
 
   override fun generateInitScript(params: GradleInitScriptParameters): String? {
     val shortenCommandLine = params.configuration.shortenCommandLine
