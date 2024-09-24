@@ -137,8 +137,9 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo @NotNull [] _usages) {
     try {
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-      progressIndicator.setIndeterminate(myElementsToMove.length <= 1); // only show progress when moving multiple elements
-      progressIndicator.setFraction(0.0);
+      boolean showProgression = myElementsToMove.length > 1;
+      progressIndicator.setIndeterminate(!showProgression); // only show progression when moving multiple elements
+      if (showProgression) progressIndicator.setFraction(0.0);
       List<PsiElement> toChange = new ArrayList<>();
       Collections.addAll(toChange, myElementsToMove);
 
@@ -177,7 +178,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       List<SmartPsiElementPointer<PsiFile>> movedFiles = new ArrayList<>();
       for (int i = 0; i < myElementsToMove.length; i++) {
         PsiElement element = toChange.get(i);
-        progressIndicator.setFraction((double)i / myElementsToMove.length);
+        if (showProgression) progressIndicator.setFraction((double)i / myElementsToMove.length);
         if (element instanceof PsiDirectory directory) {
           progressIndicator.setText2(directory.getVirtualFile().getPresentableUrl());
           MoveFilesOrDirectoriesUtil.doMoveDirectory(directory, newParent);
@@ -211,7 +212,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         }
       }
       progressIndicator.setText2("");
-      progressIndicator.setFraction(1.0);
+      if (showProgression) progressIndicator.setFraction(1.0);
       // sort by offset descending to process correctly several usages in one PsiElement [IDEADEV-33013]
       UsageInfo[] usages = codeUsages.toArray(UsageInfo.EMPTY_ARRAY);
       CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
