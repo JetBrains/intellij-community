@@ -4,6 +4,7 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.printableString
 import com.intellij.openapi.diagnostic.fileLogger
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 private val LOG get() = fileLogger()
@@ -92,9 +93,9 @@ private fun logAwaitStart(message: String?, timeout: Duration) {
   message?.let { LOG.info("Await: '$it' with timeout $timeout") }
 }
 
-private fun <T> logAwaitFinish(message: String?, result: T) {
+private fun <T> logAwaitFinish(message: String?, result: T, passedTime: Duration) {
   message?.let {
-    LOG.info("Await: '$it' resulted with \n\t${printableString(result.toString())}")
+    LOG.info("Await: '$it' resulted in $passedTime with \n\t${printableString(result.toString())}")
   }
 }
 
@@ -118,13 +119,12 @@ fun <T> waitFor(
   checker: (T) -> Boolean,
 ): T {
   logAwaitStart(message, timeout)
-  val endTime = System.currentTimeMillis() + timeout.inWholeMilliseconds
-  var now = System.currentTimeMillis()
+  val startTime = System.currentTimeMillis()
+  val endTime = startTime + timeout.inWholeMilliseconds
   var result = getter()
-  while (now < endTime && checker(result).not()) {
+  while (endTime > System.currentTimeMillis() && checker(result).not()) {
     Thread.sleep(interval.inWholeMilliseconds)
     result = getter()
-    now = System.currentTimeMillis()
   }
   if (checker(result).not()) {
     throw WaitForException(timeout,
@@ -133,8 +133,9 @@ fun <T> waitFor(
       .also { LOG.warn(it) }
   }
   else {
-    if (result !is Boolean) {
-      logAwaitFinish(message, result)
+    val passedTime = (System.currentTimeMillis() - startTime).milliseconds
+    if (result !is Boolean || passedTime > 10.seconds) {
+      logAwaitFinish(message, result, passedTime)
     }
     return result
   }
@@ -155,15 +156,14 @@ fun <T> waitForOne(
   checker: (T) -> Boolean,
 ): T {
   logAwaitStart(message, timeout)
-  val endTime = System.currentTimeMillis() + timeout.inWholeMilliseconds
-  var now = System.currentTimeMillis()
   var resultList = getter()
   var filteredResultList = resultList.filter { checker(it) }
-  while (now < endTime && filteredResultList.size != 1) {
+  val startTime = System.currentTimeMillis()
+  val endTime = startTime + timeout.inWholeMilliseconds
+  while (endTime > System.currentTimeMillis() && filteredResultList.size != 1) {
     Thread.sleep(interval.inWholeMilliseconds)
     resultList = getter()
     filteredResultList = resultList.filter { checker(it) }
-    now = System.currentTimeMillis()
   }
   if (filteredResultList.size != 1) {
     throw WaitForException(timeout,
@@ -176,7 +176,8 @@ fun <T> waitForOne(
   }
   else {
     return filteredResultList.single().also {
-      logAwaitFinish(message, it)
+      val passedTime = (System.currentTimeMillis() - startTime).milliseconds
+      logAwaitFinish(message, it, passedTime)
     }
   }
 }
@@ -196,13 +197,12 @@ fun <T> waitForOne(
   getter: () -> List<T>,
 ): T {
   logAwaitStart(message, timeout)
-  val endTime = System.currentTimeMillis() + timeout.inWholeMilliseconds
-  var now = System.currentTimeMillis()
   var resultList = getter()
-  while (now < endTime && resultList.size != 1) {
+  val startTime = System.currentTimeMillis()
+  val endTime = startTime + timeout.inWholeMilliseconds
+  while (endTime > System.currentTimeMillis() && resultList.size != 1) {
     Thread.sleep(interval.inWholeMilliseconds)
     resultList = getter()
-    now = System.currentTimeMillis()
   }
   if (resultList.size != 1) {
     val resultListString = if (resultList.isEmpty()) "none" else resultList.joinToString("\n\t")
@@ -215,7 +215,8 @@ fun <T> waitForOne(
   }
   else {
     return resultList.single().also {
-      logAwaitFinish(message, it)
+      val passedTime = (System.currentTimeMillis() - startTime).milliseconds
+      logAwaitFinish(message, it, passedTime)
     }
   }
 }
