@@ -19,7 +19,7 @@ fun PrintStream.reportTestFailure(testName: String, message: String, details: St
 }
 
 fun String.escapeStringForTeamCity(): String {
-  return this.substring(0, kotlin.math.min(7000, this.length))
+  return this//.substring(0, kotlin.math.min(7000, this.length))
     .replace("\\|", "||")
     .replace("\\[", "|[")
     .replace("]", "|]")
