@@ -6,18 +6,13 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 import com.intellij.execution.wsl.target.WslTargetType
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.openapi.util.UserDataHolderBase
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
-import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
-import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil
@@ -30,13 +25,7 @@ private val MAVEN_TARGET_PATH = Key.create<String>("MAVEN_TARGET_PATH")
 private val WSL_DISTRIBUTION = Key.create<WSLDistribution>("WSL_DISTRIBUTION")
 private val JDK_PATH = Key.create<String>("JDK_PATH")
 
-class MavenWslTargetConfigurator : MavenImporter("", ""),
-                                   MavenWorkspaceConfigurator {
-
-  override fun isMigratedToConfigurator(): Boolean {
-    return true
-  }
-
+class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
     prepareMavenData(context.project, context)
   }
@@ -44,19 +33,6 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
   override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
     if (!SystemInfo.isWindows) return
     configureForProject(context.project, context)
-  }
-
-  override fun isApplicable(mavenProject: MavenProject): Boolean {
-    return SystemInfo.isWindows && MavenWslUtil.tryGetWslDistributionForPath(mavenProject.path) != null
-  }
-
-  override fun postProcess(module: Module,
-                           mavenProject: MavenProject,
-                           changes: MavenProjectChanges,
-                           modifiableModelsProvider: IdeModifiableModelsProvider?) {
-    val dataHolder = UserDataHolderBase()
-    prepareMavenData(module.project, dataHolder)
-    configureForProject(module.project, dataHolder)
   }
 
   private fun prepareMavenData(project: Project, dataHolder: UserDataHolder) {

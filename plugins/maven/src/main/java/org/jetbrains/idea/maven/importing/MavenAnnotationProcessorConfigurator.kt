@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -30,7 +29,6 @@ import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
-import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.jetbrains.jps.util.JpsPathUtil
@@ -51,13 +49,9 @@ private val ANNOTATION_PROCESSOR_MODULE_NAMES = Key.create<MutableMap<MavenProje
   "ANNOTATION_PROCESSOR_MODULE_NAMES")
 
 @ApiStatus.Internal
-class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plugins",
+class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator("org.apache.maven.plugins",
                                                            "maven-compiler-plugin"), MavenWorkspaceConfigurator {
   override fun isApplicable(mavenProject: MavenProject): Boolean {
-    return true
-  }
-
-  override fun isMigratedToConfigurator(): Boolean {
     return true
   }
 
@@ -75,35 +69,6 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
                                 Function { moduleName: MavenId -> mavenProjectToModuleNamesCache[moduleName] },
                                 map)
     ANNOTATION_PROCESSOR_MODULE_NAMES[context] = map
-  }
-
-  override fun process(modifiableModelsProvider: IdeModifiableModelsProvider,
-                       module: Module,
-                       rootModel: MavenRootModelAdapter,
-                       mavenModel: MavenProjectsTree,
-                       mavenProject: MavenProject,
-                       changes: MavenProjectChanges,
-                       mavenProjectToModuleName: Map<MavenProject, String>,
-                       postTasks: List<MavenProjectsProcessorTask>) {
-    val config = getConfig(mavenProject, "annotationProcessorPaths")
-    if (config == null) return
-
-    val annotationTargetDir = mavenProject.getAnnotationProcessorDirectory(false)
-    // directory must exist before compilation start to be recognized as source root
-    File(rootModel.toPath(annotationTargetDir).path).mkdirs()
-    rootModel.addGeneratedJavaSourceFolder(annotationTargetDir, JavaSourceRootType.SOURCE, false)
-
-    val map = ANNOTATION_PROCESSOR_MODULE_NAMES[modifiableModelsProvider, HashMap()]
-    collectProcessorModuleNames(java.util.List.of(mavenProject),
-                                { mavenId: MavenId? ->
-                                  val mavenArtifact = mavenModel.findProject(mavenId)
-                                  if (mavenArtifact == null) return@collectProcessorModuleNames null
-                                  val moduleName = mavenProjectToModuleName[mavenArtifact]
-                                  if (moduleName == null) return@collectProcessorModuleNames null
-                                  java.util.List.of(moduleName)
-                                },
-                                map)
-    ANNOTATION_PROCESSOR_MODULE_NAMES[modifiableModelsProvider] = map
   }
 
   private fun collectProcessorModuleNames(projects: Iterable<MavenProject>,
@@ -148,32 +113,6 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
                       context.mavenProjectsTree,
                       projectWithModules.asIterable(),
                       moduleByName)
-  }
-
-  override fun postProcess(module: Module,
-                           mavenProject: MavenProject,
-                           changes: MavenProjectChanges,
-                           modifiableModelsProvider: IdeModifiableModelsProvider) {
-    val processorModuleNames =
-      ANNOTATION_PROCESSOR_MODULE_NAMES[modifiableModelsProvider, java.util.Map.of()].getOrDefault(mavenProject, listOf())
-
-    val moduleWithType: ModuleWithType<Module> = object : ModuleWithType<Module> {
-      override val module: Module
-        get() = module
-
-      override val type: MavenModuleType
-        get() = StandardMavenModuleType.SINGLE_MODULE
-    }
-    val projectWithModules = MavenProjectWithProcessorModules(mavenProject,
-                                                              listOf(moduleWithType),
-                                                              processorModuleNames)
-    configureProfiles(module.project,
-                      MavenProjectsManager.getInstance(module.project).projectsTree,
-                      java.util.List.of(projectWithModules)
-    ) { moduleName: String? ->
-      modifiableModelsProvider.findIdeModule(
-        moduleName!!)
-    }
   }
 
 

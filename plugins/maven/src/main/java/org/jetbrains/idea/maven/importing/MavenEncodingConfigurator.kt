@@ -3,8 +3,6 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -17,7 +15,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.io.URLUtil.urlToPath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.io.File
 import java.nio.charset.Charset
@@ -25,16 +22,8 @@ import java.nio.charset.IllegalCharsetNameException
 import java.nio.charset.UnsupportedCharsetException
 
 @ApiStatus.Internal
-class MavenEncodingConfigurator : MavenImporter("", ""), MavenWorkspaceConfigurator {
+class MavenEncodingConfigurator : MavenWorkspaceConfigurator {
   private val PREPARED_MAPPER = Key.create<EncodingMapper>("ENCODING_MAPPER")
-
-  override fun isApplicable(mavenProject: MavenProject): Boolean {
-    return true
-  }
-
-  override fun isMigratedToConfigurator(): Boolean {
-    return true
-  }
 
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
     val allMavenProjects = context.mavenProjectsWithModules.filter { it.hasChanges() }.map { it.mavenProject }
@@ -44,13 +33,6 @@ class MavenEncodingConfigurator : MavenImporter("", ""), MavenWorkspaceConfigura
 
   override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
     PREPARED_MAPPER.get(context)?.applyCollectedInfo()
-  }
-
-  override fun postProcess(module: Module,
-                           mavenProject: MavenProject,
-                           changes: MavenProjectChanges,
-                           modifiableModelsProvider: IdeModifiableModelsProvider) {
-    mapEncodings(sequenceOf(mavenProject), module.project).applyCollectedInfo()
   }
 
   private fun mapEncodings(mavenProjects: Sequence<MavenProject>, project: Project): EncodingMapper {

@@ -5,7 +5,6 @@ import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -17,11 +16,11 @@ import com.intellij.util.text.nullize
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.MavenDisposable
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 
 private val ALL_PROJECTS_COMPILERS = Key.create<MutableSet<String>>("maven.compilers")
@@ -36,18 +35,8 @@ private const val propEndTag = "}"
 private val LOG = Logger.getInstance(MavenCompilerConfigurator::class.java)
 
 @ApiStatus.Internal
-class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin"),
+class MavenCompilerConfigurator : MavenApplicableConfigurator("org.apache.maven.plugins", "maven-compiler-plugin"),
                                   MavenWorkspaceConfigurator {
-
-  override fun isApplicable(mavenProject: MavenProject?): Boolean {
-    return true
-  }
-
-  override fun processChangedModulesOnly(): Boolean {
-    return false
-  }
-
-  @Throws(MavenProcessCanceledException::class)
   fun resolve(project: Project,
               mavenProject: MavenProject,
               nativeMavenProject: NativeMavenProjectHolder,
@@ -61,10 +50,6 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
     if (project.getUserData(DEFAULT_COMPILER_EXTENSION) == null) {
       project.putUserData(DEFAULT_COMPILER_EXTENSION, defaultCompilerExtension)
     }
-  }
-
-  override fun isMigratedToConfigurator(): Boolean {
-    return true
   }
 
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
@@ -95,67 +80,11 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
     MavenProjectImporterUtil.removeOutdatedCompilerConfigSettings(context.project)
   }
 
-  override fun preProcess(module: Module,
-                          mavenProject: MavenProject,
-                          changes: MavenProjectChanges,
-                          modifiableModelsProvider: IdeModifiableModelsProvider) {
-
-    // #resolve() puts the extension in the project's user data
-    // we need to clean it (for the next import), so we transfer it to the current IdeModifiableModelsProvider
-    val defaultCompilerExtension = module.project.getUserData(DEFAULT_COMPILER_EXTENSION)
-    if (defaultCompilerExtension != null) {
-      modifiableModelsProvider.putUserData(DEFAULT_COMPILER_EXTENSION, defaultCompilerExtension)
-      module.project.putUserData(DEFAULT_COMPILER_EXTENSION, null)
-    }
-
-    val config = getCompilerConfigurationWhenApplicable(module.project, mavenProject) ?: return
-
-    var compilers = modifiableModelsProvider.getUserData(ALL_PROJECTS_COMPILERS)
-    if (compilers == null) {
-      compilers = mutableSetOf()
-      modifiableModelsProvider.putUserData(ALL_PROJECTS_COMPILERS, compilers)
-    }
-    compilers.add(getCompilerId(config))
-  }
-
   private fun getCompilerConfigurationWhenApplicable(project: Project, mavenProject: MavenProject): Element? {
     if (!Registry.`is`("maven.import.compiler.arguments", true) ||
         !MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler) return null
     if (!super.isApplicable(mavenProject)) return null
     return getConfig(mavenProject)
-  }
-
-  override fun process(modifiableModelsProvider: IdeModifiableModelsProvider,
-                       module: Module,
-                       rootModel: MavenRootModelAdapter,
-                       mavenModel: MavenProjectsTree,
-                       mavenProject: MavenProject,
-                       changes: MavenProjectChanges,
-                       mavenProjectToModuleName: Map<MavenProject, String>,
-                       postTasks: List<MavenProjectsProcessorTask>) {
-    val project = module.project
-
-    // select (and cache) default compiler extension
-    var defaultCompilerExtension = modifiableModelsProvider.getUserData(DEFAULT_COMPILER_EXTENSION)
-    if (defaultCompilerExtension == null) {
-      defaultCompilerExtension = selectDefaultCompilerExtension(
-        modifiableModelsProvider.getUserData(ALL_PROJECTS_COMPILERS).orEmpty())
-      modifiableModelsProvider.putUserData(DEFAULT_COMPILER_EXTENSION, defaultCompilerExtension)
-    }
-
-    val ideCompilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
-
-    // configure (once) project settings
-    if (modifiableModelsProvider.getUserData(DEFAULT_COMPILER_IS_SET) == null) {
-      setDefaultProjectCompiler(project, ideCompilerConfiguration, defaultCompilerExtension)
-      modifiableModelsProvider.putUserData(DEFAULT_COMPILER_IS_SET, true)
-    }
-
-    // configure module settings
-    configureModules(module.project,
-                     sequenceOf(MavenProjectWithModulesData(mavenProject, listOf(module))),
-                     ideCompilerConfiguration,
-                     defaultCompilerExtension)
   }
 
   private fun selectDefaultCompilerExtension(allCompilers: Set<String>): MavenCompilerExtension? {

@@ -5,31 +5,17 @@ import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 
 @ApiStatus.Internal
-class MavenRemoteRepositoriesConfigurator : MavenImporter("", ""),
-                                            MavenWorkspaceConfigurator {
+class MavenRemoteRepositoriesConfigurator : MavenWorkspaceConfigurator {
   private val COLLECTED_REPOSITORIES = Key.create<MutableSet<RemoteRepositoryDescription>>("COLLECTED_REPOSITORIES")
-
-  override fun processChangedModulesOnly(): Boolean = false
-
-  override fun isApplicable(mavenProject: MavenProject?): Boolean {
-    return true
-  }
-
-  override fun isMigratedToConfigurator(): Boolean {
-    return true
-  }
 
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
     val mavenProjects = context.mavenProjectsWithModules.map { it.mavenProject }
@@ -39,17 +25,6 @@ class MavenRemoteRepositoriesConfigurator : MavenImporter("", ""),
 
   override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
     COLLECTED_REPOSITORIES.get(context)?.let { applyRepositories(context.project, it) }
-  }
-
-  override fun preProcess(module: Module?,
-                          mavenProject: MavenProject?,
-                          changes: MavenProjectChanges?,
-                          modifiableModelsProvider: IdeModifiableModelsProvider?) {
-    if (module == null || mavenProject == null) {
-      return
-    }
-    val repostories = collectRepositoriesForMavenProjects(module.project, sequenceOf(mavenProject))
-    applyRepositories(module.project, repostories)
   }
 
   private fun collectRepositoriesForMavenProjects(project: Project,
