@@ -35,7 +35,7 @@ import com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopup
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.ui.EditorTextField
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Point
@@ -44,11 +44,12 @@ import java.awt.datatransfer.StringSelection
 /**
  * Draws and handles review changes markers in gutter
  */
+@ApiStatus.NonExtendable
 open class CodeReviewEditorGutterChangesRenderer(
-  private val model: CodeReviewEditorGutterActionableChangesModel,
-  private val editor: Editor,
+  protected val model: CodeReviewEditorGutterActionableChangesModel,
+  protected val editor: Editor,
   disposable: Disposable,
-  val lineStatusMarkerColorScheme: LineStatusMarkerColorScheme = ReviewInEditorUtil.REVIEW_STATUS_MARKER_COLOR_SCHEME,
+  private val lineStatusMarkerColorScheme: LineStatusMarkerColorScheme = ReviewInEditorUtil.REVIEW_STATUS_MARKER_COLOR_SCHEME,
 ) : LineStatusMarkerRendererWithPopup(editor.project, editor.document, model, disposable, { it === editor }) {
 
   override fun paintGutterMarkers(editor: Editor, ranges: List<Range>, g: Graphics) {
@@ -69,7 +70,7 @@ open class CodeReviewEditorGutterChangesRenderer(
                                 disposable: Disposable): LineStatusMarkerPopupPanel {
     val vcsContent = model.getBaseContent(LineRange(range.vcsLine1, range.vcsLine2))?.removeSuffix("\n")
 
-    val editorComponent = if (!vcsContent.isNullOrEmpty()) {
+    val editorComponent = if (vcsContent != null) {
       val popupEditor = createPopupEditor(project, editor, vcsContent, disposable)
       showLineDiff(editor, popupEditor, range, vcsContent, disposable)
       LineStatusMarkerPopupPanel.createEditorComponent(editor, popupEditor.component)
@@ -78,28 +79,21 @@ open class CodeReviewEditorGutterChangesRenderer(
       null
     }
 
-
-    val actions = listOfNotNull(
-      createRevertAction(range),
-      createPrevChangeAction(range),
-      createNextChangeAction(range),
-      createCopyLineAction(range),
-      createShowDiffAction(range),
-      createToggleByWordDiffAction()
-    ) + customActions(project)
+    val actions = createActions(range)
 
     val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
     return LineStatusMarkerPopupPanel.create(editor, toolbar, editorComponent, null)
   }
 
-  @Internal
-  protected open fun customActions(project: Project?): List<AnAction> = emptyList()
-  protected open fun createRevertAction(range: Range): AnAction? = null
-  protected open fun createPrevChangeAction(range: Range): AnAction? = ShowPrevChangeMarkerAction(range)
-  protected open fun createNextChangeAction(range: Range): AnAction? = ShowNextChangeMarkerAction(range)
-  protected open fun createCopyLineAction(range: Range): AnAction? = CopyLineStatusRangeAction(range)
-  protected open fun createShowDiffAction(range: Range): AnAction? = ShowDiffAction(range)
-  protected open fun createToggleByWordDiffAction(): AnAction? = ToggleByWordDiffAction()
+  protected open fun createActions(range: Range): List<AnAction> {
+    return listOf(
+      ShowPrevChangeMarkerAction(range),
+      ShowNextChangeMarkerAction(range),
+      CopyLineStatusRangeAction(range),
+      ShowDiffAction(range),
+      ToggleByWordDiffAction()
+    )
+  }
 
   private fun createPopupEditor(project: Project?, mainEditor: Editor, vcsContent: String, disposable: Disposable): Editor {
     val factory = EditorFactory.getInstance()
@@ -140,8 +134,6 @@ open class CodeReviewEditorGutterChangesRenderer(
     var highlightersDisposable: Disposable? = null
     fun update(show: Boolean) {
       if (show && highlightersDisposable == null) {
-        if (vcsContent.isEmpty()) return
-
         val currentContent = DiffUtil.getLinesContent(editor.document, range.line1, range.line2)
         if (currentContent.isEmpty()) return
 
@@ -175,7 +167,7 @@ open class CodeReviewEditorGutterChangesRenderer(
     update(model.shouldHighlightDiffRanges)
   }
 
-  private inner class ShowNextChangeMarkerAction(range: Range)
+  protected inner class ShowNextChangeMarkerAction(range: Range)
     : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, "VcsShowNextChangeMarker"), LightEditCompatible {
 
     override fun isEnabled(editor: Editor, range: Range): Boolean = getNextRange(range.line1) != null
@@ -193,7 +185,7 @@ open class CodeReviewEditorGutterChangesRenderer(
     }
   }
 
-  private inner class ShowPrevChangeMarkerAction(range: Range)
+  protected inner class ShowPrevChangeMarkerAction(range: Range)
     : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, "VcsShowPrevChangeMarker"), LightEditCompatible {
 
     override fun isEnabled(editor: Editor, range: Range): Boolean = getPrevRange(range.line1) != null
@@ -211,7 +203,7 @@ open class CodeReviewEditorGutterChangesRenderer(
     }
   }
 
-  private inner class CopyLineStatusRangeAction(range: Range)
+  protected inner class CopyLineStatusRangeAction(range: Range)
     : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, IdeActions.ACTION_COPY), LightEditCompatible {
     override fun isEnabled(editor: Editor, range: Range): Boolean = range.hasVcsLines()
     override fun actionPerformed(editor: Editor, range: Range) {
@@ -220,7 +212,7 @@ open class CodeReviewEditorGutterChangesRenderer(
     }
   }
 
-  private inner class ShowDiffAction(range: Range)
+  protected inner class ShowDiffAction(range: Range)
     : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, "Vcs.ShowDiffChangedLines"), LightEditCompatible {
     init {
       setShortcutSet(CompositeShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Vcs.ShowDiffChangedLines"),
@@ -237,7 +229,7 @@ open class CodeReviewEditorGutterChangesRenderer(
     }
   }
 
-  private inner class ToggleByWordDiffAction
+  protected inner class ToggleByWordDiffAction
     : ToggleAction(CollaborationToolsBundle.message("review.editor.action.highlight.lines.text"), null, AllIcons.Actions.Highlighting),
       DumbAware, LightEditCompatible {
 

@@ -2248,9 +2248,14 @@ f:com.intellij.ide.scratch.ScratchUtil
 - s:getRelativePath(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - s:isScratch(com.intellij.openapi.vfs.VirtualFile):Z
 f:com.intellij.inlinePrompt.InlinePrompt
+- *sf:isInlinePromptGenerating(com.intellij.openapi.editor.Editor):Z
+- *sf:isInlinePromptGenerating(com.intellij.openapi.editor.Editor,java.lang.Integer):Z
+- *sf:isInlinePromptGenerating(com.intellij.openapi.editor.Editor,java.lang.Integer,com.intellij.openapi.project.Project):Z
+- *bs:isInlinePromptGenerating$default(com.intellij.openapi.editor.Editor,java.lang.Integer,com.intellij.openapi.project.Project,I,java.lang.Object):Z
 - *sf:isInlinePromptShown(com.intellij.openapi.editor.Editor):Z
-- *sf:isInlinePromptShown(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
-- *bs:isInlinePromptShown$default(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,I,java.lang.Object):Z
+- *sf:isInlinePromptShown(com.intellij.openapi.editor.Editor,java.lang.Integer):Z
+- *sf:isInlinePromptShown(com.intellij.openapi.editor.Editor,java.lang.Integer,com.intellij.openapi.project.Project):Z
+- *bs:isInlinePromptShown$default(com.intellij.openapi.editor.Editor,java.lang.Integer,com.intellij.openapi.project.Project,I,java.lang.Object):Z
 f:com.intellij.lang.BracePair
 - <init>(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType,Z):V
 - getLeftBraceType():com.intellij.psi.tree.IElementType

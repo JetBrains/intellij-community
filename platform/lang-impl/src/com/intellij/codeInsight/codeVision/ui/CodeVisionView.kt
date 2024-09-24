@@ -14,6 +14,8 @@ import com.intellij.codeInsight.codeVision.ui.popup.CodeVisionPopup
 import com.intellij.codeInsight.codeVision.ui.renderers.BlockCodeVisionInlayRenderer
 import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
 import com.intellij.codeInsight.codeVision.ui.renderers.InlineCodeVisionInlayRenderer
+import com.intellij.inlinePrompt.isInlinePromptGenerating
+import com.intellij.inlinePrompt.isInlinePromptShown
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Inlay
@@ -72,7 +74,9 @@ class CodeVisionView(val project: Project) {
 
     val listInlays = mutableListOf<Inlay<*>>()
     for (lens in lenses) {
+      val position = if (lens.key == CodeVisionAnchorKind.Default) CodeVisionSettings.getInstance().defaultPosition else lens.key
       val logicalPosition = editor.offsetToLogicalPosition(anchoringRange.startOffset)
+      if (position == CodeVisionAnchorKind.Right && (isInlinePromptShown(editor, line = logicalPosition.line)) || isInlinePromptGenerating(editor, line = logicalPosition.line)) continue
       val inlay = when (if (lens.key == CodeVisionAnchorKind.Default) CodeVisionSettings.getInstance().defaultPosition else lens.key) {
         CodeVisionAnchorKind.Top -> {
           getOrCreateBlockInlay(editor, anchoringRange)

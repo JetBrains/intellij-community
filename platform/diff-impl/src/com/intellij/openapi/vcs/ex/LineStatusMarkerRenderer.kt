@@ -28,6 +28,7 @@ import com.intellij.util.containers.PeekableIterator
 import com.intellij.util.containers.PeekableIteratorWrapper
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
+import org.jetbrains.annotations.ApiStatus
 
 abstract class LineStatusMarkerRenderer internal constructor(
   protected val project: Project?,
@@ -45,6 +46,12 @@ abstract class LineStatusMarkerRenderer internal constructor(
 
   protected abstract fun getRanges(): List<Range>?
 
+  @Deprecated("""
+    A hack for rendering inline prompt gutter mark on top of the git's one.
+    The method should be removed and mark conflict should be resolved in another way.
+    See com.intellij.ml.llm.inlinePromptDetector.diff.CGResultGutterRenderer.
+  """)
+  @ApiStatus.Internal
   protected open fun getGutterLayer(): Int {
     return DiffDrawUtil.LST_LINE_MARKER_LAYER
   }

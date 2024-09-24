@@ -3,7 +3,7 @@
 
 package com.intellij.inlinePrompt
 
-import com.intellij.inlinePrompt.InlinePromptManager.Companion.getInstance
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -18,17 +18,13 @@ import javax.swing.Icon
  */
 @Internal
 interface InlinePromptManager {
-  companion object {
-    fun getInstance(project: Project): InlinePromptManager = project.getService(InlinePromptManager::class.java)
-  }
-
   /**
    * Checks if the inline prompt is currently shown in the specified editor.
    *
    * @param editor the editor in which the inline prompt visibility is to be checked
    * @return true if the inline prompt is shown, false otherwise
    */
-  fun isInlinePromptShown(editor: Editor): Boolean
+  fun isInlinePromptShown(editor: Editor, line: Int?): Boolean
 
   /**
    * Checks if inline prompt code is currently being generated in the specified editor.
@@ -36,7 +32,7 @@ interface InlinePromptManager {
    * @param editor the editor in which the code generation status of the inline prompt is to be checked
    * @return true if inline prompt code is being generated, false otherwise
    */
-  fun isInlinePromptCodeGenerating(editor: Editor): Boolean
+  fun isInlinePromptCodeGenerating(editor: Editor, line: Int?): Boolean
 
   fun getBulbIcon(): Icon?
 }
@@ -45,14 +41,30 @@ interface InlinePromptManager {
  * Checks if the inline prompt is currently shown in the specified editor.
  *
  * @param editor the editor in which the inline prompt visibility is to be checked
+ * @param line the line which is inspected for having inline prompt. If `null`, then the function all lines are checked
  * @param project the project associated with the editor, defaults to the project of the editor if not provided
  * @return true if the inline prompt is shown, false otherwise
  */
 @Experimental
 @JvmOverloads
-fun isInlinePromptShown(editor: Editor, project: Project? = editor.project): Boolean {
+fun isInlinePromptShown(editor: Editor, line: Int? = null, project: Project? = editor.project): Boolean {
   if (project == null) return false
-  return getInstance(project).isInlinePromptShown(editor)
+  return project.service<InlinePromptManager>().isInlinePromptShown(editor, line)
+}
+
+/**
+ * Checks if the inline prompt generation UI elements are active.
+ *
+ * @param editor the editor in which the inline prompt visibility is to be checked
+ * @param line the line which is inspected for having active generation UI. If `null`, then the function all lines are checked
+ * @param project the project associated with the editor, defaults to the project of the editor if not provided
+ * @return true if the inline prompt is shown, false otherwise
+ */
+@Experimental
+@JvmOverloads
+fun isInlinePromptGenerating(editor: Editor, line: Int? = null, project: Project? = editor.project): Boolean {
+  if (project == null) return false
+  return project.service<InlinePromptManager>().isInlinePromptCodeGenerating(editor, line)
 }
 
 /**
@@ -60,7 +72,7 @@ fun isInlinePromptShown(editor: Editor, project: Project? = editor.project): Boo
  */
 @Internal
 fun getInlinePromptBulbIcon(project: Project, editor: Editor): Icon? {
-  val inlinePromptManager = getInstance(project)
-  val isInlinePrompt = inlinePromptManager.isInlinePromptShown(editor) || inlinePromptManager.isInlinePromptCodeGenerating(editor)
+  val inlinePromptManager = project.service<InlinePromptManager>()
+  val isInlinePrompt = inlinePromptManager.isInlinePromptShown(editor, null) || inlinePromptManager.isInlinePromptCodeGenerating(editor, null)
   return if (isInlinePrompt) inlinePromptManager.getBulbIcon() else null
 }
