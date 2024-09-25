@@ -554,7 +554,7 @@
       "name": "ChartsConfig",
       "scope": "app",
       "pluginId": "intellij.charts",
-      "classFqn": "com.intellij.bigdatatools.visualization.charts.style.ChartsConfig",
+      "classFqn": "com.intellij.charts.style.ChartsConfig",
       "storage": "ChartsStyleConfig.xml",
       "properties": [
         {
