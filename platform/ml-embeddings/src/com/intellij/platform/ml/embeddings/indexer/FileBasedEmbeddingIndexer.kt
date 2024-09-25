@@ -20,16 +20,16 @@ import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
-import com.intellij.platform.ml.embeddings.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.platform.ml.embeddings.files.SemanticSearchFileChangeListener
 import com.intellij.platform.ml.embeddings.indexer.configuration.EmbeddingsConfiguration
-import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableClass
+import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableFile
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableSymbol
 import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettings
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettingsImpl
+import com.intellij.platform.ml.embeddings.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.platform.ml.embeddings.utils.SemanticSearchCoroutineScope
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiManager
@@ -227,12 +227,12 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
 
       if (settings.shouldIndexClasses) {
         launch {
-          readActionUndispatched { FileIndexableEntitiesProvider.extractClasses(psiFile) }.collect(classesChannel::send)
+          readActionUndispatched { ClassesProvider.extractClasses(psiFile) }.forEach { classesChannel.send(it) }
         }
       }
       if (settings.shouldIndexSymbols) {
         launch {
-          readActionUndispatched { FileIndexableEntitiesProvider.extractSymbols(psiFile) }.collect(symbolsChannel::send)
+          readActionUndispatched { SymbolsProvider.extractSymbols(psiFile) }.forEach { symbolsChannel.send(it) }
         }
       }
     }

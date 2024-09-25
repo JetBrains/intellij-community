@@ -5,7 +5,7 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.searcheverywhere.ml">
-    <fileIndexableEntitiesProvider
-      implementation="com.intellij.searchEverywhereMl.semantics.python.PythonIndexableEntitiesProvider"/>
+    <classesProvider filetype="Python" implementationClass="com.intellij.searchEverywhereMl.semantics.python.PythonClassesProvider"/>
+    <symbolsProvider filetype="Python" implementationClass="com.intellij.searchEverywhereMl.semantics.python.PythonSymbolsProvider"/>
   </extensions>
 </idea-plugin>

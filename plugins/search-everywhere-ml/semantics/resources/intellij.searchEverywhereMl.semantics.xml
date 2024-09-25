@@ -58,10 +58,4 @@
                  description="Highlight semantic items in Search Everywhere"
                  key="search.everywhere.ml.semantic.highlight.items"/>
   </extensions>
-
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.searcheverywhere.ml.fileIndexableEntitiesProvider"
-                    interface="com.intellij.platform.ml.embeddings.indexer.FileIndexableEntitiesProvider"
-                    dynamic="true"/>
-  </extensionPoints>
 </idea-plugin>
