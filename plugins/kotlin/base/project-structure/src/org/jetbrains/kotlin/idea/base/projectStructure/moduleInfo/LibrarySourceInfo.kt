@@ -36,7 +36,8 @@ data class LibrarySourceInfo(
         get() = KotlinBaseProjectStructureBundle.message("sources.for.library.0", library.presentableName)
 
     override fun sourceScope(): GlobalSearchScope =
-        KotlinSourceFilterScope.librarySources(LibrarySourceScope(project, topPackageNames, entriesVirtualFileSystems, library), project)
+        // kotlin stdlib source.jar is known to pack multiple source-sets in the same jar as `.jar!/commonMain/*`, `.jar!/jvmMain/*` etc
+        KotlinSourceFilterScope.librarySources(LibrarySourceScope(project, null, entriesVirtualFileSystems, library), project)
 
     override fun modulesWhoseInternalsAreVisible(): Collection<ModuleInfo> {
         return LibraryInfoCache.getInstance(project)[library]
@@ -54,7 +55,7 @@ data class LibrarySourceInfo(
 @Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide 'calcHashCode()'
 private class LibrarySourceScope(
     project: Project,
-    topPackageNames: Set<String>,
+    topPackageNames: Set<String>?,
     entriesVirtualFileSystems: Set<NewVirtualFileSystem>?,
     private val library: Library,
 ) : PoweredLibraryScopeBase(
