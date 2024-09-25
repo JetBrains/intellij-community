@@ -5,7 +5,10 @@ import com.intellij.execution.processTools.ExecutionResult
 import com.intellij.platform.eel.*
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 
 /**
@@ -38,10 +41,21 @@ fun EelExecApi.ExecuteProcessResult.unwrap() = when (this) {
  */
 @OptIn(DelicateCoroutinesApi::class)
 suspend fun EelProcess.awaitExecutionResult() = computeDetached {
-  val stdOut = async { stdout.receive() }
-  val stdErr = async { stderr.receive() }
+  ByteArrayOutputStream().use { out ->
+    ByteArrayOutputStream().use { err ->
+      coroutineScope {
+        launch {
+          stdout.consumeEach(out::write)
+        }
 
-  ExecutionResult(exitCode.await(), stdOut.await(), stdErr.await())
+        launch {
+          stderr.consumeEach(err::write)
+        }
+      }
+
+      ExecutionResult(exitCode.await(), out.toByteArray(), err.toByteArray())
+    }
+  }
 }
 
 /**
