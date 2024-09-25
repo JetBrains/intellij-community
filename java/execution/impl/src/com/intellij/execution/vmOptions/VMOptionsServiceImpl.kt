@@ -16,6 +16,24 @@ import java.util.concurrent.ConcurrentMap
 class VMOptionsServiceImpl : VMOptionsService {
   companion object {
     private val ourData: ConcurrentMap<String, CompletableFuture<JdkOptionsData>> = CollectionFactory.createConcurrentSoftValueMap()
+
+    private val STANDARD_OPTION_LIST : List<VMOption> = listOf(
+      opt("ea", "enable assertions with specified granularity"),
+      opt("enableassertions", "enable assertions with specified granularity"),
+      opt("da", "disable assertions with specified granularity"),
+      opt("disableassertions", "disable assertions with specified granularity"),
+      opt("esa", "enable system assertions"),
+      opt("dsa", "disable system assertions"),
+      opt("agentpath:", "load native agent library by full pathname"),
+      opt("agentlib:", "load native agent library <libname>, e.g. -agentlib:jdwp"),
+      opt("javaagent:", "load Java programming language agent"),
+      opt("D", "set a system property in format <name>=<value>"),
+      opt("XX:", "specify non-standard JVM-specific option")
+    )
+
+    private fun opt(name: String, doc: String): VMOption {
+      return VMOption(name, null, null, VMOptionKind.Standard, doc, VMOptionVariant.DASH, null)
+    }
   }
 
   override fun getOrComputeOptionsForJdk(javaHome: String): CompletableFuture<JdkOptionsData> {
@@ -31,11 +49,11 @@ class VMOptionsServiceImpl : VMOptionsService {
   }
 
   // when null is returned, it was a timeout
-  private fun computeOptionsData(javaHome: String): JdkOptionsData? {
-    return JdkOptionsData(getOptionsForJdk(javaHome) ?: return null)
+  private fun computeOptionsData(javaHome: String): JdkOptionsData {
+    return JdkOptionsData(getOptionsForJdk(javaHome))
   }
 
-  private fun getOptionsForJdk(javaHome: String): List<VMOption>? {
+  private fun getOptionsForJdk(javaHome: String): List<VMOption> {
     val vmPath = getVmPath(javaHome)
     val generalCommandLine = GeneralCommandLine(vmPath)
     generalCommandLine.addParameters("-XX:+PrintFlagsFinal", "-XX:+UnlockDiagnosticVMOptions", "-XX:+UnlockExperimentalVMOptions", "-X")
@@ -43,19 +61,19 @@ class VMOptionsServiceImpl : VMOptionsService {
       OSProcessHandler(generalCommandLine)
     }
     catch (e: ProcessNotCreatedException) {
-      return null
+      return STANDARD_OPTION_LIST
     }
     val runner = CapturingProcessRunner(handler)
     val output = runner.runProcess(1000)
     if (output.isTimeout) {
-      return null
+      return STANDARD_OPTION_LIST
     }
     val xxOptions = VMOptionsParser.parseXXOptions(output.stdout)
     val xOptions = VMOptionsParser.parseXOptions(output.stderr)
     if (xOptions != null) {
-      return xOptions + xxOptions
+      return xOptions + xxOptions + STANDARD_OPTION_LIST
     }
-    return xxOptions
+    return xxOptions + STANDARD_OPTION_LIST
   }
 
   private fun getVmPath(javaHome: String): String {
