@@ -88,6 +88,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/intentions/convertToStringTemplate", pattern = pattern)
             model("${idea}/inspections/unusedSymbol", pattern = pattern)
             model("${idea}/inspections/arrayInDataClass", pattern = pattern)
+            model("${idea}/inspections/publicApiImplicitType", pattern = pattern)
         }
 
         testClass<AbstractK2MultiFileInspectionTest> {
