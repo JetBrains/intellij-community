@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.impl.backend.shelf
+package com.intellij.vcs.impl.backend.shelf.diff
 
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapper
@@ -7,17 +7,17 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.impl.backend.shelf.ShelfTree
+import com.intellij.vcs.impl.backend.shelf.ShelvedListNode
 import javax.swing.tree.DefaultMutableTreeNode
 
 internal class ShelveTreeDiffPreviewHandler : ChangesTreeDiffPreviewHandler() {
-  override fun iterateSelectedChanges(tree: ChangesTree): Iterable<@JvmWildcard ChangeViewDiffRequestProcessor.Wrapper> {
-    return VcsTreeModelData.selected(tree).iterateUserObjects<ShelvedWrapper>(ShelvedWrapper::class.java)
+  override fun iterateSelectedChanges(tree: ChangesTree): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
+    return (tree as ShelfTree).selectedChanges
   }
 
-  override fun iterateAllChanges(tree: ChangesTree): Iterable<@JvmWildcard ChangeViewDiffRequestProcessor.Wrapper> {
-    val changeLists = VcsTreeModelData.selected(tree).iterateUserObjects(ShelvedWrapper::class.java)
-        .map{it.changeList }
-        .toSet()
+  override fun iterateAllChanges(tree: ChangesTree): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
+    val changeLists = iterateSelectedChanges(tree).map { (it as ShelvedWrapper).changeList }.toSet()
 
     return VcsTreeModelData.all(tree).iterateRawNodes()
       .filter { it is ShelvedListNode && changeLists.contains(it.changeList) }

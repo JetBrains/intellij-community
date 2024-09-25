@@ -2,6 +2,7 @@
 package com.intellij.vcs.impl.backend.shelf
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -10,15 +11,19 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.platform.kernel.withKernel
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update.Companion.create
+import com.intellij.vcs.impl.backend.shelf.diff.BackendShelveEditorDiffPreview
 import com.intellij.vcs.impl.shared.rhizome.NodeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvesTreeRootEntity
+import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import fleet.kernel.SharedRef
 import fleet.kernel.change
 import fleet.kernel.shared
 import fleet.kernel.sharedRef
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
@@ -31,6 +36,8 @@ class ShelfTreeHolder(project: Project, val cs: CoroutineScope) : Disposable {
   private val updateQueue = MergingUpdateQueue("Update Shelf Content", 200, true, null, project, null, true)
 
   private val tree = ShelfTree(project)
+
+  private val diffPreview = BackendShelveEditorDiffPreview(tree)
 
   private fun updateTreeModel() {
     tree.invalidateDataAndRefresh {
@@ -78,8 +85,20 @@ class ShelfTreeHolder(project: Project, val cs: CoroutineScope) : Disposable {
     return entity
   }
 
-  fun debug() {
-    saveModelToDb()
+  fun showDiff(changeListDto: ChangeListDto) {
+    val changeListNode = TreeUtil.treeTraverser(tree)
+                           .bfsTraversal()
+                           .find { (it as ChangesBrowserNode<*>).getUserData(ENTITY_ID_KEY) == changeListDto.changeList } as? ChangesBrowserNode<*>
+                         ?: return
+    val selectedChanges = changeListNode.traverse().filter(ShelvedChangeNode::class.java).filter {
+      val changeRef = it.getUserData(ENTITY_ID_KEY) as? SharedRef<*> ?: return@filter false
+      return@filter changeListDto.changes.contains(changeRef)
+    }.map { it.shelvedChange }.toList()
+
+    tree.selectedChanges = selectedChanges
+    cs.launch(Dispatchers.EDT) {
+      diffPreview.performDiffAction()
+    }
   }
 
   fun scheduleTreeUpdate() {
