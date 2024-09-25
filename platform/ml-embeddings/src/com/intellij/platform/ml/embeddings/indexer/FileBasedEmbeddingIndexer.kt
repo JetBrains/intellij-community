@@ -23,10 +23,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
 import com.intellij.platform.ml.embeddings.files.SemanticSearchFileChangeListener
 import com.intellij.platform.ml.embeddings.indexer.configuration.EmbeddingsConfiguration
-import com.intellij.platform.ml.embeddings.indexer.entities.IndexableClass
-import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
-import com.intellij.platform.ml.embeddings.indexer.entities.IndexableFile
-import com.intellij.platform.ml.embeddings.indexer.entities.IndexableSymbol
+import com.intellij.platform.ml.embeddings.indexer.entities.*
 import com.intellij.platform.ml.embeddings.jvm.indices.EntityId
 import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettings
@@ -158,9 +155,9 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
 
     withContext(indexingScope.coroutineContext) {
       withContext(indexingContext) {
-        val filesChannel = Channel<IndexableFile>(capacity = BUFFER_SIZE)
-        val classesChannel = Channel<IndexableClass>(capacity = BUFFER_SIZE)
-        val symbolsChannel = Channel<IndexableSymbol>(capacity = BUFFER_SIZE)
+        val filesChannel = Channel<IndexableEntity>(capacity = BUFFER_SIZE)
+        val classesChannel = Channel<IndexableEntity>(capacity = BUFFER_SIZE)
+        val symbolsChannel = Channel<IndexableEntity>(capacity = BUFFER_SIZE)
 
         suspend fun sendEntities(indexId: IndexId, channel: ReceiveChannel<IndexableEntity>) {
           val entities = ArrayList<IndexableEntity>(BATCH_SIZE)
@@ -185,10 +182,14 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
         if (Registry.`is`("intellij.platform.ml.embeddings.use.file.based.index")) {
           // todo: file names
           launch {
-            fetchEntities(CLASS_NAME_EMBEDDING_INDEX_NAME, classesChannel, project) { name -> IndexableClass(EntityId(name)) }
+            fetchEntities(CLASS_NAME_EMBEDDING_INDEX_NAME, classesChannel, project) { key, name ->
+              LongIndexableEntity(key.toLong(), IndexableClass(EntityId(name)))
+            }
           }
           launch {
-            fetchEntities(SYMBOL_NAME_EMBEDDING_INDEX_NAME, symbolsChannel, project) { name -> IndexableSymbol(EntityId(name)) }
+            fetchEntities(SYMBOL_NAME_EMBEDDING_INDEX_NAME, symbolsChannel, project) { key, name ->
+              LongIndexableEntity(key.toLong(), IndexableSymbol(EntityId(name)))
+            }
           }
         }
         else {
@@ -206,9 +207,9 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
     project: Project,
     files: List<VirtualFile>,
     settings: EmbeddingIndexSettingsImpl,
-    filesChannel: Channel<IndexableFile>,
-    classesChannel: Channel<IndexableClass>,
-    symbolsChannel: Channel<IndexableSymbol>,
+    filesChannel: Channel<IndexableEntity>,
+    classesChannel: Channel<IndexableEntity>,
+    symbolsChannel: Channel<IndexableEntity>,
   ) {
     val psiManager = PsiManager.getInstance(project)
     val processedFiles = AtomicInteger(0)
@@ -236,7 +237,10 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
     }
   }
 
-  private suspend fun <T : IndexableEntity> fetchEntities(indexId: ID<EmbeddingKey, String>, channel: Channel<T>, project: Project, nameToEntity: (String) -> T) {
+  private suspend fun fetchEntities(indexId: ID<EmbeddingKey, String>,
+                                    channel: Channel<IndexableEntity>,
+                                    project: Project,
+                                    nameToEntity: (EmbeddingKey, String) -> LongIndexableEntity) {
     val fileBasedIndex = FileBasedIndex.getInstance()
     val scope = GlobalSearchScope.projectScope(project)
     val keys = smartReadAction(project) { fileBasedIndex.getAllKeys(indexId, project) }
@@ -246,7 +250,7 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
       chunk.forEach { key ->
         val names = smartReadAction(project) { fileBasedIndex.getValues(indexId, key, scope) }
         for (name in names) {
-          channel.send(nameToEntity(name))
+          channel.send(nameToEntity(key, name))
         }
       }
     }
@@ -256,9 +260,9 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
     file: VirtualFile,
     psiManager: PsiManager,
     settings: EmbeddingIndexSettings,
-    filesChannel: Channel<IndexableFile>,
-    classesChannel: Channel<IndexableClass>,
-    symbolsChannel: Channel<IndexableSymbol>,
+    filesChannel: Channel<IndexableEntity>,
+    classesChannel: Channel<IndexableEntity>,
+    symbolsChannel: Channel<IndexableEntity>,
   ) = coroutineScope {
     if (settings.shouldIndexFiles) {
       launch {
