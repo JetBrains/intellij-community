@@ -59,7 +59,7 @@ fun getUpdatedStorage(
         val libraryDependencies = toVfsRoots(configuration.dependenciesClassPath)
             .map { libraryDependencyFactory.get(it) }
 
-        val allDependencies = libraryDependencies + listOfNotNull(sdkDependency)
+        val allDependencies = listOfNotNull(sdkDependency) + libraryDependencies
 
         val source = moduleEntitySourceSupplier(scriptFile.toVirtualFileUrl(fileUrlManager))
         updatedStorage.addEntity(ModuleEntity(moduleName, allDependencies, source))
