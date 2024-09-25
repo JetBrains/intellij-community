@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,6 +23,7 @@ public final class JavaSdkUtil {
   public static @NotNull List<Path> getJdkClassesRoots(@NotNull Path home, boolean isJre) {
     Path[] jarDirs;
     Path fileName = home.getFileName();
+    Logger.getInstance(JavaSdkUtil.class).info("Jdk provided home is " + home);
     if (fileName != null && "Home".equals(fileName.toString()) && Files.exists(home.resolve("../Classes/classes.jar"))) {
       Path libDir = home.resolve("lib");
       Path classesDir = home.resolveSibling("Classes");
