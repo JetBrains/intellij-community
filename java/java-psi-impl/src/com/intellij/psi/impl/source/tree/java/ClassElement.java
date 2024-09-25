@@ -107,11 +107,15 @@ public class ClassElement extends CompositeElement implements Constants {
       }
     }
 
+    IElementType elementType = getElementType();
     ASTNode afterLast = last.getTreeNext();
     ASTNode next;
     for (ASTNode child = first; child != afterLast; child = next) {
       next = child.getTreeNext();
-      if (child.getElementType() == JavaElementType.METHOD && ((PsiMethod)SourceTreeToPsiMap.treeElementToPsi(child)).isConstructor()) {
+      if (child.getElementType() == JavaElementType.METHOD
+          && ((PsiMethod)SourceTreeToPsiMap.treeElementToPsi(child)).isConstructor()
+          && elementType != IMPLICIT_CLASS && elementType != ANONYMOUS_CLASS // can't declare constructor, code has errors
+      ) {
         ASTNode oldIdentifier = ((CompositeElement)child).findChildByRole(ChildRole.NAME);
         ASTNode newIdentifier = findChildByRole(ChildRole.NAME).copyElement();
         newIdentifier.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(this));
@@ -156,9 +160,9 @@ public class ClassElement extends CompositeElement implements Constants {
     if (firstAdded.getElementType() == ENUM_CONSTANT) {
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
       for (ASTNode child = ((ASTNode)first).getTreeNext(); child != null; child = child.getTreeNext()) {
-        final IElementType elementType = child.getElementType();
-        if (elementType == COMMA || elementType == SEMICOLON) break;
-        if (elementType == ENUM_CONSTANT) {
+        final IElementType childElementType = child.getElementType();
+        if (childElementType == COMMA || childElementType == SEMICOLON) break;
+        if (childElementType == ENUM_CONSTANT) {
           TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, first, Boolean.FALSE);
           break;
@@ -166,9 +170,9 @@ public class ClassElement extends CompositeElement implements Constants {
       }
 
       for (ASTNode child = ((ASTNode)first).getTreePrev(); child != null; child = child.getTreePrev()) {
-        final IElementType elementType = child.getElementType();
-        if (elementType == COMMA || elementType == SEMICOLON) break;
-        if (elementType == ENUM_CONSTANT) {
+        final IElementType childElementType = child.getElementType();
+        if (childElementType == COMMA || childElementType == SEMICOLON) break;
+        if (childElementType == ENUM_CONSTANT) {
           TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
           super.addInternal(comma, comma, child, Boolean.FALSE);
           break;
