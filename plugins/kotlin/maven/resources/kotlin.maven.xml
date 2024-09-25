@@ -13,7 +13,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
-    <importer implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenImporterEx" />
     <importing.workspaceConfigurator implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenImporterEx"/>
     <importer implementation="org.jetbrains.kotlin.idea.maven.KotlinCodeStyleMavenImporter" />
 

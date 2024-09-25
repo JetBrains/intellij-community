@@ -72,7 +72,6 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
         project: Project,
         mavenProject: MavenProject
     ) {
-        if (!isMigratedToConfigurator) return
         storage.modifyModuleEntity(module) {
             this.kotlinSettings += createWorkspaceEntity(module)
         }
@@ -89,8 +88,6 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
         project: Project,
         mavenProject: MavenProject
     ) {
-        if (!isMigratedToConfigurator) return
-
         val moduleName = module.name
         val sourceRoots = ArrayUtil.toStringArray(module.getSourceRootUrls(false))
         val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return
@@ -249,10 +246,6 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             }
             this.targetPlatform = kotlinFacetSettings.targetPlatform?.serializeComponentPlatforms()
         }
-    }
-
-    override fun isMigratedToConfigurator(): Boolean {
-        return KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled
     }
 
     private fun getDefaultTargetPlatform(project: Project): TargetPlatform {
