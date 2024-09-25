@@ -25,7 +25,10 @@ class EmbeddingsStorageManagerWrapper<KeyT>(
     query: String, limit: Int, similarityThreshold: Float? = null,
   ): List<ScoredText> {
     val result = storageManager.search(project, indexId, query, limit, similarityThreshold)
-      .map { (id, similarity) -> ScoredText(keyProvider.findEntityId(project, indexId, id), similarity) }
+      .map { (id, similarity) ->
+        val entityId = keyProvider.findEntityId(project, indexId, id)
+        ScoredText(entityId, similarity)
+      }
     return result
   }
 

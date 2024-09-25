@@ -3,6 +3,7 @@ package com.intellij.platform.ml.embeddings.indexer.configuration
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.embeddings.indexer.keys.EmbeddingStorageKeyProvider
+import com.intellij.platform.ml.embeddings.indexer.keys.IndexLongKeyProvider
 import com.intellij.platform.ml.embeddings.indexer.keys.IntegerStorageKeyProvider
 import com.intellij.platform.ml.embeddings.indexer.storage.NativeServerTextEmbeddingsStorageManager
 import com.intellij.platform.ml.embeddings.indexer.storage.TextEmbeddingsStorageManager
@@ -13,7 +14,12 @@ class NativeServerEmbeddingsConfiguration: EmbeddingsConfiguration<Long> {
   }
 
   override fun getKeyProvider(): EmbeddingStorageKeyProvider<Long> {
-    return IntegerStorageKeyProvider.getInstance()
+    return if (Registry.`is`("intellij.platform.ml.embeddings.use.file.based.index")) {
+      IndexLongKeyProvider.getInstance()
+    }
+    else {
+      IntegerStorageKeyProvider.getInstance()
+    }
   }
 
   override fun isEnabled(): Boolean {

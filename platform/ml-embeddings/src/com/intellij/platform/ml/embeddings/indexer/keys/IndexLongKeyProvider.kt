@@ -1,0 +1,57 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ml.embeddings.indexer.keys
+
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.ml.embeddings.indexer.CLASS_NAME_EMBEDDING_INDEX_NAME
+import com.intellij.platform.ml.embeddings.indexer.EmbeddingKey
+import com.intellij.platform.ml.embeddings.indexer.IndexId
+import com.intellij.platform.ml.embeddings.indexer.SYMBOL_NAME_EMBEDDING_INDEX_NAME
+import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
+import com.intellij.platform.ml.embeddings.indexer.entities.LongIndexableEntity
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.indexing.FileBasedIndex
+
+@Service(Service.Level.APP)
+internal class IndexLongKeyProvider : EmbeddingStorageKeyProvider<Long> {
+  companion object {
+    fun getInstance(): IndexLongKeyProvider = service()
+  }
+
+  override suspend fun findKey(project: Project, indexId: IndexId, entity: IndexableEntity): Long {
+    return (entity as LongIndexableEntity).longId
+  }
+
+  override suspend fun findEntityId(project: Project, indexId: IndexId, key: Long): String {
+    val fileId = (key shr 32).toInt()
+    val file = VirtualFileManager.getInstance().findFileById(fileId) ?: return ""
+
+    val hash = key.toInt()
+
+    var result = ""
+
+    val index = when (indexId) {
+      IndexId.ACTIONS -> return "" // todo
+      IndexId.FILES -> return "" // todo
+      IndexId.CLASSES -> CLASS_NAME_EMBEDDING_INDEX_NAME
+      IndexId.SYMBOLS -> SYMBOL_NAME_EMBEDDING_INDEX_NAME
+    }
+
+    FileBasedIndex.getInstance().processValues(
+      /* indexId = */ index,
+      /* dataKey = */ EmbeddingKey.fromLong(key),
+      /* inFile = */ file,
+      /* processor = */ FileBasedIndex.ValueProcessor { _, value ->
+      if (value.hashCode() == hash) {
+        result = value
+        return@ValueProcessor false
+      }
+      true
+    },
+      /* filter = */ GlobalSearchScope.fileScope(project, file))
+
+    return result
+  }
+}
