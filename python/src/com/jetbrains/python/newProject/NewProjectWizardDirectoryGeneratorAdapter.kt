@@ -6,6 +6,7 @@ import com.intellij.ide.wizard.GeneratorNewProjectWizard
 import com.intellij.ide.wizard.NewProjectWizardStepPanel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectGeneratorBase
 import com.intellij.platform.GeneratorPeerImpl
@@ -33,7 +34,7 @@ open class NewProjectWizardDirectoryGeneratorAdapter<T : Any>(val wizard: Genera
   override fun createPeer(): ProjectGeneratorPeer<T> {
     val context = WizardContext(null) {}
     return object : GeneratorPeerImpl<T>() {
-      override fun getComponent(): JComponent {
+      override fun getComponent(myLocationField: TextFieldWithBrowseButton, checkValid: Runnable): JComponent {
         panel = NewProjectWizardStepPanel(wizard.createStep(context))
         return panel.component
       }

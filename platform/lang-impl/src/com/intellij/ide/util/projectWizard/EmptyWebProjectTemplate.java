@@ -4,6 +4,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectGeneratorPeer;
@@ -40,14 +41,16 @@ public class EmptyWebProjectTemplate extends WebProjectTemplate<Object> {
   @Override
   public @NotNull ProjectGeneratorPeer<Object> createPeer() {
     return new ProjectGeneratorPeer<>() {
+
       @Override
-      public @NotNull JComponent getComponent() {
+      public @NotNull JComponent getComponent(@NotNull TextFieldWithBrowseButton myLocationField,
+                                              @NotNull Runnable checkValid) {
         return new JPanel();
       }
 
       @Override
       public void buildUI(@NotNull SettingsStep settingsStep) {
-        settingsStep.addSettingsComponent(getComponent());
+        settingsStep.addSettingsComponent(new JPanel());
       }
 
       @Override

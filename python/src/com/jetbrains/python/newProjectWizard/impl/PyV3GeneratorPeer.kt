@@ -2,6 +2,7 @@
 package com.jetbrains.python.newProjectWizard.impl
 
 import com.intellij.ide.util.projectWizard.SettingsStep
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.ProjectGeneratorPeer
 import com.jetbrains.python.newProjectWizard.ProjectPathFlow
@@ -21,7 +22,7 @@ internal class PyV3GeneratorPeer<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecifi
   private val panel: PyV3VUI<*> = PyV3VUI(settings, projectPath, specificUiAndSettings, allowedInterpreterTypes)
 
 
-  override fun getComponent(): JComponent = panel.mainPanel
+  override fun getComponent(myLocationField: TextFieldWithBrowseButton, checkValid: Runnable): JComponent = panel.mainPanel
 
   override fun buildUI(settingsStep: SettingsStep) = Unit
 

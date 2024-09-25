@@ -77,7 +77,7 @@ public class ProjectSpecificSettingsStep<T extends PyNewProjectSettings> extends
   protected @Nullable JPanel createAdvancedSettings() {
     JComponent advancedSettings = null;
     if (myProjectGenerator instanceof WebProjectTemplate) {
-      advancedSettings = getPeer().getComponent();
+      advancedSettings = getPeer().getComponent(myLocationField, () -> checkValid());
     }
     if (advancedSettings != null) {
       final JPanel jPanel = new JPanel(new VerticalFlowLayout());

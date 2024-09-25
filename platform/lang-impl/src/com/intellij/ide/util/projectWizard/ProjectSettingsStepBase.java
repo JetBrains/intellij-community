@@ -67,7 +67,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   private static final String DEFAULT_PROJECT_NAME = "untitled";
   private final @NlsSafe @NotNull String myNewProjectName;
   /**
-   * If {@link ProjectGeneratorPeer#getComponent()} is Kotlin DSL UI, we store it here and use for validation
+   * If {@link ProjectGeneratorPeer#getComponent(TextFieldWithBrowseButton, Runnable)} is Kotlin DSL UI, we store it here and use for validation
    */
   @Nullable
   private DialogPanelWrapper myDialogPanelWrapper;
@@ -333,7 +333,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
 
   protected @Nullable JPanel createAdvancedSettings() {
     final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
-    var component = getPeer().getComponent();
+    var component = getPeer().getComponent(myLocationField, () -> checkValid());
     // If a component is a DialogPanel, created with Kotlin DSL UI,
     // it may have validation which must be obeyed as is done for DialogWrapper
     if (component instanceof DialogPanel dialogPanel) {
