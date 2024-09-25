@@ -4,6 +4,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -30,6 +31,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Query;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +107,11 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
         if (path != null) {
           final MemberNodeBase<M> node = (MemberNodeBase)path.getLastPathComponent();
           myAlarm.cancelAllRequests();
-          myAlarm.addRequest(() -> updateEditorTexts(node), 300);
+          myAlarm.addRequest(() -> {
+            try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162969")) {
+              updateEditorTexts(node);
+            }
+          }, 300);
         }
       }
     };

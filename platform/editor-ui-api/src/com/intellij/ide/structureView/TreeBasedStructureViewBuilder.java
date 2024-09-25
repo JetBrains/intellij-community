@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +32,10 @@ public abstract class TreeBasedStructureViewBuilder implements StructureViewBuil
 
   @Override
   public @NotNull StructureView createStructureView(@Nullable FileEditor fileEditor, @NotNull Project project) {
-    StructureViewModel model = createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null);
+    StructureViewModel model;
+    try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162970")) {
+      model = createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null);
+    }
     var view = createStructureView(fileEditor, project, model);
     Disposer.register(view, model);
     return view;
