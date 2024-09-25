@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.debugger
 
 import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.engine.jdi.StackFrameProxy
 import com.intellij.debugger.ui.tree.ExtraDebugNodesProvider
@@ -29,7 +30,12 @@ private const val THREADING_SUPPORT_FQN = "com.intellij.openapi.application.impl
 internal class DebugeeIdeStateRenderer : ExtraDebugNodesProvider {
   override fun addExtraNodes(evaluationContext: EvaluationContext, children: XValueChildrenList) {
     if (!Registry.`is`("devkit.debugger.show.ide.state")) return
-    val supportClass = evaluationContext.debugProcess.findClass(evaluationContext, SUPPORT_CLASS_FQN, null) ?: return
+    val supportClass = try {
+      evaluationContext.debugProcess.findClass(evaluationContext, SUPPORT_CLASS_FQN, null) ?: return
+    }
+    catch (_: EvaluateException) {
+      return
+    }
     val getStateMethod = supportClass.methodsByName(GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE).singleOrNull() ?: return
     val state = evaluationContext.debugProcess.invokeMethod(evaluationContext, supportClass as ClassType, getStateMethod, emptyList<Value>()) as ObjectReference?
     if (state == null) return
