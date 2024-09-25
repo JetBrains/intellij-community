@@ -218,15 +218,14 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     // if still not consumed, handle the event by the default JTextComponent logic.
     //    super.processInputMethodEvent(e);
 
-    if (!e.isConsumed() && editor.isDefaultInputMethodHandler()) {
+    if (!e.isConsumed() && !editor.isDisposed()) {
+      InputMethodListener listener = editor.getInputMethodSupport().getListener();
       switch (e.getID()) {
         case InputMethodEvent.INPUT_METHOD_TEXT_CHANGED:
-          editor.replaceInputMethodText(e);
-          // No breaks over here.
-
+          listener.inputMethodTextChanged(e);
+          break;
         case InputMethodEvent.CARET_POSITION_CHANGED:
-          editor.inputMethodCaretPositionChanged(e);
-          e.consume();
+          listener.caretPositionChanged(e);
           break;
       }
     }
@@ -250,7 +249,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   @Override
   public @Nullable InputMethodRequests getInputMethodRequests() {
-    return IdeEventQueue.getInstance().isInputMethodEnabled() ? editor.getInputMethodRequests() : null;
+    return IdeEventQueue.getInstance().isInputMethodEnabled() ? editor.getInputMethodSupport().getInputMethodRequestsSwingWrapper() : null;
   }
 
   @DirtyUI

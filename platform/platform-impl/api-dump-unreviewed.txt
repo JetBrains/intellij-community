@@ -12692,6 +12692,8 @@ f:com.intellij.openapi.editor.impl.EditorImpl$CaretRectangle
 - f:myIsRtl:Z
 - f:myPoint:java.awt.geom.Point2D
 - f:myWidth:F
+f:com.intellij.openapi.editor.impl.EditorInputMethodSupport
+- <init>(java.awt.im.InputMethodRequests,java.awt.event.InputMethodListener):V
 f:com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl
 - <init>():V
 - addListener(java.lang.Runnable):V

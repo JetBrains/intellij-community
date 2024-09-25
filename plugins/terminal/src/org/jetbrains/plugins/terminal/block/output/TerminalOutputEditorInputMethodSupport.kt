@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.EditorInputMethodSupport
 import com.intellij.openapi.editor.impl.InputMethodInlayRenderer
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
@@ -37,6 +38,15 @@ internal class TerminalOutputEditorInputMethodSupport(
   fun install(parentDisposable: Disposable) {
     check(editor.isViewer)
 
+    val mouseListener = object : MouseAdapter() {
+      override fun mousePressed(e: MouseEvent?) {
+        if (inlay != null && !editor.isDisposed) {
+          editor.contentComponent.getInputContext()?.endComposition()
+        }
+      }
+    }
+    editor.contentComponent.addMouseListener(mouseListener)
+
     val inputMethodListener = object : InputMethodListener {
       override fun inputMethodTextChanged(event: InputMethodEvent) {
         if (!editor.isDisposed) {
@@ -49,23 +59,12 @@ internal class TerminalOutputEditorInputMethodSupport(
         event.consume()
       }
     }
-    editor.contentComponent.addInputMethodListener(inputMethodListener)
 
-    val mouseListener = object : MouseAdapter() {
-      override fun mousePressed(e: MouseEvent?) {
-        if (inlay != null && !editor.isDisposed) {
-          editor.contentComponent.getInputContext()?.endComposition()
-        }
-      }
-    }
-    editor.contentComponent.addMouseListener(mouseListener)
-
-    (editor as EditorImpl).setInputMethodRequests(inputMethodRequests)
+    (editor as EditorImpl).setInputMethodSupport(EditorInputMethodSupport(inputMethodRequests, inputMethodListener))
 
     Disposer.register(parentDisposable) {
-      editor.contentComponent.removeInputMethodListener(inputMethodListener)
       editor.contentComponent.removeMouseListener(mouseListener)
-      editor.setInputMethodRequests(null)
+      editor.setInputMethodSupport(null)
     }
   }
 

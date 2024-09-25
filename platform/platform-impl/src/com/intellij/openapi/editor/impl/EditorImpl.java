@@ -273,7 +273,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int mySavedCaretOffsetForDNDUndoHack;
   private final List<FocusChangeListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private InputMethodRequestsHolder myInputMethodRequestsHolder;
+  private EditorInputMethodSupport myInputMethodSupport;
   private final MouseDragSelectionEventHandler mouseDragHandler = new MouseDragSelectionEventHandler(e -> {
     processMouseDragged(e);
     return Unit.INSTANCE;
@@ -2254,19 +2254,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return handler != null && handler.isComposedTextShown();
   }
 
-  /**
-   * Returns true if the default logic ({@link MyInputMethodHandler}) should handle input method events.
-   * Customize it with: (a) `{@link #setInputMethodRequests(InputMethodRequests)}` and
-   * (b) `editor.contentComponent.addInputMethodListener(inputMethodListener)`.
-   */
-  boolean isDefaultInputMethodHandler() {
-    InputMethodRequestsHolder holder = myInputMethodRequestsHolder;
-    return holder == null || holder.asMyHandler() != null;
-  }
-
   private @Nullable MyInputMethodHandler getMyInputMethodHandler() {
-    InputMethodRequestsHolder holder = myInputMethodRequestsHolder;
-    return holder != null ? holder.asMyHandler() : null;
+    EditorInputMethodSupport support = myInputMethodSupport;
+    return support != null && support.getRequests() instanceof MyInputMethodHandler handler ? handler : null;
   }
 
   @Override
@@ -3756,37 +3746,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     mouseSelectionStateAlarm.cancel();
   }
 
-  void replaceInputMethodText(@NotNull InputMethodEvent e) {
-    if (isReleased) return;
-    MyInputMethodHandler handler = getOrInitInputMethodRequestsHolder().asMyHandler();
-    if (handler != null) {
-      handler.replaceInputMethodText(e);
+  @RequiresEdt(generateAssertion = false)
+  @NotNull EditorInputMethodSupport getInputMethodSupport() {
+    if (myInputMethodSupport == null) {
+      MyInputMethodHandler handler = new MyInputMethodHandler();
+      myInputMethodSupport = new EditorInputMethodSupport(handler, new MyInputMethodListener(handler));
     }
-  }
-
-  void inputMethodCaretPositionChanged(@NotNull InputMethodEvent e) {
-    if (isReleased) return;
-    MyInputMethodHandler handler = getOrInitInputMethodRequestsHolder().asMyHandler();
-    if (handler != null) {
-      handler.setInputMethodCaretPosition(e);
-    }
-  }
-
-  @Nullable InputMethodRequests getInputMethodRequests() {
-    return getOrInitInputMethodRequestsHolder().myInputMethodRequestsSwingWrapper;
-  }
-
-  private @NotNull InputMethodRequestsHolder getOrInitInputMethodRequestsHolder() {
-    if (myInputMethodRequestsHolder == null) {
-      myInputMethodRequestsHolder = new InputMethodRequestsHolder(new MyInputMethodHandler());
-    }
-    return myInputMethodRequestsHolder;
+    return myInputMethodSupport;
   }
 
   @ApiStatus.Internal
   @RequiresEdt(generateAssertion = false)
-  public void setInputMethodRequests(@Nullable InputMethodRequests inputMethodRequests) {
-    myInputMethodRequestsHolder = new InputMethodRequestsHolder(inputMethodRequests);
+  public void setInputMethodSupport(@Nullable EditorInputMethodSupport inputMethodSupport) {
+    myInputMethodSupport = inputMethodSupport;
   }
 
   @Override
@@ -3912,11 +3884,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
 
-  private static final class MyInputMethodHandleSwingThreadWrapper implements InputMethodRequests {
+  static final class MyInputMethodHandleSwingThreadWrapper implements InputMethodRequests {
     @NotNull
     private final InputMethodRequests myDelegate;
 
-    private MyInputMethodHandleSwingThreadWrapper(@NotNull InputMethodRequests delegate) {
+    MyInputMethodHandleSwingThreadWrapper(@NotNull InputMethodRequests delegate) {
       myDelegate = delegate;
     }
 
@@ -3961,17 +3933,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static final class InputMethodRequestsHolder {
-    private final @Nullable InputMethodRequests myInputMethodRequests;
-    private final @Nullable InputMethodRequests myInputMethodRequestsSwingWrapper;
+  private final class MyInputMethodListener implements InputMethodListener {
 
-    private InputMethodRequestsHolder(@Nullable InputMethodRequests imRequests) {
-      myInputMethodRequests = imRequests;
-      myInputMethodRequestsSwingWrapper = imRequests != null ? new MyInputMethodHandleSwingThreadWrapper(imRequests) : null;
+    private final MyInputMethodHandler myHandler;
+
+    private MyInputMethodListener(@NotNull MyInputMethodHandler handler) {
+      myHandler = handler;
     }
 
-    private @Nullable MyInputMethodHandler asMyHandler() {
-      return myInputMethodRequests instanceof MyInputMethodHandler handler ? handler : null;
+    @Override
+    public void inputMethodTextChanged(InputMethodEvent event) {
+      myHandler.replaceInputMethodText(event);
+      myHandler.setInputMethodCaretPosition(event);
+      event.consume();
+    }
+
+    @Override
+    public void caretPositionChanged(InputMethodEvent event) {
+      myHandler.setInputMethodCaretPosition(event);
+      event.consume();
     }
   }
 
