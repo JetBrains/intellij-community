@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.settingsSync.GitSettingsLog
 import com.intellij.settingsSync.SettingsSyncBundle
-import com.intellij.settingsSync.getCategory
+import com.intellij.settingsSync.getRoamableCategory
 import com.intellij.vcs.log.VcsFullCommitDetails
 import java.text.DateFormat
 import java.util.*
@@ -129,7 +129,7 @@ internal class ChangeRecord(commitId: Int,
       if (fileName == GitSettingsLog.PLUGINS_FILE) return SettingsCategory.PLUGINS
 
       //workaround empty category
-      return getCategory(fileName)?.first ?: SettingsCategory.OTHER
+      return getRoamableCategory(fileName)?.first ?: SettingsCategory.OTHER
     }
 
     val changesCategories = changes.map { getChangeCategory(it) }.distinct().sortedBy { getCategoryOrder(it) }.map { toString(it) }

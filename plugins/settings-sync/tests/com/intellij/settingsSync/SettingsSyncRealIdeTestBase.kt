@@ -4,21 +4,17 @@ import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.StateLoadPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil.createTempDirectory
-import com.intellij.settingsSync.GitSettingsLog.Companion
-import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.replaceService
-import com.intellij.util.progress.sleepCancellable
+import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
@@ -27,25 +23,53 @@ import java.lang.reflect.Constructor
 import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
-import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
 
 internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
   protected lateinit var componentStore: TestComponentStore
+  val testPluginDescriptor: DefaultPluginDescriptor = DefaultPluginDescriptor("test")
 
   @BeforeEach
   fun setupComponentStore() {
     componentStore = TestComponentStore(configDir)
     application.replaceService(IComponentStore::class.java, componentStore, disposable)
     //warm up
+    application.registerService(ExportableNonRoamable::class.java, ExportableNonRoamable::class.java, testPluginDescriptor, false)
+    application.registerService(Roamable::class.java, Roamable::class.java, testPluginDescriptor, false)
+    //application.registerService(Roamable::class.java, Roamable::class.java, false)
 
     application.processAllImplementationClasses { componentClass, plugin ->
       // do nothing
     }
   }
 
+  internal data class AState(@Attribute var foo: String = "")
+
+  @State(name = "SettingsSyncTestExportableNonRoamable",
+         category = SettingsCategory.TOOLS,
+         storages = [Storage("settings-sync-test.exportable-non-roamable.xml", roamingType = RoamingType.DISABLED, exportable = true)])
+  internal class ExportableNonRoamable : BaseComponent()
+
+  @State(name = "SettingsSyncTestRoamable",
+         storages = [Storage("settings-sync-test.roamable.xml", roamingType = RoamingType.DEFAULT)],
+         category = SettingsCategory.UI)
+  internal class Roamable : BaseComponent()
+
+  internal open class BaseComponent : PersistentStateComponent<AState> {
+    var aState = AState()
+
+    override fun getState() = aState
+
+    override fun loadState(state: AState) {
+      this.aState = state
+    }
+  }
+
+
   @AfterEach
   fun resetComponentStatesToDefault() {
+    application.unregisterService(ExportableNonRoamable::class.java)
+    application.unregisterService(Roamable::class.java)
     componentStore.resetComponents()
   }
 

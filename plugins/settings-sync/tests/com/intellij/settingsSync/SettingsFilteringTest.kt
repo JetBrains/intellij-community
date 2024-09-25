@@ -1,6 +1,7 @@
 package com.intellij.settingsSync
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
+import com.intellij.idea.TestFor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
@@ -71,5 +72,11 @@ class SettingsFilteringTest : LightPlatformTestCase() {
 
   fun `test settings sync settings always synchronized` () {
     assertTrue(isSyncCategoryEnabled("settingsSync.xml"))
+  }
+
+  @TestFor(issues = ["IJPL-162877"])
+  fun `test dont sync non-roamable components`() {
+    assertFalse(isSyncCategoryEnabled("advancedSettings.xml"))
+    assertFalse(isSyncCategoryEnabled("trustedPaths.xml"))
   }
 }

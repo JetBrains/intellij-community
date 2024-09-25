@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
+import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -14,6 +15,7 @@ import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.nio.charset.Charset
 import java.time.Instant
@@ -293,12 +295,53 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     testVariousComponentsShouldBeSyncedOrNot(Roamable(), expectedToBeSynced = true)
   }
 
+
+  @Test
+  @TestFor(issues = ["IJPL-162877"])
+  fun `don't sync non-roamable files`() = timeoutRunBlockingAndStopBridge {
+    val nonRoamable = ExportableNonRoamable()
+
+    nonRoamable.init()
+    val generalSettings = GeneralSettings.getInstance().init()
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+
+    val generalSettingsState = GeneralSettings().apply {
+      isSaveOnFrameDeactivation = false
+    }.toFileState()
+    val nonRoamableState = ExportableNonRoamable().apply {
+      aState.foo = "bar"
+    }.toFileState()
+
+    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(
+      MetaInfo(Instant.now(), getLocalApplicationInfo()),
+      setOf(generalSettingsState, nonRoamableState),
+      null, emptyMap(), emptySet()
+    ))
+
+    waitForSettingsToBeApplied(generalSettings) {
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+    }
+    Assertions.assertFalse(generalSettings.isSaveOnFrameDeactivation)
+    Assertions.assertTrue(nonRoamable.aState.foo == "")
+
+    bridge.waitForAllExecuted()
+
+    val state = nonRoamable::class.annotations.find { it is State } as State
+    val file = state.storages.first().value
+
+    // we shouldn't drop non-roamable files as they might be used by other IDEs
+    val syncCopy = settingsSyncStorage.resolve("options").resolve(file)
+    val localCopy = configDir.resolve("options").resolve(file)
+    Assertions.assertTrue(syncCopy.exists(), "File should be copied from server")
+    Assertions.assertFalse(localCopy.exists(), "File should not be updated (it's not roamamble)")
+  }
+
+
   private suspend fun testVariousComponentsShouldBeSyncedOrNot(component: BaseComponent, expectedToBeSynced: Boolean) {
     component.aState.foo = "bar"
     runBlocking {
       application.componentStore.saveComponent(component)
     }
-    application.registerComponentImplementation(component.javaClass, component.javaClass, false)
 
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
@@ -312,27 +355,6 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     }
     else {
       Assertions.assertFalse(fileExists, assertMessage)
-    }
-  }
-
-  private data class AState(@Attribute var foo: String = "")
-
-  @State(name = "SettingsSyncTestExportableNonRoamable",
-         storages = [Storage("settings-sync-test.exportable-non-roamable.xml", roamingType = RoamingType.DISABLED, exportable = true)])
-  private class ExportableNonRoamable : BaseComponent()
-
-  @State(name = "SettingsSyncTestRoamable",
-         storages = [Storage("settings-sync-test.roamable.xml", roamingType = RoamingType.DEFAULT)],
-         category = SettingsCategory.UI)
-  private class Roamable : BaseComponent()
-
-  private open class BaseComponent : PersistentStateComponent<AState> {
-    var aState = AState()
-
-    override fun getState() = aState
-
-    override fun loadState(state: AState) {
-      this.aState = state
     }
   }
 

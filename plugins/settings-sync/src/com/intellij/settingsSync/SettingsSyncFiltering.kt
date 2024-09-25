@@ -16,7 +16,7 @@ internal fun isSyncCategoryEnabled(fileSpec: String): Boolean {
   if (rawFileSpec == SettingsSyncSettings.FILE_SPEC)
     return true
 
-  val (category, subCategory) = getSchemeCategory(rawFileSpec) ?: getCategory(rawFileSpec) ?: return false
+  val (category, subCategory) = getSchemeCategory(rawFileSpec) ?: getRoamableCategory(rawFileSpec) ?: return false
 
   if (category != SettingsCategory.OTHER && SettingsSyncSettings.getInstance().isCategoryEnabled(category)) {
     if (subCategory != null) {
@@ -33,23 +33,29 @@ private fun removeOsPrefix(fileSpec: String): String {
   return if (fileSpec.startsWith(osPrefix)) StringUtil.trimStart(fileSpec, osPrefix) else fileSpec
 }
 
-private fun getCategory(fileName: String, componentClasses: List<Class<PersistentStateComponent<Any>>>): Pair<SettingsCategory, String?> {
+private fun getRoamableCategory(fileName: String, componentClasses: List<Class<PersistentStateComponent<Any>>>): Pair<SettingsCategory, String?> {
   componentClasses.forEach {
     val category = ComponentCategorizer.getCategory(it)
+    if (category == SettingsCategory.OTHER) return@forEach
 
-    if (category != SettingsCategory.OTHER) {
-      // Once found, ignore any other possibly conflicting definitions
-      return (category to getSubCategory(fileName))
+    val state = it.getAnnotation(State::class.java)
+    val storage = state.storages.find { it.value == fileName }
+    if (storage == null || !storage.roamingType.isRoamable) {
+      return@forEach
     }
+
+    // Once found, ignore any other possibly conflicting definitions
+    return (category to getSubCategory(fileName))
   }
+
 
   return SettingsCategory.OTHER to null
 }
 
-private val categoryCache: ConcurrentHashMap<String, Pair<SettingsCategory, String?>> = ConcurrentHashMap()
+private val roamambleCategoryCache: ConcurrentHashMap<String, Pair<SettingsCategory, String?>?> = ConcurrentHashMap()
 
-fun getCategory(fileName: String): Pair<SettingsCategory, String?>? {
-  categoryCache[fileName]?.let { cachedCategory ->
+fun getRoamableCategory(fileName: String): Pair<SettingsCategory, String?>? {
+  roamambleCategoryCache[fileName]?.let { cachedCategory ->
     return cachedCategory
   }
 
@@ -59,9 +65,9 @@ fun getCategory(fileName: String): Pair<SettingsCategory, String?>? {
     return null
   }
 
-  val category = getSchemeCategory(fileName) ?: getCategory(fileName, componentClasses)
+  val category = getSchemeCategory(fileName) ?: getRoamableCategory(fileName, componentClasses)
 
-  categoryCache[fileName] = category
+  roamambleCategoryCache[fileName] = category
 
   return category
 }
