@@ -584,6 +584,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                                                                   @NotNull VfsAwareIndexStorageLayout<K, V> layout)
     throws StorageException, IOException {
     if (FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX && extension.getName() == FilenameIndex.NAME) {
+      //MAYBE RC: make FilenameIndexImpl implements CustomImplementationFileBasedIndexExtension, and return special index
+      //          implementation what doesn't 'index' anything, and delegates lookup to VFS?
+      //          Pro: we could drop a lot of if-s (like this one) across the codebase, and gather all the code into a nice
+      //          FilenameIndexOverVFS class
+      //          Cons: lookup with actual indexes involves deeper stacktraces, with many supplementary calls along the way,
+      //          so filename lookup may become more expensive being re-implemented that way (not sure it will be noticeable, though)
       return new EmptyIndex<>(extension);
     }
     else if (extension instanceof CustomImplementationFileBasedIndexExtension) {

@@ -613,7 +613,6 @@ com.intellij.util.indexing.FileBasedIndex$ValueProcessor
 a:com.intellij.util.indexing.FileBasedIndexExtension
 - com.intellij.util.indexing.IndexExtension
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- sf:USE_VFS_FOR_FILENAME_INDEX:Z
 - <init>():V
 - *:canBeShared():Z
 - a:dependsOnFileContent():Z

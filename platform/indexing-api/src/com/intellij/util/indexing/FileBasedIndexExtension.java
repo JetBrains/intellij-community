@@ -50,6 +50,7 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
     new ExtensionPointName<>("com.intellij.fileBasedIndex");
 
   // Use VFS-based implementation for FilenameIndex
+  @ApiStatus.Internal
   public static final boolean USE_VFS_FOR_FILENAME_INDEX = Boolean.parseBoolean(System.getProperty("indexing.filename.over.vfs", "true"));
 
   private static final int DEFAULT_CACHE_SIZE = 1024;
