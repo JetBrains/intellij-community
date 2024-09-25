@@ -17,6 +17,26 @@ import java.util.Set;
 import static org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 
 public final class MergeHelper {
+  /**
+   * Enhances the loops in the provided statement tree.
+   * Simple example:<p>
+   * before: <pre>
+   * {@code
+   * Iterator var6 = a.iterator();
+   * while(true) {
+   *  if (!var6.hasNext()) {
+   *    break;
+   *  }
+   *  A<String> s = (A)var6.next();
+   * }
+   * }
+   * </pre>
+   * after:
+   * <pre>
+   * {@code
+   * for(A<String> s : a) {}
+   * </pre>
+   */
   public static void enhanceLoops(Statement root) {
     while (enhanceLoopsRec(root)) /**/;
     SequenceHelper.condenseSequences(root);
@@ -714,6 +734,28 @@ public final class MergeHelper {
     return inv.isUnboxingCall() && isNextCall(inv.getInstance());
   }
 
+  /**
+   * Convert `while` to `do-while`.
+   * Simple synthetic example:<p>
+   * before: <pre>
+   * {@code
+   * while(true){
+   *   doSomething();
+   *   if (i >= 10) {
+   *     break;,
+   *   }
+   * }
+   * }
+   * </pre>
+   * after:
+   * <pre>
+   * {@code
+   * do {
+   *   doSomething();
+   * } while(i < 10);
+   * }
+   * </pre>
+   */
   public static boolean makeDoWhileLoops(RootStatement root) {
     if (makeDoWhileRec(root)) {
       SequenceHelper.condenseSequences(root);

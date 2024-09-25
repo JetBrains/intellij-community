@@ -12,6 +12,30 @@ import java.util.*;
 
 public final class EliminateLoopsHelper {
 
+  /**
+   * Remove loops from the given root statement. <p>
+   * Simple synthetic example:<p>
+   * before: <pre>
+   * {@code
+   * LABEL:
+   * while(true){
+   *   while(true){
+   *     doSomething();
+   *     break LABEL;
+   *   }
+   * }
+   * }
+   * </pre>
+   * after:
+   * <pre>
+   * {@code
+   * while(true){
+   *   doSomething();
+   *   break;
+   * }
+   * }
+   * </pre>
+   */
   public static boolean eliminateLoops(RootStatement root, StructMethod mt, StructClass cl) {
 
     boolean ret = eliminateLoopsRec(root);

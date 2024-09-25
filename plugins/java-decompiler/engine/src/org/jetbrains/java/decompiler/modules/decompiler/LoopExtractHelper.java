@@ -19,7 +19,29 @@ import java.util.Set;
 
 public final class LoopExtractHelper {
 
-
+  /**
+   * Analyzes the provided statement structure to identify and extract loop constructs.
+   * If any loops are successfully extracted, the statement sequences are condensed.<p>
+   * Simple synthetic example:<p>
+   * before: <pre>
+   * {@code
+   * while(true){
+   *  if (var1 >= 10){
+   *    break
+   *  }
+   *  doSomething();
+   * }
+   * }
+   * </pre>
+   * after:
+   * <pre>
+   * {@code
+   * while(var1 >= 10){
+   *  doSomething();
+   * }
+   * }
+   * </pre>
+   */
   public static boolean extractLoops(Statement root) {
 
     boolean res = (extractLoopsRec(root) != 0);

@@ -20,6 +20,9 @@ import java.util.stream.Collectors;
 
 public final class TryHelper
 {
+  /**
+   * Tries to convert `try` statement to `try-with-resource`
+   */
   public static boolean enhanceTryStats(RootStatement root, StructMethod mt) {
     boolean ret = makeTryWithResourceRec(root, mt, root.getDummyExit(), new ArrayList<>());
     if (ret) {

@@ -268,6 +268,26 @@ public class MethodProcessorRunnable implements Runnable {
     return finished;
   }
 
+  /**
+   * Clean monitor of synchronizer: <p>
+   * Simple synthetic example:<p>
+   * before: <pre>
+   * {@code
+   * var a = b; // a is not used anywhere
+   * synchronized (b){
+   *  doSomething();
+   * }
+   * }
+   * </pre>
+   * after:
+   * <pre>
+   * {@code
+   * synchronized (b){
+   *  doSomething();
+   * }
+   * }
+   * </pre>
+   */
   public static void cleanSynchronizedVar(Statement stat) {
     for (Statement st : stat.getStats()) {
       cleanSynchronizedVar(st);
