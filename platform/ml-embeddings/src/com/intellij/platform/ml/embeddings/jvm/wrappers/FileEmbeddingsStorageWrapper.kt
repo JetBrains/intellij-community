@@ -5,7 +5,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ml.embeddings.indexer.IndexId.FILES
-import com.intellij.platform.ml.embeddings.indexer.entities.IndexableFile
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettingsImpl
 import kotlinx.coroutines.CoroutineScope
 
@@ -16,7 +15,7 @@ import kotlinx.coroutines.CoroutineScope
  */
 @Service(Service.Level.PROJECT)
 class FileEmbeddingsStorageWrapper(project: Project, coroutineScope: CoroutineScope)
-  : AbstractEmbeddingsStorageWrapper<IndexableFile>(project, FILES, coroutineScope) {
+  : AbstractEmbeddingsStorageWrapper(project, FILES, coroutineScope) {
   override fun isEnabled(): Boolean = EmbeddingIndexSettingsImpl.getInstance().shouldIndexFiles
 
   companion object {

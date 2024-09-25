@@ -5,14 +5,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ml.embeddings.indexer.IndexId.CLASSES
-import com.intellij.platform.ml.embeddings.indexer.entities.IndexableClass
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettingsImpl
 import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
 class ClassEmbeddingsStorageWrapper(
   project: Project, cs: CoroutineScope,
-) : AbstractEmbeddingsStorageWrapper<IndexableClass>(project, CLASSES, cs) {
+) : AbstractEmbeddingsStorageWrapper(project, CLASSES, cs) {
   override fun isEnabled(): Boolean = EmbeddingIndexSettingsImpl.getInstance().shouldIndexClasses
 
   companion object {

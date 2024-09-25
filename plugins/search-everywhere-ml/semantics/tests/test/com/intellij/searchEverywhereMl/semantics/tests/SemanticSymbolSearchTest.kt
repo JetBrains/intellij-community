@@ -35,7 +35,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test basic semantics`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    assertEquals(5, storage.index.getSize())
+    assertEquals(5, storage.getSize())
 
     var neighbours = storage.searchNeighbours(modelService.embed("begin indexing"), 10, 0.5).asFlow().filterByModel()
     assertEquals(setOf("startIndexing", "ProjectIndexingTask"), neighbours)
@@ -49,7 +49,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test index ids are not duplicated`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/IndexProjectAction.kt")
-    assertEquals(1, storage.index.getSize())
+    assertEquals(1, storage.getSize())
   }
 
   fun `test search everywhere contributor`() = runTest(
@@ -78,7 +78,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test method renaming changes the index`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    assertEquals(5, storage.index.getSize())
+    assertEquals(5, storage.getSize())
 
     var neighbours = storage.streamSearchNeighbours(modelService.embed("begin indexing"), 0.5).filterByModel()
     assertEquals(setOf("ProjectIndexingTask", "startIndexing"), neighbours)
@@ -105,7 +105,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test removal of file with method changes the index`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    assertEquals(5, storage.index.getSize())
+    assertEquals(5, storage.getSize())
 
     var neighbours = storage.streamSearchNeighbours(modelService.embed("begin indexing"), 0.5).filterByModel()
     assertEquals(setOf("startIndexing", "ProjectIndexingTask"), neighbours)

@@ -5,13 +5,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ml.embeddings.indexer.IndexId.SYMBOLS
-import com.intellij.platform.ml.embeddings.indexer.entities.IndexableSymbol
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettingsImpl
 import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
 class SymbolEmbeddingsStorageWrapper(project: Project, cs: CoroutineScope)
-  : AbstractEmbeddingsStorageWrapper<IndexableSymbol>(project, SYMBOLS, cs) {
+  : AbstractEmbeddingsStorageWrapper(project, SYMBOLS, cs) {
   override fun isEnabled(): Boolean = EmbeddingIndexSettingsImpl.getInstance().shouldIndexSymbols
 
   companion object {

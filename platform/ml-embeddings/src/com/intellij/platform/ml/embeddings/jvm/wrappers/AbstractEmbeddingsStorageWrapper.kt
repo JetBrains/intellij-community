@@ -28,7 +28,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.div
 import kotlin.time.Duration.Companion.seconds
 
-abstract class AbstractEmbeddingsStorageWrapper<T : IndexableEntity>(
+abstract class AbstractEmbeddingsStorageWrapper(
   val project: Project,
   val indexId: IndexId,
   private val cs: CoroutineScope,
@@ -56,7 +56,7 @@ abstract class AbstractEmbeddingsStorageWrapper<T : IndexableEntity>(
   abstract fun isEnabled(): Boolean
 
   suspend fun addEntries(values: Iterable<Pair<EntityId, FloatTextEmbedding>>) {
-    accessTime.set(System.currentTimeMillis())
+    accessTime.set(System.nanoTime())
     if (isEnabled()) {
       indexLoadingMutex.withLock {
         load()
@@ -109,6 +109,12 @@ abstract class AbstractEmbeddingsStorageWrapper<T : IndexableEntity>(
       loadJob.join()
       emitAll(index.streamFindClose(queryEmbedding, similarityThreshold))
     }
+  }
+
+  suspend fun getSize(): Int {
+    accessTime.set(System.nanoTime())
+    loadIndex()
+    return index.getSize()
   }
 
   private suspend fun loadIndex() {

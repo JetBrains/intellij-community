@@ -69,9 +69,9 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
       add(VECTOR_COUNT.with(
         when (index) {
           ACTIONS -> ActionEmbeddingsStorageWrapper.getInstance().index.getSize()
-          FILES -> FileEmbeddingsStorageWrapper.getInstance(project!!).index.getSize()
-          CLASSES -> ClassEmbeddingsStorageWrapper.getInstance(project!!).index.getSize()
-          SYMBOLS -> SymbolEmbeddingsStorageWrapper.getInstance(project!!).index.getSize()
+          FILES -> FileEmbeddingsStorageWrapper.getInstance(project!!).getSize()
+          CLASSES -> ClassEmbeddingsStorageWrapper.getInstance(project!!).getSize()
+          SYMBOLS -> SymbolEmbeddingsStorageWrapper.getInstance(project!!).getSize()
         }.toLong()
       ))
       add(INDEX.with(index))

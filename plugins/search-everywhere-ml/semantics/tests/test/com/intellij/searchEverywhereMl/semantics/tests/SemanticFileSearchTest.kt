@@ -32,7 +32,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test basic semantics`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.getSize())
+    assertEquals(3, storage.getSize())
 
     var neighbours = storage.searchNeighbours(modelService.embed("index project job"), 10, 0.5).asFlow().filterByModel()
     assertEquals(setOf("IndexProjectAction.java", "ProjectIndexingTask.kt"), neighbours)
@@ -49,12 +49,12 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
     myFixture.copyFileToProject("java/IndexProjectAction.java", "src/second/IndexProjectAction.java")
     setupTest()
 
-    assertEquals(1, storage.index.getSize())
+    assertEquals(1, storage.getSize())
   }
 
   fun `test search everywhere contributor`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.getSize())
+    assertEquals(3, storage.getSize())
 
     val contributor = SemanticFileSearchEverywhereContributor(createEvent())
     Disposer.register(project, contributor)
@@ -74,7 +74,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test file renaming changes the index`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.getSize())
+    assertEquals(3, storage.getSize())
 
     var neighbours = storage.streamSearchNeighbours(modelService.embed("index project job"), 0.5).filterByModel()
     assertEquals(setOf("ProjectIndexingTask.kt", "IndexProjectAction.java"), neighbours)
@@ -97,7 +97,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test file removal changes the index`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.getSize())
+    assertEquals(3, storage.getSize())
 
     var neighbours = storage.streamSearchNeighbours(modelService.embed("index project job"), 0.5).filterByModel()
     assertEquals(setOf("IndexProjectAction.java", "ProjectIndexingTask.kt"), neighbours)
@@ -133,7 +133,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
 
     TimeoutUtil.sleep(2000) // wait for two seconds for index update
 
-    assertEquals(3, storage.index.getSize())
+    assertEquals(3, storage.getSize())
 
     neighbours = storage.streamSearchNeighbours(modelService.embed("index project job"), 0.5).filterByModel()
     assertEquals(setOf("IndexProjectAction.java", "ProjectIndexingTask.kt"), neighbours)

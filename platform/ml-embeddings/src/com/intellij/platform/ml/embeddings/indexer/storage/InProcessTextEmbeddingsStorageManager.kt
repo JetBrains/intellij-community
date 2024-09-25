@@ -49,7 +49,7 @@ class InProcessTextEmbeddingsStorageManager : TextEmbeddingsStorageManager<Entit
   }
 
   companion object {
-    private fun getWrapper(project: Project, indexId: IndexId): AbstractEmbeddingsStorageWrapper<*> {
+    private fun getWrapper(project: Project, indexId: IndexId): AbstractEmbeddingsStorageWrapper {
       return when (indexId) {
         IndexId.CLASSES -> ClassEmbeddingsStorageWrapper.getInstance(project)
         IndexId.FILES -> FileEmbeddingsStorageWrapper.getInstance(project)

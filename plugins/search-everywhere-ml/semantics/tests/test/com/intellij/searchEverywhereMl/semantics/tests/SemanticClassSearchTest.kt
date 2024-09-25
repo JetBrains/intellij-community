@@ -33,7 +33,7 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test basic semantics`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.getSize())
+    assertEquals(3, storage.getSize())
 
     var neighbours = storage.searchNeighbours(modelService.embed("index project job"), 10, 0.5).asFlow().filterByModel()
     assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours)
@@ -47,14 +47,14 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test index ids are not duplicated`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/IndexProjectAction.kt")
-    assertEquals(1, storage.index.getSize())
+    assertEquals(1, storage.getSize())
   }
 
   fun `test search everywhere contributor`() = runTest(
     timeout = 45.seconds // increased timeout because of a bug in class index
   ) {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.getSize())
+    assertEquals(3, storage.getSize())
 
     val contributor = SemanticClassSearchEverywhereContributor(createEvent())
     Disposer.register(project, contributor)
@@ -74,7 +74,7 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test class renaming changes the index`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.getSize())
+    assertEquals(3, storage.getSize())
 
     var neighbours = storage.streamSearchNeighbours(modelService.embed("index project job"), 0.5).filterByModel()
     assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours)
@@ -101,7 +101,7 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test removal of file with class changes the index`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.getSize())
+    assertEquals(3, storage.getSize())
 
     var neighbours = storage.streamSearchNeighbours(modelService.embed("index project job"), 0.5).filterByModel()
     assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours)
