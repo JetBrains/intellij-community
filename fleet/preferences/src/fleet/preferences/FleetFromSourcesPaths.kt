@@ -2,6 +2,7 @@
 package fleet.preferences
 
 import java.io.IOException
+import java.io.UncheckedIOException
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
@@ -70,6 +71,8 @@ object FleetFromSourcesPaths {
           }
         }
         catch (ignore: IOException) {
+        }
+        catch (ignore: UncheckedIOException) {
         }
       }
       directory = directory.parent
