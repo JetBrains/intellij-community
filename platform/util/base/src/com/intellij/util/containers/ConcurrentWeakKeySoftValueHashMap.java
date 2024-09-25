@@ -341,22 +341,33 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
 
   @Override
   public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
-    KeyReference<K, V> oldKeyReference = createHardKey(key);
-    ValueReference<K, V> oldValueReference = createValueReference(oldValue, myValueQueue);
-    ValueReference<K, V> newValueReference = createValueReference(newValue, myValueQueue);
+    HardKey<K, V> oldKeyReference = createHardKey(key);
+    ValueReference<K, V> oldValueReference = null;
+    try {
+      oldValueReference = createValueReference(oldValue, myValueQueue);
+      ValueReference<K, V> newValueReference = createValueReference(newValue, myValueQueue);
 
-    boolean replaced = myMap.replace(oldKeyReference, oldValueReference, newValueReference);
-    processQueues();
-    return replaced;
+      boolean replaced = myMap.replace(oldKeyReference, oldValueReference, newValueReference);
+      processQueues();
+      return replaced;
+    }
+    finally {
+      oldKeyReference.clear();
+    }
   }
 
   @Override
   public V replace(@NotNull K key, @NotNull V value) {
-    KeyReference<K, V> keyReference = createHardKey(key);
-    ValueReference<K, V> valueReference = createValueReference(value, myValueQueue);
-    ValueReference<K, V> result = myMap.replace(keyReference, valueReference);
-    V prev = result == null ? null : result.get();
-    processQueues();
-    return prev;
+    HardKey<K, V> keyReference = createHardKey(key);
+    try {
+      ValueReference<K, V> valueReference = createValueReference(value, myValueQueue);
+      ValueReference<K, V> result = myMap.replace(keyReference, valueReference);
+      V prev = result == null ? null : result.get();
+      processQueues();
+      return prev;
+    }
+    finally {
+      keyReference.clear();
+    }
   }
 }

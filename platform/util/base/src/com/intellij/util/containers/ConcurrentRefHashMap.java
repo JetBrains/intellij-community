@@ -301,23 +301,19 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       //noinspection unchecked
       Map.Entry<K,V> e = (Map.Entry<K,V>)o;
       V ev = e.getValue();
-
       HardKey<K> key = createHardKey(e.getKey());
-
-      boolean toRemove;
       try {
         V hv = myMap.get(key);
-        toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
+        boolean toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
         if (toRemove) {
           myMap.remove(key);
         }
+        processQueue();
+        return toRemove;
       }
       finally {
         key.clear();
       }
-      processQueue();
-
-      return toRemove;
     }
 
     @Override
@@ -351,23 +347,41 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   @Override
   public boolean remove(@NotNull Object key, @NotNull Object value) {
-    boolean removed = myMap.remove(createHardKey(key), value);
-    processQueue();
-    return removed;
+    HardKey<K> hardKey = createHardKey(key);
+    try {
+      boolean removed = myMap.remove(hardKey, value);
+      processQueue();
+      return removed;
+    }
+    finally {
+      hardKey.clear();
+    }
   }
 
   @Override
   public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
-    boolean replaced = myMap.replace(createHardKey(key), oldValue, newValue);
-    processQueue();
-    return replaced;
+    HardKey<K> hardKey = createHardKey(key);
+    try {
+      boolean replaced = myMap.replace(hardKey, oldValue, newValue);
+      processQueue();
+      return replaced;
+    }
+    finally {
+      hardKey.clear();
+    }
   }
 
   @Override
   public V replace(@NotNull K key, @NotNull V value) {
-    V replaced = myMap.replace(createHardKey(key), value);
-    processQueue();
-    return replaced;
+    HardKey<K> hardKey = createHardKey(key);
+    try {
+      V replaced = myMap.replace(hardKey, value);
+      processQueue();
+      return replaced;
+    }
+    finally {
+      hardKey.clear();
+    }
   }
 
   // MAKE SURE IT CONSISTENT WITH com.intellij.util.containers.ConcurrentHashMap
