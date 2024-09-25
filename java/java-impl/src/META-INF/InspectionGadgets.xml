@@ -2761,10 +2761,10 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids"
                      implementationClass="com.intellij.codeInspection.ForEachWithRecordPatternCanBeUsedInspection" cleanupTool="true"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
-                     shortName="DeconstructionCanBeUsed" enabledByDefault="false" level="INFORMATION"
+                     shortName="DeconstructionCanBeUsed" enabledByDefault="true" level="WARNING"
                      bundle="messages.InspectionGadgetsBundle" key="inspection.deconstruction.can.be.used.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids21"
-                     implementationClass="com.intellij.codeInspection.DeconstructionCanBeUsedInspection" cleanupTool="false"/>
+                     implementationClass="com.intellij.codeInspection.DeconstructionCanBeUsedInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CastCanBeReplacedWithVariable" enabledByDefault="true" level="INFORMATION"
                      bundle="messages.InspectionGadgetsBundle" key="inspection.cast.can.be.replaced.with.variable.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
