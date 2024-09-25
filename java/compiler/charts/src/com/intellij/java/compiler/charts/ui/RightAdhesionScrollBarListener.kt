@@ -17,6 +17,7 @@ internal class RightAdhesionScrollBarListener(
   private val shouldScroll: AutoScrollingType
 ) : AdjustmentListener, MouseWheelListener {
   private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("Compilation charts adjust value listener", 1)
+  private var lastZoomEvent = ZoomEvent.RESET
   private var updateShouldScrollTask: ScheduledFuture<*>? = null
   private var lastNewPosition: Point? = null
   override fun adjustmentValueChanged(e: AdjustmentEvent) {
@@ -68,17 +69,19 @@ internal class RightAdhesionScrollBarListener(
     shouldScroll.stop()
   }
 
-  fun increase() = applyZoomTransformation { adjust(viewport, viewport.getMiddlePoint(), ZOOM_IN_MULTIPLIER) }
+  fun increase() = applyZoomTransformation(ZoomEvent.IN) { adjust(viewport, viewport.getMiddlePoint(), ZOOM_IN_MULTIPLIER) }
 
-  fun decrease() = applyZoomTransformation { adjust(viewport, viewport.getMiddlePoint(), ZOOM_OUT_MULTIPLIER) }
+  fun decrease() = applyZoomTransformation(ZoomEvent.OUT) { adjust(viewport, viewport.getMiddlePoint(), ZOOM_OUT_MULTIPLIER) }
 
-  fun reset() = applyZoomTransformation {
+  fun reset() = applyZoomTransformation(ZoomEvent.RESET) {
     val shouldScrollAfterResetting = viewport.width >= viewport.viewSize.width
     lastNewPosition = reset(viewport, viewport.getMiddlePoint())
     if (shouldScrollAfterResetting) scrollToEnd()
   }
 
-  private fun applyZoomTransformation(transformation: Zoom.() -> Unit) {
+  private fun applyZoomTransformation(event: ZoomEvent, transformation: Zoom.() -> Unit) {
+    if (lastZoomEvent == ZoomEvent.RESET && event == ZoomEvent.RESET) return
+    lastZoomEvent = event
     disableShouldScroll()
     zoom.transformation()
     scheduleUpdateShouldScroll()
