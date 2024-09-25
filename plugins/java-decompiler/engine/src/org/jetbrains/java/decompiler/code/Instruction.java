@@ -96,6 +96,6 @@ public class Instruction {
   @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   public Instruction clone() {
-    return create(opcode, wide, group, bytecodeVersion, operands == null ? null : operands.clone(), length);
+    return create(opcode, wide, group, bytecodeVersion, operands == null ? null : operands.clone(), length, pool);
   }
 }
