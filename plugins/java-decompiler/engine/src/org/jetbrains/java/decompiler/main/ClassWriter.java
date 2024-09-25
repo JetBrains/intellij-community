@@ -777,72 +777,9 @@ public class ClassWriter {
         }
 
         if (cl.getRecordComponents() != null) {
-          StringBuilder buf = new StringBuilder("(");
-          for (StructRecordComponent rec : cl.getRecordComponents()) {
-            buf.append(rec.getDescriptor());
-          }
-          String desc = buf.append(")V").toString();
-          if (desc.equals(mt.getDescriptor())) {
-            boolean[] found = new boolean[1];
-            boolean hideConstructorAndGetters = DecompilerContext.getOption(IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS);
-            compact = hideConstructorAndGetters && methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> {
-              if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-                AssignmentExprent assignment = (AssignmentExprent)exprent;
-                if (assignment.getLeft() != null && assignment.getRight() != null &&
-                    assignment.getLeft().type == Exprent.EXPRENT_FIELD &&
-                    assignment.getRight().type == Exprent.EXPRENT_VAR) {
-                  int index = -1;
-                  for (StructRecordComponent component : cl.getRecordComponents()) {
-                    index++;
-                    if (component.getName() != null && component.getName().equals(((FieldExprent)assignment.getLeft()).getName())) {
-                      break;
-                    }
-                  }
-                  if (index == -1) return 1;
-                  StructMethodParametersAttribute parameters = mt.getAttribute(ATTRIBUTE_METHOD_PARAMETERS);
-                  if (parameters == null) return 1;
-                  List<StructMethodParametersAttribute.Entry> entries = parameters.getEntries();
-                  if (entries.size() <= index) return 1;
-                  StructMethodParametersAttribute.Entry entry = entries.get(index);
-                  if (entry.myName == null || !entry.myName.equals(((VarExprent)assignment.getRight()).getName())) {
-                    return 1;
-                  }
-                  Set<AnnotationExprent> recordComponentAnnotations = collectAllAnnotations(cl.getRecordComponents().get(index));
-                  VarType parameterType = descriptor != null ? descriptor.parameterTypes.get(index) : md.params[index];
-                  List<AnnotationExprent> paramAnnotations = collectParameterAnnotations(mt, parameterType, index);
-                  if (!recordComponentAnnotations.containsAll(paramAnnotations)) return 1;
-                  found[0] = true;
-
-                  return 0;
-                }
-                else if (assignment.getLeft().type == Exprent.EXPRENT_FIELD) {
-                  return 1;
-                }
-                //not really necessary, but it is safer
-                else if (assignment.getLeft() instanceof VarExprent varExprent) {
-                  StructMethodParametersAttribute parameters = mt.getAttribute(ATTRIBUTE_METHOD_PARAMETERS);
-                  if (parameters == null) return 1;
-                  List<StructMethodParametersAttribute.Entry> entries = parameters.getEntries();
-                  if (entries.stream().anyMatch(entry -> entry.myName != null && entry.myName.equals(varExprent.getName()))) {
-                    return 1;
-                  }
-                }
-              }
-              return found[0] ? 1 : 0;
-            });
-            if (compact) {
-              methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> {
-                if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-                  AssignmentExprent assignment = (AssignmentExprent) exprent;
-                  if (assignment.getLeft().type == Exprent.EXPRENT_FIELD) {
-                    return 2;
-                  }
-                }
-                return 0;
-              });
-              hideMethod = methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> 1);
-            }
-          }
+          RecordConstructorContext recordConstructorContext = tryToDeleteRecordConstructor(cl, mt, methodWrapper, md);
+          compact = recordConstructorContext.compact;
+          hideMethod = recordConstructorContext.hideConstructor;
         }
       }
       else if (CodeConstants.CLINIT_NAME.equals(name)) {
@@ -1029,6 +966,94 @@ public class ClassWriter {
     //tracer.setCurrentSourceLine(buffer.countLines(start_index_method));
 
     return !hideMethod;
+  }
+
+  /**
+   * Attempts to determine if a record constructor can be deleted based on the given parameters
+   * and performs certain transformations if applicable.
+   * If the constructor can be compact, unnecessary statements will be deleted
+   *
+   * @return a context object indicating whether to hide the constructor from decompilation output
+   *         and whether the method can be compacted
+   */
+  private static RecordConstructorContext tryToDeleteRecordConstructor(@NotNull StructClass cl,
+                                                                       @NotNull StructMethod mt,
+                                                                       @NotNull MethodWrapper methodWrapper,
+                                                                       @NotNull MethodDescriptor md) {
+    GenericMethodDescriptor descriptor = mt.getSignature();
+    boolean hideMethod = false;
+    boolean compact = false;
+    StringBuilder buf = new StringBuilder("(");
+    for (StructRecordComponent rec : cl.getRecordComponents()) {
+      buf.append(rec.getDescriptor());
+    }
+    String desc = buf.append(")V").toString();
+    if (desc.equals(mt.getDescriptor())) {
+      boolean[] found = new boolean[1];
+      boolean hideConstructorAndGetters = DecompilerContext.getOption(IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS);
+      compact = hideConstructorAndGetters && methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> {
+        if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+          AssignmentExprent assignment = (AssignmentExprent)exprent;
+          if (assignment.getLeft() != null && assignment.getRight() != null &&
+              assignment.getLeft().type == Exprent.EXPRENT_FIELD &&
+              assignment.getRight().type == Exprent.EXPRENT_VAR) {
+            int index = -1;
+            for (StructRecordComponent component : cl.getRecordComponents()) {
+              index++;
+              if (component.getName() != null && component.getName().equals(((FieldExprent)assignment.getLeft()).getName())) {
+                break;
+              }
+            }
+            if (index == -1) return 1;
+            StructMethodParametersAttribute parameters = mt.getAttribute(ATTRIBUTE_METHOD_PARAMETERS);
+            if (parameters == null) return 1;
+            List<StructMethodParametersAttribute.Entry> entries = parameters.getEntries();
+            if (entries.size() <= index) return 1;
+            StructMethodParametersAttribute.Entry entry = entries.get(index);
+            if (entry.myName == null || !entry.myName.equals(((VarExprent)assignment.getRight()).getName())) {
+              return 1;
+            }
+            Set<AnnotationExprent> recordComponentAnnotations = collectAllAnnotations(cl.getRecordComponents().get(index));
+            VarType parameterType = descriptor != null ? descriptor.parameterTypes.get(index) : md.params[index];
+            List<AnnotationExprent> paramAnnotations = collectParameterAnnotations(mt, parameterType, index);
+            if (!recordComponentAnnotations.containsAll(paramAnnotations)) return 1;
+            found[0] = true;
+
+            return 0;
+          }
+          else if (assignment.getLeft().type == Exprent.EXPRENT_FIELD) {
+            return 1;
+          }
+          //not really necessary, but it is safer
+          else if (assignment.getLeft() instanceof VarExprent varExprent) {
+            StructMethodParametersAttribute parameters = mt.getAttribute(ATTRIBUTE_METHOD_PARAMETERS);
+            if (parameters == null) return 1;
+            List<StructMethodParametersAttribute.Entry> entries = parameters.getEntries();
+            if (entries.stream().anyMatch(entry -> entry.myName != null && entry.myName.equals(varExprent.getName()))) {
+              return 1;
+            }
+          }
+        }
+        return found[0] ? 1 : 0;
+      });
+      if (compact) {
+        methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> {
+          if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+            AssignmentExprent assignment = (AssignmentExprent)exprent;
+            if (assignment.getLeft().type == Exprent.EXPRENT_FIELD) {
+              return 2;
+            }
+          }
+          return 0;
+        });
+        hideMethod = methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> 1);
+      }
+    }
+    return new RecordConstructorContext(hideMethod, compact);
+  }
+
+  record RecordConstructorContext(boolean hideConstructor, boolean compact) {
+
   }
 
   @NotNull
