@@ -38,7 +38,7 @@ val isFleetTestMode: Boolean by lazy { !isFleetDevMode && !isFleetDistributionMo
 val isFleetShortCircuitMode: Boolean by lazy {
   fleetFlag("fleet.shortCircuit", when {
     isFleetTestMode -> false
-    isFleetInternalDefaultValue -> Random.nextBoolean()
+    isFleetInternalDefaultValue -> false
     else -> true
   })
 }
