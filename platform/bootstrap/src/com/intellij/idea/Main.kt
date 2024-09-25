@@ -13,7 +13,7 @@ import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.project.impl.P3SupportInstaller
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.bootstrap.initMarketplace
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -23,9 +23,7 @@ import com.intellij.platform.ide.bootstrap.startApplication
 import com.intellij.platform.impl.toolkit.IdeFontManager
 import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.platform.impl.toolkit.IdeToolkit
-import com.intellij.ui.JreHiDpiUtil
 import com.intellij.util.ui.TextLayoutUtil
-import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -46,10 +44,20 @@ fun main(rawArgs: Array<String>) {
   val startTimeUnixNano = System.currentTimeMillis() * 1000000
   startupTimings.add("startup begin")
   startupTimings.add(startTimeNano)
-  mainImpl(rawArgs, startupTimings, startTimeUnixNano, changeClassPath = null)
+  mainImpl(
+    rawArgs = rawArgs,
+    startupTimings = startupTimings,
+    startTimeUnixNano = startTimeUnixNano,
+    changeClassPath = null,
+  )
 }
 
-internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, startTimeUnixNano: Long, changeClassPath: Consumer<ClassLoader>?) {
+internal fun mainImpl(
+  rawArgs: Array<String>,
+  startupTimings: ArrayList<Any>,
+  startTimeUnixNano: Long,
+  changeClassPath: Consumer<ClassLoader>?,
+) {
   val args = preprocessArgs(rawArgs)
   AppMode.setFlags(args)
   addBootstrapTiming("AppMode.setFlags", startupTimings)
@@ -68,7 +76,7 @@ internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, st
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler() + rootTask()) {
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
-        startApp(args, mainScope = this@runBlocking, busyThread, changeClassPath)
+        startApp(args = args, mainScope = this@runBlocking, busyThread = busyThread, changeClassPath = changeClassPath)
       }
 
       awaitCancellation()
@@ -85,9 +93,12 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     launch {
       CoroutineTracerShim.coroutineTracer = object : CoroutineTracerShim {
         override suspend fun getTraceActivity() = com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity()
+
         override fun rootTrace() = rootTask()
-        override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T =
-          com.intellij.platform.diagnostic.telemetry.impl.span(name, context, action)
+
+        override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
+          return com.intellij.platform.diagnostic.telemetry.impl.span(name, context, action)
+        }
       }
     }
 
@@ -154,7 +165,15 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
       }
     }
 
-    startApplication(args, configImportNeededDeferred, customTargetDirectoryToImportConfig, mainClassLoaderDeferred, appStarterDeferred, mainScope, busyThread)
+    startApplication(
+      args = args,
+      configImportNeededDeferred = configImportNeededDeferred,
+      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
+      mainClassLoaderDeferred = mainClassLoaderDeferred,
+      appStarterDeferred = appStarterDeferred,
+      mainScope = mainScope,
+      busyThread = busyThread,
+    )
   }
 }
 
@@ -179,9 +198,13 @@ private fun initRemoteDev(args: List<String>) {
   if (args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND) {
     System.setProperty("idea.initially.ask.config", "never")
   }
-  if (SystemInfo.isMac) { // avoid icon jumping in dock for the backend process
-    System.setProperty("apple.awt.BackgroundOnly", "true") // this makes sure that the following call doesn't create an icon in Dock
-    Toolkit.getDefaultToolkit() // this tells the OS that app initialization is finished
+
+  // avoid an icon jumping in dock for the backend process
+  if (SystemInfoRt.isMac) {
+    // this makes sure that the following call doesn't create an icon in Dock
+    System.setProperty("apple.awt.BackgroundOnly", "true")
+    // this tells the OS that app initialization is finished
+    Toolkit.getDefaultToolkit()
   }
   initRemoteDevGraphicsEnvironment()
   initLux()
