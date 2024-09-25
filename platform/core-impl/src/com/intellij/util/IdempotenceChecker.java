@@ -418,7 +418,7 @@ public final class IdempotenceChecker {
 
   private static boolean shouldPerformRandomCheck() {
     int rate = rateCheckProperty.get().asInteger();
-    return rate > 0 && ThreadLocalRandom.current().nextInt(rate) == 0;
+    return rate > 0 && ThreadLocalRandom.current().nextInt(rate) == 0 && !ApplicationManagerEx.isInStressTest();
   }
 
   @TestOnly
