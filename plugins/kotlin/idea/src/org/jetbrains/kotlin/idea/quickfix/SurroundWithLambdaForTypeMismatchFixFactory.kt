@@ -40,7 +40,7 @@ internal object SurroundWithLambdaForTypeMismatchFixFactory : KotlinSingleIntent
                 val diagnosticWithParameters = Errors.CONSTANT_EXPECTED_TYPE_MISMATCH.cast(diagnostic)
 
                 val diagnosticElement = diagnostic.psiElement
-                if (!(diagnosticElement is KtExpression)) {
+                if (diagnosticElement !is KtExpression) {
                     LOG.error("Unexpected element: " + diagnosticElement.text)
                     return null
                 }
