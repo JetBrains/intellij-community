@@ -690,10 +690,14 @@ class MavenProject(val file: VirtualFile) {
       return result
     }
 
+  @Internal
+  @Deprecated("Do not add dependencies to Maven project. Instead, add dependencies to [com.intellij.platform.workspace.jps.entities.ModuleEntity]")
   fun addDependency(dependency: MavenArtifact) {
     addDependencies(listOf(dependency))
   }
 
+  @Internal
+  @Deprecated("Do not add dependencies to Maven project. Instead, add dependencies to [com.intellij.platform.workspace.jps.entities.ModuleEntity]")
   fun addDependencies(dependencies: Collection<MavenArtifact>) {
     val newDependencies = myState.dependencies + dependencies
     val newState = myState.copy(
