@@ -707,6 +707,8 @@ object PluginManagerCore {
       for (descriptor in aliens) {
         descriptor.isEnabled = false
       }
+      //write the list of third-party plugins back to ensure that the privacy note will be shown next time
+      writeThirdPartyPluginsIds(aliens.map { it.getPluginId() })
     }
     else if (AppMode.isRemoteDevHost()) {
       logger.warn("""
