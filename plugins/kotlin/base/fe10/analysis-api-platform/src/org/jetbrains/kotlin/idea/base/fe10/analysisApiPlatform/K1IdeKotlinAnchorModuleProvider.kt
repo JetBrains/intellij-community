@@ -7,12 +7,14 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinAnchorM
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinAnchorModuleProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 
-class K1IdeKotlinAnchorModuleProvider(val project: Project) : KotlinAnchorModuleProvider {
+class K1IdeKotlinAnchorModuleProvider(val project: Project) : IdeKotlinAnchorModuleProvider {
     override fun getAnchorModule(libraryModule: KaLibraryModule): KaSourceModule? {
         @OptIn(Frontend10ApiUsage::class)
         val libraryInfo = libraryModule.moduleInfo as? LibraryInfo ?: return null
@@ -23,6 +25,16 @@ class K1IdeKotlinAnchorModuleProvider(val project: Project) : KotlinAnchorModule
         ResolutionAnchorCacheService.getInstance(project)
             .librariesForResolutionAnchors.keys
             .mapNotNull { it.toKaModule() as? KaSourceModule }
+
+
+    @OptIn(Frontend10ApiUsage::class)
+    override fun getAnchorLibraries(sourceModule: KaSourceModule): List<KaLibraryModule> {
+        val sourceModuleInfo = sourceModule.moduleInfo as? ModuleSourceInfo ?: return emptyList()
+        return ResolutionAnchorCacheService.getInstance(project)
+            .librariesForResolutionAnchors[sourceModuleInfo]
+            ?.map { it.toKaModule() as KaLibraryModule }
+            ?: emptyList()
+    }
 
     override fun getAllAnchorModulesIfComputed(): Collection<KaSourceModule>? {
         ThreadingAssertions.assertWriteAccess()

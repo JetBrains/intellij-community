@@ -13,22 +13,31 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinAnchorModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinAnchorModuleProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.getLibraryModules
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.caches.resolve.util.ResolutionAnchorCacheState
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 
 @ApiStatus.Internal
-class K2IdeKotlinAnchorModuleProvider(val project: Project) : KotlinAnchorModuleProvider {
+class K2IdeKotlinAnchorModuleProvider(val project: Project) : IdeKotlinAnchorModuleProvider {
     override fun getAnchorModule(libraryModule: KaLibraryModule): KaSourceModule? {
         return anchorMapping.anchorByLibrary[libraryModule]
     }
 
     override fun getAllAnchorModules(): Collection<KaSourceModule> {
         return anchorMapping.librariesByAnchor.keys
+    }
+
+    override fun getAllAnchorModulesIfComputed(): Collection<KaSourceModule>? {
+        val mapping = anchorMappingCachedValue.upToDateOrNull?.get() ?: return null
+        return mapping.librariesByAnchor.keys
+    }
+
+    override fun getAnchorLibraries(libraryModule: KaSourceModule): List<KaLibraryModule> {
+        return anchorMapping.librariesByAnchor[libraryModule] ?: emptyList()
     }
 
     @TestOnly
@@ -45,15 +54,20 @@ class K2IdeKotlinAnchorModuleProvider(val project: Project) : KotlinAnchorModule
         val librariesByAnchor: Map<KaSourceModule, List<KaLibraryModule>>,
     )
 
+    private val anchorMappingCachedValue = CachedValuesManager.getManager(project).createCachedValue(
+        project,
+        {
+            CachedValueProvider.Result.create(
+                createResolutionAnchorMapping(),
+                ModuleModificationTracker.getInstance(project),
+                JavaLibraryModificationTracker.getInstance(project),
+            )
+        },
+        /* trackValue = */ false
+    )
+
     private val anchorMapping: AnchorMapping
-        get() =
-            CachedValuesManager.getManager(project).getCachedValue(project) {
-                CachedValueProvider.Result.create(
-                    createResolutionAnchorMapping(),
-                    ModuleModificationTracker.getInstance(project),
-                    JavaLibraryModificationTracker.getInstance(project)
-                )
-            }
+        get() = anchorMappingCachedValue.value
 
 
     private fun createResolutionAnchorMapping(): AnchorMapping {

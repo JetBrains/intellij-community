@@ -10,6 +10,9 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinAnchorModuleProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform.K1IdeKotlinAnchorModuleProvider"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform.K1IdeKotlinModuleDependentsProvider"/>
   </extensions>
 
   <dependencies>

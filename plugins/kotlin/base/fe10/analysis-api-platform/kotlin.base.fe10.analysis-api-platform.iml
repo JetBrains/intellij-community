@@ -34,5 +34,6 @@
     <orderEntry type="module" module-name="kotlin.base.analysis-api-platform" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="kotlin.base.util" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
   </component>
 </module>
