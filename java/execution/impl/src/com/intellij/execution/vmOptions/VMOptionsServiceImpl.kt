@@ -23,7 +23,9 @@ class VMOptionsServiceImpl : VMOptionsService {
       opt("da", "disable assertions with specified granularity"),
       opt("disableassertions", "disable assertions with specified granularity"),
       opt("esa", "enable system assertions"),
+      opt("enablesystemassertions", "enable system assertions"),
       opt("dsa", "disable system assertions"),
+      opt("disablesystemassertions", "disable system assertions"),
       opt("agentpath:", "load native agent library by full pathname"),
       opt("agentlib:", "load native agent library <libname>, e.g. -agentlib:jdwp"),
       opt("javaagent:", "load Java programming language agent"),
@@ -47,6 +49,8 @@ class VMOptionsServiceImpl : VMOptionsService {
     }
     return future
   }
+
+  override fun getStandardOptions(): JdkOptionsData = JdkOptionsData(STANDARD_OPTION_LIST)
 
   // when null is returned, it was a timeout
   private fun computeOptionsData(javaHome: String): JdkOptionsData {
