@@ -38,7 +38,7 @@ interface ExternalSystemUnlinkedProjectAware {
   }
 
   suspend fun unlinkProject(project: Project, externalProjectPath: String) {
-    throw UnsupportedOperationException()
+    throw UnsupportedOperationException("'unlinkProject' method in ${this::class.qualifiedName} is not implemented")
   }
 
   fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable)
