@@ -6,7 +6,7 @@ import org.jetbrains.java.decompiler.util.TextUtil;
 
 public class Instruction {
   public static Instruction create(int opcode, boolean wide, int group, int bytecodeVersion, int[] operands, int length) {
-	return create(opcode, wide, group, bytecodeVersion, operands, length, null);
+    return create(opcode, wide, group, bytecodeVersion, operands, length, null);
   }
   public static Instruction create(int opcode, boolean wide, int group, int bytecodeVersion, int[] operands, int length, ConstantPool pool) {
     if (opcode >= CodeConstants.opc_ifeq && opcode <= CodeConstants.opc_if_acmpne ||
