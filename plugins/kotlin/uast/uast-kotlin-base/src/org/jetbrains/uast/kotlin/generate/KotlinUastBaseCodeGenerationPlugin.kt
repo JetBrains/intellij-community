@@ -249,11 +249,11 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
 
         val methodCallPsiType = KotlinUFunctionCallExpression(analyzableMethodCall, null).getExpressionType()
         if (methodCallPsiType == null || !expectedReturnType.isAssignableFrom(GenericsUtil.eliminateWildcards(methodCallPsiType))) {
-            val typeParams = (expectedReturnType as? PsiClassType)?.parameters?.map { it.getFQname(context) }
+            val typeParams = (expectedReturnType as? PsiClassType)?.parameters?.mapNotNull { it.getFQname(context) }
             if (typeParams == null) return KotlinUFunctionCallExpression(analyzableMethodCall, null)
 
             for (typeParam in typeParams) {
-                val typeParameter = psiFactory.createTypeArgument(typeParam.orEmpty())
+                val typeParameter = psiFactory.createTypeArgument(typeParam)
                 analyzableMethodCall.addTypeArgument(typeParameter)
             }
             return KotlinUFunctionCallExpression(analyzableMethodCall, null)
