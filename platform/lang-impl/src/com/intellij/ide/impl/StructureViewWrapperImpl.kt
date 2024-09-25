@@ -347,23 +347,25 @@ class StructureViewWrapperImpl(private val project: Project,
     check(rebuildRequests.tryEmit(delay))
   }
 
-  private suspend fun rebuildImpl() = withContext(Dispatchers.EDT) {
+  private suspend fun rebuildImpl() {
     val container: Container = myToolWindow.component
     val wasFocused = UIUtil.isFocusAncestor(container)
-    if (myStructureView != null) {
-      myStructureView!!.storeState()
-      Disposer.dispose(myStructureView!!)
-      myStructureView = null
-      myFileEditor = null
-    }
-    if (myModuleStructureComponent != null) {
-      Disposer.dispose(myModuleStructureComponent!!)
-      myModuleStructureComponent = null
-    }
     val contentManager = myToolWindow.contentManager
-    contentManager.removeAllContents(true)
+    withContext(Dispatchers.EDT) {
+      if (myStructureView != null) {
+        myStructureView!!.storeState()
+        Disposer.dispose(myStructureView!!)
+        myStructureView = null
+        myFileEditor = null
+      }
+      if (myModuleStructureComponent != null) {
+        Disposer.dispose(myModuleStructureComponent!!)
+        myModuleStructureComponent = null
+      }
+      contentManager.removeAllContents(true)
+    }
     if (!isStructureViewShowing) {
-      return@withContext
+      return
     }
 
     val file = myFile ?: run {
@@ -384,9 +386,11 @@ class StructureViewWrapperImpl(private val project: Project,
         }
 
         if (module != null && !ModuleType.isInternal(module)) {
-          myModuleStructureComponent = ModuleStructureComponent(module)
-          createSinglePanel(myModuleStructureComponent!!.component!!)
-          Disposer.register(this@StructureViewWrapperImpl, myModuleStructureComponent!!)
+          withContext(Dispatchers.EDT) {
+            myModuleStructureComponent = ModuleStructureComponent(module)
+            createSinglePanel(myModuleStructureComponent!!.component!!)
+            Disposer.register(this@StructureViewWrapperImpl, myModuleStructureComponent!!)
+          }
         }
       }
       else {
@@ -414,34 +418,36 @@ class StructureViewWrapperImpl(private val project: Project,
         }
       }
     }
-    updateHeaderActions(myStructureView)
-    if (myModuleStructureComponent == null && myStructureView == null) {
-      val panel: JBPanelWithEmptyText = object : JBPanelWithEmptyText() {
-        override fun getBackground(): Color {
-          return UIUtil.getTreeBackground()
+    withContext(Dispatchers.EDT) {
+      updateHeaderActions(myStructureView)
+      if (myModuleStructureComponent == null && myStructureView == null) {
+        val panel: JBPanelWithEmptyText = object : JBPanelWithEmptyText() {
+          override fun getBackground(): Color {
+            return UIUtil.getTreeBackground()
+          }
+        }
+        panel.emptyText.setText(LangBundle.message("panel.empty.text.no.structure"))
+        createSinglePanel(panel)
+      }
+      for (i in panels.indices) {
+        val content = ContentFactory.getInstance().createContent(panels[i], names[i], false)
+        contentManager.addContent(content)
+        if (i == 0 && myStructureView != null) {
+          Disposer.register(content, myStructureView!!)
         }
       }
-      panel.emptyText.setText(LangBundle.message("panel.empty.text.no.structure"))
-      createSinglePanel(panel)
-    }
-    for (i in panels.indices) {
-      val content = ContentFactory.getInstance().createContent(panels[i], names[i], false)
-      contentManager.addContent(content)
-      if (i == 0 && myStructureView != null) {
-        Disposer.register(content, myStructureView!!)
+
+      pendingRebuild.set(false)
+      val pendingSelection = pendingSelectionFunc.getAndSet(null)
+      if (pendingSelection != null) {
+        pendingSelection()
       }
-    }
 
-    pendingRebuild.set(false)
-    val pendingSelection = pendingSelectionFunc.getAndSet(null)
-    if (pendingSelection != null) {
-      pendingSelection()
-    }
-
-    if (wasFocused) {
-      val policy = container.focusTraversalPolicy
-      val component = policy?.getDefaultComponent(container)
-      if (component != null) IdeFocusManager.getInstance(project).requestFocusInProject(component, project)
+      if (wasFocused) {
+        val policy = container.focusTraversalPolicy
+        val component = policy?.getDefaultComponent(container)
+        if (component != null) IdeFocusManager.getInstance(project).requestFocusInProject(component, project)
+      }
     }
   }
 
