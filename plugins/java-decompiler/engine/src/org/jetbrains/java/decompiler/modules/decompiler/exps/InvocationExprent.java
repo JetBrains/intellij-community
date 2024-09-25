@@ -386,28 +386,6 @@ public class InvocationExprent extends Exprent {
     }
     List<StructMethod> matches = getMatchedDescriptors();
     BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
-    //StructMethod desc = null;
-    //if(matches.size() == 1) {
-    //  desc = matches.get(0);
-    //}
-
-    //StructClass cl = DecompilerContext.getStructContext().getClass(className);
-    //Map<VarType, VarType> genArgs = new HashMap<>();
-
-    // building generic info from the instance
-    //VarType inferred = instance == null ? null : instance.getInferredExprType(null);
-    //if (cl != null && cl.getSignature() != null && instance != null && inferred.isGeneric()) {
-    //  GenericType genType = (GenericType)inferred;
-    //  if (genType.getArguments().size() == cl.getSignature().fparameters.size()) {
-    //    for (int i = 0; i < cl.getSignature().fparameters.size(); i++) {
-    //      VarType from = GenericType.parse("T" + cl.getSignature().fparameters.get(i) + ";");
-    //      VarType to = genType.getArguments().get(i);
-    //      if (from != null && to != null) {
-    //        genArgs.put(from, to);
-    //      }
-    //    }
-    //  }
-    //}
 
     // omit 'new Type[] {}' for the last parameter of a vararg method call
     if (parameters.size() == descriptor.params.length && isVarArgCall()) {
@@ -423,34 +401,6 @@ public class InvocationExprent extends Exprent {
       if (mask == null || mask.get(i) == null) {
         TextBuffer buff = new TextBuffer();
         boolean ambiguous = setAmbiguousParameters.get(i);
-        /*
-        VarType type = descriptor.params[i];
-
-        // using info from the generic signature
-        if (desc != null && desc.getSignature() != null && desc.getSignature().params.size() == lstParameters.size()) {
-          type = desc.getSignature().params.get(i);
-        }
-
-        // applying generic info from the signature
-        VarType remappedType = type.remap(genArgs);
-        if(type != remappedType) {
-          type = remappedType;
-        }
-        else if (desc != null && desc.getSignature() != null && genericArgs.size() != 0) { // and from the inferred generic arguments
-          Map<VarType, VarType> genMap = new HashMap<VarType, VarType>();
-          for (int j = 0; j < genericArgs.size(); j++) {
-            VarType from = GenericType.parse("T" + desc.getSignature().fparameters.get(j) + ";");
-            VarType to = genericArgs.get(j);
-            genMap.put(from, to);
-          }
-        }
-
-        // not passing it along if what we get back is more specific
-        VarType exprType = lstParameters.get(i).getInferredExprType(type);
-        if (exprType != null && type != null && type.type == CodeConstants.TYPE_GENVAR) {
-          //type = exprType;
-        }
-        */
 
         // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
         ExprProcessor.getCastedExprent(parameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, true, true, tracer);

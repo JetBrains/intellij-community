@@ -156,24 +156,6 @@ public class ClassWrapper {
       if (attr != null) {
         // only param names here
         varProc.setDebugVarNames(attr.getMapNames());
-
-        /*
-        // the rest is here
-        methodWrapper.getOrBuildGraph().iterateExprents(exprent -> {
-          List<Exprent> lst = exprent.getAllExprents(true);
-          lst.add(exprent);
-          lst.stream()
-            .filter(e -> e.type == Exprent.EXPRENT_VAR)
-            .forEach(e -> {
-              VarExprent varExprent = (VarExprent)e;
-              String name = varExprent.getDebugName(mt);
-              if (name != null) {
-                varProc.setVarName(varExprent.getVarVersionPair(), name);
-              }
-            });
-          return 0;
-        });
-        */
       }
     }
   }
