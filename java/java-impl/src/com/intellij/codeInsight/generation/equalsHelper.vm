@@ -24,7 +24,6 @@
 #end
 ##
 #macro(addEqualsPrologue)
-if(this == $paramName) return true;
   #addInstanceOfToText()
   #if ($superHasEquals)
     if(!super.equals($paramName)) return false;
