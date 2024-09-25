@@ -157,7 +157,8 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
       else -> null
     }
     if (pinentryFallback.isNullOrBlank()) {
-      LOG.debug("Pinentry fallback not found in $gpgAgentConfBackup. Skip pinentry script generation.")
+      LOG.warn("Pinentry fallback not found in $gpgAgentConfBackup. " +
+               "Some features of GPG (as a key manipulation) may not work correctly without default pinentry-program specified in this file.")
     }
     PinentryShellScriptLauncherGenerator(executable)
       .generate(project, gpgAgentPaths, pinentryFallback)
