@@ -73,7 +73,7 @@ data class ScriptModuleInfo(
                         )
                         basicScriptScope.union(scope)
                     }
-                } ?: GlobalSearchScope.EMPTY_SCOPE
+                } ?: basicScriptScope
         }
     }
 
