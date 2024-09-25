@@ -4,7 +4,6 @@ package com.intellij.platform.eel.path
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath.Absolute.OS
 import java.nio.file.InvalidPathException
-import kotlin.Throws
 
 sealed interface EelPathResult<P : EelPath> {
   data class Ok<P : EelPath>(val path: P) : EelPathResult<P>
@@ -22,7 +21,7 @@ sealed interface EelPathResult<P : EelPath> {
 sealed interface EelPath {
   companion object {
     @JvmStatic
-    fun parse(raw: String, os: Absolute.OS?): EelPathResult<out EelPath> =
+    fun parse(raw: String, os: OS?): EelPathResult<out EelPath> =
       when (val absoluteResult = Absolute.parse(raw, os)) {
         is EelPathResult.Ok -> absoluteResult
         is EelPathResult.Err -> Relative.parse(raw)
@@ -150,7 +149,7 @@ sealed interface EelPath {
     override fun compareTo(other: Relative): Int
 
     /**
-     * Resolves special path elements like "." and ".." whenever it is possible.
+     * Resolves special path elements like `.` and `..` whenever it is possible.
      *
      * Does not perform any access to the file system.
      *

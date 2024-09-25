@@ -6,6 +6,7 @@ import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttribu
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
+import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.Companion.newFileSystemMap
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
@@ -254,7 +255,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
     fsBlocking {
       try {
-        path.nioFs.ijentFs.delete(path.eelPath as EelPath.Absolute, false)
+        path.nioFs.ijentFs.delete(path.eelPath, false)
       }
       catch (e: IjentFileSystemApi.DeleteException) {
         e.throwFileSystemException()
@@ -349,7 +350,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       when (val ijentFs = fs.ijentFs) {
         is IjentFileSystemPosixApi -> {
           val fileInfo = ijentFs
-            // According to the javadoc, this method must follow symlinks.
+            // According to the Javadoc, this method must follow symlinks.
             .stat(ensurePathIsAbsolute(path.eelPath), IjentFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
             .getOrThrowFileSystemException()
           // Inspired by sun.nio.fs.UnixFileSystemProvider#checkAccess

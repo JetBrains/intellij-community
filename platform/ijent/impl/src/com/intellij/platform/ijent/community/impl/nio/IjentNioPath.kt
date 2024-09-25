@@ -4,8 +4,6 @@ package com.intellij.platform.ijent.community.impl.nio
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.getOrThrow
-import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
-import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
@@ -13,10 +11,12 @@ import java.nio.file.attribute.BasicFileAttributes
 /**
  * Such paths are supposed to be created via the corresponding nio FileSystem. [Path.of] does NOT return instances of this class.
  *
- * How to get a path:
+ * How to get a path using [IjentNioFileSystemProvider]:
  * ```kotlin
  * val ijent: IjentApi = getIjentFromSomewhere()
- * val path: Path = ijent.fs.asNioFileSystem().getPath("/usr/bin/cowsay")
+ * val fs = IjentNioFileSystemProvider.getInstance()
+ *   .getFileSystem(URI("ijent://some-id-that-you-should-know"))
+ *   .getPath("/usr/bin/cowsay")
  * ```
  */
 class IjentNioPath internal constructor(
@@ -24,12 +24,6 @@ class IjentNioPath internal constructor(
   internal val nioFs: IjentNioFileSystem,
   cachedAttributes: BasicFileAttributes?,
 ) : Path, BasicFileAttributesHolder2.Impl(cachedAttributes) {
-  private val isWindows
-    get() = when (nioFs.ijentFs) {
-      is IjentFileSystemPosixApi -> false
-      is IjentFileSystemWindowsApi -> true
-    }
-
   override fun getFileSystem(): IjentNioFileSystem = nioFs
 
   override fun isAbsolute(): Boolean =
@@ -65,7 +59,7 @@ class IjentNioPath internal constructor(
 
   override fun startsWith(other: Path): Boolean {
     val otherEelPath = try {
-      other.toEelPath(isWindows)
+      other.toEelPath()
     }
     catch (_: InvalidPathException) {
       return false
@@ -84,7 +78,7 @@ class IjentNioPath internal constructor(
   }
 
   override fun endsWith(other: Path): Boolean =
-    when (val otherIjentPath = other.toEelPath(isWindows)) {
+    when (val otherIjentPath = other.toEelPath()) {
       is EelPath.Absolute -> eelPath == otherIjentPath
       is EelPath.Relative -> eelPath.endsWith(otherIjentPath)
     }
@@ -96,13 +90,13 @@ class IjentNioPath internal constructor(
     }
 
   override fun resolve(other: Path): IjentNioPath =
-    when (val otherIjentPath = other.toEelPath(isWindows)) {
+    when (val otherIjentPath = other.toEelPath()) {
       is EelPath.Absolute -> otherIjentPath.toNioPath()  // TODO is it the desired behaviour?
       is EelPath.Relative -> eelPath.resolve(otherIjentPath).getOrThrow().toNioPath()
     }
 
   override fun relativize(other: Path): IjentNioPath =
-    when (val otherIjentPath = other.toEelPath(isWindows)) {
+    when (val otherIjentPath = other.toEelPath()) {
       is EelPath.Absolute -> when (eelPath) {
         is EelPath.Absolute -> eelPath.relativize(otherIjentPath).getOrThrow().toNioPath()
         is EelPath.Relative -> throw InvalidPathException("$this.relativize($other)",

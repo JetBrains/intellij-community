@@ -180,9 +180,11 @@ internal class ArrayListEelAbsolutePath private constructor(
       }
       when (windowsRoot) {
         null -> {
-          // An API user may expect that if a Windows path factory always requires to specify a root, then a Unix path factory requires
-          // the same. Another API user may expect that since the Unix path is always know and since slashes are prohibited inside file
-          // names, the root shouldn't be specified explicitly. Luckily, it's easy to meet expectations of both users.
+          // An API user may expect that if a Windows path factory always requires specifying a root, then a Unix path factory requires
+          // the same.
+          // Another API user may expect that since the Unix path is always known and since slashes are prohibited inside file
+          // names, the root shouldn't be specified explicitly.
+          // Luckily, it's easy to meet the expectations of both users.
           @Suppress("NAME_SHADOWING") val parts =
             if (parts.first() == "/") parts.drop(1)
             else parts
@@ -348,7 +350,8 @@ internal class ArrayListEelAbsolutePath private constructor(
           require('/' !in name) { "Windows drives should not contain regular slashes" }
           require("\\" in name) {
             "Windows drive names must end with a backslash."
-            // Otherwise, Windows treat such path as a current directory. Try `Files.list(Path.of("C:")).toList()` or `dir C:` in cmd.exe.
+            // Otherwise, Windows treat such paths as a current directory.
+            // Try `Files.list(Path.of("C:")).toList()` or `dir C:` in cmd.exe.
             // UNC server and share names may have no backslash at the end, but UNC labels always contain at least three backslashes.
           }
         }

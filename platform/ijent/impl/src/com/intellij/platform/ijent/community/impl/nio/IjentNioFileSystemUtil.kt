@@ -49,7 +49,7 @@ internal fun IjentFsError.throwFileSystemException(): Nothing {
   }
 }
 
-internal fun Path.toEelPath(isWindows: Boolean): EelPath =
+internal fun Path.toEelPath(): EelPath =
   when {
     this is IjentNioPath -> eelPath
 
@@ -68,7 +68,7 @@ internal fun <T> fsBlocking(body: suspend () -> T): T = invokeSuspending(body)
  * Unfortunately, the execution of [block] may still launch coroutines, although they are very primitive.
  * To mitigate this, we use [Dispatchers.Unconfined] as an elementary event loop.
  * It does not change the final thread of execution,
- * as we are awaiting for a monitor on the same thread where [invokeSuspending] was called.
+ * as we are waiting for a monitor on the same thread where [invokeSuspending] was called.
  *
  * We manage to save up to 30% (300 microseconds) of performance cost in comparison with [kotlinx.coroutines.runBlocking],
  * which is important in case of many short IO operations.

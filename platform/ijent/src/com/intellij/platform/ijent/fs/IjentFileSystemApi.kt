@@ -9,13 +9,14 @@ import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.IjentWindowsInfo
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.StatError
 import java.nio.ByteBuffer
+import kotlin.Throws
 
 // TODO Integrate case-(in)sensitiveness into the interface.
 
 sealed interface IjentFileSystemApi {
 
   /**
-   * The same as the user from [com.intellij.platform.eel.IjentApi.info].
+   * The same as the user from [com.intellij.platform.ijent.IjentApi.info].
    *
    * There's a duplication of methods because [user] is required for checking file permissions correctly, but also it can be required
    * in other cases outside the filesystem.
@@ -40,10 +41,10 @@ sealed interface IjentFileSystemApi {
 
   /**
    * Returns names of files in a directory and the attributes of the corresponding files.
-   * If [path] is a symlink, it will be resolved regardless of [resolveSymlinks].
+   * If [path] is a symlink, it will be resolved regardless of [symlinkPolicy].
    *  TODO Is it an expected behaviour?
    *
-   * [resolveSymlinks] controls resolution of symlinks among children.
+   * [symlinkPolicy] controls resolution of symlinks among children.
    *  TODO The behaviour is different from resolveSymlinks in [stat]. To be fixed.
    */
   @Throws(IjentUnavailableException::class)
@@ -51,7 +52,7 @@ sealed interface IjentFileSystemApi {
     path: EelPath.Absolute,
     symlinkPolicy: SymlinkPolicy,
   ): IjentFsResult<
-    out Collection<Pair<String, IjentFileInfo>>,
+    Collection<Pair<String, IjentFileInfo>>,
     ListDirectoryError>
 
   @Suppress("unused")
@@ -79,10 +80,10 @@ sealed interface IjentFileSystemApi {
   }
 
   /**
-   * Similar to stat(2) and lstat(2). [resolveSymlinks] has an impact only on [IjentFileInfo.fileType] if [path] points on a symlink.
+   * Similar to stat(2) and lstat(2). [symlinkPolicy] has an impact only on [IjentFileInfo.type] if [path] points on a symlink.
    */
   @Throws(IjentUnavailableException::class)
-  suspend fun stat(path: EelPath.Absolute, symlinkPolicy: SymlinkPolicy): IjentFsResult<out IjentFileInfo, StatError>
+  suspend fun stat(path: EelPath.Absolute, symlinkPolicy: SymlinkPolicy): IjentFsResult<IjentFileInfo, StatError>
 
   /**
    * Defines the behavior of FS operations on symbolic links
@@ -115,7 +116,7 @@ sealed interface IjentFileSystemApi {
   }
 
   /**
-   * on Unix return true if both paths have the same inode.
+   * On Unix return true if both paths have the same inode.
    * On Windows some heuristics are used, for more details see https://docs.rs/same-file/1.0.6/same_file/
    */
   @Throws(IjentUnavailableException::class)
@@ -132,7 +133,7 @@ sealed interface IjentFileSystemApi {
   }
 
   /**
-   * Opens file only for reading
+   * Opens the file only for reading
    */
   @Throws(IjentUnavailableException::class)
   suspend fun openForReading(path: EelPath.Absolute): IjentFsResult<
@@ -149,7 +150,7 @@ sealed interface IjentFileSystemApi {
   }
 
   /**
-   * Opens file only for writing
+   * Opens the file only for writing
    */
   @Throws(IjentUnavailableException::class)
   suspend fun openForWriting(
@@ -228,8 +229,8 @@ sealed interface IjentFileSystemApi {
 
     /**
      * Relevant for copying directories.
-     * [shouldCopyRecursively] indicates whether the directory should be copied recirsively.
-     * If `false`, then only the directory itself is copied, resulting in an empty directory located at target path
+     * [copyRecursively] indicates whether the directory should be copied recursively.
+     * If `false`, then only the directory itself is copied, resulting in an empty directory located at the target path
      */
     fun copyRecursively(v: Boolean): CopyOptions
     val copyRecursively: Boolean
@@ -465,7 +466,7 @@ interface IjentFileSystemPosixApi : IjentFileSystemApi {
   @Throws(IjentUnavailableException::class)
   override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: IjentFileSystemApi.SymlinkPolicy): IjentFsResult<
     IjentPosixFileInfo,
-    IjentFileSystemApi.StatError>
+    StatError>
 
 
   /**
@@ -532,5 +533,5 @@ interface IjentFileSystemWindowsApi : IjentFileSystemApi {
   @Throws(IjentUnavailableException::class)
   override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: IjentFileSystemApi.SymlinkPolicy): IjentFsResult<
     IjentWindowsFileInfo,
-    IjentFileSystemApi.StatError>
+    StatError>
 }

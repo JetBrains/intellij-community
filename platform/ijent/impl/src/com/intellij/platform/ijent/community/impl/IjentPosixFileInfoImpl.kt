@@ -26,17 +26,17 @@ data class IjentPosixFileInfoImpl(
     override val group: Int,
     val mask: Int,
   ) : IjentPosixFileInfo.Permissions {
-    override val otherCanExecute: Boolean get() = (mask and 0x1) != 0 // (00001)  execute/search by others
-    override val otherCanWrite: Boolean get() = (mask and 0x2) != 0 // (00002)  write by others
-    override val otherCanRead: Boolean get() = (mask and 0x4) != 0 // (00004)  read by others
-    override val groupCanExecute: Boolean get() = (mask and 0x8) != 0 // (00010)  execute/search by group
-    override val groupCanWrite: Boolean get() = (mask and 0x10) != 0 // (00020)  write by group
-    override val groupCanRead: Boolean get() = (mask and 0x20) != 0 // (00040)  read by group
-    override val ownerCanExecute: Boolean get() = (mask and 0x40) != 0 // (00100)  execute/search by owner
-    override val ownerCanWrite: Boolean get() = (mask and 0x80) != 0 // (00200)  write by owner
-    override val ownerCanRead: Boolean get() = (mask and 0x100) != 0 // (00400)  read by owner
-    override val stickyBit: Boolean get() = (mask and 0x200) != 0 // (01000)  sticky bit
-    override val setGid: Boolean get() = (mask and 0x400) != 0 // (02000)  set-group-ID
-    override val setUid: Boolean get() = (mask and 0x800) != 0 // (04000)  set-user-ID
+    override val otherCanExecute: Boolean get() = (mask and 0x1) != 0 // (00001) execute/search by others
+    override val otherCanWrite: Boolean get() = (mask and 0x2) != 0 // (00002) write by others
+    override val otherCanRead: Boolean get() = (mask and 0x4) != 0 // (00004) read by others
+    override val groupCanExecute: Boolean get() = (mask and 0x8) != 0 // (00010) execute/search by group
+    override val groupCanWrite: Boolean get() = (mask and 0x10) != 0 // (00020) write by group
+    override val groupCanRead: Boolean get() = (mask and 0x20) != 0 // (00040) read by group
+    override val ownerCanExecute: Boolean get() = (mask and 0x40) != 0 // (00100) execute/search by owner
+    override val ownerCanWrite: Boolean get() = (mask and 0x80) != 0 // (00200) write by owner
+    override val ownerCanRead: Boolean get() = (mask and 0x100) != 0 // (00400) read by owner
+    override val stickyBit: Boolean get() = (mask and 0x200) != 0 // (01000) sticky bit
+    override val setGid: Boolean get() = (mask and 0x400) != 0 // (02000) set-group-ID
+    override val setUid: Boolean get() = (mask and 0x800) != 0 // (04000) set-user-ID
   }
 }

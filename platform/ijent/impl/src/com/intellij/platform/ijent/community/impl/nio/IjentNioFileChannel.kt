@@ -4,7 +4,10 @@ package com.intellij.platform.ijent.community.impl.nio
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.ijent.fs.*
+import com.intellij.platform.ijent.fs.IjentFileInfo
+import com.intellij.platform.ijent.fs.IjentFileSystemApi
+import com.intellij.platform.ijent.fs.IjentOpenedFile
+import com.intellij.platform.ijent.fs.IjentPosixFileInfo
 import com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -14,9 +17,9 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import kotlin.Throws
 
 internal class IjentNioFileChannel private constructor(
-  private val nioFs: IjentNioFileSystem,
   private val ijentOpenedFile: IjentOpenedFile,
   // we keep stacktrace of the cause of closing for troubleshooting
   @Volatile
@@ -25,21 +28,21 @@ internal class IjentNioFileChannel private constructor(
   companion object {
     @JvmStatic
     internal suspend fun createReading(nioFs: IjentNioFileSystem, path: EelPath.Absolute): IjentNioFileChannel =
-      IjentNioFileChannel(nioFs, nioFs.ijentFs.openForReading(path).getOrThrowFileSystemException())
+      IjentNioFileChannel(nioFs.ijentFs.openForReading(path).getOrThrowFileSystemException())
 
     @JvmStatic
     internal suspend fun createWriting(
       nioFs: IjentNioFileSystem,
       options: IjentFileSystemApi.WriteOptions,
     ): IjentNioFileChannel =
-      IjentNioFileChannel(nioFs, nioFs.ijentFs.openForWriting(options).getOrThrowFileSystemException())
+      IjentNioFileChannel(nioFs.ijentFs.openForWriting(options).getOrThrowFileSystemException())
 
     @JvmStatic
     internal suspend fun createReadingWriting(
       nioFs: IjentNioFileSystem,
       options: IjentFileSystemApi.WriteOptions,
     ): IjentNioFileChannel {
-      return IjentNioFileChannel(nioFs, nioFs.ijentFs.openForReadingAndWriting(options).getOrThrowFileSystemException())
+      return IjentNioFileChannel(nioFs.ijentFs.openForReadingAndWriting(options).getOrThrowFileSystemException())
     }
   }
 
@@ -207,8 +210,8 @@ internal class IjentNioFileChannel private constructor(
       throw IllegalArgumentException("Position $position is negative")
     }
     val buf = ByteBuffer.allocate(count.toInt())
-    var currentPosition = 0;
-    var totalBytesRead = 0;
+    var currentPosition = 0
+    var totalBytesRead = 0
     do {
       val bytesRead = src.read(buf)
       if (bytesRead == 0) {

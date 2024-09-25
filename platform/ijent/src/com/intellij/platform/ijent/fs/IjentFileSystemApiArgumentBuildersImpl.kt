@@ -5,7 +5,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.CopyOptions
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.FileWriterCreationMode
 
-internal data class WriteOptionsImpl internal constructor(
+internal data class WriteOptionsImpl(
   override val path: EelPath.Absolute,
   override var append: Boolean = false,
   override var truncateExisting: Boolean = false,
@@ -18,7 +18,7 @@ internal data class WriteOptionsImpl internal constructor(
   override fun creationMode(v: FileWriterCreationMode): IjentFileSystemApi.WriteOptions = apply { creationMode = v }
 }
 
-internal data class CopyOptionsImpl internal constructor(
+internal data class CopyOptionsImpl(
   override val source: EelPath.Absolute,
   override val target: EelPath.Absolute,
   override var copyRecursively: Boolean = false,
