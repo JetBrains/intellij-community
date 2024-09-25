@@ -209,7 +209,6 @@ f:com.intellij.vcs.log.data.VcsLogData
 - com.intellij.openapi.Disposable
 - com.intellij.vcs.log.VcsLogDataProvider
 - sf:DATA_PACK_REFRESH:com.intellij.vcs.log.data.VcsLogProgress$ProgressKey
-- sf:RECENT_COMMITS_COUNT:I
 - <init>(com.intellij.openapi.project.Project,java.util.Map,com.intellij.vcs.log.impl.VcsLogErrorHandler,Z,com.intellij.openapi.Disposable):V
 - addDataPackChangeListener(com.intellij.vcs.log.data.DataPackChangeListener):V
 - dispose():V
@@ -229,6 +228,7 @@ f:com.intellij.vcs.log.data.VcsLogData
 - getMiniDetailsGetter():com.intellij.vcs.log.data.MiniDetailsGetter
 - getProgress():com.intellij.vcs.log.data.VcsLogProgress
 - getProject():com.intellij.openapi.project.Project
+- s:getRecentCommitsCount():I
 - getRoots():java.util.Collection
 - getStorage():com.intellij.vcs.log.data.VcsLogStorage
 - getTopCommitsCache():com.intellij.vcs.log.data.TopCommitsCache
