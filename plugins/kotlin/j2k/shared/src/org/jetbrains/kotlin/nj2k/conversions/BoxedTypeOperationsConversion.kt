@@ -11,6 +11,11 @@ import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
+/**
+ * Converts operations on boxed types to more idiomatic Kotlin expressions:
+ *   1. Unwrap constructor calls: `new Double(10.1)` -> `10.1`
+ *   2. Change type conversion calls: `double.longValue()` -> `double.toLong()`
+ */
 class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -53,10 +58,10 @@ class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : Recursive
         val conversionType = if (shouldConvertToIntFirst) {
             "Int"
         } else {
-            operationType.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
+            operationType.replaceFirstChar { it.titlecase(Locale.US) }
         }
 
-        val typeName = primitiveTypeName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
+        val typeName = primitiveTypeName.replaceFirstChar { it.titlecase(Locale.US) }
         return JKQualifiedExpression(
             receiver,
             JKCallExpressionImpl(
