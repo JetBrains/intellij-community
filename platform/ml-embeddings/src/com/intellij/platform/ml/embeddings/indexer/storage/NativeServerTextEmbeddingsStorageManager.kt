@@ -15,8 +15,8 @@ import org.jetbrains.embeddings.local.server.stubs.searchRequest
 
 // TODO: move to UUID key type
 @Service(Service.Level.APP)
-class NativeServerTextEmbeddingsStorageManager : TextEmbeddingsStorageManager<Int> {
-  override suspend fun addAbsent(project: Project, indexId: IndexId, entries: List<IndexEntry<Int>>) {
+class NativeServerTextEmbeddingsStorageManager : TextEmbeddingsStorageManager<Long> {
+  override suspend fun addAbsent(project: Project, indexId: IndexId, entries: List<IndexEntry<Long>>) {
     val request = presentRequest {
       projectId = getProjectId(project)
       indexType = indexId.toString()
@@ -30,7 +30,7 @@ class NativeServerTextEmbeddingsStorageManager : TextEmbeddingsStorageManager<In
     NativeServerManager.getInstance().getConnection().ensureVectorsPresent(request)
   }
 
-  override suspend fun remove(project: Project, indexId: IndexId, keys: List<Int>) {
+  override suspend fun remove(project: Project, indexId: IndexId, keys: List<Long>) {
     NativeServerManager.getInstance().getConnection().removeVectors(removeRequest {
       projectId = getProjectId(project)
       indexType = indexId.toString()
@@ -44,7 +44,7 @@ class NativeServerTextEmbeddingsStorageManager : TextEmbeddingsStorageManager<In
     query: String,
     limit: Int,
     similarityThreshold: Float?,
-  ): List<ScoredKey<Int>> {
+  ): List<ScoredKey<Long>> {
     FileBasedEmbeddingIndexer.getInstance().triggerIndexing(project)
     val connection = NativeServerManager.getInstance().getConnection()
     val request = searchRequest {

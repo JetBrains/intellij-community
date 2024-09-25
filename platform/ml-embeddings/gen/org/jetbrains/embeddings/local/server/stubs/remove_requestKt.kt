@@ -63,62 +63,62 @@ public object remove_requestKt {
     @kotlin.OptIn(com.google.protobuf.kotlin.OnlyForUseByGeneratedProtoCode::class)
     public class IdsProxy private constructor() : com.google.protobuf.kotlin.DslProxy()
     /**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      */
-     public val ids: com.google.protobuf.kotlin.DslList<kotlin.Int, IdsProxy>
+     public val ids: com.google.protobuf.kotlin.DslList<kotlin.Long, IdsProxy>
       @kotlin.jvm.JvmSynthetic
       get() = com.google.protobuf.kotlin.DslList(
         _builder.getIdsList()
       )
     /**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @param value The ids to add.
      */
     @kotlin.jvm.JvmSynthetic
     @kotlin.jvm.JvmName("addIds")
-    public fun com.google.protobuf.kotlin.DslList<kotlin.Int, IdsProxy>.add(value: kotlin.Int) {
+    public fun com.google.protobuf.kotlin.DslList<kotlin.Long, IdsProxy>.add(value: kotlin.Long) {
       _builder.addIds(value)
     }/**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @param value The ids to add.
      */
     @kotlin.jvm.JvmSynthetic
     @kotlin.jvm.JvmName("plusAssignIds")
     @Suppress("NOTHING_TO_INLINE")
-    public inline operator fun com.google.protobuf.kotlin.DslList<kotlin.Int, IdsProxy>.plusAssign(value: kotlin.Int) {
+    public inline operator fun com.google.protobuf.kotlin.DslList<kotlin.Long, IdsProxy>.plusAssign(value: kotlin.Long) {
       add(value)
     }/**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @param values The ids to add.
      */
     @kotlin.jvm.JvmSynthetic
     @kotlin.jvm.JvmName("addAllIds")
-    public fun com.google.protobuf.kotlin.DslList<kotlin.Int, IdsProxy>.addAll(values: kotlin.collections.Iterable<kotlin.Int>) {
+    public fun com.google.protobuf.kotlin.DslList<kotlin.Long, IdsProxy>.addAll(values: kotlin.collections.Iterable<kotlin.Long>) {
       _builder.addAllIds(values)
     }/**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @param values The ids to add.
      */
     @kotlin.jvm.JvmSynthetic
     @kotlin.jvm.JvmName("plusAssignAllIds")
     @Suppress("NOTHING_TO_INLINE")
-    public inline operator fun com.google.protobuf.kotlin.DslList<kotlin.Int, IdsProxy>.plusAssign(values: kotlin.collections.Iterable<kotlin.Int>) {
+    public inline operator fun com.google.protobuf.kotlin.DslList<kotlin.Long, IdsProxy>.plusAssign(values: kotlin.collections.Iterable<kotlin.Long>) {
       addAll(values)
     }/**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @param index The index to set the value at.
      * @param value The ids to set.
      */
     @kotlin.jvm.JvmSynthetic
     @kotlin.jvm.JvmName("setIds")
-    public operator fun com.google.protobuf.kotlin.DslList<kotlin.Int, IdsProxy>.set(index: kotlin.Int, value: kotlin.Int) {
+    public operator fun com.google.protobuf.kotlin.DslList<kotlin.Long, IdsProxy>.set(index: kotlin.Int, value: kotlin.Long) {
       _builder.setIds(index, value)
     }/**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      */
     @kotlin.jvm.JvmSynthetic
     @kotlin.jvm.JvmName("clearIds")
-    public fun com.google.protobuf.kotlin.DslList<kotlin.Int, IdsProxy>.clear() {
+    public fun com.google.protobuf.kotlin.DslList<kotlin.Long, IdsProxy>.clear() {
       _builder.clearIds()
     }}
 }

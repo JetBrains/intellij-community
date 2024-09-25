@@ -7,12 +7,12 @@ import com.intellij.platform.ml.embeddings.indexer.keys.IntegerStorageKeyProvide
 import com.intellij.platform.ml.embeddings.indexer.storage.NativeServerTextEmbeddingsStorageManager
 import com.intellij.platform.ml.embeddings.indexer.storage.TextEmbeddingsStorageManager
 
-class NativeServerEmbeddingsConfiguration: EmbeddingsConfiguration<Int> {
-  override fun getStorageManager(): TextEmbeddingsStorageManager<Int> {
+class NativeServerEmbeddingsConfiguration: EmbeddingsConfiguration<Long> {
+  override fun getStorageManager(): TextEmbeddingsStorageManager<Long> {
     return NativeServerTextEmbeddingsStorageManager.getInstance()
   }
 
-  override fun getKeyProvider(): EmbeddingStorageKeyProvider<Int> {
+  override fun getKeyProvider(): EmbeddingStorageKeyProvider<Long> {
     return IntegerStorageKeyProvider.getInstance()
   }
 

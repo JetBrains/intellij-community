@@ -13,16 +13,16 @@ public final class Embeddings {
       com.google.protobuf.MessageLiteOrBuilder {
 
     /**
-     * <code>int32 id = 1;</code>
+     * <code>int64 id = 1;</code>
      * @return The id.
      */
-    int getId();
+    long getId();
 
     /**
      * <code>string text = 2;</code>
      * @return The text.
      */
-    java.lang.String getText();
+    String getText();
     /**
      * <code>string text = 2;</code>
      * @return The bytes for text.
@@ -42,46 +42,46 @@ public final class Embeddings {
       text_ = "";
     }
     public static final int ID_FIELD_NUMBER = 1;
-    private int id_;
+    private long id_;
     /**
-     * <code>int32 id = 1;</code>
+     * <code>int64 id = 1;</code>
      * @return The id.
      */
-    @java.lang.Override
-    public int getId() {
+    @Override
+    public long getId() {
       return id_;
     }
     /**
-     * <code>int32 id = 1;</code>
+     * <code>int64 id = 1;</code>
      * @param value The id to set.
      */
-    private void setId(int value) {
+    private void setId(long value) {
       
       id_ = value;
     }
     /**
-     * <code>int32 id = 1;</code>
+     * <code>int64 id = 1;</code>
      */
     private void clearId() {
       
-      id_ = 0;
+      id_ = 0L;
     }
 
     public static final int TEXT_FIELD_NUMBER = 2;
-    private java.lang.String text_;
+    private String text_;
     /**
      * <code>string text = 2;</code>
      * @return The text.
      */
-    @java.lang.Override
-    public java.lang.String getText() {
+    @Override
+    public String getText() {
       return text_;
     }
     /**
      * <code>string text = 2;</code>
      * @return The bytes for text.
      */
-    @java.lang.Override
+    @Override
     public com.google.protobuf.ByteString
         getTextBytes() {
       return com.google.protobuf.ByteString.copyFromUtf8(text_);
@@ -91,8 +91,8 @@ public final class Embeddings {
      * @param value The text to set.
      */
     private void setText(
-        java.lang.String value) {
-      java.lang.Class<?> valueClass = value.getClass();
+        String value) {
+      Class<?> valueClass = value.getClass();
   
       text_ = value;
     }
@@ -114,73 +114,73 @@ public final class Embeddings {
       
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity parseFrom(
+    public static index_entity parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity parseFrom(
+    public static index_entity parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity parseFrom(
+    public static index_entity parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity parseFrom(
+    public static index_entity parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity parseFrom(byte[] data)
+    public static index_entity parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity parseFrom(
+    public static index_entity parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity parseFrom(java.io.InputStream input)
+    public static index_entity parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity parseFrom(
+    public static index_entity parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity parseDelimitedFrom(java.io.InputStream input)
+    public static index_entity parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity parseDelimitedFrom(
+    public static index_entity parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity parseFrom(
+    public static index_entity parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity parseFrom(
+    public static index_entity parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -191,7 +191,7 @@ public final class Embeddings {
     public static Builder newBuilder() {
       return (Builder) DEFAULT_INSTANCE.createBuilder();
     }
-    public static Builder newBuilder(org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity prototype) {
+    public static Builder newBuilder(index_entity prototype) {
       return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
     }
 
@@ -200,9 +200,9 @@ public final class Embeddings {
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageLite.Builder<
-          org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity, Builder> implements
+          index_entity, Builder> implements
         // @@protoc_insertion_point(builder_implements:org.jetbrains.embeddings.local.server.stubs.index_entity)
-        org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entityOrBuilder {
+        index_entityOrBuilder {
       // Construct using org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity.newBuilder()
       private Builder() {
         super(DEFAULT_INSTANCE);
@@ -210,25 +210,25 @@ public final class Embeddings {
 
 
       /**
-       * <code>int32 id = 1;</code>
+       * <code>int64 id = 1;</code>
        * @return The id.
        */
-      @java.lang.Override
-      public int getId() {
+      @Override
+      public long getId() {
         return instance.getId();
       }
       /**
-       * <code>int32 id = 1;</code>
+       * <code>int64 id = 1;</code>
        * @param value The id to set.
        * @return This builder for chaining.
        */
-      public Builder setId(int value) {
+      public Builder setId(long value) {
         copyOnWrite();
         instance.setId(value);
         return this;
       }
       /**
-       * <code>int32 id = 1;</code>
+       * <code>int64 id = 1;</code>
        * @return This builder for chaining.
        */
       public Builder clearId() {
@@ -241,15 +241,15 @@ public final class Embeddings {
        * <code>string text = 2;</code>
        * @return The text.
        */
-      @java.lang.Override
-      public java.lang.String getText() {
+      @Override
+      public String getText() {
         return instance.getText();
       }
       /**
        * <code>string text = 2;</code>
        * @return The bytes for text.
        */
-      @java.lang.Override
+      @Override
       public com.google.protobuf.ByteString
           getTextBytes() {
         return instance.getTextBytes();
@@ -260,7 +260,7 @@ public final class Embeddings {
        * @return This builder for chaining.
        */
       public Builder setText(
-          java.lang.String value) {
+          String value) {
         copyOnWrite();
         instance.setText(value);
         return this;
@@ -288,25 +288,25 @@ public final class Embeddings {
 
       // @@protoc_insertion_point(builder_scope:org.jetbrains.embeddings.local.server.stubs.index_entity)
     }
-    @java.lang.Override
-    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-    protected final java.lang.Object dynamicMethod(
-        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-        java.lang.Object arg0, java.lang.Object arg1) {
+    @Override
+    @SuppressWarnings({"unchecked", "fallthrough"})
+    protected final Object dynamicMethod(
+        MethodToInvoke method,
+        Object arg0, Object arg1) {
       switch (method) {
         case NEW_MUTABLE_INSTANCE: {
-          return new org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity();
+          return new index_entity();
         }
         case NEW_BUILDER: {
           return new Builder();
         }
         case BUILD_MESSAGE_INFO: {
-            java.lang.Object[] objects = new java.lang.Object[] {
+            Object[] objects = new Object[] {
               "id_",
               "text_",
             };
-            java.lang.String info =
-                "\u0000\u0002\u0000\u0000\u0001\u0002\u0002\u0000\u0000\u0000\u0001\u0004\u0002\u0208" +
+            String info =
+                "\u0000\u0002\u0000\u0000\u0001\u0002\u0002\u0000\u0000\u0000\u0001\u0002\u0002\u0208" +
                 "";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
@@ -315,13 +315,13 @@ public final class Embeddings {
           return DEFAULT_INSTANCE;
         }
         case GET_PARSER: {
-          com.google.protobuf.Parser<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity> parser = PARSER;
+          com.google.protobuf.Parser<index_entity> parser = PARSER;
           if (parser == null) {
-            synchronized (org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity.class) {
+            synchronized (index_entity.class) {
               parser = PARSER;
               if (parser == null) {
                 parser =
-                    new DefaultInstanceBasedParser<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity>(
+                    new DefaultInstanceBasedParser<index_entity>(
                         DEFAULT_INSTANCE);
                 PARSER = parser;
               }
@@ -341,7 +341,7 @@ public final class Embeddings {
 
 
     // @@protoc_insertion_point(class_scope:org.jetbrains.embeddings.local.server.stubs.index_entity)
-    private static final org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity DEFAULT_INSTANCE;
+    private static final index_entity DEFAULT_INSTANCE;
     static {
       index_entity defaultInstance = new index_entity();
       // New instances are implicitly immutable so no need to make
@@ -351,7 +351,7 @@ public final class Embeddings {
         index_entity.class, defaultInstance);
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity getDefaultInstance() {
+    public static index_entity getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
@@ -370,7 +370,7 @@ public final class Embeddings {
      * <code>string project_id = 1;</code>
      * @return The projectId.
      */
-    java.lang.String getProjectId();
+    String getProjectId();
     /**
      * <code>string project_id = 1;</code>
      * @return The bytes for projectId.
@@ -382,7 +382,7 @@ public final class Embeddings {
      * <code>string index_type = 2;</code>
      * @return The indexType.
      */
-    java.lang.String getIndexType();
+    String getIndexType();
     /**
      * <code>string index_type = 2;</code>
      * @return The bytes for indexType.
@@ -393,12 +393,12 @@ public final class Embeddings {
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
      */
-    java.util.List<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity> 
+    java.util.List<index_entity>
         getEntitiesList();
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
      */
-    org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity getEntities(int index);
+    index_entity getEntities(int index);
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
      */
@@ -418,20 +418,20 @@ public final class Embeddings {
       entities_ = emptyProtobufList();
     }
     public static final int PROJECT_ID_FIELD_NUMBER = 1;
-    private java.lang.String projectId_;
+    private String projectId_;
     /**
      * <code>string project_id = 1;</code>
      * @return The projectId.
      */
-    @java.lang.Override
-    public java.lang.String getProjectId() {
+    @Override
+    public String getProjectId() {
       return projectId_;
     }
     /**
      * <code>string project_id = 1;</code>
      * @return The bytes for projectId.
      */
-    @java.lang.Override
+    @Override
     public com.google.protobuf.ByteString
         getProjectIdBytes() {
       return com.google.protobuf.ByteString.copyFromUtf8(projectId_);
@@ -441,8 +441,8 @@ public final class Embeddings {
      * @param value The projectId to set.
      */
     private void setProjectId(
-        java.lang.String value) {
-      java.lang.Class<?> valueClass = value.getClass();
+        String value) {
+      Class<?> valueClass = value.getClass();
   
       projectId_ = value;
     }
@@ -465,20 +465,20 @@ public final class Embeddings {
     }
 
     public static final int INDEX_TYPE_FIELD_NUMBER = 2;
-    private java.lang.String indexType_;
+    private String indexType_;
     /**
      * <code>string index_type = 2;</code>
      * @return The indexType.
      */
-    @java.lang.Override
-    public java.lang.String getIndexType() {
+    @Override
+    public String getIndexType() {
       return indexType_;
     }
     /**
      * <code>string index_type = 2;</code>
      * @return The bytes for indexType.
      */
-    @java.lang.Override
+    @Override
     public com.google.protobuf.ByteString
         getIndexTypeBytes() {
       return com.google.protobuf.ByteString.copyFromUtf8(indexType_);
@@ -488,8 +488,8 @@ public final class Embeddings {
      * @param value The indexType to set.
      */
     private void setIndexType(
-        java.lang.String value) {
-      java.lang.Class<?> valueClass = value.getClass();
+        String value) {
+      Class<?> valueClass = value.getClass();
   
       indexType_ = value;
     }
@@ -512,44 +512,44 @@ public final class Embeddings {
     }
 
     public static final int ENTITIES_FIELD_NUMBER = 3;
-    private com.google.protobuf.Internal.ProtobufList<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity> entities_;
+    private com.google.protobuf.Internal.ProtobufList<index_entity> entities_;
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
      */
-    @java.lang.Override
-    public java.util.List<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity> getEntitiesList() {
+    @Override
+    public java.util.List<index_entity> getEntitiesList() {
       return entities_;
     }
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
      */
-    public java.util.List<? extends org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entityOrBuilder> 
+    public java.util.List<? extends index_entityOrBuilder>
         getEntitiesOrBuilderList() {
       return entities_;
     }
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
      */
-    @java.lang.Override
+    @Override
     public int getEntitiesCount() {
       return entities_.size();
     }
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
      */
-    @java.lang.Override
-    public org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity getEntities(int index) {
+    @Override
+    public index_entity getEntities(int index) {
       return entities_.get(index);
     }
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
      */
-    public org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entityOrBuilder getEntitiesOrBuilder(
+    public index_entityOrBuilder getEntitiesOrBuilder(
         int index) {
       return entities_.get(index);
     }
     private void ensureEntitiesIsMutable() {
-      com.google.protobuf.Internal.ProtobufList<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity> tmp = entities_;
+      com.google.protobuf.Internal.ProtobufList<index_entity> tmp = entities_;
       if (!tmp.isModifiable()) {
         entities_ =
             com.google.protobuf.GeneratedMessageLite.mutableCopy(tmp);
@@ -560,7 +560,7 @@ public final class Embeddings {
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
      */
     private void setEntities(
-        int index, org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity value) {
+        int index, index_entity value) {
       value.getClass();
   ensureEntitiesIsMutable();
       entities_.set(index, value);
@@ -568,7 +568,7 @@ public final class Embeddings {
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
      */
-    private void addEntities(org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity value) {
+    private void addEntities(index_entity value) {
       value.getClass();
   ensureEntitiesIsMutable();
       entities_.add(value);
@@ -577,7 +577,7 @@ public final class Embeddings {
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
      */
     private void addEntities(
-        int index, org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity value) {
+        int index, index_entity value) {
       value.getClass();
   ensureEntitiesIsMutable();
       entities_.add(index, value);
@@ -586,7 +586,7 @@ public final class Embeddings {
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
      */
     private void addAllEntities(
-        java.lang.Iterable<? extends org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity> values) {
+        Iterable<? extends index_entity> values) {
       ensureEntitiesIsMutable();
       com.google.protobuf.AbstractMessageLite.addAll(
           values, entities_);
@@ -605,73 +605,73 @@ public final class Embeddings {
       entities_.remove(index);
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request parseFrom(
+    public static present_request parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request parseFrom(
+    public static present_request parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request parseFrom(
+    public static present_request parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request parseFrom(
+    public static present_request parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request parseFrom(byte[] data)
+    public static present_request parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request parseFrom(
+    public static present_request parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request parseFrom(java.io.InputStream input)
+    public static present_request parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request parseFrom(
+    public static present_request parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request parseDelimitedFrom(java.io.InputStream input)
+    public static present_request parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request parseDelimitedFrom(
+    public static present_request parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request parseFrom(
+    public static present_request parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request parseFrom(
+    public static present_request parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -682,7 +682,7 @@ public final class Embeddings {
     public static Builder newBuilder() {
       return (Builder) DEFAULT_INSTANCE.createBuilder();
     }
-    public static Builder newBuilder(org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request prototype) {
+    public static Builder newBuilder(present_request prototype) {
       return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
     }
 
@@ -691,9 +691,9 @@ public final class Embeddings {
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageLite.Builder<
-          org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request, Builder> implements
+          present_request, Builder> implements
         // @@protoc_insertion_point(builder_implements:org.jetbrains.embeddings.local.server.stubs.present_request)
-        org.jetbrains.embeddings.local.server.stubs.Embeddings.present_requestOrBuilder {
+        present_requestOrBuilder {
       // Construct using org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request.newBuilder()
       private Builder() {
         super(DEFAULT_INSTANCE);
@@ -704,15 +704,15 @@ public final class Embeddings {
        * <code>string project_id = 1;</code>
        * @return The projectId.
        */
-      @java.lang.Override
-      public java.lang.String getProjectId() {
+      @Override
+      public String getProjectId() {
         return instance.getProjectId();
       }
       /**
        * <code>string project_id = 1;</code>
        * @return The bytes for projectId.
        */
-      @java.lang.Override
+      @Override
       public com.google.protobuf.ByteString
           getProjectIdBytes() {
         return instance.getProjectIdBytes();
@@ -723,7 +723,7 @@ public final class Embeddings {
        * @return This builder for chaining.
        */
       public Builder setProjectId(
-          java.lang.String value) {
+          String value) {
         copyOnWrite();
         instance.setProjectId(value);
         return this;
@@ -753,15 +753,15 @@ public final class Embeddings {
        * <code>string index_type = 2;</code>
        * @return The indexType.
        */
-      @java.lang.Override
-      public java.lang.String getIndexType() {
+      @Override
+      public String getIndexType() {
         return instance.getIndexType();
       }
       /**
        * <code>string index_type = 2;</code>
        * @return The bytes for indexType.
        */
-      @java.lang.Override
+      @Override
       public com.google.protobuf.ByteString
           getIndexTypeBytes() {
         return instance.getIndexTypeBytes();
@@ -772,7 +772,7 @@ public final class Embeddings {
        * @return This builder for chaining.
        */
       public Builder setIndexType(
-          java.lang.String value) {
+          String value) {
         copyOnWrite();
         instance.setIndexType(value);
         return this;
@@ -801,29 +801,29 @@ public final class Embeddings {
       /**
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
        */
-      @java.lang.Override
-      public java.util.List<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity> getEntitiesList() {
+      @Override
+      public java.util.List<index_entity> getEntitiesList() {
         return java.util.Collections.unmodifiableList(
             instance.getEntitiesList());
       }
       /**
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
        */
-      @java.lang.Override
+      @Override
       public int getEntitiesCount() {
         return instance.getEntitiesCount();
       }/**
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
        */
-      @java.lang.Override
-      public org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity getEntities(int index) {
+      @Override
+      public index_entity getEntities(int index) {
         return instance.getEntities(index);
       }
       /**
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
        */
       public Builder setEntities(
-          int index, org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity value) {
+          int index, index_entity value) {
         copyOnWrite();
         instance.setEntities(index, value);
         return this;
@@ -832,7 +832,7 @@ public final class Embeddings {
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
        */
       public Builder setEntities(
-          int index, org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity.Builder builderForValue) {
+          int index, index_entity.Builder builderForValue) {
         copyOnWrite();
         instance.setEntities(index,
             builderForValue.build());
@@ -841,7 +841,7 @@ public final class Embeddings {
       /**
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
        */
-      public Builder addEntities(org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity value) {
+      public Builder addEntities(index_entity value) {
         copyOnWrite();
         instance.addEntities(value);
         return this;
@@ -850,7 +850,7 @@ public final class Embeddings {
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
        */
       public Builder addEntities(
-          int index, org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity value) {
+          int index, index_entity value) {
         copyOnWrite();
         instance.addEntities(index, value);
         return this;
@@ -859,7 +859,7 @@ public final class Embeddings {
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
        */
       public Builder addEntities(
-          org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity.Builder builderForValue) {
+          index_entity.Builder builderForValue) {
         copyOnWrite();
         instance.addEntities(builderForValue.build());
         return this;
@@ -868,7 +868,7 @@ public final class Embeddings {
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
        */
       public Builder addEntities(
-          int index, org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity.Builder builderForValue) {
+          int index, index_entity.Builder builderForValue) {
         copyOnWrite();
         instance.addEntities(index,
             builderForValue.build());
@@ -878,7 +878,7 @@ public final class Embeddings {
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
        */
       public Builder addAllEntities(
-          java.lang.Iterable<? extends org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity> values) {
+          Iterable<? extends index_entity> values) {
         copyOnWrite();
         instance.addAllEntities(values);
         return this;
@@ -902,26 +902,26 @@ public final class Embeddings {
 
       // @@protoc_insertion_point(builder_scope:org.jetbrains.embeddings.local.server.stubs.present_request)
     }
-    @java.lang.Override
-    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-    protected final java.lang.Object dynamicMethod(
-        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-        java.lang.Object arg0, java.lang.Object arg1) {
+    @Override
+    @SuppressWarnings({"unchecked", "fallthrough"})
+    protected final Object dynamicMethod(
+        MethodToInvoke method,
+        Object arg0, Object arg1) {
       switch (method) {
         case NEW_MUTABLE_INSTANCE: {
-          return new org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request();
+          return new present_request();
         }
         case NEW_BUILDER: {
           return new Builder();
         }
         case BUILD_MESSAGE_INFO: {
-            java.lang.Object[] objects = new java.lang.Object[] {
+            Object[] objects = new Object[] {
               "projectId_",
               "indexType_",
               "entities_",
-              org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity.class,
+              index_entity.class,
             };
-            java.lang.String info =
+            String info =
                 "\u0000\u0003\u0000\u0000\u0001\u0003\u0003\u0000\u0001\u0000\u0001\u0208\u0002\u0208" +
                 "\u0003\u001b";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
@@ -931,13 +931,13 @@ public final class Embeddings {
           return DEFAULT_INSTANCE;
         }
         case GET_PARSER: {
-          com.google.protobuf.Parser<org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request> parser = PARSER;
+          com.google.protobuf.Parser<present_request> parser = PARSER;
           if (parser == null) {
-            synchronized (org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request.class) {
+            synchronized (present_request.class) {
               parser = PARSER;
               if (parser == null) {
                 parser =
-                    new DefaultInstanceBasedParser<org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request>(
+                    new DefaultInstanceBasedParser<present_request>(
                         DEFAULT_INSTANCE);
                 PARSER = parser;
               }
@@ -957,7 +957,7 @@ public final class Embeddings {
 
 
     // @@protoc_insertion_point(class_scope:org.jetbrains.embeddings.local.server.stubs.present_request)
-    private static final org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request DEFAULT_INSTANCE;
+    private static final present_request DEFAULT_INSTANCE;
     static {
       present_request defaultInstance = new present_request();
       // New instances are implicitly immutable so no need to make
@@ -967,7 +967,7 @@ public final class Embeddings {
         present_request.class, defaultInstance);
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request getDefaultInstance() {
+    public static present_request getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
@@ -985,80 +985,80 @@ public final class Embeddings {
   /**
    * Protobuf type {@code org.jetbrains.embeddings.local.server.stubs.present_response}
    */
-  public  static final class  present_response extends
+  public  static final class present_response extends
       com.google.protobuf.GeneratedMessageLite<
           present_response, present_response.Builder> implements
       // @@protoc_insertion_point(message_implements:org.jetbrains.embeddings.local.server.stubs.present_response)
       present_responseOrBuilder {
     private present_response() {
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response parseFrom(
+    public static present_response parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response parseFrom(
+    public static present_response parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response parseFrom(
+    public static present_response parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response parseFrom(
+    public static present_response parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response parseFrom(byte[] data)
+    public static present_response parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response parseFrom(
+    public static present_response parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response parseFrom(java.io.InputStream input)
+    public static present_response parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response parseFrom(
+    public static present_response parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response parseDelimitedFrom(java.io.InputStream input)
+    public static present_response parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response parseDelimitedFrom(
+    public static present_response parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response parseFrom(
+    public static present_response parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response parseFrom(
+    public static present_response parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -1069,7 +1069,7 @@ public final class Embeddings {
     public static Builder newBuilder() {
       return (Builder) DEFAULT_INSTANCE.createBuilder();
     }
-    public static Builder newBuilder(org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response prototype) {
+    public static Builder newBuilder(present_response prototype) {
       return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
     }
 
@@ -1078,9 +1078,9 @@ public final class Embeddings {
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageLite.Builder<
-          org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response, Builder> implements
+          present_response, Builder> implements
         // @@protoc_insertion_point(builder_implements:org.jetbrains.embeddings.local.server.stubs.present_response)
-        org.jetbrains.embeddings.local.server.stubs.Embeddings.present_responseOrBuilder {
+        present_responseOrBuilder {
       // Construct using org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response.newBuilder()
       private Builder() {
         super(DEFAULT_INSTANCE);
@@ -1089,20 +1089,21 @@ public final class Embeddings {
 
       // @@protoc_insertion_point(builder_scope:org.jetbrains.embeddings.local.server.stubs.present_response)
     }
-    @java.lang.Override
-    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-    protected final java.lang.Object dynamicMethod(
-        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-        java.lang.Object arg0, java.lang.Object arg1) {
+    @Override
+    @SuppressWarnings({"unchecked", "fallthrough"})
+    protected final Object dynamicMethod(
+        MethodToInvoke method,
+        Object arg0, Object arg1) {
       switch (method) {
         case NEW_MUTABLE_INSTANCE: {
-          return new org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response();
+          return new present_response();
         }
         case NEW_BUILDER: {
           return new Builder();
         }
         case BUILD_MESSAGE_INFO: {
-            java.lang.Object[] objects = null;java.lang.String info =
+            Object[] objects = null;
+          String info =
                 "\u0000\u0000";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
@@ -1111,13 +1112,13 @@ public final class Embeddings {
           return DEFAULT_INSTANCE;
         }
         case GET_PARSER: {
-          com.google.protobuf.Parser<org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response> parser = PARSER;
+          com.google.protobuf.Parser<present_response> parser = PARSER;
           if (parser == null) {
-            synchronized (org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response.class) {
+            synchronized (present_response.class) {
               parser = PARSER;
               if (parser == null) {
                 parser =
-                    new DefaultInstanceBasedParser<org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response>(
+                    new DefaultInstanceBasedParser<present_response>(
                         DEFAULT_INSTANCE);
                 PARSER = parser;
               }
@@ -1137,7 +1138,7 @@ public final class Embeddings {
 
 
     // @@protoc_insertion_point(class_scope:org.jetbrains.embeddings.local.server.stubs.present_response)
-    private static final org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response DEFAULT_INSTANCE;
+    private static final present_response DEFAULT_INSTANCE;
     static {
       present_response defaultInstance = new present_response();
       // New instances are implicitly immutable so no need to make
@@ -1147,7 +1148,7 @@ public final class Embeddings {
         present_response.class, defaultInstance);
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.present_response getDefaultInstance() {
+    public static present_response getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
@@ -1166,7 +1167,7 @@ public final class Embeddings {
      * <code>string project_id = 1;</code>
      * @return The projectId.
      */
-    java.lang.String getProjectId();
+    String getProjectId();
     /**
      * <code>string project_id = 1;</code>
      * @return The bytes for projectId.
@@ -1178,7 +1179,7 @@ public final class Embeddings {
      * <code>string index_type = 2;</code>
      * @return The indexType.
      */
-    java.lang.String getIndexType();
+    String getIndexType();
     /**
      * <code>string index_type = 2;</code>
      * @return The bytes for indexType.
@@ -1187,21 +1188,21 @@ public final class Embeddings {
         getIndexTypeBytes();
 
     /**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @return A list containing the ids.
      */
-    java.util.List<java.lang.Integer> getIdsList();
+    java.util.List<Long> getIdsList();
     /**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @return The count of ids.
      */
     int getIdsCount();
     /**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @param index The index of the element to return.
      * @return The ids at the given index.
      */
-    int getIds(int index);
+    long getIds(int index);
   }
   /**
    * Protobuf type {@code org.jetbrains.embeddings.local.server.stubs.remove_request}
@@ -1214,23 +1215,23 @@ public final class Embeddings {
     private remove_request() {
       projectId_ = "";
       indexType_ = "";
-      ids_ = emptyIntList();
+      ids_ = emptyLongList();
     }
     public static final int PROJECT_ID_FIELD_NUMBER = 1;
-    private java.lang.String projectId_;
+    private String projectId_;
     /**
      * <code>string project_id = 1;</code>
      * @return The projectId.
      */
-    @java.lang.Override
-    public java.lang.String getProjectId() {
+    @Override
+    public String getProjectId() {
       return projectId_;
     }
     /**
      * <code>string project_id = 1;</code>
      * @return The bytes for projectId.
      */
-    @java.lang.Override
+    @Override
     public com.google.protobuf.ByteString
         getProjectIdBytes() {
       return com.google.protobuf.ByteString.copyFromUtf8(projectId_);
@@ -1240,8 +1241,8 @@ public final class Embeddings {
      * @param value The projectId to set.
      */
     private void setProjectId(
-        java.lang.String value) {
-      java.lang.Class<?> valueClass = value.getClass();
+        String value) {
+      Class<?> valueClass = value.getClass();
   
       projectId_ = value;
     }
@@ -1264,20 +1265,20 @@ public final class Embeddings {
     }
 
     public static final int INDEX_TYPE_FIELD_NUMBER = 2;
-    private java.lang.String indexType_;
+    private String indexType_;
     /**
      * <code>string index_type = 2;</code>
      * @return The indexType.
      */
-    @java.lang.Override
-    public java.lang.String getIndexType() {
+    @Override
+    public String getIndexType() {
       return indexType_;
     }
     /**
      * <code>string index_type = 2;</code>
      * @return The bytes for indexType.
      */
-    @java.lang.Override
+    @Override
     public com.google.protobuf.ByteString
         getIndexTypeBytes() {
       return com.google.protobuf.ByteString.copyFromUtf8(indexType_);
@@ -1287,8 +1288,8 @@ public final class Embeddings {
      * @param value The indexType to set.
      */
     private void setIndexType(
-        java.lang.String value) {
-      java.lang.Class<?> valueClass = value.getClass();
+        String value) {
+      Class<?> valueClass = value.getClass();
   
       indexType_ = value;
     }
@@ -1311,143 +1312,143 @@ public final class Embeddings {
     }
 
     public static final int IDS_FIELD_NUMBER = 3;
-    private com.google.protobuf.Internal.IntList ids_;
+    private com.google.protobuf.Internal.LongList ids_;
     /**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @return A list containing the ids.
      */
-    @java.lang.Override
-    public java.util.List<java.lang.Integer>
+    @Override
+    public java.util.List<Long>
         getIdsList() {
       return ids_;
     }
     /**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @return The count of ids.
      */
-    @java.lang.Override
+    @Override
     public int getIdsCount() {
       return ids_.size();
     }
     /**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @param index The index of the element to return.
      * @return The ids at the given index.
      */
-    @java.lang.Override
-    public int getIds(int index) {
-      return ids_.getInt(index);
+    @Override
+    public long getIds(int index) {
+      return ids_.getLong(index);
     }
     private int idsMemoizedSerializedSize = -1;
     private void ensureIdsIsMutable() {
-      com.google.protobuf.Internal.IntList tmp = ids_;
+      com.google.protobuf.Internal.LongList tmp = ids_;
       if (!tmp.isModifiable()) {
         ids_ =
             com.google.protobuf.GeneratedMessageLite.mutableCopy(tmp);
        }
     }
     /**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @param index The index to set the value at.
      * @param value The ids to set.
      */
     private void setIds(
-        int index, int value) {
+        int index, long value) {
       ensureIdsIsMutable();
-      ids_.setInt(index, value);
+      ids_.setLong(index, value);
     }
     /**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @param value The ids to add.
      */
-    private void addIds(int value) {
+    private void addIds(long value) {
       ensureIdsIsMutable();
-      ids_.addInt(value);
+      ids_.addLong(value);
     }
     /**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      * @param values The ids to add.
      */
     private void addAllIds(
-        java.lang.Iterable<? extends java.lang.Integer> values) {
+        Iterable<? extends Long> values) {
       ensureIdsIsMutable();
       com.google.protobuf.AbstractMessageLite.addAll(
           values, ids_);
     }
     /**
-     * <code>repeated int32 ids = 3;</code>
+     * <code>repeated int64 ids = 3;</code>
      */
     private void clearIds() {
-      ids_ = emptyIntList();
+      ids_ = emptyLongList();
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request parseFrom(
+    public static remove_request parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request parseFrom(
+    public static remove_request parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request parseFrom(
+    public static remove_request parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request parseFrom(
+    public static remove_request parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request parseFrom(byte[] data)
+    public static remove_request parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request parseFrom(
+    public static remove_request parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request parseFrom(java.io.InputStream input)
+    public static remove_request parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request parseFrom(
+    public static remove_request parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request parseDelimitedFrom(java.io.InputStream input)
+    public static remove_request parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request parseDelimitedFrom(
+    public static remove_request parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request parseFrom(
+    public static remove_request parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request parseFrom(
+    public static remove_request parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -1458,7 +1459,7 @@ public final class Embeddings {
     public static Builder newBuilder() {
       return (Builder) DEFAULT_INSTANCE.createBuilder();
     }
-    public static Builder newBuilder(org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request prototype) {
+    public static Builder newBuilder(remove_request prototype) {
       return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
     }
 
@@ -1467,9 +1468,9 @@ public final class Embeddings {
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageLite.Builder<
-          org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request, Builder> implements
+          remove_request, Builder> implements
         // @@protoc_insertion_point(builder_implements:org.jetbrains.embeddings.local.server.stubs.remove_request)
-        org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_requestOrBuilder {
+        remove_requestOrBuilder {
       // Construct using org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request.newBuilder()
       private Builder() {
         super(DEFAULT_INSTANCE);
@@ -1480,15 +1481,15 @@ public final class Embeddings {
        * <code>string project_id = 1;</code>
        * @return The projectId.
        */
-      @java.lang.Override
-      public java.lang.String getProjectId() {
+      @Override
+      public String getProjectId() {
         return instance.getProjectId();
       }
       /**
        * <code>string project_id = 1;</code>
        * @return The bytes for projectId.
        */
-      @java.lang.Override
+      @Override
       public com.google.protobuf.ByteString
           getProjectIdBytes() {
         return instance.getProjectIdBytes();
@@ -1499,7 +1500,7 @@ public final class Embeddings {
        * @return This builder for chaining.
        */
       public Builder setProjectId(
-          java.lang.String value) {
+          String value) {
         copyOnWrite();
         instance.setProjectId(value);
         return this;
@@ -1529,15 +1530,15 @@ public final class Embeddings {
        * <code>string index_type = 2;</code>
        * @return The indexType.
        */
-      @java.lang.Override
-      public java.lang.String getIndexType() {
+      @Override
+      public String getIndexType() {
         return instance.getIndexType();
       }
       /**
        * <code>string index_type = 2;</code>
        * @return The bytes for indexType.
        */
-      @java.lang.Override
+      @Override
       public com.google.protobuf.ByteString
           getIndexTypeBytes() {
         return instance.getIndexTypeBytes();
@@ -1548,7 +1549,7 @@ public final class Embeddings {
        * @return This builder for chaining.
        */
       public Builder setIndexType(
-          java.lang.String value) {
+          String value) {
         copyOnWrite();
         instance.setIndexType(value);
         return this;
@@ -1575,66 +1576,66 @@ public final class Embeddings {
       }
 
       /**
-       * <code>repeated int32 ids = 3;</code>
+       * <code>repeated int64 ids = 3;</code>
        * @return A list containing the ids.
        */
-      @java.lang.Override
-      public java.util.List<java.lang.Integer>
+      @Override
+      public java.util.List<Long>
           getIdsList() {
         return java.util.Collections.unmodifiableList(
             instance.getIdsList());
       }
       /**
-       * <code>repeated int32 ids = 3;</code>
+       * <code>repeated int64 ids = 3;</code>
        * @return The count of ids.
        */
-      @java.lang.Override
+      @Override
       public int getIdsCount() {
         return instance.getIdsCount();
       }
       /**
-       * <code>repeated int32 ids = 3;</code>
+       * <code>repeated int64 ids = 3;</code>
        * @param index The index of the element to return.
        * @return The ids at the given index.
        */
-      @java.lang.Override
-      public int getIds(int index) {
+      @Override
+      public long getIds(int index) {
         return instance.getIds(index);
       }
       /**
-       * <code>repeated int32 ids = 3;</code>
+       * <code>repeated int64 ids = 3;</code>
        * @param value The ids to set.
        * @return This builder for chaining.
        */
       public Builder setIds(
-          int index, int value) {
+          int index, long value) {
         copyOnWrite();
         instance.setIds(index, value);
         return this;
       }
       /**
-       * <code>repeated int32 ids = 3;</code>
+       * <code>repeated int64 ids = 3;</code>
        * @param value The ids to add.
        * @return This builder for chaining.
        */
-      public Builder addIds(int value) {
+      public Builder addIds(long value) {
         copyOnWrite();
         instance.addIds(value);
         return this;
       }
       /**
-       * <code>repeated int32 ids = 3;</code>
+       * <code>repeated int64 ids = 3;</code>
        * @param values The ids to add.
        * @return This builder for chaining.
        */
       public Builder addAllIds(
-          java.lang.Iterable<? extends java.lang.Integer> values) {
+          Iterable<? extends Long> values) {
         copyOnWrite();
         instance.addAllIds(values);
         return this;
       }
       /**
-       * <code>repeated int32 ids = 3;</code>
+       * <code>repeated int64 ids = 3;</code>
        * @return This builder for chaining.
        */
       public Builder clearIds() {
@@ -1645,27 +1646,27 @@ public final class Embeddings {
 
       // @@protoc_insertion_point(builder_scope:org.jetbrains.embeddings.local.server.stubs.remove_request)
     }
-    @java.lang.Override
-    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-    protected final java.lang.Object dynamicMethod(
-        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-        java.lang.Object arg0, java.lang.Object arg1) {
+    @Override
+    @SuppressWarnings({"unchecked", "fallthrough"})
+    protected final Object dynamicMethod(
+        MethodToInvoke method,
+        Object arg0, Object arg1) {
       switch (method) {
         case NEW_MUTABLE_INSTANCE: {
-          return new org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request();
+          return new remove_request();
         }
         case NEW_BUILDER: {
           return new Builder();
         }
         case BUILD_MESSAGE_INFO: {
-            java.lang.Object[] objects = new java.lang.Object[] {
+            Object[] objects = new Object[] {
               "projectId_",
               "indexType_",
               "ids_",
             };
-            java.lang.String info =
+            String info =
                 "\u0000\u0003\u0000\u0000\u0001\u0003\u0003\u0000\u0001\u0000\u0001\u0208\u0002\u0208" +
-                "\u0003\'";
+                "\u0003%";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
         // fall through
@@ -1673,13 +1674,13 @@ public final class Embeddings {
           return DEFAULT_INSTANCE;
         }
         case GET_PARSER: {
-          com.google.protobuf.Parser<org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request> parser = PARSER;
+          com.google.protobuf.Parser<remove_request> parser = PARSER;
           if (parser == null) {
-            synchronized (org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request.class) {
+            synchronized (remove_request.class) {
               parser = PARSER;
               if (parser == null) {
                 parser =
-                    new DefaultInstanceBasedParser<org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request>(
+                    new DefaultInstanceBasedParser<remove_request>(
                         DEFAULT_INSTANCE);
                 PARSER = parser;
               }
@@ -1699,7 +1700,7 @@ public final class Embeddings {
 
 
     // @@protoc_insertion_point(class_scope:org.jetbrains.embeddings.local.server.stubs.remove_request)
-    private static final org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request DEFAULT_INSTANCE;
+    private static final remove_request DEFAULT_INSTANCE;
     static {
       remove_request defaultInstance = new remove_request();
       // New instances are implicitly immutable so no need to make
@@ -1709,7 +1710,7 @@ public final class Embeddings {
         remove_request.class, defaultInstance);
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_request getDefaultInstance() {
+    public static remove_request getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
@@ -1734,73 +1735,73 @@ public final class Embeddings {
       remove_responseOrBuilder {
     private remove_response() {
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response parseFrom(
+    public static remove_response parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response parseFrom(
+    public static remove_response parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response parseFrom(
+    public static remove_response parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response parseFrom(
+    public static remove_response parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response parseFrom(byte[] data)
+    public static remove_response parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response parseFrom(
+    public static remove_response parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response parseFrom(java.io.InputStream input)
+    public static remove_response parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response parseFrom(
+    public static remove_response parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response parseDelimitedFrom(java.io.InputStream input)
+    public static remove_response parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response parseDelimitedFrom(
+    public static remove_response parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response parseFrom(
+    public static remove_response parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response parseFrom(
+    public static remove_response parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -1811,7 +1812,7 @@ public final class Embeddings {
     public static Builder newBuilder() {
       return (Builder) DEFAULT_INSTANCE.createBuilder();
     }
-    public static Builder newBuilder(org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response prototype) {
+    public static Builder newBuilder(remove_response prototype) {
       return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
     }
 
@@ -1820,9 +1821,9 @@ public final class Embeddings {
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageLite.Builder<
-          org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response, Builder> implements
+          remove_response, Builder> implements
         // @@protoc_insertion_point(builder_implements:org.jetbrains.embeddings.local.server.stubs.remove_response)
-        org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_responseOrBuilder {
+        remove_responseOrBuilder {
       // Construct using org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response.newBuilder()
       private Builder() {
         super(DEFAULT_INSTANCE);
@@ -1831,20 +1832,21 @@ public final class Embeddings {
 
       // @@protoc_insertion_point(builder_scope:org.jetbrains.embeddings.local.server.stubs.remove_response)
     }
-    @java.lang.Override
-    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-    protected final java.lang.Object dynamicMethod(
-        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-        java.lang.Object arg0, java.lang.Object arg1) {
+    @Override
+    @SuppressWarnings({"unchecked", "fallthrough"})
+    protected final Object dynamicMethod(
+        MethodToInvoke method,
+        Object arg0, Object arg1) {
       switch (method) {
         case NEW_MUTABLE_INSTANCE: {
-          return new org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response();
+          return new remove_response();
         }
         case NEW_BUILDER: {
           return new Builder();
         }
         case BUILD_MESSAGE_INFO: {
-            java.lang.Object[] objects = null;java.lang.String info =
+            Object[] objects = null;
+          String info =
                 "\u0000\u0000";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
@@ -1853,13 +1855,13 @@ public final class Embeddings {
           return DEFAULT_INSTANCE;
         }
         case GET_PARSER: {
-          com.google.protobuf.Parser<org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response> parser = PARSER;
+          com.google.protobuf.Parser<remove_response> parser = PARSER;
           if (parser == null) {
-            synchronized (org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response.class) {
+            synchronized (remove_response.class) {
               parser = PARSER;
               if (parser == null) {
                 parser =
-                    new DefaultInstanceBasedParser<org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response>(
+                    new DefaultInstanceBasedParser<remove_response>(
                         DEFAULT_INSTANCE);
                 PARSER = parser;
               }
@@ -1879,7 +1881,7 @@ public final class Embeddings {
 
 
     // @@protoc_insertion_point(class_scope:org.jetbrains.embeddings.local.server.stubs.remove_response)
-    private static final org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response DEFAULT_INSTANCE;
+    private static final remove_response DEFAULT_INSTANCE;
     static {
       remove_response defaultInstance = new remove_response();
       // New instances are implicitly immutable so no need to make
@@ -1889,7 +1891,7 @@ public final class Embeddings {
         remove_response.class, defaultInstance);
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.remove_response getDefaultInstance() {
+    public static remove_response getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
@@ -1908,7 +1910,7 @@ public final class Embeddings {
      * <code>string project_id = 1;</code>
      * @return The projectId.
      */
-    java.lang.String getProjectId();
+    String getProjectId();
     /**
      * <code>string project_id = 1;</code>
      * @return The bytes for projectId.
@@ -1920,7 +1922,7 @@ public final class Embeddings {
      * <code>string index_type = 2;</code>
      * @return The indexType.
      */
-    java.lang.String getIndexType();
+    String getIndexType();
     /**
      * <code>string index_type = 2;</code>
      * @return The bytes for indexType.
@@ -1932,7 +1934,7 @@ public final class Embeddings {
      * <code>string text = 3;</code>
      * @return The text.
      */
-    java.lang.String getText();
+    String getText();
     /**
      * <code>string text = 3;</code>
      * @return The bytes for text.
@@ -1960,20 +1962,20 @@ public final class Embeddings {
       text_ = "";
     }
     public static final int PROJECT_ID_FIELD_NUMBER = 1;
-    private java.lang.String projectId_;
+    private String projectId_;
     /**
      * <code>string project_id = 1;</code>
      * @return The projectId.
      */
-    @java.lang.Override
-    public java.lang.String getProjectId() {
+    @Override
+    public String getProjectId() {
       return projectId_;
     }
     /**
      * <code>string project_id = 1;</code>
      * @return The bytes for projectId.
      */
-    @java.lang.Override
+    @Override
     public com.google.protobuf.ByteString
         getProjectIdBytes() {
       return com.google.protobuf.ByteString.copyFromUtf8(projectId_);
@@ -1983,8 +1985,8 @@ public final class Embeddings {
      * @param value The projectId to set.
      */
     private void setProjectId(
-        java.lang.String value) {
-      java.lang.Class<?> valueClass = value.getClass();
+        String value) {
+      Class<?> valueClass = value.getClass();
   
       projectId_ = value;
     }
@@ -2007,20 +2009,20 @@ public final class Embeddings {
     }
 
     public static final int INDEX_TYPE_FIELD_NUMBER = 2;
-    private java.lang.String indexType_;
+    private String indexType_;
     /**
      * <code>string index_type = 2;</code>
      * @return The indexType.
      */
-    @java.lang.Override
-    public java.lang.String getIndexType() {
+    @Override
+    public String getIndexType() {
       return indexType_;
     }
     /**
      * <code>string index_type = 2;</code>
      * @return The bytes for indexType.
      */
-    @java.lang.Override
+    @Override
     public com.google.protobuf.ByteString
         getIndexTypeBytes() {
       return com.google.protobuf.ByteString.copyFromUtf8(indexType_);
@@ -2030,8 +2032,8 @@ public final class Embeddings {
      * @param value The indexType to set.
      */
     private void setIndexType(
-        java.lang.String value) {
-      java.lang.Class<?> valueClass = value.getClass();
+        String value) {
+      Class<?> valueClass = value.getClass();
   
       indexType_ = value;
     }
@@ -2054,20 +2056,20 @@ public final class Embeddings {
     }
 
     public static final int TEXT_FIELD_NUMBER = 3;
-    private java.lang.String text_;
+    private String text_;
     /**
      * <code>string text = 3;</code>
      * @return The text.
      */
-    @java.lang.Override
-    public java.lang.String getText() {
+    @Override
+    public String getText() {
       return text_;
     }
     /**
      * <code>string text = 3;</code>
      * @return The bytes for text.
      */
-    @java.lang.Override
+    @Override
     public com.google.protobuf.ByteString
         getTextBytes() {
       return com.google.protobuf.ByteString.copyFromUtf8(text_);
@@ -2077,8 +2079,8 @@ public final class Embeddings {
      * @param value The text to set.
      */
     private void setText(
-        java.lang.String value) {
-      java.lang.Class<?> valueClass = value.getClass();
+        String value) {
+      Class<?> valueClass = value.getClass();
   
       text_ = value;
     }
@@ -2106,7 +2108,7 @@ public final class Embeddings {
      * <code>int32 top = 4;</code>
      * @return The top.
      */
-    @java.lang.Override
+    @Override
     public int getTop() {
       return top_;
     }
@@ -2126,73 +2128,73 @@ public final class Embeddings {
       top_ = 0;
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request parseFrom(
+    public static search_request parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request parseFrom(
+    public static search_request parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request parseFrom(
+    public static search_request parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request parseFrom(
+    public static search_request parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request parseFrom(byte[] data)
+    public static search_request parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request parseFrom(
+    public static search_request parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request parseFrom(java.io.InputStream input)
+    public static search_request parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request parseFrom(
+    public static search_request parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request parseDelimitedFrom(java.io.InputStream input)
+    public static search_request parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request parseDelimitedFrom(
+    public static search_request parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request parseFrom(
+    public static search_request parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request parseFrom(
+    public static search_request parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -2203,7 +2205,7 @@ public final class Embeddings {
     public static Builder newBuilder() {
       return (Builder) DEFAULT_INSTANCE.createBuilder();
     }
-    public static Builder newBuilder(org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request prototype) {
+    public static Builder newBuilder(search_request prototype) {
       return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
     }
 
@@ -2212,9 +2214,9 @@ public final class Embeddings {
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageLite.Builder<
-          org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request, Builder> implements
+          search_request, Builder> implements
         // @@protoc_insertion_point(builder_implements:org.jetbrains.embeddings.local.server.stubs.search_request)
-        org.jetbrains.embeddings.local.server.stubs.Embeddings.search_requestOrBuilder {
+        search_requestOrBuilder {
       // Construct using org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request.newBuilder()
       private Builder() {
         super(DEFAULT_INSTANCE);
@@ -2225,15 +2227,15 @@ public final class Embeddings {
        * <code>string project_id = 1;</code>
        * @return The projectId.
        */
-      @java.lang.Override
-      public java.lang.String getProjectId() {
+      @Override
+      public String getProjectId() {
         return instance.getProjectId();
       }
       /**
        * <code>string project_id = 1;</code>
        * @return The bytes for projectId.
        */
-      @java.lang.Override
+      @Override
       public com.google.protobuf.ByteString
           getProjectIdBytes() {
         return instance.getProjectIdBytes();
@@ -2244,7 +2246,7 @@ public final class Embeddings {
        * @return This builder for chaining.
        */
       public Builder setProjectId(
-          java.lang.String value) {
+          String value) {
         copyOnWrite();
         instance.setProjectId(value);
         return this;
@@ -2274,15 +2276,15 @@ public final class Embeddings {
        * <code>string index_type = 2;</code>
        * @return The indexType.
        */
-      @java.lang.Override
-      public java.lang.String getIndexType() {
+      @Override
+      public String getIndexType() {
         return instance.getIndexType();
       }
       /**
        * <code>string index_type = 2;</code>
        * @return The bytes for indexType.
        */
-      @java.lang.Override
+      @Override
       public com.google.protobuf.ByteString
           getIndexTypeBytes() {
         return instance.getIndexTypeBytes();
@@ -2293,7 +2295,7 @@ public final class Embeddings {
        * @return This builder for chaining.
        */
       public Builder setIndexType(
-          java.lang.String value) {
+          String value) {
         copyOnWrite();
         instance.setIndexType(value);
         return this;
@@ -2323,15 +2325,15 @@ public final class Embeddings {
        * <code>string text = 3;</code>
        * @return The text.
        */
-      @java.lang.Override
-      public java.lang.String getText() {
+      @Override
+      public String getText() {
         return instance.getText();
       }
       /**
        * <code>string text = 3;</code>
        * @return The bytes for text.
        */
-      @java.lang.Override
+      @Override
       public com.google.protobuf.ByteString
           getTextBytes() {
         return instance.getTextBytes();
@@ -2342,7 +2344,7 @@ public final class Embeddings {
        * @return This builder for chaining.
        */
       public Builder setText(
-          java.lang.String value) {
+          String value) {
         copyOnWrite();
         instance.setText(value);
         return this;
@@ -2372,7 +2374,7 @@ public final class Embeddings {
        * <code>int32 top = 4;</code>
        * @return The top.
        */
-      @java.lang.Override
+      @Override
       public int getTop() {
         return instance.getTop();
       }
@@ -2398,26 +2400,26 @@ public final class Embeddings {
 
       // @@protoc_insertion_point(builder_scope:org.jetbrains.embeddings.local.server.stubs.search_request)
     }
-    @java.lang.Override
-    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-    protected final java.lang.Object dynamicMethod(
-        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-        java.lang.Object arg0, java.lang.Object arg1) {
+    @Override
+    @SuppressWarnings({"unchecked", "fallthrough"})
+    protected final Object dynamicMethod(
+        MethodToInvoke method,
+        Object arg0, Object arg1) {
       switch (method) {
         case NEW_MUTABLE_INSTANCE: {
-          return new org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request();
+          return new search_request();
         }
         case NEW_BUILDER: {
           return new Builder();
         }
         case BUILD_MESSAGE_INFO: {
-            java.lang.Object[] objects = new java.lang.Object[] {
+            Object[] objects = new Object[] {
               "projectId_",
               "indexType_",
               "text_",
               "top_",
             };
-            java.lang.String info =
+            String info =
                 "\u0000\u0004\u0000\u0000\u0001\u0004\u0004\u0000\u0000\u0000\u0001\u0208\u0002\u0208" +
                 "\u0003\u0208\u0004\u0004";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
@@ -2427,13 +2429,13 @@ public final class Embeddings {
           return DEFAULT_INSTANCE;
         }
         case GET_PARSER: {
-          com.google.protobuf.Parser<org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request> parser = PARSER;
+          com.google.protobuf.Parser<search_request> parser = PARSER;
           if (parser == null) {
-            synchronized (org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request.class) {
+            synchronized (search_request.class) {
               parser = PARSER;
               if (parser == null) {
                 parser =
-                    new DefaultInstanceBasedParser<org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request>(
+                    new DefaultInstanceBasedParser<search_request>(
                         DEFAULT_INSTANCE);
                 PARSER = parser;
               }
@@ -2453,7 +2455,7 @@ public final class Embeddings {
 
 
     // @@protoc_insertion_point(class_scope:org.jetbrains.embeddings.local.server.stubs.search_request)
-    private static final org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request DEFAULT_INSTANCE;
+    private static final search_request DEFAULT_INSTANCE;
     static {
       search_request defaultInstance = new search_request();
       // New instances are implicitly immutable so no need to make
@@ -2463,7 +2465,7 @@ public final class Embeddings {
         search_request.class, defaultInstance);
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request getDefaultInstance() {
+    public static search_request getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
@@ -2479,10 +2481,10 @@ public final class Embeddings {
       com.google.protobuf.MessageLiteOrBuilder {
 
     /**
-     * <code>int32 id = 1;</code>
+     * <code>int64 id = 1;</code>
      * @return The id.
      */
-    int getId();
+    long getId();
 
     /**
      * <code>float distance = 2;</code>
@@ -2501,29 +2503,29 @@ public final class Embeddings {
     private scored_entry() {
     }
     public static final int ID_FIELD_NUMBER = 1;
-    private int id_;
+    private long id_;
     /**
-     * <code>int32 id = 1;</code>
+     * <code>int64 id = 1;</code>
      * @return The id.
      */
-    @java.lang.Override
-    public int getId() {
+    @Override
+    public long getId() {
       return id_;
     }
     /**
-     * <code>int32 id = 1;</code>
+     * <code>int64 id = 1;</code>
      * @param value The id to set.
      */
-    private void setId(int value) {
+    private void setId(long value) {
       
       id_ = value;
     }
     /**
-     * <code>int32 id = 1;</code>
+     * <code>int64 id = 1;</code>
      */
     private void clearId() {
       
-      id_ = 0;
+      id_ = 0L;
     }
 
     public static final int DISTANCE_FIELD_NUMBER = 2;
@@ -2532,7 +2534,7 @@ public final class Embeddings {
      * <code>float distance = 2;</code>
      * @return The distance.
      */
-    @java.lang.Override
+    @Override
     public float getDistance() {
       return distance_;
     }
@@ -2552,73 +2554,73 @@ public final class Embeddings {
       distance_ = 0F;
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry parseFrom(
+    public static scored_entry parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry parseFrom(
+    public static scored_entry parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry parseFrom(
+    public static scored_entry parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry parseFrom(
+    public static scored_entry parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry parseFrom(byte[] data)
+    public static scored_entry parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry parseFrom(
+    public static scored_entry parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry parseFrom(java.io.InputStream input)
+    public static scored_entry parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry parseFrom(
+    public static scored_entry parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry parseDelimitedFrom(java.io.InputStream input)
+    public static scored_entry parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry parseDelimitedFrom(
+    public static scored_entry parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry parseFrom(
+    public static scored_entry parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry parseFrom(
+    public static scored_entry parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -2629,7 +2631,7 @@ public final class Embeddings {
     public static Builder newBuilder() {
       return (Builder) DEFAULT_INSTANCE.createBuilder();
     }
-    public static Builder newBuilder(org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry prototype) {
+    public static Builder newBuilder(scored_entry prototype) {
       return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
     }
 
@@ -2638,9 +2640,9 @@ public final class Embeddings {
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageLite.Builder<
-          org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry, Builder> implements
+          scored_entry, Builder> implements
         // @@protoc_insertion_point(builder_implements:org.jetbrains.embeddings.local.server.stubs.scored_entry)
-        org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entryOrBuilder {
+        scored_entryOrBuilder {
       // Construct using org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry.newBuilder()
       private Builder() {
         super(DEFAULT_INSTANCE);
@@ -2648,25 +2650,25 @@ public final class Embeddings {
 
 
       /**
-       * <code>int32 id = 1;</code>
+       * <code>int64 id = 1;</code>
        * @return The id.
        */
-      @java.lang.Override
-      public int getId() {
+      @Override
+      public long getId() {
         return instance.getId();
       }
       /**
-       * <code>int32 id = 1;</code>
+       * <code>int64 id = 1;</code>
        * @param value The id to set.
        * @return This builder for chaining.
        */
-      public Builder setId(int value) {
+      public Builder setId(long value) {
         copyOnWrite();
         instance.setId(value);
         return this;
       }
       /**
-       * <code>int32 id = 1;</code>
+       * <code>int64 id = 1;</code>
        * @return This builder for chaining.
        */
       public Builder clearId() {
@@ -2679,7 +2681,7 @@ public final class Embeddings {
        * <code>float distance = 2;</code>
        * @return The distance.
        */
-      @java.lang.Override
+      @Override
       public float getDistance() {
         return instance.getDistance();
       }
@@ -2705,25 +2707,25 @@ public final class Embeddings {
 
       // @@protoc_insertion_point(builder_scope:org.jetbrains.embeddings.local.server.stubs.scored_entry)
     }
-    @java.lang.Override
-    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-    protected final java.lang.Object dynamicMethod(
-        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-        java.lang.Object arg0, java.lang.Object arg1) {
+    @Override
+    @SuppressWarnings({"unchecked", "fallthrough"})
+    protected final Object dynamicMethod(
+        MethodToInvoke method,
+        Object arg0, Object arg1) {
       switch (method) {
         case NEW_MUTABLE_INSTANCE: {
-          return new org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry();
+          return new scored_entry();
         }
         case NEW_BUILDER: {
           return new Builder();
         }
         case BUILD_MESSAGE_INFO: {
-            java.lang.Object[] objects = new java.lang.Object[] {
+            Object[] objects = new Object[] {
               "id_",
               "distance_",
             };
-            java.lang.String info =
-                "\u0000\u0002\u0000\u0000\u0001\u0002\u0002\u0000\u0000\u0000\u0001\u0004\u0002\u0001" +
+            String info =
+                "\u0000\u0002\u0000\u0000\u0001\u0002\u0002\u0000\u0000\u0000\u0001\u0002\u0002\u0001" +
                 "";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
@@ -2732,13 +2734,13 @@ public final class Embeddings {
           return DEFAULT_INSTANCE;
         }
         case GET_PARSER: {
-          com.google.protobuf.Parser<org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry> parser = PARSER;
+          com.google.protobuf.Parser<scored_entry> parser = PARSER;
           if (parser == null) {
-            synchronized (org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry.class) {
+            synchronized (scored_entry.class) {
               parser = PARSER;
               if (parser == null) {
                 parser =
-                    new DefaultInstanceBasedParser<org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry>(
+                    new DefaultInstanceBasedParser<scored_entry>(
                         DEFAULT_INSTANCE);
                 PARSER = parser;
               }
@@ -2758,7 +2760,7 @@ public final class Embeddings {
 
 
     // @@protoc_insertion_point(class_scope:org.jetbrains.embeddings.local.server.stubs.scored_entry)
-    private static final org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry DEFAULT_INSTANCE;
+    private static final scored_entry DEFAULT_INSTANCE;
     static {
       scored_entry defaultInstance = new scored_entry();
       // New instances are implicitly immutable so no need to make
@@ -2768,7 +2770,7 @@ public final class Embeddings {
         scored_entry.class, defaultInstance);
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry getDefaultInstance() {
+    public static scored_entry getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
@@ -2786,12 +2788,12 @@ public final class Embeddings {
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
      */
-    java.util.List<org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry> 
+    java.util.List<scored_entry>
         getResultsList();
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
      */
-    org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry getResults(int index);
+    scored_entry getResults(int index);
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
      */
@@ -2809,44 +2811,44 @@ public final class Embeddings {
       results_ = emptyProtobufList();
     }
     public static final int RESULTS_FIELD_NUMBER = 1;
-    private com.google.protobuf.Internal.ProtobufList<org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry> results_;
+    private com.google.protobuf.Internal.ProtobufList<scored_entry> results_;
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
      */
-    @java.lang.Override
-    public java.util.List<org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry> getResultsList() {
+    @Override
+    public java.util.List<scored_entry> getResultsList() {
       return results_;
     }
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
      */
-    public java.util.List<? extends org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entryOrBuilder> 
+    public java.util.List<? extends scored_entryOrBuilder>
         getResultsOrBuilderList() {
       return results_;
     }
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
      */
-    @java.lang.Override
+    @Override
     public int getResultsCount() {
       return results_.size();
     }
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
      */
-    @java.lang.Override
-    public org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry getResults(int index) {
+    @Override
+    public scored_entry getResults(int index) {
       return results_.get(index);
     }
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
      */
-    public org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entryOrBuilder getResultsOrBuilder(
+    public scored_entryOrBuilder getResultsOrBuilder(
         int index) {
       return results_.get(index);
     }
     private void ensureResultsIsMutable() {
-      com.google.protobuf.Internal.ProtobufList<org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry> tmp = results_;
+      com.google.protobuf.Internal.ProtobufList<scored_entry> tmp = results_;
       if (!tmp.isModifiable()) {
         results_ =
             com.google.protobuf.GeneratedMessageLite.mutableCopy(tmp);
@@ -2857,7 +2859,7 @@ public final class Embeddings {
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
      */
     private void setResults(
-        int index, org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry value) {
+        int index, scored_entry value) {
       value.getClass();
   ensureResultsIsMutable();
       results_.set(index, value);
@@ -2865,7 +2867,7 @@ public final class Embeddings {
     /**
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
      */
-    private void addResults(org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry value) {
+    private void addResults(scored_entry value) {
       value.getClass();
   ensureResultsIsMutable();
       results_.add(value);
@@ -2874,7 +2876,7 @@ public final class Embeddings {
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
      */
     private void addResults(
-        int index, org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry value) {
+        int index, scored_entry value) {
       value.getClass();
   ensureResultsIsMutable();
       results_.add(index, value);
@@ -2883,7 +2885,7 @@ public final class Embeddings {
      * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
      */
     private void addAllResults(
-        java.lang.Iterable<? extends org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry> values) {
+        Iterable<? extends scored_entry> values) {
       ensureResultsIsMutable();
       com.google.protobuf.AbstractMessageLite.addAll(
           values, results_);
@@ -2902,73 +2904,73 @@ public final class Embeddings {
       results_.remove(index);
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response parseFrom(
+    public static search_response parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response parseFrom(
+    public static search_response parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response parseFrom(
+    public static search_response parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response parseFrom(
+    public static search_response parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response parseFrom(byte[] data)
+    public static search_response parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response parseFrom(
+    public static search_response parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response parseFrom(java.io.InputStream input)
+    public static search_response parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response parseFrom(
+    public static search_response parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response parseDelimitedFrom(java.io.InputStream input)
+    public static search_response parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response parseDelimitedFrom(
+    public static search_response parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response parseFrom(
+    public static search_response parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response parseFrom(
+    public static search_response parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -2979,7 +2981,7 @@ public final class Embeddings {
     public static Builder newBuilder() {
       return (Builder) DEFAULT_INSTANCE.createBuilder();
     }
-    public static Builder newBuilder(org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response prototype) {
+    public static Builder newBuilder(search_response prototype) {
       return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
     }
 
@@ -2988,9 +2990,9 @@ public final class Embeddings {
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageLite.Builder<
-          org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response, Builder> implements
+          search_response, Builder> implements
         // @@protoc_insertion_point(builder_implements:org.jetbrains.embeddings.local.server.stubs.search_response)
-        org.jetbrains.embeddings.local.server.stubs.Embeddings.search_responseOrBuilder {
+        search_responseOrBuilder {
       // Construct using org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response.newBuilder()
       private Builder() {
         super(DEFAULT_INSTANCE);
@@ -3000,29 +3002,29 @@ public final class Embeddings {
       /**
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
        */
-      @java.lang.Override
-      public java.util.List<org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry> getResultsList() {
+      @Override
+      public java.util.List<scored_entry> getResultsList() {
         return java.util.Collections.unmodifiableList(
             instance.getResultsList());
       }
       /**
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
        */
-      @java.lang.Override
+      @Override
       public int getResultsCount() {
         return instance.getResultsCount();
       }/**
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
        */
-      @java.lang.Override
-      public org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry getResults(int index) {
+      @Override
+      public scored_entry getResults(int index) {
         return instance.getResults(index);
       }
       /**
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
        */
       public Builder setResults(
-          int index, org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry value) {
+          int index, scored_entry value) {
         copyOnWrite();
         instance.setResults(index, value);
         return this;
@@ -3031,7 +3033,7 @@ public final class Embeddings {
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
        */
       public Builder setResults(
-          int index, org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry.Builder builderForValue) {
+          int index, scored_entry.Builder builderForValue) {
         copyOnWrite();
         instance.setResults(index,
             builderForValue.build());
@@ -3040,7 +3042,7 @@ public final class Embeddings {
       /**
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
        */
-      public Builder addResults(org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry value) {
+      public Builder addResults(scored_entry value) {
         copyOnWrite();
         instance.addResults(value);
         return this;
@@ -3049,7 +3051,7 @@ public final class Embeddings {
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
        */
       public Builder addResults(
-          int index, org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry value) {
+          int index, scored_entry value) {
         copyOnWrite();
         instance.addResults(index, value);
         return this;
@@ -3058,7 +3060,7 @@ public final class Embeddings {
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
        */
       public Builder addResults(
-          org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry.Builder builderForValue) {
+          scored_entry.Builder builderForValue) {
         copyOnWrite();
         instance.addResults(builderForValue.build());
         return this;
@@ -3067,7 +3069,7 @@ public final class Embeddings {
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
        */
       public Builder addResults(
-          int index, org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry.Builder builderForValue) {
+          int index, scored_entry.Builder builderForValue) {
         copyOnWrite();
         instance.addResults(index,
             builderForValue.build());
@@ -3077,7 +3079,7 @@ public final class Embeddings {
        * <code>repeated .org.jetbrains.embeddings.local.server.stubs.scored_entry results = 1;</code>
        */
       public Builder addAllResults(
-          java.lang.Iterable<? extends org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry> values) {
+          Iterable<? extends scored_entry> values) {
         copyOnWrite();
         instance.addAllResults(values);
         return this;
@@ -3101,24 +3103,24 @@ public final class Embeddings {
 
       // @@protoc_insertion_point(builder_scope:org.jetbrains.embeddings.local.server.stubs.search_response)
     }
-    @java.lang.Override
-    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-    protected final java.lang.Object dynamicMethod(
-        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-        java.lang.Object arg0, java.lang.Object arg1) {
+    @Override
+    @SuppressWarnings({"unchecked", "fallthrough"})
+    protected final Object dynamicMethod(
+        MethodToInvoke method,
+        Object arg0, Object arg1) {
       switch (method) {
         case NEW_MUTABLE_INSTANCE: {
-          return new org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response();
+          return new search_response();
         }
         case NEW_BUILDER: {
           return new Builder();
         }
         case BUILD_MESSAGE_INFO: {
-            java.lang.Object[] objects = new java.lang.Object[] {
+            Object[] objects = new Object[] {
               "results_",
-              org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry.class,
+              scored_entry.class,
             };
-            java.lang.String info =
+            String info =
                 "\u0000\u0001\u0000\u0000\u0001\u0001\u0001\u0000\u0001\u0000\u0001\u001b";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
@@ -3127,13 +3129,13 @@ public final class Embeddings {
           return DEFAULT_INSTANCE;
         }
         case GET_PARSER: {
-          com.google.protobuf.Parser<org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response> parser = PARSER;
+          com.google.protobuf.Parser<search_response> parser = PARSER;
           if (parser == null) {
-            synchronized (org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response.class) {
+            synchronized (search_response.class) {
               parser = PARSER;
               if (parser == null) {
                 parser =
-                    new DefaultInstanceBasedParser<org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response>(
+                    new DefaultInstanceBasedParser<search_response>(
                         DEFAULT_INSTANCE);
                 PARSER = parser;
               }
@@ -3153,7 +3155,7 @@ public final class Embeddings {
 
 
     // @@protoc_insertion_point(class_scope:org.jetbrains.embeddings.local.server.stubs.search_response)
-    private static final org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response DEFAULT_INSTANCE;
+    private static final search_response DEFAULT_INSTANCE;
     static {
       search_response defaultInstance = new search_response();
       // New instances are implicitly immutable so no need to make
@@ -3163,7 +3165,7 @@ public final class Embeddings {
         search_response.class, defaultInstance);
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.search_response getDefaultInstance() {
+    public static search_response getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
@@ -3188,73 +3190,73 @@ public final class Embeddings {
       finish_requestOrBuilder {
     private finish_request() {
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request parseFrom(
+    public static finish_request parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request parseFrom(
+    public static finish_request parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request parseFrom(
+    public static finish_request parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request parseFrom(
+    public static finish_request parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request parseFrom(byte[] data)
+    public static finish_request parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request parseFrom(
+    public static finish_request parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request parseFrom(java.io.InputStream input)
+    public static finish_request parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request parseFrom(
+    public static finish_request parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request parseDelimitedFrom(java.io.InputStream input)
+    public static finish_request parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request parseDelimitedFrom(
+    public static finish_request parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request parseFrom(
+    public static finish_request parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request parseFrom(
+    public static finish_request parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -3265,7 +3267,7 @@ public final class Embeddings {
     public static Builder newBuilder() {
       return (Builder) DEFAULT_INSTANCE.createBuilder();
     }
-    public static Builder newBuilder(org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request prototype) {
+    public static Builder newBuilder(finish_request prototype) {
       return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
     }
 
@@ -3274,9 +3276,9 @@ public final class Embeddings {
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageLite.Builder<
-          org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request, Builder> implements
+          finish_request, Builder> implements
         // @@protoc_insertion_point(builder_implements:org.jetbrains.embeddings.local.server.stubs.finish_request)
-        org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_requestOrBuilder {
+        finish_requestOrBuilder {
       // Construct using org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request.newBuilder()
       private Builder() {
         super(DEFAULT_INSTANCE);
@@ -3285,20 +3287,21 @@ public final class Embeddings {
 
       // @@protoc_insertion_point(builder_scope:org.jetbrains.embeddings.local.server.stubs.finish_request)
     }
-    @java.lang.Override
-    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-    protected final java.lang.Object dynamicMethod(
-        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-        java.lang.Object arg0, java.lang.Object arg1) {
+    @Override
+    @SuppressWarnings({"unchecked", "fallthrough"})
+    protected final Object dynamicMethod(
+        MethodToInvoke method,
+        Object arg0, Object arg1) {
       switch (method) {
         case NEW_MUTABLE_INSTANCE: {
-          return new org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request();
+          return new finish_request();
         }
         case NEW_BUILDER: {
           return new Builder();
         }
         case BUILD_MESSAGE_INFO: {
-            java.lang.Object[] objects = null;java.lang.String info =
+            Object[] objects = null;
+          String info =
                 "\u0000\u0000";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
@@ -3307,13 +3310,13 @@ public final class Embeddings {
           return DEFAULT_INSTANCE;
         }
         case GET_PARSER: {
-          com.google.protobuf.Parser<org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request> parser = PARSER;
+          com.google.protobuf.Parser<finish_request> parser = PARSER;
           if (parser == null) {
-            synchronized (org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request.class) {
+            synchronized (finish_request.class) {
               parser = PARSER;
               if (parser == null) {
                 parser =
-                    new DefaultInstanceBasedParser<org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request>(
+                    new DefaultInstanceBasedParser<finish_request>(
                         DEFAULT_INSTANCE);
                 PARSER = parser;
               }
@@ -3333,7 +3336,7 @@ public final class Embeddings {
 
 
     // @@protoc_insertion_point(class_scope:org.jetbrains.embeddings.local.server.stubs.finish_request)
-    private static final org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request DEFAULT_INSTANCE;
+    private static final finish_request DEFAULT_INSTANCE;
     static {
       finish_request defaultInstance = new finish_request();
       // New instances are implicitly immutable so no need to make
@@ -3343,7 +3346,7 @@ public final class Embeddings {
         finish_request.class, defaultInstance);
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_request getDefaultInstance() {
+    public static finish_request getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 
@@ -3368,73 +3371,73 @@ public final class Embeddings {
       finish_responseOrBuilder {
     private finish_response() {
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response parseFrom(
+    public static finish_response parseFrom(
         java.nio.ByteBuffer data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response parseFrom(
+    public static finish_response parseFrom(
         java.nio.ByteBuffer data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response parseFrom(
+    public static finish_response parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response parseFrom(
+    public static finish_response parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response parseFrom(byte[] data)
+    public static finish_response parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response parseFrom(
+    public static finish_response parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, data, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response parseFrom(java.io.InputStream input)
+    public static finish_response parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response parseFrom(
+    public static finish_response parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response parseDelimitedFrom(java.io.InputStream input)
+    public static finish_response parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response parseDelimitedFrom(
+    public static finish_response parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response parseFrom(
+    public static finish_response parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
           DEFAULT_INSTANCE, input);
     }
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response parseFrom(
+    public static finish_response parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -3445,7 +3448,7 @@ public final class Embeddings {
     public static Builder newBuilder() {
       return (Builder) DEFAULT_INSTANCE.createBuilder();
     }
-    public static Builder newBuilder(org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response prototype) {
+    public static Builder newBuilder(finish_response prototype) {
       return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
     }
 
@@ -3454,9 +3457,9 @@ public final class Embeddings {
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageLite.Builder<
-          org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response, Builder> implements
+          finish_response, Builder> implements
         // @@protoc_insertion_point(builder_implements:org.jetbrains.embeddings.local.server.stubs.finish_response)
-        org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_responseOrBuilder {
+        finish_responseOrBuilder {
       // Construct using org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response.newBuilder()
       private Builder() {
         super(DEFAULT_INSTANCE);
@@ -3465,20 +3468,21 @@ public final class Embeddings {
 
       // @@protoc_insertion_point(builder_scope:org.jetbrains.embeddings.local.server.stubs.finish_response)
     }
-    @java.lang.Override
-    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-    protected final java.lang.Object dynamicMethod(
-        com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-        java.lang.Object arg0, java.lang.Object arg1) {
+    @Override
+    @SuppressWarnings({"unchecked", "fallthrough"})
+    protected final Object dynamicMethod(
+        MethodToInvoke method,
+        Object arg0, Object arg1) {
       switch (method) {
         case NEW_MUTABLE_INSTANCE: {
-          return new org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response();
+          return new finish_response();
         }
         case NEW_BUILDER: {
           return new Builder();
         }
         case BUILD_MESSAGE_INFO: {
-            java.lang.Object[] objects = null;java.lang.String info =
+            Object[] objects = null;
+          String info =
                 "\u0000\u0000";
             return newMessageInfo(DEFAULT_INSTANCE, info, objects);
         }
@@ -3487,13 +3491,13 @@ public final class Embeddings {
           return DEFAULT_INSTANCE;
         }
         case GET_PARSER: {
-          com.google.protobuf.Parser<org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response> parser = PARSER;
+          com.google.protobuf.Parser<finish_response> parser = PARSER;
           if (parser == null) {
-            synchronized (org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response.class) {
+            synchronized (finish_response.class) {
               parser = PARSER;
               if (parser == null) {
                 parser =
-                    new DefaultInstanceBasedParser<org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response>(
+                    new DefaultInstanceBasedParser<finish_response>(
                         DEFAULT_INSTANCE);
                 PARSER = parser;
               }
@@ -3513,7 +3517,7 @@ public final class Embeddings {
 
 
     // @@protoc_insertion_point(class_scope:org.jetbrains.embeddings.local.server.stubs.finish_response)
-    private static final org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response DEFAULT_INSTANCE;
+    private static final finish_response DEFAULT_INSTANCE;
     static {
       finish_response defaultInstance = new finish_response();
       // New instances are implicitly immutable so no need to make
@@ -3523,7 +3527,7 @@ public final class Embeddings {
         finish_response.class, defaultInstance);
     }
 
-    public static org.jetbrains.embeddings.local.server.stubs.Embeddings.finish_response getDefaultInstance() {
+    public static finish_response getDefaultInstance() {
       return DEFAULT_INSTANCE;
     }
 

@@ -23,9 +23,9 @@ public object index_entityKt {
     internal fun _build(): org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity = _builder.build()
 
     /**
-     * <code>int32 id = 1;</code>
+     * <code>int64 id = 1;</code>
      */
-    public var id: kotlin.Int
+    public var id: kotlin.Long
       @JvmName("getId")
       get() = _builder.getId()
       @JvmName("setId")
@@ -33,7 +33,7 @@ public object index_entityKt {
         _builder.setId(value)
       }
     /**
-     * <code>int32 id = 1;</code>
+     * <code>int64 id = 1;</code>
      */
     public fun clearId() {
       _builder.clearId()

@@ -23,9 +23,9 @@ public object scored_entryKt {
     internal fun _build(): org.jetbrains.embeddings.local.server.stubs.Embeddings.scored_entry = _builder.build()
 
     /**
-     * <code>int32 id = 1;</code>
+     * <code>int64 id = 1;</code>
      */
-    public var id: kotlin.Int
+    public var id: kotlin.Long
       @JvmName("getId")
       get() = _builder.getId()
       @JvmName("setId")
@@ -33,7 +33,7 @@ public object scored_entryKt {
         _builder.setId(value)
       }
     /**
-     * <code>int32 id = 1;</code>
+     * <code>int64 id = 1;</code>
      */
     public fun clearId() {
       _builder.clearId()
