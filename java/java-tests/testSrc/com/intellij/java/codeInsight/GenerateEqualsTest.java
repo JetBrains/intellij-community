@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.application.options.CodeStyle;
@@ -107,6 +107,10 @@ public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
 
   public void testDifferentTypesGetters() {
     doTest(Function.identity(), Function.identity(), fields -> PsiField.EMPTY_ARRAY, true, true, false);
+  }
+  
+  public void testRecordUseGettersJava21() {
+    doTest(Function.identity(), Function.identity(), fields -> PsiField.EMPTY_ARRAY, true, true, true);
   }
 
   public void testDifferentTypesAllNotNull() {

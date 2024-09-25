@@ -179,9 +179,7 @@ public class GenerateEqualsHelper implements Runnable {
     final MethodSignature equalsSignature = getEqualsSignature(myProject, myClass.getResolveScope());
 
     PsiMethod superEquals = MethodSignatureUtil.findMethodBySignature(myClass, equalsSignature, true);
-    if (superEquals != null) {
-      contextMap.put(SUPER_PARAM_NAME, superEquals.getParameterList().getParameters()[0].getName());
-    }
+    contextMap.put(SUPER_PARAM_NAME, superEquals == null ? "obj" : superEquals.getParameterList().getParameters()[0].getName());
 
     contextMap.put(SUPER_HAS_EQUALS, superMethodExists(equalsSignature));
     contextMap.put(CHECK_PARAMETER_WITH_INSTANCEOF, myCheckParameterWithInstanceof);

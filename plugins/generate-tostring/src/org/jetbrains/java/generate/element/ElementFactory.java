@@ -89,12 +89,21 @@ public final class ElementFactory {
   public static FieldElement newFieldElement(PsiField field, boolean useAccessor) {
     FieldElement fe = new FieldElement();
     fe.setName(field.getName());
-    final PsiMethod getterForField = useAccessor ? PropertyUtilBase.findGetterForField(field) : null;
+    PsiRecordComponent component = JavaPsiRecordUtil.getComponentForField(field);
+    final PsiMethod getterForField;
+    if (useAccessor) {
+      getterForField = component != null 
+                       ? JavaPsiRecordUtil.getAccessorForRecordComponent(component)
+                       : PropertyUtilBase.findGetterForField(field);
+    }
+    else {
+      getterForField = null;
+    }
     fe.setAccessor(getterForField != null ? getterForField.getName() + "()" : field.getName());
 
     if (PsiAdapter.isConstantField(field)) fe.setConstant(true);
     if (PsiAdapter.isEnumField(field)) fe.setEnum(true);
-    if (JavaPsiRecordUtil.getComponentForField(field) != null) fe.setRecordComponent(true);
+    if (component != null) fe.setRecordComponent(true);
     PsiModifierList modifiers = field.getModifierList();
     if (modifiers != null) {
       if (modifiers.hasModifierProperty(PsiModifier.TRANSIENT)) fe.setModifierTransient(true);
