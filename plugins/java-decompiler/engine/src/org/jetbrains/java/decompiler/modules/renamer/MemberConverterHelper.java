@@ -2,14 +2,14 @@
 package org.jetbrains.java.decompiler.modules.renamer;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
-import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer;
+import org.jetbrains.java.decompiler.main.extern.IMemberIdentifierRenamer;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-public class ConverterHelper implements IIdentifierRenamer {
+public class MemberConverterHelper implements IMemberIdentifierRenamer {
   private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
     "abstract", "do", "if", "package", "synchronized", "boolean", "double", "implements", "private", "this", "break", "else", "import",
     "protected", "throw", "byte", "extends", "instanceof", "public", "throws", "case", "false", "int", "return", "transient", "catch",

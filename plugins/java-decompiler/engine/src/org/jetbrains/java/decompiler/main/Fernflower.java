@@ -4,8 +4,8 @@ package org.jetbrains.java.decompiler.main;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.extern.*;
-import org.jetbrains.java.decompiler.modules.renamer.ConverterHelper;
 import org.jetbrains.java.decompiler.modules.renamer.IdentifierConverter;
+import org.jetbrains.java.decompiler.modules.renamer.MemberConverterHelper;
 import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
 import org.jetbrains.java.decompiler.struct.IDecompiledData;
 import org.jetbrains.java.decompiler.struct.StructClass;
@@ -23,7 +23,7 @@ import java.util.Map;
 public class Fernflower implements IDecompiledData {
   private final StructContext structContext;
   private final ClassesProcessor classProcessor;
-  private final IIdentifierRenamer helper;
+  private final IMemberIdentifierRenamer helper;
   private final IdentifierConverter converter;
 
   public Fernflower(IBytecodeProvider provider,
@@ -89,18 +89,18 @@ public class Fernflower implements IDecompiledData {
     this(provider, saver, customProperties, logger, null);
   }
 
-  private static IIdentifierRenamer loadHelper(String className, IFernflowerLogger logger) {
+  private static IMemberIdentifierRenamer loadHelper(String className, IFernflowerLogger logger) {
     if (className != null) {
       try {
         Class<?> renamerClass = Fernflower.class.getClassLoader().loadClass(className);
-        return (IIdentifierRenamer) renamerClass.getDeclaredConstructor().newInstance();
+        return (IMemberIdentifierRenamer) renamerClass.getDeclaredConstructor().newInstance();
       }
       catch (Exception e) {
         logger.writeMessage("Cannot load renamer '" + className + "'", IFernflowerLogger.Severity.WARN, e);
       }
     }
 
-    return new ConverterHelper();
+    return new MemberConverterHelper();
   }
 
   public void addSource(File source) {

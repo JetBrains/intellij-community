@@ -8,7 +8,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeSourceMapper;
 import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer;
+import org.jetbrains.java.decompiler.main.extern.IMemberIdentifierRenamer;
 import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 import org.jetbrains.java.decompiler.main.rels.LambdaProcessor;
 import org.jetbrains.java.decompiler.main.rels.NestedClassProcessor;
@@ -87,7 +87,7 @@ public class ClassesProcessor {
     return false;
   }
 
-  public void loadClasses(IIdentifierRenamer renamer) {
+  public void loadClasses(IMemberIdentifierRenamer renamer) {
     Map<String, Inner> mapInnerClasses = new HashMap<>();
     Map<String, Set<String>> mapNestedClassReferences = new HashMap<>();
     Map<String, Set<String>> mapEnclosingClassReferences = new HashMap<>();
@@ -114,7 +114,7 @@ public class ClassesProcessor {
               }
               else if (simpleName != null &&
                        renamer != null &&
-                       renamer.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
+                       renamer.toBeRenamed(IMemberIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
                 simpleName = renamer.getNextClassName(innerName, simpleName);
                 mapNewSimpleNames.put(innerName, simpleName);
               }

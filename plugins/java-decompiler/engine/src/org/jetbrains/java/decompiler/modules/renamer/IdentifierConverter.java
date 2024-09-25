@@ -2,7 +2,7 @@
 package org.jetbrains.java.decompiler.modules.renamer;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
-import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer;
+import org.jetbrains.java.decompiler.main.extern.IMemberIdentifierRenamer;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.StructField;
@@ -17,13 +17,13 @@ import java.util.*;
 
 public class IdentifierConverter implements NewClassNameBuilder {
   private final StructContext context;
-  private final IIdentifierRenamer helper;
+  private final IMemberIdentifierRenamer helper;
   private final PoolInterceptor interceptor;
   private List<ClassWrapperNode> rootClasses = new ArrayList<>();
   private List<ClassWrapperNode> rootInterfaces = new ArrayList<>();
   private Map<String, Map<String, String>> interfaceNameMaps = new HashMap<>();
 
-  public IdentifierConverter(StructContext context, IIdentifierRenamer helper, PoolInterceptor interceptor) {
+  public IdentifierConverter(StructContext context, IMemberIdentifierRenamer helper, PoolInterceptor interceptor) {
     this.context = context;
     this.helper = helper;
     this.interceptor = interceptor;
@@ -147,13 +147,13 @@ public class IdentifierConverter implements NewClassNameBuilder {
     String classOldFullName = cl.qualifiedName;
 
     // TODO: rename packages
-    String clSimpleName = ConverterHelper.getSimpleClassName(classOldFullName);
-    if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, clSimpleName, null, null)) {
+    String clSimpleName = MemberConverterHelper.getSimpleClassName(classOldFullName);
+    if (helper.toBeRenamed(IMemberIdentifierRenamer.Type.ELEMENT_CLASS, clSimpleName, null, null)) {
       String classNewFullName;
 
       do {
-        String classname = helper.getNextClassName(classOldFullName, ConverterHelper.getSimpleClassName(classOldFullName));
-        classNewFullName = ConverterHelper.replaceSimpleClassName(classOldFullName, classname);
+        String classname = helper.getNextClassName(classOldFullName, MemberConverterHelper.getSimpleClassName(classOldFullName));
+        classNewFullName = MemberConverterHelper.replaceSimpleClassName(classOldFullName, classname);
       }
       while (context.getClasses().containsKey(classNewFullName));
 
@@ -191,7 +191,7 @@ public class IdentifierConverter implements NewClassNameBuilder {
           names.put(key, name);
         }
       }
-      else if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_METHOD, classOldFullName, name, mt.getDescriptor())) {
+      else if (helper.toBeRenamed(IMemberIdentifierRenamer.Type.ELEMENT_METHOD, classOldFullName, name, mt.getDescriptor())) {
         if (isPrivate || !names.containsKey(key)) {
           do {
             name = helper.getNextMethodName(classOldFullName, name, mt.getDescriptor());
@@ -224,7 +224,7 @@ public class IdentifierConverter implements NewClassNameBuilder {
     }
 
     for (StructField fd : cl.getFields()) {
-      if (helper.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_FIELD, classOldFullName, fd.getName(), fd.getDescriptor())) {
+      if (helper.toBeRenamed(IMemberIdentifierRenamer.Type.ELEMENT_FIELD, classOldFullName, fd.getName(), fd.getDescriptor())) {
         String newName;
         do {
           newName = helper.getNextFieldName(classOldFullName, fd.getName(), fd.getDescriptor());

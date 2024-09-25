@@ -2,8 +2,8 @@
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
-import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer.Type;
-import org.jetbrains.java.decompiler.modules.renamer.ConverterHelper;
+import org.jetbrains.java.decompiler.main.extern.IMemberIdentifierRenamer.Type;
+import org.jetbrains.java.decompiler.modules.renamer.MemberConverterHelper;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
@@ -80,7 +80,7 @@ public class ConverterHelperTest {
   }
 
   private static void doTest(Type elementType, String className, String element, String descriptor, boolean shallBeRenamed) {
-    boolean result = new ConverterHelper().toBeRenamed(elementType, className, element, descriptor);
+    boolean result = new MemberConverterHelper().toBeRenamed(elementType, className, element, descriptor);
     String assertionMessage = shallBeRenamed ? "Identifier { %s, %s, %s, %s } shall be renamed" : "Identifier { %s, %s, %s, %s } shall not be renamed";
 
     assertTrue(String.format(assertionMessage, elementType.toString(), className, element, descriptor), result == shallBeRenamed);
