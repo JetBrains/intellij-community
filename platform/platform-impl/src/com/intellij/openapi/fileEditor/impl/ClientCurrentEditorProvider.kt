@@ -10,6 +10,11 @@ import com.intellij.util.ui.UIUtil
 
 private class ClientCurrentEditorProvider : CurrentEditorProvider {
   override fun getCurrentEditor(project: Project?): FileEditor? {
+    FocusBasedCurrentEditorProvider.getCurrentEditorEx()?.let { editor ->
+      // GTW-6595
+      return editor
+    }
+
     if (project == null) {
       // fallback to search by focus
       return ClientEditorManager.getCurrentInstance().editorsSequence()
