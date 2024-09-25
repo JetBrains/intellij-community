@@ -188,10 +188,10 @@ public final class BackgroundUpdateHighlightersUtil {
   @RequiresBackgroundThread
   @RequiresReadLock
   public static void setHighlightersInRange(@NotNull TextRange range,
-                                     @NotNull List<? extends HighlightInfo> infos,
-                                     @NotNull MarkupModelEx markup,
-                                     int group,
-                                     @NotNull HighlightingSession session) {
+                                            @NotNull List<? extends HighlightInfo> infos,
+                                            @NotNull MarkupModelEx markup,
+                                            int group,
+                                            @NotNull HighlightingSession session) {
     Project project = session.getProject();
     Document document = session.getDocument();
 
