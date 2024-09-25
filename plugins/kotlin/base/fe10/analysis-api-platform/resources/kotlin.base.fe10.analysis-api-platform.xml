@@ -13,6 +13,9 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform.K1IdeKotlinModuleDependentsProvider"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderService"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform.K1IdeProjectStructureProviderService"/>
   </extensions>
 
   <dependencies>

@@ -17,12 +17,10 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap
 import org.jetbrains.kotlin.analyzer.LibraryModuleInfo
 import org.jetbrains.kotlin.analyzer.TrackableModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
-import org.jetbrains.kotlin.idea.base.projectStructure.KotlinModificationTrackerProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
+import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderService
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
-import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
-import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -105,11 +103,8 @@ abstract class LibraryInfo internal constructor(
     override fun getLibraryRoots(): Collection<String> = library.getFiles(OrderRootType.CLASSES).mapNotNull(PathUtil::getLocalPath)
 
     override fun createModificationTracker(): ModificationTracker =
-        if (!project.useLibraryToSourceAnalysis) {
-            ModificationTracker.NEVER_CHANGED
-        } else {
-            ResolutionAnchorAwareLibraryModificationTracker(this)
-        }
+        ProjectStructureProviderService.getInstance(project).createLibraryModificationTracker(this)
+
 
     val isDisposed get() = library.isDisposed
 
@@ -122,28 +117,7 @@ abstract class LibraryInfo internal constructor(
     override fun toString() = "${this::class.simpleName}@${Integer.toHexString(System.identityHashCode(this))}($library)"
 }
 
-private class ResolutionAnchorAwareLibraryModificationTracker(libraryInfo: LibraryInfo) : ModificationTracker {
-    private val dependencyModules: List<Module> = if (!libraryInfo.isDisposed) {
-        ResolutionAnchorCacheService.getInstance(libraryInfo.project)
-            .getDependencyResolutionAnchors(libraryInfo)
-            .map { it.module }
-    } else {
-        emptyList()
-    }
 
-    override fun getModificationCount(): Long {
-        if (dependencyModules.isEmpty()) {
-            return ModificationTracker.NEVER_CHANGED.modificationCount
-        }
-
-        val project = dependencyModules.first().project
-        val modificationTrackerProvider = KotlinModificationTrackerProvider.getInstance(project)
-
-        return dependencyModules
-            .maxOfOrNull(modificationTrackerProvider::getModuleSelfModificationCount)
-            ?: ModificationTracker.NEVER_CHANGED.modificationCount
-    }
-}
 
 @Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide calcHashCode()
 private class LibraryWithoutSourceScope(

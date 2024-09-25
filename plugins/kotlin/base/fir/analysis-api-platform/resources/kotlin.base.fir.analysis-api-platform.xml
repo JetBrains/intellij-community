@@ -22,6 +22,9 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.K2IdeKotlinModuleDependentsProvider"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderService"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.K2IdeProjectStructureProviderService"/>
 
     <psi.treeChangePreprocessor
             implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockPsiTreeChangePreprocessor"/>
