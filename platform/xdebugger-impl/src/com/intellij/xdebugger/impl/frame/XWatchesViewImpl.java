@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.SingleEdtTaskScheduler;
@@ -271,7 +272,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       addToWatchesActionRef.get()
         .registerCustomShortcutSet(new CustomShortcutSet(XDebuggerEvaluationDialog.getAddWatchKeystroke()), editorComponent);
       JComponent component = myEvaluateComboBox.getComponent();
-      //component.setBackground(tree.getBackground());
+      InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(component);
+      component.setBackground(EVALUATE_FIELD_BACKGROUND_COLOR);
       component.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
       if (!UIExperiment.isNewDebuggerUIEnabled()) {
         XToggleEvaluateExpressionFieldAction.markAsEvaluateExpressionField(component);
