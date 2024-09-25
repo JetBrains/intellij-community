@@ -1470,7 +1470,7 @@ public class AllIcons {
   public static final class Xml {
     public static final class Browsers {
       /** 16x16 */ public static final @NotNull Icon Canary = load("xml/browsers/canary.svg", 1155643146, 0);
-      /** 16x16 */ public static final @NotNull Icon Chrome = load("xml/browsers/chrome.svg", -162875107, 0);
+      /** 16x16 */ public static final @NotNull Icon Chrome = load("xml/browsers/chrome.svg", -1254806517, 0);
       /** 16x16 */ public static final @NotNull Icon Chromium = load("xml/browsers/chromium.svg", -1696650918, 0);
       /** 16x16 */ public static final @NotNull Icon Edge = load("xml/browsers/edge.svg", 1590404949, 0);
       /** 16x16 */ public static final @NotNull Icon Explorer = load("xml/browsers/explorer.svg", -737513654, 0);
