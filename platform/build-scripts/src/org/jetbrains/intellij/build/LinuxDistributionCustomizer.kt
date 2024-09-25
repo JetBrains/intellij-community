@@ -19,8 +19,12 @@ open class LinuxDistributionCustomizer {
    */
   var iconPngPathForEAP: String? = null
 
+  @Suppress("unused")
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("New native launcher is always enabled")
   /**
    * Enables the use of the new cross-platform launcher (which loads launch data from `product-info.json` instead of hardcoding into a script).
+   * It's now recommended to use the new launcher, so it must always be built. Setting this property to `false` will have no effect.
    */
   var useXPlatLauncher = true
 
@@ -34,11 +38,9 @@ open class LinuxDistributionCustomizer {
       "bin/*.sh",
       "plugins/**/*.sh",
       "bin/fsnotifier",
-      "bin/restarter"
+      "bin/restarter",
+      "bin/${context.productProperties.baseFileName}",
     )
-
-    val launcherPattern = if (useXPlatLauncher) sequenceOf("bin/${context.productProperties.baseFileName}") else emptySequence()
-
     val rtPatterns = if (includeRuntime) {
       context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, context.productProperties.runtimeDistribution)
     }
@@ -46,7 +48,7 @@ open class LinuxDistributionCustomizer {
       emptySequence()
     }
 
-    return basePatterns + launcherPattern + rtPatterns +
+    return basePatterns + rtPatterns +
            RepairUtilityBuilder.executableFilesPatterns(context) +
            extraExecutables +
            context.getExtraExecutablePattern(OsFamily.LINUX)

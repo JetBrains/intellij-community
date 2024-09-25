@@ -162,7 +162,7 @@ class LinuxDistributionBuilder(
     get() = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
 
   private val launcherFileName: String
-    get() = "${context.productProperties.baseFileName}${if (customizer.useXPlatLauncher) "" else ".sh"}"
+    get() = context.productProperties.baseFileName
 
   private suspend fun buildTarGz(arch: JvmArchitecture, runtimeDir: Path?, unixDistPath: Path, suffix: String): Path = withContext(Dispatchers.IO) {
     val tarRoot = rootDirectoryName
@@ -378,11 +378,9 @@ class LinuxDistributionBuilder(
   }
 
   private suspend fun addNativeLauncher(distBinDir: Path, targetPath: Path, arch: JvmArchitecture) {
-    if (customizer.useXPlatLauncher) {
-      val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.LINUX, arch)
-      copyFile(execPath, distBinDir.resolve(context.productProperties.baseFileName))
-      copyFile(licensePath, targetPath.resolve("license/launcher-third-party-libraries.html"))
-    }
+    val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.LINUX, arch)
+    copyFile(execPath, distBinDir.resolve(context.productProperties.baseFileName))
+    copyFile(licensePath, targetPath.resolve("license/launcher-third-party-libraries.html"))
   }
 
   private fun generateLauncherScript(distBinDir: Path, arch: JvmArchitecture, nonCustomizableJvmArgs: List<String>, context: BuildContext) {
