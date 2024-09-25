@@ -32,6 +32,9 @@ gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
       def jvmArgs = options.jvmArgs.findAll { !it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp') }
       jvmArgs << ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + ForkedDebuggerHelper.addrFromProperty + ':' + debugPort
       jvmArgs.addAll(processOptions)
+      if (jvmArgs.contains("")) {
+        throw new IllegalArgumentException("JVM arguments must not contain empty strings. Current value: $jvmArgs")
+      }
       options.jvmArgs = jvmArgs
     }
     task.doLast {
