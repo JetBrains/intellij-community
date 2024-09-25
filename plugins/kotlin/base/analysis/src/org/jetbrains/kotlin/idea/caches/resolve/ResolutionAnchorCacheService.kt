@@ -3,15 +3,11 @@
 package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.java.library.JavaLibraryModificationTracker
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.analysis.LibraryDependenciesCacheImpl.Companion.isSpecialKotlinCoreLibrary
@@ -21,31 +17,22 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.util.getTransitiveLibraryDependencyInfos
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
+import org.jetbrains.kotlin.idea.caches.resolve.util.ResolutionAnchorCacheState
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@State(name = "KotlinIdeAnchorService", storages = [Storage("anchors.xml")])
 class ResolutionAnchorCacheServiceImpl(
     val project: Project
-) : ResolutionAnchorCacheService, PersistentStateComponent<ResolutionAnchorCacheServiceImpl.State> {
-    data class State(
-        var moduleNameToAnchorName: Map<String, String> = emptyMap()
-    )
+) : ResolutionAnchorCacheService {
 
-    @JvmField
-    @Volatile
-    var myState: State = State()
+    private val state get() = ResolutionAnchorCacheState.getInstance(project)
 
-    override fun getState(): State = myState
-
-    override fun loadState(state: State) {
-        XmlSerializerUtil.copyBean(state, myState)
-    }
+    val moduleNameToAnchorName get() = state.myState.moduleNameToAnchorName
 
     @TestOnly
     fun setAnchors(mapping: Map<String, String>) {
-        myState = State(mapping)
+        state.setAnchors(mapping)
     }
 
     private class AnchorMapping(
@@ -123,8 +110,9 @@ class ResolutionAnchorCacheServiceImpl(
     }
 
     private fun createResolutionAnchorMapping(): AnchorMapping {
+        val moduleNameToAnchorName = moduleNameToAnchorName
         // Avoid loading all module infos if the project defines no anchor mappings.
-        if (myState.moduleNameToAnchorName.isEmpty()) {
+        if (moduleNameToAnchorName.isEmpty()) {
             return AnchorMapping(emptyMap(), emptyMap())
         }
 
@@ -133,7 +121,7 @@ class ResolutionAnchorCacheServiceImpl(
         val anchorByLibrary = mutableMapOf<LibraryInfo, ModuleSourceInfo>()
         val librariesByAnchor = mutableMapOf<ModuleSourceInfo, MutableList<LibraryInfo>>()
 
-        myState.moduleNameToAnchorName.entries.forEach { (libraryName, anchorName) ->
+        moduleNameToAnchorName.entries.forEach { (libraryName, anchorName) ->
             val library: LibraryInfo = modulesByNames[libraryName]?.safeAs<LibraryInfo>() ?: run {
                 logger.warn("Resolution anchor mapping key doesn't point to a known library: $libraryName. Skipping this anchor")
                 return@forEach
