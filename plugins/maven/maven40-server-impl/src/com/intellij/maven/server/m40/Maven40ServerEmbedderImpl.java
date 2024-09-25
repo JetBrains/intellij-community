@@ -1045,23 +1045,35 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         try {
           RepositorySystem repositorySystem = getComponent(RepositorySystem.class);
           for (MavenArtifactResolutionRequest request : requests) {
-            ArtifactResult artifactResult = repositorySystem.resolveArtifact(
-              mavenSession.getRepositorySession(),
-              new ArtifactRequest(RepositoryUtils.toArtifact(createArtifact(request.getArtifactInfo())),
-                                  RepositoryUtils.toRepos(repositories), null));
-            artifacts.add(
-              Maven40ModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifactResult.getArtifact()), getLocalRepositoryFile()));
+            MavenArtifact artifact = tryResolveArtifact(mavenSession, request, repositorySystem, repositories);
+            artifacts.add(artifact);
             task.incrementFinishedRequests();
           }
         }
-        catch (ArtifactResolutionException e) {
-          throw new RuntimeException(e);
+        catch (Exception e) {
+          throw wrapToSerializableRuntimeException(e);
         }
       });
       return artifacts;
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  private @NotNull MavenArtifact tryResolveArtifact(MavenSession mavenSession,
+                                                    MavenArtifactResolutionRequest request,
+                                                    RepositorySystem repositorySystem,
+                                                    List<ArtifactRepository> repositories) {
+    try {
+      ArtifactResult artifactResult = repositorySystem.resolveArtifact(
+        mavenSession.getRepositorySession(),
+        new ArtifactRequest(RepositoryUtils.toArtifact(createArtifact(request.getArtifactInfo())),
+                            RepositoryUtils.toRepos(repositories), null));
+      return Maven40ModelConverter.convertArtifact(RepositoryUtils.toArtifact(artifactResult.getArtifact()), getLocalRepositoryFile());
+    }
+    catch (ArtifactResolutionException e) {
+      return Maven40ModelConverter.convertArtifact(createArtifact(request.getArtifactInfo()), getLocalRepositoryFile());
     }
   }
 
