@@ -85,22 +85,23 @@ private class FileNotInSourceRootService(
             val psiFile = infoAndFile.second
             if (!psiFile.isValid) return@writeAction
             if (editor is EditorImpl) {
-              val listener = object : VirtualFileListener {
-                override fun fileMoved(event: VirtualFileMoveEvent) {
-                  val file = event.file
-                  if (file == psiFile.virtualFile) {
-                    file.fileSystem.removeVirtualFileListener(this)
-                    if (editor.isDisposed) return
-                    DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(GROUP, psiFile)
-                    checkEditor(editor)
-                  }
-                }
-              }
-              val fileSystem = psiFile.virtualFile.fileSystem
-              fileSystem.addVirtualFileListener(listener)
               for (fileEditor in FileEditorManager.getInstance(project).getEditors(psiFile.virtualFile)) {
                 if (fileEditor is TextEditor && fileEditor.editor == editor) {
+                  val listener = object : VirtualFileListener {
+                    override fun fileMoved(event: VirtualFileMoveEvent) {
+                      val file = event.file
+                      if (file == psiFile.virtualFile) {
+                        file.fileSystem.removeVirtualFileListener(this)
+                        if (editor.isDisposed) return
+                        DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(GROUP, psiFile)
+                        checkEditor(editor)
+                      }
+                    }
+                  }
+                  val fileSystem = psiFile.virtualFile.fileSystem
+                  fileSystem.addVirtualFileListener(listener)
                   Disposer.register(fileEditor) { fileSystem.removeVirtualFileListener(listener) }
+                  break
                 }
               }
             }
