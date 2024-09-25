@@ -95,7 +95,12 @@ public final class JBCefApp {
     addCefCustomSchemeHandlerFactory(new JBCefFileSchemeHandlerFactory());
 
     if (RegistryManager.getInstance().is("ide.browser.jcef.out-of-process.enabled")) {
-      System.setProperty("jcef.remote.enabled", "true");
+      if (Boolean.getBoolean("idea.debug.mode"))
+        LOG.debug("Out-of-process jcef mode is disabled (because idea.debug.mode=true)");
+      else if (SystemInfo.isWayland)
+        LOG.debug("Out-of-process jcef mode is temporarily disabled in Wayland"); // TODO: fix https://youtrack.jetbrains.com/issue/IJPL-161273
+      else
+        System.setProperty("jcef.remote.enabled", "true");
     }
 
     Boolean result = null;
@@ -103,9 +108,11 @@ public final class JBCefApp {
       // Temporary use reflection to avoid jcef-version increment
       Method m = CefApp.class.getMethod("isRemoteEnabled");
       result = (boolean)m.invoke(CefApp.class);
-    } catch (Throwable e) {}
+    } catch (Throwable e) {
+      LOG.warn(e);
+    }
 
-    IS_REMOTE_ENABLED = result == null ? false : result;
+    IS_REMOTE_ENABLED = result != null && result;
   }
 
   private JBCefApp(@NotNull JCefAppConfig config) throws IllegalStateException {

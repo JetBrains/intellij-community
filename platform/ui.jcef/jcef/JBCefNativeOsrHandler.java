@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.Gray;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.jetbrains.JBR;
@@ -26,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHandler {
   private static final int CLEAN_CACHE_TIME_MS = Integer.getInteger("jcef.remote.osr.clean_cache_time_ms", 10*1000); // 10 sec
-  private static final boolean FORCE_USE_SOFTWARE_RENDERING = true; // NOTE: temporary enabled until fixed IJPL-161293
+  private static final boolean FORCE_USE_SOFTWARE_RENDERING = !Boolean.getBoolean("jcef.remote.enable_hardware_rendering"); // NOTE: temporary enabled until fixed IJPL-161293
 
   private final Map<String, SharedMemory.WithRaster> mySharedMemCache = new ConcurrentHashMap<>();
   private SharedMemory.WithRaster myCurrentFrame;
