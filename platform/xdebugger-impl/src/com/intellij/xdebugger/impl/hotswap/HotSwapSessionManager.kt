@@ -12,7 +12,7 @@ import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
-import java.lang.ref.SoftReference
+import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
@@ -22,7 +22,7 @@ class HotSwapSessionManager private constructor(private val project: Project, in
   private val sessions = DisposableWrapperList<HotSwapSession<*>>()
 
   @Volatile
-  private var selectedSession: SoftReference<HotSwapSession<*>>? = null
+  private var selectedSession: WeakReference<HotSwapSession<*>>? = null
 
   /**
    * Start a hot swap session and source file tracking.
@@ -59,7 +59,7 @@ class HotSwapSessionManager private constructor(private val project: Project, in
     val current = currentSession
     val selected = selectedSession?.get()
     if (selected !== session) {
-      selectedSession = SoftReference(session)
+      selectedSession = WeakReference(session)
     }
     if (session !== current) {
       fireStatusChanged(session)
