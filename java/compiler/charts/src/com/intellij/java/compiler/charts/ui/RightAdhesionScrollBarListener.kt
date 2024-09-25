@@ -18,7 +18,13 @@ internal class RightAdhesionScrollBarListener(
 ) : AdjustmentListener, MouseWheelListener {
   private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("Compilation charts adjust value listener", 1)
   private var updateShouldScrollTask: ScheduledFuture<*>? = null
+  private var lastNewPosition: Point? = null
   override fun adjustmentValueChanged(e: AdjustmentEvent) {
+    val point = lastNewPosition
+    lastNewPosition = null
+    if (point != null && !shouldScroll.isActive()) {
+      viewport.viewPosition = point
+    }
     if (e.valueIsAdjusting) {
       updateShouldScroll()
     }
@@ -68,7 +74,7 @@ internal class RightAdhesionScrollBarListener(
 
   fun reset() = applyZoomTransformation {
     val shouldScrollAfterResetting = viewport.width >= viewport.viewSize.width
-    reset(viewport, viewport.getMiddlePoint())
+    lastNewPosition = reset(viewport, viewport.getMiddlePoint())
     if (shouldScrollAfterResetting) scrollToEnd()
   }
 

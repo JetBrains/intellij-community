@@ -15,23 +15,25 @@ class Zoom {
   fun toPixels(duration: Double): Double = toPixels(duration, scale)
   fun toDuration(pixels: Int): Long = toDuration(pixels.toDouble(), scale)
 
-  fun adjust(viewport: JViewport, xPosition: Int, delta: Double): Point {
+  fun adjust(viewport: JViewport, xPosition: Int, delta: Double, shouldAdjustViewport: Boolean = true): Point {
     val localX = xPosition - viewport.viewPosition.x
     val currentTimeUnderCursor = toDuration(xPosition)
     scale *= delta
 
     val newViewPositionX = max(toPixels(currentTimeUnderCursor) - localX, 0.0).roundToInt()
     val point = Point(newViewPositionX, viewport.viewPosition.y)
-    if (viewport.width < viewport.viewSize.width) {
+    if (shouldAdjustViewport && viewport.width < viewport.viewSize.width) {
       viewport.viewPosition = point
     }
     return point
   }
 
-  fun reset(viewport: JViewport, xPosition: Int) {
+  fun reset(viewport: JViewport, xPosition: Int): Point? {
     val delta = INITIAL_SCALE / scale
-    adjust(viewport, xPosition, delta)
+    val isScaleAboveInitial = scale > INITIAL_SCALE
+    val newViewportPosition = adjust(viewport, xPosition, delta, isScaleAboveInitial)
     scale = INITIAL_SCALE
+    return if (isScaleAboveInitial) null else newViewportPosition
   }
 
   private fun toPixels(duration: Double, scale: Double): Double = nanosToSeconds(duration * scale)
