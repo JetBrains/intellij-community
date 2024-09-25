@@ -229,7 +229,12 @@ class StructureViewWrapperImpl(private val project: Project,
   }
 
   private suspend fun setFile(file: VirtualFile?) {
-    if (file?.fileSystem is NonPhysicalFileSystem) return
+    if (file?.fileSystem is NonPhysicalFileSystem) {
+      val notInEditor = withContext(Dispatchers.EDT) {
+        !project.serviceAsync<FileEditorManager>().selectedFiles.contains(file)
+      }
+      if (notInEditor) return
+    }
 
     suspend fun setFileAndRebuild() = withContext(Dispatchers.EDT) {
       // myFile access on EDT
