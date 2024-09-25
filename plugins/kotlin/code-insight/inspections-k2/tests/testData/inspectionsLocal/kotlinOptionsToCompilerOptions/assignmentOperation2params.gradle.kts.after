@@ -1,6 +1,5 @@
+// PROBLEM: Use of deprecated 'kotlinOptions' DSL
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm") version "2.0.0"
 }
@@ -23,8 +22,6 @@ kotlin {
     jvmToolchain(8)
 }
 
-tasks.withType<KotlinCompile<*>> {
-    compilerOptions {
-        freeCompilerArgs.addAll("-Xopt-in=kotlin.RequiresOptIn")
-    }
+tasks.named("compileKotlin", org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java) {
+    compilerOptions.freeCompilerArgs.addAll("-Xexport-kdoc", "-Xopt-in=kotlin.RequiresOptIn")
 }
