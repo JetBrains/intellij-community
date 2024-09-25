@@ -81,8 +81,8 @@ internal class RightAdhesionScrollBarListener(
   private fun JViewport.getMiddlePoint(): Int = viewPosition.x + width / 2
 
   companion object {
-    private const val ZOOM_IN_MULTIPLIER: Double = 1.1
-    private const val ZOOM_OUT_MULTIPLIER: Double = 0.9
+    private const val ZOOM_IN_MULTIPLIER: Double = 1.25
+    private const val ZOOM_OUT_MULTIPLIER: Double = 0.8
   }
 }
 
