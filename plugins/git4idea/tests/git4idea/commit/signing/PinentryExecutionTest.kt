@@ -29,7 +29,9 @@ class PinentryExecutionTest : GitSingleRepoTest() {
 
   override fun setUp() {
     super.setUp()
-    val enabled = GpgAgentConfigurator.isEnabled(GitExecutableManager.getInstance().getExecutable(project))
+    git("config commit.gpgSign true")
+    git("config user.signingkey 0A46826A!")
+    val enabled = GpgAgentConfigurator.isEnabled(project, GitExecutableManager.getInstance().getExecutable(project))
     assumeTrue("GpgAgentConfigurator should be enabled", enabled);
   }
 

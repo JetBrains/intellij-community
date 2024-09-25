@@ -21,7 +21,7 @@ private fun readGitGpgConfig(repository: GitRepository): RepoConfig {
   // TODO: "tag.gpgSign" ?
   val isEnabled = isGpgSignEnabled(repository.project, repository.root)
   if (!isEnabled) return RepoConfig(null)
-  val keyValue = GitConfigUtil.getValue(repository.project, repository.root, GitConfigUtil.GPG_COMMIT_SIGN_KEY)
+  val keyValue = getGpgSignKey(repository.project, repository.root)
   if (keyValue == null) return RepoConfig(null)
   return RepoConfig(GpgKey(keyValue.trim()))
 }
@@ -85,8 +85,18 @@ fun isGpgSignEnabled(project: Project, root: VirtualFile): Boolean {
     return GitConfigUtil.getBooleanValue(GitConfigUtil.getValue(project, root, GitConfigUtil.GPG_COMMIT_SIGN)) == true
   }
   catch (e: VcsException) {
-    logger<GitConfigUtil>().warn("Cannot get gpg.commitSign config value", e)
+    logger<GitConfigUtil>().warn("Cannot get ${GitConfigUtil.GPG_COMMIT_SIGN} config value", e)
     return false
+  }
+}
+
+fun getGpgSignKey(project: Project, root: VirtualFile): String? {
+  try {
+    return GitConfigUtil.getValue(project, root, GitConfigUtil.GPG_COMMIT_SIGN_KEY)
+  }
+  catch (e: VcsException) {
+    logger<GitConfigUtil>().warn("Cannot get ${GitConfigUtil.GPG_COMMIT_SIGN_KEY} config value", e)
+    return null
   }
 }
 

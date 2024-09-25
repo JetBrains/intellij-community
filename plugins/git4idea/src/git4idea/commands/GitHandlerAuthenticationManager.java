@@ -182,12 +182,13 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   }
 
   private void prepareGpgAgentAuth() throws IOException {
-    if (!GpgAgentConfigurator.isEnabled(myHandler.myExecutable)) {
-      return;
-    }
     Project project = myHandler.project();
     VirtualFile root = myHandler.getExecutableContext().getRoot();
     if (project == null || root == null) {
+      return;
+    }
+
+    if (!GpgAgentConfigurator.isEnabled(project, myHandler.myExecutable)) {
       return;
     }
 

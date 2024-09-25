@@ -28,7 +28,12 @@ import git4idea.commit.signing.PinentryService.Companion.PINENTRY_USER_DATA_ENV
 import git4idea.config.GitExecutable
 import git4idea.config.GitExecutableListener
 import git4idea.config.GitExecutableManager
+import git4idea.config.gpg.getGpgSignKey
+import git4idea.config.gpg.isGpgSignEnabled
 import git4idea.gpg.PinentryApp
+import git4idea.repo.GitConfigListener
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -51,17 +56,29 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
     const val GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY = "pinentry-program"
 
     @JvmStatic
-    fun isEnabled(executable: GitExecutable): Boolean {
+    fun isEnabled(project: Project, executable: GitExecutable): Boolean {
       return Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry", false) &&
              ((AppMode.isRemoteDevHost() && SystemInfo.isUnix)
-             || executable is GitExecutable.Wsl
-             || application.isUnitTestMode)
+              || executable is GitExecutable.Wsl
+              || application.isUnitTestMode)
+             && // do not configure Gpg Agent for roots without commit.gpgSign and user.signingkey enabled
+             GitRepositoryManager.getInstance(project)
+               .repositories.any { repository ->
+                 isGpgSignEnabled(project, repository.root)
+                 && getGpgSignKey(project, repository.root) != null
+               }
+
     }
   }
 
   init {
     val connection = application.messageBus.connect(this)
     connection.subscribe(GitExecutableManager.TOPIC, GitExecutableListener { cs.launch { configure() }})
+    project.messageBus.connect(this).subscribe(GitConfigListener.TOPIC, object: GitConfigListener {
+      override fun notifyConfigChanged(repository: GitRepository) {
+        cs.launch { configure() }
+      }
+    })
   }
 
   suspend fun configure() {
@@ -85,7 +102,7 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
   @VisibleForTesting
   internal fun doConfigure(pathLocator: GpgAgentPathsLocator? = null) {
     val executable = GitExecutableManager.getInstance().getExecutable(project)
-    if (!isEnabled(executable)) return
+    if (!isEnabled(project, executable)) return
 
     val gpgAgentPaths = pathLocator?.resolvePaths() ?: createPathLocator(executable).resolvePaths() ?: return
     val gpgAgentConf = gpgAgentPaths.gpgAgentConf
