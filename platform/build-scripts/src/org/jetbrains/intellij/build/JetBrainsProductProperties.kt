@@ -49,23 +49,24 @@ abstract class JetBrainsProductProperties : ProductProperties() {
 
   final override fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
     return buildList {
-      addAll(super.validatePlugin(pluginId, result, context).filterNot {
-        (
-          // FIXME IDEA-356970
-          pluginId == "com.intellij.plugins.projectFragments" ||
-          // FIXME IJPL-159498
-          pluginId == "org.jetbrains.plugins.docker.gateway" || pluginId == "com.intellij.java" || pluginId == "com.intellij.java.ide" ||
-          // it's an internal plugin that should be compatible with older IDEA versions as well,
-          // so it's ok to have preloading there
-          pluginId == "com.intellij.monorepo.devkit"
-        ) && it.message.contains("Service preloading is deprecated") ||
-        (
-          // FIXME PY-74322
-          pluginId == "com.intellij.python.frontend" ||
-          // FIXME AE-121
-          pluginId == "com.jetbrains.personalization"
-        ) && it.message.contains("Plugin has no dependencies")
-      })
+      addAll( super.validatePlugin(pluginId, result, context).filterNot {
+      (
+        // FIXME IDEA-356970
+        pluginId == "com.intellij.plugins.projectFragments" ||
+        // FIXME IJPL-159498
+        pluginId == "org.jetbrains.plugins.docker.gateway" || pluginId == "com.intellij.java" || pluginId == "com.intellij.java.ide" ||
+        // it's an internal plugin that should be compatible with older IDEA versions as well,
+        // so it's ok to have preloading there
+        pluginId == "com.intellij.monorepo.devkit"
+      ) && it.message.contains("Service preloading is deprecated") ||
+      (
+        // FIXME PY-74322
+        pluginId == "com.intellij.python.frontend" ||
+        // FIXME AE-121
+        pluginId == "com.jetbrains.personalization"
+      ) && it.message.contains("Plugin has no dependencies") ||
+      it.message.contains("The plugin file size exceeds the maximum limit of 1 GB")  // FIXME RIDER-116978
+    })
       if (result is PluginCreationSuccess) {
         if (result.plugin.vendor?.contains("JetBrains") != true) {
           add(InvalidPluginDescriptorError("${result.plugin.pluginId} is published not by JetBrains: ${result.plugin.vendor}"))
