@@ -45,8 +45,6 @@ abstract class JetBrainsProductProperties : ProductProperties() {
         (
           // FIXME IDEA-356970
           pluginId == "com.intellij.plugins.projectFragments" ||
-          // FIXME IJPL-169105
-          pluginId == "com.jetbrains.codeWithMe" ||
           // FIXME IJPL-159498
           pluginId == "org.jetbrains.plugins.docker.gateway" || pluginId == "com.intellij.java" || pluginId == "com.intellij.java.ide" ||
           // it's an internal plugin that should be compatible with older IDEA versions as well,
@@ -58,7 +56,8 @@ abstract class JetBrainsProductProperties : ProductProperties() {
           pluginId == "com.intellij.python.frontend" ||
           // FIXME AE-121
           pluginId == "com.jetbrains.personalization"
-        ) && it.message.contains("Plugin has no dependencies")
+        ) && it.message.contains("Plugin has no dependencies") ||
+        it.message.contains("The plugin file size exceeds the maximum limit of 1 GB")  // FIXME RIDER-116978
       })
       if (result is PluginCreationSuccess) {
         if (result.plugin.vendor?.contains("JetBrains") != true) {
