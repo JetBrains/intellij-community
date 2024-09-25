@@ -47,13 +47,7 @@ internal class IndexLongKeyProvider : EmbeddingStorageKeyProvider<Long> {
         /* indexId = */ index,
         /* dataKey = */ EmbeddingKey.fromLong(key),
         /* inFile = */ file,
-        /* processor = */ FileBasedIndex.ValueProcessor { _, value ->
-        if (value.hashCode() == hash) {
-          result = value
-          return@ValueProcessor false
-        }
-        true
-      },
+        /* processor = */ FileBasedIndex.ValueProcessor { _, value -> result = value; false },
         /* filter = */ GlobalSearchScope.fileScope(project, file))
     }
 
