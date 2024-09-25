@@ -50,6 +50,9 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
     if (containingClass == null || (containingClass.isInterface() && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method))) {
       return null;
     }
+    if ((containingClass instanceof PsiImplicitClass || containingClass instanceof PsiAnonymousClass) && method.isConstructor()) {
+      return null; // constructors can't be declared here, code is broken so don't suggest generating more broken code
+    }
     if (containingClass.isAnnotationType()) {
       // Method with parameters in annotation is a compilation error; there's no sense to create overload
       return null;
