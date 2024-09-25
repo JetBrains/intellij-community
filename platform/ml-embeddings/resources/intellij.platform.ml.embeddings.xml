@@ -49,6 +49,12 @@
       description="Use native server for embeddings search and storage"
       key="intellij.platform.ml.embeddings.use.native.server"/>
 
+    <registryKey
+      defaultValue="false"
+      description="Use file based index to store indexable strings and track changes"
+      restartRequired="true"
+      key="intellij.platform.ml.embeddings.use.file.based.index"/>
+
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger"/>
   </extensions>

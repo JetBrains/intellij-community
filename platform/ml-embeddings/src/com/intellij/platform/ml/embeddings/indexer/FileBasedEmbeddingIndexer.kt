@@ -4,6 +4,7 @@ package com.intellij.platform.ml.embeddings.indexer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readActionUndispatched
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -26,6 +27,7 @@ import com.intellij.platform.ml.embeddings.indexer.entities.IndexableClass
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableFile
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableSymbol
+import com.intellij.platform.ml.embeddings.jvm.indices.EntityId
 import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettings
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettingsImpl
@@ -33,7 +35,10 @@ import com.intellij.platform.ml.embeddings.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.platform.ml.embeddings.utils.SemanticSearchCoroutineScope
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiManager
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.ID
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -177,33 +182,71 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
         launch { sendEntities(IndexId.CLASSES, classesChannel) }
         launch { sendEntities(IndexId.SYMBOLS, symbolsChannel) }
 
-        val psiManager = PsiManager.getInstance(project)
-        val processedFiles = AtomicInteger(0)
-        val total: Int = filesLimit?.let { minOf(files.size, it) } ?: files.size
-        logger.debug { "Effective embedding indexing files limit: $total" }
-        withContext(filesIterationContext) {
-          val limit = filesLimit
-          repeat(FILE_WORKER_COUNT) { worker ->
-            var index = worker
-            launch {
-              while (index < files.size) {
-                if (limit != null && processedFiles.get() >= limit) return@launch
-                val file = files[index]
-                if (file.isFile && file.isValid && file.isInLocalFileSystem) {
-                  processFile(file, psiManager, settings, filesChannel, classesChannel, symbolsChannel)
-                  processedFiles.incrementAndGet()
-                }
-                else {
-                  logger.debug { "File is not valid: ${file.name}" }
-                }
-                index += FILE_WORKER_COUNT
-              }
-            }
+        if (Registry.`is`("intellij.platform.ml.embeddings.use.file.based.index")) {
+          // todo: file names
+          launch {
+            fetchEntities(CLASS_NAME_EMBEDDING_INDEX_NAME, classesChannel, project) { name -> IndexableClass(EntityId(name)) }
+          }
+          launch {
+            fetchEntities(SYMBOL_NAME_EMBEDDING_INDEX_NAME, symbolsChannel, project) { name -> IndexableSymbol(EntityId(name)) }
           }
         }
+        else {
+          indexFilesInProject(project, files, settings, filesChannel, classesChannel, symbolsChannel)
+        }
+
         filesChannel.close()
         classesChannel.close()
         symbolsChannel.close()
+      }
+    }
+  }
+
+  private suspend fun indexFilesInProject(
+    project: Project,
+    files: List<VirtualFile>,
+    settings: EmbeddingIndexSettingsImpl,
+    filesChannel: Channel<IndexableFile>,
+    classesChannel: Channel<IndexableClass>,
+    symbolsChannel: Channel<IndexableSymbol>,
+  ) {
+    val psiManager = PsiManager.getInstance(project)
+    val processedFiles = AtomicInteger(0)
+    val total: Int = filesLimit?.let { minOf(files.size, it) } ?: files.size
+    logger.debug { "Effective embedding indexing files limit: $total" }
+    withContext(filesIterationContext) {
+      val limit = filesLimit
+      repeat(FILE_WORKER_COUNT) { worker ->
+        var index = worker
+        launch {
+          while (index < files.size) {
+            if (limit != null && processedFiles.get() >= limit) return@launch
+            val file = files[index]
+            if (file.isFile && file.isValid && file.isInLocalFileSystem) {
+              processFile(file, psiManager, settings, filesChannel, classesChannel, symbolsChannel)
+              processedFiles.incrementAndGet()
+            }
+            else {
+              logger.debug { "File is not valid: ${file.name}" }
+            }
+            index += FILE_WORKER_COUNT
+          }
+        }
+      }
+    }
+  }
+
+  private suspend fun <T : IndexableEntity> fetchEntities(indexId: ID<EmbeddingKey, String>, channel: Channel<T>, project: Project, nameToEntity: (String) -> T) {
+    val fileBasedIndex = FileBasedIndex.getInstance()
+    val scope = GlobalSearchScope.projectScope(project)
+    val keys = smartReadAction(project) { fileBasedIndex.getAllKeys(indexId, project) }
+
+    keys.asSequence().chunked(1024).forEach { chunk ->
+      chunk.forEach { key ->
+        val names = smartReadAction(project) { fileBasedIndex.getValues(indexId, key, scope) }
+        for (name in names) {
+          channel.send(nameToEntity(name))
+        }
       }
     }
   }

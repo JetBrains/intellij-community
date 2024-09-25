@@ -13,8 +13,8 @@ import java.io.DataInput
 import java.io.DataOutput
 import java.util.*
 
-private val CLASS_NAME_EMBEDDING_INDEX_NAME = ID.create<EmbeddingKey, String>("ClassNameEmbeddingIndex")
-private val SYMBOL_NAME_EMBEDDING_INDEX_NAME = ID.create<EmbeddingKey, String>("SymbolNameEmbeddingIndex")
+internal val CLASS_NAME_EMBEDDING_INDEX_NAME = ID.create<EmbeddingKey, String>("ClassNameEmbeddingIndex")
+internal val SYMBOL_NAME_EMBEDDING_INDEX_NAME = ID.create<EmbeddingKey, String>("SymbolNameEmbeddingIndex")
 
 internal class EmbeddingKey(val fileId: Int, val indexableRepresentationHashCode: Int) {
   override fun hashCode(): Int = Objects.hash(fileId, indexableRepresentationHashCode)
@@ -58,6 +58,8 @@ internal class SymbolNameEmbeddingIndex : BaseEmbeddingIndex() {
 }
 
 internal abstract class BaseEmbeddingIndex() : FileBasedIndexExtension<EmbeddingKey, String>() {
+  override fun traceKeyHashToVirtualFileMapping(): Boolean = true
+
   override fun getInputFilter(): FileBasedIndex.InputFilter {
     return object : DefaultFileTypeSpecificInputFilter(*fileTypes) {
       override fun acceptInput(file: VirtualFile): Boolean {
