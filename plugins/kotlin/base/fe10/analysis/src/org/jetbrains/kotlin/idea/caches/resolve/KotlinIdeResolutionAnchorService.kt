@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SourceForBinaryModuleInfo
 import org.jetbrains.kotlin.resolve.ResolutionAnchorProvider

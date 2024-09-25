@@ -20,6 +20,7 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
 import org.jetbrains.kotlin.idea.base.projectStructure.*
@@ -86,7 +87,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         /**
          * @see filterForBuiltins
          */
-        internal fun LibraryInfo.isSpecialKotlinCoreLibrary(project: Project): Boolean {
+        @ApiStatus.Internal
+        fun LibraryInfo.isSpecialKotlinCoreLibrary(project: Project): Boolean {
             return !IdeBuiltInsLoadingState.isFromClassLoader && isCoreKotlinLibrary(project)
         }
     }

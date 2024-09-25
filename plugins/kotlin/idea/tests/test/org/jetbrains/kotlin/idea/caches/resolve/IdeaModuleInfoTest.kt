@@ -26,13 +26,14 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheServiceImpl
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmJsLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmWasiLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.*
-import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.withLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo

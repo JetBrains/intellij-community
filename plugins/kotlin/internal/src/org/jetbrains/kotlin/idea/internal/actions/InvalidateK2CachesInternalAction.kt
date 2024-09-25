@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.LLFirBuiltinsSessionFactory
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.caches.trackers.KotlinIDEModificationTrackerService
+import org.jetbrains.kotlin.idea.caches.trackers.IDEKotlinModificationTrackerService
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import javax.swing.JComponent
@@ -41,7 +41,7 @@ internal class InvalidateK2CachesInternalAction : AnAction() {
     @Suppress("TestOnlyProblems")
     private fun invalidateCaches(project: Project, invalidationMode: InvalidationMode) = runWriteAction {
         if (invalidationMode.invalidateSources) {
-            KotlinIDEModificationTrackerService.invalidateCaches(project)
+            IDEKotlinModificationTrackerService.invalidateCaches(project)
             project.analysisMessageBus.apply {
                 syncPublisher(KotlinModificationTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION).onModification()
                 syncPublisher(KotlinModificationTopics.GLOBAL_SCRIPT_MODULE_STATE_MODIFICATION).onModification()
