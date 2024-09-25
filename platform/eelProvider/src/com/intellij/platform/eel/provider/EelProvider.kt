@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -15,9 +16,17 @@ suspend fun Project.getEelApi(): EelApi {
   return Path.of(path).getEelApi()
 }
 
-suspend fun Path.getEelApi(): EelApi =
-  EP_NAME.extensionList.firstNotNullOfOrNull { it.getEelApi(this) }
-  ?: if (SystemInfo.isWindows) LocalWindowsEelApiImpl() else LocalPosixEelApiImpl()
+private val LOG by lazy { logger<EelProvider>() }
+
+suspend fun Path.getEelApi(): EelApi {
+  val eels = EP_NAME.extensionList.mapNotNull { it.getEelApi(this) }
+
+  if (eels.size > 1) {
+    LOG.error("Multiple EEL providers found for $this: $eels")
+  }
+
+  return eels.firstOrNull() ?: if (SystemInfo.isWindows) LocalWindowsEelApiImpl() else LocalPosixEelApiImpl()
+}
 
 @ApiStatus.Internal
 interface EelProvider {
