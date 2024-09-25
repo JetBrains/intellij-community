@@ -121,8 +121,8 @@ public class Fernflower implements IDecompiledData {
     structContext.saveContext();
   }
 
-  public void addWhitelist(String prefix) {
-    classProcessor.addWhitelist(prefix);
+  public void addToMustBeDecompiled(String prefix) {
+    classProcessor.addToMustBeDecompiled(prefix);
   }
 
   public void clearContext() {

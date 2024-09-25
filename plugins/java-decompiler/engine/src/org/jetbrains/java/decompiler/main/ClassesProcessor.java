@@ -38,7 +38,7 @@ public class ClassesProcessor {
 
   private final StructContext context;
   private final Map<String, ClassNode> mapRootClasses = new HashMap<>();
-  private final Set<String> whitelist = new HashSet<>();
+  private final Set<String> mustBeDecompiled = new HashSet<>();
 
   private static class Inner {
     private String simpleName;
@@ -71,15 +71,15 @@ public class ClassesProcessor {
     this.context = context;
   }
 
-  public void addWhitelist(String prefix) {
-    this.whitelist.add(prefix);
+  public void addToMustBeDecompiled(String prefix) {
+    this.mustBeDecompiled.add(prefix);
   }
 
-  public boolean isWhitelisted(String cls) {
-    if (this.whitelist.isEmpty())
+  public boolean mustBeDecompiled(String cls) {
+    if (this.mustBeDecompiled.isEmpty())
       return true;
 
-    for (String prefix : this.whitelist) {
+    for (String prefix : this.mustBeDecompiled) {
       if (cls.startsWith(prefix))
         return true;
     }
@@ -186,7 +186,7 @@ public class ClassesProcessor {
           }
         }
 
-        if (isWhitelisted(cl.qualifiedName)) {
+        if (mustBeDecompiled(cl.qualifiedName)) {
           ClassNode node = new ClassNode(ClassNode.CLASS_ROOT, cl);
           node.access = cl.getAccessFlags();
           mapRootClasses.put(cl.qualifiedName, node);
