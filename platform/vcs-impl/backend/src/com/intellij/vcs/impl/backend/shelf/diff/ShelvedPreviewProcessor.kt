@@ -13,19 +13,21 @@ import com.intellij.openapi.vcs.changes.ui.TreeHandlerChangesTreeTracker
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.impl.backend.shelf.ShelfTree
+import kotlinx.coroutines.CoroutineScope
 
 internal class ShelvedPreviewProcessor(
   project: Project,
+  cs: CoroutineScope,
   tree: ShelfTree,
   private val isInEditor: Boolean,
 ) : TreeHandlerDiffRequestProcessor(
-  DiffPlaces.SHELVE_VIEW, tree, ShelveTreeDiffPreviewHandler.INSTANCE), DiffPreviewUpdateProcessor {
+  DiffPlaces.SHELVE_VIEW, tree, ShelveTreeDiffPreviewHandler(cs)), DiffPreviewUpdateProcessor {
 
   private val preloader = PatchesPreloader(project)
 
   init {
     putContextUserData(PatchesPreloader.SHELF_PRELOADER, preloader)
-    TreeHandlerChangesTreeTracker(tree, this, ShelveTreeDiffPreviewHandler.INSTANCE, !isInEditor).track()
+    TreeHandlerChangesTreeTracker(tree, this, ShelveTreeDiffPreviewHandler(cs), !isInEditor).track()
   }
 
   @RequiresEdt

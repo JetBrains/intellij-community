@@ -3,8 +3,11 @@ package com.intellij.vcs.impl.frontend.shelf.tree
 
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.ChangesTreeEditorDiffPreview
 import com.intellij.vcs.impl.frontend.changes.SelectedData
+import com.intellij.vcs.impl.frontend.shelf.subscribeToShelfTreeSelectionChanged
+import com.intellij.vcs.impl.shared.rhizome.SelectShelveChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
@@ -12,8 +15,13 @@ import fleet.kernel.sharedRef
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import javax.swing.tree.DefaultMutableTreeNode
 
 class ShelfTreeEditorDiffPreview(tree: ShelfTree, val cs: CoroutineScope) : ChangesTreeEditorDiffPreview<ShelfTree>(tree) {
+
+  init {
+    subscribeToShelfTreeSelectionChanged(cs, ::selectNodeInTree)
+  }
 
   override fun performDiffAction(): Boolean {
     val selectedLists = tree.getSelectedLists()
@@ -28,6 +36,15 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, val cs: CoroutineScope) : Chan
       }
     }
     return true
+  }
+
+  private fun selectNodeInTree(it: SelectShelveChangeEntity) {
+    val rootNode = tree.model.root as DefaultMutableTreeNode
+    val changeListNode = TreeUtil.findNodeWithObject(rootNode, it.changeList) ?: return
+    val changeNode = TreeUtil.findNodeWithObject(changeListNode, it.change) ?: return
+    cs.launch(Dispatchers.EDT) {
+      TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(changeNode), false)
+    }
   }
 
 }

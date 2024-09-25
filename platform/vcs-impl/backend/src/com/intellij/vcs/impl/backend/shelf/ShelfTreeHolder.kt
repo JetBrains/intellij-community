@@ -37,7 +37,7 @@ class ShelfTreeHolder(project: Project, val cs: CoroutineScope) : Disposable {
 
   private val tree = ShelfTree(project)
 
-  private val diffPreview = BackendShelveEditorDiffPreview(tree)
+  private val diffPreview = BackendShelveEditorDiffPreview(tree, cs)
 
   private fun updateTreeModel() {
     tree.invalidateDataAndRefresh {

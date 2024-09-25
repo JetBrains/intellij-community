@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 
 class ShelfEntityTypeProvider : EntityTypeProvider {
-  override fun entityTypes(): List<EntityType<*>> = listOf(ShelvesTreeRootEntity, ShelvedChangeListEntity, ShelvedChangeEntity, TagNodeEntity)
+  override fun entityTypes(): List<EntityType<*>> = listOf(ShelvesTreeRootEntity, ShelvedChangeListEntity, ShelvedChangeEntity, TagNodeEntity, SelectShelveChangeEntity)
 }
 
 abstract class NodeEntity : Entity {
@@ -68,5 +68,15 @@ class TagNodeEntity(override val eid: EID) : NodeEntity() {
 
   companion object : DurableEntityType<TagNodeEntity>(TagNodeEntity::class.java.name, "com.intellij", ::TagNodeEntity, NodeEntity) {
     val Text = requiredValue("text", String.serializer())
+  }
+}
+
+class SelectShelveChangeEntity(override val eid: EID) : Entity {
+  val changeList: ShelvedChangeListEntity by ChangeList
+  val change: ShelvedChangeEntity by Change
+
+  companion object : DurableEntityType<SelectShelveChangeEntity>(SelectShelveChangeEntity::class.java.name, "com.intellij", ::SelectShelveChangeEntity) {
+    val ChangeList = requiredRef<ShelvedChangeListEntity>("ChangeList")
+    val Change = requiredRef<ShelvedChangeEntity>("Change")
   }
 }

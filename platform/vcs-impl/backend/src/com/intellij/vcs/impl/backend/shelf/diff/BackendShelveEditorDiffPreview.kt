@@ -10,10 +10,11 @@ import com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import com.intellij.vcs.impl.backend.shelf.ShelfTree
+import kotlinx.coroutines.CoroutineScope
 
-class BackendShelveEditorDiffPreview(tree: ShelfTree) : TreeHandlerEditorDiffPreview(tree, tree, ShelveTreeDiffPreviewHandler.INSTANCE) {
+class BackendShelveEditorDiffPreview(tree: ShelfTree, private  val cs: CoroutineScope) : TreeHandlerEditorDiffPreview(tree, tree, ShelveTreeDiffPreviewHandler(cs)) {
   override fun createViewer(): DiffEditorViewer {
-    return ShelvedPreviewProcessor(project, tree as ShelfTree, true)
+    return ShelvedPreviewProcessor(project, cs, tree as ShelfTree, true)
   }
 
   public override fun returnFocusToTree() {
