@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.embeddings.indexer.keys
 
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -45,7 +43,7 @@ internal class IndexLongKeyProvider : EmbeddingStorageKeyProvider<Long> {
     smartReadAction(project) {
       FileBasedIndex.getInstance().processValues(
         /* indexId = */ index,
-        /* dataKey = */ EmbeddingKey.fromLong(key),
+        /* dataKey = */ EmbeddingKey(hash),
         /* inFile = */ file,
         /* processor = */ FileBasedIndex.ValueProcessor { _, value -> result = value; false },
         /* filter = */ GlobalSearchScope.fileScope(project, file))

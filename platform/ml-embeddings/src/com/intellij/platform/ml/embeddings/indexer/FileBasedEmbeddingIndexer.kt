@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -240,7 +241,7 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
   private suspend fun fetchEntities(indexId: ID<EmbeddingKey, String>,
                                     channel: Channel<IndexableEntity>,
                                     project: Project,
-                                    nameToEntity: (EmbeddingKey, String) -> LongIndexableEntity) {
+                                    nameToEntity: (Long, String) -> LongIndexableEntity) {
     val fileBasedIndex = FileBasedIndex.getInstance()
     val scope = GlobalSearchScope.projectScope(project)
     val keys = smartReadAction(project) { fileBasedIndex.getAllKeys(indexId, project) }
@@ -248,9 +249,18 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
     val chunkSize = Registry.intValue("intellij.platform.ml.embeddings.file.based.index.processing.chunk.size")
     keys.asSequence().chunked(chunkSize).forEach { chunk ->
       chunk.forEach { key ->
-        val names = smartReadAction(project) { fileBasedIndex.getValues(indexId, key, scope) }
-        for (name in names) {
-          channel.send(nameToEntity(key, name))
+        val fileIdsAndNames = smartReadAction(project) {
+          val result = mutableListOf<Pair<Int, String>>()
+          fileBasedIndex.processValues(indexId, key, null, { virtualFile, name ->
+            if (virtualFile is VirtualFileWithId) {
+              result.add(Pair(virtualFile.id, name))
+            }
+            true
+          }, scope)
+          result
+        }
+        for ((fileId, name) in fileIdsAndNames) {
+          channel.send(nameToEntity(key.toLong(fileId), name))
         }
       }
     }

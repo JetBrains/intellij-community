@@ -3,7 +3,6 @@ package com.intellij.platform.ml.embeddings.indexer
 
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.PsiFile
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
@@ -11,24 +10,16 @@ import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.KeyDescriptor
 import java.io.DataInput
 import java.io.DataOutput
-import java.util.*
 
 internal val CLASS_NAME_EMBEDDING_INDEX_NAME = ID.create<EmbeddingKey, String>("ClassNameEmbeddingIndex")
 internal val SYMBOL_NAME_EMBEDDING_INDEX_NAME = ID.create<EmbeddingKey, String>("SymbolNameEmbeddingIndex")
 
-internal class EmbeddingKey(val fileId: Int, val indexableRepresentationHashCode: Int) {
-  override fun hashCode(): Int = Objects.hash(fileId, indexableRepresentationHashCode)
-  override fun equals(other: Any?): Boolean =
-    other is EmbeddingKey && other.fileId == fileId && other.indexableRepresentationHashCode == indexableRepresentationHashCode
+internal class EmbeddingKey(val textHashCode: Int) {
+  override fun hashCode(): Int = textHashCode.hashCode()
+  override fun equals(other: Any?): Boolean = other is EmbeddingKey && other.textHashCode == textHashCode
 
-  fun toLong(): Long {
-    return (fileId.toLong() shl 32) + indexableRepresentationHashCode.toLong()
-  }
-
-  companion object {
-    fun fromLong(v: Long): EmbeddingKey {
-      return EmbeddingKey((v shr 32).toInt(), v.toInt())
-    }
+  fun toLong(fileId: Int): Long {
+    return (fileId.toLong() shl 32) + textHashCode.toLong()
   }
 }
 
@@ -40,7 +31,7 @@ internal class ClassNameEmbeddingIndex : BaseEmbeddingIndex() {
     get() = ClassesProvider.supportedFileTypes
 
   override fun getName(): ID<EmbeddingKey, String> = CLASS_NAME_EMBEDDING_INDEX_NAME
-  override fun getVersion(): Int = 0
+  override fun getVersion(): Int = 1
   override fun index(psiFile: PsiFile): List<IndexingItem> {
     return ClassesProvider.extractClasses(psiFile).map { IndexingItem(it.id.id) }
   }
@@ -51,7 +42,7 @@ internal class SymbolNameEmbeddingIndex : BaseEmbeddingIndex() {
     get() = SymbolsProvider.supportedFileTypes
 
   override fun getName(): ID<EmbeddingKey, String> = SYMBOL_NAME_EMBEDDING_INDEX_NAME
-  override fun getVersion(): Int = 0
+  override fun getVersion(): Int = 1
   override fun index(psiFile: PsiFile): List<IndexingItem> {
     return SymbolsProvider.extractSymbols(psiFile).map { IndexingItem(it.id.id) }
   }
@@ -75,10 +66,9 @@ internal abstract class BaseEmbeddingIndex() : FileBasedIndexExtension<Embedding
 
   override fun getIndexer(): DataIndexer<EmbeddingKey, String, FileContent> {
     return DataIndexer { inputData ->
-      val id = (inputData.file as? VirtualFileWithId)?.id ?: return@DataIndexer emptyMap()
       index(inputData.psiFile).associate { item ->
         val textHashcode = item.text.hashCode()
-        EmbeddingKey(id, textHashcode) to item.text
+        EmbeddingKey(textHashcode) to item.text
       }
     }
   }
@@ -91,8 +81,8 @@ internal abstract class BaseEmbeddingIndex() : FileBasedIndexExtension<Embedding
     return object : KeyDescriptor<EmbeddingKey> {
       override fun getHashCode(value: EmbeddingKey): Int = value.hashCode()
       override fun isEqual(val1: EmbeddingKey, val2: EmbeddingKey): Boolean = val1 == val2
-      override fun save(out: DataOutput, value: EmbeddingKey) = DataInputOutputUtil.writeLONG(out, value.toLong())
-      override fun read(`in`: DataInput): EmbeddingKey = EmbeddingKey.fromLong(DataInputOutputUtil.readLONG(`in`))
+      override fun save(out: DataOutput, value: EmbeddingKey) = DataInputOutputUtil.writeINT(out, value.textHashCode)
+      override fun read(`in`: DataInput): EmbeddingKey = EmbeddingKey(DataInputOutputUtil.readINT(`in`))
     }
   }
 
