@@ -3,6 +3,7 @@ package com.intellij.platform.eel.provider
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelApi
@@ -16,6 +17,8 @@ suspend fun Project.getEelApi(): EelApi {
   return Path.of(path).getEelApi()
 }
 
+fun Project.getEelApiBlocking() = runBlockingMaybeCancellable { getEelApi() }
+
 private val LOG by lazy { logger<EelProvider>() }
 
 suspend fun Path.getEelApi(): EelApi {
@@ -27,6 +30,8 @@ suspend fun Path.getEelApi(): EelApi {
 
   return eels.firstOrNull() ?: if (SystemInfo.isWindows) LocalWindowsEelApiImpl() else LocalPosixEelApiImpl()
 }
+
+fun Path.getEelApiBlocking() = runBlockingMaybeCancellable { getEelApi() }
 
 @ApiStatus.Internal
 interface EelProvider {
