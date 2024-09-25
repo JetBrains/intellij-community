@@ -55,6 +55,12 @@
       restartRequired="true"
       key="intellij.platform.ml.embeddings.use.file.based.index"/>
 
+    <registryKey
+      defaultValue="16384"
+      description="Chunk size for indexing values from file based index. All values should not be loaded to memory at once to avoid high memory usage."
+      restartRequired="true"
+      key="intellij.platform.ml.embeddings.file.based.index.processing.chunk.size"/>
+
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger"/>
   </extensions>

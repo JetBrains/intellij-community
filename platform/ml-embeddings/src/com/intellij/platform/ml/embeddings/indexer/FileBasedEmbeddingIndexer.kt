@@ -241,7 +241,8 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
     val scope = GlobalSearchScope.projectScope(project)
     val keys = smartReadAction(project) { fileBasedIndex.getAllKeys(indexId, project) }
 
-    keys.asSequence().chunked(1024).forEach { chunk ->
+    val chunkSize = Registry.intValue("intellij.platform.ml.embeddings.file.based.index.processing.chunk.size")
+    keys.asSequence().chunked(chunkSize).forEach { chunk ->
       chunk.forEach { key ->
         val names = smartReadAction(project) { fileBasedIndex.getValues(indexId, key, scope) }
         for (name in names) {
