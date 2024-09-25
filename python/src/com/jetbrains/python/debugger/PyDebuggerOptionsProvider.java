@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NonNls;
@@ -39,6 +40,7 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
     public boolean myDropIntoDebuggerOnFailedTests = false;
     public boolean mySupportQtDebugging = true;
     public @NonNls String myPyQtBackend = "auto";
+    public int myDebuggerPort = Registry.intValue("python.debugger.port");
     public @NonNls String myAttachProcessFilter = "python";
   }
 
@@ -91,6 +93,14 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
 
   public void setPyQtBackend(String backend) {
     myState.myPyQtBackend = backend;
+  }
+
+  int getDebuggerPort() {
+    return myState.myDebuggerPort;
+  }
+
+  void setDebuggerPort(int port) {
+    myState.myDebuggerPort = port;
   }
 
   public String getAttachProcessFilter() {

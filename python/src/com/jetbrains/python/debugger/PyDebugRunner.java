@@ -160,7 +160,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     RunProfile profile = environment.getRunProfile();
 
     if (Registry.is("python.debug.use.single.port")) {
-      int port = Registry.intValue("python.debugger.port");
+      int port = PyDebuggerOptionsProvider.getInstance(environment.getProject()).getDebuggerPort();
       TargetEnvironment.TargetPortBinding targetPortBinding =
         new TargetEnvironment.TargetPortBinding(port, port);
       return Promises
