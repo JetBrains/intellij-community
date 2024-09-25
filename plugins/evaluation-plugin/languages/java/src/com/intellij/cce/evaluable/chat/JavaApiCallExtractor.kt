@@ -1,6 +1,7 @@
-package com.intellij.cce.visitor
+package com.intellij.cce.evaluable.chat
 
 import com.intellij.cce.core.Language
+import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.metric.ApiCallExtractor
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.application.smartReadActionBlocking
@@ -18,11 +19,17 @@ class JavaApiCallExtractor : ApiCallExtractor {
     private const val PLATFORM_LANG_ID = "JAVA"
   }
 
-  override suspend fun extractApiCalls(code: String, project: Project): List<String> {
+  override suspend fun extractApiCalls(code: String, project: Project, tokenProperties: TokenProperties): List<String> {
     val psiFile = writeAction { createPsiFile(code, project) }
+    val methodNameThatMustBeGenerated = extractMethodNameThatMustBeGenerated(tokenProperties)
     return smartReadActionBlocking(project) {
-      extractCalledApiMethods(psiFile).mapNotNull { QualifiedNameProviderUtil.getQualifiedName(it) }
+      val method = findMethodWhichMustBeGenerated(psiFile, methodNameThatMustBeGenerated) ?: return@smartReadActionBlocking emptyList()
+      extractCalledApiMethods(method).mapNotNull { QualifiedNameProviderUtil.getQualifiedName(it) }
     }
+  }
+
+  private fun extractMethodNameThatMustBeGenerated(tokenProperties: TokenProperties): String {
+    return tokenProperties.additionalProperty(METHOD_NAME_PROPERTY)!!
   }
 
   private fun createPsiFile(code: String, project: Project): PsiFile {
@@ -31,6 +38,19 @@ class JavaApiCallExtractor : ApiCallExtractor {
       PlatformLanguage.findLanguageByID(PLATFORM_LANG_ID)!!,
       code,
     )
+  }
+
+  private fun findMethodWhichMustBeGenerated(psiFile: PsiFile, methodName: String): PsiMethod? {
+    var foundMethod: PsiMethod? = null
+    psiFile.accept(object : JavaRecursiveElementVisitor() {
+      override fun visitMethod(method: PsiMethod) {
+        if (methodName == method.name) {
+          foundMethod = method
+        }
+        super.visitMethod(method)
+      }
+    })
+    return foundMethod
   }
 }
 

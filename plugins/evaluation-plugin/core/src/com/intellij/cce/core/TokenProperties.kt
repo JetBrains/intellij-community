@@ -11,6 +11,8 @@ interface TokenProperties {
 
   fun additionalProperty(name: String): String?
 
+  fun additionalPropertyNames(): Set<String>
+
   fun describe(): String
 
   fun hasFeature(feature: String): Boolean
@@ -49,6 +51,7 @@ class LineProperties(val completableRanges: List<TextRange>) : TokenProperties {
   override val tokenType: TypeProperty = TypeProperty.LINE
   override val location: SymbolLocation = SymbolLocation.UNKNOWN
   override fun additionalProperty(name: String): String? = null
+  override fun additionalPropertyNames(): Set<String> = setOf()
   override fun describe(): String = ""
   override fun hasFeature(feature: String): Boolean = false
   override fun withFeatures(features: Set<String>): TokenProperties = this
@@ -120,6 +123,8 @@ class SimpleTokenProperties private constructor(
     return additional[name]
   }
 
+  override fun additionalPropertyNames(): Set<String> = additional.keys
+
   override fun describe(): String {
     return buildString {
       append("tokenType=$tokenType")
@@ -152,6 +157,7 @@ class DocumentationProperties(val docComment: String, val startOffset: Int, val 
   override val tokenType: TypeProperty = TypeProperty.UNKNOWN
   override val location: SymbolLocation = SymbolLocation.UNKNOWN
   override fun additionalProperty(name: String): String? = null
+  override fun additionalPropertyNames(): Set<String> = emptySet()
   override fun describe(): String = ""
   override fun hasFeature(feature: String): Boolean = false
   override fun withFeatures(features: Set<String>): TokenProperties = this
