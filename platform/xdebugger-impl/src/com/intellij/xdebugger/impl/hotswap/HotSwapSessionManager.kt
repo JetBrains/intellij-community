@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.hotswap
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -110,6 +111,8 @@ internal fun interface HotSwapChangesListener {
   fun onStatusChanged(forceStatus: HotSwapVisibleStatus?)
 }
 
+private val logger = logger<HotSwapSession<*>>()
+
 @ApiStatus.Internal
 class HotSwapSession<T> internal constructor(val project: Project, internal val provider: HotSwapProvider<T>, parentScope: CoroutineScope) : Disposable {
   internal val coroutineScope = parentScope.childScope("HotSwapSession $this")
@@ -125,6 +128,9 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
     // No further updates after the session is complete
     if (currentStatus == HotSwapVisibleStatus.SESSION_COMPLETED) return
     currentStatus = status
+    if (logger.isDebugEnabled) {
+      logger.debug("Session status changed: $status (fire=$fireUpdate)")
+    }
     if (fireUpdate) {
       HotSwapSessionManager.getInstance(project).fireStatusChanged(this)
     }

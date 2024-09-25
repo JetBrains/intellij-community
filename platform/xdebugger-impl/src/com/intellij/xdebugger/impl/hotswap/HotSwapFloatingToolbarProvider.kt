@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
@@ -161,6 +162,8 @@ private fun JComponent.installPopupMenu() {
   })
 }
 
+private val logger = logger<HotSwapFloatingToolbarProvider>()
+
 internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
   override val autoHideable: Boolean get() = false
   private val hotSwapAction by lazy { HotSwapWithRebuildAction() }
@@ -193,12 +196,18 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
       // We need to hide the button even if the coroutineScope is cancelled
       manager.coroutineScope.launch(Dispatchers.EDT, start = CoroutineStart.ATOMIC) {
         if (!showFloatingToolbar()) {
+          if (logger.isDebugEnabled) {
+            logger.debug("Hide button because it is disabled")
+          }
           component.scheduleHide()
           return@launch
         }
         val session = manager.currentSession
         val status = forceStatus ?: session?.currentStatus
 
+        if (logger.isDebugEnabled) {
+          logger.debug("Button status changed: $status")
+        }
         when (status) {
           HotSwapVisibleStatus.IN_PROGRESS -> {
             hotSwapAction.status = HotSwapButtonStatus.IN_PROGRESS

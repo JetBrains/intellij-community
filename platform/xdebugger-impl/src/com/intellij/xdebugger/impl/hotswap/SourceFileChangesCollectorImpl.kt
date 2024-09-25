@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.hotswap
 import com.intellij.history.LocalHistory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -26,6 +27,8 @@ import org.jetbrains.annotations.TestOnly
 fun interface SourceFileChangeFilter<T> {
   suspend fun isApplicable(change: T): Boolean
 }
+
+private val logger = logger<SourceFileChangesCollectorImpl>()
 
 /**
  * Default implementation of [SourceFileChangesCollector], that track modification of all available documents.
@@ -51,6 +54,9 @@ class SourceFileChangesCollectorImpl(
     val eventMulticaster = EditorFactory.getInstance().eventMulticaster
     eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
+        if (logger.isDebugEnabled) {
+          logger.debug("Document changed: ${event.document}")
+        }
         onDocumentChange(event.document)
       }
     }, this)
@@ -70,7 +76,15 @@ class SourceFileChangesCollectorImpl(
   private fun onDocumentChange(document: Document) {
     coroutineScope.launch(Dispatchers.Default) {
       val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return@launch
-      if (filters.any { !it.isApplicable(virtualFile) }) return@launch
+      if (filters.any { !it.isApplicable(virtualFile) }) {
+        if (logger.isDebugEnabled) {
+          logger.debug("Document change skipped as filtered: $document")
+        }
+        return@launch
+      }
+      if (logger.isDebugEnabled) {
+        logger.debug("Document change processing: $document")
+      }
       channel.send(Update(virtualFile, document))
     }
   }
@@ -98,7 +112,17 @@ class SourceFileChangesCollectorImpl(
       }
 
       val isEmpty = currentChanges.isEmpty()
-      if (isEmpty) listener.onChangesCanceled() else listener.onNewChanges()
+      if (isEmpty) {
+        if (logger.isDebugEnabled) {
+          logger.debug("Document change reverted previous changes: $document")
+        }
+        listener.onChangesCanceled()
+      } else {
+        if (logger.isDebugEnabled) {
+          logger.debug("Document change active: $document")
+        }
+        listener.onNewChanges()
+      }
     }
   }
 
