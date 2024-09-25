@@ -12,5 +12,5 @@ interface ApiCallExtractor {
   }
 
   val language: Language
-  suspend fun extractForGeneratedCode(code: String, project: Project): List<String>
+  suspend fun extractApiCalls(code: String, project: Project): List<String>
 }

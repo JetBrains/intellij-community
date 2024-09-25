@@ -6,9 +6,7 @@ import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.application.smartReadActionBlocking
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.JavaRecursiveElementVisitor
-import com.intellij.psi.PsiCallExpression
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.startOffset
@@ -41,20 +39,9 @@ class JavaCodeGenerationInChatVisitor : EvaluationVisitor, JavaRecursiveElementV
 
   private suspend fun extractInternalApiCalls(method: PsiMethod): List<String> {
     return smartReadActionBlocking(method.project) {
-      val callExpressions = extractCallExpressions(method)
-      callExpressions.mapNotNull { it.tryGetCorrespondingInternalApi() }
+      extractCalledInternalApiMethods(method).mapNotNull {
+        QualifiedNameProviderUtil.getQualifiedName(it)
+      }
     }
   }
-
-
-  private fun PsiCallExpression.tryGetCorrespondingInternalApi(): String? {
-    val resolvedElement = this.resolveMethod() ?: return null
-    val containingFile = resolvedElement.containingFile?.virtualFile ?: return null
-    val projectFileIndex = ProjectFileIndex.getInstance(this.project)
-    if (projectFileIndex.isInContent(containingFile)) {
-      return QualifiedNameProviderUtil.getQualifiedName(resolvedElement)
-    }
-    return null
-  }
-
 }

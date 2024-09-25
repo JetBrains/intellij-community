@@ -6,24 +6,10 @@ import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.application.smartReadActionBlocking
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
 import com.intellij.lang.Language as PlatformLanguage
 
-fun extractCallExpressions(
-  psiElement: PsiElement,
-  filter: (PsiCallExpression) -> Boolean = { true },
-): List<PsiCallExpression> {
-  val result: MutableList<PsiCallExpression> = mutableListOf()
-  val visitor = object : JavaRecursiveElementVisitor() {
-    override fun visitCallExpression(callExpression: PsiCallExpression) {
-      if (!filter(callExpression)) return
-      result.add(callExpression)
-      super.visitCallExpression(callExpression)
-    }
-  }
-  psiElement.accept(visitor)
-  return result
-}
 
 class JavaApiCallExtractor : ApiCallExtractor {
   override val language = Language.JAVA
@@ -32,13 +18,10 @@ class JavaApiCallExtractor : ApiCallExtractor {
     private const val PLATFORM_LANG_ID = "JAVA"
   }
 
-  override suspend fun extractForGeneratedCode(code: String, project: Project): List<String> {
+  override suspend fun extractApiCalls(code: String, project: Project): List<String> {
     val psiFile = writeAction { createPsiFile(code, project) }
     return smartReadActionBlocking(project) {
-      val callExpressions = extractCallExpressions(psiFile)
-      callExpressions.mapNotNull { psiCallExpression ->
-        psiCallExpression.resolveMethod()?.let { QualifiedNameProviderUtil.getQualifiedName(it) }
-      }
+      extractCalledApiMethods(psiFile).mapNotNull { QualifiedNameProviderUtil.getQualifiedName(it) }
     }
   }
 
@@ -49,4 +32,48 @@ class JavaApiCallExtractor : ApiCallExtractor {
       code,
     )
   }
+}
+
+fun extractCalledApiMethods(psiElement: PsiElement): List<PsiMethod> {
+  return extractMethodCallExpressionsFromMethods(psiElement) {
+    !isSuperCall(it)
+  }.mapNotNull { it.resolveMethod() }
+}
+
+private fun isSuperCall(callExpression: PsiCallExpression): Boolean {
+  return (callExpression is PsiMethodCallExpression)
+         && (callExpression.methodExpression.qualifierExpression is PsiSuperExpression)
+}
+
+fun extractCalledInternalApiMethods(psiElement: PsiElement): List<PsiMethod> {
+  val apiMethods = extractCalledApiMethods(psiElement)
+  return apiMethods.filter { isInternalApiMethod(it) }
+}
+
+private fun isInternalApiMethod(method: PsiMethod): Boolean {
+  val project = method.project
+  val containingFile = method.containingFile?.virtualFile ?: return false
+  val projectFileIndex = ProjectFileIndex.getInstance(project)
+  return projectFileIndex.isInContent(containingFile)
+}
+
+private fun extractMethodCallExpressionsFromMethods(
+  psiElement: PsiElement,
+  filter: (PsiCallExpression) -> Boolean = { true },
+): List<PsiCallExpression> {
+  val result: MutableList<PsiCallExpression> = mutableListOf()
+  val visitor = object : JavaRecursiveElementVisitor() {
+    override fun visitMethod(method: PsiMethod) {
+      if (method.isConstructor) return
+      super.visitMethod(method)
+    }
+
+    override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
+      if (!filter(expression)) return
+      result.add(expression)
+      super.visitCallExpression(expression)
+    }
+  }
+  psiElement.accept(visitor)
+  return result
 }
