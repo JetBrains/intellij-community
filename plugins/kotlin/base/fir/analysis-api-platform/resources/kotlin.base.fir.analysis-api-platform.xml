@@ -16,6 +16,9 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.packages.KotlinForwardDeclarationsPackageProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeForwardDeclarationPackageProviderFactory"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinAnchorModuleProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.K2IdeKotlinAnchorModuleProvider"/>
 
     <psi.treeChangePreprocessor
             implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeOutOfBlockPsiTreeChangePreprocessor"/>

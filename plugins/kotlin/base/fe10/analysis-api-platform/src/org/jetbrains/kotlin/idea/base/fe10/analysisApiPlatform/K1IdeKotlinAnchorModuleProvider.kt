@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.base.analysisApiPlatform
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 
-class IdeKotlinAnchorModuleProvider(val project: Project) : KotlinAnchorModuleProvider {
+class K1IdeKotlinAnchorModuleProvider(val project: Project) : KotlinAnchorModuleProvider {
     override fun getAnchorModule(libraryModule: KaLibraryModule): KaSourceModule? {
         @OptIn(Frontend10ApiUsage::class)
         val libraryInfo = libraryModule.moduleInfo as? LibraryInfo ?: return null

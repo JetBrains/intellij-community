@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
@@ -56,6 +57,10 @@ val KaSourceModule.ideaModule: Module
 fun Module.getMainKtSourceModule(): KaSourceModule? {
     val moduleInfo = productionSourceInfo ?: return null
     return moduleInfo.toKaModuleOfType<KaSourceModule>()
+}
+
+fun Library.getLibraryModules(project: Project): List<KaLibraryModule> {
+    return LibraryInfoCache.getInstance(project)[this].map { it.toKaModuleOfType<KaLibraryModule>() }
 }
 
 val ModuleInfo.kotlinSourceRootType: KotlinSourceRootType?
