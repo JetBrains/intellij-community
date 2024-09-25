@@ -528,6 +528,11 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
       module java.base { exports exports java.lang.annotation; }
     """.trimIndent())
 
+    highlight("TestClassA.java", """
+      package <error descr="Package 'java.lang.annotation' exists in another module: java.base">java.lang.annotation</error>;          
+      public class TestClassA { }
+    """.trimIndent(), M2)
+
     ApplicationManager.getApplication().runWriteAction {
       val model = ModuleRootManager.getInstance(ModuleManager.getInstance(project).findModuleByName(M2.moduleName)!!).getModifiableModel()
       model.contentEntries[0].addExcludeFolder(altSourceRoot)
