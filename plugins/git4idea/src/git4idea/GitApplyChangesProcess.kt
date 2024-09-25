@@ -31,11 +31,11 @@ import com.intellij.xml.util.XmlStringUtil.wrapInHtmlTag
 import git4idea.GitUtil.refreshChangedVfs
 import git4idea.actions.GitAbortOperationAction
 import git4idea.changes.GitChangeUtils.getStagedChanges
+import git4idea.cherrypick.GitLocalChangesConflictDetector
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitLineHandlerListener
 import git4idea.commands.GitSimpleEventDetector
 import git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT
-import git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK
 import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector
 import git4idea.i18n.GitBundle
 import git4idea.index.isStagingAreaAvailable
@@ -118,7 +118,7 @@ internal class GitApplyChangesProcess(
     alreadyPicked: MutableList<VcsCommitMetadata>,
   ): Boolean {
     val conflictDetector = GitSimpleEventDetector(CHERRY_PICK_CONFLICT)
-    val localChangesOverwrittenDetector = GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK)
+    val localChangesOverwrittenDetector = GitLocalChangesConflictDetector()
     val untrackedFilesDetector = GitUntrackedFilesOverwrittenByOperationDetector(repository.root)
 
     val commitMessage = defaultCommitMessageGenerator(repository, commit)

@@ -20,7 +20,11 @@ public class GitSimpleEventDetector implements GitLineEventDetector {
 
   public enum Event {
     CHERRY_PICK_CONFLICT("after resolving the conflicts"), // also applies to revert
-    LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK("would be overwritten by merge"), // also applies to revert
+    /**
+     * @deprecated replaced with {@link git4idea.cherrypick.GitLocalChangesConflictDetector}
+     */
+    @Deprecated
+    LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK("would be overwritten by "), // by (merge|cherry-pick|revert), applies to revert
     UNMERGED_PREVENTING_CHECKOUT("you need to resolve your current index first"),
     UNMERGED_PREVENTING_MERGE("is not possible because you have unmerged files"),
     BRANCH_NOT_FULLY_MERGED("is not fully merged"),
