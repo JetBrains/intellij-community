@@ -7,6 +7,7 @@ import com.jetbrains.rhizomedb.Entity
 import com.jetbrains.rhizomedb.EntityType
 import com.jetbrains.rhizomedb.Mixin
 import fleet.kernel.DurableEntityType
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 
 class ShelfEntityTypeProvider : EntityTypeProvider {
@@ -27,6 +28,7 @@ class ShelvesTreeRootEntity(override val eid: EID) : NodeEntity() {
   companion object : DurableEntityType<ShelvesTreeRootEntity>(ShelvesTreeRootEntity::class.java.name, "com.intellij", ::ShelvesTreeRootEntity)
 }
 
+@Serializable
 class ShelvedChangeListEntity(override val eid: EID) : NodeEntity() {
   val name: String by Name
   val description: String by Description
@@ -48,6 +50,7 @@ class ShelvedChangeListEntity(override val eid: EID) : NodeEntity() {
   }
 }
 
+@Serializable
 class ShelvedChangeEntity(override val eid: EID) : NodeEntity() {
   val filePath: String by FilePath
   val additionalText: String? by AdditionalText

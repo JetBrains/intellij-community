@@ -5,9 +5,10 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
-import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.rpc.backend.RemoteApiProvider
+import com.intellij.vcs.impl.shared.rpc.ChangeListDto
+import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import com.jetbrains.rhizomedb.EID
 import fleet.kernel.change
 import fleet.kernel.shared
@@ -34,6 +35,11 @@ class BackendShelfApi : RemoteShelfApi {
       }
     }
     ShelfTreeHolder.getInstance(project).scheduleTreeUpdate()
+  }
+
+  override suspend fun showDiffForChanges(projectId: EID, changeListDto: ChangeListDto) {
+    val project = getProject(projectId) ?: return
+    ShelfTreeHolder.getInstance(project).showDiff(changeListDto)
   }
 
   private suspend fun getProject(projectId: EID): Project? {
