@@ -100,7 +100,7 @@ public final class Optional<T> {
     }
 
     /*<# [[@ NotNull]] #>*/public static <T> Optional<T> of(/*<# [[@ Flow [( [[targetIsContainer  =  true]] )]]] #>*/T value) {
-        return new Optional(Objects.requireNonNull(value));
+        return new Optional<T>(Objects.requireNonNull(value));
     }
 
     /*<# [[@ NotNull] [@ Contract [( [[pure  =  true]] )]]] #>*/public static <T> Optional<T> ofNullable(/*<# [[@ Flow [( [[targetIsContainer  =  true]] )]]] #>*/T value) {
@@ -178,11 +178,11 @@ public final class Optional<T> {
     }
 
     /*<# [[@ Contract [( [[value  =  "!null -> !null"] ,  [pure  =  true]] )]] [@ Flow [( [[sourceIsContainer  =  true]] )]]] #>*/public T orElse(/*<# [[@ Nullable] [@ Flow [( [[targetIsContainer  =  true]] )]]] #>*/T other) {
-        return this.value != null ? this.value : other;
+        return (T)(this.value != null ? this.value : other);
     }
 
     public T orElseGet(Supplier<? extends T> supplier) {
-        return this.value != null ? this.value : supplier.get();
+        return (T)(this.value != null ? this.value : supplier.get());
     }
 
     public T orElseThrow() {
