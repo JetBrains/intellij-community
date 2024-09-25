@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- No package, there are two top level packages available :( -->
   <name>JSON</name>
   <!-- The plugin id is intentionally kept equal to its main module id
@@ -16,9 +16,7 @@
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
 
-  <content>
-    <module name="intellij.json.split" loading="required"/>
-  </content>
+  <xi:include href="/intellij.json.split.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions resource-bundle="messages.JsonBundle">
     <action id="JsonCopyPointer" class="com.intellij.json.editor.JsonCopyPointerAction">
