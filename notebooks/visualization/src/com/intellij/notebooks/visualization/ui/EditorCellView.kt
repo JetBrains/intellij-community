@@ -8,7 +8,6 @@ import com.intellij.notebooks.visualization.*
 import com.intellij.notebooks.visualization.NotebookCellInlayController.InputFactory
 import com.intellij.notebooks.visualization.context.NotebookDataContext
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -90,6 +89,15 @@ class EditorCellView(
     cell.source.afterChange(this) {
       updateInput()
     }
+    cell.selected.afterChange(this) { selected ->
+      this.selected = selected
+    }
+    this.selected = cell.selected.get()
+    cell.executionStatus.afterChange(this) { execution ->
+      updateExecutionStatus(execution.count, execution.status, execution.startTime, execution.endTime)
+    }
+    val executionStatus = cell.executionStatus.get()
+    updateExecutionStatus(executionStatus.count, executionStatus.status, executionStatus.startTime, executionStatus.endTime)
     recreateControllers()
     updateSelection(false)
     updateOutputs()
@@ -209,10 +217,6 @@ class EditorCellView(
   fun onViewportChanges() {
     input.onViewportChange()
     outputs?.onViewportChange()
-  }
-
-  fun setGutterAction(action: AnAction?) {
-    input.setGutterAction(action)
   }
 
   fun mouseExited() {
@@ -336,7 +340,7 @@ class EditorCellView(
     return Rectangle(0, inputBounds.y, editor.contentSize.width, height)
   }
 
-  fun updateExecutionStatus(executionCount: Int?, progressStatus: ProgressStatus?, startTime: ZonedDateTime?, endTime: ZonedDateTime?) {
+  private fun updateExecutionStatus(executionCount: Int?, progressStatus: ProgressStatus?, startTime: ZonedDateTime?, endTime: ZonedDateTime?) {
     _controllers.filterIsInstance<CellExecutionStatusView>().firstOrNull()
       ?.updateExecutionStatus(executionCount, progressStatus, startTime, endTime)
     input.runCellButton?.updateGutterAction(progressStatus)

@@ -25,7 +25,7 @@ class CustomFoldingEditorCellViewComponent(
   internal val component: JComponent,
   private val editor: EditorEx,
   private val cell: EditorCell,
-) : EditorCellViewComponent(), HasGutterIcon {
+) : EditorCellViewComponent() {
 
   private var foldingRegion: CustomFoldRegion? = null
 
@@ -50,26 +50,36 @@ class CustomFoldingEditorCellViewComponent(
     return component
   }
 
-  override fun updateGutterIcons(gutterAction: AnAction?) {
-    gutterActionRenderer = gutterAction?.let { ActionToGutterRendererAdapter(it) }
-    foldingRegion?.update()
+  private fun updateGutterIcons(gutterAction: AnAction?) {
+    cell.manager.update { ctx ->
+      gutterActionRenderer = gutterAction?.let { ActionToGutterRendererAdapter(it) }
+      ctx.addFoldingOperation { modelEx ->
+        foldingRegion?.update()
+      }
+    }
   }
 
-  override fun dispose() {
-    super.dispose()
-    disposeFolding()
+  init {
+    cell.gutterAction.afterChange(this) { action ->
+      updateGutterIcons(action)
+    }
+    updateGutterIcons(cell.gutterAction.get())
   }
 
-  private fun disposeFolding() = cell.manager.update { ctx ->
-    foldingRegion?.let { region ->
-      ctx.addFoldingOperation {
+  override fun dispose() = cell.manager.update { ctx ->
+    disposeFolding(ctx)
+  }
+
+  private fun disposeFolding(ctx: UpdateContext) {
+    ctx.addFoldingOperation {
+      foldingRegion?.let { region ->
         if (region.isValid == true) {
           editor.foldingModel.removeFoldRegion(region)
         }
       }
+      foldingRegion = null
     }
     editor.componentContainer.remove(mainComponent)
-    foldingRegion = null
   }
 
   override fun calculateBounds(): Rectangle {

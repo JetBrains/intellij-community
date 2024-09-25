@@ -4,7 +4,6 @@ import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isO
 import com.intellij.notebooks.ui.visualization.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellInlayController
 import com.intellij.notebooks.visualization.NotebookCellLines
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.impl.EditorImpl
 import java.awt.Rectangle
 
@@ -24,8 +23,6 @@ class EditorCellInput(
   val component: EditorCellViewComponent = componentFactory.createComponent(editor, cell).also { add(it) }
 
   val folding = EditorCellFoldingBar(editor, ::getFoldingBounds) { toggleFolding() }
-
-  private var gutterAction: AnAction? = null
 
   var folded = false
     private set
@@ -65,16 +62,6 @@ class EditorCellInput(
 
   fun update() {
     updateInput()
-    updateGutterIcons()
-  }
-
-  private fun updateGutterIcons() {
-    (component as? HasGutterIcon)?.updateGutterIcons(gutterAction)
-  }
-
-  fun setGutterAction(action: AnAction?) {
-    gutterAction = action
-    updateGutterIcons()
   }
 
   override fun calculateBounds(): Rectangle {

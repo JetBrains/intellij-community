@@ -8,5 +8,4 @@ interface EditorCellEventListener : EventListener {
   sealed interface EditorCellEvent
   data class CellCreated(val cell: EditorCell) : EditorCellEvent
   data class CellRemoved(val cell: EditorCell) : EditorCellEvent
-  data class CellUpdated(val cell: EditorCell) : EditorCellEvent
 }

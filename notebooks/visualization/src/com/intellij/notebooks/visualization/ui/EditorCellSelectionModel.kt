@@ -21,7 +21,7 @@ class EditorCellSelectionModel(manager: NotebookCellInlayManager) {
 
   private fun removeCell(selectedCell: EditorCell) {
     _selection.remove(selectedCell)
-    selectedCell.selected = false
+    selectedCell.selected.set(false)
   }
 
   fun replaceSelection(cells: Collection<EditorCell>) {
@@ -29,10 +29,10 @@ class EditorCellSelectionModel(manager: NotebookCellInlayManager) {
     val toRemove = _selection - selectionSet
     val toAdd = selectionSet - _selection
     toRemove.forEach {
-      it.selected = false
+      it.selected.set(false)
     }
     toAdd.forEach {
-      it.selected = true
+      it.selected.set(true)
     }
     _selection.removeAll(toRemove)
     _selection.addAll(toAdd)

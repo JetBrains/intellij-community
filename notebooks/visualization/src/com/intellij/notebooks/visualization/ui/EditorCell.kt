@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.util.*
 import java.time.ZonedDateTime
@@ -24,7 +25,6 @@ class EditorCell(
   private val editor: EditorEx,
   val manager: NotebookCellInlayManager,
   var intervalPointer: NotebookIntervalPointer,
-  private val viewFactory: (EditorCell) -> EditorCellView,
 ) : Disposable, UserDataHolder by UserDataHolderBase() {
 
   val source = AtomicProperty<String>(getSource())
@@ -42,68 +42,20 @@ class EditorCell(
 
   val interval get() = intervalPointer.get() ?: error("Invalid interval")
 
-  var view: EditorCellView? = null
+  val view: EditorCellView?
+    get() = manager.views[this]
 
-  var visible: Boolean = true
-    set(value) {
-      if (field == value) return
-      field = value
-      manager.update<Unit> { ctx ->
-        if (!value) {
-          view?.let {
-            disposeView(it)
-          }
-        }
-        else {
-          if (view == null) {
-            view = createView()
-          }
-        }
-      }
-    }
+  var visible = AtomicBooleanProperty(true)
 
   init {
     CELL_EXTENSION_CONTAINER_KEY.set(this, mutableMapOf())
   }
 
-  fun initView() {
-    view = createView()
-  }
+  val selected = AtomicBooleanProperty(false)
 
-  private fun createView(): EditorCellView = manager.update { ctx ->
-    val view = viewFactory(this).also { Disposer.register(this, it) }
-    gutterAction?.let { view.setGutterAction(it) }
-    view.updateExecutionStatus(executionCount, progressStatus, executionStartTime, executionEndTime)
-    view.selected = selected
-    manager.fireCellViewCreated(view)
-    view.updateCellFolding(ctx)
-    view
-  }
+  val gutterAction = AtomicProperty<AnAction?>(null)
 
-  private fun disposeView(it: EditorCellView) {
-    Disposer.dispose(it)
-    view = null
-    manager.fireCellViewRemoved(it)
-  }
-
-  var selected: Boolean = false
-    set(value) {
-      if (field != value) {
-        field = value
-        view?.selected = value
-      }
-    }
-
-  var gutterAction: AnAction? = null
-    private set
-
-  private var executionCount: Int? = null
-
-  private var progressStatus: ProgressStatus? = null
-
-  private var executionStartTime: ZonedDateTime? = null
-
-  private var executionEndTime: ZonedDateTime? = null
+  val executionStatus = AtomicProperty<ExecutionStatus>(ExecutionStatus())
 
   val mode = AtomicProperty<NotebookEditorMode>(NotebookEditorMode.COMMAND)
 
@@ -111,7 +63,6 @@ class EditorCell(
 
   override fun dispose() {
     cleanupExtensions()
-    view?.let { disposeView(it) }
   }
 
   private fun cleanupExtensions() {
@@ -139,8 +90,7 @@ class EditorCell(
   }
 
   fun setGutterAction(action: AnAction?) {
-    gutterAction = action
-    view?.setGutterAction(action)
+    gutterAction.set(action)
   }
 
   inline fun <reified T : NotebookCellInlayController> getController(): T? {
@@ -174,10 +124,10 @@ class EditorCell(
 
   private fun getOutputs(): List<NotebookOutputDataKey> =
     NotebookOutputDataKeyExtractor.EP_NAME.extensionList.asSequence()
-       .mapNotNull { it.extract(editor as EditorImpl, interval) }
-       .firstOrNull()
-       ?.takeIf { it.isNotEmpty() }
-     ?: emptyList()
+      .mapNotNull { it.extract(editor as EditorImpl, interval) }
+      .firstOrNull()
+      ?.takeIf { it.isNotEmpty() }
+    ?: emptyList()
 
   private fun updateOutputs(newOutputs: List<NotebookOutputDataKey>) = runInEdt {
     outputs.set(newOutputs)
@@ -186,22 +136,18 @@ class EditorCell(
   fun onExecutionEvent(event: ExecutionEvent) {
     when (event) {
       is ExecutionEvent.ExecutionStarted -> {
-        executionStartTime = event.startTime
-        progressStatus = event.status
+        executionStatus.set(executionStatus.get().copy(status = event.status, startTime = event.startTime))
       }
       is ExecutionEvent.ExecutionStopped -> {
-        executionEndTime = event.endTime
-        progressStatus = event.status
-        executionCount = event.executionCount
+        executionStatus.set(executionStatus.get().copy(status = event.status, endTime = event.endTime, count = event.executionCount))
       }
       is ExecutionEvent.ExecutionSubmitted -> {
-        progressStatus = event.status
+        executionStatus.set(executionStatus.get().copy(status = event.status))
       }
       is ExecutionEvent.ExecutionReset -> {
-        progressStatus = event.status
+        executionStatus.set(executionStatus.get().copy(status = event.status))
       }
     }
-    view?.updateExecutionStatus(executionCount, progressStatus, executionStartTime, executionEndTime)
   }
 
   fun switchToEditMode() = runInEdt {
@@ -236,4 +182,11 @@ class EditorCell(
   private fun forEachExtension(action: (EditorCellExtension) -> Unit) {
     CELL_EXTENSION_CONTAINER_KEY.get(this)?.values?.forEach { action(it) }
   }
+
+  data class ExecutionStatus(
+    val status: ProgressStatus? = null,
+    val count: Int? = null,
+    val startTime: ZonedDateTime? = null,
+    val endTime: ZonedDateTime? = null
+  )
 }

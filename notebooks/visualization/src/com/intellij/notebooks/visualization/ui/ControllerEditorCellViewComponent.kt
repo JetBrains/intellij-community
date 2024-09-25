@@ -14,13 +14,20 @@ class ControllerEditorCellViewComponent(
   internal val controller: NotebookCellInlayController,
   private val editor: Editor,
   private val cell: EditorCell,
-) : EditorCellViewComponent(), HasGutterIcon {
+) : EditorCellViewComponent() {
 
   private var foldedRegion: FoldRegion? = null
 
-  override fun updateGutterIcons(gutterAction: AnAction?) {
+  private fun updateGutterIcons(gutterAction: AnAction?) {
     val inlay = controller.inlay
     inlay.update()
+  }
+
+  init {
+    cell.gutterAction.afterChange(this) { action ->
+      updateGutterIcons(action)
+    }
+    updateGutterIcons(cell.gutterAction.get())
   }
 
   override fun dispose() {

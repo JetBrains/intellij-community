@@ -6,15 +6,19 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Disposer
 import com.intellij.notebooks.visualization.UpdateContext
 import java.awt.Rectangle
+import java.util.Collections
 
 abstract class EditorCellViewComponent : Disposable {
   protected var parent: EditorCellViewComponent? = null
 
-  private val children = mutableListOf<EditorCellViewComponent>()
+  private val _children = mutableListOf<EditorCellViewComponent>()
+
+  val children: List<EditorCellViewComponent>
+    get() = Collections.unmodifiableList(_children)
 
   /* Add automatically registers child disposable. */
   fun add(child: EditorCellViewComponent) {
-    children.add(child)
+    _children.add(child)
     child.parent = this
     Disposer.register(this, child)
   }
@@ -22,14 +26,14 @@ abstract class EditorCellViewComponent : Disposable {
   /* Chile disposable will be automatically disposed. */
   fun remove(child: EditorCellViewComponent) {
     Disposer.dispose(child)
-    children.remove(child)
+    _children.remove(child)
     child.parent = null
   }
 
   override fun dispose() = Unit
 
   fun onViewportChange() {
-    children.forEach { it.onViewportChange() }
+    _children.forEach { it.onViewportChange() }
     doViewportChange()
   }
 
@@ -38,13 +42,13 @@ abstract class EditorCellViewComponent : Disposable {
   abstract fun calculateBounds(): Rectangle
 
   open fun updateCellFolding(updateContext: UpdateContext) {
-    children.forEach {
+    _children.forEach {
       it.updateCellFolding(updateContext)
     }
   }
 
   fun getInlays(): Sequence<Inlay<*>> {
-    return doGetInlays() + children.asSequence().flatMap { it.getInlays() }
+    return doGetInlays() + _children.asSequence().flatMap { it.getInlays() }
   }
 
   open fun doGetInlays(): Sequence<Inlay<*>> {

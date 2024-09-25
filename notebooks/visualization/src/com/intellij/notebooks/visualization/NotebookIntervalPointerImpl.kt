@@ -52,7 +52,6 @@ class UndoableActionListener : BulkAwareDocumentListener.Simple {
         override fun redo() {}
       }
       registerUndoableAction(action)
-      document.notebookIntervalPointerFactory.onUpdated(NotebookIntervalPointersEvent(eventChanges))
     }
   }
 }
@@ -183,6 +182,8 @@ class NotebookIntervalPointerFactoryImpl(
 
     //Postpone UndoableAction registration until DocumentUndoProvider registers its own action.
     document.putUserData(POSTPONED_CHANGES_KEY, PostponedChanges(eventChanges, shiftChanges))
+
+    onUpdated(NotebookIntervalPointersEvent(eventChanges))
   }
 
   private fun applyPostponedChanges(event: NotebookCellLinesEvent) {
@@ -190,6 +191,7 @@ class NotebookIntervalPointerFactoryImpl(
     ThreadingAssertions.assertWriteAccess()
     updatePointersByChanges(postponedChanges.eventChanges)
     updatePointersByChanges(postponedChanges.shiftChanges)
+    onUpdated(NotebookIntervalPointersEvent(postponedChanges.eventChanges))
   }
 
   private fun updatePointersByChanges(changes: List<Change>) {
