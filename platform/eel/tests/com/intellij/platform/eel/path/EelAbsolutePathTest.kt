@@ -2,7 +2,7 @@
 package com.intellij.platform.eel.path
 
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeTypeOf
+import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.TestFactory
@@ -36,7 +36,7 @@ class EelAbsolutePathTest {
       add(dynamicTest(rawPath) {
         val eelPath = EelPath.Absolute
           .parse(rawPath, null)
-          .shouldBeTypeOf<EelPathResult.Ok<EelPath.Absolute>>()
+          .shouldBeInstanceOf<EelPathResult.Ok<EelPath.Absolute>>()
           .path
         eelPath.toString() shouldBe rawPath
       })

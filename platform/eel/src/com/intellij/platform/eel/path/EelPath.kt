@@ -4,10 +4,16 @@ package com.intellij.platform.eel.path
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath.Absolute.OS
 import java.nio.file.InvalidPathException
+import kotlin.Throws
 
 sealed interface EelPathResult<P : EelPath> {
-  data class Ok<P : EelPath>(val path: P) : EelPathResult<P>
-  data class Err<P : EelPath>(val raw: String, val reason: String) : EelPathResult<P>
+  interface Ok<P : EelPath> : EelPathResult<P> {
+    val path: P
+  }
+  interface Err<P : EelPath> : EelPathResult<P> {
+    val raw: String
+    val reason: String
+  }
 }
 
 /**

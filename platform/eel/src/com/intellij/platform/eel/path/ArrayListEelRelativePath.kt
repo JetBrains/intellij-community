@@ -33,14 +33,14 @@ internal class ArrayListEelRelativePath private constructor(
         result += fileName
       }
     }
-    return EelPathResult.Ok(ArrayListEelRelativePath(result))
+    return Ok(ArrayListEelRelativePath(result))
   }
 
   override fun getChild(name: String): EelPathResult<ArrayListEelRelativePath> =
     when {
-      name.isEmpty() -> EelPathResult.Err(name, "Empty child name is not allowed")
-      "/" in name -> EelPathResult.Err(name, "Invalid symbol in child name: /")
-      else -> EelPathResult.Ok(ArrayListEelRelativePath(parts + name))
+      name.isEmpty() -> Err(name, "Empty child name is not allowed")
+      "/" in name -> Err(name, "Invalid symbol in child name: /")
+      else -> Ok(ArrayListEelRelativePath(parts + name))
     }
 
   override fun compareTo(other: EelPath.Relative): Int {
@@ -123,7 +123,7 @@ internal class ArrayListEelRelativePath private constructor(
           is EelPathResult.Err -> return r
         }
       }
-      return EelPathResult.Ok(result)
+      return Ok(result)
     }
   }
 }
