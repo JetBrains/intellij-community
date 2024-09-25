@@ -145,7 +145,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     doTest();
   }
-  
+
   public void testNullableCalledWithNullUnderNotNullByDefault() {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
@@ -248,7 +248,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     myFixture.enableInspections(myInspection);
     myFixture.checkHighlighting(true, false, true);
   }
-  
+
   public void testDefaultOverridesExplicit() {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
@@ -301,7 +301,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
-  
+
   public void testOverrideGenericMethod() {
     myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
@@ -332,24 +332,24 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testNullPassedToNullableParameter() {
     doTest();
   }
-  
+
   public void testTypeUseArrayAnnotation() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
-  
+
   public void testIncorrectPlacement() {
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
-  
+
   public void testInheritTypeUse() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
-  
+
   public void testMismatchOnArrayElementTypeUse() {
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
@@ -365,7 +365,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     DataFlowInspection8Test.setupAmbiguousAnnotations("typeUse", myFixture);
     doTest();
   }
-  
+
   public void testIncorrectPlacementAmbiguousJava6() {
     DataFlowInspection8Test.setupAmbiguousAnnotations("typeUse", myFixture);
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
@@ -393,7 +393,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testRemoveAnnotationWithImportQuickFix() {
     doTestWithFix("Remove annotation");
   }
-  
+
   public void testQuickFixOnTypeArgumentNullable() {
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
@@ -414,6 +414,11 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
 
   public void testMapComputeLambdaAnnotation() {
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testDisableOnLocals() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
 }

@@ -164,25 +164,25 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       @Override
       public void visitAnnotation(@NotNull PsiAnnotation annotation) {
         String qualifiedName = annotation.getQualifiedName();
+        if (qualifiedName == null) return;
         Optional<Nullability> nullabilityOptional = manager.getAnnotationNullability(qualifiedName);
         if (nullabilityOptional.isEmpty()) return;
         Nullability nullability = nullabilityOptional.get();
         PsiType type = AnnotationUtil.getRelatedType(annotation);
         PsiAnnotationOwner owner = annotation.getOwner();
-        PsiModifierListOwner listOwner = owner instanceof PsiModifierList
-                                         ? tryCast(((PsiModifierList)owner).getParent(), PsiModifierListOwner.class) : null;
+        PsiModifierListOwner listOwner = owner instanceof PsiModifierList modifierList
+                                         ? tryCast(modifierList.getParent(), PsiModifierListOwner.class) : null;
+        PsiType targetType = listOwner instanceof PsiMethod method ? method.getReturnType() :
+                             listOwner instanceof PsiVariable variable ? variable.getType() : null;
         if (type instanceof PsiPrimitiveType) {
-          PsiType targetType = listOwner instanceof PsiMethod
-                               ? ((PsiMethod)listOwner).getReturnType()
-                               : listOwner instanceof PsiVariable ? ((PsiVariable)listOwner).getType() : null;
           LocalQuickFix additionalFix = null;
           if (targetType instanceof PsiArrayType && targetType.getAnnotations().length == 0) {
             additionalFix = new MoveAnnotationToArrayFix();
           }
           reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.primitive.type.annotation", LocalQuickFix.notNullElements(additionalFix));
         }
-        if (type instanceof PsiClassType) {
-          PsiElement context = ((PsiClassType)type).getPsiContext();
+        if (type instanceof PsiClassType classType) {
+          PsiElement context = classType.getPsiContext();
           // outer type/package
           if (context instanceof PsiJavaCodeReferenceElement outerCtx) {
             PsiElement parent = context.getParent();
@@ -208,16 +208,18 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
             }
           }
         }
-        if (listOwner instanceof PsiMethod && ((PsiMethod)listOwner).isConstructor()) {
+        if (type instanceof PsiArrayType && annotation.getParent() instanceof PsiTypeElement parent &&
+            parent.getType().equals(type) && !manager.canAnnotateLocals(qualifiedName)) {
+          checkIllegalLocalAnnotation(annotation, parent.getParent());
+        }
+        if (listOwner instanceof PsiMethod method && method.isConstructor()) {
           reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.constructor");
         }
         if (listOwner instanceof PsiEnumConstant) {
           reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.enum.constant");
         }
-        if ((listOwner instanceof PsiLocalVariable ||
-             listOwner instanceof PsiParameter && ((PsiParameter)listOwner).getDeclarationScope() instanceof PsiCatchSection)
-            && !manager.canAnnotateLocals(qualifiedName)) {
-          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.local.variable");
+        if (!manager.canAnnotateLocals(qualifiedName) && !(targetType instanceof PsiArrayType)) {
+          checkIllegalLocalAnnotation(annotation, listOwner);
         }
         if (type instanceof PsiWildcardType && manager.isTypeUseAnnotationLocationRestricted(qualifiedName)) {
           reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.wildcard");
@@ -231,12 +233,20 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         checkOppositeAnnotationConflict(annotation, nullability);
         if (AnnotationUtil.NOT_NULL.equals(qualifiedName)) {
           PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("exception");
-          if (value instanceof PsiClassObjectAccessExpression) {
-            PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(((PsiClassObjectAccessExpression)value).getOperand().getType());
+          if (value instanceof PsiClassObjectAccessExpression classObjectAccessExpression) {
+            PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(classObjectAccessExpression.getOperand().getType());
             if (psiClass != null && !hasStringConstructor(psiClass)) {
               reportProblem(holder, value, "custom.exception.class.should.have.a.constructor");
             }
           }
+        }
+      }
+
+      private void checkIllegalLocalAnnotation(@NotNull PsiAnnotation annotation, @Nullable PsiElement owner) {
+        if (owner instanceof PsiLocalVariable ||
+            owner instanceof PsiParameter parameter &&
+            parameter.getDeclarationScope() instanceof PsiCatchSection) {
+          reportIncorrectLocation(holder, annotation, (PsiVariable)owner, "inspection.nullable.problems.at.local.variable");
         }
       }
 
