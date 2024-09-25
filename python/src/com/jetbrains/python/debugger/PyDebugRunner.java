@@ -110,9 +110,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
   private static final @NonNls String PYTHON3_PYCACHE_PREFIX_OPTION = "pycache_prefix=";
 
-  @ApiStatus.Internal
-  public static final int DEFAULT_DEBUGGER_PORT = 29781;
-
   private static final Logger LOG = Logger.getInstance(PyDebugRunner.class);
 
   @Override
@@ -163,7 +160,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     RunProfile profile = environment.getRunProfile();
 
     if (Registry.is("python.debug.use.single.port")) {
-      int port = Registry.intValue("python.debugger.port", DEFAULT_DEBUGGER_PORT);
+      int port = Registry.intValue("python.debugger.port");
       TargetEnvironment.TargetPortBinding targetPortBinding =
         new TargetEnvironment.TargetPortBinding(port, port);
       return Promises

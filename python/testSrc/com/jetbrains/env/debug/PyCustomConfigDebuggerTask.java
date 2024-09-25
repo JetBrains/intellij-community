@@ -88,7 +88,7 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
     myTerminateSemaphore = new Semaphore(0);
 
     WriteAction.runAndWait(() -> {
-      var port = Registry.intValue("python.debugger.port", PyDebugRunner.DEFAULT_DEBUGGER_PORT);
+      var port = Registry.intValue("python.debugger.port");
 
       TargetEnvironment.TargetPortBinding targetPortBinding =
         new TargetEnvironment.TargetPortBinding(port, port);
