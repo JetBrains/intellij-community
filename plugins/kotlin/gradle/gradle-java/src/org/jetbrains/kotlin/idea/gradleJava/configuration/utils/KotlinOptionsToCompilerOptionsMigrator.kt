@@ -3,14 +3,16 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.utils
 
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion
+import org.jetbrains.kotlin.idea.gradleTooling.compareTo
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.util.function.Function
 
 data class CompilerOption(val expression: String, val classToImport: FqName? = null, val compilerOptionValue: String? = null)
@@ -73,9 +75,8 @@ fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinaryExpressio
 }
 
 fun kotlinVersionIsEqualOrHigher(major: Int, minor: Int, patch: Int, file: PsiFile): Boolean {
-    val jpsVersion = KotlinJpsPluginSettings.jpsVersion(file.project)
-    val parsedKotlinVersion = IdeKotlinVersion.opt(jpsVersion)?.kotlinVersion ?: return false
-    return parsedKotlinVersion >= KotlinVersion(major, minor, patch)
+    val version = file.module?.kotlinGradlePluginVersion ?: return false
+    return version >= KotlinToolingVersion(major, minor, patch, classifier = null)
 }
 
 private fun getOperationReplacer(operationReference: String, optionValue: String): String? {
