@@ -37,5 +37,5 @@ RUN . "$HOME/.cargo/env"; cargo fetch --target x86_64-unknown-linux-gnu
 RUN . "$HOME/.cargo/env"; \
     cargo install cargo-prefetch; \
     cargo prefetch; \
-    cargo prefetch autocfg@=1.1.0 chrono@=0.4.38 libc@=0.2.153 num-traits@=0.2.16 winresource@=0.1.17 windows@0.58.0
+    cargo prefetch autocfg@=1.1.0 chrono@=0.4.38 num-traits@=0.2.16 winresource@=0.1.17 windows@=0.58.0 libc@=0.2.155
 
