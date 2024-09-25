@@ -15,7 +15,7 @@
 
     <projectService
             serviceInterface="org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService"
-            serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.KotlinIDEModificationTrackerService"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.IDEKotlinModificationTrackerService"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.LibraryDependenciesCacheImpl"/>
@@ -33,10 +33,7 @@
             serviceInterface="org.jetbrains.kotlin.idea.caches.project.IdeaModelInfosCache"
             serviceImplementation="org.jetbrains.kotlin.idea.caches.project.FineGrainedIdeaModelInfosCache"/>
 
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinModificationTrackerProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.KotlinModificationTrackerProviderImpl"/>
-    <projectService
+      <projectService
             serviceInterface="org.jetbrains.kotlin.analyzer.LanguageSettingsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.IDELanguageSettingsProvider"/>
 
@@ -59,9 +56,5 @@
             defaultValue="5000"
             restartRequired="true"
     />
-
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.idea.caches.trackers.ModuleDependencyProviderExtension"
-            serviceImplementation="org.jetbrains.kotlin.idea.caches.project.ResolutionAnchorModuleDependencyProviderExtension"/>
   </extensions>
 </idea-plugin>

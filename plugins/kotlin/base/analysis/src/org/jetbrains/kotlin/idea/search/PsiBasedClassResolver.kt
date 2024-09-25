@@ -11,12 +11,12 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.imports.getDefaultImports
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.*
 import org.jetbrains.kotlin.idea.base.util.allScope
-import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -68,7 +68,7 @@ class PsiBasedClassResolver @TestOnly constructor(private val targetClassFqName:
                 {
                     CachedValueProvider.Result(
                         PsiBasedClassResolver(target),
-                        KotlinCodeBlockModificationListener.getInstance(target.project).kotlinOutOfCodeBlockTracker
+                        KotlinModificationTrackerFactory.getInstance(target.project).createProjectWideOutOfBlockModificationTracker(),
                     )
                 }, false
             )

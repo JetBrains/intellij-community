@@ -32,11 +32,16 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
+import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.util.caching.*
-import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
+import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
+import org.jetbrains.kotlin.idea.base.util.caching.newEntity
+import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import java.util.concurrent.ConcurrentHashMap
@@ -322,7 +327,7 @@ class FineGrainedIdeaModelInfosCache(private val project: Project) : IdeaModelIn
 
     private fun incModificationCount() {
         modificationTracker.incModificationCount()
-        KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
+        ProjectStructureProviderService.getInstance(project).incOutOfBlockModificationCount()
     }
 
     override fun forPlatform(platform: TargetPlatform): List<IdeaModuleInfo> =

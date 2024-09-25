@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.trackers
 
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.Processors
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
 import org.jetbrains.kotlin.psi.KtFile
@@ -82,7 +83,8 @@ class KotlinModuleOutOfCodeBlockModificationTracker(private val module: Module) 
         // perModuleModCount map
         private var perModuleChangesHighWatermark: Long? = null
 
-        internal fun getModificationCount(module: Module): Long {
+        @ApiStatus.Internal
+        fun getModificationCount(module: Module): Long {
             return perModuleModCount[module] ?: perModuleChangesHighWatermark ?: kotlinOfOfCodeBlockTracker.modificationCount
         }
 

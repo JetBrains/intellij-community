@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KotlinModificationTracker
 import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 
 internal class K1IdeProjectStructureProviderService(private val project: Project) : ProjectStructureProviderService {
     override fun createLibraryModificationTracker(libraryInfo: LibraryInfo): ModificationTracker {
@@ -17,6 +18,10 @@ internal class K1IdeProjectStructureProviderService(private val project: Project
         } else {
             ResolutionAnchorAwareLibraryModificationTracker(libraryInfo)
         }
+    }
+
+    override fun incOutOfBlockModificationCount() {
+        KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
     }
 }
 

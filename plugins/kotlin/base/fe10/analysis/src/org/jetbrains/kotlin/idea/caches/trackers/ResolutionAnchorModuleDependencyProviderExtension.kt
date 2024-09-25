@@ -1,18 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.caches.project
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.caches.trackers
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
-import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.caches.trackers.ModuleDependencyProviderExtension
-import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
+import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
 
 class ResolutionAnchorModuleDependencyProviderExtension(private val project: Project) : ModuleDependencyProviderExtension {
     /**
@@ -31,11 +28,11 @@ class ResolutionAnchorModuleDependencyProviderExtension(private val project: Pro
         if (!project.useLibraryToSourceAnalysis) return
 
         val resolutionAnchorDependencies = HashSet<ModuleSourceInfo>()
-        val libraryInfoCache = LibraryInfoCache.getInstance(project)
+        val libraryInfoCache = LibraryInfoCache.Companion.getInstance(project)
         val anchorCacheService = ResolutionAnchorCacheService.getInstance(project)
         ModuleRootManager.getInstance(module).orderEntries().recursively().forEachLibrary { library ->
             libraryInfoCache[library].flatMapTo(resolutionAnchorDependencies) { libraryInfo ->
-                checkCanceled()
+                ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
                 anchorCacheService.getDependencyResolutionAnchors(libraryInfo)
             }
 

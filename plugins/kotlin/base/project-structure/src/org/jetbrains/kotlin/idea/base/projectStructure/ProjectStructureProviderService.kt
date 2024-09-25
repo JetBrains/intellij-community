@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 interface ProjectStructureProviderService {
     fun createLibraryModificationTracker(libraryInfo: LibraryInfo): ModificationTracker
 
+    fun incOutOfBlockModificationCount()
+
     companion object {
         fun getInstance(project: Project): ProjectStructureProviderService = project.service()
     }

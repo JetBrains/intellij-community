@@ -20,7 +20,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
@@ -406,7 +405,14 @@ class GradleBuildRootsManager(val project: Project, private val coroutineScope: 
                     }
 
                     if (KotlinPluginModeProvider.isK1Mode() && restartAnalyzer) {
-                        KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
+                        val kotlinCodeBlockModificationListenerClass = Class.forName("org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener")
+                        kotlinCodeBlockModificationListenerClass
+                            .getMethod("incModificationCount")
+                            .invoke(
+                                @Suppress("IncorrectServiceRetrieving")
+                                project.getService(kotlinCodeBlockModificationListenerClass),
+                            )
+
                         // this required only for "pause" state
                         PsiManager.getInstance(project).findFile(it)?.let { ktFile ->
                             DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
