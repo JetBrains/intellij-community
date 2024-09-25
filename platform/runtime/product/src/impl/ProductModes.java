@@ -21,11 +21,10 @@ final class ProductModes {
     switch (mode) {
       case FRONTEND: return RuntimeModuleId.module("intellij.platform.monolith");
       
-      //this module doesn't exist yet, it will be added when we need to use it
-      case MONOLITH: return RuntimeModuleId.module("intellij.platform.frontend");
+      case MONOLITH: return RuntimeModuleId.module("intellij.platform.frontend.split");
 
       //currently we use the same modules in 'backend' and 'localIde' modes, in the future we may disable some UI-only modules in 'backend' mode
-      case BACKEND: return RuntimeModuleId.module("intellij.platform.frontend");
+      case BACKEND: return RuntimeModuleId.module("intellij.platform.frontend.split");
     }
     throw new AssertionError(mode);
   }
