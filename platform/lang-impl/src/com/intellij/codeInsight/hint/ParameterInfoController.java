@@ -41,6 +41,8 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -585,6 +587,24 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     @Override
     public String toString() {
       return getComponentCount() == 0 ? "<empty>" : getComponent(0).toString();
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleJPanel() {
+          @Override
+          public Accessible getAccessibleParent() {
+            Container parent = getParent();
+            if (parent instanceof Accessible accessible) {
+              return accessible;
+            }
+            return super.getAccessibleParent();
+          }
+        };
+      }
+
+      return accessibleContext;
     }
   }
 }

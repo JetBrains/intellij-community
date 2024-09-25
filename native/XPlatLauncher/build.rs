@@ -98,7 +98,7 @@ pub fn download_cef(version: &str, platform: &str, working_dir: &Path) -> Result
 
 #[cfg(target_os = "windows")]
 fn download_to_file(client: &Client, src: &str, dest: &Path) -> Result<()> {
-        fs_remove(dest)?;
+    fs_remove(dest)?;
 
     trace!("Downloading {src} to {dest:?}");
     let mut response = client.get(src).send()?.error_for_status()?;
@@ -251,7 +251,7 @@ fn link_cef_sandbox(cef_dir: &Path) -> Result<()> {
         "wbemuuid",
         "winmm",
         "ws2_32",
-        "WindowsApp",
+        //"WindowsApp" - do not add, it is not needed for Win32 apps and brings in ugly umbrella libs
     ];
 
     // Link each of the standard libraries

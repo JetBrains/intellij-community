@@ -3346,27 +3346,4 @@ public final class UIUtil {
     GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
     return gd.isFullScreenSupported();
   }
-
-  private static boolean DISABLE_LAYOUT_IN_TEXT_COMPONENTS = false;
-
-  @ApiStatus.Internal
-  public static void disableLayoutInTextComponents() {
-    DISABLE_LAYOUT_IN_TEXT_COMPONENTS = true;
-  }
-
-  /**
-   * Disables performing text layout for 'complex' text in the document, if configured globally.
-   * Should be called before the document is used for anything, i.e., right after construction.
-   */
-  @ApiStatus.Internal
-  public static void disableTextLayoutIfNeeded(@NotNull Document document) {
-    if (DISABLE_LAYOUT_IN_TEXT_COMPONENTS && document instanceof AbstractDocument ad) {
-      ad.setDocumentProperties(new Hashtable<>(2) {
-        @Override
-        public synchronized Object get(Object key) {
-          return "i18n".equals(key) ? Boolean.FALSE : super.get(key);
-        }
-      });
-    }
-  }
 }

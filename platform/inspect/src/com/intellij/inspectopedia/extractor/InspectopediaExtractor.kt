@@ -77,7 +77,7 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
         val wrapper = scopeToolState.tool
         val extension = wrapper.extension
         val pluginId = extension?.pluginDescriptor?.pluginId?.idString ?: ideName
-        val description = wrapper.loadDescription()?.splitToSequence("<!-- tooltip end -->")?.map { it.trim() }?.filter { it.isEmpty() }?.toList()
+        val description = wrapper.loadDescription()?.split("<!-- tooltip end -->")?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList()
                           ?: emptyList()
 
         var panelInfo: List<OptionsPanelInfo>? = null

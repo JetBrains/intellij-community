@@ -1884,7 +1884,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
                                                       @NotNull Context context) {
     PyClass pyClass = classType.getPyClass();
     if (isGeneric(pyClass, context.getTypeContext())) {
-      PyCollectionType genericDefinitionType = PyTypeChecker.findGenericDefinitionType(pyClass, context.getTypeContext());
+      PyCollectionType genericDefinitionType =
+        doPreventingRecursion(pyClass, false, () -> PyTypeChecker.findGenericDefinitionType(pyClass, context.getTypeContext()));
       if (genericDefinitionType != null && ContainerUtil.exists(genericDefinitionType.getElementTypes(),
                                                                 t -> t instanceof PyTypeParameterType typeParameterType &&
                                                                      typeParameterType.getDefaultType() != null)) {

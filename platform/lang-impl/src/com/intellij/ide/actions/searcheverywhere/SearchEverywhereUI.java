@@ -497,7 +497,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       return ContainerUtil.getOnlyItem(getSelectedInfos());
     }
     if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-      SearchEverywhereFoundElementInfo info = ContainerUtil.getOnlyItem(getSelectedInfos());
+      List<SearchEverywhereFoundElementInfo> selection = getSelectedInfos();
+      SearchEverywhereFoundElementInfo info = ContainerUtil.getOnlyItem(selection);
       return info == null ? null : info.getElement();
     }
     if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {

@@ -9,13 +9,13 @@ import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
 import com.intellij.json.psi.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +25,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.json.JsonTokenSets.STRING_LITERALS;
 
@@ -32,7 +33,14 @@ public final class JsonPsiImplUtils {
   static final Key<List<Pair<TextRange, String>>> STRING_FRAGMENTS = new Key<>("JSON string fragments");
 
   public static @NotNull String getName(@NotNull JsonProperty property) {
-    String text = InjectedLanguageManager.getInstance(property.getProject()).getUnescapedText(property.getNameElement());
+    PsiElement name = property.getNameElement();
+    // Below is a highly optimized version of:
+    // String text = InjectedLanguageManager.getInstance(property.getProject()).getUnescapedText(property.getNameElement());
+    // to avoid calls to PsiElement.getProject() and to avoid walking visitor
+    String text = InjectedLanguageUtilBase.getUnescapedLeafText(name,false);
+    if (text == null) {
+      text = Objects.requireNonNull(InjectedLanguageUtilBase.getUnescapedLeafText(name.getFirstChild(), false));
+    }
     return JsonTextLiteralService.getInstance().unquoteAndUnescape(text);
   }
 

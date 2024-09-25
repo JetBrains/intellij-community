@@ -39,6 +39,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import static com.jetbrains.python.sdk.PythonSdkUtilKtKt.tryResolvePath;
 import static com.jetbrains.python.sdk.flavors.PySdkFlavorUtilKt.getFileExecutionError;
 
 
@@ -283,14 +284,14 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   @Nullable
   public static PythonSdkFlavor<?> getFlavor(@Nullable String sdkPath) {
     if (sdkPath == null || PythonSdkUtil.isCustomPythonSdkHomePath(sdkPath)) return null;
-    return tryDetectFlavorByLocalPath(Path.of(sdkPath));
+    return tryDetectFlavorByLocalPath(sdkPath);
   }
 
   /**
    * Detects {@link PythonSdkFlavor} for local python path
    */
   @RequiresBackgroundThread(generateAssertion = false) //No warning yet as there are usages: to be fixed
-  public static @Nullable PythonSdkFlavor<?> tryDetectFlavorByLocalPath(@NotNull Path sdkPath) {
+  public static @Nullable PythonSdkFlavor<?> tryDetectFlavorByLocalPath(@NotNull String sdkPath) {
     // Iterate over all flavors starting with platform-independent (like venv): see `getApplicableFlavors` doc.
     // Order is important as venv must have priority over unix/windows
     for (PythonSdkFlavor<?> flavor : getApplicableFlavors(true)) {
@@ -311,15 +312,14 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
       return null;
     }
 
-    Path path = Path.of(sdkPath);
     for (PythonSdkFlavor<?> flavor : getPlatformIndependentFlavors()) {
-      if (flavor.isValidSdkPath(path)) {
+      if (flavor.isValidSdkPath(sdkPath)) {
         return flavor;
       }
     }
 
     for (PythonSdkFlavor<?> flavor : getPlatformFlavorsFromExtensions(true)) {
-      if (flavor.isValidSdkPath(path)) {
+      if (flavor.isValidSdkPath(sdkPath)) {
         return flavor;
       }
     }
@@ -329,7 +329,12 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * It only validates path for local target, hence use {@link #sdkSeemsValid(Sdk, PyFlavorData, TargetEnvironmentConfiguration)} instead
    */
-  public boolean isValidSdkPath(@NotNull Path path) {
+  public boolean isValidSdkPath(@NotNull String pathStr) {
+    Path path = tryResolvePath(pathStr);
+    if (path == null) {
+      return false;
+    }
+
     return Files.exists(path) && Files.isExecutable(path);
   }
 

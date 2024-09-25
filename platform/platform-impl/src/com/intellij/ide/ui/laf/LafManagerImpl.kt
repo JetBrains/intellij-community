@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorSchemesSorter
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -701,18 +702,27 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private fun patchLafFonts(uiDefaults: UIDefaults) {
     val uiSettings = UISettings.getInstance()
     val currentScale = uiSettings.currentIdeScale
-    if (uiSettings.overrideLafFonts || currentScale != 1f) {
+    val overrideLafFonts = uiSettings.overrideLafFonts
+    val useInterFont = useInterFont()
+    LOG.debug { "patchLafFonts: scale=$currentScale, overrideLafFonts=$overrideLafFonts, useInterFont=$useInterFont" }
+    if (overrideLafFonts || currentScale != 1f) {
       storeOriginalFontDefaults(uiDefaults)
-      val fontFace = if (uiSettings.overrideLafFonts) uiSettings.fontFace else defaultFont.family
-      val fontSize = (if (uiSettings.overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D) * currentScale
+      val fontFace = if (overrideLafFonts) uiSettings.fontFace else defaultFont.family
+      val fontSize = (if (overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D) * currentScale
+      LOG.debug { "patchLafFonts: using font '$fontFace' with size $fontSize" }
       initFontDefaults(uiDefaults, getFontWithFallback(fontFace, Font.PLAIN, fontSize))
-      val userScaleFactor = if (useInterFont()) fontSize / INTER_SIZE else getFontScale(fontSize)
+      val userScaleFactor = if (useInterFont) fontSize / INTER_SIZE else getFontScale(fontSize)
+      LOG.debug { "patchLafFonts: computed user scale factor $userScaleFactor from font size $fontSize" }
       setUserScaleFactor(userScaleFactor)
     }
-    else if (useInterFont()) {
+    else if (useInterFont) {
       storeOriginalFontDefaults(uiDefaults)
-      initFontDefaults(uiDefaults, defaultInterFont)
-      setUserScaleFactor(defaultUserScaleFactor)
+      val interFont = defaultInterFont
+      LOG.debug { "patchLafFonts: using Inter font with size ${interFont.size2D}" }
+      initFontDefaults(uiDefaults, interFont)
+      val userScaleFactor = defaultUserScaleFactor
+      LOG.debug { "patchLafFonts: setting the default scale factor $userScaleFactor" }
+      setUserScaleFactor(userScaleFactor)
     }
     else {
       restoreOriginalFontDefaults(uiDefaults)
@@ -741,7 +751,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         defaults.put(resource, lafDefaults.get(resource))
       }
     }
-    setUserScaleFactor(getFontScale(fontSize = JBFont.label().size.toFloat()))
+    val fontScale = getFontScale(fontSize = JBFont.label().size.toFloat())
+    LOG.debug { "restoreOriginalFontDefaults: setting the user scale factor to $fontScale" }
+    setUserScaleFactor(fontScale)
   }
 
   private fun storeOriginalFontDefaults(defaults: UIDefaults) {

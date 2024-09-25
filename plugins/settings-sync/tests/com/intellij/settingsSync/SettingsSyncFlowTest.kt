@@ -428,7 +428,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     git.add().addFilepattern(".gitignore").call()
     git.commit().setMessage("init").setNoVerify(true).setSign(false).call()
 
-    (dotGit / "index").write("aaaaaaa")
+    val errorMessage = "Failed to collect initial snapshot"
+    ideMediator.throwOnGetInitial(RuntimeException(errorMessage))
+
     LoggedErrorProcessor.executeAndReturnLoggedError {
       initSettingsSync()
     }
