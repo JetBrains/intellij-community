@@ -132,6 +132,10 @@ object ChooserPopupUtil {
     val popupBuilder = PopupChooserBuilder(list)
       .setFilteringEnabled { filteringMapper(it as T) }
       .configure(popupConfig)
+
+    popupBuilder.setCancelOnOtherWindowOpen(false)
+    popupBuilder.setCancelOnWindowDeactivation(false)
+
     val popup = popupBuilder.createPopup()
 
     configure(popup, list, listModel, popupBuilder.scrollPane)
