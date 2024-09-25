@@ -322,7 +322,7 @@ public final class XFramesView extends XDebugView {
     }
   }
 
-  public JComponent getDefaultFocusedComponent() {
+  public XDebuggerFramesList getFramesList() {
     return myFramesList;
   }
 
@@ -772,6 +772,10 @@ public final class XFramesView extends XDebugView {
     @Override
     public @Nullable Color getBackgroundColor() {
       return null;
+    }
+
+    public List<XStackFrame> getHiddenFrames() {
+      return hiddenFrames;
     }
 
     private Optional<ItemWithSeparatorAbove> findFrameWithSeparator() {

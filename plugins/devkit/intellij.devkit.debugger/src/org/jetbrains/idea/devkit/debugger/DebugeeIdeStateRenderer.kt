@@ -1,20 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.debugger
 
+import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.JavaStackFrame
+import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContext
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.jdi.StackFrameProxy
+import com.intellij.debugger.memory.utils.StackFrameItem
 import com.intellij.debugger.ui.tree.ExtraDebugNodesProvider
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
+import com.intellij.xdebugger.impl.frame.XFramesView
 import com.sun.jdi.BooleanValue
 import com.sun.jdi.ClassType
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
-import javax.swing.Icon
 
 /**
  * @see com.intellij.ide.debug.ApplicationStateDebugSupport
@@ -60,18 +66,25 @@ internal class DebugeeIdeStateRenderer : ExtraDebugNodesProvider {
       }
 
       override fun computeChildren(node: XCompositeNode) {
-        addChild(node, "debugger.read.allowed", isReadActionAllowed?.toString(), AllIcons.Actions.ShowReadAccess, isWriteActionAllowed == null)
-        addChild(node, "debugger.write.allowed", isWriteActionAllowed?.toString(), AllIcons.Actions.ShowWriteAccess, true)
+        addChild(node, isReadActionAllowed, isRead = true, addLink = isWriteActionAllowed != true)
+        addChild(node, isWriteActionAllowed, isRead = false, addLink = true)
+        node.addChildren(XValueChildrenList.EMPTY, true)
       }
 
-      private fun addChild(node: XCompositeNode, nameKey: String, value: String?, icon: Icon, isLast: Boolean) {
+      private fun addChild(node: XCompositeNode, value: Boolean?, isRead: Boolean, addLink: Boolean) {
         if (value == null) return
+        val nameKey = if (isRead) "debugger.read.allowed" else "debugger.write.allowed"
+        val icon = if (isRead) AllIcons.Actions.ShowReadAccess else AllIcons.Actions.ShowWriteAccess
+
         node.addChildren(XValueChildrenList.singleton(DevKitDebuggerBundle.message(nameKey), object : XValue() {
           override fun canNavigateToSource(): Boolean = false
           override fun computePresentation(node: XValueNode, place: XValuePlace) {
-            node.setPresentation(icon, null, value, false)
+            node.setPresentation(icon, null, value.toString(), false)
+            if (value == true && addLink) {
+              addLinkToLockAccess(isRead, node, evaluationContext)
+            }
           }
-        }), isLast)
+        }), false)
       }
 
     })
@@ -148,3 +161,96 @@ private fun findLockAccessIndex(frames: List<StackFrameProxy>): Pair<Int, Int> {
   }
   return readIndex to writeIndex
 }
+
+private fun isLockAccessMethod(frame: StackFrameProxy, isRead: Boolean): Boolean {
+  val location = frame.location()
+  val className = location.declaringType().name()
+  val methodName = location.method().name()
+  return if (isRead) {
+    isReadAccessCall(className, methodName)
+  }
+  else {
+    isWriteAccessCall(className, methodName)
+  }
+}
+
+private fun isReadAccessCall(className: String, methodName: String): Boolean =
+  className == "com.intellij.openapi.application.impl.NonBlockingReadActionImpl" && methodName == "executeSynchronously"
+  || ((className == "com.intellij.openapi.application.Application" || className == "com.intellij.openapi.application.impl.ApplicationImpl")
+      && (methodName == "runReadAction" || methodName == "runWriteIntentReadAction" || methodName == "tryRunReadAction"))
+  || className == "com.intellij.openapi.application.ActionsKt" && methodName == "runReadAction"
+  || (className == "com.intellij.openapi.application.ReadAction"
+      && (methodName == "run" || methodName == "execute" || methodName == "compute" || methodName == "computeCancellable"))
+  || (className == "com.intellij.openapi.application.WriteIntentReadAction"
+      && (methodName == "run" || methodName == "compute"))
+  || (className == "com.intellij.openapi.application.CoroutinesKt"
+      && (methodName == "readAction" || methodName == "smartReadAction" || methodName == "constrainedReadAction"
+          || methodName == "readActionUndispatched" || methodName == "constrainedReadActionUndispatched"
+          || methodName == "readActionBlocking" || methodName == "smartReadActionBlocking"
+          || methodName == "constrainedReadActionBlocking" || methodName == "writeIntentReadAction"))
+
+private fun isWriteAccessCall(className: String, methodName: String): Boolean =
+  ((className == "com.intellij.openapi.application.Application" || className == "com.intellij.openapi.application.impl.ApplicationImpl")
+   && (methodName == "runWriteAction" || methodName == "runWriteActionWithNonCancellableProgressInDispatchThread"
+       || methodName == "runIntendedWriteActionOnCurrentThread"))
+  || className == "com.intellij.openapi.application.ActionsKt" && methodName == "runWriteAction"
+  || (className == "com.intellij.openapi.application.WriteAction"
+      && (methodName == "run" || methodName == "execute" || methodName == "compute" || methodName == "runAndWait" || methodName == "computeAndWait"))
+  || (className == "com.intellij.openapi.application.CoroutinesKt"
+      && (methodName == "writeAction" || methodName == "readAndWriteAction" || methodName == "constrainedReadAndWriteAction"))
+
+
+private fun addLinkToLockAccess(
+  isRead: Boolean,
+  node: XValueNode,
+  evaluationContext: EvaluationContext,
+) {
+  node.setFullValueEvaluator(object : JavaValue.JavaFullValueEvaluator(DevKitDebuggerBundle.message("debugger.navigate.to.lock.access"), evaluationContext as EvaluationContextImpl) {
+    override fun isShowValuePopup() = false
+    override fun evaluate(callback: XFullValueEvaluationCallback) {
+      navigateToStackFrame()
+      callback.evaluated("")
+    }
+
+    private fun navigateToStackFrame() {
+      val debugProcess = evaluationContext.debugProcess as? DebugProcessImpl ?: return
+      val xDebugSession = debugProcess.session.xDebugSession as? XDebugSessionImpl ?: return
+      val framesView = xDebugSession.sessionTab?.framesView ?: return
+      val framesList = framesView.framesList
+      val xFrames = framesList.model.items.filterIsInstance<XStackFrame>()
+
+      val asyncFrameIndex = xFrames.indexOfFirst { it is StackFrameItem.CapturedStackFrame }
+      val syncXFrames = xFrames.flattenJavaFrames(toIndex = indexOrEndOfList(asyncFrameIndex, xFrames))
+      selectLockFrame(syncXFrames, isRead, framesList)
+    }
+  })
+}
+
+private fun selectLockFrame(
+  javaFrames: List<JavaStackFrame>,
+  isRead: Boolean,
+  framesList: XDebuggerFramesList,
+): Boolean {
+  val (targetXFrameIndex, _) = javaFrames.withIndex().reversed()
+    .firstOrNull { (_, frame) -> isLockAccessMethod(frame.stackFrameProxy, isRead) } ?: return false
+  if (targetXFrameIndex < 0) return false
+  var targetXFrame: XStackFrame = javaFrames.getOrNull(targetXFrameIndex + 1) ?: return false
+  if (!framesList.model.contains(targetXFrame)) {
+    val collapsedFrames = framesList.model.items.filterIsInstance<XFramesView.HiddenStackFramesItem>()
+    targetXFrame = collapsedFrames.firstOrNull { it.hiddenFrames.contains(targetXFrame)  } ?: return false
+    if (!framesList.model.contains(targetXFrame)) return false
+  }
+  framesList.selectFrame(targetXFrame)
+  return true
+}
+
+private fun indexOrEndOfList(index: Int, list: List<*>): Int = if (index < 0) list.size else index
+
+private fun List<XStackFrame>.flattenJavaFrames(toIndex: Int = size) =
+  subList(0, toIndex).flatMap { frame ->
+    when (frame) {
+      is JavaStackFrame -> listOf(frame)
+      is XFramesView.HiddenStackFramesItem -> frame.hiddenFrames.filterIsInstance<JavaStackFrame>()
+      else -> emptyList()
+    }
+  }
