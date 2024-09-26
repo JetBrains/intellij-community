@@ -214,10 +214,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
               .withTitle(CredentialStoreBundle.message("passwordSafeConfigurable.keepass.database.file"))
               .withExtensionFilter("kdbx")
             keePassDbFile = textFieldWithBrowseButton(fileChooserDescriptor, fileChosen = {
-              val path = when {
-                it.isDirectory -> "${it.path}${File.separator}$DB_FILE_NAME"
-                else -> it.path
-              }
+              val path = if (it.isDirectory) "${it.path}${File.separator}${DB_FILE_NAME}" else it.path
               return@textFieldWithBrowseButton File(path).path
             })
               .resizableColumn()

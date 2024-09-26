@@ -139,7 +139,7 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, Li
       ConfigImportHelper.setSettingsFilter(this)
     }
     chooseSettingsFile(descriptor, pathPanel.text, window) { file ->
-      val path = if (file.isDirectory) "${file.path}/$DEFAULT_FILE_NAME" else file.path
+      val path = if (file.isDirectory) "${file.path}/${DEFAULT_FILE_NAME}" else file.path
       pathPanel.text = FileUtil.toSystemDependentName(path)
     }
   }

@@ -164,13 +164,13 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
         loadCustomIcon(path)
         null
       }
-      catch (ex: FileNotFoundException) {
+      catch (_: FileNotFoundException) {
         ValidationInfo(IdeBundle.message("icon.validation.message.not.found"), this)
       }
-      catch (ex: NoSuchFileException) {
+      catch (_: NoSuchFileException) {
         ValidationInfo(IdeBundle.message("icon.validation.message.not.found"), this)
       }
-      catch (t: Throwable) {
+      catch (_: Throwable) {
         ValidationInfo(IdeBundle.message("icon.validation.message.format"), this)
       }
     }).installOn(this)

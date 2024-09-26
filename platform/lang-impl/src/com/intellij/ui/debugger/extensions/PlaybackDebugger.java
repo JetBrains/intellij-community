@@ -160,10 +160,9 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   private final class SaveAction extends AnAction {
-  SaveAction() {
-    super(IdeBundle.messagePointer("action.AnAction.text.save"),
-          IdeBundle.messagePointer("action.AnAction.description.save"), AllIcons.Actions.MenuSaveall);
-  }
+    SaveAction() {
+      super(IdeBundle.messagePointer("action.AnAction.text.save"), IdeBundle.messagePointer("action.AnAction.description.save"), AllIcons.Actions.MenuSaveall);
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -195,11 +194,10 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   private final class SetScriptFileAction extends AnAction {
-  SetScriptFileAction() {
-    //noinspection DialogTitleCapitalization
-    super(IdeBundle.messagePointer("action.AnAction.text.set.script.file"),
-          IdeBundle.messagePointer("action.AnAction.description.set.script.file"), AllIcons.Actions.MenuOpen);
-  }
+    @SuppressWarnings("DialogTitleCapitalization")
+    SetScriptFileAction() {
+      super(IdeBundle.messagePointer("action.AnAction.text.set.script.file"), IdeBundle.messagePointer("action.AnAction.description.set.script.file"), AllIcons.Actions.MenuOpen);
+    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -212,12 +210,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
   }
 
-  @SuppressWarnings("DialogTitleCapitalization")
   private final class NewScriptAction extends AnAction {
-  NewScriptAction() {
-    super(IdeBundle.messagePointer("action.AnAction.text.new.script"),
-          IdeBundle.messagePointer("action.AnAction.description.new.script"), AllIcons.Actions.New);
-  }
+    @SuppressWarnings("DialogTitleCapitalization")
+    NewScriptAction() {
+      super(IdeBundle.messagePointer("action.AnAction.text.new.script"), IdeBundle.messagePointer("action.AnAction.description.new.script"), AllIcons.Actions.New);
+    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -259,10 +256,9 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   private final class StopAction extends AnAction {
-  StopAction() {
-    super(IdeBundle.messagePointer("action.AnAction.text.stop"),
-          IdeBundle.messagePointer("action.AnAction.description.stop"), AllIcons.Actions.Suspend);
-  }
+    StopAction() {
+      super(IdeBundle.messagePointer("action.AnAction.text.stop"), IdeBundle.messagePointer("action.AnAction.description.stop"), AllIcons.Actions.Suspend);
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -284,10 +280,9 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   private final class ActivateFrameAndRun extends AnAction {
-  ActivateFrameAndRun() {
-    super(IdeBundle.messagePointer("action.AnAction.text.activate.frame.and.run"),
-          IdeBundle.messagePointer("action.AnAction.description.activate.frame.and.run"), AllIcons.Nodes.Deploy);
-  }
+    ActivateFrameAndRun() {
+      super(IdeBundle.messagePointer("action.AnAction.text.activate.frame.and.run"), IdeBundle.messagePointer("action.AnAction.description.activate.frame.and.run"), AllIcons.Nodes.Deploy);
+    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -306,10 +301,9 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   private final class RunOnFameActivationAction extends AnAction {
-  RunOnFameActivationAction() {
-    super(IdeBundle.messagePointer("action.AnAction.text.run.on.frame.activation"),
-          IdeBundle.messagePointer("action.AnAction.description.run.on.frame.activation"), AllIcons.RunConfigurations.TestState.Run);
-  }
+    RunOnFameActivationAction() {
+      super(IdeBundle.messagePointer("action.AnAction.text.run.on.frame.activation"), IdeBundle.messagePointer("action.AnAction.description.run.on.frame.activation"), AllIcons.RunConfigurations.TestState.Run);
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {

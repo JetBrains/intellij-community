@@ -48,11 +48,10 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
     val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
 
     val descriptor = object : FileChooserDescriptor(true, true, true, true, false, false) {
-      override fun isFileSelectable(file: VirtualFile?): Boolean {
-        if (file?.isDirectory == true) {
-          return file.fileSystem.getNioPath(file)?.let { path -> ConfigImportHelper.isConfigDirectory(path) } == true
-        }
-        return super.isFileSelectable(file)
+      override fun isFileSelectable(file: VirtualFile?): Boolean = when {
+        file == null -> false
+        file.isDirectory -> file.fileSystem.getNioPath(file)?.let { path -> ConfigImportHelper.isConfigDirectory(path) } == true
+        else -> super.isFileSelectable(file)
       }
     }.apply {
       title = ConfigurationStoreBundle.message("title.import.file.location")

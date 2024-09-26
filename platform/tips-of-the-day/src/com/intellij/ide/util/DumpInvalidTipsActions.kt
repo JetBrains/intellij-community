@@ -12,10 +12,12 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import java.awt.datatransfer.StringSelection
 
-@Suppress("HardCodedStringLiteral") // it is the internal action, so localization is not required
+@Suppress("HardCodedStringLiteral") // it is an internal action, so localization is not required
 internal open class DumpInvalidTipsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     runBackgroundableTask("Analyzing tips", e.getData(CommonDataKeys.PROJECT)) {
@@ -62,16 +64,14 @@ internal open class DumpInvalidTipsAction : AnAction() {
     CopyPasteManager.getInstance().setContents(StringSelection(issues))
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   companion object {
     private val LOG = Logger.getInstance(DumpInvalidTipsAction::class.java)
   }
 }
 
-@Suppress("HardCodedStringLiteral") // it is the internal action, so localization is not required
+@Suppress("HardCodedStringLiteral") // it is an internal action, so localization is not required
 internal class SelectAndDumpInvalidTipsAction : DumpInvalidTipsAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
@@ -89,11 +89,13 @@ internal class SelectAndDumpInvalidTipsAction : DumpInvalidTipsAction() {
   }
 
   private fun collectTipFilesRecursively(file: VirtualFile, list: MutableList<VirtualFile>) {
-    if (file.isDirectory) {
-      file.children.forEach { collectTipFilesRecursively(it, list) }
-    }
-    else if (file.extension == "html" || file.extension == "htm") {
-      list.add(file)
-    }
+    VfsUtilCore. visitChildrenRecursively(file, object : VirtualFileVisitor<Any>() {
+      override fun visitFile(file: VirtualFile): Boolean {
+        if (file.extension == "html" || file.extension == "htm") {
+          list.add(file)
+        }
+        return true
+      }
+    })
   }
 }

@@ -36,7 +36,6 @@ final class ImportOldConfigsPanel extends JDialog {
   private JRadioButton myRbImportAuto;
   private JRadioButton myRbImport;
   private TextFieldWithBrowseButton myPrevInstallation;
-  private JRadioButton myCustomButton;
   private JRadioButton myRbDoNotImport;
   private JButton myOkButton;
   private ComboBox<Path> myComboBoxOldPaths;

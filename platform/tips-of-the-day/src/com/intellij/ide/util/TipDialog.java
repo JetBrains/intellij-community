@@ -111,14 +111,14 @@ final class TipDialog extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    if (myShowActions) {
-      if (Registry.is("ide.show.open.button.in.tip.dialog")) {
-        return new Action[]{new OpenTipsAction(), myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
-      }
-      return new Action[]{myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
+    if (!myShowActions) {
+      return new Action[]{getCancelAction()};
+    }
+    else if (Registry.is("ide.show.open.button.in.tip.dialog")) {
+      return new Action[]{new OpenTipsAction(), myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
     }
     else {
-      return new Action[]{getCancelAction()};
+      return new Action[]{myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
     }
   }
 

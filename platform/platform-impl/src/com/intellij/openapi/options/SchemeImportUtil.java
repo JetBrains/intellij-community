@@ -34,33 +34,24 @@ public final class SchemeImportUtil {
     if (description != null) {
       descriptor.setDescription(description);
     }
-    FileChooserDialog fileChooser = FileChooserFactory.getInstance()
-      .createFileChooser(descriptor, null, parent);
-    final VirtualFile[] preselectFiles;
-    if (preselect != null) {
-      preselectFiles = new VirtualFile[1];
-      preselectFiles[0] = preselect;
-    }
-    else {
-      preselectFiles = VirtualFile.EMPTY_ARRAY;
-    }
-    final VirtualFile[] virtualFiles = fileChooser.choose(null, preselectFiles);
+    var fileChooser = FileChooserFactory.getInstance().createFileChooser(descriptor, null, parent);
+    var preselectFiles = preselect != null ? new VirtualFile[]{preselect} : VirtualFile.EMPTY_ARRAY;
+    var virtualFiles = fileChooser.choose(null, preselectFiles);
     if (virtualFiles.length != 1) return null;
     virtualFiles[0].refresh(false, false);
     return virtualFiles[0];
   }
 
-  private static boolean canSelectJarFile(String @NotNull [] sourceExtensions) {
+  private static boolean canSelectJarFile(String[] sourceExtensions) {
     return ArrayUtil.contains("jar", sourceExtensions);
   }
 
   public static @NotNull Element loadSchemeDom(@NotNull VirtualFile file) throws SchemeImportException {
-    try (InputStream inputStream = file.getInputStream()) {
+    try (var inputStream = file.getInputStream()) {
       return JDOMUtil.load(inputStream);
     }
     catch (IOException | JDOMException e) {
       throw new SchemeImportException();
     }
   }
-
 }
