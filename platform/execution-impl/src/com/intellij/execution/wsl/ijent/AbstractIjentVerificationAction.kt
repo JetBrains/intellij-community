@@ -18,7 +18,6 @@ import com.intellij.platform.eel.executeProcess
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
-import com.intellij.platform.ijent.IjentExecApi
 import com.intellij.platform.ijent.IjentMissingBinary
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.deploy
@@ -62,7 +61,7 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
               deployingStrategy.deploy("IjentVerificationAction").ijentApi.use { ijent ->
                 coroutineScope {
                   launch {
-                    val info = ijent.info
+                    val info = ijent.ijentProcessInfo
                     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
                       Messages.showInfoMessage(
                         """

@@ -9,7 +9,7 @@ import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
-import com.intellij.platform.eel.EelPosixInfo
+import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.ijent.community.impl.nio.EelPosixGroupPrincipal
 import com.intellij.platform.ijent.community.impl.nio.EelPosixUserPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
@@ -183,7 +183,7 @@ class IjentWslNioFileSystemProvider(
             val dosAttributes =
               if (cachedAttrs != null)
                 IjentNioPosixFileAttributesWithDosAdapter(
-                  ijentPath.fileSystem.ijentFs.user as EelPosixInfo.User,
+                  ijentPath.fileSystem.ijentFs.user as EelUserPosixInfo,
                   cachedAttrs,
                   nameStartsWithDot = ijentPath.eelPath.fileName.startsWith("."),
                 )
@@ -276,7 +276,7 @@ class IjentWslNioFileSystemProvider(
 
       is PosixFileAttributes ->
         IjentNioPosixFileAttributesWithDosAdapter(
-          ijentNioPath.fileSystem.ijentFs.user as EelPosixInfo.User,
+          ijentNioPath.fileSystem.ijentFs.user as EelUserPosixInfo,
           actualAttrs, path.name.startsWith("."),
         )
 
@@ -369,7 +369,7 @@ class IjentWslNioFileSystemProvider(
 
 @VisibleForTesting
 class IjentNioPosixFileAttributesWithDosAdapter(
-  private val userInfo: EelPosixInfo.User,
+  private val userInfo: EelUserPosixInfo,
   private val fileInfo: PosixFileAttributes,
   private val nameStartsWithDot: Boolean,
 ) : CaseSensitivityAttribute, PosixFileAttributes by fileInfo, DosFileAttributes {

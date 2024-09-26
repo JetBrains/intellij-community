@@ -25,6 +25,11 @@ interface EelApi {
   val tunnels: EelTunnelsApi
 
   /**
+   * Returns basic info about the user with whose privileges the IJent process runs.
+   */
+  val userInfo: EelUserInfo
+
+  /**
    * On Unix-like OS, PID is int32. On Windows, PID is uint32. The type of Long covers both PID types, and a separate class doesn't allow
    * to forget that fact and misuse types in APIs.
    */
@@ -36,9 +41,11 @@ interface EelApi {
 interface EelPosixApi : EelApi {
   override val platform: EelPlatform.Posix
   override val tunnels: EelTunnelsPosixApi
+  override val userInfo: EelUserPosixInfo
 }
 
 interface EelWindowsApi : EelApi {
   override val platform: EelPlatform.Windows
   override val tunnels: EelTunnelsWindowsApi
+  override val userInfo: EelUserWindowsInfo
 }

@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.fs
 
-import com.intellij.platform.eel.EelInfo
-import com.intellij.platform.eel.EelPosixInfo
-import com.intellij.platform.eel.EelWindowsInfo
+import com.intellij.platform.eel.EelUserInfo
+import com.intellij.platform.eel.EelUserPosixInfo
+import com.intellij.platform.eel.EelUserWindowsInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
 import java.nio.ByteBuffer
@@ -19,7 +19,7 @@ interface EelFileSystemApi {
    *
    * TODO If `user` is non-suspendable, then `userHome` should be non-suspendable too. Or not?
    */
-  val user: EelInfo.User
+  val user: EelUserInfo
 
   /**
    * A user may have no home directory on Unix-like systems, for example, the user `nobody`.
@@ -415,7 +415,7 @@ sealed interface EelOpenedFile {
 }
 
 interface EelFileSystemPosixApi : EelFileSystemApi {
-  override val user: EelPosixInfo.User
+  override val user: EelUserPosixInfo
 
   enum class CreateDirAttributePosix {
     // todo
@@ -495,7 +495,7 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
 }
 
 interface EelFileSystemWindowsApi : EelFileSystemApi {
-  override val user: EelWindowsInfo.User
+  override val user: EelUserWindowsInfo
 
   suspend fun getRootDirectories(): Collection<EelPath.Absolute>
 

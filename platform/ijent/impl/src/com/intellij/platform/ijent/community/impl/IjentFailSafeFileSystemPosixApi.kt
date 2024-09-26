@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl
 
-import com.intellij.platform.eel.EelPosixInfo
+import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentApi
@@ -94,7 +94,7 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
  * so implementing a similar class for Windows will require a full copy-paste of this class.
  */
 private class IjentFailSafeFileSystemPosixApiImpl(
-  override val user: EelPosixInfo.User,
+  override val user: EelUserPosixInfo,
   private val holder: DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>,
 ) : IjentFileSystemPosixApi {
   override suspend fun userHome(): EelPath.Absolute? =
