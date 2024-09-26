@@ -177,7 +177,7 @@ public class Maven3XProjectResolver {
           continue;
         }
 
-        String previousDependencyHash = myPomHashMap.getDependencyHash(buildingResult.getPomFile());
+        String previousDependencyHash = myPomHashMap.getDependencyHash(pomFile);
         String newDependencyHash = fileToNewDependencyHash.get(pomFile);
         if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
           executionResults.add(createExecutionResult(project, previousDependencyHash));
