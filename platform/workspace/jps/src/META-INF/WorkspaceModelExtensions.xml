@@ -23,6 +23,9 @@
                  description="Enables various functionality in IDE to work via the new reactive API for the workspace model"/>
     <registryKey key="ide.workspace.model.use.new.api.unloaded.modules" defaultValue="false" restartRequired="true"
                  description="Enable work of unloaded modules via reactive read"/>
+    <registryKey key="ide.workspace.model.write.external.files.directly" defaultValue="false" restartRequired="false"
+                 description="When enabled, WSM bypasses module's configuration stores on project save and writes module xml files directly
+                              to 'cache' directory (iml files are still saved through module's configuration stores)"/>
     <workspaceModel.customFacetRelatedEntitySerializer implementation="com.intellij.platform.workspace.jps.serialization.impl.DefaultFacetEntitySerializer" />
   </extensions>
 </idea-plugin>
