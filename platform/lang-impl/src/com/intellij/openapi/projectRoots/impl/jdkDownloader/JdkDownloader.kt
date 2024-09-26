@@ -24,6 +24,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.getEelApiBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
@@ -38,9 +40,13 @@ internal val JDK_DOWNLOADER_EXT: DataKey<JdkDownloaderDialogHostExtension> = Dat
 internal interface JdkDownloaderDialogHostExtension {
   fun allowWsl() : Boolean = true
 
+  fun allowEel() : Boolean = Registry.`is`("java.home.finder.use.eel")
+
   fun createMainPredicate() : JdkPredicate? = null
 
   fun createWslPredicate() : JdkPredicate? = null
+
+  fun createEelPredicate(eel: EelApi) : JdkPredicate? = null
 
   fun shouldIncludeItem(sdkType: SdkTypeId, item: JdkItem) : Boolean = true
 }
@@ -137,7 +143,22 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
 
         val mainModel = buildModel(extension.createMainPredicate() ?: JdkPredicate.default()) ?: return@computeInBackground null
         val wslModel = if (allowWsl && wslDistributions.isNotEmpty()) buildModel(extension.createWslPredicate() ?: JdkPredicate.forWSL()) else null
-        JdkDownloaderMergedModel(mainModel, wslModel, wslDistributions, projectWslDistribution)
+
+        val eelPair: Pair<EelApi, JdkDownloaderModel>? =
+          if (extension.allowEel()) {
+            val eel = project.getEelApiBlocking()
+            buildModel(extension.createEelPredicate(eel) ?: JdkPredicate.forEel(eel))?.let { eel to it}
+          }
+          else null
+
+        JdkDownloaderMergedModel(
+          mainModel = mainModel,
+          wslModel = wslModel,
+          eelModel = eelPair?.second,
+          wslDistributions = wslDistributions,
+          eel = eelPair?.first,
+          projectWSLDistribution = projectWslDistribution,
+        )
       }
     }
     catch (e: Throwable) {
@@ -207,7 +228,17 @@ internal fun selectJdkAndPath(
   val projectWslDistribution = if (allowWsl) project?.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) } else null
 
   val mainModel = buildJdkDownloaderModel(items) { extension.shouldIncludeItem(sdkTypeId, it) }
-  val mergedModel = JdkDownloaderMergedModel(mainModel, null, wslDistributions, projectWslDistribution)
+
+  val eelModel = null // TODO What should be here?
+
+  val mergedModel = JdkDownloaderMergedModel(
+    mainModel = mainModel,
+    wslModel = null,
+    eelModel = eelModel,
+    eel = null,
+    wslDistributions = wslDistributions,
+    projectWSLDistribution = projectWslDistribution,
+  )
 
   if (project?.isDisposed == true) return null
 

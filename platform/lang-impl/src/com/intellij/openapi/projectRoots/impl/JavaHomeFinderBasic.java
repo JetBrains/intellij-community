@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore;
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.OsAbstractionForJdkInstaller;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
@@ -156,7 +157,7 @@ public class JavaHomeFinderBasic {
     Set<Path> paths = new HashSet<>();
 
     if (myCheckDefaultInstallDir) {
-      paths.add(JdkInstaller.getInstance().defaultInstallDir());
+      paths.add(JdkInstaller.getInstance().defaultInstallDir((OsAbstractionForJdkInstaller)null));
     }
 
     if (myCheckUsedInstallDirs) {

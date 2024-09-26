@@ -475,7 +475,8 @@ f:com.intellij.openapi.projectRoots.JdkCommandLineSetup$Companion
 com.intellij.openapi.projectRoots.JdkFinder
 - a:defaultJavaLocation():java.lang.String
 - s:getInstance():com.intellij.openapi.projectRoots.JdkFinder
-- a:suggestHomePaths():java.util.List
+- suggestHomePaths():java.util.List
+- a:suggestHomePaths(com.intellij.openapi.project.Project):java.util.List
 f:com.intellij.openapi.projectRoots.JdkUtil
 - sf:AGENT_RUNTIME_CLASSPATH:com.intellij.openapi.util.Key
 - sf:COMMAND_LINE_CONTENT:com.intellij.openapi.util.Key
@@ -548,6 +549,7 @@ a:com.intellij.openapi.projectRoots.SdkType
 - showCustomCreateUI(com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,com.intellij.util.Consumer):V
 - a:suggestHomePath():java.lang.String
 - suggestHomePaths():java.util.Collection
+- suggestHomePaths(com.intellij.openapi.project.Project):java.util.Collection
 - a:suggestSdkName(java.lang.String,java.lang.String):java.lang.String
 - supportsCustomCreateUI():Z
 c:com.intellij.openapi.projectRoots.SimpleJavaSdkType
@@ -570,6 +572,7 @@ c:com.intellij.openapi.projectRoots.SimpleJavaSdkType
 - saveAdditionalData(com.intellij.openapi.projectRoots.SdkAdditionalData,org.jdom.Element):V
 - suggestHomePath():java.lang.String
 - suggestHomePaths():java.util.Collection
+- suggestHomePaths(com.intellij.openapi.project.Project):java.util.Collection
 - suggestSdkName(java.lang.String,java.lang.String):java.lang.String
 - versionStringComparator():java.util.Comparator
 f:com.intellij.openapi.projectRoots.impl.SdkVersionUtil

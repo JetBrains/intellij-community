@@ -3,7 +3,6 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -16,7 +15,7 @@ import java.nio.file.Paths
 internal class RuntimeChooserDownloader {
   fun downloadAndUse(indicator: ProgressIndicator, jdk: JdkItem, targetDir: Path): Path? {
     try {
-      val installer = service<RuntimeChooserJbrInstaller>()
+      val installer = RuntimeChooserJbrInstaller
       val request = installer.prepareJdkInstallation(jdk, targetDir)
       installer.installJdk(request, indicator, null)
       return request.javaHome
@@ -32,9 +31,9 @@ internal class RuntimeChooserDownloader {
   }
 }
 
-@Service(Service.Level.APP)
-internal class RuntimeChooserJbrInstaller : JdkInstallerBase() {
-  override fun defaultInstallDir(): Path {
+internal object RuntimeChooserJbrInstaller : JdkInstallerBase() {
+  override fun defaultInstallDir(osAbstractionForJdkInstaller: OsAbstractionForJdkInstaller?): Path {
+    // TODO Use osAbstractionForJdkInstaller
     val explicitHome = System.getProperty("jbr.downloader.home")
     if (explicitHome != null) {
       return Paths.get(explicitHome)

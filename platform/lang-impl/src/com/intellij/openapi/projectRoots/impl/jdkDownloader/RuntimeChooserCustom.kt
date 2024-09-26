@@ -48,6 +48,7 @@ internal object RuntimeChooserCustom {
 
   private val jdkDownloaderExtension = object : JdkDownloaderDialogHostExtension {
     override fun allowWsl(): Boolean = false
+    override fun allowEel(): Boolean = false
 
     override fun shouldIncludeItem(sdkType: SdkTypeId, item: JdkItem): Boolean {
       return sdkType == this@RuntimeChooserCustom.sdkType && isSupportedSdkItem(item)

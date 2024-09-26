@@ -14525,6 +14525,7 @@ f:com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel$Companion
 - bs:createSdkComboBoxModel$default(com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel$Companion,com.intellij.openapi.project.Project,com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel,java.util.function.Predicate,java.util.function.Predicate,java.util.function.Predicate,I,java.lang.Object):com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel
 c:com.intellij.openapi.roots.ui.configuration.SdkDetector
 - <init>():V
+- detectSdks(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.SdkType,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.roots.ui.configuration.SdkDetector$DetectedSdkListener):V
 - detectSdks(com.intellij.openapi.projectRoots.SdkType,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.roots.ui.configuration.SdkDetector$DetectedSdkListener):V
 - getDetectedSdksWithUpdate(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,com.intellij.openapi.application.ModalityState,com.intellij.openapi.roots.ui.configuration.SdkDetector$DetectedSdkListener):V
 - s:getInstance():com.intellij.openapi.roots.ui.configuration.SdkDetector
@@ -14821,7 +14822,6 @@ c:com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 - doAdd(com.intellij.openapi.projectRoots.Sdk,java.util.function.Consumer):V
 - doAdd(javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.projectRoots.SdkType,com.intellij.util.Consumer):V
 - doAdd(javax.swing.JComponent,com.intellij.openapi.projectRoots.SdkType,com.intellij.util.Consumer):V
-- doDownload(com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.projectRoots.SdkType,java.util.function.Consumer):V
 - downloadSdk(com.intellij.openapi.projectRoots.Sdk):V
 - findSdk(com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.projectRoots.Sdk
 - findSdk(java.lang.String):com.intellij.openapi.projectRoots.Sdk

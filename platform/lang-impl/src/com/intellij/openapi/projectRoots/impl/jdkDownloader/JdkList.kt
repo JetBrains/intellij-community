@@ -12,11 +12,14 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPackageType.entries
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.write
@@ -243,6 +246,12 @@ data class JdkPredicate(
     fun default(): JdkPredicate = createInstance(forWsl = false)
     fun forWSL(buildNumber: BuildNumber? = ApplicationInfoImpl.getShadowInstance().build): JdkPredicate = createInstance(forWsl = true, buildNumber)
 
+    fun forEel(
+      eel: EelApi,
+      buildNumber: BuildNumber? = ApplicationInfoImpl.getShadowInstance().build,
+    ): JdkPredicate =
+      createInstance(eel, buildNumber)
+
     /**
      * Selects only JDKs that are for the same OS and CPU arch as the current Java process.
      */
@@ -261,6 +270,18 @@ data class JdkPredicate(
       }
 
       return JdkPredicate(buildNumber, platforms.toSet())
+    }
+
+    private fun createInstance(eel: EelApi, buildNumber: BuildNumber?): JdkPredicate {
+      val platform = when (eel.platform) {
+        EelPlatform.Arm64Darwin -> setOf(JdkPlatform("macOS", "x86_64"), JdkPlatform("macOS", "aarch64"))
+        EelPlatform.X8664Darwin -> setOf(JdkPlatform("macOS", "x86_64"))
+        EelPlatform.Aarch64Linux -> setOf(JdkPlatform("linux", "aarch64"))
+        EelPlatform.X8664Linux -> setOf(JdkPlatform("linux", "x86_64"))
+        EelPlatform.X64Windows -> setOf(JdkPlatform("windows", "x86_64"))
+        // TODO Windows aarch64
+      }
+      return JdkPredicate(buildNumber, platform)
     }
 
     val currentOS: String = when {

@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.eel.EelApi;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,6 +22,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.projectRoots.impl.JavaHomeFinderEel.javaHomeFinderEel;
+import static com.intellij.platform.eel.provider.EelProviderUtil.getEelApiBlocking;
+import static com.intellij.platform.eel.provider.EelProviderUtil.getLocalEel;
 
 @ApiStatus.Internal
 public abstract class JavaHomeFinder {
@@ -54,7 +60,11 @@ public abstract class JavaHomeFinder {
    * Tries to find existing Java SDKs on this computer.
    * If no JDK found, returns possible directories to start file chooser.
    * @return suggested sdk home paths (sorted)
+   *
+   * @deprecated Please use {@link JavaHomeFinder#suggestHomePaths(Project)}. The project can be located on a remote machine,
+   * and the SDK should be local to the project, not to the IDE.
    */
+  @Deprecated
   public static @NotNull List<String> suggestHomePaths() {
     return suggestHomePaths(false);
   }
@@ -65,7 +75,22 @@ public abstract class JavaHomeFinder {
    * or that need the embedded JetBrains Runtime.
    */
   public static @NotNull List<String> suggestHomePaths(boolean forceEmbeddedJava) {
-    JavaHomeFinderBasic javaFinder = getFinder(forceEmbeddedJava);
+    return suggestHomePaths(getLocalEel(), forceEmbeddedJava);
+  }
+
+  /**
+   * Tries to find Java SDKs on the machine where {@code project} is located.
+   * If no JDK found, returns possible directories to start file chooser.
+   *
+   * @return suggested sdk home paths (sorted)
+   */
+  public static @NotNull List<@NotNull String> suggestHomePaths(@Nullable Project project) {
+    return suggestHomePaths(getEelApiBlocking(project), false);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull List<String> suggestHomePaths(@NotNull EelApi eel, boolean forceEmbeddedJava) {
+    JavaHomeFinderBasic javaFinder = getFinder(eel, forceEmbeddedJava);
     if (javaFinder == null) return Collections.emptyList();
 
     ArrayList<String> paths = new ArrayList<>(javaFinder.findExistingJdks());
@@ -77,13 +102,21 @@ public abstract class JavaHomeFinder {
     return forceEmbeddedJava || Registry.is("java.detector.enabled", true);
   }
 
-  private static JavaHomeFinderBasic getFinder(boolean forceEmbeddedJava) {
+  private static JavaHomeFinderBasic getFinder(@NotNull EelApi eel, boolean forceEmbeddedJava) {
     if (!isDetectorEnabled(forceEmbeddedJava)) return null;
 
-    return getFinder().checkEmbeddedJava(forceEmbeddedJava);
+    return getFinder(eel).checkEmbeddedJava(forceEmbeddedJava);
   }
 
-  public static @NotNull JavaHomeFinderBasic getFinder() {
+  public static @NotNull JavaHomeFinderBasic getFinder(@Nullable Project project) {
+    return getFinder(getEelApiBlocking(project));
+  }
+
+  private static @NotNull JavaHomeFinderBasic getFinder(@NotNull EelApi eel) {
+    if (Registry.is("java.home.finder.use.eel")) {
+      return javaHomeFinderEel(eel);
+    }
+
     SystemInfoProvider systemInfoProvider = new SystemInfoProvider();
 
     if (SystemInfo.isWindows) {

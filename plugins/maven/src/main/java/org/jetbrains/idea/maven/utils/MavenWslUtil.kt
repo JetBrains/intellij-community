@@ -10,6 +10,7 @@ import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.InvalidSdkException
@@ -17,6 +18,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -27,9 +29,15 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.ui.navigation.Place
 import com.intellij.util.text.VersionComparatorUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.config.MavenConfig
 import org.jetbrains.idea.maven.config.MavenConfigSettings
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
@@ -358,6 +366,10 @@ object MavenWslUtil : MavenUtil() {
                                    sdk: Sdk,
                                    notification: Notification,
                                    listener: NotificationListener) {
+    if (Registry.`is`("java.home.finder.use.eel")) {
+      return findOrDownloadNewJdkOverEel(project, notification, listener)
+    }
+
     val jdkTask = object : Task.Backgroundable(null, MavenProjectBundle.message("wsl.jdk.searching"), false) {
       override fun run(indicator: ProgressIndicator) {
         val sdkPath = service<JdkFinder>().suggestHomePaths().filter {
@@ -389,7 +401,7 @@ object MavenWslUtil : MavenUtil() {
         }
         else {
           this.title = MavenProjectBundle.message("wsl.jdk.downloading")
-          val homeDir = installer.defaultInstallDir(model[0], projectWslDistr)
+          val homeDir = installer.defaultInstallDir(model[0], null, projectWslDistr)
           val request = installer.prepareJdkInstallation(model[0], homeDir)
           installer.installJdk(request, indicator, project)
           notification.hideBalloon()
@@ -397,6 +409,54 @@ object MavenWslUtil : MavenUtil() {
       }
     }
     ProgressManager.getInstance().run(jdkTask)
+  }
+
+  private fun findOrDownloadNewJdkOverEel(
+    project: Project,
+    notification: Notification,
+    listener: NotificationListener,
+  ) {
+    MavenCoroutineScopeProvider.getCoroutineScope(project).launch(Dispatchers.IO) {
+      withBackgroundProgress(project, MavenProjectBundle.message("wsl.jdk.searching"), cancellable = false) {
+        val eel = project.getEelApi()
+        val sdkPath = service<JdkFinder>().suggestHomePaths(project).firstOrNull()
+        if (sdkPath != null) {
+          writeAction {
+            val jdkName = SdkConfigurationUtil.createUniqueSdkName(JavaSdk.getInstance(), sdkPath,
+                                                                   ProjectJdkTable.getInstance().allJdks.toList())
+            val newJdk = JavaSdk.getInstance().createJdk(jdkName, sdkPath)
+            ProjectJdkTable.getInstance().addJdk(newJdk)
+            ProjectRootManagerEx.getInstance(project).projectSdk = newJdk
+            notification.hideBalloon()
+          }
+          return@withBackgroundProgress
+        }
+        val installer = JdkInstaller.getInstance()
+        val jdkPredicate = JdkPredicate.forEel(eel)
+        val model = coroutineToIndicator {
+          JdkListDownloader.getInstance().downloadModelForJdkInstaller(ProgressManager.getGlobalProgressIndicator(), jdkPredicate)
+        }
+        if (model.isEmpty()) {
+          Notification(
+            MAVEN_NOTIFICATION_GROUP,
+            MavenProjectBundle.message("maven.wsl.jdk.fix.failed"),
+            MavenProjectBundle.message("maven.wsl.jdk.fix.failed.descr"),
+            NotificationType.ERROR
+          ).setListener(listener).notify(project)
+
+        }
+        else {
+          withProgressText(MavenProjectBundle.message("wsl.jdk.downloading")) {
+            val homeDir = installer.defaultInstallDir(model[0], eel, null)
+            val request = installer.prepareJdkInstallation(model[0], homeDir)
+            coroutineToIndicator {
+              installer.installJdk(request, ProgressManager.getGlobalProgressIndicator(), project)
+            }
+            notification.hideBalloon()
+          }
+        }
+      }
+    }
   }
 }
 

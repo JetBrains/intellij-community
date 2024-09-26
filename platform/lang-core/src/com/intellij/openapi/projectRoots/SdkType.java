@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
+
 /**
  * Inherit from this class and register implementation as {@code sdkType} extension in plugin.xml to provide a custom type of
  * <a href="https://www.jetbrains.com/help/idea/sdk.html">SDK</a>. Users can create and assign SDKs to modules in Project Structure dialog.
@@ -63,10 +64,26 @@ public abstract class SdkType implements SdkTypeId {
    * for possible interruption request. It is not recommended to call this method from a ETD thread. See
    * an alternative {@link #suggestHomePath()} method for EDT-friendly calls.
    * @see #suggestHomePath()
+   *
+   * @deprecated Use {@link #suggestHomePaths(Project)}
    */
+  @Deprecated
   public @NotNull Collection<String> suggestHomePaths() {
     String home = suggestHomePath();
     return ContainerUtil.createMaybeSingletonList(home);
+  }
+
+  /**
+   * Returns a list of all valid SDKs found on the host where {@code project} is located.
+   * <p/>
+   * E.g. for Python SDK on Unix the method may return {@code ["/usr/bin/python2", "/usr/bin/python3"]}.
+   * <p/>
+   * This method may take significant time to execute. The implementation may check {@link ProgressManager#checkCanceled()}
+   * for possible interruption request. It is not recommended to call this method from a ETD thread. See
+   * an alternative {@link #suggestHomePath()} method for EDT-friendly calls.
+   */
+  public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
+    return suggestHomePaths();
   }
 
   /**

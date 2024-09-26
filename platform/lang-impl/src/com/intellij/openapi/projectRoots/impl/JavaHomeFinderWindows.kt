@@ -23,7 +23,7 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     const val defaultJavaLocation: String = "C:\\Program Files"
 
     @Suppress("SpellCheckingInspection")
-    private const val regCommand = """reg query HKLM\SOFTWARE\JavaSoft\JDK /s /v JavaHome"""
+    private val regCommand = listOf("reg", "query", """HKLM\SOFTWARE\JavaSoft\JDK""", "/s", "/v", "JavaHome")
 
     private val javaHomePattern = Regex("""^\s+JavaHome\s+REG_SZ\s+(\S.+\S)\s*$""", setOf(MULTILINE, IGNORE_CASE))
 
@@ -40,9 +40,17 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     }
   }
 
-  constructor(registeredJdks: Boolean,
-              wslJdks: Boolean,
-              systemInfoProvider: JavaHomeFinder.SystemInfoProvider) : super(systemInfoProvider) {
+  private val processRunner: (cmd: List<String>) -> CharSequence
+
+  @JvmOverloads
+  constructor(
+    registeredJdks: Boolean,
+    wslJdks: Boolean,
+    systemInfoProvider: JavaHomeFinder.SystemInfoProvider,
+    processRunner: (cmd: List<String>) -> CharSequence = { cmd -> WindowsRegistryUtil.readRegistry(cmd.joinToString(" ")) },
+  ) : super(systemInfoProvider) {
+    this.processRunner = processRunner
+
     if (registeredJdks) {
       /** Whether the OS is 64-bit (**important**: it's not the same as [com.intellij.util.system.CpuArch]). */
       val os64bit = !systemInfoProvider.getEnvironmentVariable("ProgramFiles(x86)").isNullOrBlank()
@@ -90,11 +98,11 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     val cmd =
       when (b) {
         null -> regCommand
-        Bitness.x32 -> "$regCommand /reg:32"
-        Bitness.x64 -> "$regCommand /reg:64"
+        Bitness.x32 -> regCommand + "/reg:32"
+        Bitness.x64 -> regCommand + "/reg:64"
       }
     try {
-      val registryLines: CharSequence = WindowsRegistryUtil.readRegistry(cmd)
+      val registryLines: CharSequence = processRunner(cmd)
       val registeredPaths = gatherHomePaths(registryLines)
       val folders: MutableSet<Path> = TreeSet()
       for (rp in registeredPaths) {

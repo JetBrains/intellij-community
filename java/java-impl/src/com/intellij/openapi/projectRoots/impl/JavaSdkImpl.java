@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -33,6 +34,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -189,7 +191,12 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public @NotNull Collection<String> suggestHomePaths() {
-    return JavaHomeFinder.suggestHomePaths();
+    return suggestHomePaths(null);
+  }
+
+  @Override
+  public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
+    return JavaHomeFinder.suggestHomePaths(EelProviderUtil.getEelApiBlocking(project), false);
   }
 
   @Override

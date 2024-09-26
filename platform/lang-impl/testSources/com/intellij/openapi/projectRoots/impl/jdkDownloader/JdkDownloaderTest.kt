@@ -5,6 +5,7 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -20,7 +21,6 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 import java.nio.file.Path
 import kotlin.concurrent.thread
 
@@ -79,19 +79,21 @@ class JdkDownloaderTest : BareTestFixtureTestCase() {
                                        size = 604,
                                        sha256 = "1cf15536c1525f413190fd53243f343511a17e6ce7439ccee4dc86f0d34f9e81")
 
-  private val mockWSL = object: WSLDistributionForJdkInstaller {
-    override fun getWslPath(path: Path): String = path.toString()
+  private val mockWSL = object: OsAbstractionForJdkInstaller.Wsl {
+    override val d: WSLDistribution
+      get() = TODO("Not yet implemented")
 
-    override fun executeOnWsl(command: List<String>, dir: String, timeout: Int): ProcessOutput {
-      val cmd = GeneralCommandLine(command)
-      cmd.workDirectory = File(dir)
-      return CapturingProcessHandler(cmd).runProcess(timeout)
+    override fun getPath(path: Path): String = path.toString()
+
+    override fun execute(command: List<String>, dir: String, timeout: Int): ProcessOutput {
+      val processHandler = CapturingProcessHandler(GeneralCommandLine(command).withWorkingDirectory(Path.of(dir)));
+      return processHandler.runProcess(timeout)
     }
   }
 
   private val mockWSLInstaller = object: JdkInstallerBase() {
     override fun wslDistributionFromPath(targetDir: Path) = mockWSL
-    override fun defaultInstallDir(): Path = error("Must not call")
+    override fun defaultInstallDir(osAbstractionForJdkInstaller: OsAbstractionForJdkInstaller?): Path = error("Must not call")
   }
 
   @Test fun `test reuse pending JDKs`() {

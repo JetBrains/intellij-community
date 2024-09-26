@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.eel.EelApi
 import com.intellij.ui.*
 import com.intellij.ui.components.textFieldWithBrowseButton
 import com.intellij.ui.dsl.builder.AlignX
@@ -204,14 +205,26 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
 }
 
 internal class JdkDownloaderMergedModel(
+  @Deprecated("Remove when eelModel is stabilized")
   private val mainModel: JdkDownloaderModel,
+
+  @Deprecated("Remove when eelModel is stabilized")
   private val wslModel: JdkDownloaderModel?,
+
+  private val eelModel: JdkDownloaderModel?,
+
+  val eel: EelApi?,
   val wslDistributions: List<WSLDistribution>,
   val projectWSLDistribution: WSLDistribution?
 ) {
+  val hasEel: Boolean get() = eelModel != null
+
+  @Deprecated("Remove when eelModel is stabilized")
   val hasWsl: Boolean get() = wslModel != null
 
+  @Deprecated("Remove when eelModel is stabilized")
   fun selectModel(wsl: Boolean): JdkDownloaderModel = when {
+    eelModel != null -> eelModel
     wsl && wslModel != null -> wslModel
     else -> mainModel
   }
@@ -290,7 +303,7 @@ internal class JdkDownloadDialog(
   }
 
   private fun setupContainer(): JComponent {
-    if (mergedModel.hasWsl) {
+    if (mergedModel.hasWsl && !mergedModel.hasEel) {  // TODO File chooser for Eel
       installDirCombo = ComboBox<String>().apply {
         isEditable = true
         initBrowsableEditor(
@@ -363,7 +376,7 @@ internal class JdkDownloadDialog(
 
     vendorComboBox.selectedItem = it.selectItem
     val newVersion = it.item
-    val path = JdkInstaller.getInstance().defaultInstallDir(newVersion, mergedModel.projectWSLDistribution).toString()
+    val path = JdkInstaller.getInstance().defaultInstallDir(newVersion, mergedModel.eel, mergedModel.projectWSLDistribution).toString()
     val relativePath = FileUtil.getLocationRelativeToUserHome(path)
     if (installDirTextField != null) {
       installDirTextField!!.text = relativePath
@@ -376,8 +389,11 @@ internal class JdkDownloadDialog(
   }
 
   private fun getSuggestedInstallDirs(newVersion: JdkItem): List<String> {
+    if (mergedModel.hasEel) {
+      return listOf(JdkInstaller.getInstance().defaultInstallDir(newVersion, mergedModel.eel, null).toString())
+    }
     return (listOf(null) + mergedModel.wslDistributions).mapTo(LinkedHashSet()) {
-      JdkInstaller.getInstance().defaultInstallDir(newVersion, it).toString()
+      JdkInstaller.getInstance().defaultInstallDir(newVersion, null, it).toString()
     }.map {
       FileUtil.getLocationRelativeToUserHome(it)
     }
