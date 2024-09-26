@@ -668,7 +668,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   private MavenGoalExecutionResult createEmbedderExecutionResult(@NotNull File file, Maven3ExecutionResult result) {
-    Collection<MavenProjectProblem> problems = collectProblems(file, result.getExceptions(), result.getModelProblems());
+    Collection<MavenProjectProblem> problems = collectProblems(file, result.getExceptions(), Collections.emptyList());
 
     MavenGoalExecutionResult.Folders folders = new MavenGoalExecutionResult.Folders();
     MavenProject mavenProject = result.getMavenProject();

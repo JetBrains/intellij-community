@@ -28,6 +28,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class MavenServerExecutionResult implements Serializable {
+
+  public static final MavenServerExecutionResult EMPTY = new MavenServerExecutionResult(null, Collections.emptyList(), Collections.emptySet());
+
   @Nullable public final ProjectData projectData;
   @NotNull public final Collection<MavenProjectProblem> problems;
   @NotNull public final Set<MavenId> unresolvedArtifacts;
