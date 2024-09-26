@@ -178,12 +178,16 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
   }
 
   companion object {
-    private val SDK_BRIDGE_MAPPING_ID = ExternalMappingKey.create<ProjectJdkImpl>("intellij.sdk.bridge")
+    private val SDK_BRIDGE_MAPPING_ID = ExternalMappingKey.create<Sdk>("intellij.sdk.bridge")
 
-    val EntityStorage.sdkMap: ExternalEntityMapping<ProjectJdkImpl>
+    val EntityStorage.sdkMap: ExternalEntityMapping<Sdk>
       get() = getExternalMapping(SDK_BRIDGE_MAPPING_ID)
-    val MutableEntityStorage.mutableSdkMap: MutableExternalEntityMapping<ProjectJdkImpl>
+
+    val MutableEntityStorage.mutableSdkMap: MutableExternalEntityMapping<Sdk>
       get() = getMutableExternalMapping(SDK_BRIDGE_MAPPING_ID)
+
+    fun EntityStorage.findSdkEntity(sdk: Sdk): SdkEntity? =
+      sdkMap.getEntities(sdk).firstOrNull() as SdkEntity?
 
     fun createEmptySdkEntity(name: String, type: String, homePath: String = "", version: String? = null): SdkEntity.Builder {
       val sdkEntitySource = createEntitySourceForSdk()
