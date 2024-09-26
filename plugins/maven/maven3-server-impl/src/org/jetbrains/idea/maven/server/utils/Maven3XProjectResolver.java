@@ -90,12 +90,20 @@ public class Maven3XProjectResolver {
   }
 
   private static class ProjectBuildingResultInfo {
-    ProjectBuildingResult buildingResult;
-    List<Exception> exceptions;
+    @NotNull String projectId;
+    @NotNull MavenProject mavenProject;
+    @NotNull List<ModelProblem> modelProblems;
+    @NotNull List<Exception> exceptions;
     String dependencyHash;
 
-    private ProjectBuildingResultInfo(ProjectBuildingResult buildingResult, List<Exception> exceptions, String dependencyHash) {
-      this.buildingResult = buildingResult;
+    private ProjectBuildingResultInfo(@NotNull String projectId,
+                                      @NotNull MavenProject mavenProject,
+                                      @NotNull List<ModelProblem> modelProblems,
+                                      @NotNull List<Exception> exceptions,
+                                      String dependencyHash) {
+      this.projectId = projectId;
+      this.mavenProject = mavenProject;
+      this.modelProblems = modelProblems;
       this.exceptions = exceptions;
       this.dependencyHash = dependencyHash;
     }
@@ -103,7 +111,7 @@ public class Maven3XProjectResolver {
     @Override
     public String toString() {
       return "ProjectBuildingResultData{" +
-             "projectId=" + buildingResult.getProjectId() +
+             "projectId=" + projectId +
              ", dependencyHash=" + dependencyHash +
              '}';
     }
@@ -160,26 +168,21 @@ public class Maven3XProjectResolver {
 
       for (ProjectBuildingResult buildingResult : buildingResults) {
         MavenProject project = buildingResult.getProject();
-        if (project == null) {
-          new Exception("PROJECT is null").printStackTrace();
-        }
+        String projectId = buildingResult.getProjectId();
         File pomFile = buildingResult.getPomFile();
+        List<ModelProblem> modelProblems = buildingResult.getProblems();
 
-        String newDependencyHash = null;
-        if (pomFile != null) {
-          if (project == null) {
-            executionResults.add(createExecutionResult(pomFile, buildingResult.getProblems()));
-            continue;
-          }
-
-          String previousDependencyHash = myPomHashMap.getDependencyHash(pomFile);
-          newDependencyHash = fileToNewDependencyHash.get(pomFile);
-          if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
-            executionResults.add(createExecutionResult(project, previousDependencyHash));
-            continue;
-          }
+        if (project == null) {
+          executionResults.add(createExecutionResult(pomFile, modelProblems));
+          continue;
         }
 
+        String previousDependencyHash = myPomHashMap.getDependencyHash(buildingResult.getPomFile());
+        String newDependencyHash = fileToNewDependencyHash.get(pomFile);
+        if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
+          executionResults.add(createExecutionResult(project, previousDependencyHash));
+          continue;
+        }
 
         List<Exception> exceptions = new ArrayList<>();
 
@@ -187,7 +190,7 @@ public class Maven3XProjectResolver {
 
         project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
 
-        buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newDependencyHash));
+        buildingResultInfos.add(new ProjectBuildingResultInfo(projectId, project, modelProblems, exceptions, newDependencyHash));
       }
 
       myLongRunningTask.updateTotalRequests(buildingResultInfos.size());
@@ -198,8 +201,8 @@ public class Maven3XProjectResolver {
             buildingResultInfos, br -> {
               if (myLongRunningTask.isCanceled()) return MavenServerExecutionResult.EMPTY;
               MavenServerExecutionResult result = myTelemetry.callWithSpan(
-                "resolveBuildingResult " + br.buildingResult.getProjectId(), () ->
-                  resolveBuildingResult(repositorySession, addUnresolved, br.buildingResult.getProject(), br.buildingResult.getProblems(), br.exceptions, br.dependencyHash));
+                "resolveBuildingResult " + br.projectId, () ->
+                  resolveBuildingResult(repositorySession, addUnresolved, br.mavenProject, br.modelProblems, br.exceptions, br.dependencyHash));
               myLongRunningTask.incrementFinishedRequests();
               return result;
             }
