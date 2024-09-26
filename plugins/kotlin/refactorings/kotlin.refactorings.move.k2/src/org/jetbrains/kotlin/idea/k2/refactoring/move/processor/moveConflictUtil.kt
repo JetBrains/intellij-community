@@ -8,8 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.*
@@ -69,7 +68,7 @@ internal fun findAllMoveConflicts(
     usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> {
     val targetIdeaModule = targetDir.module ?: return MultiMap.empty()
-    val targetKaModule = targetIdeaModule.productionOrTestSourceModuleInfo?.toKaModule() ?: return MultiMap.empty()
+    val targetKaModule = targetIdeaModule.toKaSourceModuleForProductionOrTest() ?: return MultiMap.empty()
     return MultiMap<PsiElement, String>().apply {
         putAllValues(checkMoveExpectedDeclarationIntoPlatformCode(topLevelDeclarationsToMove, targetKaModule))
         putAllValues(checkMoveActualDeclarationIntoCommonModule(topLevelDeclarationsToMove, targetKaModule))

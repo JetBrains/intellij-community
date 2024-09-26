@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -62,7 +61,7 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
         // The only friend dependency that currently exists in the IDE is the dependency of an IDEA module's test sources on its production
         // sources. Hence, a test source `KaModule` is a direct dependent of its production source `KaModule`.
         if (module.ideaModuleInfo is ModuleProductionSourceInfo) {
-            addIfNotNull(module.ideaModule.testSourceInfo?.toKaModule())
+            addIfNotNull(module.ideaModule.toKaSourceModuleForTests())
         }
     }
 
@@ -71,7 +70,7 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
     private fun getDirectDependentsForLibraryModule(module: KtLibraryModuleByModuleInfo): Set<KaModule> =
         project.service<LibraryUsageIndex>()
             .getDependentModules(module.libraryInfo)
-            .mapNotNullTo(mutableSetOf()) { it.productionOrTestSourceModuleInfo?.toKaModule() }
+            .mapNotNullTo(mutableSetOf()) { it.toKaSourceModuleForProductionOrTest() }
 
     private fun MutableSet<KaModule>.addWorkspaceModelDependents(symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>) {
         val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
@@ -84,7 +83,7 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
                 // We can skip the module entity if `findModule` returns `null` because the module won't have been added to the project
                 // model yet and thus cannot be a proper `KaModule`. If there is a production source `KaModule`, we only need to add that
                 // because the test source `KaModule` will be a direct friend dependent of the production source `KaModule`.
-                addIfNotNull(moduleEntity.findModule(snapshot)?.productionOrTestSourceModuleInfo?.toKaModule())
+                addIfNotNull(moduleEntity.findModule(snapshot)?.toKaSourceModuleForProductionOrTest())
             }
     }
 
@@ -116,8 +115,8 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
 
     @OptIn(Frontend10ApiUsage::class)
     override fun getRefinementDependents(module: KaModule): Set<KaModule> {
-        val moduleInfo = module.moduleInfo as? ModuleSourceInfo ?: return emptySet()
-        val implementingModules = moduleInfo.module.implementingModules
-        return implementingModules.mapNotNullTo(mutableSetOf()) { it.productionOrTestSourceModuleInfo?.toKaModule() }.ifEmpty { emptySet() }
+        if (module !is KaSourceModule) return emptySet()
+        val implementingModules = module.ideaModule.implementingModules
+        return implementingModules.mapNotNullTo(mutableSetOf()) { it.toKaSourceModuleForProductionOrTest() }.ifEmpty { emptySet() }
     }
 }

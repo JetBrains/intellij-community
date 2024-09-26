@@ -11,6 +11,7 @@ import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
@@ -21,8 +22,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.implCommon.ActualCompletionLookupElementDecorator
@@ -67,7 +66,7 @@ internal class ActualKeywordHandler(
         if (!isTopLevelDeclaration) return emptyList()
 
         val module = position.module ?: return emptyList()
-        val kaModule = position.moduleInfo.toKaModule()
+        val kaModule = KotlinProjectStructureProvider.getModule(project, position, useSiteModule = null)
         val dependsOnModules = kaModule.transitiveDependsOnDependencies
         if (dependsOnModules.isEmpty()) return emptyList()
 

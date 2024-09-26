@@ -51,5 +51,6 @@
     <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-platform" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.analysis-api-platform" scope="TEST" />
   </component>
 </module>

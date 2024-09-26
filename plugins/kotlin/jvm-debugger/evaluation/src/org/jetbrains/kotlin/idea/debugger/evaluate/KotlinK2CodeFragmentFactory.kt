@@ -11,8 +11,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -34,7 +33,7 @@ class KotlinK2CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
                 .filter { module -> module.implementingModules.isEmpty() } // Looking for a leave
                 .firstOrNull { module -> module.platform.isJvm() }
 
-            virtualFile.analysisContextModule = jvmLeafModule?.productionOrTestSourceModuleInfo?.toKaModule()
+            virtualFile.analysisContextModule = jvmLeafModule?.toKaSourceModuleForProductionOrTest()
         }
     }
 

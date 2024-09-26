@@ -39,9 +39,9 @@ import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.fir.extensions.FirAssignExpressionAltererExtension
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
+import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleRootType
+import org.jetbrains.kotlin.idea.base.projectStructure.getSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
@@ -174,9 +174,9 @@ internal class KtCompilerPluginsProviderIdeImpl(
             // (or even a platform-agnostic alternative) should be added.
             if (compilerArguments is K2JVMCompilerArguments) {
                 val compilerExtension = CompilerModuleExtension.getInstance(module.ideaModule)
-                val outputUrl = when (module.moduleInfo) {
-                    is ModuleTestSourceInfo -> compilerExtension?.compilerOutputUrlForTests
-                    else -> compilerExtension?.compilerOutputUrl
+                val outputUrl = when (module.getSourceModuleKind()) {
+                    KaSourceModuleRootType.TEST -> compilerExtension?.compilerOutputUrlForTests
+                    KaSourceModuleRootType.SOURCE, null -> compilerExtension?.compilerOutputUrl
                 }
 
                 putIfNotNull(JVMConfigurationKeys.JVM_TARGET, compilerArguments.jvmTarget?.let(JvmTarget::fromString))

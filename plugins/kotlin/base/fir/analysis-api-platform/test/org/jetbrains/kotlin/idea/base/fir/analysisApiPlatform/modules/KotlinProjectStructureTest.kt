@@ -569,8 +569,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
     }
 
     private fun Library.toKaModule(): KaLibraryModule {
-        val expectedLibraryInfo = LibraryInfoCache.getInstance(project)[this].single()
-        return expectedLibraryInfo.toKaModuleOfType<KaLibraryModule>()
+        return toKaLibraryModules(project).single()
     }
 
     private inline fun <reified T> assertKaModuleType(element: PsiElement, contextualModule: KaModule? = null) {

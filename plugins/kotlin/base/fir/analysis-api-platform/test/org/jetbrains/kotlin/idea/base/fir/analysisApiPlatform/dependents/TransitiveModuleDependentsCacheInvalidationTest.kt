@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
@@ -59,7 +60,7 @@ class TransitiveModuleDependentsCacheInvalidationTest : AbstractMultiModuleTest(
         moduleB.addDependency(libraryA)
         moduleC.addDependency(moduleB)
 
-        val ktModuleA = LibraryInfoCache.getInstance(project)[libraryA].first().toKaModule()
+        val ktModuleA = libraryA.toKaLibraryModules(project).first()
 
         Assert.assertEquals(
             setOf("b", "c"),

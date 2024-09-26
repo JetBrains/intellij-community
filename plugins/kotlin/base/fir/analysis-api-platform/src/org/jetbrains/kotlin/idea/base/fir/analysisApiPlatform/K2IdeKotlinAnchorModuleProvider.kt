@@ -16,7 +16,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinAnchorModuleProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.getLibraryModules
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
 import org.jetbrains.kotlin.idea.caches.resolve.util.ResolutionAnchorCacheState
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
@@ -86,7 +86,7 @@ class K2IdeKotlinAnchorModuleProvider(val project: Project) : IdeKotlinAnchorMod
         val librariesByAnchor = mutableMapOf<KaSourceModule, MutableList<KaLibraryModule>>()
 
         moduleNameToAnchorName.entries.forEach { (libraryName, anchorName) ->
-            val library: KaLibraryModule = librariesByName[libraryName]?.getLibraryModules(project)?.firstOrNull() ?: run {
+            val library: KaLibraryModule = librariesByName[libraryName]?.toKaLibraryModules(project)?.firstOrNull() ?: run {
                 logger.warn("Resolution anchor mapping key doesn't point to a known library: $libraryName. Skipping this anchor")
                 return@forEach
             }

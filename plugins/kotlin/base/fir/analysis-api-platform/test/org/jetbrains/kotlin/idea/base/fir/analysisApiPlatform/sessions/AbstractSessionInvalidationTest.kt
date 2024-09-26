@@ -7,8 +7,8 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
-import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTests
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
 import java.io.File
@@ -57,8 +57,7 @@ sealed class AbstractSessionInvalidationTest : AbstractProjectStructureTest<Sess
     @OptIn(LLFirInternals::class)
     private fun getAllModuleSessions(mainModule: KaModule): List<LLFirSession> {
         val projectModules = ModuleManager.getInstance(mainModule.project).modules
-            .flatMap { it.sourceModuleInfos }
-            .map { it.toKaModule() }
+            .flatMap { listOfNotNull(it.toKaSourceModuleForProductionOrTest(), it.toKaSourceModuleForTests()) }
 
         val resolveSession = LLFirResolveSessionService.getInstance(mainModule.project).getFirResolveSession(mainModule)
         return projectModules.map(resolveSession::getSessionFor)

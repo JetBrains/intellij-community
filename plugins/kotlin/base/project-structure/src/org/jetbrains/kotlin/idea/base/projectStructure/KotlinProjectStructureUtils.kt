@@ -59,7 +59,30 @@ fun Module.getMainKtSourceModule(): KaSourceModule? {
     return moduleInfo.toKaModuleOfType<KaSourceModule>()
 }
 
-fun Library.getLibraryModules(project: Project): List<KaLibraryModule> {
+fun Module.toKaSourceModuleForTests(): KaSourceModule? {
+    val moduleInfo = testSourceInfo ?: return null
+    return moduleInfo.toKaModuleOfType<KaSourceModule>()
+}
+
+fun Module.toKaSourceModuleForProductionOrTest(): KaSourceModule? {
+    val moduleInfo = productionSourceInfo ?: testSourceInfo ?: return null
+    return moduleInfo.toKaModuleOfType<KaSourceModule>()
+}
+
+@OptIn(Frontend10ApiUsage::class)
+fun KaSourceModule.getSourceModuleKind(): KaSourceModuleRootType? {
+    return when (moduleInfo) {
+        is ModuleProductionSourceInfo -> KaSourceModuleRootType.SOURCE
+        is ModuleTestSourceInfo -> KaSourceModuleRootType.TEST
+        else -> null
+    }
+}
+
+enum class KaSourceModuleRootType {
+    SOURCE, TEST;
+}
+
+fun Library.toKaLibraryModules(project: Project): List<KaLibraryModule> {
     return LibraryInfoCache.getInstance(project)[this].map { it.toKaModuleOfType<KaLibraryModule>() }
 }
 

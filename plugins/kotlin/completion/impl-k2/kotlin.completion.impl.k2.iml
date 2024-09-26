@@ -54,5 +54,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
   </component>
 </module>

@@ -7,9 +7,8 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTests
 
 /**
  * Returns the [KaModule]s for which modification events need to be published when this [Module] is affected.
@@ -20,7 +19,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
  * will already be invalidated.
  */
 fun Module.toKaModulesForModificationEvents(): List<KaModule> =
-    listOfNotNull(productionSourceInfo?.toKaModule(), testSourceInfo?.toKaModule())
+    listOfNotNull(getMainKtSourceModule(), toKaSourceModuleForTests())
 
 /**
  * Publishes an out-of-block modification event for this [KaModule]. Must be called in a write action.

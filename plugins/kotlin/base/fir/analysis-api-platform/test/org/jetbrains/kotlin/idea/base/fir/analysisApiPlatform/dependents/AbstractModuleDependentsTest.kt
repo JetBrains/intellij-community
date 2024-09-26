@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleD
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.base.util.getAsStringList
@@ -32,7 +32,7 @@ abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<Modul
 
         val targetModule = when (entityReference) {
             is TestProjectLibraryReference ->
-                LibraryInfoCache.getInstance(project)[projectLibrariesByName.getValue(entityReference.name)].first().toKaModule()
+                projectLibrariesByName.getValue(entityReference.name).toKaLibraryModules(project).first()
 
             is TestProjectModuleReference ->
                 modulesByName.getValue(entityReference.name).getMainKtSourceModule()!!
