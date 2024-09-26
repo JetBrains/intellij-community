@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ml.embeddings.indexer.CLASS_NAME_EMBEDDING_INDEX_NAME
 import com.intellij.platform.ml.embeddings.indexer.EmbeddingKey
+import com.intellij.platform.ml.embeddings.indexer.FILE_NAME_EMBEDDING_INDEX_NAME
 import com.intellij.platform.ml.embeddings.indexer.IndexId
 import com.intellij.platform.ml.embeddings.indexer.SYMBOL_NAME_EMBEDDING_INDEX_NAME
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
@@ -35,7 +36,7 @@ internal class IndexLongKeyProvider : EmbeddingStorageKeyProvider<Long> {
 
     val index = when (indexId) {
       IndexId.ACTIONS -> return "" // todo
-      IndexId.FILES -> return "" // todo
+      IndexId.FILES -> FILE_NAME_EMBEDDING_INDEX_NAME
       IndexId.CLASSES -> CLASS_NAME_EMBEDDING_INDEX_NAME
       IndexId.SYMBOLS -> SYMBOL_NAME_EMBEDDING_INDEX_NAME
     }

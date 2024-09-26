@@ -91,6 +91,7 @@
     <platform.ml.embeddings.textEmbeddingsConfiguration
       implementation="com.intellij.platform.ml.embeddings.indexer.configuration.NativeServerEmbeddingsConfiguration"/>
 
+    <fileBasedIndex implementation="com.intellij.platform.ml.embeddings.indexer.FileNameEmbeddingIndex"/>
     <fileBasedIndex implementation="com.intellij.platform.ml.embeddings.indexer.ClassNameEmbeddingIndex"/>
     <fileBasedIndex implementation="com.intellij.platform.ml.embeddings.indexer.SymbolNameEmbeddingIndex"/>
   </extensions>

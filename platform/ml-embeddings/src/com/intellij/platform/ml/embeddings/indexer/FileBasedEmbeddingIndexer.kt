@@ -180,7 +180,12 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
         launch { sendEntities(IndexId.SYMBOLS, symbolsChannel) }
 
         if (Registry.`is`("intellij.platform.ml.embeddings.use.file.based.index")) {
-          filesChannel.close() // todo: file names
+          launch {
+            fetchEntities(FILE_NAME_EMBEDDING_INDEX_NAME, filesChannel, project) { key, name ->
+              LongIndexableEntity(key.toLong(), IndexableFile(EntityId(name)))
+            }
+            classesChannel.close()
+          }
           launch {
             fetchEntities(CLASS_NAME_EMBEDDING_INDEX_NAME, classesChannel, project) { key, name ->
               LongIndexableEntity(key.toLong(), IndexableClass(EntityId(name)))

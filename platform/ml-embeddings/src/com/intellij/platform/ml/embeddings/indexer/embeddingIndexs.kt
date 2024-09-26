@@ -11,6 +11,7 @@ import com.intellij.util.io.KeyDescriptor
 import java.io.DataInput
 import java.io.DataOutput
 
+internal val FILE_NAME_EMBEDDING_INDEX_NAME = ID.create<EmbeddingKey, String>("FileNameEmbeddingIndex")
 internal val CLASS_NAME_EMBEDDING_INDEX_NAME = ID.create<EmbeddingKey, String>("ClassNameEmbeddingIndex")
 internal val SYMBOL_NAME_EMBEDDING_INDEX_NAME = ID.create<EmbeddingKey, String>("SymbolNameEmbeddingIndex")
 
@@ -25,6 +26,17 @@ internal class EmbeddingKey(val textHashCode: Int) {
 
 @JvmInline
 value class IndexingItem(val text: String)
+
+internal class FileNameEmbeddingIndex : BaseEmbeddingIndex() {
+  override val fileTypes: Array<FileType>
+    get() = ClassesProvider.supportedFileTypes
+
+  override fun getName(): ID<EmbeddingKey, String> = FILE_NAME_EMBEDDING_INDEX_NAME
+  override fun getVersion(): Int = 1
+  override fun index(psiFile: PsiFile): List<IndexingItem> {
+    return listOf(IndexingItem(psiFile.name))
+  }
+}
 
 internal class ClassNameEmbeddingIndex : BaseEmbeddingIndex() {
   override val fileTypes: Array<FileType>
