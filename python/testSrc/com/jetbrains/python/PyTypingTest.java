@@ -5594,6 +5594,60 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-71002
+  public void testParamSpecDefaultTypeRefersToAnotherParamSpecNewStyle() {
+    doTest("Clazz[[str], [str], [str]]", """
+      class Clazz[**P1, **P2 = P1, **P3 = P2]: ...
+      expr = Clazz[[str]]()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecDefaultTypeRefersToAnotherParamSpecOldStyle() {
+    doTest("Clazz[[str], [str], [str]]", """
+      from typing import Generic, ParamSpec
+      P1 = ParamSpec("P1")
+      P2 = ParamSpec("P2", default=P1)
+      P3 = ParamSpec("P3", default=P2)
+      class Clazz(Generic[P1, P2, P3]): ...
+      expr = Clazz[[str]]()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecDefaultTypeRefersToAnotherParamSpecOldStyleNoExplicit() {
+    doTest("Clazz[[str], [str], [bool, bool], [bool, bool]]", """
+      from typing import Generic, ParamSpec
+      P1 = ParamSpec("P1", default=[str])
+      P2 = ParamSpec("P2", default=P1)
+      P3 = ParamSpec("P3", default=[bool, bool])
+      P4 = ParamSpec("P4", default=P3)
+      class Clazz(Generic[P1, P2, P3, P4]): ...
+      expr = Clazz()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithDefaultInConstructor() {
+    doTest("(int, str, str) -> None | None", """
+      from typing import Generic, ParamSpec, Callable
+      P = ParamSpec("P", default=[int, str, str])
+      class ClassA(Generic[P]):
+          def __init__(self, x: Callable[P, None] = None) -> None:
+              self.x = x
+              ...
+      expr = ClassA().x
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecDefaultTypeRefersToAnotherParamSpecWithEllipsis() {
+    doTest("Clazz[Any, [float], [float]]", """
+      class Clazz[**P1, **P2 = P1, **P3 = P2]: ...
+      expr = Clazz[..., [float]]()
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
