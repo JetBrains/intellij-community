@@ -28,6 +28,7 @@ class EelApiWithPathsNormalization(
       }
     }
 
+    override val workingDirectory: String? = null; get() = field?.let(::normalizeIfPath)
     override val args: List<String> = originalExecApi.args.map(::normalizeIfPath)
     override val env: Map<String, String> = originalExecApi.env.mapValues { (_, value) -> normalizeIfPath(value) }
   }
