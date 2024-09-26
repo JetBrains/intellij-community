@@ -50,7 +50,7 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
     val collector = provider.getCollectorFor(file, editor, settings, sink) ?: error("Collector is expected")
     val collectorWithSettings = CollectorWithSettings(collector, provider.key, file.language, sink)
     collectorWithSettings.collectTraversingAndApply(editor, file, true)
-    return InlayDumpUtil.dumpHintsInternal(sourceText, editor = myFixture.editor, renderer = { renderer, _ ->
+    return InlayDumpUtil.dumpHintsInternal(sourceText, editor = myFixture.editor, renderer = { renderer, _, _ ->
       if (renderer !is PresentationRenderer && renderer !is LinearOrderInlayRenderer<*>) error("renderer not supported")
       renderer.toString()
     })

@@ -24,7 +24,7 @@ object InlayDumpUtil {
     sourceText: String,
     editor: Editor,
     filter: ((Inlay<*>) -> Boolean)? = null,
-    renderer: (EditorCustomElementRenderer, Inlay<*>) -> String = { r, _ -> r.toString() },
+    renderer: (EditorCustomElementRenderer, Inlay<*>, InlayType) -> String = { r, _, _ -> r.toString() },
     // if document has multiple injected files, a proper host offset should be passed
     offsetShift: Int = 0,
     indentBlockInlays: Boolean = false,
@@ -96,13 +96,13 @@ object InlayDumpUtil {
       }
     }
 
-    fun render(r: (EditorCustomElementRenderer, Inlay<*>) -> String): String {
+    fun render(r: (EditorCustomElementRenderer, Inlay<*>, InlayType) -> String): String {
       return buildString {
         append("/*<# ")
         if (type == InlayType.BlockAbove) {
           append("block ")
         }
-        append(r(inlay.renderer, inlay))
+        append(r(inlay.renderer, inlay, type))
         append(" #>*/")
         if (type == InlayType.BlockAbove) {
           append('\n')
@@ -113,7 +113,7 @@ object InlayDumpUtil {
     override fun toString(): String {
       val renderer = inlay.renderer
       if (renderer !is PresentationRenderer && renderer !is LinearOrderInlayRenderer<*>) error("renderer not supported")
-      return render { r, _ -> r.toString() }
+      return render { r, _, _ -> r.toString() }
     }
   }
 

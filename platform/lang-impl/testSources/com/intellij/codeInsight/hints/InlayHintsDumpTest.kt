@@ -114,7 +114,7 @@ class InlayHintsDumpTest : LightPlatformCodeInsightFixture4TestCase() {
       InlayDumpUtil.dumpHintsInternal(
         text,
         editor = myFixture.editor,
-        renderer = { r, _ -> r as DummyInlayRenderer; r.text },
+        renderer = { r, _, _ -> r as DummyInlayRenderer; r.text },
         indentBlockInlays = indentBlockInlays
       )
 

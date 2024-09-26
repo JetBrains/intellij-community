@@ -610,7 +610,7 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
       file.text,
       editor,
       { it.renderer is CodeVisionInlayRenderer },
-      { _, inlay -> inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation } }
+      { _, inlay, _ -> inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation } }
     )
 
     assertEquals(after, actualText)
