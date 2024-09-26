@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.debugger
 
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.SuspendContextImpl
@@ -42,7 +43,7 @@ internal class DebugeeIdeStateRenderer : ExtraDebugNodesProvider {
     catch (_: EvaluateException) {
       return
     }
-    val getStateMethod = supportClass.methodsByName(GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE).singleOrNull() ?: return
+    val getStateMethod = DebuggerUtils.findMethod(supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE) ?: return
     val state = evaluationContext.debugProcess.invokeMethod(evaluationContext, supportClass as ClassType, getStateMethod, emptyList<Value>()) as ObjectReference?
     if (state == null) return
     val stateClass = state.referenceType()
