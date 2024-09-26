@@ -286,8 +286,7 @@ public class Maven40ProjectResolver {
     String dependencyHash = result.getDependencyHash();
     boolean dependencyResolutionSkipped = result.isDependencyResolutionSkipped();
 
-    Collection<MavenProjectProblem> problems = new LinkedHashSet<>();
-    myEmbedder.collectProblems(file, exceptions, modelProblems, problems);
+    Collection<MavenProjectProblem> problems = myEmbedder.collectProblems(file, exceptions, modelProblems);
 
     Collection<MavenProjectProblem> unresolvedProblems = new HashSet<>();
     collectUnresolvedArtifactProblems(file, dependencyResolutionResult, unresolvedProblems);
@@ -306,7 +305,7 @@ public class Maven40ProjectResolver {
         myLocalRepositoryFile);
     }
     catch (Exception e) {
-      myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), modelProblems, problems);
+      problems.addAll(myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), modelProblems));
     }
 
     RemoteNativeMaven40ProjectHolder holder = new RemoteNativeMaven40ProjectHolder(mavenProject);

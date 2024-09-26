@@ -668,9 +668,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   private MavenGoalExecutionResult createEmbedderExecutionResult(@NotNull File file, Maven3ExecutionResult result) {
-    Collection<MavenProjectProblem> problems = new LinkedHashSet<>();
-
-    collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
+    Collection<MavenProjectProblem> problems = collectProblems(file, result.getExceptions(), result.getModelProblems());
 
     MavenGoalExecutionResult.Folders folders = new MavenGoalExecutionResult.Folders();
     MavenProject mavenProject = result.getMavenProject();
@@ -684,12 +682,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     return new MavenGoalExecutionResult(true, file, folders, problems);
   }
 
-  public void collectProblems(@Nullable File file,
-                              @NotNull Collection<? extends Exception> exceptions,
-                              @NotNull List<? extends ModelProblem> modelProblems,
-                              @NotNull Collection<? super MavenProjectProblem> collector) {
+  public Collection<MavenProjectProblem> collectProblems(@Nullable File file,
+                                                         @NotNull Collection<? extends Exception> exceptions,
+                                                         @NotNull List<? extends ModelProblem> modelProblems) {
+    Collection<MavenProjectProblem> problems = new LinkedHashSet<>();
     for (Throwable each : exceptions) {
-      collector.addAll(collectExceptionProblems(file, each));
+      problems.addAll(collectExceptionProblems(file, each));
     }
     for (ModelProblem problem : modelProblems) {
       String source;
@@ -714,12 +712,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       Exception problemException = problem.getException();
       if (problemException != null) {
         myConsoleWrapper.error("Maven model problem", problemException);
-        collector.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage()));
+        problems.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage()));
       }
       else {
-        collector.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage(), true));
+        problems.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage(), true));
       }
     }
+    return problems;
   }
 
   private List<MavenProjectProblem> collectExceptionProblems(@Nullable File file, Throwable ex) {

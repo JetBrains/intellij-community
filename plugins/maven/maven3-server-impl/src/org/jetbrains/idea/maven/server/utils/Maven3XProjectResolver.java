@@ -265,8 +265,7 @@ public class Maven3XProjectResolver {
     String dependencyHash = result.getDependencyHash();
     boolean dependencyResolutionSkipped = result.isDependencyResolutionSkipped();
 
-    Collection<MavenProjectProblem> problems = new LinkedHashSet<>();
-    myEmbedder.collectProblems(file, exceptions, modelProblems, problems);
+    Collection<MavenProjectProblem> problems = myEmbedder.collectProblems(file, exceptions, modelProblems);
 
     if (mavenProject == null) return new MavenServerExecutionResult(null, problems, Collections.emptySet());
 
@@ -281,7 +280,7 @@ public class Maven3XProjectResolver {
         mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), myEmbedder.getLocalRepositoryFile());
     }
     catch (Exception e) {
-      myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), modelProblems, problems);
+      problems.addAll(myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), modelProblems));
     }
 
     RemoteNativeMaven3ProjectHolder holder = new RemoteNativeMaven3ProjectHolder(mavenProject);
