@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
+import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.impl.source.PsiMethodImpl
@@ -137,6 +139,34 @@ class KotlinFirChangeSignatureTest :
             allowAnalysisOnEdt {
                 analyze(fragment) {
                     fragment.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).isNotEmpty()
+                }
+            }
+        )
+    }
+
+    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
+    fun testTypeFragmentErrors() {
+        val psiFile = myFixture.addFileToProject("CommonList.kt", "class CustomList<in T>")
+        val fragment = KtPsiFactory(project).createTypeCodeFragment("", psiFile)
+        val diagnostics = allowAnalysisOnEdt {
+            analyze(fragment) {
+                fragment.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                    .map { it.defaultMessage}
+            }
+        }
+        assertNotEmpty(diagnostics)
+        assertEquals("Unexpected diagnostics number", 1, diagnostics.size)
+        assertEquals("Syntax error: Incomplete code.", diagnostics.first())
+
+        runWriteCommandAction(project) {
+            fragment.containingFile.fileDocument.setText("CustomList<String>")
+            PsiDocumentManager.getInstance(project).commitDocument(fragment.containingFile.fileDocument)
+        }
+
+        assertTrue(
+            allowAnalysisOnEdt {
+                analyze(fragment) {
+                    fragment.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).isEmpty()
                 }
             }
         )
