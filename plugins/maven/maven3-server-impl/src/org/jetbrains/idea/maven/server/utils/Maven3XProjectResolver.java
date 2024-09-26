@@ -199,7 +199,7 @@ public class Maven3XProjectResolver {
               if (myLongRunningTask.isCanceled()) return MavenServerExecutionResult.EMPTY;
               MavenServerExecutionResult result = myTelemetry.callWithSpan(
                 "resolveBuildingResult " + br.buildingResult.getProjectId(), () ->
-                  resolveBuildingResult(repositorySession, addUnresolved, br.buildingResult, br.exceptions, br.dependencyHash));
+                  resolveBuildingResult(repositorySession, addUnresolved, br.buildingResult.getProject(), br.buildingResult.getProblems(), br.exceptions, br.dependencyHash));
               myLongRunningTask.incrementFinishedRequests();
               return result;
             }
@@ -242,17 +242,11 @@ public class Maven3XProjectResolver {
   @NotNull
   private MavenServerExecutionResult resolveBuildingResult(RepositorySystemSession repositorySession,
                                                            boolean addUnresolved,
-                                                           ProjectBuildingResult buildingResult,
+                                                           MavenProject project,
+                                                           @NotNull List<ModelProblem> modelProblems,
                                                            List<Exception> exceptions,
                                                            String dependencyHash) {
-    MavenProject project = buildingResult.getProject();
     try {
-      List<ModelProblem> modelProblems = new ArrayList<>();
-
-      if (buildingResult.getProblems() != null) {
-        modelProblems.addAll(buildingResult.getProblems());
-      }
-
       DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
       Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
       project.setArtifacts(artifacts);
@@ -297,8 +291,8 @@ public class Maven3XProjectResolver {
   @NotNull
   private MavenServerExecutionResult createExecutionResult(@Nullable File file,
                                                            @NotNull List<Exception> exceptions,
-                                                           List<ModelProblem> modelProblems,
-                                                           MavenProject mavenProject,
+                                                           @NotNull List<ModelProblem> modelProblems,
+                                                           @Nullable MavenProject mavenProject,
                                                            DependencyResolutionResult dependencyResolutionResult,
                                                            String dependencyHash,
                                                            boolean dependencyResolutionSkipped) {

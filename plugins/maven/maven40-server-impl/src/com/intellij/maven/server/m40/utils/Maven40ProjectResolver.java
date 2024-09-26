@@ -174,7 +174,7 @@ public class Maven40ProjectResolver {
             if (myLongRunningTask.isCanceled()) return MavenServerExecutionResult.EMPTY;
             MavenServerExecutionResult result = myTelemetry.callWithSpan(
               "resolveBuildingResult " + br.buildingResult.getProjectId(), () ->
-                resolveBuildingResult(session.getRepositorySession(), br.buildingResult, br.exceptions, br.dependencyHash));
+                resolveBuildingResult(session.getRepositorySession(), br.buildingResult.getProject(), br.buildingResult.getProblems(), br.exceptions, br.dependencyHash));
             myLongRunningTask.incrementFinishedRequests();
             return result;
           }
@@ -206,17 +206,11 @@ public class Maven40ProjectResolver {
 
   @NotNull
   private MavenServerExecutionResult resolveBuildingResult(RepositorySystemSession repositorySession,
-                                                           ProjectBuildingResult buildingResult,
+                                                           MavenProject project,
+                                                           @NotNull List<ModelProblem> modelProblems,
                                                            List<Exception> exceptions,
                                                            String dependencyHash) {
-    MavenProject project = buildingResult.getProject();
     try {
-      List<ModelProblem> modelProblems = new ArrayList<>();
-
-      if (buildingResult.getProblems() != null) {
-        modelProblems.addAll(buildingResult.getProblems());
-      }
-
       DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
       Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult);
       project.setArtifacts(artifacts);
@@ -304,9 +298,10 @@ public class Maven40ProjectResolver {
 
   @NotNull
   private MavenServerExecutionResult createExecutionResult(@Nullable File file,
-                                                           List<Exception> exceptions,
-                                                           List<ModelProblem> modelProblems,
-                                                           MavenProject mavenProject, DependencyResolutionResult dependencyResolutionResult,
+                                                           @NotNull List<Exception> exceptions,
+                                                           @NotNull List<ModelProblem> modelProblems,
+                                                           @Nullable MavenProject mavenProject,
+                                                           DependencyResolutionResult dependencyResolutionResult,
                                                            String dependencyHash,
                                                            boolean dependencyResolutionSkipped) {
     if (null != dependencyResolutionResult && null != dependencyResolutionResult.getCollectionErrors()) {
