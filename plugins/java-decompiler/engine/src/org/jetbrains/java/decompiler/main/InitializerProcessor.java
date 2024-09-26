@@ -10,7 +10,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statements;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -97,7 +97,7 @@ public final class InitializerProcessor {
         if (exprent.type == Exprent.EXPRENT_INVOCATION) {
           InvocationExprent invExpr = (InvocationExprent)exprent;
           if (Statements.isInvocationInitConstructor(invExpr, method, wrapper, false)) {
-            List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(invExpr.getClassName(), invExpr.getStringDescriptor(), invExpr.getParameters().size());
+            List<VarVersion> mask = ExprUtil.getSyntheticParametersMask(invExpr.getClassName(), invExpr.getStringDescriptor(), invExpr.getParameters().size());
             boolean hideSuper = true;
 
             //searching for non-synthetic params
@@ -290,7 +290,7 @@ public final class InitializerProcessor {
     for (Exprent expr : lst) {
       switch (expr.type) {
         case Exprent.EXPRENT_VAR -> {
-          VarVersionPair varPair = new VarVersionPair((VarExprent)expr);
+          VarVersion varPair = new VarVersion((VarExprent)expr);
           if (!method.varproc.getExternalVars().contains(varPair)) {
             String varName = method.varproc.getVarName(varPair);
             if (!varName.equals("this") && !varName.endsWith(".this")) { // FIXME: remove direct comparison with strings

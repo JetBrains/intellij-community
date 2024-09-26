@@ -6,7 +6,7 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
 
@@ -84,7 +84,7 @@ public final class MethodDescriptor {
         MethodWrapper methodWrapper = node.getWrapper().getMethodWrapper(struct.getName(), struct.getDescriptor());
         boolean init = CodeConstants.INIT_NAME.equals(struct.getName()) && node.type != ClassNode.CLASS_ANONYMOUS;
         long actualParams = md.params.length;
-        List<VarVersionPair> sigFields = methodWrapper == null ? null : methodWrapper.synthParameters;
+        List<VarVersion> sigFields = methodWrapper == null ? null : methodWrapper.synthParameters;
         if (sigFields != null) {
           actualParams = sigFields.stream().filter(Objects::isNull).count();
         }

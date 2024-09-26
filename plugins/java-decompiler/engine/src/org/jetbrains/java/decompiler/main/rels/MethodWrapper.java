@@ -6,7 +6,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 
 import java.util.HashSet;
@@ -21,7 +21,7 @@ public class MethodWrapper {
   public final Set<String> setOuterVarNames = new HashSet<>();
 
   public DirectGraph graph;
-  public List<VarVersionPair> synthParameters;
+  public List<VarVersion> synthParameters;
   public boolean decompiledWithErrors;
 
   public MethodWrapper(RootStatement root, VarProcessor varproc, StructMethod methodStruct, CounterContainer counter) {

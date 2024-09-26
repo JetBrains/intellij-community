@@ -11,7 +11,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
@@ -83,12 +83,12 @@ public class ClassWrapper {
         else {
           int varIndex = 0;
           if (!mt.hasModifier(CodeConstants.ACC_STATIC)) {
-            varProc.getThisVars().put(new VarVersionPair(0, 0), classStruct.qualifiedName);
-            varProc.setVarName(new VarVersionPair(0, 0), vc.getFreeName(0));
+            varProc.getThisVars().put(new VarVersion(0, 0), classStruct.qualifiedName);
+            varProc.setVarName(new VarVersion(0, 0), vc.getFreeName(0));
             varIndex = 1;
           }
           for (int i = 0; i < md.params.length; i++) {
-            varProc.setVarName(new VarVersionPair(varIndex, 0), vc.getFreeName(varIndex));
+            varProc.setVarName(new VarVersion(varIndex, 0), vc.getFreeName(varIndex));
             varIndex += md.params[i].getStackSize();
           }
         }
@@ -138,10 +138,10 @@ public class ClassWrapper {
         for (int i = varProc.getFirstParameterPosition(); i < entries.size(); i++) {
           StructMethodParametersAttribute.Entry entry = entries.get(i);
           if (entry.myName != null) {
-            varProc.setVarName(new VarVersionPair(index, 0), entry.myName);
+            varProc.setVarName(new VarVersion(index, 0), entry.myName);
           }
           if ((entry.myAccessFlags & CodeConstants.ACC_FINAL) != 0) {
-            varProc.setParameterFinal(new VarVersionPair(index, 0));
+            varProc.setParameterFinal(new VarVersion(index, 0));
           }
           index += md.params[i].getStackSize();
         }

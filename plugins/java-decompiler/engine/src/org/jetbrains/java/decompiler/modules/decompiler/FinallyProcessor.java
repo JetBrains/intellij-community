@@ -28,7 +28,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -139,7 +139,7 @@ public class FinallyProcessor {
 
     List<Exprent> expressions = firstBlockStatement.getExprents();
 
-    VarVersionPair pair = new VarVersionPair((VarExprent)((AssignmentExprent)expressions.get(firstCode == 2 ? 1 : 0)).getLeft());
+    VarVersion pair = new VarVersion((VarExprent)((AssignmentExprent)expressions.get(firstCode == 2 ? 1 : 0)).getLeft());
 
     FlattenStatementsHelper flattenHelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flattenHelper.buildDirectGraph(root);
@@ -179,7 +179,7 @@ public class FinallyProcessor {
 
             boolean found = false;
             for (Exprent expr : lst) {
-              if (expr.type == Exprent.EXPRENT_VAR && new VarVersionPair((VarExprent)expr).equals(pair)) {
+              if (expr.type == Exprent.EXPRENT_VAR && new VarVersion((VarExprent)expr).equals(pair)) {
                 found = true;
                 break;
               }
@@ -207,7 +207,7 @@ public class FinallyProcessor {
             if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
               AssignmentExprent assignment = (AssignmentExprent)exprent;
               if (assignment.getRight().type == Exprent.EXPRENT_VAR &&
-                  new VarVersionPair((VarExprent)assignment.getRight()).equals(pair)) {
+                  new VarVersion((VarExprent)assignment.getRight()).equals(pair)) {
                 Exprent next = null;
                 if (i == node.exprents.size() - 1) {
                   if (node.successors.size() == 1) {

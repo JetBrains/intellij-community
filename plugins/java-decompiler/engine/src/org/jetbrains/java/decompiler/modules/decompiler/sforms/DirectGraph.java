@@ -117,6 +117,13 @@ public class DirectGraph {
     return true;
   }
 
+  /**
+   * Used to iterate over all exprents, including nested ones.
+   *
+   * @param itr the {@link ExprentIterator} used to process each expression.
+   * @return {@code true} if the iteration was successful within the provided constraints (itr doesn't return 1),
+   *         {@code false} otherwise.
+   */
   public boolean iterateExprentsDeep(ExprentIterator itr) {
     return iterateExprents(exprent -> {
       List<Exprent> lst = exprent.getAllExprents(true);

@@ -7,7 +7,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.HashSet;
@@ -134,7 +134,7 @@ public class PPandMMHelper {
               exprentReplaced = true;
 
               if (!left.equals(econd)) {
-                updateVersions(this.dgraph, new VarVersionPair((VarExprent)left), new VarVersionPair((VarExprent)econd));
+                updateVersions(this.dgraph, new VarVersion((VarExprent)left), new VarVersion((VarExprent)econd));
               }
 
               return ret;
@@ -168,7 +168,7 @@ public class PPandMMHelper {
   }
 
 
-  private static void updateVersions(DirectGraph graph, final VarVersionPair oldVVP, final VarVersionPair newVVP) {
+  private static void updateVersions(DirectGraph graph, final VarVersion oldVVP, final VarVersion newVVP) {
     graph.iterateExprents(new DirectGraph.ExprentIterator() {
       @Override
       public int processExprent(Exprent exprent) {

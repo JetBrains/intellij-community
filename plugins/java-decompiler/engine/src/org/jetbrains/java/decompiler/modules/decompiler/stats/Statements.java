@@ -6,7 +6,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 
 public final class Statements {
   public static Statement findFirstData(Statement stat) {
@@ -26,7 +26,7 @@ public final class Statements {
   public static boolean isInvocationInitConstructor(InvocationExprent inv, MethodWrapper method, ClassWrapper wrapper, boolean withThis) {
     if (inv.getFuncType() == InvocationExprent.TYPE_INIT && inv.getInstance().type == Exprent.EXPRENT_VAR) {
       VarExprent instVar = (VarExprent)inv.getInstance();
-      VarVersionPair varPair = new VarVersionPair(instVar);
+      VarVersion varPair = new VarVersion(instVar);
       String className = method.varproc.getThisVars().get(varPair);
       if (className != null) { // any this instance. TODO: Restrict to current class?
         return withThis || !wrapper.getClassStruct().qualifiedName.equals(inv.getClassName());

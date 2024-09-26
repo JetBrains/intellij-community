@@ -2,7 +2,7 @@
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
@@ -88,7 +88,7 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
     return localVariables.stream().anyMatch(v -> Objects.equals(v.name, name));
   }
 
-  public Map<VarVersionPair, String> getMapNames() {
+  public Map<VarVersion, String> getMapNames() {
     return localVariables.stream().collect(Collectors.toMap(v -> v.version, v -> v.name, (n1, n2) -> n2));
   }
 
@@ -101,7 +101,7 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
       Integer version = indexVersion.get(var.index);
       version = version == null ? 1 : version++;
       indexVersion.put(var.index, version);
-      var.version = new VarVersionPair(var.index, version.intValue());
+      var.version = new VarVersion(var.index, version.intValue());
     }
   }
 
@@ -116,7 +116,7 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
     final String descriptor;
     final int index;
     private String signature;
-    private VarVersionPair version;
+    private VarVersion version;
 
     private LocalVariable(int start_pc, int length, String name, String descriptor, int index) {
       this.start_pc = start_pc;
@@ -124,7 +124,7 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
       this.name = name;
       this.descriptor = descriptor;
       this.index = index;
-      this.version = new VarVersionPair(index, 0);
+      this.version = new VarVersion(index, 0);
     }
 
     @Override
@@ -154,7 +154,7 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
       return start_pc + length;
     }
 
-    public VarVersionPair getVersion() {
+    public VarVersion getVersion() {
       return version;
     }
 

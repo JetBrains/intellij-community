@@ -13,7 +13,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.ClasspathHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
@@ -273,7 +273,7 @@ public class InvocationExprent extends Exprent {
 
       if (instance != null && instance.type == EXPRENT_VAR) {
         VarExprent instVar = (VarExprent)instance;
-        VarVersionPair varPair = new VarVersionPair(instVar);
+        VarVersion varPair = new VarVersion(instVar);
 
         VarProcessor varProc = instVar.getProcessor();
         if (varProc == null) {
@@ -375,7 +375,7 @@ public class InvocationExprent extends Exprent {
       }
     }
 
-    List<VarVersionPair> mask = null;
+    List<VarVersion> mask = null;
     boolean isEnum = false;
     if (funcType == TYPE_INIT) {
       ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(className);

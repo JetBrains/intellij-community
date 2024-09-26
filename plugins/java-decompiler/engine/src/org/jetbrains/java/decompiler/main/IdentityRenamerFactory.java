@@ -3,7 +3,7 @@ package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.main.extern.IVariableNameProvider;
 import org.jetbrains.java.decompiler.main.extern.IVariableNamingFactory;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 
 import java.util.Map;
@@ -15,7 +15,7 @@ public class IdentityRenamerFactory implements IVariableNamingFactory, IVariable
   }
 
   @Override
-  public Map<VarVersionPair, String> rename(Map<VarVersionPair, String> variables) {
+  public Map<VarVersion, String> rename(Map<VarVersion, String> variables) {
     return null;
   }
 

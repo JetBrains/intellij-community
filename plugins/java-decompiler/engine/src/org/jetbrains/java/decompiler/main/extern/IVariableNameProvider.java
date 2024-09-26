@@ -2,12 +2,12 @@
 package org.jetbrains.java.decompiler.main.extern;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 
 import java.util.Map;
 
 public interface IVariableNameProvider {
-  Map<VarVersionPair,String> rename(Map<VarVersionPair, String> variables);
+  Map<VarVersion,String> rename(Map<VarVersion, String> variables);
 
   default String renameAbstractParameter(String name, int index) {
      return name;

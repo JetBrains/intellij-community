@@ -4,7 +4,7 @@ package org.jetbrains.java.decompiler.util;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.extern.IVariableNameProvider;
 import org.jetbrains.java.decompiler.main.extern.IVariableNamingFactory;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -87,7 +87,7 @@ public class JADNameProvider implements IVariableNameProvider {
   }
 
   @Override
-  public Map<VarVersionPair,String> rename(Map<VarVersionPair, String> entries) {
+  public Map<VarVersion,String> rename(Map<VarVersion, String> entries) {
     int params = 0;
     if ((this.method.getAccessFlags() & CodeConstants.ACC_STATIC) != CodeConstants.ACC_STATIC) {
       params++;
@@ -98,11 +98,11 @@ public class JADNameProvider implements IVariableNameProvider {
       params += param.getStackSize();
     }
 
-    List<VarVersionPair> keys = new ArrayList<>(entries.keySet());
+    List<VarVersion> keys = new ArrayList<>(entries.keySet());
     Collections.sort(keys, (o1, o2) -> (o1.var != o2.var) ? o1.var - o2.var : o1.version - o2.version);
 
-    Map<VarVersionPair, String> result = new LinkedHashMap<>();
-    for (VarVersionPair ver : keys) {
+    Map<VarVersion, String> result = new LinkedHashMap<>();
+    for (VarVersion ver : keys) {
       String type = cleanType(entries.get(ver));
       if ("this".equals(type)) {
         continue;

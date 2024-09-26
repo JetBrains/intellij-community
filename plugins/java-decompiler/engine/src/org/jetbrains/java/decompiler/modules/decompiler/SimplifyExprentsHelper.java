@@ -12,7 +12,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.sforms.SSAConstructorSpa
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
@@ -549,7 +549,7 @@ public class SimplifyExprentsHelper {
 
         NewExprent newExpr = (NewExprent)as.getRight();
         VarType newType = newExpr.getNewType();
-        VarVersionPair leftPair = new VarVersionPair((VarExprent)as.getLeft());
+        VarVersion leftPair = new VarVersion((VarExprent)as.getLeft());
 
         if (newType.getType() == CodeConstants.TYPE_OBJECT && newType.getArrayDim() == 0 && newExpr.getConstructor() == null) {
           for (int i = index + 1; i < list.size(); i++) {
@@ -572,7 +572,7 @@ public class SimplifyExprentsHelper {
             }
 
             // check for variable in use
-            Set<VarVersionPair> setVars = remote.getAllVariables();
+            Set<VarVersion> setVars = remote.getAllVariables();
             if (setVars.contains(leftPair)) { // variable used somewhere in between -> exit, need a better reduced code
               return false;
             }
@@ -665,7 +665,7 @@ public class SimplifyExprentsHelper {
               if (ifVar.getIndex() == elseVar.getIndex() && ifVar.isStack()) { // ifVar.getIndex() >= VarExprent.STACK_BASE) {
                 boolean found = false;
 
-                for (Entry<VarVersionPair, FastSparseSet<Integer>> ent : ssa.getPhi().entrySet()) {
+                for (Entry<VarVersion, FastSparseSet<Integer>> ent : ssa.getPhi().entrySet()) {
                   if (ent.getKey().var == ifVar.getIndex()) {
                     if (ent.getValue().contains(ifVar.getVersion()) && ent.getValue().contains(elseVar.getVersion())) {
                       found = true;

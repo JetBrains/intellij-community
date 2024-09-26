@@ -8,9 +8,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionNode;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionsGraph;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -45,13 +45,13 @@ public class SSAUConstructorSparseEx {
   private final HashMap<Integer, Integer> lastversion = new HashMap<>();
 
   // version, protected ranges (catch, finally)
-  private final HashMap<VarVersionPair, Integer> mapVersionFirstRange = new HashMap<>();
+  private final HashMap<VarVersion, Integer> mapVersionFirstRange = new HashMap<>();
 
   // version, version
-  private final HashMap<VarVersionPair, VarVersionPair> phantomppnodes = new HashMap<>(); // ++ and --
+  private final HashMap<VarVersion, VarVersion> phantomppnodes = new HashMap<>(); // ++ and --
 
   // node.id, version, version
-  private final HashMap<String, HashMap<VarVersionPair, VarVersionPair>> phantomexitnodes =
+  private final HashMap<String, HashMap<VarVersion, VarVersion>> phantomexitnodes =
     new HashMap<>(); // finally exits
 
   // versions memory dependencies
@@ -254,7 +254,7 @@ public class SSAUConstructorSparseEx {
         mapFieldVars.put(expr.id, index);
 
         // ssu graph
-        ssuversions.createNode(new VarVersionPair(index, 1));
+        ssuversions.createNode(new VarVersion(index, 1));
       }
 
       setCurrentVar(varmap, index, 1);
@@ -296,13 +296,13 @@ public class SSAUConstructorSparseEx {
         varassign.setVersion(nextver);
 
         // ssu graph
-        ssuversions.createNode(new VarVersionPair(varindex, nextver));
+        ssuversions.createNode(new VarVersion(varindex, nextver));
 
         setCurrentVar(varmap, varindex, nextver);
       }
       else {
         if (calcLiveVars) {
-          varMapToGraph(new VarVersionPair(varindex.intValue(), varassign.getVersion()), varmap);
+          varMapToGraph(new VarVersion(varindex.intValue(), varassign.getVersion()), varmap);
         }
         setCurrentVar(varmap, varindex, varassign.getVersion());
       }
@@ -315,14 +315,14 @@ public class SSAUConstructorSparseEx {
           if (func.getLstOperands().get(0).type == Exprent.EXPRENT_VAR) {
             VarExprent var = (VarExprent)func.getLstOperands().get(0);
             Integer varindex = var.getIndex();
-            VarVersionPair varpaar = new VarVersionPair(varindex.intValue(), var.getVersion());
+            VarVersion varpaar = new VarVersion(varindex.intValue(), var.getVersion());
 
             // ssu graph
-            VarVersionPair phantomver = phantomppnodes.get(varpaar);
+            VarVersion phantomver = phantomppnodes.get(varpaar);
             if (phantomver == null) {
               // get next version
               Integer nextver = getNextFreeVersion(varindex, null);
-              phantomver = new VarVersionPair(varindex, nextver);
+              phantomver = new VarVersion(varindex, nextver);
               //ssuversions.createOrGetNode(phantomver);
               ssuversions.createNode(phantomver);
 
@@ -362,7 +362,7 @@ public class SSAUConstructorSparseEx {
       if (cardinality == 1) { // size == 1
         if (current_vers != 0) {
           if (calcLiveVars) {
-            varMapToGraph(new VarVersionPair(varindex, current_vers), varmap);
+            varMapToGraph(new VarVersion(varindex, current_vers), varmap);
           }
           setCurrentVar(varmap, varindex, current_vers);
         }
@@ -376,8 +376,8 @@ public class SSAUConstructorSparseEx {
 
           // ssu graph
           Integer lastver = vers.iterator().next();
-          VarVersionNode prenode = ssuversions.nodes.getWithKey(new VarVersionPair(varindex, lastver));
-          VarVersionNode usenode = ssuversions.createNode(new VarVersionPair(varindex, usever));
+          VarVersionNode prenode = ssuversions.nodes.getWithKey(new VarVersion(varindex, lastver));
+          VarVersionNode usenode = ssuversions.createNode(new VarVersion(varindex, usever));
           VarVersionEdge edge = new VarVersionEdge(VarVersionEdge.EDGE_GENERAL, prenode, usenode);
           prenode.addSuccessor(edge);
           usenode.addPredecessor(edge);
@@ -387,7 +387,7 @@ public class SSAUConstructorSparseEx {
 
         if (current_vers != 0) {
           if (calcLiveVars) {
-            varMapToGraph(new VarVersionPair(varindex, current_vers), varmap);
+            varMapToGraph(new VarVersion(varindex, current_vers), varmap);
           }
           setCurrentVar(varmap, varindex, current_vers);
         }
@@ -398,19 +398,19 @@ public class SSAUConstructorSparseEx {
           vardest.setVersion(usever);
 
           // ssu node
-          ssuversions.createNode(new VarVersionPair(varindex, usever));
+          ssuversions.createNode(new VarVersion(varindex, usever));
 
           setCurrentVar(varmap, varindex, usever);
 
           current_vers = usever;
         }
 
-        createOrUpdatePhiNode(new VarVersionPair(varindex, current_vers), vers, stat);
+        createOrUpdatePhiNode(new VarVersion(varindex, current_vers), vers, stat);
       } // vers.size() == 0 means uninitialized variable, which is impossible
     }
   }
 
-  private void createOrUpdatePhiNode(VarVersionPair phivar, FastSparseSet<Integer> vers, Statement stat) {
+  private void createOrUpdatePhiNode(VarVersion phivar, FastSparseSet<Integer> vers, Statement stat) {
 
     FastSparseSet<Integer> versCopy = vers.getCopy();
 
@@ -440,18 +440,18 @@ public class SSAUConstructorSparseEx {
     }
 
     List<VarVersionNode> colnodes = new ArrayList<>();
-    List<VarVersionPair> colpaars = new ArrayList<>();
+    List<VarVersion> colpaars = new ArrayList<>();
 
     for (Integer ver : versCopy) {
 
-      VarVersionNode prenode = ssuversions.nodes.getWithKey(new VarVersionPair(phivar.var, ver.intValue()));
+      VarVersionNode prenode = ssuversions.nodes.getWithKey(new VarVersion(phivar.var, ver.intValue()));
 
       Integer tempver = getNextFreeVersion(phivar.var, stat);
 
       VarVersionNode tempnode = new VarVersionNode(phivar.var, tempver);
 
       colnodes.add(tempnode);
-      colpaars.add(new VarVersionPair(phivar.var, tempver.intValue()));
+      colpaars.add(new VarVersion(phivar.var, tempver.intValue()));
 
       VarVersionEdge edge = new VarVersionEdge(VarVersionEdge.EDGE_GENERAL, prenode, tempnode);
 
@@ -467,9 +467,9 @@ public class SSAUConstructorSparseEx {
     ssuversions.addNodes(colnodes, colpaars);
   }
 
-  private void varMapToGraph(VarVersionPair varpaar, SFormsFastMapDirect varmap) {
+  private void varMapToGraph(VarVersion varpaar, SFormsFastMapDirect varmap) {
 
-    VBStyleCollection<VarVersionNode, VarVersionPair> nodes = ssuversions.nodes;
+    VBStyleCollection<VarVersionNode, VarVersion> nodes = ssuversions.nodes;
 
     VarVersionNode node = nodes.getWithKey(varpaar);
 
@@ -492,7 +492,7 @@ public class SSAUConstructorSparseEx {
     if (stat != null) { // null iff phantom version
       Integer firstRangeId = getFirstProtectedRange(stat);
       if (firstRangeId != null) {
-        mapVersionFirstRange.put(new VarVersionPair(var, nextver), firstRangeId);
+        mapVersionFirstRange.put(new VarVersion(var, nextver), firstRangeId);
       }
     }
 
@@ -613,7 +613,7 @@ public class SSAUConstructorSparseEx {
         if (!mapTrueSource.isEmpty() && !mapNew.isEmpty()) { // FIXME: what for??
 
           // replace phi versions with corresponding phantom ones
-          HashMap<VarVersionPair, VarVersionPair> mapPhantom = phantomexitnodes.get(predid);
+          HashMap<VarVersion, VarVersion> mapPhantom = phantomexitnodes.get(predid);
           if (mapPhantom == null) {
             mapPhantom = new HashMap<>();
           }
@@ -625,17 +625,17 @@ public class SSAUConstructorSparseEx {
             for (Integer version : ent.getValue()) {
 
               Integer varindex = ent.getKey();
-              VarVersionPair exitvar = new VarVersionPair(varindex, version);
+              VarVersion exitvar = new VarVersion(varindex, version);
               FastSparseSet<Integer> newSet = mapNew.get(varindex);
 
               // remove the actual exit version
               newSet.remove(version);
 
               // get or create phantom version
-              VarVersionPair phantomvar = mapPhantom.get(exitvar);
+              VarVersion phantomvar = mapPhantom.get(exitvar);
               if (phantomvar == null) {
                 Integer newversion = getNextFreeVersion(exitvar.var, null);
-                phantomvar = new VarVersionPair(exitvar.var, newversion.intValue());
+                phantomvar = new VarVersion(exitvar.var, newversion.intValue());
 
                 VarVersionNode exitnode = ssuversions.nodes.getWithKey(exitvar);
                 VarVersionNode phantomnode = ssuversions.createNode(phantomvar);
@@ -724,7 +724,7 @@ public class SSAUConstructorSparseEx {
 
           extraVarVersions.put(dgraph.nodes.getWithKey(flatthelper.getMapDestinationNodes().get(stat.getStats().get(i).id)[0]).id, map);
           //ssuversions.createOrGetNode(new VarVersionPair(varindex, version));
-          ssuversions.createNode(new VarVersionPair(varindex, version));
+          ssuversions.createNode(new VarVersion(varindex, version));
         }
       }
     }
@@ -749,7 +749,7 @@ public class SSAUConstructorSparseEx {
       FastSparseSet<Integer> set = factory.spawnEmptySet();
       set.add(version);
       map.put(varindex, set);
-      ssuversions.createNode(new VarVersionPair(varindex, version));
+      ssuversions.createNode(new VarVersion(varindex, version));
 
       if (thisvar) {
         if (i == 0) {
@@ -798,7 +798,7 @@ public class SSAUConstructorSparseEx {
     return ssuversions;
   }
 
-  public SFormsFastMapDirect getLiveVarVersionsMap(VarVersionPair varpaar) {
+  public SFormsFastMapDirect getLiveVarVersionsMap(VarVersion varpaar) {
 
 
     VarVersionNode node = ssuversions.nodes.getWithKey(varpaar);
@@ -809,7 +809,7 @@ public class SSAUConstructorSparseEx {
     return null;
   }
 
-  public HashMap<VarVersionPair, Integer> getMapVersionFirstRange() {
+  public HashMap<VarVersion, Integer> getMapVersionFirstRange() {
     return mapVersionFirstRange;
   }
 

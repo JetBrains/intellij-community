@@ -10,7 +10,7 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
@@ -109,14 +109,14 @@ public abstract class Exprent implements IMatchable {
     return list;
   }
 
-  public Set<VarVersionPair> getAllVariables() {
+  public Set<VarVersion> getAllVariables() {
     List<Exprent> lstAllExprents = getAllExprents(true);
     lstAllExprents.add(this);
 
-    Set<VarVersionPair> set = new HashSet<>();
+    Set<VarVersion> set = new HashSet<>();
     for (Exprent expr : lstAllExprents) {
       if (expr.type == EXPRENT_VAR) {
-        set.add(new VarVersionPair((VarExprent)expr));
+        set.add(new VarVersion((VarExprent)expr));
       }
     }
     return set;

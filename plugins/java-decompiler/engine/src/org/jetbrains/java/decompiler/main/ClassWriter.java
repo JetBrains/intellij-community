@@ -18,7 +18,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.typeann.TargetInfo;
 import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotation;
 import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWriteHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
 import org.jetbrains.java.decompiler.struct.*;
 import org.jetbrains.java.decompiler.struct.attr.*;
@@ -139,7 +139,7 @@ public class ClassWriter {
                 buffer.append(' ');
               }
 
-              String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
+              String parameterName = methodWrapper.varproc.getVarName(new VarVersion(index, 0));
               if (parameterName == null) {
                 parameterName = "param" + index; // null iff decompiled with errors
               }
@@ -831,7 +831,7 @@ public class ClassWriter {
         if (!compact) {
         buffer.append('(');
 
-        List<VarVersionPair> mask = methodWrapper.synthParameters;
+        List<VarVersion> mask = methodWrapper.synthParameters;
 
         int lastVisibleParameterIndex = -1;
         for (int i = 0; i < md.params.length; i++) {
@@ -856,7 +856,7 @@ public class ClassWriter {
             if (descriptor != null) paramType = descriptor.parameterTypes.get(paramCount); else paramType = md.params[i];
             appendParameterAnnotations(buffer, mt, paramType, paramCount);
 
-            VarVersionPair pair = new VarVersionPair(index, 0);
+            VarVersion pair = new VarVersion(index, 0);
             if (methodWrapper.varproc.isParameterFinal(pair) ||
                 methodWrapper.varproc.getVarFinal(pair) == VarProcessor.VAR_EXPLICIT_FINAL) {
               buffer.append("final ");
@@ -1174,7 +1174,7 @@ public class ClassWriter {
             buffer.append(typeName);
             buffer.append(" ");
 
-            String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
+            String parameterName = methodWrapper.varproc.getVarName(new VarVersion(index, 0));
             if (parameterName == null) {
               parameterName = "param" + index; // null iff decompiled with errors
             }

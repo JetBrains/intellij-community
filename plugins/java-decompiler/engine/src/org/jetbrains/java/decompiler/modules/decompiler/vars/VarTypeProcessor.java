@@ -25,9 +25,9 @@ public class VarTypeProcessor {
   private final StructMethod method;
   private final MethodDescriptor methodDescriptor;
 
-  private final Map<VarVersionPair, VarType> minExprentTypes = new HashMap<>();
-  private final Map<VarVersionPair, VarType> maxExprentTypes = new HashMap<>();
-  private final Map<VarVersionPair, Integer> finalVariables = new HashMap<>();
+  private final Map<VarVersion, VarType> minExprentTypes = new HashMap<>();
+  private final Map<VarVersion, VarType> maxExprentTypes = new HashMap<>();
+  private final Map<VarVersion, Integer> finalVariables = new HashMap<>();
 
   public VarTypeProcessor(@NotNull StructMethod method, @NotNull MethodDescriptor methodDescriptor) {
     this.method = method;
@@ -47,14 +47,14 @@ public class VarTypeProcessor {
     if (thisVar) {
       StructClass currentClass = (StructClass)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS);
       VarType classType = new VarType(CodeConstants.TYPE_OBJECT, 0, currentClass.qualifiedName);
-      minExprentTypes.put(new VarVersionPair(0, 1), classType);
-      maxExprentTypes.put(new VarVersionPair(0, 1), classType);
+      minExprentTypes.put(new VarVersion(0, 1), classType);
+      maxExprentTypes.put(new VarVersion(0, 1), classType);
     }
     int varIndex = 0;
     VarType[] methodParameters = methodDescriptor.params;
     for (VarType parameter : methodParameters) {
-      minExprentTypes.put(new VarVersionPair(varIndex + (thisVar ? 1 : 0), 1), parameter);
-      maxExprentTypes.put(new VarVersionPair(varIndex + (thisVar ? 1 : 0), 1), parameter);
+      minExprentTypes.put(new VarVersion(varIndex + (thisVar ? 1 : 0), 1), parameter);
+      maxExprentTypes.put(new VarVersion(varIndex + (thisVar ? 1 : 0), 1), parameter);
       varIndex += parameter.getStackSize();
     }
   }
@@ -73,8 +73,8 @@ public class VarTypeProcessor {
       }
       if (catchVariables != null) {
         for (VarExprent catchVariable : catchVariables) {
-          minExprentTypes.put(new VarVersionPair(catchVariable.getIndex(), 1), catchVariable.getVarType());
-          maxExprentTypes.put(new VarVersionPair(catchVariable.getIndex(), 1), catchVariable.getVarType());
+          minExprentTypes.put(new VarVersion(catchVariable.getIndex(), 1), catchVariable.getVarType());
+          maxExprentTypes.put(new VarVersion(catchVariable.getIndex(), 1), catchVariable.getVarType());
         }
       }
       statements.addAll(statement.getStats());
@@ -88,7 +88,7 @@ public class VarTypeProcessor {
     if (currentExprent.type == Exprent.EXPRENT_CONST) {
       ConstExprent constExprent = (ConstExprent)currentExprent;
       if (constExprent.getConstType().getTypeFamily() <= CodeConstants.TYPE_FAMILY_INTEGER) { // boolean or integer
-        VarVersionPair varVersion = new VarVersionPair(constExprent.id, -1);
+        VarVersion varVersion = new VarVersion(constExprent.id, -1);
         if (!minExprentTypes.containsKey(varVersion)) {
           minExprentTypes.put(varVersion, constExprent.getConstType());
         }
@@ -125,10 +125,10 @@ public class VarTypeProcessor {
           newType = integerType;
         }
       }
-      return changeConstExprentType(new VarVersionPair(exprent.id, -1), exprent, newType, checkMinExprentType);
+      return changeConstExprentType(new VarVersion(exprent.id, -1), exprent, newType, checkMinExprentType);
     }
     if (exprent.type == Exprent.EXPRENT_VAR) {
-      return changeConstExprentType(new VarVersionPair((VarExprent)exprent), exprent, newType, checkMinExprentType);
+      return changeConstExprentType(new VarVersion((VarExprent)exprent), exprent, newType, checkMinExprentType);
     }
     if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
       return changeExprentType(((AssignmentExprent)exprent).getRight(), newType, checkMinExprentType);
@@ -149,7 +149,7 @@ public class VarTypeProcessor {
     return true;
   }
 
-  private boolean changeConstExprentType(@NotNull VarVersionPair varVersion,
+  private boolean changeConstExprentType(@NotNull VarVersion varVersion,
                                          @NotNull Exprent exprent,
                                          @NotNull VarType newType,
                                          boolean checkMinExprentType) {
@@ -194,8 +194,8 @@ public class VarTypeProcessor {
       for (Exprent exprent : allExprents) {
         if (exprent.type == Exprent.EXPRENT_VAR) {
           VarExprent ve = (VarExprent)exprent;
-          if (ve.getLVT() != null) {
-            ve.setVarType(ve.getLVT().getVarType());
+          if (ve.getLVItem() != null) {
+            ve.setVarType(ve.getLVItem().getVarType());
           } else {
             ve.setVarType(VarType.VARTYPE_UNKNOWN);
           }
@@ -211,23 +211,23 @@ public class VarTypeProcessor {
     });
   }
 
-  public Map<VarVersionPair, VarType> getMaxExprentTypes() {
+  public Map<VarVersion, VarType> getMaxExprentTypes() {
     return maxExprentTypes;
   }
 
-  public Map<VarVersionPair, VarType> getMinExprentTypes() {
+  public Map<VarVersion, VarType> getMinExprentTypes() {
     return minExprentTypes;
   }
 
-  public Map<VarVersionPair, Integer> getFinalVariables() {
+  public Map<VarVersion, Integer> getFinalVariables() {
     return finalVariables;
   }
 
-  public VarType getVarType(VarVersionPair pair) {
+  public VarType getVarType(VarVersion pair) {
     return minExprentTypes.get(pair);
   }
 
-  public void setVarType(VarVersionPair pair, VarType type) {
+  public void setVarType(VarVersion pair, VarType type) {
     minExprentTypes.put(pair, type);
   }
 }

@@ -14,7 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.DotExporter;
@@ -40,7 +40,7 @@ public class SSAConstructorSparseEx {
   private final HashMap<String, SFormsFastMapDirect> extraVarVersions = new HashMap<>();
 
   // (var, version), version
-  private final HashMap<VarVersionPair, FastSparseSet<Integer>> phi = new HashMap<>();
+  private final HashMap<VarVersion, FastSparseSet<Integer>> phi = new HashMap<>();
 
   // var, version
   private final HashMap<Integer, Integer> lastversion = new HashMap<>();
@@ -250,7 +250,7 @@ public class SSAConstructorSparseEx {
       else if (cardinality == 2) { // size > 1
         Integer current_vers = vardest.getVersion();
 
-        VarVersionPair currpaar = new VarVersionPair(varindex, current_vers);
+        VarVersion currpaar = new VarVersion(varindex, current_vers);
         if (current_vers != 0 && phi.containsKey(currpaar)) {
           setCurrentVar(varmap, varindex, current_vers);
           // update phi node
@@ -264,7 +264,7 @@ public class SSAConstructorSparseEx {
 
           setCurrentVar(varmap, varindex, nextver);
           // create new phi node
-          phi.put(new VarVersionPair(varindex, nextver), vers);
+          phi.put(new VarVersion(varindex, nextver), vers);
         }
       } // 0 means uninitialized variable, which is impossible
     }
@@ -501,7 +501,7 @@ public class SSAConstructorSparseEx {
     return map;
   }
 
-  public HashMap<VarVersionPair, FastSparseSet<Integer>> getPhi() {
+  public HashMap<VarVersion, FastSparseSet<Integer>> getPhi() {
     return phi;
   }
 }

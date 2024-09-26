@@ -61,7 +61,7 @@ public class VarDefinitionHelper {
     int varindex = 0;
     for (int i = 0; i < paramcount; i++) {
       implDefVars.add(varindex);
-      VarVersionPair vpp = new VarVersionPair(varindex, 0);
+      VarVersion vpp = new VarVersion(varindex, 0);
       varproc.setVarName(vpp, vc.getFreeName(varindex));
 
       if (thisvar) {
@@ -80,8 +80,8 @@ public class VarDefinitionHelper {
     if (thisvar) {
       StructClass current_class = (StructClass)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS);
 
-      varproc.getThisVars().put(new VarVersionPair(0, 0), current_class.qualifiedName);
-      varproc.setVarName(new VarVersionPair(0, 0), "this");
+      varproc.getThisVars().put(new VarVersion(0, 0), current_class.qualifiedName);
+      varproc.setVarName(new VarVersion(0, 0), "this");
       vc.addName("this");
     }
 
@@ -109,7 +109,7 @@ public class VarDefinitionHelper {
       if (lstVars != null) {
         for (VarExprent var : lstVars) {
           implDefVars.add(var.getIndex());
-          VarVersionPair pair = new VarVersionPair(var);
+          VarVersion pair = new VarVersion(var);
           String name = varproc.getAssignedVarName(pair);
           if (varproc.getVarName(pair) == null) {
             if (name != null) {
@@ -142,7 +142,7 @@ public class VarDefinitionHelper {
       }
 
 
-      VarVersionPair pair = new VarVersionPair(index.intValue(), 0);
+      VarVersion pair = new VarVersion(index.intValue(), 0);
       String name = varproc.getAssignedVarName(pair);
       if (name != null) {
         varproc.setVarName(pair, name);
@@ -218,7 +218,7 @@ public class VarDefinitionHelper {
       }
 
       if (!defset) {
-        VarExprent var = new VarExprent(index, varproc.getVarType(new VarVersionPair(index.intValue(), 0)), varproc);
+        VarExprent var = new VarExprent(index, varproc.getVarType(new VarVersion(index.intValue(), 0)), varproc);
         var.setDefinition(true);
 
         LocalVariable lvt = findLVT(index.intValue(), stat);
@@ -280,7 +280,7 @@ public class VarDefinitionHelper {
     }
 
     VarExprent var = (VarExprent)exp;
-    return var.getIndex() == index ? var.getLVT() : null;
+    return var.getIndex() == index ? var.getLVItem() : null;
   }
 
   private Statement findFirstBlock(Statement stat, Integer varindex) {
@@ -422,8 +422,8 @@ public class VarDefinitionHelper {
   }
 
   private void populateTypeBounds() {
-    Map<VarVersionPair, VarType> mapExprentMinTypes = varproc.getVarVersions().getTypeProcessor().getMinExprentTypes();
-    Map<VarVersionPair, VarType> mapExprentMaxTypes = varproc.getVarVersions().getTypeProcessor().getMaxExprentTypes();
+    Map<VarVersion, VarType> mapExprentMinTypes = varproc.getVarVersions().getTypeProcessor().getMinExprentTypes();
+    Map<VarVersion, VarType> mapExprentMaxTypes = varproc.getVarVersions().getTypeProcessor().getMaxExprentTypes();
     LinkedList<Statement> stack = new LinkedList<>();
     stack.add(root);
 
@@ -459,7 +459,7 @@ public class VarDefinitionHelper {
                   continue; //This is dirty, but if we don't then too many things become object...
 
               if (instance != null && instance.type == Exprent.EXPRENT_VAR) {
-                VarVersionPair key = ((VarExprent)instance).getVarVersionPair();
+                VarVersion key = ((VarExprent)instance).getVarVersionPair();
                 VarType newType = new VarType(CodeConstants.TYPE_OBJECT, 0, target);
                 VarType oldMin = mapExprentMinTypes.get(key);
                 VarType oldMax = mapExprentMaxTypes.get(key);
@@ -497,22 +497,22 @@ public class VarDefinitionHelper {
   }
 
   private void mergeVars(Statement stat) {
-    Map<Integer, VarVersionPair> parent = new HashMap<>(); // Always empty dua!
+    Map<Integer, VarVersion> parent = new HashMap<>(); // Always empty dua!
     MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 
     int index = 0;
     if (!mt.hasModifier(CodeConstants.ACC_STATIC)) {
-      parent.put(index, new VarVersionPair(index++, 0));
+      parent.put(index, new VarVersion(index++, 0));
     }
 
     for (VarType var : md.params) {
-      parent.put(index, new VarVersionPair(index, 0));
+      parent.put(index, new VarVersion(index, 0));
       index += var.getStackSize();
     }
 
     populateTypeBounds();
 
-    Map<VarVersionPair, VarVersionPair> blacklist = new HashMap<>();
+    Map<VarVersion, VarVersion> blacklist = new HashMap<>();
     VPPEntry remap = mergeVars(stat, parent, new HashMap<>(), blacklist);
     while (remap != null) {
       //System.out.println("Remapping: " + remap.getKey() + " -> " + remap.getValue());
@@ -524,8 +524,8 @@ public class VarDefinitionHelper {
   }
 
 
-  private VPPEntry mergeVars(Statement stat, Map<Integer, VarVersionPair> parent, Map<Integer, VarVersionPair> leaked, Map<VarVersionPair, VarVersionPair> blacklist) {
-    Map<Integer, VarVersionPair> this_vars = new HashMap<>();
+  private VPPEntry mergeVars(Statement stat, Map<Integer, VarVersion> parent, Map<Integer, VarVersion> leaked, Map<VarVersion, VarVersion> blacklist) {
+    Map<Integer, VarVersion> this_vars = new HashMap<>();
     if (!parent.isEmpty())
       this_vars.putAll(parent);
 
@@ -539,13 +539,13 @@ public class VarDefinitionHelper {
             stat.getVarDefinitions().remove(x);
             return new VPPEntry(var, this_vars.get(index));
           }
-          this_vars.put(index, new VarVersionPair(var));
-          leaked.put(index, new VarVersionPair(var));
+          this_vars.put(index, new VarVersion(var));
+          leaked.put(index, new VarVersion(var));
         }
       }
     }
 
-    Map<Integer, VarVersionPair> scoped = switch (stat.type) { // These are the type of statements that leak vars
+    Map<Integer, VarVersion> scoped = switch (stat.type) { // These are the type of statements that leak vars
       case BASIC_BLOCK, GENERAL, ROOT, SEQUENCE -> leaked;
       default -> null;
     };
@@ -557,7 +557,7 @@ public class VarDefinitionHelper {
         if (obj instanceof Statement st) {
 
           //Map<VarVersionPair, VarVersionPair> blacklist_n = new HashMap<VarVersionPair, VarVersionPair>();
-          Map<Integer, VarVersionPair> leaked_n = new HashMap<>();
+          Map<Integer, VarVersion> leaked_n = new HashMap<>();
           VPPEntry remap = mergeVars(st, this_vars, leaked_n, blacklist);
 
           if (remap != null) {
@@ -624,7 +624,7 @@ public class VarDefinitionHelper {
     return null; // We made it with no remaps!!!!!!!
   }
 
-  private VPPEntry processExprent(Exprent exp, Map<Integer, VarVersionPair> this_vars, Map<Integer, VarVersionPair> leaked, Map<VarVersionPair, VarVersionPair> blacklist) {
+  private VPPEntry processExprent(Exprent exp, Map<Integer, VarVersion> this_vars, Map<Integer, VarVersion> leaked, Map<VarVersion, VarVersion> blacklist) {
     VarExprent var = null;
 
     if (exp.type == Exprent.EXPRENT_ASSIGNMENT) {
@@ -648,24 +648,24 @@ public class VarDefinitionHelper {
     }
 
     int index = varproc.getVarOriginalIndex(var.getIndex());
-    VarVersionPair new_ = this_vars.get(index);
+    VarVersion new_ = this_vars.get(index);
     if (new_ != null) {
-      VarVersionPair old = new VarVersionPair(var);
-      VarVersionPair black = blacklist.get(old);
+      VarVersion old = new VarVersion(var);
+      VarVersion black = blacklist.get(old);
       if (black == null || !black.equals(new_)) {
         return new VPPEntry(var, this_vars.get(index));
       }
     }
-    this_vars.put(index, new VarVersionPair(var));
+    this_vars.put(index, new VarVersion(var));
 
     if (leaked != null) {
-      leaked.put(index, new VarVersionPair(var));
+      leaked.put(index, new VarVersion(var));
     }
 
     return null;
   }
 
-  private boolean remapVar(Statement stat, VarVersionPair from, VarVersionPair to) {
+  private boolean remapVar(Statement stat, VarVersion from, VarVersion to) {
     if (from.equals(to))
       throw new IllegalArgumentException("Something went wrong: " + from);
     boolean success = false;
@@ -723,7 +723,7 @@ public class VarDefinitionHelper {
     return success;
   }
 
-  private boolean remapVar(Exprent exprent, VarVersionPair from, VarVersionPair to) {
+  private boolean remapVar(Exprent exprent, VarVersion from, VarVersion to) {
     if (exprent == null) { // Sometimes there are null exprents?
       return false;
     }
@@ -736,7 +736,7 @@ public class VarDefinitionHelper {
       if (expr.type == Exprent.EXPRENT_ASSIGNMENT) {
         AssignmentExprent ass = (AssignmentExprent)expr;
         if (ass.getLeft().type == Exprent.EXPRENT_VAR && ass.getRight().type == Exprent.EXPRENT_CONST) {
-          VarVersionPair left = new VarVersionPair((VarExprent)ass.getLeft());
+          VarVersion left = new VarVersion((VarExprent)ass.getLeft());
           if (!left.equals(from) && !left.equals(to)) {
             continue;
           }
@@ -755,7 +755,7 @@ public class VarDefinitionHelper {
       }
       else if (expr.type == Exprent.EXPRENT_VAR) {
         VarExprent var = (VarExprent)expr;
-        VarVersionPair old = new VarVersionPair(var);
+        VarVersion old = new VarVersion(var);
         if (!old.equals(from)) {
           continue;
         }
@@ -777,9 +777,9 @@ public class VarDefinitionHelper {
     return remapped;
   }
 
-  private VarType getMergedType(VarVersionPair from, VarVersionPair to) {
-    Map<VarVersionPair, VarType> minTypes = varproc.getVarVersions().getTypeProcessor().getMinExprentTypes();
-    Map<VarVersionPair, VarType> maxTypes = varproc.getVarVersions().getTypeProcessor().getMaxExprentTypes();
+  private VarType getMergedType(VarVersion from, VarVersion to) {
+    Map<VarVersion, VarType> minTypes = varproc.getVarVersions().getTypeProcessor().getMinExprentTypes();
+    Map<VarVersion, VarType> maxTypes = varproc.getVarVersions().getTypeProcessor().getMaxExprentTypes();
     return getMergedType(minTypes.get(from), minTypes.get(to), maxTypes.get(from), maxTypes.get(to));
   }
 
@@ -821,14 +821,14 @@ public class VarDefinitionHelper {
 
   private void propogateLVTs(Statement stat) {
     MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
-    Map<VarVersionPair, VarInfo> types = new LinkedHashMap<>();
+    Map<VarVersion, VarInfo> types = new LinkedHashMap<>();
 
     if (varproc.hasLVT()) {
       int index = 0;
       if (!mt.hasModifier(CodeConstants.ACC_STATIC)) {
         List<LocalVariable> lvt = varproc.getCandidates(index); // Some enums give incomplete lvts?
         if (lvt != null && !lvt.isEmpty()) {
-          types.put(new VarVersionPair(index, 0), new VarInfo(lvt.get(0), null));
+          types.put(new VarVersion(index, 0), new VarInfo(lvt.get(0), null));
         }
         index++;
       }
@@ -836,7 +836,7 @@ public class VarDefinitionHelper {
       for (VarType var : md.params) {
         List<LocalVariable> lvt = varproc.getCandidates(index); // Some enums give incomplete lvts?
         if (lvt != null && !lvt.isEmpty()) {
-          types.put(new VarVersionPair(index, 0), new VarInfo(lvt.get(0), null));
+          types.put(new VarVersion(index, 0), new VarInfo(lvt.get(0), null));
         }
         index += var.getStackSize();
       }
@@ -844,13 +844,13 @@ public class VarDefinitionHelper {
 
     findTypes(stat, types);
 
-    Map<VarVersionPair,String> typeNames = new LinkedHashMap<>();
-    for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
+    Map<VarVersion,String> typeNames = new LinkedHashMap<>();
+    for (Entry<VarVersion, VarInfo> e : types.entrySet()) {
       typeNames.put(e.getKey(), e.getValue().getCast());
     }
 
 
-    Map<VarVersionPair, String> renames = this.mt.getVariableNamer().rename(typeNames);
+    Map<VarVersion, String> renames = this.mt.getVariableNamer().rename(typeNames);
 
     // Stuff the parent context into enclosed child methods
     StatementIterator.iterate(root, (exprent) -> {
@@ -896,10 +896,10 @@ public class VarDefinitionHelper {
       }
     }
 
-    Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
+    Map<VarVersion, LocalVariable> lvts = new HashMap<>();
 
-    for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
-      VarVersionPair idx = e.getKey();
+    for (Entry<VarVersion, VarInfo> e : types.entrySet()) {
+      VarVersion idx = e.getKey();
       // skip this. we can't rename it
       if (idx.var == 0 && !mt.hasModifier(CodeConstants.ACC_STATIC)) {
         continue;
@@ -924,7 +924,7 @@ public class VarDefinitionHelper {
     applyTypes(stat, lvts);
   }
 
-  private static void findTypes(Statement stat, Map<VarVersionPair, VarInfo> types) {
+  private static void findTypes(Statement stat, Map<VarVersion, VarInfo> types) {
     if (stat == null) {
       return;
     }
@@ -950,29 +950,29 @@ public class VarDefinitionHelper {
     }
   }
 
-  private static void findTypes(Exprent exp, Map<VarVersionPair, VarInfo> types) {
+  private static void findTypes(Exprent exp, Map<VarVersion, VarInfo> types) {
     List<Exprent> lst = exp.getAllExprents(true);
     lst.add(exp);
 
     for (Exprent exprent : lst) {
       if (exprent.type == Exprent.EXPRENT_VAR) {
         VarExprent var = (VarExprent)exprent;
-        VarVersionPair ver = new VarVersionPair(var);
+        VarVersion ver = new VarVersion(var);
         if (var.isDefinition()) {
-          types.put(ver, new VarInfo(var.getLVT(), var.getVarType()));
+          types.put(ver, new VarInfo(var.getLVItem(), var.getVarType()));
         } else {
           VarInfo existing = types.get(ver);
           if (existing == null)
-            existing = new VarInfo(var.getLVT(), var.getVarType());
-          else if (existing.getLVT() == null && var.getLVT() != null)
-            existing = new VarInfo(var.getLVT(), existing.getType());
+            existing = new VarInfo(var.getLVItem(), var.getVarType());
+          else if (existing.getLVT() == null && var.getLVItem() != null)
+            existing = new VarInfo(var.getLVItem(), existing.getType());
           types.put(ver, existing);
         }
       }
     }
   }
 
-  private static void applyTypes(Statement stat, Map<VarVersionPair, LocalVariable> types) {
+  private static void applyTypes(Statement stat, Map<VarVersion, LocalVariable> types) {
     if (stat == null || types.isEmpty()) {
       return;
     }
@@ -998,7 +998,7 @@ public class VarDefinitionHelper {
     }
   }
 
-  private static void applyTypes(Exprent exprent, Map<VarVersionPair, LocalVariable> types) {
+  private static void applyTypes(Exprent exprent, Map<VarVersion, LocalVariable> types) {
     if (exprent == null) {
       return;
     }
@@ -1008,7 +1008,7 @@ public class VarDefinitionHelper {
     for (Exprent expr : lst) {
       if (expr.type == Exprent.EXPRENT_VAR) {
         VarExprent var = (VarExprent)expr;
-        LocalVariable lvt = types.get(new VarVersionPair(var));
+        LocalVariable lvt = types.get(new VarVersion(var));
         if (lvt != null) {
           var.setLVT(lvt);
         }
@@ -1033,9 +1033,9 @@ public class VarDefinitionHelper {
       return tmp;
     }
   }
-  private static class VPPEntry extends SimpleEntry<VarVersionPair, VarVersionPair> {
-    private VPPEntry(VarExprent key, VarVersionPair value) {
-        super(new VarVersionPair(key), value);
+  private static class VPPEntry extends SimpleEntry<VarVersion, VarVersion> {
+    private VPPEntry(VarExprent key, VarVersion value) {
+        super(new VarVersion(key), value);
     }
   }
 
@@ -1070,7 +1070,7 @@ public class VarDefinitionHelper {
     }
   }
 
-  private static boolean isVarReadFirst(VarVersionPair var, Statement stat, int index, VarExprent... whitelist) {
+  private static boolean isVarReadFirst(VarVersion var, Statement stat, int index, VarExprent... whitelist) {
     if (stat.getExprents() == null) {
       List<Object> objs = stat.getSequentialObjects();
       for (int x = index; x < objs.size(); x++) {
@@ -1097,7 +1097,7 @@ public class VarDefinitionHelper {
     return false;
   }
 
-  private static boolean isVarReadFirst(VarVersionPair target, Exprent exp, VarExprent... whitelist) {
+  private static boolean isVarReadFirst(VarVersion target, Exprent exp, VarExprent... whitelist) {
     AssignmentExprent ass = exp.type == Exprent.EXPRENT_ASSIGNMENT ? (AssignmentExprent)exp : null;
     List<Exprent> lst = exp.getAllExprents(true);
     lst.add(exp);

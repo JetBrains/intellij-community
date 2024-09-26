@@ -8,7 +8,7 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
@@ -429,7 +429,7 @@ public final class TryHelper
     }
 
     if (exit != null && exit.getValue() != null && exit.getValue().type == Exprent.EXPRENT_VAR) {
-      VarVersionPair returnVar = ((VarExprent) exit.getValue()).getVarVersionPair();
+      VarVersion returnVar = ((VarExprent) exit.getValue()).getVarVersionPair();
       if (!statement.getAllPredecessorEdges().isEmpty()) {
         StatEdge edge = statement.getAllPredecessorEdges().get(0);
         Statement ret = edge.getSource();
@@ -438,7 +438,7 @@ public final class TryHelper
           if (last.type == Exprent.EXPRENT_ASSIGNMENT) {
             AssignmentExprent assignment = (AssignmentExprent) last;
             if (assignment.getLeft().type == Exprent.EXPRENT_VAR) {
-              VarVersionPair assigned = ((VarExprent) assignment.getLeft()).getVarVersionPair();
+              VarVersion assigned = ((VarExprent) assignment.getLeft()).getVarVersionPair();
               if (returnVar.var == assigned.var) {
                 exit.replaceExprent(exit.getValue(), assignment.getRight());
                 ret.getExprents().set(ret.getExprents().size() - 1, exit);
