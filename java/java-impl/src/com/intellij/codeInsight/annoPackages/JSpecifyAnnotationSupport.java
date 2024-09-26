@@ -37,17 +37,12 @@ public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport
         return null;
       }
     }
-    PsiType targetType = null;
-    if (context instanceof PsiMethod) {
-      targetType = ((PsiMethod)context).getReturnType();
-    }
-    else if (context instanceof PsiVariable) {
-      targetType = ((PsiVariable)context).getType();
-    }
+    PsiType targetType = context instanceof PsiMethod method ? method.getReturnType() :
+                         context instanceof PsiVariable variable ? variable.getType() : null;
     if (PsiUtil.resolveClassInClassTypeOnly(targetType) instanceof PsiTypeParameter) return null;
     return new NullabilityAnnotationInfo(anno, nullability, true);
   }
-  
+
   @Override
   public @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return switch (nullability) {
