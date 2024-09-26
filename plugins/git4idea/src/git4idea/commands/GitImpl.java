@@ -248,7 +248,8 @@ public class GitImpl extends GitImplBase {
   @Override
   public @NotNull GitCommandResult stashSave(@NotNull GitRepository repository, @NotNull String message) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.STASH);
-    h.addParameters("save");
+    h.addParameters("push");
+    h.addParameters("-m");
     h.addParameters(message);
     return runCommand(h);
   }
