@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl
 
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.core.CoreFileTypeRegistry
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.application.ApplicationManager
@@ -74,9 +73,7 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
     }
     val previousFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
     try {
-      resetThreadContext().use {
-        fileDialog.isVisible = true
-      }
+      fileDialog.isVisible = true
     }
     finally {
       if (commandProcessor != null) {

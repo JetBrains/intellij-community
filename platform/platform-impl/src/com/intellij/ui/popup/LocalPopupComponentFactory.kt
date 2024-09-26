@@ -119,11 +119,7 @@ open class LocalPopupComponentFactory: PopupComponentFactory {
       if (window != null) {
         fixFlickering(window, false)
       }
-      // `resetThreadContext` here is needed because `show` runs eventloop
-      // IJPL-161712
-      resetThreadContext().use {
-        popup.show()
-      }
+      popup.show()
       if (window != null) {
         fixFlickering(window, true)
         if (window is JWindow) {

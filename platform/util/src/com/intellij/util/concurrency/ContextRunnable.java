@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.concurrency.ThreadContext;
+import com.intellij.openapi.application.AccessToken;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +23,9 @@ final class ContextRunnable implements Runnable {
   @Async.Execute
   @Override
   public void run() {
-    myContext.runInChildContext(myRunnable);
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      myContext.runInChildContext(myRunnable);
+    }
   }
 
   public Runnable getDelegate() {
