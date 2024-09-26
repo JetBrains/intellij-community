@@ -27,7 +27,7 @@ class ShelfTree internal constructor(project: Project) : AsyncChangesTree(projec
   override val changesTreeModel: AsyncChangesTreeModel = ShelfTreeAsyncModel(project, scope)
   private val deleteProvider: DeleteProvider = ShelveDeleteProvider(myProject, this)
 
-  var selectedChanges: List<ShelvedWrapper> = mutableListOf()
+  var selectedChanges: List<ShelvedWrapper> = listOf()
     set(value) {
       field = value.toList()
     }

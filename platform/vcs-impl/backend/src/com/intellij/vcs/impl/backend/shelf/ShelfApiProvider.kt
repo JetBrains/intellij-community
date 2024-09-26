@@ -42,6 +42,11 @@ class BackendShelfApi : RemoteShelfApi {
     ShelfTreeHolder.getInstance(project).showDiff(changeListDto)
   }
 
+  override suspend fun notifyNodeSelected(projectId: EID, changeListDto: ChangeListDto) {
+    val project = getProject(projectId) ?: return
+    ShelfTreeHolder.getInstance(project).updateSelection(changeListDto)
+  }
+
   private suspend fun getProject(projectId: EID): Project? {
     return serviceAsync<ProjectManager>().openProjects.firstOrNull()
   }

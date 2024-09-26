@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.frontend.changes
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Processor
@@ -15,6 +17,7 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_ENTER
 import java.awt.event.MouseEvent
+import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultTreeModel
 
 @Suppress("LeakingThis")
@@ -55,6 +58,11 @@ open class ChangesTree(val project: Project, val showCheckboxes: Boolean, val hi
 
   fun getRoot(): ChangesBrowserRootNode {
     return model.root as ChangesBrowserRootNode
+  }
+
+  fun addSelectionListener(parent: Disposable? = null, listener: TreeSelectionListener) {
+    addTreeSelectionListener(listener)
+    if (parent != null) Disposer.register(parent) { removeTreeSelectionListener(listener) }
   }
 }
 

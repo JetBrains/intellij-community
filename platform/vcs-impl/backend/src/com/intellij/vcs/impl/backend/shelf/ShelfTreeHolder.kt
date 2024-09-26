@@ -25,6 +25,7 @@ import fleet.kernel.sharedRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.swing.tree.TreePath
 
 @Service(Service.Level.PROJECT)
 class ShelfTreeHolder(project: Project, val cs: CoroutineScope) : Disposable {
@@ -85,19 +86,32 @@ class ShelfTreeHolder(project: Project, val cs: CoroutineScope) : Disposable {
     return entity
   }
 
-  fun showDiff(changeListDto: ChangeListDto) {
+  private fun findChangesInTree(changeListDto: ChangeListDto): List<ShelvedChangeNode> {
     val changeListNode = TreeUtil.treeTraverser(tree)
                            .bfsTraversal()
                            .find { (it as ChangesBrowserNode<*>).getUserData(ENTITY_ID_KEY) == changeListDto.changeList } as? ChangesBrowserNode<*>
-                         ?: return
+                         ?: return emptyList()
     val selectedChanges = changeListNode.traverse().filter(ShelvedChangeNode::class.java).filter {
       val changeRef = it.getUserData(ENTITY_ID_KEY) as? SharedRef<*> ?: return@filter false
       return@filter changeListDto.changes.contains(changeRef)
-    }.map { it.shelvedChange }.toList()
+    }
+    return selectedChanges.toList()
+  }
 
-    tree.selectedChanges = selectedChanges
+  fun showDiff(changeListDto: ChangeListDto) {
+    val selectedChanges = findChangesInTree(changeListDto)
+
+    tree.selectedChanges = selectedChanges.map { it.shelvedChange }
     cs.launch(Dispatchers.EDT) {
       diffPreview.performDiffAction()
+    }
+  }
+
+  fun updateSelection(changeListDto: ChangeListDto) {
+    val selectedChanges = findChangesInTree(changeListDto)
+    tree.selectedChanges = selectedChanges.map { it.shelvedChange }
+    cs.launch(Dispatchers.EDT) {
+      tree.selectionModel.selectionPaths = selectedChanges.map { TreePath(it.path) }.toTypedArray() //wa to call TreeHandlerChangesTreeTracker.updatePreview()
     }
   }
 

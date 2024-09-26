@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
 interface RemoteShelfApi : RemoteApi<Unit> {
   suspend fun loadChangesAsync(projectId: EID)
   suspend fun showDiffForChanges(projectId: EID, changeListDto: ChangeListDto)
+  suspend fun notifyNodeSelected(projectId: EID, changeListDto: ChangeListDto)
 }
 
 @Serializable
