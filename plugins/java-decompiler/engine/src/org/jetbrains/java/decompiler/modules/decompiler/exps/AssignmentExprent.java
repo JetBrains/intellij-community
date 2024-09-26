@@ -166,7 +166,7 @@ public class AssignmentExprent extends Exprent {
   }
 
   @Override
-  public void getBytecodeRange(@Nullable BitSet values) {
+  public void fillBytecodeRange(@Nullable BitSet values) {
     measureBytecode(values, left);
     measureBytecode(values, right);
     measureBytecode(values);

@@ -526,15 +526,15 @@ public final class MergeHelper {
 
         InvocationExprent holder = (InvocationExprent)(initExprents[0]).getRight();
 
-        initExprents[0].getBytecodeRange(holder.getInstance().bytecode);
-        holder.getBytecodeRange(holder.getInstance().bytecode);
-        firstDoExprent.getBytecodeRange(firstDoExprent.getLeft().bytecode);
-        firstDoExprent.getRight().getBytecodeRange(firstDoExprent.getLeft().bytecode);
+        initExprents[0].fillBytecodeRange(holder.getInstance().bytecode);
+        holder.fillBytecodeRange(holder.getInstance().bytecode);
+        firstDoExprent.fillBytecodeRange(firstDoExprent.getLeft().bytecode);
+        firstDoExprent.getRight().fillBytecodeRange(firstDoExprent.getLeft().bytecode);
         if (stat.getIncExprent() != null) {
-          stat.getIncExprent().getBytecodeRange(holder.getInstance().bytecode);
+          stat.getIncExprent().fillBytecodeRange(holder.getInstance().bytecode);
         }
         if (stat.getInitExprent() != null) {
-          stat.getInitExprent().getBytecodeRange(firstDoExprent.getLeft().bytecode);
+          stat.getInitExprent().fillBytecodeRange(firstDoExprent.getLeft().bytecode);
         }
 
         stat.setLoopType(DoStatement.LoopType.FOREACH);
@@ -551,9 +551,9 @@ public final class MergeHelper {
           if (copy.getIndex() == inc.getIndex() && copy.getVersion() == inc.getVersion() &&
               !inc.isVarReferenced(stat.getTopParent(), copy) && !isNextCall(initExprents[1].getRight())) {
             preData.getExprents().remove(initExprents[1]);
-            initExprents[1].getBytecodeRange(initExprents[1].getRight().bytecode);
+            initExprents[1].fillBytecodeRange(initExprents[1].getRight().bytecode);
             if (stat.getIncExprent() == null) return false;
-            stat.getIncExprent().getBytecodeRange(initExprents[1].getRight().bytecode);
+            stat.getIncExprent().fillBytecodeRange(initExprents[1].getRight().bytecode);
             stat.setIncExprent(initExprents[1].getRight());
           }
         }

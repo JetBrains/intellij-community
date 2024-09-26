@@ -840,7 +840,7 @@ public abstract class Statement implements IMatchable {
       values.or(((DummyExitStatement)this).bytecode);
     if (this.getExprents() != null) {
       for (Exprent e : this.getExprents()) {
-        e.getBytecodeRange(values);
+        e.fillBytecodeRange(values);
       }
     } else {
       for (Object obj : this.getSequentialObjects()) {
@@ -849,7 +849,7 @@ public abstract class Statement implements IMatchable {
         } else if (obj instanceof Statement) {
           ((Statement)obj).getOffset(values);
         } else if (obj instanceof Exprent) {
-          ((Exprent)obj).getBytecodeRange(values);
+          ((Exprent)obj).fillBytecodeRange(values);
         }
       }
     }

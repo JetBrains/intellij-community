@@ -110,7 +110,7 @@ public class ArrayExprent extends Exprent {
   }
 
   @Override
-  public void getBytecodeRange(@Nullable BitSet values) {
+  public void fillBytecodeRange(@Nullable BitSet values) {
     measureBytecode(values, array);
     measureBytecode(values, index);
     measureBytecode(values);

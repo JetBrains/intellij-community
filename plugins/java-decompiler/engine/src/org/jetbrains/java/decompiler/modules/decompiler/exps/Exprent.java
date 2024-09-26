@@ -156,7 +156,11 @@ public abstract class Exprent implements IMatchable {
     }
   }
 
-  public abstract void getBytecodeRange(@Nullable BitSet values);
+  /**
+   * Fills the given BitSet with bytecode range data.
+   * This bytecode data represents bytecode offset which is used to map with source lines
+   */
+  public abstract void fillBytecodeRange(@Nullable BitSet values);
 
   protected void measureBytecode(@Nullable BitSet values) {
     if (bytecode != null && values != null)
@@ -165,13 +169,13 @@ public abstract class Exprent implements IMatchable {
 
   protected static void measureBytecode(@Nullable BitSet values, @Nullable Exprent exprent) {
     if (exprent != null)
-      exprent.getBytecodeRange(values);
+      exprent.fillBytecodeRange(values);
   }
 
   protected static void measureBytecode(@Nullable BitSet values, @Nullable List<? extends Exprent> list) {
     if (list != null && !list.isEmpty()) {
       for (Exprent e : list)
-        e.getBytecodeRange(values);
+        e.fillBytecodeRange(values);
     }
   }
 

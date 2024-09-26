@@ -123,13 +123,13 @@ public class SwitchExprent extends Exprent {
   }
 
   @Override
-  public void getBytecodeRange(@Nullable BitSet values) {
+  public void fillBytecodeRange(@Nullable BitSet values) {
     if (caseValues != null && !caseValues.isEmpty()) {
       for (List<Exprent> l : caseValues) {
         if (l != null && !l.isEmpty()) {
           for (Exprent e : l) {
             if (e != null)
-              e.getBytecodeRange(values);
+              e.fillBytecodeRange(values);
           }
         }
       }

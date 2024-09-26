@@ -237,7 +237,7 @@ public final class CatchStatement extends Statement {
     super.getOffset(values);
 
     for (Exprent exp : this.getResources()) {
-      exp.getBytecodeRange(values);
+      exp.fillBytecodeRange(values);
     }
   }
 

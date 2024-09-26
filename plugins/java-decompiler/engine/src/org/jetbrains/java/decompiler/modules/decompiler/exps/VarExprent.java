@@ -237,7 +237,7 @@ public class VarExprent extends Exprent {
   }
 
   @Override
-  public void getBytecodeRange(@Nullable BitSet values) {
+  public void fillBytecodeRange(@Nullable BitSet values) {
     measureBytecode(values);
   }
 

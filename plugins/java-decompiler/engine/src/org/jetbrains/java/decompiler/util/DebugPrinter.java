@@ -75,7 +75,7 @@ public final class DebugPrinter {
       StringBuilder sb = new StringBuilder();
       sb.append(indent);
       BitSet values = new BitSet();
-      exp.getBytecodeRange(values);
+      exp.fillBytecodeRange(values);
       sb.append("(").append(values.nextSetBit(0)).append(", ").append(values.length()-1).append(") ");
       sb.append(exp.getClass().getSimpleName());
       sb.append(" ").append(exp.id).append(" ");

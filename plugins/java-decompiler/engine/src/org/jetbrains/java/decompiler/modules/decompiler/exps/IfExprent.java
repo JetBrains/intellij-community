@@ -133,7 +133,7 @@ public class IfExprent extends Exprent {
   }
 
   @Override
-  public void getBytecodeRange(@Nullable BitSet values) {
+  public void fillBytecodeRange(@Nullable BitSet values) {
     measureBytecode(values, condition);
     measureBytecode(values);
   }
