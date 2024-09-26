@@ -38,7 +38,6 @@ public abstract class ImportLayoutPanel extends JPanel {
   private final JBCheckBox myCbLayoutStaticImportsSeparately =
     new JBCheckBox(JavaBundle.message("import.layout.static.imports.separately"));
   private final JBTable myImportLayoutTable;
-  private final ImportLayoutPanelUI myUI;
 
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
 
@@ -87,7 +86,7 @@ public abstract class ImportLayoutPanel extends JPanel {
     });
 
     ActionGroup addGroup = new DefaultActionGroup(new AddPackageAction(), new AddBlankLineAction());
-    addGroup.getTemplatePresentation().setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
+    addGroup.getTemplatePresentation().setIcon(AllIcons.General.Add);
     addGroup.getTemplatePresentation().setText(JavaBundle.messagePointer("button.add"));
     addGroup.getTemplatePresentation().setPopupGroup(true);
     addGroup.registerCustomShortcutSet(CommonShortcuts.getNewForDialogs(), null);
@@ -109,8 +108,8 @@ public abstract class ImportLayoutPanel extends JPanel {
       .setPreferredSize(new Dimension(-1, JBUI.scale(180)))
       .createPanel();
 
-    myUI = new ImportLayoutPanelUI(myCbLayoutStaticImportsSeparately, importLayoutPanel);
-    add(myUI.getPanel(), BorderLayout.CENTER);
+    final ImportLayoutPanelUI UI = new ImportLayoutPanelUI(myCbLayoutStaticImportsSeparately, importLayoutPanel);
+    add(UI.getPanel(), BorderLayout.CENTER);
   }
 
   private class AddPackageAction extends DumbAwareAction {
