@@ -24,8 +24,9 @@ class JavaShellCommandSpecsProviderTest : BasePlatformTestCase() {
     val fixture = ShellCompletionTestFixture.builder(project).mockShellCommandResults { _ ->
       return@mockShellCommandResults ShellCommandResult.create("", exitCode = 1)
     }.build()
-    assertSameElements(fixture.getCompletionNames(), listOf("-?", "-help", "-h", "-jar", "-D", "-version", "-classpath", "-cp", "-showversion",
-                                                            "-dsa", "-enablesystemassertions", "-esa", "-disablesystemassertions", "-ea", "-enableassertions", "-da", "-disableassertions", "-agentlib", "-agentpath", "-javaagent"))
+    assertSameElements(fixture.getCompletionNames(), listOf("-ea", "-enableassertions", "-da", "-disableassertions", "-esa", "-enablesystemassertions",
+                                                            "-dsa", "-disablesystemassertions", "-agentpath:", "-agentlib:", "-javaagent:",
+                                                            "-D", "-XX:", "-?", "-help", "-h", "-jar", "-version", "-classpath", "-cp", "-showversion"))
   }
 
   @Test
