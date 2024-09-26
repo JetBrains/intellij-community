@@ -4,7 +4,6 @@ package com.intellij.gradle.toolingExtension.impl.util;
 import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Task;
-import org.gradle.api.file.RegularFile;
 import org.gradle.api.internal.DynamicObjectAware;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.plugins.ExtensionContainer;
@@ -54,14 +53,14 @@ public final class GradleTaskUtil {
 
   public static @NotNull File getTaskArchiveFile(@NotNull AbstractArchiveTask task) {
     if (is51OrBetter) {
-      return GradleReflectionUtil.reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile();
+      return task.getArchiveFile().get().getAsFile();
     }
     return GradleReflectionUtil.reflectiveCall(task, "getArchivePath", File.class);
   }
 
   public static @NotNull String getTaskArchiveFileName(@NotNull AbstractArchiveTask task) {
     if (is51OrBetter) {
-      return GradleReflectionUtil.reflectiveGetProperty(task, "getArchiveFileName", String.class);
+      return task.getArchiveFileName().get();
     }
     return GradleReflectionUtil.reflectiveCall(task, "getArchiveName", String.class);
   }
