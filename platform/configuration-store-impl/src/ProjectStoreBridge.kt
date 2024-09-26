@@ -17,6 +17,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
@@ -89,24 +90,36 @@ private class JpsStorageContentWriter(
   override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     if (FileUtilRt.extensionEquals(filePath, "iml")) {
-      session.setModuleComponentState(imlFilePath = filePath, componentName = componentName, componentTag = componentTag)
+      saveInternalFileModuleComponent(filePath, componentName, componentTag)
     }
     else if (isExternalModuleFile(filePath)) {
-      session.setExternalModuleComponentState(
-        moduleFileName = FileUtilRt.getNameWithoutExtension(PathUtilRt.getFileName(filePath)),
-        componentName = componentName,
-        componentTag = componentTag,
-      )
+      saveExternalFileModuleComponent(filePath, componentName, componentTag)
     }
     else {
-      val stateStorage = getProjectStateStorage(filePath = filePath, store = store, project = project)
-      val producer = session.getProducer(stateStorage)
-      if (producer is DirectoryBasedSaveSessionProducer) {
-        producer.setFileState(fileName = PathUtilRt.getFileName(filePath), componentName = componentName, element = componentTag?.children?.first())
-      }
-      else {
-        producer?.setState(component = null, componentName = componentName, pluginId = PluginManagerCore.CORE_ID, state = componentTag)
-      }
+      saveNonModuleComponent(filePath, componentName, componentTag)
+    }
+  }
+
+  private fun saveInternalFileModuleComponent(filePath: @NlsSafe String, componentName: String, componentTag: Element?) {
+    session.setModuleComponentState(imlFilePath = filePath, componentName = componentName, componentTag = componentTag)
+  }
+
+  private fun saveExternalFileModuleComponent(filePath: @NlsSafe String, componentName: String, componentTag: Element?) {
+    session.setExternalModuleComponentState(
+      moduleFileName = FileUtilRt.getNameWithoutExtension(PathUtilRt.getFileName(filePath)),
+      componentName = componentName,
+      componentTag = componentTag,
+    )
+  }
+
+  private fun saveNonModuleComponent(filePath: @NlsSafe String, componentName: String, componentTag: Element?) {
+    val stateStorage = getProjectStateStorage(filePath = filePath, store = store, project = project)
+    val producer = session.getProducer(stateStorage)
+    if (producer is DirectoryBasedSaveSessionProducer) {
+      producer.setFileState(fileName = PathUtilRt.getFileName(filePath), componentName = componentName, element = componentTag?.children?.first())
+    }
+    else {
+      producer?.setState(component = null, componentName = componentName, pluginId = PluginManagerCore.CORE_ID, state = componentTag)
     }
   }
 
