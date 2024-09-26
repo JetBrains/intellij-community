@@ -1,6 +1,6 @@
 import java.time.*;
 
-public class DateRedundant {
+class DateRedundant {
   class First {
     LocalDateTime convert(LocalDateTime source)
     {

@@ -2676,21 +2676,12 @@
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.siyeh.ig.controlflow.UnnecessaryReturnInspection" cleanupTool="true"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="RedundantCompareToJavaTime"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
-                     enabledByDefault="true" level="WARNING" key="inspection.simplifiable.compare.java.time.display.name"
-                     bundle="messages.InspectionGadgetsBundle" implementationClass="com.intellij.codeInspection.RedundantCompareToJavaTimeInspection"
-                     cleanupTool="true"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="RedundantExplicitChronoField"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
-                     enabledByDefault="true" level="WARNING" key="inspection.explicit.chrono.field.display.name"
-                     bundle="messages.InspectionGadgetsBundle" implementationClass="com.siyeh.ig.redundancy.RedundantExplicitChronoFieldInspection"
-                     cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
-                     enabledByDefault="true" level="WEAK WARNING" key="inspection.redundant.creation.java.time.display.name"
-                     bundle="messages.InspectionGadgetsBundle" implementationClass="com.siyeh.ig.redundancy.RedundantCreationJavaTimeInspection"
+                     enabledByDefault="true" level="WARNING" key="inspection.redundant.java.time.operation.display.name"
+                     bundle="messages.InspectionGadgetsBundle" implementationClass="com.siyeh.ig.redundancy.RedundantJavaTimeOperationsInspection"
                      cleanupTool="true"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.redundancy.RedundantJavaTimeOperationMerger"/>
 
     <!--group.names.visibility.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AmbiguousMethodCall" bundle="messages.InspectionGadgetsBundle" key="ambiguous.method.call.display.name"

@@ -1,35 +1,35 @@
 import java.time.*;
 
-public class DateRedundant {
+class DateRedundant {
   class First {
     LocalDateTime convert(LocalDateTime source)
     {
-      return LocalDateTime.from<caret>(source);
+      return LocalDateTime.<warning descr="Redundant 'LocalDateTime.from()' call">from<caret></warning>(source);
     }
 
     LocalTime convert(LocalTime source)
     {
-      return LocalTime.from(source);
+      return LocalTime.<warning descr="Redundant 'LocalTime.from()' call">from</warning>(source);
     }
 
     LocalDate convert(LocalDate source)
     {
-      return LocalDate.from(source);
+      return LocalDate.<warning descr="Redundant 'LocalDate.from()' call">from</warning>(source);
     }
 
     OffsetDateTime convert(OffsetDateTime source)
     {
-      return OffsetDateTime.from(source);
+      return OffsetDateTime.<warning descr="Redundant 'OffsetDateTime.from()' call">from</warning>(source);
     }
 
     OffsetTime convert(OffsetTime source)
     {
-      return OffsetTime.from(source);
+      return OffsetTime.<warning descr="Redundant 'OffsetTime.from()' call">from</warning>(source);
     }
 
     ZonedDateTime convert(ZonedDateTime source)
     {
-      return ZonedDateTime.from(source);
+      return ZonedDateTime.<warning descr="Redundant 'ZonedDateTime.from()' call">from</warning>(source);
     }
   }
 
@@ -37,7 +37,7 @@ public class DateRedundant {
   static class Third {
     private LocalDate getLocalDate(LocalDate fullTime)
     {
-      return LocalDate.of(fullTime.getYear(),
+      return LocalDate.<warning descr="Redundant creation of 'LocalDate' object">of</warning>(fullTime.getYear(),
                           fullTime.getMonth(),
                           fullTime.getDayOfMonth()
       );
@@ -45,7 +45,7 @@ public class DateRedundant {
 
     private LocalDate getLocalDate(ZonedDateTime fullTime)
     {
-      return LocalDate.of(fullTime.getYear(),
+      return LocalDate.<warning descr="Redundant creation of 'LocalDate' object">of</warning>(fullTime.getYear(),
                           fullTime.getMonth(),
                           fullTime.getDayOfMonth()
       );
@@ -53,7 +53,7 @@ public class DateRedundant {
 
     private LocalTime getLocalTime(ZonedDateTime fullTime)
     {
-      return LocalTime.of(fullTime.getHour(),
+      return LocalTime.<warning descr="Redundant creation of 'LocalTime' object">of</warning>(fullTime.getHour(),
                           fullTime.getMinute(),
                           fullTime.getSecond(),
                           fullTime.getNano());
@@ -61,7 +61,7 @@ public class DateRedundant {
 
     private LocalDate getLocalDate(LocalDateTime fullTime)
     {
-      return LocalDate.of(fullTime.getYear(),
+      return LocalDate.<warning descr="Redundant creation of 'LocalDate' object">of</warning>(fullTime.getYear(),
                           fullTime.getMonth(),
                           fullTime.getDayOfMonth()
       );
@@ -69,7 +69,7 @@ public class DateRedundant {
 
     private LocalDate getLocalDate2(LocalDateTime fullTime)
     {
-      return LocalDate.of(fullTime.getYear(),
+      return LocalDate.<warning descr="Redundant creation of 'LocalDate' object">of</warning>(fullTime.getYear(),
                           fullTime.getMonthValue(),
                           fullTime.getDayOfMonth()
       );
@@ -77,7 +77,7 @@ public class DateRedundant {
 
     private LocalTime getLocalTime(LocalDateTime fullTime)
     {
-      return LocalTime.of(fullTime.getHour(),
+      return LocalTime.<warning descr="Redundant creation of 'LocalTime' object">of</warning>(fullTime.getHour(),
                           fullTime.getMinute(),
                           fullTime.getSecond(),
                           fullTime.getNano());
@@ -85,7 +85,7 @@ public class DateRedundant {
 
     private LocalDate getLocalDate(OffsetDateTime fullTime)
     {
-      return LocalDate.of(fullTime.getYear(),
+      return LocalDate.<warning descr="Redundant creation of 'LocalDate' object">of</warning>(fullTime.getYear(),
                           fullTime.getMonthValue(),
                           fullTime.getDayOfMonth()
       );
@@ -94,7 +94,7 @@ public class DateRedundant {
     private LocalTime getLocalTime(OffsetDateTime fullTime)
     {
       return LocalTime.
-        of(fullTime.getHour(),
+        <warning descr="Redundant creation of 'LocalTime' object">of</warning>(fullTime.getHour(),
            fullTime.getMinute(),
            fullTime.getSecond(),
            fullTime.getNano());
@@ -102,7 +102,7 @@ public class DateRedundant {
 
     private LocalTime getLocalTime(LocalTime fullTime)
     {
-      return LocalTime.of(fullTime.getHour(),
+      return LocalTime.<warning descr="Redundant creation of 'LocalTime' object">of</warning>(fullTime.getHour(),
                           fullTime.getMinute(),
                           fullTime.getSecond(),
                           fullTime.getNano());
