@@ -1,4 +1,4 @@
-from __future__ import print_statement
+from __future__ import with_statement
 from time import sleep
 
 
