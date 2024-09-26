@@ -542,7 +542,10 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
     fun fireModulesAdded(project: Project, modules: List<Module>) {
-      project.messageBus.syncPublisher(ModuleListener.TOPIC).modulesAdded(project, modules)
+      val bus = project.messageBus
+      if (!bus.isDisposed) {
+        bus.syncPublisher(ModuleListener.TOPIC).modulesAdded(project, modules)
+      }
     }
 
     internal fun getModuleGroupPath(module: Module, entityStorage: VersionedEntityStorage): Array<String>? {

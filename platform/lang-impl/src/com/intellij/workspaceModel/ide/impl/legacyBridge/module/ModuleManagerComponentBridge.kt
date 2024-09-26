@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -40,11 +39,10 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ModuleRootListe
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.ensureActive
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.coroutines.coroutineContext
 
 internal class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
   : ModuleManagerBridgeImpl(project = project, coroutineScope = coroutineScope, moduleRootListenerBridge = ModuleRootListenerBridgeImpl) {
@@ -52,11 +50,11 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
 
   internal class ModuleManagerInitProjectActivity : InitProjectActivity {
     override suspend fun run(project: Project) {
+      coroutineContext.ensureActive()
       val modules = (project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge).modules().toList()
+      coroutineContext.ensureActive()
       span("firing modules_added event") {
-        blockingContext {
-          fireModulesAdded(project, modules)
-        }
+        fireModulesAdded(project, modules)
       }
       span("deprecated module component moduleAdded calling") {
         for (module in modules) {
