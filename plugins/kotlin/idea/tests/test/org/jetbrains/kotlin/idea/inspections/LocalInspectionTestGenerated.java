@@ -453,6 +453,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/branched/ifThenToElvis/nullCheckWithSelectorCallChain.kt");
             }
 
+            @TestMetadata("nullabilityInReceiversOfBaseCause.kt")
+            public void testNullabilityInReceiversOfBaseCause() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToElvis/nullabilityInReceiversOfBaseCause.kt");
+            }
+
+            @TestMetadata("nullabilityInReceiversOfBaseCause1.kt")
+            public void testNullabilityInReceiversOfBaseCause1() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToElvis/nullabilityInReceiversOfBaseCause1.kt");
+            }
+
             @TestMetadata("nullableResultWithImplicitReceiver.kt")
             public void testNullableResultWithImplicitReceiver() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToElvis/nullableResultWithImplicitReceiver.kt");

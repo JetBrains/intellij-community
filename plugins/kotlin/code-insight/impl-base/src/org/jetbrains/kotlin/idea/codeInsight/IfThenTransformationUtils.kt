@@ -205,7 +205,7 @@ object IfThenTransformationUtils {
 
     context(KaSession)
     fun prepareIfThenToElvisInspectionData(element: KtIfExpression): IfThenToElvisInspectionData? {
-        val transformationData = IfThenTransformationUtils.buildTransformationData(element) ?: return null
+        val transformationData = buildTransformationData(element) ?: return null
         val transformationStrategy = IfThenTransformationStrategy.create(transformationData) ?: return null
 
         if (element.expressionType?.isUnitType != false) return null
@@ -234,7 +234,7 @@ object IfThenTransformationUtils {
 
     private fun KaSession.clausesReplaceableByElvis(data: IfThenTransformationData): Boolean =
         when {
-            data.negatedClause == null || data.negatedClause?.isNullOrBlockExpression() == true ->
+            data.negatedClause == null || data.negatedClause.isNullOrBlockExpression() == true ->
                 false
             (data.negatedClause as? KtThrowExpression)?.let { throwsNullPointerExceptionWithNoArguments(it) } == true ->
                 false
@@ -245,7 +245,8 @@ object IfThenTransformationUtils {
             data.baseClause.anyArgumentEvaluatesTo(data.checkedExpression) ->
                 true
             hasImplicitReceiverReplaceableBySafeCall(data) || data.baseClause.hasFirstReceiverOf(data.checkedExpression) ->
-                data.baseClause.expressionType?.canBeNull == false
+                generateSequence(data.baseClause) { (it as? KtDotQualifiedExpression)?.receiverExpression }.toList()
+                    .all { it.expressionType?.canBeNull == false || it.smartCastInfo?.smartCastType?.canBeNull == false }
             else ->
                 false
         }
