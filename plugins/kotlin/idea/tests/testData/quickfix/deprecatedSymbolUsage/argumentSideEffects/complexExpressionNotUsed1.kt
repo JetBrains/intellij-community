@@ -2,6 +2,7 @@
 
 @Deprecated("", ReplaceWith("newFun()"))
 fun oldFun(p: Int) {
+    /** some comments */
     newFun()
 }
 

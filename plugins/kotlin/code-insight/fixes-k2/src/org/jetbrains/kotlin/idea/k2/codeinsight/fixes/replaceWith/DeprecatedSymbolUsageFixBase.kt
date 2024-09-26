@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.ClassUsageRep
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CodeToInlineBuilder
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithData
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.buildCodeToInline
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -175,7 +176,9 @@ abstract class DeprecatedSymbolUsageFixBase(
             val expression =
                 psiFactory.createExpressionCodeFragment(replaceWith.pattern, context).getContentElement() ?: return null
 
-            return buildCodeToInline(target, expression, false, null, CodeToInlineBuilder(original = target))
+            return buildCodeToInline(target, expression, false, null, object : CodeToInlineBuilder(original = target) {
+                override fun saveComments(codeToInline: MutableCodeToInline, contextDeclaration: KtDeclaration) {}
+            })
         }
     }
 }
