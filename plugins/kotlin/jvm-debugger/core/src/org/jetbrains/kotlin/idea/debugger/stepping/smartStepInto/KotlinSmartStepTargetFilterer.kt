@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType
@@ -36,10 +38,12 @@ class KotlinSmartStepTargetFilterer(
     private val functionCounter = mutableMapOf<String, Int>()
     private val targetWasVisited = BooleanArray(targets.size) { false }
 
-    fun visitInlineFunction(function: KtNamedFunction) {
-        val label = analyze(function) {
-            val symbol = function.symbol
-            KotlinMethodSmartStepTarget.calcLabel(symbol)
+    suspend fun visitInlineFunction(function: KtNamedFunction) {
+        val label = readAction {
+            analyze(function) {
+                val symbol = function.symbol
+                KotlinMethodSmartStepTarget.calcLabel(symbol)
+            }
         }
         val currentCount = functionCounter.increment(label) - 1
         val matchedSteppingTargetIndex = targets.indexOfFirst {
@@ -49,7 +53,7 @@ class KotlinSmartStepTargetFilterer(
         targetWasVisited[matchedSteppingTargetIndex] = true
     }
 
-    fun visitOrdinaryFunction(owner: String, name: String, signature: String) {
+    suspend fun visitOrdinaryFunction(owner: String, name: String, signature: String) {
         val currentCount = functionCounter.increment("$owner.$name$signature") - 1
         for ((i, target) in targets.withIndex()) {
             if (targetWasVisited[i]) continue
@@ -60,7 +64,7 @@ class KotlinSmartStepTargetFilterer(
         }
     }
 
-    private fun KotlinMethodSmartStepTarget.shouldBeVisited(owner: String, name: String, signature: String, currentCount: Int): Boolean {
+    private suspend fun KotlinMethodSmartStepTarget.shouldBeVisited(owner: String, name: String, signature: String, currentCount: Int): Boolean {
         val (updatedOwner, updatedName, updatedSignature) = BytecodeSignature(owner, name, signature)
             .handleMangling(methodInfo)
             .handleValueClassMethods(methodInfo)
@@ -71,7 +75,7 @@ class KotlinSmartStepTargetFilterer(
         return matches(updatedOwner, updatedName, updatedSignature, currentCount)
     }
 
-    private fun KotlinMethodSmartStepTarget.matches(owner: String, name: String, signature: String, currentCount: Int): Boolean {
+    private suspend fun KotlinMethodSmartStepTarget.matches(owner: String, name: String, signature: String, currentCount: Int): Boolean {
         if (ordinal != currentCount) return false
         val nameMatches = methodNameMatches(methodInfo, name)
         if (!nameMatches) return false
@@ -86,16 +90,18 @@ class KotlinSmartStepTargetFilterer(
                 "equals" -> return signature == "(Ljava/lang/Object;)Z"
             }
             // it means the method is, in fact, the implicit primary constructor
-            analyze(declaration) {
-                return primaryConstructorMatches(declaration, owner, name, signature)
+            return readAction {
+                analyze(declaration) {
+                    primaryConstructorMatches(declaration, owner, name, signature)
+                }
             }
         }
 
         if (!methodInfo.isInlineClassMember) {
             // Cannot create light class for functions with inline classes
-            val lightMethod = declaration.getLightClassMethod()
+            val lightMethod = readAction { declaration.getLightClassMethod() }
             // Do not match by name, as it was already checked
-            val lightMethodMatch = lightMethod?.matches(owner, signature, debugProcess)
+            val lightMethodMatch = runReadAction { lightMethod?.matches(owner, signature, debugProcess) }
             // Light method match still can fail in some Kotlin-specific cases (e.g., setter/getter signature)
             if (lightMethodMatch == true) {
                 return true
@@ -112,14 +118,15 @@ class KotlinSmartStepTargetFilterer(
         return owner == internalClassName
     }
 
-    private fun matchesBySignature(declaration: KtDeclaration, owner: String, signature: String): Boolean {
-        analyze(declaration) {
-            val symbol = declaration.symbol as? KaCallableSymbol ?: return false
-            val declarationSignature = symbol.getJvmSignature()
-            val declarationInternalName = symbol.getJvmInternalClassName()
-            return signature == declarationSignature && owner.isSubClassOf(declarationInternalName)
+    private suspend fun matchesBySignature(declaration: KtDeclaration, owner: String, signature: String): Boolean =
+        readAction {
+            analyze(declaration) {
+                val symbol = declaration.symbol as? KaCallableSymbol ?: return@analyze false
+                val declarationSignature = symbol.getJvmSignature()
+                val declarationInternalName = symbol.getJvmInternalClassName()
+                signature == declarationSignature && owner.isSubClassOf(declarationInternalName)
+            }
         }
-    }
 
     fun getUnvisitedTargets(): List<KotlinMethodSmartStepTarget> =
         targets.filterIndexed { i, _ ->

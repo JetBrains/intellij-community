@@ -296,6 +296,18 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
 @ApiStatus.Experimental
 fun <T> invokeCommandAsCompletableFuture(action: suspend () -> T): CompletableFuture<T> {
   DebuggerManagerThreadImpl.assertIsManagerThread()
+  val managerThread = InvokeThread.currentThread() as DebuggerManagerThreadImpl
+  val command = DebuggerManagerThreadImpl.getCurrentCommand()
+  val priority = command?.priority ?: PrioritizedTask.Priority.LOW
+  val suspendContext = (command as? SuspendContextCommandImpl)?.suspendContext
+  return invokeCommandAsCompletableFuture(managerThread, priority, suspendContext, action)
+}
+
+@ApiStatus.Experimental
+fun <T> invokeCommandAsCompletableFuture(managerThread: DebuggerManagerThreadImpl,
+                                         priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
+                                         suspendContext: SuspendContextImpl? = null,
+                                         action: suspend () -> T): CompletableFuture<T> {
   val res = DebuggerCompletableFuture<T>()
 
   suspend fun doRun() {
@@ -307,10 +319,6 @@ fun <T> invokeCommandAsCompletableFuture(action: suspend () -> T): CompletableFu
     }
   }
 
-  val managerThread = InvokeThread.currentThread() as DebuggerManagerThreadImpl
-  val command = DebuggerManagerThreadImpl.getCurrentCommand()
-  val priority = command?.priority ?: PrioritizedTask.Priority.LOW
-  val suspendContext = (command as? SuspendContextCommandImpl)?.suspendContext
   if (suspendContext != null) {
     managerThread.invoke(object : SuspendContextCommandImpl(suspendContext) {
       override suspend fun contextActionSuspend(suspendContext: SuspendContextImpl) = doRun()
