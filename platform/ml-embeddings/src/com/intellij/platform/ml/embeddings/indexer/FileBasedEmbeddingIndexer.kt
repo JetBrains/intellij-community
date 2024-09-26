@@ -2,7 +2,6 @@
 package com.intellij.platform.ml.embeddings.indexer
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
@@ -117,7 +116,7 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
   }
 
   private suspend fun indexProject(project: Project) {
-    if (!ApplicationManager.getApplication().isUnitTestMode) project.waitForSmartMode()
+    project.waitForSmartMode()
     logger.debug { "Started full project embedding indexing" }
     SEMANTIC_SEARCH_TRACER.spanBuilder(INDEXING_SPAN_NAME).useWithScope {
       startIndexingSession(project)
