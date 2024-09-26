@@ -1,0 +1,36 @@
+MODULES
+project.nativeTest
+    fqName: foo.bar.NativeTest
+    name: NativeTest
+    type: Gradle
+    tasks: [:cleanMacosArm64Test, :macosArm64Test, --tests, "foo.bar.NativeTest"]
+    scriptParameters:
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+    fqName: foo.bar.NativeTest.failure
+    name: NativeTest.failure
+    type: Gradle
+    tasks: [:cleanMacosArm64Test, :macosArm64Test, --tests, "foo.bar.NativeTest.failure"]
+    scriptParameters:
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+    fqName: foo.bar.NativeTest.success
+    name: NativeTest.success
+    type: Gradle
+    tasks: [:cleanMacosArm64Test, :macosArm64Test, --tests, "foo.bar.NativeTest.success"]
+    scriptParameters:
+    isDebugAllEnabled: false
+    isRunAsTest: true
+
+
+
+Test configuration:
+- showing only modules matching .*nativeTest
+- Showing runConfiguration detail: name
+- Showing runConfiguration detail: type
+- Showing runConfiguration detail: tasks
+- Showing runConfiguration detail: scriptParameters
+- Showing runConfiguration detail: isDebugAllEnabled
+- Showing runConfiguration detail: isRunAsTest
