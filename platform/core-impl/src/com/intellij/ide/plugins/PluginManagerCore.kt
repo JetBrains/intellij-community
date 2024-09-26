@@ -708,12 +708,12 @@ object PluginManagerCore {
         descriptor.isEnabled = false
       }
       //write the list of third-party plugins back to ensure that the privacy note will be shown next time
-      writeThirdPartyPluginsIds(aliens.map { it.getPluginId() })
+      writeThirdPartyPluginsIds(aliens.map { it.pluginId })
     }
     else if (AppMode.isRemoteDevHost()) {
       logger.warn("""
         |New third-party plugins were installed, they will be disabled because asking for consent to use third-party plugins during startup isn't supported in remote development mode:
-        | ${aliens.joinToString(separator = "\n ") { it.getName() }} 
+        | ${aliens.joinToString(separator = "\n ") { it.name }} 
         |Use '--give-consent-to-use-third-party-plugins' option in 'installPlugins' option to approve installed third-party plugins automatically.
         |""".trimMargin())
       disableThirdPartyPlugins()
@@ -848,12 +848,12 @@ object PluginManagerCore {
 
   @JvmStatic
   fun getPluginNameAndVendor(descriptor: IdeaPluginDescriptor): @Nls String {
-    val vendor = descriptor.getVendor() ?: descriptor.organization
+    val vendor = descriptor.vendor ?: descriptor.organization
     if (vendor.isNullOrEmpty()) {
-      return CoreBundle.message("plugin.name.and.unknown.vendor", descriptor.getName())
+      return CoreBundle.message("plugin.name.and.unknown.vendor", descriptor.name)
     }
     else {
-      return CoreBundle.message("plugin.name.and.vendor", descriptor.getName(), vendor)
+      return CoreBundle.message("plugin.name.and.vendor", descriptor.name, vendor)
     }
   }
 
