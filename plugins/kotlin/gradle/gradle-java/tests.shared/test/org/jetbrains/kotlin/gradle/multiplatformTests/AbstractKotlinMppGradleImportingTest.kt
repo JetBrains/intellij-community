@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.cont
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingCheckDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hooks.TestHooks
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hooks.TestHooksDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.ExecuteRunConfigurationsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.RunConfigurationChecksDsl
@@ -85,7 +87,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
                                                       HighlightingCheckDsl,
                                                       TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl,
                                                       AllFilesUnderContentRootConfigurationDsl, RunConfigurationChecksDsl,
-                                                      CustomGradlePropertiesDsl, DocumentationCheckerDsl {
+                                                      CustomGradlePropertiesDsl, DocumentationCheckerDsl, TestHooksDsl {
 
     internal val installedFeatures = listOf<TestFeature<*>>(
         GradleProjectsPublishingTestsFeature,
@@ -104,6 +106,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         AllFilesAreUnderContentRootChecker,
         DocumentationChecker,
         ReferenceTargetChecker,
+        TestHooks
     )
 
     private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl(installedFeatures)
