@@ -71,6 +71,8 @@ data class BuildOptions(
       }
       // repair utility is unbundled for all IDEs
       add(REPAIR_UTILITY_BUNDLE_STEP)
+      // IJI-1070
+      add(LIBRARY_URL_CHECK_STEP)
     },
   /**
    * If `true`, write all compilation messages into a separate file (`compilation.log`).
