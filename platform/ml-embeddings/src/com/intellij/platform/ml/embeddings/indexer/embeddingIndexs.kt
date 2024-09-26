@@ -27,17 +27,25 @@ internal class EmbeddingKey(val textHashCode: Int) {
 value class IndexingItem(val text: String)
 
 internal class FileNameEmbeddingIndex : BaseEmbeddingIndex() {
-  override val fileTypes: Array<FileType>
-    get() = ClassesProvider.supportedFileTypes
-
   override fun getName(): ID<EmbeddingKey, String> = FILE_NAME_EMBEDDING_INDEX_NAME
   override fun getVersion(): Int = 1
   override fun index(inputData: FileContent): List<IndexingItem> {
     return listOf(IndexingItem(inputData.file.name))
   }
+
+  override fun getInputFilter(): FileBasedIndex.InputFilter {
+    return FileBasedIndex.InputFilter { file ->
+      // todo: we don't want to index libraries
+      //   file.isInLocalFileSystem filters out jar libraries but it'll probably won't work e.g. for Python libs
+      //   probably filtering should be implemented via FilePropertyPusher
+      isAcceptableFile(file)
+    }
+  }
+
+  override fun dependsOnFileContent(): Boolean = false
 }
 
-internal class ClassNameEmbeddingIndex : BaseEmbeddingIndex() {
+internal class ClassNameEmbeddingIndex : PsiBaseEmbeddingIndex() {
   override val fileTypes: Array<FileType>
     get() = ClassesProvider.supportedFileTypes
 
@@ -48,7 +56,7 @@ internal class ClassNameEmbeddingIndex : BaseEmbeddingIndex() {
   }
 }
 
-internal class SymbolNameEmbeddingIndex : BaseEmbeddingIndex() {
+internal class SymbolNameEmbeddingIndex : PsiBaseEmbeddingIndex() {
   override val fileTypes: Array<FileType>
     get() = SymbolsProvider.supportedFileTypes
 
@@ -59,21 +67,8 @@ internal class SymbolNameEmbeddingIndex : BaseEmbeddingIndex() {
   }
 }
 
-internal abstract class BaseEmbeddingIndex() : FileBasedIndexExtension<EmbeddingKey, String>() {
+internal abstract class BaseEmbeddingIndex : FileBasedIndexExtension<EmbeddingKey, String>() {
   override fun traceKeyHashToVirtualFileMapping(): Boolean = true
-
-  override fun getInputFilter(): FileBasedIndex.InputFilter {
-    return object : DefaultFileTypeSpecificInputFilter(*fileTypes) {
-      override fun acceptInput(file: VirtualFile): Boolean {
-        // todo: we don't want to index libraries
-        //   file.isInLocalFileSystem filters out jar libraries but it'll probably won't work e.g. for Python libs
-        //   probably filtering should be implemented via FilePropertyPusher
-        return file.isInLocalFileSystem
-      }
-    }
-  }
-
-  override fun dependsOnFileContent(): Boolean = true
 
   override fun getIndexer(): DataIndexer<EmbeddingKey, String, FileContent> {
     return DataIndexer { inputData ->
@@ -84,9 +79,7 @@ internal abstract class BaseEmbeddingIndex() : FileBasedIndexExtension<Embedding
     }
   }
 
-  protected abstract fun index(inputData: FileContent): List<IndexingItem>
-
-  abstract val fileTypes: Array<FileType>
+  abstract fun index(context: FileContent): List<IndexingItem>
 
   override fun getKeyDescriptor(): KeyDescriptor<EmbeddingKey> {
     return object : KeyDescriptor<EmbeddingKey> {
@@ -103,4 +96,25 @@ internal abstract class BaseEmbeddingIndex() : FileBasedIndexExtension<Embedding
       override fun read(`in`: DataInput): String = `in`.readUTF()
     }
   }
+}
+
+internal abstract class PsiBaseEmbeddingIndex : BaseEmbeddingIndex() {
+  override fun getInputFilter(): FileBasedIndex.InputFilter {
+    return object : DefaultFileTypeSpecificInputFilter(*fileTypes) {
+      override fun acceptInput(file: VirtualFile): Boolean {
+        // todo: we don't want to index libraries
+        //   file.isInLocalFileSystem filters out jar libraries but it'll probably won't work e.g. for Python libs
+        //   probably filtering should be implemented via FilePropertyPusher
+        return isAcceptableFile(file)
+      }
+    }
+  }
+
+  override fun dependsOnFileContent(): Boolean = true
+
+  abstract val fileTypes: Array<FileType>
+}
+
+private fun isAcceptableFile(file: VirtualFile): Boolean {
+  return file.isInLocalFileSystem
 }
