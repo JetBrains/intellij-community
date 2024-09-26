@@ -44,8 +44,10 @@ class JavaApiCallExtractor : ApiCallExtractor {
     var foundMethod: PsiMethod? = null
     psiFile.accept(object : JavaRecursiveElementVisitor() {
       override fun visitMethod(method: PsiMethod) {
+        if (foundMethod != null) return
         if (methodName == method.name) {
           foundMethod = method
+          return
         }
         super.visitMethod(method)
       }
