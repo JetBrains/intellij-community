@@ -35,6 +35,11 @@
     <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.ImportCandidateRelativeFeatures"/>
     <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.PrimitiveImportFeatures"/>
     <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.PsiStructureFeatures"/>
+    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.RelevanceEvaluationFeatures"/>
+    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.ImportsFeatures"/>
+    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.OpenFilesImportsFeatures"/>
+    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.NeighborFilesImportsFeatures"/>
+    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.BaseProjectFeatures"/>
 
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive"/>
