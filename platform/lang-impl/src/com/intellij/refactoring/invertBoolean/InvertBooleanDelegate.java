@@ -2,8 +2,8 @@
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -17,15 +17,11 @@ import java.util.Collection;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public abstract class InvertBooleanDelegate {
-  public static final ExtensionPointName<InvertBooleanDelegate> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.invertBoolean");
+  public static final LanguageExtension<InvertBooleanDelegate> EP_NAME = new LanguageExtension<>("com.intellij.refactoring.invertBoolean");
 
   public static @Nullable InvertBooleanDelegate findInvertBooleanDelegate(PsiElement element) {
-    for (InvertBooleanDelegate delegate : EP_NAME.getExtensionList()) {
-      if (delegate.isVisibleOnElement(element)) {
-        return delegate;
-      }
-    }
-    return null;
+    InvertBooleanDelegate delegate = EP_NAME.forLanguage(element.getLanguage());
+    return delegate != null && delegate.isVisibleOnElement(element) ? delegate : null;
   }
 
   /**

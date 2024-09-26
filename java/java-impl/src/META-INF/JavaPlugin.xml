@@ -1097,7 +1097,7 @@
     <refactoring.pushDown language="JAVA" implementationClass="com.intellij.refactoring.memberPushDown.JavaPushDownDelegate" id="java"/>
     <refactoring.introduceParameterObject language="JAVA"
                                           implementationClass="com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectDelegate"/>
-    <refactoring.invertBoolean implementation="com.intellij.refactoring.invertBoolean.JavaInvertBooleanDelegate"/>
+    <refactoring.invertBoolean language="JAVA" implementationClass="com.intellij.refactoring.invertBoolean.JavaInvertBooleanDelegate"/>
     <refactoring.moveInnerClassUsagesHandler language="JAVA"
                                              implementationClass="com.intellij.refactoring.move.moveInner.MoveInnerClassJavaUsagesHandler"
                                              id="java"/>
