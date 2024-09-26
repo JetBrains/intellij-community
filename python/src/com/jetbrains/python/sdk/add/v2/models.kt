@@ -60,13 +60,11 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
   }
     .stateIn(scope + uiContext, started = SharingStarted.Eagerly, initialValue = emptyList())
 
-
   val baseInterpreters: StateFlow<List<PythonSelectableInterpreter>> = allInterpreters
     .mapLatest {
       it.filter { it !is ExistingSelectableInterpreter || it.isSystemWide } + installable
     }
     .stateIn(scope + uiContext, started = SharingStarted.Eagerly, initialValue = emptyList())
-
 
   val interpreterLoading = MutableStateFlow(false)
   val condaEnvironmentsLoading = MutableStateFlow(false)
@@ -82,7 +80,6 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
     condaEnvironmentsLoading.value = false
     interpreterLoading.value = false
   }
-
 
   suspend fun detectCondaExecutable() {
     withContext(Dispatchers.IO) {
@@ -120,7 +117,6 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
       return@withContext null
     }
 
-
   private suspend fun initInterpreterList() {
     withContext(Dispatchers.IO) {
       val existingSdks = PyConfigurableInterpreterList.getInstance(null).getModel().sdks.toList()
@@ -152,13 +148,19 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
     }
   }
 
-  open fun addInterpreter(path: String): PythonSelectableInterpreter = TODO()
+  open fun addInterpreter(path: String): PythonSelectableInterpreter {
+    val languageLevel = PySdkUtil.getLanguageLevelForSdk(PythonSdkUtil.findSdkByKey(path))
+    val interpreter = ManuallyAddedSelectableInterpreter(path, languageLevel)
+    manuallyAddedInterpreters.value += interpreter
+    return interpreter
+  }
 
-  abstract fun addInterpreter(sdk: Sdk)
+  open fun addInterpreter(sdk: Sdk) {
+    manuallyAddedInterpreters.value += ExistingSelectableInterpreter(sdk, PySdkUtil.getLanguageLevelForSdk(sdk), sdk.isSystemWide)
+  }
 
-  open fun suggestVenvPath(): String? = ""
+  open fun suggestVenvPath(): String? = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectPath.value.toString()))
 }
-
 
 abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModelParams)
   : PythonAddInterpreterModel(params) {
@@ -204,7 +206,6 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
   }
 }
 
-
 class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams)
   : PythonMutableTargetAddInterpreterModel(params) {
 
@@ -222,10 +223,6 @@ class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams)
     }
   }
 
-  override fun addInterpreter(sdk: Sdk) {
-    manuallyAddedInterpreters.value += ExistingSelectableInterpreter(sdk, PySdkUtil.getLanguageLevelForSdk(sdk), sdk.isSystemWide)
-  }
-
   override fun createBrowseAction(): () -> String? {
     return {
       var path: Path? = null
@@ -235,19 +232,8 @@ class PythonLocalAddInterpreterModel(params: PyInterpreterModelParams)
       path?.toString()
     }
   }
-
-  override fun addInterpreter(path: String): PythonSelectableInterpreter {
-    val languageLevel = PySdkUtil.getLanguageLevelForSdk(PythonSdkUtil.findSdkByKey(path))
-    val interpreter = ManuallyAddedSelectableInterpreter(path, languageLevel)
-    manuallyAddedInterpreters.value += interpreter
-    return interpreter
-  }
-
-  override fun suggestVenvPath(): String? {
-    // todo should this be a coroutine?
-    return FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectPath.value.toString()))
-  }
 }
+
 
 // todo does it need target configuration
 sealed class PythonSelectableInterpreter {
@@ -261,10 +247,10 @@ class ExistingSelectableInterpreter(val sdk: Sdk, override val languageLevel: La
   override val homePath = sdk.homePath!! // todo is it safe
 }
 
-
 class DetectedSelectableInterpreter(override val homePath: String, override val languageLevel: LanguageLevel) : PythonSelectableInterpreter()
 
 class ManuallyAddedSelectableInterpreter(override val homePath: String, override val languageLevel: LanguageLevel) : PythonSelectableInterpreter()
+
 class InstallableSelectableInterpreter(val sdk: PySdkToInstall) : PythonSelectableInterpreter() {
   override val homePath: String = ""
   override val languageLevel = PySdkUtil.getLanguageLevelForSdk(sdk)
