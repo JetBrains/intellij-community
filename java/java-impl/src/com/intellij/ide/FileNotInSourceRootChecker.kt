@@ -18,7 +18,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
@@ -59,17 +59,18 @@ private class FileNotInSourceRootService(
     val messageBus = ApplicationManager.getApplication().messageBus
     messageBus.connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-        for (ed in EditorFactory.getInstance().allEditors) {
-          if (ed.virtualFile == file)
-            checkEditor(ed)
+        val editors = FileEditorManager.getInstance(project).getEditors(file)
+        for (ed in editors) {
+          checkEditor(ed)
         }
       }
     })
-
-    EditorFactory.getInstance().editorList.forEach { checkEditor(it) }
+    FileEditorManager.getInstance(project).allEditors.forEach { checkEditor(it) }
   }
 
-  private fun checkEditor(editor: Editor) {
+  private fun checkEditor(fileEditor: FileEditor) {
+    if (fileEditor !is TextEditor) return
+    val editor = fileEditor.editor
     if (editor.project !== project) return
     if (PropertiesComponent.getInstance(project).getBoolean(JAVA_DONT_CHECK_OUT_OF_SOURCE_FILES, false)) return
     val virtualFile = editor.virtualFile ?: return
@@ -84,27 +85,20 @@ private class FileNotInSourceRootService(
           writeAction {
             val psiFile = infoAndFile.second
             if (!psiFile.isValid) return@writeAction
-            if (editor is EditorImpl) {
-              for (fileEditor in FileEditorManager.getInstance(project).getEditors(psiFile.virtualFile)) {
-                if (fileEditor is TextEditor && fileEditor.editor == editor) {
-                  val listener = object : VirtualFileListener {
-                    override fun fileMoved(event: VirtualFileMoveEvent) {
-                      val file = event.file
-                      if (file == psiFile.virtualFile) {
-                        file.fileSystem.removeVirtualFileListener(this)
-                        if (editor.isDisposed) return
-                        DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(GROUP, psiFile)
-                        checkEditor(editor)
-                      }
-                    }
-                  }
-                  val fileSystem = psiFile.virtualFile.fileSystem
-                  fileSystem.addVirtualFileListener(listener)
-                  Disposer.register(fileEditor) { fileSystem.removeVirtualFileListener(listener) }
-                  break
+            val listener = object : VirtualFileListener {
+              override fun fileMoved(event: VirtualFileMoveEvent) {
+                val file = event.file
+                if (file == psiFile.virtualFile) {
+                  file.fileSystem.removeVirtualFileListener(this)
+                  if (editor.isDisposed) return
+                  DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(GROUP, psiFile)
+                  checkEditor(fileEditor)
                 }
               }
             }
+            val fileSystem = psiFile.virtualFile.fileSystem
+            fileSystem.addVirtualFileListener(listener)
+            Disposer.register(fileEditor) { fileSystem.removeVirtualFileListener(listener) }
 
             DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(GROUP, infoAndFile.first, infoAndFile.second, null)
           }
