@@ -184,7 +184,7 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
             fetchEntities(FILE_NAME_EMBEDDING_INDEX_NAME, filesChannel, project) { key, name ->
               LongIndexableEntity(key.toLong(), IndexableFile(EntityId(name)))
             }
-            classesChannel.close()
+            filesChannel.close()
           }
           launch {
             fetchEntities(CLASS_NAME_EMBEDDING_INDEX_NAME, classesChannel, project) { key, name ->
