@@ -52,5 +52,12 @@ class InlineInlayPosition(val offset: Int, val relatedToPrevious: Boolean, overr
 
 class EndOfLinePosition @JvmOverloads constructor(val line: Int, override val priority: Int = 0) : InlayPosition
 
+/**
+ * Positions an inlay hint above the line that contains [offset].
+ *
+ * @param verticalPriority Hints with higher [verticalPriority] will be placed closer to the line given by [offset].
+ * Hints from the same provider with the same [verticalPriority] will be placed on the same line.
+ * @param priority Within a single line, hints are sorted by [priority] in descending order.
+ */
 @ApiStatus.Experimental
 class AboveLineIndentedPosition(val offset: Int, val verticalPriority: Int = 0, override val priority: Int = 0) : InlayPosition
