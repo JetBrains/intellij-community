@@ -165,8 +165,7 @@ fun KtDeclaration.isEffectivelyActual(checkConstructor: Boolean = true): Boolean
 }
 
 fun KtPropertyAccessor.deleteBody() {
-    val leftParenthesis = leftParenthesis ?: return
-    deleteChildRange(leftParenthesis, lastChild)
+    deleteChildRange(parameterList ?: return, lastChild)
 }
 
 /**
