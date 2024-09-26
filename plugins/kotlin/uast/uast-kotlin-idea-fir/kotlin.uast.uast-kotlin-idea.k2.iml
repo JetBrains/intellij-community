@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
+    <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" />
   </component>
 </module>
