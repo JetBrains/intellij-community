@@ -211,6 +211,9 @@ public abstract class Exprent implements IMatchable {
     Map<VarType, VarType> map = new HashMap<>();
 
     // List<T> -> List<String>
+    //for example:
+    //Bar<String, String> bar = new Bar<String, String>();
+    //it replace Bar<T, L> to Bar<String, String>
     if (upperBound != null && upperBound.isGeneric() && ret.isGeneric()) {
       List<VarType> leftArgs = ((GenericType)upperBound).getArguments();
       List<VarType> rightArgs = ((GenericType)ret).getArguments();
@@ -248,6 +251,21 @@ public abstract class Exprent implements IMatchable {
     buf.append(">");
   }
 
+  /**
+   * Example:
+   * <pre>
+   * {@code
+   *  class A <A, B extends TestGenerics.Maps & List>{
+   *
+   *  }
+   * }
+   * </pre>
+   * for this case, the result will be
+   *  <pre>
+   *  'A' -> Object
+   *  'B' - [TestGenerics.Maps, List]
+   *  </pre>
+   */
   protected Map<VarType, List<VarType>> getNamedGenerics() {
     Map<VarType, List<VarType>> ret = new HashMap<>();
     ClassNode class_ = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
