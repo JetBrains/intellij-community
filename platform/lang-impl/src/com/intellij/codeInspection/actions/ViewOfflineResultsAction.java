@@ -14,13 +14,12 @@ import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvi
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -39,7 +38,6 @@ import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -65,16 +63,8 @@ public final class ViewOfflineResultsAction extends AnAction {
 
     LOG.assertTrue(project != null);
 
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false){
-      @Override
-      public Icon getIcon(VirtualFile file) {
-        if (file.isDirectory() &&
-            file.findChild(InspectionsResultUtil.DESCRIPTIONS + "." + StdFileTypes.XML.getDefaultExtension()) != null) {
-          return AllIcons.Nodes.InspectionResults;
-        }
-        return super.getIcon(file);
-      }
-    }.withFileFilter(f -> f.isDirectory() || StdFileTypes.XML.getDefaultExtension().equals(f.getExtension()))
+    var descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+      .withExtensionFilter("xml")
       .withTitle(InspectionsBundle.message("view.offline.inspections.select.path.title"))
       .withDescription(InspectionsBundle.message("view.offline.inspections.select.path.description"));
     final VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);

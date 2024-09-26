@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.certificates
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.fileChooser.FileTypeDescriptor
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
@@ -59,13 +58,6 @@ class PluginCertificateManager :
     }
   }
 
-  private val CERTIFICATE_DESCRIPTOR = FileTypeDescriptor(
-    IdeBundle.message("settings.certificate.choose.certificate"),
-    ".crt", ".CRT",
-    ".cer", ".CER",
-    ".pem", ".PEM",
-    ".der", ".DER"
-  )
   private val EMPTY_PANEL = "empty.panel"
   private val myTrustManager: MutableTrustManager = PluginCertificateStore.customTrustManager
   private val myTreeBuilder: CertificateTreeBuilder = CertificateTreeBuilder(myTree)
@@ -164,7 +156,7 @@ class PluginCertificateManager :
   }
 
   private fun chooseFileAndAdd() {
-    FileChooser.chooseFile(CERTIFICATE_DESCRIPTOR, null, null) { file: VirtualFile ->
+    FileChooser.chooseFile(CertificateConfigurable.CERTIFICATE_DESCRIPTOR, null, null) { file: VirtualFile ->
       val path = file.path
       val certificate = CertificateUtil.loadX509Certificate(path)
       when {

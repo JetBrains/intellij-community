@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.RecentProjectIconHelper.Companion.createIcon
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.io.FileUtil
@@ -109,9 +109,8 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
 private class ChangeProjectIcon(private val ui: ProjectIconUI) : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val files = FileChooserFactory.getInstance()
-      .createFileChooser(FileChooserDescriptor(true, false, false, false, false, false).withFileFilter { file: VirtualFile ->
-        "svg".equals(file.extension, ignoreCase = true)
-      }, null, null).choose(null)
+      .createFileChooser(FileChooserDescriptorFactory.createSingleFileDescriptor("svg"), null, null)
+      .choose(null)
     if (files.size == 1) {
       try {
         val newIcon = createIcon(Path.of(files[0].path))

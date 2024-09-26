@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileTypeDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -31,18 +32,13 @@ import java.util.Set;
 import static com.intellij.util.net.ssl.CertificateUtil.getCommonName;
 import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager;
 
-/**
- * @author Mikhail Golubev
- */
 @ApiStatus.Internal
 public final class CertificateConfigurable implements SearchableConfigurable, Configurable.NoScroll, CertificateListener {
-  private static final FileTypeDescriptor CERTIFICATE_DESCRIPTOR =
-    new FileTypeDescriptor(IdeBundle.message("settings.certificate.choose.certificate"),
-                           ".crt", ".CRT",
-                           ".cer", ".CER",
-                           ".pem", ".PEM",
-                           ".der", ".DER");
-  public static final @NonNls String EMPTY_PANEL = "empty.panel";
+  public static final FileChooserDescriptor CERTIFICATE_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFileDescriptor()
+    .withTitle(IdeBundle.message("settings.certificate.choose.certificate"))
+    .withExtensionFilter(IdeBundle.message("settings.certificate.filter.label"), "crt", "cer", "pem", "der");
+
+  public static final String EMPTY_PANEL = "empty.panel";
 
   private JPanel myRootPanel;
 

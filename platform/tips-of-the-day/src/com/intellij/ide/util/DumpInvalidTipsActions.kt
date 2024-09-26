@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util
 
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry
@@ -10,6 +9,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.vfs.VirtualFile
@@ -76,7 +76,7 @@ internal class SelectAndDumpInvalidTipsAction : DumpInvalidTipsAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     val descriptor = FileChooserDescriptor(true, true, false, false, false, true)
-      .withFileFilter { it.isDirectory || it.extension == "html" || it.extension == "htm" }
+      .withExtensionFilter(FileTypeManager.getInstance().getStdFileType("HTML"))
       .withDescription("Choose HTML files or folders with tips.")
     val chosenFiles = FileChooser.chooseFiles(descriptor, project, null)
 
@@ -97,4 +97,3 @@ internal class SelectAndDumpInvalidTipsAction : DumpInvalidTipsAction() {
     }
   }
 }
-

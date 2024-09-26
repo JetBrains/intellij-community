@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization
 
 import com.intellij.icons.AllIcons
@@ -196,9 +196,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
 
   private fun browseIconAndSelect() {
     val descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-      .withFileFilter { file ->
-        StringUtil.equalsIgnoreCase(file.extension, "svg") || StringUtil.equalsIgnoreCase(file.extension, "png")
-      }
+      .withExtensionFilter(IdeBundle.message("icon.file.filter.label"), "svg", "png")
     descriptor.title = IdeBundle.message("title.browse.icon")
     descriptor.description = IdeBundle.message("prompt.browse.icon.for.selected.action")
     val iconFile = FileChooser.chooseFile(descriptor, null, null)

@@ -1,11 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.BootstrapBundle;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -94,11 +92,10 @@ final class ImportOldConfigsPanel extends JDialog {
     }
     myPrevInstallation.setTextFieldPreferredWidth(50);
     myPrevInstallation.addActionListener(e -> {
-      FileChooserDescriptor chooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
-      chooserDescriptor.setHideIgnored(false);
-      chooserDescriptor.withFileFilter(file -> file.isDirectory() || ConfigImportHelper.isSettingsFile(file));
-      Ref<File> fileRef = Ref.create();
-      PathChooserDialog chooser = FileChooserFactoryImpl.createNativePathChooserIfEnabled(chooserDescriptor, null, myRootPanel);
+      var chooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withHideIgnored(false);
+      ConfigImportHelper.setSettingsFilter(chooserDescriptor);
+      var fileRef = Ref.<File>create();
+      var chooser = FileChooserFactoryImpl.createNativePathChooserIfEnabled(chooserDescriptor, null, myRootPanel);
       if (chooser != null) {
         VirtualFile vf = myLastSelection != null ? new CoreLocalVirtualFile(new CoreLocalFileSystem(), myLastSelection) : null;
         chooser.choose(vf, files -> fileRef.set(new File(files.get(0).getPresentableUrl())));
@@ -108,7 +105,7 @@ final class ImportOldConfigsPanel extends JDialog {
         fc.setSelectedFile(myLastSelection != null ? myLastSelection.toFile() : null);
         fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         fc.setFileHidingEnabled(SystemInfo.isWindows || SystemInfo.isMac);
-        fc.setFileFilter(new FileNameExtensionFilter("settings file", "zip", "jar"));
+        fc.setFileFilter(new FileNameExtensionFilter(BootstrapBundle.message("import.settings.filter"), "zip", "jar"));
         @SuppressWarnings("DuplicatedCode")
         int returnVal = fc.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {

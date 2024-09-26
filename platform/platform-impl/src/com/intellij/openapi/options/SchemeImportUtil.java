@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,28 +15,22 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Set;
+import java.util.Locale;
 
 public final class SchemeImportUtil {
-  public static @Nullable VirtualFile selectImportSource(final String @NotNull [] sourceExtensions,
-                                                         @NotNull Component parent,
-                                                         @Nullable VirtualFile preselect,
-                                                         @Nullable @NlsContexts.Label String description) {
-    final Set<String> extensions = Set.of(sourceExtensions);
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, canSelectJarFile(sourceExtensions), false, false, false) {
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return
-          (file.isDirectory() || isFileSelectable(file)) &&
-          (showHiddenFiles || !FileElement.isFileHidden(file));
-      }
-
-      @Override
-      public boolean isFileSelectable(@Nullable VirtualFile file) {
-        return file != null && !file.isDirectory() && file.getExtension() != null && extensions.contains(file.getExtension());
-      }
-    };
+  public static @Nullable VirtualFile selectImportSource(
+    @NotNull String @NotNull [] sourceExtensions,
+    @NotNull Component parent,
+    @Nullable VirtualFile preselect,
+    @Nullable @NlsContexts.Label String description
+  ) {
+    var descriptor = new FileChooserDescriptor(true, false, canSelectJarFile(sourceExtensions), false, false, false);
+    if (sourceExtensions.length == 1) {
+      descriptor.withExtensionFilter(sourceExtensions[0]);
+    }
+    else {
+      descriptor.withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", sourceExtensions[0].toUpperCase(Locale.ROOT)), sourceExtensions);
+    }
     if (description != null) {
       descriptor.setDescription(description);
     }

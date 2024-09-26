@@ -112,9 +112,8 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
       }.bottomGap(BottomGap.SMALL)
 
       val locationRow = row(UIBundle.message("label.project.wizard.new.project.location")) {
-        val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+        val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
           .withTitle(message("title.select.project.file.directory", context.presentationName))
-          .withFileFilter { it.isDirectory }
           .withPathToTextConvertor(::getPresentablePath)
           .withTextToPathConvertor(::getCanonicalPath)
         textFieldWithBrowseButton(fileChooserDescriptor, context.project)

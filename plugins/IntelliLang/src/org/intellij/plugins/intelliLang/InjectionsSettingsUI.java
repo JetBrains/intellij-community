@@ -4,7 +4,6 @@ package org.intellij.plugins.intelliLang;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
@@ -13,9 +12,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -706,20 +704,10 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
   }
 
   private void doImportAction(final DataContext dataContext) {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, true, false) {
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return super.isFileVisible(file, showHiddenFiles) &&
-               (file.isDirectory() || "xml".equals(file.getExtension()) || FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE));
-      }
-
-      @Override
-      public boolean isFileSelectable(@Nullable VirtualFile file) {
-        return file != null && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
-      }
-    };
-    descriptor.setDescription(IntelliLangBundle.message("dialog.file.chooser.description.please.select.the.configuration.file"));
-    descriptor.setTitle(IntelliLangBundle.message("dialog.file.chooser.title.import.configuration"));
+    var descriptor = new FileChooserDescriptor(true, false, false, false, true, false)
+      .withExtensionFilter(FileTypeManager.getInstance().getStdFileType("XML"))
+      .withTitle(IntelliLangBundle.message("dialog.file.chooser.title.import.configuration"))
+      .withDescription(IntelliLangBundle.message("dialog.file.chooser.description.please.select.the.configuration.file"));
 
     descriptor.putUserData(LangDataKeys.MODULE_CONTEXT, PlatformCoreDataKeys.MODULE.getData(dataContext));
 

@@ -11,7 +11,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.ui.Messages;
@@ -151,6 +150,15 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     LocalFileSystem.getInstance().addVirtualFileListener(myVfsListener);
   }
 
+  private static final class ScriptFileChooserDescriptor extends FileChooserDescriptor {
+    ScriptFileChooserDescriptor() {
+      super(true, false, false, false, false, false);
+      putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
+      putUserData(FileChooserKeys.NEW_FILE_TEMPLATE_TEXT, "");
+      withExtensionFilter(UiScriptFileType.myExtension);
+    }
+  }
+
   private final class SaveAction extends AnAction {
   SaveAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.save"),
@@ -183,21 +191,6 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
         }
       }
       ApplicationManager.getApplication().runWriteAction(() -> save());
-    }
-  }
-
-  private static final class ScriptFileChooserDescriptor extends FileChooserDescriptor {
-    ScriptFileChooserDescriptor() {
-      super(true, false, false, false, false, false);
-      putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
-      putUserData(FileChooserKeys.NEW_FILE_TEMPLATE_TEXT, "");
-    }
-
-    @Override
-    public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-      if (!showHiddenFiles && FileElement.isFileHidden(file)) return false;
-      return file.getExtension() != null && file.getExtension().equalsIgnoreCase(UiScriptFileType.myExtension)
-             || super.isFileVisible(file, showHiddenFiles) && file.isDirectory();
     }
   }
 

@@ -6,7 +6,6 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
-import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
@@ -19,7 +18,7 @@ import com.intellij.openapi.application.migrations.PythonProMigration242;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -37,7 +36,6 @@ import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ide.bootstrap.IdeStartupWizardKt;
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter;
 import com.intellij.ui.AppUIUtilKt;
@@ -480,9 +478,8 @@ public final class ConfigImportHelper {
     return isFirstSession() && !isConfigImported();
   }
 
-  /** Simple check by file type, content is not checked. */
-  public static boolean isSettingsFile(@NotNull VirtualFile file) {
-    return FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE);
+  public static void setSettingsFilter(@NotNull FileChooserDescriptor descriptor) {
+    descriptor.withExtensionFilter(BootstrapBundle.message("import.settings.filter"), "zip", "jar");
   }
 
   public static void setConfigImportedInThisSession() {

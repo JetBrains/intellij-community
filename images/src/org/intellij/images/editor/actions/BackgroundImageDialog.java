@@ -219,8 +219,8 @@ public class BackgroundImageDialog extends DialogWrapper {
     initFillPanel(myFillPanel, myFillGroup, getDisposable());
     ((CardLayout)myPreviewPanel.getLayout()).show(myPreviewPanel, EDITOR);
     myPathField.getComboBox().setEditable(true);
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, true, false)
-      .withFileFilter(file -> ImageFileTypeManager.getInstance().isImage(file));
+    var descriptor = new FileChooserDescriptor(true, false, false, false, true, false)
+      .withExtensionFilter(ImageFileTypeManager.getInstance().getImageFileType());
     myPathField.addBrowseFolderListener(null, descriptor, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
     JTextComponent textComponent = getComboEditor();
     textComponent.getDocument().addDocumentListener(new DocumentAdapter() {
