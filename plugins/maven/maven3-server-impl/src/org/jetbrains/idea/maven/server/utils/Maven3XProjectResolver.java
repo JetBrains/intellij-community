@@ -172,15 +172,14 @@ public class Maven3XProjectResolver {
         File pomFile = buildingResult.getPomFile();
         List<ModelProblem> modelProblems = buildingResult.getProblems();
 
-        if (project == null) {
+        if (project == null || pomFile == null) {
           executionResults.add(createExecutionResult(pomFile, modelProblems));
           continue;
         }
 
-        String previousDependencyHash = myPomHashMap.getDependencyHash(pomFile);
         String newDependencyHash = fileToNewDependencyHash.get(pomFile);
-        if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
-          executionResults.add(createExecutionResult(project, previousDependencyHash));
+        if (!dependenciesChanged(pomFile, newDependencyHash, fileToNewDependencyHash)) {
+          executionResults.add(createExecutionResult(project, newDependencyHash));
           continue;
         }
 
@@ -214,6 +213,13 @@ public class Maven3XProjectResolver {
       executionResults.add(createExecutionResult(e));
     }
     return executionResults;
+  }
+
+  private boolean dependenciesChanged(@NotNull File pomFile, String newDependencyHash, Map<File, String> fileToNewDependencyHash) {
+    String previousDependencyHash = myPomHashMap.getDependencyHash(pomFile);
+    if (null == previousDependencyHash) return true;
+    if (previousDependencyHash.equals(newDependencyHash)) return false;
+    return true;
   }
 
   @NotNull
