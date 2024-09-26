@@ -35,27 +35,11 @@ internal class FirNativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTo
             return null
         }
 
-        val module = declaration.module ?: return null
-
-        /**
-         * Find all target names which are expected to run this test.
-         * For example, consider running a test in 'nativeTest', then we might expect
-         * macosX64, macosArm64, linuxX64, ... target to potentially execute this test class.
-         */
-        val targetNames = listOf(module, *module.implementingModules.toTypedArray())
-            .filter { it.implementingModules.isEmpty() }
-            .map { module -> module.name.substringAfterLast(".").removeSuffix("Test") }
-
-
         val urls = when (declaration) {
-            is KtClassOrObject -> {
-                listOf("java:suite://${declaration.fqName?.asString()}")
-            }
-
+            is KtClassOrObject -> listOf("java:suite://${declaration.fqName?.asString()}")
             is KtNamedFunction -> {
                 val containingClass = declaration.containingClass()
-                val baseName = "java:test://${containingClass?.fqName?.asString()}.${declaration.name}"
-                targetNames.map { targetName -> "$baseName[$targetName]" } + baseName
+                listOf("java:test://${containingClass?.fqName?.asString()}/${declaration.name}")
             }
 
             else -> return null

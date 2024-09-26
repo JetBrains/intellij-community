@@ -62,7 +62,7 @@ abstract class AbstractNativeIdePlatformKindTooling : IdePlatformKindTooling() {
             is KtNamedFunction -> {
                 val lightMethod = declaration.toLightMethods().firstOrNull() ?: return null
                 val lightClass = lightMethod.containingClass as? KtLightClass ?: return null
-                val baseName = "java:test://${lightClass.qualifiedName}.${lightMethod.name}"
+                val baseName = "java:test://${lightClass.qualifiedName}/${lightMethod.name}"
                 listOf("$baseName[${targetName}X64]", "$baseName[$targetName]", baseName)
             }
 
