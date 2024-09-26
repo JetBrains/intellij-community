@@ -5,12 +5,13 @@ import com.intellij.junit.testFramework.JUnitMalformedDeclarationInspectionTestB
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinJUnitMalformedDeclarationInspectionTestBase(
   junit5Version: String
 ) : JUnitMalformedDeclarationInspectionTestBase(junit5Version), ExpectedPluginModeProvider {
   override fun setUp() {
-    super.setUp()
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
   }
 }

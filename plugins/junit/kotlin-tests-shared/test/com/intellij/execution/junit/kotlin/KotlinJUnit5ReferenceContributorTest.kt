@@ -4,8 +4,13 @@ package com.intellij.execution.junit.kotlin
 import com.intellij.junit.testFramework.JUnit5ReferenceContributorTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinJUnit5ReferenceContributorTest : JUnit5ReferenceContributorTestBase(), ExpectedPluginModeProvider {
+  override fun setUp() {
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+  }
+
   fun `test resolve to enum source value`() {
     myFixture.assertResolvableReference(JvmLanguage.KOTLIN, """
       enum class Foo { AAA, BBB }

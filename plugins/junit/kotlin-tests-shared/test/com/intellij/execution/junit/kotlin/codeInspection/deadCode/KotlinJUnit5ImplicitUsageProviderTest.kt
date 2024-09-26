@@ -5,10 +5,11 @@ import com.intellij.junit.testFramework.JUnit5ImplicitUsageProviderTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinJUnit5ImplicitUsageProviderTest : JUnit5ImplicitUsageProviderTestBase(), ExpectedPluginModeProvider {
   override fun setUp() {
-    super.setUp()
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
   }
 

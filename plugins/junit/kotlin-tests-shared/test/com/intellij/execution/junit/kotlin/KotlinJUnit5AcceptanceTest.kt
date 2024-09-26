@@ -7,11 +7,12 @@ import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil
 import com.intellij.psi.PsiClassOwner
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.jupiter.api.Assertions
 
 abstract class KotlinJUnit5AcceptanceTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
   override fun setUp() {
-    super.setUp()
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
     JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture)
   }
 

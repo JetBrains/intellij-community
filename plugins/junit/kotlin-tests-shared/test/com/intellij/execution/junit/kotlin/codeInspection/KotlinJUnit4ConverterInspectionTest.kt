@@ -6,10 +6,11 @@ import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.refactoring.BaseRefactoringProcessor
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
 abstract class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase(), ExpectedPluginModeProvider {
   override fun setUp() {
-    super.setUp()
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
   }
 
