@@ -278,19 +278,24 @@ public class Maven40ProjectResolver {
 
   @NotNull
   private MavenServerExecutionResult createExecutionResult(Maven40ExecutionResult result) {
-    File file = result.getPomFile();
+    @Nullable File file = result.getPomFile();
+    List<Exception> exceptions = result.getExceptions();
+    List<ModelProblem> modelProblems = result.getModelProblems();
+    DependencyResolutionResult dependencyResolutionResult = result.getDependencyResolutionResult();
+    MavenProject mavenProject = result.getMavenProject();
+    String dependencyHash = result.getDependencyHash();
+    boolean dependencyResolutionSkipped = result.isDependencyResolutionSkipped();
+
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
-    myEmbedder.collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
+    myEmbedder.collectProblems(file, exceptions, modelProblems, problems);
 
     Collection<MavenProjectProblem> unresolvedProblems = new HashSet<>();
-    collectUnresolvedArtifactProblems(file, result.getDependencyResolutionResult(), unresolvedProblems);
+    collectUnresolvedArtifactProblems(file, dependencyResolutionResult, unresolvedProblems);
 
-    MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenServerExecutionResult(null, problems, Collections.emptySet());
 
     MavenModel model = new MavenModel();
     try {
-      DependencyResolutionResult dependencyResolutionResult = result.getDependencyResolutionResult();
       DependencyNode dependencyGraph =
         dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;
 
@@ -301,7 +306,7 @@ public class Maven40ProjectResolver {
         myLocalRepositoryFile);
     }
     catch (Exception e) {
-      myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), result.getModelProblems(), problems);
+      myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), modelProblems, problems);
     }
 
     RemoteNativeMaven40ProjectHolder holder = new RemoteNativeMaven40ProjectHolder(mavenProject);
@@ -316,7 +321,7 @@ public class Maven40ProjectResolver {
 
     Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, result.getDependencyHash(), result.isDependencyResolutionSkipped(), mavenModelMap,
+      new MavenServerExecutionResult.ProjectData(model, dependencyHash, dependencyResolutionSkipped, mavenModelMap,
                                                  holder, activatedProfiles);
     if (null == model.getBuild() || null == model.getBuild().getDirectory()) {
       data = null;

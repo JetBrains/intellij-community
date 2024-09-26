@@ -258,18 +258,20 @@ public class Maven3XProjectResolver {
   @NotNull
   private MavenServerExecutionResult createExecutionResult(Maven3ExecutionResult result) {
     @Nullable File file = result.getPomFile();
-    Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
-    myEmbedder.collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
-
-    Collection<MavenProjectProblem> unresolvedProblems = new HashSet<>();
-    collectUnresolvedArtifactProblems(file, result.getDependencyResolutionResult(), unresolvedProblems);
-
+    List<Exception> exceptions = result.getExceptions();
+    List<ModelProblem> modelProblems = result.getModelProblems();
+    DependencyResolutionResult dependencyResolutionResult = result.getDependencyResolutionResult();
     MavenProject mavenProject = result.getMavenProject();
+    String dependencyHash = result.getDependencyHash();
+    boolean dependencyResolutionSkipped = result.isDependencyResolutionSkipped();
+
+    Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
+    myEmbedder.collectProblems(file, exceptions, modelProblems, problems);
+
     if (mavenProject == null) return new MavenServerExecutionResult(null, problems, Collections.emptySet());
 
     MavenModel model = new MavenModel();
     try {
-      DependencyResolutionResult dependencyResolutionResult = result.getDependencyResolutionResult();
       DependencyNode dependencyGraph = dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;
 
       List<DependencyNode> dependencyNodes =
@@ -279,7 +281,7 @@ public class Maven3XProjectResolver {
         mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), myEmbedder.getLocalRepositoryFile());
     }
     catch (Exception e) {
-      myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), result.getModelProblems(), problems);
+      myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), modelProblems, problems);
     }
 
     RemoteNativeMaven3ProjectHolder holder = new RemoteNativeMaven3ProjectHolder(mavenProject);
@@ -294,8 +296,10 @@ public class Maven3XProjectResolver {
 
     Map<String, String> mavenModelMap = Maven3ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, result.getDependencyHash(), result.isDependencyResolutionSkipped(), mavenModelMap,
+      new MavenServerExecutionResult.ProjectData(model, dependencyHash, dependencyResolutionSkipped, mavenModelMap,
                                                  holder, activatedProfiles);
+    Collection<MavenProjectProblem> unresolvedProblems = new HashSet<>();
+    collectUnresolvedArtifactProblems(file, dependencyResolutionResult, unresolvedProblems);
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
   }
 
