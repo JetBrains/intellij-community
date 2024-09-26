@@ -18,7 +18,6 @@
     <orderEntry type="module" module-name="intellij.tools.testsBootstrap" />
     <orderEntry type="module" module-name="intellij.java.resources.en" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.rt" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.resources" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.images" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.regexp" exported="" scope="RUNTIME" />

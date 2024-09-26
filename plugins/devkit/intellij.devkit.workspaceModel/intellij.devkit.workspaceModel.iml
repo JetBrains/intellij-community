@@ -15,7 +15,6 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
-    <orderEntry type="module" module-name="intellij.platform.resources" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />

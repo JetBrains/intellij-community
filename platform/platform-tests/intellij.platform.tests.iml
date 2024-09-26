@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
-    <orderEntry type="module" module-name="intellij.platform.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.spellchecker" />

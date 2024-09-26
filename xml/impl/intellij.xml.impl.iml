@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
-    <orderEntry type="module" module-name="intellij.platform.resources" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" exported="" />
     <orderEntry type="module" module-name="intellij.xml.analysis.impl" exported="" />
