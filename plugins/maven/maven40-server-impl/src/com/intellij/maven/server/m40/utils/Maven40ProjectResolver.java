@@ -122,6 +122,7 @@ public class Maven40ProjectResolver {
     return executionResults;
   }
 
+  @NotNull
   private ArrayList<MavenServerExecutionResult> getExecutionResults(MavenSession session,
                                                                     Set<File> files,
                                                                     MavenExecutionRequest request) {
@@ -187,7 +188,8 @@ public class Maven40ProjectResolver {
     return executionResults;
   }
 
-  private @NotNull Map<File, String> collectHashes(boolean runInParallel, List<ProjectBuildingResult> buildingResults) {
+  @NotNull
+  private Map<File, String> collectHashes(boolean runInParallel, List<ProjectBuildingResult> buildingResults) {
     Map<File, String> fileToNewDependencyHash = new ConcurrentHashMap<>();
     myTelemetry.executeWithSpan("dependencyHashes",
                                 runInParallel,
