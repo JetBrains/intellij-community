@@ -1147,24 +1147,16 @@ public final class PyTypeChecker {
               substitution = invert(invertedSubstitution);
             }
           }
-          if (substitution instanceof PyTypeVarType) {
-            PyQualifiedNameOwner scope = typeVar.getScopeOwner();
-            if (scope instanceof PyClass pyClass) {
-              PyType genericTypeFromClass = getGenericTypeForClass(context, pyClass);
-              if (genericTypeFromClass instanceof PyCollectionType) {
-                Generics generics = collectGenerics(genericTypeFromClass, context);
-                PyType finalSubstitution = substitution;
+          if (substitution instanceof PyTypeVarType typeVarSubstitution) {
 
-                PyTypeVarType sameScopeSubstitution = StreamEx.of(generics.typeVars)
-                  .findFirst(typeVarType -> {
-                    return typeVarType.getDeclarationElement() != null
-                             && typeVarType.getDeclarationElement().equals(finalSubstitution.getDeclarationElement());
-                  }).orElse(null);
+            PyTypeVarType sameScopeSubstitution = StreamEx.of(substitutions.typeVars.keySet())
+              .findFirst(typeVarType -> {
+                return typeVarType.getDeclarationElement() != null
+                       && typeVarType.getDeclarationElement().equals(typeVarSubstitution.getDeclarationElement());
+              }).orElse(null);
 
-                if (sameScopeSubstitution != null && sameScopeSubstitution.getDefaultType() != null) {
-                  return substitute(sameScopeSubstitution, substitutions, context, substituting);
-                }
-              }
+            if (sameScopeSubstitution != null && typeVarSubstitution.getDefaultType() != null) {
+              return substitute(sameScopeSubstitution, substitutions, context, substituting);
             }
           }
           // TODO remove !typeVar.equals(substitution) part, it's necessary due to the logic in unifyReceiverWithParamSpecs
@@ -1175,11 +1167,20 @@ public final class PyTypeChecker {
         }
         else if (type instanceof PyParamSpecType paramSpecType && paramSpecType.getParameters() == null) {
           if (!substitutions.paramSpecs.containsKey(paramSpecType)) {
+            PyParamSpecType sameScopeSubstitution = StreamEx.of(substitutions.paramSpecs.keySet())
+              .findFirst(typeVarType -> {
+                return typeVarType.getDeclarationElement() != null
+                       && typeVarType.getDeclarationElement().equals(paramSpecType.getDeclarationElement());
+              }).orElse(null);
+
+            if (sameScopeSubstitution != null) {
+              return substitute(sameScopeSubstitution, substitutions, context, substituting);
+            }
             return paramSpecType;
           }
           PyParamSpecType substitution = substitutions.paramSpecs.get(paramSpecType);
           if (substitution != null && !substitution.equals(paramSpecType) && hasGenerics(substitution, context)) {
-            return substitute(substitution, substitutions, context);
+            return substitute(substitution, substitutions, context, substituting);
           }
           // TODO For ParamSpecs, replace Any with (*args: Any, **kwargs: Any) as it's a logical "wildcard" for this kind of type parameter
           return substitution;

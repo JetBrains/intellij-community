@@ -1826,6 +1826,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         .withParameters(ContainerUtil
                           .map(defaultArgumentTypes, argType -> PyCallableParameterImpl.nonPsi(argType)), context.getTypeContext());
     }
+    if (expression instanceof PyReferenceExpression) {
+      PyType referenceType = Ref.deref(getType(expression, context));
+      if (referenceType instanceof PyParamSpecType paramSpecType) {
+        return paramSpecType;
+      }
+    }
     return null;
   }
 
