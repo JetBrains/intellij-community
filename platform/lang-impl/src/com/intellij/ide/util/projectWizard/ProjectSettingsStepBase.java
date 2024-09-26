@@ -363,6 +363,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
 
   protected LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
     myLocationField = new TextFieldWithBrowseButton();
+    Disposer.register(this, myLocationField);
     final String projectLocation = myProjectDirectory.get().toString();
     myLocationField.setText(projectLocation);
     final int index = projectLocation.lastIndexOf(File.separator);
