@@ -5,6 +5,7 @@ import com.intellij.execution.vmOptions.VMOptionKind
 import com.intellij.execution.vmOptions.VMOptionVariant
 import com.intellij.execution.vmOptions.VMOptionsService
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,6 +19,8 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
   }
 
   private fun getSpecs(): ShellCommandSpec = ShellCommandSpec("java") {
+    parserOptions = ShellCommandParserOptions.create(flagsArePosixNonCompliant = true, optionsMustPrecedeArguments = true)
+
     dynamicOptions { terminalContext ->
       val javaContext = JavaShellCommandContext.create(terminalContext)
       addOptionsFromVM(javaContext?.getJrePath())
