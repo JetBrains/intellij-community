@@ -1,7 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.frontend.changes
 
+import com.intellij.ide.DefaultTreeExpander
+import com.intellij.ide.TreeExpander
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.DoubleClickListener
@@ -17,13 +22,17 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_ENTER
 import java.awt.event.MouseEvent
+import java.util.*
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultTreeModel
 
 @Suppress("LeakingThis")
-open class ChangesTree(val project: Project, val showCheckboxes: Boolean, val highlightProblems: Boolean) : Tree() {
+open class ChangesTree(val project: Project, val showCheckboxes: Boolean, val highlightProblems: Boolean) : Tree(), UiCompatibleDataProvider {
   private var modelUpdateInProgress = false
   private val keyHandlers = ChangesTreeHandlers(this)
+  private var groupingKeys: List<String> = listOf()
+  private var isModelFlat: Boolean = true
+  private val treeExpander = MyTreeExpander()
 
   init {
     val nodeRenderer = ChangesBrowserNodeRenderer(project, { false }, false)
@@ -42,6 +51,7 @@ open class ChangesTree(val project: Project, val showCheckboxes: Boolean, val hi
     modelUpdateInProgress = true
     try {
       setModel(model)
+      isModelFlat = isCurrentModelFlat()
     }
     finally {
       modelUpdateInProgress = false
@@ -63,6 +73,31 @@ open class ChangesTree(val project: Project, val showCheckboxes: Boolean, val hi
   fun addSelectionListener(parent: Disposable? = null, listener: TreeSelectionListener) {
     addTreeSelectionListener(listener)
     if (parent != null) Disposer.register(parent) { removeTreeSelectionListener(listener) }
+  }
+
+  private fun isCurrentModelFlat(): Boolean {
+    var isFlat = true
+    val enumeration: Enumeration<*> = getRoot().depthFirstEnumeration()
+
+    while (isFlat && enumeration.hasMoreElements()) {
+      isFlat = (enumeration.nextElement() as ChangesBrowserNode<*>).getLevel() <= 1
+    }
+
+    return isFlat
+  }
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[PlatformDataKeys.TREE_EXPANDER] = treeExpander
+  }
+
+  inner class MyTreeExpander : DefaultTreeExpander(this) {
+    override fun isExpandAllVisible(): Boolean {
+      return groupingKeys.isNotEmpty() || !isModelFlat
+    }
+
+    override fun isCollapseAllVisible(): Boolean {
+      return isExpandAllVisible
+    }
   }
 }
 

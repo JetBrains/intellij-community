@@ -3,4 +3,15 @@
     <module name="intellij.platform.vcs.impl.shared"/>
     <plugin id="com.intellij.platform.experimental.frontend"/>
   </dependencies>
+
+  <actions>
+    <group id="Frontend.Shelve.KeymapGroup" searchable="false">
+      <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>
+    </group>
+
+    <group id="ShelvedChangesToolbar">
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
+    </group>
+  </actions>
 </idea-plugin>
