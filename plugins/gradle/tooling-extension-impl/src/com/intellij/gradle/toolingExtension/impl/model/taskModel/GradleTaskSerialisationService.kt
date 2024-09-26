@@ -47,6 +47,7 @@ class GradleTaskSerialisationService : SerializationService<GradleTaskModel> {
     private const val TASK_TYPE_FIELD: String = "type"
     private const val TASK_IS_TEST_FIELD: String = "isTest"
     private const val TASK_IS_JVM_TEST_FIELD: String = "isJvmTest"
+    private const val TASK_IS_INHERITED_FIELD: String = "isInherited"
 
     @JvmStatic
     fun writeTaskModel(writer: IonWriter, model: GradleTaskModel) {
@@ -90,6 +91,7 @@ class GradleTaskSerialisationService : SerializationService<GradleTaskModel> {
         writeString(writer, TASK_TYPE_FIELD, task.type)
         writeBoolean(writer, TASK_IS_TEST_FIELD, task.isTest)
         writeBoolean(writer, TASK_IS_JVM_TEST_FIELD, task.isJvmTest)
+        writeBoolean(writer, TASK_IS_INHERITED_FIELD, task.isInherited)
       }
     }
 
@@ -105,6 +107,7 @@ class GradleTaskSerialisationService : SerializationService<GradleTaskModel> {
           type = readString(reader, TASK_TYPE_FIELD)
           isTest = readBoolean(reader, TASK_IS_TEST_FIELD)
           isJvmTest = readBoolean(reader, TASK_IS_JVM_TEST_FIELD)
+          isInherited = readBoolean(reader, TASK_IS_INHERITED_FIELD)
         }
       }
     }

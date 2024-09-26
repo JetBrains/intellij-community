@@ -38,4 +38,6 @@ public interface ExternalTask extends Serializable {
   boolean isTest();
 
   boolean isJvmTest();
+
+  boolean isInherited();
 }

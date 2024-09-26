@@ -20,6 +20,8 @@ public final class DefaultExternalTask implements ExternalTask {
 
   private boolean isJvmTest;
 
+  private boolean isInherited;
+
   public DefaultExternalTask() {
   }
 
@@ -31,6 +33,7 @@ public final class DefaultExternalTask implements ExternalTask {
     type = externalTask.getType();
     isTest = externalTask.isTest();
     isJvmTest = externalTask.isJvmTest();
+    isInherited = externalTask.isInherited();
   }
 
   @NotNull
@@ -99,5 +102,14 @@ public final class DefaultExternalTask implements ExternalTask {
 
   public void setJvmTest(boolean test) {
     isJvmTest = test;
+  }
+
+  @Override
+  public boolean isInherited() {
+    return isInherited;
+  }
+
+  public void setInherited(boolean inherited) {
+    isInherited = inherited;
   }
 }
