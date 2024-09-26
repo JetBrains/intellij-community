@@ -18,7 +18,6 @@ import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +38,7 @@ public abstract class ImportLayoutPanel extends JPanel {
   private final JBCheckBox myCbLayoutStaticImportsSeparately =
     new JBCheckBox(JavaBundle.message("import.layout.static.imports.separately"));
   private final JBTable myImportLayoutTable;
+  private final ImportLayoutPanelUI myUI;
 
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
 
@@ -56,7 +56,6 @@ public abstract class ImportLayoutPanel extends JPanel {
 
   public ImportLayoutPanel() {
     super(new BorderLayout());
-    setBorder(IdeBorderFactory.createTitledBorder(JavaBundle.message("title.import.layout"), false, JBInsets.emptyInsets()));
 
     myCbLayoutStaticImportsSeparately.addItemListener(e -> {
       if (areStaticImportsEnabled()) {
@@ -87,8 +86,6 @@ public abstract class ImportLayoutPanel extends JPanel {
       refresh();
     });
 
-    add(myCbLayoutStaticImportsSeparately, BorderLayout.NORTH);
-
     ActionGroup addGroup = new DefaultActionGroup(new AddPackageAction(), new AddBlankLineAction());
     addGroup.getTemplatePresentation().setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
     addGroup.getTemplatePresentation().setText(JavaBundle.messagePointer("button.add"));
@@ -109,10 +106,11 @@ public abstract class ImportLayoutPanel extends JPanel {
                            IdeBundle.message("action.remove"),
                            JavaBundle.message("import.layout.panel.up.button"),
                            JavaBundle.message("import.layout.panel.down.button"))
-      .setPreferredSize(new Dimension(-1, JBUI.scale(180))).createPanel();
+      .setPreferredSize(new Dimension(-1, JBUI.scale(180)))
+      .createPanel();
 
-
-    add(importLayoutPanel, BorderLayout.CENTER);
+    myUI = new ImportLayoutPanelUI(myCbLayoutStaticImportsSeparately, importLayoutPanel);
+    add(myUI.getPanel(), BorderLayout.CENTER);
   }
 
   private class AddPackageAction extends DumbAwareAction {
