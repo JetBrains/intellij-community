@@ -159,7 +159,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     PythonCommandLineState pyState = (PythonCommandLineState)state;
     RunProfile profile = environment.getRunProfile();
 
-    if (Registry.is("python.debug.use.single.port")) {
+    if (PyDebuggerOptionsProvider.getInstance(environment.getProject()).isRunDebuggerInServerMode() &&
+        Registry.is("python.debug.use.single.port")) {
       int port = PyDebuggerOptionsProvider.getInstance(environment.getProject()).getDebuggerPort();
       TargetEnvironment.TargetPortBinding targetPortBinding =
         new TargetEnvironment.TargetPortBinding(port, port);
@@ -633,7 +634,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     configureDebugEnvironment(project, new TargetEnvironmentController(debuggerScript.getEnvs(), request), runProfile,
                               isLocalTarget);
 
-    if (Registry.is("python.debug.use.single.port")) {
+    if (PyDebuggerOptionsProvider.getInstance(project).isRunDebuggerInServerMode() && Registry.is("python.debug.use.single.port")) {
       configureServerModeDebugConnectionParameters(debuggerScript, serverPortOnTarget);
     }
     else {

@@ -14,11 +14,11 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.*;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebugValueExecutionService;
+import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -88,7 +88,7 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
     myTerminateSemaphore = new Semaphore(0);
 
     WriteAction.runAndWait(() -> {
-      var port = Registry.intValue("python.debugger.port");
+      var port = PyDebuggerOptionsProvider.getInstance(project).getDebuggerPort();
 
       TargetEnvironment.TargetPortBinding targetPortBinding =
         new TargetEnvironment.TargetPortBinding(port, port);
