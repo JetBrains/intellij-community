@@ -17,6 +17,10 @@ internal class JcefComponentWrapper(private val component: Component) {
   private val jbCefBrowser = findBrowser()
   private val jsExecutor = JsExecutor(jbCefBrowser)
 
+  fun hasDocument() = jbCefBrowser.cefBrowser.hasDocument()
+
+  fun getUrl(): String = jbCefBrowser.cefBrowser.url
+
   fun runJs(js: String) = jsExecutor.runJs(js)
 
   /**

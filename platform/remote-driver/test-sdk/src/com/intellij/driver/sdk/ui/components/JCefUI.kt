@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
+import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -88,10 +89,16 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  val dom: String
-    get() = callJs("""document.documentElement.outerHTML""")
+  fun hasDocument(): Boolean = jcefWorker.hasDocument()
 
-  private fun callJs(@Language("JavaScript") js: String, timeout: Long = 3000): String {
+  fun getUrl(): String =  jcefWorker.getUrl()
+
+  fun getHtml(): String {
+    waitFor("Document exists") { hasDocument() }
+    return callJs("""document.documentElement.outerHTML""")
+  }
+
+  fun callJs(@Language("JavaScript") js: String, timeout: Long = 3000): String {
     return jcefWorker.callJs(js, timeout)
   }
 
@@ -163,6 +170,8 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
 private interface JcefComponentWrapper {
   fun runJs(@Language("JavaScript") js: String)
   fun callJs(@Language("JavaScript") js: String, executeTimeoutMs: Long): String
+  fun hasDocument(): Boolean
+  fun getUrl(): String
 }
 
 
