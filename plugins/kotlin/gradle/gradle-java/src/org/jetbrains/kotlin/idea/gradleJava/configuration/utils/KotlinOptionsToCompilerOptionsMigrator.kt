@@ -24,7 +24,30 @@ data class Replacement(val expressionToReplace: KtExpression, val replacement: S
 @ApiStatus.Internal
 fun expressionContainsOperationForbiddenToReplace(binaryExpression: KtBinaryExpression): Boolean {
     val operationReference = binaryExpression.operationReference.text
-    return operationReference == "-="
+    if (operationReference == "-=") {
+        return true
+    } else {
+        val rightPartOfBinaryExpression = binaryExpression.right ?: return true
+        if (rightPartOfBinaryExpression is KtBinaryExpression) {
+            return checkIfExpressionContainsMinusOperator(rightPartOfBinaryExpression)
+        } else {
+            return false
+        }
+    }
+}
+
+private fun checkIfExpressionContainsMinusOperator(binaryExpression: KtBinaryExpression): Boolean {
+    val operationReference = binaryExpression.operationReference.text
+    if (operationReference == "-") {
+        return true
+    } else {
+        val leftPartOfBinaryExpression = binaryExpression.left ?: return true
+        if (leftPartOfBinaryExpression is KtBinaryExpression) {
+            return checkIfExpressionContainsMinusOperator(leftPartOfBinaryExpression)
+        } else {
+            return false
+        }
+    }
 }
 
 @ApiStatus.Internal

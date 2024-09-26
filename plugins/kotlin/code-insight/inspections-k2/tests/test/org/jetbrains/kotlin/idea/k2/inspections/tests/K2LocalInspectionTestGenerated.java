@@ -8359,14 +8359,19 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontReplaceInKtFile.kt");
             }
 
+            @TestMetadata("dontReplaceWithMinusOperator2.gradle.kts")
+            public void testDontReplaceWithMinusOperator2_gradle() throws Exception {
+                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontReplaceWithMinusOperator2.gradle.kts");
+            }
+
+            @TestMetadata("dontReplaceWithMinusOperator.gradle.kts")
+            public void testDontReplaceWithMinusOperator_gradle() throws Exception {
+                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontReplaceWithMinusOperator.gradle.kts");
+            }
+
             @TestMetadata("freeCompilerArgsAddAllFromList.gradle.kts")
             public void testFreeCompilerArgsAddAllFromList_gradle() throws Exception {
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/freeCompilerArgsAddAllFromList.gradle.kts");
-            }
-
-            @TestMetadata("freeCompilerArgsMinusFreeCompilerArgs.gradle.kts")
-            public void testFreeCompilerArgsMinusFreeCompilerArgs_gradle() throws Exception {
-                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/freeCompilerArgsMinusFreeCompilerArgs.gradle.kts");
             }
 
             @TestMetadata("freeCompilerArgsMultipleAddition1.gradle.kts")

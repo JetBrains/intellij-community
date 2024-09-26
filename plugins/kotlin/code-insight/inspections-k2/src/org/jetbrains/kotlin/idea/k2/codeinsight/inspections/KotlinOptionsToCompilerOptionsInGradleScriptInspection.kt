@@ -98,7 +98,7 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
 
                         if (lambdaStatements?.isNotEmpty() == true) { // compileKotlin.kotlinOptions { .. }
                             lambdaStatements.forEach {
-                                if (binaryExpressionsContainForbiddenOperations(it)) return
+                                if (expressionsContainForbiddenOperations(it)) return
                             }
                         }
                     }
@@ -149,12 +149,12 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
         return false
     }
 
-    private fun binaryExpressionsContainForbiddenOperations(element: PsiElement): Boolean {
+    private fun expressionsContainForbiddenOperations(element: PsiElement): Boolean {
         if (element is KtBinaryExpression) { // for sth like `kotlinOptions.sourceMapEmbedSources = "inlining"`
             if (expressionContainsOperationForbiddenToReplace(element)) return true
         } else {
             element.children.forEach {
-                if (binaryExpressionsContainForbiddenOperations(it)) return true
+                if (expressionsContainForbiddenOperations(it)) return true
             }
         }
         return false
@@ -218,7 +218,7 @@ private class ReplaceKotlinOptionsWithCompilerOptionsFix() : KotlinModCommandQui
                  */
                 if (lambdaStatements?.isNotEmpty() == true) { // compileKotlin.kotlinOptions { .. }
                     lambdaStatements.forEach {
-                        searchAndProcessBinaryExpressionChildren(it, expressionsToFix)
+                        addExpressionsToFixIfNeeded(it, expressionsToFix)
                     }
                 }
             }
@@ -240,12 +240,12 @@ private class ReplaceKotlinOptionsWithCompilerOptionsFix() : KotlinModCommandQui
      * Test case:
      * K2LocalInspectionTestGenerated.InspectionsLocal.KotlinOptionsToCompilerOptions#testDontMergeConvertedOptionsToAnotherCompilerOptions_gradle
      */
-    private fun searchAndProcessBinaryExpressionChildren(element: PsiElement, expressionsToFix: MutableList<Replacement>) {
+    private fun addExpressionsToFixIfNeeded(element: PsiElement, expressionsToFix: MutableList<Replacement>) {
         if (element is KtBinaryExpression) { // for sth like `kotlinOptions.sourceMapEmbedSources = "inlining"`
             getReplacementForOldKotlinOptionIfNeeded(element)?.let { expressionsToFix.add(it) }
         } else {
             element.children.forEach {
-                searchAndProcessBinaryExpressionChildren(it, expressionsToFix)
+                addExpressionsToFixIfNeeded(it, expressionsToFix)
             }
         }
     }

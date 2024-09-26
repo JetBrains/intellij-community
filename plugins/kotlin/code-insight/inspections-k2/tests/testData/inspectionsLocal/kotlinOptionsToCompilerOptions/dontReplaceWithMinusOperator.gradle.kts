@@ -1,3 +1,5 @@
+// PROBLEM: none
+
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -16,7 +18,7 @@ subprojects {
     }
 
     tasks.withType<KotlinCompile>().all {
-        compilerOptions {
+        <caret>kotlinOptions {
             freeCompilerArgs = freeCompilerArgs - "-Xopt-in=kotlin.RequiresOptIn"
         }
     }
