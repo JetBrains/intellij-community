@@ -4,6 +4,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.siyeh.ig.psiutils.MethodMatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -22,8 +23,10 @@ public class IncorrectMessageFormatInspectionTest extends LightJavaCodeInsightFi
 
   private void doTest(List<String> classes, List<String> methods) {
     IncorrectMessageFormatInspection inspection = new IncorrectMessageFormatInspection();
-    inspection.customClasses.addAll(classes);
-    inspection.customMethods.addAll(methods);
+    MethodMatcher matcher = inspection.myMethodMatcher;
+    for (int i = 0; i < classes.size(); i++) {
+      matcher.add(classes.get(i), methods.get(i));
+    }
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(getTestName(false) + ".java");
   }

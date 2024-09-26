@@ -1,13 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -15,6 +16,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.format.MessageFormatUtil;
 import com.siyeh.ig.psiutils.ConstructionUtils;
+import com.siyeh.ig.psiutils.MethodMatcher;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,36 +26,22 @@ import java.util.*;
 
 public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  public List<String> customClasses = new ArrayList<>();
-  public List<String> customMethods = new ArrayList<>();
+  public MethodMatcher myMethodMatcher = new MethodMatcher().finishDefault();
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return OptPane.pane(
-      OptPane.table(
-        InspectionGadgetsBundle.message("inspection.incorrect.message.custom.classes.methods"),
-        OptPane.column("customClasses", InspectionGadgetsBundle.message("inspection.incorrect.message.custom.classes"),
-                       new JavaClassValidator()),
-        OptPane.column("customMethods", InspectionGadgetsBundle.message("inspection.incorrect.message.custom.methods"))
-      ).description(InspectionGadgetsBundle.message("inspection.incorrect.message.custom.classes.methods.description"))
-    );
+      myMethodMatcher.getTable(InspectionGadgetsBundle.message(
+        "inspection.incorrect.message.custom.classes.methods")).prefix("myMethodMatcher"));
   }
 
   private boolean isCustomPatternMethodCall(@NotNull PsiMethodCallExpression call) {
-    PsiReferenceExpression methodExpression = call.getMethodExpression();
-
-    String methodName = methodExpression.getReferenceName();
-    if (methodName == null || !customMethods.contains(methodName)) {
+    if (!myMethodMatcher.matches(call)) {
       return false;
     }
 
     PsiMethod method = call.resolveMethod();
     if (method == null) return false;
-    PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null || !customClasses.contains(containingClass.getQualifiedName())) {
-      return false;
-    }
-
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 2) {
       return false;
@@ -69,6 +58,18 @@ public final class IncorrectMessageFormatInspection extends AbstractBaseJavaLoca
     }
 
     return true;
+  }
+
+  @Override
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
+    super.readSettings(element);
+    myMethodMatcher.readSettings(element);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
+    super.writeSettings(element);
+    myMethodMatcher.writeSettings(element);
   }
 
   @NotNull
