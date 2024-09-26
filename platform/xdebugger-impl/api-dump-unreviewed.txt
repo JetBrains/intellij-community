@@ -238,7 +238,6 @@ c:com.intellij.xdebugger.impl.XDebuggerSupport
 - getMarkObjectHandler():com.intellij.xdebugger.impl.actions.MarkObjectActionHandler
 - getMuteBreakpointsHandler():com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler
 - getPauseHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- getQuickEvaluateHandler():com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
 - getResumeActionHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getRunToCursorHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getShowExecutionPointHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
@@ -1022,16 +1021,6 @@ c:com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator
 - createDescriptorByNode(java.lang.Object,com.intellij.concurrency.ResultConsumer):V
 - createTree(com.intellij.openapi.util.Pair):com.intellij.ui.treeStructure.Tree
 - getTitle(com.intellij.openapi.util.Pair):java.lang.String
-f:com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler
-- com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
-- sf:Companion:com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler$Companion
-- <init>():V
-- canShowHint(com.intellij.openapi.project.Project):Z
-- createValueHint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType):com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
-- createValueHintAsync(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType):com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler$CancellableHint
-- getValueLookupDelay(com.intellij.openapi.project.Project):I
-- isEnabled(com.intellij.openapi.project.Project):Z
-f:com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler$Companion
 c:com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 - com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,com.intellij.xdebugger.evaluation.ExpressionInfo,com.intellij.xdebugger.evaluation.XDebuggerEvaluator,com.intellij.xdebugger.XDebugSession,Z):V

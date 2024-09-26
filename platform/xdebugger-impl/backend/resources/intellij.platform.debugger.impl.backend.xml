@@ -4,6 +4,6 @@
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider
-      implementation="com.intellij.platform.debugger.impl.backend.BackendDebuggerValueLookupHintsRemoteApiProvider"/>
+      implementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerRemoteApiProviders"/>
   </extensions>
 </idea-plugin>

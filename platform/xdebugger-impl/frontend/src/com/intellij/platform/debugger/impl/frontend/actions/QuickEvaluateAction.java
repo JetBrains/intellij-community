@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.debugger.impl.frontend.evaluate.quick.XQuickEvaluateHandler;
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
@@ -28,6 +29,7 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
 
   private static class QuickEvaluateHandlerWrapper extends DebuggerActionHandler {
     private final QuickEvaluateHandler myHandler;
+    private final QuickEvaluateHandler myXQuickEvaluateHandler = new XQuickEvaluateHandler();
 
     QuickEvaluateHandlerWrapper(final QuickEvaluateHandler handler) {
       myHandler = handler;
@@ -38,14 +40,22 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
       Editor editor = event.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
         LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();
+        QuickEvaluateHandler handler;
+        // first try to use platform's evaluate handler
+        if (myXQuickEvaluateHandler.isEnabled(project, event)) {
+          handler = myXQuickEvaluateHandler;
+        }
+        else {
+          handler = myHandler;
+        }
         ValueLookupManager.getInstance(project).
-          showHint(myHandler, editor, editor.logicalPositionToXY(logicalPosition), null, ValueHintType.MOUSE_CLICK_HINT);
+          showHint(handler, editor, editor.logicalPositionToXY(logicalPosition), null, ValueHintType.MOUSE_CLICK_HINT);
       }
     }
 
     @Override
     public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
-      if (!myHandler.isEnabled(project, event)) {
+      if (!myHandler.isEnabled(project, event) && !myXQuickEvaluateHandler.isEnabled(project, event)) {
         return false;
       }
 

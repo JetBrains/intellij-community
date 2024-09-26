@@ -10,7 +10,6 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
-import fleet.util.UID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -22,11 +21,11 @@ interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
 
   suspend fun canShowHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): Boolean
 
-  suspend fun createHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): RemoteValueHint?
+  suspend fun createHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType, fromPlugins: Boolean): RemoteValueHintId?
 
-  suspend fun showHint(projectId: ProjectId, hintId: Int): Flow<Unit>
+  suspend fun showHint(projectId: ProjectId, hintId: RemoteValueHintId): Flow<Unit>
 
-  suspend fun removeHint(projectId: ProjectId, hintId: Int)
+  suspend fun removeHint(projectId: ProjectId, hintId: RemoteValueHintId)
 
   companion object {
     @JvmStatic
@@ -40,4 +39,4 @@ interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
 
 @ApiStatus.Internal
 @Serializable
-data class RemoteValueHint(val id: Int)
+data class RemoteValueHintId(val id: Int)

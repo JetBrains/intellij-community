@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.debugger.impl.frontend.evaluate.quick.XQuickEvaluateHandler;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
@@ -39,6 +40,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
   private final Alarm myAlarm;
   private HintRequest myHintRequest = null;
   private AbstractValueHint myCurrentHint = null;
+  private final @NotNull QuickEvaluateHandler myXQuickEvaluateHandler = new XQuickEvaluateHandler();
   private boolean myListening;
 
   public ValueLookupManager(@NotNull Project project) {
@@ -100,22 +102,23 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
 
     Point point = e.getMouseEvent().getPoint();
 
-    if (!Registry.is("debugger.valueLookupFrontendBackend")) {
-      for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-        QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
-        if (handler.isEnabled(myProject)) {
-          requestHint(handler, editor, point, e, type);
-          return;
-        }
+    // handle platform handler first
+    if (myXQuickEvaluateHandler.isEnabled(myProject)) {
+      requestHint(myXQuickEvaluateHandler, editor, point, e, type);
+      return;
+    }
+    // otherwise, handle plugin handlers
+    // for remote dev: specific DebuggerSupport with remote bridge will be used
+    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
+      QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
+      if (handler.isEnabled(myProject)) {
+        requestHint(handler, editor, point, e, type);
+        return;
       }
+    }
 
-      // if no providers were triggered - hide
-      hideHint();
-    }
-    else {
-      QuickEvaluateHandler handler = new ValueLookupManagerQuickEvaluateHandler();
-      requestHint(handler, editor, point, e, type);
-    }
+    // if no providers were triggered - hide
+    hideHint();
   }
 
   private void requestHint(final QuickEvaluateHandler handler,

@@ -64,6 +64,9 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -76,7 +79,9 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
+import static com.intellij.xdebugger.impl.XDebuggerActiveSessionControllerKt.synchronizeActiveSessionWithDb;
 
 @ApiStatus.Internal
 @State(name = "XDebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -92,7 +97,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   private final XDebuggerPinToTopManager myPinToTopManager;
   private final XDebuggerExecutionPointManager myExecutionPointManager;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions = Collections.synchronizedMap(new LinkedHashMap<>());
-  private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<>();
+  private final MutableStateFlow<@Nullable XDebugSessionImpl> myActiveSession = createMutableStateFlow(null);
 
   private XDebuggerState myState = new XDebuggerState();
 
@@ -108,6 +113,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myWatchesManager = new XDebuggerWatchesManager(project, coroutineScope);
     myPinToTopManager = new XDebuggerPinToTopManager(coroutineScope);
     myExecutionPointManager = new XDebuggerExecutionPointManager(project, coroutineScope);
+
+    synchronizeActiveSessionWithDb(coroutineScope, project, myActiveSession);
 
     messageBusConnection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
@@ -383,11 +390,18 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   @Override
   public @Nullable XDebugSessionImpl getCurrentSession() {
-    return myActiveSession.get();
+    return myActiveSession.getValue();
+  }
+
+  @ApiStatus.Internal
+  public StateFlow<@Nullable XDebugSessionImpl> getCurrentSessionFlow() {
+    return myActiveSession;
   }
 
   boolean setCurrentSession(@Nullable XDebugSessionImpl session) {
-    XDebugSessionImpl previousSession = myActiveSession.getAndSet(session);
+    XDebugSessionImpl previousSession = StateFlowKt.getAndUpdate(myActiveSession, (currentValue) -> {
+      return session;
+    });
     boolean sessionChanged = previousSession != session;
     if (sessionChanged) {
       if (session != null) {

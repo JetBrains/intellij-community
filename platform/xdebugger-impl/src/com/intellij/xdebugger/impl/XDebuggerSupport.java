@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -7,8 +7,6 @@ import com.intellij.xdebugger.impl.actions.*;
 import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
-import com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler;
-import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import org.jetbrains.annotations.NotNull;
 
 public class XDebuggerSupport extends DebuggerSupport {
@@ -26,7 +24,6 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final XDebuggerPauseActionHandler myPauseHandler;
   private final XDebuggerSuspendedActionHandler myShowExecutionPointHandler;
   private final XDebuggerEvaluateActionHandler myEvaluateHandler;
-  private final XQuickEvaluateHandler myQuickEvaluateHandler;
 
   private final XAddToWatchesFromEditorActionHandler myAddToWatchesActionHandler;
   private final XAddToInlineWatchesFromEditorActionHandler myAddToInlineWatchesActionHandler;
@@ -91,7 +88,6 @@ public class XDebuggerSupport extends DebuggerSupport {
     };
     myMuteBreakpointsHandler = new XDebuggerMuteBreakpointsHandler();
     myEvaluateHandler = new XDebuggerEvaluateActionHandler();
-    myQuickEvaluateHandler = new XQuickEvaluateHandler();
     myMarkObjectActionHandler = new XMarkObjectActionHandler();
     myEditBreakpointActionHandler = new XDebuggerEditBreakpointActionHandler();
   }
@@ -184,12 +180,6 @@ public class XDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerActionHandler getEvaluateHandler() {
     return myEvaluateHandler;
-  }
-
-  @Override
-  @NotNull
-  public QuickEvaluateHandler getQuickEvaluateHandler() {
-    return myQuickEvaluateHandler;
   }
 
   @NotNull
