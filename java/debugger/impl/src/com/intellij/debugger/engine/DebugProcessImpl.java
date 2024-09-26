@@ -2162,6 +2162,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           (context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD || isResumeOnlyCurrentThread())) {
         myThreadBlockedMonitor.startWatching(myContextThread);
       }
+
+      if (context != null) {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(SteppingListener.TOPIC)
+          .beforeSteppingStarted(context, getSteppingAction());
+      }
+
+
       if (context != null
           && isResumeOnlyCurrentThread()
           && context.getSuspendPolicy() == EventRequest.SUSPEND_ALL
