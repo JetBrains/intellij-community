@@ -110,13 +110,7 @@ class LinuxDistributionBuilder(
         buildTarGz(arch, runtimeDir, osAndArchSpecificDistPath, suffix(arch))
       }
       launch(Dispatchers.IO) {
-        if (arch == JvmArchitecture.x64) {
-          buildSnapPackage(runtimeDir, osAndArchSpecificDistPath, arch)
-        }
-        else {
-          // TODO: Add snap for aarch64
-          Span.current().addEvent("skip building Snap packages for non-x64 arch")
-        }
+        buildSnapPackage(runtimeDir, osAndArchSpecificDistPath, arch)
       }
 
       if (tarGzPath != null ) {
@@ -198,13 +192,19 @@ class LinuxDistributionBuilder(
     "${appInfo.majorVersion}.${appInfo.minorVersion}${if (versionSuffix.isEmpty()) "" else "-${versionSuffix}"}"
   }
 
-  private val snapArtifactName: String? by lazy {
-    "${customizer.snapName ?: return@lazy null}_${snapVersion}_amd64.snap"
+  private fun getSnapArchName(arch: JvmArchitecture) = when (arch) {
+    JvmArchitecture.x64 -> "amd64"
+    JvmArchitecture.aarch64 -> "arm64"
+  }
+
+  private fun getSnapArtifactName(arch: JvmArchitecture): String? {
+    val snapName = customizer.snapName ?: return null
+    return "${snapName}_${snapVersion}_${getSnapArchName(arch)}.snap"
   }
 
   private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture) {
     val snapName = customizer.snapName
-    val snapArtifactName = this.snapArtifactName
+    val snapArtifactName = this.getSnapArtifactName(arch)
     if (snapName == null || snapArtifactName == null) {
       Span.current().addEvent("Linux .snap package build skipped because of missing snapName in ${customizer::class.java.simpleName}")
       return
@@ -214,9 +214,12 @@ class LinuxDistributionBuilder(
       return
     }
 
-    val snapDir = context.paths.buildOutputDir.resolve("dist.snap")
+    val architecture = getSnapArchName(arch)
+    val snapDir = context.paths.buildOutputDir.resolve("dist.snap.${architecture}")
+
     spanBuilder("build Linux .snap package")
       .setAttribute("snapName", snapName)
+      .setAttribute("arch", arch.name)
       .use { span ->
         if (SystemInfoRt.isWindows) {
           span.addEvent(".snap cannot be built on Windows, skipped")
@@ -266,7 +269,7 @@ class LinuxDistributionBuilder(
           |# </${snapcraftConfig.name}>
         """.trimMargin()
         )
-        val productJsonDir = context.paths.tempDir.resolve("linux.dist.snap.product-info.json")
+        val productJsonDir = context.paths.tempDir.resolve("linux.dist.snap.product-info.json.$architecture")
         val jsonText = generateProductJson(productJsonDir, arch)
         validateProductJson(
           jsonText,
@@ -293,7 +296,9 @@ class LinuxDistributionBuilder(
             "--workdir=/build",
             context.options.snapDockerImage,
             "snapcraft",
-            "snap", "-o", "result/$snapArtifactName"
+            "snap",
+            "--build-for=$architecture",
+            "-o", "result/$snapArtifactName"
           ),
           workingDir = snapDir,
           timeout = context.options.snapDockerBuildTimeoutMin.minutes,
@@ -316,7 +321,7 @@ class LinuxDistributionBuilder(
     val archSuffix = suffix(arch)
     return sequenceOf("${archSuffix}.tar.gz", "${NO_RUNTIME_SUFFIX}${archSuffix}.tar.gz")
       .map { suffix -> context.productProperties.getBaseArtifactName(context) + suffix }
-      .plus(snapArtifactName)
+      .plus(getSnapArtifactName(arch))
       .filterNotNull()
       .map(context.paths.artifactDir::resolve)
       .filter { it.exists() }

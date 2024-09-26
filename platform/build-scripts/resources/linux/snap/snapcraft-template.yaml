@@ -8,11 +8,13 @@ description: |-
   $DESCRIPTION$
 grade: $GRADE$
 confinement: classic
-base: core18
+base: core22
 compression: lzo
 architectures:
   - build-on: [amd64, arm64]
-    run-on: amd64
+    build-for: amd64
+  - build-on: [amd64, arm64]
+    build-for: arm64
 
 apps:
   $NAME$:
