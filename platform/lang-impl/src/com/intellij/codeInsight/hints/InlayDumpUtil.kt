@@ -10,6 +10,11 @@ import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.regex.Pattern
 
+/**
+ * Note that while functions here are marked as internal, the dump format they define is part of **public APIs** built on top of them
+ * (e.g. previews for declarative `InlayHintProvider`s and base tests for code vision and inlay hints).
+ * @see com.intellij.codeInsight.hints.declarative.impl.DeclarativeHintsProviderSettingsModel
+ */
 @Internal
 object InlayDumpUtil {
   val inlayPattern: Pattern =
