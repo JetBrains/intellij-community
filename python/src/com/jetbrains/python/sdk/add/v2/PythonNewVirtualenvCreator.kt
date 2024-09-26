@@ -26,6 +26,7 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -196,7 +197,7 @@ class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) 
     // todo remove project path, or move to controller
     try {
       val venvPath = Path.of(model.state.venvPath.get())
-      model.setupVirtualenv(venvPath, model.projectPath.value)
+      model.setupVirtualenv(venvPath, model.projectPath.first())
     }
     catch (e: InvalidPathException) {
       Result.failure(e)

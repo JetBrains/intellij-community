@@ -159,7 +159,7 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
     manuallyAddedInterpreters.value += ExistingSelectableInterpreter(sdk, PySdkUtil.getLanguageLevelForSdk(sdk), sdk.isSystemWide)
   }
 
-  open fun suggestVenvPath(): String? = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectPath.value.toString()))
+  suspend fun suggestVenvPath(): String? = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectPath.first().toString()))
 }
 
 abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModelParams)

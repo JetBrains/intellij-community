@@ -19,6 +19,7 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
+import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
@@ -63,7 +64,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
     val newSdk = setupEnvSdk(moduleOrProject.project,
                              module,
                              ProjectJdkTable.getInstance().allJdks.asList(),
-                             model.projectPath.value.toString(),
+                             model.projectPath.first().toString(),
                              homePath,
                              false)!!
     addSdk(newSdk)

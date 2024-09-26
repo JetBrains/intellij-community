@@ -32,17 +32,19 @@ import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.util.ErrorSink
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
 
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
  */
-class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<Path>, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null, private val errorSink: ErrorSink) : PySdkCreator {
+class PythonAddNewEnvironmentPanel(val projectPath: Flow<Path>, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null, private val errorSink: ErrorSink) : PySdkCreator {
   private val propertyGraph = PropertyGraph()
   private val allowedInterpreterTypes = (onlyAllowedInterpreterTypes ?: PythonInterpreterSelectionMode.entries).also {
     assert(it.isNotEmpty()) {
@@ -61,9 +63,9 @@ class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<Path>, onlyAllowed
   private lateinit var pythonBaseVersionComboBox: PythonInterpreterComboBox
   private var initialized = false
 
-  private fun updateVenvLocationHint() {
+  private suspend fun updateVenvLocationHint(): Unit = withContext(Dispatchers.EDT) {
     val get = selectedMode.get()
-    if (get == PROJECT_VENV) venvHint.set(message("sdk.create.simple.venv.hint", projectPath.value.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME).toString()))
+    if (get == PROJECT_VENV) venvHint.set(message("sdk.create.simple.venv.hint", projectPath.first().resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME).toString()))
     else if (get == BASE_CONDA && PROJECT_VENV in allowedInterpreterTypes) venvHint.set(message("sdk.create.simple.conda.hint"))
   }
 
@@ -123,7 +125,11 @@ class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<Path>, onlyAllowed
         custom.buildPanel(this, validationRequestor)
       }.visibleIf(_custom)
     }
-    selectedMode.afterChange { updateVenvLocationHint() }
+    selectedMode.afterChange {
+      model.scope.launch {
+        updateVenvLocationHint()
+      }
+    }
   }
 
 
@@ -160,7 +166,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: StateFlow<Path>, onlyAllowed
     model.navigator.saveLastState()
     return when (selectedMode.get()) {
       PROJECT_VENV -> {
-        val projectPath = projectPath.value
+        val projectPath = projectPath.first()
         // todo just keep venv path, all the rest is in the model
         model.setupVirtualenv(projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME), projectPath)
       }
