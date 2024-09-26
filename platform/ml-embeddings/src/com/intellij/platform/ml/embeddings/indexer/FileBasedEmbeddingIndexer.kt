@@ -181,25 +181,23 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
         launch { sendEntities(IndexId.SYMBOLS, symbolsChannel) }
 
         if (Registry.`is`("intellij.platform.ml.embeddings.use.file.based.index")) {
-          // todo: file names
+          filesChannel.close() // todo: file names
           launch {
             fetchEntities(CLASS_NAME_EMBEDDING_INDEX_NAME, classesChannel, project) { key, name ->
               LongIndexableEntity(key.toLong(), IndexableClass(EntityId(name)))
             }
+            classesChannel.close()
           }
           launch {
             fetchEntities(SYMBOL_NAME_EMBEDDING_INDEX_NAME, symbolsChannel, project) { key, name ->
               LongIndexableEntity(key.toLong(), IndexableSymbol(EntityId(name)))
             }
+            symbolsChannel.close()
           }
         }
         else {
           indexFilesInProject(project, files, settings, filesChannel, classesChannel, symbolsChannel)
         }
-
-        filesChannel.close()
-        classesChannel.close()
-        symbolsChannel.close()
       }
     }
   }
@@ -236,6 +234,9 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
         }
       }
     }
+    filesChannel.close()
+    classesChannel.close()
+    symbolsChannel.close()
   }
 
   private suspend fun fetchEntities(indexId: ID<EmbeddingKey, String>,
