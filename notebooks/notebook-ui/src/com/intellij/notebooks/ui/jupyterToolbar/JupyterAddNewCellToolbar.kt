@@ -1,5 +1,6 @@
 package com.intellij.notebooks.ui.jupyterToolbar
 
+import com.intellij.notebooks.ui.SelectClickedCellEventHelper
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -32,9 +33,9 @@ class JupyterAddNewCellToolbar(
     isOpaque = false
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     targetComponent = target
+    putClientProperty(SelectClickedCellEventHelper.SKIP_CLICK_PROCESSING_FOR_CELL_SELECTION, true)
     setSkipWindowAdjustments(false)
   }
-
 
   override fun paintComponent(g: Graphics) {
     val g2 = g.create() as Graphics2D

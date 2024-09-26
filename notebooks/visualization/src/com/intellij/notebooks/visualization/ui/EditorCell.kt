@@ -29,15 +29,6 @@ class EditorCell(
 
   val source = AtomicProperty<String>(getSource())
 
-  private fun getSource(): String {
-    val document = editor.document
-    if (interval.lines.first + 1 >= document.lineCount) return ""
-    val startOffset = document.getLineStartOffset(interval.lines.first + 1)
-    val endOffset = document.getLineEndOffset(interval.lines.last)
-    if (startOffset >= endOffset) return ""  // possible for empty cells
-    return document.getText(TextRange(startOffset, endOffset))
-  }
-
   val type = interval.type
 
   val interval get() = intervalPointer.get() ?: error("Invalid interval")
@@ -47,19 +38,29 @@ class EditorCell(
 
   var visible = AtomicBooleanProperty(true)
 
-  init {
-    CELL_EXTENSION_CONTAINER_KEY.set(this, mutableMapOf())
-  }
-
   val selected = AtomicBooleanProperty(false)
 
   val gutterAction = AtomicProperty<AnAction?>(null)
 
   val executionStatus = AtomicProperty<ExecutionStatus>(ExecutionStatus())
 
+  // ToDo we should remove or rework this. Mode does not really reflects the state of markdown cells.
   val mode = AtomicProperty<NotebookEditorMode>(NotebookEditorMode.COMMAND)
 
   val outputs = AtomicProperty<List<NotebookOutputDataKey>>(getOutputs())
+
+  init {
+    CELL_EXTENSION_CONTAINER_KEY.set(this, mutableMapOf())
+  }
+
+  private fun getSource(): String {
+    val document = editor.document
+    if (interval.lines.first + 1 >= document.lineCount) return ""
+    val startOffset = document.getLineStartOffset(interval.lines.first + 1)
+    val endOffset = document.getLineEndOffset(interval.lines.last)
+    if (startOffset >= endOffset) return ""  // possible for empty cells
+    return document.getText(TextRange(startOffset, endOffset))
+  }
 
   override fun dispose() {
     cleanupExtensions()
@@ -187,6 +188,6 @@ class EditorCell(
     val status: ProgressStatus? = null,
     val count: Int? = null,
     val startTime: ZonedDateTime? = null,
-    val endTime: ZonedDateTime? = null
+    val endTime: ZonedDateTime? = null,
   )
 }
