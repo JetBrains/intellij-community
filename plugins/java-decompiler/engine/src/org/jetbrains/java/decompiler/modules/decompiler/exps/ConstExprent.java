@@ -2,6 +2,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -421,7 +422,8 @@ public class ConstExprent extends Exprent {
 
   // Different JVM implementations/version display Floats and Doubles with different String representations
   // for the same thing. This trims them all down to only the necessary amount.
-  private static String trimFloat(String value, float start) {
+  @VisibleForTesting
+  public static String trimFloat(String value, float start) {
     // Includes NaN and simple numbers
     if (value.length() <= 3 || !DecompilerContext.getOption(IFernflowerPreferences.STANDARDIZE_FLOATING_POINT_NUMBERS))
       return value;
@@ -452,18 +454,24 @@ public class ConstExprent extends Exprent {
         return rounded;
 
       long decimalVal = 1;
+      int leadingZeros = 0;
       for (int i = 0; i < decimal.length() - 1; i++) {
+        if (decimal.charAt(i) == '0' && leadingZeros == i) {
+          leadingZeros++;
+        }
         decimalVal = (decimalVal - 1) * 10 + decimal.charAt(i) - '0' + 1;
-        rounded = integer + '.' + decimalVal + exp;
-        if (Float.parseFloat(rounded) == start)
+        rounded = integer + '.' + "0".repeat(leadingZeros) + decimalVal + exp;
+        if (Float.parseFloat(rounded) == start) {
           return rounded;
+        }
       }
     }
 
     return value + exp;
   }
 
-  private static String trimDouble(String value, double start) {
+  @VisibleForTesting
+  public static String trimDouble(String value, double start) {
     // Includes NaN and simple numbers
     if (value.length() <= 3 || !DecompilerContext.getOption(IFernflowerPreferences.STANDARDIZE_FLOATING_POINT_NUMBERS))
       return value;
@@ -494,11 +502,16 @@ public class ConstExprent extends Exprent {
         return rounded;
 
       long decimalVal = 1;
+      int leadingZeros = 0;
       for (int i = 0; i < decimal.length() - 1; i++) {
+        if(decimal.charAt(i) == '0' && leadingZeros == i) {
+          leadingZeros++;
+        }
         decimalVal = (decimalVal - 1) * 10 + decimal.charAt(i) - '0' + 1;
-        rounded = integer + '.' + decimalVal + exp;
-        if (Double.parseDouble(rounded) == start)
+        rounded = integer + '.' + "0".repeat(leadingZeros) + decimalVal + exp;
+        if (Double.parseDouble(rounded) == start) {
           return rounded;
+        }
       }
     }
     return value + exp;
