@@ -74,6 +74,7 @@
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-platform" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.code-insight" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.project-structure" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.fir.analysis" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="RUNTIME" />

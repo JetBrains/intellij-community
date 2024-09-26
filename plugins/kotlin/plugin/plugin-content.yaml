@@ -215,6 +215,7 @@
   - name: kotlin.base.fir.analysis-api-platform
   - name: kotlin.base.fir.code-insight
   - name: kotlin.base.fir.project-structure
+  - name: kotlin.base.fir.analysis
   - name: kotlin.code-insight.api
   - name: kotlin.code-insight.utils
   - name: kotlin.code-insight.intentions.shared

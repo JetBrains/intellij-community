@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.caches.trackers
 
 import com.intellij.openapi.project.Project
@@ -12,24 +11,23 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificatio
 import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinIDEModificationTrackerService(private val project: Project) : KotlinModificationTrackerService() {
+abstract class IDEKotlinModificationTrackerService(protected val project: Project) : KotlinModificationTrackerService() {
     override val modificationTracker: ModificationTracker = PsiModificationTracker.getInstance(project)
 
     override val outOfBlockModificationTracker: ModificationTracker =
-        KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+        KotlinModificationTrackerFactory.Companion.getInstance(project).createProjectWideOutOfBlockModificationTracker()
 
     override val allLibrariesModificationTracker: ModificationTracker
-        get() = KotlinModificationTrackerFactory.getInstance(project).createLibrariesWideModificationTracker()
+        get() = KotlinModificationTrackerFactory.Companion.getInstance(project).createLibrariesWideModificationTracker()
 
-    override fun fileModificationTracker(file: KtFile): ModificationTracker =
-        file.perFileModificationTracker
+    abstract override fun fileModificationTracker(file: KtFile): ModificationTracker
 
     companion object {
         @TestOnly
         fun invalidateCaches(project: Project) {
             // We only want to clear source caches, so `allLibrariesModificationTracker` is not incremented.
             project.getService(KotlinModificationTrackerService::class.java).apply {
-                (outOfBlockModificationTracker as SimpleModificationTracker).incModificationCount()
+              (outOfBlockModificationTracker as SimpleModificationTracker).incModificationCount()
 
                 @Suppress("DEPRECATION")
                 (modificationTracker as PsiModificationTrackerImpl).incCounter()
