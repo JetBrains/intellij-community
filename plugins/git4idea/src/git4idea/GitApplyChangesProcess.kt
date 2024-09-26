@@ -5,8 +5,6 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
 import com.intellij.history.ActivityId
 import com.intellij.history.LocalHistory
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
@@ -419,28 +417,12 @@ internal class GitApplyChangesProcess(
     commit: VcsCommitMetadata,
     successfulCommits: List<VcsCommitMetadata>,
   ) {
-    val title = GitBundle.message("apply.changes.operation.performed.with.conflicts", operationName.capitalize())
-
-    var description = commitDetails(commit)
-    description += UIUtil.BR + GitBundle.message("apply.changes.unresolved.conflicts.text")
-    description += getSuccessfulCommitDetailsIfAny(successfulCommits)
-
-    val notification = VcsNotifier.importantNotification()
-      .createNotification(title, description, NotificationType.WARNING)
-      .setDisplayId(GitNotificationIdsHolder.APPLY_CHANGES_CONFLICTS)
-      .addAction(NotificationAction.createSimple(GitBundle.message("apply.changes.unresolved.conflicts.notification.resolve.action.text")) {
-        val hash = commit.id.toShortString()
-        val commitAuthor = VcsUserUtil.getShortPresentation(commit.author)
-        val commitMessage = commit.subject
-        ConflictResolver(project, repository.root, hash, commitAuthor, commitMessage, operationName).mergeNoProceedInBackground()
-      })
-      .addAction(NotificationAction.create(GitBundle.message("apply.changes.unresolved.conflicts.notification.abort.action.text",
-                                                             operationName.capitalize())) { _, notification ->
-        if (abortCommand.performInBackground(repository)) {
-          notification.expire()
-        }
-      })
-    VcsNotifier.getInstance(project).notify(notification)
+    val description = commitDetails(commit) +
+                      UIUtil.BR +
+                      GitBundle.message("apply.changes.unresolved.conflicts.text") +
+                      getSuccessfulCommitDetailsIfAny(successfulCommits)
+    VcsNotifier.getInstance(project)
+      .notify(ApplyChangesConflictNotification(operationName, description, commit, repository, abortCommand))
   }
 
   private fun notifyCommitCancelled(commit: VcsCommitMetadata, successfulCommits: List<VcsCommitMetadata>) {
