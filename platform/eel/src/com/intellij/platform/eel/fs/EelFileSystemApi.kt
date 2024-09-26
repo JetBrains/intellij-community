@@ -194,14 +194,19 @@ interface EelFileSystemApi {
     where: EelPath.Absolute,
     additionalMessage: String,
   ) : EelFsIOException(where, additionalMessage) {
-    class DoesNotExist(where: EelPath.Absolute, additionalMessage: String) : DeleteException(where, additionalMessage), EelFsError.DoesNotExist
-    class DirNotEmpty(where: EelPath.Absolute, additionalMessage: String) : DeleteException(where, additionalMessage), EelFsError.DirNotEmpty
-    class PermissionDenied(where: EelPath.Absolute, additionalMessage: String) : DeleteException(where, additionalMessage), EelFsError.PermissionDenied
+    class DoesNotExist(where: EelPath.Absolute, additionalMessage: String) : DeleteException(where,
+                                                                                             additionalMessage), EelFsError.DoesNotExist
+
+    class DirNotEmpty(where: EelPath.Absolute, additionalMessage: String) : DeleteException(where,
+                                                                                            additionalMessage), EelFsError.DirNotEmpty
+
+    class PermissionDenied(where: EelPath.Absolute, additionalMessage: String) : DeleteException(where,
+                                                                                                 additionalMessage), EelFsError.PermissionDenied
 
     /**
      * Thrown only when `followLinks` is specified for [delete]
      */
-    class UnresolvedLink(where: EelPath.Absolute): DeleteException(where, "Attempted to delete a file referenced by an unresolvable link")
+    class UnresolvedLink(where: EelPath.Absolute) : DeleteException(where, "Attempted to delete a file referenced by an unresolvable link")
     class Other(where: EelPath.Absolute, additionalMessage: String)
       : DeleteException(where, additionalMessage), EelFsError.Other
   }
@@ -326,18 +331,18 @@ sealed interface EelOpenedFile {
      *
      * This operation modifies the file's cursor, i.e. [tell] may show different results before and after this function is invoked.
      *
-     * It reads not more than [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+     * The implementation MAY read less data than the capacity of the buffer even if it's possible to read the whole requested buffer.
      */
-      suspend fun read(buf: ByteBuffer): EelFsResult<ReadResult, ReadError>
+    suspend fun read(buf: ByteBuffer): EelFsResult<ReadResult, ReadError>
 
     /**
      * Reads data from the position [offset] of the file.
      *
      * This operation does not modify the file's cursor, i.e. [tell] will show the same result before and after this function is invoked.
      *
-     * It reads not more than [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+     * The implementation MAY read less than [offset] bytes even if it's possible to read the whole requested buffer.
      */
-      suspend fun read(buf: ByteBuffer, offset: Long): EelFsResult<ReadResult, ReadError>
+    suspend fun read(buf: ByteBuffer, offset: Long): EelFsResult<ReadResult, ReadError>
 
     sealed interface ReadResult {
       interface EOF : ReadResult
@@ -357,18 +362,18 @@ sealed interface EelOpenedFile {
     /**
      * TODO Document
      *
-     * It writes not more than [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+     * The implementation MAY write the part of the [buf] even if it's possible to write the whole buffer.
      */
-      suspend fun write(buf: ByteBuffer): EelFsResult<
+    suspend fun write(buf: ByteBuffer): EelFsResult<
       Int,
       WriteError>
 
     /**
      * TODO Document
      *
-     * It writes not more than [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+     * The implementation MAY write the part of the [buf] even if it's possible to write the whole buffer.
      */
-      suspend fun write(buf: ByteBuffer, pos: Long): EelFsResult<
+    suspend fun write(buf: ByteBuffer, pos: Long): EelFsResult<
       Int,
       WriteError>
 
@@ -428,10 +433,18 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
     where: EelPath.Absolute,
     additionalMessage: String,
   ) : EelFsIOException(where, additionalMessage) {
-    class DirAlreadyExists(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where, additionalMessage), EelFsError.AlreadyExists
-    class FileAlreadyExists(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where, additionalMessage), EelFsError.AlreadyExists
-    class ParentNotFound(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where, additionalMessage), EelFsError.DoesNotExist
-    class PermissionDenied(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where, additionalMessage), EelFsError.PermissionDenied
+    class DirAlreadyExists(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where,
+                                                                                                          additionalMessage), EelFsError.AlreadyExists
+
+    class FileAlreadyExists(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where,
+                                                                                                           additionalMessage), EelFsError.AlreadyExists
+
+    class ParentNotFound(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where,
+                                                                                                        additionalMessage), EelFsError.DoesNotExist
+
+    class PermissionDenied(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where,
+                                                                                                          additionalMessage), EelFsError.PermissionDenied
+
     class Other(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where, additionalMessage), EelFsError.Other
   }
 
@@ -461,25 +474,29 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
     /**
      * Example: `createSymbolicLink("anywhere", "/directory_that_does_not_exist")`
      */
-    class DoesNotExist(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where, additionalMessage), EelFsError.DoesNotExist
+    class DoesNotExist(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
+                                                                                                         additionalMessage), EelFsError.DoesNotExist
 
     /**
      * Examples:
      * * `createSymbolicLink("anywhere", "/etc/passwd")`
      * * `createSymbolicLink("anywhere", "/home")`
      */
-    class FileAlreadyExists(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where, additionalMessage), EelFsError.AlreadyExists
+    class FileAlreadyExists(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
+                                                                                                              additionalMessage), EelFsError.AlreadyExists
 
     /**
      * Example: `createSymbolicLink("anywhere", "/etc/passwd/oops")`
      */
-    class NotDirectory(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where, additionalMessage), EelFsError.NotDirectory
+    class NotDirectory(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
+                                                                                                         additionalMessage), EelFsError.NotDirectory
 
     /**
      * Example:
      * * With non-root permissions: `createSymbolicLink("anywhere", "/root/oops")`
      */
-    class PermissionDenied(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where, additionalMessage), EelFsError.PermissionDenied
+    class PermissionDenied(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
+                                                                                                             additionalMessage), EelFsError.PermissionDenied
 
     /**
      * Everything else, including `ELOOP`.
@@ -490,7 +507,8 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
      * createSymbolicLink("anywhere", "/tmp/foobar/oops") // Other("something about ELOOP")
      * ```
      */
-    class Other(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where, additionalMessage), EelFsError.Other
+    class Other(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
+                                                                                                  additionalMessage), EelFsError.Other
   }
 }
 

@@ -6,7 +6,7 @@ import com.intellij.platform.eel.EelUserWindowsInfo
 
 data class EelUserPosixInfoImpl(
   override val uid: Int,
-  override val gid: Int
+  override val gid: Int,
 ) : EelUserPosixInfo
 
 data object EelUserWindowsInfoImpl : EelUserWindowsInfo

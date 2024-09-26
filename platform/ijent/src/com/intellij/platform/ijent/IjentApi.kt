@@ -8,11 +8,12 @@ import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
 
 /**
- * Provides access to an IJent process running on some machine. An instance of this interface gives ability to run commands
- * on a local or a remote machine. Every instance corresponds to a single machine, i.e. unlike Run Targets, if IJent is launched
- * in a Docker container, every call to execute a process (see [com.intellij.platform.eel.EelExecApi]) runs a command in the same Docker container.
+ * Provides access to an IJent process running on some machine.
+ * An instance of this interface gives the ability to run commands on a local or a remote machine. Every instance corresponds to
+ * a single machine, i.e., unlike Run Targets, if IJent is launched in a Docker container, every call to execute a process
+ * (see [com.intellij.platform.eel.EelExecApi]) runs a command in the same Docker container.
  *
- * Usually, [com.intellij.platform.ijent.deploy] creates instances of [com.intellij.platform.eel.IjentApi].
+ * Usually, [com.intellij.platform.ijent.deploy] creates instances of [com.intellij.platform.ijent.IjentApi].
  */
 sealed interface IjentApi : AutoCloseable {
 

@@ -35,11 +35,11 @@ sealed interface EelFsError {
   sealed interface PermissionDenied : EelFsError
   sealed interface NotDirectory : EelFsError
   sealed interface NotFile : EelFsError
-  sealed interface UnknownFile: EelFsError
-  sealed interface ReadOnlyFileSystem: EelFsError
-  sealed interface NameTooLong: EelFsError
-  sealed interface NotEnoughSpace: EelFsError
-  sealed interface DirNotEmpty: EelFsError
+  sealed interface UnknownFile : EelFsError
+  sealed interface ReadOnlyFileSystem : EelFsError
+  sealed interface NameTooLong : EelFsError
+  sealed interface NotEnoughSpace : EelFsError
+  sealed interface DirNotEmpty : EelFsError
 }
 
 /**
@@ -49,24 +49,25 @@ sealed class EelFsIOException(
   override val where: EelPath.Absolute,
   val additionalMessage: String,
 ) : IOException(), EelFsError {
-  override val message: String get() {
-    // TODO i18n
-    val prefix: @Nls String = when (this) {
-      is EelFsError.DoesNotExist -> "Does not exist"
-      is EelFsError.NotDirectory -> "Not a directory"
-      is EelFsError.NotFile -> "Not a file"
-      is EelFsError.PermissionDenied -> "Permission denied"
-      is EelFsError.AlreadyExists -> "File with this name already exists"
-      is EelFsError.ReadOnlyFileSystem -> "File system is read-only"
-      is EelFsError.Other -> "Unexpected rare error"
-      is EelFsError.DirNotEmpty -> "Directory is not empty"
-      is EelFsError.NameTooLong -> "Name is too long"
-      is EelFsError.NotEnoughSpace -> "Not enough space"
-      is EelOpenedFile.Writer.TruncateException.NegativeOffset -> "Offset is negative"
-      is EelOpenedFile.Writer.TruncateException.OffsetTooBig -> "Offset is too big"
-      is EelOpenedFile.Writer.TruncateException.UnknownFile -> "File is not opened"
-      is EelFileSystemApi.DeleteException.UnresolvedLink -> "Unresolved link"
+  override val message: String
+    get() {
+      // TODO i18n
+      val prefix: @Nls String = when (this) {
+        is EelFsError.DoesNotExist -> "Does not exist"
+        is EelFsError.NotDirectory -> "Not a directory"
+        is EelFsError.NotFile -> "Not a file"
+        is EelFsError.PermissionDenied -> "Permission denied"
+        is EelFsError.AlreadyExists -> "File with this name already exists"
+        is EelFsError.ReadOnlyFileSystem -> "File system is read-only"
+        is EelFsError.Other -> "Unexpected rare error"
+        is EelFsError.DirNotEmpty -> "Directory is not empty"
+        is EelFsError.NameTooLong -> "Name is too long"
+        is EelFsError.NotEnoughSpace -> "Not enough space"
+        is EelOpenedFile.Writer.TruncateException.NegativeOffset -> "Offset is negative"
+        is EelOpenedFile.Writer.TruncateException.OffsetTooBig -> "Offset is too big"
+        is EelOpenedFile.Writer.TruncateException.UnknownFile -> "File is not opened"
+        is EelFileSystemApi.DeleteException.UnresolvedLink -> "Unresolved link"
+      }
+      return if (additionalMessage.isEmpty()) "$prefix: $where" else "$prefix: $where ($additionalMessage)"
     }
-    return if (additionalMessage.isEmpty()) "$prefix: $where" else "$prefix: $where ($additionalMessage)"
-  }
 }

@@ -42,7 +42,8 @@ internal fun EelFsError.throwFileSystemException(): Nothing {
     is EelOpenedFile.SeekError.InvalidValue -> IllegalArgumentException(message)
     is EelOpenedFile.Reader.ReadError.InvalidValue -> IllegalArgumentException(message)
     is EelOpenedFile.Writer.TruncateException.NegativeOffset,
-    is EelOpenedFile.Writer.TruncateException.OffsetTooBig -> throw IllegalArgumentException(message)
+    is EelOpenedFile.Writer.TruncateException.OffsetTooBig,
+      -> throw IllegalArgumentException(message)
     is EelOpenedFile.Writer.WriteError.InvalidValue -> throw IllegalArgumentException(message)
     is EelFileSystemApi.DeleteException.UnresolvedLink -> throw FileSystemException(where.toString(), null, message)
     is EelFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
