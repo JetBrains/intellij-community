@@ -14,7 +14,7 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.startOffset
 
-class JavaCodeGenerationInChatVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
+class JavaChatCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
   private var codeFragment: CodeFragment? = null
 
   override val language: Language = Language.JAVA
