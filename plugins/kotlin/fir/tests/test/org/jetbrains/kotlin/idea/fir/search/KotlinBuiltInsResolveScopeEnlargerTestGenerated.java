@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/search/builtInsScopeEnlarger")
-public class BuiltInsResolveScopeEnlargerTestGenerated extends AbstractBuiltInsResolveScopeEnlargerTest {
+public class KotlinBuiltInsResolveScopeEnlargerTestGenerated extends AbstractKotlinBuiltInsResolveScopeEnlargerTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
@@ -30,8 +30,13 @@ public class BuiltInsResolveScopeEnlargerTestGenerated extends AbstractBuiltInsR
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("commonModuleResolveScope.kt")
-    public void testCommonModuleResolveScope() throws Exception {
-        runTest("testData/search/builtInsScopeEnlarger/commonModuleResolveScope.kt");
+    @TestMetadata("integerReturnType.kt")
+    public void testIntegerReturnType() throws Exception {
+        runTest("testData/search/builtInsScopeEnlarger/integerReturnType.kt");
+    }
+
+    @TestMetadata("targetAnnotation.kt")
+    public void testTargetAnnotation() throws Exception {
+        runTest("testData/search/builtInsScopeEnlarger/targetAnnotation.kt");
     }
 }

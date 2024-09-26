@@ -39,8 +39,8 @@ import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoTypeDeclarationTe
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.projectView.AbstractK2ProjectViewTest
 import org.jetbrains.kotlin.idea.fir.resolve.*
-import org.jetbrains.kotlin.idea.fir.search.AbstractBuiltInsResolveScopeEnlargerTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
+import org.jetbrains.kotlin.idea.fir.search.AbstractKotlinBuiltInsResolveScopeEnlargerTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractScopeEnlargerTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
 import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTest
@@ -441,7 +441,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
             model("search/scopeEnlarger", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractBuiltInsResolveScopeEnlargerTest> {
+        testClass<AbstractKotlinBuiltInsResolveScopeEnlargerTest> {
             model("search/builtInsScopeEnlarger", pattern = KT_WITHOUT_DOTS)
         }
 

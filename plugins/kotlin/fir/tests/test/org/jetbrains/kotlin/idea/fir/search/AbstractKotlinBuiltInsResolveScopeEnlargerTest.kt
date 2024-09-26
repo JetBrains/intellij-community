@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightMultiplatformCodeInsightFixture
 import org.jetbrains.kotlin.idea.test.configureMultiPlatformModuleStructure
 import org.jetbrains.kotlin.psi.KtElement
 
-abstract class AbstractBuiltInsResolveScopeEnlargerTest : KotlinLightMultiplatformCodeInsightFixtureTestCase() {
+abstract class AbstractKotlinBuiltInsResolveScopeEnlargerTest : KotlinLightMultiplatformCodeInsightFixtureTestCase() {
     fun doTest(testPath: String) {
         val virtualFile = myFixture.configureMultiPlatformModuleStructure(testPath).mainFile
         require(virtualFile != null)
