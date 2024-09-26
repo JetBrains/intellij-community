@@ -20,9 +20,11 @@ import java.io.IOException
  * @throws IOException if the `ExecuteProcessResult` is `Failure`.
  * @return the `EelProcess` if the `ExecuteProcessResult` is `Success`.
  */
-fun EelExecApi.ExecuteProcessResult.unwrap() = when (this) {
-  is EelExecApi.ExecuteProcessResult.Success -> process
-  is EelExecApi.ExecuteProcessResult.Failure -> throw IOException(message)
+fun EelExecApi.ExecuteProcessResult.unwrap(): EelProcess {
+  return when (this) {
+    is EelExecApi.ExecuteProcessResult.Success -> process
+    is EelExecApi.ExecuteProcessResult.Failure -> throw RuntimeException(toString())
+  }
 }
 
 /**
