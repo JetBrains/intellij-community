@@ -1,0 +1,21 @@
+package records;
+
+public record TestHideConstructorRecordAnnoGetter(String b2) {
+   @Anno
+   public String b2() {
+      return this.b2;// 9
+   }
+}
+
+class 'records/TestHideConstructorRecordAnnoGetter' {
+   method 'b2 ()Ljava/lang/String;' {
+      0      5
+      1      5
+      2      5
+      3      5
+      4      5
+   }
+}
+
+Lines mapping:
+9 <-> 6

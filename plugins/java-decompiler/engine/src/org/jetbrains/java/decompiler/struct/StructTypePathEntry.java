@@ -63,4 +63,19 @@ public class StructTypePathEntry {
       return id;
     }
   }
+
+  @Override
+  public final boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof StructTypePathEntry entry)) return false;
+
+    return typePathEntryKind == entry.typePathEntryKind && typeArgumentIndex == entry.typeArgumentIndex;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = typePathEntryKind;
+    result = 31 * result + typeArgumentIndex;
+    return result;
+  }
 }

@@ -156,44 +156,7 @@ public class ClassWriter {
 
           RootStatement root = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;
           if (DecompilerContext.getOption(IFernflowerPreferences.INLINE_SIMPLE_LAMBDAS) && !methodWrapper.decompiledWithErrors && root != null) {
-            Statement firstStat = root.getFirst();
-            if (firstStat.type == Statement.StatementType.BASIC_BLOCK && firstStat.getExprents() != null && firstStat.getExprents().size() == 1) {
-              Exprent firstExpr = firstStat.getExprents().get(0);
-              boolean isVarDefinition = firstExpr.type == Exprent.EXPRENT_ASSIGNMENT &&
-                ((AssignmentExprent)firstExpr).getLeft().type == Exprent.EXPRENT_VAR &&
-                ((VarExprent)((AssignmentExprent)firstExpr).getLeft()).isDefinition();
-
-              boolean isThrow = firstExpr.type == Exprent.EXPRENT_EXIT &&
-                ((ExitExprent)firstExpr).getExitType() == ExitExprent.EXIT_THROW;
-
-              if (!isVarDefinition && !isThrow) {
-                simpleLambda = true;
-                MethodWrapper outerWrapper = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
-                DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, methodWrapper);
-                try {
-                  TextBuffer codeBuffer = firstExpr.toJava(indent + 1, tracer);
-
-                  if (firstExpr.type == Exprent.EXPRENT_EXIT)
-                    codeBuffer.setStart(6); // skip return
-                  else
-                    codeBuffer.prepend(" ");
-
-                  buffer.append(codeBuffer);
-                }
-                catch (Throwable ex) {
-                  DecompilerContext.getLogger().writeMessage("Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be written.",
-                    IFernflowerLogger.Severity.WARN,
-                    ex);
-                  methodWrapper.decompiledWithErrors = true;
-                  buffer.append(" // $FF: Couldn't be decompiled");
-                }
-                finally {
-                  tracer.addMapping(root.getDummyExit().bytecode);
-                  addTracer(cl, mt, tracer);
-                  DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, outerWrapper);
-                }
-              }
-            }
+            simpleLambda = convertToOneLineLambda(wrapper, tracer, buffer, mt, indent);
           }
         }
 
@@ -214,6 +177,55 @@ public class ClassWriter {
     }
 
     DecompilerContext.getLogger().endWriteClass();
+  }
+
+  private static boolean convertToOneLineLambda(@NotNull ClassWrapper classWrapper,
+                                                @NotNull BytecodeMappingTracer tracer,
+                                                @NotNull TextBuffer buffer,
+                                                @NotNull StructMethod mt, int indent) {
+    RootStatement root = classWrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;
+    MethodWrapper methodWrapper = classWrapper.getMethodWrapper(mt.getName(), mt.getDescriptor());
+    StructClass cl = classWrapper.getClassStruct();
+    boolean simpleLambda = false;
+    Statement firstStat = root.getFirst();
+    if (firstStat.type == Statement.StatementType.BASIC_BLOCK && firstStat.getExprents() != null && firstStat.getExprents().size() == 1) {
+      Exprent firstExpr = firstStat.getExprents().get(0);
+      boolean isVarDefinition = firstExpr.type == Exprent.EXPRENT_ASSIGNMENT &&
+        ((AssignmentExprent)firstExpr).getLeft().type == Exprent.EXPRENT_VAR &&
+        ((VarExprent)((AssignmentExprent)firstExpr).getLeft()).isDefinition();
+
+      boolean isThrow = firstExpr.type == Exprent.EXPRENT_EXIT &&
+        ((ExitExprent)firstExpr).getExitType() == ExitExprent.EXIT_THROW;
+
+      if (!isVarDefinition && !isThrow) {
+        simpleLambda = true;
+        MethodWrapper outerWrapper = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
+        DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, methodWrapper);
+        try {
+          TextBuffer codeBuffer = firstExpr.toJava(indent + 1, tracer);
+
+          if (firstExpr.type == Exprent.EXPRENT_EXIT)
+            codeBuffer.setStart(6); // skip return
+          else
+            codeBuffer.prepend(" ");
+
+          buffer.append(codeBuffer);
+        }
+        catch (Throwable ex) {
+          DecompilerContext.getLogger().writeMessage("Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be written.",
+            IFernflowerLogger.Severity.WARN,
+            ex);
+          methodWrapper.decompiledWithErrors = true;
+          buffer.append(" // $FF: Couldn't be decompiled");
+        }
+        finally {
+          tracer.addMapping(root.getDummyExit().bytecode);
+          addTracer(cl, mt, tracer);
+          DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, outerWrapper);
+        }
+      }
+    }
+    return simpleLambda;
   }
 
   public void classToJava(ClassNode node, TextBuffer buffer, int indent, BytecodeMappingTracer tracer) {
@@ -363,8 +375,8 @@ public class ClassWriter {
         if (name.equals(rec.getName()) && descriptor.equals("()" + rec.getDescriptor())) {
           if (code.countLines() == 1) {
             String str = code.toString().trim();
-            Set<AnnotationExprent> methodAnnotations = collectAllAnnotations(mt);
-            Set<AnnotationExprent> fieldAnnotations = collectAllAnnotations(rec);
+            AnnotationContainer methodAnnotations = collectAllAnnotations(mt);
+            AnnotationContainer fieldAnnotations = collectAllAnnotations(rec);
             if (fieldAnnotations.containsAll(methodAnnotations)) {
               return str.equals("return this." + mt.getName() + ';');
             }
@@ -377,9 +389,19 @@ public class ClassWriter {
     return false;
   }
 
+  private record AnnotationContainer(Set<AnnotationExprent> memberAnnotation, Set<TypeAnnotationModel> typeAnnotationModel) {
+
+    private record TypeAnnotationModel(AnnotationExprent annotation, List<StructTypePathEntry> paths) {}
+
+    public boolean containsAll(AnnotationContainer other) {
+      return memberAnnotation.containsAll(other.memberAnnotation) &&
+             typeAnnotationModel.containsAll(other.typeAnnotationModel);
+    }
+  }
+
   @NotNull
-  private static Set<AnnotationExprent> collectAllAnnotations(@Nullable StructMember mt) {
-    Set<AnnotationExprent> result = new HashSet<>();
+  private static AnnotationContainer collectAllAnnotations(@Nullable StructMember mt) {
+    AnnotationContainer result = new AnnotationContainer(new HashSet<>(), new HashSet<>());
     if (mt == null) {
       return result;
     }
@@ -388,12 +410,13 @@ public class ClassWriter {
       if (attribute != null) {
         for (AnnotationExprent annotation : attribute.getAnnotations()) {
           if (mt.memberAnnCollidesWithTypeAnnotation(annotation)) continue;
-          result.add(annotation);
+          result.memberAnnotation.add(annotation);
         }
       }
     }
-    for (TypeAnnotation annotation : TypeAnnotation.listFrom(mt)) {
-      result.add(annotation.getAnnotationExpr());
+    List<TypeAnnotation> annotations = TypeAnnotation.listFrom(mt);
+    for (TypeAnnotation annotation : annotations) {
+      result.typeAnnotationModel.add(new AnnotationContainer.TypeAnnotationModel(annotation.getAnnotationExpr(), annotation.getPaths()));
     }
     return result;
   }
@@ -982,6 +1005,8 @@ public class ClassWriter {
                                                                        @NotNull MethodDescriptor md) {
     GenericMethodDescriptor descriptor = mt.getSignature();
     boolean hideMethod = false;
+    AnnotationContainer container = collectAllAnnotations(mt);
+    if (!container.memberAnnotation.isEmpty()) return new RecordConstructorContext(false, false);
     boolean compact = false;
     StringBuilder buf = new StringBuilder("(");
     for (StructRecordComponent rec : cl.getRecordComponents()) {
@@ -991,51 +1016,55 @@ public class ClassWriter {
     if (desc.equals(mt.getDescriptor())) {
       boolean[] found = new boolean[1];
       boolean hideConstructorAndGetters = DecompilerContext.getOption(IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS);
-      compact = hideConstructorAndGetters && methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> {
-        if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-          AssignmentExprent assignment = (AssignmentExprent)exprent;
-          if (assignment.getLeft() != null && assignment.getRight() != null &&
-              assignment.getLeft().type == Exprent.EXPRENT_FIELD &&
-              assignment.getRight().type == Exprent.EXPRENT_VAR) {
-            int index = -1;
-            for (StructRecordComponent component : cl.getRecordComponents()) {
-              index++;
-              if (component.getName() != null && component.getName().equals(((FieldExprent)assignment.getLeft()).getName())) {
-                break;
+      StructMethodParametersAttribute parameters = mt.getAttribute(ATTRIBUTE_METHOD_PARAMETERS);
+      if (parameters != null) {
+        final List<TypeAnnotation> typeAnnotations = TypeAnnotation.listFrom(mt);
+        List<StructMethodParametersAttribute.Entry> entries = parameters.getEntries();
+        compact = hideConstructorAndGetters && methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> {
+          if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+            AssignmentExprent assignment = (AssignmentExprent)exprent;
+            if (assignment.getLeft() != null && assignment.getRight() != null &&
+                assignment.getLeft().type == Exprent.EXPRENT_FIELD &&
+                assignment.getRight().type == Exprent.EXPRENT_VAR) {
+              int index = -1;
+              for (StructRecordComponent component : cl.getRecordComponents()) {
+                index++;
+                if (component.getName() != null && component.getName().equals(((FieldExprent)assignment.getLeft()).getName())) {
+                  break;
+                }
+              }
+              if (index == -1) return 1;
+              if (entries.size() <= index) return 1;
+              StructMethodParametersAttribute.Entry entry = entries.get(index);
+              if (entry.myName == null || !entry.myName.equals(((VarExprent)assignment.getRight()).getName())) {
+                return 1;
+              }
+              AnnotationContainer recordComponentAnnotations = collectAllAnnotations(cl.getRecordComponents().get(index));
+              VarType parameterType = descriptor != null ? descriptor.parameterTypes.get(index) : md.params[index];
+              List<AnnotationExprent> paramAnnotations = collectParameterAnnotations(mt, parameterType, index);
+              List<TypeAnnotation> typeParamAnnotations = TargetInfo.FormalParameterTarget.extract(typeAnnotations, index);
+              AnnotationContainer paramContainer = new AnnotationContainer(new HashSet<>(paramAnnotations),
+                                                                  typeParamAnnotations.stream()
+                                                                    .map(an -> new AnnotationContainer.TypeAnnotationModel(
+                                                                      an.getAnnotationExpr(), an.getPaths())).collect(Collectors.toSet()));
+              if (!recordComponentAnnotations.containsAll(paramContainer)) return 1;
+              found[0] = true;
+
+              return 0;
+            }
+            else if (assignment.getLeft().type == Exprent.EXPRENT_FIELD) {
+              return 1;
+            }
+            //not really necessary, but it is safer
+            else if (assignment.getLeft() instanceof VarExprent varExprent) {
+              if (entries.stream().anyMatch(entry -> entry.myName != null && entry.myName.equals(varExprent.getName()))) {
+                return 1;
               }
             }
-            if (index == -1) return 1;
-            StructMethodParametersAttribute parameters = mt.getAttribute(ATTRIBUTE_METHOD_PARAMETERS);
-            if (parameters == null) return 1;
-            List<StructMethodParametersAttribute.Entry> entries = parameters.getEntries();
-            if (entries.size() <= index) return 1;
-            StructMethodParametersAttribute.Entry entry = entries.get(index);
-            if (entry.myName == null || !entry.myName.equals(((VarExprent)assignment.getRight()).getName())) {
-              return 1;
-            }
-            Set<AnnotationExprent> recordComponentAnnotations = collectAllAnnotations(cl.getRecordComponents().get(index));
-            VarType parameterType = descriptor != null ? descriptor.parameterTypes.get(index) : md.params[index];
-            List<AnnotationExprent> paramAnnotations = collectParameterAnnotations(mt, parameterType, index);
-            if (!recordComponentAnnotations.containsAll(paramAnnotations)) return 1;
-            found[0] = true;
-
-            return 0;
           }
-          else if (assignment.getLeft().type == Exprent.EXPRENT_FIELD) {
-            return 1;
-          }
-          //not really necessary, but it is safer
-          else if (assignment.getLeft() instanceof VarExprent varExprent) {
-            StructMethodParametersAttribute parameters = mt.getAttribute(ATTRIBUTE_METHOD_PARAMETERS);
-            if (parameters == null) return 1;
-            List<StructMethodParametersAttribute.Entry> entries = parameters.getEntries();
-            if (entries.stream().anyMatch(entry -> entry.myName != null && entry.myName.equals(varExprent.getName()))) {
-              return 1;
-            }
-          }
-        }
-        return found[0] ? 1 : 0;
-      });
+          return found[0] ? 1 : 0;
+        });
+      }
       if (compact) {
         methodWrapper.getOrBuildGraph().iterateExprents((exprent) -> {
           if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
@@ -1052,9 +1081,7 @@ public class ClassWriter {
     return new RecordConstructorContext(hideMethod, compact);
   }
 
-  record RecordConstructorContext(boolean hideConstructor, boolean compact) {
-
-  }
+  record RecordConstructorContext(boolean hideConstructor, boolean compact) { }
 
   @NotNull
   private static List<AnnotationExprent> collectParameterAnnotations(StructMethod mt, Type type, int param) {
