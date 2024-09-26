@@ -3,17 +3,17 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider.getFixes
 
 object ImportQuickFixFactories {
     val invisibleReferenceFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.InvisibleReference ->
-        getFixes(diagnostic.psi)
+        ImportQuickFixProvider.getFixes(diagnostic.psi)
     }
 
-    /** Used only for importing references on the fly. In all other cases import fixes for unresolved references are created
-     *  by [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.KotlinFirUnresolvedReferenceQuickFixProvider]
+    /**
+     * Used only for importing references on the fly. In all other cases import fixes for unresolved references are created
+     * by [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.KotlinFirUnresolvedReferenceQuickFixProvider]
      */
     val unresolvedReferenceFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnresolvedReference ->
-        getFixes(diagnostic.psi)
+        ImportQuickFixProvider.getFixes(diagnostic.psi)
     }
 }

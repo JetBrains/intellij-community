@@ -157,12 +157,16 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             psiElement.registerKotlinUnresolvedReferenceKind(UnresolvedDelegateFunction(diagnostic.expectedFunctionSignature))
         }
 
-        if (diagnostic is KaFirDiagnostic.UnresolvedImport || diagnostic is KaFirDiagnostic.UnresolvedReference) {
+        if (
+            diagnostic is KaFirDiagnostic.UnresolvedReference ||
+            diagnostic is KaFirDiagnostic.UnresolvedImport
+        ) {
             psiElement.registerKotlinUnresolvedReferenceKind(KotlinUnresolvedReferenceKind.Regular)
         }
 
         if (
-            diagnostic is KaFirDiagnostic.UnresolvedImport || diagnostic is KaFirDiagnostic.UnresolvedReference ||
+            diagnostic is KaFirDiagnostic.UnresolvedImport ||
+            diagnostic is KaFirDiagnostic.UnresolvedReference ||
             diagnostic is KaFirDiagnostic.DelegateSpecialFunctionMissing ||
             diagnostic is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable
         ) {
