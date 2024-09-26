@@ -160,6 +160,8 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   private static VirtualFile[] getIdeaLibrary(String home) {
     List<VirtualFile> result = new ArrayList<>();
+    appendIdeaLibrary(home, result, "junit.jar", "junit4.jar"); // DO NOT REMOVE
+
     ProductInfo productInfo = ProductInfoKt.loadProductInfo(home);
     if (productInfo != null) {
       final JarFileSystem jfs = JarFileSystem.getInstance();
