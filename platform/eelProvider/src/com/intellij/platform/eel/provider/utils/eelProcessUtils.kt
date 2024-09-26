@@ -79,7 +79,7 @@ suspend fun EelProcess.awaitExecutionResult() = computeDetached {
  * }
  * ```
  */
-suspend fun EelApi.where(exe: String): String? {
+suspend fun EelApi.where(exe: String): EelPath.Absolute? {
   val tool = when (this) {
     is EelPosixApi -> "which"
     is EelWindowsApi -> "where.exe"
@@ -93,6 +93,6 @@ suspend fun EelApi.where(exe: String): String? {
     return null
   }
   else {
-    return String(result.stdOut).trim()
+    return fs.getPath(result.stdout).unwrap()
   }
 }
