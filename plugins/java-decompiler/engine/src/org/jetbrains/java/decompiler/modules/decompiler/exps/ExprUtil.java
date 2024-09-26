@@ -8,9 +8,6 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
-import org.jetbrains.java.decompiler.struct.StructClass;
-import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
-import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,26 +34,14 @@ public final class ExprUtil {
       }
       mask = methodWrapper.synthParameters;
     }
-    else if (parameters > 0 && node.type == ClassNode.CLASS_MEMBER && !isStatic(node.classStruct)) {
-      // non-static member class
-      mask = new ArrayList<>(Collections.nCopies(parameters, null));
-      mask.set(0, new VarVersionPair(-1, 0));
+    else {
+      if (parameters > 0 && node.type == ClassNode.CLASS_MEMBER && !(node.classStruct.hasModifier(CodeConstants.ACC_STATIC))) {
+        // non-static member class
+        mask = new ArrayList<>(Collections.nCopies(parameters, null));
+        mask.set(0, new VarVersionPair(-1, 0));
+      }
     }
 
     return mask;
-  }
-
-  public static boolean isStatic(StructClass struct) {
-    if (struct.hasModifier(CodeConstants.ACC_STATIC))
-      return true;
-    if (struct.hasAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES)) {
-      StructInnerClassesAttribute attr = struct.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
-      for (StructInnerClassesAttribute.Entry entry : attr.getEntries()) {
-        if (entry.innerName != null && entry.innerName.equals(struct.qualifiedName)) {
-          return (entry.accessFlags & CodeConstants.ACC_STATIC) == CodeConstants.ACC_STATIC;
-        }
-      }
-    }
-    return false;
   }
 }

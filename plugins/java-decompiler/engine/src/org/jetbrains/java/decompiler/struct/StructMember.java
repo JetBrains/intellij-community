@@ -6,10 +6,7 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.typeann.TargetInfo;
 import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotation;
-import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
-import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
-import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAttribute;
-import org.jetbrains.java.decompiler.struct.attr.StructTypeAnnotationAttribute;
+import org.jetbrains.java.decompiler.struct.attr.*;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
@@ -45,7 +42,18 @@ public abstract class StructMember {
   }
 
   public boolean hasModifier(int modifier) {
-    return (accessFlags & modifier) == modifier;
+    boolean result = (accessFlags & modifier) == modifier;
+    if (!result && modifier == CodeConstants.ACC_STATIC &&
+        this instanceof StructClass struct &&
+        struct.hasAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES)) {
+      StructInnerClassesAttribute attr = struct.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
+      for (StructInnerClassesAttribute.Entry entry : attr.getEntries()) {
+        if (entry.innerName != null && entry.innerName.equals(struct.qualifiedName)) {
+          return (entry.accessFlags & CodeConstants.ACC_STATIC) == CodeConstants.ACC_STATIC;
+        }
+      }
+    }
+    return result;
   }
 
   public boolean isSynthetic() {

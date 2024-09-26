@@ -416,8 +416,7 @@ public class NestedClassProcessor {
           for (VarFieldPair pair : entry.getValue()) {
             VarVersionPair ver = pair != null && !pair.fieldKey.isEmpty() ? pair.varPair : null;
             if (ver == null && mask.isEmpty() &&
-                nestedNode.type == ClassNode.CLASS_MEMBER &&
-                !ExprUtil.isStatic(nestedNode.classStruct) &&
+                nestedNode.type == ClassNode.CLASS_MEMBER && !(nestedNode.classStruct.hasModifier(CodeConstants.ACC_STATIC)) &&
                 (nestedNode.classStruct.getAccessFlags() & CodeConstants.ACC_ENUM) == 0 &&  //!enum
                 !groovyClosure(nestedNode)) {
               ver = new VarVersionPair(-1, 0); // non-static inners always have 'Outer.this'
