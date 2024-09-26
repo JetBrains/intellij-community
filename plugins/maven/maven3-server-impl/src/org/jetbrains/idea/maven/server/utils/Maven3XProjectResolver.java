@@ -215,7 +215,7 @@ public class Maven3XProjectResolver {
         executionResults.addAll(execResults);
       }
       catch (Exception e) {
-        executionResults.add(handleException(e));
+        executionResults.add(createExecutionResult(new Maven3ExecutionResult(Collections.singletonList(e))));
       }
     });
 
@@ -251,7 +251,7 @@ public class Maven3XProjectResolver {
       return createExecutionResult(executionResult);
     }
     catch (Exception e) {
-      return handleException(project, e);
+      return createExecutionResult(new Maven3ExecutionResult(project, Collections.singletonList(e)));
     }
   }
 
@@ -426,14 +426,6 @@ public class Maven3XProjectResolver {
         }
       }
     }
-  }
-
-  private MavenServerExecutionResult handleException(Exception e) {
-    return createExecutionResult(new Maven3ExecutionResult(Collections.singletonList(e)));
-  }
-
-  private MavenServerExecutionResult handleException(MavenProject mavenProject, Exception e) {
-    return createExecutionResult(new Maven3ExecutionResult(mavenProject, Collections.singletonList(e)));
   }
 
   /**
