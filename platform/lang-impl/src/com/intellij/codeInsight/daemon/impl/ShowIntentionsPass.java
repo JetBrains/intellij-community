@@ -303,7 +303,10 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     List<HighlightInfo> additionalInfos = new ArrayList<>();
     Document document = hostEditor.getDocument();
     int line = document.getLineNumber(offset);
-    DaemonCodeAnalyzerEx.processHighlights(document, hostFile.getProject(), HighlightSeverity.INFORMATION, 0, document.getTextLength(), info -> {
+    int lineStartOffset = document.getLineStartOffset(line);
+    int lineEndOffset = document.getLineEndOffset(line);
+    // assumption: HighlightInfo.fixRange does not extend beyond that the containing lines, otherwise it would look silly, and searching for these infos would be expensive
+    DaemonCodeAnalyzerEx.processHighlights(document, hostFile.getProject(), HighlightSeverity.INFORMATION, lineStartOffset, lineEndOffset, info -> {
       if (info.containsOffset(offset, true)) {
         infos.add(info);
       }
