@@ -1463,7 +1463,6 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - ps:dressIcon(com.intellij.openapi.vfs.VirtualFile,javax.swing.Icon):javax.swing.Icon
 - getComment(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - getDescription():java.lang.String
-- f:getFileToSelect(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getIcon(com.intellij.openapi.vfs.VirtualFile):javax.swing.Icon
 - getName(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - getRoots():java.util.List
@@ -1493,6 +1492,9 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - setTitle(java.lang.String):V
 - validateSelectedFiles(com.intellij.openapi.vfs.VirtualFile[]):V
 - withDescription(java.lang.String):com.intellij.openapi.fileChooser.FileChooserDescriptor
+- withExtensionFilter(com.intellij.openapi.fileTypes.FileType):com.intellij.openapi.fileChooser.FileChooserDescriptor
+- withExtensionFilter(java.lang.String):com.intellij.openapi.fileChooser.FileChooserDescriptor
+- withExtensionFilter(java.lang.String,java.lang.String[]):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withFileFilter(com.intellij.openapi.util.Condition):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withHideIgnored(Z):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withRoots(java.util.List):com.intellij.openapi.fileChooser.FileChooserDescriptor

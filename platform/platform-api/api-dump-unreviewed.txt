@@ -2389,8 +2389,6 @@ com.intellij.openapi.fileChooser.FileTextField
 c:com.intellij.openapi.fileChooser.FileTypeDescriptor
 - com.intellij.openapi.fileChooser.FileChooserDescriptor
 - <init>(java.lang.String,java.lang.String[]):V
-- isFileSelectable(com.intellij.openapi.vfs.VirtualFile):Z
-- isFileVisible(com.intellij.openapi.vfs.VirtualFile,Z):Z
 com.intellij.openapi.fileChooser.PathChooserDialog
 - sf:PREFER_LAST_OVER_EXPLICIT:com.intellij.openapi.actionSystem.DataKey
 - a:choose(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Consumer):V

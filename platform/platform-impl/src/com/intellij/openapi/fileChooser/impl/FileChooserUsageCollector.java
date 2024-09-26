@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class FileChooserUsageCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ui.file.chooser", 2);
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.file.chooser", 3);
 
   private static final EnumEventField<Type> TYPE = EventFields.Enum("type", Type.class);
   private static final BooleanEventField FORCED = EventFields.Boolean("forced");
@@ -29,7 +29,10 @@ public class FileChooserUsageCollector extends CounterUsagesCollector {
     "chooser_shown", TYPE, FORCED, JAR_CONTENTS, NON_LOCAL_ROOTS, FILTER, NON_LOCAL_FILES);
 
   private enum Type {NATIVE, CLASSIC, NEW, OTHER}
-  private enum Filter {NONE, TYPE, EXT, OTHER}
+
+  private static Filter filterType(@Nullable String filterType) {
+    return filterType == null ? Filter.NONE : filterType.equals("file-ext") ? Filter.EXT : Filter.OTHER;
+  }
 
   @Override
   public EventLogGroup getGroup() {
@@ -54,10 +57,5 @@ public class FileChooserUsageCollector extends CounterUsagesCollector {
            Type.OTHER;
   }
 
-  private static Filter filterType(@Nullable String filterType) {
-    return filterType == null ? Filter.NONE :
-           filterType.equals("file-type") ? Filter.TYPE :
-           filterType.equals("file-ext") ? Filter.EXT :
-           Filter.OTHER;
-  }
+  private enum Filter {NONE, EXT, OTHER}
 }

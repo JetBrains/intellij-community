@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -28,12 +27,10 @@ import com.intellij.util.UriUtil
 import java.awt.Component
 import java.awt.FileDialog
 import java.awt.KeyboardFocusManager
-import java.io.File
-import java.io.FilenameFilter
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
-internal class FileChooserDialogHelper(private val descriptor: FileChooserDescriptor) : FilenameFilter {
+internal class FileChooserDialogHelper(private val descriptor: FileChooserDescriptor) {
   @Suppress("SpellCheckingInspection")
   private val ZIP_FS_TYPE = "zipfs"
 
@@ -57,15 +54,9 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
     if (SystemInfo.isWindows) {
       System.setProperty("sun.awt.windows.useCommonItemDialog", "true")
     }
-    else if (SystemInfo.isMac) {
-      var key = "awt.file.dialog.enable.filter"
-      System.setProperty(key, Registry.`is`(key, true).toString())
-    }
   }
 
   fun showNativeDialog(fileDialog: FileDialog) {
-    fileDialog.filenameFilter = this
-
     val commandProcessor = if (ApplicationManager.getApplication() != null) CommandProcessorEx.getInstance() as CommandProcessorEx else null
     if (commandProcessor != null) {
       commandProcessor.enterModal()
@@ -139,14 +130,5 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
     catch (e: Exception) {
       Logger.getInstance(FileChooserDialogHelper::class.java).warn(e)
       null
-    }
-
-  override fun accept(dir: File, name: String): Boolean =
-    try {
-      descriptor.isFileSelectable(localFs.value.refreshAndFindFileByPath(dir.absolutePath + File.separatorChar + name))
-    }
-    catch (t: Throwable) {
-      Logger.getInstance(FileChooserDialogHelper::class.java).warn(t)
-      false
     }
 }
