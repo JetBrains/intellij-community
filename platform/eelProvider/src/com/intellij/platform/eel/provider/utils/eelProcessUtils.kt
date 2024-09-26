@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
-import com.intellij.execution.processTools.ExecutionResult
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.channels.consumeEach
@@ -40,20 +42,22 @@ fun EelExecApi.ExecuteProcessResult.unwrap() = when (this) {
  * @see ExecutionResult
  */
 @OptIn(DelicateCoroutinesApi::class)
-suspend fun EelProcess.awaitExecutionResult() = computeDetached {
-  ByteArrayOutputStream().use { out ->
-    ByteArrayOutputStream().use { err ->
-      coroutineScope {
-        launch {
-          stdout.consumeEach(out::write)
+suspend fun EelProcess.awaitProcessResult(): ProcessOutput {
+  return computeDetached {
+    ByteArrayOutputStream().use { out ->
+      ByteArrayOutputStream().use { err ->
+        coroutineScope {
+          launch {
+            stdout.consumeEach(out::write)
+          }
+
+          launch {
+            stderr.consumeEach(err::write)
+          }
         }
 
-        launch {
-          stderr.consumeEach(err::write)
-        }
+        ProcessOutput(String(out.toByteArray()), String(err.toByteArray()), exitCode.await(), false, false)
       }
-
-      ExecutionResult(exitCode.await(), out.toByteArray(), err.toByteArray())
     }
   }
 }
@@ -86,7 +90,7 @@ suspend fun EelApi.where(exe: String): EelPath.Absolute? {
     else -> throw IllegalArgumentException("Unsupported OS: $this")
   }
 
-  val result = exec.executeProcess(tool, exe).unwrap().awaitExecutionResult()
+  val result = exec.executeProcess(tool, exe).unwrap().awaitProcessResult()
 
   if (result.exitCode != 0) {
     // TODO: log error?/throw Exception?
