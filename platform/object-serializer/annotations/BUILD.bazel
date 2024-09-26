@@ -2,7 +2,7 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.objectSerializer.annotations",
+  name = "objectSerializer-annotations",
   module_name = "intellij.platform.objectSerializer.annotations",
   visibility = ["//visibility:public"],
   srcs = glob(["**/*.kt", "**/*.java"]),

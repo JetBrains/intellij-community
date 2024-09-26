@@ -2,7 +2,7 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.tools.jps.build.standalone",
+  name = "tools-jps-build-standalone",
   module_name = "intellij.tools.jps.build.standalone",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
@@ -10,15 +10,15 @@ kt_jvm_library(
   kotlinc_opts = "//:k11",
   deps = [
     "@libraries//:groovy",
-    "@community//jps/jps-builders:intellij.platform.jps.build",
-    "@community//jps/model-api:intellij.platform.jps.model",
+    "@community//jps/jps-builders:jps-build",
+    "@community//jps/model-api:jps-model",
     "@libraries//:cli-parser",
-    "@community//jps/model-serialization:intellij.platform.jps.model.serialization",
+    "@community//jps/model-serialization:jps-model-serialization",
     "@libraries//:protobuf-java",
   ],
   exports = [
-    "@community//jps/jps-builders:intellij.platform.jps.build",
-    "@community//jps/model-serialization:intellij.platform.jps.model.serialization",
+    "@community//jps/jps-builders:jps-build",
+    "@community//jps/model-serialization:jps-model-serialization",
   ]
 )
 ### auto-generated section `build` end

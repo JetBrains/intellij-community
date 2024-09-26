@@ -1,12 +1,9 @@
 ### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_java//java:defs.bzl", "java_library")
 
-kt_jvm_library(
-  name = "intellij.platform.icons",
-  module_name = "intellij.platform.icons",
+java_library(
+  name = "icons",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17"
+  resources = glob(["src/**/*"])
 )
 ### auto-generated section `build` end

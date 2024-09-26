@@ -1,6 +1,12 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
 
 create_kotlinc_options(
   name = "custom",
@@ -9,28 +15,29 @@ create_kotlinc_options(
 )
 
 kt_jvm_library(
-  name = "intellij.platform.diagnostic.telemetry.exporters",
+  name = "diagnostic-telemetry-exporters",
   module_name = "intellij.platform.diagnostic.telemetry.exporters",
   visibility = ["//visibility:public"],
-  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = ":custom",
   plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@libraries//:kotlin-stdlib",
     "@libraries//:annotations",
-    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
     "@libraries//:opentelemetry-sdk",
     "@libraries//:opentelemetry-semconv",
     "@libraries//:opentelemetry-exporter-otlp-common",
-    "@community//platform/util/http:intellij.platform.util.http",
+    "@community//platform/util/http:util-http",
     "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/util:intellij.platform.util",
+    "@community//platform/util",
     "@libraries//:jackson-core",
     "@libraries//:jackson-databind",
     "@libraries//:jackson-module-kotlin",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-protobuf-jvm",
-  ]
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

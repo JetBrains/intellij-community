@@ -2,7 +2,7 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.util.rt.java8",
+  name = "util-rt-java8",
   module_name = "intellij.platform.util.rt.java8",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),

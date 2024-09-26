@@ -1,33 +1,40 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.kernel",
+  name = "kernel",
   module_name = "intellij.platform.kernel",
   visibility = ["//visibility:public"],
-  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@libraries//:kotlin-stdlib",
-    "@community//platform/kernel/rpc:intellij.platform.rpc",
+    "@community//platform/kernel/rpc",
     "@libraries//:rhizomedb-compiler-plugin.provided",
-    "@community//fleet/kernel:fleet.kernel",
+    "@community//fleet/kernel:fleet-kernel",
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@libraries//:kotlinx-collections-immutable-jvm",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:intellij-deps-fastutil",
-    "@community//platform/core-api:intellij.platform.core",
-    "@community//platform/ide-core:intellij.platform.ide.core",
-    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
+    "@community//platform/core-api:core",
+    "@community//platform/ide-core",
+    "@community//platform/util/coroutines:util-coroutines",
   ],
   exports = [
     "@libraries//:kotlin-stdlib",
-    "@community//platform/kernel/rpc:intellij.platform.rpc",
-    "@community//fleet/kernel:fleet.kernel",
+    "@community//platform/kernel/rpc",
+    "@community//fleet/kernel:fleet-kernel",
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@libraries//:kotlinx-serialization-core-jvm",
-  ]
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

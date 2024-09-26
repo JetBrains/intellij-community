@@ -1,41 +1,48 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.util",
+  name = "util",
   module_name = "intellij.platform.util",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   plugins = ["@libraries//:serialization_plugin"],
   deps = [
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/util/jdom:util-jdom",
     "@libraries//:log4j-over-slf4j",
     "@libraries//:annotations",
-    "@community//platform/util-rt:intellij.platform.util.rt",
-    "@community//platform/util-class-loader:intellij.platform.util.classLoader",
+    "@community//platform/util-rt",
+    "@community//platform/util-class-loader:util-classLoader",
     "@libraries//:jna-platform",
     "@libraries//:oro",
     "@libraries//:lz4-java",
     "@libraries//:commons-compress",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:kotlin-stdlib",
-    "@community//platform/util/base:intellij.platform.util.base",
+    "@community//platform/util/base:util-base",
     "@libraries//:aalto-xml",
-    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
+    "@community//platform/util/xmlDom:util-xmlDom",
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
     "@libraries//:caffeine",
-    "@community//platform/util/troveCompileOnly:intellij.platform.util.troveCompileOnly",
+    "@community//platform/util/troveCompileOnly:util-troveCompileOnly",
   ],
   exports = [
     "@libraries//:annotations",
-    "@community//platform/util-rt:intellij.platform.util.rt",
-    "@community//platform/util/base:intellij.platform.util.base",
+    "@community//platform/util-rt",
+    "@community//platform/util/base:util-base",
   ],
   runtime_deps = [
+    ":resources",
     "@libraries//:commons-io",
     "@libraries//:commons-codec",
   ]

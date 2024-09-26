@@ -1,11 +1,17 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.ide.progress",
+  name = "ide-progress",
   module_name = "intellij.platform.ide.progress",
   visibility = ["//visibility:public"],
-  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   plugins = ["@libraries//:serialization_plugin"],
@@ -13,13 +19,14 @@ kt_jvm_library(
     "@libraries//:annotations",
     "@libraries//:kotlin-stdlib",
     "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/util/progress:intellij.platform.util.progress",
-    "@community//platform/core-api:intellij.platform.core",
-    "@community//platform/service-container:intellij.platform.serviceContainer",
-    "@community//platform/kernel/shared:intellij.platform.kernel",
+    "@community//platform/util/progress:util-progress",
+    "@community//platform/core-api:core",
+    "@community//platform/service-container:serviceContainer",
+    "@community//platform/kernel/shared:kernel",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
-    "@community//platform/project/shared:intellij.platform.project",
-  ]
+    "@community//platform/project/shared:project",
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

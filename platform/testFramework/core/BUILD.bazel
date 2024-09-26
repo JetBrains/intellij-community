@@ -1,28 +1,37 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.testFramework.core",
+  name = "testFramework-core",
   module_name = "intellij.platform.testFramework.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
-    "@community//platform/util:intellij.platform.util",
-    "@community//platform/util-class-loader:intellij.platform.util.classLoader",
-    "@community//platform/boot:intellij.platform.boot",
-    "@community//platform/testFramework/bootstrap:intellij.tools.testsBootstrap",
+    "@community//platform/util",
+    "@community//platform/util-class-loader:util-classLoader",
+    "@community//platform/boot",
+    "@community//platform/testFramework/bootstrap:tools-testsBootstrap",
     "@libraries//:opentest4j",
     "@libraries//:junit",
     "@libraries//:junit-jupiter-api.provided",
-    "@community//java/java-runtime:intellij.java.rt",
+    "@community//java/java-runtime:java-rt",
     "@libraries//:kotlin-stdlib",
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@libraries//:jackson-core",
     "@libraries//:jackson-databind",
     "@libraries//:jackson-module-kotlin",
     "@libraries//:httpmime",
-  ]
+    "@libraries//:kotlinx-collections-immutable-jvm",
+    "@community//platform/testFramework/teamCity:testFramework-teamCity",
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

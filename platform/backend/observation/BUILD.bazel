@@ -2,7 +2,7 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.backend.observation",
+  name = "backend-observation",
   module_name = "intellij.platform.backend.observation",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
@@ -10,7 +10,7 @@ kt_jvm_library(
   kotlinc_opts = "//:k17",
   deps = [
     "@libraries//:kotlin-stdlib",
-    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/core-api:core",
   ]
 )
 ### auto-generated section `build` end

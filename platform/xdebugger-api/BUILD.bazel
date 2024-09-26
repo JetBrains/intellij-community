@@ -1,24 +1,34 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.debugger",
+  name = "debugger",
+  module_name = "intellij.platform.debugger",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   plugins = ["@libraries//:serialization_plugin"],
   deps = [
-    "@community//platform/lang-api:intellij.platform.lang",
-    "@community//platform/util/ui:intellij.platform.util.ui",
-    "@community//platform/util/concurrency:intellij.platform.concurrency",
-    "@community//platform/core-ui:intellij.platform.core.ui",
-    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
+    "@community//platform/lang-api:lang",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/util/concurrency",
+    "@community//platform/core-ui",
+    "@community//platform/platform-util-io:ide-util-io",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
-    "@libraries//:kotlin-stdlib"
+    "@libraries//:kotlin-stdlib",
   ],
   exports = [
-    "@community//platform/lang-api:intellij.platform.lang",
-    "@community//platform/util/concurrency:intellij.platform.concurrency"
-  ]
+    "@community//platform/lang-api:lang",
+    "@community//platform/util/concurrency",
+  ],
+  runtime_deps = [":resources"]
 )
+### auto-generated section `build` end

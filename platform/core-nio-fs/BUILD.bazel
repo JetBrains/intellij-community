@@ -1,7 +1,7 @@
 load("@rules_java//java:defs.bzl", "java_library")
 
 java_library(
-  name = "intellij.platform.core.nio.fs",
+  name = "core-nio-fs",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.java"]),
   add_exports = ["java.base/sun.nio.fs"],

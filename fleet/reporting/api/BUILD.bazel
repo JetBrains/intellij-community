@@ -2,7 +2,7 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "fleet.reporting.api",
+  name = "fleet-reporting-api",
   module_name = "fleet.reporting.api",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),

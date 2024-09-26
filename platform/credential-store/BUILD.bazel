@@ -2,18 +2,18 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.credentialStore",
+  name = "credentialStore",
   module_name = "intellij.platform.credentialStore",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
-    "@community//platform/util-ex:intellij.platform.util.ex",
-    "@community//platform/util/base:intellij.platform.util.base",
-    "@community//platform/util:intellij.platform.util",
+    "@community//platform/util-ex",
+    "@community//platform/util/base:util-base",
+    "@community//platform/util",
     "@libraries//:kotlin-stdlib",
-    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/core-api:core",
   ]
 )
 ### auto-generated section `build` end

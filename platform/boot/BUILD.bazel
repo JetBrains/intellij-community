@@ -2,16 +2,16 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.boot",
+  name = "boot",
   module_name = "intellij.platform.boot",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = "//:k11",
   deps = [
-    "@community//platform/util-class-loader:intellij.platform.util.classLoader",
+    "@community//platform/util-class-loader:util-classLoader",
     "@libraries//:annotations",
-    "@community//platform/util/zip:intellij.platform.util.zip",
+    "@community//platform/util/zip:util-zip",
   ]
 )
 ### auto-generated section `build` end

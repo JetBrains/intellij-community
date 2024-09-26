@@ -5,7 +5,6 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 kt_javac_options(
   name = "custom-javac-options",
   x_ep_disable_all_checks = True,
-  x_enable_incremental_compilation = True,
   warn = "off",
   add_exports = [
     "java.desktop/sun.awt=ALL-UNNAMED",
@@ -14,7 +13,7 @@ kt_javac_options(
 )
 
 kt_jvm_library(
-  name = "intellij.platform.ui.jcef",
+  name = "ui-jcef",
   module_name = "intellij.platform.ui.jcef",
   visibility = ["//visibility:public"],
   srcs = glob(["jcef/**/*.kt", "jcef/**/*.java"]),
@@ -24,20 +23,20 @@ kt_jvm_library(
     "@libraries//:annotations",
     "@libraries//:kotlin-stdlib",
     "@libraries//:jcef",
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
-    "@community//platform/util/ui:intellij.platform.util.ui",
-    "@community//platform/util:intellij.platform.util",
-    "@community//platform/core-api:intellij.platform.core",
-    "@community//platform/core-ui:intellij.platform.core.ui",
-    "@community//platform/util-ex:intellij.platform.util.ex",
-    "@community//platform/editor-ui-api:intellij.platform.editor",
-    "@community//platform/ide-core:intellij.platform.ide.core",
-    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
-    "@community//platform/util/concurrency:intellij.platform.concurrency",
-    "@community//platform/platform-api:intellij.platform.ide",
-    "@community//platform/core-impl:intellij.platform.core.impl",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/util",
+    "@community//platform/core-api:core",
+    "@community//platform/core-ui",
+    "@community//platform/util-ex",
+    "@community//platform/editor-ui-api:editor",
+    "@community//platform/ide-core",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@community//platform/util/concurrency",
+    "@community//platform/platform-api:ide",
+    "@community//platform/core-impl",
     "@libraries//:jbr-api",
-    "@community//platform/jbr:intellij.platform.jbr",
+    "@community//platform/jbr",
   ],
   exports = ["@libraries//:jcef"]
 )

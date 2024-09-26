@@ -2,14 +2,14 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.jps.model",
+  name = "jps-model",
   module_name = "intellij.platform.jps.model",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = "//:k11",
   deps = [
-    "@community//platform/util:intellij.platform.util",
+    "@community//platform/util",
     "@libraries//:annotations",
   ],
   exports = ["@libraries//:annotations"]

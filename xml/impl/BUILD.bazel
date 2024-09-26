@@ -1,0 +1,48 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_jvm_library(
+  name = "xml-impl",
+  module_name = "intellij.xml.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//xml/openapi:xml",
+    "@libraries//:xercesImpl",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/lang-impl",
+    "@community//platform/execution-impl",
+    "@community//platform/icons",
+    "@community//platform/vcs-api:vcs",
+    "@community//xml/xml-psi-impl",
+    "@community//xml/xml-analysis-impl",
+    "@community//xml/xml-structure-view-impl:xml-structureView-impl",
+    "@community//platform/xdebugger-api:debugger",
+    "@community//platform/built-in-server-api:builtInServer",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui",
+    "@community//spellchecker",
+    "@community//xml/dom-openapi:xml-dom",
+    "@community//platform/webSymbols",
+    "@community//platform/code-style-impl:codeStyle-impl",
+    "@community//platform/platform-util-io-impl:ide-util-io-impl",
+    "@community//platform/util/xmlDom:util-xmlDom",
+    "@libraries//:aalto-xml",
+  ],
+  exports = [
+    "@community//xml/openapi:xml",
+    "@community//xml/xml-psi-impl",
+    "@community//xml/xml-analysis-impl",
+    "@community//xml/xml-structure-view-impl:xml-structureView-impl",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

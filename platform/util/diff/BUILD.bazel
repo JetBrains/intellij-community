@@ -2,15 +2,15 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.util.diff",
+  name = "util-diff",
   module_name = "intellij.platform.util.diff",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = [
-    "@community//platform/util/base:intellij.platform.util.base",
-    "@community//platform/util-rt:intellij.platform.util.rt",
+    "@community//platform/util/base:util-base",
+    "@community//platform/util-rt",
     "@libraries//:kotlin-stdlib",
     "@libraries//:annotations",
     "@libraries//:intellij-deps-fastutil",

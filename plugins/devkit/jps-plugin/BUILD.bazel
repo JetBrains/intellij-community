@@ -1,20 +1,27 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.devkit.jps",
+  name = "devkit-jps",
   module_name = "intellij.devkit.jps",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = "//:k11",
   deps = [
-    "@community//jps/model-api:intellij.platform.jps.model",
-    "@community//jps/model-serialization:intellij.platform.jps.model.serialization",
-    "@community//jps/jps-builders:intellij.platform.jps.build",
-    "@community//java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil",
+    "@community//jps/model-api:jps-model",
+    "@community//jps/model-serialization:jps-model-serialization",
+    "@community//jps/jps-builders:jps-build",
+    "@community//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
     "@libraries//:asm-all",
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
-  ]
+    "@community//platform/util/jdom:util-jdom",
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

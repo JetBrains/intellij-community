@@ -1,0 +1,46 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_jvm_library(
+  name = "xml-psi-impl",
+  module_name = "intellij.xml.psi.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/core-api:core",
+    "@community//xml/xml-psi-api:xml-psi",
+    "@community//platform/core-impl",
+    "@community//platform/analysis-impl",
+    "@community//platform/projectModel-impl",
+    "@community//platform/indexing-impl",
+    "@libraries//:xercesImpl",
+    "@community//RegExpSupport:regexp",
+    "@community//platform/lang-api:lang",
+    "@community//platform/lang-impl",
+    "@libraries//:xml-resolver",
+    "@community//platform/util/nanoxml:util-nanoxml",
+    "@community//platform/util/ui:util-ui",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:jackson-core",
+    "@libraries//:jackson-databind",
+    "@libraries//:jackson-module-kotlin",
+    "@libraries//:caffeine",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/webSymbols",
+    "@community//platform/markdown-utils",
+  ],
+  exports = [
+    "@community//xml/xml-psi-api:xml-psi",
+    "@community//RegExpSupport:regexp",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

@@ -2,7 +2,7 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.ijent.community.buildConstants",
+  name = "ijent-community-buildConstants",
   module_name = "intellij.platform.ijent.community.buildConstants",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),

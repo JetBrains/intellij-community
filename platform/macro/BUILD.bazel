@@ -1,23 +1,26 @@
+### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.macro",
+  name = "macro",
+  module_name = "intellij.platform.macro",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
-    "@community//platform/core-api:intellij.platform.core",
-    "@community//platform/core-ui:intellij.platform.core.ui",
-    "@community//platform/editor-ui-api:intellij.platform.editor",
-    "@community//platform/projectModel-api:intellij.platform.projectModel",
-    "@community//platform/execution:intellij.platform.execution",
-    "@community//platform/lang-core:intellij.platform.lang.core",
-    "@community//platform/util/ui:intellij.platform.util.ui",
-    "@community//jps/model-serialization:intellij.platform.jps.model.serialization",
-    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl",
-    "@community//platform/ide-core:intellij.platform.ide.core",
-    "@community//platform/analysis-api:intellij.platform.analysis",
-    "@community//platform/util/jdom:intellij.platform.util.jdom"
+    "@community//platform/core-api:core",
+    "@community//platform/core-ui",
+    "@community//platform/editor-ui-api:editor",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/execution",
+    "@community//platform/lang-core",
+    "@community//platform/util/ui:util-ui",
+    "@community//jps/model-serialization:jps-model-serialization",
+    "@community//platform/projectModel-impl",
+    "@community//platform/ide-core",
+    "@community//platform/analysis-api:analysis",
+    "@community//platform/util/jdom:util-jdom",
   ]
 )
+### auto-generated section `build` end

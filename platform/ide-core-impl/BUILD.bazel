@@ -1,33 +1,40 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.ide.core.impl",
+  name = "ide-core-impl",
   module_name = "intellij.platform.ide.core.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
-    "@community//platform/core-api:intellij.platform.core",
-    "@community//platform/ide-core:intellij.platform.ide.core",
-    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
-    "@community//platform/util/ui:intellij.platform.util.ui",
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
-    "@community//platform/util/concurrency:intellij.platform.concurrency",
-    "@community//platform/core-impl:intellij.platform.core.impl",
-    "@community//platform/analysis-impl:intellij.platform.analysis.impl",
+    "@community//platform/core-api:core",
+    "@community//platform/ide-core",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/util/concurrency",
+    "@community//platform/core-impl",
+    "@community//platform/analysis-impl",
     "@libraries//:icu4j",
     "@libraries//:intellij-deps-fastutil",
-    "@community//platform/editor-ui-api:intellij.platform.editor",
-    "@community//platform/core-ui:intellij.platform.core.ui",
-    "@community//jps/model-impl:intellij.platform.jps.model.impl",
+    "@community//platform/editor-ui-api:editor",
+    "@community//platform/core-ui",
+    "@community//jps/model-impl:jps-model-impl",
     "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/workspace/jps:intellij.platform.workspace.jps",
-    "@community//platform/backend/workspace:intellij.platform.backend.workspace",
-    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@community//platform/workspace/jps:workspace-jps",
+    "@community//platform/backend/workspace:backend-workspace",
+    "@community//platform/diagnostic",
     "@libraries//:hash4j",
-    "@community//platform/backend/observation:intellij.platform.backend.observation",
-  ]
+    "@community//platform/backend/observation:backend-observation",
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

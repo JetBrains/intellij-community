@@ -1,23 +1,33 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.feedback",
+  name = "feedback",
+  module_name = "intellij.platform.feedback",
   visibility = ["//visibility:public"],
-  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   plugins = ["@libraries//:serialization_plugin"],
   deps = [
-    "@community//platform/util:intellij.platform.util",
-    "@community//platform/editor-ui-api:intellij.platform.editor",
-    "@community//platform/lang-api:intellij.platform.lang",
-    "@community//platform/core-impl:intellij.platform.core.impl",
+    "@community//platform/util",
+    "@community//platform/editor-ui-api:editor",
+    "@community//platform/lang-api:lang",
+    "@community//platform/core-impl",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
-    "@community//platform/platform-impl:intellij.platform.ide.impl",
+    "@community//platform/platform-impl:ide-impl",
     "@libraries//:kotlinx-datetime-jvm",
-    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
-    "@community//platform/statistics:intellij.platform.statistics",
-    "@community//platform/core-ui:intellij.platform.core.ui"
-  ]
+    "@community//platform/util/xmlDom:util-xmlDom",
+    "@community//platform/statistics",
+    "@community//platform/core-ui",
+  ],
+  runtime_deps = [":resources"]
 )
+### auto-generated section `build` end

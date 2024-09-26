@@ -9,7 +9,7 @@ create_kotlinc_options(
 )
 
 kt_jvm_library(
-  name = "intellij.platform.buildScripts.downloader",
+  name = "buildScripts-downloader",
   module_name = "intellij.platform.buildScripts.downloader",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),

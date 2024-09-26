@@ -1,27 +1,33 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.jps.build",
+  name = "jps-build",
   module_name = "intellij.platform.jps.build",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = "//:k11",
   deps = [
-    "@community//platform/util:intellij.platform.util",
-    "@community//platform/forms_rt:intellij.java.guiForms.rt",
-    "@community//java/compiler/forms-compiler:intellij.java.guiForms.compiler",
-    "@community//java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil",
-    "@community//aether-dependency-resolver:intellij.java.aetherDependencyResolver",
+    "@community//platform/util",
+    "@community//platform/forms_rt:java-guiForms-rt",
+    "@community//java/compiler/forms-compiler:java-guiForms-compiler",
+    "@community//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "@community//aether-dependency-resolver:java-aetherDependencyResolver",
     "@libraries//:asm-all",
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
-    "@community//platform/util/nanoxml:intellij.platform.util.nanoxml",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/util/nanoxml:util-nanoxml",
     "@libraries//:forms",
     "@libraries//:protobuf-java",
-    "@community//jps/model-api:intellij.platform.jps.model",
-    "@community//jps/model-serialization:intellij.platform.jps.model.serialization",
-    "@community//jps/model-impl:intellij.platform.jps.model.impl",
+    "@community//jps/model-api:jps-model",
+    "@community//jps/model-serialization:jps-model-serialization",
+    "@community//jps/model-impl:jps-model-impl",
     "@libraries//:netty-codec-http2",
     "@libraries//:javax.annotation-api",
     "@libraries//:qdox",
@@ -29,10 +35,10 @@ kt_jvm_library(
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:jps-javac-extension",
     "@libraries//:netty-buffer",
-    "@community//jps/jps-builders-6:intellij.platform.jps.build.javac.rt",
-    "@community//platform/tracing:intellij.platform.tracing.rt",
-    "@community//platform/runtime/repository:intellij.platform.runtime.repository",
-    "@community//platform/util/zip:intellij.platform.util.zip",
+    "@community//jps/jps-builders-6:jps-build-javac-rt",
+    "@community//platform/tracing:tracing-rt",
+    "@community//platform/runtime/repository:runtime-repository",
+    "@community//platform/util/zip:util-zip",
     "@libraries//:caffeine",
     "@libraries//:kotlinx-metadata-jvm",
     "@libraries//:kotlin-stdlib.provided",
@@ -42,13 +48,14 @@ kt_jvm_library(
     "@libraries//:h2-mvstore",
   ],
   exports = [
-    "@community//platform/util:intellij.platform.util",
-    "@community//jps/jps-builders-6:intellij.platform.jps.build.javac.rt",
-    "@community//platform/tracing:intellij.platform.tracing.rt",
+    "@community//platform/util",
+    "@community//jps/jps-builders-6:jps-build-javac-rt",
+    "@community//platform/tracing:tracing-rt",
   ],
   runtime_deps = [
-    "@community//java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
-    "@community//java/java-runtime:intellij.java.rt",
+    ":resources",
+    "@community//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8",
+    "@community//java/java-runtime:java-rt",
   ]
 )
 ### auto-generated section `build` end

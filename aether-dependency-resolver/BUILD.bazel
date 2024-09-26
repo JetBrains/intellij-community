@@ -2,7 +2,7 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.java.aetherDependencyResolver",
+  name = "java-aetherDependencyResolver",
   module_name = "intellij.java.aetherDependencyResolver",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
@@ -21,7 +21,7 @@ kt_jvm_library(
     "@libraries//:commons-lang3",
     "@libraries//:plexus-utils",
     "@libraries//:commons-codec",
-    "@community//platform/util:intellij.platform.util",
+    "@community//platform/util",
   ],
   exports = [
     "@libraries//:httpmime",

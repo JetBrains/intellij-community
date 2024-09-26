@@ -1,6 +1,12 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
 
 create_kotlinc_options(
   name = "custom",
@@ -9,10 +15,10 @@ create_kotlinc_options(
 )
 
 kt_jvm_library(
-  name = "intellij.platform.diagnostic.telemetry.impl",
+  name = "diagnostic-telemetry-impl",
   module_name = "intellij.platform.diagnostic.telemetry.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = ":custom",
   plugins = ["@libraries//:serialization_plugin"],
@@ -23,18 +29,19 @@ kt_jvm_library(
     "@libraries//:kotlin-stdlib",
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@libraries//:opentelemetry-extension-kotlin",
-    "@community//platform/util:intellij.platform.util",
+    "@community//platform/util",
     "@libraries//:opentelemetry-exporter-otlp-common",
     "@libraries//:HdrHistogram",
-    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
-    "@community//platform/core-impl:intellij.platform.core.impl",
-    "@community//platform/util/http:intellij.platform.util.http",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
+    "@community//platform/core-impl",
+    "@community//platform/util/http:util-http",
     "@libraries//:kotlinx-serialization-protobuf-jvm",
     "@libraries//:kotlinx-serialization-core-jvm",
-    "@community//platform/diagnostic:intellij.platform.diagnostic",
-    "@community//platform/diagnostic/telemetry.exporters:intellij.platform.diagnostic.telemetry.exporters",
-    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
+    "@community//platform/diagnostic",
+    "@community//platform/diagnostic/telemetry.exporters:diagnostic-telemetry-exporters",
+    "@community//platform/util/coroutines:util-coroutines",
   ],
-  exports = ["@community//platform/diagnostic/telemetry.exporters:intellij.platform.diagnostic.telemetry.exporters"]
+  exports = ["@community//platform/diagnostic/telemetry.exporters:diagnostic-telemetry-exporters"],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

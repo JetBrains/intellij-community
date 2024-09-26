@@ -1,0 +1,20 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "xml-structureView-impl",
+  module_name = "intellij.xml.structureView.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//xml/xml-structure-view-api:xml-structureView",
+    "@community//xml/xml-psi-impl",
+    "@community//platform/structure-view-impl:structureView-impl",
+    "@community//platform/core-impl",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/lang-impl",
+  ]
+)
+### auto-generated section `build` end

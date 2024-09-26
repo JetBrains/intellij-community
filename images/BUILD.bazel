@@ -1,0 +1,33 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_jvm_library(
+  name = "images",
+  module_name = "intellij.platform.images",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@community//platform/lang-api:lang",
+    "@community//platform/lang-impl",
+    "@libraries//:commons-imaging",
+    "@community//platform/core-ui",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@community//platform/util/jdom:util-jdom",
+    "@libraries//:jcef",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@community//xml/xml-frontback",
+    "@community//platform/ui.jcef:ui-jcef",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

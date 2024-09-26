@@ -2,7 +2,7 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.idea.community.build.dependencies",
+  name = "build-dependencies",
   module_name = "intellij.idea.community.build.dependencies",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
@@ -10,7 +10,7 @@ kt_jvm_library(
   kotlinc_opts = "//:k17",
   deps = [
     "@libraries//:annotations",
-    "@community//platform/build-scripts/downloader:intellij.platform.buildScripts.downloader",
+    "@community//platform/build-scripts/downloader:buildScripts-downloader",
     "@libraries//:kotlin-stdlib",
     "@libraries//:kotlinx-coroutines-core-jvm",
   ]

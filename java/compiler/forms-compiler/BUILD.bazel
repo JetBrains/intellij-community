@@ -2,20 +2,20 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.java.guiForms.compiler",
+  name = "java-guiForms-compiler",
   module_name = "intellij.java.guiForms.compiler",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = [
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
-    "@community//platform/forms_rt:intellij.java.guiForms.rt",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/forms_rt:java-guiForms-rt",
     "@libraries//:asm-all",
     "@libraries//:forms",
-    "@community//java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil",
+    "@community//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
     "@libraries//:annotations",
   ],
-  exports = ["@community//java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil"]
+  exports = ["@community//java/compiler/instrumentation-util:java-compiler-instrumentationUtil"]
 )
 ### auto-generated section `build` end

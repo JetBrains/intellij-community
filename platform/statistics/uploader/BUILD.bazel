@@ -2,7 +2,7 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.statistics.uploader",
+  name = "statistics-uploader",
   module_name = "intellij.platform.statistics.uploader",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
@@ -11,12 +11,12 @@ kt_jvm_library(
   deps = [
     "@libraries//:annotations",
     "@libraries//:kotlin-stdlib",
-    "@community//platform/statistics/config:intellij.platform.statistics.config",
+    "@community//platform/statistics/config:statistics-config",
     "@libraries//:ap-validation",
     "@libraries//:jackson-core",
     "@libraries//:jackson-databind",
     "@libraries//:jackson-module-kotlin",
   ],
-  exports = ["@community//platform/statistics/config:intellij.platform.statistics.config"]
+  exports = ["@community//platform/statistics/config:statistics-config"]
 )
 ### auto-generated section `build` end

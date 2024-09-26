@@ -2,7 +2,7 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.eel.provider",
+  name = "eel-provider",
   module_name = "intellij.platform.eel.provider",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
@@ -12,13 +12,13 @@ kt_jvm_library(
     "@libraries//:kotlin-stdlib",
     "@libraries//:annotations",
     "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/util/base:intellij.platform.util.base",
-    "@community//platform/extensions:intellij.platform.extensions",
-    "@community//platform/util:intellij.platform.util",
-    "@community//platform/eel:intellij.platform.eel",
-    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
-    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
-    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/util/base:util-base",
+    "@community//platform/extensions",
+    "@community//platform/util",
+    "@community//platform/eel",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@community//platform/util/coroutines:util-coroutines",
+    "@community//platform/core-api:core",
     "@libraries//:jna-platform",
     "@libraries//:pty4j",
   ]

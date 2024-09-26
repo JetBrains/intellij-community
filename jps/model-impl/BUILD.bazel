@@ -2,15 +2,15 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.jps.model.impl",
+  name = "jps-model-impl",
   module_name = "intellij.platform.jps.model.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = "//:k11",
   deps = [
-    "@community//platform/util:intellij.platform.util",
-    "@community//jps/model-api:intellij.platform.jps.model",
+    "@community//platform/util",
+    "@community//jps/model-api:jps-model",
     "@libraries//:intellij-deps-fastutil",
   ]
 )

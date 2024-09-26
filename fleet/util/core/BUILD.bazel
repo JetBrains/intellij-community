@@ -2,7 +2,7 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "fleet.util.core",
+  name = "fleet-util-core",
   module_name = "fleet.util.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
@@ -16,19 +16,19 @@ kt_jvm_library(
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
     "@libraries//:kotlinx-coroutines-slf4j",
-    "@community//fleet/util/logging/api:fleet.util.logging.api",
+    "@community//fleet/util/logging/api:fleet-util-logging-api",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:kotlinx-collections-immutable-jvm",
-    "@community//fleet/reporting/api:fleet.reporting.api",
-    "@community//fleet/preferences:fleet.preferences",
-    "@community//fleet/util/os:fleet.util.os",
+    "@community//fleet/reporting/api:fleet-reporting-api",
+    "@community//fleet/preferences:fleet-preferences",
+    "@community//fleet/util/os:fleet-util-os",
     "@libraries//:slf4j-api",
   ],
   exports = [
     "@libraries//:bifurcan",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
-    "@community//fleet/util/logging/api:fleet.util.logging.api",
+    "@community//fleet/util/logging/api:fleet-util-logging-api",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:kotlinx-collections-immutable-jvm",
   ]

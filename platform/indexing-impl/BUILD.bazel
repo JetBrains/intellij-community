@@ -2,34 +2,34 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.indexing.impl",
+  name = "indexing-impl",
   module_name = "intellij.platform.indexing.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
-    "@community//platform/core-impl:intellij.platform.core.impl",
-    "@community//platform/indexing-api:intellij.platform.indexing",
-    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl",
+    "@community//platform/core-impl",
+    "@community//platform/indexing-api:indexing",
+    "@community//platform/projectModel-impl",
     "@libraries//:kotlin-stdlib",
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@libraries//:streamex",
     "@libraries//:intellij-deps-fastutil",
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
-    "@community//platform/statistics:intellij.platform.statistics",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/statistics",
     "@libraries//:HdrHistogram",
-    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
     "@libraries//:opentelemetry-sdk",
     "@libraries//:opentelemetry-semconv",
     "@libraries//:guava",
-    "@community//platform/workspace/jps:intellij.platform.workspace.jps",
-    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@community//platform/workspace/jps:workspace-jps",
+    "@community//platform/diagnostic",
     "@libraries//:caffeine",
-    "@community//platform/util/nanoxml:intellij.platform.util.nanoxml",
+    "@community//platform/util/nanoxml:util-nanoxml",
     "@libraries//:aalto-xml",
-    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
+    "@community//platform/util/xmlDom:util-xmlDom",
   ],
-  exports = ["@community//platform/indexing-api:intellij.platform.indexing"]
+  exports = ["@community//platform/indexing-api:indexing"]
 )
 ### auto-generated section `build` end

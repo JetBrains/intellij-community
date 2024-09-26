@@ -1,21 +1,28 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.ide.util.io",
+  name = "ide-util-io",
   module_name = "intellij.platform.ide.util.io",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
     "@libraries//:kotlin-stdlib",
-    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/core-api:core",
     "@libraries//:guava",
     "@libraries//:intellij-deps-fastutil",
-    "@community//platform/util/base:intellij.platform.util.base",
+    "@community//platform/util/base:util-base",
     "@libraries//:jna-platform",
-    "@community//platform/diagnostic:intellij.platform.diagnostic",
-  ]
+    "@community//platform/diagnostic",
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

@@ -12,7 +12,7 @@ create_kotlinc_options(
 )
 
 kt_jvm_library(
-  name = "fleet.rpc",
+  name = "fleet-rpc",
   module_name = "fleet.rpc",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
@@ -20,8 +20,8 @@ kt_jvm_library(
   kotlinc_opts = ":custom",
   plugins = ["@libraries//:serialization_plugin"],
   deps = [
-    "@community//fleet/reporting/api:fleet.reporting.api",
-    "@community//fleet/preferences:fleet.preferences",
+    "@community//fleet/reporting/api:fleet-reporting-api",
+    "@community//fleet/preferences:fleet-preferences",
     "@libraries//:kotlin-reflect",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
@@ -30,7 +30,7 @@ kt_jvm_library(
     "@libraries//:kotlinx-coroutines-slf4j",
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@libraries//:rpc-compiler-plugin.provided",
-    "@community//fleet/util/core:fleet.util.core",
+    "@community//fleet/util/core:fleet-util-core",
     "@libraries//:opentelemetry-sdk",
     "@libraries//:opentelemetry-semconv",
   ]

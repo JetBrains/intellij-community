@@ -1,27 +1,34 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.diff",
+  name = "diff",
   module_name = "intellij.platform.diff",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
-    "@community//platform/util/diff:intellij.platform.util.diff",
-    "@community//platform/ide-core:intellij.platform.ide.core",
-    "@community//platform/util/ui:intellij.platform.util.ui",
-    "@community//platform/core-ui:intellij.platform.core.ui",
-    "@community//platform/core-api:intellij.platform.core",
-    "@community//platform/editor-ui-api:intellij.platform.editor",
-    "@community//platform/analysis-api:intellij.platform.analysis",
-    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@community//platform/util/diff:util-diff",
+    "@community//platform/ide-core",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/core-ui",
+    "@community//platform/core-api:core",
+    "@community//platform/editor-ui-api:editor",
+    "@community//platform/analysis-api:analysis",
+    "@community//platform/projectModel-api:projectModel",
     "@libraries//:kotlin-stdlib",
   ],
   exports = [
-    "@community//platform/util/diff:intellij.platform.util.diff",
-    "@community//platform/ide-core:intellij.platform.ide.core",
-  ]
+    "@community//platform/util/diff:util-diff",
+    "@community//platform/ide-core",
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

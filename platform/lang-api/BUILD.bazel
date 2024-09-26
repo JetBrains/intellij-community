@@ -1,43 +1,50 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.lang",
+  name = "lang",
   module_name = "intellij.platform.lang",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
-    "@community//platform/platform-api:intellij.platform.ide",
-    "@community//platform/lang-core:intellij.platform.lang.core",
-    "@community//platform/lvcs-api:intellij.platform.lvcs",
-    "@community//platform/indexing-api:intellij.platform.indexing",
-    "@community//platform/projectModel-api:intellij.platform.projectModel",
-    "@community//platform/analysis-api:intellij.platform.analysis",
+    "@community//platform/platform-api:ide",
+    "@community//platform/lang-core",
+    "@community//platform/lvcs-api:lvcs",
+    "@community//platform/indexing-api:indexing",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/analysis-api:analysis",
     "@libraries//:kotlin-stdlib",
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
-    "@community//platform/util-ex:intellij.platform.util.ex",
-    "@community//platform/util/ui:intellij.platform.util.ui",
-    "@community//platform/util-class-loader:intellij.platform.util.classLoader",
-    "@community//platform/util/concurrency:intellij.platform.concurrency",
-    "@community//platform/core-ui:intellij.platform.core.ui",
-    "@community//platform/code-style-api:intellij.platform.codeStyle",
-    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
-    "@community//platform/execution:intellij.platform.execution",
-    "@community//platform/refactoring:intellij.platform.refactoring",
-    "@community//platform/ml-api:intellij.platform.ml",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/util-ex",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/util-class-loader:util-classLoader",
+    "@community//platform/util/concurrency",
+    "@community//platform/core-ui",
+    "@community//platform/code-style-api:codeStyle",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@community//platform/execution",
+    "@community//platform/refactoring",
+    "@community//platform/ml-api:ml",
   ],
   exports = [
-    "@community//platform/platform-api:intellij.platform.ide",
-    "@community//platform/lang-core:intellij.platform.lang.core",
-    "@community//platform/lvcs-api:intellij.platform.lvcs",
-    "@community//platform/indexing-api:intellij.platform.indexing",
-    "@community//platform/projectModel-api:intellij.platform.projectModel",
-    "@community//platform/analysis-api:intellij.platform.analysis",
-    "@community//platform/code-style-api:intellij.platform.codeStyle",
-    "@community//platform/execution:intellij.platform.execution",
-    "@community//platform/refactoring:intellij.platform.refactoring",
-  ]
+    "@community//platform/platform-api:ide",
+    "@community//platform/lang-core",
+    "@community//platform/lvcs-api:lvcs",
+    "@community//platform/indexing-api:indexing",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/analysis-api:analysis",
+    "@community//platform/code-style-api:codeStyle",
+    "@community//platform/execution",
+    "@community//platform/refactoring",
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

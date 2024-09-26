@@ -12,7 +12,7 @@ create_kotlinc_options(
 )
 
 kt_jvm_library(
-  name = "fleet.kernel",
+  name = "fleet-kernel",
   module_name = "fleet.kernel",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
@@ -21,22 +21,22 @@ kt_jvm_library(
   plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@libraries//:kotlin-stdlib",
-    "@community//fleet/rhizomedb:fleet.rhizomedb",
+    "@community//fleet/rhizomedb:fleet-rhizomedb",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
     "@libraries//:rhizomedb-compiler-plugin.provided",
-    "@community//fleet/util/core:fleet.util.core",
-    "@community//fleet/rpc:fleet.rpc",
+    "@community//fleet/util/core:fleet-util-core",
+    "@community//fleet/rpc:fleet-rpc",
     "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//fleet/preferences:fleet.preferences",
-    "@community//fleet/reporting/api:fleet.reporting.api",
+    "@community//fleet/preferences:fleet-preferences",
+    "@community//fleet/reporting/api:fleet-reporting-api",
   ],
   exports = [
-    "@community//fleet/rhizomedb:fleet.rhizomedb",
+    "@community//fleet/rhizomedb:fleet-rhizomedb",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
-    "@community//fleet/util/core:fleet.util.core",
-    "@community//fleet/rpc:fleet.rpc",
+    "@community//fleet/util/core:fleet-util-core",
+    "@community//fleet/rpc:fleet-rpc",
     "@libraries//:kotlinx-coroutines-core-jvm",
   ]
 )

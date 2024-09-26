@@ -1,38 +1,48 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.configurationStore.impl",
+  name = "configurationStore-impl",
+  module_name = "intellij.platform.configurationStore.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@libraries//:kotlin-stdlib",
-    "@community//platform/util:intellij.platform.util",
-    "@community//platform/core-api:intellij.platform.core",
-    "@community//platform/platform-api:intellij.platform.ide",
-    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl",
-    "@community//platform/workspace/jps:intellij.platform.workspace.jps",
-    "@community//platform/platform-impl:intellij.platform.ide.impl",
+    "@community//platform/util",
+    "@community//platform/core-api:core",
+    "@community//platform/platform-api:ide",
+    "@community//platform/projectModel-impl",
+    "@community//platform/workspace/jps:workspace-jps",
+    "@community//platform/platform-impl:ide-impl",
     "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/object-serializer:intellij.platform.objectSerializer",
-    "@community//platform/service-container:intellij.platform.serviceContainer",
+    "@community//platform/object-serializer:objectSerializer",
+    "@community//platform/service-container:serviceContainer",
     "@libraries//:snakeyaml-engine",
-    "@community//platform/statistics:intellij.platform.statistics",
+    "@community//platform/statistics",
     "@libraries//:intellij-deps-fastutil",
-    "@community//platform/diff-api:intellij.platform.diff",
-    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/diff-api:diff",
+    "@community//platform/core-ui",
     "@libraries//:aalto-xml",
-    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/util/xmlDom:util-xmlDom",
+    "@community//platform/util/jdom:util-jdom",
     "@libraries//:hash4j",
     "@libraries//:opentelemetry-sdk",
     "@libraries//:opentelemetry-semconv",
-    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
-    "@community//platform/backend/workspace:intellij.platform.backend.workspace",
-    "@community//platform/settings:intellij.platform.settings",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
+    "@community//platform/backend/workspace:backend-workspace",
+    "@community//platform/settings",
     "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm"
-  ]
+    "@libraries//:kotlinx-serialization-json-jvm",
+  ],
+  runtime_deps = [":resources"]
 )
+### auto-generated section `build` end

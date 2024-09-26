@@ -2,7 +2,7 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.tools.testsBootstrap",
+  name = "tools-testsBootstrap",
   module_name = "intellij.tools.testsBootstrap",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
@@ -17,6 +17,6 @@ kt_jvm_library(
     "@libraries//:junit-jupiter-engine.provided",
     "@libraries//:opentest4j",
   ],
-  runtime_deps = ["@community//platform/boot:intellij.platform.boot"]
+  runtime_deps = ["@community//platform/boot"]
 )
 ### auto-generated section `build` end

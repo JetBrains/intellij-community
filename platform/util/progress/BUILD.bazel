@@ -9,7 +9,7 @@ create_kotlinc_options(
 )
 
 kt_jvm_library(
-  name = "intellij.platform.util.progress",
+  name = "util-progress",
   module_name = "intellij.platform.util.progress",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
@@ -22,8 +22,8 @@ kt_jvm_library(
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@libraries//:kotlinx-collections-immutable-jvm",
     "@libraries//:guava",
-    "@community//platform/util:intellij.platform.util",
-    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
+    "@community//platform/util",
+    "@community//platform/util/coroutines:util-coroutines",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",

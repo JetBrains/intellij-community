@@ -1,0 +1,33 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_jvm_library(
+  name = "webSymbols",
+  module_name = "intellij.platform.webSymbols",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/analysis-api:analysis",
+    "@community//platform/lang-impl",
+    "@community//platform/core-ui",
+    "@community//platform/core-api:core",
+    "@libraries//:jackson-databind",
+    "@libraries//:jackson-core",
+    "@libraries//:jackson-module-kotlin",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:commons-compress",
+    "@libraries//:markdown-jvm",
+    "@libraries//:gson",
+    "@community//platform/markdown-utils",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

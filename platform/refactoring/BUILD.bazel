@@ -1,34 +1,41 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.refactoring",
+  name = "refactoring",
   module_name = "intellij.platform.refactoring",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
-    "@community//platform/util:intellij.platform.util",
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
-    "@community//platform/extensions:intellij.platform.extensions",
-    "@community//platform/core-api:intellij.platform.core",
-    "@community//platform/projectModel-api:intellij.platform.projectModel",
-    "@community//platform/editor-ui-api:intellij.platform.editor",
-    "@community//platform/util/ui:intellij.platform.util.ui",
-    "@community//platform/core-ui:intellij.platform.core.ui",
-    "@community//platform/util-ex:intellij.platform.util.ex",
-    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
-    "@community//platform/analysis-api:intellij.platform.analysis",
-    "@community//platform/ide-core:intellij.platform.ide.core",
-    "@community//platform/analysis-impl:intellij.platform.analysis.impl",
-    "@community//platform/indexing-api:intellij.platform.indexing",
-    "@community//platform/statistics:intellij.platform.statistics",
+    "@community//platform/util",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/extensions",
+    "@community//platform/core-api:core",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/editor-ui-api:editor",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/core-ui",
+    "@community//platform/util-ex",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@community//platform/analysis-api:analysis",
+    "@community//platform/ide-core",
+    "@community//platform/analysis-impl",
+    "@community//platform/indexing-api:indexing",
+    "@community//platform/statistics",
     "@libraries//:intellij-deps-fastutil",
-    "@community//platform/ide-core-impl:intellij.platform.ide.core.impl",
-    "@community//platform/code-style-api:intellij.platform.codeStyle",
-    "@community//platform/usageView:intellij.platform.usageView",
-    "@community//platform/lvcs-api:intellij.platform.lvcs",
-  ]
+    "@community//platform/ide-core-impl",
+    "@community//platform/code-style-api:codeStyle",
+    "@community//platform/usageView",
+    "@community//platform/lvcs-api:lvcs",
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

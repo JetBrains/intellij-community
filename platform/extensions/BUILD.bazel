@@ -2,20 +2,20 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.extensions",
+  name = "extensions",
   module_name = "intellij.platform.extensions",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = [
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
-    "@community//platform/util:intellij.platform.util",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/util",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:kotlin-stdlib",
-    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
+    "@community//platform/util/xmlDom:util-xmlDom",
     "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/diagnostic:intellij.platform.diagnostic",
+    "@community//platform/diagnostic",
     "@libraries//:kotlinx-collections-immutable-jvm",
     "@libraries//:annotations",
   ],

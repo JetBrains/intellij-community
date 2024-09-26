@@ -1,0 +1,48 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+java_library(
+  name = "compatibilityResources",
+  resources = glob(["compatibilityResources/**/*"])
+)
+
+kt_jvm_library(
+  name = "spellchecker",
+  module_name = "intellij.spellchecker",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/lang-api:lang",
+    "@community//platform/lang-impl",
+    "@community//platform/platform-api:ide",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//xml/openapi:xml",
+    "@community//xml/dom-openapi:xml-dom",
+    "@libraries//:guava",
+    "@community//platform/statistics",
+    "@libraries//:gec-spell-engine-local-jvm",
+    "@libraries//:nlp-detect-jvm",
+    "@libraries//:hunspell-en-jvm",
+    "@libraries//:utils-lucene-lt-compatibility-jvm",
+    "@libraries//:java-string-similarity",
+    "@libraries//:lucene-core",
+    "@libraries//:lucene-analysis-common",
+    "@community//platform/core-ui",
+    "@community//platform/util/jdom:util-jdom",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:caffeine",
+  ],
+  runtime_deps = [
+    ":resources",
+    ":compatibilityResources",
+  ]
+)
+### auto-generated section `build` end

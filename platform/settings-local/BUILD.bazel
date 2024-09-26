@@ -1,6 +1,12 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
 
 create_kotlinc_options(
   name = "custom",
@@ -9,36 +15,37 @@ create_kotlinc_options(
 )
 
 kt_jvm_library(
-  name = "intellij.platform.settings.local",
+  name = "settings-local",
   module_name = "intellij.platform.settings.local",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = ":custom",
   plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@libraries//:kotlin-stdlib",
     "@libraries//:annotations",
-    "@community//platform/extensions:intellij.platform.extensions",
-    "@community//platform/core-api:intellij.platform.core",
-    "@community//platform/settings:intellij.platform.settings",
-    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@community//platform/extensions",
+    "@community//platform/core-api:core",
+    "@community//platform/settings",
+    "@community//platform/projectModel-api:projectModel",
     "@libraries//:kotlinx-serialization-core-jvm",
-    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl",
-    "@community//platform/ide-core:intellij.platform.ide.core",
+    "@community//platform/projectModel-impl",
+    "@community//platform/ide-core",
     "@libraries//:kotlinx-serialization-protobuf-jvm",
-    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
     "@libraries//:opentelemetry-sdk",
     "@libraries//:opentelemetry-semconv",
     "@libraries//:h2-mvstore",
     "@libraries//:kotlinx-serialization-cbor-jvm",
     "@libraries//:jackson-core",
     "@libraries//:jackson-dataformat-cbor",
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
-    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
-    "@community//platform/object-serializer:intellij.platform.objectSerializer",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/util/xmlDom:util-xmlDom",
+    "@community//platform/object-serializer:objectSerializer",
     "@libraries//:kotlinx-serialization-json-jvm",
     "@libraries//:aalto-xml",
-  ]
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

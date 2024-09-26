@@ -1,0 +1,31 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_jvm_library(
+  name = "xml-analysis-impl",
+  module_name = "intellij.xml.analysis.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//xml/xml-psi-impl",
+    "@community//platform/analysis-impl",
+    "@community//platform/core-impl",
+    "@community//xml/xml-analysis-api:xml-analysis",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/editor-ui-api:editor",
+    "@community//platform/editor-ui-ex:editor-ex",
+    "@community//platform/lang-impl",
+  ],
+  exports = ["@community//xml/xml-analysis-api:xml-analysis"],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

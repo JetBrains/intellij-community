@@ -9,14 +9,14 @@ create_kotlinc_options(
 )
 
 kt_jvm_library(
-  name = "fleet.rhizomedb",
+  name = "fleet-rhizomedb",
   module_name = "fleet.rhizomedb",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = ":custom",
   deps = [
-    "@community//fleet/util/core:fleet.util.core",
+    "@community//fleet/util/core:fleet-util-core",
     "@libraries//:kotlin-stdlib",
     "@libraries//:kotlin-reflect",
     "@libraries//:intellij-deps-fastutil",

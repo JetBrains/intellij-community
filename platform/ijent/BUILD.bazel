@@ -1,19 +1,26 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.ijent",
+  name = "ijent",
   module_name = "intellij.platform.ijent",
   visibility = ["//visibility:public"],
-  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
     "@libraries//:kotlin-stdlib",
-    "@community//platform/core-api:intellij.platform.core",
-    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
-    "@community//platform/eel:intellij.platform.eel",
+    "@community//platform/core-api:core",
+    "@community//platform/util/coroutines:util-coroutines",
+    "@community//platform/eel",
   ],
-  exports = ["@community//platform/eel:intellij.platform.eel"]
+  exports = ["@community//platform/eel"],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

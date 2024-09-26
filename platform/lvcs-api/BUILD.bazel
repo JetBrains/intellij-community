@@ -2,14 +2,14 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.lvcs",
+  name = "lvcs",
   module_name = "intellij.platform.lvcs",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
-    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/core-api:core",
     "@libraries//:kotlin-stdlib",
   ]
 )

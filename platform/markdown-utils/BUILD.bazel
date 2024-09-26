@@ -1,0 +1,20 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "markdown-utils",
+  module_name = "intellij.platform.markdown.utils",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/core-api:core",
+    "@community//platform/editor-ui-api:editor",
+    "@community//platform/util/ui:util-ui",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:markdown-jvm",
+    "@community//platform/lang-impl",
+  ]
+)
+### auto-generated section `build` end

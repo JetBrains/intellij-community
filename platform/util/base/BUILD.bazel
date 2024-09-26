@@ -2,7 +2,7 @@
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
-  name = "intellij.platform.util.base",
+  name = "util-base",
   module_name = "intellij.platform.util.base",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
@@ -10,7 +10,7 @@ kt_jvm_library(
   kotlinc_opts = "//:k8",
   deps = [
     "@libraries//:annotations",
-    "@community//platform/util-rt:intellij.platform.util.rt",
+    "@community//platform/util-rt",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:kotlin-stdlib",
     "@libraries//:kotlinx-coroutines-core-jvm",

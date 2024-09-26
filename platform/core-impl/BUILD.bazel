@@ -1,34 +1,41 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.platform.core.impl",
+  name = "core-impl",
   module_name = "intellij.platform.core.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = [
-    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/core-api:core",
     "@libraries//:kotlin-stdlib",
     "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/util/jdom:util-jdom",
     "@libraries//:intellij-deps-fastutil",
-    "@community//platform/util-class-loader:intellij.platform.util.classLoader",
+    "@community//platform/util-class-loader:util-classLoader",
     "@libraries//:aalto-xml",
-    "@community//platform/util/xmlDom:intellij.platform.util.xmlDom",
+    "@community//platform/util/xmlDom:util-xmlDom",
     "@libraries//:automaton",
     "@libraries//:guava",
-    "@community//platform/util/diff:intellij.platform.util.diff",
-    "@community//platform/diagnostic:intellij.platform.diagnostic",
-    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
+    "@community//platform/util/diff:util-diff",
+    "@community//platform/diagnostic",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
     "@libraries//:opentelemetry-sdk",
     "@libraries//:opentelemetry-semconv",
-    "@community//platform/util/coroutines:intellij.platform.util.coroutines",
+    "@community//platform/util/coroutines:util-coroutines",
   ],
   exports = [
-    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/core-api:core",
     "@libraries//:kotlin-stdlib",
-  ]
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

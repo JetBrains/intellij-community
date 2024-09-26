@@ -1,0 +1,27 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_jvm_library(
+  name = "regexp",
+  module_name = "intellij.regexp",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/lang-api:lang",
+    "@community//platform/lang-impl",
+    "@community//xml/xml-psi-api:xml-psi",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui",
+    "@community//platform/util/jdom:util-jdom",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

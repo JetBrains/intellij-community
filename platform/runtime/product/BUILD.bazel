@@ -9,7 +9,7 @@ create_kotlinc_options(
 )
 
 kt_jvm_library(
-  name = "intellij.platform.runtime.product",
+  name = "runtime-product",
   module_name = "intellij.platform.runtime.product",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
@@ -17,10 +17,10 @@ kt_jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@libraries//:annotations",
-    "@community//platform/runtime/repository:intellij.platform.runtime.repository",
+    "@community//platform/runtime/repository:runtime-repository",
     "@libraries//:kotlin-stdlib",
-    "@community//platform/util/base:intellij.platform.util.base",
+    "@community//platform/util/base:util-base",
   ],
-  exports = ["@community//platform/runtime/repository:intellij.platform.runtime.repository"]
+  exports = ["@community//platform/runtime/repository:runtime-repository"]
 )
 ### auto-generated section `build` end

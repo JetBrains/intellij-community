@@ -3,12 +3,11 @@
 
 package org.jetbrains.intellij.build.bazel
 
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
-import org.jetbrains.jps.model.module.JpsLibraryDependency
-import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.module.JpsModuleDependency
+import org.jetbrains.jps.model.module.*
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
@@ -32,7 +31,8 @@ class JpsModuleToBazel {
 
       generator.addModuleToQueue(nameToModule.getValue("intellij.platform.buildScripts"))
       generator.addModuleToQueue(nameToModule.getValue("intellij.platform.buildScripts.bazel"))
-      generator.addModuleToQueue(nameToModule.getValue("intellij.platform.ide.impl"))
+      generator.addModuleToQueue(nameToModule.getValue("intellij.platform.images"))
+      generator.addModuleToQueue(nameToModule.getValue("intellij.xml.impl"))
       generator.generate()
 
       generateCommunityLibraryBuild(projectDir, generator)
@@ -80,6 +80,10 @@ private data class ModuleDescriptor(
 
 private fun describeModule(module: JpsModule): ModuleDescriptor {
   val contentRoots = module.contentRootsList.urls.map { Path.of(JpsPathUtil.urlToPath(it)) }
+  if (contentRoots.isEmpty()) {
+    throw NoContentRoot("Skip ${module.name} because it has no content roots")
+  }
+
   require(contentRoots.size == 1) {
     "Expected exactly one content root for module ${module.name}, got $contentRoots"
   }
@@ -87,6 +91,8 @@ private fun describeModule(module: JpsModule): ModuleDescriptor {
     contentRoot = contentRoots.first(),
   )
 }
+
+private class NoContentRoot(message: String) : RuntimeException(message)
 
 private data class Library(
   @JvmField val bazelLabel: String,
@@ -109,18 +115,22 @@ private class BazelBuildFileGenerator(
 
   private val moduleDescriptors = IdentityHashMap<JpsModule, ModuleDescriptor>()
 
-  private fun getModuleDescriptor(module: JpsModule): ModuleDescriptor {
-    return moduleDescriptors.computeIfAbsent(module) { describeModule(it) }
+  private fun getModuleDescriptor(module: JpsModule): ModuleDescriptor? {
+    try {
+      return moduleDescriptors.computeIfAbsent(module) { describeModule(it) }
+    }
+    catch (_: NoContentRoot) {
+      println("Skip ${module.name} because it has no content roots")
+      return null
+    }
   }
 
   val libs = LinkedHashSet<Library>()
 
   fun addModuleToQueue(module: JpsModule) {
-    if (generated.putIfAbsent(module, true) != null) {
-      return
+    if (generated.putIfAbsent(module, true) == null) {
+      queue.addLast(module)
     }
-
-    queue.addLast(module)
   }
 
   fun generate() {
@@ -129,8 +139,8 @@ private class BazelBuildFileGenerator(
     }
   }
 
-  private fun getBazelDependencyLabel(module: JpsModule): String {
-    val descriptor = getModuleDescriptor(module)
+  private fun getBazelDependencyLabel(module: JpsModule): String? {
+    val descriptor = getModuleDescriptor(module) ?: return null
     val contentRoot = descriptor.contentRoot
     var path = checkAndGetRelativePath(projectDir, contentRoot).invariantSeparatorsPathString
     if (path.startsWith("community/")) {
@@ -139,37 +149,87 @@ private class BazelBuildFileGenerator(
     else {
       path = "//$path"
     }
-    return path + ":${module.name}"
+    val dirName = contentRoot.fileName.toString()
+    val bazelName = jpsModuleNameToBazelBuildName(module)
+    return path + (if (dirName == bazelName) "" else ":${jpsModuleNameToBazelBuildName(module)}")
   }
 
   private fun generateBazelBuildFiles(module: JpsModule) {
-    val moduleDescriptor = getModuleDescriptor(module)
+    val moduleDescriptor = getModuleDescriptor(module) ?: return
     val contentRoot = moduleDescriptor.contentRoot
     val fileUpdater = BazelFileUpdater(contentRoot.resolve("BUILD.bazel"))
     buildFile(fileUpdater, "build") {
-      load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+      val sources = computeSources(module, contentRoot, JavaSourceRootType.SOURCE)
+      val resources = module.sourceRoots.filter { it.rootType == JavaResourceRootType.RESOURCE }
 
-      target("kt_jvm_library") {
-        option("name", module.name)
-        option("module_name", module.name)
-        visibility(arrayOf("//visibility:public"))
-        option("srcs", glob(computeSources(module, contentRoot)))
+      val resourceDependencies = mutableListOf<String>()
 
-        val jvmTarget = getLanguageLevel(module)
-        var kotlincOptionsLabel = computeKotlincOptions(module = module, jvmTarget = jvmTarget) ?: "//:k$jvmTarget"
-        var javacOptionsLabel = computeJavacOptions(module, jvmTarget) ?: "//:j$jvmTarget"
+      val isResourceOnly = sources.isEmpty()
+      if (resources.isNotEmpty()) {
+        generateResources(resources = resources, isResourceOnly = isResourceOnly, module = module, resourceDependencies = resourceDependencies, contentRoot = contentRoot)
+      }
 
-        option("javac_opts", javacOptionsLabel)
-        option("kotlinc_opts", kotlincOptionsLabel)
+      if (!isResourceOnly) {
+        load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
-        generateDeps(module)
+        target("kt_jvm_library") {
+          option("name", jpsModuleNameToBazelBuildName(module))
+          option("module_name", module.name)
+          visibility(arrayOf("//visibility:public"))
+          option("srcs", glob(sources))
+
+          val jvmTarget = getLanguageLevel(module)
+          var kotlincOptionsLabel = computeKotlincOptions(module = module, jvmTarget = jvmTarget) ?: "//:k$jvmTarget"
+          var javacOptionsLabel = computeJavacOptions(module, jvmTarget) ?: "//:j$jvmTarget"
+
+          option("javac_opts", javacOptionsLabel)
+          option("kotlinc_opts", kotlincOptionsLabel)
+
+          generateDeps(module, resourceDependencies)
+        }
+      }
+
+      if (resources.isEmpty() && sources.isEmpty()) {
+        //todo support generation for test-only modules
+        return
       }
     }
     fileUpdater.save()
   }
 
-  // exports doesn't work for kotlin-rules - we decided that it is better just write by hand BUILD file if `java_library` is necessary (add-exports works for java rules)
-  // the code below is not actual
+  private fun BuildFile.generateResources(
+    resources: List<JpsModuleSourceRoot>,
+    isResourceOnly: Boolean,
+    module: JpsModule,
+    resourceDependencies: MutableList<String>,
+    contentRoot: Path,
+  ) {
+    load("@rules_java//java:defs.bzl", "java_library")
+    for (resourceRoot in resources) {
+      target("java_library") {
+        val resourceDependency = if (isResourceOnly) jpsModuleNameToBazelBuildName(module) else resourceRoot.path.fileName.toString()
+        option("name", resourceDependency)
+        if (isResourceOnly) {
+          visibility(arrayOf("//visibility:public"))
+        }
+        else {
+          resourceDependencies.add(resourceDependency)
+        }
+
+        val prefix = checkAndGetRelativePath(contentRoot, resourceRoot.path).invariantSeparatorsPathString
+        option("resources", glob(listOf("$prefix/**/*")))
+      }
+    }
+  }
+
+  private fun jpsModuleNameToBazelBuildName(module: JpsModule): @NlsSafe String {
+    return module.name
+      .removePrefix("intellij.platform.")
+      .removePrefix("intellij.idea.community.")
+      .removePrefix("intellij.")
+      .replace('.', '-')
+  }
+
   private fun BuildFile.computeJavacOptions(module: JpsModule, jvmTarget: String): String? {
     val extraJavacOptions = projectJavacSettings.currentCompilerOptions.ADDITIONAL_OPTIONS_OVERRIDE.get(module.name) ?: return null
     val exports = mutableListOf<String>()
@@ -190,7 +250,6 @@ private class BazelBuildFileGenerator(
       // release is not compatible with --add-exports (*** java)
       require(jvmTarget == "17")
       option("x_ep_disable_all_checks", true)
-      option("x_enable_incremental_compilation", true)
       option("warn", "off")
       option("add_exports", exports)
     }
@@ -219,15 +278,21 @@ private class BazelBuildFileGenerator(
     return ":$kotlincOptionsName"
   }
 
-  private fun computeSources(module: JpsModule, contentRoot: Path): List<String> {
+  private fun computeSources(module: JpsModule, contentRoot: Path, type: JpsModuleSourceRootType<*>): List<String> {
     return module.sourceRoots.asSequence()
-      .filter { !productionOnly || JavaModuleSourceRootTypes.PRODUCTION.contains(it.rootType) }
-      .flatMap {
-        var prefix = checkAndGetRelativePath(contentRoot, it.path).invariantSeparatorsPathString
+      .filter { it.rootType == type }
+      .flatMap { it ->
+        val dir = it.path
+        var prefix = checkAndGetRelativePath(contentRoot, dir).invariantSeparatorsPathString
         if (prefix.isNotEmpty()) {
           prefix += "/"
         }
-        sequenceOf("$prefix**/*.kt", "$prefix**/*.java")
+        if (type == JavaSourceRootType.SOURCE || type == JavaSourceRootType.TEST_SOURCE) {
+          sequenceOf("$prefix**/*.kt", "$prefix**/*.java")
+        }
+        else {
+          sequenceOf("$prefix**/*")
+        }
       }
       .toList()
   }
@@ -243,10 +308,12 @@ private class BazelBuildFileGenerator(
     }
   }
 
-  private fun Target.generateDeps(module: JpsModule) {
+  private fun Target.generateDeps(module: JpsModule, resourceDependencies: List<String>) {
     val deps = ArrayList<String>()
     val exports = mutableListOf<String>()
     val runtimeDeps = mutableListOf<String>()
+
+    resourceDependencies.mapTo(runtimeDeps) { ":$it" }
 
     for (element in module.dependenciesList.dependencies) {
       val dependencyExtension = javaExtensionService.getDependencyExtension(element) ?: continue
@@ -257,7 +324,8 @@ private class BazelBuildFileGenerator(
 
       if (element is JpsModuleDependency) {
         val dependency = element.moduleReference.resolve()!!
-        val label = getBazelDependencyLabel(dependency)
+        // todo runtime dependency (getBazelDependencyLabel() is null only because fake "main" modules do not have content roots, and we don't know where to create BUILD file)
+        val label = getBazelDependencyLabel(dependency) ?: continue
         if (scope == JpsJavaDependencyScope.RUNTIME) {
           runtimeDeps.add(label)
         }

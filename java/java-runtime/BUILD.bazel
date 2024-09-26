@@ -1,16 +1,23 @@
 ### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
 kt_jvm_library(
-  name = "intellij.java.rt",
+  name = "java-rt",
   module_name = "intellij.java.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = [
     "@libraries//:ant.provided",
     "@libraries//:junit",
-  ]
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end
