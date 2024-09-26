@@ -199,6 +199,3 @@ class SuperClass {
     }
   }
 }
-
-
-
