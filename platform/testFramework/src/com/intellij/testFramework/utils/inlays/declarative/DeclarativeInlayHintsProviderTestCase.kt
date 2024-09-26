@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.*
+import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -60,9 +61,8 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
     }
     pass.applyInformationToEditor()
 
-    val dump = InlayDumpUtil.dumpHintsInternal(previewText, editor = myFixture.editor, renderer = { renderer, _ ->
-      renderer as DeclarativeInlayRenderer
-      renderer.presentationList.getEntries().joinToString(separator = "|") { entry ->
+    val dump = DeclarativeHintsDumpUtil.dumpHints(previewText, editor = myFixture.editor, renderer = { presentationList ->
+      presentationList.getEntries().joinToString(separator = "|") { entry ->
         val text = (entry as TextInlayPresentationEntry).text
         val actionData = entry.clickArea?.actionData
         val payload = actionData?.payload
