@@ -5,8 +5,6 @@ import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.statistics.Engine
-import com.intellij.debugger.statistics.StatisticsStorage.Companion.createSteppingToken
-import com.intellij.debugger.statistics.SteppingAction
 import com.intellij.openapi.diagnostic.Logger
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
@@ -57,7 +55,7 @@ object KotlinStepActionFactory {
                     return hint
                 }
 
-                override fun createCommandToken() = createSteppingToken(SteppingAction.STEP_OVER, Engine.KOTLIN)
+                override fun getEngine() = Engine.KOTLIN
             }
         }
     }
@@ -84,7 +82,7 @@ object KotlinStepActionFactory {
                     return getThreadFilterFromContextForStepping(suspendContext) ?: super.getThreadFilterFromContext(suspendContext)
                 }
 
-                override fun createCommandToken() = createSteppingToken(SteppingAction.STEP_INTO, Engine.KOTLIN)
+                override fun getEngine() = Engine.KOTLIN
             }
         }
     }
@@ -109,7 +107,7 @@ object KotlinStepActionFactory {
                     return hint
                 }
 
-                override fun createCommandToken() = createSteppingToken(SteppingAction.STEP_INTO, Engine.KOTLIN)
+                override fun getEngine() = Engine.KOTLIN
             }
         }
     }
@@ -148,7 +146,7 @@ object KotlinStepActionFactory {
                     return getThreadFilterFromContextForStepping(suspendContext) ?: super.getThreadFilterFromContext(suspendContext)
                 }
 
-                override fun createCommandToken() = createSteppingToken(SteppingAction.STEP_OUT, Engine.KOTLIN)
+                override fun getEngine() = Engine.KOTLIN
             }
         }
     }

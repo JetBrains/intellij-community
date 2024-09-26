@@ -4,6 +4,7 @@ package com.intellij.debugger.statistics
 import com.intellij.debugger.actions.JvmSmartStepIntoHandler
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessEvents
+import com.intellij.debugger.engine.SteppingAction
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 object DebuggerStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger", 8)
+  private val GROUP = EventLogGroup("java.debugger", 9)
 
   // fields
 

@@ -5,8 +5,6 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.*
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.statistics.Engine
-import com.intellij.debugger.statistics.StatisticsStorage.Companion.createSteppingToken
-import com.intellij.debugger.statistics.SteppingAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.xdebugger.XSourcePosition
@@ -84,7 +82,7 @@ object DebuggerSteppingHelper {
           return hint
         }
 
-        override fun createCommandToken() = createSteppingToken(SteppingAction.STEP_OVER, Engine.KOTLIN)
+        override fun getEngine() = Engine.KOTLIN
       }
     }
   }

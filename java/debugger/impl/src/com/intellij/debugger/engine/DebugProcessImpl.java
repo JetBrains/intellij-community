@@ -26,7 +26,6 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.statistics.Engine;
 import com.intellij.debugger.statistics.StatisticsStorage;
-import com.intellij.debugger.statistics.SteppingAction;
 import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.execution.CantRunException;
@@ -1953,8 +1952,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     @Override
-    public Object createCommandToken() {
-      return StatisticsStorage.createSteppingToken(SteppingAction.STEP_OUT, Engine.JAVA);
+    protected @NotNull SteppingAction getSteppingAction() {
+      return SteppingAction.STEP_OUT;
     }
   }
 
@@ -2005,8 +2004,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     @Override
-    public Object createCommandToken() {
-      return StatisticsStorage.createSteppingToken(SteppingAction.STEP_INTO, Engine.JAVA);
+    protected @NotNull SteppingAction getSteppingAction() {
+      return SteppingAction.STEP_INTO;
     }
   }
 
@@ -2078,8 +2077,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     @Override
-    public Object createCommandToken() {
-      return StatisticsStorage.createSteppingToken(SteppingAction.STEP_OVER, Engine.JAVA);
+    protected @NotNull SteppingAction getSteppingAction() {
+      return SteppingAction.STEP_OVER;
     }
   }
 
@@ -2140,6 +2139,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         });
       }
     }
+
+    @Override
+    protected @NotNull SteppingAction getSteppingAction() {
+      return SteppingAction.RUN_TO_CURSOR;
+    }
   }
 
   public abstract class StepCommand extends ResumeCommand {
@@ -2172,8 +2176,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     public void step(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, RequestHint hint, Object commandToken) {
     }
 
-    public Object createCommandToken() {
-      return null;
+    protected @NotNull Engine getEngine() {
+      return Engine.JAVA;
+    }
+
+    protected abstract @NotNull SteppingAction getSteppingAction();
+
+    public final @NotNull Object createCommandToken() {
+      return StatisticsStorage.createSteppingToken(getSteppingAction(), getEngine());
     }
 
     @Nullable
