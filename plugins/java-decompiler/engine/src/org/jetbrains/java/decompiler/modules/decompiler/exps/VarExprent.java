@@ -145,26 +145,6 @@ public class VarExprent extends Exprent {
     return new VarVersionPair(index, version);
   }
 
-  /*
-  public String getDebugName(StructMethod method) {
-    StructLocalVariableTableAttribute attr = method.getLocalVariableAttr();
-    if (attr != null && processor != null) {
-      Integer origIndex = processor.getVarOriginalIndex(index);
-      if (origIndex != null) {
-        int offset = bytecode == null ? -1 : bytecode.nextSetBit(0);
-        if (bytecode != null && isFromStore) {
-          offset = bytecode.previousSetBit(bytecode.size()) + 1;
-        }
-        String name = attr.getName(origIndex, offset);
-        if (name != null && TextUtil.isValidIdentifier(name, method.getBytecodeVersion())) {
-          return name;
-        }
-      }
-    }
-    return null;
-  }
-  */
-
   public VarType getDefinitionType() {
     if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
 
