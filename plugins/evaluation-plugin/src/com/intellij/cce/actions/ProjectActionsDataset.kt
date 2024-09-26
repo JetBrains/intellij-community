@@ -37,7 +37,14 @@ open class ProjectActionsDataset(
   val processor: GenerateActionsProcessor,
   private val featureName: String,
 ) : EvaluationDataset {
-  private val datasetRef = config.sourceFile?.run { DatasetRef.parse(this) }
+  private val datasetRef = config.sourceFile.run {
+    val sf = this ?: ""
+    if (sf.isNotBlank()) {
+      DatasetRef.parse(sf)
+    } else {
+      null
+    }
+  }
   private var datasetRefIsHandled = false
 
   override val setupSdk: EvaluationStep? = SetupSdkStep.forLanguage(project, Language.resolve(config.language))
