@@ -582,6 +582,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
     override val importOnTheFlyList: KotlinQuickFixesList = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(ImportQuickFixFactories.unresolvedReferenceFactory)
+        registerFactory(ImportQuickFixFactories.unresolvedReferenceWrongReceiverFactory)
         registerFactory(ImportQuickFixFactories.invisibleReferenceFactory)
     }
 }

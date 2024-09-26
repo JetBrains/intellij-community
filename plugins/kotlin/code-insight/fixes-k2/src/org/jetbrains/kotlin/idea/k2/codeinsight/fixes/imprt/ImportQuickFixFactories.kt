@@ -16,4 +16,11 @@ object ImportQuickFixFactories {
     val unresolvedReferenceFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnresolvedReference ->
         ImportQuickFixProvider.getFixes(diagnostic.psi)
     }
+
+    /**
+     * See KDoc for [unresolvedReferenceFactory].
+     */
+    val unresolvedReferenceWrongReceiverFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnresolvedReferenceWrongReceiver ->
+        ImportQuickFixProvider.getFixes(diagnostic.psi)
+    }
 }

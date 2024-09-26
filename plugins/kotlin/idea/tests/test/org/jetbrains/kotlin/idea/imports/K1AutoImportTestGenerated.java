@@ -184,4 +184,9 @@ public class K1AutoImportTestGenerated extends AbstractK1AutoImportTest {
     public void testWithoutAutoImport() throws Exception {
         runTest("testData/editor/autoImport/withoutAutoImport/");
     }
+
+    @TestMetadata("wrongReceiverType")
+    public void testWrongReceiverType() throws Exception {
+        runTest("testData/editor/autoImport/wrongReceiverType/");
+    }
 }

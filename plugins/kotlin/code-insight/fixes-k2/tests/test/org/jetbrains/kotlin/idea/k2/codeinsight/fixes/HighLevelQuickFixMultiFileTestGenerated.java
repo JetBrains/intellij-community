@@ -999,6 +999,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             public void testWithSmartCastQualifier() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/withSmartCastQualifier.before.Main.kt");
             }
+
+            @TestMetadata("wrongReceiverType.test")
+            public void testWrongReceiverType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/wrongReceiverType.test");
+            }
         }
     }
 

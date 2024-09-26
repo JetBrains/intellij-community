@@ -1111,6 +1111,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             public void testWithSmartCastQualifier() throws Exception {
                 runTest("testData/quickfix/autoImports/withSmartCastQualifier.before.Main.kt");
             }
+
+            @TestMetadata("wrongReceiverType.test")
+            public void testWrongReceiverType() throws Exception {
+                runTest("testData/quickfix/autoImports/wrongReceiverType.test");
+            }
         }
     }
 
