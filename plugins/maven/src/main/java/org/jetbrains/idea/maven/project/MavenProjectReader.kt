@@ -115,7 +115,7 @@ class MavenProjectReader(private val myProject: Project) {
                                           problems: MutableCollection<MavenProjectProblem>) {
     if (mySettingsProfilesCache == null) {
       val settingsProfiles: MutableList<MavenProfile> = ArrayList()
-      val settingsProblems = MavenProjectProblem.createProblemsList()
+      val settingsProblems = LinkedHashSet<MavenProjectProblem>()
       val settingsAlwaysOnProfiles: MutableSet<String> = HashSet()
 
       for (each in generalSettings.effectiveSettingsFiles) {
@@ -239,7 +239,7 @@ class MavenProjectReader(private val myProject: Project) {
                            var alwaysOnProfiles: MutableSet<String>)
 
   private suspend fun doReadProjectModel(project: Project, file: VirtualFile, headerOnly: Boolean): RawModelReadResult {
-    val problems = MavenProjectProblem.createProblemsList()
+    val problems = LinkedHashSet<MavenProjectProblem>()
     val alwaysOnProfiles: MutableSet<String> = HashSet()
 
     val fileExtension = file.extension

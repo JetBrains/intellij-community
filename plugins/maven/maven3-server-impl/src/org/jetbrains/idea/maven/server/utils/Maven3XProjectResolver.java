@@ -265,7 +265,7 @@ public class Maven3XProjectResolver {
     String dependencyHash = result.getDependencyHash();
     boolean dependencyResolutionSkipped = result.isDependencyResolutionSkipped();
 
-    Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
+    Collection<MavenProjectProblem> problems = new LinkedHashSet<>();
     myEmbedder.collectProblems(file, exceptions, modelProblems, problems);
 
     if (mavenProject == null) return new MavenServerExecutionResult(null, problems, Collections.emptySet());

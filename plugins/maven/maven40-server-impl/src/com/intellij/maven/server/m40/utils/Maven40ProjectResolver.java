@@ -286,7 +286,7 @@ public class Maven40ProjectResolver {
     String dependencyHash = result.getDependencyHash();
     boolean dependencyResolutionSkipped = result.isDependencyResolutionSkipped();
 
-    Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
+    Collection<MavenProjectProblem> problems = new LinkedHashSet<>();
     myEmbedder.collectProblems(file, exceptions, modelProblems, problems);
 
     Collection<MavenProjectProblem> unresolvedProblems = new HashSet<>();

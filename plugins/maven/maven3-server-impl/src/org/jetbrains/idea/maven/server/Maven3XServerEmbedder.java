@@ -668,7 +668,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   private MavenGoalExecutionResult createEmbedderExecutionResult(@NotNull File file, Maven3ExecutionResult result) {
-    Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
+    Collection<MavenProjectProblem> problems = new LinkedHashSet<>();
 
     collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
 

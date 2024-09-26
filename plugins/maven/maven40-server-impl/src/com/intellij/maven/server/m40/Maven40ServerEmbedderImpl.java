@@ -920,7 +920,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull
   private MavenGoalExecutionResult createEmbedderExecutionResult(@NotNull File file, Maven40ExecutionResult result) {
-    Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
+    Collection<MavenProjectProblem> problems = new LinkedHashSet<>();
 
     collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
 
