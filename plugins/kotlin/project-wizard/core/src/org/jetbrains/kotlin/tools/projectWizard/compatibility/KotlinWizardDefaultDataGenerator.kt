@@ -61,7 +61,7 @@ class WizardDefaultDataGeneratorSettings<T : IdeVersionedDataState>(
         val parsedData = parser.parseVersionedJson(jsonData, applicationVersion)!!
 
         val velocityEngine = VelocityEngine()
-        velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADERS, "classpath");
+        velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADERS, "classpath")
         velocityEngine.setProperty("resource.loader.classpath.class", ClasspathResourceLoader::class.java.name)
         velocityEngine.init()
 
