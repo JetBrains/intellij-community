@@ -3,7 +3,6 @@ package com.intellij.platform.ml.embeddings.indexer
 
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFile
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
@@ -33,8 +32,8 @@ internal class FileNameEmbeddingIndex : BaseEmbeddingIndex() {
 
   override fun getName(): ID<EmbeddingKey, String> = FILE_NAME_EMBEDDING_INDEX_NAME
   override fun getVersion(): Int = 1
-  override fun index(psiFile: PsiFile): List<IndexingItem> {
-    return listOf(IndexingItem(psiFile.name))
+  override fun index(inputData: FileContent): List<IndexingItem> {
+    return listOf(IndexingItem(inputData.file.name))
   }
 }
 
@@ -44,8 +43,8 @@ internal class ClassNameEmbeddingIndex : BaseEmbeddingIndex() {
 
   override fun getName(): ID<EmbeddingKey, String> = CLASS_NAME_EMBEDDING_INDEX_NAME
   override fun getVersion(): Int = 1
-  override fun index(psiFile: PsiFile): List<IndexingItem> {
-    return ClassesProvider.extractClasses(psiFile).map { IndexingItem(it.id.id) }
+  override fun index(inputData: FileContent): List<IndexingItem> {
+    return ClassesProvider.extractClasses(inputData.psiFile).map { IndexingItem(it.id.id) }
   }
 }
 
@@ -55,8 +54,8 @@ internal class SymbolNameEmbeddingIndex : BaseEmbeddingIndex() {
 
   override fun getName(): ID<EmbeddingKey, String> = SYMBOL_NAME_EMBEDDING_INDEX_NAME
   override fun getVersion(): Int = 1
-  override fun index(psiFile: PsiFile): List<IndexingItem> {
-    return SymbolsProvider.extractSymbols(psiFile).map { IndexingItem(it.id.id) }
+  override fun index(inputData: FileContent): List<IndexingItem> {
+    return SymbolsProvider.extractSymbols(inputData.psiFile).map { IndexingItem(it.id.id) }
   }
 }
 
@@ -78,14 +77,14 @@ internal abstract class BaseEmbeddingIndex() : FileBasedIndexExtension<Embedding
 
   override fun getIndexer(): DataIndexer<EmbeddingKey, String, FileContent> {
     return DataIndexer { inputData ->
-      index(inputData.psiFile).associate { item ->
+      index(inputData).associate { item ->
         val textHashcode = item.text.hashCode()
         EmbeddingKey(textHashcode) to item.text
       }
     }
   }
 
-  abstract fun index(psiFile: PsiFile): List<IndexingItem>
+  protected abstract fun index(inputData: FileContent): List<IndexingItem>
 
   abstract val fileTypes: Array<FileType>
 
