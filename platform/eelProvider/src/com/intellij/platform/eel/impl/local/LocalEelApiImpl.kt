@@ -3,6 +3,8 @@ package com.intellij.platform.eel.impl.local
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.fs.EelFileSystemPosixApi
+import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
 import com.intellij.platform.eel.provider.EelUserPosixInfoImpl
 import com.intellij.platform.eel.provider.EelUserWindowsInfoImpl
 
@@ -15,6 +17,8 @@ internal class LocalWindowsEelApiImpl : LocalEelApi, EelWindowsApi {
   override val platform: EelPlatform.Windows get() = if (SystemInfo.isAarch64) TODO("Not yet implemented") else EelPlatform.X64Windows
   override val exec: EelExecApi = EelLocalExecApi()
   override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl
+  override val fs: EelFileSystemWindowsApi
+    get() = TODO("Not yet implemented")
 }
 
 internal class LocalPosixEelApiImpl : LocalEelApi, EelPosixApi {
@@ -30,4 +34,6 @@ internal class LocalPosixEelApiImpl : LocalEelApi, EelPosixApi {
     uid = System.getProperty("user.id").toInt(),
     gid = System.getProperty("group.id").toInt(),
   )
+  override val fs: EelFileSystemPosixApi
+    get() = TODO("Not yet implemented")
 }
