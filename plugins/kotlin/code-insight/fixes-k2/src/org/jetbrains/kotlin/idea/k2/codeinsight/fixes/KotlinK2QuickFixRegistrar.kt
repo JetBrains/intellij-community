@@ -138,8 +138,6 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeAccessorTypeFixFactory.wrongGetterReturnTypeFactory)
         registerFactory(ChangeAccessorTypeFixFactory.wrongSetterParameterTypeFactory)
         registerFactory(LiftAssignmentOutOfTryFixFactory.liftAssignmentOutOfTryFix)
-        registerFactory(RenameModToRemFixFactory.deprecatedBinaryModFactory)
-        registerFactory(RenameModToRemFixFactory.forbiddenBinaryModFactory)
         registerFactory(KaFirDiagnostic.UnresolvedLabel::class, CreateLabelFixFactories.unresolvedLabelFactory)
         registerFactory(KaFirDiagnostic.NotALoopLabel::class, CreateLabelFixFactories.notALoopLabelFactory)
         registerFactory(AddDefaultConstructorFixFactory.addDefaultConstructorFixFactory)
