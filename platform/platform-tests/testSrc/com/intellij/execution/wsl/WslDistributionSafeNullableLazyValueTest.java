@@ -3,6 +3,7 @@ package com.intellij.execution.wsl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -13,6 +14,7 @@ import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import kotlinx.coroutines.Job;
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -327,6 +330,39 @@ public final class WslDistributionSafeNullableLazyValueTest {
     });
 
     Assertions.assertThat(counter.get()).isEqualTo(iterations);
+  }
+
+  @Test
+  public void testAsyncValueComputationSurvivesCancelledJob() {
+    var expectedAsyncValue = "Hey!";
+    var lazyValue = WslDistributionSafeNullableLazyValue.create(() -> expectedAsyncValue);
+    EdtTestUtil.runInEdtAndGet(() -> {
+      var expectedSyncValue = "Not yet!";
+      var syncValue = runWithDummyProgress(() -> {
+        Job job = Objects.requireNonNull(currentThreadContext().get(Job.Key));
+        job.cancel(new CancellationException("Not today"));
+        return lazyValue.getValueOrElse(expectedSyncValue);
+      });
+      assertEquals(expectedSyncValue, syncValue);
+      return null;
+    });
+
+    var syncValue2 = runWithDummyProgress(() -> {
+      long start = System.nanoTime();
+      do {
+        String value = lazyValue.getValue();
+        if (value != null) {
+          return value;
+        }
+        Logger.getInstance(WslDistributionSafeNullableLazyValueTest.class).info("Skipped");
+        //noinspection BusyWait
+        Thread.sleep(10);
+      }
+      while (System.nanoTime() < start + WAIT_TIMEOUT_IN_SECONDS * 1_000_000_000);
+      return null;
+    });
+
+    assertEquals(expectedAsyncValue, syncValue2);
   }
 
   private static int getThreadCount() {
