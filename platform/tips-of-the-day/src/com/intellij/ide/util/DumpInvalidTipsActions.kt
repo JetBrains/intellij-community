@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -75,8 +76,10 @@ internal open class DumpInvalidTipsAction : AnAction() {
 internal class SelectAndDumpInvalidTipsAction : DumpInvalidTipsAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
+    val htmlFileType = FileTypeManager.getInstance().getStdFileType("HTML")
     val descriptor = FileChooserDescriptor(true, true, false, false, false, true)
-      .withExtensionFilter(FileTypeManager.getInstance().getStdFileType("HTML"))
+      .withFileFilter { FileTypeRegistry.getInstance().isFileOfType(it, htmlFileType) }
+      .withExtensionFilter(htmlFileType)
       .withDescription("Choose HTML files or folders with tips.")
     val chosenFiles = FileChooser.chooseFiles(descriptor, project, null)
 

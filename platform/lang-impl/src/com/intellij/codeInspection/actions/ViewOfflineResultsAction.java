@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -63,8 +64,8 @@ public final class ViewOfflineResultsAction extends AnAction {
 
     LOG.assertTrue(project != null);
 
-    var descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
-      .withExtensionFilter("xml")
+    var xmlFileType = FileTypeManager.getInstance().getStdFileType("XML");
+    var descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(xmlFileType)
       .withTitle(InspectionsBundle.message("view.offline.inspections.select.path.title"))
       .withDescription(InspectionsBundle.message("view.offline.inspections.select.path.description"));
     final VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);

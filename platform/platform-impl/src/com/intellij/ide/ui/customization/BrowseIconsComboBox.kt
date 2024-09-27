@@ -196,6 +196,7 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
 
   private fun browseIconAndSelect() {
     val descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withFileFilter { "svg".equals(it.extension, ignoreCase = true) || "png".equals(it.extension, ignoreCase = true) }
       .withExtensionFilter(IdeBundle.message("icon.file.filter.label"), "svg", "png")
     descriptor.title = IdeBundle.message("title.browse.icon")
     descriptor.description = IdeBundle.message("prompt.browse.icon.for.selected.action")

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Allows customizing {@link FileChooser} dialog options.
@@ -46,7 +47,7 @@ public class FileChooserDescriptor implements Cloneable {
   private boolean myTreeRootVisible = false;
   private boolean myShowHiddenFiles = false;
   private @Nullable Pair<@Nls String, List<String>> myExtensionFilter = null;
-  private Condition<? super VirtualFile> myFileFilter = null;
+  private Predicate<? super VirtualFile> myFileFilter = null;
   private boolean myForcedToUseIdeaFileChooser = false;
 
   private final Map<String, Object> myUserData = new HashMap<>();
@@ -87,7 +88,7 @@ public class FileChooserDescriptor implements Cloneable {
     myTreeRootVisible = d.isTreeRootVisible();
     myShowHiddenFiles = d.isShowHiddenFiles();
     myExtensionFilter = d.myExtensionFilter;
-    myFileFilter = null;
+    myFileFilter = d.myFileFilter;
     myForcedToUseIdeaFileChooser = false;
     myUserData.putAll(d.myUserData);
   }
@@ -209,11 +210,13 @@ public class FileChooserDescriptor implements Cloneable {
     return this;
   }
 
-  /** @deprecated incompatible with native file choosers; please use {@link #withExtensionFilter} instead */
-  @Deprecated
+  /**
+   * Sets simple boolean condition for use in {@link #isFileVisible(VirtualFile, boolean)} and {@link #isFileSelectable(VirtualFile)}.
+   * <p/>
+   * In native choosers, has no effect on visibility (use {@link #withExtensionFilter} for that), only on a final eligibility check.
+   */
   public FileChooserDescriptor withFileFilter(@Nullable Condition<? super VirtualFile> filter) {
     myFileFilter = filter;
-    putUserData(FILTER_TYPE, filter != null ? "other" : null);
     return this;
   }
 
@@ -245,14 +248,13 @@ public class FileChooserDescriptor implements Cloneable {
     if (extensions.length == 0) throw new IllegalArgumentException("The list must not be empty");
     if (ContainerUtil.find(extensions, String::isBlank) != null) throw new IllegalArgumentException("The list must not contain empty strings");
     myExtensionFilter = new Pair<>(label, List.of(extensions));
-    putUserData(FILTER_TYPE, "file-ext");
     return this;
   }
 
   /**
    * Defines whether a file is visible in the tree.
    *
-   * @deprecated ignored by native file choosers; do not use.
+   * @deprecated ignored by native file choosers; use {@link #withFileFilter} and {@link #withExtensionFilter} instead.
    */
   @Deprecated
   public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
@@ -272,7 +274,7 @@ public class FileChooserDescriptor implements Cloneable {
       if (myExtensionFilter != null && !matchesExtFilter(file, myExtensionFilter.second)) {
         return false;
       }
-      if (myFileFilter != null && !myFileFilter.value(file)) {
+      if (myFileFilter != null && !myFileFilter.test(file)) {
         return false;
       }
     }
@@ -306,7 +308,7 @@ public class FileChooserDescriptor implements Cloneable {
         return matchesExtFilter(file, myExtensionFilter.second);
       }
       if (myFileFilter != null) {
-        return myFileFilter.value(file);
+        return myFileFilter.test(file);
       }
     }
     return acceptAsJarFile(file) || acceptAsGeneralFile(file);
@@ -395,8 +397,17 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   public @Nullable <T> T getUserData(@NotNull DataKey<T> key) {
-    @SuppressWarnings("unchecked") T t = (T)myUserData.get(key.getName());
-    return t;
+    if (key == FILTER_TYPE) {
+      var result = "";
+      if (myExtensionFilter != null) result += 'e';
+      if (myFileFilter != null) result += 'f';
+      @SuppressWarnings("unchecked") T t = (T)result;
+      return t;
+    }
+    else {
+      @SuppressWarnings("unchecked") T t = (T)myUserData.get(key.getName());
+      return t;
+    }
   }
 
   private static boolean matchesExtFilter(VirtualFile file, List<String> extensions) {

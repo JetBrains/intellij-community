@@ -28,7 +28,7 @@ public final class SchemeImportUtil {
     if (sourceExtensions.length == 1) {
       descriptor.withExtensionFilter(sourceExtensions[0]);
     }
-    else {
+    else if (sourceExtensions.length > 1) {
       descriptor.withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", sourceExtensions[0].toUpperCase(Locale.ROOT)), sourceExtensions);
     }
     if (description != null) {

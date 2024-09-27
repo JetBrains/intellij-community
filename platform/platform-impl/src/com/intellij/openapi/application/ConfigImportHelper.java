@@ -6,6 +6,7 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
@@ -19,6 +20,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -479,7 +481,9 @@ public final class ConfigImportHelper {
   }
 
   public static void setSettingsFilter(@NotNull FileChooserDescriptor descriptor) {
-    descriptor.withExtensionFilter(BootstrapBundle.message("import.settings.filter"), "zip", "jar");
+    descriptor
+      .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE))
+      .withExtensionFilter(BootstrapBundle.message("import.settings.filter"), "zip", "jar");
   }
 
   public static void setConfigImportedInThisSession() {

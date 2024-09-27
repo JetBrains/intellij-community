@@ -13,6 +13,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -704,8 +705,10 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
   }
 
   private void doImportAction(final DataContext dataContext) {
+    var xmlFileType = FileTypeManager.getInstance().getStdFileType("XML");
     var descriptor = new FileChooserDescriptor(true, false, false, false, true, false)
-      .withExtensionFilter(FileTypeManager.getInstance().getStdFileType("XML"))
+      .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, xmlFileType))
+      .withExtensionFilter(xmlFileType)
       .withTitle(IntelliLangBundle.message("dialog.file.chooser.title.import.configuration"))
       .withDescription(IntelliLangBundle.message("dialog.file.chooser.description.please.select.the.configuration.file"));
 

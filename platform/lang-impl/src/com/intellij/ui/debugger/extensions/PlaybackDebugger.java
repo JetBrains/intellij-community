@@ -54,20 +54,16 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   private static final Color CODE_COLOR = PlatformColors.BLUE;
   private static final Color TEST_COLOR = JBColor.GREEN.darker();
 
+  private static final FileChooserDescriptor FILE_DESCRIPTOR = new ScriptFileChooserDescriptor();
+
   private JPanel myComponent;
-
   private PlaybackRunner runner;
-
   private JEditorPane myLog;
-
   private final JTextField myCurrentScript = new JTextField();
-
   private VirtualFileListener myVfsListener;
-
   private boolean myChanged;
 
   private PlaybackDebuggerState myState;
-  private static final FileChooserDescriptor FILE_DESCRIPTOR = new ScriptFileChooserDescriptor();
   private JTextArea myCodeEditor;
 
   private void initUi() {
@@ -155,6 +151,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
       super(true, false, false, false, false, false);
       putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
       putUserData(FileChooserKeys.NEW_FILE_TEMPLATE_TEXT, "");
+      withFileFilter(file -> UiScriptFileType.myExtension.equalsIgnoreCase(file.getExtension()));
       withExtensionFilter(UiScriptFileType.myExtension);
     }
   }

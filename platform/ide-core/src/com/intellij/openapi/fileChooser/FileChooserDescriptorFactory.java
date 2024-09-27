@@ -2,7 +2,9 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,15 +49,21 @@ public final class FileChooserDescriptorFactory {
   }
 
   public static FileChooserDescriptor createSingleFileDescriptor(@NotNull FileType fileType) {
-    return createSingleFileNoJarsDescriptor().withExtensionFilter(fileType);
+    return createSingleFileNoJarsDescriptor()
+      .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType))
+      .withExtensionFilter(fileType);
   }
 
   public static FileChooserDescriptor createSingleFileOrFolderDescriptor(@NotNull FileType fileType) {
-    return createSingleFileOrFolderDescriptor().withExtensionFilter(fileType);
+    return createSingleFileOrFolderDescriptor()
+      .withFileFilter(file -> file.isDirectory() || FileTypeRegistry.getInstance().isFileOfType(file, fileType))
+      .withExtensionFilter(fileType);
   }
 
   public static FileChooserDescriptor createSingleFileDescriptor(@NotNull String extension) {
-    return createSingleFileNoJarsDescriptor().withExtensionFilter(extension);
+    return createSingleFileNoJarsDescriptor()
+      .withFileFilter(file -> Strings.endsWithIgnoreCase(file.getName(), '.' + extension))
+      .withExtensionFilter(extension);
   }
 
   public static FileChooserDescriptor createSingleFolderDescriptor() {

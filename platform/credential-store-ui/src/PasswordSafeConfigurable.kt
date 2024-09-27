@@ -212,6 +212,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
           row(CredentialStoreBundle.message("settings.password.database")) {
             val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
               .withTitle(CredentialStoreBundle.message("passwordSafeConfigurable.keepass.database.file"))
+              .withFileFilter { it.extension.equals("kdbx", ignoreCase = true) }
               .withExtensionFilter("kdbx")
             keePassDbFile = textFieldWithBrowseButton(fileChooserDescriptor, fileChosen = {
               val path = if (it.isDirectory) "${it.path}${File.separator}${DB_FILE_NAME}" else it.path
