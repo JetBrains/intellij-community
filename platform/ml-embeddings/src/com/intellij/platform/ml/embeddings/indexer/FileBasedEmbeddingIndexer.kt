@@ -157,16 +157,20 @@ internal suspend fun searchAndSendEntities(
   val classesChannel = if (settings.shouldIndexClasses) Channel<IndexableEntity>(capacity = BUFFER_SIZE) else null
   val symbolsChannel = if (settings.shouldIndexSymbols) Channel<IndexableEntity>(capacity = BUFFER_SIZE) else null
 
-  if (filesChannel != null) launch { sendEntities(project, IndexId.FILES, filesChannel) }
-  if (classesChannel != null) launch { sendEntities(project, IndexId.CLASSES, classesChannel) }
-  if (symbolsChannel != null) launch { sendEntities(project, IndexId.SYMBOLS, symbolsChannel) }
+  try {
+    if (filesChannel != null) launch { sendEntities(project, IndexId.FILES, filesChannel) }
+    if (classesChannel != null) launch { sendEntities(project, IndexId.CLASSES, classesChannel) }
+    if (symbolsChannel != null) launch { sendEntities(project, IndexId.SYMBOLS, symbolsChannel) }
 
-  coroutineScope {
-    launchSearching(this, filesChannel, classesChannel, symbolsChannel)
+    coroutineScope {
+      launchSearching(this, filesChannel, classesChannel, symbolsChannel)
+    }
   }
-  // Here all producer coroutines launch from launchSearching finished,
-  // so we can close channels to make consumer coroutines finish
-  filesChannel?.close()
-  classesChannel?.close()
-  symbolsChannel?.close()
+  finally {
+    // Here all producer coroutines launch from launchSearching finished,
+    // so we can close channels to make consumer coroutines finish
+    filesChannel?.close()
+    classesChannel?.close()
+    symbolsChannel?.close()
+  }
 }
