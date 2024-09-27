@@ -1842,6 +1842,7 @@ com.intellij.openapi.editor.EditorSettings
 - a:isWhitespacesShown():Z
 - a:isWrapWhenTypingReachesRightMargin(com.intellij.openapi.project.Project):Z
 - a:resetCamelWords():V
+- a:resetWheelFontChangeEnabled():V
 - a:setAdditionalColumnsCount(I):V
 - a:setAdditionalLinesCount(I):V
 - a:setAdditionalPageAtBottom(Z):V
