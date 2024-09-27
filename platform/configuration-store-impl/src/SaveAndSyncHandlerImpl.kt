@@ -16,7 +16,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.NlsContexts
@@ -158,9 +157,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       }
 
       runCatching {
-        blockingContext {
-          eventPublisher.beforeSave(task, forceExecuteImmediately)
-        }
+        eventPublisher.beforeSave(task, forceExecuteImmediately)
         saveProjectsAndApp(task.forceSavingAllSettings, task.project)
       }.getOrLogException(LOG)
     }
@@ -320,9 +317,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
         if (roots.any { it is NewVirtualFile && it.isDirty }) {
           val session = queue.createBackgroundRefreshSession(roots)
           bgRefreshSession = session
-          blockingContext {
-            session.launch()
-          }
+          session.launch()
           bgRefreshSession = null
           sessions.incrementAndGet()
           events.addAndGet(session.metric("events") as Int)
