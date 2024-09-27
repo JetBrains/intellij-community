@@ -13,7 +13,6 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.junit.Test
 
 class MavenSnapshotDependenciesTest : MavenMultiVersionImportingTestCase() {
@@ -99,7 +98,7 @@ class MavenSnapshotDependenciesTest : MavenMultiVersionImportingTestCase() {
     val mavenProjectToCachedValue = mutableMapOf<MavenProject, String>()
 
     class MyMavenProjectResolutionContributor : MavenProjectResolutionContributor {
-      override suspend fun onMavenProjectResolved(project: Project, mavenProject: MavenProject, nativeMavenProject: NativeMavenProjectHolder, embedder: MavenEmbedderWrapper) {
+      override suspend fun onMavenProjectResolved(project: Project, mavenProject: MavenProject, embedder: MavenEmbedderWrapper) {
         mavenProject.putCachedValue(testCacheKey, "testValue")
       }
     }

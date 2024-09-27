@@ -7,18 +7,18 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectResolutionContributor
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 
 internal class MavenCompilerContributor : MavenProjectResolutionContributor {
-  override suspend fun onMavenProjectResolved(project: Project,
-                                              mavenProject: MavenProject,
-                                              nativeMavenProject: NativeMavenProjectHolder,
-                                              embedder: MavenEmbedderWrapper) {
+  override suspend fun onMavenProjectResolved(
+    project: Project,
+    mavenProject: MavenProject,
+    embedder: MavenEmbedderWrapper
+  ) {
     if (!isApplicable(mavenProject)) return
     if (!Registry.`is`("maven.import.compiler.arguments", true) || !MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler) return
 
     val defaultCompilerExtension = MavenCompilerExtension.EP_NAME.extensions.find {
-      it.resolveDefaultCompiler(project, mavenProject, nativeMavenProject, embedder)
+      it.resolveDefaultCompiler(project, mavenProject, embedder)
     }
     if (project.getUserData(DEFAULT_COMPILER_EXTENSION) == null) {
       project.putUserData(DEFAULT_COMPILER_EXTENSION, defaultCompilerExtension)

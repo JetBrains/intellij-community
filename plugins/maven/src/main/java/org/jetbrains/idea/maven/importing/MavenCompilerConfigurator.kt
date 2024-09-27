@@ -45,7 +45,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator("org.apache.maven.
     if (!Registry.`is`("maven.import.compiler.arguments", true) ||  !MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler) return
 
     val defaultCompilerExtension = MavenCompilerExtension.EP_NAME.extensions.find {
-      it.resolveDefaultCompiler(project, mavenProject, nativeMavenProject, embedder)
+      it.resolveDefaultCompiler(project, mavenProject, embedder)
     }
     if (project.getUserData(DEFAULT_COMPILER_EXTENSION) == null) {
       project.putUserData(DEFAULT_COMPILER_EXTENSION, defaultCompilerExtension)

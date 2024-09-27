@@ -50,10 +50,21 @@ class MavenProjectResolverResult(@JvmField val mavenModel: MavenModel,
 
 @ApiStatus.Internal
 interface MavenProjectResolutionContributor {
-  suspend fun onMavenProjectResolved(project: Project,
-                                     mavenProject: MavenProject,
-                                     nativeMavenProject: NativeMavenProjectHolder,
-                                     embedder: MavenEmbedderWrapper)
+  @Deprecated("Use {@link #onMavenProjectResolved(Project, MavenProject, MavenEmbedderWrapper)}")
+  suspend fun onMavenProjectResolved(
+    project: Project,
+    mavenProject: MavenProject,
+    nativeMavenProject: NativeMavenProjectHolder,
+    embedder: MavenEmbedderWrapper,
+  ) {
+    throw UnsupportedOperationException("Please implement ${this::class.qualifiedName}#onMavenProjectResolved(Project, MavenProject, MavenEmbedderWrapper)")
+  }
+
+  suspend fun onMavenProjectResolved(
+    project: Project,
+    mavenProject: MavenProject,
+    embedder: MavenEmbedderWrapper,
+  ) = onMavenProjectResolved(project, mavenProject, NativeMavenProjectHolder.NULL, embedder)
 
   companion object {
     val EP_NAME = ExtensionPointName.create<MavenProjectResolutionContributor>("org.jetbrains.idea.maven.projectResolutionContributor")
@@ -413,7 +424,7 @@ class MavenProjectResolver(private val myProject: Project) {
     val nativeMavenProject = result.nativeMavenProject
     if (nativeMavenProject != null) {
       for (contributor in EP_NAME.extensionList) {
-        contributor.onMavenProjectResolved(myProject, mavenProjectCandidate, nativeMavenProject, embedder)
+        contributor.onMavenProjectResolved(myProject, mavenProjectCandidate, embedder)
       }
     }
     else {
