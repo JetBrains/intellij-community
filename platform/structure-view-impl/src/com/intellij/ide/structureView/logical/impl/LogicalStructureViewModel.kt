@@ -7,9 +7,11 @@ import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModelBase
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
+import com.intellij.ide.structureView.logical.ContainerElementsProvider
 import com.intellij.ide.structureView.logical.ExternalElementsProvider
 import com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvider
 import com.intellij.ide.structureView.logical.PropertyElementProvider
+import com.intellij.ide.structureView.logical.model.LogicalContainerPresentationProvider
 import com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider
 import com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 import com.intellij.ide.util.treeView.smartTree.TreeElement
@@ -19,9 +21,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTarget
 import com.intellij.ui.SimpleTextAttributes
-import java.awt.Component
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Supplier
 import javax.swing.Icon
 
 internal class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>, elementBuilder: ElementsBuilder)
@@ -107,6 +107,12 @@ private class ElementsBuilder {
           }
         }
       }
+      else if (groupingObject is ContainerElementsProvider<*, *>
+               && LogicalContainerPresentationProvider.getForObject(groupingObject)?.isFlatElements() == true) {
+        for (child in childrenProvider()) {
+          result.add(createViewTreeElement(child))
+        }
+      }
       else if (groupingObject is ExternalElementsProvider<*, *>) {
         val groupElement = groupElements.getOrPut(assembledModel) {
           ConcurrentHashMap(mapOf(groupingObject to LogicalGroupStructureElement (assembledModel, groupingObject, childrenProvider)))
@@ -187,6 +193,8 @@ private class ElementsBuilder {
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
       return getChildrenNodes(assembledModel)
     }
+
+    override fun isAllowExtensions(): Boolean = false
 
     override fun getLogicalAssembledModel() = assembledModel
 
@@ -274,6 +282,8 @@ private class ElementsBuilder {
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
       return emptyList() // getChildrenNodes (assembledModel, parentKey + "." + assembledModel.model.hashCode())
     }
+
+    override fun isAllowExtensions(): Boolean = false
 
     override fun getLogicalAssembledModel() = assembledModel
 

@@ -5,7 +5,9 @@ import com.intellij.ide.structureView.logical.ConvertElementsProvider
 import com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ClassOwnerLogicalStructureElementsProvider: LogicalStructureElementsProvider<PsiClassOwner, Any> {
   override fun getElements(parent: PsiClassOwner): List<Any> {
     val result = mutableListOf<Any>()

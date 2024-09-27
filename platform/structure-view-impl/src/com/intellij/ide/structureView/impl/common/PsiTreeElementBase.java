@@ -81,7 +81,12 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
 
   private @NotNull List<StructureViewTreeElement> doGetChildren(boolean withCustomRegions) {
     T element = getElement();
-    return element == null ? Collections.emptyList() : mergeWithExtensions(element, getChildrenBase(), withCustomRegions);
+    if (element == null) return Collections.emptyList();
+    Collection<StructureViewTreeElement> baseChildren = getChildrenBase();
+    if (!isAllowExtensions()) {
+      return (baseChildren instanceof List<StructureViewTreeElement> list) ? list : new ArrayList<>(baseChildren);
+    }
+    return mergeWithExtensions(element, baseChildren, withCustomRegions);
   }
 
   @Override
@@ -104,6 +109,11 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
   }
 
   public abstract @NotNull Collection<StructureViewTreeElement> getChildrenBase();
+
+  @ApiStatus.Internal
+  public boolean isAllowExtensions() {
+    return true;
+  }
 
   public boolean equals(final Object o) {
     if (this == o) return true;

@@ -1004,7 +1004,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         .map(path -> getPathBounds(path))
         .ifPresent(pathBounds -> {
           floatingToolbar.hideImmediately();
-          floatingToolbar.setBounds(getBounds().width - 70, pathBounds.y - 5, 60, pathBounds.height + 5);
+          floatingToolbar.setBounds(getParent().getBounds().width - 70, pathBounds.y - 5, 60, pathBounds.height + 5);
           floatingToolbar.scheduleShow();
         });
     }
