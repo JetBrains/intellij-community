@@ -4,12 +4,14 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ml.embeddings.actions.ActionEmbeddingStorageManager
 import com.intellij.platform.ml.embeddings.jvm.wrappers.ActionEmbeddingsStorageWrapper
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
-import com.intellij.testFramework.PlatformTestUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlin.time.Duration.Companion.minutes
 
@@ -41,11 +43,12 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
 
     val standardActionContributor = ActionSearchEverywhereContributor.Factory()
       .createContributor(createEvent()) as ActionSearchEverywhereContributor
-    val searchEverywhereUI = SearchEverywhereUI(project, listOf(SemanticActionSearchEverywhereContributor(standardActionContributor)),
-                                                { _ -> null }, null)
+    val searchEverywhereUI = runBlocking(Dispatchers.EDT) {
+      SearchEverywhereUI(project, listOf(SemanticActionSearchEverywhereContributor(standardActionContributor)), { _ -> null }, null)
+    }
     Disposer.register(project, searchEverywhereUI)
 
-    val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern("delete all breakpoints"))
+    val elements = runBlocking(Dispatchers.EDT) { searchEverywhereUI.findElementsForPattern("delete all breakpoints") }.get()
 
     val items = elements.filterIsInstance<GotoActionModel.MatchedValue>().map { it.value as GotoActionModel.ActionWrapper }.map { it.actionText }
 
@@ -56,10 +59,10 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
     val semanticActionContributor = SemanticActionSearchEverywhereContributor(
       ActionSearchEverywhereContributor.Factory().createContributor(createEvent()) as ActionSearchEverywhereContributor)
 
-    val semanticSearchEverywhereUI = SearchEverywhereUI(project, listOf(semanticActionContributor))
+    val semanticSearchEverywhereUI = runBlocking(Dispatchers.EDT) { SearchEverywhereUI(project, listOf(semanticActionContributor)) }
     Disposer.register(project, semanticSearchEverywhereUI)
 
-    val results = PlatformTestUtil.waitForFuture(semanticSearchEverywhereUI.findElementsForPattern(""))
+    val results = runBlocking(Dispatchers.EDT) { semanticSearchEverywhereUI.findElementsForPattern("") }.get()
 
     assertEquals("expected no results from semantic contributor for empty query",
                  0, results.filterIsInstance<GotoActionModel.MatchedValue>().mapNotNull { it.value as? GotoActionModel.MatchedValue }.size)
@@ -74,9 +77,9 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
     val semanticActionContributor = SemanticActionSearchEverywhereContributor(
       ActionSearchEverywhereContributor.Factory().createContributor(createEvent()) as ActionSearchEverywhereContributor)
 
-    val standardSearchEverywhereUI = SearchEverywhereUI(project, listOf(standardActionContributor))
+    val standardSearchEverywhereUI = runBlocking(Dispatchers.EDT) { SearchEverywhereUI(project, listOf(standardActionContributor)) }
     Disposer.register(project, standardSearchEverywhereUI)
-    val semanticSearchEverywhereUI = SearchEverywhereUI(project, listOf(semanticActionContributor))
+    val semanticSearchEverywhereUI = runBlocking(Dispatchers.EDT) { SearchEverywhereUI(project, listOf(semanticActionContributor)) }
     Disposer.register(project, semanticSearchEverywhereUI)
 
     val prefixes = ('a'..'z').map { it.toString() }.toMutableList()
@@ -87,7 +90,7 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
     }
 
     fun findResultsFromUI(ui: SearchEverywhereUI, query: String): List<String> {
-      return PlatformTestUtil.waitForFuture(ui.findElementsForPattern(query))
+      return runBlocking(Dispatchers.EDT) { ui.findElementsForPattern(query) }.get()
         .filterIsInstance<GotoActionModel.MatchedValue>()
         .mapNotNull { it.value as? GotoActionModel.ActionWrapper }
         // 'Include disabled actions' checkbox is automatically set in standard search when no results found.

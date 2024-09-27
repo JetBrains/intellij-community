@@ -5,10 +5,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.platform.ml.embeddings.indexer.storage.ScoredKey
 import com.intellij.platform.ml.embeddings.jvm.indices.EntityId
 import com.intellij.platform.ml.embeddings.jvm.models.LocalEmbeddingService
 import com.intellij.platform.ml.embeddings.jvm.models.LocalEmbeddingServiceProviderImpl
-import com.intellij.platform.ml.embeddings.indexer.storage.ScoredKey
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 abstract class SemanticSearchBaseTestCase : LightJavaCodeInsightFixtureTestCase() {
@@ -25,4 +25,6 @@ abstract class SemanticSearchBaseTestCase : LightJavaCodeInsightFixtureTestCase(
   protected fun Iterable<ScoredKey<EntityId>>.toIdsSet(): Set<String> {
     return this.map { it.key.id }.toSet()
   }
+
+  override fun runInDispatchThread(): Boolean = false
 }

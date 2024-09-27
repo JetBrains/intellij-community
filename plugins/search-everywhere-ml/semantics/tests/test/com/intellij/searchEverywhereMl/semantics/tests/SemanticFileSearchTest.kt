@@ -3,21 +3,25 @@ package com.intellij.searchEverywhereMl.semantics.tests
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoFileModel
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.ml.embeddings.indexer.FileBasedEmbeddingIndexer
+import com.intellij.platform.ml.embeddings.indexer.entities.IndexableFile
+import com.intellij.platform.ml.embeddings.indexer.storage.ScoredKey
 import com.intellij.platform.ml.embeddings.jvm.indices.EntityId
 import com.intellij.platform.ml.embeddings.jvm.wrappers.FileEmbeddingsStorageWrapper
-import com.intellij.platform.ml.embeddings.indexer.entities.IndexableFile
-import com.intellij.platform.ml.embeddings.indexer.FileBasedEmbeddingIndexer
-import com.intellij.platform.ml.embeddings.indexer.storage.ScoredKey
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticFileSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import java.io.BufferedReader
 import java.nio.file.Path
@@ -56,12 +60,12 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
     assertEquals(3, storage.getSize())
 
-    val contributor = SemanticFileSearchEverywhereContributor(createEvent())
+    val contributor = readAction { SemanticFileSearchEverywhereContributor (createEvent()) }
     Disposer.register(project, contributor)
-    val searchEverywhereUI = SearchEverywhereUI(project, listOf(contributor), { _ -> null }, null)
+    val searchEverywhereUI = runBlocking(Dispatchers.EDT) { SearchEverywhereUI (project, listOf(contributor), { _ -> null }, null) }
     Disposer.register(project, searchEverywhereUI)
 
-    val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern("index project job"))
+    val elements = runBlocking(Dispatchers.EDT) { searchEverywhereUI.findElementsForPattern("index project job") }.get()
 
     val items: List<PsiElement> = elements.filterIsInstance<PsiItemWithSimilarity<*>>().mapNotNull { extractPsiElement(it) }
     assertEquals(2, items.size)
@@ -144,8 +148,10 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
 
   private suspend fun Flow<ScoredKey<EntityId>>.filterByModel(): Set<String> {
     return this.map { it.key.id }.filter {
-      model.getElementsByName(it, false, it).any { element ->
-        (element as PsiElement).isValid
+      smartReadAction(project) {
+        model.getElementsByName(it, false, it).any { element ->
+          (element as PsiElement).isValid
+        }
       }
     }.toSet()
   }
