@@ -5,7 +5,6 @@ import com.intellij.CommonBundle
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.repo.Repository
 import com.intellij.icons.AllIcons
-import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.Messages
@@ -14,8 +13,8 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ChangeListData
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
-import git4idea.ApplyChangesConflictNotification
 import git4idea.DialogManager
+import git4idea.GitApplyChangesNotification
 import git4idea.GitActivity
 import git4idea.GitNotificationIdsHolder.Companion.CHERRY_PICK_ABORT_FAILED
 import git4idea.GitNotificationIdsHolder.Companion.CHERRY_PICK_ABORT_SUCCESS
@@ -70,9 +69,7 @@ internal abstract class GitAbortOperationAction(
       doAbort(repository, indicator)
     }
 
-    NotificationsManager.getNotificationsManager()
-      .getNotificationsOfType(ApplyChangesConflictNotification::class.java, repository.project)
-      .forEach { it.expire() }
+    GitApplyChangesNotification.expireAll<GitApplyChangesNotification.ExpireAfterAbort>(repository.project)
 
     return true
   }

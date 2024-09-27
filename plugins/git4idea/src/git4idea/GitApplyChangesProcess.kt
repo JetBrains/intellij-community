@@ -406,8 +406,7 @@ internal class GitApplyChangesProcess(
         vcsNotifier.notifySuccess(GitNotificationIdsHolder.APPLY_CHANGES_SUCCESS, title, description)
       }
       else -> {
-        vcsNotifier.notifyImportantWarning(GitNotificationIdsHolder.APPLY_CHANGES_SUCCESS, GitBundle.message("apply.changes.nothing.to.do", operationName),
-                                           formSkippedDescription(skipped, false))
+        vcsNotifier.notify(GitApplyChangesNothingToDoNotification(operationName, formSkippedDescription(skipped, false)))
       }
     }
   }
@@ -422,7 +421,7 @@ internal class GitApplyChangesProcess(
                       GitBundle.message("apply.changes.unresolved.conflicts.text") +
                       getSuccessfulCommitDetailsIfAny(successfulCommits)
     VcsNotifier.getInstance(project)
-      .notify(ApplyChangesConflictNotification(operationName, description, commit, repository, abortCommand))
+      .notify(GitApplyChangesConflictNotification(operationName, description, commit, repository, abortCommand))
   }
 
   private fun notifyCommitCancelled(commit: VcsCommitMetadata, successfulCommits: List<VcsCommitMetadata>) {

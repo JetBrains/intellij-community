@@ -4,7 +4,10 @@ package git4idea
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.notification.NotificationsManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.NotificationContent
+import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.util.VcsUserUtil
@@ -14,18 +17,38 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 
-internal class ApplyChangesConflictNotification(
+abstract class GitApplyChangesNotification(
+  groupId: String,
+  title: @NotificationTitle String,
+  content: @NotificationContent String,
+  type: NotificationType,
+) : Notification(groupId, title, content, type) {
+  companion object {
+    inline fun <reified T: ExpireAfter> expireAll(project: Project) {
+      NotificationsManager.getNotificationsManager()
+        .getNotificationsOfType(GitApplyChangesNotification::class.java, project)
+        .forEach {
+          if (it is T) it.expire()
+        }
+    }
+  }
+
+  sealed interface ExpireAfter
+  interface ExpireAfterAbort: ExpireAfter
+}
+
+internal class GitApplyChangesConflictNotification(
   operationName: @Nls String,
   description: @NotificationContent String,
   commit: VcsCommitMetadata,
   repository: GitRepository,
   abortCommand: GitAbortOperationAction,
-) : Notification(
+) : GitApplyChangesNotification(
   VcsNotifier.importantNotification().displayId,
   GitBundle.message("apply.changes.operation.performed.with.conflicts", operationName.capitalize()),
   description,
   NotificationType.WARNING,
-) {
+), GitApplyChangesNotification.ExpireAfterAbort {
   init {
     setDisplayId(GitNotificationIdsHolder.APPLY_CHANGES_CONFLICTS)
 
@@ -40,5 +63,19 @@ internal class ApplyChangesConflictNotification(
                                                           operationName.capitalize())) {
       abortCommand.performInBackground(repository)
     })
+  }
+}
+
+internal class GitApplyChangesNothingToDoNotification(
+  operationName: @Nls String,
+  description: @NotificationContent String
+): GitApplyChangesNotification(
+  VcsNotifier.importantNotification().displayId,
+  GitBundle.message("apply.changes.nothing.to.do", operationName),
+  description,
+  NotificationType.WARNING,
+), GitApplyChangesNotification.ExpireAfterAbort {
+  init {
+    setDisplayId(GitNotificationIdsHolder.APPLY_CHANGES_SUCCESS)
   }
 }
