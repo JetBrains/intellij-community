@@ -53,11 +53,11 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testPatterns() {
     doTest();
   }
-  
+
   public void testDeconstructionNullability() {
     doTest();
   }
-  
+
   public void testUnnamedPatterns() {
     doTest();
   }
@@ -77,7 +77,7 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testNewStringWrongEquals() { doTest(); }
 
   public void testSwitchWhenReturnBoolean() { doTest(); }
-  
+
   public void testSkipSwitchExpressionWithThrow() { doTest(); }
 
   public void testStringTemplates() {
@@ -131,8 +131,19 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
 
   public void testArrayElementWrappedInPureMethod() { doTest(); }
   public void testArrayAddedIntoCollection() { doTest(); }
-  
+
   public void testInstanceOfPatternAffectNullity() { doTest(); }
-  
+
   public void testNullabilityInEnumSwitch() { doTest(); }
+
+  public void testJetBrainsNotNullByDefault() {
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         
+                         import java.lang.annotation.*;
+                         
+                         @Target({ElementType.TYPE, ElementType.PACKAGE})\s
+                         public @interface NotNullByDefault {}""");
+    doTest();
+  }
 }

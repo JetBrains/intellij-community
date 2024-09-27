@@ -24,6 +24,7 @@ public class AnnotationUtil {
   public static final String NULLABLE = "org.jetbrains.annotations.Nullable";
   public static final String UNKNOWN_NULLABILITY = "org.jetbrains.annotations.UnknownNullability";
   public static final String NOT_NULL = "org.jetbrains.annotations.NotNull";
+  public static final String NOT_NULL_BY_DEFAULT = "org.jetbrains.annotations.NotNullByDefault";
 
   public static final String NON_NLS = "org.jetbrains.annotations.NonNls";
   public static final String NLS = "org.jetbrains.annotations.Nls";
