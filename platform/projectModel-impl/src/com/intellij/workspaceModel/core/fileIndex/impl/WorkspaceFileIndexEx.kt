@@ -40,12 +40,26 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    * If the contributor is actually registered for a child entity of [E], the function will return nothing.
    */
   fun <E: WorkspaceEntity> findContainingEntities(file: VirtualFile,
-                                                  entityClass: Class<E>, 
+                                                  entityClass: Class<E>,
                                                   honorExclusion: Boolean, 
                                                   includeContentSets: Boolean, 
                                                   includeExternalSets: Boolean,
                                                   includeExternalSourceSets: Boolean,
                                                   includeCustomKindSets: Boolean): Collection<E>
+
+  /**
+   * Searches for the first parent of [file] (or [file] itself), which has an associated [WorkspaceFileSet]s (taking into account
+   * passed flags), and returns all entities from which these filesets were contributed.
+   */
+  @ApiStatus.Experimental
+  fun findContainingEntities(
+    file: VirtualFile,
+    honorExclusion: Boolean,
+    includeContentSets: Boolean,
+    includeExternalSets: Boolean,
+    includeExternalSourceSets: Boolean,
+    includeCustomKindSets: Boolean,
+  ): Collection<WorkspaceEntity>
 
   /**
    * Holds references to the currently stored data.

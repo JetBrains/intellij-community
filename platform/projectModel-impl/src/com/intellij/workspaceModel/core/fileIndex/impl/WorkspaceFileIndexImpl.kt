@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.injected.editor.VirtualFileWindow
@@ -309,20 +309,24 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   }
 
   override fun <E : WorkspaceEntity> findContainingEntities(file: VirtualFile, entityClass: Class<E>, honorExclusion: Boolean, includeContentSets: Boolean, includeExternalSets: Boolean, includeExternalSourceSets: Boolean, includeCustomKindSets: Boolean): Collection<E> {
+    val allEntities = findContainingEntities(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets, includeCustomKindSets)
+    @Suppress("UNCHECKED_CAST")
+    return allEntities.filter { entity -> entity.getEntityInterface() == entityClass } as Collection<E>
+  }
+
+  override fun findContainingEntities(file: VirtualFile, honorExclusion: Boolean, includeContentSets: Boolean, includeExternalSets: Boolean, includeExternalSourceSets: Boolean, includeCustomKindSets: Boolean): Collection<WorkspaceEntity> {
     return when (val fileInfo = getFileInfo(file, honorExclusion, includeContentSets, includeExternalSets, includeExternalSourceSets, includeCustomKindSets)) {
-      is WorkspaceFileSetImpl -> listOfNotNull(resolveEntity(fileInfo, entityClass))
+      is WorkspaceFileSetImpl -> listOfNotNull(resolveEntity(fileInfo))
       is MultipleWorkspaceFileSets -> fileInfo.fileSets.mapNotNull { fileSet ->
-        (fileSet as? StoredFileSet?)?.let { resolveEntity(it, entityClass) }
+        (fileSet as? StoredFileSet?)?.let { resolveEntity(it) }
       }
       is NonWorkspace -> return emptyList()
     }
   }
 
-  private fun <E> resolveEntity(fileSet: StoredFileSet, entityClass: Class<E>): E? {
+  private fun resolveEntity(fileSet: StoredFileSet): WorkspaceEntity? {
     if (fileSet.entityStorageKind != EntityStorageKind.MAIN) return null
-    val entity = fileSet.entityPointer.resolve(WorkspaceModel.getInstance(project).currentSnapshot)
-    @Suppress("UNCHECKED_CAST")
-    return entity?.takeIf { it.getEntityInterface() == entityClass } as E?
+    return fileSet.entityPointer.resolve(WorkspaceModel.getInstance(project).currentSnapshot)
   }
 
   @RequiresReadLock
