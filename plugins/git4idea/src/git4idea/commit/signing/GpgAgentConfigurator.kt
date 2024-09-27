@@ -138,8 +138,19 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
   private fun readConfig(gpgAgentConf: Path): GpgAgentConfig {
     val config = mutableMapOf<String, String>()
     try {
-      gpgAgentConf.readLines().forEach { line ->
-        val (key, value) = line.split(' ')
+      for (line in gpgAgentConf.readLines()) {
+        val keyValue = line.split(' ')
+        val key: String
+        val value: String
+        when (keyValue.size) {
+          1 -> {
+            key = keyValue[0]; value = ""
+          }
+          2 -> {
+            key = keyValue[0]; value = keyValue[1]
+          }
+          else -> continue
+        }
         config[key] = value
       }
     }
@@ -188,7 +199,7 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
     configToSave.put(GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY, pinentryAppLauncherConfigPath)
     try {
       FileUtil.writeToFile(configPath.toFile(),
-                           configToSave.map { (key, value) -> "$key $value" }.joinToString(separator = "\n"))
+                           configToSave.map { (key, value) -> "$key $value".trimEnd() }.joinToString(separator = "\n"))
     }
     catch (e: IOException) {
       LOG.error("Cannot change config $configPath", e)

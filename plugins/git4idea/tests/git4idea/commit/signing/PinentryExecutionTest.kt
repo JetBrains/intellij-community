@@ -64,14 +64,15 @@ class PinentryExecutionTest : GitSingleRepoTest() {
 
     val pathLocator = TestGpgPathLocator()
     val paths = pathLocator.resolvePaths()!!
+    val allowLoopbackPinentryConfig = "allow-loopback-pinentry"
     val cacheTtlConfig = "default-cache-ttl 5000"
     val pinentryConfig = "$GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY ${paths.gpgPinentryAppLauncherConfigPath}"
 
-    FileUtil.writeToFile(paths.gpgAgentConf.toFile(), cacheTtlConfig)
+    FileUtil.writeToFile(paths.gpgAgentConf.toFile(), "$allowLoopbackPinentryConfig\n$cacheTtlConfig")
     project.service<GpgAgentConfigurator>().doConfigure(pathLocator)
     val generatedConfig = paths.gpgAgentConf.readLines()
 
-    assertContainsOrdered(generatedConfig, listOf(cacheTtlConfig, pinentryConfig))
+    assertContainsOrdered(generatedConfig, listOf(allowLoopbackPinentryConfig, cacheTtlConfig, pinentryConfig))
   }
 
   fun `test pinentry launcher structure`() {
