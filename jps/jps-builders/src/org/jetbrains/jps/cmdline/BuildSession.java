@@ -381,7 +381,9 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
       }
       myProjectDescriptor = pd;
-      if (myCacheLoadManager != null) myCacheLoadManager.updateBuildStatistic(myProjectDescriptor);
+      if (myCacheLoadManager != null) {
+        myCacheLoadManager.updateBuildStatistic(myProjectDescriptor);
+      }
 
       myLastEventOrdinal.set(myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L);
 
@@ -513,7 +515,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
         for (BuildRootDescriptor descriptor : descriptors) {
           StampsStorage<?> stampStorage = dataManager.getFileStampStorage(descriptor.getTarget());
-          Object currentUpToDateStamp = stampStorage.getCurrentStampIfUpToDate(file, descriptor.getTarget(), null);
+          Object currentUpToDateStamp = stampStorage == null? null : stampStorage.getCurrentStampIfUpToDate(file, descriptor.getTarget(), null);
           if (currentUpToDateStamp == null) {
             projectDescriptor.fsState.markDirty(null, file.toFile(), descriptor, stampStorage, saveEventStamp);
           }

@@ -264,23 +264,25 @@ public final class BuildTargetSourcesState implements BuildListener {
         return;
       }
 
-      HashStampStorage stampStorage = (HashStampStorage)dataManager.getFileStampStorage(target);
+      StampsStorage<?> stStorage = dataManager.getFileStampStorage(target);
+      if (stStorage instanceof HashStampStorage) {
+        HashStampStorage stampStorage = (HashStampStorage)stStorage;
+        Files.walkFileTree(rootFile, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
+          @Override
+          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+            return buildRootIndex.isDirectoryAccepted(dir, rootDescriptor) ? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
+          }
 
-      Files.walkFileTree(rootFile, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-          return buildRootIndex.isDirectoryAccepted(dir, rootDescriptor) ? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
-        }
-
-        @Override
-        public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
-          if (!buildRootIndex.isFileAccepted(path.toFile(), rootDescriptor)) {
+          @Override
+          public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
+            if (!buildRootIndex.isFileAccepted(path.toFile(), rootDescriptor)) {
+              return FileVisitResult.CONTINUE;
+            }
+            getFileHash(path, rootFile, hash, hashToReuse, stampStorage);
             return FileVisitResult.CONTINUE;
           }
-          getFileHash(path, rootFile, hash, hashToReuse, stampStorage);
-          return FileVisitResult.CONTINUE;
-        }
-      });
+        });
+      }
     }
     catch (IOException e) {
       LOG.warn("Couldn't calculate build target hash for : " + target.getPresentableName(), e);
