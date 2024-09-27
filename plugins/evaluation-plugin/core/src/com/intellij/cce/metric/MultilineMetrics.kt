@@ -6,10 +6,9 @@ import com.intellij.cce.metric.util.chrF
 import org.apache.commons.text.similarity.LevenshteinDistance
 
 
-private fun Lookup.getWithPrefix() = suggestions.firstOrNull()?.text
-
-
 abstract class LineSimularityMetric(showByDefault: Boolean) : SimilarityMetric(showByDefault) {
+  protected fun Lookup.getWithPrefix() = suggestions.firstOrNull()?.text
+
   override fun computeExpectedText(session: Session, lookup: Lookup) = session.expectedText
 }
 
