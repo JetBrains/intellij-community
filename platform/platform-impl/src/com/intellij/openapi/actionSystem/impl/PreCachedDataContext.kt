@@ -1,646 +1,608 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.actionSystem.impl;
+@file:Suppress("removal", "DEPRECATION")
 
-import com.intellij.diagnostic.LoadingState;
-import com.intellij.ide.ActivityTracker;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.ide.impl.DataValidators;
-import com.intellij.ide.impl.GetDataRuleType;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.SlowOperations;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.containers.*;
-import com.intellij.util.keyFMap.KeyFMap;
-import com.intellij.util.ui.EDT;
-import com.intellij.util.ui.UIUtil;
-import kotlin.jvm.functions.Function0;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.openapi.actionSystem.impl
 
-import javax.swing.*;
-import java.awt.*;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
-import java.util.List;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.ActivityTracker
+import com.intellij.ide.DataManager
+import com.intellij.ide.ProhibitAWTEvents
+import com.intellij.ide.impl.DataManagerImpl
+import com.intellij.ide.impl.DataValidators
+import com.intellij.ide.impl.GetDataRuleType
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnActionEvent.InjectedDataContextSupplier
+import com.intellij.openapi.actionSystem.impl.Utils.isModalContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.Strings
+import com.intellij.reference.SoftReference
+import com.intellij.ui.SpeedSearchBase
+import com.intellij.ui.speedSearch.SpeedSearchSupply
+import com.intellij.util.SlowOperations
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.containers.*
+import com.intellij.util.keyFMap.KeyFMap
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
+import java.awt.Component
+import java.lang.ref.Reference
+import java.lang.ref.WeakReference
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JComponent
 
-import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
-import static com.intellij.openapi.actionSystem.CustomizedDataContext.EXPLICIT_NULL;
-import static com.intellij.openapi.actionSystem.impl.EdtDataContextKt.wrapUnsafeData;
-import static com.intellij.reference.SoftReference.dereference;
+private val LOG = Logger.getInstance(PreCachedDataContext::class.java)
 
-/**
- * @author gregsh
- */
-class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier {
+private var ourPrevMapEventCount = 0
+private val ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap<Component, FList<ProviderData>>()
+private val ourComponents = ContainerUtil.createWeakSet<Component>()
+private val ourInstances = UnsafeWeakList<PreCachedDataContext>()
+private val ourDataKeysIndices = ConcurrentHashMap<String, Int>()
+private val ourDataKeysCount = AtomicInteger()
+private val ourEDTWarnsInterner = Interner.createStringInterner()
+private var ourIsCapturingSnapshot = false
 
-  private static final Logger LOG = Logger.getInstance(PreCachedDataContext.class);
+internal open class PreCachedDataContext : AsyncDataContext, UserDataHolder, InjectedDataContextSupplier {
+  private val myComponentRef: ComponentRef
+  private val myUserData: AtomicReference<KeyFMap>
+  private val myCachedData: FList<ProviderData>
+  private val myDataManager: DataManagerImpl
+  private val myDataKeysCount: Int
 
-  private static int ourPrevMapEventCount;
-  private static final Map<Component, FList<ProviderData>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
-  private static final Set<Component> ourComponents = ContainerUtil.createWeakSet();
-  private static final Collection<PreCachedDataContext> ourInstances = new UnsafeWeakList<>();
-  private static final Map<String, Integer> ourDataKeysIndices = new ConcurrentHashMap<>();
-  private static final AtomicInteger ourDataKeysCount = new AtomicInteger();
-  private static final Interner<String> ourEDTWarnsInterner = Interner.createStringInterner();
-  private static boolean ourIsCapturingSnapshot;
-
-  private final ComponentRef myComponentRef;
-  private final AtomicReference<KeyFMap> myUserData;
-  private final FList<ProviderData> myCachedData;
-  private final DataManagerImpl myDataManager;
-  private final int myDataKeysCount;
-
-  /** @noinspection AssignmentToStaticFieldFromInstanceMethod*/
-  PreCachedDataContext(@Nullable Component component) {
-    myComponentRef = new ComponentRef(component);
-    myUserData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
-    myDataManager = (DataManagerImpl)DataManager.getInstance();
+  constructor(component: Component?) {
+    myComponentRef = ComponentRef(component)
+    myUserData = AtomicReference(KeyFMap.EMPTY_MAP)
+    myDataManager = DataManager.getInstance() as DataManagerImpl
     if (component == null) {
-      myCachedData = FList.emptyList();
-      myDataKeysCount = DataKey.allKeysCount();
-      return;
+      myCachedData = FList.emptyList()
+      myDataKeysCount = DataKey.allKeysCount()
+      return
     }
 
-    ThreadingAssertions.assertEventDispatchThread();
-    ourIsCapturingSnapshot = true;
-    try (AccessToken ignore1 = ProhibitAWTEvents.start("getData");
-         AccessToken ignore2 = SlowOperations.startSection(SlowOperations.FORCE_ASSERT)) {
-      int count = ActivityTracker.getInstance().getCount();
-      if (ourPrevMapEventCount != count ||
-          ourDataKeysIndices.size() != DataKey.allKeysCount() ||
-          ApplicationManager.getApplication().isUnitTestMode()) {
-        ourPrevMaps.clear();
-        ourComponents.clear();
-      }
-      List<Component> components = FList.createFromReversed(
-        JBIterable.generate(component, UIUtil::getParent).takeWhile(o -> {
-          FList<ProviderData> list = ourPrevMaps.get(o);
-          if (list == null) return true;
-          // make sure we run edt rules on the current component
-          return o == component && !ourComponents.contains(o);
-        }));
-      Component topParent = components.isEmpty() ? component : UIUtil.getParent(components.get(0));
-      FList<ProviderData> initial = topParent == null ? FList.emptyList() : ourPrevMaps.get(topParent);
+    ThreadingAssertions.assertEventDispatchThread()
+    ourIsCapturingSnapshot = true
+    try {
+      ProhibitAWTEvents.start("getData").use { ignore1 ->
+        SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use { ignore2 ->
+          val count = ActivityTracker.getInstance().count
+          if (ourPrevMapEventCount != count ||
+              ourDataKeysIndices.size != DataKey.allKeysCount() ||
+              ApplicationManager.getApplication().isUnitTestMode()) {
+            ourPrevMaps.clear()
+            ourComponents.clear()
+          }
+          val components = generateSequence(component) { UIUtil.getParent(it) }
+            .takeWhile { ourPrevMaps[it] == null || it === component && !ourComponents.contains(it) }
+            .toList().asReversed()
+          val topParent = if (components.isEmpty()) component else UIUtil.getParent(components[0])
+          val initial = if (topParent == null) FList.emptyList() else ourPrevMaps[topParent]!!
 
-      int keyCount;
-      FList<ProviderData> cachedData;
-      MySink sink = new MySink();
-      while (true) {
-        sink.keys = null;
-        cachedData = cacheComponentsData(sink, components, initial, myDataManager);
-        cachedData = runSnapshotRules(sink, component, cachedData);
-        keyCount = sink.keys == null ? DataKey.allKeysCount() : sink.keys.length;
-        // retry if providers add new keys
-        if (keyCount == DataKey.allKeysCount()) break;
+          var keyCount: Int
+          var cachedData: FList<ProviderData>
+          val sink = MySink()
+          while (true) {
+            sink.keys = null
+            cachedData = cacheComponentsData(sink, components, initial, myDataManager)
+            cachedData = runSnapshotRules(sink, component, cachedData)
+            keyCount = sink.keys?.size ?: DataKey.allKeysCount()
+            // retry if providers add new keys
+            if (keyCount == DataKey.allKeysCount()) break
+          }
+          myDataKeysCount = keyCount
+          myCachedData = cachedData
+          ourInstances.add(this)
+          ourComponents.add(component)
+          ourPrevMapEventCount = count
+        }
       }
-      myDataKeysCount = keyCount;
-      myCachedData = cachedData;
-      ourInstances.add(this);
-      ourComponents.add(component);
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ourPrevMapEventCount = count;
     }
     finally {
-      ourIsCapturingSnapshot = false;
+      ourIsCapturingSnapshot = false
     }
   }
 
-  private PreCachedDataContext(@NotNull ComponentRef compRef,
-                               @NotNull FList<ProviderData> cachedData,
-                               @NotNull AtomicReference<KeyFMap> userData,
-                               @NotNull DataManagerImpl dataManager,
-                               int dataKeysCount) {
-    myComponentRef = compRef;
-    myCachedData = cachedData;
-    myUserData = userData;
-    myDataManager = dataManager;
-    myDataKeysCount = dataKeysCount;
+  private constructor(
+    compRef: ComponentRef,
+    cachedData: FList<ProviderData>,
+    userData: AtomicReference<KeyFMap>,
+    dataManager: DataManagerImpl,
+    dataKeysCount: Int
+  ) {
+    myComponentRef = compRef
+    myCachedData = cachedData
+    myUserData = userData
+    myDataManager = dataManager
+    myDataKeysCount = dataKeysCount
   }
 
-  boolean cachesAllKnownDataKeys() {
-    return myDataKeysCount == DataKey.allKeysCount();
+  fun cachesAllKnownDataKeys(): Boolean {
+    return myDataKeysCount == DataKey.allKeysCount()
   }
 
-  @Override
-  public final @NotNull DataContext getInjectedDataContext() {
-    return this instanceof InjectedDataContext ? this :
-           new InjectedDataContext(myComponentRef, myCachedData, myUserData, myDataManager, myDataKeysCount);
+  override fun getInjectedDataContext(): DataContext {
+    return this as? InjectedDataContext
+           ?: InjectedDataContext(myComponentRef, myCachedData, myUserData, myDataManager, myDataKeysCount)
   }
 
-  @NotNull PreCachedDataContext prependProvider(@Nullable Object dataProvider) {
-    if (dataProvider == null) return this;
-    boolean isEDT = EDT.isCurrentThreadEdt();
-    int keyCount;
-    FList<ProviderData> cachedData;
-    MySink sink = new MySink();
+  fun prependProvider(dataProvider: Any?): PreCachedDataContext {
+    if (dataProvider == null) return this
+    val isEDT = EDT.isCurrentThreadEdt()
+    var keyCount: Int
+    var cachedData: FList<ProviderData>
+    val sink = MySink()
     while (true) {
-      Component component = dereference(myComponentRef.ref);
-      sink.keys = null;
-      sink.hideEditor = hideEditor(component);
-      cacheProviderData(sink, dataProvider, myDataManager);
-      cachedData = sink.map == null ? myCachedData : myCachedData.prepend(sink.map);
+      val component = SoftReference.dereference(myComponentRef.ref)
+      sink.keys = null
+      sink.hideEditor = hideEditor(component)
+      cacheProviderData(sink, dataProvider, myDataManager)
+      cachedData = if (sink.map == null) myCachedData else myCachedData.prepend(sink.map)
       // do not provide CONTEXT_COMPONENT in BGT
-      cachedData = runSnapshotRules(sink, isEDT ? component : null, cachedData);
-      keyCount = sink.keys == null ? DataKey.allKeysCount() : sink.keys.length;
+      cachedData = runSnapshotRules(sink, if (isEDT) component else null, cachedData)
+      keyCount = sink.keys?.size ?: DataKey.allKeysCount()
       // retry if the provider adds new keys
-      if (keyCount == DataKey.allKeysCount()) break;
+      if (keyCount == DataKey.allKeysCount()) break
     }
-    AtomicReference<KeyFMap> userData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
-    return this instanceof InjectedDataContext
-           ? new InjectedDataContext(myComponentRef, cachedData, userData, myDataManager, keyCount)
-           : new PreCachedDataContext(myComponentRef, cachedData, userData, myDataManager, keyCount);
+    val userData = AtomicReference(KeyFMap.EMPTY_MAP)
+    return when (this) {
+      is InjectedDataContext -> InjectedDataContext(myComponentRef, cachedData, userData, myDataManager, keyCount)
+      else -> PreCachedDataContext(myComponentRef, cachedData, userData, myDataManager, keyCount)
+    }
   }
 
-  @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    //noinspection DuplicatedCode
-    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) return dereference(myComponentRef.ref);
-    if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.is(dataId)) return myComponentRef.modalContext;
-    if (PlatformDataKeys.MODALITY_STATE.is(dataId)) return myComponentRef.modalityState;
-    if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId) && myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText;
-    if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId) && myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get();
-    if (myCachedData.isEmpty()) return null;
+  @Suppress("DuplicatedCode")
+  @Deprecated("Deprecated in Java")
+  override fun getData(dataId: String): Any? {
+    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.`is`(dataId)) return SoftReference.dereference(myComponentRef.ref)
+    if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.`is`(dataId)) return myComponentRef.modalContext
+    if (PlatformDataKeys.MODALITY_STATE.`is`(dataId)) return myComponentRef.modalityState
+    if (PlatformDataKeys.SPEED_SEARCH_TEXT.`is`(dataId) && myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText
+    if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.`is`(dataId) && myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get()
+    if (myCachedData.isEmpty()) return null
 
-    boolean isEDT = EDT.isCurrentThreadEdt();
+    val isEDT = EDT.isCurrentThreadEdt()
     if (isEDT && ourIsCapturingSnapshot) {
-      reportGetDataInsideCapturingSnapshot();
+      reportGetDataInsideCapturingSnapshot()
     }
-    boolean noRulesSection = isEDT && ActionUpdater.Companion.isNoRulesInEDTSection();
-    boolean rulesSuppressed = isEDT && LoadingState.COMPONENTS_LOADED.isOccurred() && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
-    boolean rulesAllowed = !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed && !noRulesSection;
-    Object answer = getDataInner(dataId, rulesAllowed, !noRulesSection);
+    val noRulesSection = isEDT && ActionUpdater.isNoRulesInEDTSection
+    val rulesSuppressed = isEDT && LoadingState.COMPONENTS_LOADED.isOccurred &&
+                          Registry.`is`("actionSystem.update.actions.suppress.dataRules.on.edt")
+    val rulesAllowed = !CommonDataKeys.PROJECT.`is`(dataId) && !rulesSuppressed && !noRulesSection
+    var answer = getDataInner(dataId, rulesAllowed, !noRulesSection)
 
-    int keyIndex; // for use with `nullsByContextRules` only, always != -1
-    ProviderData map = myCachedData.get(0);
-    if (answer == null && rulesAllowed && !map.nullsByContextRules.get(keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1))) {
-      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, new ContextRuleProvider());
-      if (answer != null) {
-        map.computedData.put(dataId, answer);
-        map.nullsByRules.clear(keyIndex);
-        reportValueProvidedByRules(dataId);
-      }
-      else {
-        map.nullsByContextRules.set(keyIndex);
+    val map = myCachedData[0]
+    if (answer == null && rulesAllowed) {
+      val keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1)
+      if (!map.nullsByContextRules.get(keyIndex)) {
+        answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, ContextRuleProvider())
+        if (answer != null) {
+          map.computedData.put(dataId, answer)
+          map.nullsByRules.clear(keyIndex)
+        }
+        else {
+          map.nullsByContextRules.set(keyIndex)
+        }
       }
     }
     if (answer == null && rulesSuppressed) {
-      Throwable throwable = new Throwable();
-      AppExecutorUtil.getAppExecutorService().execute(() -> {
-        if (ReadAction.compute(() -> getData(dataId)) != null) {
-          LOG.warn(dataId + " is not available on EDT. " +
-                   "Code that depends on data rules and slow data providers must be run in background. " +
-                   "For example, an action must use `ActionUpdateThread.BGT`.", throwable);
+      val throwable = Throwable()
+      AppExecutorUtil.getAppExecutorService().execute {
+        if (ReadAction.compute(ThrowableComputable { getData(dataId) }) != null) {
+          LOG.warn("$dataId is not available on EDT. Code that depends on data rules and slow data providers " +
+                   "must be run in background. For example, an action must use `ActionUpdateThread.BGT`.", throwable)
         }
-      });
+      }
     }
-    answer = wrapUnsafeData(answer);
-    return answer == EXPLICIT_NULL ? null : answer;
+    answer = wrapUnsafeData(answer)
+    return if (answer === CustomizedDataContext.EXPLICIT_NULL) null else answer
   }
 
-  protected @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowed, boolean ruleValuesAllowed) {
-    int keyIndex = getDataKeyIndex(dataId);
-    if (keyIndex == -1) return EXPLICIT_NULL; // DataKey not found
+  protected open fun getDataInner(dataId: String, rulesAllowed: Boolean, ruleValuesAllowed: Boolean): Any? {
+    val keyIndex: Int = getDataKeyIndex(dataId)
+    if (keyIndex == -1) return CustomizedDataContext.EXPLICIT_NULL // DataKey not found
 
-    Object answer = null;
-    for (ProviderData map : myCachedData) {
-      ProgressManager.checkCanceled();
-      boolean isComputed = false;
-      answer = map.uiSnapshot.get(dataId);
+    var answer: Any? = null
+    for (map in myCachedData) {
+      ProgressManager.checkCanceled()
+      var isComputed = false
+      answer = map.uiSnapshot[dataId]
       if (answer == null) {
-        answer = map.computedData.get(dataId);
-        isComputed = true;
+        answer = map.computedData[dataId]
+        isComputed = true
       }
-      if (answer == EXPLICIT_NULL) break;
+      if (answer === CustomizedDataContext.EXPLICIT_NULL) break
       if (answer != null) {
         if (isComputed) {
-          reportValueProvidedByRulesUsage(dataId, !ruleValuesAllowed);
-          if (!ruleValuesAllowed) return null;
+          reportValueProvidedByRulesUsage(dataId, !ruleValuesAllowed)
+          if (!ruleValuesAllowed) return null
         }
-        answer = DataValidators.validOrNull(answer, dataId, this);
-        if (answer != null) break;
-        if (!isComputed) return null;
+        answer = DataValidators.validOrNull(answer, dataId, this)
+        if (answer != null) break
+        if (!isComputed) return null
         // allow slow data providers and rules to re-calc the value
-        map.computedData.remove(dataId);
+        map.computedData.remove(dataId)
       }
-      if (!rulesAllowed || map.nullsByRules.get(keyIndex)) continue;
+      if (!rulesAllowed || map.nullsByRules.get(keyIndex)) continue
 
-      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.PROVIDER, map);
+      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.PROVIDER, map)
 
       if (answer == null) {
-        map.nullsByRules.set(keyIndex);
+        map.nullsByRules.set(keyIndex)
       }
       else {
-        map.computedData.put(dataId, answer);
-        reportValueProvidedByRules(dataId);
-        break;
+        map.computedData.put(dataId, answer)
+        break
       }
     }
-    return answer;
+    return answer
   }
 
-  private static void reportGetDataInsideCapturingSnapshot() {
-    LOG.error("DataContext must not be queried during another DataContext creation");
+  private fun reportGetDataInsideCapturingSnapshot() {
+    LOG.error("DataContext must not be queried during another DataContext creation")
   }
 
-  private static void reportValueProvidedByRulesUsage(@NotNull String dataId, boolean error) {
-    if (!Registry.is("actionSystem.update.actions.warn.dataRules.on.edt")) return;
-    if (EDT.isCurrentThreadEdt() && SlowOperations.isInSection(SlowOperations.ACTION_UPDATE) &&
-        ActionUpdater.Companion.currentInEDTOperationName() != null && !SlowOperations.isAlwaysAllowed()) {
-      String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.Companion.currentInEDTOperationName() + ". See ActionUpdateThread javadoc.";
-      if (!Strings.areSameInstance(message, ourEDTWarnsInterner.intern(message))) return;
-      Throwable th = error ? new Throwable(message) : null;
-      AppExecutorUtil.getAppExecutorService().execute(() -> {
+  private fun reportValueProvidedByRulesUsage(dataId: String, error: Boolean) {
+    if (!Registry.`is`("actionSystem.update.actions.warn.dataRules.on.edt")) return
+    if (EDT.isCurrentThreadEdt() &&
+        SlowOperations.isInSection(SlowOperations.ACTION_UPDATE) &&
+        ActionUpdater.currentInEDTOperationName() != null &&
+        !SlowOperations.isAlwaysAllowed()) {
+      val message = "'$dataId' is requested on EDT by ${ActionUpdater.currentInEDTOperationName()}. See ActionUpdateThread javadoc."
+      if (!Strings.areSameInstance(message, ourEDTWarnsInterner.intern(message))) return
+      val th = if (error) Throwable(message) else null
+      AppExecutorUtil.getAppExecutorService().execute {
         if (error) {
-          LOG.error(th);
+          LOG.error(th as Throwable)
         }
         else {
-          LOG.warn(message);
+          LOG.warn(message)
         }
-      });
+      }
     }
   }
 
-  private static void reportValueProvidedByRules(@NotNull String dataId) {
-    if (!Registry.is("actionSystem.update.actions.warn.dataRules.on.edt")) return;
-    if ("History".equals(dataId) || "treeExpanderHideActions".equals(dataId)) {
-      LOG.error("'" + dataId + "' is provided by a rule"); // EA-648179
-    }
-  }
+  @Suppress("DuplicatedCode")
+  fun getRawDataIfCached(dataId: String, uiOnly: Boolean): Any? {
+    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.`is`(dataId)) return SoftReference.dereference(myComponentRef.ref)
+    if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.`is`(dataId)) return myComponentRef.modalContext
+    if (PlatformDataKeys.MODALITY_STATE.`is`(dataId)) return myComponentRef.modalityState
+    if (PlatformDataKeys.SPEED_SEARCH_TEXT.`is`(dataId) && myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText
+    if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.`is`(dataId) && myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get()
+    if (myCachedData.isEmpty()) return null
 
-  @Nullable Object getRawDataIfCached(@NotNull String dataId, boolean uiOnly) {
-    //noinspection DuplicatedCode
-    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.is(dataId)) return dereference(myComponentRef.ref);
-    if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.is(dataId)) return myComponentRef.modalContext;
-    if (PlatformDataKeys.MODALITY_STATE.is(dataId)) return myComponentRef.modalityState;
-    if (PlatformDataKeys.SPEED_SEARCH_TEXT.is(dataId) && myComponentRef.speedSearchText != null) return myComponentRef.speedSearchText;
-    if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId) && myComponentRef.speedSearchRef != null) return myComponentRef.speedSearchRef.get();
-    if (myCachedData.isEmpty()) return null;
-
-    for (ProviderData map : myCachedData) {
-      Object answer = map.uiSnapshot.get(dataId);
-      if (answer == null && !uiOnly) answer = map.computedData.get(dataId);
+    for (map in myCachedData) {
+      var answer = map.uiSnapshot[dataId]
+      if (answer == null && !uiOnly) answer = map.computedData[dataId]
       if (answer != null) {
-        return answer == EXPLICIT_NULL ? null : answer;
+        return if (answer === CustomizedDataContext.EXPLICIT_NULL) null else answer
       }
     }
-    return null;
+    return null
   }
 
-  static void clearAllCaches() {
-    for (FList<ProviderData> list : ourPrevMaps.values()) {
-      for (ProviderData map : list) {
-        map.uiSnapshot.clear();
-        map.computedData.clear();
-      }
-    }
-    ourPrevMaps.clear();
-    ourComponents.clear();
-    for (PreCachedDataContext context : ourInstances) {
-      for (ProviderData map : context.myCachedData) {
-        map.uiSnapshot.clear();
-        map.computedData.clear();
-      }
-    }
-    ourInstances.clear();
-  }
-
-  static @NotNull AsyncDataContext customize(@NotNull AsyncDataContext context, @Nullable Object provider) {
-    if (provider == null) return context;
-    MySink sink = new MySink();
-    cacheProviderData(sink, provider, (DataManagerImpl)DataManager.getInstance());
-    Map<String, Object> snapshot = sink.map == null ? null : sink.map.uiSnapshot;
-    if (snapshot == null) return context;
-    return dataId -> DataManager.getInstance().getCustomizedData(dataId, context, snapshot::get);
-  }
-
-  private static int getDataKeyIndex(@NotNull String dataId) {
-    int keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
-    if (keyIndex == -1 && ourDataKeysIndices.size() < DataKey.allKeysCount()) {
-      for (DataKey<?> key : DataKey.allKeys()) {
-        ourDataKeysIndices.computeIfAbsent(key.getName(), __ -> ourDataKeysCount.getAndIncrement());
-      }
-      keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
-    }
-    return keyIndex;
-  }
-
-  private static @NotNull FList<ProviderData> cacheComponentsData(@NotNull MySink sink,
-                                                                  @NotNull List<? extends Component> components,
-                                                                  @NotNull FList<ProviderData> initial,
-                                                                  @NotNull DataManagerImpl dataManager) {
-    FList<ProviderData> cachedData = initial;
-    if (components.isEmpty()) return cachedData;
-    long start = System.currentTimeMillis();
-    for (Component comp : components) {
-      sink.map = null;
-      sink.hideEditor = hideEditor(comp);
-      Object dataProvider = comp instanceof UiDataProvider ? comp : getDataProviderEx(comp);
-      cacheProviderData(sink, dataProvider, dataManager);
-      cachedData = sink.map == null ? cachedData : cachedData.prepend(sink.map);
-      ourPrevMaps.put(comp, cachedData);
-    }
-    long time = System.currentTimeMillis() - start;
-    if (time > 200) {
-      // nothing
-    }
-    return cachedData;
-  }
-
-  private static void cacheProviderData(@NotNull MySink sink,
-                                        @Nullable Object dataProvider,
-                                        @NotNull DataManagerImpl dataManager) {
-    DataSink.uiDataSnapshot(sink, dataProvider);
-    if (sink.map != null) { // no data - no rules
-      for (DataKey<?> key : dataManager.keysForRuleType(GetDataRuleType.FAST)) {
-        Object data = dataManager.getDataFromRules(key.getName(), GetDataRuleType.FAST, sink.map.uiSnapshot::get);
-        if (data == null) continue;
-        sink.map.uiSnapshot.putIfAbsent(key.getName(), data);
-      }
-    }
-    if (sink.hideEditor) {
-      if (sink.map == null) sink.map = new ProviderData();
-      sink.map.uiSnapshot.put(CommonDataKeys.EDITOR.getName(), EXPLICIT_NULL);
-      sink.map.uiSnapshot.put(CommonDataKeys.HOST_EDITOR.getName(), EXPLICIT_NULL);
-      sink.map.uiSnapshot.put(InjectedDataKeys.EDITOR.getName(), EXPLICIT_NULL);
-    }
-  }
-
-  private static @NotNull FList<ProviderData> runSnapshotRules(@NotNull MySink sink,
-                                                               @Nullable Component component,
-                                                               @NotNull FList<ProviderData> cachedData) {
-    boolean noMap = sink.map == null;
-    DataSnapshot snapshot = new DataSnapshot() {
-      /** @noinspection unchecked */
-      @Override
-      public <T> @Nullable T get(@NotNull DataKey<T> key) {
-        if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT) return (T)component;
-        for (ProviderData map : cachedData) {
-          Object answer = map.uiSnapshot.get(key.getName());
-          if (answer != null) {
-            return answer == EXPLICIT_NULL ? null : (T)answer;
-          }
-        }
-        return null;
-      }
-    };
-    UiDataRule.forEachRule(o -> {
-      Object prev = sink.source;
-      sink.source = o;
-      sink.cachedDataForRules = cachedData;
-      try {
-        o.uiDataSnapshot(sink, snapshot);
-      }
-      finally {
-        sink.cachedDataForRules = null;
-        sink.source = prev;
-      }
-    });
-    return noMap && sink.map != null ? cachedData.prepend(sink.map) : cachedData;
-  }
-
-  private static class MySink implements DataSink {
-    ProviderData map;
-    Object source;
-    DataKey<?>[] keys;
-    @Deprecated
-    boolean hideEditor;
-    FList<ProviderData> cachedDataForRules;
-
-    @Override
-    public <T> void set(@NotNull DataKey<T> key, @Nullable T data) {
-      if (data == null) return;
-      if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
-          key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
-          key == PlatformDataKeys.MODALITY_STATE) {
-        return;
-      }
-      T validated;
-      if (data == EXPLICIT_NULL) {
-        validated = data;
-      }
-      else if (key == PlatformCoreDataKeys.BGT_DATA_PROVIDER) {
-        DataProvider existing = map == null ? null : (DataProvider)map.uiSnapshot.get(key.getName());
-        //noinspection unchecked
-        validated = existing == null ? data :
-                    cachedDataForRules == null ?
-                    (T)CompositeDataProvider.compose((DataProvider)data, existing) :
-                    (T)CompositeDataProvider.compose(existing, (DataProvider)data);
-      }
-      else {
-        //noinspection unchecked
-        validated = (T)DataValidators.validOrNull(data, key.getName(), source);
-      }
-      if (validated == null) return;
-      if (map == null) map = new ProviderData();
-      if (cachedDataForRules != null && key != PlatformCoreDataKeys.BGT_DATA_PROVIDER) {
-        for (ProviderData map : cachedDataForRules) {
-          if (map.uiSnapshot.get(key.getName()) != null) {
-            return;
-          }
+  companion object {
+    @JvmStatic
+    fun clearAllCaches() {
+      for (list in ourPrevMaps.values) {
+        for (map in list) {
+          map.uiSnapshot.clear()
+          map.computedData.clear()
         }
       }
-      map.uiSnapshot.put(key.getName(), validated);
-      if (key == CommonDataKeys.EDITOR && validated != EXPLICIT_NULL) {
-        map.uiSnapshot.put(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getName(), validated);
-      }
-    }
-
-    @Override
-    public <T> void setNull(@NotNull DataKey<T> key) {
-      if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
-          key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
-          key == PlatformDataKeys.MODALITY_STATE) {
-        return;
-      }
-      if (map == null) map = new ProviderData();
-      map.uiSnapshot.put(key.getName(), EXPLICIT_NULL);
-    }
-
-    @Override
-    public <T> void lazy(@NotNull DataKey<T> key, @NotNull Function0<? extends @Nullable T> data) {
-      set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, new MyLazy<>(key, data));
-    }
-
-    @Override
-    public <T> void lazyNull(@NotNull DataKey<T> key) {
-      set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, dataId -> key.is(dataId) ? EXPLICIT_NULL : null);
-    }
-
-    @Override
-    public void uiDataSnapshot(@NotNull UiDataProvider provider) {
-      Object prev = source;
-      source = provider;
-      try {
-        provider.uiDataSnapshot(this);
-      }
-      finally {
-        source = prev;
-      }
-    }
-
-    @Override
-    public void dataSnapshot(@NotNull DataSnapshotProvider provider) {
-      Object prev = source;
-      source = provider;
-      try {
-        provider.dataSnapshot(this);
-      }
-      finally {
-        source = prev;
-      }
-    }
-
-    @Override
-    public void uiDataSnapshot(@NotNull DataProvider provider) {
-      Object prev = source;
-      source = provider;
-      try {
-        if (keys == null) {
-          keys = DataKey.allKeys();
-        }
-        for (DataKey<?> key : keys) {
-          Object data = key.getData(provider);
-          if (data != null) {
-            //noinspection unchecked
-            set((DataKey<Object>)key, data);
-          }
+      ourPrevMaps.clear()
+      ourComponents.clear()
+      for (context in ourInstances) {
+        for (map in context.myCachedData) {
+          map.uiSnapshot.clear()
+          map.computedData.clear()
         }
       }
-      finally {
-        source = prev;
+      ourInstances.clear()
+    }
+
+    @JvmStatic
+    fun customize(context: AsyncDataContext, provider: Any?): AsyncDataContext {
+      if (provider == null) return context
+      val sink = MySink()
+      cacheProviderData(sink, provider, DataManager.getInstance() as DataManagerImpl)
+      val snapshot = sink.map?.uiSnapshot
+      if (snapshot == null) return context
+      return AsyncDataContext { dataId: String ->
+        DataManager.getInstance().getCustomizedData(dataId, context, DataProvider { snapshot[it] })
       }
     }
   }
 
-  private static class MyLazy<T> implements DataProvider, DataValidators.SourceWrapper {
-    final DataKey<T> key;
-    final Function0<? extends @Nullable T> supplier;
-
-    MyLazy(@NotNull DataKey<T> key, @NotNull Function0<? extends @Nullable T> supplier) {
-      this.key = key;
-      this.supplier = supplier;
-    }
-
-    @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      return key.is(dataId) ? supplier.invoke() : null;
-    }
-
-    @Override
-    public @NotNull Object unwrapSource() {
-      return supplier;
-    }
+  override fun <T> getUserData(key: Key<T>): T? {
+    return myUserData.get().get(key)
   }
 
-  private static boolean hideEditor(@Nullable Component component) {
-    return component instanceof JComponent &&
-           ((JComponent)component).getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null;
-  }
-
-  @Override
-  public String toString() {
-    return (this instanceof InjectedDataContext ? "injected:" : "") +
-           "component=" + getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-  }
-
-  @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
-    return myUserData.get().get(key);
-  }
-
-  @Override
-  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+  override fun <T> putUserData(key: Key<T>, value: T?) {
     while (true) {
-      KeyFMap map = myUserData.get();
-      KeyFMap newMap = value == null ? map.minus(key) : map.plus(key, value);
-      if (newMap == map || myUserData.compareAndSet(map, newMap)) {
-        break;
+      val map = myUserData.get()
+      val newMap = if (value == null) map.minus(key) else map.plus(key, value)
+      if (newMap === map || myUserData.compareAndSet(map, newMap)) {
+        break
       }
     }
   }
 
-  private static final class InjectedDataContext extends PreCachedDataContext {
-    InjectedDataContext(@NotNull ComponentRef compRef,
-                        @NotNull FList<ProviderData> cachedData,
-                        @NotNull AtomicReference<KeyFMap> userData,
-                        @NotNull DataManagerImpl dataManager,
-                        int dataKeysCount) {
-      super(compRef, cachedData, userData, dataManager, dataKeysCount);
+  override fun toString(): String {
+    return (if (this is InjectedDataContext) "injected:" else "") +
+           "component=${getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)}"
+  }
+
+  private inner class ContextRuleProvider : DataProvider, DataValidators.SourceWrapper {
+    override fun getData(dataId: String): Any? {
+      return getDataInner(dataId, !CommonDataKeys.PROJECT.`is`(dataId), true)
     }
 
-    @Override
-    protected @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase, boolean ruleValuesAllowed) {
-      return InjectedDataKeys.getInjectedData(dataId, (key) -> super.getDataInner(key, rulesAllowedBase, ruleValuesAllowed));
+    override fun unwrapSource(): Any {
+      return this@PreCachedDataContext
     }
   }
 
-  private class ContextRuleProvider implements DataProvider, DataValidators.SourceWrapper {
-    @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      return getDataInner(dataId, !CommonDataKeys.PROJECT.is(dataId), true);
+  private class InjectedDataContext(
+    compRef: ComponentRef,
+    cachedData: FList<ProviderData>,
+    userData: AtomicReference<KeyFMap>,
+    dataManager: DataManagerImpl,
+    dataKeysCount: Int
+  ) : PreCachedDataContext(compRef, cachedData, userData, dataManager, dataKeysCount) {
+    override fun getDataInner(dataId: String, rulesAllowedBase: Boolean, ruleValuesAllowed: Boolean): Any? {
+      return InjectedDataKeys.getInjectedData(dataId, DataProvider { dataId ->
+        super.getDataInner(dataId, rulesAllowedBase, ruleValuesAllowed)
+      })
     }
+  }
+}
 
-    @Override
-    public @NotNull Object unwrapSource() {
-      return PreCachedDataContext.this;
+private fun getDataKeyIndex(dataId: String): Int {
+  var keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1)
+  if (keyIndex == -1 && ourDataKeysIndices.size < DataKey.allKeysCount()) {
+    for (key in DataKey.allKeys()) {
+      ourDataKeysIndices.computeIfAbsent(key.name) { ourDataKeysCount.getAndIncrement() }
+    }
+    keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1)
+  }
+  return keyIndex
+}
+
+private fun cacheComponentsData(
+  sink: MySink,
+  components: List<Component>,
+  initial: FList<ProviderData>,
+  dataManager: DataManagerImpl
+): FList<ProviderData> {
+  var cachedData = initial
+  if (components.isEmpty()) return cachedData
+  val start = System.currentTimeMillis()
+  for (comp in components) {
+    sink.map = null
+    sink.hideEditor = hideEditor(comp)
+    val dataProvider = if (comp is UiDataProvider) comp else DataManagerImpl.getDataProviderEx(comp)
+    cacheProviderData(sink, dataProvider, dataManager)
+    cachedData = if (sink.map == null) cachedData else cachedData.prepend(sink.map)
+    ourPrevMaps.put(comp, cachedData)
+  }
+  val time = System.currentTimeMillis() - start
+  @Suppress("ControlFlowWithEmptyBody")
+  if (time > 200) {
+    // nothing
+  }
+  return cachedData
+}
+
+private fun cacheProviderData(
+  sink: MySink,
+  dataProvider: Any?,
+  dataManager: DataManagerImpl
+) {
+  DataSink.uiDataSnapshot(sink, dataProvider)
+  sink.map?.let { map -> // no data - no rules
+    for (key in dataManager.keysForRuleType(GetDataRuleType.FAST)) {
+      val data = dataManager.getDataFromRules(
+        key.name, GetDataRuleType.FAST, DataProvider { map.uiSnapshot[it] })
+      if (data == null) continue
+      map.uiSnapshot.putIfAbsent(key.name, data)
+    }
+  }
+  if (sink.hideEditor) {
+    val map = sink.map ?: ProviderData().also { sink.map = it }
+    map.uiSnapshot.put(CommonDataKeys.EDITOR.name, CustomizedDataContext.EXPLICIT_NULL)
+    map.uiSnapshot.put(CommonDataKeys.HOST_EDITOR.name, CustomizedDataContext.EXPLICIT_NULL)
+    map.uiSnapshot.put(InjectedDataKeys.EDITOR.name, CustomizedDataContext.EXPLICIT_NULL)
+  }
+}
+
+private fun runSnapshotRules(
+  sink: MySink,
+  component: Component?,
+  cachedData: FList<ProviderData>
+): FList<ProviderData> {
+  val noMap = sink.map == null
+  val snapshot: DataSnapshot = object : DataSnapshot {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : Any> get(key: DataKey<T>): T? {
+      if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT) return component as T?
+      for (map in cachedData) {
+        val answer = map.uiSnapshot[key.name]
+        when {
+          answer === CustomizedDataContext.EXPLICIT_NULL -> return null
+          answer != null -> return answer as T
+        }
+      }
+      return null
+    }
+  }
+  UiDataRule.forEachRule { rule ->
+    val prev = sink.source
+    sink.source = rule
+    sink.cachedDataForRules = cachedData
+    try {
+      rule.uiDataSnapshot(sink, snapshot)
+    }
+    finally {
+      sink.cachedDataForRules = null
+      sink.source = prev
+    }
+  }
+  return if (noMap && sink.map != null) cachedData.prepend(sink.map) else cachedData
+}
+
+private class MySink : DataSink {
+  var map: ProviderData? = null
+  var source: Any? = null
+  var keys: Array<DataKey<*>>? = null
+
+  var hideEditor: Boolean = false
+  var cachedDataForRules: FList<ProviderData>? = null
+
+  override fun <T : Any> set(key: DataKey<T>, data: T?) {
+    if (data == null) return
+    if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
+        key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
+        key == PlatformDataKeys.MODALITY_STATE) {
+      return
+    }
+    val validated = when {
+      data === CustomizedDataContext.EXPLICIT_NULL -> data
+      key == PlatformCoreDataKeys.BGT_DATA_PROVIDER -> {
+        val existing = map?.uiSnapshot[key.name] as DataProvider?
+        when {
+          existing == null -> data
+          cachedDataForRules == null -> CompositeDataProvider.compose(data as DataProvider, existing)
+          else -> CompositeDataProvider.compose(existing, data as DataProvider)
+        }
+      }
+      else -> DataValidators.validOrNull(data, key.name, source!!)
+    }
+    if (validated == null) return
+    val map = map ?: ProviderData().also { map = it }
+    if (cachedDataForRules != null && key != PlatformCoreDataKeys.BGT_DATA_PROVIDER) {
+      for (map in cachedDataForRules) {
+        if (map.uiSnapshot[key.name] != null) {
+          return
+        }
+      }
+    }
+    map.uiSnapshot.put(key.name, validated)
+    if (key == CommonDataKeys.EDITOR && validated !== CustomizedDataContext.EXPLICIT_NULL) {
+      map.uiSnapshot.put(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.name, validated)
     }
   }
 
-  private static final class ProviderData implements DataProvider, DataValidators.SourceWrapper {
-    final Map<String, Object> uiSnapshot = new ConcurrentHashMap<>();
-    final Map<String, Object> computedData = new ConcurrentHashMap<>();
-    // to avoid lots of nulls in maps
-    final ConcurrentBitSet nullsByRules = ConcurrentBitSet.create();
-    final ConcurrentBitSet nullsByContextRules = ConcurrentBitSet.create();
-
-    @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      Object o = uiSnapshot.get(dataId);
-      return o != null ? o : computedData.get(dataId);
+  override fun <T : Any> setNull(key: DataKey<T>) {
+    if (key == PlatformCoreDataKeys.CONTEXT_COMPONENT || key == PlatformCoreDataKeys.IS_MODAL_CONTEXT || key == PlatformDataKeys.MODALITY_STATE) {
+      return
     }
+    val map = map ?: ProviderData().also { map = it }
+    map.uiSnapshot.put(key.name, CustomizedDataContext.EXPLICIT_NULL)
+  }
 
-    @Override
-    public @NotNull Object unwrapSource() {
-      return Collections.emptyMap();
+  override fun <T : Any> lazy(key: DataKey<T>, data: () -> T?) {
+    set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, MyLazy(key, data))
+  }
+
+  override fun <T : Any> lazyNull(key: DataKey<T>) {
+    set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, DataProvider { dataId ->
+      if (key.`is`(dataId)) CustomizedDataContext.EXPLICIT_NULL else null
+    })
+  }
+
+  override fun uiDataSnapshot(provider: UiDataProvider) {
+    val prev = source
+    source = provider
+    try {
+      provider.uiDataSnapshot(this)
+    }
+    finally {
+      source = prev
     }
   }
 
-  private static final class ComponentRef {
-    final Reference<Component> ref;
-    final ModalityState modalityState;
-    final Boolean modalContext;
-
-    final String speedSearchText;
-    final Reference<Component> speedSearchRef;
-
-    ComponentRef(@Nullable Component component) {
-      ref = component == null ? null : new WeakReference<>(component);
-      modalityState = component == null ? ModalityState.nonModal() : ModalityState.stateForComponent(component);
-      modalContext = component == null ? null : Utils.isModalContext(component);
-
-      SpeedSearchSupply supply = component instanceof JComponent ? SpeedSearchSupply.getSupply((JComponent)component) : null;
-      speedSearchText = supply != null ? supply.getEnteredPrefix() : null;
-      JTextField field = supply instanceof SpeedSearchBase<?> ? ((SpeedSearchBase<?>)supply).getSearchField() : null;
-      speedSearchRef = field != null ? new WeakReference<>(field) : null;
+  override fun dataSnapshot(provider: DataSnapshotProvider) {
+    val prev = source
+    source = provider
+    try {
+      provider.dataSnapshot(this)
     }
+    finally {
+      source = prev
+    }
+  }
+
+  override fun uiDataSnapshot(provider: DataProvider) {
+    val prev = source
+    source = provider
+    try {
+      val keys = keys ?: DataKey.allKeys().also { keys = it }
+      for (key in keys) {
+        val data: Any? = key.getData(provider)
+        if (data != null) {
+          @Suppress("UNCHECKED_CAST")
+          set(key as DataKey<Any>, data)
+        }
+      }
+    }
+    finally {
+      source = prev
+    }
+  }
+}
+
+private class MyLazy<T>(val key: DataKey<T>, val supplier: () -> T?) : DataProvider, DataValidators.SourceWrapper {
+  override fun getData(dataId: String): Any? {
+    return if (key.`is`(dataId)) supplier.invoke() else null
+  }
+
+  override fun unwrapSource(): Any {
+    return supplier
+  }
+}
+
+private fun hideEditor(component: Component?): Boolean {
+  return component is JComponent &&
+         component.getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null
+}
+
+private class ProviderData : DataProvider, DataValidators.SourceWrapper {
+  val uiSnapshot = ConcurrentHashMap<String, Any>()
+  val computedData = ConcurrentHashMap<String, Any>()
+
+  // to avoid lots of nulls in maps
+  val nullsByRules = ConcurrentBitSet.create()
+  val nullsByContextRules = ConcurrentBitSet.create()
+
+  override fun getData(dataId: String): Any? {
+    return uiSnapshot[dataId] ?: computedData[dataId]
+  }
+
+  override fun unwrapSource(): Any {
+    return emptyMap<Any, Any>()
+  }
+}
+
+private class ComponentRef(component: Component?) {
+  val ref = component?.let { WeakReference(it) }
+  val modalityState = component?.let { ModalityState.stateForComponent(it) } ?: ModalityState.nonModal()
+  val modalContext = component?.let { isModalContext(it) }
+
+  val speedSearchText: String?
+  val speedSearchRef: Reference<Component>?
+
+  init {
+    val supply = (component as? JComponent)?.let { SpeedSearchSupply.getSupply(it) }
+    speedSearchText = supply?.enteredPrefix
+    speedSearchRef = (supply as? SpeedSearchBase<*>)?.getSearchField()?.let { WeakReference(it) }
   }
 }
