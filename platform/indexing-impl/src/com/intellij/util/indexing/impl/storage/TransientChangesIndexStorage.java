@@ -24,11 +24,15 @@ import java.util.Set;
 @Internal
 public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private static final Logger LOG = Logger.getInstance(TransientChangesIndexStorage.class);
-  private final Map<Key, TransientChangeTrackingValueContainer<Value>> myMap;
-  private final @NotNull VfsAwareIndexStorage<Key, Value> myBackendStorage;
-  private final List<BufferingStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final @NotNull ID<?, ?> myIndexId;
-  private boolean myBufferingEnabled;
+
+  /** Used for debug/logging */
+  private final @NotNull ID<?, ?> indexId;
+
+  private final Map<Key, TransientChangeTrackingValueContainer<Value>> inMemoryStorage;
+  private final @NotNull VfsAwareIndexStorage<Key, Value> underlyingStorage;
+
+  private boolean bufferingEnabled;
+  private final List<BufferingStateListener> bufferingStateListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public interface BufferingStateListener {
     void bufferingStateChanged(boolean newState);
@@ -36,46 +40,42 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
     void memoryStorageCleared();
   }
 
-  public TransientChangesIndexStorage(@NotNull IndexStorage<Key, Value> backend, @NotNull FileBasedIndexExtension<Key, Value> extension) {
-    myBackendStorage = (VfsAwareIndexStorage<Key, Value>)backend;
-    myIndexId = extension.getName();
-    myMap = ConcurrentCollectionFactory.createConcurrentMap(IndexStorageUtil.adaptKeyDescriptorToStrategy(extension.getKeyDescriptor()));
-  }
-
-  @NotNull
-  VfsAwareIndexStorage<Key, Value> getBackendStorage() {
-    return myBackendStorage;
+  public TransientChangesIndexStorage(@NotNull IndexStorage<Key, Value> underlyingStorage,
+                                      @NotNull FileBasedIndexExtension<Key, Value> extension) {
+    this.underlyingStorage = (VfsAwareIndexStorage<Key, Value>)underlyingStorage;
+    indexId = extension.getName();
+    inMemoryStorage = ConcurrentCollectionFactory.createConcurrentMap(IndexStorageUtil.adaptKeyDescriptorToStrategy(extension.getKeyDescriptor()));
   }
 
   public void addBufferingStateListener(@NotNull BufferingStateListener listener) {
-    myListeners.add(listener);
+    bufferingStateListeners.add(listener);
   }
 
   public void setBufferingEnabled(boolean enabled) {
-    final boolean wasEnabled = myBufferingEnabled;
+    boolean wasEnabled = bufferingEnabled;
     LOG.assertTrue(wasEnabled != enabled);
 
-    myBufferingEnabled = enabled;
-    for (BufferingStateListener listener : myListeners) {
+    bufferingEnabled = enabled;
+    for (BufferingStateListener listener : bufferingStateListeners) {
       listener.bufferingStateChanged(enabled);
     }
   }
 
   public boolean clearMemoryMap() {
-    boolean modified = !myMap.isEmpty();
-    myMap.clear();
-    if (modified && FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
-      LOG.info("clearMemoryMap,index=" + myIndexId);
+    boolean modified = !inMemoryStorage.isEmpty();
+    inMemoryStorage.clear();
+    if (modified && FileBasedIndexEx.doTraceStubUpdates(indexId)) {
+      LOG.info("clearMemoryMap,index=" + indexId);
     }
     return modified;
   }
 
   public boolean clearMemoryMapForId(Key key, int fileId) {
-    TransientChangeTrackingValueContainer<Value> container = myMap.get(key);
+    TransientChangeTrackingValueContainer<Value> container = inMemoryStorage.get(key);
     if (container != null) {
       container.dropAssociatedValue(fileId);
-      if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
-        LOG.info("clearMemoryMapForId,inputId=" + fileId + ",index=" + myIndexId + ",key=" + key);
+      if (FileBasedIndexEx.doTraceStubUpdates(indexId)) {
+        LOG.info("clearMemoryMapForId,inputId=" + fileId + ",index=" + indexId + ",key=" + key);
       }
       return true;
     }
@@ -83,7 +83,7 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
   }
 
   public void fireMemoryStorageCleared() {
-    for (BufferingStateListener listener : myListeners) {
+    for (BufferingStateListener listener : bufferingStateListeners) {
       listener.memoryStorageCleared();
     }
   }
@@ -91,135 +91,133 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
   @Override
   public void clearCaches() {
     try {
-      if (myMap.isEmpty()) return;
+      if (inMemoryStorage.isEmpty()) return;
 
-      if (IndexDebugProperties.DEBUG || FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
-        LOG.info("clearCaches,index=" + myIndexId + ",number of items:" + myMap.size());
+      if (IndexDebugProperties.DEBUG || FileBasedIndexEx.doTraceStubUpdates(indexId)) {
+        LOG.info("clearCaches,index=" + indexId + ",number of items:" + inMemoryStorage.size());
       }
 
-      for (ChangeTrackingValueContainer<Value> v : myMap.values()) {
+      for (ChangeTrackingValueContainer<Value> v : inMemoryStorage.values()) {
         v.dropMergedData();
       }
     }
     finally {
-      myBackendStorage.clearCaches();
+      underlyingStorage.clearCaches();
     }
   }
 
   @Override
   public void close() throws IOException {
-    myBackendStorage.close();
+    underlyingStorage.close();
   }
 
   @Override
   @Internal
   public boolean isClosed() {
-    return myBackendStorage.isClosed();
+    return underlyingStorage.isClosed();
   }
 
   @Override
   public void clear() throws StorageException {
     clearMemoryMap();
-    myBackendStorage.clear();
+    underlyingStorage.clear();
   }
 
   @Override
   public void flush() throws IOException {
-    myBackendStorage.flush();
+    underlyingStorage.flush();
   }
 
   @Override
   public boolean isDirty() {
-    return myBackendStorage.isDirty();
+    return underlyingStorage.isDirty();
   }
 
   @Override
-  public boolean processKeys(final @NotNull Processor<? super Key> processor, GlobalSearchScope scope, IdFilter idFilter)
+  public boolean processKeys(@NotNull Processor<? super Key> processor, GlobalSearchScope scope, IdFilter idFilter)
     throws StorageException {
-    final Set<Key> stopList = new HashSet<>();
+    Set<Key> stopList = new HashSet<>();
 
     Processor<Key> decoratingProcessor = key -> {
       if (stopList.contains(key)) return true;
 
-      final UpdatableValueContainer<Value> container = myMap.get(key);
+      UpdatableValueContainer<Value> container = inMemoryStorage.get(key);
       if (container != null && container.size() == 0) {
         return true;
       }
       return processor.process(key);
     };
 
-    for (Key key : myMap.keySet()) {
+    for (Key key : inMemoryStorage.keySet()) {
       if (!decoratingProcessor.process(key)) {
         return false;
       }
       stopList.add(key);
     }
-    return myBackendStorage.processKeys(stopList.isEmpty() ? processor : decoratingProcessor, scope, idFilter);
+    return underlyingStorage.processKeys(stopList.isEmpty() ? processor : decoratingProcessor, scope, idFilter);
   }
 
   @Override
-  public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
-    if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
-      LOG.info("addValue,inputId=" + inputId + ",index=" + myIndexId + ",inMemory=" + myBufferingEnabled + "," + value);
+  public void addValue(Key key, int inputId, Value value) throws StorageException {
+    if (FileBasedIndexEx.doTraceStubUpdates(indexId)) {
+      LOG.info("addValue,inputId=" + inputId + ",index=" + indexId + ",inMemory=" + bufferingEnabled + "," + value);
     }
 
-    if (myBufferingEnabled) {
+    if (bufferingEnabled) {
       getMemValueContainer(key).addValue(inputId, value);
       return;
     }
-    final ChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
+    ChangeTrackingValueContainer<Value> valueContainer = inMemoryStorage.get(key);
     if (valueContainer != null) {
       valueContainer.dropMergedData();
     }
 
-    myBackendStorage.addValue(key, inputId, value);
+    underlyingStorage.addValue(key, inputId, value);
   }
 
   @Override
   public void removeAllValues(@NotNull Key key, int inputId) throws StorageException {
-    if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
-      LOG.info("removeAllValues,inputId=" + inputId + ",index=" + myIndexId + ",inMemory=" + myBufferingEnabled);
+    if (FileBasedIndexEx.doTraceStubUpdates(indexId)) {
+      LOG.info("removeAllValues,inputId=" + inputId + ",index=" + indexId + ",inMemory=" + bufferingEnabled);
     }
 
-    if (myBufferingEnabled) {
+    if (bufferingEnabled) {
       getMemValueContainer(key).removeAssociatedValue(inputId);
       return;
     }
-    final ChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
+    ChangeTrackingValueContainer<Value> valueContainer = inMemoryStorage.get(key);
     if (valueContainer != null) {
       valueContainer.dropMergedData();
     }
 
-    myBackendStorage.removeAllValues(key, inputId);
+    underlyingStorage.removeAllValues(key, inputId);
   }
 
-  private UpdatableValueContainer<Value> getMemValueContainer(final Key key) {
-    return myMap.computeIfAbsent(key, k -> {
-      return new TransientChangeTrackingValueContainer<>(() -> {
-        try {
-          return (UpdatableValueContainer<Value>)myBackendStorage.read(key);
-        }
-        catch (StorageException e) {
-          throw new RuntimeException(e);
-        }
-      });
-    });
+  private UpdatableValueContainer<Value> getMemValueContainer(Key key) {
+    return inMemoryStorage.computeIfAbsent(key, k -> new TransientChangeTrackingValueContainer<>(() -> {
+      try {
+        return (UpdatableValueContainer<Value>)underlyingStorage.read(key);
+      }
+      catch (StorageException e) {
+        throw new RuntimeException(e);
+      }
+    }));
   }
 
   @Override
-  public @NotNull ValueContainer<Value> read(final Key key) throws StorageException {
-    final ValueContainer<Value> valueContainer = myMap.get(key);
+  public @NotNull ValueContainer<Value> read(Key key) throws StorageException {
+    ValueContainer<Value> valueContainer = inMemoryStorage.get(key);
     if (valueContainer != null) {
       return valueContainer;
     }
 
-    return myBackendStorage.read(key);
+    return underlyingStorage.read(key);
   }
 
   @Override
   public int keysCountApproximately() {
     //RC: this imprecise upper bound -- some keys counted twice since they present in both transient
     //    and persistent storage
-    return myMap.size() + myBackendStorage.keysCountApproximately();
+    return inMemoryStorage.size() + underlyingStorage.keysCountApproximately();
   }
 }
