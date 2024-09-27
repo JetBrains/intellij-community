@@ -4,15 +4,10 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
@@ -33,20 +28,7 @@ public class OutputEditor extends ModuleElementsEditor {
 
   @Override
   protected JComponent createComponentImpl() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(new EmptyBorder(UIUtil.PANEL_SMALL_INSETS));
-    final GridBagConstraints gc =
-      new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                             JBInsets.emptyInsets(), 0, 0);
-    panel.add(myCompilerOutputEditor.createComponentImpl(), gc);
-    final JPanel javadocPanel = (JPanel)myJavadocEditor.createComponentImpl();
-    javadocPanel.setBorder(IdeBorderFactory.createTitledBorder(myJavadocEditor.getDisplayName(), false));
-    gc.weighty = 1;
-    panel.add(javadocPanel, gc);
-    final JPanel annotationsPanel = (JPanel)myAnnotationsEditor.createComponentImpl();
-    annotationsPanel.setBorder(IdeBorderFactory.createTitledBorder(myAnnotationsEditor.getDisplayName(), false));
-    panel.add(annotationsPanel, gc);
-    return panel;
+    return new OutputEditorUi().createPanel(myCompilerOutputEditor, myJavadocEditor, myAnnotationsEditor);
   }
 
   @Override
