@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -61,11 +61,12 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   private static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = new ExtensionPointName<>("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance(ModuleBuilder.class);
-  private final Set<ModuleConfigurationUpdater> myUpdaters = new HashSet<>();
-  private final EventDispatcher<ModuleBuilderListener> myDispatcher = EventDispatcher.create(ModuleBuilderListener.class);
+
+  private final Set<ModuleConfigurationUpdater> updaters = new HashSet<>();
+  private final EventDispatcher<ModuleBuilderListener> dispatcher = EventDispatcher.create(ModuleBuilderListener.class);
   protected Sdk myJdk;
-  private String myName;
-  private @NonNls String myModuleFilePath;
+  private String name;
+  private @NonNls String moduleFilePath;
   private String myContentEntryPath;
 
   public @NotNull List<Class<? extends ModuleWizardStep>> getIgnoredSteps() {
@@ -117,16 +118,16 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   protected static @Nullable String acceptParameter(String param) {
-    return param != null && param.length() > 0 ? param : null;
+    return param != null && !param.isEmpty() ? param : null;
   }
 
   public String getName() {
-    return myName;
+    return name;
   }
 
   @Override
   public void setName(String name) {
-    myName = acceptParameter(name);
+    this.name = acceptParameter(name);
   }
 
   @Override
@@ -202,16 +203,16 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   public String getModuleFilePath() {
-    return myModuleFilePath;
+    return moduleFilePath;
   }
 
   @Override
   public void setModuleFilePath(@NonNls String path) {
-    myModuleFilePath = acceptParameter(path);
+    moduleFilePath = acceptParameter(path);
   }
 
   public void addModuleConfigurationUpdater(ModuleConfigurationUpdater updater) {
-    myUpdaters.add(updater);
+    updaters.add(updater);
   }
 
   public @Nullable String getContentEntryPath() {
@@ -255,10 +256,10 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   public @Nullable String getModuleFileDirectory() {
-    if (myModuleFilePath == null) {
+    if (moduleFilePath == null) {
       return null;
     }
-    final String parent = new File(myModuleFilePath).getParent();
+    final String parent = new File(moduleFilePath).getParent();
     if (parent == null) {
       return null;
     }
@@ -267,12 +268,12 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
   public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, ConfigurationException, JDOMException {
-    LOG.assertTrue(myName != null);
-    LOG.assertTrue(myModuleFilePath != null);
+    LOG.assertTrue(name != null);
+    LOG.assertTrue(moduleFilePath != null);
 
-    deleteModuleFile(myModuleFilePath);
+    deleteModuleFile(moduleFilePath);
     final ModuleType moduleType = getModuleType();
-    final Module module = moduleModel.newModule(myModuleFilePath, moduleType.getId());
+    final Module module = moduleModel.newModule(moduleFilePath, moduleType.getId());
     setupModule(module);
 
     return module;
@@ -281,7 +282,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   protected void setupModule(Module module) throws ConfigurationException {
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
     setupRootModel(modifiableModel);
-    for (ModuleConfigurationUpdater updater : myUpdaters) {
+    for (ModuleConfigurationUpdater updater : updaters) {
       updater.update(module, modifiableModel);
     }
     modifiableModel.commit();
@@ -289,7 +290,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   private void onModuleInitialized(final Module module) {
-    myDispatcher.getMulticaster().moduleCreated(module);
+    dispatcher.getMulticaster().moduleCreated(module);
   }
 
   public void setupRootModel(@NotNull ModifiableRootModel modifiableRootModel) throws ConfigurationException {
@@ -328,11 +329,11 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   public void addListener(ModuleBuilderListener listener) {
-    myDispatcher.addListener(listener);
+    dispatcher.addListener(listener);
   }
 
   public void removeListener(ModuleBuilderListener listener) {
-    myDispatcher.removeListener(listener);
+    dispatcher.removeListener(listener);
   }
 
   public boolean canCreateModule() {
@@ -345,22 +346,24 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return module != null ? Collections.singletonList(module) : null;
   }
 
-  public @Nullable Module commitModule(final @NotNull Project project, final @Nullable ModifiableModuleModel model) {
-    if (canCreateModule()) {
-      if (myName == null) {
-        myName = project.getName();
-      }
-      if (myModuleFilePath == null) {
-        myModuleFilePath = project.getBasePath() + File.separator + myName + ModuleFileType.DOT_DEFAULT_EXTENSION;
-      }
-      try {
-        return ApplicationManager.getApplication().runWriteAction(
-          (ThrowableComputable<Module, Exception>)() -> createAndCommitIfNeeded(project, model, true));
-      }
-      catch (Exception ex) {
-        LOG.warn(ex);
-        MessagesService.getInstance().showErrorDialog(project, IdeCoreBundle.message("error.adding.module.to.project", ex.getMessage()), IdeCoreBundle.message("title.add.module"));
-      }
+  public @Nullable Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
+    if (!canCreateModule()) {
+      return null;
+    }
+
+    if (name == null) {
+      name = project.getName();
+    }
+    if (moduleFilePath == null) {
+      moduleFilePath = project.getBasePath() + File.separator + name + ModuleFileType.DOT_DEFAULT_EXTENSION;
+    }
+    try {
+      return ApplicationManager.getApplication().runWriteAction(
+        (ThrowableComputable<Module, Exception>)() -> createAndCommitIfNeeded(project, model, true));
+    }
+    catch (Exception ex) {
+      LOG.warn(ex);
+      MessagesService.getInstance().showErrorDialog(project, IdeCoreBundle.message("error.adding.module.to.project", ex.getMessage()), IdeCoreBundle.message("title.add.module"));
     }
     return null;
   }
@@ -402,9 +405,9 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   public void updateFrom(ModuleBuilder from) {
-    myName = from.getName();
+    name = from.getName();
     myContentEntryPath = from.getContentEntryPath();
-    myModuleFilePath = from.getModuleFilePath();
+    moduleFilePath = from.getModuleFilePath();
   }
 
   public Sdk getModuleJdk() {
@@ -420,8 +423,6 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   public abstract static class ModuleConfigurationUpdater {
-
     public abstract void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel);
-
   }
 }
