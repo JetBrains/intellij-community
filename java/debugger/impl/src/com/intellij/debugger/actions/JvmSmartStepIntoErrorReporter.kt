@@ -5,6 +5,7 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.thisLogger
@@ -56,7 +57,7 @@ object JvmSmartStepIntoErrorReporter {
       if (stackTrace != null) {
         add(Attachment("stacktrace.txt", stackTrace).apply { isIncluded = true })
       }
-      add(Attachment("expression.txt", expression.text).apply { isIncluded = true })
+      add(Attachment("expression.txt", runReadAction { expression.text }).apply { isIncluded = true })
     }
 
     thisLogger().error("Failed to locate targets in bytecode. Details in attachments.",
