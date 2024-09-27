@@ -132,10 +132,6 @@ public class RemoteConnectionBuilder {
 
       parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "");
       parameters.getVMParametersList().replaceOrPrepend("-agentlib:jdwp=", "-agentlib:jdwp=" + _debuggeeRunProperties);
-
-      // deliberately skip outdated parameter because it can disable full-speed debugging for some jdk builds
-      // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6272174
-      parameters.getVMParametersList().replaceOrPrepend("-Xdebug", "");
     });
 
     return new RemoteConnection(useSockets, DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK, address, myServer);
