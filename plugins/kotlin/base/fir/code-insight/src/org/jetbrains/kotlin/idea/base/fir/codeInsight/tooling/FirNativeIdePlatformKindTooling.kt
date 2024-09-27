@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractNativeIdePlatf
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor
+import org.jetbrains.kotlin.idea.testIntegration.genericKotlinTestUrls
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -35,16 +36,6 @@ internal class FirNativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTo
             return null
         }
 
-        val urls = when (declaration) {
-            is KtClassOrObject -> listOf("java:suite://${declaration.fqName?.asString()}")
-            is KtNamedFunction -> {
-                val containingClass = declaration.containingClass()
-                listOf("java:test://${containingClass?.fqName?.asString()}/${declaration.name}")
-            }
-
-            else -> return null
-        }
-
-        return KotlinTestRunLineMarkerContributor.getTestStateIcon(urls, declaration)
+        return KotlinTestRunLineMarkerContributor.getTestStateIcon(declaration.genericKotlinTestUrls(), declaration)
     }
 }

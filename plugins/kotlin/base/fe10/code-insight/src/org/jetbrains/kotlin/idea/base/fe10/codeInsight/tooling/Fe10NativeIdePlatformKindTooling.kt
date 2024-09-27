@@ -8,6 +8,8 @@ import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractGenericTestIco
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractNativeIdePlatformKindTooling
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor
+import org.jetbrains.kotlin.idea.testIntegration.genericKotlinTestUrls
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -36,8 +38,7 @@ class Fe10NativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTooling() 
         val descriptor = declaration.resolveToDescriptorIfAny() ?: return null
         if (!Fe10GenericTestIconProvider.isKotlinTestDeclaration(descriptor)) return null
 
-        val moduleName = descriptor.module.stableName?.asString() ?: ""
-        return getTestIcon(declaration, moduleName)
+        return KotlinTestRunLineMarkerContributor.getTestStateIcon(declaration.genericKotlinTestUrls(), declaration)
     }
 }
 

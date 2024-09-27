@@ -1,27 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 
-import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
-import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.vfs.findFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.testIntegration.TestRunLineMarkerProvider
-import com.intellij.util.containers.ContainerUtil.filterIsInstance
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomChecksDsl
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomGradleProperties
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomGradlePropertiesTestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hooks.TestHooks
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.ExecuteRunConfigurationsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.RunConfigurationsChecker
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.compareTo
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
@@ -66,6 +61,7 @@ class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest(), C
         setRegistryPropertyForTest("gradle.testLauncherAPI.enabled", "false")
 
         doTest {
+            onlyModules("project.*")
             executeRunConfiguration("CommonTest.test in commonTest - success")
             executeRunConfiguration("CommonTest.test in commonTest - failure")
             executeRunConfiguration("IosTest.test in iosTest - success")
@@ -111,6 +107,50 @@ class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest(), C
                     }
 
                     assertStateAtText("NativeTest", AllIcons.RunConfigurations.TestState.Red2)
+                    assertStateAtText("success", AllIcons.RunConfigurations.TestState.Green2)
+                    assertStateAtText("failure", AllIcons.RunConfigurations.TestState.Red2)
+                }
+            }
+        }
+    }
+
+
+    @PluginTargetVersions(pluginVersion = "2.0.20-dev-0+")
+    @Test
+    fun testCommonTest() {
+        doTest {
+            onlyModules(".*commonTest")
+            executeRunConfiguration("foo.bar.CommonTest")
+            /**
+             * Let's test the line-markers after the test executed
+             *
+             * ```kotlin
+             * class CommonTest { // <- RED!
+             *     @Test
+             *     fun failure() // <- RED!
+             *
+             *     @Test
+             *     fun success() // <- GREEN!
+             * }
+             * ```
+             */
+            runAfterTestExecution {
+                val nativeTestFile = projectRoot.findFile("src/commonTest/kotlin/CommonTest.kt") ?: error("Missing 'CommonTest.kt'")
+                runInEdtAndWait {
+                    codeInsightTestFixture.openFileInEditor(nativeTestFile)
+                    codeInsightTestFixture.doHighlighting()
+                    val psi = PsiManager.getInstance(myProject).findFile(nativeTestFile) ?: error("Missing 'CommonTest.kt' PsiFile")
+                    val document = PsiDocumentManager.getInstance(myProject).getDocument(psi) ?: error("Missing 'CommonTest.kt' Document")
+                    val lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project)
+
+                    fun assertStateAtText(text: String, icon: Icon) {
+                        val lineMarker = lineMarkers.find { marker -> marker.element?.text == text }
+                            ?: error("Missing line marker for '$text'")
+
+                        kotlin.test.assertEquals(icon, lineMarker.icon, "Wrong line-marker at '$text'")
+                    }
+
+                    assertStateAtText("CommonTest", AllIcons.RunConfigurations.TestState.Red2)
                     assertStateAtText("success", AllIcons.RunConfigurations.TestState.Green2)
                     assertStateAtText("failure", AllIcons.RunConfigurations.TestState.Red2)
                 }

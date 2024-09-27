@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.testIntegration.genericKotlinTestUrls
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFunction
@@ -48,27 +49,5 @@ abstract class AbstractNativeIdePlatformKindTooling : IdePlatformKindTooling() {
             .any { !it.isForTests }
 
         return hasRunConfigurations
-    }
-
-    protected fun getTestIcon(declaration: KtNamedDeclaration, moduleName: String): Icon? {
-        val targetName = moduleName.substringAfterLast(".").removeSuffix("Test>")
-
-        val urls = when (declaration) {
-            is KtClassOrObject -> {
-                val lightClass = declaration.toLightClass() ?: return null
-                listOf("java:suite://${lightClass.qualifiedName}")
-            }
-
-            is KtNamedFunction -> {
-                val lightMethod = declaration.toLightMethods().firstOrNull() ?: return null
-                val lightClass = lightMethod.containingClass as? KtLightClass ?: return null
-                val baseName = "java:test://${lightClass.qualifiedName}/${lightMethod.name}"
-                listOf("$baseName[${targetName}X64]", "$baseName[$targetName]", baseName)
-            }
-
-            else -> return null
-        }
-
-        return KotlinTestRunLineMarkerContributor.getTestStateIcon(urls, declaration)
     }
 }
