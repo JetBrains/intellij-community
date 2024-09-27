@@ -284,7 +284,7 @@ internal object InlineCompletionContextLogs {
     val SCOPE_VALUABLE_SYMBOLS_AFTER = scopeFeatures { EventFields.Boolean("${it}_scope_valuable_symbols_after", "False if in the ${it} scope after caret there are only whitespaces or statements/strings enclosures") }
     val SCOPE_HAS_ERROR_PSI = scopeFeatures { EventFields.Boolean("${it}_scope_has_error_psi", "True if in the ${it} scope there's any PsiError element") }
 
-    val TIME_SINCE_LAST_TYPING = register(EventFields.Long("time_since_last_typing"))
+    val TIME_SINCE_LAST_TYPING = register(EventFields.Long("time_since_last_typing", "Duration between current typing and previous one."))
     val TYPING_SPEEDS = TypingSpeedTracker.getEventFields().map {
       register(it)
     }

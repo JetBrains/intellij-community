@@ -82,7 +82,20 @@ class TypingSpeedTracker {
 
   companion object {
     private val DECAY_DURATIONS = listOf(1, 2, 5, 30)
-      .associate { it.seconds to Pair(EventFields.Float("typing_speed_${it}s"), OldFeatureDeclaration.float("typing_speed_${it}s").nullable()) }
+      .associate {
+        it.seconds to Pair(
+          EventFields.Float("typing_speed_${it}s", """
+            Typing speed with exponential smoothing factor derived from decay_duration $it seconds as 
+            `alpha = 0.5.pow(time_since_last_typing / decay_duration)`.
+            Last speed (typings per minute) is computed as:
+            `V_last = 60 / time_since_last_typing`
+            And resulting formula:
+            `V_avg = alpha * V_avg_previous + (1 - alpha) * V_last`
+            Note: it's an alternative for moving average for time series. The lesser decay_duration the bigger weight recent typing speed gets in the averaging. 
+            """.trimIndent()
+          ),
+          OldFeatureDeclaration.float("typing_speed_${it}s").nullable())
+      }
     private val DECAY_DURATIONS_NEW = listOf(1, 2, 5, 30)
       .associate { it.seconds to Pair(EventFields.Float("typing_speed_${it}s"), NewFeatureDeclaration.float("typing_speed_${it}s").nullable()) }
 
