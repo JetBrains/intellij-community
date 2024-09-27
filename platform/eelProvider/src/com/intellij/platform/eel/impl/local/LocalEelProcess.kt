@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelApiBase
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.KillableProcess
 import com.intellij.platform.eel.impl.local.processKiller.PosixProcessKiller
@@ -30,7 +30,7 @@ internal class LocalEelProcess private constructor(
 
   private val scope: CoroutineScope = ApplicationManager.getApplication().service<ExecLocalProcessService>().scope()
 
-  override val pid: EelApi.Pid = LocalPid(process.pid())
+  override val pid: EelApiBase.Pid = LocalPid(process.pid())
   override val stdin: SendChannel<ByteArray> = StreamWrapper.OutputStreamWrapper(scope, process.outputStream).connectChannel()
   override val stdout: ReceiveChannel<ByteArray> = StreamWrapper.InputStreamWrapper(scope, process.inputStream).connectChannel()
   override val stderr: ReceiveChannel<ByteArray> = StreamWrapper.InputStreamWrapper(scope, process.errorStream).connectChannel()

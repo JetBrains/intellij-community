@@ -10,7 +10,7 @@ import kotlinx.coroutines.channels.SendChannel
  *
  */
 interface EelProcess: KillableProcess {
-  val pid: EelApi.Pid
+  val pid: EelApiBase.Pid
 
   /**
    * Although data transmission via this channel could potentially stall due to overflow of [kotlinx.coroutines.channels.Channel],

@@ -4,7 +4,6 @@ package com.intellij.platform.eel.path
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath.Absolute.OS
 import java.nio.file.InvalidPathException
-import kotlin.Throws
 
 sealed interface EelPathResult<P : EelPath> {
   interface Ok<P : EelPath> : EelPathResult<P> {

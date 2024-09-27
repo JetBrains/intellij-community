@@ -2,7 +2,7 @@
 package com.intellij.execution.wsl.ijent.nio.toggle
 
 import com.intellij.diagnostic.VMOptions
-import com.intellij.execution.eel.EelApiWithPathsNormalization
+import com.intellij.execution.eel.EelApiWithPathsMapping
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.execution.wsl.WslIjentManager
@@ -26,7 +26,6 @@ import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.isSameFileAs
-import kotlin.io.path.pathString
 
 /**
  * This service, along with listeners inside it, enables and disables access to WSL drives through IJent.
@@ -76,8 +75,13 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
       val enabledDistros = serviceAsync<IjentWslNioFsToggler>().strategy?.enabledInDistros
 
       return enabledDistros?.firstOrNull { distro -> distro.getUNCRootPath().isSameFileAs(path.root) }?.let { distro ->
-        EelApiWithPathsNormalization(
-          prefix = path.root.pathString,
+        /**
+         * NOTE: In [IjentWslNioFsToggleStrategy], the [com.intellij.execution.ijent.nio.IjentEphemeralRootAwareFileSystemProvider] is not currently
+         * used because [com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystem] has its own logic for handling WSL roots (prefixes).
+         * Therefore, in this case, [com.intellij.execution.eel.EelEphemeralRootAwareMapper.getOriginalPath] will return null.
+         */
+        EelApiWithPathsMapping(
+          ephemeralRoot = path.root,
           original = WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false)
         )
       }
