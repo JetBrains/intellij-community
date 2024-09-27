@@ -49,29 +49,29 @@ object RelaxedSimilarityUtils {
     }
   }
 
-  fun computeRelaxedExactMatch(
-    middle: String,
-    completion: String,
-    prefix: String,
-    suffix: String,
-    stripChars: Boolean = false,
-  ): RelaxedResult = computeRelaxedSimilarity(middle, completion, prefix, suffix, stripChars) {
-    line, middleLines -> line in middleLines
+  interface RelaxedMetric {
+    fun compute(middle: String, completion: String, prefix: String, suffix: String, stripChars: Boolean = false): RelaxedResult
   }
 
-  private fun normalizedEditDistance(left: String, right: String): Double {
-    val norm = listOf(left, right).maxOf { it.length }
-    return LevenshteinDistance(norm).apply(left, right).toDouble() / norm
+  class RelaxedExactMatch : RelaxedMetric {
+    override fun compute(middle: String, completion: String, prefix: String, suffix: String, stripChars: Boolean): RelaxedResult {
+      return computeRelaxedSimilarity(middle, completion, prefix, suffix, stripChars) { line, middleLines ->
+        line in middleLines
+      }
+    }
   }
 
-  fun computeRelaxedEditDistance(
-    middle: String,
-    completion: String,
-    prefix: String,
-    suffix: String,
-    stripChars: Boolean,
-    threshold: Double = 0.5,
-  ): RelaxedResult = computeRelaxedSimilarity(middle, completion, prefix, suffix, stripChars) {
-    line, middleLines -> 1 - normalizedEditDistance(line, middle) > threshold
+  class RelaxedEditDistance(private val threshold: Double = 0.5) : RelaxedMetric {
+    private fun normalizedEditDistance(left: String, right: String): Double {
+      val norm = listOf(left, right).maxOf { it.length }
+      val result = LevenshteinDistance(norm).apply(left, right).toDouble() / norm
+      return result
+    }
+
+    override fun compute(middle: String, completion: String, prefix: String, suffix: String, stripChars: Boolean): RelaxedResult {
+      return computeRelaxedSimilarity(middle, completion, prefix, suffix, stripChars) { line, middleLines ->
+        middleLines.any { 1 - normalizedEditDistance(line, it) > threshold }
+      }
+    }
   }
 }
