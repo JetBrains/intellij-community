@@ -56,7 +56,7 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
   private val indexingJobs = mutableMapOf<Project, Job>()
   private val jobsMutex = Mutex()
 
-  private val storageManagerWrapper = EmbeddingsConfiguration.getConfiguration().toStorageManagerWrapper()
+  private val storageManagerWrapper = EmbeddingsConfiguration.getStorageManagerWrapper()
 
   private val filesLimit: Int?
     get() {
