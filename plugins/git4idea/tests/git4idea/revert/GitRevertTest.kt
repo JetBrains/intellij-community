@@ -57,7 +57,7 @@ class GitRevertTest : GitSingleRepoTest() {
 
     assertErrorNotification("Revert failed", """
       ${commit.id.toShortString()} ${commit.subject}
-      """ + GitBundle.message("apply.changes.would.be.overwritten", "revert"))
+      """ + GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "revert", "shelve"))
     assertEquals("File content shouldn't change", "initial\nsecond\n", file.read())
     assertEquals("No new commits should have been created", commit.id.asString(), last())
   }
@@ -96,7 +96,7 @@ class GitRevertTest : GitSingleRepoTest() {
 
     assertErrorNotification("Revert failed","""
       ${commit1.id.toShortString()} ${commit1.subject}
-      """ + GitBundle.message("apply.changes.would.be.overwritten", "revert") + """
+      """ + GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "revert", "shelve") + """
       """ + GitBundle.message("apply.changes.operation.successful.for.commits", "revert", 1) + """
       ${commit2.id.toShortString()} ${commit2.subject}""")
     assertFalse("File should have been deleted", rFile.exists())

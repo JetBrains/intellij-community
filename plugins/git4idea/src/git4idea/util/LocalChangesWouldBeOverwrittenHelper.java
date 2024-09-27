@@ -13,6 +13,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.ChangesBrowserWithRollback;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,10 +30,9 @@ public final class LocalChangesWouldBeOverwrittenHelper {
     final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativeFilePaths);
     final List<Change> changes = GitUtil.findLocalChangesForPaths(project, root, absolutePaths, false);
 
-
     VcsNotifier.importantNotification()
       .createNotification(GitBundle.message("notification.title.git.operation.failed", StringUtil.capitalize(operationName)),
-                          GitBundle.message("warning.your.local.changes.would.be.overwritten.by.merge"),
+                          GitBundle.message(getOverwrittenByMergeMessage()),
                           NotificationType.ERROR)
       .setDisplayId(displayId)
       .addAction(NotificationAction.createSimple(
@@ -44,7 +45,7 @@ public final class LocalChangesWouldBeOverwrittenHelper {
   private static void showErrorDialog(@NotNull Project project, @NotNull String operationName, @NotNull List<? extends Change> changes,
                                       @NotNull Collection<String> absolutePaths) {
     String title = GitBundle.message("dialog.title.local.changes.prevent.from.operation", StringUtil.capitalize(operationName));
-    String description = GitBundle.message("warning.your.local.changes.would.be.overwritten.by.merge");
+    String description = GitBundle.message(getOverwrittenByMergeMessage());
     if (changes.isEmpty()) {
       GitUtil.showPathsInDialog(project, absolutePaths, title, description);
     }
@@ -61,4 +62,10 @@ public final class LocalChangesWouldBeOverwrittenHelper {
     }
   }
 
+  @ApiStatus.Internal
+  public static @Nls @NotNull String getOverwrittenByMergeMessage() {
+    String mergeOperation = GitBundle.message("merge.operation.name");
+    String stashOperation = StringUtil.toLowerCase(GitBundle.message("local.changes.save.policy.stash"));
+    return GitBundle.message("warning.your.local.changes.would.be.overwritten.by", mergeOperation, stashOperation);
+  }
 }

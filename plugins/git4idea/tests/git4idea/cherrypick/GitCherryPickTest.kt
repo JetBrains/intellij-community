@@ -40,7 +40,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
     assertErrorNotification("Cherry-pick failed", """
       ${shortHash(commit)} fix #1 
-      """ + GitBundle.message("apply.changes.would.be.overwritten", "cherry-pick"))
+      """ + GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "cherry-pick", "shelve"))
   }
 
   protected fun `check untracked file conflicting with commit`() {

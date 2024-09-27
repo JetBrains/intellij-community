@@ -34,6 +34,7 @@ import git4idea.commands.GitLineHandlerListener
 import git4idea.commands.GitSimpleEventDetector
 import git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT
 import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector
+import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.index.isStagingAreaAvailable
 import git4idea.index.showStagingArea
@@ -41,6 +42,7 @@ import git4idea.merge.GitConflictResolver
 import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import git4idea.stash.GitChangesSaver
 import git4idea.util.GitUntrackedFilesHelper
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -187,7 +189,9 @@ internal class GitApplyChangesProcess(
         return false
       }
       else if (localChangesOverwrittenDetector.isDetected) {
-        notifyError(GitBundle.message("apply.changes.would.be.overwritten", operationName), commit, successfulCommits)
+        val savingStrategy = GitVcsSettings.getInstance(project).saveChangesPolicy
+        val message = GitBundle.message("warning.your.local.changes.would.be.overwritten.by", operationName, savingStrategy.text.lowercase())
+        notifyError(message, commit, successfulCommits)
         return false
       }
       else if (emptyCommitDetector(result)) {

@@ -139,7 +139,7 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
 
     assertErrorNotification("Cherry-pick failed", """
       ${shortHash(commit2)} appended common
-      """ + GitBundle.message("apply.changes.would.be.overwritten", "cherry-pick") + """
+      """ + GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "cherry-pick", "shelve") + """
       """ + GitBundle.message("apply.changes.operation.successful.for.commits", "cherry-pick", 1) + """
       ${shortHash(commit1)} fix #1""")
 
