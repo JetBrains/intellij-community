@@ -124,8 +124,6 @@ public class HighlightInfo implements Segment {
    */
   final PsiReference unresolvedReference;
 
-  private final @Nullable Integer layerOverride;
-
   /**
    * @deprecated Do not create manually, use {@link #newHighlightInfo(HighlightInfoType)} instead
    */
@@ -147,8 +145,7 @@ public class HighlightInfo implements Segment {
                           @Nullable Object toolId,
                           @Nullable GutterMark gutterIconRenderer,
                           int group,
-                          @Nullable PsiReference unresolvedReference,
-                          @Nullable Integer layerOverride) {
+                          @Nullable PsiReference unresolvedReference) {
     if (startOffset < 0 || startOffset > endOffset) {
       LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
     }
@@ -171,7 +168,6 @@ public class HighlightInfo implements Segment {
     this.toolId = toolId;
     this.group = group;
     this.unresolvedReference = unresolvedReference;
-    this.layerOverride = layerOverride;
   }
 
   /**
@@ -593,9 +589,6 @@ public class HighlightInfo implements Segment {
       return registerFix(action.asIntention(), options, displayName, fixRange, key);
     }
 
-    @ApiStatus.Internal
-    @NotNull Builder overrideLayer(int layer);
-
     @Nullable("null means filtered out")
     HighlightInfo create();
 
@@ -636,7 +629,7 @@ public class HighlightInfo implements Segment {
       annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(),
       annotation.needsUpdateOnTyping(),
       annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), annotatorClass, annotation.getGutterIconRenderer(), Pass.UPDATE_ALL,
-      annotation.getUnresolvedReference(), null);
+      annotation.getUnresolvedReference());
 
     List<? extends Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
     if (fixes != null) {
@@ -1100,9 +1093,4 @@ public class HighlightInfo implements Segment {
   boolean isInjectionRelated() {
     return HighlightInfoUpdaterImpl.isInjectionRelated(toolId);
   }
-
-  @ApiStatus.Internal
-  boolean isLayerOverriden() { return layerOverride != null; }
-  @ApiStatus.Internal
-  int getLayerOverride() { Objects.requireNonNull(layerOverride); return layerOverride; }
 }
