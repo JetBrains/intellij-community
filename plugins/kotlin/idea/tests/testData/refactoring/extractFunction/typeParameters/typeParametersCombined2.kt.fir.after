@@ -8,7 +8,7 @@ class A<T: Data>(val t: T) {
     // SIBLING:
     inner class B<U: Data>(val u: U) {
         fun <V: Data> foo(v: V): Int {
-            return i<U, V>(v)
+            return i(v)
         }
     }
 

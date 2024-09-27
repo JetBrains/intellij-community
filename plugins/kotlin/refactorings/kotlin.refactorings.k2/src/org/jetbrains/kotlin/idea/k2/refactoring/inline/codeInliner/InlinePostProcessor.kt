@@ -24,31 +24,12 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.D
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.MAKE_ARGUMENT_NAMED_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.USER_CODE_KEY
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtLambdaArgument
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtReferenceExpression
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.KtTypeArgumentList
-import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.resolve.ArrayFqNames.ARRAY_CALL_FQ_NAMES
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.util.ArrayList
-import kotlin.collections.asReversed
-import kotlin.collections.contains
-import kotlin.collections.mapNotNull
-import kotlin.collections.orEmpty
-import kotlin.to
 
 object InlinePostProcessor: AbstractInlinePostProcessor() {
     override fun canMoveLambdaOutsideParentheses(expr: KtCallExpression): Boolean {
@@ -129,7 +110,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
 
             if (callExpression != null &&
                 RemoveExplicitTypeArgumentsUtils.isApplicableByPsi(callExpression) &&
-                analyze(typeArgumentList) { areTypeArgumentsRedundant(typeArgumentList) }) {
+                analyze(typeArgumentList) { areTypeArgumentsRedundant(typeArgumentList, true) }) {
                 typeArgumentList.delete()
             }
         }

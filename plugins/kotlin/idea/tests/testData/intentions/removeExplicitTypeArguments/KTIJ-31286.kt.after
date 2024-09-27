@@ -1,0 +1,10 @@
+// AFTER-WARNING: Parameter 'p' is never used
+
+interface Provider<A>
+class ProviderImpl : Provider<String>
+
+fun <T> assertThat(p: Provider<T>) {}
+
+fun mm() {
+    assertThat(ProviderImpl())
+}

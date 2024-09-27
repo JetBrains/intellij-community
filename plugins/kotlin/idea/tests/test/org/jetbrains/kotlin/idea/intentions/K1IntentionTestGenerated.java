@@ -16933,6 +16933,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitTypeArguments/insideOtherCall.kt");
         }
 
+        @TestMetadata("KTIJ-31286.kt")
+        public void testKTIJ_31286() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/KTIJ-31286.kt");
+        }
+
         @TestMetadata("kt29735.kt")
         public void testKt29735() throws Exception {
             runTest("testData/intentions/removeExplicitTypeArguments/kt29735.kt");

@@ -140,7 +140,7 @@ internal class ConvertLambdaToReferenceIntention :
             }
 
             outerCallExpression.typeArgumentList?.let {
-                if (areTypeArgumentsRedundant(it)) {
+                if (areTypeArgumentsRedundant(it, approximateFlexible = false)) {
                     it.delete()
                 }
             }

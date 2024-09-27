@@ -1,5 +1,5 @@
 fun g() {
-    println(listOf<String>("a", "b").any<String> {
+    println(listOf<String>("a", "b").any {
         if (it.isEmpty()) return@any false
         it.length < 10
     })

@@ -6263,6 +6263,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/insideOtherCall.kt");
         }
 
+        @TestMetadata("KTIJ-31286.kt")
+        public void testKTIJ_31286() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/KTIJ-31286.kt");
+        }
+
         @TestMetadata("kt29735.kt")
         public void testKt29735() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/kt29735.kt");
