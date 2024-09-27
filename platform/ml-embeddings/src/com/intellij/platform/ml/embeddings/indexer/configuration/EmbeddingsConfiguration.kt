@@ -12,10 +12,9 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * EmbeddingsConfiguration defines a configuration
+ * EmbeddingsConfiguration defines a configuration of indexer and storage used for a given indexId.
  * Use [getStorageManagerWrapper] to obtain the corresponding instance of [EmbeddingsStorageManagerWrapper] to perform a search for
- * in a given index.
- * Different indexes can use different storages and key providers.
+ * a given index.
  */
 @ApiStatus.OverrideOnly
 interface EmbeddingsConfiguration<KeyT> {
