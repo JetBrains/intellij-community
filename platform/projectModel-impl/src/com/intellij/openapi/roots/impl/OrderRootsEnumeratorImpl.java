@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PathsList;
@@ -92,7 +93,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
           Collections.addAll(result, myCustomSdkRootProvider.fun((JdkOrderEntry)orderEntry));
           return true;
         }
-        if (OrderEnumeratorBase.addCustomRootsForLibraryOrSdk((LibraryOrSdkOrderEntry)orderEntry, type, result, customHandlers)) {
+        if (addCustomRootsForLibraryOrSdk((LibraryOrSdkOrderEntry)orderEntry, type, result, customHandlers)) {
           return true;
         }
         Collections.addAll(result, ((LibraryOrSdkOrderEntry)orderEntry).getRootFiles(type));
@@ -204,7 +205,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         }
       }
     }
-    OrderEnumeratorBase.addCustomRootsForModule(type, rootModel, result, includeProduction, includeTests, customHandlers);
+    addCustomRootsForModule(type, rootModel, result, includeProduction, includeTests, customHandlers);
   }
 
   private void collectModuleRootsUrls(@NotNull OrderRootType type,
@@ -262,5 +263,41 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   @NotNull
   private OrderRootType getRootType(@NotNull OrderEntry e) {
     return myRootType != null ? myRootType : myRootTypeProvider.fun(e);
+  }
+
+  private static boolean addCustomRootsForLibraryOrSdk(@NotNull LibraryOrSdkOrderEntry forOrderEntry,
+                                                       @NotNull OrderRootType type,
+                                                       @NotNull Collection<? super VirtualFile> result,
+                                                       @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
+    for (OrderEnumerationHandler handler : customHandlers) {
+      final List<String> urls = new ArrayList<>();
+      final boolean added =
+        handler.addCustomRootsForLibraryOrSdk(forOrderEntry, type, urls);
+      for (String url : urls) {
+        ContainerUtil.addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url));
+      }
+      if (added) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean addCustomRootsForModule(@NotNull OrderRootType type,
+                                                 @NotNull ModuleRootModel rootModel,
+                                                 @NotNull Collection<? super VirtualFile> result,
+                                                 boolean includeProduction,
+                                                 boolean includeTests,
+                                                 @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
+    for (OrderEnumerationHandler handler : customHandlers) {
+      final List<String> urls = new ArrayList<>();
+      final boolean added = handler.addCustomModuleRoots(type, rootModel, urls, includeProduction, includeTests);
+      for (String url : urls) {
+        ContainerUtil.addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url));
+      }
+
+      if (added) return true;
+    }
+    return false;
   }
 }

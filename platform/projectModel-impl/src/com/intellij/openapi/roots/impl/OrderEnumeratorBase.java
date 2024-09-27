@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -405,24 +405,6 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     return true;
   }
 
-  static boolean addCustomRootsForLibraryOrSdk(@NotNull LibraryOrSdkOrderEntry forOrderEntry,
-                                               @NotNull OrderRootType type,
-                                               @NotNull Collection<? super VirtualFile> result,
-                                               @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
-    for (OrderEnumerationHandler handler : customHandlers) {
-      final List<String> urls = new ArrayList<>();
-      final boolean added =
-        handler.addCustomRootsForLibraryOrSdk(forOrderEntry, type, urls);
-      for (String url : urls) {
-        ContainerUtil.addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url));
-      }
-      if (added) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   static boolean addCustomRootUrlsForLibraryOrSdk(@NotNull LibraryOrSdkOrderEntry forOrderEntry,
                                                   @NotNull OrderRootType type,
                                                   @NotNull Collection<? super String> result,
@@ -435,24 +417,6 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
       if (added) {
         return true;
       }
-    }
-    return false;
-  }
-
-  static boolean addCustomRootsForModule(@NotNull OrderRootType type,
-                                         @NotNull ModuleRootModel rootModel,
-                                         @NotNull Collection<? super VirtualFile> result,
-                                         boolean includeProduction,
-                                         boolean includeTests,
-                                         @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
-    for (OrderEnumerationHandler handler : customHandlers) {
-      final List<String> urls = new ArrayList<>();
-      final boolean added = handler.addCustomModuleRoots(type, rootModel, urls, includeProduction, includeTests);
-      for (String url : urls) {
-        ContainerUtil.addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url));
-      }
-
-      if (added) return true;
     }
     return false;
   }
