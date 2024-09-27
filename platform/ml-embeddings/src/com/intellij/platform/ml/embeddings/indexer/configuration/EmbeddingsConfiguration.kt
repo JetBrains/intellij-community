@@ -21,13 +21,6 @@ interface EmbeddingsConfiguration<KeyT> {
     private val EP_NAME: ExtensionPointName<EmbeddingsConfiguration<*>> = ExtensionPointName.create(
       "com.intellij.platform.ml.embeddings.textEmbeddingsConfiguration")
 
-    fun <KeyT> getForKeyType(): EmbeddingsConfiguration<KeyT> {
-      return EP_NAME.extensionList
-        .filter { it.isEnabled() }
-        .filterIsInstance<EmbeddingsConfiguration<KeyT>>()
-        .first()
-    }
-
     fun getConfiguration(): EmbeddingsConfiguration<*> {
       return EP_NAME.extensionList.first { it.isEnabled() }
     }
