@@ -11,7 +11,7 @@ plugins {
 
 kotlin {
     // Use a specific Java version to ease working on different environments
-    jvmToolchain(11)
+    jvmToolchain(JDK_VERSION)
 }
 
 tasks.withType<Test>().configureEach {

@@ -107,6 +107,8 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
             substituteArtifactsVersions(substituteJvmToolchainVersion(fileContents))
         } else if (relativePath.contains("settings.gradle")) {
             substituteFoojayVersion(fileContents)
+        } else if (relativePath.contains("gradle.kts")) { // convention plugin
+            substituteArtifactsVersions(substituteJvmToolchainVersion(fileContents))
         } else if (relativePath.contains("libs.versions.toml")) {
             var newContents = fileContents
             newContents = substituteTomlLibraryVersion(newContents, "kotlin", "KOTLIN_VERSION")
