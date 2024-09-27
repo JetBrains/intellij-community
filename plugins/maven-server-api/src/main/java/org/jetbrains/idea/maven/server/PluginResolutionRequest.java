@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -11,17 +12,17 @@ import java.util.Objects;
 
 public class PluginResolutionRequest implements Serializable {
   private final @NotNull MavenId myMavenPluginId;
-  private final int nativeMavenProjectId;
+  @NotNull List<@NotNull MavenRemoteRepository> repositories;
   private final boolean resolvePluginDependencies;
   private final @NotNull List<@NotNull MavenId> pluginDependencies;
 
   public PluginResolutionRequest(@NotNull MavenId mavenPluginId,
-                                 int nativeMavenProjectId,
+                                 @NotNull List<@NotNull MavenRemoteRepository> repositories,
                                  boolean resolvePluginDependencies,
                                  @NotNull List<@NotNull MavenId> pluginDependencies
                                  ) {
     myMavenPluginId = mavenPluginId;
-    this.nativeMavenProjectId = nativeMavenProjectId;
+    this.repositories = repositories;
     this.resolvePluginDependencies = resolvePluginDependencies;
     this.pluginDependencies = new ArrayList<>(pluginDependencies);
   }
@@ -31,8 +32,8 @@ public class PluginResolutionRequest implements Serializable {
     return myMavenPluginId;
   }
 
-  public int getNativeMavenProjectId() {
-    return nativeMavenProjectId;
+  public @NotNull List<@NotNull MavenRemoteRepository> getRepositories() {
+    return repositories;
   }
 
   public boolean resolvePluginDependencies() {
@@ -48,15 +49,15 @@ public class PluginResolutionRequest implements Serializable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PluginResolutionRequest request = (PluginResolutionRequest)o;
-    return nativeMavenProjectId == request.nativeMavenProjectId &&
-           resolvePluginDependencies == request.resolvePluginDependencies &&
+    return resolvePluginDependencies == request.resolvePluginDependencies &&
            Objects.equals(myMavenPluginId, request.myMavenPluginId) &&
+           Objects.equals(repositories, request.repositories) &&
            Objects.equals(pluginDependencies, request.pluginDependencies);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myMavenPluginId, nativeMavenProjectId, resolvePluginDependencies, pluginDependencies);
+    return Objects.hash(myMavenPluginId, repositories, resolvePluginDependencies, pluginDependencies);
   }
 
   @Override
@@ -65,7 +66,7 @@ public class PluginResolutionRequest implements Serializable {
            "pluginId=" + myMavenPluginId +
            ", resolveDependencies=" + resolvePluginDependencies +
            ", pluginDependencies=" + pluginDependencies +
-           ", nativeMavenProjectId=" + nativeMavenProjectId +
+           ", repositories=" + repositories +
            '}';
   }
 }

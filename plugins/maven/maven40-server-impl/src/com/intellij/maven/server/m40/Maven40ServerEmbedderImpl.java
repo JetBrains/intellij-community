@@ -737,15 +737,12 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  private static @NotNull List<PluginResolutionData> collectPluginResolutionData(@NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests) {
+  private @NotNull List<PluginResolutionData> collectPluginResolutionData(@NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests) {
     List<PluginResolutionData> resolutions = new ArrayList<>();
 
     for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
       MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
-      int nativeMavenProjectId = pluginResolutionRequest.getNativeMavenProjectId();
-
-      MavenProject project = RemoteNativeMaven40ProjectHolder.findProjectById(nativeMavenProjectId);
-      List<RemoteRepository> remoteRepos = project.getRemotePluginRepositories();
+      List<RemoteRepository> remoteRepos = RepositoryUtils.toRepos(convertRepositories(pluginResolutionRequest.getRepositories(), false));
 
       List<Dependency> dependencies = new ArrayList<>();
       for (MavenId dependencyId : pluginResolutionRequest.getPluginDependencies()) {

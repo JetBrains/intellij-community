@@ -15,6 +15,7 @@ import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConsole
+import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.telemetry.getCurrentTelemetryIds
 import org.jetbrains.idea.maven.telemetry.scheduleExportTelemetryTrace
 import org.jetbrains.idea.maven.telemetry.tracer
@@ -25,6 +26,7 @@ import java.io.Serializable
 import java.nio.file.Path
 import java.rmi.RemoteException
 import java.util.*
+import kotlin.Throws
 
 abstract class MavenEmbedderWrapper internal constructor(private val project: Project) :
   MavenRemoteObjectWrapper<MavenServerEmbedder?>() {
@@ -150,11 +152,11 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   fun resolvePlugin(plugin: MavenPlugin,
-                    nativeMavenProject: NativeMavenProjectHolder,
+                    mavenProject: MavenProject,
                     forceUpdateSnapshots: Boolean): Collection<MavenArtifact> {
     val mavenId = plugin.mavenId
     val dependencies = plugin.dependencies.map { MavenId(it.groupId, it.artifactId, it.version) }
-    val resolutionRequests = listOf(PluginResolutionRequest(mavenId, nativeMavenProject.id, true, dependencies))
+    val resolutionRequests = listOf(PluginResolutionRequest(mavenId, mavenProject.remoteRepositories, true, dependencies))
     return runBlockingMaybeCancellable {
       resolvePlugins(resolutionRequests, null, MavenLogEventHandler, forceUpdateSnapshots)
         .flatMap { resolutionResult: PluginResolutionResponse -> resolutionResult.pluginDependencyArtifacts }.toSet()

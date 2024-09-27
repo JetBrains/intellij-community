@@ -9,7 +9,6 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.server.PluginResolutionRequest
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -40,7 +39,7 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
       val mavenPluginIds = mavenPluginIdsToResolve.map { it.first }
       MavenLog.LOG.info("maven plugin resolution started: $mavenPluginIds")
       val forceUpdate = MavenProjectsManager.getInstance(myProject).forceUpdateSnapshots
-      val resolutionRequests = mavenPluginIdsToResolve.map { PluginResolutionRequest(it.first, it.second.id, false, emptyList()) }
+      val resolutionRequests = mavenPluginIdsToResolve.map { PluginResolutionRequest(it.first, it.second.remoteRepositories, false, emptyList()) }
       val resolutionResults = embedder.resolvePlugins(resolutionRequests, process, eventHandler, forceUpdate)
       val unresolvedPluginIds = resolutionResults.filter { !it.isResolved }.map { it.mavenPluginId }.toSet()
       MavenLog.LOG.info("maven plugin resolution finished, unresolved: $unresolvedPluginIds")
@@ -78,8 +77,8 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
   }
 
   companion object {
-    private fun collectMavenPluginIdsToResolve(mavenProjects: Collection<MavenProjectWithHolder>): Collection<Pair<MavenId, NativeMavenProjectHolder>> {
-      val mavenPluginIdsToResolve = HashSet<Pair<MavenId, NativeMavenProjectHolder>>()
+    private fun collectMavenPluginIdsToResolve(mavenProjects: Collection<MavenProjectWithHolder>): Collection<Pair<MavenId, MavenProject>> {
+      val mavenPluginIdsToResolve = HashSet<Pair<MavenId, MavenProject>>()
       if (Registry.`is`("maven.plugins.use.cache")) {
         val pluginIdsToProjects = HashMap<MavenId, MutableList<MavenProjectWithHolder>>()
         for (projectData in mavenProjects) {
@@ -91,15 +90,14 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
           }
         }
         for ((key, value) in pluginIdsToProjects) {
-          mavenPluginIdsToResolve.add(Pair.create(key, sortAndGetFirst(value).mavenProjectHolder))
+          mavenPluginIdsToResolve.add(Pair.create(key, sortAndGetFirst(value).mavenProject))
         }
       }
       else {
         for (projectData in mavenProjects) {
           val mavenProject = projectData.mavenProject
-          val nativeMavenProject = projectData.mavenProjectHolder
           for (mavenPlugin in mavenProject.declaredPlugins) {
-            mavenPluginIdsToResolve.add(Pair.create(mavenPlugin.mavenId, nativeMavenProject))
+            mavenPluginIdsToResolve.add(Pair.create(mavenPlugin.mavenId, mavenProject))
           }
         }
       }

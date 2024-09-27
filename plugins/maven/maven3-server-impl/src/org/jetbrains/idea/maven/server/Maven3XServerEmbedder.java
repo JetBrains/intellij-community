@@ -876,10 +876,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
       for (PluginResolutionRequest pluginResolutionRequest : pluginResolutionRequests) {
         MavenId mavenPluginId = pluginResolutionRequest.getMavenPluginId();
-        int nativeMavenProjectId = pluginResolutionRequest.getNativeMavenProjectId();
-
-        MavenProject project = RemoteNativeMaven3ProjectHolder.findProjectById(nativeMavenProjectId);
-        List<RemoteRepository> remoteRepos = project.getRemotePluginRepositories();
+        List<RemoteRepository> remoteRepos = RepositoryUtils.toRepos(convertRepositories(pluginResolutionRequest.getRepositories()));
 
         List<Dependency> dependencies = new ArrayList<>();
         for (MavenId dependencyId : pluginResolutionRequest.getPluginDependencies()) {
