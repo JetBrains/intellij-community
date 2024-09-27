@@ -2,13 +2,12 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.xQuery
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfo.isLinux
 import java.awt.Point
 
 val Finder.toolbarHeader: FrameHeaderUI
   get() = x(xQuery {
-    or(byClass("MacToolbarFrameHeader"), if (isLinux) byClass("MainToolbar") else byClass("ToolbarFrameHeader"))
+    or(byClass("MacToolbarFrameHeader"),  byClass("ToolbarFrameHeader"))
   }, FrameHeaderUI::class.java)
 
 class FrameHeaderUI(data: ComponentData) : UiComponent(data) {
