@@ -67,12 +67,12 @@ public class SSAConstructorSparseEx {
 
     setCatchMaps(root, dgraph, flatthelper);
 
-    int itteration = 1;
+    int iteration = 1;
     HashSet<String> updated = new HashSet<>();
     do {
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
       cancellationManager.checkCanceled();
-      ssaStatements(dgraph, updated, mt, itteration++);
+      ssaStatements(dgraph, updated, mt, iteration++);
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
     }
     while (!updated.isEmpty());

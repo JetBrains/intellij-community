@@ -16,6 +16,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.*;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
@@ -70,19 +71,12 @@ public class StackVarsProcessor {
   }
 
   private static void setVersionsToNull(Statement stat) {
-    if (stat.getExprents() == null) {
-      for (Object obj : stat.getSequentialObjects()) {
-        if (obj instanceof Statement) {
-          setVersionsToNull((Statement)obj);
-        }
-        else if (obj instanceof Exprent) {
-          setExprentVersionsToNull((Exprent)obj);
-        }
+    for (IMatchable obj : stat.getExprentsOrSequentialObjects()) {
+      if (obj instanceof Statement) {
+        setVersionsToNull((Statement)obj);
       }
-    }
-    else {
-      for (Exprent exprent : stat.getExprents()) {
-        setExprentVersionsToNull(exprent);
+      else if (obj instanceof Exprent) {
+        setExprentVersionsToNull((Exprent)obj);
       }
     }
   }
@@ -94,14 +88,14 @@ public class StackVarsProcessor {
     for (Exprent expr : lst) {
       if (expr.type == Exprent.EXPRENT_VAR) {
         VarExprent varExprent = (VarExprent)expr;
-        VarVersion previousPair = varExprent.getVarVersionPair();
+        VarVersion previousPair = varExprent.getVarVersion();
         String name = varExprent.getProcessor().getVarName(previousPair);
         String assignedName = varExprent.getProcessor().getAssignedVarName(previousPair);
         varExprent.setVersion(0);
-        String name0 = varExprent.getProcessor().getVarName(varExprent.getVarVersionPair());
-        String assignedName0 = varExprent.getProcessor().getAssignedVarName(varExprent.getVarVersionPair());
+        String name0 = varExprent.getProcessor().getVarName(varExprent.getVarVersion());
+        String assignedName0 = varExprent.getProcessor().getAssignedVarName(varExprent.getVarVersion());
         if (name == null && name0 == null && assignedName != null && assignedName0 == null) {
-          varExprent.getProcessor().setAssignedVarName(varExprent.getVarVersionPair(), assignedName);
+          varExprent.getProcessor().setAssignedVarName(varExprent.getVarVersion(), assignedName);
         }
       }
     }
@@ -403,21 +397,21 @@ public class StackVarsProcessor {
     }
 
     if (!notdom && !vernotreplaced) {
-      if (left.getLVItem() != null && right.type == Exprent.EXPRENT_VAR &&
+      if (left.getLVTEntry() != null && right.type == Exprent.EXPRENT_VAR &&
           right instanceof VarExprent rightVarExprent &&
-          rightVarExprent.getLVItem() == null) {
+          rightVarExprent.getLVTEntry() == null) {
         //try to save at least name
         VarProcessor processor = rightVarExprent.getProcessor();
-        String name = processor.getVarName(rightVarExprent.getVarVersionPair());
+        String name = processor.getVarName(rightVarExprent.getVarVersion());
         String name0 = processor.getVarName(new VarVersion(rightVarExprent.getIndex(), 0));
-        StructLocalVariableTableAttribute.LocalVariable lvt = processor.getVarLVT(rightVarExprent.getVarVersionPair());
-        StructLocalVariableTableAttribute.LocalVariable lvt0 = processor.getVarLVT(new VarVersion(rightVarExprent.getIndex(), 0));
+        StructLocalVariableTableAttribute.LocalVariable lvt = processor.getVarLVTEntry(rightVarExprent.getVarVersion());
+        StructLocalVariableTableAttribute.LocalVariable lvt0 = processor.getVarLVTEntry(new VarVersion(rightVarExprent.getIndex(), 0));
         if (name == null &&
             name0 == null &&
             lvt0 == null &&
             lvt == null &&
-            processor.getAssignedVarName(rightVarExprent.getVarVersionPair()) == null) {
-          processor.setAssignedVarName(rightVarExprent.getVarVersionPair(), left.getName());
+            processor.getAssignedVarName(rightVarExprent.getVarVersion()) == null) {
+          processor.setAssignedVarName(rightVarExprent.getVarVersion(), left.getName());
         }
       }
       // remove assignment

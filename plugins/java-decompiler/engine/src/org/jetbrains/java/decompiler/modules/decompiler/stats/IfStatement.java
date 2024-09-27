@@ -283,9 +283,9 @@ public final class IfStatement extends Statement {
   }
 
   @Override
-  public List<Object> getSequentialObjects() {
+  public List<IMatchable> getSequentialObjects() {
 
-    List<Object> lst = new ArrayList<>(stats);
+    List<IMatchable> lst = new ArrayList<>(stats);
     lst.add(1, headexprent.get(0));
 
     return lst;

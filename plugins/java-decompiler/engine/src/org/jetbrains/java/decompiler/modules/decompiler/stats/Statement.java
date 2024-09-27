@@ -448,8 +448,17 @@ public abstract class Statement implements IMatchable {
   }
 
   // TODO: make obsolete and remove
-  public List<Object> getSequentialObjects() {
+  public List<IMatchable> getSequentialObjects() {
     return new ArrayList<>(stats);
+  }
+
+  @NotNull
+  public List<? extends IMatchable> getExprentsOrSequentialObjects() {
+    List<? extends IMatchable> exprents = getExprents();
+    if (exprents != null) {
+      return exprents;
+    }
+    return getSequentialObjects();
   }
 
   public void initExprents() {
@@ -800,6 +809,13 @@ public abstract class Statement implements IMatchable {
     return varDefinitions;
   }
 
+  /**
+   * Retrieves the list of expression statements associated with this instance.
+   * This method also checks if the current operation has been canceled via the cancellation manager.
+   *
+   * @return a list of {@link Exprent} objects representing expression statements (can be empty if BlockStatement is empty),
+   * or null if it is a SequenceStatement or this Block is not processed
+   */
   @Nullable
   public List<Exprent> getExprents() {
     cancellationManager.checkCanceled();
@@ -843,7 +859,7 @@ public abstract class Statement implements IMatchable {
         e.fillBytecodeRange(values);
       }
     } else {
-      for (Object obj : this.getSequentialObjects()) {
+      for (IMatchable obj : this.getSequentialObjects()) {
         if (obj == null) {
           //Humm? Skip it
         } else if (obj instanceof Statement) {

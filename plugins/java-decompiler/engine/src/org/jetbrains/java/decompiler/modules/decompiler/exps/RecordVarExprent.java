@@ -80,7 +80,7 @@ public class RecordVarExprent extends VarExprent {
     this.setVarType(varExprent.getVarType());
     this.setIndex(varExprent.getIndex());
     this.setVersion(varExprent.getVersion());
-    this.setLVT(varExprent.getLVItem());
+    this.setLVTEntry(varExprent.getLVTEntry());
     return true;
   }
 

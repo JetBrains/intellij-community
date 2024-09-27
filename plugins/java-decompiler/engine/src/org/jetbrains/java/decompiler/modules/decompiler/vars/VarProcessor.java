@@ -197,7 +197,7 @@ public class VarProcessor {
       return;
 
     method.getLocalVariableAttr().getVariables()
-      .filter(v -> v.getVersion().var == exprent.getIndex() && v.getStart() == start).findFirst().ifPresent(exprent::setLVT);
+      .filter(v -> v.getVersion().var == exprent.getIndex() && v.getStart() == start).findFirst().ifPresent(exprent::setLVTEntry);
   }
 
   public void copyVarInfo(VarVersion from, VarVersion to) {
@@ -228,9 +228,7 @@ public class VarProcessor {
         }
       ));
 
-    for (Integer b : blacklist)
-      ret.remove(b);
-
+    ret.keySet().removeAll(blacklist);
     return ret;
   }
 
@@ -238,11 +236,11 @@ public class VarProcessor {
     return varVersions;
   }
 
-  public void setVarLVT(VarVersion var, LocalVariable lvt) {
+  public void setVarLVTEntry(VarVersion var, LocalVariable lvt) {
     mapVarLVTs.put(var, lvt);
   }
 
-  public LocalVariable getVarLVT(VarVersion var) {
+  public LocalVariable getVarLVTEntry(VarVersion var) {
     return mapVarLVTs.get(var);
   }
 }

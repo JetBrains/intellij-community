@@ -194,8 +194,8 @@ public class VarTypeProcessor {
       for (Exprent exprent : allExprents) {
         if (exprent.type == Exprent.EXPRENT_VAR) {
           VarExprent ve = (VarExprent)exprent;
-          if (ve.getLVItem() != null) {
-            ve.setVarType(ve.getLVItem().getVarType());
+          if (ve.getLVTEntry() != null) {
+            ve.setVarType(ve.getLVTEntry().getVarType());
           } else {
             ve.setVarType(VarType.VARTYPE_UNKNOWN);
           }

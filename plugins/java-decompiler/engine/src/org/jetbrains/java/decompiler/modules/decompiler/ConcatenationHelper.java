@@ -211,7 +211,7 @@ public final class ConcatenationHelper {
               if (!VarType.VARTYPE_STRING.equals(exprent.getExprType())) {
                 nonString++;
                 if (nonString == 2 && i == 1) {
-                  // First two items of concatenation are a variable and variable's type is not a String.
+                  // First two items of concatenation are variables and their types are not String.
                   // Prepend it with empty string literal to force resulting expression type to be String.
                   res.add(0, new ConstExprent(VarType.VARTYPE_STRING, "", expr.bytecode));
                 }

@@ -154,7 +154,7 @@ public final class TryHelper
             return false;
           }
 
-          child.setTryType(CatchStatement.RESORCES);
+          child.setTryType(CatchStatement.CatchStatementType.RESOURCES);
           List<Exprent> exprents = initBlock.getExprents();
           if (exprents != null) {
             exprents.remove(ass);
@@ -253,7 +253,7 @@ public final class TryHelper
                   nullable = true;
 
                   // Double check that the variables in the null check and the closeable match
-                  if (!closeable.getVarVersionPair().equals(((VarExprent)check).getVarVersionPair())) {
+                  if (!closeable.getVarVersion().equals(((VarExprent)check).getVarVersion())) {
                     closeable = null;
                   }
                 }
@@ -340,7 +340,7 @@ public final class TryHelper
     // Destroy catch block
     tryStatement.getStats().remove(1);
 
-    tryStatement.setTryType(CatchStatement.RESORCES);
+    tryStatement.setTryType(CatchStatement.CatchStatementType.RESOURCES);
     tryStatements.remove(0);
   }
 
@@ -356,7 +356,7 @@ public final class TryHelper
 
           // Ensure the exprent is the one we want to remove
           if (func.getFuncType() == FunctionExprent.FUNCTION_NE && func.getLstOperands().get(0) instanceof VarExprent && func.getLstOperands().get(1).getExprType().equals(VarType.VARTYPE_NULL)) {
-            if (func.getLstOperands().get(0) instanceof VarExprent && ((VarExprent) func.getLstOperands().get(0)).getVarVersionPair().equals(closeable.getVarVersionPair())) {
+            if (func.getLstOperands().get(0) instanceof VarExprent && ((VarExprent) func.getLstOperands().get(0)).getVarVersion().equals(closeable.getVarVersion())) {
               return true;
             }
           }
@@ -429,7 +429,7 @@ public final class TryHelper
     }
 
     if (exit != null && exit.getValue() != null && exit.getValue().type == Exprent.EXPRENT_VAR) {
-      VarVersion returnVar = ((VarExprent) exit.getValue()).getVarVersionPair();
+      VarVersion returnVar = ((VarExprent) exit.getValue()).getVarVersion();
       if (!statement.getAllPredecessorEdges().isEmpty()) {
         StatEdge edge = statement.getAllPredecessorEdges().get(0);
         Statement ret = edge.getSource();
@@ -438,7 +438,7 @@ public final class TryHelper
           if (last.type == Exprent.EXPRENT_ASSIGNMENT) {
             AssignmentExprent assignment = (AssignmentExprent) last;
             if (assignment.getLeft().type == Exprent.EXPRENT_VAR) {
-              VarVersion assigned = ((VarExprent) assignment.getLeft()).getVarVersionPair();
+              VarVersion assigned = ((VarExprent) assignment.getLeft()).getVarVersion();
               if (returnVar.var == assigned.var) {
                 exit.replaceExprent(exit.getValue(), assignment.getRight());
                 ret.getExprents().set(ret.getExprents().size() - 1, exit);
@@ -536,8 +536,8 @@ public final class TryHelper
     if (parent != null && parent.getFirst() != null && parent.getFirst().type == Statement.StatementType.TRY_CATCH) {
       CatchStatement toRemove = (CatchStatement)parent.getFirst();
 
-      if (toRemove.getTryType() == CatchStatement.RESORCES) {
-        catchStat.setTryType(CatchStatement.RESORCES);
+      if (toRemove.getTryType() == CatchStatement.CatchStatementType.RESOURCES) {
+        catchStat.setTryType(CatchStatement.CatchStatementType.RESOURCES);
         catchStat.getResources().addAll(toRemove.getResources());
 
         catchStat.getVarDefinitions().addAll(toRemove.getVarDefinitions());
@@ -581,7 +581,7 @@ public final class TryHelper
           // Only merge trys that have an inner statement size of 1, a single block
           // TODO: how does this handle nested nullable try stats?
           if (inner.getStats().size() == 1) {
-            stat.setTryType(CatchStatement.RESORCES);
+            stat.setTryType(CatchStatement.CatchStatementType.RESOURCES);
             // Set the outer try to be resources, and initialize
             stat.getResources().addAll(resources);
             stat.getVarDefinitions().addAll(inner.getVarDefinitions());
@@ -626,7 +626,7 @@ public final class TryHelper
         AssignmentExprent ass = (AssignmentExprent)exp;
         if (ass.getLeft().type == Exprent.EXPRENT_VAR) { // cannot use equals as var's varType may be unknown and not match
           VarExprent left = (VarExprent)ass.getLeft();
-          if (left.getVarVersionPair().equals(var.getVarVersionPair())) {
+          if (left.getVarVersion().equals(var.getVarVersion())) {
             return ass;
           }
         }

@@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
@@ -123,8 +124,8 @@ public final class DoStatement extends Statement {
   }
 
   @Override
-  public @NotNull List<Object> getSequentialObjects() {
-    List<Object> lst = new ArrayList<>();
+  public @NotNull List<IMatchable> getSequentialObjects() {
+    List<IMatchable> lst = new ArrayList<>();
     switch (loopType) {
       case FOR:
         if (getInitExprent() != null) {

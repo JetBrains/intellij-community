@@ -10,6 +10,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
 
 import java.util.BitSet;
 
@@ -23,7 +24,7 @@ public final class DebugPrinter {
       return;
     }
 
-    for (Object obj : root.getSequentialObjects()) {
+    for (IMatchable obj : root.getSequentialObjects()) {
       if (obj instanceof Statement) {
         printStatement((Statement)obj, "  ", varProc);
       } else if (obj == null) {

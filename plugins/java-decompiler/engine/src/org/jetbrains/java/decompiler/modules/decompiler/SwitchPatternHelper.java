@@ -521,7 +521,7 @@ public final class SwitchPatternHelper {
                                              new VarType(CodeConstants.TYPE_OBJECT, 0, className),
                                              processor);
       varExprent.setDefinition(true);
-      processor.setVarName(varExprent.getVarVersionPair(), VarExprent.getName(varExprent.getVarVersionPair()));
+      processor.setVarName(varExprent.getVarVersion(), VarExprent.getName(varExprent.getVarVersion()));
       return varExprent;
     }
 

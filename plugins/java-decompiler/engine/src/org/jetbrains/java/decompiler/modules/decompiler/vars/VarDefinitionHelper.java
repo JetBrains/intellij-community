@@ -16,6 +16,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribu
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.util.StatementIterator;
 
 import java.util.*;
@@ -221,9 +222,9 @@ public class VarDefinitionHelper {
         VarExprent var = new VarExprent(index, varproc.getVarType(new VarVersion(index.intValue(), 0)), varproc);
         var.setDefinition(true);
 
-        LocalVariable lvt = findLVT(index.intValue(), stat);
-        if (lvt != null) {
-          var.setLVT(lvt);
+        LocalVariable lv = findLVTEntry(index.intValue(), stat);
+        if (lv != null) {
+          var.setLVTEntry(lv);
         }
 
         lst.add(addindex, var);
@@ -239,26 +240,16 @@ public class VarDefinitionHelper {
   // private methods
   // *****************************************************************************
 
-  private static LocalVariable findLVT(int index, Statement stat) {
-    if (stat.getExprents() == null) {
-      for (Object obj : stat.getSequentialObjects()) {
-        if (obj instanceof Statement) {
-          LocalVariable lvt = findLVT(index, (Statement)obj);
-          if (lvt != null) {
-            return lvt;
-          }
-        }
-        else if (obj instanceof Exprent) {
-          LocalVariable lvt = findLVT(index, (Exprent)obj);
-          if (lvt != null) {
-            return lvt;
-          }
+  private static LocalVariable findLVTEntry(int index, Statement stat) {
+    for (IMatchable obj : stat.getExprentsOrSequentialObjects()) {
+      if (obj instanceof Statement) {
+        LocalVariable lvt = findLVTEntry(index, (Statement)obj);
+        if (lvt != null) {
+          return lvt;
         }
       }
-    }
-    else {
-      for (Exprent exp : stat.getExprents()) {
-        LocalVariable lvt = findLVT(index, exp);
+      else if (obj instanceof Exprent) {
+        LocalVariable lvt = findLVTEntry(index, (Exprent)obj);
         if (lvt != null) {
           return lvt;
         }
@@ -267,9 +258,9 @@ public class VarDefinitionHelper {
     return null;
   }
 
-  private static LocalVariable findLVT(int index, Exprent exp) {
+  private static LocalVariable findLVTEntry(int index, Exprent exp) {
     for (Exprent e: exp.getAllExprents(false)) {
-      LocalVariable lvt = findLVT(index, e);
+      LocalVariable lvt = findLVTEntry(index, e);
       if (lvt != null) {
         return lvt;
       }
@@ -280,7 +271,7 @@ public class VarDefinitionHelper {
     }
 
     VarExprent var = (VarExprent)exp;
-    return var.getIndex() == index ? var.getLVItem() : null;
+    return var.getIndex() == index ? var.getLVTEntry() : null;
   }
 
   private Statement findFirstBlock(Statement stat, Integer varindex) {
@@ -329,7 +320,7 @@ public class VarDefinitionHelper {
       List<Integer> childVars = new ArrayList<>();
       List<Exprent> currVars = new ArrayList<>();
 
-      for (Object obj : stat.getSequentialObjects()) {
+      for (IMatchable obj : stat.getSequentialObjects()) {
         if (obj instanceof Statement st) {
           childVars.addAll(initStatement(st));
 
@@ -459,7 +450,7 @@ public class VarDefinitionHelper {
                   continue; //This is dirty, but if we don't then too many things become object...
 
               if (instance != null && instance.type == Exprent.EXPRENT_VAR) {
-                VarVersion key = ((VarExprent)instance).getVarVersionPair();
+                VarVersion key = ((VarExprent)instance).getVarVersion();
                 VarType newType = new VarType(CodeConstants.TYPE_OBJECT, 0, target);
                 VarType oldMin = mapExprentMinTypes.get(key);
                 VarType oldMax = mapExprentMaxTypes.get(key);
@@ -551,7 +542,7 @@ public class VarDefinitionHelper {
     };
 
     if (stat.getExprents() == null) {
-      List<Object> objs = stat.getSequentialObjects();
+      List<IMatchable> objs = stat.getSequentialObjects();
       for (int i = 0; i < objs.size(); i++) {
         Object obj = objs.get(i);
         if (obj instanceof Statement st) {
@@ -604,8 +595,8 @@ public class VarDefinitionHelper {
             this_vars.putAll(leaked_n);
           }
         }
-        else if (obj instanceof Exprent) {
-          VPPEntry ret = processExprent((Exprent)obj, this_vars, scoped, blacklist);
+        else if (obj instanceof Exprent exprent) {
+          VPPEntry ret = processExprent(exprent, this_vars, scoped, blacklist);
           if (ret != null && isVarReadFirst(ret.getValue(), stat, i + 1)) {
             return ret;
           }
@@ -670,7 +661,7 @@ public class VarDefinitionHelper {
       throw new IllegalArgumentException("Something went wrong: " + from);
     boolean success = false;
     if (stat.getExprents() == null) {
-      for (Object obj : stat.getSequentialObjects()) {
+      for (IMatchable obj : stat.getSequentialObjects()) {
         if (obj instanceof Statement) {
           success |= remapVar((Statement)obj, from, to);
         }
@@ -704,7 +695,7 @@ public class VarDefinitionHelper {
         Exprent exp = itr.next();
         if (exp.type == Exprent.EXPRENT_VAR) {
           VarExprent var = (VarExprent)exp;
-          if (from.equals(var.getVarVersionPair())) {
+          if (from.equals(var.getVarVersion())) {
             itr.remove();
           }
           else if (to.var == var.getIndex() && to.version == var.getVersion()) {
@@ -869,9 +860,7 @@ public class VarDefinitionHelper {
           ClassesProcessor.ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(_new.getNewType().getValue());
           if (child != null) {
             if (_new.isLambda()) {
-              if (child.lambdaInformation.is_method_reference) {
-                //methods.add(child.getWrapper().getClassStruct().getMethod(child.lambdaInformation.content_method_key));
-              } else {
+              if (!child.lambdaInformation.is_method_reference) {
                 methods.add(child.classStruct.getMethod(child.lambdaInformation.content_method_name, child.lambdaInformation.content_method_descriptor));
               }
             } else {
@@ -915,7 +904,7 @@ public class VarDefinitionHelper {
         if (rename != null) {
           lvt = lvt.rename(rename);
         }
-        varproc.setVarLVT(idx, lvt);
+        varproc.setVarLVTEntry(idx, lvt);
         lvts.put(idx, lvt);
       }
     }
@@ -933,19 +922,12 @@ public class VarDefinitionHelper {
       findTypes(exp, types);
     }
 
-    if (stat.getExprents() == null) {
-      for (Object obj : stat.getSequentialObjects()) {
-        if (obj instanceof Statement) {
-          findTypes((Statement)obj, types);
-        }
-        else if (obj instanceof Exprent) {
-          findTypes((Exprent)obj, types);
-        }
+    for (IMatchable obj : stat.getExprentsOrSequentialObjects()) {
+      if (obj instanceof Statement statement) {
+        findTypes(statement, types);
       }
-    }
-    else {
-      for (Exprent exp : stat.getExprents()) {
-        findTypes(exp, types);
+      else if (obj instanceof Exprent exprent) {
+        findTypes(exprent, types);
       }
     }
   }
@@ -959,13 +941,13 @@ public class VarDefinitionHelper {
         VarExprent var = (VarExprent)exprent;
         VarVersion ver = new VarVersion(var);
         if (var.isDefinition()) {
-          types.put(ver, new VarInfo(var.getLVItem(), var.getVarType()));
+          types.put(ver, new VarInfo(var.getLVTEntry(), var.getVarType()));
         } else {
           VarInfo existing = types.get(ver);
           if (existing == null)
-            existing = new VarInfo(var.getLVItem(), var.getVarType());
-          else if (existing.getLVT() == null && var.getLVItem() != null)
-            existing = new VarInfo(var.getLVItem(), existing.getType());
+            existing = new VarInfo(var.getLVTEntry(), var.getVarType());
+          else if (existing.getLVT() == null && var.getLVTEntry() != null)
+            existing = new VarInfo(var.getLVTEntry(), existing.getType());
           types.put(ver, existing);
         }
       }
@@ -981,19 +963,12 @@ public class VarDefinitionHelper {
       applyTypes(exp, types);
     }
 
-    if (stat.getExprents() == null) {
-      for (Object obj : stat.getSequentialObjects()) {
-        if (obj instanceof Statement) {
-          applyTypes((Statement)obj, types);
-        }
-        else if (obj instanceof Exprent) {
-          applyTypes((Exprent)obj, types);
-        }
+    for (IMatchable obj : stat.getExprentsOrSequentialObjects()) {
+      if (obj instanceof Statement statement) {
+        applyTypes(statement, types);
       }
-    }
-    else {
-      for (Exprent exp : stat.getExprents()) {
-        applyTypes(exp, types);
+      else if (obj instanceof Exprent exprent) {
+        applyTypes(exprent, types);
       }
     }
   }
@@ -1010,30 +985,13 @@ public class VarDefinitionHelper {
         VarExprent var = (VarExprent)expr;
         LocalVariable lvt = types.get(new VarVersion(var));
         if (lvt != null) {
-          var.setLVT(lvt);
+          var.setLVTEntry(lvt);
         }
       }
     }
   }
 
-  //Helper classes because Java is dumb and doesn't have a Pair<K,V> class
-  private static class SimpleEntry<K, V> implements Entry<K, V> {
-    private final K key;
-    private V value;
-    private SimpleEntry(K key, V value) {
-      this.key = key;
-      this.value = value;
-    }
-    @Override public K getKey() { return key; }
-    @Override public V getValue() { return value; }
-    @Override
-    public V setValue(V value) {
-      V tmp = this.value;
-      this.value = value;
-      return tmp;
-    }
-  }
-  private static class VPPEntry extends SimpleEntry<VarVersion, VarVersion> {
+  private static class VPPEntry extends AbstractMap.SimpleEntry<VarVersion, VarVersion> {
     private VPPEntry(VarExprent key, VarVersion value) {
         super(new VarVersion(key), value);
     }
@@ -1072,7 +1030,7 @@ public class VarDefinitionHelper {
 
   private static boolean isVarReadFirst(VarVersion var, Statement stat, int index, VarExprent... whitelist) {
     if (stat.getExprents() == null) {
-      List<Object> objs = stat.getSequentialObjects();
+      List<IMatchable> objs = stat.getSequentialObjects();
       for (int x = index; x < objs.size(); x++) {
         Object obj = objs.get(x);
         if (obj instanceof Statement) {

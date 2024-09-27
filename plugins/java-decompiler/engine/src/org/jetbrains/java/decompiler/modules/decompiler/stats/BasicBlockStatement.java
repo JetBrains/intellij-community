@@ -72,6 +72,7 @@ public class BasicBlockStatement extends Statement {
 
   @Override
   protected String toString(int indent) {
-	return TextUtil.getIndentString(indent) + type + ": " + id + DecompilerContext.getNewLineSeparator() + block.getSeq().toString(indent + 1);
+    return TextUtil.getIndentString(indent) + type + ": " +
+           id + DecompilerContext.getNewLineSeparator() + block.getSeq().toString(indent + 1);
   }
 }

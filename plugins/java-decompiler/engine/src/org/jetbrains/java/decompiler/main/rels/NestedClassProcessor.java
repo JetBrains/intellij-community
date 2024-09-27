@@ -27,6 +27,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribu
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.util.DotExporter;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
@@ -142,7 +143,7 @@ public class NestedClassProcessor {
 
                 if (param.type == Exprent.EXPRENT_VAR) {
                   mapNewNames.put(varVersion, enclosingMethod.varproc.getVarName(new VarVersion((VarExprent)param)));
-                  lvts.put(varVersion, ((VarExprent)param).getLVItem());
+                  lvts.put(varVersion, ((VarExprent)param).getLVTEntry());
                 }
               }
               else {
@@ -171,18 +172,18 @@ public class NestedClassProcessor {
 
       method.varproc.setVarName(pair, entry.getValue());
       if (lvt != null) {
-        method.varproc.setVarLVT(pair, lvt);
+        method.varproc.setVarLVTEntry(pair, lvt);
       }
     }
 
     method.getOrBuildGraph().iterateExprentsDeep(exp -> {
       if (exp.type == Exprent.EXPRENT_VAR) {
         VarExprent var = (VarExprent)exp;
-        LocalVariable lv = lvts.get(var.getVarVersionPair());
+        LocalVariable lv = lvts.get(var.getVarVersion());
         if (lv != null)
-          var.setLVT(lv);
-        else if (mapNewNames.containsKey(var.getVarVersionPair()))
-          var.setLVT(null);
+          var.setLVTEntry(lv);
+        else if (mapNewNames.containsKey(var.getVarVersion()))
+          var.setLVTEntry(null);
       }
       return 0;
     });
@@ -469,7 +470,7 @@ public class NestedClassProcessor {
               if (child.type != ClassNode.CLASS_MEMBER) {
                 varName = enclosingMethod.varproc.getVarName(pair);
                 varType = enclosingMethod.varproc.getVarType(pair);
-                varLVT = enclosingMethod.varproc.getVarLVT(pair);
+                varLVT = enclosingMethod.varproc.getVarLVTEntry(pair);
 
                 enclosingMethod.varproc.setVarFinal(pair, VarProcessor.VAR_EXPLICIT_FINAL);
               }
@@ -513,7 +514,7 @@ public class NestedClassProcessor {
 
               varName = enclosing_method.varproc.getVarName(entry.getValue());
               varType = enclosing_method.varproc.getVarType(entry.getValue());
-              varLVT = enclosing_method.varproc.getVarLVT(entry.getValue());
+              varLVT = enclosing_method.varproc.getVarLVTEntry(entry.getValue());
 
               enclosing_method.varproc.setVarFinal(entry.getValue(), VarProcessor.VAR_EXPLICIT_FINAL);
             }
@@ -560,7 +561,7 @@ public class NestedClassProcessor {
             method.varproc.setVarType(pair, type);
           }
           if (lvt != null) {
-            method.varproc.setVarLVT(pair, lvt);
+            method.varproc.setVarLVTEntry(pair, lvt);
           }
         }
 
@@ -602,9 +603,9 @@ public class NestedClassProcessor {
                 VarVersion newVar = mapParamsToNewVars.get(varIndex);
                 method.varproc.getExternalVars().add(newVar);
                 VarExprent ret = new VarExprent(newVar.var, method.varproc.getVarType(newVar), method.varproc, exprent.bytecode);
-                LocalVariable lvt = method.varproc.getVarLVT(newVar);
+                LocalVariable lvt = method.varproc.getVarLVTEntry(newVar);
                 if (lvt != null) {
-                  ret.setLVT(lvt);
+                  ret.setLVTEntry(lvt);
                 }
                 return ret;
               }
@@ -618,9 +619,9 @@ public class NestedClassProcessor {
                 VarVersion newVar = mapFieldsToNewVars.get(key);
                 method.varproc.getExternalVars().add(newVar);
                 VarExprent ret = new VarExprent(newVar.var, method.varproc.getVarType(newVar), method.varproc, exprent.bytecode);
-                LocalVariable lvt = method.varproc.getVarLVT(newVar);
+                LocalVariable lvt = method.varproc.getVarLVTEntry(newVar);
                 if (lvt != null) {
-                  ret.setLVT(lvt);
+                  ret.setLVTEntry(lvt);
                 }
                 return ret;
               }
@@ -879,7 +880,7 @@ public class NestedClassProcessor {
     if (stat.getExprents() == null) {
       int counter = 0;
 
-      for (Object obj : stat.getSequentialObjects()) {
+      for (IMatchable obj : stat.getSequentialObjects()) {
         if (obj instanceof Statement st) {
 
           Statement stTemp = getDefStatement(st, classType, setStats);

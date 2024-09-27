@@ -9,6 +9,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.SequenceHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
@@ -94,9 +95,9 @@ public class SynchronizedStatement extends Statement {
   }
 
   @Override
-  public List<Object> getSequentialObjects() {
+  public List<IMatchable> getSequentialObjects() {
 
-    List<Object> lst = new ArrayList<>(stats);
+    List<IMatchable> lst = new ArrayList<>(stats);
     lst.add(1, headexprent.get(0));
 
     return lst;

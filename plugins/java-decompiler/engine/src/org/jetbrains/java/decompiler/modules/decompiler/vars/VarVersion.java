@@ -1,9 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 
-public class VarVersion {
+public class VarVersion implements Comparable<VarVersion>{
 
   public final int var;
   public final int version;
@@ -44,5 +45,10 @@ public class VarVersion {
   @Override
   public String toString() {
     return "(" + var + "," + version + ")";
+  }
+
+  @Override
+  public int compareTo(@NotNull VarVersion o) {
+    return var != o.var ? Integer.compare(var, o.var) : Integer.compare(version, o.version);
   }
 }

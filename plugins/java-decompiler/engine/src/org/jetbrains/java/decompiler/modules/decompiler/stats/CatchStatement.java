@@ -13,19 +13,21 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
 
 public final class CatchStatement extends Statement {
-  public static final int NORMAL = 0;
-  public static final int RESORCES = 1;
+  public enum CatchStatementType{
+    NORMAL, RESOURCES
+  }
 
   private final List<List<String>> exctstrings = new ArrayList<>();
   private final List<VarExprent> vars = new ArrayList<>();
   private final List<Exprent> resources = new ArrayList<>();
 
-  private int tryType;
+  private CatchStatementType tryType;
 
   // *****************************************************************************
   // constructors
@@ -33,7 +35,7 @@ public final class CatchStatement extends Statement {
 
   private CatchStatement() {
     super(StatementType.TRY_CATCH);
-    tryType = NORMAL;
+    tryType = CatchStatementType.NORMAL;
   }
 
   private CatchStatement(Statement head, Statement next, Set<Statement> setHandlers) {
@@ -152,7 +154,7 @@ public final class CatchStatement extends Statement {
       tracer.incrementCurrentSourceLine();
     }
 
-    if (tryType == NORMAL) {
+    if (tryType == CatchStatementType.NORMAL) {
       buf.appendIndent(indent).append("try {").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
@@ -208,9 +210,9 @@ public final class CatchStatement extends Statement {
   }
 
   @Override
-  public List<Object> getSequentialObjects() {
+  public List<IMatchable> getSequentialObjects() {
 
-    List<Object> lst = new ArrayList<>(resources);
+    List<IMatchable> lst = new ArrayList<>(resources);
     lst.addAll(stats);
     lst.addAll(vars);
 
@@ -253,11 +255,11 @@ public final class CatchStatement extends Statement {
     return vars;
   }
 
-  public int getTryType() {
+  public CatchStatementType getTryType() {
     return tryType;
   }
 
-  public void setTryType(int tryType) {
+  public void setTryType(CatchStatementType tryType) {
     this.tryType = tryType;
   }
 

@@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericFieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
@@ -47,7 +48,7 @@ public class VarExprent extends Exprent {
   private int version = 0;
   private boolean classDef = false;
   private boolean stack = false;
-  private LocalVariable lvtItem = null;
+  private LocalVariable lvtEntry = null;
 
   public VarExprent(int index, VarType varType, VarProcessor processor) {
     this(index, varType, processor, null);
@@ -68,17 +69,17 @@ public class VarExprent extends Exprent {
 
   @Override
   public VarType getInferredExprType(VarType upperBound) {
-    if (lvtItem != null && lvtItem.getSignature() != null) {
+    if (lvtEntry != null && lvtEntry.getSignature() != null) {
       // TODO; figure out why it's crashing, ugly fix for now
       try {
-        return GenericType.parse(lvtItem.getSignature());
+        return GenericType.parse(lvtEntry.getSignature());
       } catch (StringIndexOutOfBoundsException ex) {
         DecompilerContext.getLogger().writeMessage("Inconsistent data: ",
                                                    IFernflowerLogger.Severity.WARN, ex);
       }
     }
-    else if (lvtItem != null) {
-      return lvtItem.getVarType();
+    else if (lvtEntry != null) {
+      return lvtEntry.getVarType();
     }
     return getVarType();
   }
@@ -100,7 +101,7 @@ public class VarExprent extends Exprent {
     var.setVersion(version);
     var.setClassDef(classDef);
     var.setStack(stack);
-    var.setLVT(lvtItem);
+    var.setLVTEntry(lvtEntry);
     return var;
   }
 
@@ -116,7 +117,7 @@ public class VarExprent extends Exprent {
       tracer.incrementCurrentSourceLine(buffer.countLines());
     }
     else {
-      VarVersion varVersion = getVarVersionPair();
+      VarVersion varVersion = getVarVersion();
 
       if (definition) {
         if (processor != null && processor.getVarFinal(varVersion) == VarProcessor.VAR_EXPLICIT_FINAL) {
@@ -141,17 +142,17 @@ public class VarExprent extends Exprent {
     return "var" + versionPair.var + (versionPair.version == 0 ? "" : "_" + versionPair.version);
   }
 
-  public VarVersion getVarVersionPair() {
+  public VarVersion getVarVersion() {
     return new VarVersion(index, version);
   }
 
   public VarType getDefinitionType() {
     if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
 
-      if (lvtItem != null) {
+      if (lvtEntry != null) {
         if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
-          if (lvtItem.getSignature() != null) {
-            GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(lvtItem.getSignature());
+          if (lvtEntry.getSignature() != null) {
+            GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(lvtEntry.getSignature());
             if (descriptor != null) {
               return descriptor.type;
             }
@@ -230,13 +231,13 @@ public class VarExprent extends Exprent {
   }
 
   public VarType getVarType() {
-    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES) && lvtItem != null) {
-      return new VarType(lvtItem.getDescriptor());
+    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES) && lvtEntry != null) {
+      return new VarType(lvtEntry.getDescriptor());
     }
 
     VarType vt = null;
     if (processor != null) {
-      vt = processor.getVarType(getVarVersionPair());
+      vt = processor.getVarType(getVarVersion());
     }
 
     if (vt == null || (varType != null && varType.getType() != CodeConstants.TYPE_UNKNOWN)) {
@@ -286,10 +287,10 @@ public class VarExprent extends Exprent {
     this.stack = stack;
   }
 
-  public void setLVT(LocalVariable var) {
-    this.lvtItem = var;
-    if (processor != null && lvtItem != null) {
-      processor.setVarType(getVarVersionPair(), lvtItem.getVarType());
+  public void setLVTEntry(LocalVariable var) {
+    this.lvtEntry = var;
+    if (processor != null && lvtEntry != null) {
+      processor.setVarType(getVarVersion(), lvtEntry.getVarType());
     }
   }
 
@@ -298,52 +299,43 @@ public class VarExprent extends Exprent {
    *
    * @return the local variable item of type LocalVariable.
    */
-  public LocalVariable getLVItem() {
-    return lvtItem;
+  public LocalVariable getLVTEntry() {
+    return lvtEntry;
   }
 
   public String getName() {
-    VarVersion pair = getVarVersionPair();
-    if (lvtItem != null && TextUtil.isValidIdentifier(lvtItem.getName(), CodeConstants.BYTECODE_JAVA_22))
-      return lvtItem.getName();
+    VarVersion varVersion = getVarVersion();
+    if (lvtEntry != null && TextUtil.isValidIdentifier(lvtEntry.getName(), CodeConstants.BYTECODE_JAVA_22))
+      return lvtEntry.getName();
 
     if (processor != null) {
-      String ret = processor.getVarName(pair);
+      String ret = processor.getVarName(varVersion);
       if (ret != null)
         return ret;
     }
 
-    return getName(pair);
+    return getName(varVersion);
   }
 
   @Override
   public CheckTypesResult checkExprTypeBounds() {
-    if (lvtItem != null) {
+    if (lvtEntry != null) {
       CheckTypesResult ret = new CheckTypesResult();
-      ret.addMinTypeExprent(this, lvtItem.getVarType());
+      ret.addMinTypeExprent(this, lvtEntry.getVarType());
       return ret;
     }
     return null;
   }
 
   public boolean isVarReferenced(Statement stat, VarExprent... whitelist) {
-    if (stat.getExprents() == null) {
-      for (Object obj : stat.getSequentialObjects()) {
-        if (obj instanceof Statement) {
-          if (isVarReferenced((Statement)obj, whitelist)) {
-            return true;
-          }
-        }
-        else if (obj instanceof Exprent) {
-          if (isVarReferenced((Exprent)obj, whitelist)) {
-            return true;
-          }
+    for (IMatchable obj : stat.getExprentsOrSequentialObjects()) {
+      if (obj instanceof Statement) {
+        if (isVarReferenced((Statement)obj, whitelist)) {
+          return true;
         }
       }
-    }
-    else {
-      for (Exprent exp : stat.getExprents()) {
-        if (isVarReferenced(exp, whitelist)) {
+      else if (obj instanceof Exprent) {
+        if (isVarReferenced((Exprent)obj, whitelist)) {
           return true;
         }
       }
@@ -355,7 +347,7 @@ public class VarExprent extends Exprent {
     List<Exprent> lst = exp.getAllExprents(true);
     lst.add(exp);
     lst = lst.stream().filter(e -> e != this && e.type == Exprent.EXPRENT_VAR &&
-      getVarVersionPair().equals(((VarExprent)e).getVarVersionPair()))
+                                   getVarVersion().equals(((VarExprent)e).getVarVersion()))
         .collect(Collectors.toList());
 
     for (Exprent var : lst) {

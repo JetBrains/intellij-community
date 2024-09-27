@@ -16,6 +16,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.util.StartEndPair;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -261,8 +262,8 @@ public final class SwitchStatement extends Statement {
 
   @Override
   @NotNull
-  public List<Object> getSequentialObjects() {
-    List<Object> result = new ArrayList<>(stats);
+  public List<IMatchable> getSequentialObjects() {
+    List<IMatchable> result = new ArrayList<>(stats);
     result.add(1, headExprent);
     return result;
   }

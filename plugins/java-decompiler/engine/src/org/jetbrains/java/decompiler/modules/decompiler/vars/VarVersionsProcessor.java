@@ -250,8 +250,7 @@ public class VarVersionsProcessor {
 
     // map var-version pairs on new var indexes
     List<VarVersion> vvps = new ArrayList<>(mapExprentMinTypes.keySet());
-    Collections.sort(vvps,
-                     Comparator.<VarVersion>comparingInt(pair -> pair.var).thenComparing(pair -> pair.version));
+    Collections.sort(vvps);
 
     for (VarVersion pair : vvps) {
 
@@ -285,9 +284,9 @@ public class VarVersionsProcessor {
             String name = newVar.getProcessor().getAssignedVarName(new VarVersion(newVar.getIndex(), 0));
             newVar.setIndex(newVarIndex);
             newVar.setVersion(0);
-            if (name != null && newVar.getLVItem() == null && newVar.getProcessor().getVarName(newVar.getVarVersionPair()) == null) {
-              newVar.getProcessor().setAssignedVarName(newVar.getVarVersionPair(), name);
-              newVar.getProcessor().setVarName(newVar.getVarVersionPair(), name);
+            if (name != null && newVar.getLVTEntry() == null && newVar.getProcessor().getVarName(newVar.getVarVersion()) == null) {
+              newVar.getProcessor().setAssignedVarName(newVar.getVarVersion(), name);
+              newVar.getProcessor().setVarName(newVar.getVarVersion(), name);
             }
           }
         }

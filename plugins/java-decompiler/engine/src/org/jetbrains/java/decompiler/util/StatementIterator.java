@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.util;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph.ExprentIterator;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
 
 import java.util.List;
 
@@ -17,19 +18,12 @@ public final class StatementIterator {
       iterate(exp, itr);
     }
 
-    if (stat.getExprents() == null) {
-      for (Object obj : stat.getSequentialObjects()) {
-        if (obj instanceof Statement) {
-          iterate((Statement)obj, itr);
-        }
-        else if (obj instanceof Exprent) {
-          iterate((Exprent)obj, itr);
-        }
+    for (IMatchable obj : stat.getExprentsOrSequentialObjects()) {
+      if (obj instanceof Statement) {
+        iterate((Statement)obj, itr);
       }
-    }
-    else {
-      for (Exprent exp : stat.getExprents()) {
-        iterate(exp, itr);
+      else if (obj instanceof Exprent) {
+        iterate((Exprent)obj, itr);
       }
     }
   }

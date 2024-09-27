@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.Statemen
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,7 +86,7 @@ public final class SecondaryFunctionsHelper {
     while (replaced) {
       replaced = false;
 
-      List<Object> lstObjects = new ArrayList<>(stat.getExprents() == null ? stat.getSequentialObjects() : stat.getExprents());
+      List<? extends IMatchable> lstObjects = new ArrayList<>(stat.getExprentsOrSequentialObjects());
 
       for (int i = 0; i < lstObjects.size(); i++) {
         Object obj = lstObjects.get(i);
@@ -420,7 +421,7 @@ public final class SecondaryFunctionsHelper {
 
   // Updates assignments to make them compound assignments if possible
   public static void updateAssignments(Statement stat) {
-    List<Object> objects = new ArrayList<>(stat.getExprents() == null ? stat.getSequentialObjects() : stat.getExprents());
+    List<? extends IMatchable> objects = new ArrayList<>(stat.getExprentsOrSequentialObjects());
 
     for (Object obj : objects) {
       if (obj instanceof Statement) {
