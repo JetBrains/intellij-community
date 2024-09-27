@@ -254,7 +254,7 @@
   </dependencies>
 
   <extensionPoints>
-    <extensionPoint name="org.jetbrains.kotlin.supportsKotlinPluginMode" dynamic="true"
+    <extensionPoint name="supportsKotlinPluginMode" dynamic="true"
                     beanClass="org.jetbrains.kotlin.idea.base.plugin.SupportsKotlinPluginMode">
     </extensionPoint>
   </extensionPoints>
