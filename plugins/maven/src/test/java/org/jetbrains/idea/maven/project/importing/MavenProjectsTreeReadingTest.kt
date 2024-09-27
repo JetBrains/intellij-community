@@ -26,7 +26,6 @@ import org.jetbrains.idea.maven.project.MavenEmbeddersManager
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsTree
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.junit.Test
 import java.util.*
 import java.util.Set
@@ -601,14 +600,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     tree.addListener(listener, getTestRootDisposable())
     val mavenProject = tree.findProject(projectPom)!!
     val embeddersManager = MavenEmbeddersManager(project)
-    val nativeProject: MutableList<NativeMavenProjectHolder?> = ArrayList()
     try {
-      tree.addListener(object : MavenProjectsTree.Listener {
-        override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
-                                     nativeMavenProject: NativeMavenProjectHolder?) {
-          nativeProject.add(nativeMavenProject)
-        }
-      }, getTestRootDisposable())
       resolve(project,
               mavenProject,
               mavenGeneralSettings,
@@ -619,8 +611,6 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     }
     assertEquals(log().add("resolved", "project"), listener.log)
     assertTrue(mavenProject.hasReadingProblems())
-    UsefulTestCase.assertSize(1, nativeProject)
-    assertNull(nativeProject[0])
   }
 
   @Test

@@ -34,7 +34,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider
 import org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction
 import org.jetbrains.idea.maven.project.projectRoot.MavenModuleStructureExtension
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.junit.Test
 
 class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
@@ -128,8 +127,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
   fun testDoNotScheduleResolveOfInvalidProjectsDeleted() = runBlocking {
     val called = BooleanArray(1)
     projectsManager.addProjectsTreeListener(object : MavenProjectsTree.Listener {
-      override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
-                                   nativeMavenProject: NativeMavenProjectHolder?) {
+      override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
         called[0] = true
       }
     })

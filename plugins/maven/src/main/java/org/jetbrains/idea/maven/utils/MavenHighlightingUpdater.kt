@@ -20,7 +20,6 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenProjectsTree
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 
 @Service(Service.Level.PROJECT)
 internal class MavenHighlightingUpdater(
@@ -43,8 +42,7 @@ internal class MavenHighlightingUpdater(
         }
       }
 
-      override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
-                                   nativeMavenProject: NativeMavenProjectHolder?) {
+      override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
         schedule(projectWithChanges.first)
       }
 

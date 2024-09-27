@@ -10,7 +10,6 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList
@@ -83,8 +82,7 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
       add(text, updated.map { it.mavenId.artifactId }.toSet())
     }
 
-    override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
-                                 nativeMavenProject: NativeMavenProjectHolder?) {
+    override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
       add("resolved", setOf(projectWithChanges.first.mavenId.artifactId))
     }
 

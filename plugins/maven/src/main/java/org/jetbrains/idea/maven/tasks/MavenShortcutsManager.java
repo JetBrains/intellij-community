@@ -25,7 +25,6 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -168,8 +167,7 @@ public final class MavenShortcutsManager implements Disposable {
     }
 
     @Override
-    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                NativeMavenProjectHolder nativeMavenProject) {
+    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
       scheduleKeymapUpdate(Collections.singletonList(projectWithChanges.first), true);
     }
 

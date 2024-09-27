@@ -18,8 +18,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
 import java.util.List;
 
@@ -45,8 +43,7 @@ public class MavenModificationTracker extends SimpleModificationTracker {
       }
 
       @Override
-      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  @Nullable NativeMavenProjectHolder nativeMavenProject) {
+      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
         incModificationCount();
       }
 

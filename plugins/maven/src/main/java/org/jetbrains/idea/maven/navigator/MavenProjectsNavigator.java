@@ -51,7 +51,6 @@ import org.jetbrains.idea.maven.navigator.structure.MavenProjectsNavigatorPanel;
 import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenIndexUpdateState;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -481,8 +480,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
     }
 
     @Override
-    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                NativeMavenProjectHolder nativeMavenProject) {
+    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
       scheduleUpdateProjects(Collections.singletonList(projectWithChanges.first), Collections.emptyList());
     }
 
