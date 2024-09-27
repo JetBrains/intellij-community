@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetArtifactIndex;
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
+import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -15,8 +16,6 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
 import java.io.File;
 import java.util.*;
-
-import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFile;
 
 public class GradleSourceSetArtifactIndexBuilder extends AbstractModelBuilderService {
 
@@ -36,15 +35,13 @@ public class GradleSourceSetArtifactIndexBuilder extends AbstractModelBuilderSer
       for (SourceSet sourceSet : sourceSetContainer) {
         Task task = project.getTasks().findByName(sourceSet.getJarTaskName());
         if (task instanceof AbstractArchiveTask) {
-          File archivePath = getTaskArchiveFile((AbstractArchiveTask)task);
-          if (archivePath != null) {
-            sourceSetArtifactMap.put(archivePath.getPath(), sourceSet);
-            for (File file : sourceSet.getOutput().getClassesDirs().getFiles()) {
-              sourceSetOutputArtifactMap.put(file.getPath(), archivePath.getPath());
-            }
-            File resourcesDir = Objects.requireNonNull(sourceSet.getOutput().getResourcesDir());
-            sourceSetOutputArtifactMap.put(resourcesDir.getPath(), archivePath.getPath());
+          File archiveFile = GradleTaskUtil.getTaskArchiveFile((AbstractArchiveTask)task);
+          sourceSetArtifactMap.put(archiveFile.getPath(), sourceSet);
+          for (File file : sourceSet.getOutput().getClassesDirs().getFiles()) {
+            sourceSetOutputArtifactMap.put(file.getPath(), archiveFile.getPath());
           }
+          File resourcesDir = Objects.requireNonNull(sourceSet.getOutput().getResourcesDir());
+          sourceSetOutputArtifactMap.put(resourcesDir.getPath(), archiveFile.getPath());
         }
       }
       sourceSetArtifactModel.setSourceSetArtifactMap(sourceSetArtifactMap);

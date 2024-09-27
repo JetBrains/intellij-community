@@ -54,7 +54,7 @@ class EarModelBuilderImpl : AbstractModelBuilderService() {
     for (task in project.tasks.withType(Ear::class.java)) {
 
       val archiveFile = GradleTaskUtil.getTaskArchiveFile(task)
-      val archiveName = GradleTaskUtil.getTaskArchiveFileName(task)!!
+      val archiveName = GradleTaskUtil.getTaskArchiveFileName(task)
 
       val appDirName = collectAppDirName(project, task)
       val libDirName = task.libDirName

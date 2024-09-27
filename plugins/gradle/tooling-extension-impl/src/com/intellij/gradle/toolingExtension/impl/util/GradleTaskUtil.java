@@ -52,14 +52,14 @@ public final class GradleTaskUtil {
     return null;
   }
 
-  public static @Nullable File getTaskArchiveFile(@NotNull AbstractArchiveTask task) {
+  public static @NotNull File getTaskArchiveFile(@NotNull AbstractArchiveTask task) {
     if (is51OrBetter) {
       return GradleReflectionUtil.reflectiveGetProperty(task, "getArchiveFile", RegularFile.class).getAsFile();
     }
     return GradleReflectionUtil.reflectiveCall(task, "getArchivePath", File.class);
   }
 
-  public static @Nullable String getTaskArchiveFileName(@NotNull AbstractArchiveTask task) {
+  public static @NotNull String getTaskArchiveFileName(@NotNull AbstractArchiveTask task) {
     if (is51OrBetter) {
       return GradleReflectionUtil.reflectiveGetProperty(task, "getArchiveFileName", String.class);
     }

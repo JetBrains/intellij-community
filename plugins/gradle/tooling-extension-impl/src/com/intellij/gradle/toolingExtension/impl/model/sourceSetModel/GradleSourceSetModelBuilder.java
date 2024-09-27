@@ -89,9 +89,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       @Override
       public void visit(Jar element) {
         File archiveFile = GradleTaskUtil.getTaskArchiveFile(element);
-        if (archiveFile != null) {
-          taskArtifacts.add(archiveFile);
-        }
+        taskArtifacts.add(archiveFile);
       }
 
       @Override
@@ -129,11 +127,9 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
 
       @Override
       public void visit(Jar element) {
-        File archiveFile = GradleTaskUtil.getTaskArchiveFile(element);
-        if (archiveFile != null) {
-          if (isShadowJar(element) || containsPotentialClasspathElements(element, project)) {
-            additionalArtifacts.add(archiveFile);
-          }
+        if (isShadowJar(element) || containsPotentialClasspathElements(element, project)) {
+          File archiveFile = GradleTaskUtil.getTaskArchiveFile(element);
+          additionalArtifacts.add(archiveFile);
         }
       }
 
@@ -216,7 +212,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       @Override
       public void visit(AbstractArchiveTask element) {
         if (containsAllSourceSetOutput(element, sourceSet)) {
-          sourceSetArtifacts.add(GradleTaskUtil.getTaskArchiveFile(element));
+          File archiveFile = GradleTaskUtil.getTaskArchiveFile(element);
+          sourceSetArtifacts.add(archiveFile);
         }
       }
 

@@ -41,7 +41,7 @@ class WarModelBuilderImpl : AbstractModelBuilderService() {
     for (task in project.tasks.withType(War::class.java)) {
 
       val archiveFile = GradleTaskUtil.getTaskArchiveFile(task)
-      val archiveName = GradleTaskUtil.getTaskArchiveFileName(task)!!
+      val archiveName = GradleTaskUtil.getTaskArchiveFileName(task)
 
       val (webAppDir, webAppDirName) = collectWebAppDirAndName(project, task)
       val webXml = task.webXml
