@@ -282,17 +282,13 @@ object CommunityRepositoryModules {
       spec.mainJarName = "android.jar"
       spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
         val pluginXml = pluginXmlSupplier()
-        val pluginVersion = if (pluginXml.indexOf("<version>") != -1) {
+        if (pluginXml.indexOf("<version>") != -1) {
           val declaredVersion = pluginXml.substring(pluginXml.indexOf("<version>") + "<version>".length, pluginXml.indexOf("</version>"))
-          "$declaredVersion.$ideBuildVersion"
+          PluginVersionEvaluatorResult(pluginVersion = "$declaredVersion.$ideBuildVersion")
         }
         else {
-          ideBuildVersion
+          PluginVersionEvaluatorResult(pluginVersion = ideBuildVersion)
         }
-        check(pluginVersion == SnapshotBuildNumber.VALUE || SemanticVersioningScheme.matches(pluginVersion)) {
-          "Android plugin version '$pluginVersion' does not satisfy the Semantic Versioning, see https://semver.org"
-        }
-        PluginVersionEvaluatorResult(pluginVersion = pluginVersion)
       }
 
       spec.excludeProjectLibrary("Gradle")
