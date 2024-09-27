@@ -94,6 +94,10 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
     driver.invokeAction("List-selectNextRow", component = component)
   }
 
+  fun invokeSelectPrevRowAction() {
+    driver.invokeAction("List-selectPreviousRow", component = component)
+  }
+
   protected fun findItemIndex(itemText: String, fullMatch: Boolean): Int? =
     fixture.collectItems().indexOfFirst {
       if (fullMatch) it == itemText
