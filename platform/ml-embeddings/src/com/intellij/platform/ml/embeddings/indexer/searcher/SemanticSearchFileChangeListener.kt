@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
-class SemanticSearchFileChangeListener(cs: CoroutineScope, private val index: suspend (Project, List<VirtualFile>) -> Unit) : AsyncFileListener {
+internal class SemanticSearchFileChangeListener(cs: CoroutineScope, private val index: suspend (Project, List<VirtualFile>) -> Unit) : AsyncFileListener {
   private val reindexRequest = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val reindexQueue = AtomicReference(ConcurrentCollectionFactory.createConcurrentSet<VirtualFile>())
 
