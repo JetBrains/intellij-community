@@ -75,5 +75,6 @@
     <orderEntry type="module" module-name="intellij.junit.kotlin.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.kotlin.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.compiler-plugin-support.tests" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-base.tests" scope="RUNTIME" />
   </component>
 </module>
