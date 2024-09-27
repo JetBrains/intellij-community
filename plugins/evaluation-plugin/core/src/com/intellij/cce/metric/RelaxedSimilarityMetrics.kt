@@ -1,5 +1,6 @@
 package com.intellij.cce.metric
 
+import com.intellij.cce.core.Lookup
 import org.apache.commons.text.similarity.LevenshteinDistance
 
 object RelaxedSimilarityUtils {
@@ -21,7 +22,7 @@ object RelaxedSimilarityUtils {
       .filter { it.isNotBlank() }
   }
 
-  enum class RelaxedResult(val weight: Int) { NO(0), ANY(1), MULTI(2) }
+  enum class RelaxedResult(val weight: Double) { NO(0.0), ANY(1.0), MULTI(2.0) }
 
   fun computeRelaxedSimilarity(
     middle: String,
@@ -50,7 +51,7 @@ object RelaxedSimilarityUtils {
   }
 
   interface RelaxedMetric {
-    fun compute(middle: String, completion: String, prefix: String, suffix: String, stripChars: Boolean = false): RelaxedResult
+    fun compute(middle: String, completion: String, prefix: String = "", suffix: String = "", stripChars: Boolean = false): RelaxedResult
   }
 
   class RelaxedExactMatch : RelaxedMetric {
@@ -74,4 +75,24 @@ object RelaxedSimilarityUtils {
       }
     }
   }
+}
+
+class RelaxedExactMatch(showByDefault: Boolean) : LineSimularityMetric(showByDefault) {
+  override val name: String
+    get() = "Relaxed exact match"
+
+  override val description: String
+    get() = "Check if any line from expected text matches the completion"
+
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
+    val completion = lookup.getWithPrefix() ?: return null
+    val match = RelaxedSimilarityUtils.RelaxedExactMatch().compute(
+      middle = expectedText,
+      completion = completion,
+      stripChars = false,
+    )
+    return match.weight
+  }
+
+  override fun computeExpected(lookup: Lookup, expectedText: String): Double = RelaxedSimilarityUtils.RelaxedResult.MULTI.weight
 }
