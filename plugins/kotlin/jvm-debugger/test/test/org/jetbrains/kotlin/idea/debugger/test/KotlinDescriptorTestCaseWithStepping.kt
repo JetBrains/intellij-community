@@ -21,9 +21,7 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
@@ -32,11 +30,6 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import junit.framework.AssertionFailedError
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.areLogErrorsIgnored
@@ -189,9 +182,6 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         dp.managerThread.schedule(stepOverCommand)
     }
 
-    private fun launch(block: suspend CoroutineScope.() -> Unit) =
-        (project as ComponentManagerEx).getCoroutineScope().launch(block = block)
-
     private fun process(instruction: SteppingInstruction) {
         fun loop(count: Int, block: SuspendContextImpl.() -> Unit) {
             repeat(count) {
@@ -206,20 +196,18 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             SteppingInstructionKind.StepOut -> loop(instruction.arg) { doStepOut() }
             SteppingInstructionKind.StepOver -> loop(instruction.arg) { doStepOver() }
             SteppingInstructionKind.ForceStepOver -> loop(instruction.arg) { doStepOver(ignoreBreakpoints = true) }
-            SteppingInstructionKind.SmartStepInto -> loop(instruction.arg) { launch { doSmartStepInto() } }
-            SteppingInstructionKind.SmartStepIntoByIndex -> doOnBreakpoint { launch { doSmartStepInto(instruction.arg) } }
+            SteppingInstructionKind.SmartStepInto -> loop(instruction.arg) { doSmartStepInto() }
+            SteppingInstructionKind.SmartStepIntoByIndex -> doOnBreakpoint { doSmartStepInto(instruction.arg) }
             SteppingInstructionKind.Resume -> loop(instruction.arg) { resume(this) }
             SteppingInstructionKind.SmartStepTargetsExpectedNumber ->
                 doOnBreakpoint {
-                    launch {
-                        checkNumberOfSmartStepTargets(instruction.arg)
-                        this@KotlinDescriptorTestCaseWithStepping.resume(this@doOnBreakpoint)
-                    }
+                    checkNumberOfSmartStepTargets(instruction.arg)
+                    resume(this)
                 }
         }
     }
 
-    private suspend fun checkNumberOfSmartStepTargets(expectedNumber: Int) {
+    private fun checkNumberOfSmartStepTargets(expectedNumber: Int) {
         val smartStepFilters = createSmartStepIntoFilters()
         try {
             assertEquals(
@@ -232,7 +220,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         }
     }
 
-    private suspend fun SuspendContextImpl.doSmartStepInto(chooseFromList: Int = 0) {
+    private fun SuspendContextImpl.doSmartStepInto(chooseFromList: Int = 0) {
         this.doSmartStepInto(chooseFromList, false)
     }
 
@@ -280,7 +268,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     protected open fun extraPrintContext(context: SuspendContextImpl) {}
 
-    private suspend fun SuspendContextImpl.doSmartStepInto(chooseFromList: Int, ignoreFilters: Boolean) {
+    private fun SuspendContextImpl.doSmartStepInto(chooseFromList: Int, ignoreFilters: Boolean) {
         val filters = createSmartStepIntoFilters()
         if (chooseFromList == 0) {
             if (filters.isEmpty()) {
@@ -303,26 +291,22 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         elementAt.getElementTextWithContext()
     }
 
-    private suspend fun createSmartStepIntoFilters(): List<MethodFilter> {
-        val position = debuggerContext.sourcePosition
-        val stepTargets = withContext(Dispatchers.Default) {
-            KotlinSmartStepIntoHandler()
-                .findStepIntoTargets(position, debuggerSession)
-                .asDeferred().await()
-        }
+    private fun createSmartStepIntoFilters(): List<MethodFilter> {
+        val stepTargets = KotlinSmartStepIntoHandler()
+            .findSmartStepTargetsSync(debuggerContext.sourcePosition, debuggerSession)
 
         // the resulting order is different from the order in code when stepping some methods are filtered
         // due to de-prioritisation in JvmSmartStepIntoHandler.reorderWithSteppingFilters
-        if (readAction { stepTargets.none { DebugProcessImpl.isClassFiltered(it.className)} }) {
+        if (runReadAction { stepTargets.none { DebugProcessImpl.isClassFiltered(it.className)} }) {
             try {
                 assertEquals("Smart step targets are not sorted by position in tree",
-                             stepTargets.sortedByPositionInTree().map { readAction { it.presentation } },
-                             stepTargets.map { readAction { it.presentation } })
+                             stepTargets.sortedByPositionInTree().map { runReadAction { it.presentation } },
+                             stepTargets.map { runReadAction { it.presentation } })
             } catch (e: AssertionFailedError) {
                 thrownExceptions.add(e)
             }
         }
-        return readAction {
+        return runReadAction {
             stepTargets.mapNotNull { stepTarget ->
                 when (stepTarget) {
                     is KotlinSmartStepTarget -> stepTarget.createMethodFilter()

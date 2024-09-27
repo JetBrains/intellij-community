@@ -25,6 +25,7 @@ import com.intellij.psi.util.parents
 import com.intellij.util.Range
 import com.intellij.util.containers.OrderedSet
 import com.sun.jdi.Location
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asPromise
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
@@ -53,9 +54,12 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
             findSmartStepTargetsInternal(position, session)
         }.asPromise()
 
-    override fun findSmartStepTargets(position: SourcePosition): List<SmartStepTarget> =
+    override fun findSmartStepTargets(position: SourcePosition) = findSmartStepTargetsSync(position, null)
+
+    @ApiStatus.Internal
+    fun findSmartStepTargetsSync(position: SourcePosition, session: DebuggerSession?): List<SmartStepTarget> =
         runBlockingCancellable {
-            findSmartStepTargetsInternal(position, null)
+            findSmartStepTargetsInternal(position, session)
         }
 
     override fun createMethodFilter(stepTarget: SmartStepTarget?): MethodFilter? =
