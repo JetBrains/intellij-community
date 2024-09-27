@@ -77,22 +77,36 @@ object RelaxedSimilarityUtils {
   }
 }
 
-class RelaxedExactMatch(showByDefault: Boolean) : LineSimularityMetric(showByDefault) {
-  override val name: String
-    get() = "Relaxed exact match"
-
-  override val description: String
-    get() = "Check if any line from expected text matches the completion"
+abstract class BaseRelaxedMetric(showByDefault: Boolean) : LineSimularityMetric(showByDefault) {
+  abstract val onlyValuable: Boolean
+  abstract val metric: RelaxedSimilarityUtils.RelaxedMetric
 
   override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
     val completion = lookup.getWithPrefix() ?: return null
-    val match = RelaxedSimilarityUtils.RelaxedExactMatch().compute(
-      middle = expectedText,
-      completion = completion,
-      stripChars = false,
-    )
+    val match = metric.compute(middle = expectedText, completion = completion, stripChars = onlyValuable)
     return match.weight
   }
 
   override fun computeExpected(lookup: Lookup, expectedText: String): Double = RelaxedSimilarityUtils.RelaxedResult.MULTI.weight
+}
+
+class RelaxedExactMatchOnlyAlphanum(showByDefault: Boolean) : BaseRelaxedMetric(showByDefault) {
+  override val name: String = "Relaxed alphanumeric-only exact match"
+  override val description: String =
+    "Checks that for any the suggested lines of the completion, at least one of the lines from middle matches it."
+  override val onlyValuable: Boolean = true
+  override val metric: RelaxedSimilarityUtils.RelaxedMetric = RelaxedSimilarityUtils.RelaxedExactMatch()
+}
+
+/**
+ * Note that the default threshold value is picked experimenatlly.
+ */
+class RelaxedEditDistanceOnlyAlphanum(showByDefault: Boolean, threshold: Double = 0.767) : BaseRelaxedMetric(showByDefault) {
+  override val name: String = "Relaxed alphanumeric-only edit distance"
+  override val description: String = """
+    Checks that for any the suggested lines of the completion,
+    there is a line from middle that has a normalized edit distance less than $threshold.
+  """.trimIndent()
+  override val onlyValuable: Boolean = true
+  override val metric: RelaxedSimilarityUtils.RelaxedMetric = RelaxedSimilarityUtils.RelaxedEditDistance(threshold)
 }
