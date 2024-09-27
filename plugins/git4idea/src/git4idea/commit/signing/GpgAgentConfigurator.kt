@@ -15,6 +15,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -83,7 +84,7 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
   }
 
   suspend fun configure() {
-    withContext(Dispatchers.IO) { doConfigure() }
+    withContext(Dispatchers.IO) { ProjectLevelVcsManager.getInstance(project).runAfterInitialization { doConfigure() } }
   }
 
   private fun createPathLocator(executor: GitExecutable): GpgAgentPathsLocator {
