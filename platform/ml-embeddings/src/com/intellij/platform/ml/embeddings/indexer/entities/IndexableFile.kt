@@ -7,6 +7,6 @@ import com.intellij.platform.ml.embeddings.jvm.indices.EntityId
 import com.intellij.platform.ml.embeddings.utils.splitIdentifierIntoTokens
 
 class IndexableFile(override val id: EntityId) : IndexableEntity {
-  constructor(file: VirtualFile) : this(EntityId(file.name.intern()))
+  constructor(file: VirtualFile) : this(EntityId(file.name))
   override val indexableRepresentation by lazy { splitIdentifierIntoTokens(FileUtilRt.getNameWithoutExtension(id.id)) }
 }
