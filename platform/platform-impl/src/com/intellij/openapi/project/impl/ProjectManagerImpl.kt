@@ -49,7 +49,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -71,7 +70,6 @@ import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.project.PROJECT_ID
 import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.project.ProjectId
@@ -80,7 +78,6 @@ import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
-import com.intellij.util.PathUtilRt
 import com.intellij.util.PlatformUtils.isDataSpell
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -538,10 +535,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     @Suppress("DEPRECATION")
-    val project = runBlockingModalWithRawProgressReporter(
-      owner = ModalTaskOwner.guess(),
-      title = IdeUICustomization.getInstance().projectMessage("progress.title.project.creating.name", name ?: PathUtilRt.getFileName(path)),
-    ) {
+    val project = runUnderModalProgressIfIsEdt {
       val file = toCanonicalName(path)
       removeProjectConfigurationAndCaches(file)
       val project = instantiateProject(projectStoreBaseDir = file, options = options)
@@ -1230,12 +1224,12 @@ private fun removeProjectConfigurationAndCaches(projectFile: Path) {
       }
     }
   }
-  catch (ignored: IOException) {
+  catch (_: IOException) {
   }
   try {
     getProjectDataPathRoot(projectFile).delete()
   }
-  catch (ignored: IOException) {
+  catch (_: IOException) {
   }
 }
 
