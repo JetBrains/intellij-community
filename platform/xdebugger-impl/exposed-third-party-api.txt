@@ -1,5 +1,4 @@
 com/jetbrains/rhizomedb/impl/EntityTypeProvider
-fleet/rpc/RemoteApi
 fleet/rpc/RemoteApiDescriptor
 fleet/rpc/RpcSignature
 kotlin/jvm/internal/DefaultConstructorMarker
