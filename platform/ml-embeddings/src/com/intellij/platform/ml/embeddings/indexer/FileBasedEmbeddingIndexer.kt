@@ -180,29 +180,31 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
         launch { sendEntities(IndexId.SYMBOLS, symbolsChannel) }
 
         if (Registry.`is`("intellij.platform.ml.embeddings.use.file.based.index")) {
-          launch {
-            fetchEntities(FILE_NAME_EMBEDDING_INDEX_NAME, filesChannel, project) { key, name ->
-              LongIndexableEntity(key.toLong(), IndexableFile(EntityId(name)))
-            }
-            filesChannel.close()
-          }
-          launch {
-            fetchEntities(CLASS_NAME_EMBEDDING_INDEX_NAME, classesChannel, project) { key, name ->
-              LongIndexableEntity(key.toLong(), IndexableClass(EntityId(name)))
-            }
-            classesChannel.close()
-          }
-          launch {
-            fetchEntities(SYMBOL_NAME_EMBEDDING_INDEX_NAME, symbolsChannel, project) { key, name ->
-              LongIndexableEntity(key.toLong(), IndexableSymbol(EntityId(name)))
-            }
-            symbolsChannel.close()
-          }
+          launchFetchingEntities(settings.shouldIndexFiles, FILE_NAME_EMBEDDING_INDEX_NAME, filesChannel, project) { entityId -> IndexableFile(entityId) }
+          launchFetchingEntities(settings.shouldIndexClasses, CLASS_NAME_EMBEDDING_INDEX_NAME, classesChannel, project) { entityId -> IndexableClass(entityId) }
+          launchFetchingEntities(settings.shouldIndexSymbols, SYMBOL_NAME_EMBEDDING_INDEX_NAME, symbolsChannel, project) { entityId -> IndexableSymbol(entityId) }
         }
         else {
           indexFilesInProject(project, files, settings, filesChannel, classesChannel, symbolsChannel)
         }
       }
+    }
+  }
+
+  private fun CoroutineScope.launchFetchingEntities(shouldIndex: Boolean,
+                                                    index: ID<EmbeddingKey, String>,
+                                                    channel: Channel<IndexableEntity>,
+                                                    project: Project,
+                                                    toIndexableEntity: (EntityId) -> IndexableEntity) {
+    if (!shouldIndex) {
+      channel.close()
+      return
+    }
+    launch {
+      fetchEntities(index, channel, project) { key, name ->
+        LongIndexableEntity(key.toLong(), toIndexableEntity(EntityId(name)))
+      }
+      channel.close()
     }
   }
 
