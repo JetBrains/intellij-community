@@ -65,6 +65,7 @@ open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
 
   fun toFront() {
     ideaFrameComponent.toFront()
+    mainToolbar.click()
   }
 
   fun isMinimized() = ideaFrameComponent.getState() == Frame.ICONIFIED
