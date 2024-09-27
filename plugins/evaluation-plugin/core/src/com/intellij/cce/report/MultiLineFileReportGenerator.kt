@@ -3,7 +3,7 @@ package com.intellij.cce.report
 
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.CharFScore
-import com.intellij.cce.metric.EditSimilarity
+import com.intellij.cce.metric.CharFScoreFirstLine
 import com.intellij.cce.metric.Metric
 import com.intellij.cce.metric.TotalLatencyMetric
 import com.intellij.cce.workspace.storages.FeaturesStorage
@@ -37,8 +37,8 @@ class MultiLineFileReportGenerator(
 
   private fun getSessionMetricsAndColor(session: Session) = with(session) {
     listOf(
+      "${(evaluate(CharFScoreFirstLine()) * 100).roundToInt()}%",
       "${(evaluate(CharFScore()) * 100).roundToInt()}%",
-      "${(evaluate(EditSimilarity()) * 100).roundToInt()}%",
       "${formatDouble((evaluate(TotalLatencyMetric()) / 1000))}s"
     ).joinToString("  ", transform = { it.padEnd(4) }) to color()
   }
