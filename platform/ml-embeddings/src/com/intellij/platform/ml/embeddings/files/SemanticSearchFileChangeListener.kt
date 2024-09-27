@@ -3,12 +3,10 @@ package com.intellij.platform.ml.embeddings.files
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.platform.ml.embeddings.indexer.FileBasedEmbeddingIndexer
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettingsImpl
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
@@ -24,8 +22,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
-@Service(Service.Level.APP)
-class SemanticSearchFileChangeListener(cs: CoroutineScope) : AsyncFileListener {
+class SemanticSearchFileChangeListener(cs: CoroutineScope, private val index: suspend (Project, List<VirtualFile>) -> Unit) : AsyncFileListener {
   private val reindexRequest = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val reindexQueue = AtomicReference(ConcurrentCollectionFactory.createConcurrentSet<VirtualFile>())
 
@@ -56,13 +53,9 @@ class SemanticSearchFileChangeListener(cs: CoroutineScope) : AsyncFileListener {
       queue.flatMap { fileBasedIndex.getContainingProjects(it).map { project -> project to it } }
     }.groupBy({ it.first }, { it.second })
     for ((project, files) in projectToFiles) {
-      FileBasedEmbeddingIndexer.getInstance().indexFiles(project, files)
+      index(project, files)
     }
     // When we have a project:
     // val files = IndexableFilesIndex.getInstance(project).run { queue.filter { shouldBeIndexed(it) } }
-  }
-
-  companion object {
-    fun getInstance(): SemanticSearchFileChangeListener = service()
   }
 }
