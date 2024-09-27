@@ -52,7 +52,7 @@ public final class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameter
 
   @Override
   public PsiElement @NotNull [] getChildren() {
-    return getChildren(getModifierList(), getTypeElement(), getNameIdentifier());
+    return getChildren(getModifierList(), getTypeElement());
   }
 
   private @NotNull String calcName() {
