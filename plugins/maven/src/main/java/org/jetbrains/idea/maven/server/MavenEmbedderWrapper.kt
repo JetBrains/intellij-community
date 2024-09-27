@@ -53,20 +53,29 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     }
   }
 
-  suspend fun resolveProject(fileToDependencyHash: Map<VirtualFile, String?>,
-                             explicitProfiles: MavenExplicitProfiles,
-                             progressReporter: RawProgressReporter,
-                             eventHandler: MavenEventHandler,
-                             workspaceMap: MavenWorkspaceMap?,
-                             updateSnapshots: Boolean,
-                             userProperties: Properties): Collection<MavenServerExecutionResult> {
-    val transformer = if (fileToDependencyHash.isEmpty()) RemotePathTransformerFactory.Transformer.ID
+  suspend fun resolveProject(
+    pomToDependencyHash: Map<VirtualFile, String?>,
+    pomDependencies: Map<VirtualFile, Set<File>>,
+    explicitProfiles: MavenExplicitProfiles,
+    progressReporter: RawProgressReporter,
+    eventHandler: MavenEventHandler,
+    workspaceMap: MavenWorkspaceMap?,
+    updateSnapshots: Boolean,
+    userProperties: Properties,
+  ): Collection<MavenServerExecutionResult> {
+    val transformer = if (pomToDependencyHash.isEmpty()) RemotePathTransformerFactory.Transformer.ID
     else RemotePathTransformerFactory.createForProject(project)
 
     val pomHashMap = PomHashMap()
-    fileToDependencyHash.mapNotNull { (file, checkSum) ->
+    pomToDependencyHash.mapNotNull { (file, checkSum) ->
       transformer.toRemotePath(file.getPath())?.let {
         pomHashMap.put(File(it), checkSum)
+      }
+    }
+
+    pomDependencies.map { (file, dependencies) ->
+      transformer.toRemotePath(file.getPath())?.let {
+        pomHashMap.addFileDependencies(File(it), dependencies.mapNotNull { transformer.toRemotePath(it.path) }.map { File(it) })
       }
     }
 

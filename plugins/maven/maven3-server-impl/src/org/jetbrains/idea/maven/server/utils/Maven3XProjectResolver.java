@@ -35,8 +35,6 @@ import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
 
 import java.io.File;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -178,7 +176,7 @@ public class Maven3XProjectResolver {
         }
 
         String newDependencyHash = fileToNewDependencyHash.get(pomFile);
-        if (!dependenciesChanged(pomFile, newDependencyHash, fileToNewDependencyHash)) {
+        if (!transitiveDependenciesChanged(pomFile, newDependencyHash, fileToNewDependencyHash)) {
           executionResults.add(createExecutionResult(project, newDependencyHash));
           continue;
         }
@@ -215,11 +213,17 @@ public class Maven3XProjectResolver {
     return executionResults;
   }
 
-  private boolean dependenciesChanged(@NotNull File pomFile, String newDependencyHash, Map<File, String> fileToNewDependencyHash) {
+  private boolean transitiveDependenciesChanged(@NotNull File pomFile, String newDependencyHash, Map<File, String> fileToNewDependencyHash) {
+    if (dependenciesChanged(pomFile, newDependencyHash)) return true;
+    for (File dependencyPomFile : myPomHashMap.getFileDependencies(pomFile)) {
+      if (dependenciesChanged(dependencyPomFile, fileToNewDependencyHash.get(dependencyPomFile))) return true;
+    }
+    return false;
+  }
+
+  private boolean dependenciesChanged(@NotNull File pomFile, String newDependencyHash) {
     String previousDependencyHash = myPomHashMap.getDependencyHash(pomFile);
-    if (null == previousDependencyHash) return true;
-    if (previousDependencyHash.equals(newDependencyHash)) return false;
-    return true;
+    return previousDependencyHash == null || !previousDependencyHash.equals(newDependencyHash);
   }
 
   @NotNull

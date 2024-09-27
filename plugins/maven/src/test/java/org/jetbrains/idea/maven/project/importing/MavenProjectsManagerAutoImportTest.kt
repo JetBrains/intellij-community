@@ -32,7 +32,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   fun testResolvingEnvVariableInRepositoryPath() = runBlocking {
     val temp = System.getenv(envVar)
     waitForImportWithinTimeout {
-      updateSettingsXml("<localRepository>\${env." + envVar + "}/tmpRepo</localRepository>")
+      updateSettingsXml("<localRepository>\${env.$envVar}/tmpRepo</localRepository>")
     }
     val repo = File("$temp/tmpRepo").getCanonicalFile()
     assertEquals(repo.path, mavenGeneralSettings.getEffectiveLocalRepository().path)
@@ -444,10 +444,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     scheduleProjectImportAndWait()
     assertModuleModuleDeps("m1", "m2")
 
-    // relying on transitive dependencies is not a good practice
-    // transitive dependency updating is not fully supported by incremental sync
-    // run full sync to pick up transitive dependency
-    updateAllProjectsFullSync()
+    updateAllProjects()
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
   }
 
@@ -533,10 +530,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertModules("project", "m1")
     assertModuleModuleDeps("m1")
 
-    // relying on transitive dependencies is not a good practice
-    // transitive dependency updating is not fully supported by incremental sync
-    // run full sync to pick up transitive dependency changes
-    updateAllProjectsFullSync()
+    updateAllProjects()
     assertModuleLibDeps("m1", "Maven: test:m2:1")
   }
 
