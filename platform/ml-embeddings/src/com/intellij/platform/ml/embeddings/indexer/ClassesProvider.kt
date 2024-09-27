@@ -13,7 +13,7 @@ interface ClassesProvider {
   fun extract(file: PsiFile): List<IndexableClass>
 
   companion object {
-    private val EXTENSION = FileTypeExtension<ClassesProvider>("com.intellij.searcheverywhere.ml.classesProvider")
+    private val EXTENSION = FileTypeExtension<ClassesProvider>("com.intellij.embeddings.indexer.classesProvider")
 
     @RequiresReadLock
     fun extractClasses(file: PsiFile): List<IndexableClass> {

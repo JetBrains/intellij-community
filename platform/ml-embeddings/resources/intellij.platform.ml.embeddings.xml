@@ -65,10 +65,10 @@
       interface="com.intellij.platform.ml.embeddings.indexer.configuration.EmbeddingsConfiguration"
       dynamic="true"/>
 
-    <extensionPoint name="searcheverywhere.ml.classesProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
+    <extensionPoint name="embeddings.indexer.classesProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.platform.ml.embeddings.indexer.ClassesProvider"/>
     </extensionPoint>
-    <extensionPoint name="searcheverywhere.ml.symbolsProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
+    <extensionPoint name="embeddings.indexer.symbolsProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.platform.ml.embeddings.indexer.SymbolsProvider"/>
     </extensionPoint>
   </extensionPoints>

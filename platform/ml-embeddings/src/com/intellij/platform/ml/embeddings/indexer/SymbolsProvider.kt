@@ -13,7 +13,7 @@ interface SymbolsProvider {
   fun extract(file: PsiFile): List<IndexableSymbol>
 
   companion object {
-    private val EXTENSION = FileTypeExtension<SymbolsProvider>("com.intellij.searcheverywhere.ml.symbolsProvider")
+    private val EXTENSION = FileTypeExtension<SymbolsProvider>("com.intellij.embeddings.indexer.symbolsProvider")
 
     @RequiresReadLock
     fun extractSymbols(file: PsiFile): List<IndexableSymbol> {

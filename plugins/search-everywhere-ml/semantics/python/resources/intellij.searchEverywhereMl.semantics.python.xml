@@ -4,7 +4,7 @@
     <module name="intellij.searchEverywhereMl.semantics"/>
   </dependencies>
 
-  <extensions defaultExtensionNs="com.intellij.searcheverywhere.ml">
+  <extensions defaultExtensionNs="com.intellij.embeddings.indexer">
     <classesProvider filetype="Python" implementationClass="com.intellij.searchEverywhereMl.semantics.python.PythonClassesProvider"/>
     <symbolsProvider filetype="Python" implementationClass="com.intellij.searchEverywhereMl.semantics.python.PythonSymbolsProvider"/>
   </extensions>
