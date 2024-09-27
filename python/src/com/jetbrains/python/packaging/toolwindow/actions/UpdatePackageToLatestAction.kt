@@ -7,7 +7,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
-import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackages
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.launch
@@ -15,31 +14,44 @@ import kotlinx.coroutines.launch
 internal class UpdatePackageToLatestAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val pkg = e.selectedPackage as? InstalledPackage ?: return
+
+    val packages = getPackagesForUpdate(e)
+    if (packages.isEmpty()) {
+      return
+    }
 
     val service = PyPackagingToolWindowService.getInstance(project)
 
     PyPackageCoroutine.getIoScope(project).launch {
-      val specification = pkg.repository.createPackageSpecification(pkg.name, pkg.nextVersion!!.presentableText)
-      service.updatePackage(specification)
+      for (pkg in packages) {
+        val specification = pkg.repository.createPackageSpecification(pkg.name, pkg.nextVersion!!.presentableText)
+        service.updatePackage(specification)
+      }
     }
   }
 
   override fun update(e: AnActionEvent) {
-    val selectedPackage = e.selectedPackages.singleOrNull()
-    val pkg = selectedPackage as? InstalledPackage
+    val packages = getPackagesForUpdate(e)
 
-    val currentVersion = pkg?.currentVersion?.presentableText
-    val nextVersion = pkg?.nextVersion?.presentableText
-    if (currentVersion != null && nextVersion != null) {
+    if (packages.isEmpty() || packages.any { !it.canBeUpdated }) {
       e.presentation.isEnabledAndVisible = true
-      e.presentation.text = PyBundle.message("python.toolwindow.packages.update.package.version", currentVersion, nextVersion)
-    }
-    else {
-      e.presentation.isEnabledAndVisible = false
+      return
     }
 
+    val singlePackage = packages.singleOrNull()
+    e.presentation.text = if (singlePackage !=null) {
+      val currentVersion = singlePackage.currentVersion?.presentableText
+      val nextVersion = singlePackage.nextVersion?.presentableText
+      PyBundle.message("python.toolwindow.packages.update.package.version", currentVersion, nextVersion)
+    } else {
+      PyBundle.message("python.toolwindow.packages.update.packages")
+    }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  private fun getPackagesForUpdate(e: AnActionEvent) =
+    e.selectedPackages.filterIsInstance<InstalledPackage>().filter {
+      it.canBeUpdated
+    }
 }
