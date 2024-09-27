@@ -146,19 +146,19 @@ public class TestSwitchNestedDeconstructionsJavac {
       }
 
       switch (o) {// 136
-         case R2(String var27, String s2) when s.length() > 3:// 137
+         case R2(String s, String s2) when s.length() > 3:// 137
             if (s.length() == 2) {// 138
                System.out.println(o);// 139
             }
 
             return;// 164
-         case R2(String var27, String s2) when s.length() > 4:// 142
+         case R2(String s, String s2) when s.length() > 4:// 142
             if (s.length() == 2) {// 143
                System.out.println(o);// 144
             }
 
             return;
-         case R2(String var27, Object var58) when s.length() > 3:// 147
+         case R2(String s, Object var58) when s.length() > 3:// 147
             if (s.length() == 2) {// 148
                System.out.println(o);// 149
             }

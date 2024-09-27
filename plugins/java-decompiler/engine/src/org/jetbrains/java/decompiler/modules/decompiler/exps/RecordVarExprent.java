@@ -56,6 +56,7 @@ public class RecordVarExprent extends VarExprent {
   public RecordVarExprent copy() {
     VarExprent copy = (VarExprent)super.copy();
     RecordVarExprent newRoot = new RecordVarExprent(copy);
+    newRoot.setLVTEntry(copy.getLVTEntry());
     for (RecordVarExprent component : components) {
       newRoot.addComponent(component.copy());
     }
