@@ -215,7 +215,7 @@ class LibraryBridgeImpl(
   companion object {
     private val libraryRootTypes = ConcurrentFactoryMap.createMap<String, LibraryRootTypeId> { LibraryRootTypeId(it) }
 
-    internal fun OrderRootType.toLibraryRootType(): LibraryRootTypeId = when (this) {
+    fun OrderRootType.toLibraryRootType(): LibraryRootTypeId = when (this) {
       OrderRootType.CLASSES -> LibraryRootTypeId.COMPILED
       OrderRootType.SOURCES -> LibraryRootTypeId.SOURCES
       else -> libraryRootTypes[name()]!!

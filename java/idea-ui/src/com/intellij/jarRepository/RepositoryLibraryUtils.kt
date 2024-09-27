@@ -587,6 +587,6 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
 
 private fun LibraryPropertiesEntity.isRepositoryLibraryProperties() = propertiesXmlTag != null && REPOSITORY_LIBRARY_KIND.kindId == library.typeId?.name
 
-private fun LibraryPropertiesEntity.toRepositoryLibraryProperties(): RepositoryLibraryProperties? {
+fun LibraryPropertiesEntity.toRepositoryLibraryProperties(): RepositoryLibraryProperties? {
   return if (isRepositoryLibraryProperties()) deserialize(JDOMUtil.load(checkNotNull(propertiesXmlTag))) else null
 }
