@@ -51,6 +51,7 @@ public final class PinentryApp implements ExternalApp {
               if (pinentryUserData == null) {
                 pinentryUserData = "";
               }
+              pinentryUserData = pinentryUserData.replace("IJ_PINENTRY=", "");
               String[] pinentryData = pinentryUserData.split(":");
 
               if (pinentryData.length != 3) {

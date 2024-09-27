@@ -200,7 +200,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     if (needGpgSigning) {
       PinentryService.PinentryData pinentryData = PinentryService.getInstance(project).startSession();
       if (pinentryData != null) {
-        myHandler.addCustomEnvironmentVariable(PinentryService.PINENTRY_USER_DATA_ENV, pinentryData.toString());
+        myHandler.addCustomEnvironmentVariable(PinentryService.PINENTRY_USER_DATA_ENV, pinentryData.toEnv());
         myHandler.addListener(new GitHandlerListener() {
           @Override
           public void processTerminated(int exitCode) {

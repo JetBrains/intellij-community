@@ -156,7 +156,12 @@ internal class PinentryService(private val cs: CoroutineScope) {
   }
 
   data class PinentryData(val publicKey: String, val address: Address) {
-    override fun toString(): String = "$publicKey:$address"
+
+    fun toEnv(): String = "$PREFIX$publicKey:$address"
+
+    companion object {
+      const val PREFIX = "IJ_PINENTRY="
+    }
   }
 
   companion object {

@@ -130,9 +130,9 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     }
   }
 
-  private fun requestPassword(paths: GpgAgentPaths, pinentryData: PinentryService.PinentryData?): List<@NlsSafe String> {
+  private fun requestPassword(paths: GpgAgentPaths, pinentryData: PinentryService.PinentryData): List<@NlsSafe String> {
     val cmd = GeneralCommandLine(paths.gpgPinentryAppLauncherConfigPath)
-      .withEnvironment(PinentryService.PINENTRY_USER_DATA_ENV, pinentryData.toString())
+      .withEnvironment(PinentryService.PINENTRY_USER_DATA_ENV, pinentryData.toEnv())
 
     val output = object : CapturingProcessHandler.Silent(cmd) {
       override fun createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter? {

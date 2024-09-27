@@ -25,6 +25,7 @@ import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_AGENT_CONF_FIL
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_HOME_DIR
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.PINENTRY_LAUNCHER_FILE_NAME
 import git4idea.commit.signing.PinentryService.Companion.PINENTRY_USER_DATA_ENV
+import git4idea.commit.signing.PinentryService.PinentryData
 import git4idea.config.GitExecutable
 import git4idea.config.GitExecutableListener
 import git4idea.config.GitExecutableManager
@@ -355,7 +356,8 @@ internal class PinentryShellScriptLauncherGenerator(override val executable: Git
     }
 
     return """|#!/bin/sh
-              |if [ -n "${'$'}$PINENTRY_USER_DATA_ENV" ]; then
+              |if [ -n "${'$'}$PINENTRY_USER_DATA_ENV" ] && [[
+              |  "${'$'}$PINENTRY_USER_DATA_ENV" == "${PinentryData.PREFIX}"* ]]; then
               |  ${addParameters(*getCommandLineParameters()).commandLine(PinentryApp::class.java, false)}
               |else
               |  exec $fallbackPinentryPath "$@"
