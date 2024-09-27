@@ -1,59 +1,51 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.tooling.builder;
+package org.jetbrains.plugins.gradle.tooling.builder
 
-import com.intellij.gradle.toolingExtension.impl.model.taskIndex.GradleTaskIndex;
-import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
-import org.gradle.api.Project;
-import org.gradle.api.Task;
-import org.gradle.api.java.archives.Attributes;
-import org.gradle.jvm.tasks.Jar;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.jar.JarTaskManifestConfiguration;
-import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
-import org.jetbrains.plugins.gradle.tooling.internal.jar.JarTaskManifestConfigurationImpl;
+import com.intellij.gradle.toolingExtension.impl.model.taskIndex.GradleTaskIndex
+import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
+import org.gradle.api.Project
+import org.gradle.api.java.archives.Attributes
+import org.gradle.jvm.tasks.Jar
+import org.jetbrains.plugins.gradle.model.jar.JarTaskManifestConfiguration
+import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
+import org.jetbrains.plugins.gradle.tooling.internal.jar.JarTaskManifestConfigurationImpl
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+private const val JAR_TASK = "jar"
 
-public class JarTaskManifestModelBuilder extends AbstractModelBuilderService {
-  public static final String JAR_TASK = "jar";
+class JarTaskManifestModelBuilder : AbstractModelBuilderService() {
 
-  @Override
-  public boolean canBuild(String modelName) {
-    return JarTaskManifestConfiguration.class.getName().equals(modelName);
+  override fun canBuild(modelName: String): Boolean {
+    return JarTaskManifestConfiguration::class.java.name == modelName
   }
 
-  @Override
-  public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
-    Set<Task> tasks = GradleTaskIndex.getInstance(context)
-      .getAllTasks(project);
+  override fun buildAll(modelName: String, project: Project, context: ModelBuilderContext): Any {
+    val tasks = GradleTaskIndex.getInstance(context)
+      .getAllTasks(project)
 
-    Map<String, Map<String, String>> projectIdentityPathToManifestAttributes = new HashMap<>();
-    for (Task task : tasks) {
-      if (task instanceof Jar && JAR_TASK.equals(task.getName())) {
-        Jar jar = (Jar)task;
-        Attributes attributes = jar.getManifest().getAttributes();
+    val projectIdentityPathToManifestAttributes = HashMap<String, Map<String, String>>()
+    for (task in tasks) {
+      if (task is Jar && JAR_TASK == task.name) {
+        val attributes = task.manifest.attributes
         if (!attributes.isEmpty()) {
-          projectIdentityPathToManifestAttributes.put(identityPath(project), attributeMap(attributes));
+          projectIdentityPathToManifestAttributes.put(identityPath(project), attributeMap(attributes))
         }
       }
     }
-    return new JarTaskManifestConfigurationImpl(projectIdentityPathToManifestAttributes);
+    return JarTaskManifestConfigurationImpl(projectIdentityPathToManifestAttributes)
   }
 
-  private static Map<String, String> attributeMap(Attributes attributes) {
-    Map<String, String> result = new HashMap<>();
-    for (Map.Entry<String, Object> entry : attributes.entrySet()) {
-      result.put(entry.getKey(), entry.getValue().toString());
+  private fun attributeMap(attributes: Attributes): Map<String, String> {
+    val result = HashMap<String, String>()
+    for (entry in attributes.entries) {
+      result.put(entry.key, entry.value.toString())
     }
-    return result;
+    return result
   }
 
-  private static String identityPath(Project project) {
+  private fun identityPath(project: Project): String {
     // composite builds
-    String identityPath = GradleProjectUtil.getProjectIdentityPath(project);
-    return (identityPath == null || ":".equals(identityPath)) ? project.getPath() : identityPath;
+    val identityPath = GradleProjectUtil.getProjectIdentityPath(project)
+    return if (identityPath == null || ":" == identityPath) project.path else identityPath
   }
 }
