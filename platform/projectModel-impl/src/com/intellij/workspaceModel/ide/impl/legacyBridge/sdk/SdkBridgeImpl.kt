@@ -189,6 +189,9 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
     fun EntityStorage.findSdkEntity(sdk: Sdk): SdkEntity? =
       sdkMap.getEntities(sdk).firstOrNull() as SdkEntity?
 
+    fun EntityStorage.findSdk(sdkEntity: SdkEntity): Sdk? =
+      sdkMap.getDataByEntity(sdkEntity)
+
     fun createEmptySdkEntity(name: String, type: String, homePath: String = "", version: String? = null): SdkEntity.Builder {
       val sdkEntitySource = createEntitySourceForSdk()
       val virtualFileUrlManager = getVirtualFileUrlManager()
