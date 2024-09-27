@@ -29,16 +29,20 @@ object RelaxedSimilarityUtils {
     stripChars: Boolean = false,
   ): RelaxedResult {
     if (middle.isBlank() || completion.isBlank()) return RelaxedResult.NO
+
     val missingCode = middle + suffix
     val completionLines = preProcessLines(completion, prefix, suffix, stripChars)
-    val middleLines = preProcessLines(middle, prefix, suffix, stripChars)
+    val middleLines = preProcessLines(middle, prefix, suffix, stripChars).toSet()
     val prefixMatch = missingCode.startsWith(completion.trim())
-    val hasMatchingLine = middleLines.any { completionLines.any { line -> line in it } }
-    val multilineMatch = completionLines.all { completionLine -> middleLines.any { line -> completionLine in line } }
+
+    val matchingLines = completionLines.count { it in middleLines }
+    val hasMatchingLine = matchingLines > 0
+    val multilineMatch = matchingLines == completionLines.size
+
     return when {
       multilineMatch -> RelaxedResult.MULTI
-      hasMatchingLine -> RelaxedResult.ANY
-      else -> if (prefixMatch) RelaxedResult.ANY else RelaxedResult.NO
+      hasMatchingLine || prefixMatch -> RelaxedResult.ANY
+      else -> RelaxedResult.NO
     }
   }
 }
