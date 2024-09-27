@@ -4,6 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.ui.remote.Window
 
 @Remote("com.intellij.openapi.wm.WindowManager")
 interface WindowManager {
@@ -34,6 +35,6 @@ fun Driver.getIdeFrame(project: Project): IdeFrame? {
   return service<WindowManager>().getIdeFrame(project)
 }
 
-fun Driver.hasIdeFrame(): Boolean {
-  return service<WindowManager>().findVisibleFrame() != null
+fun Driver.hasVisibleWindow(): Boolean {
+  return utility(Window::class).getWindows().any { window -> window.isShowing() }
 }
