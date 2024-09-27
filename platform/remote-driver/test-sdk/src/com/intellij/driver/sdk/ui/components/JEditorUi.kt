@@ -187,6 +187,10 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
     moveMouse(icons.firstOrNull { it.line == line - 1 }!!.location)
   }
 
+  fun rightClickOnIcon(line: Int) {
+    rightClick(icons.firstOrNull { it.line == line - 1 }!!.location)
+  }
+
   inner class GutterIcon(private val data: GutterIconWithLocation) {
     val line: Int
       get() = data.getLine()
