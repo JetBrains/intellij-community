@@ -83,15 +83,14 @@ public class NewModuleAction extends AnAction implements DumbAware, NewProjectOr
     if (builder.isOpenProjectSettingsAfter()) {
       ModulesConfigurator.showDialog(project, null, null);
     }
-    return modules == null || modules.isEmpty() ? null : modules.get(0);
+    return modules.isEmpty() ? null : modules.get(0);
   }
 
-  @Nullable
-  protected Object prepareDataFromContext(final AnActionEvent e) {
+  protected @Nullable Object prepareDataFromContext(final AnActionEvent e) {
     return null;
   }
 
-  protected void processCreatedModule(final Module module, @Nullable final Object dataFromContext) {
+  protected void processCreatedModule(final Module module, final @Nullable Object dataFromContext) {
   }
 
   @Override
@@ -105,9 +104,8 @@ public class NewModuleAction extends AnAction implements DumbAware, NewProjectOr
     return ActionUpdateThread.BGT;
   }
 
-  @NotNull
   @Override
-  public String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
+  public @NotNull String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
     return JavaUiBundle.message("module.new.action", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 :0);
   }
 }

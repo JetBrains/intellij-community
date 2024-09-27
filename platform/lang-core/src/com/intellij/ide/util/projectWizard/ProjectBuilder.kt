@@ -1,59 +1,47 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.util.projectWizard;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.util.projectWizard
 
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.module.ModifiableModuleModel
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import org.jetbrains.annotations.ApiStatus
+import java.util.function.Consumer
 
-import java.util.List;
-import java.util.function.Consumer;
+abstract class ProjectBuilder {
+  open val isUpdate: Boolean
+    get() = false
 
-public abstract class ProjectBuilder {
-  public boolean isUpdate() {
-    return false;
+  abstract fun commit(project: Project, model: ModifiableModuleModel?, modulesProvider: ModulesProvider?): List<Module>
+
+  open fun commit(project: Project): List<Module> {
+    return commit(project, null)
   }
 
-  public abstract @Nullable List<Module> commit(@NotNull Project project, @Nullable ModifiableModuleModel model, ModulesProvider modulesProvider);
-
-  public @Nullable List<Module> commit(@NotNull Project project, @Nullable ModifiableModuleModel model) {
-    return commit(project, model, DefaultModulesProvider.createForProject(project));
+  open fun commit(project: Project, model: ModifiableModuleModel?): List<Module> {
+    return commit(project, model, DefaultModulesProvider.createForProject(project))
   }
 
-  public @Nullable List<Module> commit(@NotNull Project project) {
-    return commit(project, null);
+  open fun validate(currentProject: Project?, project: Project): Boolean = true
+
+  open fun cleanup() {
   }
 
-  public boolean validate(@Nullable Project currentProject, @NotNull Project project) {
-    return true;
-  }
+  open val isOpenProjectSettingsAfter: Boolean
+    get() = false
 
-  public void cleanup() {}
+  open fun isSuitableSdkType(sdkType: SdkTypeId): Boolean = true
 
-  public boolean isOpenProjectSettingsAfter() {
-    return false;
-  }
-
-  public boolean isSuitableSdkType(SdkTypeId sdkType) {
-    return true;
-  }
-
-  public @Nullable Project createProject(String name, String path) {
-    return ProjectManager.getInstance().createProject(name, path);
+  open fun createProject(name: String, path: String): Project? {
+    return ProjectManager.getInstance().createProject(name, path)
   }
 
   /**
    * Configure project when it's added to workspace as module.
    */
   @ApiStatus.Internal
-  @Nullable
-  public Consumer<Module> createModuleConfigurator() {
-    return null;
-  }
+  open fun createModuleConfigurator(): Consumer<Module>? = null
 }
