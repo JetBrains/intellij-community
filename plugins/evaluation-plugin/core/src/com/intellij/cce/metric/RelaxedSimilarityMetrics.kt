@@ -1,5 +1,7 @@
 package com.intellij.cce.metric
 
+import org.apache.commons.text.similarity.LevenshteinDistance
+
 object RelaxedSimilarityUtils {
   private val nonValuable = Regex("[^a-zA-Z0-9_+\\-*%=&|@\$?]")
 
@@ -42,6 +44,33 @@ object RelaxedSimilarityUtils {
     return when {
       multilineMatch -> RelaxedResult.MULTI
       hasMatchingLine || prefixMatch -> RelaxedResult.ANY
+      else -> RelaxedResult.NO
+    }
+  }
+
+  fun computeRelaxedEditDistance(
+    middle: String,
+    completion: String,
+    prefix: String,
+    suffix: String,
+    threshold: Float,
+    stripChars: Boolean = false,
+  ): RelaxedResult {
+    if (middle.isBlank() || completion.isBlank()) return RelaxedResult.NO
+
+    val missingCode = middle + suffix
+    val completionLines = preProcessLines(completion, prefix, suffix, stripChars)
+    val middleLines = preProcessLines(middle, prefix, suffix, stripChars).toSet()
+    val prefixMatch = missingCode.startsWith(completion.trim())
+
+    val distanceCalculator = LevenshteinDistance.getDefaultInstance()
+    val linesMatched = completionLines.count { line ->
+      middleLines.any { distanceCalculator.apply(it, line) <= threshold }
+    }
+
+    return when {
+      linesMatched == completionLines.size -> RelaxedResult.MULTI
+      linesMatched > 0 || prefixMatch -> RelaxedResult.ANY
       else -> RelaxedResult.NO
     }
   }
