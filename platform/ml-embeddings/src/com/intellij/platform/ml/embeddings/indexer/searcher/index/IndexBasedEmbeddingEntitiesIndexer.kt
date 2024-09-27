@@ -60,20 +60,20 @@ internal class IndexBasedEmbeddingEntitiesIndexer(cs: CoroutineScope) : Embeddin
 
     val chunkSize = Registry.intValue("intellij.platform.ml.embeddings.file.based.index.processing.chunk.size")
     keys.asSequence().chunked(chunkSize).forEach { chunk ->
-      chunk.forEach { key ->
-        val fileIdsAndNames = smartReadAction(project) {
-          val result = mutableListOf<Pair<Int, String>>()
+      val fileIdsAndNames = smartReadAction(project) {
+        chunk.mapNotNull { key ->
+          var result: Pair<Long, String>? = null
           fileBasedIndex.processValues(indexId, key, null, { virtualFile, name ->
             if (virtualFile is VirtualFileWithId) {
-              result.add(Pair(virtualFile.id, name))
+              result = Pair(key.toLong(virtualFile.id), name)
             }
-            true
+            false // we don't support the situation when there are two or more different symbols within one file with the same hash
           }, scope)
           result
         }
-        for ((fileId, name) in fileIdsAndNames) {
-          channel.send(nameToEntity(key.toLong(fileId), name))
-        }
+      }
+      for ((id, name) in fileIdsAndNames) {
+        channel.send(nameToEntity(id, name))
       }
     }
   }
