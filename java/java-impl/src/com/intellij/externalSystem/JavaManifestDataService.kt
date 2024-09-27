@@ -6,7 +6,6 @@ import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.java.workspace.entities.modifyJavaModuleSettingsEntity
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
-import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractModuleDataService
@@ -16,22 +15,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.serialization.PropertyMapping
+import org.jetbrains.annotations.ApiStatus
 
-internal class JarTaskManifestDataService : WorkspaceDataService<JarTaskManifestData> {
-  private val GRADLE_MAIN_SUFFIX = ".main"
-  override fun getTargetDataKey(): Key<JarTaskManifestData> = JarTaskManifestData.KEY
+private const val GRADLE_MAIN_SUFFIX = ".main"
+
+@ApiStatus.Internal
+class JavaManifestDataService : WorkspaceDataService<JavaManifestData> {
+
+  override fun getTargetDataKey(): Key<JavaManifestData> = JavaManifestData.KEY
 
   override fun importData(
-    toImport: Collection<DataNode<JarTaskManifestData>>,
+    toImport: Collection<DataNode<JavaManifestData>>,
     projectData: ProjectData?,
     project: Project,
-    mutableStorage: MutableEntityStorage
+    mutableStorage: MutableEntityStorage,
   ) {
-    for (jarTaskManifestNode in toImport) {
-      val moduleNode = jarTaskManifestNode.getParent(ModuleData::class.java) ?: continue
+    for (manifestNode in toImport) {
+      val moduleNode = manifestNode.getParent(ModuleData::class.java) ?: continue
       val module = moduleNode.getUserData(AbstractModuleDataService.MODULE_KEY) ?: continue
-      val manifestAttributes = jarTaskManifestNode.data.manifestAttributes
+      val manifestAttributes = manifestNode.data.manifestAttributes
 
       importManifestAttributes(module, manifestAttributes, mutableStorage)
     }
@@ -56,14 +58,5 @@ internal class JarTaskManifestDataService : WorkspaceDataService<JarTaskManifest
         }
       }
     }
-  }
-}
-
-class JarTaskManifestData
-@PropertyMapping("manifestAttributes")
-constructor(val manifestAttributes: Map<String, String>) {
-  companion object {
-    @JvmField
-    val KEY = Key.create(JarTaskManifestData::class.java, ProjectKeys.TASK.processingWeight + 1)
   }
 }

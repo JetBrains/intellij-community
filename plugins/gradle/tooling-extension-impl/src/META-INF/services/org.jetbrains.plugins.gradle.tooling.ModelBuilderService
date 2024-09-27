@@ -21,4 +21,4 @@ org.jetbrains.plugins.gradle.tooling.builder.IntelliJProjectSettingsBuilder
 org.jetbrains.plugins.gradle.tooling.builder.DependencyAccessorsModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.MavenRepositoriesModelBuilder
 org.jetbrains.plugins.gradle.tooling.builder.VersionCatalogsModelBuilder
-org.jetbrains.plugins.gradle.tooling.builder.JarTaskManifestModelBuilder
+com.intellij.gradle.toolingExtension.impl.javaModel.manifestModel.JavaGradleManifestModelBuilder
