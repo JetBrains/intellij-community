@@ -101,8 +101,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                        final VirtualFile @Nullable [] files) {
     GithubSettings settings = GithubSettings.getInstance();
     // Ask for description and other params
+    @Nullable String fileName = GithubGistContentsCollector.Companion.getGistFileName(editor, files);
     GithubCreateGistDialog dialog = new GithubCreateGistDialog(project,
-                                                               getFileName(editor, files),
+                                                               fileName,
                                                                settings.isPrivateGist(),
                                                                settings.isOpenInBrowserGist(),
                                                                settings.isCopyURLGist());
@@ -152,17 +153,6 @@ public class GithubCreateGistAction extends DumbAwareAction {
         }
       }
     }.queue();
-  }
-
-  @Nullable
-  private static String getFileName(@Nullable Editor editor, VirtualFile @Nullable [] files) {
-    if (files != null && files.length == 1 && !files[0].isDirectory()) {
-      return files[0].getName();
-    }
-    if (editor != null) {
-      return "";
-    }
-    return null;
   }
 
   @Nullable

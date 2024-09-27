@@ -25,6 +25,15 @@ interface GithubGistContentsCollector {
    */
   fun collectContents(gistEventData: GistEventData): List<GithubGistRequest.FileContent>?
 
+  /**
+   * Retrieves the displayed file name for a gist from the given `editor` and `files` array.
+   *
+   * @param editor The editor object which might be null.
+   * @param files An array of VirtualFile objects which might be null.
+   * @return The file name as a String if found, otherwise returns null.
+   */
+  fun getGistFileName(editor: Editor?, files: Array<VirtualFile>?): String?
+
   companion object {
     val EP = ExtensionPointName.create<GithubGistContentsCollector>("com.intellij.vcs.github.gistContentsCollector")
 
@@ -35,7 +44,15 @@ interface GithubGistContentsCollector {
       files: Array<VirtualFile>?,
     ): List<GithubGistRequest.FileContent> {
       val eventData = GistEventData(project, editor, file, files)
-      return EP.extensionList.firstNotNullOf { it.collectContents(eventData) }
+      return EP.extensionList.firstNotNullOf {
+        it.collectContents(eventData)
+      }
+    }
+
+    fun getGistFileName(editor: Editor?, files: Array<VirtualFile>?): String? {
+      return EP.extensionList.firstNotNullOfOrNull {
+        it.getGistFileName(editor, files)
+      }
     }
   }
 }

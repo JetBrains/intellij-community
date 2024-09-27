@@ -18,6 +18,17 @@ import org.jetbrains.plugins.github.util.GithubUtil
 import java.io.IOException
 
 open class DefaultGithubGistContentsCollector : GithubGistContentsCollector {
+  override fun getGistFileName(editor: Editor?, files: Array<VirtualFile>?): String? {
+    val onlyFile = files?.singleOrNull()?.takeIf { !it.isDirectory }
+    if (onlyFile != null) {
+      return onlyFile.name
+    }
+    if (editor != null) {
+      return ""
+    }
+    return null
+  }
+
   override fun collectContents(gistEventData: GithubGistContentsCollector.GistEventData): List<GithubGistRequest.FileContent> {
     val (project, editor, file, files) = gistEventData
 
@@ -41,8 +52,11 @@ open class DefaultGithubGistContentsCollector : GithubGistContentsCollector {
     throw IllegalStateException("File, files and editor can't be null all at once!")
   }
 
-  protected open fun getContentFromEditor(editor: Editor, file: VirtualFile?): List<GithubGistRequest.FileContent>? {
-    val text: String = ReadAction.compute<String?, java.lang.RuntimeException> { editor.selectionModel.selectedText } ?: editor.document.text
+  protected open fun getContentFromEditor(
+    editor: Editor,
+    file: VirtualFile?,
+  ): List<GithubGistRequest.FileContent>? {
+    val text: String = getSelectedText(editor) ?: editor.document.text
     if (text.isBlank()) {
       return null
     }
@@ -50,6 +64,9 @@ open class DefaultGithubGistContentsCollector : GithubGistContentsCollector {
     val fileName = file?.name.orEmpty()
     return listOf(GithubGistRequest.FileContent(fileName, text))
   }
+
+  protected fun getSelectedText(editor: Editor): String? =
+    ReadAction.compute<String?, java.lang.RuntimeException> { editor.selectionModel.selectedText }
 
   private fun getContentFromFile(file: VirtualFile, project: Project, prefix: String?): List<GithubGistRequest.FileContent> {
     if (file.isDirectory) {
