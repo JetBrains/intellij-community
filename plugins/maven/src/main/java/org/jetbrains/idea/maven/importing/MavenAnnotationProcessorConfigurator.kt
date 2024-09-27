@@ -16,19 +16,15 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.Consumer
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getProcessorArtifactInfos
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
 import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.jetbrains.jps.util.JpsPathUtil
@@ -119,45 +115,6 @@ class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator("org.ap
   private class MavenProjectWithProcessorModules(val mavenProject: MavenProject,
                                                  val mavenProjectModules: List<ModuleWithType<Module>>,
                                                  val processorModuleNames: List<String>)
-
-  @Throws(MavenProcessCanceledException::class)
-  fun resolve(project: Project,
-              mavenProject: MavenProject,
-              nativeMavenProject: NativeMavenProjectHolder,
-              embedder: MavenEmbedderWrapper) {
-    val config = getConfig(mavenProject, "annotationProcessorPaths")
-    if (config == null) return
-
-    val artifactsInfo = getProcessorArtifactInfos(config)
-    if (artifactsInfo.isEmpty()) {
-      return
-    }
-
-    val externalArtifacts: MutableList<MavenArtifactInfo> = ArrayList()
-    val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-    val tree = mavenProjectsManager.projectsTree
-    for (info in artifactsInfo) {
-      val mavenArtifact = tree.findProject(MavenId(info.groupId, info.artifactId, info.version))
-      if (mavenArtifact == null) {
-        externalArtifacts.add(info)
-      }
-    }
-
-    try {
-      val annotationProcessors = embedder
-        .resolveArtifactTransitively(ArrayList(externalArtifacts), ArrayList(mavenProject.remoteRepositories))
-      if (annotationProcessors.problem != null) {
-        MavenResolveResultProblemProcessor.notifySyncForProblem(project, annotationProcessors.problem!!)
-      }
-      else {
-        mavenProject.addAnnotationProcessors(annotationProcessors.mavenResolvedArtifacts)
-      }
-    }
-    catch (e: Exception) {
-      val message = if (e.message != null) e.message else ExceptionUtil.getThrowableText(e)
-      MavenProjectsManager.getInstance(project).syncConsole.addWarning(SyncBundle.message("maven.sync.annotation.processor.problem"), message!!)
-    }
-  }
 
   private fun configureProfiles(project: Project,
                                 tree: MavenProjectsTree,

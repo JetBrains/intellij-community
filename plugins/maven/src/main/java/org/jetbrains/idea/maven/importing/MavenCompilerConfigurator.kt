@@ -18,8 +18,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.MavenDisposable
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 
@@ -37,21 +35,6 @@ private val LOG = Logger.getInstance(MavenCompilerConfigurator::class.java)
 @ApiStatus.Internal
 class MavenCompilerConfigurator : MavenApplicableConfigurator("org.apache.maven.plugins", "maven-compiler-plugin"),
                                   MavenWorkspaceConfigurator {
-  fun resolve(project: Project,
-              mavenProject: MavenProject,
-              nativeMavenProject: NativeMavenProjectHolder,
-              embedder: MavenEmbedderWrapper) {
-    if (!super.isApplicable(mavenProject)) return
-    if (!Registry.`is`("maven.import.compiler.arguments", true) ||  !MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler) return
-
-    val defaultCompilerExtension = MavenCompilerExtension.EP_NAME.extensions.find {
-      it.resolveDefaultCompiler(project, mavenProject, embedder)
-    }
-    if (project.getUserData(DEFAULT_COMPILER_EXTENSION) == null) {
-      project.putUserData(DEFAULT_COMPILER_EXTENSION, defaultCompilerExtension)
-    }
-  }
-
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
     var defaultCompilerExtension = context.project.getUserData(DEFAULT_COMPILER_EXTENSION)
     context.putUserData(DEFAULT_COMPILER_EXTENSION, null)

@@ -331,20 +331,11 @@ public class Maven3XProjectResolver {
       problems.addAll(myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), modelProblems));
     }
 
-    RemoteNativeMaven3ProjectHolder holder = new RemoteNativeMaven3ProjectHolder(mavenProject);
-    try {
-      UnicastRemoteObject.exportObject(holder, 0);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
-
     Collection<String> activatedProfiles = Maven3XProfileUtil.collectActivatedProfiles(mavenProject);
 
     Map<String, String> mavenModelMap = Maven3ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, dependencyHash, dependencyResolutionSkipped, mavenModelMap,
-                                                 holder, activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, dependencyHash, dependencyResolutionSkipped, mavenModelMap, activatedProfiles);
     Collection<MavenProjectProblem> unresolvedProblems = new HashSet<>();
     collectUnresolvedArtifactProblems(file, dependencyResolutionResult, unresolvedProblems);
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);

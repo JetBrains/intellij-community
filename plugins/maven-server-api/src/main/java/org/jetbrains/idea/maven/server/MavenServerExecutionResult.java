@@ -58,20 +58,17 @@ public class MavenServerExecutionResult implements Serializable {
     public final String dependencyHash;
     public final boolean dependencyResolutionSkipped;
     public final Map<String, String> mavenModelMap;
-    public final NativeMavenProjectHolder nativeMavenProject;
     public final Collection<String> activatedProfiles;
 
     public ProjectData(@NotNull MavenModel mavenModel,
                        @Nullable String dependencyHash,
                        boolean dependencyResolutionSkipped,
                        Map<String, String> mavenModelMap,
-                       NativeMavenProjectHolder nativeMavenProject,
                        Collection<String> activatedProfiles) {
       this.mavenModel = mavenModel;
       this.dependencyHash = dependencyHash;
       this.dependencyResolutionSkipped = dependencyResolutionSkipped;
       this.mavenModelMap = mavenModelMap;
-      this.nativeMavenProject = nativeMavenProject;
       this.activatedProfiles = activatedProfiles;
     }
 

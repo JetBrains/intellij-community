@@ -349,20 +349,11 @@ public class Maven40ProjectResolver {
       problems.addAll(myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), modelProblems));
     }
 
-    RemoteNativeMaven40ProjectHolder holder = new RemoteNativeMaven40ProjectHolder(mavenProject);
-    try {
-      UnicastRemoteObject.exportObject(holder, 0);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
-    }
-
     Collection<String> activatedProfiles = Maven40ProfileUtil.collectActivatedProfiles(mavenProject);
 
     Map<String, String> mavenModelMap = Maven40ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, dependencyHash, dependencyResolutionSkipped, mavenModelMap,
-                                                 holder, activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, dependencyHash, dependencyResolutionSkipped, mavenModelMap, activatedProfiles);
     if (null == model.getBuild() || null == model.getBuild().getDirectory()) {
       data = null;
     }

@@ -42,7 +42,6 @@ class MavenProjectResolverResult(@JvmField val mavenModel: MavenModel,
                                  @JvmField val dependencyResolutionSkipped: Boolean,
                                  @JvmField val nativeModelMap: Map<String, String>,
                                  @JvmField val activatedProfiles: MavenExplicitProfiles,
-                                 val nativeMavenProject: NativeMavenProjectHolder?,
                                  @JvmField val readingProblems: MutableCollection<MavenProjectProblem>,
                                  @JvmField val unresolvedArtifactIds: MutableSet<MavenId>,
                                  val unresolvedProblems: Collection<MavenProjectProblem>)
@@ -348,7 +347,6 @@ class MavenProjectResolver(private val myProject: Project) {
             projectData.dependencyResolutionSkipped,
             projectData.mavenModelMap,
             MavenExplicitProfiles(projectData.activatedProfiles, explicitProfiles.disabledProfiles),
-            projectData.nativeMavenProject,
             result.problems,
             result.unresolvedArtifacts,
             result.unresolvedProblems))
