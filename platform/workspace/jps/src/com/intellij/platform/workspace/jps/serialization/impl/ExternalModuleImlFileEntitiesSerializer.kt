@@ -73,7 +73,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
   override fun saveModuleOptions(externalSystemOptions: ExternalSystemModuleOptionsEntity?,
                                  moduleType: String?,
                                  customImlData: ModuleCustomImlDataEntity?,
-                                 writer: JpsFileContentWriter) {
+                                 content: WritableJpsFileContent) {
     val fileUrlString = fileUrl.url
     if (FileUtil.extensionEquals(fileUrlString, "iml")) {
       logger<ExternalModuleImlFileEntitiesSerializer>().error("External serializer should not write to iml files. Path:$fileUrlString")
@@ -93,7 +93,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
       saveOption("linkedProjectId", externalSystemOptions.linkedProjectId)
       saveOption("linkedProjectPath", externalSystemOptions.linkedProjectPath)
       saveOption("rootProjectPath", externalSystemOptions.rootProjectPath)
-      writer.saveComponent(fileUrlString, "ExternalSystem", componentTag)
+      content.saveComponent("ExternalSystem", componentTag)
     }
     if (moduleType != null || !customImlData?.customModuleOptions.isNullOrEmpty()) {
       val componentTag = JDomSerializationUtil.createComponentElement(DEPRECATED_MODULE_MANAGER_COMPONENT_NAME)
@@ -103,7 +103,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
       customImlData?.customModuleOptions?.forEach{ (key, value) ->
         componentTag.addContent(Element("option").setAttribute("key", key).setAttribute("value", value))
       }
-      writer.saveComponent(fileUrlString, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, componentTag)
+      content.saveComponent(DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, componentTag)
     }
   }
 
