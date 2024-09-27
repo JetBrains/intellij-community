@@ -17,7 +17,9 @@ class VMOptionsServiceImpl : VMOptionsService {
   companion object {
     private val ourData: ConcurrentMap<String, CompletableFuture<JdkOptionsData>> = CollectionFactory.createConcurrentSoftValueMap()
 
-    private val STANDARD_OPTION_LIST : List<VMOption> = listOf(
+    @JvmStatic
+    @get:JvmName("getStandardOptionList")
+    val STANDARD_OPTION_LIST : List<VMOption> = listOf(
       opt("ea", "enable assertions with specified granularity"),
       opt("enableassertions", "enable assertions with specified granularity"),
       opt("da", "disable assertions with specified granularity"),
