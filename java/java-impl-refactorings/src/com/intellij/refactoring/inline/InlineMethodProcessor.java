@@ -225,7 +225,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ReadAction.run(() -> {
-        PsiCodeBlock body = Objects.requireNonNull(myMethod.getBody());
         if (!myInlineThisOnly) {
           final PsiMethod[] superMethods = myMethod.findSuperMethods();
           for (PsiMethod method : superMethods) {
@@ -252,7 +251,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               conflicts.putValue(element, JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
             }
 
-            final String errorMessage = checkUnableToInsertCodeBlock(body, element);
+            final String errorMessage = checkUnableToInsertCodeBlock(myMethod.getBody(), element);
             if (errorMessage != null) {
               conflicts.putValue(element, errorMessage);
             }
@@ -265,7 +264,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         else if (myReference instanceof PsiMethodReferenceExpression) {
           processSideEffectsInMethodReferenceQualifier(conflicts, (PsiMethodReferenceExpression)myReference);
         }
-        addInaccessibleMemberConflicts(body, usagesIn, new ReferencedElementsCollector(), conflicts);
+        addInaccessibleMemberConflicts(myMethod, usagesIn, new ReferencedElementsCollector(), conflicts);
         addInaccessibleSuperCallsConflicts(usagesIn, conflicts);
       }),
       RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
@@ -346,20 +345,21 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     });
   }
 
-  public static void addInaccessibleMemberConflicts(PsiElement element,
+  public static void addInaccessibleMemberConflicts(PsiMethod method,
                                                     UsageInfo[] usages,
                                                     ReferencedElementsCollector collector,
                                                     MultiMap<PsiElement, @DialogMessage String> conflicts) {
-    element.accept(collector);
-    final Map<PsiMember, Set<PsiMember>> containersToReferenced = getInaccessible(collector.myReferencedMembers, usages, element);
-
-    containersToReferenced.forEach((container, referencedInaccessible) -> {
-      for (PsiMember referenced : referencedInaccessible) {
-        final String referencedDescription = RefactoringUIUtil.getDescription(referenced, true);
+    PsiCodeBlock body = Objects.requireNonNull(method.getBody());
+    body.accept(collector);
+    final Map<PsiMember, Set<PsiMember>> locationsToInaccessibles = getInaccessible(collector.myReferencedMembers, usages, method);
+    String methodDescription = RefactoringUIUtil.getDescription(method, true);
+    locationsToInaccessibles.forEach((container, inaccessibles) -> {
+      for (PsiMember inaccessible : inaccessibles) {
+        final String referencedDescription = RefactoringUIUtil.getDescription(inaccessible, true);
         final String containerDescription = RefactoringUIUtil.getDescription(container, true);
-        String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
-                                                   referencedDescription, containerDescription);
-        conflicts.putValue(container, StringUtil.capitalize(message));
+        String message = RefactoringBundle.message("0.which.is.used.in.1.not.accessible.from.call.site.s.in.2",
+                                                   referencedDescription, methodDescription, containerDescription);
+        conflicts.putValue(usages.length == 1 ? inaccessible : container, StringUtil.capitalize(message));
       }
     });
   }
@@ -424,13 +424,11 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  @Nullable
   @Override
   protected String getRefactoringId() {
     return "refactoring.inline.method";
   }
 
-  @Nullable
   @Override
   protected RefactoringEventData getBeforeData() {
     final RefactoringEventData data = new RefactoringEventData();
