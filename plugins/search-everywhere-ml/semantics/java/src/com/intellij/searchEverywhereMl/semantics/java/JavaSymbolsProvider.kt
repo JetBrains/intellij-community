@@ -8,10 +8,12 @@ import com.intellij.psi.PsiJavaFile
 
 internal class JavaSymbolsProvider : SymbolsProvider {
   override fun extract(file: PsiFile): List<IndexableSymbol> {
-    return (file as PsiJavaFile).classes.filterNotNull()
-      .flatMap { it.methods.toList() }
-      .filter { it.name != ANONYMOUS_ID }
-      .map { IndexableSymbol(EntityId(it.name.intern())) }
+    return (file as PsiJavaFile).classes.asSequence()
+      .filterNotNull()
+      .flatMap { c -> c.methods.asSequence() }
+      .filter { m -> m.name != ANONYMOUS_ID }
+      .map { m -> IndexableSymbol(EntityId(m.name)) }
+      .toList()
   }
 
   companion object {

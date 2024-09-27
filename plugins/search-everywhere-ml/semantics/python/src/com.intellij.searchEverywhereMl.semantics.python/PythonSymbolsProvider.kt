@@ -9,9 +9,12 @@ import com.jetbrains.python.psi.PyFunction
 
 internal class PythonSymbolsProvider : SymbolsProvider {
   override fun extract(file: PsiFile): List<IndexableSymbol> {
-    return PsiTreeUtil.findChildrenOfAnyType(file, false, PyFunction::class.java)
-      .filter { it.name != ANONYMOUS_ID }
-      .map { IndexableSymbol(EntityId(it.name?.intern() ?: "")) }
+    return PsiTreeUtil.findChildrenOfAnyType(file, false, PyFunction::class.java).asSequence()
+      .map { f -> f.name }
+      .filterNotNull()
+      .filter { name -> name != ANONYMOUS_ID }
+      .map { name -> IndexableSymbol(EntityId(name)) }
+      .toList()
   }
 
   companion object {

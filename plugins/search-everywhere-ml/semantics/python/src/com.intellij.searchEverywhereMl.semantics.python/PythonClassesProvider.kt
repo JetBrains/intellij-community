@@ -9,9 +9,12 @@ import com.jetbrains.python.psi.PyClass
 
 internal class PythonClassesProvider : ClassesProvider {
   override fun extract(file: PsiFile): List<IndexableClass> {
-    return PsiTreeUtil.getStubChildrenOfTypeAsList(file, PyClass::class.java)
-      .filter { it.name != ANONYMOUS_ID }
-      .map { IndexableClass(EntityId(it.name?.intern() ?: "")) }
+    return PsiTreeUtil.getStubChildrenOfTypeAsList(file, PyClass::class.java).asSequence()
+      .map { c -> c.name }
+      .filterNotNull()
+      .filter { name -> name != ANONYMOUS_ID }
+      .map { name -> IndexableClass(EntityId(name)) }
+      .toList()
   }
 
   companion object {

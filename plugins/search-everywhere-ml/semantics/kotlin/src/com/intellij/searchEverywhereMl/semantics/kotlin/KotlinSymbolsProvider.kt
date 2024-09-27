@@ -9,9 +9,12 @@ import org.jetbrains.kotlin.psi.KtFunction
 
 internal class KotlinSymbolsProvider : SymbolsProvider {
   override fun extract(file: PsiFile): List<IndexableSymbol> {
-    return PsiTreeUtil.findChildrenOfAnyType(file, false, KtFunction::class.java)
-      .filter { it.name != ANONYMOUS_ID }
-      .map { IndexableSymbol(EntityId(it.name?.intern() ?: "")) }
+    return PsiTreeUtil.findChildrenOfAnyType(file, false, KtFunction::class.java).asSequence()
+      .map { f -> f.name }
+      .filterNotNull()
+      .filter { name -> name != ANONYMOUS_ID }
+      .map { name -> IndexableSymbol(EntityId(name)) }
+      .toList()
   }
 
   companion object {

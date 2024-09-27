@@ -9,8 +9,10 @@ import com.intellij.psi.PsiJavaFile
 
 internal class JavaClassesProvider : ClassesProvider {
   override fun extract(file: PsiFile): List<IndexableClass> {
-    return (file as PsiJavaFile).classes.filterNotNull()
-      .filter { it !is PsiAnonymousClass }
-      .map { IndexableClass(EntityId(it.name?.intern() ?: "")) }
+    return (file as PsiJavaFile).classes.asSequence()
+      .filter { c -> c !is PsiAnonymousClass }
+      .map { c -> c.name }
+      .filterNotNull()
+      .mapTo(mutableListOf()) { name -> IndexableClass(EntityId(name)) }
   }
 }
