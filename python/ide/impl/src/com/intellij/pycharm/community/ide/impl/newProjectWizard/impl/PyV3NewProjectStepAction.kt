@@ -8,8 +8,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup.CollapsedActionGroup
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
-import com.intellij.pycharm.community.ide.impl.newProjectWizard.impl.emptyProject.PyV3EmptyProjectGenerator
 import com.intellij.pycharm.community.ide.impl.newProject.steps.PythonGenerateProjectCallback
+import com.intellij.pycharm.community.ide.impl.newProjectWizard.impl.emptyProject.PyV3EmptyProjectGenerator
 import com.jetbrains.python.newProject.PyNewProjectSettings
 import com.jetbrains.python.newProject.PythonProjectGenerator
 import com.jetbrains.python.newProject.steps.PythonProjectSpecificSettingsStep

@@ -13,12 +13,12 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.SystemProperties
 import com.jetbrains.extensions.failure
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
+import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.suggestCondaPath
@@ -42,7 +42,9 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
   open val state = AddInterpreterState(propertyGraph)
   open val targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null
 
-  val projectPath = params.projectPathProperty ?: MutableStateFlow(Path.of(SystemProperties.getUserHome())) // todo how to populate?
+  // TODO: DOC
+  val myProjectPathFlows: ProjectPathFlows = params.projectPathFlows
+
   internal val scope = params.scope
   internal val uiContext = params.uiContext
 
@@ -159,7 +161,7 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
     manuallyAddedInterpreters.value += ExistingSelectableInterpreter(sdk, PySdkUtil.getLanguageLevelForSdk(sdk), sdk.isSystemWide)
   }
 
-  suspend fun suggestVenvPath(): String? = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectPath.first().toString()))
+  suspend fun suggestVenvPath(): String? = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(myProjectPathFlows.projectPathWithDefault.first().toString()))
 }
 
 abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModelParams)

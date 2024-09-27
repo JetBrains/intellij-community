@@ -3,6 +3,7 @@ package com.jetbrains.python.newProjectWizard
 
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
+import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider
 
 /**
  * Binds [PROJECT_SPECIFIC_SETTINGS] to Kotlin DSL UI.
@@ -18,8 +19,8 @@ interface PyV3ProjectTypeSpecificUI<PROJECT_SPECIFIC_SETTINGS : PyV3ProjectTypeS
 
   /**
    * If you need to show something in "advanced settings".
-   * You also have a flow with project path,
-   * you might bind it to the cell using [bindProjectName] if you need project name.
+   * You also have an api with project name.
+   * you might bind it to the cell using [com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider.Companion.bindProjectName] if you need project name.
    */
-  val advancedSettings: (Panel.(settings: PROJECT_SPECIFIC_SETTINGS, projectPath: ProjectPathFlow) -> Unit)? get() = null
+  val advancedSettings: (Panel.(PROJECT_SPECIFIC_SETTINGS, ProjectPathProvider) -> Unit)? get() = null
 }

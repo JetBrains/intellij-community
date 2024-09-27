@@ -23,6 +23,7 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
@@ -32,19 +33,17 @@ import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.util.ErrorSink
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.nio.file.Path
 
 
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
  */
-class PythonAddNewEnvironmentPanel(val projectPath: Flow<Path>, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null, private val errorSink: ErrorSink) : PySdkCreator {
+class PythonAddNewEnvironmentPanel(val projectPathFlows: ProjectPathFlows, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null, private val errorSink: ErrorSink) : PySdkCreator {
   private val propertyGraph = PropertyGraph()
   private val allowedInterpreterTypes = (onlyAllowedInterpreterTypes ?: PythonInterpreterSelectionMode.entries).also {
     assert(it.isNotEmpty()) {
@@ -65,7 +64,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: Flow<Path>, onlyAllowedInter
 
   private suspend fun updateVenvLocationHint(): Unit = withContext(Dispatchers.EDT) {
     val get = selectedMode.get()
-    if (get == PROJECT_VENV) venvHint.set(message("sdk.create.simple.venv.hint", projectPath.first().resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME).toString()))
+    if (get == PROJECT_VENV) venvHint.set(message("sdk.create.simple.venv.hint", projectPathFlows.projectPathWithDefault.first().resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME).toString()))
     else if (get == BASE_CONDA && PROJECT_VENV in allowedInterpreterTypes) venvHint.set(message("sdk.create.simple.conda.hint"))
   }
 
@@ -75,11 +74,11 @@ class PythonAddNewEnvironmentPanel(val projectPath: Flow<Path>, onlyAllowedInter
   fun buildPanel(outerPanel: Panel) {
     //presenter = PythonAddInterpreterPresenter(state, uiContext = Dispatchers.EDT + ModalityState.current().asContextElement())
     model = PythonLocalAddInterpreterModel(PyInterpreterModelParams(service<PythonAddSdkService>().coroutineScope,
-                                                                    Dispatchers.EDT + ModalityState.current().asContextElement(), projectPath))
+                                                                    Dispatchers.EDT + ModalityState.current().asContextElement(), projectPathFlows))
     model.navigator.selectionMode = selectedMode
     //presenter.controller = model
 
-    custom = PythonAddCustomInterpreter(model, projectPath = projectPath, errorSink = ShowingMessageErrorSync)
+    custom = PythonAddCustomInterpreter(model, errorSink = ShowingMessageErrorSync)
 
     val validationRequestor = WHEN_PROPERTY_CHANGED(selectedMode)
 
@@ -114,7 +113,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: Flow<Path>, onlyAllowedInter
       row("") {
         comment("").bindText(venvHint).apply {
           component.showingScope("Update hint") {
-            projectPath.collect {
+            projectPathFlows.projectPathWithDefault.collect {
               updateVenvLocationHint()
             }
           }
@@ -166,7 +165,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: Flow<Path>, onlyAllowedInter
     model.navigator.saveLastState()
     return when (selectedMode.get()) {
       PROJECT_VENV -> {
-        val projectPath = projectPath.first()
+        val projectPath = projectPathFlows.projectPathWithDefault.first()
         // todo just keep venv path, all the rest is in the model
         model.setupVirtualenv(projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME), projectPath)
       }

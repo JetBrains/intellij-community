@@ -17,7 +17,7 @@ import com.jetbrains.python.util.ErrorSink
 import kotlinx.coroutines.flow.Flow
 import java.nio.file.Path
 
-class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterModel, val moduleOrProject: ModuleOrProject? = null, projectPath: Flow<Path>? = null, errorSink: ErrorSink) {
+class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterModel, val moduleOrProject: ModuleOrProject? = null, projectPathFlow: Flow<Path>? = null, errorSink: ErrorSink) {
 
   private val propertyGraph = model.propertyGraph
   private val selectionMethod = propertyGraph.property(PythonInterpreterSelectionMethod.CREATE_NEW)
@@ -28,7 +28,7 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
 
   private val newInterpreterCreators = mapOf(
     VIRTUALENV to PythonNewVirtualenvCreator(model),
-    CONDA to CondaNewEnvironmentCreator(model, projectPath, errorSink),
+    CONDA to CondaNewEnvironmentCreator(model,  errorSink),
     PIPENV to PipEnvNewEnvironmentCreator(model),
     POETRY to PoetryNewEnvironmentCreator(model, moduleOrProject),
   )

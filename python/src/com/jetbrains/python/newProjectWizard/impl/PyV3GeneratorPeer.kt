@@ -5,24 +5,26 @@ import com.intellij.ide.util.projectWizard.SettingsStep
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.ProjectGeneratorPeer
-import com.jetbrains.python.newProjectWizard.ProjectPathFlow
 import com.jetbrains.python.newProjectWizard.PyV3BaseProjectSettings
 import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificSettings
 import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificUI
+import com.jetbrains.python.newProjectWizard.impl.projectPath.ProjectPathImpl
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import javax.swing.JComponent
 
 internal class PyV3GeneratorPeer<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings>(
   baseSettings: PyV3BaseProjectSettings,
-  projectPath: ProjectPathFlow,
-  specificUiAndSettings: Pair<PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>, TYPE_SPECIFIC_SETTINGS>?,
-  allowedInterpreterTypes:Set<PythonInterpreterSelectionMode>?
+  private val specificUiAndSettings: Pair<PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>, TYPE_SPECIFIC_SETTINGS>?,
+  private val allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>?,
 ) : ProjectGeneratorPeer<PyV3BaseProjectSettings> {
   private val settings = baseSettings
-  private val panel: PyV3VUI<*> = PyV3VUI(settings, projectPath, specificUiAndSettings, allowedInterpreterTypes)
+  private lateinit var panel: PyV3VUI<*>
 
 
-  override fun getComponent(myLocationField: TextFieldWithBrowseButton, checkValid: Runnable): JComponent = panel.mainPanel
+  override fun getComponent(projectPathField: TextFieldWithBrowseButton, checkValid: Runnable): JComponent {
+    panel = PyV3VUI(settings, ProjectPathImpl(projectPathField), specificUiAndSettings, allowedInterpreterTypes)
+    return panel.mainPanel
+  }
 
   override fun buildUI(settingsStep: SettingsStep) = Unit
 

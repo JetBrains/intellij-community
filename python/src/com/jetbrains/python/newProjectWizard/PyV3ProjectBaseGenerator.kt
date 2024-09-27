@@ -11,15 +11,14 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.ProjectGeneratorPeer
-import com.intellij.util.SystemProperties
 import com.jetbrains.python.Result
 import com.jetbrains.python.newProjectWizard.impl.PyV3GeneratorPeer
+import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.util.ErrorSink
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
@@ -40,7 +39,6 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   private val _newProjectName: @NlsSafe String? = null,
 ) : DirectoryProjectGenerator<PyV3BaseProjectSettings> {
   private val baseSettings = PyV3BaseProjectSettings()
-  private val projectPathFlow = MutableStateFlow(Path.of(SystemProperties.getUserHome()))
   val newProjectName: @NlsSafe String get() = _newProjectName ?: "${name.replace(" ", "")}Project"
 
 
@@ -58,12 +56,11 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   }
 
   override fun createPeer(): ProjectGeneratorPeer<PyV3BaseProjectSettings> =
-    PyV3GeneratorPeer(baseSettings, projectPathFlow, typeSpecificUI?.let { Pair(it, typeSpecificSettings) }, allowedInterpreterTypes)
+    PyV3GeneratorPeer(baseSettings, typeSpecificUI?.let { Pair(it, typeSpecificSettings) }, allowedInterpreterTypes)
 
   override fun validate(baseDirPath: String): ValidationResult =
-    when (val pathOrError = validateProjectPathAndGetPath(baseDirPath)) {
+    when (val pathOrError = validatePath(baseDirPath)) {
       is Result.Success<Path, *> -> {
-        projectPathFlow.value = pathOrError.result
         ValidationResult.OK
       }
       is Result.Failure<*, @Nls String> -> ValidationResult(pathOrError.error)

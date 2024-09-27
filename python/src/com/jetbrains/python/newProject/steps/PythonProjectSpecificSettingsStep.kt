@@ -24,12 +24,12 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.PyNewProjectSettings
 import com.jetbrains.python.newProject.PythonProjectGenerator
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.newProjectWizard.promotion.PromoProjectGenerator
 import com.jetbrains.python.sdk.PyLazySdk
 import com.jetbrains.python.sdk.add.v2.PythonAddNewEnvironmentPanel
@@ -52,7 +52,7 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
   private val propertyGraph = PropertyGraph()
   private val projectName = propertyGraph.property("")
   private val projectLocation = propertyGraph.property("")
-  private val projectLocationFlow = MutableStateFlow(Path.of(SystemProperties.getUserHome()))
+  private val projectLocationFlowStr = MutableStateFlow(projectLocation.get())
   private val locationHint = propertyGraph.property("").apply {
     dependsOn(projectName, ::updateHint)
     dependsOn(projectLocation, ::updateHint)
@@ -64,7 +64,7 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
 
   init {
     projectLocation.afterChange {
-      projectLocationFlow.value = Path.of(projectLocation.get())
+      projectLocationFlowStr.value = projectLocation.get()
     }
   }
 
@@ -115,7 +115,7 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
 
     // Instead of setting this type as default, we limit types to it
     val onlyAllowedInterpreterTypes = projectGenerator.preferredEnvironmentType?.let { setOf(it) }
-    val interpreterPanel = PythonAddNewEnvironmentPanel(projectLocationFlow, onlyAllowedInterpreterTypes, errorSink = ShowingMessageErrorSync).also { interpreterPanel = it }
+    val interpreterPanel = PythonAddNewEnvironmentPanel(ProjectPathFlows.create(projectLocationFlowStr), onlyAllowedInterpreterTypes, errorSink = ShowingMessageErrorSync).also { interpreterPanel = it }
 
     mainPanel = panel {
       row(message("new.project.name")) {

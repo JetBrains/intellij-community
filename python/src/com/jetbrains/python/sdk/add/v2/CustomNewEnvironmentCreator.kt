@@ -64,7 +64,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
     val newSdk = setupEnvSdk(moduleOrProject.project,
                              module,
                              ProjectJdkTable.getInstance().allJdks.asList(),
-                             model.projectPath.first().toString(),
+                             model.myProjectPathFlows.projectPathWithDefault.first().toString(),
                              homePath,
                              false)!!
     addSdk(newSdk)
