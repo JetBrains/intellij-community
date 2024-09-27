@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
@@ -77,7 +76,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private final Function<PsiReference, InlineTransformer> myTransformerChooser;
 
   private final PsiElementFactory myFactory;
-  private final JavaCodeStyleManager myJavaCodeStyle;
 
   private final String myDescriptiveName;
   private List<CodeBlockSurrounder.SurroundResult> mySurroundResults;
@@ -121,9 +119,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     mySearchForTextOccurrences = searchForTextOccurrences;
     myDeleteTheDeclaration = isDeleteTheDeclaration;
 
-    PsiManager manager = PsiManager.getInstance(myProject);
-    myFactory = JavaPsiFacade.getElementFactory(manager.getProject());
-    myJavaCodeStyle = JavaCodeStyleManager.getInstance(myProject);
+    myFactory = JavaPsiFacade.getElementFactory(myProject);
     myDescriptiveName = DescriptiveNameUtil.getDescriptiveName(myMethod);
   }
 
@@ -229,6 +225,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ReadAction.run(() -> {
+        PsiCodeBlock body = Objects.requireNonNull(myMethod.getBody());
         if (!myInlineThisOnly) {
           final PsiMethod[] superMethods = myMethod.findSuperMethods();
           for (PsiMethod method : superMethods) {
@@ -255,7 +252,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               conflicts.putValue(element, JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
             }
 
-            final String errorMessage = checkUnableToInsertCodeBlock(myMethod.getBody(), element);
+            final String errorMessage = checkUnableToInsertCodeBlock(body, element);
             if (errorMessage != null) {
               conflicts.putValue(element, errorMessage);
             }
@@ -268,7 +265,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         else if (myReference instanceof PsiMethodReferenceExpression) {
           processSideEffectsInMethodReferenceQualifier(conflicts, (PsiMethodReferenceExpression)myReference);
         }
-        addInaccessibleMemberConflicts(myMethod, usagesIn, new ReferencedElementsCollector(), conflicts);
+        addInaccessibleMemberConflicts(body, usagesIn, new ReferencedElementsCollector(), conflicts);
         addInaccessibleSuperCallsConflicts(usagesIn, conflicts);
       }),
       RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
@@ -437,7 +434,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   @Override
   protected RefactoringEventData getBeforeData() {
     final RefactoringEventData data = new RefactoringEventData();
-    data.addElement(myMethod);
+    if (myDeleteTheDeclaration) data.addElement(myMethod);
     return data;
   }
 
