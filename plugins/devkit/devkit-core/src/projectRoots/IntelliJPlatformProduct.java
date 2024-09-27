@@ -22,7 +22,6 @@ public enum IntelliJPlatformProduct {
   WEBSTORM("WS", "WebStorm", PlatformUtils.WEB_PREFIX, "com.jetbrains.intellij.webstorm:webstorm", "webstorm:WebStorm"),
   APPCODE("OC", "AppCode", PlatformUtils.APPCODE_PREFIX, null, null),
   CLION("CL", "CLion", PlatformUtils.CLION_PREFIX, "com.jetbrains.intellij.clion:clion", "cpp:CLion"),
-  MOBILE_IDE("MI", "Mobile IDE", PlatformUtils.MOBILE_IDE_PREFIX, null, null),
   DBE("DB", "DataGrip", PlatformUtils.DBE_PREFIX, null, "datagrip:datagrip"),
   RIDER("RD", "Rider", PlatformUtils.RIDER_PREFIX, "com.jetbrains.intellij.rider:riderRD", "rider:JetBrains.Rider"),
   GOIDE("GO", "GoLand", PlatformUtils.GOIDE_PREFIX, "com.jetbrains.intellij.goland:goland", "go:goland"),

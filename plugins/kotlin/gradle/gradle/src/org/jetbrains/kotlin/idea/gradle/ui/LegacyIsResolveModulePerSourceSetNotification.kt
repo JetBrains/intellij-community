@@ -38,7 +38,7 @@ fun notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(
     notificationSuppressState: SuppressResolveModulePerSourceSetNotificationState,
     isResolveModulePerSourceSetSetting: IsResolveModulePerSourceSetSetting
 ) {
-    if (KotlinPlatformUtils.isAndroidStudio || PlatformUtils.isMobileIde() || PlatformUtils.isAppCode()) return
+    if (KotlinPlatformUtils.isAndroidStudio) return
     if (notificationSuppressState.isSuppressed) return
     if (isResolveModulePerSourceSetSetting.isResolveModulePerSourceSet) return
     if (previouslyShownNotification.get()?.isExpired == false) return
