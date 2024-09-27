@@ -247,6 +247,7 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
   fun restartIfNeeded() {
     if (myEvents.isClosed) {
       myEvents.reopen()
+      LOG.assertTrue(!coroutineScope.isActive, "Coroutine scope should be cancelled")
       coroutineScope = createScope()
       startNewWorkerThread()
     }
