@@ -68,6 +68,7 @@ public class Maven3ModelConverter {
     result.setDependencyTree(convertDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
 
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
+    result.setRemotePluginRepositories(convertRepositories(model.getPluginRepositories()));
     result.setProfiles(convertProfiles(model.getProfiles()));
     result.setModules(model.getModules());
 

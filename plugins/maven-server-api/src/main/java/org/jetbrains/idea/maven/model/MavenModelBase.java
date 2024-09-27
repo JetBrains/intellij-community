@@ -24,7 +24,8 @@ public class MavenModelBase implements Serializable {
   private ArrayList<MavenArtifact> myExtensions = new ArrayList<>();
   private ArrayList<MavenArtifact> myDependencies = new ArrayList<>();
   private ArrayList<MavenArtifactNode> myDependencyTree = new ArrayList<>();
-  private ArrayList<MavenRemoteRepository> myRemoteRepositories =new ArrayList<>();
+  private ArrayList<MavenRemoteRepository> myRemoteRepositories = new ArrayList<>();
+  private ArrayList<MavenRemoteRepository> myRemotePluginRepositories = new ArrayList<>();
 
   private ArrayList<String> myModules;
 
@@ -89,6 +90,14 @@ public class MavenModelBase implements Serializable {
 
   public void setRemoteRepositories(List<MavenRemoteRepository> remoteRepositories) {
     myRemoteRepositories = new ArrayList<>(remoteRepositories);
+  }
+
+  public ArrayList<MavenRemoteRepository> getRemotePluginRepositories() {
+    return myRemotePluginRepositories;
+  }
+
+  public void setRemotePluginRepositories(List<MavenRemoteRepository> remotePluginRepositories) {
+    myRemotePluginRepositories = new ArrayList<>(remotePluginRepositories);
   }
 
   public List<String> getModules() {

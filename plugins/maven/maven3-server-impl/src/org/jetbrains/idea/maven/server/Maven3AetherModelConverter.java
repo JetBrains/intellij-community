@@ -50,6 +50,7 @@ public final class Maven3AetherModelConverter extends Maven3ModelConverter {
     result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
 
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
+    result.setRemotePluginRepositories(convertRepositories(model.getPluginRepositories()));
     result.setProfiles(convertProfiles(model.getProfiles()));
     result.setModules(model.getModules());
 

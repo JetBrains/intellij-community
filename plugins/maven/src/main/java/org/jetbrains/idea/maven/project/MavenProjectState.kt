@@ -32,6 +32,7 @@ internal data class MavenProjectState(
   val dependencies: List<MavenArtifact> = emptyList(),
   val dependencyTree: List<MavenArtifactNode> = emptyList(),
   val remoteRepositories: List<MavenRemoteRepository> = emptyList(),
+  val remotePluginRepositories: List<MavenRemoteRepository> = emptyList(),
   val annotationProcessors: List<MavenArtifact> = emptyList(),
   val modulesPathsAndNames: Map<String, String> = emptyMap(),
   val modelMap: Map<String, String> = emptyMap(),

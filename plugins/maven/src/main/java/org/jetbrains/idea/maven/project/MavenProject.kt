@@ -921,6 +921,11 @@ class MavenProject(val file: VirtualFile) {
       return myState.remoteRepositories
     }
 
+  val remotePluginRepositories: List<MavenRemoteRepository>
+    get() {
+      return myState.remotePluginRepositories
+    }
+
   fun getClassifierAndExtension(artifact: MavenArtifact, type: MavenExtraArtifactType): Pair<String, String> {
     for (each: MavenImporter in MavenImporter.getSuitableImporters(this)) {
       val result: Pair<String, String>? = each.getExtraArtifactClassifierAndExtension(artifact, type)
@@ -1115,6 +1120,7 @@ class MavenProject(val file: VirtualFile) {
 
       val newUnresolvedArtifacts: MutableSet<MavenId> = HashSet()
       val newRepositories = LinkedHashSet<MavenRemoteRepository>()
+      val newPluginRepositories = LinkedHashSet<MavenRemoteRepository>()
       val newDependencies = LinkedHashSet<MavenArtifact>()
       val newDependencyTree = LinkedHashSet<MavenArtifactNode>()
       val newPluginInfos = LinkedHashSet<MavenPluginInfo>()
@@ -1124,6 +1130,7 @@ class MavenProject(val file: VirtualFile) {
       if (keepPreviousArtifacts) {
         newUnresolvedArtifacts.addAll(state.unresolvedArtifactIds)
         newRepositories.addAll(state.remoteRepositories)
+        newPluginRepositories.addAll(state.remotePluginRepositories)
         newDependencies.addAll(state.dependencies)
         newDependencyTree.addAll(state.dependencyTree)
         newExtensions.addAll(state.extensions)
@@ -1143,11 +1150,13 @@ class MavenProject(val file: VirtualFile) {
 
       newUnresolvedArtifacts.addAll(unresolvedArtifactIds)
       newRepositories.addAll(model.remoteRepositories)
+      newPluginRepositories.addAll(model.remotePluginRepositories)
       newDependencyTree.addAll(model.dependencyTree)
       newDependencies.addAll(model.dependencies)
       newExtensions.addAll(model.extensions)
 
       val remoteRepositories = ArrayList(newRepositories)
+      val remotePluginRepositories = ArrayList(newPluginRepositories)
       val dependencies = ArrayList(newDependencies)
       val dependencyTree = ArrayList(newDependencyTree)
       val pluginInfos = ArrayList(newPluginInfos)
@@ -1184,6 +1193,7 @@ class MavenProject(val file: VirtualFile) {
         testResources = build.testResources,
         unresolvedArtifactIds = newUnresolvedArtifacts,
         remoteRepositories = remoteRepositories,
+        remotePluginRepositories = remotePluginRepositories,
         dependencies = dependencies,
         dependencyTree = dependencyTree,
         pluginInfos = pluginInfos,

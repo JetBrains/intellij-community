@@ -46,6 +46,7 @@ public final class Maven40ApiModelConverter {
     result.setPlugins(convertPlugins(model));
 
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
+    result.setRemotePluginRepositories(convertRepositories(model.getPluginRepositories()));
     result.setProfiles(convertProfiles(model.getProfiles()));
     result.setModules(model.getModules());
 

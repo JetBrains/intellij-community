@@ -156,7 +156,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                     forceUpdateSnapshots: Boolean): Collection<MavenArtifact> {
     val mavenId = plugin.mavenId
     val dependencies = plugin.dependencies.map { MavenId(it.groupId, it.artifactId, it.version) }
-    val resolutionRequests = listOf(PluginResolutionRequest(mavenId, mavenProject.remoteRepositories, true, dependencies))
+    val resolutionRequests = listOf(PluginResolutionRequest(mavenId, mavenProject.remotePluginRepositories, true, dependencies))
     return runBlockingMaybeCancellable {
       resolvePlugins(resolutionRequests, null, MavenLogEventHandler, forceUpdateSnapshots)
         .flatMap { resolutionResult: PluginResolutionResponse -> resolutionResult.pluginDependencyArtifacts }.toSet()

@@ -22,7 +22,7 @@ public class PluginResolutionRequest implements Serializable {
                                  @NotNull List<@NotNull MavenId> pluginDependencies
                                  ) {
     myMavenPluginId = mavenPluginId;
-    this.repositories = repositories;
+    this.repositories = new ArrayList<>(repositories);
     this.resolvePluginDependencies = resolvePluginDependencies;
     this.pluginDependencies = new ArrayList<>(pluginDependencies);
   }

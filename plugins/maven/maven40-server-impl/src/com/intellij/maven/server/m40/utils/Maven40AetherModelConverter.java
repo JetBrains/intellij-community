@@ -47,6 +47,7 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
     result.setDependencies(convertArtifacts(mavenProject.getArtifacts(), convertedArtifacts, localRepository));
 
     result.setRemoteRepositories(convertAetherRepositories(mavenProject.getRemoteProjectRepositories()));
+    result.setRemotePluginRepositories(convertAetherRepositories(mavenProject.getRemotePluginRepositories()));
     result.setProfiles(convertProfiles(mavenProject.getModel().getProfiles()));
     result.setModules(mavenProject.getModules());
 
