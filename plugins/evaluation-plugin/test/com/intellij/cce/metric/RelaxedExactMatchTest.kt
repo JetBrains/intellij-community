@@ -44,63 +44,77 @@ class RelaxedExactMatchTest {
     (inputs, outputs) -> assertEquals(outputs, inputs.process())
   }
 
-  private fun runRelaxedExactMatch(
+  private fun runRelaxedChecks(
     middle: String,
     completion: String,
-    expected: RelaxedSimilarityUtils.RelaxedResult,
+    expected: Map<RelaxedSimilarityUtils.RelaxedMetric, RelaxedSimilarityUtils.RelaxedResult>,
     prefix: String = "",
     suffix: String = "",
     stripChars: Boolean = false,
-  ) = assertEquals(expected, RelaxedSimilarityUtils.computeRelaxedExactMatch(
-    middle = middle,
-    completion = completion,
-    prefix = prefix,
-    suffix = suffix,
-    stripChars = stripChars,
-  ))
+  ) = expected.forEach { check, result ->
+    assertEquals(result, check.compute(middle, completion, prefix, suffix, stripChars)) { "For ${check.javaClass.simpleName}" }
+  }
 
   @Test
-  fun `test computeRelaxedExactMatch with exact match one line`() = runRelaxedExactMatch(
+  fun `test computeRelaxedExactMatch with exact match one line`() = runRelaxedChecks(
     middle = "hello",
     completion = "hello",
-    expected = RelaxedSimilarityUtils.RelaxedResult.MULTI,
+    expected = mapOf(
+      RelaxedSimilarityUtils.RelaxedExactMatch() to RelaxedSimilarityUtils.RelaxedResult.MULTI,
+      RelaxedSimilarityUtils.RelaxedEditDistance() to RelaxedSimilarityUtils.RelaxedResult.MULTI,
+    ),
   )
 
   @Test
-  fun `test computeRelaxedExactMatch with exact match multiple lines`() = runRelaxedExactMatch(
+  fun `test computeRelaxedExactMatch with exact match multiple lines`() = runRelaxedChecks(
     middle = "hello\nworld",
     completion = "hello\nworld",
-    expected = RelaxedSimilarityUtils.RelaxedResult.MULTI,
+    expected = mapOf(
+      RelaxedSimilarityUtils.RelaxedExactMatch() to RelaxedSimilarityUtils.RelaxedResult.MULTI,
+      RelaxedSimilarityUtils.RelaxedEditDistance() to RelaxedSimilarityUtils.RelaxedResult.MULTI,
+    ),
   )
 
   @Test
-  fun `test computeRelaxedExactMatch with exact match multiple lines but in different order`() = runRelaxedExactMatch(
+  fun `test computeRelaxedExactMatch with exact match multiple lines but in different order`() = runRelaxedChecks(
     middle = "hello\nworld",
     completion = "world\nhello",
-    expected = RelaxedSimilarityUtils.RelaxedResult.MULTI,
+    expected = mapOf(
+      RelaxedSimilarityUtils.RelaxedExactMatch() to RelaxedSimilarityUtils.RelaxedResult.MULTI,
+      RelaxedSimilarityUtils.RelaxedEditDistance() to RelaxedSimilarityUtils.RelaxedResult.MULTI,
+    ),
   )
 
   @Test
-  fun `test computeRelaxedExactMatch with partial match in first line`() = runRelaxedExactMatch(
+  fun `test computeRelaxedExactMatch with partial match in first line`() = runRelaxedChecks(
     middle = "llo\nworld",
     completion = "llo",
     prefix = "he",
-    expected = RelaxedSimilarityUtils.RelaxedResult.MULTI,
+    expected = mapOf(
+      RelaxedSimilarityUtils.RelaxedExactMatch() to RelaxedSimilarityUtils.RelaxedResult.MULTI,
+      RelaxedSimilarityUtils.RelaxedEditDistance() to RelaxedSimilarityUtils.RelaxedResult.MULTI,
+    ),
   )
 
   @Test
-  fun `test computeRelaxedExactMatch with partial match in last line`() = runRelaxedExactMatch(
+  fun `test computeRelaxedExactMatch with partial match in last line`() = runRelaxedChecks(
     middle = "hello\nworld",
     completion = "world\nbye",
-    expected = RelaxedSimilarityUtils.RelaxedResult.ANY,
+    expected = mapOf(
+      RelaxedSimilarityUtils.RelaxedExactMatch() to RelaxedSimilarityUtils.RelaxedResult.ANY,
+      RelaxedSimilarityUtils.RelaxedEditDistance() to RelaxedSimilarityUtils.RelaxedResult.ANY,
+    ),
   )
 
   @Test
-  fun `test computeRelaxedExactMatch no match`() = runRelaxedExactMatch(
+  fun `test computeRelaxedExactMatch no match`() = runRelaxedChecks(
     prefix = "hello\n",
     middle = "world\n",
     completion = "kotlin\n",
     suffix = "\nbye\n",
-    expected = RelaxedSimilarityUtils.RelaxedResult.NO,
+    expected = mapOf(
+      RelaxedSimilarityUtils.RelaxedExactMatch() to RelaxedSimilarityUtils.RelaxedResult.NO,
+      RelaxedSimilarityUtils.RelaxedEditDistance() to RelaxedSimilarityUtils.RelaxedResult.NO,
+    ),
   )
 }
