@@ -77,4 +77,6 @@ internal class IndexBasedEmbeddingEntitiesIndexer(cs: CoroutineScope) : Embeddin
       }
     }
   }
+
+  override fun dispose() = Unit
 }

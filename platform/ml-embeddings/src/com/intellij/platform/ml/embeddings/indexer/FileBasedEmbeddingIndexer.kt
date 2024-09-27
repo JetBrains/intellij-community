@@ -42,7 +42,11 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
   private val indexingJobs = mutableMapOf<Project, Job>()
   private val jobsMutex = Mutex()
   private val entitiesIndexer: EmbeddingEntitiesIndexer = if (Registry.`is`("intellij.platform.ml.embeddings.use.file.based.index")) IndexBasedEmbeddingEntitiesIndexer(indexerScope)
-  else VFSBasedEmbeddingEntitiesIndexer(indexerScope).also { searcher -> Disposer.register(this, searcher) }
+  else VFSBasedEmbeddingEntitiesIndexer(indexerScope)
+
+  init {
+    Disposer.register(this, entitiesIndexer)
+  }
 
 
   fun prepareForSearch(project: Project): Job = cs.launch {

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.embeddings.indexer.searcher.vfs
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -14,7 +13,6 @@ import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
-import com.intellij.platform.ml.embeddings.files.SemanticSearchFileChangeListener
 import com.intellij.platform.ml.embeddings.indexer.ClassesProvider
 import com.intellij.platform.ml.embeddings.indexer.SymbolsProvider
 import com.intellij.platform.ml.embeddings.indexer.TOTAL_THREAD_LIMIT_FOR_INDEXING
@@ -22,6 +20,7 @@ import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableFile
 import com.intellij.platform.ml.embeddings.indexer.searchAndSendEntities
 import com.intellij.platform.ml.embeddings.indexer.searcher.EmbeddingEntitiesIndexer
+import com.intellij.platform.ml.embeddings.indexer.searcher.SemanticSearchFileChangeListener
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettings
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettingsImpl
 import com.intellij.platform.ml.embeddings.utils.SEMANTIC_SEARCH_TRACER
@@ -36,7 +35,7 @@ private const val SCANNING_SPAN_NAME = "embeddingFilesScanning"
 private const val FILE_WORKER_COUNT = 4
 private val logger = Logger.getInstance(VFSBasedEmbeddingEntitiesIndexer::class.java)
 
-internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) : EmbeddingEntitiesIndexer, Disposable {
+internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) : EmbeddingEntitiesIndexer {
   private val isFileListenerAdded = AtomicBoolean(false)
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -67,21 +66,21 @@ internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) 
   }
 
   private fun addFileListener() {
-    val listener = SemanticSearchFileChangeListener(cs.childScope("Embedding file change listener scope"), ::searchAndIndex)
+    val listener = SemanticSearchFileChangeListener(cs.childScope("Embedding file change listener scope"), ::index)
     VirtualFileManager.getInstance().addAsyncFileListener(listener, this)
   }
 
-  suspend fun searchAndIndex(project: Project, files: List<VirtualFile>) {
+  suspend fun index(project: Project, files: List<VirtualFile>) {
     val settings = EmbeddingIndexSettingsImpl.getInstance()
-    if (settings.shouldIndexAnythingFileBased) {
-      indexingScope.launch {
-        searchAndSendEntities(project, settings) { filesChannel, classesChannel, symbolsChannel ->
-          launch {
-            search(project, files, filesChannel, classesChannel, symbolsChannel)
-          }
+    if (!settings.shouldIndexAnythingFileBased) return
+
+    indexingScope.launch {
+      searchAndSendEntities(project, settings) { filesChannel, classesChannel, symbolsChannel ->
+        launch {
+          search(project, files, filesChannel, classesChannel, symbolsChannel)
         }
-      }.join()
-    }
+      }
+    }.join()
   }
 
   private suspend fun search(
