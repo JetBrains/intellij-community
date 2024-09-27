@@ -85,10 +85,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       return result
     }
 
-    fun asReader(): JpsFileContentReader {
-      return reader
-    }
-
     companion object {
       private fun loadComponents(
         reader: JpsFileContentReader, url: String, customModuleFilePath: String?,
@@ -163,7 +159,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val externalContent = getExternalXmlFileContent(reader, externalSerializer, exceptionsCollector)
 
 
-    val moduleLoadedInfo = externalSerializer?.loadModuleEntity(externalContent, errorReporter, virtualFileManager, moduleLibrariesCollector,
+    val moduleLoadedInfo = externalSerializer?.loadModuleEntity(externalContent, reader, errorReporter, virtualFileManager, moduleLibrariesCollector,
                                                                   exceptionsCollector)
 
     val moduleEntity: ModuleEntity.Builder?
@@ -171,14 +167,14 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val entitySource = getOtherEntitiesEntitySource(internalContent)
       runCatchingXmlIssues(exceptionsCollector) {
         loadContentRoots(moduleLoadedInfo.customRootsSerializer, moduleLoadedInfo.moduleEntity, internalContent,
-                         moduleLoadedInfo.customDir, errorReporter, virtualFileManager, entitySource,
-                         true, moduleLibrariesCollector)
+                         reader, moduleLoadedInfo.customDir, errorReporter, virtualFileManager,
+                         entitySource, true, moduleLibrariesCollector)
       }
 
       moduleEntity = loadAdditionalContents(internalContent, virtualFileManager, moduleLoadedInfo.moduleEntity, exceptionsCollector)
     }
     else {
-      val localModule = loadModuleEntity(internalContent, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
+      val localModule = loadModuleEntity(internalContent, reader, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
 
       var tmpModule = localModule?.moduleEntity
 
@@ -284,6 +280,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   private fun loadModuleEntity(
     content: JpsFileContent?,
+    readerForCustomRootsSerializerOnly: JpsFileContentReader,
     errorReporter: ErrorReporter,
     virtualFileManager: VirtualFileUrlManager,
     moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity.Builder>,
@@ -368,8 +365,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       // Don't forget to load external system options even if custom root serializer exist
       loadExternalSystemOptions(moduleEntity, content, externalSystemOptions, externalSystemId, entitySource)
 
-      loadContentRoots(customRootsSerializer, moduleEntity, content, customDir, errorReporter, virtualFileManager, moduleEntity.entitySource,
-                       false, moduleLibrariesCollector)
+      loadContentRoots(customRootsSerializer, moduleEntity, content, readerForCustomRootsSerializerOnly, customDir, errorReporter, virtualFileManager,
+                       moduleEntity.entitySource, false, moduleLibrariesCollector)
       loadTestModuleProperty(moduleEntity, content, entitySource)
     }
 
@@ -384,6 +381,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     customRootsSerializer: CustomModuleRootsSerializer?,
     moduleEntity: ModuleEntity.Builder,
     content: JpsFileContent,
+    readerForCustomRootsSerializerOnly: JpsFileContentReader,
     customDir: String?,
     errorReporter: ErrorReporter,
     virtualFileManager: VirtualFileUrlManager,
@@ -392,7 +390,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity.Builder>,
   ) {
     if (customRootsSerializer != null) {
-      customRootsSerializer.loadRoots(moduleEntity, content.asReader(), customDir, fileUrl, internalModuleListSerializer, errorReporter,
+      customRootsSerializer.loadRoots(moduleEntity, readerForCustomRootsSerializerOnly, customDir, fileUrl, internalModuleListSerializer, errorReporter,
                                       virtualFileManager,
                                       moduleLibrariesCollector)
     }
@@ -714,10 +712,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     fun saveComponent(componentName: String, componentTag: Element?) {
       writer.saveComponent(fileUrl, componentName, componentTag)
     }
-
-    fun asWriter(): JpsFileContentWriter {
-      return writer
-    }
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -727,7 +721,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     storage: EntityStorage,
     writer: JpsFileContentWriter,
   ) {
-    saveEntities(mainEntities, entities, storage, WritableJpsFileContent(writer, fileUrl.url))
+    saveEntities(mainEntities, entities, storage, WritableJpsFileContent(writer, fileUrl.url), writer)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -736,6 +730,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
     storage: EntityStorage,
     content: WritableJpsFileContent,
+    writerForCustomRootsSerializerOnly: JpsFileContentWriter,
   ) = saveEntitiesTimeMs.addMeasuredTime {
 
     if (externalStorage && FileUtil.extensionEquals(fileUrl.url, "iml")) {
@@ -748,7 +743,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
     val module = mainEntities.singleOrNull()
     if (module != null && acceptsSource(module.entitySource)) {
-      saveModuleEntities(module, entities, storage, content)
+      saveModuleEntities(module, entities, storage, content, writerForCustomRootsSerializerOnly)
     }
     else {
       val targetComponent = ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME
@@ -824,10 +819,13 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
            entitySource is JpsFileDependentEntitySource && (entitySource as? JpsImportedEntitySource)?.storedExternally != true
   }
 
-  private fun saveModuleEntities(module: ModuleEntity,
-                                 entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
-                                 storage: EntityStorage,
-                                 content: WritableJpsFileContent) {
+  private fun saveModuleEntities(
+    module: ModuleEntity,
+    entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
+    storage: EntityStorage,
+    content: WritableJpsFileContent,
+    writerForCustomRootsSerializerOnly: JpsFileContentWriter,
+  ) {
     val externalSystemOptions = module.exModuleOptions
     val customImlData = module.customImlData
     saveModuleOptions(externalSystemOptions, module.type?.name, customImlData, content)
@@ -837,7 +835,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val serializer = context.customModuleRootsSerializers.firstOrNull { it.id == customSerializerId }
       if (serializer != null) {
         val customDir = moduleOptions[JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE]
-        serializer.saveRoots(module, entities, content.asWriter(), customDir, fileUrl, storage, context.virtualFileUrlManager)
+        serializer.saveRoots(module, entities, writerForCustomRootsSerializerOnly, customDir, fileUrl, storage, context.virtualFileUrlManager)
         content.saveComponent(MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
       }
       else {
