@@ -123,11 +123,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       throw new RuntimeException(e);
     }
     assertNotNull(myCreatedProject);
-
-    UIUtil.dispatchAllInvocationEvents();
-    IndexingTestUtil.waitUntilIndexesAreReady(myCreatedProject);
-    TestObservation.waitForConfiguration(TimeUnit.MINUTES.toMillis(10), myCreatedProject);
-
+    waitForConfiguration(myCreatedProject);
     return myCreatedProject;
   }
 
@@ -137,12 +133,14 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   private Module createModuleFromWizard(@NotNull Project project) {
     Module createdModule = new NewModuleAction().createModuleFromWizard(project, null, myWizard);
+    waitForConfiguration(project);
+    return createdModule;
+  }
 
+  protected void waitForConfiguration(@NotNull Project project) {
     UIUtil.dispatchAllInvocationEvents();
     IndexingTestUtil.waitUntilIndexesAreReady(project);
     TestObservation.waitForConfiguration(TimeUnit.MINUTES.toMillis(10), project);
-
-    return createdModule;
   }
 
   private static void setSelectedTemplate(@NotNull Step step, @NotNull String group, @Nullable String name) {
