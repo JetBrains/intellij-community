@@ -18,7 +18,7 @@ interface SymbolsProvider {
     @RequiresReadLock
     fun extractSymbols(file: PsiFile): List<IndexableSymbol> {
       ThreadingAssertions.assertReadAccess() // annotation doesn't work in Kotlin
-      return EXTENSION.forFileType(file.fileType).extract(file)
+      return EXTENSION.forFileType(file.fileType)?.extract(file) ?: emptyList()
     }
   }
 }

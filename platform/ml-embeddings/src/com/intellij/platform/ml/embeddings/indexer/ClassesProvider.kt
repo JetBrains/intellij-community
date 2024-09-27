@@ -18,7 +18,7 @@ interface ClassesProvider {
     @RequiresReadLock
     fun extractClasses(file: PsiFile): List<IndexableClass> {
       ThreadingAssertions.assertReadAccess() // annotation doesn't work in Kotlin
-      return EXTENSION.forFileType(file.fileType).extract(file)
+      return EXTENSION.forFileType(file.fileType)?.extract(file) ?: emptyList()
     }
   }
 }
