@@ -1,18 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
+import com.intellij.configurationStore.runInAutoSaveDisabledMode
+import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.ide.impl.NewProjectUtil.createFromWizard
-import com.intellij.ide.impl.NewProjectUtil.setCompilerOutputPath
-import com.intellij.ide.impl.OpenProjectTask.Companion.build
 import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
-import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtil.updateLastProjectLocation
 import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.serviceAsync
@@ -38,6 +38,10 @@ import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.TimeoutUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -46,20 +50,29 @@ import java.util.concurrent.CancellationException
 private val LOG = logger<NewProjectUtil>()
 
 @Suppress("DuplicatedCode")
-internal suspend fun createNewProjectAsync(wizard: AbstractProjectWizard) {
+@Internal
+suspend fun createNewProjectAsync(wizard: AbstractProjectWizard) {
   // warm-up components
   serviceAsync<ProjectManager>().defaultProject
 
   val context = wizard.wizardContext
   val time = System.nanoTime()
   NewProjectWizardCollector.logOpen(context)
-  if (wizard.showAndGet()) {
-    createFromWizard(wizard)
-    NewProjectWizardCollector.logFinish(context, true, TimeoutUtil.getDurationMillis(time))
-  }
-  else {
+  if (!withContext(Dispatchers.EDT) { wizard.showAndGet() }) {
     NewProjectWizardCollector.logFinish(context, false, TimeoutUtil.getDurationMillis(time))
+    return
   }
+
+  try {
+    val projectFile = Path.of(wizard.newProjectFilePath)
+    val newProject = createProjectFromWizardImpl(wizard = wizard, projectFile = projectFile, projectToClose = null)
+    NewProjectWizardCollector.logProjectCreated(newProject, wizard.wizardContext)
+  }
+  catch (e: IOException) {
+    AppUIUtil.invokeOnEdt { Messages.showErrorDialog(e.message, JavaUiBundle.message("dialog.title.project.initialization.failed")) }
+    return
+  }
+  NewProjectWizardCollector.logFinish(context, true, TimeoutUtil.getDurationMillis(time))
 }
 
 object NewProjectUtil {
@@ -67,11 +80,13 @@ object NewProjectUtil {
   @Deprecated("Use {@link #createNewProject(AbstractProjectWizard)}, projectToClose param is not used.",
               ReplaceWith("createNewProject(wizard)", "com.intellij.ide.impl.NewProjectUtil.createNewProject"))
   fun createNewProject(@Suppress("unused") projectToClose: Project?, wizard: AbstractProjectWizard) {
+    @Suppress("DEPRECATION")
     createNewProject(wizard)
   }
 
   @Suppress("DuplicatedCode")
   @JvmStatic
+  @Deprecated("Use {@link #createNewProjectAsync(AbstractProjectWizard, Project)}")
   fun createNewProject(wizard: AbstractProjectWizard) {
     // warm-up components
     ProjectManager.getInstance().defaultProject
@@ -91,7 +106,13 @@ object NewProjectUtil {
   @JvmStatic
   fun createFromWizard(wizard: AbstractProjectWizard, projectToClose: Project? = null): Project? {
     try {
-      val newProject = doCreate(wizard, projectToClose)
+      val projectFile = Path.of(wizard.newProjectFilePath)
+      val newProject = runWithModalProgressBlocking(
+        owner = ModalTaskOwner.guess(),
+        title = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", projectFile.fileName.toString()),
+      ) {
+        createProjectFromWizardImpl(wizard = wizard, projectFile = projectFile, projectToClose = projectToClose)
+      }
       NewProjectWizardCollector.logProjectCreated(newProject, wizard.wizardContext)
       return newProject
     }
@@ -125,14 +146,12 @@ object NewProjectUtil {
   }
 }
 
-private fun doCreate(wizard: AbstractProjectWizard, projectToClose: Project?): Project? {
-  val projectFilePath = wizard.newProjectFilePath
-  val projectManager = ProjectManagerEx.getInstanceEx()
-
-  val projectFile = Path.of(projectFilePath)
-
-  for (p in ProjectUtilCore.getOpenProjects()) {
-    if (isSameProject(projectFile, p)) {
+@VisibleForTesting
+@Internal
+suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFile: Path, projectToClose: Project?): Project? {
+  val projectManager = (serviceAsync<ProjectManager>() as ProjectManagerEx)
+  for (p in projectManager.getOpenProjects()) {
+    if (ProjectUtil.isSameProject(projectFile, p)) {
       focusProjectWindow(project = p, stealFocusIfAppInactive = false)
       return null
     }
@@ -142,7 +161,7 @@ private fun doCreate(wizard: AbstractProjectWizard, projectToClose: Project?): P
   LOG.debug { "builder $projectBuilder" }
   try {
     val projectDir = if (wizard.storageScheme == StorageScheme.DEFAULT) {
-      projectFile.parent ?: throw IOException("Cannot create project in '$projectFilePath': no parent file exists")
+      projectFile.parent ?: throw IOException("Cannot create project in '$projectFile': no parent file exists")
     }
     else {
       projectFile
@@ -151,11 +170,11 @@ private fun doCreate(wizard: AbstractProjectWizard, projectToClose: Project?): P
     val newProject: Project? = if (projectBuilder == null || !projectBuilder.isUpdate) {
       val name = wizard.projectName
       if (projectBuilder == null) {
-        projectManager.newProject(projectFile, build().asNewProject().withProjectName(name))
+        projectManager.newProject(projectFile, OpenProjectTask.build().asNewProject().withProjectName(name))
       }
       else {
         try {
-          projectBuilder.createProject(name, projectFilePath)
+          projectBuilder.createProject(name, projectFile.toString())
         }
         catch (e: CancellationException) {
           throw e
@@ -175,33 +194,50 @@ private fun doCreate(wizard: AbstractProjectWizard, projectToClose: Project?): P
     }
 
     val compileOutput = wizard.newCompileOutput
-    setCompilerOutputPath(newProject, compileOutput)
+    val javaCompilerExtension = CompilerProjectExtension.getInstance(newProject)
+    if (javaCompilerExtension != null) {
+      val canonicalPath = try {
+        FileUtil.resolveShortWindowsName(compileOutput)
+      }
+      catch (_: IOException) {
+        compileOutput
+      }
+
+      @Suppress("UsagesOfObsoleteApi")
+      backgroundWriteAction {
+        javaCompilerExtension.compilerOutputUrl = VfsUtilCore.pathToUrl(canonicalPath)
+      }
+    }
+
     if (projectBuilder != null) {
       // validate can require a project on disk
       if (!ApplicationManager.getApplication().isUnitTestMode) {
-        newProject.save()
+        runInAutoSaveDisabledMode {
+          saveSettings(componentManager = newProject, forceSavingAllSettings = true)
+        }
       }
       if (!projectBuilder.validate(projectToClose, newProject)) {
         return projectToClose
       }
-      projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
+
+      withContext(Dispatchers.EDT) {
+        projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
+      }
     }
 
     val jdk = wizard.newProjectJdk
     if (jdk != null) {
-      CommandProcessor.getInstance().executeCommand(newProject, {
-        ApplicationManager.getApplication().runWriteAction {
-          JavaSdkUtil.applyJdkToProject(newProject, jdk)
-        }
-      }, null, null)
+      @Suppress("UsagesOfObsoleteApi")
+      backgroundWriteAction {
+        JavaSdkUtil.applyJdkToProject(newProject, jdk)
+      }
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       val needToOpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter
       StartupManager.getInstance(newProject).runAfterOpened {
         // ensure the dialog is shown after all startup activities are done
-        ApplicationManager.getApplication().invokeLater(
-          {
+        ApplicationManager.getApplication().invokeLater({
             if (needToOpenProjectStructure) {
               ModulesConfigurator.showDialog(newProject, null, null)
             }
@@ -227,13 +263,9 @@ private fun doCreate(wizard: AbstractProjectWizard, projectToClose: Project?): P
           }
         }
       }
-      runWithModalProgressBlocking(
-        owner = ModalTaskOwner.guess(),
-        title = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", options.projectName),
-      ) {
-        serviceAsync<TrustedPaths>().setProjectPathTrusted(projectDir, true)
-        (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(projectStoreBaseDir = projectDir, options = options)
-      }
+
+      serviceAsync<TrustedPaths>().setProjectPathTrusted(projectDir, true)
+      (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(projectStoreBaseDir = projectDir, options = options)
     }
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject)
