@@ -83,7 +83,7 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
       })
       border = JBUI.Borders.empty(1)
       BoxLayout(this, BoxLayout.LINE_AXIS)
-      background = COLOR_BACKGROUND
+      background = Colors.Background.DEFAULT
     }
   }
 
@@ -93,7 +93,7 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
   }
 
   init {
-    border = JBUI.Borders.customLine(COLOR_LINE)
+    border = JBUI.Borders.customLine(Colors.LINE)
     layout = BorderLayout()
 
     // module name
@@ -117,7 +117,7 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
       actionManager.getAction("CompilationChartsScrollToEndAction"),
     )
 
-    val toolbar = actionManager.createActionToolbar(COMPILATION_CHARTS_TOOLBAR_ID, actionGroup, true).apply {
+    val toolbar = actionManager.createActionToolbar(Settings.Toolbar.ID, actionGroup, true).apply {
       targetComponent = this@ActionPanel
     }
     addToRight(toolbar.component)
@@ -180,27 +180,27 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
         val block = JBLabel().apply {
           preferredSize = Dimension(10, 10)
           isOpaque = true
-          background = COLOR_PRODUCTION_BLOCK
-          border = BorderFactory.createLineBorder(COLOR_PRODUCTION_BORDER, 1)
+          background = Colors.Production.ENABLED
+          border = BorderFactory.createLineBorder(Colors.Production.BORDER, 1)
         }
         add(block)
         add(JBLabel(CompilationChartsBundle.message("charts.production.type")))
 
         addMouseListener(object : MouseAdapter() {
           override fun mouseEntered(e: MouseEvent) {
-            block.border = BorderFactory.createLineBorder(COLOR_PRODUCTION_BORDER_SELECTED, 1)
+            block.border = BorderFactory.createLineBorder(Colors.Production.SELECTED, 1)
           }
 
           override fun mouseExited(e: MouseEvent) {
-            block.border = BorderFactory.createLineBorder(COLOR_PRODUCTION_BORDER, 1)
+            block.border = BorderFactory.createLineBorder(Colors.Production.BORDER, 1)
           }
 
           override fun mouseClicked(e: MouseEvent) {
             vm.filter.set(vm.filter.value.setProduction(!vm.filter.value.production))
             if (vm.filter.value.production)
-              block.background = COLOR_PRODUCTION_BLOCK
+              block.background = Colors.Production.ENABLED
             else
-              block.background = COLOR_PRODUCTION_BLOCK_DISABLED
+              block.background = Colors.Production.DISABLED
           }
         })
 
@@ -210,26 +210,26 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
         val block = JBLabel().apply {
           preferredSize = Dimension(10, 10)
           isOpaque = true
-          background = COLOR_TEST_BLOCK
-          border = BorderFactory.createLineBorder(COLOR_TEST_BORDER)
+          background = Colors.Test.ENABLED
+          border = BorderFactory.createLineBorder(Colors.Test.BORDER)
         }
         add(block)
         add(JBLabel(CompilationChartsBundle.message("charts.test.type")))
         addMouseListener(object : MouseAdapter() {
           override fun mouseEntered(e: MouseEvent) {
-            block.border = BorderFactory.createLineBorder(COLOR_TEST_BORDER_SELECTED, 1)
+            block.border = BorderFactory.createLineBorder(Colors.Test.SELECTED, 1)
           }
 
           override fun mouseExited(e: MouseEvent) {
-            block.border = BorderFactory.createLineBorder(COLOR_TEST_BORDER, 1)
+            block.border = BorderFactory.createLineBorder(Colors.Test.BORDER, 1)
           }
 
           override fun mouseClicked(e: MouseEvent) {
             vm.filter.set(vm.filter.value.setTest(!vm.filter.value.test))
             if (vm.filter.value.test)
-              block.background = COLOR_TEST_BLOCK
+              block.background = Colors.Test.ENABLED
             else
-              block.background = COLOR_TEST_BLOCK_DISABLED
+              block.background = Colors.Test.DISABLED
           }
         })
       })
@@ -238,7 +238,7 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
         val block = JBLabel().apply {
           preferredSize = Dimension(10, 2)
           isOpaque = true
-          background = COLOR_MEMORY_BORDER
+          background = Colors.Memory.BORDER
         }
         val label = JBLabel(CompilationChartsBundle.message("charts.memory.type"))
         add(block)
@@ -249,12 +249,12 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
             when (vm.cpuMemory.value) {
               CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY -> {
                 label.text = CompilationChartsBundle.message("charts.cpu.type")
-                block.background = COLOR_CPU_BORDER
+                block.background = Colors.Cpu.BORDER
                 vm.cpuMemory.set(CompilationChartsViewModel.CpuMemoryStatisticsType.CPU)
               }
               CompilationChartsViewModel.CpuMemoryStatisticsType.CPU -> {
                 label.text = CompilationChartsBundle.message("charts.memory.type")
-                block.background = COLOR_MEMORY_BORDER
+                block.background = Colors.Memory.BORDER
                 vm.cpuMemory.set(CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY)
               }
             }
@@ -263,9 +263,5 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
       })
     }
     override fun actionPerformed(e: AnActionEvent) = Unit
-  }
-
-  companion object {
-    private const val COMPILATION_CHARTS_TOOLBAR_ID = "CompilationChartsToolbar"
   }
 }

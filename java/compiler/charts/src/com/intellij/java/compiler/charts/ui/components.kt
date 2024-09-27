@@ -243,7 +243,7 @@ class ChartUsage(private val zoom: Zoom, private val name: String, internal val 
       fill(path)
     }
     g2d.withColor(color.border) {
-      g2d.withStroke(BasicStroke(USAGE_BORDER)) {
+      g2d.withStroke(BasicStroke(Settings.Usage.BORDER)) {
         draw(border)
       }
     }
@@ -385,7 +385,7 @@ class ChartAxis(private val zoom: Zoom) : ChartComponent {
       val from = (bracket.x.roundToInt() / distance) * distance
       val to = from + bracket.width.roundToInt() + bracket.x.roundToInt() % distance
 
-      withColor(COLOR_LINE) {
+      withColor(Colors.LINE) {
         for (x in from..to step distance) {
           // big axis
           withStroke(BasicStroke(1.5F, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0f, this@ChartAxis.stroke, 0.0f)) {

@@ -9,7 +9,7 @@ import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
 class Zoom {
-  private var scale = INITIAL_SCALE
+  private var scale = Settings.Zoom.SCALE
 
   fun toPixels(duration: Long): Double = toPixels(duration.toDouble(), scale)
   fun toPixels(duration: Double): Double = toPixels(duration, scale)
@@ -29,10 +29,10 @@ class Zoom {
   }
 
   fun reset(viewport: JViewport, xPosition: Int): Point? {
-    val delta = INITIAL_SCALE / scale
-    val isScaleAboveInitial = scale > INITIAL_SCALE
+    val delta = Settings.Zoom.SCALE / scale
+    val isScaleAboveInitial = scale > Settings.Zoom.SCALE
     val newViewportPosition = adjust(viewport, xPosition, delta, isScaleAboveInitial)
-    scale = INITIAL_SCALE
+    scale = Settings.Zoom.SCALE
     return if (isScaleAboveInitial) null else newViewportPosition
   }
 
@@ -40,8 +40,4 @@ class Zoom {
   private fun toDuration(pixels: Double, scale: Double): Long = secondsToNanos(pixels / scale).roundToLong()
   private fun nanosToSeconds(time: Double): Double = time / TimeUnit.SECONDS.toNanos(1)
   private fun secondsToNanos(time: Double): Double = time * TimeUnit.SECONDS.toNanos(1)
-
-  companion object {
-    private const val INITIAL_SCALE: Double = 24.0
-  }
 }

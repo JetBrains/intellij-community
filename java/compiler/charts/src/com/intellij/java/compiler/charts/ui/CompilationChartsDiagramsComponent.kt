@@ -11,14 +11,12 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.Magnificator
-import com.intellij.ui.table.JBTable
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.util.concurrent.ConcurrentSkipListSet
-import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 import javax.swing.JViewport
 import javax.swing.SwingUtilities
@@ -30,10 +28,6 @@ class CompilationChartsDiagramsComponent(
   private val zoom: Zoom,
   private val viewport: JViewport,
 ) : JBPanelWithEmptyText(BorderLayout()) {
-  companion object {
-    val ROW_HEIGHT = JBTable().rowHeight * 1.5
-  }
-
   val modules: CompilationChartsViewModel.ViewModules = CompilationChartsViewModel.ViewModules()
   val stats: Map<CpuMemoryStatisticsType, MutableSet<CompilationChartsViewModel.StatisticData>> = mapOf(MEMORY to ConcurrentSkipListSet(), CPU to ConcurrentSkipListSet())
   var cpu: MutableSet<CompilationChartsViewModel.StatisticData> = ConcurrentSkipListSet()
@@ -61,15 +55,15 @@ class CompilationChartsDiagramsComponent(
     MEMORY to ChartUsage(zoom, "memory", UsageModel()).apply {
       format = { stat -> "${stat.data / (1024 * 1024)} MB" }
       color {
-        background = COLOR_MEMORY
-        border = COLOR_MEMORY_BORDER
+        background = Colors.Memory.BACKGROUND
+        border = Colors.Memory.BORDER
       }
     },
     CPU to ChartUsage(zoom, "cpu", UsageModel()).apply {
       format = { stat -> "${stat.data} %" }
       color {
-        background = COLOR_CPU
-        border = COLOR_CPU_BORDER
+        background = Colors.Cpu.BACKGROUND
+        border = Colors.Cpu.BORDER
       }
     })
 
@@ -87,35 +81,35 @@ class CompilationChartsDiagramsComponent(
 
     charts = charts(vm, zoom, { cleanCache() }) {
       progress {
-        height = ROW_HEIGHT
+        height = Settings.Block.HEIGHT
 
         block {
-          border = MODULE_BLOCK_BORDER
-          padding = MODULE_BLOCK_PADDING
-          color = { m -> if (m.target.isTest) COLOR_TEST_BLOCK else COLOR_PRODUCTION_BLOCK }
-          outline = { m -> if (m.target.isTest) COLOR_TEST_BORDER else COLOR_PRODUCTION_BORDER }
-          selected = { m -> if (m.target.isTest) COLOR_TEST_BORDER_SELECTED else COLOR_PRODUCTION_BORDER_SELECTED }
+          border = Settings.Block.BORDER
+          padding = Settings.Block.PADDING
+          color = { m -> Colors.getBlock(m.target.isTest).ENABLED }
+          outline = { m -> Colors.getBlock(m.target.isTest).BORDER }
+          selected = { m -> Colors.getBlock(m.target.isTest).SELECTED }
         }
         background {
-          color = { row -> if (row % 2 == 0) COLOR_BACKGROUND_EVEN else COLOR_BACKGROUND_ODD }
+          color = { row -> Colors.Background.getRowColor(row) }
         }
       }
       usage = usages[MEMORY]!!
       axis {
         stroke = floatArrayOf(5f, 5f)
-        distance = AXIS_DISTANCE_PX
-        count = AXIS_MARKERS_COUNT
-        height = ROW_HEIGHT
-        padding = AXIS_TEXT_PADDING
+        distance = Settings.Axis.DISTANCE
+        count = Settings.Axis.MARKERS_COUNT
+        height = Settings.Block.HEIGHT
+        padding = Settings.Axis.TEXT_PADDING
       }
       settings {
         font {
-          size = FONT_SIZE
-          color = COLOR_TEXT
+          size = Settings.Font.SIZE
+          color = Colors.TEXT
         }
-        background = COLOR_BACKGROUND
+        background = Colors.Background.DEFAULT
         line {
-          color = COLOR_LINE
+          color = Colors.LINE
         }
         mouse = CompilationChartsModuleInfo(vm, this@CompilationChartsDiagramsComponent)
       }
@@ -130,7 +124,7 @@ class CompilationChartsDiagramsComponent(
     })
 
     AppExecutorUtil.createBoundedScheduledExecutorService("Compilation charts component", 1)
-      .scheduleWithFixedDelay({ if (hasNewData()) smartDraw() }, 0, REFRESH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+      .scheduleWithFixedDelay({ if (hasNewData()) smartDraw() }, 0, Settings.Refresh.timeout, Settings.Refresh.unit)
   }
 
   internal fun cleanCache() {
@@ -194,15 +188,15 @@ class CompilationChartsDiagramsComponent(
     g2d: ChartGraphics,
     draw: (ChartGraphics) -> Unit,
   ) {
-    val start: Int = viewport.viewPosition.x / BUFFERED_IMAGE_WIDTH_PX
-    val end: Int = (viewport.viewPosition.x + viewport.width) / BUFFERED_IMAGE_WIDTH_PX + 1
+    val start: Int = viewport.viewPosition.x / Settings.Image.WIDTH
+    val end: Int = (viewport.viewPosition.x + viewport.width) / Settings.Image.WIDTH + 1
 
     for (index in start..end) {
-      charts.clips(Rectangle2D.Double((index * BUFFERED_IMAGE_WIDTH_PX).toDouble(), viewport.y.toDouble(),
-                                      BUFFERED_IMAGE_WIDTH_PX.toDouble(), viewport.height.toDouble()))
+      charts.clips(Rectangle2D.Double((index * Settings.Image.WIDTH).toDouble(), viewport.y.toDouble(),
+                                      Settings.Image.WIDTH.toDouble(), viewport.height.toDouble()))
 
-      val area = Rectangle2D.Double((index * BUFFERED_IMAGE_WIDTH_PX).toDouble(), viewport.y.toDouble(),
-                                    BUFFERED_IMAGE_WIDTH_PX.toDouble(), charts.height())
+      val area = Rectangle2D.Double((index * Settings.Image.WIDTH).toDouble(), viewport.y.toDouble(),
+                                    Settings.Image.WIDTH.toDouble(), charts.height())
 
       val image = images[index]
       if (image != null && image.height() == area.height) {
@@ -214,7 +208,7 @@ class CompilationChartsDiagramsComponent(
         }
         else {
           val counter = imageRequestCount.compute(index) { _, v -> (v ?: 0) + 1 } ?: 1
-          if (counter < IMAGE_CACHE_ACTIVATION_COUNT) {
+          if (counter < Settings.Image.CACHE_ACTIVATION_COUNT) {
             draw(g2d)
           }
           else {

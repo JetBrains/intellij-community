@@ -8,7 +8,6 @@ import java.awt.event.AdjustmentListener
 import java.awt.event.MouseWheelEvent
 import java.awt.event.MouseWheelListener
 import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
 import javax.swing.JViewport
 
 internal class RightAdhesionScrollBarListener(
@@ -43,7 +42,7 @@ internal class RightAdhesionScrollBarListener(
 
   private fun scheduleUpdateShouldScroll() {
     updateShouldScrollTask?.cancel(false)
-    updateShouldScrollTask = executor.schedule(::updateShouldScroll, 100, TimeUnit.MILLISECONDS)
+    updateShouldScrollTask = executor.schedule(::updateShouldScroll, Settings.Scroll.timeout, Settings.Scroll.unit)
   }
 
   private fun adjustHorizontalScrollToRightIfNeeded() {
@@ -69,9 +68,9 @@ internal class RightAdhesionScrollBarListener(
     shouldScroll.stop()
   }
 
-  fun increase() = applyZoomTransformation(ZoomEvent.IN) { adjust(viewport, viewport.getMiddlePoint(), ZOOM_IN_MULTIPLIER) }
+  fun increase() = applyZoomTransformation(ZoomEvent.IN) { adjust(viewport, viewport.getMiddlePoint(), Settings.Zoom.IN) }
 
-  fun decrease() = applyZoomTransformation(ZoomEvent.OUT) { adjust(viewport, viewport.getMiddlePoint(), ZOOM_OUT_MULTIPLIER) }
+  fun decrease() = applyZoomTransformation(ZoomEvent.OUT) { adjust(viewport, viewport.getMiddlePoint(), Settings.Zoom.OUT) }
 
   fun reset() = applyZoomTransformation(ZoomEvent.RESET) {
     val shouldScrollAfterResetting = viewport.width >= viewport.viewSize.width
@@ -88,10 +87,5 @@ internal class RightAdhesionScrollBarListener(
   }
 
   private fun JViewport.getMiddlePoint(): Int = viewPosition.x + width / 2
-
-  companion object {
-    private const val ZOOM_IN_MULTIPLIER: Double = 1.25
-    private const val ZOOM_OUT_MULTIPLIER: Double = 0.8
-  }
 }
 

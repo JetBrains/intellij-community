@@ -1060,6 +1060,35 @@
         "horizontalAxisColor": "Gray9"
       }
     },
+    "CompilationCharts": {
+      "background":{
+        "odd": "Gray13",
+        "even": "Gray12",
+        "default": "Gray13"
+      },
+      "test": {
+        "enabled": "Green7",
+        "disabled": "Green10",
+        "border": "Green5",
+        "selected": "Green6"
+      },
+      "production": {
+        "enabled": "Blue8",
+        "disabled": "Blue11",
+        "border": "Blue4",
+        "selected": "Blue5"
+      },
+      "memory": {
+        "background": "Blue10",
+        "border": "Blue5"
+      },
+      "cpu": {
+        "background": "Green9",
+        "border": "Green7"
+      },
+      "lineColor": "Gray10",
+      "textColor": "Gray2"
+    },
     "FlameGraph.Tooltip": {
       "scaleBackground": "#EBECF0",
       "scaleColor": "#C2D6FC",
