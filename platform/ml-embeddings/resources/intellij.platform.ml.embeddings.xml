@@ -73,8 +73,11 @@
 
     <extensionPoint
       qualifiedName="com.intellij.platform.ml.embeddings.textEmbeddingsConfiguration"
-      interface="com.intellij.platform.ml.embeddings.indexer.configuration.EmbeddingsConfiguration"
-      dynamic="true"/>
+      beanClass="com.intellij.platform.ml.embeddings.indexer.configuration.EmbeddingsConfigurationBean"
+      dynamic="true"
+    >
+      <with attribute="implementation" implements="com.intellij.platform.ml.embeddings.indexer.configuration.EmbeddingsConfiguration"/>
+    </extensionPoint>
 
     <extensionPoint name="embeddings.indexer.classesProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.platform.ml.embeddings.indexer.ClassesProvider"/>
@@ -84,13 +87,63 @@
     </extensionPoint>
   </extensionPoints>
 
+  <extensions defaultExtensionNs="com.intellij.platform.ml.embeddings">
+    <textEmbeddingsConfiguration
+      implementation="com.intellij.platform.ml.embeddings.indexer.configuration.InProcessEmbeddingsConfiguration"
+      indexId="actions"
+    />
+    <textEmbeddingsConfiguration
+      implementation="com.intellij.platform.ml.embeddings.indexer.configuration.InProcessEmbeddingsConfiguration"
+      indexId="classes"
+    />
+    <textEmbeddingsConfiguration
+      implementation="com.intellij.platform.ml.embeddings.indexer.configuration.InProcessEmbeddingsConfiguration"
+      indexId="symbols"
+    />
+    <textEmbeddingsConfiguration
+      implementation="com.intellij.platform.ml.embeddings.indexer.configuration.InProcessEmbeddingsConfiguration"
+      indexId="files"
+    />
+
+    <textEmbeddingsConfiguration
+      implementation="com.intellij.platform.ml.embeddings.indexer.configuration.NativeServerFileBasedIndexEmbeddingsConfiguration"
+      indexId="classes"
+      order="before NativeServerEmbeddingsConfigurationClasses"
+    />
+    <textEmbeddingsConfiguration
+      implementation="com.intellij.platform.ml.embeddings.indexer.configuration.NativeServerFileBasedIndexEmbeddingsConfiguration"
+      indexId="symbols"
+      order="before NativeServerEmbeddingsConfigurationSymbols"
+    />
+    <textEmbeddingsConfiguration
+      implementation="com.intellij.platform.ml.embeddings.indexer.configuration.NativeServerFileBasedIndexEmbeddingsConfiguration"
+      indexId="files"
+      order="before NativeServerEmbeddingsConfigurationFiles"
+    />
+
+    <textEmbeddingsConfiguration
+      implementation="com.intellij.platform.ml.embeddings.indexer.configuration.NativeServerEmbeddingsConfiguration"
+      indexId="actions"
+      id = "NativeServerEmbeddingsConfigurationActions"
+    />
+    <textEmbeddingsConfiguration
+      implementation="com.intellij.platform.ml.embeddings.indexer.configuration.NativeServerEmbeddingsConfiguration"
+      indexId="classes"
+      id = "NativeServerEmbeddingsConfigurationClasses"
+    />
+    <textEmbeddingsConfiguration
+      implementation="com.intellij.platform.ml.embeddings.indexer.configuration.NativeServerEmbeddingsConfiguration"
+      indexId="symbols"
+      id = "NativeServerEmbeddingsConfigurationSymbols"
+    />
+    <textEmbeddingsConfiguration
+      implementation="com.intellij.platform.ml.embeddings.indexer.configuration.NativeServerEmbeddingsConfiguration"
+      indexId="files"
+      id = "NativeServerEmbeddingsConfigurationFiles"
+    />
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij">
-    <platform.ml.embeddings.textEmbeddingsConfiguration
-      implementation="com.intellij.platform.ml.embeddings.indexer.configuration.InProcessEmbeddingsConfiguration"/>
-
-    <platform.ml.embeddings.textEmbeddingsConfiguration
-      implementation="com.intellij.platform.ml.embeddings.indexer.configuration.NativeServerEmbeddingsConfiguration"/>
-
     <fileBasedIndex implementation="com.intellij.platform.ml.embeddings.indexer.FileNameEmbeddingIndex"/>
     <fileBasedIndex implementation="com.intellij.platform.ml.embeddings.indexer.ClassNameEmbeddingIndex"/>
     <fileBasedIndex implementation="com.intellij.platform.ml.embeddings.indexer.SymbolNameEmbeddingIndex"/>

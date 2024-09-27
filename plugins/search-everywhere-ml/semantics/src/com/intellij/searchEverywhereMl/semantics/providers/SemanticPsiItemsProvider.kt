@@ -26,8 +26,8 @@ abstract class SemanticPsiItemsProvider(val project: Project) : StreamSemanticIt
 
   override suspend fun search(pattern: String, similarityThreshold: Double?): List<ScoredText> {
     if (pattern.isBlank()) return emptyList()
-    return EmbeddingsConfiguration.getStorageManagerWrapper()
-      .search(project, indexId, convertNameToNaturalLanguage(pattern), itemLimit, similarityThreshold?.toFloat())
+    return EmbeddingsConfiguration
+      .getStorageManagerWrapper(indexId).search(project, convertNameToNaturalLanguage(pattern), itemLimit, similarityThreshold?.toFloat())
   }
 
   override suspend fun streamSearch(

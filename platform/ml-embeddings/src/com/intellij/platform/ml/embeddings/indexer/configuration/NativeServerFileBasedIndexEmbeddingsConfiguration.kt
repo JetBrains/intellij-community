@@ -2,21 +2,23 @@
 package com.intellij.platform.ml.embeddings.indexer.configuration
 
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ml.embeddings.indexer.IndexId
 import com.intellij.platform.ml.embeddings.indexer.keys.EmbeddingStorageKeyProvider
-import com.intellij.platform.ml.embeddings.indexer.keys.IntegerStorageKeyProvider
+import com.intellij.platform.ml.embeddings.indexer.keys.IndexLongKeyProvider
 import com.intellij.platform.ml.embeddings.indexer.storage.NativeServerTextEmbeddingsStorageManager
 import com.intellij.platform.ml.embeddings.indexer.storage.TextEmbeddingsStorageManager
 
-class NativeServerEmbeddingsConfiguration: EmbeddingsConfiguration<Long> {
+class NativeServerFileBasedIndexEmbeddingsConfiguration: EmbeddingsConfiguration<Long> {
   override fun getStorageManager(): TextEmbeddingsStorageManager<Long> {
     return NativeServerTextEmbeddingsStorageManager.getInstance()
   }
 
   override fun getKeyProvider(): EmbeddingStorageKeyProvider<Long> {
-    return IntegerStorageKeyProvider.getInstance()
+    return IndexLongKeyProvider.getInstance()
   }
 
   override fun isEnabled(): Boolean {
-    return Registry.`is`("intellij.platform.ml.embeddings.use.native.server")
+    return Registry.Companion.`is`("intellij.platform.ml.embeddings.use.native.server") &&
+           Registry.Companion.`is`("intellij.platform.ml.embeddings.use.file.based.index")
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.platform.ml.embeddings.EmbeddingsBundle
 import com.intellij.platform.ml.embeddings.files.SemanticSearchFileChangeListener
 import com.intellij.platform.ml.embeddings.indexer.configuration.EmbeddingsConfiguration
 import com.intellij.platform.ml.embeddings.indexer.entities.*
+import com.intellij.platform.ml.embeddings.indexer.storage.EmbeddingsStorageManagerWrapper
 import com.intellij.platform.ml.embeddings.jvm.indices.EntityId
 import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettings
@@ -56,7 +57,11 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
   private val indexingJobs = mutableMapOf<Project, Job>()
   private val jobsMutex = Mutex()
 
-  private val storageManagerWrapper = EmbeddingsConfiguration.getStorageManagerWrapper()
+  private val storageManagerWrappers = buildMap {
+    for (indexId in FILE_BASED_INDICES) {
+      put(indexId, EmbeddingsConfiguration.getStorageManagerWrapper(indexId))
+    }
+  }
 
   private val filesLimit: Int?
     get() {
@@ -162,16 +167,17 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
         suspend fun sendEntities(indexId: IndexId, channel: ReceiveChannel<IndexableEntity>) {
           val entities = ArrayList<IndexableEntity>(BATCH_SIZE)
           var index = 0
+          val wrapper = getStorageManagerWrapper(indexId)
           for (entity in channel) {
             if (entities.size < BATCH_SIZE) entities.add(entity) else entities[index] = entity
             ++index
             if (index == BATCH_SIZE) {
-              storageManagerWrapper.addAbsent(project, indexId, entities)
+              wrapper.addAbsent(project, entities)
               index = 0
             }
           }
           if (entities.isNotEmpty()) {
-            storageManagerWrapper.addAbsent(project, indexId, entities)
+            wrapper.addAbsent(project, entities)
           }
         }
 
@@ -305,14 +311,18 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
 
   private suspend fun startIndexingSession(project: Project) {
     for (indexId in FILE_BASED_INDICES) {
-      storageManagerWrapper.startIndexingSession(project, indexId)
+      getStorageManagerWrapper(indexId).startIndexingSession(project)
     }
   }
 
   private suspend fun finishIndexingSession(project: Project) {
     for (indexId in FILE_BASED_INDICES) {
-      storageManagerWrapper.finishIndexingSession(project, indexId)
+      getStorageManagerWrapper(indexId).finishIndexingSession(project)
     }
+  }
+
+  private fun getStorageManagerWrapper(indexId: IndexId): EmbeddingsStorageManagerWrapper<*> {
+    return storageManagerWrappers[indexId] ?: throw IllegalArgumentException("$indexId is not supported for file-based indexing")
   }
 
   companion object {

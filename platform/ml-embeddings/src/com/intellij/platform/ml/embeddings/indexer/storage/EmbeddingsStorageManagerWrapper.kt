@@ -8,10 +8,11 @@ import com.intellij.platform.ml.embeddings.indexer.keys.EmbeddingStorageKeyProvi
 import com.intellij.platform.ml.embeddings.utils.ScoredText
 
 class EmbeddingsStorageManagerWrapper<KeyT>(
+  private val indexId: IndexId,
   private val storageManager: TextEmbeddingsStorageManager<KeyT>,
   private val keyProvider: EmbeddingStorageKeyProvider<KeyT>,
 ) {
-  suspend fun addAbsent(project: Project, indexId: IndexId, entities: List<IndexableEntity>) {
+  suspend fun addAbsent(project: Project, entities: List<IndexableEntity>) {
     return storageManager.addAbsent(project, indexId, entities.map {
       IndexEntry(
         keyProvider.findKey(project, indexId, it),
@@ -21,8 +22,10 @@ class EmbeddingsStorageManagerWrapper<KeyT>(
   }
 
   suspend fun search(
-    project: Project, indexId: IndexId,
-    query: String, limit: Int, similarityThreshold: Float? = null,
+    project: Project,
+    query: String,
+    limit: Int,
+    similarityThreshold: Float? = null,
   ): List<ScoredText> {
     val result = storageManager.search(project, indexId, query, limit, similarityThreshold)
       .map { (id, similarity) ->
@@ -32,11 +35,11 @@ class EmbeddingsStorageManagerWrapper<KeyT>(
     return result
   }
 
-  suspend fun startIndexingSession(project: Project, indexId: IndexId) {
+  suspend fun startIndexingSession(project: Project) {
     storageManager.startIndexingSession(project, indexId)
   }
 
-  suspend fun finishIndexingSession(project: Project, indexId: IndexId) {
+  suspend fun finishIndexingSession(project: Project) {
     storageManager.finishIndexingSession(project, indexId)
   }
 

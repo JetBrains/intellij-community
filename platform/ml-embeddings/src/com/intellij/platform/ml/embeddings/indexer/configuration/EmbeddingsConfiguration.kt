@@ -2,11 +2,21 @@
 package com.intellij.platform.ml.embeddings.indexer.configuration
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.RequiredElement
+import com.intellij.platform.ml.embeddings.indexer.IndexId
 import com.intellij.platform.ml.embeddings.indexer.keys.EmbeddingStorageKeyProvider
 import com.intellij.platform.ml.embeddings.indexer.storage.EmbeddingsStorageManagerWrapper
 import com.intellij.platform.ml.embeddings.indexer.storage.TextEmbeddingsStorageManager
+import com.intellij.serviceContainer.BaseKeyedLazyInstance
+import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * EmbeddingsConfiguration defines a configuration
+ * Use [getStorageManagerWrapper] to obtain the corresponding instance of [EmbeddingsStorageManagerWrapper] to perform a search for
+ * in a given index.
+ * Different indexes can use different storages and key providers.
+ */
 @ApiStatus.OverrideOnly
 interface EmbeddingsConfiguration<KeyT> {
   fun getStorageManager(): TextEmbeddingsStorageManager<KeyT>
@@ -16,21 +26,35 @@ interface EmbeddingsConfiguration<KeyT> {
   fun isEnabled(): Boolean
 
   companion object {
-    private val EP_NAME: ExtensionPointName<EmbeddingsConfiguration<*>> = ExtensionPointName.create(
+    private val EP_NAME: ExtensionPointName<EmbeddingsConfigurationBean> = ExtensionPointName.create(
       "com.intellij.platform.ml.embeddings.textEmbeddingsConfiguration")
 
-    fun getStorageManagerWrapper(): EmbeddingsStorageManagerWrapper<*> {
-      val instance = EP_NAME.extensionList.first {
-        it.isEnabled()
+    fun getStorageManagerWrapper(indexId: IndexId): EmbeddingsStorageManagerWrapper<*> {
+      val bean = EP_NAME.extensionList.first {
+        it.indexId == indexId &&
+        it.instance.isEnabled()
       }
 
-      return instance.toStorageManagerWrapper()
+      val instance = bean.instance
+      return instance.toStorageManagerWrapper(indexId)
     }
 
-    private fun <KeyT> EmbeddingsConfiguration<KeyT>.toStorageManagerWrapper(): EmbeddingsStorageManagerWrapper<KeyT> {
+    private fun <KeyT> EmbeddingsConfiguration<KeyT>.toStorageManagerWrapper(indexId: IndexId): EmbeddingsStorageManagerWrapper<KeyT> {
       val storageManager = getStorageManager()
       val keyProvider = getKeyProvider()
-      return EmbeddingsStorageManagerWrapper(storageManager, keyProvider)
+      return EmbeddingsStorageManagerWrapper(indexId, storageManager, keyProvider)
     }
   }
+}
+
+internal class EmbeddingsConfigurationBean : BaseKeyedLazyInstance<EmbeddingsConfiguration<*>>() {
+  @RequiredElement
+  @Attribute("implementation")
+  lateinit var implementation: String
+
+  @RequiredElement
+  @Attribute(value = "indexId")
+  lateinit var indexId: IndexId
+
+  override fun getImplementationClassName(): String? = implementation
 }

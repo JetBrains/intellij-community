@@ -15,6 +15,7 @@ import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
 import com.intellij.platform.ml.embeddings.indexer.entities.LongIndexableEntity
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.ID
 
 @Service(Service.Level.APP)
 internal class IndexLongKeyProvider : EmbeddingStorageKeyProvider<Long> {
@@ -34,12 +35,7 @@ internal class IndexLongKeyProvider : EmbeddingStorageKeyProvider<Long> {
 
     var result = ""
 
-    val index = when (indexId) {
-      IndexId.ACTIONS -> return "" // todo
-      IndexId.FILES -> FILE_NAME_EMBEDDING_INDEX_NAME
-      IndexId.CLASSES -> CLASS_NAME_EMBEDDING_INDEX_NAME
-      IndexId.SYMBOLS -> SYMBOL_NAME_EMBEDDING_INDEX_NAME
-    }
+    val index = getEmbeddingIndexId(indexId) ?: throw IllegalArgumentException("$indexId request is not supported")
 
     smartReadAction(project) {
       FileBasedIndex.getInstance().processValues(
@@ -51,5 +47,15 @@ internal class IndexLongKeyProvider : EmbeddingStorageKeyProvider<Long> {
     }
 
     return result
+  }
+
+  private fun getEmbeddingIndexId(indexId: IndexId): ID<EmbeddingKey, String>? {
+    val index = when (indexId) {
+      IndexId.FILES -> FILE_NAME_EMBEDDING_INDEX_NAME
+      IndexId.CLASSES -> CLASS_NAME_EMBEDDING_INDEX_NAME
+      IndexId.SYMBOLS -> SYMBOL_NAME_EMBEDDING_INDEX_NAME
+      else -> null
+    }
+    return index
   }
 }
