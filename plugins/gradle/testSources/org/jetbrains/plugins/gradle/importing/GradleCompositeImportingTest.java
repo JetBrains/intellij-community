@@ -52,39 +52,40 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test
   public void testBasicCompositeBuild() throws Exception {
     //enableGradleDebugWithSuspend();
-    createSettingsFile("""
-                         rootProject.name='adhoc'
+    createSettingsFile(settingsScript(it -> it
+      .setProjectName("adhoc")
+      .includeBuild("../my-app")
+      .includeBuild("../my-utils")
+    ));
 
-                         includeBuild '../my-app'
-                         includeBuild '../my-utils'""");
+    createProjectSubFile("../my-app/settings.gradle", settingsScript(it -> it
+      .setProjectName("my-app-name")
+    ));
+    createProjectSubFile("../my-app/build.gradle", script(it -> it
+      .addGroup("org.sample")
+      .addVersion("1.0")
+      .withJavaPlugin()
+      .addImplementationDependency("org.sample:number-utils:1.0")
+      .addImplementationDependency("org.sample:string-utils:1.0")
+    ));
 
-    createProjectSubFile("../my-app/settings.gradle", "rootProject.name = 'my-app-name'\n");
-    createProjectSubFile("../my-app/build.gradle",
-                         createBuildScriptBuilder()
-                           .addGroup("org.sample")
-                           .addVersion("1.0")
-                           .withJavaPlugin()
-                           .addImplementationDependency("org.sample:number-utils:1.0")
-                           .addImplementationDependency("org.sample:string-utils:1.0")
-                           .generate());
-
-    createProjectSubFile("../my-utils/settings.gradle",
-                         "rootProject.name = 'my-utils'\n" +
-                         "include 'number-utils', 'string-utils' ");
-    createProjectSubFile("../my-utils/build.gradle",
-                         createBuildScriptBuilder()
-                           .subprojects(it -> {
-                             it.addGroup("org.sample")
-                               .addVersion("1.0")
-                               .withJavaPlugin();
-                           })
-                           .project(":string-utils", it -> {
-                             it
-                               .withMavenCentral()
-                               .withJavaLibraryPlugin()
-                               .addApiDependency("org.apache.commons:commons-lang3:3.4");
-                           })
-                           .generate());
+    createProjectSubFile("../my-utils/settings.gradle", settingsScript(it -> it
+      .setProjectName("my-utils")
+      .include("number-utils", "string-utils")
+    ));
+    createProjectSubFile("../my-utils/number-utils/build.gradle", script(it -> it
+      .addGroup("org.sample")
+      .addVersion("1.0")
+      .withJavaPlugin()
+    ));
+    createProjectSubFile("../my-utils/string-utils/build.gradle", script(it -> it
+      .addGroup("org.sample")
+      .addVersion("1.0")
+      .withJavaPlugin()
+      .withMavenCentral()
+      .withJavaLibraryPlugin()
+      .addApiDependency("org.apache.commons:commons-lang3:3.4")
+    ));
 
     importProject();
 
