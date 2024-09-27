@@ -413,7 +413,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
     val projectsToImport = resolutionResult.mavenProjectMap.entries
       .flatMap { it.value }
-      .associateBy({ it.mavenProject }, { MavenProjectChanges.ALL })
+      .associateBy({ it }, { MavenProjectChanges.ALL })
 
     // plugins and artifacts can be resolved in parallel with import
     return coroutineScope {
@@ -469,7 +469,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                                      reporter,
                                      syncConsole)
           project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionFinished(
-            res.mavenProjectMap.entries.flatMap { it.value }.map { it.mavenProject })
+            res.mavenProjectMap.entries.flatMap { it.value })
           res
         }
       }
@@ -681,7 +681,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       return "updated ${updated}, deleted ${deleted}"
     }
     if (result is MavenProjectResolutionResult) {
-      val mavenProjects = result.mavenProjectMap.flatMap { it.value }.map { it.mavenProject }
+      val mavenProjects = result.mavenProjectMap.flatMap { it.value }
       return "resolved ${mavenProjects}"
     }
     return result.toString()

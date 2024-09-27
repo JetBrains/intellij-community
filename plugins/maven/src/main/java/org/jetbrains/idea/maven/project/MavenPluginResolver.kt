@@ -18,18 +18,18 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
   private val myProject: Project = myTree.project
 
   suspend fun resolvePlugins(
-    mavenProjectsToResolvePlugins: Collection<MavenProjectWithHolder>,
+    mavenProjectsToResolvePlugins: Collection<MavenProject>,
     embeddersManager: MavenEmbeddersManager,
     process: RawProgressReporter,
     eventHandler: MavenEventHandler) {
     val mavenProjects = mavenProjectsToResolvePlugins.filter {
-      !it.mavenProject.hasReadingProblems()
-      && it.mavenProject.hasUnresolvedPlugins()
+      !it.hasReadingProblems()
+      && it.hasUnresolvedPlugins()
     }
 
     if (mavenProjects.isEmpty()) return
 
-    val firstProject = sortAndGetFirst(mavenProjects).mavenProject
+    val firstProject = sortAndGetFirst(mavenProjects)
     val baseDir = MavenUtil.getBaseDir(firstProject.directoryFile).toString()
     process.text(MavenProjectBundle.message("maven.downloading.pom.plugins", firstProject.displayName))
     val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE, baseDir)
@@ -52,9 +52,8 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
         }
       }
       reportUnresolvedPlugins(unresolvedPluginIds)
-      val updatedMavenProjects = mavenProjects.map { it.mavenProject }.toSet()
       val pluginIdsToArtifacts = resolutionResults.associate { it.mavenPluginId to it.pluginArtifact }
-      for (mavenProject in updatedMavenProjects) {
+      for (mavenProject in mavenProjects) {
         mavenProject.updatePluginArtifacts(pluginIdsToArtifacts)
         myTree.firePluginsResolved(mavenProject)
       }
@@ -77,25 +76,23 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
   }
 
   companion object {
-    private fun collectMavenPluginIdsToResolve(mavenProjects: Collection<MavenProjectWithHolder>): Collection<Pair<MavenId, MavenProject>> {
+    private fun collectMavenPluginIdsToResolve(mavenProjects: Collection<MavenProject>): Collection<Pair<MavenId, MavenProject>> {
       val mavenPluginIdsToResolve = HashSet<Pair<MavenId, MavenProject>>()
       if (Registry.`is`("maven.plugins.use.cache")) {
-        val pluginIdsToProjects = HashMap<MavenId, MutableList<MavenProjectWithHolder>>()
-        for (projectData in mavenProjects) {
-          val mavenProject = projectData.mavenProject
+        val pluginIdsToProjects = HashMap<MavenId, MutableList<MavenProject>>()
+        for (mavenProject in mavenProjects) {
           for (mavenPlugin in mavenProject.declaredPlugins) {
             val mavenPluginId = mavenPlugin.mavenId
             pluginIdsToProjects.putIfAbsent(mavenPluginId, ArrayList())
-            pluginIdsToProjects[mavenPluginId]!!.add(projectData)
+            pluginIdsToProjects[mavenPluginId]!!.add(mavenProject)
           }
         }
         for ((key, value) in pluginIdsToProjects) {
-          mavenPluginIdsToResolve.add(Pair.create(key, sortAndGetFirst(value).mavenProject))
+          mavenPluginIdsToResolve.add(Pair.create(key, sortAndGetFirst(value)))
         }
       }
       else {
-        for (projectData in mavenProjects) {
-          val mavenProject = projectData.mavenProject
+        for (mavenProject in mavenProjects) {
           for (mavenPlugin in mavenProject.declaredPlugins) {
             mavenPluginIdsToResolve.add(Pair.create(mavenPlugin.mavenId, mavenProject))
           }
@@ -104,8 +101,8 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
       return mavenPluginIdsToResolve
     }
 
-    private fun sortAndGetFirst(mavenProjects: Collection<MavenProjectWithHolder>): MavenProjectWithHolder {
-      return mavenProjects.minBy { it.mavenProject.directory }
+    private fun sortAndGetFirst(mavenProjects: Collection<MavenProject>): MavenProject {
+      return mavenProjects.minBy { it.directory }
     }
   }
 }

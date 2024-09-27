@@ -13,7 +13,6 @@ import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.IOException
-import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 
 abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() {

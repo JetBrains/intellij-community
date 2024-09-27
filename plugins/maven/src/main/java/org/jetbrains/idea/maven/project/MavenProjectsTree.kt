@@ -41,6 +41,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Consumer
 import java.util.regex.Pattern
 import java.util.zip.CRC32
+import kotlin.Throws
 
 class MavenProjectsTree(val project: Project) {
   private val myStructureLock = ReentrantReadWriteLock()
@@ -882,10 +883,9 @@ class MavenProjectsTree(val project: Project) {
     }
   }
 
-  fun fireProjectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
-                          nativeMavenProject: NativeMavenProjectHolder?) {
+  fun fireProjectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
     for (each in myListeners) {
-      each.projectResolved(projectWithChanges, nativeMavenProject)
+      each.projectResolved(projectWithChanges, null)
     }
   }
 

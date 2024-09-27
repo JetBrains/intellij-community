@@ -21,7 +21,6 @@ import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.RepositoryBlockedSyncIssue.getIssue
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenConfigBuildIssue.getIssue
-import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenProjectResolutionContributor.Companion.EP_NAME
 import org.jetbrains.idea.maven.project.MavenResolveResultProblemProcessor.BLOCKED_MIRROR_FOR_REPOSITORIES
@@ -35,7 +34,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @ApiStatus.Internal
-data class MavenProjectResolutionResult(val mavenProjectMap: Map<String, Collection<MavenProjectWithHolder>>)
+data class MavenProjectResolutionResult(val mavenProjectMap: Map<String, Collection<MavenProject>>)
 
 @ApiStatus.Internal
 class MavenProjectResolverResult(@JvmField val mavenModel: MavenModel,
@@ -60,6 +59,7 @@ interface MavenProjectResolutionContributor {
     throw UnsupportedOperationException("Please implement ${this::class.qualifiedName}#onMavenProjectResolved(Project, MavenProject, MavenEmbedderWrapper)")
   }
 
+  @Suppress("DEPRECATION")
   suspend fun onMavenProjectResolved(
     project: Project,
     mavenProject: MavenProject,
@@ -82,7 +82,7 @@ class MavenProjectResolver(private val myProject: Project) {
                       progressReporter: RawProgressReporter,
                       eventHandler: MavenEventHandler): MavenProjectResolutionResult {
     val updateSnapshots = MavenProjectsManager.getInstance(myProject).forceUpdateSnapshots || generalSettings.isAlwaysUpdateSnapshots
-    val projectsWithUnresolvedPlugins = HashMap<String, Collection<MavenProjectWithHolder>>()
+    val projectsWithUnresolvedPlugins = HashMap<String, Collection<MavenProject>>()
     val fileToDependencyHash = tree.projects.associate { it.file to if (incrementally) it.dependencyHash else null }
     val projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, tree)
     for ((baseDir, mavenProjectsInBaseDir) in projectMultiMap.entrySet()) {
@@ -90,7 +90,8 @@ class MavenProjectResolver(private val myProject: Project) {
       try {
         val userProperties = Properties()
         for (mavenProject in mavenProjectsInBaseDir) {
-          for (mavenImporter in MavenImporter.getSuitableImporters(mavenProject)) {
+          @Suppress("DEPRECATION")
+          for (mavenImporter in org.jetbrains.idea.maven.importing.MavenImporter.getSuitableImporters(mavenProject)) {
             mavenImporter.customizeUserProperties(myProject, mavenProject, userProperties)
           }
         }
@@ -148,7 +149,7 @@ class MavenProjectResolver(private val myProject: Project) {
     workspaceMap: MavenWorkspaceMap?,
     updateSnapshots: Boolean,
     userProperties: Properties,
-  ): Collection<MavenProjectWithHolder> {
+  ): Collection<MavenProject> {
     if (mavenProjects.isEmpty()) return listOf()
     checkCanceled()
     MavenLog.LOG.debug("Project resolution started: ${mavenProjects.size}")
@@ -176,7 +177,7 @@ class MavenProjectResolver(private val myProject: Project) {
         val mavenProject = pathToMavenProject[path]
         if (null != mavenProject) {
           mavenProject.updateState(projectProblems)
-          tree.fireProjectResolved(Pair.create(mavenProject, MavenProjectChanges.ALL), null)
+          tree.fireProjectResolved(Pair.create(mavenProject, MavenProjectChanges.ALL))
         }
       }
     }
@@ -192,7 +193,7 @@ class MavenProjectResolver(private val myProject: Project) {
       .groupBy { mavenProject -> mavenProject.mavenId.artifactId }
       .filterKeys { it != null }
       .mapKeys { it.key!! }
-    val projectsWithUnresolvedPlugins = ConcurrentLinkedQueue<MavenProjectWithHolder>()
+    val projectsWithUnresolvedPlugins = ConcurrentLinkedQueue<MavenProject>()
 
     coroutineScope {
       results.forEach {
@@ -378,7 +379,7 @@ class MavenProjectResolver(private val myProject: Project) {
                                                           generalSettings: MavenGeneralSettings,
                                                           embedder: MavenEmbedderWrapper,
                                                           tree: MavenProjectsTree,
-                                                          projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProjectWithHolder>) {
+                                                          projectsWithUnresolvedPlugins: ConcurrentLinkedQueue<MavenProject>) {
     val mavenId = result.mavenModel.mavenId
     val artifactId = mavenId.artifactId
     val mavenProjects = artifactIdToMavenProjects[artifactId]
@@ -421,26 +422,15 @@ class MavenProjectResolver(private val myProject: Project) {
       keepPreviousArtifacts,
       keepPreviousResolutionResults)
 
-    val nativeMavenProject = result.nativeMavenProject
-    if (nativeMavenProject != null) {
-      for (contributor in EP_NAME.extensionList) {
-        contributor.onMavenProjectResolved(myProject, mavenProjectCandidate, embedder)
-      }
-    }
-    else {
-      MavenLog.LOG.warn("Native maven project not found for $artifactId")
+    for (contributor in EP_NAME.extensionList) {
+      contributor.onMavenProjectResolved(myProject, mavenProjectCandidate, embedder)
     }
     // project may be modified by MavenImporters, so we need to collect the changes after them:
     val changes = mavenProjectCandidate.getChangesSinceSnapshot(snapshot)
     mavenProjectCandidate.problems // need for fill problem cache
-    tree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes), nativeMavenProject)
+    tree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes))
     if (!mavenProjectCandidate.hasReadingProblems()) {
-      if (null != nativeMavenProject) {
-        projectsWithUnresolvedPlugins.add(MavenProjectWithHolder(mavenProjectCandidate, nativeMavenProject, changes))
-      }
-      else {
-        MavenLog.LOG.error("Native maven project is null for $mavenProjectCandidate")
-      }
+      projectsWithUnresolvedPlugins.add(mavenProjectCandidate)
     }
   }
 
