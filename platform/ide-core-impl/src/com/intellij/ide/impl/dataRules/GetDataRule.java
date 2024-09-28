@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.openapi.actionSystem.DataSink#lazy
  * @see com.intellij.openapi.actionSystem.DataSink#lazyValue
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface GetDataRule {
   ExtensionPointName<KeyedLazyInstance<GetDataRule>> EP_NAME = new ExtensionPointName<>("com.intellij.getDataRule");
 

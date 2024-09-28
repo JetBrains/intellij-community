@@ -2,6 +2,7 @@
 package com.intellij.internal.inspector.components
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -143,7 +144,7 @@ private fun equalData(o1: Any?, o2: Any?, level: Int, visited: MutableSet<Any>?)
     override fun equals(other: Any?): Boolean = other is P && o1 === other.o1 && o2 === other.o2
     override fun hashCode(): Int = o1.hashCode() + o2.hashCode() * 31
   }
-  fun set() = (visited ?: HashSet<Any>()).apply { add(P(o1!!, o2!!)) }
+  fun set() = (visited ?: HashSet()).apply { add(P(o1!!, o2!!)) }
   if (o1 === o2) return true
   if (o1 == null || o2 == null) return false
   val c1 = o1.javaClass
@@ -192,6 +193,9 @@ private fun getKeyPresentation(key: String, overridden: Boolean) = when {
 
 private fun getValuePresentation(value: Any) = when (value) {
   is Array<*> -> value.contentToString()
+  is DataManagerImpl.KeyedDataProvider ->
+    "${value.map.size} lazy" +
+    "${value.generic?.let { " + generic" } ?: ""}: ${value.map.keys.joinToString(", ")}"
   else -> value.toString()
 }
 

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus;
  *
  * @deprecated Use {@link com.intellij.openapi.actionSystem.DataSink#lazyValue} instead.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @ApiStatus.Internal
 public enum GetDataRuleType {
   /**

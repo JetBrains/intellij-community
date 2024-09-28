@@ -6,17 +6,7 @@ package com.intellij.ide.impl
 import com.intellij.ide.DataManager
 import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.ide.ui.IdeUiService
-import com.intellij.openapi.actionSystem.CompositeDataProvider
-import com.intellij.openapi.actionSystem.CustomizedDataContext
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.DataSnapshotProvider
-import com.intellij.openapi.actionSystem.DependentTransientComponent
-import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
-import com.intellij.openapi.actionSystem.InjectedDataKeys
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
@@ -56,8 +46,8 @@ private val ourGetDataLevel: ThreadLocal<ThreadState> = ThreadLocal.withInitial 
 
 open class DataManagerImpl : DataManager() {
 
-  private val myRulesCache = ConcurrentFactoryMap.createMap<Pair<String, GetDataRuleType>, GetDataRule> {
-    getDataRule(it.first, it.second)
+  private val myRulesCache = ConcurrentFactoryMap.createMap<String, GetDataRule> {
+    getDataRule(it)
   }
 
   init {
@@ -67,31 +57,13 @@ open class DataManagerImpl : DataManager() {
       ?.addChangeListener(Runnable { myRulesCache.clear() }, app)
   }
 
-
   @ApiStatus.Internal
-  fun keysForRuleType(ruleType: GetDataRuleType): List<DataKey<*>> {
-    val includeFast = ruleType == GetDataRuleType.PROVIDER
-    var result: MutableList<DataKey<*>>? = null
-    for (bean in GetDataRule.EP_NAME.extensionsIfPointIsRegistered) {
-      val type = (bean as GetDataRuleBean).type
-      if (type != ruleType && !(includeFast && type == GetDataRuleType.FAST)) continue
-      if (result == null) result = ArrayList()
-      result.add(DataKey.create<Any>(bean.key))
-    }
-    return result ?: emptyList()
+  fun getDataFromRules(dataId: String, provider: DataProvider): Any? {
+    val rule = myRulesCache[dataId] ?: return null
+    return getDataFromRuleInner(rule, dataId, provider)
   }
 
-  @ApiStatus.Internal
-  fun getDataFromProviderAndRules(dataId: String, ruleType: GetDataRuleType?, provider: DataProvider): Any? {
-    return getDataFromProviderAndRulesInner(dataId, ruleType, provider)
-  }
-
-  @ApiStatus.Internal
-  fun getDataFromRules(dataId: String, ruleType: GetDataRuleType, provider: DataProvider): Any? {
-    return getDataFromRulesInner(dataId, ruleType, provider)
-  }
-
-  private fun getDataFromProviderAndRulesInner(dataId: String, ruleType: GetDataRuleType?, provider: DataProvider): Any? {
+  private fun getDataFromProviderAndRules(dataId: String, provider: DataProvider): Any? {
     ProgressManager.checkCanceled()
     val state = ourGetDataLevel.get()
     if (state.ids?.contains(dataId) == true) {
@@ -100,21 +72,14 @@ open class DataManagerImpl : DataManager() {
     state.depth++
     try {
       val data = getDataFromProviderInner(dataId, provider, null)
-      return data ?: ruleType?.let {
-        getDataFromRulesInner(dataId, it, provider)
-      }
+      return data ?: getDataFromRules(dataId, provider)
     }
     finally {
       state.depth--
     }
   }
 
-  private fun getDataFromRulesInner(dataId: String, ruleType: GetDataRuleType, provider: DataProvider): Any? {
-    val rule = myRulesCache[dataId to ruleType] ?: return null
-    return getDataFromRuleInner(rule, dataId, ruleType, provider)
-  }
-
-  private fun getDataFromRuleInner(rule: GetDataRule, dataId: String, ruleType: GetDataRuleType, provider: DataProvider): Any? {
+  private fun getDataFromRuleInner(rule: GetDataRule, dataId: String, provider: DataProvider): Any? {
     val state = ourGetDataLevel.get()
     val ids = state.ids.let { ids ->
       if (ids == null || state.depth == 0) HashSet<String>().also { state.ids = it }
@@ -124,7 +89,7 @@ open class DataManagerImpl : DataManager() {
     try {
       ids.add(dataId)
       val data = rule.getData { id ->
-        val o = getDataFromProviderAndRulesInner(id, ruleType, provider)
+        val o = getDataFromProviderAndRules(id, provider)
         if (o === CustomizedDataContext.EXPLICIT_NULL) null else o
       }
       return when {
@@ -140,9 +105,8 @@ open class DataManagerImpl : DataManager() {
   }
 
   override fun getCustomizedData(dataId: String, dataContext: DataContext, provider: DataProvider): Any? {
-    val data = getDataFromProviderAndRules(dataId, GetDataRuleType.CONTEXT) { id ->
-      val o = getDataFromProviderAndRules(id, GetDataRuleType.PROVIDER, provider)
-      o ?: dataContext.getData(id)
+    val data = getDataFromProviderAndRules(dataId) { id ->
+      provider.getData(id) ?: dataContext.getData(id)
     }
     return if (data === CustomizedDataContext.EXPLICIT_NULL) null else data
   }
@@ -158,23 +122,11 @@ open class DataManagerImpl : DataManager() {
     return IdeUiService.getInstance().createCustomizedDataContext(context, p)
   }
 
-  private fun getDataRule(dataId: String, ruleType: GetDataRuleType): GetDataRule? = when (ruleType) {
-    GetDataRuleType.FAST -> rulesForKey(dataId, GetDataRuleType.FAST).let { rules ->
-      when {
-        rules == null -> null
-        rules.size == 1 -> rules[0]
-        else -> GetDataRule { getRulesData(dataId, rules, it) }
-      }
-    }
-    GetDataRuleType.PROVIDER -> getDataRuleInner(dataId, GetDataRuleType.PROVIDER)
-    GetDataRuleType.CONTEXT -> getDataRuleInner(dataId, GetDataRuleType.CONTEXT)
-  }
-
-  private fun getDataRuleInner(dataId: String, ruleType: GetDataRuleType): GetDataRule? {
+  private fun getDataRule(dataId: String): GetDataRule? {
     val uninjectedId = InjectedDataKeys.uninjectedId(dataId)
-    val noSlowRule = ruleType != GetDataRuleType.PROVIDER || PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId)
-    val rules1 = rulesForKey(dataId, ruleType)
-    val rules2 = if (uninjectedId == null) null else rulesForKey(uninjectedId, ruleType)
+    val noSlowRule = PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId)
+    val rules1 = rulesForKey(dataId)
+    val rules2 = if (uninjectedId == null) null else rulesForKey(uninjectedId)
     if (rules1 == null && rules2 == null && noSlowRule) return null
     return GetDataRule { dataProvider ->
       val bgtProvider = if (noSlowRule) null else PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(dataProvider)
@@ -190,13 +142,10 @@ open class DataManagerImpl : DataManager() {
     }
   }
 
-  private fun rulesForKey(dataId: String, ruleType: GetDataRuleType): List<GetDataRule>? {
-    val includeFast = ruleType == GetDataRuleType.PROVIDER
+  private fun rulesForKey(dataId: String): List<GetDataRule>? {
     var result: MutableList<GetDataRule>? = null
     for (bean in GetDataRule.EP_NAME.extensionsIfPointIsRegistered) {
       if (dataId != bean.getKey()) continue
-      val type = (bean as GetDataRuleBean).type
-      if (type != ruleType && !(includeFast && type == GetDataRuleType.FAST)) continue
       val rule = KeyedExtensionCollector.instantiate(bean)
       if (rule == null) continue
       if (result == null) result = SmartList<GetDataRule>()
@@ -222,7 +171,17 @@ open class DataManagerImpl : DataManager() {
   private fun getDataFromProviderInner(dataId: String, provider: DataProvider?, outerProvider: DataProvider?): Any? {
     when (provider) {
       null -> return null
-      !is CompositeDataProvider -> {
+      is KeyedDataProvider -> {
+        return getDataFromProviderInner(dataId, provider.map[dataId], outerProvider)
+               ?: getDataFromProviderInner(dataId, provider.generic, outerProvider)
+      }
+      is CompositeDataProvider -> {
+        for (p in provider.dataProviders) {
+          val data = getDataFromProviderInner(dataId, p, outerProvider)
+          if (data != null) return data
+        }
+      }
+      else -> {
         try {
           val data = if (provider is ParametrizedDataProvider) outerProvider?.let { provider.getData(dataId, it) }
           else provider.getData(dataId)
@@ -231,12 +190,6 @@ open class DataManagerImpl : DataManager() {
           }
         }
         catch (_: IndexNotReadyException) {
-        }
-      }
-      else -> {
-        for (p in provider.dataProviders) {
-          val data = getDataFromProviderInner(dataId, p, outerProvider)
-          if (data != null) return data
         }
       }
     }
@@ -339,6 +292,11 @@ open class DataManagerImpl : DataManager() {
   @ApiStatus.Internal
   interface ParametrizedDataProvider {
     fun getData(dataId: String, dataProvider: DataProvider): Any?
+  }
+
+  @ApiStatus.Internal
+  class KeyedDataProvider(val map: Map<String, DataProvider>, val generic: DataProvider?): DataProvider {
+    override fun getData(dataId: String): Nothing = throw UnsupportedOperationException()
   }
 
   companion object {

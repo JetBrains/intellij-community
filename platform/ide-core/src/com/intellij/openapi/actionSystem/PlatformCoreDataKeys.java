@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.SlowOperations;
 import kotlin.jvm.functions.Function0;
 
-import java.awt.*;
+import java.awt.Component;
 
 /**
  * @see CommonDataKeys
@@ -80,7 +80,7 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
    *
    * @deprecated Use {@link DataSink#lazy(DataKey, Function0)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final DataKey<DataProvider> BGT_DATA_PROVIDER = DataKey.create("bgtDataProvider");
 
   /**
