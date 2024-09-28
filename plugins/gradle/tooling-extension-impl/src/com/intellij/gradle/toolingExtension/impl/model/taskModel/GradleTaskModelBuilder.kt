@@ -8,6 +8,7 @@ import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil
 import org.gradle.api.Project
 import org.gradle.api.tasks.testing.AbstractTestTask
 import org.gradle.api.tasks.testing.Test
+import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.DefaultExternalTask
 import org.jetbrains.plugins.gradle.model.GradleTaskModel
@@ -27,10 +28,10 @@ class GradleTaskModelBuilder : AbstractModelBuilderService() {
     val taskModel = DefaultGradleTaskModel()
     // Android Studio (b/243767844, b/235320590): only register test tasks when fetching Gradle task information.
     // This is tested by GradleTaskListIntegrationTest.testSyncWithGradleTaskListSkipped().
-    val skipTasks = try {
-      java.lang.String.valueOf(project.properties["idea.gradle.do.not.build.tasks"]).trim().toBoolean()
-    } catch (ignored: Throwable) {
-      false
+    val skipTasks = if (GradleVersion.current() >= GradleVersion.version("8.1")) { // https://github.com/gradle/gradle/issues/19793
+      project.providers.gradleProperty("idea.gradle.do.not.build.tasks").orNull?.trim().toBoolean()
+    } else {
+      java.lang.String.valueOf(project.properties["idea.gradle.do.not.build.tasks"])?.trim().toBoolean()
     }
     if (skipTasks) {
       taskModel.tasks = getTestTasks(project)
