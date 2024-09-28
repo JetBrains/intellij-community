@@ -66,7 +66,7 @@ fun downToExpression(
     )
 
 fun JKExpression.parenthesizeIfCompoundExpression(): JKExpression = when (this) {
-    is JKIfElseExpression, is JKBinaryExpression, is JKTypeCastExpression -> JKParenthesizedExpression(this)
+    is JKIfElseExpression, is JKBinaryExpression, is JKTypeCastExpression, is JKUnaryExpression -> JKParenthesizedExpression(this)
     else -> this
 }
 
