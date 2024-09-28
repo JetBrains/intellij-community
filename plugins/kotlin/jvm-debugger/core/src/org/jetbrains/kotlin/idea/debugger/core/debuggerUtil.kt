@@ -17,9 +17,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
-import org.jetbrains.kotlin.codegen.topLevelClassAsmType
 import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
@@ -30,7 +28,6 @@ import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INVO
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -214,16 +211,12 @@ fun StackFrameProxyImpl.isOnSuspensionPoint(): Boolean {
 fun isInSuspendMethod(location: Location): Boolean {
     val method = location.method()
     val signature = method.signature()
-    val continuationAsmType = continuationAsmType()
-    return signature.contains(continuationAsmType.toString()) || isInvokeSuspendMethod(method)
+    return signature.contains(CONTINUATION_TYPE.toString()) || isInvokeSuspendMethod(method)
 }
 
 fun isInvokeSuspendMethod(method: Method): Boolean {
     return method.name() == INVOKE_SUSPEND_METHOD_NAME && method.signature() == INVOKE_SUSPEND_SIGNATURE
 }
-
-private fun continuationAsmType() =
-    StandardNames.COROUTINES_PACKAGE_FQ_NAME.child(Name.identifier("Continuation")).topLevelClassAsmType()
 
 private fun getFirstMethodLocation(location: Location): Location? {
     val firstLocation = location.safeMethod()?.location() ?: return null
@@ -448,8 +441,7 @@ private class CoroutineStateMachineVisitor(method: Method, private val resumeLoc
 
     private fun isSuspendFunction(name: String?, descriptor: String?): Boolean {
         if (name == null || descriptor == null) return false
-        val continuationAsmType = continuationAsmType()
-        return descriptor.contains(continuationAsmType.toString()) && name != "<init>"
+        return descriptor.contains(CONTINUATION_TYPE.toString()) && name != "<init>"
     }
 }
 
