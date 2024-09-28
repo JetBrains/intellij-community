@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
@@ -641,7 +642,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  public void inlineMethodCall(PsiReferenceExpression ref) throws IncorrectOperationException {
+  public void inlineMethodCall(PsiReferenceExpression ref) {
     myMethodCopy = (PsiMethod)myMethod.copy();
 
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)ref.getParent();
@@ -676,8 +677,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       LOG.assertTrue(beforeRBraceStatement != null);
 
       firstAdded = anchorParent.addRangeBefore(firstBodyElement, beforeRBraceStatement, anchor);
+      JavaCodeStyleManager style = JavaCodeStyleManager.getInstance(myProject);
 
       for (PsiElement e = firstAdded; e != anchor; e = e.getNextSibling()) {
+        style.shortenClassReferences(e);
         if (e instanceof PsiDeclarationStatement) {
           PsiElement[] elements = ((PsiDeclarationStatement)e).getDeclaredElements();
           PsiLocalVariable var = tryCast(ArrayUtil.getFirstElement(elements), PsiLocalVariable.class);
@@ -688,7 +691,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             }
             else if (blockData.thisVar != null && name.equals(blockData.thisVar.getName())) {
               thisVar = var;
-            } else {
+            }
+            else {
               for (int i = 0; i < blockData.parmVars.length; i++) {
                 if (name.equals(blockData.parmVars[i].getName())) {
                   parmVars[i] = var;
@@ -767,8 +771,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return !sourceContainingClass.equals(targetContainingClass);
   }
 
-  private BlockData prepareBlock(PsiReferenceExpression ref, InlineMethodHelper helper)
-    throws IncorrectOperationException {
+  private BlockData prepareBlock(PsiReferenceExpression ref, InlineMethodHelper helper) {
     final PsiCodeBlock block = Objects.requireNonNull(myMethodCopy.getBody());
     PsiSubstitutor callSubstitutor = helper.getSubstitutor();
     if (callSubstitutor != PsiSubstitutor.EMPTY) {
@@ -829,7 +832,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void addThisInitializer(PsiMethodCallExpression methodCall, PsiLocalVariable thisVar) throws IncorrectOperationException {
+  private void addThisInitializer(PsiMethodCallExpression methodCall, PsiLocalVariable thisVar) {
     if (thisVar != null) {
       PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
       if (qualifier == null) {
@@ -888,7 +891,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private static final Key<PsiReferenceExpression> MARK_KEY = Key.create("MarkForSurround");
 
-  private PsiReferenceExpression[] surroundWithCodeBlock(PsiReferenceExpression[] refs) throws IncorrectOperationException {
+  private PsiReferenceExpression[] surroundWithCodeBlock(PsiReferenceExpression[] refs) {
     mySurroundResults = new ArrayList<>();
 
     for (PsiReferenceExpression ref : refs) {
@@ -1017,19 +1020,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
-  private static class BlockData {
-    final PsiCodeBlock block;
-    final PsiLocalVariable thisVar;
-    final PsiLocalVariable[] parmVars;
-    final PsiLocalVariable resultVar;
-
-    BlockData(PsiCodeBlock block, PsiLocalVariable thisVar, PsiLocalVariable[] parmVars, PsiLocalVariable resultVar) {
-      this.block = block;
-      this.thisVar = thisVar;
-      this.parmVars = parmVars;
-      this.resultVar = resultVar;
-    }
-  }
+  private record BlockData(PsiCodeBlock block, PsiLocalVariable thisVar, PsiLocalVariable[] parmVars, PsiLocalVariable resultVar) {}
 
   @Override
   @NotNull
