@@ -283,6 +283,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   public void testNoInlineAnnotationType() {
     doTestNoInline("Annotation types cannot be inlined");
   }
+  
+  public void testNoInlineRecordJava21() {
+    doTestNoInline("Record classes cannot be inlined");
+  }
 
   public void testNoInlineMultipleInterfaces() {
     doTestNoInline("Classes which implement multiple interfaces cannot be inlined");
@@ -437,7 +441,7 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
                                                                           TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertInstanceOf(element, PsiClass.class);
 
-    assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage((PsiClass) element));
+    assertNull(InlineToAnonymousClassHandler.getCannotInlineMessage((PsiClass)element));
     return new InlineToAnonymousClassProcessor(getProject(), (PsiClass) element, null, false, false, false);
   }
 

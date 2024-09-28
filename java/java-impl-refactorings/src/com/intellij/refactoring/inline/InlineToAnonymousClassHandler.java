@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -192,6 +192,9 @@ public final class InlineToAnonymousClassHandler extends JavaInlineActionHandler
     if (psiClass.isEnum()) {
       return JavaBundle.message("enums.cannot.be.inlined");
     }
+    if (psiClass.isRecord()) {
+      return JavaBundle.message("records.cannot.be.inlined");
+    }
     if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return JavaRefactoringBundle.message("inline.to.anonymous.no.abstract");
     }
@@ -373,7 +376,6 @@ public final class InlineToAnonymousClassHandler extends JavaInlineActionHandler
     }
   }
 
-  @Nullable
   @Override
   public String getActionName(PsiElement element) {
     return JavaRefactoringBundle.message("inline.to.anonymous.refactoring");
