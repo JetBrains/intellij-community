@@ -234,6 +234,11 @@ internal fun MutableTWorkspace.generateK2FixTests() {
                 pattern = pattern,
                 testMethodName = testMethodName,
             )
+            model(
+                "$idea/quickfix/migration/javaAnnotationPositionedArguments",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
         }
 
         testClass<AbstractHighLevelQuickFixMultiModuleTest> {

@@ -1083,4 +1083,33 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../../../idea/tests/testData/quickfix/addGenericUpperBound/javaUpperBoundViolated.test");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/migration/javaAnnotationPositionedArguments")
+    public static class JavaAnnotationPositionedArguments extends AbstractHighLevelQuickFixMultiFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("basicMultiple.before.Main.kt")
+        public void testBasicMultiple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/javaAnnotationPositionedArguments/basicMultiple.before.Main.kt");
+        }
+
+        @TestMetadata("noValueForArgumentMultiple.before.Main.kt")
+        public void testNoValueForArgumentMultiple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/javaAnnotationPositionedArguments/noValueForArgumentMultiple.before.Main.kt");
+        }
+
+        @TestMetadata("wrongTypeMultiple.before.Main.kt")
+        public void testWrongTypeMultiple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/javaAnnotationPositionedArguments/wrongTypeMultiple.before.Main.kt");
+        }
+    }
 }
