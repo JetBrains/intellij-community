@@ -6,7 +6,9 @@ import com.intellij.gradle.toolingExtension.impl.util.GradleResultUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
 import org.gradle.api.internal.tasks.DefaultTaskContainer;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskContainer;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
@@ -28,10 +30,11 @@ public class GradleTaskWarmUpService extends AbstractModelBuilderService {
     // Android Studio (b/243767844, b/235320590): only register test tasks when fetching Gradle task information.
     // This is tested by TaskConfigurationNotTriggeredDuringSyncTest.testTasksAreNotConfiguredDuringSync().
     boolean skipTasks;
-    try {
+    if (GradleVersion.current().compareTo(GradleVersion.version("8.1")) >= 0) { // https://github.com/gradle/gradle/issues/19793
+      Provider<String> buildTasksProvider = project.getProviders().gradleProperty("idea.gradle.do.not.build.tasks");
+      skipTasks = Boolean.parseBoolean(String.valueOf(buildTasksProvider.getOrNull()).trim());
+    } else {
       skipTasks = Boolean.parseBoolean(String.valueOf(project.getProperties().get("idea.gradle.do.not.build.tasks")).trim());
-    } catch (Throwable ignored) {
-      skipTasks = false;
     }
     if (!skipTasks) {
       GradleResultUtil.runOrRetryOnce(() -> {
