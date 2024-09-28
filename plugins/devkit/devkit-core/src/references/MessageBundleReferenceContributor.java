@@ -23,10 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
-import com.intellij.util.PairProcessor;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.Query;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.DomTarget;
@@ -99,7 +96,8 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
           String id = text.substring(prefixEndIdx, dotBeforeSuffix);
           String prefix = text.substring(0, prefixEndIdx);
 
-          return new ActionOrGroupIdReference(element, id, prefix);
+          ThreeState isAction = prefix.equals(ACTION) ? ThreeState.YES : ThreeState.NO;
+          return new ActionOrGroupIdReference(element, TextRange.allOf(id).shiftRight(prefix.length()), id, isAction);
         }
 
         @Nullable

@@ -478,6 +478,7 @@
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.IconsUastReferencesContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.RegistryKeyIdReferenceContributor"/>
+    <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.ActionIdReferenceContributor"/>
     <psi.referenceContributor language="UAST"
                               implementation="org.jetbrains.idea.devkit.references.NotificationGroupIdReferenceContributor"/>
     <psi.referenceContributor language="UAST"
