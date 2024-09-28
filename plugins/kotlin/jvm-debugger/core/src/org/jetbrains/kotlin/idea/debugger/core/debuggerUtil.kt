@@ -19,7 +19,6 @@ import com.sun.jdi.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
-import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.codegen.topLevelClassAsmType
 import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
@@ -551,7 +550,7 @@ fun Method.getInlineFunctionOrArgumentVariables(): Sequence<LocalVariable> {
     val localVariables = safeVariables() ?: return emptySequence()
     return localVariables
         .asSequence()
-        .filter { isFakeLocalVariableForInline(it.name()) }
+        .filter { JvmAbi.isFakeLocalVariableForInline(it.name()) }
 }
 
 val DebugProcessImpl.canRunEvaluation: Boolean

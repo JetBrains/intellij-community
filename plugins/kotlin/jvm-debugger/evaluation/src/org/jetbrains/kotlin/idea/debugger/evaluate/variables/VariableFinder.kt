@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.codegen.coroutines.CONTINUATION_VARIABLE_NAME
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.codegen.inline.getInlineScopeInfo
-import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_PREFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_RECEIVER_FIELD
@@ -338,7 +337,7 @@ class VariableFinder(val context: ExecutionContext) {
         val scopeNumberToSurroundingScopeNumber = mutableMapOf<Int, Int>()
         for (variable in variables) {
             val name = variable.name()
-            if (isFakeLocalVariableForInline(name)) {
+            if (JvmAbi.isFakeLocalVariableForInline(name)) {
                 val (scope, _, surroundingScope) = name.getInlineScopeInfo() ?: continue
                 if (surroundingScope != null && scope >= 0 && surroundingScope >= 0) {
                     scopeNumberToSurroundingScopeNumber[scope] = surroundingScope

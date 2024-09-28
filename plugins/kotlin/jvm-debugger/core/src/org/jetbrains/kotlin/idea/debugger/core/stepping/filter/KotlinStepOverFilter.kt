@@ -9,12 +9,12 @@ import com.intellij.util.Range
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.StackFrame
-import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVariables
 import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
 import org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinMethodFilter
+import org.jetbrains.kotlin.load.java.JvmAbi
 
 data class StepOverCallerInfo(val declaringType: String, val methodName: String?, val methodSignature: String?) {
     companion object {
@@ -37,7 +37,7 @@ data class LocationToken(val lineNumber: Int, val inlineVariables: List<LocalVar
 
             for (variable in location.safeMethod()?.safeVariables() ?: emptyList()) {
                 val name = variable.name()
-                if (variable.isVisible(stackFrame) && isFakeLocalVariableForInline(name)) {
+                if (variable.isVisible(stackFrame) && JvmAbi.isFakeLocalVariableForInline(name)) {
                     methodVariables += variable
                 }
             }

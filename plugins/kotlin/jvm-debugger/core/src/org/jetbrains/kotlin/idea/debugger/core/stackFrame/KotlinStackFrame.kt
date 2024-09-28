@@ -13,7 +13,6 @@ import com.intellij.xdebugger.frame.XValueChildrenList
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
-import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_LABELED_THIS_FIELD
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_PREFIX
@@ -29,6 +28,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.SUSP
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.THIS
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.THIS_IN_DEFAULT_IMPLS
 import org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.NameUtils.CONTEXT_RECEIVER_PREFIX
 
 @Suppress("EqualsOrHashCode")
@@ -197,7 +197,7 @@ open class KotlinStackFrame(
         if (!kotlinVariableViewService.kotlinVariableView) {
             val allVisibleVariables = stackFrameProxy.safeVisibleVariables()
             return allVisibleVariables.map { variable ->
-                if (isFakeLocalVariableForInline(variable.name())) variable.wrapSyntheticInlineVariable() else variable
+                if (JvmAbi.isFakeLocalVariableForInline(variable.name())) variable.wrapSyntheticInlineVariable() else variable
             }
         }
 
@@ -207,7 +207,7 @@ open class KotlinStackFrame(
     private fun List<LocalVariableProxyImpl>.remapInKotlinView(): List<LocalVariableProxyImpl> {
         val (thisVariables, otherVariables) = filter { variable ->
                 val name = variable.nameWithoutScopeNumber()
-                !isFakeLocalVariableForInline(name) &&
+                !JvmAbi.isFakeLocalVariableForInline(name) &&
                     !name.startsWith(DESTRUCTURED_LAMBDA_ARGUMENT_VARIABLE_PREFIX) &&
                     !name.startsWith(LOCAL_FUNCTION_VARIABLE_PREFIX) &&
                     name != CONTINUATION_VARIABLE_NAME &&
