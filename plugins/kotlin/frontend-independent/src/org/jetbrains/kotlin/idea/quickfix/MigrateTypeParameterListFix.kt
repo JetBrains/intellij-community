@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.psi.KtTypeParameterList
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class MigrateTypeParameterListFix(
-    typeParameterList: KtTypeParameterList,
-) : PsiUpdateModCommandAction<KtTypeParameterList>(typeParameterList), CleanupFix.ModCommand {
+    element: KtTypeParameterList,
+) : PsiUpdateModCommandAction<KtTypeParameterList>(element), CleanupFix.ModCommand {
 
     override fun getFamilyName(): String = KotlinBundle.message("migrate.type.parameter.list.syntax")
 
