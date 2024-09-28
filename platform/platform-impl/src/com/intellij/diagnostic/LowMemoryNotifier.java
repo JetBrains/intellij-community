@@ -30,6 +30,9 @@ final class LowMemoryNotifier implements Disposable {
   static void showNotification(@NotNull VMOptions.MemoryKind kind, boolean error) {
     if (!ourNotifications.add(kind)) return;
 
+    int currentXmx = VMOptions.readOption(VMOptions.MemoryKind.HEAP, true);
+    UILatencyLogger.lowMemory(kind, currentXmx);
+
     var message = error ? IdeBundle.message("low.memory.notification.error", kind.label()) : IdeBundle.message("low.memory.notification.warning");
     var type = error ? NotificationType.ERROR : NotificationType.WARNING;
     var notification = new Notification("Low Memory", IdeBundle.message("low.memory.notification.title"), message, type);
@@ -38,7 +41,8 @@ final class LowMemoryNotifier implements Disposable {
       new HeapDumpSnapshotRunnable(MemoryReportReason.UserInvoked, HeapDumpSnapshotRunnable.AnalysisOption.SCHEDULE_ON_NEXT_START).run()));
 
     if (VMOptions.canWriteOptions()) {
-      notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("low.memory.notification.action"), () -> new EditMemorySettingsDialog(kind).show()));
+      notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("low.memory.notification.action"),
+                                                                     () -> new EditMemorySettingsDialog(kind).show()));
     }
 
     notification.whenExpired(() -> ourNotifications.remove(kind));
