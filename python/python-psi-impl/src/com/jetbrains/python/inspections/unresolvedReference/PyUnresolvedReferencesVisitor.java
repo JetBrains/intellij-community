@@ -392,7 +392,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     var isAddedToInstallAllFix = false;
     if (Iterables.size(installPackageQuickFixes) > 0) {
       ContainerUtil.addAll(fixes, installPackageQuickFixes);
-      PyPackageInstallAllProblemInfo problemInfo = new PyPackageInstallAllProblemInfo(node, description, hl_type, refName);
+      PyPackageInstallAllProblemInfo problemInfo =
+        new PyPackageInstallAllProblemInfo(node, description, hl_type, refName, fixes);
       myUnresolvedRefs.add(problemInfo);
       isAddedToInstallAllFix = true;
     }
@@ -537,18 +538,16 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
   public void addInstallAllImports() {
     List<String> refNames = myUnresolvedRefs.stream().map(it -> it.getRefName()).distinct().toList();
-    if (refNames.size() < 2) {
-      return;
-    }
-
-    var fixes = getInstallAllPackagesQuickFixes().iterator();
-    if (!fixes.hasNext()) {
-      return;
-    }
-    var fix = fixes.next();
 
     for (PyPackageInstallAllProblemInfo unresolved : myUnresolvedRefs) {
-      registerProblem(unresolved.getPsiElement(), unresolved.getDescriptionTemplate(), unresolved.getHighlightType(), null, fix);
+      var quickFixes = unresolved.getFixes();
+
+      if (refNames.size() > 1) {
+        var installAllPackageQuickFixes = getInstallAllPackagesQuickFixes();
+        ContainerUtil.addAll(quickFixes, installAllPackageQuickFixes);
+      }
+      registerProblem(unresolved.getPsiElement(), unresolved.getDescriptionTemplate(), unresolved.getHighlightType(), null,
+                      quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
 
