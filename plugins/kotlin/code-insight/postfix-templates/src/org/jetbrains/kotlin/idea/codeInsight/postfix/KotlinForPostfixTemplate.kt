@@ -142,6 +142,14 @@ private val INT_CLASS_ID = ClassId.fromString("kotlin/Int")
 
 private val ITERABLE_CLASS_IDS: Set<ClassId> = setOf(
     ClassId.fromString("kotlin/Array"),
+    ClassId.fromString("kotlin/BooleanArray"),
+    ClassId.fromString("kotlin/ByteArray"),
+    ClassId.fromString("kotlin/CharArray"),
+    ClassId.fromString("kotlin/DoubleArray"),
+    ClassId.fromString("kotlin/FloatArray"),
+    ClassId.fromString("kotlin/IntArray"),
+    ClassId.fromString("kotlin/LongArray"),
+    ClassId.fromString("kotlin/ShortArray"),
     ClassId.fromString("kotlin/collections/Iterable"),
     ClassId.fromString("kotlin/collections/Map"),
     ClassId.fromString("kotlin/sequences/Sequence"),

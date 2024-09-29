@@ -136,6 +136,11 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("intArray.kt")
+        public void testIntArray() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("list.kt")
         public void testList() throws Exception {
             performTest();
