@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
@@ -149,8 +148,6 @@ private class ResolutionAnchorAwareLibraryModificationTracker(libraryInfo: Libra
 @Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide calcHashCode()
 private class LibraryWithoutSourceScope(
     project: Project,
-    topPackageNames: Set<String>,
-    entriesVirtualFileSystems: Set<NewVirtualFileSystem>?,
     topPackageNames: Set<String>,
     entriesVirtualFileSystems: Set<NewVirtualFileSystem>?,
     private val library: Library
