@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.util.io.URLUtil
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings
@@ -28,8 +29,10 @@ import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogUiImpl
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.config.*
+import git4idea.index.getFileStatus
 import git4idea.repo.GitCommitTemplateTracker
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
@@ -47,6 +50,8 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 internal class GitStatisticsCollector : ProjectUsagesCollector() {
+  private val GROUP = EventLogGroup("git.configuration", 19)
+
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
@@ -82,6 +87,8 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     reportVersion(project, set)
     val counter = GitCommitterCounter(listOf(Period.ofMonths(1), Period.ofMonths(3), Period.ofYears(1)),
                                       additionalGitParameters = listOf("--all"))
+    val executable = GitExecutableManager.getInstance().getExecutable(null)
+
     for (repository in repositories) {
       val repoStatus = repositoryChecker.checkRepoStatus(repository)
       val branches = repository.branches
@@ -107,13 +114,22 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
       }
       catch (e: Exception) {
         if (e is ControlFlowException) throw e
-        LOG.warn(e)
+        Logger.getInstance(GitStatisticsCollector::class.java).warn(e)
       }
       val remoteTypes = HashMultiset.create(repository.remotes.map { getRemoteServerType(it) })
       for (remoteType in remoteTypes) {
         repositoryMetric.data.addData("remote_$remoteType", remoteTypes.count(remoteType))
       }
       set.add(repositoryMetric)
+
+      for (configDirName in ALL_IDE_CONFIG_NAMES) {
+        getConfigFileStatus(executable, repository, configDirName)?.let { status ->
+          set.add(SHARED_IDE_CONFIG.metric(
+            IDE_CONFIG_NAME.with(configDirName),
+            IDE_CONFIG_STATUS.with(status)
+          ))
+        }
+      }
     }
 
     addRecentBranchesOptionMetric(set, settings, defaultSettings, repositories)
@@ -196,8 +212,6 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     }
   }
 
-  private val GROUP = EventLogGroup("git.configuration", 18)
-
   private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
   private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
 
@@ -275,6 +289,17 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   private val FILTER_BY_ACTION_IN_POPUP = GROUP.registerVarargEvent("filterByActionInPopup", EventFields.Enabled)
   private val FILTER_BY_REPOSITORY_IN_POPUP = GROUP.registerVarargEvent("filterByRepositoryInPopup", EventFields.Enabled)
 
+  private val ALL_IDE_CONFIG_NAMES = listOf(
+    ".fleet",
+    ".idea",
+    ".project",
+    ".settings",
+    ".vscode",
+  )
+  private val IDE_CONFIG_NAME = EventFields.String("name", ALL_IDE_CONFIG_NAMES)
+  private val IDE_CONFIG_STATUS = EventFields.Enum("status", ConfigStatus::class.java)
+  private val SHARED_IDE_CONFIG = GROUP.registerVarargEvent("ide.config", IDE_CONFIG_NAME, IDE_CONFIG_STATUS)
+
   private fun getRemoteServerType(remote: GitRemote): String {
     val hosts = remote.urls.map(URLUtil::parseHostFromSshUrl).distinct()
 
@@ -289,10 +314,6 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     if (remote.urls.any { it.contains("gitee") }) return "gitee_custom"
 
     return "other"
-  }
-
-  companion object {
-    val LOG = Logger.getInstance(GitStatisticsCollector::class.java)
   }
 }
 
@@ -317,16 +338,42 @@ private fun GitRepository.isWorkTreeUsed(): Boolean {
     Files.list(worktreesPath).count() > 0
   }
   catch (e: Exception) {
+    if (e is ControlFlowException) throw e
     false
   }
+}
+
+private fun getConfigFileStatus(executable: GitExecutable, repository: GitRepository, configDirName: String): ConfigStatus? {
+  return try {
+    val rootPath = repository.root.toNioPath()
+    val configDir = rootPath.resolve(configDirName)
+    if (!configDir.exists() || !configDir.isDirectory()) return null
+
+    val file = repository.root.findChild(configDirName) ?: return null
+    val filePath = VcsUtil.getFilePath(file)
+
+    val status = getFileStatus(repository.root, filePath, executable)
+    when (status.getFileStatus()) {
+      FileStatus.IGNORED -> return ConfigStatus.IGNORED
+      else -> ConfigStatus.SHARED
+    }
+  }
+  catch (e: Exception) {
+    if (e is ControlFlowException) throw e
+    null
+  }
+}
+
+internal enum class ConfigStatus {
+  IGNORED,
+  SHARED
 }
 
 enum class FsMonitor { NONE, BUILTIN, EXTERNAL_FS_MONITOR }
 
 private fun GitRepository.detectFsMonitor(): FsMonitor {
   try {
-    val useBuiltIn = GitConfigUtil.getBooleanValue(GitConfigUtil.getValue(project, root, "core.useBuiltinFSMonitor"))
-                     ?: false
+    val useBuiltIn = GitConfigUtil.getBooleanValue(GitConfigUtil.getValue(project, root, "core.useBuiltinFSMonitor")) == true
     if (useBuiltIn) return FsMonitor.BUILTIN
 
     val fsMonitorHook = GitConfigUtil.getValue(project, root, "core.fsmonitor")
@@ -334,7 +381,7 @@ private fun GitRepository.detectFsMonitor(): FsMonitor {
       return FsMonitor.EXTERNAL_FS_MONITOR
     }
   }
-  catch (ignore: VcsException) {
+  catch (_: VcsException) {
   }
 
   return FsMonitor.NONE
