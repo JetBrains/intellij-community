@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.inlinePrompt.InlinePrompt;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -70,6 +71,10 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
+    if (InlinePrompt.isInlinePromptShown(myEditor)) {
+      return;
+    }
+
     Document document = myEditor.getDocument();
     List<HighlightInfo> infos = new ArrayList<>();
     List<BooleanSupplier> result = new ArrayList<>();
@@ -105,6 +110,11 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
       if (DumbService.isDumb(myProject)) {
         return;
       }
+
+      if (InlinePrompt.isInlinePromptShown(myEditor)) {
+        return;
+      }
+
       try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162974")) {
         if (!myFile.isValid()) {
           return;
@@ -175,9 +185,6 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
         return true;
       }
       if (!info.hasHint() || editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
-        return true;
-      }
-      if (markupModelEx != null && info.getHighlighter() != null && !markupModelEx.containsHighlighter(info.getHighlighter())) {
         return true;
       }
       highlights.add(info);
