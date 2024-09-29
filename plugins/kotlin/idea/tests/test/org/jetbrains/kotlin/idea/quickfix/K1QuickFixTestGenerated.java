@@ -18467,6 +18467,26 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             public void testArgumentSuspend() throws Exception {
                 runTest("testData/quickfix/typeMismatch/surroundWithLambda/argumentSuspend.kt");
             }
+
+            @TestMetadata("arityIsNotZero.kt")
+            public void testArityIsNotZero() throws Exception {
+                runTest("testData/quickfix/typeMismatch/surroundWithLambda/arityIsNotZero.kt");
+            }
+
+            @TestMetadata("assignment.kt")
+            public void testAssignment() throws Exception {
+                runTest("testData/quickfix/typeMismatch/surroundWithLambda/assignment.kt");
+            }
+
+            @TestMetadata("initializer.kt")
+            public void testInitializer() throws Exception {
+                runTest("testData/quickfix/typeMismatch/surroundWithLambda/initializer.kt");
+            }
+
+            @TestMetadata("return.kt")
+            public void testReturn() throws Exception {
+                runTest("testData/quickfix/typeMismatch/surroundWithLambda/return.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

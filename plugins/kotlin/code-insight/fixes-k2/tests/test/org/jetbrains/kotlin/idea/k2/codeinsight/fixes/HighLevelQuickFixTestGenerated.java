@@ -4571,6 +4571,75 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda")
+    public static class SurroundWithLambda extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("argument.kt")
+        public void testArgument() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/argument.kt");
+        }
+
+        @TestMetadata("argumentInt.kt")
+        public void testArgumentInt() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/argumentInt.kt");
+        }
+
+        @TestMetadata("argumentMismatch.kt")
+        public void testArgumentMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/argumentMismatch.kt");
+        }
+
+        @TestMetadata("argumentNull.kt")
+        public void testArgumentNull() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/argumentNull.kt");
+        }
+
+        @TestMetadata("argumentNullable.kt")
+        public void testArgumentNullable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/argumentNullable.kt");
+        }
+
+        @TestMetadata("argumentSubclass.kt")
+        public void testArgumentSubclass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/argumentSubclass.kt");
+        }
+
+        @TestMetadata("argumentSuspend.kt")
+        public void testArgumentSuspend() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/argumentSuspend.kt");
+        }
+
+        @TestMetadata("arityIsNotZero.kt")
+        public void testArityIsNotZero() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/arityIsNotZero.kt");
+        }
+
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/assignment.kt");
+        }
+
+        @TestMetadata("initializer.kt")
+        public void testInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/initializer.kt");
+        }
+
+        @TestMetadata("return.kt")
+        public void testReturn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/return.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression")
     public abstract static class TypeMismatchOnReturnedExpression extends AbstractHighLevelQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)

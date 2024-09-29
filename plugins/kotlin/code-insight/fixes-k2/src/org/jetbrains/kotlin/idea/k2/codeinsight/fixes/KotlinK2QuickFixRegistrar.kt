@@ -186,6 +186,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(DeprecatedTypeParameterSyntaxFixFactories.migrateTypeParameterListFixFactory)
         registerFactory(UnresolvedReferenceFixFactories.makeConstructorParameterPropertyFix)
         registerFactory(PositionedValueArgumentForJavaAnnotationFixFactories.replaceWithNamedArgumentsFixFactory)
+        registerFactory(SurroundWithLambdaForTypeMismatchFixFactory.argumentTypeMismatchFixFactory)
+        registerFactory(SurroundWithLambdaForTypeMismatchFixFactory.assignmentTypeMismatchFixFactory)
+        registerFactory(SurroundWithLambdaForTypeMismatchFixFactory.initializerTypeMismatchFixFactory)
+        registerFactory(SurroundWithLambdaForTypeMismatchFixFactory.returnTypeMismatchFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
