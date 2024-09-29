@@ -329,12 +329,6 @@ f:com.intellij.notification.impl.NotificationGroupEP
 - getDisplayName(com.intellij.openapi.extensions.PluginDescriptor):java.lang.String
 - getDisplayType():com.intellij.notification.NotificationDisplayType
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
-f:com.intellij.notification.impl.NotificationGroupManagerImpl
-- com.intellij.notification.NotificationGroupManager
-- getNotificationGroup(java.lang.String):com.intellij.notification.NotificationGroup
-- getRegisteredNotificationGroups():java.util.Collection
-- isGroupRegistered(java.lang.String):Z
-- isRegisteredNotificationId(java.lang.String):Z
 f:com.intellij.notification.impl.NotificationParentGroupBean
 - id:java.lang.String
 - parentId:java.lang.String
