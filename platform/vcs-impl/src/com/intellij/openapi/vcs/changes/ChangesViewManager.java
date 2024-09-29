@@ -10,11 +10,9 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -43,7 +41,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vcs.changes.ui.ChangesTree.TreeStateStrategy;
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.ChangesView;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -860,51 +857,6 @@ public class ChangesViewManager implements ChangesViewEx,
       finally {
         span.end();
       }
-    }
-
-    private static class ChangesViewTreeStateStrategy implements TreeStateStrategy<ChangesViewTreeStateStrategy.MyState> {
-      @Override
-      public @NotNull MyState saveState(@NotNull ChangesTree tree) {
-        ChangesBrowserNode<?> oldRoot = tree.getRoot();
-        TreeState state = TreeState.createOn(tree, oldRoot);
-        state.setScrollToSelection(false);
-        return new MyState(state, oldRoot.getFileCount());
-      }
-
-      @Override
-      public void restoreState(@NotNull ChangesTree tree, @NotNull MyState state, boolean scrollToSelection) {
-        ChangesBrowserNode<?> newRoot = tree.getRoot();
-        state.treeState.applyTo(tree, newRoot);
-
-        initTreeStateIfNeeded((ChangesListView)tree, newRoot, state.oldFileCount);
-      }
-
-      private record MyState(@NotNull TreeState treeState, int oldFileCount) {
-      }
-    }
-
-    private static void initTreeStateIfNeeded(@NotNull ChangesListView view,
-                                              @NotNull ChangesBrowserNode<?> newRoot,
-                                              int oldFileCount) {
-      ChangesBrowserNode<?> defaultListNode = getDefaultChangelistNode(newRoot);
-      if (defaultListNode == null) return;
-
-      if (view.getSelectionCount() == 0) {
-        TreeUtil.selectNode(view, defaultListNode);
-      }
-
-      if (oldFileCount == 0 && TreeUtil.collectExpandedPaths(view).isEmpty()) {
-        view.expandSafe(defaultListNode);
-      }
-    }
-
-    private static @Nullable ChangesBrowserNode<?> getDefaultChangelistNode(@NotNull ChangesBrowserNode<?> root) {
-      return root.iterateNodeChildren()
-        .filter(ChangesBrowserChangeListNode.class)
-        .find(node -> {
-          ChangeList list = node.getUserObject();
-          return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();
-        });
     }
 
     public void setGrouping(@NotNull String groupingKey) {
