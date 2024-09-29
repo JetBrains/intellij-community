@@ -138,11 +138,15 @@ class JBCefOsrComponent extends JPanel {
     myGraphicsConfigurationListener = e -> {
       myGraphicsConfigurationAlarm.cancelAllRequests();
       myGraphicsConfigurationAlarm.addRequest(() -> {
+        double oldScale = myScale;
+        double oldDensity = myRenderHandler.getPixelDensity();
         double pixelDensity = JreHiDpiUtil.isJreHiDPIEnabled() ? JCefAppConfig.getDeviceScaleFactor(this) : 1.0;
         myScale = (JreHiDpiUtil.isJreHiDPIEnabled() ? 1.0 : JCefAppConfig.getDeviceScaleFactor(this)) *
                   UISettings.getInstance().getIdeScale();
         myRenderHandler.setScreenInfo(pixelDensity, myScale);
-        myBrowser.notifyScreenInfoChanged();
+        if (oldScale != myScale || oldDensity != pixelDensity) {
+          myBrowser.notifyScreenInfoChanged();
+        }
       }, 1000);
     };
     addPropertyChangeListener("graphicsConfiguration", myGraphicsConfigurationListener);
