@@ -19,6 +19,7 @@
   </node>
   <node text="CheckedList in Collections  (java.util)"/>
   <node text="AbstractList  (kotlin.collections)">
+    <node text="SubList in AbstractList  (kotlin.collections)"/>
     <node text="ReversedListReadOnly  (kotlin.collections)"/>
     <node text="RingBuffer  (kotlin.collections)"/>
     <node text="EnumEntriesList  (kotlin.enums)"/>

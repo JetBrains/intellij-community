@@ -1933,6 +1933,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/optIn/propagateOptIn8Fir.kt");
         }
 
+        @TestMetadata("propagateSubclassOptInMultipleMarkers1.kt")
+        public void testPropagateSubclassOptInMultipleMarkers1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/propagateSubclassOptInMultipleMarkers1.kt");
+        }
+
+        @TestMetadata("propagateSubclassOptInMultipleMarkers2.kt")
+        public void testPropagateSubclassOptInMultipleMarkers2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/propagateSubclassOptInMultipleMarkers2.kt");
+        }
+
         @TestMetadata("propagateSubclassOptInRequired.kt")
         public void testPropagateSubclassOptInRequired() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/propagateSubclassOptInRequired.kt");

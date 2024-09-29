@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfig
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import org.jetbrains.kotlin.utils.addToStdlib.cast
@@ -37,7 +37,7 @@ import kotlin.script.experimental.api.makeFailureResult
 
 // NOTE: this service exists exclusively because ScriptDependencyManager
 // cannot be registered as implementing two services (state would be duplicated)
-internal class IdeScriptDependenciesProvider(project: Project) : ScriptDependenciesProvider(project) {
+internal class IdeScriptDependenciesProvider(project: Project) : ScriptConfigurationsProvider(project) {
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? {
         val configuration = getScriptConfiguration(file)
         val reports = IdeScriptReportSink.getReports(file)

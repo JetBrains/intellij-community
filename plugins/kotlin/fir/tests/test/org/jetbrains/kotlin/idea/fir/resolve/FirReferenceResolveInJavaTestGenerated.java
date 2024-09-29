@@ -37,9 +37,64 @@ public abstract class FirReferenceResolveInJavaTestGenerated extends AbstractFir
             runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/Class.java");
         }
 
+        @TestMetadata("ClassCompanionJvmField.java")
+        public void testClassCompanionJvmField() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/ClassCompanionJvmField.java");
+        }
+
+        @TestMetadata("ClassFieldExplicit.java")
+        public void testClassFieldExplicit() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/ClassFieldExplicit.java");
+        }
+
+        @TestMetadata("ClassJvmField.java")
+        public void testClassJvmField() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/ClassJvmField.java");
+        }
+
+        @TestMetadata("ClassJvmFieldCompanionExplicit.java")
+        public void testClassJvmFieldCompanionExplicit() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/ClassJvmFieldCompanionExplicit.java");
+        }
+
+        @TestMetadata("ClassJvmFieldCompanionImplicit.java")
+        public void testClassJvmFieldCompanionImplicit() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/ClassJvmFieldCompanionImplicit.java");
+        }
+
         @TestMetadata("ClassObjectField.java")
         public void testClassObjectField() throws Exception {
             runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/ClassObjectField.java");
+        }
+
+        @TestMetadata("CompanionAndClassJvmFieldExplicit.java")
+        public void testCompanionAndClassJvmFieldExplicit() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/CompanionAndClassJvmFieldExplicit.java");
+        }
+
+        @TestMetadata("CompanionAndClassJvmFieldImplicit.java")
+        public void testCompanionAndClassJvmFieldImplicit() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/CompanionAndClassJvmFieldImplicit.java");
+        }
+
+        @TestMetadata("CompanionFieldExplicit.java")
+        public void testCompanionFieldExplicit() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/CompanionFieldExplicit.java");
+        }
+
+        @TestMetadata("CompanionFieldImplicit.java")
+        public void testCompanionFieldImplicit() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/CompanionFieldImplicit.java");
+        }
+
+        @TestMetadata("CompanionJvmFieldExplicit.java")
+        public void testCompanionJvmFieldExplicit() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/CompanionJvmFieldExplicit.java");
+        }
+
+        @TestMetadata("CompanionJvmFieldImplicit.java")
+        public void testCompanionJvmFieldImplicit() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/CompanionJvmFieldImplicit.java");
         }
 
         @TestMetadata("Constructor.java")
@@ -50,6 +105,16 @@ public abstract class FirReferenceResolveInJavaTestGenerated extends AbstractFir
         @TestMetadata("EnumEntry.java")
         public void testEnumEntry() throws Exception {
             runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/EnumEntry.java");
+        }
+
+        @TestMetadata("FacadeProperty.java")
+        public void testFacadeProperty() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/FacadeProperty.java");
+        }
+
+        @TestMetadata("FacadePropertyJvmField.java")
+        public void testFacadePropertyJvmField() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/FacadePropertyJvmField.java");
         }
 
         @TestMetadata("Field.java")
@@ -95,6 +160,26 @@ public abstract class FirReferenceResolveInJavaTestGenerated extends AbstractFir
         @TestMetadata("ObjectInstance.java")
         public void testObjectInstance() throws Exception {
             runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/ObjectInstance.java");
+        }
+
+        @TestMetadata("ObjectPropertyExplicit.java")
+        public void testObjectPropertyExplicit() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/ObjectPropertyExplicit.java");
+        }
+
+        @TestMetadata("ObjectPropertyImplicit.java")
+        public void testObjectPropertyImplicit() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/ObjectPropertyImplicit.java");
+        }
+
+        @TestMetadata("ObjectPropertyJvmFieldExplicit.java")
+        public void testObjectPropertyJvmFieldExplicit() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/ObjectPropertyJvmFieldExplicit.java");
+        }
+
+        @TestMetadata("ObjectPropertyJvmFieldImplicit.java")
+        public void testObjectPropertyJvmFieldImplicit() throws Exception {
+            runTest("../../idea/tests/testData/resolve/referenceInJava/binaryAndSource/ObjectPropertyJvmFieldImplicit.java");
         }
 
         @TestMetadata("PlatformStaticFun.java")

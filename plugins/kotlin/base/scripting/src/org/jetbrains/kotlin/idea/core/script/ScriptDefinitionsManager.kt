@@ -114,12 +114,6 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
         return definition
     }
 
-    @Deprecated("Migrating to configuration refinement", level = DeprecationLevel.ERROR)
-    override fun findScriptDefinition(fileName: String): KotlinScriptDefinition? {
-        @Suppress("DEPRECATION")
-        return findDefinition(File(fileName).toScriptSource())?.legacyDefinition
-    }
-
     /**
      * Goes through the list of registered [ScriptDefinitionsSource]s and triggers definitions reload.
      * Result of previous reloads is invalidated including those launched via [reloadDefinitionsBy].

@@ -35,7 +35,7 @@ abstract class ScriptDependenciesSource<T : BaseScriptModel>(open val project: P
         updateModules(dependencies, storage)
         currentConfigurationsData.set(dependencies)
 
-        ScriptConfigurationDataProvider.getInstance(project).notifySourceUpdated()
+        ScriptConfigurationsProviderImpl.getInstance(project).notifySourceUpdated()
 
         writeAction {
             project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()

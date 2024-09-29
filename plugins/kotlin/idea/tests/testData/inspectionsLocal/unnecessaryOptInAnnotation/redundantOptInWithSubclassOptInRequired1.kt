@@ -1,16 +1,18 @@
-// API_VERSION: 1.8
+// API_VERSION: 2.1
+// WITH_STDLIB
+
 @file:OptIn(ExperimentalSubclassOptIn::class)
 
-@RequiresOptIn(
-    level = RequiresOptIn.Level.WARNING,
-    message = "Interfaces in this library are experimental for implementation"
-)
-annotation class UnstableApi
+@RequiresOptIn
+annotation class UnstableApiA
 
-@SubclassOptInRequired(UnstableApi::class)
+@RequiresOptIn
+annotation class UnstableApiB
+
+@SubclassOptInRequired(UnstableApiA::class, UnstableApiB::class)
 interface CoreLibraryApi
 
 class ApiUseSiteParameter(
-    <caret>@OptIn(UnstableApi::class) val foo: CoreLibraryApi
+    <caret>@OptIn(UnstableApiA::class) val foo: CoreLibraryApi
 ) {
 }

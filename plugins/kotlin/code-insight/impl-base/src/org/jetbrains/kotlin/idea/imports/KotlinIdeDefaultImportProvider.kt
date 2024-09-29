@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
-import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 
 @Service
 @ApiStatus.Experimental
@@ -34,7 +34,7 @@ class KotlinIdeDefaultImportProvider {
         val allDefaultImports = analyzerServices.getDefaultImports(languageVersionSettings, includeLowPriorityImports = true)
 
         val scriptExtraImports = contextFile.takeIf { it.isScript() }?.let { ktFile ->
-            val scriptDependencies = ScriptDependenciesProvider.getInstance(ktFile.project)
+            val scriptDependencies = ScriptConfigurationsProvider.getInstance(ktFile.project)
                 ?.getScriptConfiguration(ktFile.originalFile as KtFile)
             scriptDependencies?.defaultImports?.map { ImportPath.fromString(it) }
             scriptDependencies?.defaultImports?.map { ImportPath.fromString(it) }

@@ -122,9 +122,6 @@ import org.jetbrains.kotlin.idea.resolve.*
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchLineMarkersTest
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest
 import org.jetbrains.kotlin.idea.script.*
-import org.jetbrains.kotlin.idea.search.refIndex.AbstractFindUsagesWithCompilerReferenceIndexTest
-import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceByReferenceTest
-import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerLeafGroupingTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerMultiplatformTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerNullnessGroupingTest
@@ -1157,15 +1154,16 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     }
 
     testGroup("scripting-support", category = SCRIPTS) {
-        testClass<AbstractScratchRunActionTest> {
-            model("scratch", pattern = KTS, testMethodName = "doScratchCompilingTest", testClassName = "ScratchCompiling", isRecursive = false)
-            model("scratch", pattern = KTS, testMethodName = "doScratchReplTest", testClassName = "ScratchRepl", isRecursive = false)
-            model("scratch/multiFile", pattern = DIRECTORY, testMethodName = "doScratchMultiFileTest", testClassName = "ScratchMultiFile", isRecursive = false)
-            model("worksheet", pattern = WS_KTS, testMethodName = "doWorksheetCompilingTest", testClassName = "WorksheetCompiling", isRecursive = false)
-            model("worksheet", pattern = WS_KTS, testMethodName = "doWorksheetReplTest", testClassName = "WorksheetRepl", isRecursive = false)
-            model("worksheet/multiFile", pattern = DIRECTORY, testMethodName = "doWorksheetMultiFileTest", testClassName = "WorksheetMultiFile", isRecursive = false)
-            model("scratch/rightPanelOutput", pattern = KTS, testMethodName = "doRightPreviewPanelOutputTest", testClassName = "ScratchRightPanelOutput", isRecursive = false)
-        }
+        // See KTIJ-31408 for the reasoning why these tests are not generated
+        //testClass<AbstractScratchRunActionTest> {
+        //    model("scratch", pattern = KTS, testMethodName = "doScratchCompilingTest", testClassName = "ScratchCompiling", isRecursive = false)
+        //    model("scratch", pattern = KTS, testMethodName = "doScratchReplTest", testClassName = "ScratchRepl", isRecursive = false)
+        //    model("scratch/multiFile", pattern = DIRECTORY, testMethodName = "doScratchMultiFileTest", testClassName = "ScratchMultiFile", isRecursive = false)
+        //    model("worksheet", pattern = WS_KTS, testMethodName = "doWorksheetCompilingTest", testClassName = "WorksheetCompiling", isRecursive = false)
+        //    model("worksheet", pattern = WS_KTS, testMethodName = "doWorksheetReplTest", testClassName = "WorksheetRepl", isRecursive = false)
+        //    model("worksheet/multiFile", pattern = DIRECTORY, testMethodName = "doWorksheetMultiFileTest", testClassName = "WorksheetMultiFile", isRecursive = false)
+        //    model("scratch/rightPanelOutput", pattern = KTS, testMethodName = "doRightPreviewPanelOutputTest", testClassName = "ScratchRightPanelOutput", isRecursive = false)
+        //}
 
         testClass<AbstractScratchLineMarkersTest> {
             model("scratch/lineMarker", testMethodName = "doScratchTest", pattern = KT_OR_KTS)
@@ -1422,23 +1420,24 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
     }
 
-    testGroup("compiler-reference-index/tests") {
-        testClass<AbstractKotlinCompilerReferenceTest> {
-            model("compilerIndex", pattern = DIRECTORY, classPerTest = true)
-        }
-
-        testClass<AbstractKotlinCompilerReferenceByReferenceTest> {
-            model("compilerIndexByReference", pattern = DIRECTORY, classPerTest = true)
-        }
-    }
-
-    testGroup("compiler-reference-index/tests", testDataPath = "../../idea/tests/testData") {
-        testClass<AbstractFindUsagesWithCompilerReferenceIndexTest> {
-            model("findUsages/kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""), classPerTest = true)
-            model("findUsages/java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""), classPerTest = true)
-            model("findUsages/propertyFiles", pattern = Patterns.forRegex("""^(.+)\.0\.properties$"""), classPerTest = true)
-        }
-    }
+    // See KTIJ-31394 for the reasoning why these tests are not generated
+    //testGroup("compiler-reference-index/tests") {
+    //    testClass<AbstractKotlinCompilerReferenceTest> {
+    //        model("compilerIndex", pattern = DIRECTORY, classPerTest = true)
+    //    }
+    //
+    //    testClass<AbstractKotlinCompilerReferenceByReferenceTest> {
+    //        model("compilerIndexByReference", pattern = DIRECTORY, classPerTest = true)
+    //    }
+    //}
+    //
+    //testGroup("compiler-reference-index/tests", testDataPath = "../../idea/tests/testData") {
+    //    testClass<AbstractFindUsagesWithCompilerReferenceIndexTest> {
+    //        model("findUsages/kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""), classPerTest = true)
+    //        model("findUsages/java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""), classPerTest = true)
+    //        model("findUsages/propertyFiles", pattern = Patterns.forRegex("""^(.+)\.0\.properties$"""), classPerTest = true)
+    //    }
+    //}
 
     testGroup("compiler-plugins/kotlinx-serialization/tests") {
         testClass<AbstractSerializationPluginIdeDiagnosticTest> {
