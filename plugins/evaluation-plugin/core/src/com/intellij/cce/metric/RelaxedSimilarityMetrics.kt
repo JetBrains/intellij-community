@@ -103,10 +103,8 @@ class RelaxedExactMatchOnlyAlphanum(showByDefault: Boolean) : BaseRelaxedMetric(
  */
 class RelaxedEditDistanceOnlyAlphanum(showByDefault: Boolean, threshold: Double = 0.767) : BaseRelaxedMetric(showByDefault) {
   override val name: String = "Relaxed alphanumeric-only edit distance"
-  override val description: String = """
-    Checks that for any the suggested lines of the completion,
-    there is a line from middle that has a normalized edit distance less than $threshold.
-  """.trimIndent()
+  override val description: String =
+    "Checks that for any the suggested lines of the completion, there is a line from middle that has a normalized edit distance less than $threshold."
   override val onlyValuable: Boolean = true
   override val metric: RelaxedSimilarityUtils.RelaxedMetric = RelaxedSimilarityUtils.RelaxedEditDistance(threshold)
 }
