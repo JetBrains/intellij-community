@@ -23,12 +23,9 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.InitialVfsRefreshService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -68,7 +65,6 @@ import com.intellij.vcs.commit.*;
 import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
-import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -80,7 +76,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -674,11 +669,6 @@ public class ChangesViewManager implements ChangesViewEx,
       if (myCommitPanel != null) myCommitPanel.setToolbarHorizontal(isToolbarHorizontal);
     }
 
-    private final Function0<Boolean> isAllowExcludeFromCommit = () -> isAllowExcludeFromCommit();
-    private @NotNull Function<ChangeNodeDecorator, ChangeNodeDecorator> getChangeDecoratorProvider() {
-      return baseDecorator -> new PartialCommitChangeNodeDecorator(myProject, baseDecorator, isAllowExcludeFromCommit);
-    }
-
     @Override
     public @NotNull List<AnAction> getActions(boolean originalProvider) {
       return asList(myChangesPanel.getToolbarActionGroup().getChildren(ActionManager.getInstance()));
@@ -775,42 +765,14 @@ public class ChangesViewManager implements ChangesViewEx,
         List<LocalChangeList> changeLists = changeListManager.getChangeLists();
         List<FilePath> unversionedFiles = changeListManager.getUnversionedFilesPaths();
 
-        boolean shouldShowUntrackedLoading = unversionedFiles.isEmpty() &&
-                                             !myProject.getService(InitialVfsRefreshService.class).isInitialVfsRefreshFinished() &&
-                                             changeListManager.isUnversionedInUpdateMode();
-
-        boolean skipSingleDefaultChangeList = Registry.is("vcs.skip.single.default.changelist") ||
-                                              !changeListManager.areChangeListsEnabled();
-        TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
-          .setChangeLists(changeLists, skipSingleDefaultChangeList, getChangeDecoratorProvider())
-          .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
-          .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
-          .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
-          .setSwitchedRoots(changeListManager.getSwitchedRoots())
-          .setLockedFolders(changeListManager.getLockedFolders())
-          .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
-          .setUnversioned(unversionedFiles);
-        if (myChangesViewManager.myState.myShowIgnored) {
-          List<FilePath> ignoredFilePaths = changeListManager.getIgnoredFilePaths();
-          treeModelBuilder.setIgnored(ignoredFilePaths);
-        }
-        if (shouldShowUntrackedLoading) {
-          treeModelBuilder.insertSubtreeRoot(new ChangesBrowserUnversionedLoadingPendingNode());
-        }
-
-        for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
-          try {
-            extension.modifyTreeModelBuilder(treeModelBuilder);
-          }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
-          catch (Throwable t) {
-            Logger.getInstance(ChangesViewToolWindowPanel.class).error(t);
-          }
-        }
-
-        DefaultTreeModel treeModel = treeModelBuilder.build(true);
+        DefaultTreeModel treeModel = ChangesViewUtil.INSTANCE.createTreeModel(
+          myProject,
+          myView,
+          changeLists,
+          unversionedFiles,
+          myChangesViewManager.myState.myShowIgnored,
+          () -> isAllowExcludeFromCommit()
+        );
 
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.checkCanceled();
