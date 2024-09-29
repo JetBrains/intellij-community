@@ -9,6 +9,7 @@ from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 class TableCommandType:
     DF_INFO = "DF_INFO"
     SLICE = "SLICE"
+    SLICE_CSV = "SLICE_CSV"
     DESCRIBE = "DF_DESCRIBE"
     VISUALIZATION_DATA = "VISUALIZATION_DATA"
 
@@ -53,7 +54,9 @@ def exec_table_command(init_command, command_type, start_index, end_index, forma
         res.append(NEXT_VALUE_SEPARATOR)
 
     elif command_type == TableCommandType.SLICE:
-        res.append(table_provider.get_data(table, start_index, end_index, format))
+        res.append(table_provider.get_data(table, False, start_index, end_index, format))
+    elif command_type == TableCommandType.SLICE_CSV:
+        res.append(table_provider.get_data(table, True, start_index, end_index, format))
 
     return True, ''.join(res)
 

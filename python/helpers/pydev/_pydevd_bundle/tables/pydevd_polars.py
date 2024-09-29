@@ -33,10 +33,10 @@ def get_column_types(table):
 
 
 # used by pydevd
-def get_data(table, start_index=None, end_index=None, format=None, conv_mode=False):
+def get_data(table, use_csv_serialization, start_index=None, end_index=None, format=None):
     # type: (pl.DataFrame, int, int) -> str
     with __create_config(format):
-        if conv_mode:
+        if use_csv_serialization:
             return __get_df_slice(table, start_index, end_index).write_csv()
         return table[start_index:end_index]._repr_html_()
 

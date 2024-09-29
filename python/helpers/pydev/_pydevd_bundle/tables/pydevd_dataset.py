@@ -33,7 +33,7 @@ def get_column_types(table):
 
 # used by pydevd
 # noinspection PyUnresolvedReferences
-def get_data(table, start_index=None, end_index=None, format=None, conv_mode=False):
+def get_data(table, use_csv_serialization, start_index=None, end_index=None, format=None):
      # type: (datasets.arrow_dataset.Dataset, int, int) -> str
 
     def convert_data_to_csv(data):
@@ -42,33 +42,30 @@ def get_data(table, start_index=None, end_index=None, format=None, conv_mode=Fal
     def convert_data_to_html(data):
         return repr(data.to_html(notebook=True))
 
-    if conv_mode:
+    if use_csv_serialization:
         computed_data = _compute_sliced_data(table, convert_data_to_csv, start_index, end_index, format)
     else:
         computed_data = _compute_sliced_data(table, convert_data_to_html, start_index, end_index, format)
     return computed_data
 
 
+def __ipython_display(data):
+    from IPython.display import display
+    display(data)
+
+
 # used by DSTableCommands
 # noinspection PyUnresolvedReferences
 def display_data_csv(table, start_index, end_index):
      # type: (datasets.arrow_dataset.Dataset, int, int) -> None
-    def ipython_display(data):
-        from IPython.display import display
-        display(data)
-
-    _compute_sliced_data(table, ipython_display, start_index, end_index)
+    _compute_sliced_data(table, __ipython_display, start_index, end_index)
 
 
 # used by DSTableCommands
 # noinspection PyUnresolvedReferences
 def display_data_html(table, start_index, end_index):
     # type: (datasets.arrow_dataset.Dataset, int, int) -> None
-    def ipython_display(data):
-        from IPython.display import display
-        display(data)
-
-    _compute_sliced_data(table, ipython_display, start_index, end_index)
+    _compute_sliced_data(table, __ipython_display, start_index, end_index)
 
 
 def __get_data_slice(table, start, end):
@@ -76,7 +73,7 @@ def __get_data_slice(table, start, end):
     return __convert_to_df(table).iloc[start:end]
 
 
-def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=None, conv_mode=False):
+def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=None):
     # type: (datasets.arrow_dataset.Dataset, function, int, int) -> str
     max_cols, max_colwidth, max_rows = __get_tables_display_options()
 

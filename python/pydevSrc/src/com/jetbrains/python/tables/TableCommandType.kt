@@ -6,6 +6,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 enum class TableCommandType {
   DF_INFO,
   SLICE,
+  SLICE_CSV,
   DF_DESCRIBE,
   VISUALIZATION_DATA
 }

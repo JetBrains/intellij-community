@@ -44,7 +44,7 @@ def get_column_types(arr):
         TABLE_TYPE_NEXT_VALUE_SEPARATOR.join(cols_types)
 
 
-def get_data(arr, start_index=None, end_index=None, format=None, conv_mode=False):
+def get_data(arr, use_csv_serialization, start_index=None, end_index=None, format=None):
     # type: (Union[np.ndarray, dict], int, int) -> str
     def convert_data_to_html(data):
         return repr(_create_table(data, start_index, end_index, format).to_html(notebook=True))
@@ -52,10 +52,10 @@ def get_data(arr, start_index=None, end_index=None, format=None, conv_mode=False
     def convert_data_to_csv(data):
         return repr(_create_table(data, start_index, end_index, format).to_csv())
 
-    if conv_mode:
-        computed_data = _compute_data(arr, convert_data_to_csv, format, conv_mode)
+    if use_csv_serialization:
+        computed_data = _compute_data(arr, convert_data_to_csv, format)
     else:
-        computed_data = _compute_data(arr, convert_data_to_html, format, conv_mode)
+        computed_data = _compute_data(arr, convert_data_to_html, format)
     return computed_data
 
 
@@ -71,8 +71,7 @@ def display_data_html(arr, start_index=None, end_index=None):
 def display_data_csv(arr, start_index=None, end_index=None):
     # type: (np.ndarray, int, int) -> None
     def ipython_display(data):
-        from IPython.display import display
-        display(_create_table(data, start_index, end_index).to_csv())
+        print(_create_table(data, start_index, end_index).to_csv())
 
     _compute_data(arr, ipython_display)
 
@@ -247,7 +246,7 @@ def _create_table(command, start_index=None, end_index=None, format=None):
     return _NpTable(np_array, format=format).sort(sort_keys).slice(start_index, end_index)
 
 
-def _compute_data(arr, fun, format=None, conv_mode=False):
+def _compute_data(arr, fun, format=None):
     is_sort_command = type(arr) is dict
     data = arr['data'] if is_sort_command else arr
 
