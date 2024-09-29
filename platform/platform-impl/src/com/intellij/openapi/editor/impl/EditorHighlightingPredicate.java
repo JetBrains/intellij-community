@@ -2,10 +2,19 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A predicate for filtering out {@link RangeHighlighter highlighters} that should not be rendered in a given {@link EditorImpl editor}.
+ *
+ * @see EditorImpl#addHighlightingPredicate(Key, EditorHighlightingPredicate)
+ */
 @ApiStatus.Experimental
 public interface EditorHighlightingPredicate {
+  /**
+   * checks that highlighter should be rendered in the corresponding editor
+   */
   boolean test(@NotNull RangeHighlighter highlighter);
 }

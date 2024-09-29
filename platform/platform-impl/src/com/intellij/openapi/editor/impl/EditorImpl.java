@@ -3849,6 +3849,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    *
    * @param key only the last added predicate with a given key is preserved
    * @param predicate predicate that checks if the editor should show a range highlighter or not. If null is passed, the previous predicate associated with key gets erased
+   *
+   * @see EditorHighlightingPredicate
    */
   @ApiStatus.Experimental
   @RequiresEdt

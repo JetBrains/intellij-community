@@ -2,11 +2,15 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 
 /**
- * Not thread safe. It's expected to be run on EDT
+ * Internal state of [EditorImpl]'s filters.
+ *
+ * Not thread safe.
+ * It's expected to be run on EDT.
  */
 internal class HighlighterFilter private constructor(
   private var filterState: PersistentMap<Any, EditorHighlightingPredicate>,
@@ -18,6 +22,7 @@ internal class HighlighterFilter private constructor(
   /**
    * @return null if the state has not changed, or the old state otherwise
    */
+  @RequiresEdt
   fun addPredicate(key: Any, predicate: EditorHighlightingPredicate?): HighlighterFilter? {
     if (filterState[key] === predicate) {
       return null
