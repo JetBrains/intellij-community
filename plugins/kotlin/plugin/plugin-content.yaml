@@ -288,6 +288,12 @@
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2/compose-compiler-plugin-for-ide-2.jar
     reason: withProjectLibrary
+- name: lib/kotlinc.js-plain-objects-compiler-plugin.jar
+  projectLibraries:
+  - name: kotlinc.js-plain-objects-compiler-plugin
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2/js-plain-objects-compiler-plugin-for-ide-2.jar
+    reason: withProjectLibrary
 - name: lib/kotlinc.kotlin-compiler-common.jar
   projectLibraries:
   - name: kotlinc.kotlin-compiler-common

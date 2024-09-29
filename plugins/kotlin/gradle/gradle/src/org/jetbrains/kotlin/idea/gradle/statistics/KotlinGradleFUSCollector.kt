@@ -66,6 +66,7 @@ internal object KotlinGradleFUSCollector : CounterUsagesCollector() {
             StringMetrics.JS_PROPERTY_LAZY_INITIALIZATION,
             StringMetrics.JS_OUTPUT_GRANULARITY,
             BooleanMetrics.JS_IR_INCREMENTAL,
+            BooleanMetrics.WASM_IR_INCREMENTAL,
         ),
 
         KotlinGradleEvent(

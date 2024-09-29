@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
-import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer.DaemonCodeAnalyzerStatus
 import com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
@@ -14,7 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationDataProvider
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContributor {
@@ -30,7 +29,7 @@ internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContr
             val status = super.getDaemonCodeAnalyzerStatus(severityRegistrar)
 
             if (KotlinPluginModeProvider.isK2Mode()) {
-                if (ScriptConfigurationDataProvider.getInstanceIfCreated(project)?.getScriptConfiguration(file) == null) {
+                if (ScriptConfigurationsProviderImpl.getInstanceIfCreated(project)?.getScriptConfiguration(file) == null) {
                     status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
                     status.errorAnalyzingFinished = false
                 }

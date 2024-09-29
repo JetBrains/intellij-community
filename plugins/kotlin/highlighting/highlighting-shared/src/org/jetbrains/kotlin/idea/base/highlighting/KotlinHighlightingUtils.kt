@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import kotlin.script.experimental.api.ScriptDiagnostic
 
 @ApiStatus.Internal
@@ -86,4 +86,4 @@ private fun KtFile.calculateShouldHighlightScript(): Boolean {
 }
 
 private fun KtFile.isConfigurationLoaded(): Boolean =
-    ScriptDependenciesProvider.getInstance(project)?.getScriptConfiguration(this) != null
+    ScriptConfigurationsProvider.getInstance(project)?.getScriptConfiguration(this) != null
