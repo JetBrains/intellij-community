@@ -40,6 +40,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XDebugProcess;
@@ -59,6 +60,7 @@ import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -198,7 +200,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
             }
             return Pair.create(serverSocket, result);
           }
-          catch (ExecutionException err) {
+          catch (Exception err) {
             throw new RuntimeException(err.getMessage(), err);
           }
         })
@@ -968,6 +970,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       return debuggerScript;
     }
 
+    @RequiresBackgroundThread
     protected abstract @NotNull Function<TargetEnvironment, HostPort> createPortBinding(
       @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest);
 
@@ -1042,7 +1045,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
 
     @Override
-    protected @NotNull Function<TargetEnvironment, HostPort> createPortBinding(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
+    @RequiresBackgroundThread
+    protected @NotNull Function<@Nullable TargetEnvironment, HostPort> createPortBinding(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
       helpersAwareTargetRequest.getTargetEnvironmentRequest().getLocalPortBindings().add(myLocalPortBinding);
       helpersAwareTargetRequest.getTargetEnvironmentRequest().onEnvironmentPrepared((environment, indicator) -> {
         try {
@@ -1051,7 +1055,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
         catch (IOException e) {
           LOG.error("Unable to create server socket for debugging", e);
         }
-        return null;
+        return Unit.INSTANCE;
       });
 
       helpersAwareTargetRequest.getTargetEnvironmentRequest().getLocalPortBindings().add(myLocalPortBinding);
@@ -1103,6 +1107,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
 
     @Override
+    @RequiresBackgroundThread
     public @NotNull Function<TargetEnvironment, HostPort> createPortBinding(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
       helpersAwareTargetRequest.getTargetEnvironmentRequest().getTargetPortBindings().add(myTargetPortBinding);
       return TargetEnvironmentFunctions.getTargetEnvironmentValue(myTargetPortBinding);

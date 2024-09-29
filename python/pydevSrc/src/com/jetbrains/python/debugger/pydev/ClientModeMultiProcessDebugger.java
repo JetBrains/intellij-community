@@ -55,7 +55,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
         tryToConnectRemoteDebugger();
       }
       catch (Exception e) {
-        LOG.info(e);
+        LOG.error(e);
       }
     }
   }

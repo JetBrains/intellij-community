@@ -103,8 +103,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
           myDebuggerReader = debuggerReader = new DebuggerReader(myDebugger, clientSocket.getInputStream());
         }
         catch (IOException e) {
-          LOG.debug("Failed to create debugger reader", e);
-          throw e;
+          throw new IOException("Failed to create debugger reader", e);
         }
 
         try {
@@ -117,7 +116,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
           clientSocket.setSoTimeout(0);
         }
         catch (PyDebuggerException e) {
-          LOG.debug(String.format("[%d] Handshake failed", hashCode()));
+          LOG.warn(String.format("[%d] Handshake failed", hashCode()));
         }
         finally {
           if (!connected) {
@@ -131,8 +130,8 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
           Thread.sleep(retryInterval);
         }
         catch (InterruptedException ex) {
-          Thread.currentThread().interrupt();
           LOG.debug("Connection to the debugger thread is interrupted during the retry delay", e);
+          Thread.currentThread().interrupt();
         }
       }
     } while (attempts < maxRetries && !connected);
