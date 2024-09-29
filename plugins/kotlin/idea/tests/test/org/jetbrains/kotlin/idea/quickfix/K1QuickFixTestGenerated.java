@@ -18421,6 +18421,55 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/typeMismatch/surroundWithLambda")
+        public static class SurroundWithLambda extends AbstractK1QuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("argument.kt")
+            public void testArgument() throws Exception {
+                runTest("testData/quickfix/typeMismatch/surroundWithLambda/argument.kt");
+            }
+
+            @TestMetadata("argumentInt.kt")
+            public void testArgumentInt() throws Exception {
+                runTest("testData/quickfix/typeMismatch/surroundWithLambda/argumentInt.kt");
+            }
+
+            @TestMetadata("argumentMismatch.kt")
+            public void testArgumentMismatch() throws Exception {
+                runTest("testData/quickfix/typeMismatch/surroundWithLambda/argumentMismatch.kt");
+            }
+
+            @TestMetadata("argumentNull.kt")
+            public void testArgumentNull() throws Exception {
+                runTest("testData/quickfix/typeMismatch/surroundWithLambda/argumentNull.kt");
+            }
+
+            @TestMetadata("argumentNullable.kt")
+            public void testArgumentNullable() throws Exception {
+                runTest("testData/quickfix/typeMismatch/surroundWithLambda/argumentNullable.kt");
+            }
+
+            @TestMetadata("argumentSubclass.kt")
+            public void testArgumentSubclass() throws Exception {
+                runTest("testData/quickfix/typeMismatch/surroundWithLambda/argumentSubclass.kt");
+            }
+
+            @TestMetadata("argumentSuspend.kt")
+            public void testArgumentSuspend() throws Exception {
+                runTest("testData/quickfix/typeMismatch/surroundWithLambda/argumentSuspend.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression")
         public abstract static class TypeMismatchOnReturnedExpression extends AbstractK1QuickFixTest {
             @RunWith(JUnit3RunnerWithInners.class)
@@ -18948,41 +18997,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("nullArgumentForNonNullParameter.kt")
             public void testNullArgumentForNonNullParameter() throws Exception {
                 runTest("testData/quickfix/typeMismatch/nullArgumentForNonNullParameter.kt");
-            }
-
-            @TestMetadata("paramTypeLambdaMatch.kt")
-            public void testParamTypeLambdaMatch() throws Exception {
-                runTest("testData/quickfix/typeMismatch/paramTypeLambdaMatch.kt");
-            }
-
-            @TestMetadata("paramTypeLambdaMatchInt.kt")
-            public void testParamTypeLambdaMatchInt() throws Exception {
-                runTest("testData/quickfix/typeMismatch/paramTypeLambdaMatchInt.kt");
-            }
-
-            @TestMetadata("paramTypeLambdaMatchNullable.kt")
-            public void testParamTypeLambdaMatchNullable() throws Exception {
-                runTest("testData/quickfix/typeMismatch/paramTypeLambdaMatchNullable.kt");
-            }
-
-            @TestMetadata("paramTypeLambdaMatchSubclass.kt")
-            public void testParamTypeLambdaMatchSubclass() throws Exception {
-                runTest("testData/quickfix/typeMismatch/paramTypeLambdaMatchSubclass.kt");
-            }
-
-            @TestMetadata("paramTypeLambdaMatchSuspend.kt")
-            public void testParamTypeLambdaMatchSuspend() throws Exception {
-                runTest("testData/quickfix/typeMismatch/paramTypeLambdaMatchSuspend.kt");
-            }
-
-            @TestMetadata("paramTypeLambdaMismatch.kt")
-            public void testParamTypeLambdaMismatch() throws Exception {
-                runTest("testData/quickfix/typeMismatch/paramTypeLambdaMismatch.kt");
-            }
-
-            @TestMetadata("paramTypeLambdaMismatchNull.kt")
-            public void testParamTypeLambdaMismatchNull() throws Exception {
-                runTest("testData/quickfix/typeMismatch/paramTypeLambdaMismatchNull.kt");
             }
 
             @TestMetadata("parameterDefaultValue.kt")

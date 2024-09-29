@@ -1,6 +1,6 @@
 // "Surround with lambda" "true"
 fun subclass() {
-    base({ Leaf() })
+    base(<caret>Leaf())
 }
 
 fun base(base: () -> Base) {}
@@ -8,4 +8,4 @@ fun base(base: () -> Base) {}
 open class Base {}
 class Leaf : Base()
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithLambdaForTypeMismatchFix
-/* IGNORE_K2 */
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithLambdaForTypeMismatchFix
