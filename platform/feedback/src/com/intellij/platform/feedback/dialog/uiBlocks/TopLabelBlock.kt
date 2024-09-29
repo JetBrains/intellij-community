@@ -56,6 +56,6 @@ class H3LabelBlock(@NlsContexts.Label private val myText: String) : LabelBlock(m
   override fun getLableFont(): Font? = JBFont.h3()
 }
 
-class H4LabelBlock(@NlsContexts.Label private val myText: String) : LabelBlock(myText) {
-  override fun getLableFont(): Font? = JBFont.h4()
+class RegularLabelBlock(@NlsContexts.Label private val myText: String) : LabelBlock(myText) {
+  override fun getLableFont(): Font? = JBFont.regular().asBold()
 }
