@@ -25,6 +25,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.awt.im.InputMethodRequests;
+import java.beans.PropertyChangeListener;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
@@ -46,21 +47,15 @@ class JBCefOsrComponent extends JPanel {
   private double myScale = 1.0;
 
   private final @NotNull AtomicLong myScheduleResizeMs = new AtomicLong(-1);
-  private @Nullable Alarm myAlarm;
+  private @Nullable Alarm myResizeAlarm;
+  private @Nullable Alarm myGraphicsConfigurationAlarm;
   private @NotNull Disposable myDisposable;
   private @NotNull MouseWheelEventsAccumulator myWheelEventsAccumulator;
+  private @Nullable PropertyChangeListener myGraphicsConfigurationListener;
 
   JBCefOsrComponent(boolean isMouseWheelEventEnabled) {
     setPreferredSize(JBCefBrowser.DEF_PREF_SIZE);
     setBackground(JBColor.background());
-    addPropertyChangeListener("graphicsConfiguration",
-                              e -> {
-                                double pixelDensity = JreHiDpiUtil.isJreHiDPIEnabled() ? JCefAppConfig.getDeviceScaleFactor(this) : 1.0;
-                                myScale = (JreHiDpiUtil.isJreHiDPIEnabled() ? 1.0 : JCefAppConfig.getDeviceScaleFactor(this)) *
-                                          UISettings.getInstance().getIdeScale();
-                                myRenderHandler.setScreenInfo(pixelDensity, myScale);
-                                myBrowser.notifyScreenInfoChanged();
-                              });
 
     enableEvents(AWTEvent.KEY_EVENT_MASK |
                  AWTEvent.MOUSE_EVENT_MASK |
@@ -119,7 +114,7 @@ class JBCefOsrComponent extends JPanel {
   public void addNotify() {
     super.addNotify();
     myDisposable = Disposer.newDisposable();
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+    myResizeAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     myWheelEventsAccumulator = new MouseWheelEventsAccumulator(myDisposable);
 
     ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(UISettingsListener.TOPIC, uiSettings -> {
@@ -133,10 +128,29 @@ class JBCefOsrComponent extends JPanel {
     if (!JBCefBrowserBase.isCefBrowserCreationStarted(myBrowser)) {
       myBrowser.createImmediately();
     }
+
+    // It's a workaround for JBR-7335.
+    // After the device configuration is changed, the browser reacts to it whether it receives a notification from the client or not.
+    // An additional notification during this time can break the internal state of the browser, which leads to the picture freeze.
+    // The purpose of this delay is to give the browser a chance to handle the graphics configuration change before we update the scale on
+    // our side.
+    myGraphicsConfigurationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myDisposable);
+    myGraphicsConfigurationListener = e -> {
+      myGraphicsConfigurationAlarm.cancelAllRequests();
+      myGraphicsConfigurationAlarm.addRequest(() -> {
+        double pixelDensity = JreHiDpiUtil.isJreHiDPIEnabled() ? JCefAppConfig.getDeviceScaleFactor(this) : 1.0;
+        myScale = (JreHiDpiUtil.isJreHiDPIEnabled() ? 1.0 : JCefAppConfig.getDeviceScaleFactor(this)) *
+                  UISettings.getInstance().getIdeScale();
+        myRenderHandler.setScreenInfo(pixelDensity, myScale);
+        myBrowser.notifyScreenInfoChanged();
+      }, 1000);
+    };
+    addPropertyChangeListener("graphicsConfiguration", myGraphicsConfigurationListener);
   }
 
   @Override
   public void removeNotify() {
+    removePropertyChangeListener("graphicsConfiguration", myGraphicsConfigurationListener);
     super.removeNotify();
     Disposer.dispose(myDisposable);
   }
@@ -152,14 +166,14 @@ class JBCefOsrComponent extends JPanel {
   public void reshape(int x, int y, int w, int h) {
     super.reshape(x, y, w, h);
     final long timeMs = System.currentTimeMillis();
-    if (myAlarm != null) {
-      if (myAlarm.isEmpty())
+    if (myResizeAlarm != null) {
+      if (myResizeAlarm.isEmpty())
         myScheduleResizeMs.set(timeMs);
-      myAlarm.cancelAllRequests();
+      myResizeAlarm.cancelAllRequests();
       if (timeMs - myScheduleResizeMs.get() > RESIZE_DELAY_MS)
         myBrowser.wasResized(0, 0);
       else
-        myAlarm.addRequest(() -> {
+        myResizeAlarm.addRequest(() -> {
           // In OSR width and height are ignored. The view size will be requested from CefRenderHandler.
           myBrowser.wasResized(0, 0);
         }, RESIZE_DELAY_MS);
