@@ -1,25 +1,27 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.execution.target.TargetEnvironmentsManager
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WslPath
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 import com.intellij.execution.wsl.target.WslTargetType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.getEelApiBlocking
+import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenEelUtil.collectMavenDirectories
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.MavenWslUtil
-import org.jetbrains.idea.maven.utils.MavenWslUtil.collectWslMavenDirectories
-import java.io.File
+import java.nio.file.Path
 
-private val MAVEN_HOME_DIR = Key.create<File>("MAVEN_HOME_DIR")
+private val MAVEN_HOME_DIR = Key.create<Path>("MAVEN_HOME_DIR")
 private val MAVEN_HOME_VERSION = Key.create<String>("MAVEN_WSL_HOME_VERSION")
 private val MAVEN_TARGET_PATH = Key.create<String>("MAVEN_TARGET_PATH")
 private val WSL_DISTRIBUTION = Key.create<WSLDistribution>("WSL_DISTRIBUTION")
@@ -36,21 +38,23 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
   }
 
   private fun prepareMavenData(project: Project, dataHolder: UserDataHolder) {
-    val wslDistribution = project.basePath?.let { MavenWslUtil.tryGetWslDistribution(project) }
+    val wslDistribution = project.basePath?.let { project.tryGetWslDistribution() }
+
     if (wslDistribution == null) {
       return
     }
+
+    val eel = project.getEelApiBlocking()
+
     dataHolder.putUserData(WSL_DISTRIBUTION, wslDistribution)
-    val mavenPath = wslDistribution.collectWslMavenDirectories()
-      .firstOrNull()?.let { MavenUtil.getMavenHomeFile(it) }
+    val mavenPath = eel.collectMavenDirectories().firstOrNull()?.let { MavenUtil.getMavenHomePath(it) }
     dataHolder.putUserData(MAVEN_HOME_DIR, mavenPath)
-    val targetMavenPath = mavenPath?.let { wslDistribution.getWslPath(it.toPath()) }
+    val targetMavenPath = mavenPath?.let { eel.mapper.getOriginalPath(it)?.toString() }
     dataHolder.putUserData(MAVEN_TARGET_PATH, targetMavenPath)
     val mavenVersion = MavenUtil.getMavenVersion(mavenPath)
     dataHolder.putUserData(MAVEN_HOME_VERSION, mavenVersion)
-    val jdkPath = getJdkPath(project, wslDistribution)
+    val jdkPath = getJdkPath(eel)
     dataHolder.putUserData(JDK_PATH, jdkPath)
-
   }
 
   private fun configureForProject(project: Project, dataHolder: UserDataHolder) {
@@ -70,10 +74,12 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
     mavenConfiguration ?: createMavenConfiguration(targetConfiguration, project, dataHolder, wslDistribution)
   }
 
-  private fun createMavenConfiguration(configuration: WslTargetEnvironmentConfiguration,
-                                       project: Project,
-                                       dataHolder: UserDataHolder,
-                                       wslDistribution: WSLDistribution): MavenRuntimeTargetConfiguration? {
+  private fun createMavenConfiguration(
+    configuration: WslTargetEnvironmentConfiguration,
+    project: Project,
+    dataHolder: UserDataHolder,
+    wslDistribution: WSLDistribution,
+  ): MavenRuntimeTargetConfiguration? {
     val mavenConfig = MavenRuntimeTargetConfiguration()
     val targetMavenPath = dataHolder.getUserData(MAVEN_TARGET_PATH)
 
@@ -91,10 +97,12 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
     return mavenConfig
   }
 
-  private fun createJavaConfiguration(configuration: WslTargetEnvironmentConfiguration,
-                                      project: Project,
-                                      dataHolder: UserDataHolder,
-                                      wslDistribution: WSLDistribution): JavaLanguageRuntimeConfiguration? {
+  private fun createJavaConfiguration(
+    configuration: WslTargetEnvironmentConfiguration,
+    project: Project,
+    dataHolder: UserDataHolder,
+    wslDistribution: WSLDistribution,
+  ): JavaLanguageRuntimeConfiguration? {
     val javaConfig = JavaLanguageRuntimeConfiguration()
     val jdkPath = dataHolder.getUserData(JDK_PATH)
 
@@ -110,12 +118,8 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
     return javaConfig
   }
 
-  private fun getJdkPath(project: Project, wslDistribution: WSLDistribution): String? {
-    val projectSdk = ProjectRootManager.getInstance(project).getProjectSdk()
-    if (projectSdk != null && MavenWslUtil.tryGetWslDistributionForPath(projectSdk.homePath) == wslDistribution) {
-      projectSdk.homePath?.let { wslDistribution.getWslPath(it) }?.let { return@getJdkPath it }
-    }
-    return MavenWslUtil.getJdkPath(wslDistribution)
+  private fun getJdkPath(eel: EelApi): String? {
+    return eel.exec.fetchLoginShellEnvVariablesBlocking()["JDK_HOME"]
   }
 
   private fun createWslTarget(project: Project, wslDistribution: WSLDistribution): WslTargetEnvironmentConfiguration {
@@ -124,5 +128,8 @@ class MavenWslTargetConfigurator : MavenWorkspaceConfigurator {
     TargetEnvironmentsManager.getInstance(project).addTarget(configuration)
     return configuration
   }
+}
 
+private fun Project.tryGetWslDistribution(): WSLDistribution? {
+  return basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
 }

@@ -28,6 +28,12 @@ object MavenArtifactUtil {
   @JvmStatic
   @Deprecated("this method does not support split repositories")
   fun readPluginInfo(localRepository: File, mavenId: MavenId): MavenPluginInfo? {
+    return readPluginInfo(localRepository.toPath(), mavenId)
+  }
+
+  @JvmStatic
+  @Deprecated("this method does not support split repositories")
+  fun readPluginInfo(localRepository: Path, mavenId: MavenId): MavenPluginInfo? {
     val file = getArtifactNioPath(localRepository, mavenId.groupId, mavenId.artifactId, mavenId.version, "jar")
     return readPluginInfo(file)
   }
@@ -51,19 +57,25 @@ object MavenArtifactUtil {
   @JvmStatic
   @JvmOverloads
   @Deprecated("this method does not support split repositories")
-  internal fun hasArtifactFile(localRepository: File, id: MavenId, type: String = "jar"): Boolean {
+  internal fun hasArtifactFile(localRepository: Path, id: MavenId, type: String = "jar"): Boolean {
     return Files.exists(getArtifactFile(localRepository, id, type))
   }
 
   @JvmStatic
   @Deprecated("this method does not support split repositories")
   fun getArtifactFile(localRepository: File, id: MavenId, type: String): Path {
+    return getArtifactNioPath(localRepository.toPath(), id.groupId, id.artifactId, id.version, type)
+  }
+
+  @JvmStatic
+  @Deprecated("this method does not support split repositories")
+  fun getArtifactFile(localRepository: Path, id: MavenId, type: String): Path {
     return getArtifactNioPath(localRepository, id.groupId, id.artifactId, id.version, type)
   }
 
   @JvmStatic
   @Deprecated("this method does not support split repositories")
-  fun getArtifactFile(localRepository: File, id: MavenId): Path {
+  fun getArtifactFile(localRepository: Path, id: MavenId): Path {
     return getArtifactNioPath(localRepository, id.groupId, id.artifactId, id.version, "pom")
   }
 
@@ -98,7 +110,7 @@ object MavenArtifactUtil {
 
   @JvmStatic
   @Deprecated("this method does not support split repositories")
-  fun getArtifactNioPath(localRepository: File, groupId: String?, artifactId: String?, version: String?, type: String): Path {
+  fun getArtifactNioPath(localRepository: Path, groupId: String?, artifactId: String?, version: String?, type: String): Path {
     var groupId = groupId
     var artifactId = artifactId
     var version = version
@@ -131,12 +143,12 @@ object MavenArtifactUtil {
     return result.toString()
   }
 
-  private fun getArtifactDirectory(localRepository: File, groupId: String, artifactId: String): Path {
+  private fun getArtifactDirectory(localRepository: Path, groupId: String, artifactId: String): Path {
     var groupId = groupId
     var artifactId = artifactId
     groupId = sanitizeMavenIdentifier(groupId)
     artifactId = sanitizeMavenIdentifier(artifactId)
-    return localRepository.toPath().resolve(StringUtil.replace(groupId, ".", File.separator)).resolve(artifactId)
+    return localRepository.resolve(StringUtil.replace(groupId, ".", File.separator)).resolve(artifactId)
   }
 
   private fun resolveVersion(pluginDir: Path): String {

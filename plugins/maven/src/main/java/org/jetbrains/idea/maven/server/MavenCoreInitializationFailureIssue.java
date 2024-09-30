@@ -72,7 +72,7 @@ public class MavenCoreInitializationFailureIssue implements BuildIssue {
     for (String directory : myMultimoduleDirectories) {
       Path extensions = Path.of(directory).resolve(".mvn").resolve("extensions.xml");
       if (!extensions.toFile().isFile()) continue;
-      if (MavenUtil.containsDeclaredExtension(extensions.toFile(), myUnresolvedExtensionId)) {
+      if (MavenUtil.containsDeclaredExtension(extensions, myUnresolvedExtensionId)) {
         return new FileNavigatable(project, new FilePosition(extensions.toFile(), 0, 0));
       }
     }

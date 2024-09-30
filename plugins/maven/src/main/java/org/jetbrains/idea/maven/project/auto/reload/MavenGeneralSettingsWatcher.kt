@@ -26,8 +26,8 @@ class MavenGeneralSettingsWatcher(
 
   private fun collectSettingsFiles(): Set<String> {
     val result = LinkedHashSet<String>()
-    val userSettingsFile = MavenUtil.resolveUserSettingsFile(generalSettings.userSettingsFile)
-    result.add(userSettingsFile.toPath().toCanonicalPath())
+    val userSettingsFile = MavenUtil.resolveUserSettingsPath(generalSettings.userSettingsFile, null)
+    result.add(userSettingsFile.toCanonicalPath())
     return result
   }
 

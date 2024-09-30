@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
@@ -25,7 +24,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
@@ -90,15 +88,9 @@ public final class MavenDistributionsCache {
 
   @Nullable
   private static MavenDistribution fromPath(@NotNull String path, @NotNull String label) {
-    File file = new File(path);
+    Path file = Path.of(path);
     if (!isValidMavenHome(file)) return null;
-    WslPath wslPath = WslPath.parseWindowsUncPath(file.getAbsolutePath());
-    if (wslPath == null) {
-      return new LocalMavenDistribution(file.toPath(), label);
-    }
-    else {
-      return new WslMavenDistribution(wslPath.getDistribution(), wslPath.getLinuxPath(), label);
-    }
+    return new LocalMavenDistribution(file, label);
   }
 
   public @NotNull String getVmOptions(@Nullable String workingDirectory) {

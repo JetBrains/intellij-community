@@ -158,8 +158,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
   }
 
+  @Deprecated(forRemoval = true)
   public File getLocalRepository() {
-    return getGeneralSettings().getEffectiveLocalRepository();
+    return getReposirotyPath().toFile();
+  }
+
+  public Path getReposirotyPath() {
+    return getGeneralSettings().getEffectiveRepositoryPath();
   }
 
   @ApiStatus.Internal

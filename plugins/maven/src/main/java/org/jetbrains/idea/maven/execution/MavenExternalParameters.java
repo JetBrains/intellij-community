@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,6 +55,8 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.execution.util.ProgramParametersUtil.expandPathAndMacros;
@@ -97,10 +100,10 @@ public final class MavenExternalParameters {
 
     String jreName = runnerSettings.getJreName();
     boolean isGlobalRunnerSettings = MavenRunner.getInstance(project).getState() == runnerSettings;
-    Sdk jdk = ReadAction.compute(()->getJdk(project, jreName, isGlobalRunnerSettings ));
+    Sdk jdk = ReadAction.compute(() -> getJdk(project, jreName, isGlobalRunnerSettings));
     params.setJdk(jdk);
 
-    if(!verifyMavenSdkRequirements(jdk, mavenVersion)){
+    if (!verifyMavenSdkRequirements(jdk, mavenVersion)) {
       throw new ExecutionException(RunnerBundle.message("maven.3.3.1.bad.jdk"));
     }
 
@@ -131,10 +134,10 @@ public final class MavenExternalParameters {
     vmOptions = expandPathAndMacros(vmOptions, null, project);
     addVMParameters(params.getVMParametersList(), mavenHome, vmOptions);
 
-    File confFile = MavenUtil.getMavenConfFile(new File(mavenHome));
-    if (!confFile.isFile()) {
+    Path confFile = MavenUtil.getMavenConfFilePath(Path.of(mavenHome));
+    if (Files.isDirectory(confFile)) {
       throw new ExecutionException(
-        MavenProjectBundle.message("dialog.message.configuration.file.not.exists.in.maven.home", confFile.getAbsolutePath()));
+        MavenProjectBundle.message("dialog.message.configuration.file.not.exists.in.maven.home", confFile.toAbsolutePath()));
     }
 
     if (parameters.isResolveToWorkspace()) {
@@ -151,7 +154,7 @@ public final class MavenExternalParameters {
       }
     }
 
-    params.getVMParametersList().addProperty("classworlds.conf", confFile.getPath());
+    params.getVMParametersList().addProperty("classworlds.conf", confFile.toString());
 
     for (String path : getMavenClasspathEntries(mavenHome)) {
       params.getClassPath().add(path);
@@ -203,18 +206,18 @@ public final class MavenExternalParameters {
     }
   }
 
-  private static File patchConfFile(File conf, String library) throws IOException {
-    File tmpConf = FileUtil.createTempFile("idea-", "-mvn.conf");
-    tmpConf.deleteOnExit();
+  private static Path patchConfFile(Path conf, String library) throws IOException {
+    // TODO: how we should create temp file usung eel?
+    Path tmpConf = FileUtil.createTempFile("idea-", "-mvn.conf").toPath();
     patchConfFile(conf, tmpConf, library);
 
     return tmpConf;
   }
 
-  private static void patchConfFile(File originalConf, File dest, String library) throws IOException {
+  private static void patchConfFile(Path originalConf, Path dest, String library) throws IOException {
 
-    try (Scanner sc = new Scanner(originalConf);
-         BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dest), StandardCharsets.UTF_8))) {
+    try (Scanner sc = new Scanner(originalConf, StandardCharsets.UTF_8);
+         BufferedWriter out = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(dest), StandardCharsets.UTF_8))) {
       boolean patched = false;
 
       while (sc.hasNextLine()) {
@@ -343,7 +346,7 @@ public final class MavenExternalParameters {
       }
 
       throw new ProjectJdkSettingsOpenerExecutionException(
-       RunnerBundle.message("dialog.message.project.jdk.not.specified.href.configure"), project);
+        RunnerBundle.message("dialog.message.project.jdk.not.specified.href.configure"), project);
     }
 
     if (jreName.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
@@ -427,16 +430,17 @@ public final class MavenExternalParameters {
                                         @NotNull String workingDir, @Nullable MavenRunConfiguration runConfiguration)
     throws ExecutionException {
     MavenHomeType type = coreSettings.getMavenHomeType();
-    File file = null;
+    Path file = null;
     if (type instanceof StaticResolvedMavenHomeType st) {
       file = MavenUtil.getMavenHomeFile(st);
     }
     if (type instanceof MavenWrapper) {
       MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getWrapper(workingDir);
       if (distribution != null) {
-        file = distribution.getMavenHome().toFile();
-      } else {
-        file = MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
+        file = distribution.getMavenHome();
+      }
+      else {
+        file = MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome();
       }
     }
 
@@ -446,24 +450,19 @@ public final class MavenExternalParameters {
                                      coreSettings, project, runConfiguration);
     }
 
-    if (!file.exists()) {
-      throw createExecutionException(RunnerBundle.message("external.maven.home.does.not.exist", file.getPath()),
-                                     RunnerBundle.message("external.maven.home.does.not.exist.with.fix", file.getPath()),
+    if (!Files.exists(file)) {
+      throw createExecutionException(RunnerBundle.message("external.maven.home.does.not.exist", file),
+                                     RunnerBundle.message("external.maven.home.does.not.exist.with.fix", file),
                                      coreSettings, project, runConfiguration);
     }
 
     if (!MavenUtil.isValidMavenHome(file)) {
-      throw createExecutionException(RunnerBundle.message("external.maven.home.invalid", file.getPath()),
-                                     RunnerBundle.message("external.maven.home.invalid.with.fix", file.getPath()),
+      throw createExecutionException(RunnerBundle.message("external.maven.home.invalid", file),
+                                     RunnerBundle.message("external.maven.home.invalid.with.fix", file),
                                      coreSettings, project, runConfiguration);
     }
 
-    try {
-      return file.getCanonicalPath();
-    }
-    catch (IOException e) {
-      throw new ExecutionException(e.getMessage(), e);
-    }
+    return NioPathUtil.toCanonicalPath(file);
   }
 
   private static ExecutionException createExecutionException(@NlsContexts.DialogMessage String text,

@@ -33,15 +33,15 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
 
   @Override
   public boolean isSupportedByExtension(@Nullable File mavenHome) {
-    String version = MavenUtil.getMavenVersion(mavenHome);
+    String version = MavenUtil.getMavenVersion(mavenHome.toPath());
     return StringUtil.compareVersionNumbers(version, "3.1") >= 0 && StringUtil.compareVersionNumbers(version, "4") < 0;
   }
 
   @Override
-  public @Nullable File getMavenHomeFile(@Nullable StaticResolvedMavenHomeType mavenHomeType) {
+  public @Nullable Path getMavenHomeFile(@Nullable StaticResolvedMavenHomeType mavenHomeType) {
     if (mavenHomeType == null) return null;
     if (mavenHomeType == BundledMaven3.INSTANCE) {
-      return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
+      return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome();
     }
     return null;
   }

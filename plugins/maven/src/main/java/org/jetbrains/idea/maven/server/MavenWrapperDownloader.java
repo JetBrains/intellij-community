@@ -57,7 +57,7 @@ public final class MavenWrapperDownloader {
     Task.Backgroundable task = getTaskInfo();
     BackgroundableProcessIndicator indicator = new WrapperProgressIndicator(project, task, syncConsole);
     try {
-      distribution = new MavenWrapperSupport().downloadAndInstallMaven(distributionUrl, indicator);
+      distribution = new MavenWrapperSupport().downloadAndInstallMaven(distributionUrl, indicator, project);
       if (syncConsole != null && distributionUrl.toLowerCase(Locale.ENGLISH).startsWith("http:")) {
         MavenWrapperSupport.showUnsecureWarning(syncConsole, LocalFileSystem.getInstance().findFileByPath(multiModuleDir));
       }

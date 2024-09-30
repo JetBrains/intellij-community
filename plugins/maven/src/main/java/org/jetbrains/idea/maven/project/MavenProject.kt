@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenPathWrapper
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.*
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
@@ -481,7 +482,7 @@ class MavenProject(val file: VirtualFile) {
           // Collect only extensions that were attempted to be resolved.
           // It is because embedder does not even try to resolve extensions that
           // are not necessary.
-          if (myState.unresolvedArtifactIds.contains(each.mavenId) && !pomFileExists(localRepository, each)) {
+          if (myState.unresolvedArtifactIds.contains(each.mavenId) && !pomFileExists(localRepositoryPath, each)) {
             result.add(each)
           }
         }
@@ -491,7 +492,7 @@ class MavenProject(val file: VirtualFile) {
       return myUnresolvedExtensionsCache
     }
 
-  private fun pomFileExists(localRepository: File, artifact: MavenArtifact): Boolean {
+  private fun pomFileExists(localRepository: Path, artifact: MavenArtifact): Boolean {
     return hasArtifactFile(localRepository, artifact.mavenId, "pom")
   }
 
@@ -912,7 +913,13 @@ class MavenProject(val file: VirtualFile) {
       return getPropertiesFromConfig(ConfigFileKind.JVM_CONFIG)
     }
 
+  @Deprecated("Use localRepositoryPath")
   val localRepository: File
+    get() {
+      return localRepositoryPath.toFile()
+    }
+
+  val localRepositoryPath: Path
     get() {
       return myState.localRepository!!
     }
@@ -1177,7 +1184,7 @@ class MavenProject(val file: VirtualFile) {
       return state.copy(
         lastReadStamp = lastReadStamp,
         readingProblems = readingProblems,
-        localRepository = settings.effectiveLocalRepository,
+        localRepository = settings.effectiveRepositoryPath,
         activatedProfilesIds = activatedProfiles,
         mavenId = model.mavenId,
         parentId = model.parent?.mavenId,

@@ -18,10 +18,10 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.config.MavenConfig;
 import org.jetbrains.idea.maven.config.MavenConfigParser;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
+import org.jetbrains.idea.maven.utils.MavenEelUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -51,7 +51,7 @@ public class MavenGeneralSettings implements Cloneable {
   MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.NOT_SET;
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.NOT_SET;
 
-  private transient File myEffectiveLocalRepositoryCache;
+  private transient Path myEffectiveLocalRepositoryCache;
   private transient MavenConfig mavenConfigCache;
 
   private int myBulkUpdateLevel = 0;
@@ -232,26 +232,26 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
+  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
   @Deprecated(forRemoval = true)
-  public @Nullable File getEffectiveUserSettingsIoFile() {
-    return MavenWslUtil.getUserSettings(myProject, getUserSettingsFile(), getMavenConfig());
+  public @Nullable Path getEffectiveUserSettingsIoFile() {
+    return MavenEelUtil.getUserSettings(myProject, getUserSettingsFile(), getMavenConfig());
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
+  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
   @Deprecated
-  public @Nullable File getEffectiveGlobalSettingsIoFile() {
-    return MavenWslUtil.getGlobalSettings(myProject, staticOrBundled(getMavenHomeType()), getMavenConfig());
+  public @Nullable Path getEffectiveGlobalSettingsIoFile() {
+    return MavenEelUtil.getGlobalSettings(myProject, staticOrBundled(getMavenHomeType()), getMavenConfig());
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
+  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
   @Deprecated(forRemoval = true)
   public @Nullable VirtualFile getEffectiveUserSettingsFile() {
-    File file = getEffectiveUserSettingsIoFile();
-    return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
+    Path file = getEffectiveUserSettingsIoFile();
+    return file == null ? null : LocalFileSystem.getInstance().findFileByNioFile(file);
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
+  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
   @Deprecated(forRemoval = true)
   public List<VirtualFile> getEffectiveSettingsFiles() {
     List<VirtualFile> result = new ArrayList<>(2);
@@ -262,11 +262,11 @@ public class MavenGeneralSettings implements Cloneable {
     return result;
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
+  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
   @Deprecated(forRemoval = true)
   public @Nullable VirtualFile getEffectiveGlobalSettingsFile() {
-    File file = getEffectiveGlobalSettingsIoFile();
-    return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
+    Path file = getEffectiveGlobalSettingsIoFile();
+    return file == null ? null : LocalFileSystem.getInstance().findFileByNioFile(file);
   }
 
   @NotNull
@@ -286,14 +286,12 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @Deprecated(forRemoval = true)
-  public File getEffectiveLocalRepository() {
-    File result = myEffectiveLocalRepositoryCache;
+  public Path getEffectiveRepositoryPath() {
+    Path result = myEffectiveLocalRepositoryCache;
     if (result != null) return result;
 
     result =
-      MavenWslUtil.getLocalRepo(myProject, overriddenLocalRepository, staticOrBundled(mavenHomeType), mavenSettingsFile, getMavenConfig());
+      MavenEelUtil.getLocalRepo(myProject, overriddenLocalRepository, staticOrBundled(mavenHomeType), mavenSettingsFile, getMavenConfig());
     myEffectiveLocalRepositoryCache = result;
     return result;
   }

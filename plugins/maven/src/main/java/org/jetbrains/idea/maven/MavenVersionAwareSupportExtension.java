@@ -10,6 +10,7 @@ import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -23,7 +24,7 @@ public interface MavenVersionAwareSupportExtension {
   boolean isSupportedByExtension(@Nullable File mavenHome);
 
   @Nullable
-  File getMavenHomeFile(@Nullable StaticResolvedMavenHomeType mavenHomeType);
+  Path getMavenHomeFile(@Nullable StaticResolvedMavenHomeType mavenHomeType);
 
   @NotNull
   List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution);

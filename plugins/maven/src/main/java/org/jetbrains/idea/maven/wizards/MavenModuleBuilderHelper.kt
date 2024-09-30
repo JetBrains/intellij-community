@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -39,6 +40,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 
 open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
                                     protected val myAggregatorProject: MavenProject?,
@@ -190,24 +192,24 @@ open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
     }
 
     withContext(Dispatchers.Default) {
-      runner.run(params, settings) { copyGeneratedFiles(workingDir, pom, project, props["artifactId"]) }
+      runner.run(params, settings) { copyGeneratedFiles(workingDir.toPath() /* TODO */, pom, project, props["artifactId"]) }
     }
   }
 
   @VisibleForTesting
-  fun copyGeneratedFiles(workingDir: File?, pom: VirtualFile, project: Project, artifactId: String?) {
+  fun copyGeneratedFiles(workingDir: Path, pom: VirtualFile, project: Project, artifactId: String?) {
     var artifactId = artifactId
     val vcsFileAdder = GitSilentFileAdderProvider.create(project)
     try {
       try {
         artifactId = artifactId ?: myProjectId.artifactId
         if (artifactId != null) {
-          val sourceDir = File(workingDir, artifactId)
-          val targetDir = File(pom.parent.path)
+          val sourceDir = workingDir.resolve(artifactId)
+          val targetDir = pom.parent.toNioPath()
           vcsFileAdder.markFileForAdding(targetDir, true) // VFS is refreshed below
-          FileUtil.copyDir(sourceDir, targetDir)
+          NioFiles.copyRecursively(sourceDir, targetDir)
         }
-        FileUtil.delete(workingDir!!)
+        FileUtil.delete(workingDir)
       }
       catch (e: Exception) {
         showError(project, e)

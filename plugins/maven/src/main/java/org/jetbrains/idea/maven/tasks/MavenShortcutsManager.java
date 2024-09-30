@@ -28,7 +28,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -99,7 +99,7 @@ public final class MavenShortcutsManager implements Disposable {
     if (projectPath != null) {
       String portablePath = FileUtil.toSystemIndependentName(projectPath);
 
-      result.append(new File(portablePath).getParentFile().getName());
+      result.append(Path.of(portablePath).getParent().getFileName());
       result.append(Integer.toHexString(portablePath.hashCode()));
 
       if (goal != null) result.append(goal);

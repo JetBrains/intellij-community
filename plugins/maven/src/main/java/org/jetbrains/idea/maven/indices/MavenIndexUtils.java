@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -99,10 +100,10 @@ public final class MavenIndexUtils {
   @Nullable
   public static MavenRepositoryInfo getLocalRepository(Project project) {
     if (project.isDisposed()) return null;
-    File repository = MavenProjectsManager.getInstance(project).getLocalRepository();
+    Path repository = MavenProjectsManager.getInstance(project).getReposirotyPath();
     return repository == null
            ? null
-           : new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, LOCAL_REPOSITORY_ID, repository.getPath(), RepositoryKind.LOCAL);
+           : new MavenRepositoryInfo(LOCAL_REPOSITORY_ID, LOCAL_REPOSITORY_ID, repository.toString(), RepositoryKind.LOCAL);
   }
 
   @NotNull

@@ -150,7 +150,7 @@ object MavenProjectImporterUtil {
       artifact.isOptional,
       artifact.extension,
       null,
-      project.localRepository,
+      project.localRepositoryPath.toFile(),
       false, false
     )
   }

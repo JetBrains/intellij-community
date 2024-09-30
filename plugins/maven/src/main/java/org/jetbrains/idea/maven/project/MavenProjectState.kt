@@ -4,8 +4,8 @@ package org.jetbrains.idea.maven.project
 import com.intellij.openapi.util.Comparing
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.*
-import java.io.File
 import java.io.Serializable
+import java.nio.file.Path
 import java.util.*
 
 @ApiStatus.Experimental
@@ -42,7 +42,7 @@ data class MavenProjectState(
   val activatedProfilesIds: MavenExplicitProfiles = MavenExplicitProfiles.NONE,
   val dependencyHash: String? = null,
   val unresolvedArtifactIds: Set<MavenId> = emptySet(),
-  val localRepository: File? = null,
+  val localRepository: Path? = null,
   val pluginInfos: List<MavenPluginInfo> = emptyList(),
   val readingProblems: Collection<MavenProjectProblem> = emptySet(),
 ) : Serializable {

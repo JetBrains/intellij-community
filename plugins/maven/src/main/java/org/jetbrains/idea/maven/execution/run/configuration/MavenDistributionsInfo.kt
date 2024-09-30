@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.execution.run.configuration
 import com.intellij.openapi.externalSystem.service.ui.util.DistributionsInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.AbstractDistributionInfo
 import com.intellij.openapi.roots.ui.distribution.DistributionInfo
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
@@ -13,7 +14,7 @@ import org.jetbrains.idea.maven.maven4.Bundled4DistributionInfo
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-class MavenDistributionsInfo : DistributionsInfo {
+class MavenDistributionsInfo(private val project: Project) : DistributionsInfo {
   override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.label")
 
   override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.name")
@@ -27,7 +28,7 @@ class MavenDistributionsInfo : DistributionsInfo {
   override val distributions: List<DistributionInfo> by lazy {
     ArrayList<DistributionInfo>().apply {
       addIfNotNull(asDistributionInfo(MavenWrapper))
-      addAll(MavenUtil.getSystemMavenHomeVariants().map(::asDistributionInfo))
+      addAll(MavenUtil.getSystemMavenHomeVariants(project).map(::asDistributionInfo))
     }
   }
 

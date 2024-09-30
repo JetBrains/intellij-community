@@ -38,7 +38,6 @@ import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
@@ -238,9 +237,9 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     private static PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
-      File file = MavenUtil.getRepositoryFile(psiManager.getProject(), id, "pom", null);
+      Path file = MavenUtil.getRepositoryFile(psiManager.getProject(), id, "pom", null);
       if (null == file) return null;
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByNioFile(file);
       if (virtualFile == null) return null;
 
       return psiManager.findFile(virtualFile);
@@ -412,7 +411,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       PsiManager psiManager = context.getPsiManager();
 
       Path artifactFile = MavenArtifactUtil
-        .getArtifactNioPath(projectsManager.getLocalRepository(), id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
+        .getArtifactNioPath(projectsManager.getReposirotyPath(), id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
 
       VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByNioFile(artifactFile);
       if (virtualFile != null) {
