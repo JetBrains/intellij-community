@@ -7,6 +7,7 @@ import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil
 import org.gradle.api.Project
 import org.gradle.api.tasks.testing.AbstractTestTask
 import org.gradle.api.tasks.testing.Test
+import org.gradle.process.JavaForkOptions
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.DefaultExternalTask
 import org.jetbrains.plugins.gradle.model.GradleTaskModel
@@ -36,6 +37,7 @@ class GradleTaskModelBuilder : AbstractModelBuilderService() {
       externalTask.qName = task.path
       externalTask.description = task.description
       externalTask.group = GradleObjectUtil.notNull(task.group, "other")
+      externalTask.isJvm = task is JavaForkOptions
       val isInternalTest = GradleTaskUtil.getBooleanProperty(task, "idea.internal.test", false)
       val isEffectiveTest = "check" == task.name && "verification" == task.group
       val isJvmTest = task is Test

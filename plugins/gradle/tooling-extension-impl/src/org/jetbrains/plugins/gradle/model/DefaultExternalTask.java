@@ -16,6 +16,8 @@ public final class DefaultExternalTask implements ExternalTask {
   @Nullable
   private String type;
 
+  private boolean isJvm;
+
   private boolean isTest;
 
   private boolean isJvmTest;
@@ -31,6 +33,7 @@ public final class DefaultExternalTask implements ExternalTask {
     description = externalTask.getDescription();
     group = externalTask.getGroup();
     type = externalTask.getType();
+    isJvm = externalTask.isJvm();
     isTest = externalTask.isTest();
     isJvmTest = externalTask.isJvmTest();
     isInherited = externalTask.isInherited();
@@ -84,6 +87,15 @@ public final class DefaultExternalTask implements ExternalTask {
 
   public void setType(@Nullable String type) {
     this.type = type;
+  }
+
+  @Override
+  public boolean isJvm() {
+    return isJvm;
+  }
+
+  public void setJvm(boolean isJvm) {
+    this.isJvm = isJvm;
   }
 
   @Override

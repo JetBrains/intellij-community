@@ -19,6 +19,7 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
   @Nullable private String group;
   @Nullable private String type;
   private boolean inherited;
+  private boolean isJvm;
   private boolean isTest;
   private boolean isJvmTest;
 
@@ -75,6 +76,14 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
     this.inherited = inherited;
   }
 
+  public boolean isJvm() {
+    return isJvm;
+  }
+
+  public void setJvm(boolean isJvm) {
+    this.isJvm = isJvm;
+  }
+
   public boolean isTest() {
     return isTest;
   }
@@ -87,8 +96,8 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
     return isJvmTest;
   }
 
-  public void setJvmTest(boolean test) {
-    isJvmTest = test;
+  public void setJvmTest(boolean isJvmTest) {
+    this.isJvmTest = isJvmTest;
   }
 
   @Override

@@ -890,10 +890,12 @@ f:com.intellij.openapi.externalSystem.model.task.TaskData
 - getType():java.lang.String
 - hashCode():I
 - isInherited():Z
+- isJvm():Z
 - isJvmTest():Z
 - isTest():Z
 - setGroup(java.lang.String):V
 - setInherited(Z):V
+- setJvm(Z):V
 - setJvmTest(Z):V
 - setTest(Z):V
 - setType(java.lang.String):V

@@ -15,6 +15,7 @@ class GradleTaskData(val node: DataNode<TaskData>, private val gradleModulePath:
   val name = data.name.run { substringAfterLast(':').nullize() ?: this }
   val description = data.description
   val group = data.group
+  val isJvm = data.isJvm
   val isTest = data.isTest
   val isJvmTest = data.isJvmTest
   val isInherited = data.isInherited

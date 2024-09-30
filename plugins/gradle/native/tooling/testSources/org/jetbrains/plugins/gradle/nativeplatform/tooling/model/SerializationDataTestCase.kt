@@ -170,6 +170,7 @@ abstract class SerializationDataTestCase {
     if (expected == null || actual == null) return
     assertEquals(expected.description, actual.description)
     assertEquals(expected.group, actual.group)
+    assertEquals(expected.isJvm, actual.isJvm)
     assertEquals(expected.isTest, actual.isTest)
     assertEquals(expected.isJvmTest, actual.isJvmTest)
     assertEquals(expected.isInherited, actual.isInherited)

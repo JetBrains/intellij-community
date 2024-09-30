@@ -705,6 +705,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, directoryToRunTask, task.getDescription());
         taskData.setGroup(taskGroup);
         taskData.setType(task.getType());
+        taskData.setJvm(task.isJvm());
         taskData.setTest(task.isTest());
         taskData.setJvmTest(task.isJvmTest());
         taskData.setInherited(task.isInherited());
