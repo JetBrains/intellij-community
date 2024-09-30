@@ -79,7 +79,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
   @Override
   public void close() throws IOException {
     super.close();
-    if (myKeyHashToVirtualFileMapping != null){
+    if (myKeyHashToVirtualFileMapping != null) {
       myKeyHashToVirtualFileMapping.close();
     }
   }
@@ -97,25 +97,27 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
   @Override
   public boolean processKeys(@NotNull Processor<? super Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter)
     throws StorageException {
-    try {
-      invalidateCachedMappings();
+    return withReadLock(() -> {
+      try {
+        invalidateCachedMappings();
 
-      Project project = scope.getProject();
-      if (myKeyHashToVirtualFileMapping != null && project != null && idFilter != null) {
-        IntSet hashMaskSet = myKeyHashToVirtualFileMapping.getSuitableKeyHashes(idFilter, project);
-        return doProcessKeys(key -> {
-          if (!hashMaskSet.contains(myKeyDescriptor.getHashCode(key))) return true;
-          return processor.process(key);
-        });
+        Project project = scope.getProject();
+        if (myKeyHashToVirtualFileMapping != null && project != null && idFilter != null) {
+          IntSet hashMaskSet = myKeyHashToVirtualFileMapping.getSuitableKeyHashes(idFilter, project);
+          return doProcessKeys(key -> {
+            if (!hashMaskSet.contains(myKeyDescriptor.getHashCode(key))) return true;
+            return processor.process(key);
+          });
+        }
+        return doProcessKeys(processor);
       }
-      return doProcessKeys(processor);
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-    catch (RuntimeException e) {
-      return unwrapCauseAndRethrow(e);
-    }
+      catch (IOException e) {
+        throw new StorageException(e);
+      }
+      catch (RuntimeException e) {
+        return unwrapCauseAndRethrow(e);
+      }
+    });
   }
 
   @Override

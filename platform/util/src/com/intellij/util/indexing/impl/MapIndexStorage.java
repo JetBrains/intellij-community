@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
@@ -17,11 +16,14 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 @Internal
 public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
-  private static final boolean ENABLE_WAL = SystemProperties.getBooleanProperty("idea.index.enable.wal", false);
+  private static final boolean ENABLE_WAL = getBooleanProperty("idea.index.enable.wal", false);
 
   private ValueContainerMap<Key, Value> myMap;
 
@@ -30,6 +32,8 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   protected final Path myBaseStorageFile;
   protected final KeyDescriptor<Key> myKeyDescriptor;
   private final int myCacheSize;
+
+  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
   private final DataExternalizer<Value> myDataExternalizer;
   /** {@link FileBasedIndexExtension#keyIsUniqueForIndexedFile} and {@link SingleEntryFileBasedIndexExtension} */
@@ -81,6 +85,20 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
       myCacheSize
     );
     myMap = map;
+  }
+
+  @Override
+  public @NotNull IndexStorageLock.LockStamp lockForRead() {
+    ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    readLock.lock();
+    return readLock::unlock;
+  }
+
+  @Override
+  public @NotNull IndexStorageLock.LockStamp lockForWrite() {
+    ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+    writeLock.lock();
+    return writeLock::unlock;
   }
 
   private void onDropFromCache(Key key, @NotNull ChangeTrackingValueContainer<Value> valueContainer) {
@@ -354,9 +372,11 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @Override
   public void clearCaches() {
-    for (ChangeTrackingValueContainer<Value> container : myCache.getCachedValues()) {
-      container.dropMergedData();
-    }
+    withWriteLock(() -> {
+      for (ChangeTrackingValueContainer<Value> container : myCache.getCachedValues()) {
+        container.dropMergedData();
+      }
+    });
   }
 
   @Internal
@@ -378,17 +398,19 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @TestOnly
   public boolean processKeys(@NotNull Processor<? super Key> processor) throws StorageException {
-    try {
-      invalidateCachedMappings(); // this will ensure that all new keys are made into the map
-      return doProcessKeys(processor);
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-    catch (RuntimeException e) {
-      unwrapCauseAndRethrow(e);
-      return false;
-    }
+    return withReadLock(() -> {
+      try {
+        invalidateCachedMappings(); // this will ensure that all new keys are made into the map
+        return doProcessKeys(processor);
+      }
+      catch (IOException e) {
+        throw new StorageException(e);
+      }
+      catch (RuntimeException e) {
+        unwrapCauseAndRethrow(e);
+        return false;
+      }
+    });
   }
 
   protected boolean doProcessKeys(@NotNull Processor<? super Key> processor) throws IOException {

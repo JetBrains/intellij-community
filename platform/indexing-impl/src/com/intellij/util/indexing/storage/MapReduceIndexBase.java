@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
@@ -51,14 +50,12 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
   @Override
   public boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter)
     throws StorageException {
-    return ConcurrencyUtil.withLock(getLock().readLock(), () ->
-      ((VfsAwareIndexStorage<Key, Value>)getStorage()).processKeys(processor, scope, idFilter)
-    );
+    return ((VfsAwareIndexStorage<Key, Value>)getStorage()).processKeys(processor, scope, idFilter);
   }
 
   @Override
   public @NotNull Map<Key, Value> getIndexedFileData(int fileId) throws StorageException {
-    return ConcurrencyUtil.withLock(getLock().readLock(), () -> {
+    return getStorage().withReadLock(() -> {
       try {
         // TODO remove Collections.unmodifiableMap when ContainerUtil started to return unmodifiable map in all cases
         //noinspection RedundantUnmodifiable

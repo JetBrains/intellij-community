@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.GentleFlusherBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -35,7 +34,6 @@ import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -79,7 +77,6 @@ import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
@@ -105,8 +102,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
-import static com.intellij.util.MathUtil.clamp;
 import static com.intellij.util.indexing.FileBasedIndexDataInitialization.readAllProjectDirtyFilesQueues;
 import static com.intellij.util.indexing.IndexingFlag.cleanProcessingFlag;
 import static com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag;
@@ -124,7 +119,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Internal
   public static final Logger LOG = Logger.getInstance(FileBasedIndexImpl.class);
 
-  private static final boolean USE_GENTLE_FLUSHER = SystemProperties.getBooleanProperty("indexes.flushing.use-gentle-flusher", true);
   /** How often, on average, flush each index to the disk */
   private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
   final CoroutineScope coroutineScope;
@@ -1395,7 +1389,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Internal
   public @Nullable FileIndexingResult getApplierToRemoveDataFromIndexesForFile(@NotNull VirtualFile file,
-                                                                     @NotNull FileIndexingStamp indexingStamp) {
+                                                                               @NotNull FileIndexingStamp indexingStamp) {
 
     final int fileId = getFileId(file);
     boolean pendingDeletionFileAppearedInIndexableFilter = file.isValid() && !ensureFileBelongsToIndexableFilter(fileId, file).isEmpty();
@@ -1414,10 +1408,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Internal
   public @NotNull FileIndexingResult indexFileContent(@Nullable Project project,
-                                             @NotNull CachedFileContent content,
-                                             boolean isDeleteRequest,
-                                             @Nullable FileType cachedFileType,
-                                             @NotNull FileIndexingStamp indexingStamp) {
+                                                      @NotNull CachedFileContent content,
+                                                      boolean isDeleteRequest,
+                                                      @Nullable FileType cachedFileType,
+                                                      @NotNull FileIndexingStamp indexingStamp) {
     ProgressManager.checkCanceled();
     VirtualFile file = content.getVirtualFile();
     final int fileId = getFileId(file);
@@ -1435,8 +1429,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       ProgressManager.checkCanceled();
       myIndexableFilesFilterHolder.removeFile(fileId); // in case this is not isDeleteRequest
       fileIndexingResult = new FileIndexingResult(this, fileId, file, indexingStamp, Collections.emptyList(), Collections.emptyList(),
-                                       true, true, applicationMode,
-                                       cachedFileType == null ? file.getFileType() : cachedFileType, false);
+                                                  true, true, applicationMode,
+                                                  cachedFileType == null ? file.getFileType() : cachedFileType, false);
     }
     else {
       fileIndexingResult = doIndexFileContent(project, content, cachedFileType, applicationMode, indexingStamp);
@@ -1445,10 +1439,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private @NotNull FileIndexingResult doIndexFileContent(@Nullable Project project,
-                                                @NotNull CachedFileContent content,
-                                                @Nullable FileType cachedFileType,
-                                                @NotNull ApplicationMode applicationMode,
-                                                FileIndexingStamp indexingStamp) {
+                                                         @NotNull CachedFileContent content,
+                                                         @Nullable FileType cachedFileType,
+                                                         @NotNull ApplicationMode applicationMode,
+                                                         FileIndexingStamp indexingStamp) {
     ProgressManager.checkCanceled();
     final VirtualFile file = content.getVirtualFile();
     Ref<Boolean> setIndexedStatus = Ref.create(Boolean.TRUE);
@@ -2053,15 +2047,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void setUpFlusher() {
-    final ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
-    if (USE_GENTLE_FLUSHER) {
-      myFlushingTask = new GentleIndexFlusher(scheduler);
-      LOG.info("Using nice flusher for indexes");
-    }
-    else {
-      myFlushingTask = new SimpleFlusher(scheduler);
-      LOG.info("Using simple flusher for indexes");
-    }
+    ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
+    myFlushingTask = new SimpleFlusher(scheduler);
+    LOG.info("Using simple flusher for indexes");
   }
 
   @Override
@@ -2193,11 +2181,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
       IndexingStamp.flushCaches();
 
-      final int maxAttemptsPerIndex = 2;
-      final int maxSleepPerAttemptMs = 16;
-
       IndexConfiguration state = getState();
-      int interferencesWithOtherThreads = 0;
       for (ID<?, ?> indexId : state.getIndexIDs()) {
         if (betterToInterruptFlushingEarly(modCount)) {
           return; // do not interfere with 'main' jobs
@@ -2205,42 +2189,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         try {
           final UpdatableIndex<?, ?, FileContent, ?> index = state.getIndex(indexId);
           if (index != null) {
-            //RC: regular flush should not interfere with other, (likely) more response-time-critical
-            //    jobs. We can't guarantee the total absence of interference, though -- instead we're
-            //    trying to be just 'nice to others' here.
-            //    I.e. do .yield() after each flush, so somebody who waits for index access -- has its
-            //    chance. We also use .tryLock() as a way to feel interference (readLock.tryLock fails
-            //    -> somebody else acquired write lock), and back off a bit, giving 'another job' a chance
-            //    to finish.
-            //    (See e.g., IDEA-244174 for what could go wrong otherwise)
-
-            for (int attempt = 0; attempt < maxAttemptsPerIndex; attempt++) {
-              final ReadWriteLock rwLock = index.getLock();
-              final Lock indexReadLock = rwLock.readLock();
-              final boolean lockSucceeded = indexReadLock.tryLock();
-              if (lockSucceeded) {
-                try {
-                  index.flush();
-                }
-                finally {
-                  indexReadLock.unlock();
-                }
-                interferencesWithOtherThreads--;
-                break;
-              }
-              else {
-                interferencesWithOtherThreads++;
-              }
-
-              // linear backoff based on how many times we contended with others:
-              final int toWaitMs = clamp(interferencesWithOtherThreads, 0, maxSleepPerAttemptMs);
-              if (toWaitMs == 0) {
-                Thread.yield();
-              }
-              else {
-                Thread.sleep(toWaitMs);
-              }
-            }
+            index.flush();
+            Thread.yield();//be nice to other wanting to use indexes
           }
         }
         catch (Throwable e) {
@@ -2262,168 +2212,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     @Override
     public void close() {
       scheduledFuture.cancel(false);
-    }
-  }
-
-  /**
-   * Try to reduce contention by looking on the signs of interference/contention -- like Lock.getQueueLength(),
-   * and fail of .tryLock(). Introduce a limit on how many such signs are OK during a single attempt to flush
-   * indexes -- 'contention quota'. Attempt to flush indexes continues until there are less total signs of
-   * contention than the quota allows. After quota is fully spent -> flush is interrupted, and the next flush
-   * attempt is re-scheduled in a short period, and with contention quota doubled. If quota is more than enough
-   * to flush everything -- i.e., there is unspent quota -- then the next attempt is scheduled in a regular
-   * interval, and the contention quota is slightly decreased for the next attempt.
-   * More details in a {@link GentleFlusherBase} javadocs
-   */
-  private final class GentleIndexFlusher extends GentleFlusherBase {
-    private static final int MIN_CONTENTION_QUOTA = 2;
-    private static final int INITIAL_CONTENTION_QUOTA = 16;
-    private static final int MAX_CONTENTION_QUOTA = 64;
-
-
-    private int lastModCount;
-    private final Map<ID<?, ?>, IndexFlushingState> flushingStates = new HashMap<>();
-
-    //=====================
-
-    private GentleIndexFlusher(final @NotNull ScheduledExecutorService scheduler) {
-      super("IndexesFlusher",
-            scheduler, FLUSHING_PERIOD_MS,
-            MIN_CONTENTION_QUOTA, MAX_CONTENTION_QUOTA, INITIAL_CONTENTION_QUOTA,
-            TelemetryManager.getInstance().getMeter(Indexes)
-      );
-    }
-
-    @Override
-    protected FlushResult flushAsMuchAsPossibleWithinQuota(final /*InOut*/ IntRef contentionQuota) {
-      //TODO RC: check if there _any_ index to flush -- otherwise no need to flush IndexingStamp either
-      IndexingStamp.flushCaches();
-
-      final IndexConfiguration indexes = getState();
-
-      FlushResult overallResult = FlushResult.NOTHING_TO_FLUSH_NOW;
-      for (ID<?, ?> indexId : indexes.getIndexIDs()) {
-        final IndexFlushingState indexFlushingState = flushingStates.computeIfAbsent(indexId, IndexFlushingState::new);
-        final FlushResult indexFlushResult = indexFlushingState.tryFlushIfNeeded(
-          indexes,
-          contentionQuota,
-          flushingPeriodMs
-        );
-        overallResult = overallResult.and(indexFlushResult);
-        if (LOG.isTraceEnabled()) {
-          LOG.trace("\t" + indexFlushingState + " " + indexFlushResult);
-        }
-
-        final int contentionQuotaRemains = contentionQuota.get();
-        if (contentionQuotaRemains <= 0) {
-          contentionQuota.set(contentionQuotaRemains);
-          return FlushResult.HAS_MORE_TO_FLUSH;
-        }
-      }
-
-      return overallResult;
-    }
-
-    @Override
-    public boolean hasSomethingToFlush() {
-      if (IndexingStamp.isDirty()) return true;
-
-      IndexConfiguration indexes = getState();
-      for (ID<?, ?> indexId : indexes.getIndexIDs()) {
-        UpdatableIndex<?, ?, FileContent, ?> index = indexes.getIndex(indexId);
-        if (index != null && index.isDirty()) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    @Override
-    protected boolean betterPostponeFlushNow() {
-      //RC: Basically, we're trying to flush 'if idle': i.e., we don't want to
-      //    issue a flush if somebody actively writes to indexes because flush
-      //    will slow them down, if not stall them -- and (regular) flush is
-      //    less important than e.g., a current UI task.
-      //    So we issue a flush only if there _were no updates_ in indexes
-      //    since the last invocation of this method:
-      final int currentModCount = myLocalModCount.get();
-      if (lastModCount != currentModCount) {
-        lastModCount = currentModCount;
-        return true;
-      }
-      return false;
-    }
-
-    private static int threadsCompetingForLock(final ReadWriteLock lock) {
-      if (!(lock instanceof ReentrantReadWriteLock)) {
-        throw new IllegalStateException("index.lock (" + lock + ") is not ReentrantReadWriteLock -- can't sample queue length");
-      }
-      //RC: worth to add StorageLockContext.defaultContextLock().getQueueLength() into
-      //    the equation: if storages are intensively used outside of indexes, it is better to
-      //    keep hands off the indexes flush also -- since the index flush will also compete for the
-      //    storage lock
-      final int storageLockQueueLength = StorageLockContext.defaultContextLock().getQueueLength();
-      return ((ReentrantReadWriteLock)lock).getQueueLength() + storageLockQueueLength;
-    }
-
-    private final class IndexFlushingState {
-      private final ID<?, ?> indexId;
-      private long lastFlushedMs = -1;
-
-      private IndexFlushingState(final @NotNull ID<?, ?> indexId) {
-        this.indexId = indexId;
-      }
-
-      public FlushResult tryFlushIfNeeded(final @NotNull IndexConfiguration indexes,
-                                          final @NotNull /*InOut*/ IntRef contentionQuota,
-                                          final long flushingPeriodMs) {
-        if (System.currentTimeMillis() - lastFlushedMs < flushingPeriodMs) {
-          //no need for another flush yet:
-          return FlushResult.NOTHING_TO_FLUSH_NOW;
-        }
-        final UpdatableIndex<?, ?, FileContent, ?> index = indexes.getIndex(indexId);
-        if (index == null) {
-          //did nothing -> spent no quota:
-          return FlushResult.NOTHING_TO_FLUSH_NOW;
-        }
-
-        int unspentContentionQuota = contentionQuota.get();
-        final ReadWriteLock indexProtectingLock = index.getLock();
-        final Lock indexReadLock = indexProtectingLock.readLock();
-
-        final boolean lockSucceeded = indexReadLock.tryLock();
-        if (lockSucceeded) {
-          try {
-            try {
-              index.flush();
-              lastFlushedMs = System.currentTimeMillis();
-            }
-            catch (Throwable e) {
-              requestRebuild(indexId, e);
-            }
-
-            unspentContentionQuota -= threadsCompetingForLock(indexProtectingLock);
-            contentionQuota.set(unspentContentionQuota);
-
-            return FlushResult.FLUSHED_ALL;
-          }
-          finally {
-            indexReadLock.unlock();
-          }
-        }
-
-        //+1 because of the thread currently holding lock (causing .tryLock to fail)
-        final int competingThreads = threadsCompetingForLock(indexProtectingLock) + 1;
-        unspentContentionQuota -= competingThreads;
-
-        contentionQuota.set(unspentContentionQuota);
-        return FlushResult.HAS_MORE_TO_FLUSH;
-      }
-
-      @Override
-      public String toString() {
-        return "IndexFlushingState[" + indexId + "][lastFlushed: " + lastFlushedMs + ']';
-      }
     }
   }
 }

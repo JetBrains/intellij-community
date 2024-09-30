@@ -3,8 +3,12 @@ package com.intellij.util.indexing.storage.fake
 
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.FileBasedIndexExtension
+import com.intellij.util.indexing.IdFilter
+import com.intellij.util.indexing.ValueContainer
+import com.intellij.util.indexing.VfsAwareIndexStorage
 import com.intellij.util.indexing.impl.IndexStorage
+import com.intellij.util.indexing.impl.IndexStorageLock
 import com.intellij.util.indexing.impl.ValueContainerImpl
 import com.intellij.util.indexing.impl.forward.EmptyForwardIndex
 import com.intellij.util.indexing.impl.forward.ForwardIndex
@@ -56,9 +60,19 @@ internal class FakeStorageLayout<K, V>(private val extension: FileBasedIndexExte
 }
 
 internal class FakeIndexStorage<K, V> : VfsAwareIndexStorage<K, V> {
+
   override fun processKeys(processor: Processor<in K>, scope: GlobalSearchScope?, idFilter: IdFilter?): Boolean = true
 
   override fun read(key: K): ValueContainer<V> = ValueContainerImpl.createNewValueContainer()
+
+
+  override fun lockForRead(): IndexStorageLock.LockStamp {
+    return IndexStorageLock.LockStamp { /*nothing*/ }
+  }
+
+  override fun lockForWrite(): IndexStorageLock.LockStamp {
+    return IndexStorageLock.LockStamp { /*nothing*/ }
+  }
 
   override fun flush() = Unit
 

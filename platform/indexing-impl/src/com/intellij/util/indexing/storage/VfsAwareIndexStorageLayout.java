@@ -18,5 +18,10 @@ public interface VfsAwareIndexStorageLayout<Key, Value> extends IndexStorageLayo
    */
   boolean WARN_IF_CLEANING_UNCLOSED_STORAGE = getBooleanProperty("indexing.only-warn-if-cleaning-unclosed-storage", true);
 
+  //TODO RC: define a covariant return VfsAwareIndexStorage<Key,Value> openIndexStorage() is useful, because logically
+  //         every VfsAwareIndexStorageLayout impl _should_ return VfsAwareIndexStorage impl from that method. Such
+  //         an override reduces the need of class-cast also. But currently it is treated as API-breaking override, so
+  //         I postpone this refactoring
+
   void clearIndexData();
 }

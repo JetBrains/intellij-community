@@ -4,15 +4,14 @@ package com.intellij.util.indexing;
 
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
-import com.intellij.util.indexing.impl.UpdateData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
+import com.intellij.util.indexing.impl.UpdateData;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
 
 @Internal
 public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends InvertedIndex<Key, Value, Input>{
@@ -21,8 +20,7 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
                          @NotNull GlobalSearchScope scope,
                          @Nullable IdFilter idFilter) throws StorageException;
 
-  @NotNull
-  ReadWriteLock getLock();
+  //@NotNull ReadWriteLock getLock();
 
   @NotNull
   Map<Key, Value> getIndexedFileData(int fileId) throws StorageException;

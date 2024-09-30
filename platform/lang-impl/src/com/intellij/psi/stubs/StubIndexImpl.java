@@ -24,6 +24,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
 import com.intellij.util.indexing.memory.InMemoryIndexStorage;
@@ -38,7 +39,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
 
 @ApiStatus.Internal
 public final class StubIndexImpl extends StubIndexEx {
@@ -280,16 +280,12 @@ public final class StubIndexImpl extends StubIndexEx {
   @Override
   void cleanupMemoryStorage() {
     UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> stubUpdatingIndex = getStubUpdatingIndex();
-    Lock mainIndexWriteLock = stubUpdatingIndex.getLock().writeLock();
-    mainIndexWriteLock.lock();
-    try {
+    //RC: don't expect stub indexes to be sharded, so ok to cast:
+    ((MapReduceIndex)stubUpdatingIndex).getStorage().withWriteLock(() -> {
       for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
         index.cleanupMemoryStorage();
       }
-    }
-    finally {
-      mainIndexWriteLock.unlock();
-    }
+    });
   }
 
   void clearAllIndices() {

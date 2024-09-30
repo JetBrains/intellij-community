@@ -11,17 +11,15 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.UpdateData;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
+import com.intellij.util.indexing.impl.UpdateData;
 import com.intellij.util.indexing.snapshot.EmptyValueContainer;
 import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
 
 public final class EmptyFileBasedIndex extends FileBasedIndexEx {
@@ -188,8 +186,6 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   private static final class EmptyIndex<Key, Value> implements UpdatableIndex<Key, Value, FileContent, Void>, MeasurableIndexStore {
     @SuppressWarnings("rawtypes")
     private static final EmptyIndex INSTANCE = new EmptyIndex();
-    private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
-
 
     @SuppressWarnings("unchecked")
     static <Key, Value> EmptyIndex<Key, Value> getInstance() {
@@ -201,11 +197,6 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
                                   @NotNull GlobalSearchScope scope,
                                   @Nullable IdFilter idFilter) {
       return true;
-    }
-
-    @Override
-    public @NotNull ReadWriteLock getLock() {
-      return myLock;
     }
 
     @Override

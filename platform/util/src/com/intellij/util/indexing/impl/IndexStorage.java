@@ -15,7 +15,7 @@ import java.io.IOException;
  * Storage of inverted index data
  * @author Eugene Zhuravlev
  */
-public interface IndexStorage<Key, Value> extends Flushable, Closeable {
+public interface IndexStorage<Key, Value> extends IndexStorageLock, Flushable, Closeable {
 
   void addValue(Key key, int inputId, Value value) throws StorageException;
 
@@ -29,8 +29,8 @@ public interface IndexStorage<Key, Value> extends Flushable, Closeable {
 
   void clear() throws StorageException;
 
-  @NotNull
-  ValueContainer<Value> read(Key key) throws StorageException;
+  //MAYBE RC: .read(key, Function<ValueContainer>) is a better design for multithreaded use
+  @NotNull ValueContainer<Value> read(Key key) throws StorageException;
 
   /**
    * Drops (some of) cached data, without touching data that is modified and needs to be persisted.

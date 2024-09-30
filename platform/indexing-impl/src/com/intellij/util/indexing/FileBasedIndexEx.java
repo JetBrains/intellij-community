@@ -30,10 +30,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.indexing.impl.IndexDebugProperties;
-import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
-import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
-import com.intellij.util.indexing.impl.UpdateData;
+import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import it.unimi.dsi.fastutil.ints.*;
@@ -51,7 +48,6 @@ import java.util.function.IntPredicate;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.*;
 import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
 
-@SuppressWarnings("TypeParameterHidesVisibleType")
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
   public static final boolean TRACE_STUB_INDEX_UPDATES = SystemProperties.getBooleanProperty("idea.trace.stub.index.update", false) ||
@@ -342,7 +338,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       TRACE_OF_ENTRIES_LOOKUP.get()
         .indexValidationFinished();
 
-      return ConcurrencyUtil.withLock(index.getLock().readLock(), () -> computable.convert(index));
+      //noinspection unchecked
+      return ((MapReduceIndex<K, V, FileContent>)index).getStorage().withReadLock(() -> computable.convert(index));
     }
     catch (StorageException e) {
       TRACE_OF_ENTRIES_LOOKUP.get().lookupFailed();

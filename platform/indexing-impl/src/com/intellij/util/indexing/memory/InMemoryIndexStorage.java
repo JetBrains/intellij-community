@@ -10,6 +10,7 @@ import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
+import com.intellij.util.indexing.impl.IndexStorageLock;
 import com.intellij.util.indexing.impl.IndexStorageUtil;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.io.KeyDescriptor;
@@ -18,45 +19,64 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @ApiStatus.Internal
 public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K, V> {
-  private final Map<K, ValueContainerImpl<V>> myMap;
+  private final Map<K, ValueContainerImpl<V>> inMemoryStorage;
+
+  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
   private volatile boolean closed = false;
 
   public InMemoryIndexStorage(@NotNull KeyDescriptor<K> keyDescriptor) {
-    myMap = ConcurrentCollectionFactory.createConcurrentMap(IndexStorageUtil.adaptKeyDescriptorToStrategy(keyDescriptor));
+    inMemoryStorage = ConcurrentCollectionFactory.createConcurrentMap(IndexStorageUtil.adaptKeyDescriptorToStrategy(keyDescriptor));
+  }
+
+  @Override
+  public @NotNull IndexStorageLock.LockStamp lockForRead() {
+    ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    readLock.lock();
+    return readLock::unlock;
+  }
+
+  @Override
+  public @NotNull IndexStorageLock.LockStamp lockForWrite() {
+    ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+    writeLock.lock();
+    return writeLock::unlock;
   }
 
   @Override
   public boolean processKeys(@NotNull Processor<? super K> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) {
-    return ContainerUtil.and(myMap.keySet(), processor::process);
+    try (var stamp = lockForRead()) {
+      return ContainerUtil.and(inMemoryStorage.keySet(), processor::process);
+    }
   }
 
   @Override
   public void addValue(K k, int inputId, V v) {
-    myMap.computeIfAbsent(k, __ -> ValueContainerImpl.createNewValueContainer()).addValue(inputId, v);
+    inMemoryStorage.computeIfAbsent(k, __ -> ValueContainerImpl.createNewValueContainer()).addValue(inputId, v);
   }
 
   @Override
   public void removeAllValues(@NotNull K k, int inputId) {
-    ValueContainerImpl<V> container = myMap.get(k);
+    ValueContainerImpl<V> container = inMemoryStorage.get(k);
     if (container == null) return;
     container.removeAssociatedValue(inputId);
     if (container.size() == 0) {
-      myMap.remove(k);
+      inMemoryStorage.remove(k);
     }
   }
 
   @Override
   public void clear() {
-    myMap.clear();
+    inMemoryStorage.clear();
   }
 
   @Override
   public @NotNull ValueContainer<V> read(K k) throws StorageException {
-    return ObjectUtils.notNull(myMap.get(k), ValueContainerImpl.createNewValueContainer());
+    return ObjectUtils.notNull(inMemoryStorage.get(k), ValueContainerImpl.createNewValueContainer());
   }
 
   @Override
@@ -87,6 +107,6 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
 
   @Override
   public int keysCountApproximately() {
-    return myMap.size();
+    return inMemoryStorage.size();
   }
 }

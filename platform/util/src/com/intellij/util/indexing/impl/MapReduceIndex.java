@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
@@ -21,8 +20,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
 
@@ -40,8 +37,6 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   private final IndexId<Key, Value> myIndexId;
   /** = extension.getIndexer() */
   private final DataIndexer<Key, Value, Input> myIndexer;
-
-  private final ReadWriteLock myLock = new ReentrantReadWriteLock();
 
   private final IndexStorage<Key, Value> myStorage;
   private final @Nullable ForwardIndex myForwardIndex;
@@ -137,10 +132,6 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     return myForwardIndexAccessor;
   }
 
-  public final @NotNull ReadWriteLock getLock() {
-    return myLock;
-  }
-
   public long getModificationStamp() {
     return myModificationStamp.get();
   }
@@ -153,10 +144,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
       //         its current implementation persists all the changes in those containers, AND
       //         invalidates the cache entirely, i.e. remove all the cached content. So flush()
       //         strongly tops .clearCaches() in its effect on occupied heap space.
-      ConcurrencyUtil.withLock(myLock.readLock(),
-                               () -> myStorage.clearCaches()
-      );
-
+      myStorage.clearCaches();
       flush();
     }
     catch (Throwable e) {
@@ -175,7 +163,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
 
   @Override
   public void clear() {
-    ConcurrencyUtil.withLock(myLock.writeLock(), () -> {
+    myStorage.withWriteLock(() -> {
       try {
         incrementModificationStamp();
         doClear();
@@ -186,6 +174,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     });
   }
 
+  //@GuardedWith(myStorage.writeLock)
   protected void doClear() throws StorageException, IOException {
     myStorage.clear();
     if (myForwardIndex != null) myForwardIndex.clear();
@@ -206,7 +195,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
     //And also it seems only partially correct, because it is not clear are all the accesses properly synchronized
     // (ordered) from concurrency PoV -- I really believe they are not properly synchronized, but can't point specific
     // violation now, and also don't have a solution at hand for how to fix it.
-    ConcurrencyUtil.withLock(myLock.readLock(), () -> {
+    myStorage.withReadLock(() -> {
       try {
         doFlush();
       }
@@ -240,7 +229,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   @Override
   public void dispose() {
     myLowMemoryFlusher.stop();
-    ConcurrencyUtil.withLock(myLock.writeLock(), () -> {
+    myStorage.withWriteLock(() -> {
       try {
         myDisposed = true;
         doDispose();
@@ -279,7 +268,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
 
   @Override
   public @NotNull ValueContainer<Value> getData(@NotNull Key key) throws StorageException {
-    return ConcurrencyUtil.withLock(myLock.readLock(), () -> {
+    return myStorage.withReadLock(() -> {
       try {
         if (isDisposed()) {
           return ValueContainerImpl.createNewValueContainer();
@@ -412,17 +401,17 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   public void updateWith(@NotNull UpdateData<Key, Value> updateData) throws StorageException {
-    ConcurrencyUtil.withLock(myLock.writeLock(), () -> {
+    myStorage.withWriteLock(() -> {
       IndexId<?, ?> oldIndexId = IndexDebugProperties.DEBUG_INDEX_ID.get();
       try {
         IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
         boolean hasDifference = updateData.iterateChanges(changedEntriesProcessor);
 
-        //TODO RC: separate lock for forwardIndex? -- it seems it is used only in updates (?), i.e. only in one place,
-        //         so if it is out-of-sync with inverted index it is not a big deal since nobody able to see it?
-        //         ...but it is important to not allow same fileId data to be applied by different threads, because
-        //         we need previous forwardIndex.get(fileId) to calculate diff! I.e. for each fileId forwardIndex[fileId]
-        //         updates must be serialized, even though for different fileIds there is no serialization required
+        //MAYBE RC: separate lock for forwardIndex? -- it seems it is used only in updates (?), i.e. only in one place,
+        //          so if it is out-of-sync with inverted index it is not a big deal since nobody able to see it?
+        //          ...but it is important to not allow same fileId data to be applied by different threads, because
+        //          we need previous forwardIndex.get(fileId) to calculate diff! I.e. for each fileId forwardIndex[fileId]
+        //          updates must be serialized, even though for different fileIds there is no serialization required
         if (hasDifference) {
           updateData.updateForwardIndex();
         }
