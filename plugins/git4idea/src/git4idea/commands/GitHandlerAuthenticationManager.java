@@ -192,11 +192,14 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
       return;
     }
 
+    GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
+    if (repo == null) return;
+
     GitCommand command = myHandler.getCommand();
     boolean needGpgSigning =
       (command == GitCommand.COMMIT || command == GitCommand.TAG || command == GitCommand.MERGE
        || command == GitCommand.CHERRY_PICK || command == GitCommand.REBASE) &&
-      GitGpgConfigUtilsKt.isGpgSignEnabled(project, root);
+      GitGpgConfigUtilsKt.isGpgSignEnabledCached(repo);
 
     if (needGpgSigning) {
       PinentryService.PinentryData pinentryData = PinentryService.getInstance(project).startSession();

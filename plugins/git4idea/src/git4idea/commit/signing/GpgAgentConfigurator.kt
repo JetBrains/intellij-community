@@ -30,8 +30,8 @@ import git4idea.commit.signing.PinentryService.PinentryData
 import git4idea.config.GitExecutable
 import git4idea.config.GitExecutableListener
 import git4idea.config.GitExecutableManager
-import git4idea.config.gpg.getGpgSignKey
-import git4idea.config.gpg.isGpgSignEnabled
+import git4idea.config.gpg.getGpgSignKeyCached
+import git4idea.config.gpg.isGpgSignEnabledCached
 import git4idea.gpg.PinentryApp
 import git4idea.repo.GitConfigListener
 import git4idea.repo.GitRepository
@@ -66,8 +66,8 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
              && // do not configure Gpg Agent for roots without commit.gpgSign and user.signingkey enabled
              GitRepositoryManager.getInstance(project)
                .repositories.any { repository ->
-                 isGpgSignEnabled(project, repository.root)
-                 && getGpgSignKey(project, repository.root) != null
+                 isGpgSignEnabledCached(repository)
+                 && getGpgSignKeyCached(repository) != null
                }
 
     }

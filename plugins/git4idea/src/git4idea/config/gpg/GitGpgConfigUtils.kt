@@ -8,8 +8,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.commands.GitImpl
 import git4idea.config.GitConfigUtil
+import git4idea.repo.GitProjectConfigurationCache
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.StringScanner
@@ -80,6 +82,13 @@ private fun checkKeyCapabilities(capabilities: String): Boolean {
   return capabilities.contains("s") || capabilities.contains("S")  // can Sign
 }
 
+@RequiresBackgroundThread
+fun isGpgSignEnabledCached(repository: GitRepository): Boolean {
+  return GitConfigUtil
+    .getBooleanValue(GitProjectConfigurationCache.getInstance(repository.project)
+                       .readRepositoryConfig(repository, GitConfigUtil.GPG_COMMIT_SIGN)) == true
+}
+
 fun isGpgSignEnabled(project: Project, root: VirtualFile): Boolean {
   try {
     return GitConfigUtil.getBooleanValue(GitConfigUtil.getValue(project, root, GitConfigUtil.GPG_COMMIT_SIGN)) == true
@@ -88,6 +97,11 @@ fun isGpgSignEnabled(project: Project, root: VirtualFile): Boolean {
     logger<GitConfigUtil>().warn("Cannot get ${GitConfigUtil.GPG_COMMIT_SIGN} config value", e)
     return false
   }
+}
+
+@RequiresBackgroundThread
+fun getGpgSignKeyCached(repository: GitRepository): String? {
+  return GitProjectConfigurationCache.getInstance(repository.project).readRepositoryConfig(repository, GitConfigUtil.GPG_COMMIT_SIGN_KEY)
 }
 
 fun getGpgSignKey(project: Project, root: VirtualFile): String? {
