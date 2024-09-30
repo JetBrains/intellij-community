@@ -85,7 +85,7 @@ public class GitResetOperation {
         Hash startHash = getHead(repository);
 
         GitCommandResult result = myGit.reset(repository, myMode, target, detector);
-        if (!result.success() && detector.wasMessageDetected()) {
+        if (!result.success() && detector.isDetected()) {
           GitCommandResult smartResult = proposeSmartReset(detector, repository, target);
           if (smartResult != null) {
             result = smartResult;

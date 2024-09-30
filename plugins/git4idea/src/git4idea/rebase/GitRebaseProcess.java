@@ -273,7 +273,7 @@ public class GitRebaseProcess {
           return new GitRebaseStatus(type);
         }
       }
-      else if (untrackedDetector.wasMessageDetected()) {
+      else if (untrackedDetector.isDetected()) {
         LOG.info("Untracked files detected in " + repoName);
         showUntrackedFilesError(untrackedDetector.getRelativeFilePaths(), repository, somethingRebased, alreadyRebased.keySet());
         GitRebaseStatus.Type type = somethingRebased ? GitRebaseStatus.Type.SUSPENDED : GitRebaseStatus.Type.ERROR;

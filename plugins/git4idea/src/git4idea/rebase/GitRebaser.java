@@ -250,14 +250,14 @@ public final class GitRebaser {
       final boolean allMerged = new RebaserConflictResolver(myProject, root, this).merge();
       return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
     }
-    else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
+    else if (untrackedWouldBeOverwrittenDetector.isDetected()) {
       LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
       GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, root,
                                                                 untrackedWouldBeOverwrittenDetector.getRelativeFilePaths(),
                                                                 GitBundle.message("rebase.operation.name"), null);
       return GitUpdateResult.ERROR;
     }
-    else if (localChangesDetector.wasMessageDetected()) {
+    else if (localChangesDetector.isDetected()) {
       LocalChangesWouldBeOverwrittenHelper.showErrorNotification(
         myProject,
         LOCAL_CHANGES_DETECTED,

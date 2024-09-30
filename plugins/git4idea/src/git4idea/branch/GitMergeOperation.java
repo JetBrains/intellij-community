@@ -126,7 +126,7 @@ class GitMergeOperation extends GitBranchOperation {
                                           alreadyUpToDateDetector, ambiguousReferenceDetector);
 
     String fullName = myReferenceToMerge.getFullName();
-    if (ambiguousReferenceDetector.hasHappened() //happens when e.g., tag with the same name as the branch exists
+    if (ambiguousReferenceDetector.isDetected() //happens when e.g., tag with the same name as the branch exists
         && !branchToMerge.equals(fullName)) {
       return mergeRepository(repository, fullName, mergeParams);
     }
@@ -135,29 +135,29 @@ class GitMergeOperation extends GitBranchOperation {
       LOG.info("Merged successfully");
       updateAndRefreshChangedVfs(repository, startHash);
       markSuccessful(repository);
-      if (alreadyUpToDateDetector.hasHappened()) {
+      if (alreadyUpToDateDetector.isDetected()) {
         alreadyUpToDateRepository = true;
       }
     }
-    else if (unmergedFiles.hasHappened()) {
+    else if (unmergedFiles.isDetected()) {
       LOG.info("Unmerged files error!");
       fatalUnmergedFilesError();
       fatalErrorHappened = true;
     }
-    else if (localChangesDetector.wasMessageDetected()) {
+    else if (localChangesDetector.isDetected()) {
       LOG.info("Local changes would be overwritten by merge!");
       boolean smartMergeSucceeded = proposeSmartMergePerformAndNotify(repository, localChangesDetector);
       if (!smartMergeSucceeded) {
         fatalErrorHappened = true;
       }
     }
-    else if (mergeConflict.hasHappened()) {
+    else if (mergeConflict.isDetected()) {
       LOG.info("Merge conflict");
       myConflictedRepositories.put(repository, Boolean.FALSE);
       updateAndRefreshChangedVfs(repository, startHash);
       markSuccessful(repository);
     }
-    else if (untrackedOverwrittenByMerge.wasMessageDetected()) {
+    else if (untrackedOverwrittenByMerge.isDetected()) {
       LOG.info("Untracked files would be overwritten by merge!");
       fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByMerge.getRelativeFilePaths());
       fatalErrorHappened = true;
@@ -257,7 +257,7 @@ class GitMergeOperation extends GitBranchOperation {
       GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
       GitCommandResult result = myGit.merge(repository, myReferenceToMerge.getFullName(), Collections.emptyList(), mergeConflict);
       if (!result.success()) {
-        if (mergeConflict.hasHappened()) {
+        if (mergeConflict.isDetected()) {
           myConflictedRepositories.put(repository, Boolean.TRUE);
           updateAndRefreshChangedVfs(repository, startHash);
           markSuccessful(repository);
@@ -384,7 +384,7 @@ class GitMergeOperation extends GitBranchOperation {
     }
   }
 
-  private static class MyAmbiguousNameDetector implements GitLineHandlerListener {
+  private static class MyAmbiguousNameDetector implements GitLineEventDetector {
 
     private static final @NotNull Pattern PATTERN = Pattern.compile("warning: refname '.*' is ambiguous\\.");
 
@@ -398,7 +398,8 @@ class GitMergeOperation extends GitBranchOperation {
       }
     }
 
-    public boolean hasHappened() {
+    @Override
+    public boolean isDetected() {
       return myHappened;
     }
   }

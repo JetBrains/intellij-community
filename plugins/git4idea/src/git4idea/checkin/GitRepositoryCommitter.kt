@@ -17,6 +17,7 @@ import git4idea.checkin.GitCheckinEnvironment.Companion.COMMIT_DATE_FORMAT
 import git4idea.checkin.GitCheckinEnvironment.Companion.runWithMessageFile
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
+import git4idea.commands.GitLineEventDetector
 import git4idea.commands.GitLineHandler
 import git4idea.commands.GitLineHandlerListener
 import git4idea.i18n.GitBundle
@@ -96,8 +97,8 @@ private fun GitLineHandler.setCommitMessage(messageFile: File) {
   addAbsoluteFile(messageFile)
 }
 
-private class GitGpgProblemDetector : GitLineHandlerListener {
-  var isDetected = false
+private class GitGpgProblemDetector : GitLineEventDetector {
+  override var isDetected = false
     private set
 
   override fun onLineAvailable(line: String, outputType: Key<*>) {
@@ -111,8 +112,8 @@ private class GitGpgProblemDetector : GitLineHandlerListener {
   }
 }
 
-private class GitEmptyCommitProblemDetector : GitLineHandlerListener {
-  var isDetected = false
+private class GitEmptyCommitProblemDetector : GitLineEventDetector {
+  override var isDetected = false
     private set
 
   override fun onLineAvailable(line: String, outputType: Key<*>) {

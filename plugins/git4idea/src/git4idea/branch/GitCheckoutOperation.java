@@ -143,21 +143,21 @@ class GitCheckoutOperation extends GitBranchOperation {
           vfsRefresh.finished();
           markSuccessful(repository);
         }
-        else if (unmergedFiles.hasHappened()) {
+        else if (unmergedFiles.isDetected()) {
           fatalUnmergedFilesError();
           fatalErrorHappened = true;
         }
-        else if (localChangesDetector.wasMessageDetected()) {
+        else if (localChangesDetector.isDetected()) {
           boolean smartCheckoutSucceeded = smartCheckoutOrNotify(repository, localChangesDetector, activity);
           if (!smartCheckoutSucceeded) {
             fatalErrorHappened = true;
           }
         }
-        else if (untrackedOverwrittenByCheckout.wasMessageDetected()) {
+        else if (untrackedOverwrittenByCheckout.isDetected()) {
           fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByCheckout.getRelativeFilePaths());
           fatalErrorHappened = true;
         }
-        else if (!myRefShouldBeValid && unknownPathspec.hasHappened()) {
+        else if (!myRefShouldBeValid && unknownPathspec.isDetected()) {
           markSkip(repository);
         }
         else {

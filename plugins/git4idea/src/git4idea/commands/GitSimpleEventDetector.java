@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author Kirill Likhodedov
  */
-public class GitSimpleEventDetector implements GitLineHandlerListener {
+public class GitSimpleEventDetector implements GitLineEventDetector {
 
   private final @NotNull Event myEvent;
   private boolean myHappened;
@@ -52,8 +52,16 @@ public class GitSimpleEventDetector implements GitLineHandlerListener {
     }
   }
 
+  /**
+   * @deprecated replaced with {@link #isDetected()}
+   */
+  @Deprecated
   public boolean hasHappened() {
-    return myHappened;
+    return isDetected();
   }
 
+  @Override
+  public boolean isDetected() {
+    return myHappened;
+  }
 }

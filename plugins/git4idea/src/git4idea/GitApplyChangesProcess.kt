@@ -159,7 +159,7 @@ internal class GitApplyChangesProcess(
           return strategy.doUserCommit(successfulCommits, alreadyPicked)
         }
       }
-      else if (conflictDetector.hasHappened()) {
+      else if (conflictDetector.isDetected) {
         val mergeCompleted = ConflictResolver(project, repository.root, commit.id.toShortString(),
                                               VcsUserUtil.getShortPresentation(commit.author), commit.subject,
                                               operationName).merge()
@@ -178,14 +178,14 @@ internal class GitApplyChangesProcess(
           return false
         }
       }
-      else if (untrackedFilesDetector.wasMessageDetected()) {
+      else if (untrackedFilesDetector.isDetected) {
         val description = getSuccessfulCommitDetailsIfAny(successfulCommits)
 
         GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, repository.root,
                                                                   untrackedFilesDetector.relativeFilePaths, operationName, description)
         return false
       }
-      else if (localChangesOverwrittenDetector.hasHappened()) {
+      else if (localChangesOverwrittenDetector.isDetected) {
         notifyError(GitBundle.message("apply.changes.would.be.overwritten", operationName), commit, successfulCommits)
         return false
       }
