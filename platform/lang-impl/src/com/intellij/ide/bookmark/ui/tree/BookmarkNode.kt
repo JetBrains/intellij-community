@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui.tree
 
 import com.intellij.ide.bookmark.Bookmark
@@ -23,7 +23,7 @@ import javax.swing.Icon
 abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B)
   : BackgroundSupplier, ProjectViewNode<B>(project, bookmark, DEFAULT) {
 
-  val bookmarksView: BookmarksView?
+  internal val bookmarksView: BookmarksView?
     get() = parentRootNode?.value
 
   private val bookmarkType

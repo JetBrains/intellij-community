@@ -7,9 +7,11 @@ import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder;
 import com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOrigin;
 import com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOriginImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class ModuleAwareContentEntityIteratorImpl extends RootHolderIteratorBase {
 
   private final Module module;

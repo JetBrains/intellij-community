@@ -18,6 +18,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class ArrangementListRowDecorator extends JPanel implements ArrangementUiComponent {
 
   private final @NotNull JLabel mySortLabel = new JLabel(AllIcons.ObjectBrowser.Sorted);

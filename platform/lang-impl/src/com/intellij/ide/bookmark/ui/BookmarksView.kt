@@ -73,7 +73,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   )
 
   private val structure = BookmarksTreeStructure(this)
-  val model: StructureTreeModel<BookmarksTreeStructure> = StructureTreeModel(structure, FolderNodeComparator(project), this)
+  internal val model: StructureTreeModel<BookmarksTreeStructure> = StructureTreeModel(structure, FolderNodeComparator(project), this)
   val tree: DnDAwareTree = DnDAwareTree(AsyncTreeModel(model, this))
   private val treeExpander = DefaultTreeExpander(tree)
   private val panel = BorderLayoutPanel()

@@ -1,6 +1,5 @@
 com/google/common/collect/ImmutableSet
 com/jetbrains/rd/util/lifetime/Lifetime
-com/jetbrains/rd/util/lifetime/LifetimeDefinition
 com/jetbrains/rd/util/reactive/ExecutionOrder
 com/jetbrains/rd/util/reactive/IOptProperty
 com/jetbrains/rd/util/reactive/IProperty
@@ -17,4 +16,3 @@ it/unimi/dsi/fastutil/ints/IntSet
 it/unimi/dsi/fastutil/objects/Object2IntMap
 kotlin/Triple
 kotlin/jvm/internal/DefaultConstructorMarker
-kotlin/text/Regex
