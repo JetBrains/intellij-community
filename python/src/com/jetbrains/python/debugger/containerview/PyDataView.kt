@@ -251,6 +251,11 @@ class PyDataView(private val project: Project) : DumbAware {
       PropertiesComponent.getInstance(project).setValue(COLORED_BY_DEFAULT, value, true)
     }
 
+    @JvmStatic
+    fun setAutoResizeEnabled(project: Project, value: Boolean) {
+      PropertiesComponent.getInstance(project).setValue(AUTO_RESIZE, value, true)
+    }
+
     fun getInstance(project: Project): PyDataView = project.service<PyDataView>()
   }
 }
