@@ -40,7 +40,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XDebugProcess;
@@ -970,7 +969,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       return debuggerScript;
     }
 
-    @RequiresBackgroundThread
     protected abstract @NotNull Function<TargetEnvironment, HostPort> createPortBinding(
       @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest);
 
@@ -1045,7 +1043,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
 
     @Override
-    @RequiresBackgroundThread
     protected @NotNull Function<@Nullable TargetEnvironment, HostPort> createPortBinding(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
       helpersAwareTargetRequest.getTargetEnvironmentRequest().getLocalPortBindings().add(myLocalPortBinding);
       helpersAwareTargetRequest.getTargetEnvironmentRequest().onEnvironmentPrepared((environment, indicator) -> {
@@ -1107,7 +1104,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
 
     @Override
-    @RequiresBackgroundThread
     public @NotNull Function<TargetEnvironment, HostPort> createPortBinding(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
       helpersAwareTargetRequest.getTargetEnvironmentRequest().getTargetPortBindings().add(myTargetPortBinding);
       return TargetEnvironmentFunctions.getTargetEnvironmentValue(myTargetPortBinding);
