@@ -410,7 +410,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
                  IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
              """);
   }
-  
+
   public void testNestedGenerics() {
     doTest("""
              class X {
@@ -758,7 +758,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
                      IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]
              """);
   }
-  
+
   public void testCommentInType() {
     doTest("""
              class A {
@@ -784,7 +784,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
                   THROWS_LIST:PsiRefListStub[THROWS_LIST:]
             """);
   }
-  
+
   public void testInterfaceKeywordInBody() {
     String source = """
       class X {
@@ -800,7 +800,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     PsiClassStub<?> classStub = (PsiClassStub<?>)stubs.get(1);
     assertFalse(classStub.isInterface());
   }
-  
+
   public void testTypeAnnotation() {
     String source = """
       import org.jetbrains.annotations.NotNull;
@@ -826,6 +826,32 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     assertEquals("""
                    /1->@NotNull
                    /1/1->@NotNull""", annotations.toString());
+  }
+
+  public void testTypeAnnotationQualified() {
+    String source = """
+      import pkg.Anno1;
+      import pkg.Anno2;
+      
+      public final class Container {
+          public final native com.foo.@Anno1 Outer.@Anno2 Inner test();
+      }
+      """;
+    PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
+    FileASTNode fileNode = file.getNode();
+    assertNotNull(fileNode);
+    assertFalse(fileNode.isParsed());
+    StubElement<?> element = myBuilder.buildStubTree(file);
+    PsiClassStub<?> classStub = ContainerUtil.findInstance(element.getChildrenStubs(), PsiClassStub.class);
+    assertNotNull(classStub);
+    PsiMethodStub methodStub = ContainerUtil.findInstance(classStub.getChildrenStubs(), PsiMethodStub.class);
+    assertNotNull(methodStub);
+    TypeInfo typeInfo = methodStub.getReturnTypeText();
+    assertEquals("com.foo.Outer.Inner", typeInfo.text());
+    TypeAnnotationContainer annotations = typeInfo.getTypeAnnotations();
+    assertEquals("""
+                   /.->@Anno1
+                   ->@Anno2""", annotations.toString());
   }
 
   public void testSOEProof() {
