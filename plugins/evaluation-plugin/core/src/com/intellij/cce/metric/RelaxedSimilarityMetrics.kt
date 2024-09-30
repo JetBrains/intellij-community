@@ -90,7 +90,7 @@ abstract class BaseRelaxedMetric(showByDefault: Boolean) : LineSimularityMetric(
   override fun computeExpected(lookup: Lookup, expectedText: String): Double = RelaxedSimilarityUtils.RelaxedResult.MULTI.weight
 }
 
-class RelaxedExactMatchOnlyAlphanum(showByDefault: Boolean) : BaseRelaxedMetric(showByDefault) {
+class RelaxedExactMatchOnlyAlphanum(showByDefault: Boolean = false) : BaseRelaxedMetric(showByDefault) {
   override val name: String = "Relaxed alphanumeric-only exact match"
   override val description: String =
     "Checks that for any the suggested lines of the completion, at least one of the lines from middle matches it."
@@ -101,7 +101,7 @@ class RelaxedExactMatchOnlyAlphanum(showByDefault: Boolean) : BaseRelaxedMetric(
 /**
  * Note that the default threshold value is picked experimenatlly.
  */
-class RelaxedEditDistanceOnlyAlphanum(showByDefault: Boolean, threshold: Double = 0.767) : BaseRelaxedMetric(showByDefault) {
+class RelaxedEditDistanceOnlyAlphanum(showByDefault: Boolean = false, threshold: Double = 0.767) : BaseRelaxedMetric(showByDefault) {
   override val name: String = "Relaxed alphanumeric-only edit distance"
   override val description: String =
     "Checks that for any the suggested lines of the completion, there is a line from middle that has a normalized edit distance less than $threshold."

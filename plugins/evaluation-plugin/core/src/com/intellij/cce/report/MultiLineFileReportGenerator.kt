@@ -2,9 +2,9 @@
 package com.intellij.cce.report
 
 import com.intellij.cce.core.Session
-import com.intellij.cce.metric.CharFScore
 import com.intellij.cce.metric.CharFScoreFirstLine
 import com.intellij.cce.metric.Metric
+import com.intellij.cce.metric.RelaxedExactMatchOnlyAlphanum
 import com.intellij.cce.metric.TotalLatencyMetric
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*
@@ -56,6 +56,6 @@ class MultiLineFileReportGenerator(
     private val PRIMARY_METRIC = CharFScoreFirstLine()
     private const val PRIMARY_COLORING_SCALER = 120
 
-    private val SECONDARY_METRIC = CharFScore()
+    private val SECONDARY_METRIC = RelaxedExactMatchOnlyAlphanum()
   }
 }
