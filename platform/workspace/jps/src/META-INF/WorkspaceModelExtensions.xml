@@ -26,6 +26,12 @@
     <registryKey key="ide.workspace.model.write.external.files.directly" defaultValue="false" restartRequired="false"
                  description="When enabled, WSM bypasses module's configuration stores on project save and writes module xml files directly
                               to 'cache' directory (iml files are still saved through module's configuration stores)"/>
+    <registryKey key="ide.workspace.model.write.external.files.immediately" defaultValue="false" restartRequired="false"
+                 description="When enabled, WSM writes module xml files immediately when the file content is available
+                              (needs less heap because all the intermediate objects will be collected sooner).
+                              When disabled (legacy behavior) WSM will collect all the contents of all the files for
+                              each changed module, and then flush all the data in a separate pass (needs more heap to keep
+                              all the intermediate objects)."/>
     <workspaceModel.customFacetRelatedEntitySerializer implementation="com.intellij.platform.workspace.jps.serialization.impl.DefaultFacetEntitySerializer" />
   </extensions>
 </idea-plugin>
