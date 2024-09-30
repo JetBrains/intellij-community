@@ -50,6 +50,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testEnumComparison() = doTest()
     fun testEnumOrdinal() = doTest()
     fun testExclamationK2() = doTest()
+    fun testExtensionImplicitThis() = doTest()
     fun testFieldAliasing() = doTest()
     fun testForLoop() = doTest()
     fun testInRange() = doTest()
@@ -121,12 +122,12 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
             // LightClassUtil.toLightMethods triggers loading of some annotation classes from Kotlin standard library, including
             // kotlin.SinceKotlin, or kotlin.annotation.Target.
             // It goes through it.navigationElement inside org.jetbrains.kotlin.asJava.LightClassUtil.getPsiMethodWrappers
-            // then hundreds of frames and eventually ends up in PsiRawFirBuilder.Visitor.toFirConstructor where getConstructorKeyword 
+            // then hundreds of frames and eventually ends up in PsiRawFirBuilder.Visitor.toFirConstructor where getConstructorKeyword
             // is called, which in turn causes tree loading.
             // See KT-66400 for details.
-            val fromLightClassUtil = StackWalker.getInstance().walk { stream -> stream.anyMatch { ste -> 
+            val fromLightClassUtil = StackWalker.getInstance().walk { stream -> stream.anyMatch { ste ->
                 ste.className == "org.jetbrains.kotlin.asJava.LightClassUtilsKt" &&
-                ste.methodName == "toLightMethods"         
+                ste.methodName == "toLightMethods"
             } }
             !fromLightClassUtil
         }

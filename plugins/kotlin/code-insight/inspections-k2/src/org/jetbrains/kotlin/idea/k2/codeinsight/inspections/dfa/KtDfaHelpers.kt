@@ -16,14 +16,11 @@ import com.intellij.psi.PsiTypes
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef.Companion.classDef
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -106,6 +103,18 @@ private fun KaType.toDfTypeNotNullable(): DfType {
         is KaIntersectionType -> conjuncts.map { type -> type.toDfType() }.fold(DfType.TOP, DfType::meet)
         else -> DfType.TOP
     }
+}
+
+context(KaSession)
+internal fun KaVariableSymbol.toSpecialField(): SpecialField? {
+    if (this !is KaPropertySymbol) return null
+    val name = name.asString()
+    if (name != "size" && name != "length" && name != "ordinal") return null
+    val classSymbol = containingDeclaration as? KaNamedClassSymbol ?: return null
+    val field = SpecialField.fromQualifierType(classSymbol.defaultType.toDfType()) ?: return null
+    val expectedFieldName = if (field == SpecialField.ARRAY_LENGTH) "size" else field.toString()
+    if (name != expectedFieldName) return null
+    return field
 }
 
 context(KaSession)

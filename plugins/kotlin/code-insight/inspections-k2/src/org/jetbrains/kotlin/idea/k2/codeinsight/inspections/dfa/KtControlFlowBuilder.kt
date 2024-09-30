@@ -40,7 +40,6 @@ import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
-import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinCallableReferenceInstruction
@@ -48,7 +47,6 @@ import org.jetbrains.kotlin.idea.inspections.dfa.KotlinEqualityInstruction
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef.Companion.classDef
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtVariableDescriptor.Companion.variableDescriptor
-import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -828,7 +826,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (StandardNames.BUILT_INS_PACKAGE_FQ_NAME != target.callableId?.packageName) return null
         var outerExpr: KtExpression = call.parent as? KtQualifiedExpression ?: return null
         var outerExprParent = outerExpr.parent
-        while (outerExprParent is KtBinaryExpression && AND_OR_ELVIS_TOKENS.contains(outerExprParent.operationToken) && 
+        while (outerExprParent is KtBinaryExpression && AND_OR_ELVIS_TOKENS.contains(outerExprParent.operationToken) &&
             outerExprParent.right == outerExpr) {
             outerExpr = outerExprParent
             outerExprParent = outerExpr.parent
@@ -1189,10 +1187,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         processExpression(range)
         if (range != null) {
-            val kotlinType = range.getKotlinType()
-            when (val lengthField = findSpecialField(kotlinType)) {
+            val dfType = range.getKotlinType().toDfType()
+            when (val lengthField = SpecialField.fromQualifierType(dfType)) {
                 SpecialField.ARRAY_LENGTH, SpecialField.STRING_LENGTH, SpecialField.COLLECTION_SIZE -> {
-                    val collectionVar = flow.createTempVariable(kotlinType.toDfType())
+                    val collectionVar = flow.createTempVariable(dfType)
                     addInstruction(JvmAssignmentInstruction(null, collectionVar))
                     addInstruction(PopInstruction())
                     return {
@@ -1211,32 +1209,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         addInstruction(PopInstruction())
         return { pushUnknown() }
-    }
-
-    context(KaSession)
-    private fun findSpecialField(type: KaType?): SpecialField? {
-        type ?: return null
-        return when {
-            type.isEnum() -> SpecialField.ENUM_ORDINAL
-            type.isArrayOrPrimitiveArray -> SpecialField.ARRAY_LENGTH
-            type.isSubtypeOf(StandardClassIds.Collection) ||
-                    type.isSubtypeOf(StandardClassIds.Map) -> SpecialField.COLLECTION_SIZE
-
-            type.isStringType -> SpecialField.STRING_LENGTH
-            else -> null
-        }
-    }
-
-    context(KaSession)
-    private fun findSpecialField(expr: KtQualifiedExpression): SpecialField? {
-        val selector = expr.selectorExpression ?: return null
-        val receiver = expr.receiverExpression
-        val selectorText = selector.text
-        if (selectorText != "size" && selectorText != "length" && selectorText != "ordinal") return null
-        val field = findSpecialField(receiver.getKotlinType()) ?: return null
-        val expectedFieldName = if (field == SpecialField.ARRAY_LENGTH) "size" else field.toString()
-        if (selectorText != expectedFieldName) return null
-        return field
     }
 
     context(KaSession)
@@ -1378,27 +1350,32 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(ConditionalGotoInstruction(offset, DfTypes.NULL))
         }
         val selector = expr.selectorExpression
-        selector?.let(flow::startElement)
-        if (!pushJavaClassField(receiver, selector, expr)) {
-            val specialField = findSpecialField(expr)
-            if (specialField != null) {
-                addInstruction(UnwrapDerivedVariableInstruction(specialField))
-                if (expr is KtSafeQualifiedExpression) {
-                    addInstruction(WrapDerivedVariableInstruction(expr.getKotlinType().toDfType(), SpecialField.UNBOX))
-                }
-            } else {
-                when (selector) {
-                    is KtCallExpression -> processCallExpression(selector, true)
-                    is KtSimpleNameExpression -> processReferenceExpression(selector, true)
-                    else -> {
-                        addInstruction(PopInstruction())
-                        processExpression(selector)
+        if (selector == null) {
+            addInstruction(PopInstruction())
+            pushUnknown()
+        } else {
+            selector.let(flow::startElement)
+            if (!pushJavaClassField(receiver, selector, expr)) {
+                val specialField = (selector.mainReference?.resolveToSymbol() as? KaVariableSymbol)?.toSpecialField()
+                if (specialField != null) {
+                    addInstruction(UnwrapDerivedVariableInstruction(specialField))
+                    if (expr is KtSafeQualifiedExpression) {
+                        addInstruction(WrapDerivedVariableInstruction(expr.getKotlinType().toDfType(), SpecialField.UNBOX))
+                    }
+                } else {
+                    when (selector) {
+                        is KtCallExpression -> processCallExpression(selector, true)
+                        is KtSimpleNameExpression -> processReferenceExpression(selector, true)
+                        else -> {
+                            addInstruction(PopInstruction())
+                            processExpression(selector)
+                        }
                     }
                 }
+                addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
             }
-            addInstruction(ResultOfInstruction(KotlinExpressionAnchor(expr)))
+            selector.let(flow::finishElement)
         }
-        selector?.let(flow::finishElement)
         if (expr is KtSafeQualifiedExpression) {
             val endOffset = DeferredOffset()
             addInstruction(GotoInstruction(endOffset))
@@ -1794,26 +1771,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(KaSession)
     private fun processThisExpression(expr: KtThisExpression) {
         val exprType = expr.getKotlinType()
-        val symbol = ((expr.instanceReference as? KtNameReferenceExpression)?.reference as? KtReference)?.resolveToSymbol()
-        var varDesc: VariableDescriptor? = null
-        var declType: KaType? = null
-        if (symbol is KaReceiverParameterSymbol && exprType != null) {
-            val function = symbol.psi as? KtFunctionLiteral
-            declType = symbol.returnType
-            if (function != null) {
-                varDesc = KtLambdaThisVariableDescriptor(function, declType.toDfType())
-            } else {
-                if (declType is KaClassType) {
-                    val classDef = declType.expandedSymbol?.classDef()
-                    if (classDef != null) {
-                        varDesc = KtThisDescriptor(classDef, symbol.owningCallableSymbol.name?.asString())
-                    }
-                }
-            }
-        } 
-        else if (symbol is KaClassSymbol && exprType != null) {
-            varDesc = KtThisDescriptor(symbol.classDef())
-        }
+        val (varDesc, declType) = KtThisDescriptor.descriptorFromThis(expr)
         if (varDesc != null) {
             addInstruction(JvmPushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
             addImplicitConversion(declType, exprType)

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef.Companion.classDef
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -132,26 +134,43 @@ class KtVariableDescriptor(
         context(KaSession)
         fun createFromSimpleName(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
             val varFactory = factory.varFactory
+            if (expr is KtThisExpression) {
+                return KtThisDescriptor.descriptorFromThis(expr).first?.let { varFactory.createVariableValue(it) }
+            }
             if (expr !is KtSimpleNameExpression) return null
             val symbol: KaVariableSymbol = expr.mainReference.resolveToSymbol() as? KaVariableSymbol ?: return null
             if (symbol is KaValueParameterSymbol || symbol is KaLocalVariableSymbol) {
                 return varFactory.createVariableValue(symbol.variableDescriptor())
             }
+            val qualifier = findQualifier(factory, expr, symbol)
+            val specialField = symbol.toSpecialField()
+            if (specialField != null) {
+                return varFactory.createVariableValue(specialField, qualifier)
+            }
             if (!isTrackableProperty(symbol)) return null
-            val parent = expr.parent
-            var qualifier: DfaVariableValue? = null
             if ((symbol.containingDeclaration as? KaClassSymbol)?.classKind == KaClassKind.OBJECT) {
                 // property in an object: singleton, can track
                 return varFactory.createVariableValue(symbol.variableDescriptor(), null)
             }
+            if (symbol.psi?.parent is KtFile) {
+                // top-level declaration
+                return varFactory.createVariableValue(symbol.variableDescriptor(), null)
+            }
+            if (qualifier != null) {
+                return varFactory.createVariableValue(symbol.variableDescriptor(), qualifier)
+            }
+            return null
+        }
+
+        context(KaSession)
+        private fun findQualifier(factory: DfaValueFactory, expr: KtSimpleNameExpression, symbol: KaVariableSymbol): DfaVariableValue? {
+            val parent = expr.parent
+            var qualifier: DfaVariableValue? = null
+            val varFactory = factory.varFactory
             if (parent is KtQualifiedExpression && parent.selectorExpression == expr) {
                 val receiver = parent.receiverExpression
                 qualifier = createFromSimpleName(factory, receiver)
             } else {
-                if (symbol.psi?.parent is KtFile) {
-                    // top-level declaration
-                    return varFactory.createVariableValue(symbol.variableDescriptor(), null)
-                }
                 val receiverParameter = (expr.resolveToCall()?.singleVariableAccessCall()
                     ?.partiallyAppliedSymbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
                         as? KaReceiverParameterSymbol
@@ -160,16 +179,15 @@ class KtVariableDescriptor(
                 if (functionLiteral != null && type != null) {
                     qualifier = varFactory.createVariableValue(KtLambdaThisVariableDescriptor(functionLiteral, type.toDfType()))
                 } else {
-                    val classOrObject = symbol.containingDeclaration as? KaClassSymbol
-                    if (classOrObject != null) {
-                        qualifier = varFactory.createVariableValue(KtThisDescriptor(classOrObject.classDef()))
+                    val classSymbol = (((receiverParameter?.psi as? KtTypeReference)?.type as? KaClassType)?.symbol as? KaClassSymbol)
+                                ?: symbol.containingDeclaration as? KaClassSymbol
+                    if (classSymbol != null) {
+                        qualifier = varFactory.createVariableValue(
+                            KtThisDescriptor(classSymbol.classDef(), (expr.parentOfType<KtFunction>() as? KtNamedFunction)?.name))
                     }
                 }
             }
-            if (qualifier != null) {
-                return varFactory.createVariableValue(symbol.variableDescriptor(), qualifier)
-            }
-            return null
+            return qualifier
         }
 
         private fun isTrackableProperty(target: KaVariableSymbol?) =
