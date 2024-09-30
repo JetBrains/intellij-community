@@ -587,21 +587,26 @@ class GroovyBuildScriptManipulator(
                 compilerOptions.languageVersion.set(KotlinVersion.KOTLIN_1_9)
             }
          */
-        var replaced = outerDslBlock.findAndReplaceCompilerOption(parameterName, parameterValue, compilerOption, replaceIt = replaceIt)
-        if (!replaced) {
+        var foundAndReplaced =
+            outerDslBlock.findAndReplaceCompilerOption(parameterName, parameterValue, compilerOption, replaceIt = replaceIt)
+        if (!foundAndReplaced) {
             /*
             If we didn't find, we try to find it in the `compilerOptions {`
              */
-            val compilerOptionsBlock = outerDslBlock.getBlockOrCreate("compilerOptions")
-            replaced = compilerOptionsBlock.findAndReplaceCompilerOption(
-                parameterName,
-                parameterValue,
-                compilerOption,
-                checkOptionToExist = false,
-                replaceIt = replaceIt
-            )
+            var compilerOptionsBlock = outerDslBlock.getBlockByName("compilerOptions")
+            if (compilerOptionsBlock != null) {
+                foundAndReplaced = compilerOptionsBlock.findAndReplaceCompilerOption(
+                    parameterName,
+                    parameterValue,
+                    compilerOption,
+                    checkCompilerOptionPrefixToExist = false,
+                    replaceIt = replaceIt
+                )
+            } else {
+                compilerOptionsBlock = outerDslBlock.createBlock("compilerOptions")
+            }
 
-            if (!replaced) {
+            if (!foundAndReplaced) {
                 val added = compilerOptionsBlock.addLastExpressionInBlockIfNeeded(compilerOption.expression)
                 if (added) {
                     compilerOption.classToImport?.let {
@@ -616,7 +621,7 @@ class GroovyBuildScriptManipulator(
         parameterName: String,
         parameterValue: String,
         compilerOption: CompilerOption,
-        checkOptionToExist: Boolean = true,
+        checkCompilerOptionPrefixToExist: Boolean = true,
         replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
                                 /* precompiledReplacement = */ String?,
                                 /* insideCompilerOptions = */ Boolean
@@ -627,7 +632,7 @@ class GroovyBuildScriptManipulator(
             val statementLeftPartText =
                 (stmt as? GrAssignmentExpression)?.lValue?.text ?: (stmt as? GrMethodCallExpression)?.invokedExpression?.text
             val statementContainsParameterName = if (statementLeftPartText?.contains(parameterName) == true) {
-                if (checkOptionToExist && statementLeftPartText.contains("compilerOptions.$parameterName")) {
+                if (checkCompilerOptionPrefixToExist && statementLeftPartText.contains("compilerOptions.$parameterName")) {
                     insideCompilerOptions = true
                 }
                 true
@@ -836,14 +841,25 @@ class GroovyBuildScriptManipulator(
         ): GrClosableBlock {
             var block = getBlockByName(name)
             if (block == null) {
-                val factory = GroovyPsiElementFactory.getInstance(project)
-                val newBlock = factory.createExpressionFromText("$name{\n}\n")
-                if (!customInsert(newBlock)) {
-                    addAfter(newBlock, statements.lastOrNull() ?: firstChild)
-                }
-                block = getBlockByName(name)!!
+                block = createBlock(name, customInsert)
             }
             return block
+        }
+
+        /**
+         * Use with caution and only if you performed `getBlockByName(name)` right before calling this method!
+         * Otherwise, use org.jetbrains.kotlin.idea.groovy.GroovyBuildScriptManipulator.Companion.getBlockOrCreate
+         */
+        private fun GrStatementOwner.createBlock(
+            name: String,
+            customInsert: GrStatementOwner.(newBlock: PsiElement) -> Boolean = { false }
+        ): GrClosableBlock {
+            val factory = GroovyPsiElementFactory.getInstance(project)
+            val newBlock = factory.createExpressionFromText("$name{\n}\n")
+            if (!customInsert(newBlock)) {
+                addAfter(newBlock, statements.lastOrNull() ?: firstChild)
+            }
+            return getBlockByName(name)!!
         }
 
         fun GrStatementOwner.getBlockOrPrepend(name: String) = getBlockOrCreate(name) { newBlock ->
