@@ -12,7 +12,9 @@ import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.asEntity
 import com.intellij.platform.project.findProject
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.xdebugger.XDebuggerManager
@@ -24,17 +26,16 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.RemoteValueHintId
 import com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
+import com.jetbrains.rhizomedb.entity
+import fleet.kernel.change
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
 import java.awt.Point
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 
 internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHintsRemoteApi {
   override suspend fun getExpressionInfo(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): ExpressionInfo? {
@@ -120,8 +121,15 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
         val expressionInfo = getExpressionInfo(evaluator, project, hintType, editor, offset) ?: return@withContext null
         XValueHint(project, editor, point, hintType, expressionInfo, evaluator, session, false)
       }
-      val hintId = BackendDebuggerValueLookupHintsHolder.getInstance(project).registerNewHint(hint)
-      RemoteValueHintId(hintId)
+      val hintEntity = withKernel {
+        change {
+          LocalValueHintEntity.new {
+            it[LocalValueHintEntity.Project] = project.asEntity()
+            it[LocalValueHintEntity.Hint] = hint
+          }
+        }
+      }
+      RemoteValueHintId(hintEntity.eid)
     }
   }
 
@@ -143,9 +151,11 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
     return null
   }
 
-  override suspend fun showHint(projectId: ProjectId, hintId: RemoteValueHintId): Flow<Unit> {
-    val project = projectId.findProject()
-    val hint = BackendDebuggerValueLookupHintsHolder.getInstance(project).getHintById(hintId.id) ?: return emptyFlow()
+  override suspend fun showHint(hintId: RemoteValueHintId): Flow<Unit> {
+    val hint = withKernel {
+      (entity(hintId.eid) as? LocalValueHintEntity)?.hint
+    } ?: return emptyFlow()
+
     return callbackFlow {
       withContext(Dispatchers.EDT) {
         hint.invokeHint {
@@ -157,41 +167,18 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
     }
   }
 
-  override suspend fun removeHint(projectId: ProjectId, hintId: RemoteValueHintId, force: Boolean) {
-    val project = projectId.findProject()
-    val hint = BackendDebuggerValueLookupHintsHolder.getInstance(project).getHintById(hintId.id) ?: return
-    BackendDebuggerValueLookupHintsHolder.getInstance(project).removeHint(hintId.id)
-    if (force) {
-      withContext(Dispatchers.EDT) {
-        hint.hideHint()
+  override suspend fun removeHint(hintId: RemoteValueHintId, force: Boolean) {
+    withKernel {
+      val hintEntity = entity(hintId.eid) as? LocalValueHintEntity ?: return@withKernel
+      val hint = hintEntity.hint
+      if (force) {
+        withContext(Dispatchers.EDT) {
+          hint.hideHint()
+        }
+      }
+      change {
+        hintEntity.delete()
       }
     }
-  }
-}
-
-// exposed only for backend.split part
-@ApiStatus.Internal
-@Service(Service.Level.PROJECT)
-class BackendDebuggerValueLookupHintsHolder(project: Project) {
-  private val idCounter = AtomicInteger()
-  private val hints = ConcurrentHashMap<Int, AbstractValueHint>()
-
-  fun registerNewHint(hint: AbstractValueHint): Int {
-    val newHintId = idCounter.incrementAndGet()
-    hints[newHintId] = hint
-    return newHintId
-  }
-
-  fun removeHint(hintId: Int) {
-    hints.remove(hintId)
-  }
-
-  fun getHintById(hintId: Int): AbstractValueHint? {
-    return hints[hintId]
-  }
-
-  companion object {
-    @JvmStatic
-    fun getInstance(project: Project): BackendDebuggerValueLookupHintsHolder = project.service<BackendDebuggerValueLookupHintsHolder>()
   }
 }

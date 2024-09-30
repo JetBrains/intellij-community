@@ -7,6 +7,7 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+import com.jetbrains.rhizomedb.EID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -23,9 +24,9 @@ interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
 
   suspend fun createHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType, fromPlugins: Boolean): RemoteValueHintId?
 
-  suspend fun showHint(projectId: ProjectId, hintId: RemoteValueHintId): Flow<Unit>
+  suspend fun showHint(hintId: RemoteValueHintId): Flow<Unit>
 
-  suspend fun removeHint(projectId: ProjectId, hintId: RemoteValueHintId, force: Boolean)
+  suspend fun removeHint(hintId: RemoteValueHintId, force: Boolean)
 
   companion object {
     @JvmStatic
@@ -39,4 +40,4 @@ interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
 
 @ApiStatus.Internal
 @Serializable
-data class RemoteValueHintId(val id: Int)
+data class RemoteValueHintId(val eid: EID)

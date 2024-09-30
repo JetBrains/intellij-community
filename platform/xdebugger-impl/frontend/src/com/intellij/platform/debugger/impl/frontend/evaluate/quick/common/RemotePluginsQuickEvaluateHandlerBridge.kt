@@ -48,7 +48,7 @@ class RemoteValueHint(
     hintCoroutineScope!!.launch(Dispatchers.IO) {
       val hint = remoteHint.await() ?: return@launch
       val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
-      val closedEvent = remoteApi.showHint(projectId, hint)
+      val closedEvent = remoteApi.showHint(hint)
       withContext(Dispatchers.EDT) {
         closedEvent.collect {
           hideHint(force = false)
@@ -73,7 +73,7 @@ class RemoteValueHint(
         return@launch
       }
       val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
-      remoteApi.removeHint(projectId, hint, force)
+      remoteApi.removeHint(hint, force)
       hintCoroutineScope?.cancel()
     }
     super.hideHint()
