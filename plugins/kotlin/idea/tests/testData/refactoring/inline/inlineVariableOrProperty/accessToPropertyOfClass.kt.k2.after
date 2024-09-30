@@ -3,7 +3,7 @@ class Foo(val i: Int) {
         object : Runnable {
             override fun run() {
                 if ((1..2).find {
-                        println(this@Foo.i)
+                        println(i)
                         true
                     } != 0) {
                 }

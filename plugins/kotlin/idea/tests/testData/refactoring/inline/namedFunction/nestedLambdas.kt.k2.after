@@ -9,7 +9,7 @@ fun bar(a: Bar.() -> Unit) {}
 fun foobs() {
     foo {
         bar {
-            this@foo.baz("Ah")
+            baz("Ah")
         }
     }
 }
