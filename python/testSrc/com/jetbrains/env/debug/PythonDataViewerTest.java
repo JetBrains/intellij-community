@@ -62,7 +62,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
   public void testSeries() {
-    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", ImmutableSet.of(7)) {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", Collections.singleton(7)) {
       @Override
       public void testing() throws Exception {
         doTest("series", 4, 1, arrayChunk -> {
@@ -76,7 +76,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   @Test
   public void testPandasRepeatingColumnNames() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_pandas_repeating_column_names.py",
-                                              ImmutableSet.of(7)) {
+                                              Collections.singleton(7)) {
       @Override
       public void testing() throws Exception {
         doTest("c", 10, 2, (varName, session) -> getChunk(varName, "%d", session), arrayChunk -> {
@@ -94,7 +94,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
   public void testDataFrameFloatFormatting() {
-    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7)) {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", Collections.singleton(7)) {
       @Override
       public void testing() throws Exception {
         doTest("df1", 3, 5, (varName, session) -> getChunk(varName, "%.2f", session), arrayChunk -> {
@@ -110,7 +110,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
   public void testDataFrameDefaultFormatting() {
-    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7)) {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", Collections.singleton(7)) {
       @Override
       public void testing() throws Exception {
         doTest("df1", 3, 5, (varName, session) -> getChunk(varName, "%", session), arrayChunk -> {
@@ -126,7 +126,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
   public void testSeriesFormatting() {
-    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", ImmutableSet.of(7)) {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", Collections.singleton(7)) {
       @Override
       public void testing() throws Exception {
         doTest("series", 4, 1, (varName, session) -> getChunk(varName, "%03d", session), arrayChunk -> {
@@ -142,7 +142,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
   public void testLabelWithPercentSign() {
-    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(33)) {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", Collections.singleton(33)) {
       @Override
       public void testing() throws Exception {
         doTest("df5", 10, 1, chunk -> {
@@ -156,7 +156,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
   public void testTuples() {
-    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe_tuple.py", ImmutableSet.of(5)) {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe_tuple.py", Collections.singleton(5)) {
       @Override
       public void testing() throws Exception {
         doTest("df1", 3, 3, chunk -> {
@@ -232,7 +232,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
     @NotNull
     @Override
     public Set<String> getTags() {
-      return ImmutableSet.of("pandas");
+      return Collections.singleton("pandas");
     }
   }
 
