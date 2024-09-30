@@ -15,6 +15,8 @@
  */
 import org.jspecify.annotations.Nullable;
 
+// Covered by
+// conformance-tests/src/assertions/java/org/jspecify/conformance/tests/irrelevantannotations/notnullmarked/AnnotatedWildcards.java
 class NotNullMarkedAnnotatedWildcard {
   interface Lib<T extends @Nullable Object> {}
 
