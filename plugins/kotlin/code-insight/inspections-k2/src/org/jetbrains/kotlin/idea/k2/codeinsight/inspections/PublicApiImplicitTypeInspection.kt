@@ -10,6 +10,7 @@ import com.intellij.codeInspection.options.OptPane.pane
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -34,7 +35,6 @@ class PublicApiImplicitTypeInspection(
         }
 
 
-    @OptIn(KaExperimentalApi::class)
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean
@@ -53,7 +53,7 @@ class PublicApiImplicitTypeInspection(
                 if (declaration is KtParameter) return
 
                 analyze(declaration) {
-                    if (reportPrivate || reportInternalOrPublic(declaration)) {
+                    if (reportInternalOrPublic(declaration)) {
                         val fix = IntentionWrapper(SpecifyExplicitTypeQuickFix(declaration, CallableReturnTypeUpdaterUtils.getTypeInfo(declaration)))
                         holder.registerProblem(nameIdentifier, problemText, fix)
                     }
@@ -65,8 +65,10 @@ class PublicApiImplicitTypeInspection(
                 declaration: KtCallableDeclaration,
             ): Boolean  {
                 val declarationSymbol = declaration.symbol
-                return reportInternal && declarationSymbol.compilerVisibility.compareTo(Visibilities.Internal)?.let { it >= 0 } == true ||
-                        declaration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED && isPublicApi(declarationSymbol)
+                if ((reportInternal || reportPrivate) && declarationSymbol.visibility == KaSymbolVisibility.INTERNAL) {
+                    return true
+                }
+                return declaration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED && isPublicApi(declarationSymbol)
             }
         }
     }
