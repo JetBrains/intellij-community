@@ -19,15 +19,15 @@ import java.io.ByteArrayOutputStream
  *
  * @example
  * ```kotlin
- * val process = eelApi.exec.executeProcess("ls", "-la")
- * val result = process.awaitExecutionResult()
+ * val process = eelApi.exec.executeProcess("ls", "-la").getOrThrow()
+ * val result = process.awaitProcessResult()
  * println("Exit code: ${result.exitCode}")
- * println("Standard Output: ${String(result.stdOut)}")
- * println("Standard Error: ${String(result.stdErr)}")
+ * println("Standard Output: ${result.stdout}")
+ * println("Standard Error: ${result.stderr}")
  * ```
  *
  * @see EelProcess
- * @see ExecutionResult
+ * @see ProcessOutput
  */
 @OptIn(DelicateCoroutinesApi::class)
 suspend fun EelProcess.awaitProcessResult(): ProcessOutput {
