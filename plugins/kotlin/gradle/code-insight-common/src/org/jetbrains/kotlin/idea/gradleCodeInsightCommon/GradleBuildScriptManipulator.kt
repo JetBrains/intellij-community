@@ -122,7 +122,8 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
     fun changeKotlinTaskParameter(
         parameterName: String,
         parameterValue: String,
-        forTests: Boolean
+        forTests: Boolean,
+        kotlinVersion: IdeKotlinVersion
     ): PsiElement?
 
     fun PsiElement.configureToolchainOrKotlinCompilerOptions(
@@ -156,8 +157,8 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
             }
             addFoojayPlugin(changedFiles)
         } else {
-            changeKotlinTaskParameter("jvmTarget", targetVersion, forTests = false)
-            changeKotlinTaskParameter("jvmTarget", targetVersion, forTests = true)
+            changeKotlinTaskParameter("jvmTarget", targetVersion, forTests = false, kotlinVersion)
+            changeKotlinTaskParameter("jvmTarget", targetVersion, forTests = true, kotlinVersion)
         }
     }
 

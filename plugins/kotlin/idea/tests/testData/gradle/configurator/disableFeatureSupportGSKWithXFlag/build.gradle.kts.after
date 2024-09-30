@@ -8,6 +8,6 @@ repositories {
     mavenCentral()
 }
 val compileKotlin: KotlinCompile by tasks
-compileKotlin.compilerOptions {
-    freeCompilerArgs.set(listOf("-XXLanguage:-InlineClasses"))
+compileKotlin.kotlinOptions {
+    freeCompilerArgs = listOf("-XXLanguage:-InlineClasses")
 }

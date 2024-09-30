@@ -898,12 +898,38 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    fun testAddLanguageVersionModernKotlinSyntax() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                KotlinWithGradleConfigurator.changeLanguageVersion(myTestFixture.module, "1.8", null, false)
+            }
+
+            checkFiles(files)
+        }
+    }
+
+    @Test
     fun testAddLanguageVersionGSK() {
         val files = importProjectFromTestData()
 
         runInEdtAndWait {
             runWriteAction {
                 KotlinWithGradleConfigurator.changeLanguageVersion(myTestFixture.module, "1.1", null, false)
+            }
+
+            checkFiles(files)
+        }
+    }
+
+    @Test
+    fun testAddLanguageVersionGSKModernKotlinSyntax() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                KotlinWithGradleConfigurator.changeLanguageVersion(myTestFixture.module, "1.8", null, false)
             }
 
             checkFiles(files)
@@ -1099,6 +1125,10 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     fun testDisableFeatureSupportWithXFlag() = testDisableFeatureSupport()
 
     @Test
+    @TargetVersions("4.7+")
+    fun testDisableFeatureSupportWithXFlagModernKotlinSyntax() = testDisableFeatureSupport()
+
+    @Test
     fun testEnableFeatureSupport() {
         val files = importProjectFromTestData()
 
@@ -1235,6 +1265,10 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("4.7+")
     fun testEnableFeatureSupportGSKWithXFlag() = testEnableFeatureSupportGSK()
+
+    @Test
+    @TargetVersions("4.7+")
+    fun testEnableFeatureSupportGSKWithXFlagModernKotlinSyntax() = testEnableFeatureSupportGSK()
 
     @Test
     @TargetVersions("4.7+")

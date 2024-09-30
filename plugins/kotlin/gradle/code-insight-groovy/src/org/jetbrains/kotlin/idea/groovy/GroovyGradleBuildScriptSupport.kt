@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.kotlinVersionIsE
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getCompilerOption
 import org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -456,7 +455,7 @@ class GroovyBuildScriptManipulator(
             languageSettingsBlock.addParameterAssignment(parameterName, parameterValue, replaceIt)
             languageSettingsBlock
         } else {
-            addOrReplaceKotlinTaskParameter(gradleFile, parameterName, parameterValue, forTests, replaceIt)
+            addOrReplaceKotlinTaskParameter(gradleFile, parameterName, parameterValue, forTests, replaceIt = replaceIt)
         }
     }
 
@@ -472,6 +471,7 @@ class GroovyBuildScriptManipulator(
         parameterName: String,
         parameterValue: String,
         forTests: Boolean,
+        kotlinVersion: IdeKotlinVersion? = null,
         replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
                                 /* precompiledReplacement = */ String?,
                                 /* insideCompilerOptions = */ Boolean
@@ -529,21 +529,18 @@ class GroovyBuildScriptManipulator(
             }
         }
 
-        addKotlinOrCompilerOptionToBlock(kotlinBlock, parameterName, parameterValue, gradleFile, replaceIt, hasAndroidModule)
+        addKotlinOrCompilerOptionToBlock(kotlinBlock, parameterName, parameterValue, gradleFile, hasAndroidModule, kotlinVersion, replaceIt)
 
         return kotlinBlock.parent
     }
 
-    private fun projectSupportsCompilerOptions(file: PsiFile): Boolean {
+    private fun projectSupportsCompilerOptions(file: PsiFile, kotlinVersion: IdeKotlinVersion? = null): Boolean {
         /*
         Current test infrastructure uses either a fallback version of Kotlin –
         org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings.Companion.getFallbackVersionForOutdatedCompiler
         or a currently bundled version. Not that one that is stated in build scripts
         */
-        if (isUnitTestMode()) {
-            return true
-        }
-        return kotlinVersionIsEqualOrHigher(major = 1, minor = 8, patch = 0, file)
+        return kotlinVersionIsEqualOrHigher(major = 1, minor = 8, patch = 0, file, kotlinVersion)
     }
 
     private fun addKotlinOrCompilerOptionToBlock(
@@ -551,13 +548,14 @@ class GroovyBuildScriptManipulator(
         parameterName: String,
         parameterValue: String,
         gradleFile: GroovyFile,
+        hasAndroidModule: Boolean,
+        kotlinVersion: IdeKotlinVersion? = null,
         replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
                                 /* precompiledReplacement = */ String?,
                                 /* insideCompilerOptions = */ Boolean
-        ) -> GrStatement,
-        hasAndroidModule: Boolean
+        ) -> GrStatement
     ) {
-        val kotlinOptionsBlock = if (hasAndroidModule || !projectSupportsCompilerOptions(gradleFile)) {
+        val kotlinOptionsBlock = if (hasAndroidModule || !projectSupportsCompilerOptions(gradleFile, kotlinVersion)) {
             // no `compilerOptions` for android
             outerDslBlock.getBlockOrCreate("kotlinOptions")
         } else {
@@ -678,10 +676,15 @@ class GroovyBuildScriptManipulator(
     override fun changeKotlinTaskParameter(
         parameterName: String,
         parameterValue: String,
-        forTests: Boolean
+        forTests: Boolean,
+        kotlinVersion: IdeKotlinVersion
     ): PsiElement? {
         return addOrReplaceKotlinTaskParameter(
-            scriptFile, parameterName, "\"$parameterValue\"", forTests
+            scriptFile,
+            parameterName,
+            "\"$parameterValue\"",
+            forTests,
+            kotlinVersion
         ) { insideKotlinOptions, /* precompiledReplacement = */ replacement, insideCompilerOptions ->
             replaceStatement(parameterName, parameterValue, insideKotlinOptions, replacement, insideCompilerOptions)
         }

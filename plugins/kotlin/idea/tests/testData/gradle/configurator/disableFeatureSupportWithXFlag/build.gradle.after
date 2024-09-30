@@ -16,7 +16,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib"
 }
 compileKotlin {
-    compilerOptions {
-        freeCompilerArgs.set(["-XXLanguage:-InlineClasses"])
+    kotlinOptions {
+        freeCompilerArgs = ["-XXLanguage:-InlineClasses"]
     }
 }

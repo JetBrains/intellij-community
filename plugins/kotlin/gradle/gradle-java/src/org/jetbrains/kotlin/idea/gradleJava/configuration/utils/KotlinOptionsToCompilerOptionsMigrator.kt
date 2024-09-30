@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion
 import org.jetbrains.kotlin.idea.gradleTooling.compareTo
 import org.jetbrains.kotlin.name.FqName
@@ -154,7 +155,16 @@ private fun getOptionName(expression: KtExpression): Pair<String, StringBuilder>
     return Pair(optionName, replacementOfKotlinOptionsIfNeeded)
 }
 
-fun kotlinVersionIsEqualOrHigher(major: Int, minor: Int, patch: Int, file: PsiFile): Boolean {
+fun kotlinVersionIsEqualOrHigher(major: Int, minor: Int, patch: Int, file: PsiFile, kotlinVersion: IdeKotlinVersion? = null): Boolean {
+    if (kotlinVersion != null) {
+        val result = kotlinVersion.kotlinVersion >= KotlinVersion(
+            major,
+            minor,
+            patch
+        )
+        return result
+    }
+
     val version = file.module?.kotlinGradlePluginVersion ?: return false
     return version >= KotlinToolingVersion(major, minor, patch, classifier = null)
 }

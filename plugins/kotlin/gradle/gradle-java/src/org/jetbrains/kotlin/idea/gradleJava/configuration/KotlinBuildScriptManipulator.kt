@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getCompilerOptio
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.kotlinVersionIsEqualOrHigher
 import org.jetbrains.kotlin.idea.gradleTooling.capitalize
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -334,8 +333,13 @@ class KotlinBuildScriptManipulator(
             ?.addExpressionIfMissing("(this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of($targetVersionNumber))")
     }
 
-    override fun changeKotlinTaskParameter(parameterName: String, parameterValue: String, forTests: Boolean): PsiElement? {
-        return scriptFile.changeKotlinTaskParameter(parameterName, parameterValue, forTests)
+    override fun changeKotlinTaskParameter(
+        parameterName: String,
+        parameterValue: String,
+        forTests: Boolean,
+        kotlinVersion: IdeKotlinVersion
+    ): PsiElement? {
+        return scriptFile.changeKotlinTaskParameter(parameterName, parameterValue, forTests, kotlinVersion)
     }
 
     private fun KtBlockExpression.addNoVersionCompileStdlibIfMissing(stdlibArtifactName: String): KtCallExpression? =
@@ -692,16 +696,13 @@ class KotlinBuildScriptManipulator(
         }?.replaceIt() ?: addExpressionIfMissing("$parameterName = \"$parameterValue\"")
     }
 
-    private fun projectSupportsCompilerOptions(file: PsiFile): Boolean {
+    private fun projectSupportsCompilerOptions(file: PsiFile, kotlinVersion: IdeKotlinVersion?): Boolean {
         /*
         // Current test infrastructure uses either a fallback version of Kotlin –
         org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings.Companion.getFallbackVersionForOutdatedCompiler
         or a currently bundled version. Not that one that is stated in build scripts
          */
-        if (isUnitTestMode()) {
-            return true
-        }
-        return kotlinVersionIsEqualOrHigher(major = 1, minor = 8, patch = 0, file)
+        return kotlinVersionIsEqualOrHigher(major = 1, minor = 8, patch = 0, file, kotlinVersion)
     }
 
     /**
@@ -715,6 +716,7 @@ class KotlinBuildScriptManipulator(
         parameterName: String,
         parameterValue: String,
         forTests: Boolean,
+        kotlinVersion: IdeKotlinVersion? = null,
         replaceIt: KtExpression.(/* precompiledReplacement */ String?, /* insideCompilerOptions = */ Boolean) -> PsiElement
     ): PsiElement? {
         val taskName = if (forTests) "compileTestKotlin" else "compileKotlin"
@@ -727,7 +729,7 @@ class KotlinBuildScriptManipulator(
             assignment?.replaceIt(/* precompiledReplacement = */ null, /* insideCompilerOptions = */ false)
                 ?: kotlinOptionsBlock.addExpressionIfMissing("$parameterName = $parameterValue")
         } else {
-            if (projectSupportsCompilerOptions(this)) {
+            if (projectSupportsCompilerOptions(this, kotlinVersion)) {
                 addOptionToCompilerOptions(taskName, parameterName, parameterValue, replaceIt)
             } else {
                 // Add kotlinOptions
@@ -777,8 +779,13 @@ class KotlinBuildScriptManipulator(
         }
     }
 
-    private fun KtFile.changeKotlinTaskParameter(parameterName: String, parameterValue: String, forTests: Boolean): PsiElement? {
-        return addOrReplaceKotlinTaskParameter(parameterName, "\"$parameterValue\"", forTests) { replacement, _ ->
+    private fun KtFile.changeKotlinTaskParameter(
+        parameterName: String,
+        parameterValue: String,
+        forTests: Boolean,
+        kotlinVersion: IdeKotlinVersion? = null
+    ): PsiElement? {
+        return addOrReplaceKotlinTaskParameter(parameterName, "\"$parameterValue\"", forTests, kotlinVersion) { replacement, _ ->
             if (replacement != null) {
                 replace(psiFactory.createExpression(replacement))
             } else {
