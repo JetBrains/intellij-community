@@ -8,10 +8,7 @@ import com.intellij.cce.util.isUnderTeamCity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.tools.ide.metrics.collector.publishing.ApplicationMetricDto
-import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import java.nio.file.Path
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -30,10 +27,7 @@ class IntellijPerfJsonReportGenerator(
     val reportFile = dir.resolve(metricsInfoName)
     LOG.info("generateGlobalReport. save to ${reportFile.absolutePathString()}")
     try {
-      val buildInfo = helper.createBuildInfo()
-
       val perfMetrics = globalMetrics.map { it.toPerfMetric() }
-
 
       val metricsDto = AiPerformanceMetricsDto
         .create(projectName = "#feature#_#lang#_#model#_#os#", //#**# will be used in TC builds, pls don't change it
@@ -41,8 +35,8 @@ class IntellijPerfJsonReportGenerator(
                 projectDescription = "",
                 methodName = "",
                 buildNumber = BuildNumber.currentVersion(),
-                metrics = perfMetrics,
-                buildInfo = buildInfo)
+                metrics = perfMetrics
+        )
 
       reportFile.writeText(gson.toJson(metricsDto))
       helper.afterReport(reportFile)
@@ -74,24 +68,10 @@ private fun MetricInfo.toPerfMetric(namePrefix: String = ""): ApplicationMetricD
 
 
 private interface ReportHelper {
-  fun createBuildInfo(): CIServerBuildInfo
   fun afterReport(source: Path)
 }
 
 private class ReportHelperLocalMock : ReportHelper {
-  override fun createBuildInfo(): CIServerBuildInfo {
-    return CIServerBuildInfo(
-      buildId = "buildId",
-      typeId = "typeId",
-      configName = "configName",
-      buildNumber = "buildNumber",
-      branchName = "branchName",
-      url = "url",
-      isPersonal = false,
-      timestamp = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    )
-  }
-
   override fun afterReport(source: Path) {
   }
 }
@@ -99,19 +79,6 @@ private class ReportHelperLocalMock : ReportHelper {
 private class TeamCityReportHelper : ReportHelper {
   companion object {
     private val LOG = logger<TeamCityReportHelper>()
-  }
-
-  override fun createBuildInfo(): CIServerBuildInfo {
-    return CIServerBuildInfo(
-      buildId = "#teamcity.build.id#",
-      typeId = "#teamcity.buildType.id#",
-      configName = "#teamcity.buildConfName#",
-      buildNumber = "#teamcity.buildNumber#",
-      branchName = "#teamcity.build.branch#",
-      url = "#teamcity.buildUrl#",
-      isPersonal = false,
-      timestamp = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    )
   }
 
   override fun afterReport(source: Path) {

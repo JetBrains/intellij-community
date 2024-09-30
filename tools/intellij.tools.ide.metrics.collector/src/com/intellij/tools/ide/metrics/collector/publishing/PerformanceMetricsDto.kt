@@ -3,7 +3,6 @@ package com.intellij.tools.ide.metrics.collector.publishing
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.tools.ide.metrics.collector.metrics.MetricGroup
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.metrics.toJson
 import com.intellij.util.system.OS
@@ -32,7 +31,6 @@ data class IJPerfMetricsDto<T: Number>(
   val productCode: String,
   val methodName: String,
   val metrics: List<ApplicationMetricDto<T>>,
-  val tcInfo: CIServerBuildInfo
 ) {
   companion object {
     private const val VERSION = "1"
@@ -45,9 +43,8 @@ data class IJPerfMetricsDto<T: Number>(
       methodName: String,
       buildNumber: BuildNumber,
       metrics: Collection<PerformanceMetrics.Metric>,
-      buildInfo: CIServerBuildInfo,
-      generated: String = ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME)
-    ) = create(projectName, projectURL, projectDescription, methodName, buildNumber, metrics.map { it.toJson() }, buildInfo, generated)
+      generated: String = ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME),
+    ) = create(projectName, projectURL, projectDescription, methodName, buildNumber, metrics.map { it.toJson() }, generated)
 
     @JvmStatic
     fun <T: Number> create(
@@ -57,7 +54,6 @@ data class IJPerfMetricsDto<T: Number>(
       methodName: String,
       buildNumber: BuildNumber,
       metrics: List<ApplicationMetricDto<T>>,
-      buildInfo: CIServerBuildInfo,
       generated: String = ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME)
     ) = IJPerfMetricsDto(
       version = VERSION,
@@ -74,7 +70,6 @@ data class IJPerfMetricsDto<T: Number>(
       productCode = buildNumber.productCode,
       metrics = metrics,
       methodName = methodName,
-      tcInfo = buildInfo,
       projectDescription = projectDescription
     )
   }

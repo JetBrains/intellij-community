@@ -10,7 +10,6 @@ import com.intellij.teamcity.TeamCityClient
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.tools.ide.metrics.collector.MetricsCollector
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
-import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
 import com.intellij.tools.ide.util.common.withRetry
 import kotlinx.coroutines.Dispatchers
@@ -81,27 +80,13 @@ class IJPerfBenchmarksMetricsPublisher {
       teamCityClient.publishTeamCityArtifacts(source = PathManager.getLogDir(), artifactPath = uniqueTestIdentifier)
       teamCityClient.publishTeamCityArtifacts(source = getIdeTestLogFile(), artifactPath = uniqueTestIdentifier)
 
-      val buildInfo = CIServerBuildInfo(
-        buildId = teamCityClient.buildId,
-        typeId = teamCityClient.buildTypeId,
-        configName = teamCityClient.configurationName ?: "",
-        buildNumber = teamCityClient.buildNumber,
-        branchName = teamCityClient.branchName,
-        url = String.format("%s/viewLog.html?buildId=%s&buildTypeId=%s", teamCityClient.baseUri,
-                            teamCityClient.buildId,
-                            teamCityClient.buildTypeId),
-        isPersonal = teamCityClient.isPersonalBuild,
-        timestamp = ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-      )
-
       return PerformanceMetricsDto.create(
         projectName = uniqueTestIdentifier,
         projectURL = "",
         projectDescription = "",
         methodName = uniqueTestIdentifier,
         buildNumber = BuildNumber.currentVersion(),
-        metrics = metrics,
-        buildInfo = buildInfo
+        metrics = metrics
       )
     }
 

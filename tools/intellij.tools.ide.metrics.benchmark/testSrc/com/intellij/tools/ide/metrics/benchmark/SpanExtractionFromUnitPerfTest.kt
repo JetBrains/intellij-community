@@ -5,7 +5,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.BenchmarkTestInfo
-import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -82,25 +81,13 @@ class SpanExtractionFromUnitPerfTest {
 
     val reportFile = Files.createTempFile("temp", ".json")
 
-    val buildInfo = CIServerBuildInfo(
-      "8727723",
-      "someBuildType",
-      "configurationName",
-      "233.5353.98",
-      "branch_name",
-      String.format("%s/viewLog.html?buildId=%s&buildTypeId=%s", "base_uri", "8727723", "someBuildType"),
-      false,
-      ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    )
-
     val metricsDto = PerformanceMetricsDto.create(
       mainMetricName,
       "",
       "",
       testInfo.displayName,
       BuildNumber.fromString("233.SNAPSHOT")!!,
-      extractedMetrics,
-      buildInfo
+      extractedMetrics
     )
 
     // just invoke serialization to validate that it completes without exceptions
@@ -135,25 +122,13 @@ class SpanExtractionFromUnitPerfTest {
 
     val reportFile = Files.createTempFile("temp", ".json")
 
-    val buildInfo = CIServerBuildInfo(
-      "8727723",
-      "someBuildType",
-      "configurationName",
-      "233.5353.98",
-      "branch_name",
-      String.format("%s/viewLog.html?buildId=%s&buildTypeId=%s", "base_uri", "8727723", "someBuildType"),
-      false,
-      ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    )
-
     val metricsDto = PerformanceMetricsDto.create(
       mainMetricName,
       "",
       "",
       testInfo.displayName,
       BuildNumber.fromString("233.SNAPSHOT")!!,
-      extractedMetrics,
-      buildInfo
+      extractedMetrics
     )
 
     // just invoke serialization to validate that it completes without exceptions
