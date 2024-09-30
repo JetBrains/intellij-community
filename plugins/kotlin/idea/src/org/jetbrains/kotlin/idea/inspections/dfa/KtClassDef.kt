@@ -28,12 +28,8 @@ import java.util.stream.Stream
 import kotlin.streams.asStream
 
 class KtClassDef(val cls: ClassDescriptor) : TypeConstraints.ClassDef {
-    override fun isInheritor(superClassQualifiedName: String): Boolean =
-        cls.getAllSuperClassifiers().any { superClass ->
-          superClass is ClassDescriptor && correctFqName(superClass.fqNameUnsafe) == superClassQualifiedName
-        }
 
-    override fun isInheritor(superType: TypeConstraints.ClassDef): Boolean =
+  override fun isInheritor(superType: TypeConstraints.ClassDef): Boolean =
       superType is KtClassDef && cls.isSubclassOf(superType.cls)
 
     override fun isConvertible(other: TypeConstraints.ClassDef): Boolean {

@@ -33,15 +33,8 @@ class KtClassDef(
     private val kind: KaClassKind,
     private val modality: KaSymbolModality?
 ) : TypeConstraints.ClassDef {
-    override fun isInheritor(superClassQualifiedName: String): Boolean =
-        analyze(module) {
-            val classLikeSymbol = pointer.restoreSymbol() ?: return@analyze false
-            ((classLikeSymbol as? KaNamedClassSymbol)?.defaultType?.allSupertypes ?: emptySequence()).any { superType ->
-                (superType as? KaClassType)?.expandedSymbol?.classId?.asFqNameString() == superClassQualifiedName
-            }
-        }
 
-    override fun isInheritor(superType: TypeConstraints.ClassDef): Boolean =
+  override fun isInheritor(superType: TypeConstraints.ClassDef): Boolean =
         superType is KtClassDef && analyze(module) {
             val classLikeSymbol = pointer.restoreSymbol() ?: return@analyze false
             val superSymbol = superType.pointer.restoreSymbol() ?: return@analyze false
