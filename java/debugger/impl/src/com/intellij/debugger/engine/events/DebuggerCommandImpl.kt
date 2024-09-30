@@ -46,7 +46,7 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
     finally {
       myThread?.unfinishedCommands?.remove(this)
       release()
-      myCoroutineScope?.cancel()
+      cancelCommandScope()
       executeContinuation()
     }
   }
@@ -74,7 +74,12 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
   }
 
   private fun getOrCreateCommandScope(parentScope: CoroutineScope): CoroutineScope =
-    myCoroutineScope ?: parentScope.childScope("Command $this", this).also { myCoroutineScope = it }
+    myCoroutineScope ?: parentScope.childScope("Debugger Command $this", this).also { myCoroutineScope = it }
+
+  private fun cancelCommandScope() {
+    myCoroutineScope?.cancel()
+    myCoroutineScope = null
+  }
 
   internal fun resetContinuation(runnable: Runnable?): Runnable? = continuation.getAndSet(runnable)
   protected fun executeContinuation() {
@@ -87,16 +92,20 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
       val commandScope = getOrCreateCommandScope(parentScope)
       // executed synchronously until the first suspend, resume is handled by dispatcher
       commandScope.launch(dispatcher, start = CoroutineStart.UNDISPATCHED) {
-        if (commandScope.isActive) {
-          try {
-            runSuspend()
+        try {
+          if (commandScope.isActive) {
+            try {
+              runSuspend()
+            }
+            catch (e: Exception) {
+              exception = e
+            }
           }
-          catch (e: Exception) {
-            exception = e
+          else {
+            notifyCancelled()
           }
-        }
-        else {
-          notifyCancelled()
+        } finally {
+          cancelCommandScope()
         }
       }
       onSuspendOrFinish()
