@@ -11,7 +11,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
@@ -36,9 +35,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 private class FileNotInSourceRootChecker : ProjectActivity {
   override suspend fun execute(project: Project) {
@@ -81,27 +78,26 @@ private class FileNotInSourceRootService(
       }
 
       if (infoAndFile != null) {
-        withContext(Dispatchers.EDT) {
-          writeAction {
-            val psiFile = infoAndFile.second
-            if (!psiFile.isValid) return@writeAction
-            val listener = object : VirtualFileListener {
-              override fun fileMoved(event: VirtualFileMoveEvent) {
-                val file = event.file
-                if (file == psiFile.virtualFile) {
-                  file.fileSystem.removeVirtualFileListener(this)
-                  if (editor.isDisposed) return
-                  DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(GROUP, psiFile)
-                  checkEditor(fileEditor)
-                }
+        writeAction {
+          if (!fileEditor.isValid) return@writeAction
+          val psiFile = infoAndFile.second
+          if (!psiFile.isValid) return@writeAction
+          val listener = object : VirtualFileListener {
+            override fun fileMoved(event: VirtualFileMoveEvent) {
+              val file = event.file
+              if (file == psiFile.virtualFile) {
+                file.fileSystem.removeVirtualFileListener(this)
+                if (editor.isDisposed) return
+                DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(GROUP, psiFile)
+                checkEditor(fileEditor)
               }
             }
-            val fileSystem = psiFile.virtualFile.fileSystem
-            fileSystem.addVirtualFileListener(listener)
-            Disposer.register(fileEditor) { fileSystem.removeVirtualFileListener(listener) }
-
-            DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(GROUP, infoAndFile.first, infoAndFile.second, null)
           }
+          val fileSystem = psiFile.virtualFile.fileSystem
+          fileSystem.addVirtualFileListener(listener)
+          Disposer.register(fileEditor) { fileSystem.removeVirtualFileListener(listener) }
+
+          DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(GROUP, infoAndFile.first, infoAndFile.second, null)
         }
       }
     }
