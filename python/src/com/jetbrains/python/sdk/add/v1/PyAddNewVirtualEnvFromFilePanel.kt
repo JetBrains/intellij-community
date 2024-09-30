@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v1
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -18,11 +19,11 @@ import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.add.PyAddSdkPanel.Companion.validateSdkComboBox
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
+import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.add.v1.PyAddNewEnvCollector.InputData
 import com.jetbrains.python.sdk.add.v1.PyAddNewEnvCollector.RequirementsTxtOrSetupPyData
-import com.jetbrains.python.sdk.add.PyAddSdkPanel.Companion.validateSdkComboBox
-import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.basePath
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.SystemIndependent
@@ -62,8 +63,9 @@ class PyAddNewVirtualEnvFromFilePanel(
         setTextFieldPreferredWidth(it.length)
       }
 
+      @Suppress("DialogTitleCapitalization")
       addBrowseFolderListener(module.project, FileChooserDescriptorFactory.createSingleFileDescriptor()
-        .withFileFilter { file -> file.fileType.let { it == PlainTextFileType.INSTANCE || it == PythonFileType.INSTANCE } }
+        .withExtensionFilter(PyBundle.message("sdk.create.venv.dependencies.filter"), PlainTextFileType.INSTANCE, PythonFileType.INSTANCE)
         .withTitle(PyBundle.message("sdk.create.venv.dependencies.chooser")))
     }
 

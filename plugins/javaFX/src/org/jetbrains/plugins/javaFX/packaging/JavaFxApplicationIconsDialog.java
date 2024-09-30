@@ -79,8 +79,7 @@ public final class JavaFxApplicationIconsDialog extends DialogWrapper {
   }
 
   private static void addBrowseListener(TextFieldWithBrowseButton withBrowseButton, String extension, Project project) {
-    withBrowseButton.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-      .withFileFilter(file -> extension.equalsIgnoreCase(file.getExtension()))
+    withBrowseButton.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor(extension)
       .withTitle(JavaFXBundle.message("javafx.application.icons.select.icon.file.title"))
       .withDescription(JavaFXBundle.message("javafx.application.icons.select.icon.file.description", extension)));
   }

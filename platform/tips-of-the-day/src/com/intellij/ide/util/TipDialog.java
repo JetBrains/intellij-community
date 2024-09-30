@@ -7,7 +7,6 @@ import com.intellij.ide.TipsOfTheDayUsagesCollector;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.registry.Registry;
@@ -137,10 +136,8 @@ final class TipDialog extends DialogWrapper {
     @Override
     public void actionPerformed(ActionEvent e) {
       PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-      var htmlFileType = FileTypeManager.getInstance().getStdFileType("HTML");
       var descriptor = FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor()
-        .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, htmlFileType))
-        .withExtensionFilter(htmlFileType);
+        .withExtensionFilter(FileTypeManager.getInstance().getStdFileType("HTML"));
       String value = propertiesComponent.getValue(LAST_OPENED_TIP_PATH);
       VirtualFile lastOpenedTip = value != null ? LocalFileSystem.getInstance().findFileByPath(value) : null;
       VirtualFile[] pathToSelect = lastOpenedTip != null ? new VirtualFile[]{lastOpenedTip} : VirtualFile.EMPTY_ARRAY;

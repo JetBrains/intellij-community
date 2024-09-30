@@ -163,6 +163,7 @@ com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesReload
 - onProjectUnlinked(java.lang.String):V
 com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 - sf:Companion:com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware$Companion
+- buildFileExtensions():java.lang.String[]
 - s:getInstance(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 - a:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - a:isBuildFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z

@@ -5,7 +5,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
@@ -91,7 +91,7 @@ class TextMateBundlesListPanel : Disposable {
               val fileToSelect = PropertiesComponent.getInstance().getValue(TEXTMATE_LAST_ADDED_BUNDLE)?.let { lastAddedBundlePath ->
                 LocalFileSystem.getInstance().findFileByPath(lastAddedBundlePath)
               }
-              val chooserDescriptor = FileChooserDescriptor(true, true, false, false, false, true).withFileFilter { false }
+              val chooserDescriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor()
               val bundleDirectories = FileChooser.chooseFiles(chooserDescriptor, myBundlesList, null, fileToSelect)
               if (bundleDirectories.isNotEmpty()) {
                 var errorMessage: String? = null

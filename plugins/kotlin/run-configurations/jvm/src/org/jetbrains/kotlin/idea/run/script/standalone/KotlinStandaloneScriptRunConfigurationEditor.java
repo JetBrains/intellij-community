@@ -37,9 +37,8 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
     }
 
     void initChooseFileField(Project project) {
-        var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+        var descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(KotlinParserDefinition.STD_SCRIPT_SUFFIX)
                 .withTitle(KotlinRunConfigurationsBundle.message("script.choose.file"))
-                .withFileFilter(file -> file.isDirectory() || KotlinParserDefinition.STD_SCRIPT_SUFFIX.equals(file.getExtension()))
                 .withTreeRootVisible(true);
         chooseScriptFileTextField.addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     }

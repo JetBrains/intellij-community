@@ -151,7 +151,6 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
       super(true, false, false, false, false, false);
       putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
       putUserData(FileChooserKeys.NEW_FILE_TEMPLATE_TEXT, "");
-      withFileFilter(file -> UiScriptFileType.myExtension.equalsIgnoreCase(file.getExtension()));
       withExtensionFilter(UiScriptFileType.myExtension);
     }
   }

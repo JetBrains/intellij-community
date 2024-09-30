@@ -22,6 +22,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Allows customizing {@link FileChooser} dialog options.
@@ -214,26 +215,40 @@ public class FileChooserDescriptor implements Cloneable {
    * Sets simple boolean condition for use in {@link #isFileVisible(VirtualFile, boolean)} and {@link #isFileSelectable(VirtualFile)}.
    * <p/>
    * In native choosers, has no effect on visibility (use {@link #withExtensionFilter} for that), only on a final eligibility check.
+   * So for simple file type- or extension-based filtering it is better to use {@link #withExtensionFilter}.
    */
   public FileChooserDescriptor withFileFilter(@Nullable Condition<? super VirtualFile> filter) {
     myFileFilter = filter;
     return this;
   }
 
-  /** @see #withExtensionFilter(String, String...) */
+  /**
+   * @see #withExtensionFilter(String, String...)
+   * @see FileChooserDescriptorFactory#createSingleFileDescriptor(FileType)
+   * @see FileChooserDescriptorFactory#createSingleFileOrFolderDescriptor(FileType)
+   */
   public FileChooserDescriptor withExtensionFilter(@NotNull FileType type) {
-    var extensions = FileTypeManager.getInstance().getAssociations(type).stream()
+    return withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", type.getName()), type);
+  }
+
+  /**
+   * @see #withExtensionFilter(String, String...)
+   */
+  public FileChooserDescriptor withExtensionFilter(@NlsContexts.Label @NotNull String label, @NotNull FileType @NotNull ... types) {
+    if (types.length == 0) throw new IllegalArgumentException("The list must not be empty");
+    var extensions = Stream.of(types)
+      .flatMap(type -> FileTypeManager.getInstance().getAssociations(type).stream())
       .map(matcher -> matcher instanceof ExtensionFileNameMatcher em ? em.getExtension() : null)
       .filter(Objects::nonNull)
       .toArray(String[]::new);
-    return switch (extensions.length) {
-      case 0 -> throw new IllegalArgumentException("Unsupported file type: " + type);
-      case 1 -> withExtensionFilter(extensions[0]);
-      default -> withExtensionFilter(type.getDisplayName(), extensions);
-    };
+    myFileFilter = file -> ContainerUtil.exists(types, type -> FileTypeRegistry.getInstance().isFileOfType(file, type));
+    return withExtensionFilter(label, extensions);
   }
 
-  /** @see #withExtensionFilter(String, String...) */
+  /**
+   * @see #withExtensionFilter(String, String...)
+   * @see FileChooserDescriptorFactory#createSingleFileDescriptor(String)
+   */
   public FileChooserDescriptor withExtensionFilter(@NotNull String extension) {
     return withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", extension.toUpperCase(Locale.ROOT)), extension);
   }
