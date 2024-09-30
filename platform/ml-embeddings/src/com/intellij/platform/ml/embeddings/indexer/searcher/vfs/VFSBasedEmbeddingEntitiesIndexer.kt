@@ -26,6 +26,8 @@ import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettingsImpl
 import com.intellij.platform.ml.embeddings.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiManager
+import com.intellij.util.indexing.FileContentImpl
+import com.intellij.util.indexing.IndexingDataKeys.PSI_FILE
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.util.concurrent.atomic.AtomicBoolean
@@ -149,16 +151,24 @@ internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) 
     }
 
     if (classesChannel != null || symbolsChannel != null) {
-      val psiFile = readActionUndispatched { psiManager.findFile(file) } ?: return@coroutineScope
+      val (psiFile, fileType) = readActionUndispatched {
+        val psiFile = psiManager.findFile(file) ?: return@readActionUndispatched null
+        val fileType = psiFile.fileType
+        psiFile to fileType
+      } ?: return@coroutineScope
+
+      val content: FileContentImpl = FileContentImpl.createByFile(file, psiManager.project) as FileContentImpl
+      content.putUserData(PSI_FILE, psiFile) // todo I think we can avoid explicit passing of file
+      content.setSubstituteFileType(fileType) // todo we don't want to infer the substituted file type, do we?
 
       if (classesChannel != null) {
         launch {
-          readActionUndispatched { ClassesProvider.extractClasses(psiFile) }.forEach { classesChannel.send(it) }
+          readActionUndispatched { ClassesProvider.extractClasses(content) }.forEach { classesChannel.send(it) }
         }
       }
       if (symbolsChannel != null) {
         launch {
-          readActionUndispatched { SymbolsProvider.extractSymbols(psiFile) }.forEach { symbolsChannel.send(it) }
+          readActionUndispatched { SymbolsProvider.extractSymbols(content) }.forEach { symbolsChannel.send(it) }
         }
       }
     }

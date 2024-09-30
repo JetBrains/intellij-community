@@ -4,15 +4,15 @@ package com.intellij.platform.ml.embeddings.indexer
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeExtension
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableSymbol
-import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.toArray
+import com.intellij.util.indexing.FileContent
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 interface SymbolsProvider {
-  fun extract(file: PsiFile): List<IndexableSymbol>
+  fun extract(fileContent: FileContent): List<IndexableSymbol>
 
   companion object {
     private val EXTENSION = FileTypeExtension<SymbolsProvider>("com.intellij.embeddings.indexer.symbolsProvider")
@@ -21,9 +21,9 @@ interface SymbolsProvider {
       get() = EXTENSION.getAllRegisteredExtensions().keys.toArray(FileType.EMPTY_ARRAY)
 
     @RequiresReadLock
-    fun extractSymbols(file: PsiFile): List<IndexableSymbol> {
+    fun extractSymbols(fileContent: FileContent): List<IndexableSymbol> {
       ThreadingAssertions.assertReadAccess() // annotation doesn't work in Kotlin
-      return EXTENSION.forFileType(file.fileType)?.extract(file) ?: emptyList()
+      return EXTENSION.forFileType(fileContent.fileType)?.extract(fileContent) ?: emptyList()
     }
   }
 }

@@ -50,9 +50,9 @@ internal class ClassNameEmbeddingIndex : PsiBaseEmbeddingIndex() {
     get() = ClassesProvider.supportedFileTypes
 
   override fun getName(): ID<EmbeddingKey, String> = CLASS_NAME_EMBEDDING_INDEX_NAME
-  override fun getVersion(): Int = 1
+  override fun getVersion(): Int = 2
   override fun index(inputData: FileContent): List<IndexingItem> {
-    return ClassesProvider.extractClasses(inputData.psiFile).map { IndexingItem(it.id.id) }
+    return ClassesProvider.extractClasses(inputData).map { IndexingItem(it.id.id) }
   }
 }
 
@@ -61,9 +61,9 @@ internal class SymbolNameEmbeddingIndex : PsiBaseEmbeddingIndex() {
     get() = SymbolsProvider.supportedFileTypes
 
   override fun getName(): ID<EmbeddingKey, String> = SYMBOL_NAME_EMBEDDING_INDEX_NAME
-  override fun getVersion(): Int = 1
+  override fun getVersion(): Int = 2
   override fun index(inputData: FileContent): List<IndexingItem> {
-    return SymbolsProvider.extractSymbols(inputData.psiFile).map { IndexingItem(it.id.id) }
+    return SymbolsProvider.extractSymbols(inputData).map { IndexingItem(it.id.id) }
   }
 }
 
