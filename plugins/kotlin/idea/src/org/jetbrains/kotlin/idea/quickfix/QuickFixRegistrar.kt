@@ -561,7 +561,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         MISPLACED_TYPE_PARAMETER_CONSTRAINTS.registerFactory(MoveTypeParameterConstraintFixFactory)
 
-        COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT.registerFactory(CommaInWhenConditionWithoutArgumentFix)
+        COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT.registerFactory(CommaInWhenConditionWithoutArgumentFixFactory)
 
         DATA_CLASS_NOT_PROPERTY_PARAMETER.registerFactory(AddValVarToConstructorParameterAction.DataClassConstructorNotPropertyQuickFixFactory)
         MISSING_VAL_ON_ANNOTATION_PARAMETER.registerFactory(AddValVarToConstructorParameterAction.AnnotationClassConstructorNotValPropertyQuickFixFactory)

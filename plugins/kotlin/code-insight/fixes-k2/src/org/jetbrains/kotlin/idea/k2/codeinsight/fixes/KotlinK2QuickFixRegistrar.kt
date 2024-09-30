@@ -371,7 +371,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         // TODO: NON_EXHAUSTIVE_WHEN[_ON_SEALED_CLASS] will be replaced in future. We need to register the fix for those diagnostics as well
         registerPsiQuickFixes(KaFirDiagnostic.NoElseInWhen::class, AddWhenElseBranchFix)
         registerFactory(AddWhenRemainingBranchFixFactories.noElseInWhen)
-        registerPsiQuickFixes(KaFirDiagnostic.CommaInWhenConditionWithoutArgument::class, CommaInWhenConditionWithoutArgumentFix)
+        registerFactory(CommaInWhenConditionWithoutArgumentFixFactories.replaceCommaWithOrFixFactory)
         registerPsiQuickFixes(KaFirDiagnostic.SenselessNullInWhen::class, RemoveWhenBranchFix)
     }
 
