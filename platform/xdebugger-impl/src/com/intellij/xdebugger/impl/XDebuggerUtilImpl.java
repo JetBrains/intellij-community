@@ -395,7 +395,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                 if (range == null) {
                   range = lineRange;
                 }
-                if (!range.isEmpty() && range.intersects(lineRange)) {
+                if (!range.isEmpty() && range.intersectsStrict(lineRange)) {
                   myHighlighter = editor.getMarkupModel().addRangeHighlighter(
                     DebuggerColors.BREAKPOINT_ATTRIBUTES, range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER,
                     HighlighterTargetArea.EXACT_RANGE);

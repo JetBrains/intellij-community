@@ -158,7 +158,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
           MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), true);
           if (range != null && !range.isEmpty()) {
             TextRange lineRange = DocumentUtil.getLineTextRange(finalDocument, line);
-            if (range.intersects(lineRange)) {
+            if (range.intersectsStrict(lineRange)) {
               highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
                                                             DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
                                                             HighlighterTargetArea.EXACT_RANGE);
