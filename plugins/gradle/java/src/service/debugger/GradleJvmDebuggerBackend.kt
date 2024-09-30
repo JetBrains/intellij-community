@@ -36,7 +36,9 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
   }
 
   override fun initializationCode(project: Project?, dispatchPort: String?, parameters: String): List<String> {
-    return loadJvmDebugInitScript().split("\n")
+    return listOf(
+      loadJvmDebugInitScript()
+    )
   }
 
   override fun executionEnvironmentVariables(project: Project?, dispatchPort: String?, parameters: String): Map<String, String> {
