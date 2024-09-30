@@ -161,8 +161,9 @@ private class ElementsBuilder {
 
   private fun getPropertyPresentationData(propertyProvider: PropertyElementProvider<*, *>, model: Any): PresentationData {
     val presentationData = PresentationData()
+    val value = if (model is String) model else typePresentationService.getObjectName(model)
     presentationData.addText(propertyProvider.propertyName + ": ", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-    presentationData.addText(typePresentationService.getObjectName(model) + " ", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES)
+    presentationData.addText("$value ", SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES)
     return presentationData
   }
 
