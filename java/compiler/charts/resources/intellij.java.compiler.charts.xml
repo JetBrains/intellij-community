@@ -7,6 +7,8 @@
 
     <registryKey key="compilation.charts" defaultValue="false"
                  description="Show compilation charts" restartRequired="false"/>
+    <registryKey key="compilation.charts.mac.magnificationGesture" defaultValue="false"
+                 description="Enable pinch-to-zoom gesture for magnifying compilation charts." restartRequired="false"/>
   </extensions>
   <actions resource-bundle="messages.CompilationChartsBundle">
     <action id="CompilationChartsZoomResetAction" class="com.intellij.java.compiler.charts.ui.ActionPanel$ZoomResetAction"

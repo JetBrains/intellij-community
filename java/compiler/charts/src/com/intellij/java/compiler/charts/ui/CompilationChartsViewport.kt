@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
+import com.intellij.java.compiler.charts.CompilationChartsProjectActivity.Companion.COMPILATION_CHARTS_MAGNIFICATION_KEY
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBViewport
 import com.intellij.ui.components.ZoomingDelegate
 import java.awt.Graphics
@@ -10,7 +12,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 
 class CompilationChartsViewport(private val scrollType: AutoScrollingType) : JBViewport() {
-  override fun createZooming(): ZoomingDelegate = CompilationChartsZoomingDelegate(view as JComponent, this, scrollType)
+  override fun createZooming(): ZoomingDelegate = if (Registry.`is`(COMPILATION_CHARTS_MAGNIFICATION_KEY))
+    CompilationChartsZoomingDelegate(view as JComponent, this, scrollType)
+  else
+    CompilationChartsNonZoomingDelegate(view as JComponent, this)
 
   private class CompilationChartsZoomingDelegate(private val component: JComponent, private val viewport: JBViewport, private val scrollType: AutoScrollingType) : ZoomingDelegate(component, viewport) {
     private var magnificationPoint: Point? = null
@@ -66,5 +71,21 @@ class CompilationChartsViewport(private val scrollType: AutoScrollingType) : JBV
         scale = 0.0
       }
     }
+  }
+
+  private class CompilationChartsNonZoomingDelegate(component: JComponent, viewport: JBViewport) : ZoomingDelegate(component, viewport) {
+    override fun paint(g: Graphics) {
+    }
+
+    override fun magnificationStarted(at: Point) {
+    }
+
+    override fun magnificationFinished(magnification: Double) {
+    }
+
+    override fun magnify(magnification: Double) {
+    }
+
+    override fun isActive(): Boolean = false
   }
 }

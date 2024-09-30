@@ -24,6 +24,7 @@ class CompilationChartsProjectActivity : ProjectActivity {
   companion object {
     private val LOG: Logger = Logger.getInstance(CompilationChartsProjectActivity::class.java)
     const val COMPILATION_CHARTS_KEY: String = "compilation.charts"
+    const val COMPILATION_CHARTS_MAGNIFICATION_KEY: String = "compilation.charts.mac.magnificationGesture"
     const val COMPILATION_STATISTIC_BUILDER_ID: String = "jps.compile.statistic"
     const val COMPILATION_STATUS_BUILDER_ID: String = "jps.compile.status"
   }
