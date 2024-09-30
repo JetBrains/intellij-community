@@ -122,6 +122,9 @@ import org.jetbrains.kotlin.idea.resolve.*
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchLineMarkersTest
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest
 import org.jetbrains.kotlin.idea.script.*
+import org.jetbrains.kotlin.idea.search.refIndex.AbstractFindUsagesWithCompilerReferenceIndexTest
+import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceByReferenceTest
+import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerLeafGroupingTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerMultiplatformTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerNullnessGroupingTest
@@ -1420,24 +1423,23 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
     }
 
-    // See KTIJ-31394 for the reasoning why these tests are not generated
-    //testGroup("compiler-reference-index/tests") {
-    //    testClass<AbstractKotlinCompilerReferenceTest> {
-    //        model("compilerIndex", pattern = DIRECTORY, classPerTest = true)
-    //    }
-    //
-    //    testClass<AbstractKotlinCompilerReferenceByReferenceTest> {
-    //        model("compilerIndexByReference", pattern = DIRECTORY, classPerTest = true)
-    //    }
-    //}
-    //
-    //testGroup("compiler-reference-index/tests", testDataPath = "../../idea/tests/testData") {
-    //    testClass<AbstractFindUsagesWithCompilerReferenceIndexTest> {
-    //        model("findUsages/kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""), classPerTest = true)
-    //        model("findUsages/java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""), classPerTest = true)
-    //        model("findUsages/propertyFiles", pattern = Patterns.forRegex("""^(.+)\.0\.properties$"""), classPerTest = true)
-    //    }
-    //}
+    testGroup("compiler-reference-index/tests") {
+        testClass<AbstractKotlinCompilerReferenceTest> {
+            model("compilerIndex", pattern = DIRECTORY, classPerTest = true)
+        }
+
+        testClass<AbstractKotlinCompilerReferenceByReferenceTest> {
+            model("compilerIndexByReference", pattern = DIRECTORY, classPerTest = true)
+        }
+    }
+
+    testGroup("compiler-reference-index/tests", testDataPath = "../../idea/tests/testData") {
+        testClass<AbstractFindUsagesWithCompilerReferenceIndexTest> {
+            model("findUsages/kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.kt$"""), classPerTest = true)
+            model("findUsages/java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""), classPerTest = true)
+            model("findUsages/propertyFiles", pattern = Patterns.forRegex("""^(.+)\.0\.properties$"""), classPerTest = true)
+        }
+    }
 
     testGroup("compiler-plugins/kotlinx-serialization/tests") {
         testClass<AbstractSerializationPluginIdeDiagnosticTest> {
