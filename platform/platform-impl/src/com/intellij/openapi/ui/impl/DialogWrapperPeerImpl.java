@@ -951,7 +951,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     @SuppressWarnings("deprecation")
     public void hide() {
-      super.hide();
+      try (@NotNull AccessToken ignored = ThreadContext.resetThreadContext()) {
+        super.hide();
+      }
     }
 
     @Override
