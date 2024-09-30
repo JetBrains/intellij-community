@@ -68,7 +68,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
 
   override suspend fun doExecute(context: PlaybackContext) {
     val options = FindUsagesArguments()
-    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split(" ", limit = 2) }.toTypedArray())
+    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split(" ", limit = 2) }.toTypedArray(), false)
 
     val project = context.project
     val position = options.position

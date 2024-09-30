@@ -49,7 +49,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
 
     fun getOptions(arguments: String): OpenFileCommandOptions? {
       return runCatching {
-        OpenFileCommandOptions().apply { Args.parse(this, arguments.split(" ").toTypedArray()) }
+        OpenFileCommandOptions().apply { Args.parse(this, arguments.split(" ").toTypedArray(), false) }
       }.getOrNull()
     }
   }
