@@ -21,7 +21,7 @@ class AssertModuleJdkVersionCommand(text: String, line: Int) : PerformanceComman
     val project = context.project
     val options = AssertModuleJdkArguments()
 
-    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split("=") }.toTypedArray())
+    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split("=") }.toTypedArray(), false)
     val moduleManager = ModuleManager.getInstance(project)
     val module = moduleManager.findModuleByName(options.moduleName)
 

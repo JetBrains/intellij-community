@@ -269,7 +269,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
   protected String @NotNull [] getArgs(String prefix) {
     String input = extractCommandArgument(prefix);
     String[] args = input.split("\\|");
-    Args.parse(myOptions, args[0].split(" "));
+    Args.parse(myOptions, args[0].split(" "), false);
     return args;
   }
 

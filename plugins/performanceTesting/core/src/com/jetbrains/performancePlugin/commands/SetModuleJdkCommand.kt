@@ -21,7 +21,7 @@ class SetModuleJdkCommand(text: String, line: Int) : PerformanceCommandCoroutine
   override suspend fun doExecute(context: PlaybackContext) {
     val project = context.project
     val options = SetModuleJdkArguments()
-    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split("=") }.toTypedArray())
+    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split("=") }.toTypedArray(), false)
 
     val moduleManager = ModuleManager.getInstance(project)
     val module = moduleManager.findModuleByName(options.moduleName)
