@@ -153,10 +153,11 @@ private fun TextAreaDecorator(
                 Box(Modifier.padding(contentPadding)) { innerTextField() }
             }
         },
-        placeholderTextColor = style.colors.placeholder,
-        placeholder = if (state.text.isEmpty()) placeholder else null,
         textStyle = textStyle,
         modifier = decorationBoxModifier.defaultMinSize(minWidth = minSize.width, minHeight = minSize.height),
+        placeholder = if (state.text.isEmpty()) placeholder else null,
+        placeholderTextColor = style.colors.placeholder,
+        placeholderModifier = Modifier.padding(contentPadding).padding(style.metrics.borderWidth),
     )
 }
 
@@ -268,6 +269,8 @@ public fun TextArea(
     decorationBoxModifier: Modifier = Modifier,
 ) {
     val minSize = style.metrics.minSize
+    val contentPadding = style.metrics.contentPadding
+
     @Suppress("DEPRECATION")
     InputField(
         value = value,
@@ -289,10 +292,11 @@ public fun TextArea(
     ) { innerTextField, _ ->
         TextAreaDecorationBox(
             innerTextField = innerTextField,
-            placeholderTextColor = style.colors.placeholder,
-            placeholder = if (value.text.isEmpty()) placeholder else null,
             textStyle = textStyle,
             modifier = decorationBoxModifier,
+            placeholder = if (value.text.isEmpty()) placeholder else null,
+            placeholderTextColor = style.colors.placeholder,
+            placeholderModifier = Modifier.padding(contentPadding).padding(style.metrics.borderWidth),
         )
     }
 }
@@ -302,13 +306,14 @@ private fun TextAreaDecorationBox(
     innerTextField: @Composable () -> Unit,
     textStyle: TextStyle,
     modifier: Modifier,
-    placeholderTextColor: Color,
     placeholder: @Composable (() -> Unit)?,
+    placeholderTextColor: Color,
+    placeholderModifier: Modifier,
 ) {
     Layout(
         content = {
             if (placeholder != null) {
-                Box(modifier = Modifier.layoutId(PLACEHOLDER_ID), contentAlignment = Alignment.TopStart) {
+                Box(modifier = placeholderModifier.layoutId(PLACEHOLDER_ID), contentAlignment = Alignment.TopStart) {
                     CompositionLocalProvider(
                         LocalTextStyle provides textStyle.copy(color = placeholderTextColor),
                         LocalContentColor provides placeholderTextColor,
