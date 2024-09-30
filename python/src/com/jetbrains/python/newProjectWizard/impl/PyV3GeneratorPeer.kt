@@ -18,11 +18,11 @@ internal class PyV3GeneratorPeer<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecifi
   private val allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>?,
 ) : ProjectGeneratorPeer<PyV3BaseProjectSettings> {
   private val settings = baseSettings
-  private lateinit var panel: PyV3VUI<*>
+  private lateinit var panel: PyV3UI<*>
 
 
   override fun getComponent(projectPathField: TextFieldWithBrowseButton, checkValid: Runnable): JComponent {
-    panel = PyV3VUI(settings, ProjectPathImpl(projectPathField), specificUiAndSettings, allowedInterpreterTypes)
+    panel = PyV3UI(settings, ProjectPathImpl(projectPathField), specificUiAndSettings, allowedInterpreterTypes)
     return panel.mainPanel
   }
 
