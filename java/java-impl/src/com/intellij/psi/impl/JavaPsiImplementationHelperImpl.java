@@ -468,18 +468,19 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
         // Check interfaces
         var targetInInterface = Stream.concat(Stream.of(psiClass.getImplementsListTypes()), Stream.of(psiClass.getExtendsListTypes()))
           .map(type -> type.resolve())
-          .map(resolvedType -> findTarget(resolvedType, method, docTag, explicitSuper))
+          .filter(Objects::nonNull)
+          .map(resolvedType -> findTargetRecursively(resolvedType, method, docTag, explicitSuper, true, visitedSet))
           .filter(Objects::nonNull)
           .findFirst();
 
         return targetInInterface.orElse(null);
       }
 
-      private static @Nullable PsiElement findTarget(@Nullable PsiClass psiClass,
+      private static @Nullable PsiElement findTarget(@NotNull PsiClass psiClass,
                                                      @NotNull PsiMethod method,
                                                      @Nullable PsiDocTag docTag,
                                                      @Nullable String explicitSuper) {
-        if (psiClass == null || explicitSuper != null && !explicitSuper.equals(psiClass.getName())) {
+        if (explicitSuper != null && !explicitSuper.equals(psiClass.getName())) {
           return null;
         }
 

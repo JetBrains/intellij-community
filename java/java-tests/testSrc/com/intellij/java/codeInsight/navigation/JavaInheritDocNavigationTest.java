@@ -54,6 +54,27 @@ public class JavaInheritDocNavigationTest extends LightJavaCodeInsightFixtureTes
     navigateAndCheckLine(1, "* B doc");
   }
 
+  public void test_inherit_doc_interface() {
+    myFixture.configureByText("a.java", """
+      interface A {
+        /** A doc */
+        void foo() {};
+      }
+      
+      interface B extends A {
+        /** B doc */
+        @Override void foo() {};
+      }
+      
+      interface C extends B {
+        /** {@inherit<caret>Doc A} */
+        @Override void foo() {};
+      }
+      """);
+
+    navigateAndCheckLine(0, "/** A doc */");
+  }
+
   public void test_inherit_doc_explicit_super() {
     myFixture.configureByText("a.java", """
       class A {
