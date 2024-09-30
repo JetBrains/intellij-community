@@ -35,6 +35,7 @@ abstract class GitApplyChangesNotification(
 
   sealed interface ExpireAfter
   interface ExpireAfterAbort: ExpireAfter
+  interface ExpireAfterRepoStateChanged: ExpireAfter
 }
 
 internal class GitApplyChangesConflictNotification(
@@ -48,7 +49,7 @@ internal class GitApplyChangesConflictNotification(
   GitBundle.message("apply.changes.operation.performed.with.conflicts", operationName.capitalize()),
   description,
   NotificationType.WARNING,
-), GitApplyChangesNotification.ExpireAfterAbort {
+), GitApplyChangesNotification.ExpireAfterAbort, GitApplyChangesNotification.ExpireAfterRepoStateChanged {
   init {
     setDisplayId(GitNotificationIdsHolder.APPLY_CHANGES_CONFLICTS)
 
