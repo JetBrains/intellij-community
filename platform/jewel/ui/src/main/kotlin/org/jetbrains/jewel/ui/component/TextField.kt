@@ -325,16 +325,16 @@ private fun Placeable.PlacementScope.place(
         Alignment.CenterVertically.align(trailingPlaceable.height, height),
     )
 
+    // placed similar to the input text below
+    placeholderPlaceable?.placeRelative(
+        leadingPlaceable?.width ?: 0,
+        Alignment.CenterVertically.align(placeholderPlaceable.height, height),
+    )
+
     // placed center vertically
     textFieldPlaceable.placeRelative(
         leadingPlaceable?.width ?: 0,
         Alignment.CenterVertically.align(textFieldPlaceable.height, height),
-    )
-
-    // placed similar to the input text above
-    placeholderPlaceable?.placeRelative(
-        leadingPlaceable?.width ?: 0,
-        Alignment.CenterVertically.align(placeholderPlaceable.height, height),
     )
 }
 

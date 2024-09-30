@@ -339,11 +339,11 @@ private fun TextAreaDecorationBox(
         val height = calculateHeight(textAreaPlaceable, placeholderPlaceable, incomingConstraints)
 
         layout(width, height) {
+            // Placed similar to the input text below
+            placeholderPlaceable?.placeRelative(0, 0)
+
             // Placed top-start
             textAreaPlaceable.placeRelative(0, 0)
-
-            // Placed similar to the input text above
-            placeholderPlaceable?.placeRelative(0, 0)
         }
     }
 }
