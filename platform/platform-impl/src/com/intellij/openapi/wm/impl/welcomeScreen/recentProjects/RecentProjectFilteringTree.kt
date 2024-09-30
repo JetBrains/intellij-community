@@ -104,6 +104,8 @@ internal class RecentProjectFilteringTree(
 
     treeComponent.addMouseMotionListener(MouseHoverListener(treeComponent))
 
+    treeComponent.accessibleContext.accessibleName = IdeBundle.message("welcome.screen.recent.projects.accessible.name")
+
     searchModel.updateStructure()
   }
 
