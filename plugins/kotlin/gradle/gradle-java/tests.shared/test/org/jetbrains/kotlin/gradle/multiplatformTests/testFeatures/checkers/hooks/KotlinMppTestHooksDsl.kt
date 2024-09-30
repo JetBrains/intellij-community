@@ -6,7 +6,10 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.writeAccess
 
-interface TestHooksDsl {
+/**
+ * Allows 'hooking' into any stage of the import test, executing custom logic/checks/tests at this stage.
+ */
+interface KotlinMppTestHooksDsl {
     fun TestConfigurationDslScope.runBeforeImport(action: KotlinMppTestsContext.() -> Unit) {
         configuration.beforeImportHooks += action
     }
@@ -24,9 +27,9 @@ interface TestHooksDsl {
     }
 }
 
-object TestHooks : TestFeature<TestHooksConfiguration> {
-    override fun createDefaultConfiguration(): TestHooksConfiguration {
-        return TestHooksConfiguration()
+object KotlinMppTestHooks : TestFeature<KotlinMppTestHooksConfiguration> {
+    override fun createDefaultConfiguration(): KotlinMppTestHooksConfiguration {
+        return KotlinMppTestHooksConfiguration()
     }
 
     override fun KotlinMppTestsContext.beforeImport() {
@@ -47,7 +50,7 @@ object TestHooks : TestFeature<TestHooksConfiguration> {
     }
 }
 
-class TestHooksConfiguration {
+class KotlinMppTestHooksConfiguration {
     val beforeImportHooks = mutableListOf<KotlinMppTestsContext.() -> Unit>()
     val afterImportHooks = mutableListOf<KotlinMppTestsContext.() -> Unit>()
     val beforeTestExecutionHooks = mutableListOf<KotlinMppTestsContext.() -> Unit>()
@@ -55,4 +58,4 @@ class TestHooksConfiguration {
 }
 
 private val TestConfigurationDslScope.configuration
-    get() = writeAccess.getConfiguration(TestHooks)
+    get() = writeAccess.getConfiguration(KotlinMppTestHooks)

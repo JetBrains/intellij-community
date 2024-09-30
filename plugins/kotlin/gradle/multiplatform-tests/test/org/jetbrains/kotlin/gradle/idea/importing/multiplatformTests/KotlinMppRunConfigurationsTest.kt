@@ -9,14 +9,12 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomChecksDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomGradlePropertiesTestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hooks.TestHooks
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hooks.KotlinMppTestHooks
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.ExecuteRunConfigurationsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.RunConfigurationsChecker
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.compareTo
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
@@ -24,14 +22,14 @@ import org.junit.Test
 import javax.swing.Icon
 
 @TestMetadata("multiplatform/core/features/runConfigurations")
-class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest(), CustomChecksDsl {
+class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest() {
 
     override val pluginMode: KotlinPluginMode
         get() = if (kotlinPluginVersion >= "2.0.20-dev-0") KotlinPluginMode.K2
         else KotlinPluginMode.K1
 
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
-        onlyCheckers(RunConfigurationsChecker, ExecuteRunConfigurationsChecker, CustomGradlePropertiesTestFeature, TestHooks)
+        onlyCheckers(RunConfigurationsChecker, ExecuteRunConfigurationsChecker, CustomGradlePropertiesTestFeature, KotlinMppTestHooks)
         disableCheckers(HighlightingChecker)
         /* When executing tests, we do not care about deprecation warnings in our build output */
         addCustomGradleProperty("org.gradle.warning.mode", "none")

@@ -14,13 +14,12 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.cont
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingCheckDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hooks.TestHooks
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hooks.TestHooksDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hooks.KotlinMppTestHooks
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.hooks.KotlinMppTestHooksDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.ExecuteRunConfigurationsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.RunConfigurationChecksDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.RunConfigurationsChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.WorkspaceChecksDsl
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
@@ -87,13 +86,12 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
                                                       HighlightingCheckDsl,
                                                       TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl,
                                                       AllFilesUnderContentRootConfigurationDsl, RunConfigurationChecksDsl,
-                                                      CustomGradlePropertiesDsl, DocumentationCheckerDsl, TestHooksDsl {
+                                                      CustomGradlePropertiesDsl, DocumentationCheckerDsl, KotlinMppTestHooksDsl {
 
     internal val installedFeatures = listOf<TestFeature<*>>(
         GradleProjectsPublishingTestsFeature,
         LinkedProjectPathsTestsFeature,
         NoErrorEventsDuringImportFeature,
-        CustomImportChecker, // NB: Corresponding DSL is not implemented by default in most suites to not pollute the DSL
         CustomGradlePropertiesTestFeature,
 
         ContentRootsChecker,
@@ -106,7 +104,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         AllFilesAreUnderContentRootChecker,
         DocumentationChecker,
         ReferenceTargetChecker,
-        TestHooks
+        KotlinMppTestHooks
     )
 
     private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl(installedFeatures)
