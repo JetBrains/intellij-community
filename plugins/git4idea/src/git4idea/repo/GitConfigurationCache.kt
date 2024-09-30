@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -45,10 +45,15 @@ class GitProjectConfigurationCache(val project: Project) : GitConfigurationCache
     connection.subscribe<VcsRepositoryMappingListener>(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener {
       clearInvalidKeys()
     })
+    connection.subscribe(GitConfigListener.TOPIC, object : GitConfigListener {
+      override fun notifyConfigChanged(repository: GitRepository) {
+        clearForRepo(repository)
+      }
+    })
   }
 
   @RequiresBackgroundThread
-  fun <T> readRepositoryConfig(repository: GitRepository, key: String): String? {
+  fun readRepositoryConfig(repository: GitRepository, key: String): String? {
     return computeCachedValue(RepoConfigKey(repository, key)) {
       try {
         GitConfigUtil.getValue(repository.getProject(), repository.getRoot(), key)
@@ -60,9 +65,15 @@ class GitProjectConfigurationCache(val project: Project) : GitConfigurationCache
     }
   }
 
+  private fun clearForRepo(repository: GitRepository) {
+    cache.keys.removeIf {
+      it is GitRepositoryConfigKey && it.repository == repository
+    }
+  }
+
   private fun clearInvalidKeys() {
     cache.keys.removeIf {
-      it is GitRepositoryConfigKey && it.repository.isDisposed()
+      it is GitRepositoryConfigKey && it.repository.isDisposed
     }
   }
 
