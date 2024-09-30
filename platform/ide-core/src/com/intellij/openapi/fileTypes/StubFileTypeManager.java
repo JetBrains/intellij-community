@@ -8,7 +8,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class MockFileTypeManager extends FileTypeManager {
+/**
+ * empty implementation of {@link FileTypeManager} in case the {@link com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl} is not available
+ */
+final class StubFileTypeManager extends FileTypeManager {
   @Override
   public @NotNull FileType getFileTypeByFileName(@NotNull String fileName) {
     return MockLanguageFileType.INSTANCE;

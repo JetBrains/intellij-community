@@ -48,12 +48,11 @@ public class ApplicationManager {
   ) {
     Application old = ourApplication;
     setApplication(instance);
-    Supplier<? extends FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.setInstanceSupplier(fileTypeRegistryGetter);
+    FileTypeRegistry.setInstanceSupplier(fileTypeRegistryGetter, parent);
     Disposer.register(parent, () -> {
       if (old != null) {
         // to prevent NPEs in threads still running
         setApplication(old);
-        FileTypeRegistry.setInstanceSupplier(oldFileTypeRegistry);
       }
     });
   }

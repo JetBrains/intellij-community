@@ -13423,12 +13423,10 @@ f:com.intellij.openapi.fileTypes.impl.FileTypeBean
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 c:com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 - com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
-- com.intellij.openapi.Disposable
 - com.intellij.openapi.components.PersistentStateComponent
 - com.intellij.openapi.extensions.ExtensionPointListener
 - p:<init>(kotlinx.coroutines.CoroutineScope):V
 - associate(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileNameMatcher):V
-- dispose():V
 - drainReDetectQueue():V
 - extensionAdded(com.intellij.openapi.fileTypes.impl.FileTypeBean,com.intellij.openapi.extensions.PluginDescriptor):V
 - extensionRemoved(com.intellij.openapi.fileTypes.impl.FileTypeBean,com.intellij.openapi.extensions.PluginDescriptor):V
@@ -13461,7 +13459,6 @@ c:com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 - registerFileType(com.intellij.openapi.fileTypes.FileType,java.lang.String[]):V
 - removeAssociation(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileNameMatcher):V
 - removePlainTextAssociationsForFile(java.lang.CharSequence):V
-- setConflictResultConsumer(java.util.function.Consumer):V
 - setIgnoredFilesList(java.lang.String):V
 - unregisterFileType(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.extensions.PluginDescriptor):V
 *:com.intellij.openapi.fileTypes.impl.FileTypeOverrider

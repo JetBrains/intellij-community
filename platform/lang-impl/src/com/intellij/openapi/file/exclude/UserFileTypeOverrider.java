@@ -12,9 +12,11 @@ import org.jetbrains.annotations.Nullable;
  * Substitutes type for files which users explicitly marked with "Override File Type" action
  */
 final class UserFileTypeOverrider implements FileTypeOverrider {
+  private final OverrideFileTypeManager myOverrideFileTypeManager = OverrideFileTypeManager.getInstance();
+
   @Override
   public @Nullable FileType getOverriddenFileType(@NotNull VirtualFile file) {
-    String overriddenType = OverrideFileTypeManager.getInstance().getFileValue(file);
+    String overriddenType = myOverrideFileTypeManager.getFileValue(file);
     if (overriddenType != null) {
       return FileTypeManager.getInstance().findFileTypeByName(overriddenType);
     }

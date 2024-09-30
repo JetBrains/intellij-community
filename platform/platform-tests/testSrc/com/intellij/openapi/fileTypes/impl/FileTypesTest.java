@@ -7,7 +7,6 @@ import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
-import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginDescriptorTestKt;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -1086,7 +1085,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     bean.setPluginDescriptor(pluginDescriptor);
     Disposable disposable = Disposer.newDisposable();
     WriteAction.run(() -> FileTypeManagerImpl.EP_NAME.getPoint().registerExtension(bean, disposable));
-    ((FileTypeManagerImpl)FileTypeManager.getInstance()).extensionRemoved(bean, pluginDescriptor); // avoid contamination of production FileTypeManager
     return disposable;
   }
 
@@ -1324,11 +1322,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertInstanceOf(myFileTypeManager.getFileTypeByFileName("foo.hs"), MyHaskellFileType.class);
 
     WriteAction.run(() -> Disposer.dispose(disposable));
-
-    // todo restore old AbstractFileType automatically?
-    AbstractFileType old = new AbstractFileType(new SyntaxTable());
-    old.setName(MyHaskellFileType.NAME);
-    myFileTypeManager.registerFileType(old, List.of(), myFileTypeManager, FileTypeManagerImpl.coreIdeaPluginDescriptor());
   }
 
   private static class MyCustomImageFileType implements FileType {

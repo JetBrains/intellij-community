@@ -1570,11 +1570,13 @@ com.intellij.openapi.fileTypes.FileTypeListener
 - fileTypesChanged(com.intellij.openapi.fileTypes.FileTypeEvent):V
 a:com.intellij.openapi.fileTypes.FileTypeManager
 - com.intellij.openapi.fileTypes.FileTypeRegistry
+- com.intellij.openapi.Disposable
 - sf:TOPIC:com.intellij.util.messages.Topic
-- <init>():V
+- p:<init>():V
 - a:associate(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileNameMatcher):V
 - f:associateExtension(com.intellij.openapi.fileTypes.FileType,java.lang.String):V
 - f:associatePattern(com.intellij.openapi.fileTypes.FileType,java.lang.String):V
+- dispose():V
 - a:getAssociations(com.intellij.openapi.fileTypes.FileType):java.util.List
 - a:getIgnoredFilesList():java.lang.String
 - s:getInstance():com.intellij.openapi.fileTypes.FileTypeManager
@@ -1591,24 +1593,6 @@ c:com.intellij.openapi.fileTypes.FileTypes
 - sf:PLAIN_TEXT:com.intellij.openapi.fileTypes.LanguageFileType
 - sf:UNKNOWN:com.intellij.openapi.fileTypes.FileType
 - p:<init>():V
-f:com.intellij.openapi.fileTypes.MockFileTypeManager
-- com.intellij.openapi.fileTypes.FileTypeManager
-- <init>():V
-- associate(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileNameMatcher):V
-- findFileTypeByName(java.lang.String):com.intellij.openapi.fileTypes.FileType
-- getAssociations(com.intellij.openapi.fileTypes.FileType):java.util.List
-- getFileTypeByExtension(java.lang.String):com.intellij.openapi.fileTypes.FileType
-- getFileTypeByFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.FileType
-- getFileTypeByFileName(java.lang.String):com.intellij.openapi.fileTypes.FileType
-- getIgnoredFilesList():java.lang.String
-- getKnownFileTypeOrAssociate(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.fileTypes.FileType
-- getRegisteredFileTypes():com.intellij.openapi.fileTypes.FileType[]
-- getStdFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
-- isFileIgnored(com.intellij.openapi.vfs.VirtualFile):Z
-- isFileIgnored(java.lang.String):Z
-- registerFileType(com.intellij.openapi.fileTypes.FileType,java.lang.String[]):V
-- removeAssociation(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileNameMatcher):V
-- setIgnoredFilesList(java.lang.String):V
 f:com.intellij.openapi.fileTypes.MockLanguageFileType
 - com.intellij.openapi.fileTypes.LanguageFileType
 - sf:INSTANCE:com.intellij.openapi.fileTypes.LanguageFileType

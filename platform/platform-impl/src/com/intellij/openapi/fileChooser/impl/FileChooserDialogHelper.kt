@@ -3,6 +3,7 @@ package com.intellij.openapi.fileChooser.impl
 
 import com.intellij.core.CoreFileTypeRegistry
 import com.intellij.ide.highlighter.ArchiveFileType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.command.CommandProcessorEx
@@ -10,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
@@ -30,7 +32,7 @@ import java.awt.KeyboardFocusManager
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
-internal class FileChooserDialogHelper(private val descriptor: FileChooserDescriptor) {
+internal class FileChooserDialogHelper(private val descriptor: FileChooserDescriptor) : Disposable {
   @Suppress("SpellCheckingInspection")
   private val ZIP_FS_TYPE = "zipfs"
 
@@ -46,8 +48,12 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
       val registry = CoreFileTypeRegistry()
       registry.registerFileType(ArchiveFileType.INSTANCE, "zip")
       registry.registerFileType(ArchiveFileType.INSTANCE, "jar")
-      FileTypeRegistry.setInstanceSupplier { registry }
+      FileTypeRegistry.setInstanceSupplier( { registry }, this)
     }
+  }
+
+  override fun dispose() {
+
   }
 
   fun setNativeDialogProperties() {
@@ -74,6 +80,7 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { previousFocusOwner.requestFocus() }
         }
       }
+      Disposer.dispose(this)
     }
   }
 
