@@ -606,13 +606,29 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
-  public void testConditionalGenericTypeAlias() {
+  public void testConditionalGenericTypeAliasWithoutExplicitParameter() {
     doTest("list[str]",
            """
              if something:
                  Type = list
              else:
                  Type = set
+             
+             expr: Type[str]
+             """);
+  }
+
+  public void testConditionalGenericTypeAliasWithExplicitParameter() {
+    doTest("list[str]",
+           """
+             from typing import TypeVar
+             
+             T = TypeVar("T")
+             
+             if something:
+                 Type = list[T]
+             else:
+                 Type = set[T]
              
              expr: Type[str]
              """);
