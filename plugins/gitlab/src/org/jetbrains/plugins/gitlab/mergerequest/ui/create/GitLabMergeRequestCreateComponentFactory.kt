@@ -22,6 +22,7 @@ import git4idea.ui.branch.MergeDirectionModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.*
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
@@ -107,7 +108,7 @@ internal object GitLabMergeRequestCreateComponentFactory {
     }
 
     // Force an action's update with new values for commits and generating state
-    launchNow {
+    launch {
       createVm.titleGenerationVm.collect {
         if (it == null) {
           toolbar.updateActionsAsync()

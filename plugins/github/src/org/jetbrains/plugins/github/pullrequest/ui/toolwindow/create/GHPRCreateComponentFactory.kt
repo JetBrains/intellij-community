@@ -235,7 +235,7 @@ internal object GHPRCreateComponentFactory {
         }
 
         // Force an action's update with every new value for commits and template
-        cs.launchNow {
+        cs.launch {
           vm.titleAndDescriptionGenerationVm.collect {
             if (it == null) {
               toolbar.updateActionsAsync()
