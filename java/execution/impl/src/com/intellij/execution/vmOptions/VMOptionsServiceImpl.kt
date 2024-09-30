@@ -17,22 +17,27 @@ class VMOptionsServiceImpl : VMOptionsService {
   companion object {
     private val ourData: ConcurrentMap<String, CompletableFuture<JdkOptionsData>> = CollectionFactory.createConcurrentSoftValueMap()
 
+    private const val ENABLE_ASSERTIONS_DESCRIPTION = "Enables assertions with specified granularity."
+    private const val DISABLE_ASSERTIONS_DESCRIPTION = "Disables assertions with specified granularity."
+    private const val ENABLES_SYSTEM_ASSERTIONS_DESCRIPTION = "Enables system assertions."
+    private const val DISABLES_SYSTEM_ASSERTIONS_DESCRIPTION = "Disables system assertions."
+
     @JvmStatic
     @get:JvmName("getStandardOptionList")
     val STANDARD_OPTION_LIST : List<VMOption> = listOf(
-      opt("ea", "enable assertions with specified granularity"),
-      opt("enableassertions", "enable assertions with specified granularity"),
-      opt("da", "disable assertions with specified granularity"),
-      opt("disableassertions", "disable assertions with specified granularity"),
-      opt("esa", "enable system assertions"),
-      opt("enablesystemassertions", "enable system assertions"),
-      opt("dsa", "disable system assertions"),
-      opt("disablesystemassertions", "disable system assertions"),
-      opt("agentpath:", "load native agent library by full pathname"),
-      opt("agentlib:", "load native agent library <libname>, e.g. -agentlib:jdwp"),
-      opt("javaagent:", "load Java programming language agent"),
-      opt("D", "set a system property in format <name>=<value>"),
-      opt("XX:", "specify non-standard JVM-specific option")
+      opt("ea", ENABLE_ASSERTIONS_DESCRIPTION),
+      opt("enableassertions", ENABLE_ASSERTIONS_DESCRIPTION),
+      opt("da", DISABLE_ASSERTIONS_DESCRIPTION),
+      opt("disableassertions", DISABLE_ASSERTIONS_DESCRIPTION),
+      opt("esa", ENABLES_SYSTEM_ASSERTIONS_DESCRIPTION),
+      opt("enablesystemassertions", ENABLES_SYSTEM_ASSERTIONS_DESCRIPTION),
+      opt("dsa", DISABLES_SYSTEM_ASSERTIONS_DESCRIPTION),
+      opt("disablesystemassertions", DISABLES_SYSTEM_ASSERTIONS_DESCRIPTION),
+      opt("agentpath:", "Loads native agent library by &lt;pathname&gt;."),
+      opt("agentlib:", "Loads native agent library by &lt;libname&gt;."),
+      opt("javaagent:", "Loads Java programming language agent by &lt;jarpath&gt;."),
+      opt("D", "Sets a system property in format &lt;name&gt;=&lt;value&gt;."),
+      opt("XX:", "Specify non-standard JVM-specific option.")
     )
 
     private fun opt(name: String, doc: String): VMOption {

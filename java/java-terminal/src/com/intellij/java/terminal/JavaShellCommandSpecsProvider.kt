@@ -80,11 +80,17 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       val optionName = it.optionName
       val presentableName = "${it.variant.prefix()}$optionName"
       option(presentableName) {
-        if (!JavaTerminalBundle.isMessageInBundle(getOptionBundleKey(optionName))) {
-          LOG.warn("Unknown ${it.variant} option: \"$optionName\". Provide ${getOptionBundleKey(optionName)} and [${getOptionArgumentBundleKey(optionName)}]")
-          return@option
+        val optionDescription = if (JavaTerminalBundle.isMessageInBundle(getOptionBundleKey(optionName))) {
+          JavaTerminalBundle.message(getOptionBundleKey(optionName))
+        } else {
+          val descriptionCandidate = it.doc
+          if (descriptionCandidate == null) {
+            LOG.warn("Unknown ${it.variant} option: \"$optionName\". Provide ${getOptionBundleKey(optionName)} and [${getOptionArgumentBundleKey(optionName)}]")
+            return@option
+          }
+          descriptionCandidate
         }
-        description(JavaTerminalBundle.message(getOptionBundleKey(optionName)))
+        description(optionDescription)
         if (!JavaTerminalBundle.isMessageInBundle(getOptionArgumentBundleKey(optionName))) return@option
 
         val info = OPTION_UI_INFO_MAP[presentableName] ?: DEFAULT_UI_OPTION_INSTANCE
