@@ -73,7 +73,12 @@ private val defaultHandlerActions = object : MoveKotlinDeclarationsHandlerAction
         freezeTargets,
         moveToPackage,
         moveCallback
-    ).show()
+    ).let {
+        if (getBoolean("ide.performance.skip.refactoring.dialogs"))
+            it.performOKAction()
+        else
+            it.show()
+    }
 
     override fun invokeKotlinSelectNestedClassChooser(nestedClass: KtClassOrObject, targetContainer: PsiElement?) =
         KotlinSelectNestedClassRefactoringDialog.chooseNestedClassRefactoring(nestedClass, targetContainer)
