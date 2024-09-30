@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,7 +14,6 @@ import com.intellij.psi.impl.RecaptureTypeMapper;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -28,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
@@ -303,7 +304,8 @@ public final class RedundantCastUtil {
           if (Comparing.equal(newReturnType == null ? null : new RecaptureTypeMapper().mapType(newReturnType), oldReturnType) &&
               (Comparing.equal(newTargetMethod, targetMethod) ||
                !(newTargetMethod.isDeprecated() && !targetMethod.isDeprecated()) &&
-               MethodSignatureUtil.isSuperMethod(newTargetMethod, targetMethod) &&
+               (MethodSignatureUtil.isSuperMethod(newTargetMethod, targetMethod) || 
+                MethodSignatureUtil.isSuperMethod(targetMethod, newTargetMethod)) &&
                // see SCR11555, SCR14559
                areThrownExceptionsCompatible(targetMethod, newTargetMethod) &&
                areNullabilityCompatible(targetMethod, newTargetMethod))) {
@@ -1186,16 +1188,13 @@ public final class RedundantCastUtil {
     return oldNullability == newNullability;
   }
 
-  private static boolean areThrownExceptionsCompatible(final PsiMethod targetMethod, final PsiMethod newTargetMethod) {
-    final PsiClassType[] oldThrowsTypes = targetMethod.getThrowsList().getReferencedTypes();
-    final PsiClassType[] newThrowsTypes = newTargetMethod.getThrowsList().getReferencedTypes();
-    for (final PsiClassType throwsType : newThrowsTypes) {
-      if (!isExceptionThrown(throwsType, oldThrowsTypes)) return false;
-    }
-    return true;
-  }
-
-  private static boolean isExceptionThrown(PsiClassType exceptionType, PsiClassType[] thrownTypes) {
-    return ArrayUtil.contains(exceptionType, thrownTypes);
+  private static boolean areThrownExceptionsCompatible(PsiMethod targetMethod, PsiMethod newTargetMethod) {
+    Set<PsiClassType> oldThrowsTypes = Stream.of(targetMethod.getThrowsList().getReferencedTypes())
+      .filter(t -> !ExceptionUtil.isUncheckedException(t))
+      .collect(Collectors.toSet());
+    List<PsiClassType> newThrowsTypes = Stream.of(newTargetMethod.getThrowsList().getReferencedTypes())
+      .filter(t -> !ExceptionUtil.isUncheckedException(t))
+      .toList();
+    return oldThrowsTypes.size() == newThrowsTypes.size() && oldThrowsTypes.containsAll(newThrowsTypes);
   }
 }
