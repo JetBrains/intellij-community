@@ -10,12 +10,11 @@ import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.asKotlinLogger
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.library.*
-import org.jetbrains.kotlin.library.metadata.KlibMetadataVersion
 import org.jetbrains.kotlin.library.metadata.isCInteropLibrary
 import org.jetbrains.kotlin.library.metadata.isCommonizedCInteropLibrary
-import org.jetbrains.kotlin.library.metadata.metadataVersion
 import org.jetbrains.kotlin.library.resolveSingleFileKlib
 import org.jetbrains.kotlin.library.uniqueName
+import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 /**
@@ -60,8 +59,8 @@ val KotlinLibrary.compatibilityInfo: KlibCompatibilityInfo
             }
 
             !metadataVersion.isCompatibleWithCurrentCompilerVersion() -> {
-                val isOlder = metadataVersion.isAtLeast(KlibMetadataVersion.INSTANCE)
-                KlibCompatibilityInfo.IncompatibleMetadata(!isOlder)
+                val isOlder = metadataVersion.isAtMost(MetadataVersion.INSTANCE_NEXT)
+                KlibCompatibilityInfo.IncompatibleMetadata(isOlder)
             }
 
             else -> KlibCompatibilityInfo.Compatible
