@@ -22,14 +22,16 @@ abstract class AutomaticTestMethodRenamerFactory : AutomaticRenamerFactory {
   protected class AutomaticTestMethodRenamer(oldMethodName: String?,
                                              className: String?,
                                              module: Module?,
-                                             newMethodName: String) : AutomaticRenamer() {
+                                             newMethodName: String,
+                                             namesToSkip: Set<String> = emptySet()) : AutomaticRenamer() {
     init {
-      findMethodsToReplace(oldMethodName, className, module)
+      findMethodsToReplace(oldMethodName, className, module, namesToSkip)
       suggestAllNames(oldMethodName, newMethodName)
     }
 
-    private fun findMethodsToReplace(oldMethodName: String?, className: String?, module: Module?) {
+    private fun findMethodsToReplace(oldMethodName: String?, className: String?, module: Module?, namesToSkip: Set<String>) {
       if (oldMethodName == null || className == null || module == null) return
+      if (namesToSkip.contains(className)) return
       val moduleScope = GlobalSearchScope.moduleWithDependentsScope(module)
 
       val cache = PsiShortNamesCache.getInstance(module.getProject())

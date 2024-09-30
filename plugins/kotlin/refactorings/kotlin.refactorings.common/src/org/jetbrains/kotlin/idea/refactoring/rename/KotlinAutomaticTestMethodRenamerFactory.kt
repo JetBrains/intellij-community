@@ -24,7 +24,8 @@ class KotlinAutomaticTestMethodRenamerFactory : AutomaticTestMethodRenamerFactor
             ktFunction?.name,
             psiClass?.name,
             module,
-            newName)
+            newName,
+            setOf("Companion"))
     }
 
     override fun isEnabled(): Boolean = KotlinCommonRefactoringSettings.getInstance().renameTestMethods
