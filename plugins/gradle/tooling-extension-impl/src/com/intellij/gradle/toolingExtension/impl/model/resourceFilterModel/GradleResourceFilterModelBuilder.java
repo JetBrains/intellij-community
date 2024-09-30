@@ -1,148 +1,165 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel
+package com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel;
 
-import com.google.gson.GsonBuilder
-import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
-import groovy.transform.CompileDynamic
-import org.gradle.api.Action
-import org.gradle.api.Project
-import org.gradle.api.file.ContentFilterable
-import org.gradle.api.file.FileCopyDetails
-import org.gradle.api.tasks.util.PatternFilterable
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.model.DefaultExternalFilter
-import org.jetbrains.plugins.gradle.tooling.Message
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
+import com.google.gson.GsonBuilder;
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
+import groovy.lang.Closure;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import org.codehaus.groovy.runtime.StringGroovyMethods;
+import org.gradle.api.Action;
+import org.gradle.api.Project;
+import org.gradle.api.Task;
+import org.gradle.api.file.ContentFilterable;
+import org.gradle.api.file.FileCopyDetails;
+import org.gradle.api.tasks.util.PatternFilterable;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.plugins.gradle.model.DefaultExternalFilter;
+import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
+
+import java.lang.reflect.Field;
+import java.util.*;
 
 @ApiStatus.Internal
-class GradleResourceFilterModelBuilder {
-
-  static Set<String> getIncludes(Project project, String taskName) {
-    def filterableTask = project.tasks.findByName(taskName)
+public class GradleResourceFilterModelBuilder {
+  public static Set<String> getIncludes(Project project, String taskName) {
+    Task filterableTask = project.getTasks().findByName(taskName);
     if (filterableTask instanceof PatternFilterable) {
-      return filterableTask.includes
+      return ((PatternFilterable)filterableTask).getIncludes();
     }
-    return new LinkedHashSet<String>()
+
+    return new LinkedHashSet<String>();
   }
 
-  static Set<String> getExcludes(Project project, String taskName) {
-    def filterableTask = project.tasks.findByName(taskName)
+  public static Set<String> getExcludes(Project project, String taskName) {
+    Task filterableTask = project.getTasks().findByName(taskName);
     if (filterableTask instanceof PatternFilterable) {
-      return filterableTask.excludes
+      return ((PatternFilterable)filterableTask).getExcludes();
     }
-    return new LinkedHashSet<String>()
+
+    return new LinkedHashSet<String>();
   }
 
-  @CompileDynamic
-  static List<DefaultExternalFilter> getFilters(Project project, ModelBuilderContext context, String taskName) {
-    def filterReaders = new ArrayList<DefaultExternalFilter>()
-    if (System.getProperty('idea.disable.gradle.resource.filtering', 'false').toBoolean()) {
-      return filterReaders
+  public static List<DefaultExternalFilter> getFilters(final Project project, final ModelBuilderContext context, String taskName) {
+    final ArrayList<DefaultExternalFilter> filterReaders = new ArrayList<DefaultExternalFilter>();
+    if (StringGroovyMethods.toBoolean(System.getProperty("idea.disable.gradle.resource.filtering", "false"))) {
+      return ((List<DefaultExternalFilter>)(filterReaders));
     }
-    def filterableTask = project.tasks.findByName(taskName)
-    if (filterableTask instanceof ContentFilterable && filterableTask.metaClass.respondsTo(filterableTask, "getMainSpec")) {
+
+    Task filterableTask = project.getTasks().findByName(taskName);
+    if (filterableTask instanceof ContentFilterable &&
+        DefaultGroovyMethods.getMetaClass(filterableTask).respondsTo(filterableTask, "getMainSpec")) {
       //noinspection GrUnresolvedAccess
-      def mainSpec = filterableTask.getMainSpec()
+      Object mainSpec = DefaultGroovyMethods.invokeMethod(filterableTask, "getMainSpec", new Object[0]);
       if (mainSpec == null) {
-        return filterReaders
+        return ((List<DefaultExternalFilter>)(filterReaders));
       }
-      Object copyActions = null
-      if (mainSpec.hasProperty("allCopyActions")) {
+
+      Object copyActions = null;
+      if (DefaultGroovyMethods.asBoolean(DefaultGroovyMethods.hasProperty(mainSpec, "allCopyActions"))) {
         //noinspection GrUnresolvedAccess
-        copyActions = mainSpec.allCopyActions
+        copyActions = mainSpec.allCopyActions;
       }
-      else if (mainSpec.hasProperty("copyActions")) {
+      else if (DefaultGroovyMethods.asBoolean(DefaultGroovyMethods.hasProperty(mainSpec, "copyActions"))) {
         //noinspection GrUnresolvedAccess
-        copyActions = mainSpec.copyActions
+        copyActions = mainSpec.copyActions;
       }
+
       if (copyActions == null) {
-        return filterReaders
+        return ((List<DefaultExternalFilter>)(filterReaders));
       }
-      copyActions.each { Action<? super FileCopyDetails> action ->
-        def filter = getFilter(project, context, action)
-        if (filter != null) {
-          filterReaders.add(filter)
+
+      DefaultGroovyMethods.each(copyActions, new Closure<Boolean>(null, null) {
+        public Boolean doCall(Action<? super FileCopyDetails> action) {
+          DefaultExternalFilter filter = getFilter(project, context, action);
+          if (filter != null) {
+            return filterReaders.add(filter);
+          }
         }
-      }
+      });
     }
-    return filterReaders
+
+    return ((List<DefaultExternalFilter>)(filterReaders));
   }
 
   private static DefaultExternalFilter getFilter(Project project, ModelBuilderContext context, Action<? super FileCopyDetails> action) {
     try {
-      if ('RenamingCopyAction' == action.class.simpleName) {
-        return getRenamingCopyFilter(action)
+      if ("RenamingCopyAction".equals(action.getClass().getSimpleName())) {
+        return getRenamingCopyFilter(action);
       }
       else {
-        return getCommonFilter(action)
+        return getCommonFilter(action);
       }
     }
     catch (Exception ignored) {
-      context.getMessageReporter().createMessage()
-        .withGroup(Messages.RESOURCE_FILTER_MODEL_GROUP)
-        .withTitle("Resource configuration warning")
-        .withText(
-          "Cannot resolve resource filtering of " + action.class.simpleName + ". " +
-          "IDEA may fail to build project. " +
-          "Consider using delegated build (enabled by default)."
-        )
-        .withKind(Message.Kind.WARNING)
-        .reportMessage(project)
+      context.getMessageReporter().createMessage().withGroup(Messages.RESOURCE_FILTER_MODEL_GROUP)
+        .withTitle("Resource configuration warning").withText("Cannot resolve resource filtering of " +
+                                                              action.getClass().getSimpleName() +
+                                                              ". " +
+                                                              "IDEA may fail to build project. " +
+                                                              "Consider using delegated build (enabled by default).")
+        .withKind(Message.Kind.WARNING).reportMessage(project);
     }
-    return null
+
+    return null;
   }
 
-  @CompileDynamic
   private static DefaultExternalFilter getCommonFilter(Action<? super FileCopyDetails> action) {
-    def filterClass = findPropertyWithType(action, Class, 'filterType', 'val$filterType', 'arg$2', 'arg$1')
+    Class filterClass = findPropertyWithType(action, Class.class, "filterType", "val$filterType", "arg$2", "arg$1");
     if (filterClass == null) {
-      throw new IllegalArgumentException("Unsupported action found: " + action.class.name)
+      throw new IllegalArgumentException("Unsupported action found: " + action.getClass().getName());
     }
 
-    def filterType = filterClass.name
-    def properties = findPropertyWithType(action, Map, 'properties', 'val$properties', 'arg$1')
-    if ('org.apache.tools.ant.filters.ExpandProperties' == filterType) {
-      if (properties != null && properties['project'] != null) {
-        properties = properties['project'].properties
+
+    String filterType = filterClass.getName();
+    Map properties = findPropertyWithType(action, Map.class, "properties", "val$properties", "arg$1");
+    if ("org.apache.tools.ant.filters.ExpandProperties".equals(filterType)) {
+      if (properties != null && properties.get("project") != null) {
+        properties = DefaultGroovyMethods.getProperties(properties.get("project"));
       }
     }
 
-    def filter = new DefaultExternalFilter()
-    filter.filterType = filterType
+
+    DefaultExternalFilter filter = new DefaultExternalFilter();
+    filter.setFilterType(filterType);
     if (properties != null) {
-      filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(properties)
+      filter.setPropertiesAsJsonMap(new GsonBuilder().create().toJson(properties));
     }
-    return filter
+
+    return ((DefaultExternalFilter)(filter));
   }
 
-  @CompileDynamic
   private static DefaultExternalFilter getRenamingCopyFilter(Action<? super FileCopyDetails> action) {
-    assert 'RenamingCopyAction' == action.class.simpleName
+    assert "RenamingCopyAction".equals(action.getClass().getSimpleName());
 
     //noinspection GrUnresolvedAccess
-    def transformer = action.transformer
-    def pattern = transformer.matcher?.pattern()?.pattern() ?:
-                  transformer.pattern?.pattern()
-    def replacement = transformer.replacement
+    Object transformer = action.transformer;
+    final Object pattern1 = transformer.matcher.invokeMethod("pattern", new Object[0]).invokeMethod("pattern", new Object[0]);
+    Object pattern = pattern1 ? pattern1 : transformer.pattern.invokeMethod("pattern", new Object[0]);
+    Object replacement = transformer.replacement;
 
-    def filter = new DefaultExternalFilter()
-    filter.filterType = 'RenamingCopyFilter'
-    filter.propertiesAsJsonMap = new GsonBuilder().create().toJson([pattern: pattern, replacement: replacement])
-    return filter
+    DefaultExternalFilter filter = new DefaultExternalFilter();
+    filter.setFilterType("RenamingCopyFilter");
+    LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>(2);
+    map.put("pattern", pattern);
+    map.put("replacement", replacement);
+    filter.setPropertiesAsJsonMap(new GsonBuilder().create().toJson(map));
+    return ((DefaultExternalFilter)(filter));
   }
 
-  static <T> T findPropertyWithType(Object self, Class<T> type, String... propertyNames) {
-    for (String name in propertyNames) {
+  public static <T> T findPropertyWithType(Object self, Class<T> type, String... propertyNames) {
+    for (String name : propertyNames) {
       try {
-        def field = self.class.getDeclaredField(name)
-        if (field != null && type.isAssignableFrom(field.type)) {
-          field.setAccessible(true)
-          return field.get(self) as T
+        Field field = self.getClass().getDeclaredField(name);
+        if (field != null && type.isAssignableFrom(field.getType())) {
+          field.setAccessible(true);
+          return DefaultGroovyMethods.asType(field.get(self), getProperty("T"));
         }
       }
       catch (NoSuchFieldException ignored) {
       }
     }
-    return null
+
+    return null;
   }
 }
