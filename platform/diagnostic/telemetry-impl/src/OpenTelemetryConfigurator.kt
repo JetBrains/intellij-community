@@ -2,9 +2,11 @@
 package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpoint
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.common.AttributesBuilder
+import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import io.opentelemetry.sdk.resources.Resource
 import org.jetbrains.annotations.ApiStatus
@@ -31,4 +33,25 @@ class OpenTelemetryConfigurator(@JvmField internal val sdkBuilder: OpenTelemetry
       }
       .build()
   )
+
+  companion object {
+    fun create(
+      serviceName: String,
+      serviceVersion: String,
+      serviceNamespace: String,
+    ): OpenTelemetryConfigurator {
+      return OpenTelemetryConfigurator(
+        sdkBuilder = OpenTelemetrySdk.builder(),
+        serviceName = serviceName,
+        serviceVersion = serviceVersion,
+        serviceNamespace = serviceNamespace,
+        customResourceBuilder = { attributes ->
+          // don't write username to file - it maybe private information
+          if (getTraceEndpoint() != null) {
+            attributes.put(AttributeKey.stringKey("process.owner"), System.getProperty("user.name") ?: "unknown")
+          }
+        },
+      )
+    }
+  }
 }

@@ -59,16 +59,7 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
   init {
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
 
-    val configurator: OpenTelemetryConfigurator = try {
-      val appInfo = ApplicationInfoImpl.getShadowInstance()
-      createOpenTelemetryConfigurator(serviceName = ApplicationNamesInfo.getInstance().fullProductName,
-                                      serviceVersion = appInfo.build.asStringWithoutProductCode(),
-                                      serviceNamespace = appInfo.build.productCode)
-    }
-    catch (e: Throwable) {
-      createOpenTelemetryConfigurator(serviceName = "", serviceVersion = "", serviceNamespace = "")
-    }
-
+    val configurator: OpenTelemetryConfigurator = createOpenTelemetryConfigurator()
     aggregatedMetricExporter = AggregatedMetricExporter()
     otlpService = OtlpService.getInstance()
 
@@ -91,15 +82,9 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
         }
       })
 
-      val batchSpanProcessor = BatchSpanProcessor(coroutineScope = coroutineScope, spanExporters = java.util.List.copyOf(spanExporters))
       // make sure that otlpService job is canceled before BatchSpanProcessor job
       otlpServiceCoroutineScope = coroutineScope.childScope(supervisor = false)
-      val tracerProvider = SdkTracerProvider.builder()
-        .addSpanProcessor(batchSpanProcessor)
-        .setResource(configurator.resource)
-        .build()
-      configurator.sdkBuilder.setTracerProvider(tracerProvider)
-      batchSpanProcessor
+      BatchSpanProcessor(coroutineScope = coroutineScope, spanExporters = java.util.List.copyOf(spanExporters))
     }
     else {
       null
@@ -110,9 +95,17 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
                                  opentelemetrySdkResource = configurator.resource)
 
     sdk = configurator.sdkBuilder
-      // W3CTraceContextPropagator is needed to make backend/client spans properly synced, issue: RDCT-408
-      .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
-      .setMeterProvider(IdeaOtlpMeterProvider.get(configurator.resource, aggregatedMetricExporter))
+      .apply {
+        setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+        setMeterProvider(IdeaOtlpMeterProvider.get(configurator.resource, aggregatedMetricExporter))
+        if (batchSpanProcessor != null) {
+          val tracerProvider = SdkTracerProvider.builder()
+            .addSpanProcessor(batchSpanProcessor)
+            .setResource(configurator.resource)
+            .build()
+          setTracerProvider(tracerProvider)
+        }
+      }
       .buildAndRegisterGlobal()
   }
 
@@ -258,22 +251,14 @@ private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = fa
   return spanExporters
 }
 
-private fun createOpenTelemetryConfigurator(
-  serviceName: String,
-  serviceVersion: String,
-  serviceNamespace: String,
-): OpenTelemetryConfigurator {
-  return OpenTelemetryConfigurator(
-    sdkBuilder = OpenTelemetrySdk.builder(),
-    serviceName = serviceName,
-    serviceVersion = serviceVersion,
-    serviceNamespace = serviceNamespace,
-    customResourceBuilder = {
-      // don't write username to file - it maybe private information
-      if (getTraceEndpoint() != null) {
-        it.put(AttributeKey.stringKey("process.owner"), System.getProperty("user.name") ?: "unknown")
-      }
-    },
-  )
+private fun createOpenTelemetryConfigurator(): OpenTelemetryConfigurator {
+  return try {
+    val appInfo = ApplicationInfoImpl.getShadowInstance()
+    OpenTelemetryConfigurator.create(serviceName = ApplicationNamesInfo.getInstance().fullProductName,
+                                     serviceVersion = appInfo.build.asStringWithoutProductCode(),
+                                     serviceNamespace = appInfo.build.productCode)
+  }
+  catch (e: Throwable) {
+    OpenTelemetryConfigurator.create(serviceName = "", serviceVersion = "", serviceNamespace = "")
+  }
 }
-
