@@ -69,7 +69,7 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
     val commit = repo.prepareConflict()
     `do nothing on merge`()
 
-    cherryPick(commit)
+    cherryPick(commit, expectSuccess = false)
 
     `assert merge dialog was shown`()
 
@@ -98,7 +98,7 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
     `mark as resolved on merge`()
     vcsHelper.onCommit { false }
 
-    cherryPick(commit)
+    cherryPick(commit, expectSuccess = false)
 
     `assert merge dialog was shown`()
     `assert commit dialog was shown`()
@@ -135,7 +135,7 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
     checkout("feature")
     common.append("on feature\n")
 
-    cherryPick(commit1, commit2, commit3)
+    cherryPick(commit1, commit2, commit3, expectSuccess = false)
 
     assertErrorNotification("Cherry-pick failed", """
       ${shortHash(commit2)} appended common
@@ -157,7 +157,7 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
     common.append("on feature\n").addCommit("appended on feature").hash()
     `do nothing on merge`()
 
-    cherryPick(commit1, commit2, commit3)
+    cherryPick(commit1, commit2, commit3, expectSuccess = false)
 
     `assert merge dialog was shown`()
     assertLastMessage("fix #1")

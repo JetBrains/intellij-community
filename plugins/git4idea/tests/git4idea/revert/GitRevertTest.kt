@@ -23,7 +23,6 @@ import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitContentRevision.createRevision
 import git4idea.GitRevisionNumber
 import git4idea.history.GitHistoryUtils
-import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.test.*
 import java.nio.charset.Charset
@@ -276,11 +275,11 @@ class GitRevertTest : GitSingleRepoTest() {
 
   private fun revertAutoCommit(vararg commit: VcsFullCommitDetails) {
     updateChangeListManager()
-    GitRevertOperation(project, listOf(*commit), true).execute()
+    GitRevertProcess(project, listOf(*commit), true).execute()
   }
 
   private fun `revert without auto-commit`(commit: VcsFullCommitDetails) {
     updateChangeListManager()
-    GitRevertOperation(project, listOf(commit), false).execute()
+    GitRevertProcess(project, listOf(commit), false).execute()
   }
 }

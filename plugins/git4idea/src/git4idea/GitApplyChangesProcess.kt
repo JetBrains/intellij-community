@@ -42,7 +42,6 @@ import git4idea.merge.GitConflictResolver
 import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.stash.GitChangesSaver
 import git4idea.util.GitUntrackedFilesHelper
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -55,18 +54,14 @@ import java.util.concurrent.atomic.AtomicBoolean
  * waits for the [ChangeListManager] update, shows the commit dialog and removes the changelist after commit,
  * if the commit was successful.
  */
-internal class GitApplyChangesProcess(
-  private val project: Project,
+internal abstract class GitApplyChangesProcess(
+  protected val project: Project,
   private val commits: List<VcsCommitMetadata>,
   forceAutoCommit: Boolean,
   @Nls private val operationName: String,
   @Nls private val appliedWord: String,
-  private val command: (GitRepository, VcsCommitMetadata, autoCommit: Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
   private val abortCommand: GitAbortOperationAction,
-  private val emptyCommitDetector: (GitCommandResult) -> Boolean,
-  private val defaultCommitMessageGenerator: (GitRepository, VcsCommitMetadata) -> @NonNls String,
   private val preserveCommitMetadata: Boolean,
-  private val cleanupBeforeCommit: (GitRepository, autoCommit: Boolean) -> Unit = { _, _ -> },
   private val activityName: @NlsContexts.Label String,
   private val activityId: ActivityId,
 ) {
@@ -74,7 +69,19 @@ internal class GitApplyChangesProcess(
   private val vcsNotifier = VcsNotifier.getInstance(project)
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private val vcsHelper = AbstractVcsHelper.getInstance(project)
-  private val autoCommit = forceAutoCommit || !changeListManager.areChangeListsEnabled()
+  protected val autoCommit = forceAutoCommit || !changeListManager.areChangeListsEnabled()
+
+  protected abstract fun isEmptyCommit(result: GitCommandResult): Boolean
+
+  protected abstract fun cleanupBeforeCommit(repository: GitRepository)
+
+  protected abstract fun generateDefaultMessage(repository: GitRepository, commit: VcsCommitMetadata): @NonNls String
+
+  protected abstract fun applyChanges(
+    repository: GitRepository,
+    commit: VcsCommitMetadata,
+    listeners: List<GitLineHandlerListener>,
+  ): GitCommandResult
 
   fun execute() {
     // ensure there are no stall changes (ex: from recent commit) that prevent changes from being moved into temp changelist
@@ -114,7 +121,7 @@ internal class GitApplyChangesProcess(
   /**
    * @return true to continue with other commits, false to break execution
    */
-  private fun executeForCommit(
+  protected open fun executeForCommit(
     repository: GitRepository,
     commit: VcsCommitMetadata,
     successfulCommits: MutableList<VcsCommitMetadata>,
@@ -124,7 +131,7 @@ internal class GitApplyChangesProcess(
     val localChangesOverwrittenDetector = GitLocalChangesConflictDetector()
     val untrackedFilesDetector = GitUntrackedFilesOverwrittenByOperationDetector(repository.root)
 
-    val commitMessage = defaultCommitMessageGenerator(repository, commit)
+    val commitMessage = generateDefaultMessage(repository, commit)
 
     val strategy: CommitStrategy = when {
       isStagingAreaAvailable(project) -> {
@@ -144,8 +151,7 @@ internal class GitApplyChangesProcess(
     try {
       val startHash = GitUtil.getHead(repository)
 
-      val result = command(repository, commit, autoCommit,
-                           listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
+      val result = applyChanges(repository, commit, listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
 
       if (result.success()) {
         if (autoCommit) {
@@ -194,7 +200,7 @@ internal class GitApplyChangesProcess(
         notifyError(message, commit, successfulCommits)
         return false
       }
-      else if (emptyCommitDetector(result)) {
+      else if (isEmptyCommit(result)) {
         alreadyPicked.add(commit)
         return true
       }
@@ -347,7 +353,7 @@ internal class GitApplyChangesProcess(
     val sem = Semaphore(0)
     ApplicationManager.getApplication().invokeAndWait({
       try {
-        cleanupBeforeCommit(repository, autoCommit)
+        cleanupBeforeCommit(repository)
         val commitNotCancelled = vcsHelper.commitChanges(changes, changeList, commitMessage,
           object : CommitResultHandler {
             override fun onSuccess(commitMessage1: String) {

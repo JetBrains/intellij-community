@@ -36,7 +36,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     checkout("feature")
     file.append("local\n")
 
-    cherryPick(commit)
+    cherryPick(commit, expectSuccess = false)
 
     assertErrorNotification("Cherry-pick failed", """
       ${shortHash(commit)} fix #1 
@@ -50,7 +50,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     checkout("feature")
     file.create("untracked\n")
 
-    cherryPick(commit)
+    cherryPick(commit, expectSuccess = false)
 
     assertErrorNotification("Untracked Files Prevent Cherry-pick", """
       Move or commit them before cherry-pick""")
@@ -64,7 +64,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
     `do nothing on merge`()
 
-    cherryPick(commit)
+    cherryPick(commit, expectSuccess = false)
 
     `assert merge dialog was shown`()
   }
@@ -91,14 +91,16 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     changeListManager.assertOnlyDefaultChangelist()
   }
 
-  protected fun cherryPick(hashes: List<String>) {
+  protected fun cherryPick(vararg hashes: String, expectSuccess: Boolean = true) {
     updateChangeListManager()
-    val details = readDetails(hashes)
-    GitCherryPicker(project).cherryPick(details)
-  }
-
-  protected fun cherryPick(vararg hashes: String) {
-    cherryPick(hashes.asList())
+    val details = readDetails(hashes.asList())
+    val gitCherryPicker = GitCherryPicker(this.project)
+    val cherryPickSuccess = gitCherryPicker.cherryPick(details)
+    if (expectSuccess) {
+      assertTrue(cherryPickSuccess)
+    } else {
+      assertFalse(cherryPickSuccess)
+    }
   }
 
   protected fun shortHash(hash: String) = HashImpl.build(hash).toShortString()
