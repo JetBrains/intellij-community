@@ -24,15 +24,9 @@ public class DataFlowInspection9Test extends DataFlowInspectionTestCase {
   public void testNewCollectionAliasing() { doTest(); }
 
   public void testOptionalStreamInlining() { doTest(); }
-  
+
   public void testNullabilityAnnotationOnModule() {
-    @Language("JAVA") String nullMarked =
-      """
-        package org.jspecify.annotations;
-        import java.lang.annotation.*;
-        @Target(ElementType.MODULE)
-        public @interface NullMarked {}""";
-    myFixture.addClass(nullMarked);
+    addJSpecifyNullMarked();
     myFixture.addFileToProject("module-info.java", """
       import org.jspecify.annotations.NullMarked;
 
@@ -44,13 +38,23 @@ public class DataFlowInspection9Test extends DataFlowInspectionTestCase {
   }
 
   public void testJSpecifyNullMarkedLocals() {
+    addJSpecifyNullMarked();
+    doTest();
+  }
+
+  public void testJSpecifyUpperBound() {
+    addJSpecifyNullMarked();
+    DataFlowInspection8Test.setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  private void addJSpecifyNullMarked() {
     @Language("JAVA") String nullMarked =
       """
         package org.jspecify.annotations;
         import java.lang.annotation.*;
-        @Target(ElementType.CLASS)
+        @Target({ElementType.TYPE, ElementType.MODULE})
         public @interface NullMarked {}""";
     myFixture.addClass(nullMarked);
-    doTest();
   }
 }

@@ -37,10 +37,16 @@ public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport
         return null;
       }
     }
-    PsiType targetType = context instanceof PsiMethod method ? method.getReturnType() :
-                         context instanceof PsiVariable variable ? variable.getType() : null;
-    if (PsiUtil.resolveClassInClassTypeOnly(targetType) instanceof PsiTypeParameter) return null;
+    if (resolvesToTypeParameter(context)) return null;
     return new NullabilityAnnotationInfo(anno, nullability, true);
+  }
+
+  static boolean resolvesToTypeParameter(@NotNull PsiElement context) {
+    PsiType targetType = context instanceof PsiMethod method ? method.getReturnType() :
+                         context instanceof PsiVariable variable ? variable.getType() :
+                         context instanceof PsiJavaCodeReferenceElement && context.getParent() instanceof PsiTypeElement typeElement ? typeElement.getType() :
+                         null;
+    return PsiUtil.resolveClassInClassTypeOnly(targetType) instanceof PsiTypeParameter;
   }
 
   @Override
