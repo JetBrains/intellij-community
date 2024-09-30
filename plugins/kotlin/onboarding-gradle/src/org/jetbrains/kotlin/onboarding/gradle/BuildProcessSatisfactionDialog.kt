@@ -18,7 +18,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.configuration.getGradleKotlinVersion
+import org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion
 import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -65,7 +65,7 @@ internal class BuildProcessSatisfactionDialog(
     }
 
     private fun getKotlinVersions(): List<String> {
-        return project.modules.mapNotNull { it.getGradleKotlinVersion() }.distinct()
+        return project.modules.mapNotNull { it.kotlinGradlePluginVersion?.versionString }.distinct()
     }
 
     private fun LocalDate.monthsSinceDate(): Int {
