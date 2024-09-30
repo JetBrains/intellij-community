@@ -12,7 +12,6 @@ import com.intellij.platform.ml.embeddings.jvm.indices.VanillaEmbeddingSearchInd
 import com.intellij.platform.ml.embeddings.indexer.IndexId
 import com.intellij.platform.ml.embeddings.external.artifacts.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR_NAME
 import com.intellij.platform.ml.embeddings.indexer.FileBasedEmbeddingIndexer
-import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
 import com.intellij.platform.ml.embeddings.jvm.memory.EmbeddingIndexMemoryManager
 import com.intellij.platform.ml.embeddings.jvm.indices.IndexPersistedEventsCounter
 import com.intellij.platform.ml.embeddings.jvm.models.LocalEmbeddingServiceProviderImpl
@@ -115,6 +114,22 @@ abstract class AbstractEmbeddingsStorageWrapper(
     accessTime.set(System.nanoTime())
     loadIndex()
     return index.getSize()
+  }
+
+  suspend fun estimateMemory(): Long {
+    accessTime.set(System.nanoTime())
+    loadIndex()
+    return index.estimateMemoryUsage()
+  }
+
+  suspend fun clear() {
+    accessTime.set(System.nanoTime())
+    loadIndex()
+    indexLoadingMutex.withLock {
+      index.clear()
+      index.saveToDisk()
+      isIndexLoaded = false
+    }
   }
 
   private suspend fun loadIndex() {

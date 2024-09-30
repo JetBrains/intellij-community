@@ -98,7 +98,8 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
           entitiesIndexer.index(project, settings)
         }
         EmbeddingSearchLogger.indexingFinished(project, forActions = false, TimeoutUtil.getDurationMillis(projectIndexingStartTime))
-      } finally {
+      }
+      finally {
         finishIndexingSession(project)
       }
     }
@@ -122,7 +123,7 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
 
     internal const val INDEXING_VERSION = "0.0.1"
 
-    private val FILE_BASED_INDICES = arrayOf(IndexId.FILES, IndexId.CLASSES, IndexId.SYMBOLS)
+    val FILE_BASED_INDICES = arrayOf(IndexId.FILES, IndexId.CLASSES, IndexId.SYMBOLS)
 
     private val logger = Logger.getInstance(FileBasedEmbeddingIndexer::class.java)
 
@@ -132,17 +133,16 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
   override fun dispose() {}
 }
 
-private const val BATCH_SIZE = 128
-private const val BUFFER_SIZE = BATCH_SIZE * 8
+private const val BATCHES_IN_BUFFER = 8
 
 suspend fun sendEntities(project: Project, indexId: IndexId, channel: ReceiveChannel<IndexableEntity>) {
-  val entities = ArrayList<IndexableEntity>(BATCH_SIZE)
-  var index = 0
   val wrapper = getStorageManagerWrapper(indexId)
+  val entities = ArrayList<IndexableEntity>(wrapper.getBatchSize())
+  var index = 0
   for (entity in channel) {
-    if (entities.size < BATCH_SIZE) entities.add(entity) else entities[index] = entity
+    if (entities.size < wrapper.getBatchSize()) entities.add(entity) else entities[index] = entity
     ++index
-    if (index == BATCH_SIZE) {
+    if (index == wrapper.getBatchSize()) {
       wrapper.addAbsent(project, entities)
       index = 0
     }
@@ -157,9 +157,9 @@ internal suspend fun searchAndSendEntities(
   settings: EmbeddingIndexSettings,
   launchSearching: CoroutineScope.(Channel<IndexableEntity>?, Channel<IndexableEntity>?, Channel<IndexableEntity>?) -> Unit,
 ) = coroutineScope {
-  val filesChannel = if (settings.shouldIndexFiles) Channel<IndexableEntity>(capacity = BUFFER_SIZE) else null
-  val classesChannel = if (settings.shouldIndexClasses) Channel<IndexableEntity>(capacity = BUFFER_SIZE) else null
-  val symbolsChannel = if (settings.shouldIndexSymbols) Channel<IndexableEntity>(capacity = BUFFER_SIZE) else null
+  val filesChannel = if (settings.shouldIndexFiles) Channel<IndexableEntity>(capacity = getStorageManagerWrapper(IndexId.FILES).getBatchSize() * BATCHES_IN_BUFFER) else null
+  val classesChannel = if (settings.shouldIndexClasses) Channel<IndexableEntity>(capacity = getStorageManagerWrapper(IndexId.CLASSES).getBatchSize() * BATCHES_IN_BUFFER) else null
+  val symbolsChannel = if (settings.shouldIndexSymbols) Channel<IndexableEntity>(capacity = getStorageManagerWrapper(IndexId.SYMBOLS).getBatchSize() * BATCHES_IN_BUFFER) else null
 
   try {
     if (filesChannel != null) launch { sendEntities(project, IndexId.FILES, filesChannel) }

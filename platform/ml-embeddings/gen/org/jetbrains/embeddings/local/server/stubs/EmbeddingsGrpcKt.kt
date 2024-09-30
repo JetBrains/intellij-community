@@ -50,10 +50,25 @@ public object embedding_serviceGrpcKt {
     @JvmStatic
     get() = embedding_serviceGrpc.getSearchMethod()
 
+  public val clearStorageMethod:
+      MethodDescriptor<Embeddings.clear_request, Embeddings.clear_response>
+    @JvmStatic
+    get() = embedding_serviceGrpc.getClearStorageMethod()
+
+  public val startIndexingSessionMethod:
+      MethodDescriptor<Embeddings.start_request, Embeddings.start_response>
+    @JvmStatic
+    get() = embedding_serviceGrpc.getStartIndexingSessionMethod()
+
   public val finishIndexingSessionMethod:
       MethodDescriptor<Embeddings.finish_request, Embeddings.finish_response>
     @JvmStatic
     get() = embedding_serviceGrpc.getFinishIndexingSessionMethod()
+
+  public val getStorageStatsMethod:
+      MethodDescriptor<Embeddings.stats_request, Embeddings.stats_response>
+    @JvmStatic
+    get() = embedding_serviceGrpc.getGetStorageStatsMethod()
 
   /**
    * A stub for issuing RPCs to a(n) org.jetbrains.embeddings.local.server.stubs.embedding_service
@@ -142,10 +157,73 @@ public object embedding_serviceGrpcKt {
      *
      * @return The single response from the server.
      */
+    public suspend fun clearStorage(request: Embeddings.clear_request, headers: Metadata =
+        Metadata()): Embeddings.clear_response = unaryRpc(
+      channel,
+      embedding_serviceGrpc.getClearStorageMethod(),
+      request,
+      callOptions,
+      headers
+    )
+
+    /**
+     * Executes this RPC and returns the response message, suspending until the RPC completes
+     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
+     * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
+     * with the corresponding exception as a cause.
+     *
+     * @param request The request message to send to the server.
+     *
+     * @param headers Metadata to attach to the request.  Most users will not need this.
+     *
+     * @return The single response from the server.
+     */
+    public suspend fun startIndexingSession(request: Embeddings.start_request, headers: Metadata =
+        Metadata()): Embeddings.start_response = unaryRpc(
+      channel,
+      embedding_serviceGrpc.getStartIndexingSessionMethod(),
+      request,
+      callOptions,
+      headers
+    )
+
+    /**
+     * Executes this RPC and returns the response message, suspending until the RPC completes
+     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
+     * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
+     * with the corresponding exception as a cause.
+     *
+     * @param request The request message to send to the server.
+     *
+     * @param headers Metadata to attach to the request.  Most users will not need this.
+     *
+     * @return The single response from the server.
+     */
     public suspend fun finishIndexingSession(request: Embeddings.finish_request, headers: Metadata =
         Metadata()): Embeddings.finish_response = unaryRpc(
       channel,
       embedding_serviceGrpc.getFinishIndexingSessionMethod(),
+      request,
+      callOptions,
+      headers
+    )
+
+    /**
+     * Executes this RPC and returns the response message, suspending until the RPC completes
+     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
+     * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
+     * with the corresponding exception as a cause.
+     *
+     * @param request The request message to send to the server.
+     *
+     * @param headers Metadata to attach to the request.  Most users will not need this.
+     *
+     * @return The single response from the server.
+     */
+    public suspend fun getStorageStats(request: Embeddings.stats_request, headers: Metadata =
+        Metadata()): Embeddings.stats_response = unaryRpc(
+      channel,
+      embedding_serviceGrpc.getGetStorageStatsMethod(),
       request,
       callOptions,
       headers
@@ -209,6 +287,38 @@ public object embedding_serviceGrpcKt {
 
     /**
      * Returns the response to an RPC for
+     * org.jetbrains.embeddings.local.server.stubs.embedding_service.clear_storage.
+     *
+     * If this method fails with a [StatusException], the RPC will fail with the corresponding
+     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
+     * will fail
+     * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
+     * fail with `Status.UNKNOWN` with the exception as a cause.
+     *
+     * @param request The request from the client.
+     */
+    public open suspend fun clearStorage(request: Embeddings.clear_request):
+        Embeddings.clear_response = throw
+        StatusException(UNIMPLEMENTED.withDescription("Method org.jetbrains.embeddings.local.server.stubs.embedding_service.clear_storage is unimplemented"))
+
+    /**
+     * Returns the response to an RPC for
+     * org.jetbrains.embeddings.local.server.stubs.embedding_service.start_indexing_session.
+     *
+     * If this method fails with a [StatusException], the RPC will fail with the corresponding
+     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
+     * will fail
+     * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
+     * fail with `Status.UNKNOWN` with the exception as a cause.
+     *
+     * @param request The request from the client.
+     */
+    public open suspend fun startIndexingSession(request: Embeddings.start_request):
+        Embeddings.start_response = throw
+        StatusException(UNIMPLEMENTED.withDescription("Method org.jetbrains.embeddings.local.server.stubs.embedding_service.start_indexing_session is unimplemented"))
+
+    /**
+     * Returns the response to an RPC for
      * org.jetbrains.embeddings.local.server.stubs.embedding_service.finish_indexing_session.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
@@ -222,6 +332,22 @@ public object embedding_serviceGrpcKt {
     public open suspend fun finishIndexingSession(request: Embeddings.finish_request):
         Embeddings.finish_response = throw
         StatusException(UNIMPLEMENTED.withDescription("Method org.jetbrains.embeddings.local.server.stubs.embedding_service.finish_indexing_session is unimplemented"))
+
+    /**
+     * Returns the response to an RPC for
+     * org.jetbrains.embeddings.local.server.stubs.embedding_service.get_storage_stats.
+     *
+     * If this method fails with a [StatusException], the RPC will fail with the corresponding
+     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
+     * will fail
+     * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
+     * fail with `Status.UNKNOWN` with the exception as a cause.
+     *
+     * @param request The request from the client.
+     */
+    public open suspend fun getStorageStats(request: Embeddings.stats_request):
+        Embeddings.stats_response = throw
+        StatusException(UNIMPLEMENTED.withDescription("Method org.jetbrains.embeddings.local.server.stubs.embedding_service.get_storage_stats is unimplemented"))
 
     public final override fun bindService(): ServerServiceDefinition =
         builder(getServiceDescriptor())
@@ -242,8 +368,23 @@ public object embedding_serviceGrpcKt {
     ))
       .addMethod(unaryServerMethodDefinition(
       context = this.context,
+      descriptor = embedding_serviceGrpc.getClearStorageMethod(),
+      implementation = ::clearStorage
+    ))
+      .addMethod(unaryServerMethodDefinition(
+      context = this.context,
+      descriptor = embedding_serviceGrpc.getStartIndexingSessionMethod(),
+      implementation = ::startIndexingSession
+    ))
+      .addMethod(unaryServerMethodDefinition(
+      context = this.context,
       descriptor = embedding_serviceGrpc.getFinishIndexingSessionMethod(),
       implementation = ::finishIndexingSession
+    ))
+      .addMethod(unaryServerMethodDefinition(
+      context = this.context,
+      descriptor = embedding_serviceGrpc.getGetStorageStatsMethod(),
+      implementation = ::getStorageStats
     )).build()
   }
 }

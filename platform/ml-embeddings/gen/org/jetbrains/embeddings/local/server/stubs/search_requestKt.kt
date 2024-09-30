@@ -23,41 +23,31 @@ public object search_requestKt {
     internal fun _build(): org.jetbrains.embeddings.local.server.stubs.Embeddings.search_request = _builder.build()
 
     /**
-     * <code>string project_id = 1;</code>
+     * <code>.org.jetbrains.embeddings.local.server.stubs.storage_location location = 1;</code>
      */
-    public var projectId: kotlin.String
-      @JvmName("getProjectId")
-      get() = _builder.getProjectId()
-      @JvmName("setProjectId")
+    public var location: org.jetbrains.embeddings.local.server.stubs.Embeddings.storage_location
+      @JvmName("getLocation")
+      get() = _builder.getLocation()
+      @JvmName("setLocation")
       set(value) {
-        _builder.setProjectId(value)
+        _builder.setLocation(value)
       }
     /**
-     * <code>string project_id = 1;</code>
+     * <code>.org.jetbrains.embeddings.local.server.stubs.storage_location location = 1;</code>
      */
-    public fun clearProjectId() {
-      _builder.clearProjectId()
+    public fun clearLocation() {
+      _builder.clearLocation()
+    }
+    /**
+     * <code>.org.jetbrains.embeddings.local.server.stubs.storage_location location = 1;</code>
+     * @return Whether the location field is set.
+     */
+    public fun hasLocation(): kotlin.Boolean {
+      return _builder.hasLocation()
     }
 
     /**
-     * <code>string index_type = 2;</code>
-     */
-    public var indexType: kotlin.String
-      @JvmName("getIndexType")
-      get() = _builder.getIndexType()
-      @JvmName("setIndexType")
-      set(value) {
-        _builder.setIndexType(value)
-      }
-    /**
-     * <code>string index_type = 2;</code>
-     */
-    public fun clearIndexType() {
-      _builder.clearIndexType()
-    }
-
-    /**
-     * <code>string text = 3;</code>
+     * <code>string text = 2;</code>
      */
     public var text: kotlin.String
       @JvmName("getText")
@@ -67,14 +57,14 @@ public object search_requestKt {
         _builder.setText(value)
       }
     /**
-     * <code>string text = 3;</code>
+     * <code>string text = 2;</code>
      */
     public fun clearText() {
       _builder.clearText()
     }
 
     /**
-     * <code>int32 top = 4;</code>
+     * <code>int32 top = 3;</code>
      */
     public var top: kotlin.Int
       @JvmName("getTop")
@@ -84,7 +74,7 @@ public object search_requestKt {
         _builder.setTop(value)
       }
     /**
-     * <code>int32 top = 4;</code>
+     * <code>int32 top = 3;</code>
      */
     public fun clearTop() {
       _builder.clearTop()

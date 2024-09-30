@@ -9,8 +9,8 @@ import com.intellij.platform.ml.embeddings.utils.ScoredText
 
 class EmbeddingsStorageManagerWrapper<KeyT>(
   private val indexId: IndexId,
-  private val storageManager: TextEmbeddingsStorageManager<KeyT>,
-  private val keyProvider: EmbeddingStorageKeyProvider<KeyT>,
+  val storageManager: TextEmbeddingsStorageManager<KeyT>,
+  val keyProvider: EmbeddingStorageKeyProvider<KeyT>,
 ) {
   suspend fun addAbsent(project: Project, entities: List<IndexableEntity>) {
     return storageManager.addAbsent(project, indexId, entities.map {
@@ -19,6 +19,10 @@ class EmbeddingsStorageManagerWrapper<KeyT>(
         it.indexableRepresentation.take(INDEXABLE_REPRESENTATION_CHAR_LIMIT)
       )
     })
+  }
+
+  suspend fun remove(project: Project?, keys: List<KeyT>) {
+    storageManager.remove(project, indexId, keys)
   }
 
   suspend fun search(
@@ -36,13 +40,23 @@ class EmbeddingsStorageManagerWrapper<KeyT>(
     return result
   }
 
-  suspend fun startIndexingSession(project: Project) {
+  suspend fun clearStorage(project: Project?) {
+    storageManager.clearStorage(project, indexId)
+  }
+
+  suspend fun startIndexingSession(project: Project?) {
     storageManager.startIndexingSession(project, indexId)
   }
 
-  suspend fun finishIndexingSession(project: Project) {
+  suspend fun finishIndexingSession(project: Project?) {
     storageManager.finishIndexingSession(project, indexId)
   }
+
+  suspend fun getStorageStats(project: Project?): StorageStats {
+    return storageManager.getStorageStats(project, indexId)
+  }
+
+  fun getBatchSize() = storageManager.getBatchSize()
 
   companion object {
     private const val INDEXABLE_REPRESENTATION_CHAR_LIMIT = 64

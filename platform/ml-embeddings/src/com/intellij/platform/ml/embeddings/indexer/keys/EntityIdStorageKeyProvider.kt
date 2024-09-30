@@ -7,11 +7,11 @@ import com.intellij.platform.ml.embeddings.jvm.indices.EntityId
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
 
 class EntityIdStorageKeyProvider : EmbeddingStorageKeyProvider<EntityId> {
-  override suspend fun findKey(project: Project, indexId: IndexId, entity: IndexableEntity): EntityId {
+  override suspend fun findKey(project: Project?, indexId: IndexId, entity: IndexableEntity): EntityId {
     return entity.id
   }
 
-  override suspend fun findEntityId(project: Project, indexId: IndexId, key: EntityId): String {
+  override suspend fun findEntityId(project: Project?, indexId: IndexId, key: EntityId): String {
     return key.id
   }
 }

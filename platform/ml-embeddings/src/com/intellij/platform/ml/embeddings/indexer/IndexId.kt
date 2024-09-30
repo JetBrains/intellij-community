@@ -6,11 +6,23 @@ import com.intellij.platform.ml.embeddings.indexer.entities.IndexableClass
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableFile
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableSymbol
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableAction
+import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettingsImpl
 
 enum class IndexId {
   ACTIONS, FILES, CLASSES, SYMBOLS;
 
   override fun toString(): String = name.lowercase()
+
+  fun isEnabled(): Boolean {
+    return EmbeddingIndexSettingsImpl.getInstance().run {
+      when (this@IndexId) {
+        ACTIONS -> shouldIndexActions
+        FILES -> shouldIndexFiles
+        CLASSES -> shouldIndexClasses
+        SYMBOLS -> shouldIndexSymbols
+      }
+    }
+  }
 
   companion object {
     fun fromIndexableEntity(entity: IndexableEntity): IndexId {

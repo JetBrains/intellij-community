@@ -6,11 +6,13 @@ import com.intellij.ide.util.gotoByName.FilteringGotoByModel
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ml.embeddings.indexer.IndexId
 import com.intellij.platform.ml.embeddings.indexer.configuration.EmbeddingsConfiguration
+import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.utils.ScoredText
 import com.intellij.platform.ml.embeddings.utils.convertNameToNaturalLanguage
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchScopeUtil
+import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -26,8 +28,11 @@ abstract class SemanticPsiItemsProvider(val project: Project) : StreamSemanticIt
 
   override suspend fun search(pattern: String, similarityThreshold: Double?): List<ScoredText> {
     if (pattern.isBlank()) return emptyList()
-    return EmbeddingsConfiguration
-      .getStorageManagerWrapper(indexId).search(project, convertNameToNaturalLanguage(pattern), itemLimit, similarityThreshold?.toFloat())
+    val searchStart = System.nanoTime()
+    val result = EmbeddingsConfiguration.getStorageManagerWrapper(indexId)
+      .search(project, convertNameToNaturalLanguage(pattern), itemLimit, similarityThreshold?.toFloat())
+    EmbeddingSearchLogger.searchFinished(project, indexId, TimeoutUtil.getDurationMillis(searchStart))
+    return result
   }
 
   override suspend fun streamSearch(

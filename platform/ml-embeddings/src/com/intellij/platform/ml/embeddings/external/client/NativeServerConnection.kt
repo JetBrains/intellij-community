@@ -30,8 +30,19 @@ typealias EmbeddingsRemoveResponse = Embeddings.remove_response
 typealias EmbeddingsSearchRequest = Embeddings.search_request
 typealias EmbeddingsSearchResponse = Embeddings.search_response
 
+typealias EmbeddingsClearRequest = Embeddings.clear_request
+typealias EmbeddingsClearResponse = Embeddings.clear_response
+
+typealias EmbeddingsStartRequest = Embeddings.start_request
+typealias EmbeddingsStartResponse = Embeddings.start_response
+
 typealias EmbeddingsFinishRequest = Embeddings.finish_request
 typealias EmbeddingsFinishResponse = Embeddings.finish_response
+
+typealias EmbeddingsStatsRequest = Embeddings.stats_request
+typealias EmbeddingsStatsResponse = Embeddings.stats_response
+
+typealias EmbeddingsStorageLocation = Embeddings.storage_location
 
 class NativeServerConnection private constructor(
   private val osProcessHandler: OSProcessHandler,
@@ -57,9 +68,27 @@ class NativeServerConnection private constructor(
     }
   }
 
+  suspend fun clearStorage(request: EmbeddingsClearRequest): EmbeddingsClearResponse {
+    return boxGrpcException {
+      stub.clearStorage(request)
+    }
+  }
+
+  suspend fun startIndexingSession(request: EmbeddingsStartRequest): EmbeddingsStartResponse {
+    return boxGrpcException {
+      stub.startIndexingSession(request)
+    }
+  }
+
   suspend fun finishIndexingSession(request: EmbeddingsFinishRequest): EmbeddingsFinishResponse {
     return boxGrpcException {
       stub.finishIndexingSession(request)
+    }
+  }
+
+  suspend fun getStorageStats(request: EmbeddingsStatsRequest): EmbeddingsStatsResponse {
+    return boxGrpcException {
+      stub.getStorageStats(request)
     }
   }
 

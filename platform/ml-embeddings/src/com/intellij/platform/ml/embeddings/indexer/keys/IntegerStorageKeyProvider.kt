@@ -21,12 +21,12 @@ class IntegerStorageKeyProvider : EmbeddingStorageKeyProvider<Long>, Disposable 
   private val enumerators = mutableMapOf<IndexPath, PersistentStringEnumerator>()
   private val mutex = Mutex()
 
-  override suspend fun findKey(project: Project, indexId: IndexId, entity: IndexableEntity): Long {
-    return getEnumerator(project, indexId).enumerate(entity.id.id + "$$$" + entity.indexableRepresentation).toLong()
+  override suspend fun findKey(project: Project?, indexId: IndexId, entity: IndexableEntity): Long {
+    return getEnumerator(project!!, indexId).enumerate(entity.id.id + "$$$" + entity.indexableRepresentation).toLong()
   }
 
-  override suspend fun findEntityId(project: Project, indexId: IndexId, key: Long): String {
-    return getEnumerator(project, indexId).valueOf(key.toInt())?.split("$$$", limit = 2)?.first() ?: ""
+  override suspend fun findEntityId(project: Project?, indexId: IndexId, key: Long): String {
+    return getEnumerator(project!!, indexId).valueOf(key.toInt())?.split("$$$", limit = 2)?.first() ?: ""
   }
 
   private suspend fun getEnumerator(project: Project, indexId: IndexId): PersistentStringEnumerator {

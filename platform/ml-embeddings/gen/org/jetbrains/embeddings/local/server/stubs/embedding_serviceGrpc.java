@@ -105,6 +105,66 @@ public final class embedding_serviceGrpc {
     return getSearchMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<Embeddings.clear_request,
+      Embeddings.clear_response> getClearStorageMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "clear_storage",
+      requestType = Embeddings.clear_request.class,
+      responseType = Embeddings.clear_response.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<Embeddings.clear_request,
+      Embeddings.clear_response> getClearStorageMethod() {
+    io.grpc.MethodDescriptor<Embeddings.clear_request, Embeddings.clear_response> getClearStorageMethod;
+    if ((getClearStorageMethod = embedding_serviceGrpc.getClearStorageMethod) == null) {
+      synchronized (embedding_serviceGrpc.class) {
+        if ((getClearStorageMethod = embedding_serviceGrpc.getClearStorageMethod) == null) {
+          embedding_serviceGrpc.getClearStorageMethod = getClearStorageMethod =
+              io.grpc.MethodDescriptor.<Embeddings.clear_request, Embeddings.clear_response>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "clear_storage"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  Embeddings.clear_request.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  Embeddings.clear_response.getDefaultInstance()))
+              .build();
+        }
+      }
+    }
+    return getClearStorageMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<Embeddings.start_request,
+      Embeddings.start_response> getStartIndexingSessionMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "start_indexing_session",
+      requestType = Embeddings.start_request.class,
+      responseType = Embeddings.start_response.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<Embeddings.start_request,
+      Embeddings.start_response> getStartIndexingSessionMethod() {
+    io.grpc.MethodDescriptor<Embeddings.start_request, Embeddings.start_response> getStartIndexingSessionMethod;
+    if ((getStartIndexingSessionMethod = embedding_serviceGrpc.getStartIndexingSessionMethod) == null) {
+      synchronized (embedding_serviceGrpc.class) {
+        if ((getStartIndexingSessionMethod = embedding_serviceGrpc.getStartIndexingSessionMethod) == null) {
+          embedding_serviceGrpc.getStartIndexingSessionMethod = getStartIndexingSessionMethod =
+              io.grpc.MethodDescriptor.<Embeddings.start_request, Embeddings.start_response>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "start_indexing_session"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  Embeddings.start_request.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  Embeddings.start_response.getDefaultInstance()))
+              .build();
+        }
+      }
+    }
+    return getStartIndexingSessionMethod;
+  }
+
   private static volatile io.grpc.MethodDescriptor<Embeddings.finish_request,
       Embeddings.finish_response> getFinishIndexingSessionMethod;
 
@@ -133,6 +193,36 @@ public final class embedding_serviceGrpc {
       }
     }
     return getFinishIndexingSessionMethod;
+  }
+
+  private static volatile io.grpc.MethodDescriptor<Embeddings.stats_request,
+      Embeddings.stats_response> getGetStorageStatsMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "get_storage_stats",
+      requestType = Embeddings.stats_request.class,
+      responseType = Embeddings.stats_response.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<Embeddings.stats_request,
+      Embeddings.stats_response> getGetStorageStatsMethod() {
+    io.grpc.MethodDescriptor<Embeddings.stats_request, Embeddings.stats_response> getGetStorageStatsMethod;
+    if ((getGetStorageStatsMethod = embedding_serviceGrpc.getGetStorageStatsMethod) == null) {
+      synchronized (embedding_serviceGrpc.class) {
+        if ((getGetStorageStatsMethod = embedding_serviceGrpc.getGetStorageStatsMethod) == null) {
+          embedding_serviceGrpc.getGetStorageStatsMethod = getGetStorageStatsMethod =
+              io.grpc.MethodDescriptor.<Embeddings.stats_request, Embeddings.stats_response>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "get_storage_stats"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  Embeddings.stats_request.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.lite.ProtoLiteUtils.marshaller(
+                  Embeddings.stats_response.getDefaultInstance()))
+              .build();
+        }
+      }
+    }
+    return getGetStorageStatsMethod;
   }
 
   /**
@@ -206,9 +296,30 @@ public final class embedding_serviceGrpc {
 
     /**
      */
+    public void clearStorage(Embeddings.clear_request request,
+                             io.grpc.stub.StreamObserver<Embeddings.clear_response> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getClearStorageMethod(), responseObserver);
+    }
+
+    /**
+     */
+    public void startIndexingSession(Embeddings.start_request request,
+                                     io.grpc.stub.StreamObserver<Embeddings.start_response> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getStartIndexingSessionMethod(), responseObserver);
+    }
+
+    /**
+     */
     public void finishIndexingSession(Embeddings.finish_request request,
                                       io.grpc.stub.StreamObserver<Embeddings.finish_response> responseObserver) {
       io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getFinishIndexingSessionMethod(), responseObserver);
+    }
+
+    /**
+     */
+    public void getStorageStats(Embeddings.stats_request request,
+                                io.grpc.stub.StreamObserver<Embeddings.stats_response> responseObserver) {
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getGetStorageStatsMethod(), responseObserver);
     }
 
     @Override public final io.grpc.ServerServiceDefinition bindService() {
@@ -235,12 +346,33 @@ public final class embedding_serviceGrpc {
                 Embeddings.search_response>(
                   this, METHODID_SEARCH)))
           .addMethod(
+            getClearStorageMethod(),
+            io.grpc.stub.ServerCalls.asyncUnaryCall(
+              new MethodHandlers<
+                Embeddings.clear_request,
+                Embeddings.clear_response>(
+                  this, METHODID_CLEAR_STORAGE)))
+          .addMethod(
+            getStartIndexingSessionMethod(),
+            io.grpc.stub.ServerCalls.asyncUnaryCall(
+              new MethodHandlers<
+                Embeddings.start_request,
+                Embeddings.start_response>(
+                  this, METHODID_START_INDEXING_SESSION)))
+          .addMethod(
             getFinishIndexingSessionMethod(),
             io.grpc.stub.ServerCalls.asyncUnaryCall(
               new MethodHandlers<
                 Embeddings.finish_request,
                 Embeddings.finish_response>(
                   this, METHODID_FINISH_INDEXING_SESSION)))
+          .addMethod(
+            getGetStorageStatsMethod(),
+            io.grpc.stub.ServerCalls.asyncUnaryCall(
+              new MethodHandlers<
+                Embeddings.stats_request,
+                Embeddings.stats_response>(
+                  this, METHODID_GET_STORAGE_STATS)))
           .build();
     }
   }
@@ -285,10 +417,34 @@ public final class embedding_serviceGrpc {
 
     /**
      */
+    public void clearStorage(Embeddings.clear_request request,
+                             io.grpc.stub.StreamObserver<Embeddings.clear_response> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getClearStorageMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
+    public void startIndexingSession(Embeddings.start_request request,
+                                     io.grpc.stub.StreamObserver<Embeddings.start_response> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getStartIndexingSessionMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
     public void finishIndexingSession(Embeddings.finish_request request,
                                       io.grpc.stub.StreamObserver<Embeddings.finish_response> responseObserver) {
       io.grpc.stub.ClientCalls.asyncUnaryCall(
           getChannel().newCall(getFinishIndexingSessionMethod(), getCallOptions()), request, responseObserver);
+    }
+
+    /**
+     */
+    public void getStorageStats(Embeddings.stats_request request,
+                                io.grpc.stub.StreamObserver<Embeddings.stats_response> responseObserver) {
+      io.grpc.stub.ClientCalls.asyncUnaryCall(
+          getChannel().newCall(getGetStorageStatsMethod(), getCallOptions()), request, responseObserver);
     }
   }
 
@@ -329,9 +485,30 @@ public final class embedding_serviceGrpc {
 
     /**
      */
+    public Embeddings.clear_response clearStorage(Embeddings.clear_request request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getClearStorageMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public Embeddings.start_response startIndexingSession(Embeddings.start_request request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getStartIndexingSessionMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
     public Embeddings.finish_response finishIndexingSession(Embeddings.finish_request request) {
       return io.grpc.stub.ClientCalls.blockingUnaryCall(
           getChannel(), getFinishIndexingSessionMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public Embeddings.stats_response getStorageStats(Embeddings.stats_request request) {
+      return io.grpc.stub.ClientCalls.blockingUnaryCall(
+          getChannel(), getGetStorageStatsMethod(), getCallOptions(), request);
     }
   }
 
@@ -375,17 +552,44 @@ public final class embedding_serviceGrpc {
 
     /**
      */
+    public com.google.common.util.concurrent.ListenableFuture<Embeddings.clear_response> clearStorage(
+        Embeddings.clear_request request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getClearStorageMethod(), getCallOptions()), request);
+    }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<Embeddings.start_response> startIndexingSession(
+        Embeddings.start_request request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getStartIndexingSessionMethod(), getCallOptions()), request);
+    }
+
+    /**
+     */
     public com.google.common.util.concurrent.ListenableFuture<Embeddings.finish_response> finishIndexingSession(
         Embeddings.finish_request request) {
       return io.grpc.stub.ClientCalls.futureUnaryCall(
           getChannel().newCall(getFinishIndexingSessionMethod(), getCallOptions()), request);
+    }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<Embeddings.stats_response> getStorageStats(
+        Embeddings.stats_request request) {
+      return io.grpc.stub.ClientCalls.futureUnaryCall(
+          getChannel().newCall(getGetStorageStatsMethod(), getCallOptions()), request);
     }
   }
 
   private static final int METHODID_ENSURE_VECTORS_PRESENT = 0;
   private static final int METHODID_REMOVE_VECTORS = 1;
   private static final int METHODID_SEARCH = 2;
-  private static final int METHODID_FINISH_INDEXING_SESSION = 3;
+  private static final int METHODID_CLEAR_STORAGE = 3;
+  private static final int METHODID_START_INDEXING_SESSION = 4;
+  private static final int METHODID_FINISH_INDEXING_SESSION = 5;
+  private static final int METHODID_GET_STORAGE_STATS = 6;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -416,9 +620,21 @@ public final class embedding_serviceGrpc {
           serviceImpl.search((Embeddings.search_request) request,
               (io.grpc.stub.StreamObserver<Embeddings.search_response>) responseObserver);
           break;
+        case METHODID_CLEAR_STORAGE:
+          serviceImpl.clearStorage((Embeddings.clear_request) request,
+              (io.grpc.stub.StreamObserver<Embeddings.clear_response>) responseObserver);
+          break;
+        case METHODID_START_INDEXING_SESSION:
+          serviceImpl.startIndexingSession((Embeddings.start_request) request,
+              (io.grpc.stub.StreamObserver<Embeddings.start_response>) responseObserver);
+          break;
         case METHODID_FINISH_INDEXING_SESSION:
           serviceImpl.finishIndexingSession((Embeddings.finish_request) request,
               (io.grpc.stub.StreamObserver<Embeddings.finish_response>) responseObserver);
+          break;
+        case METHODID_GET_STORAGE_STATS:
+          serviceImpl.getStorageStats((Embeddings.stats_request) request,
+              (io.grpc.stub.StreamObserver<Embeddings.stats_response>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -448,7 +664,10 @@ public final class embedding_serviceGrpc {
               .addMethod(getEnsureVectorsPresentMethod())
               .addMethod(getRemoveVectorsMethod())
               .addMethod(getSearchMethod())
+              .addMethod(getClearStorageMethod())
+              .addMethod(getStartIndexingSessionMethod())
               .addMethod(getFinishIndexingSessionMethod())
+              .addMethod(getGetStorageStatsMethod())
               .build();
         }
       }

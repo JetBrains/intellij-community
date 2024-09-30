@@ -23,37 +23,27 @@ public object present_requestKt {
     internal fun _build(): org.jetbrains.embeddings.local.server.stubs.Embeddings.present_request = _builder.build()
 
     /**
-     * <code>string project_id = 1;</code>
+     * <code>.org.jetbrains.embeddings.local.server.stubs.storage_location location = 1;</code>
      */
-    public var projectId: kotlin.String
-      @JvmName("getProjectId")
-      get() = _builder.getProjectId()
-      @JvmName("setProjectId")
+    public var location: org.jetbrains.embeddings.local.server.stubs.Embeddings.storage_location
+      @JvmName("getLocation")
+      get() = _builder.getLocation()
+      @JvmName("setLocation")
       set(value) {
-        _builder.setProjectId(value)
+        _builder.setLocation(value)
       }
     /**
-     * <code>string project_id = 1;</code>
+     * <code>.org.jetbrains.embeddings.local.server.stubs.storage_location location = 1;</code>
      */
-    public fun clearProjectId() {
-      _builder.clearProjectId()
+    public fun clearLocation() {
+      _builder.clearLocation()
     }
-
     /**
-     * <code>string index_type = 2;</code>
+     * <code>.org.jetbrains.embeddings.local.server.stubs.storage_location location = 1;</code>
+     * @return Whether the location field is set.
      */
-    public var indexType: kotlin.String
-      @JvmName("getIndexType")
-      get() = _builder.getIndexType()
-      @JvmName("setIndexType")
-      set(value) {
-        _builder.setIndexType(value)
-      }
-    /**
-     * <code>string index_type = 2;</code>
-     */
-    public fun clearIndexType() {
-      _builder.clearIndexType()
+    public fun hasLocation(): kotlin.Boolean {
+      return _builder.hasLocation()
     }
 
     /**
@@ -63,7 +53,7 @@ public object present_requestKt {
     @kotlin.OptIn(com.google.protobuf.kotlin.OnlyForUseByGeneratedProtoCode::class)
     public class EntitiesProxy private constructor() : com.google.protobuf.kotlin.DslProxy()
     /**
-     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
+     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 2;</code>
      */
      public val entities: com.google.protobuf.kotlin.DslList<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity, EntitiesProxy>
       @kotlin.jvm.JvmSynthetic
@@ -71,7 +61,7 @@ public object present_requestKt {
         _builder.getEntitiesList()
       )
     /**
-     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
+     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 2;</code>
      * @param value The entities to add.
      */
     @kotlin.jvm.JvmSynthetic
@@ -79,7 +69,7 @@ public object present_requestKt {
     public fun com.google.protobuf.kotlin.DslList<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity, EntitiesProxy>.add(value: org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity) {
       _builder.addEntities(value)
     }/**
-     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
+     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 2;</code>
      * @param value The entities to add.
      */
     @kotlin.jvm.JvmSynthetic
@@ -88,7 +78,7 @@ public object present_requestKt {
     public inline operator fun com.google.protobuf.kotlin.DslList<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity, EntitiesProxy>.plusAssign(value: org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity) {
       add(value)
     }/**
-     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
+     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 2;</code>
      * @param values The entities to add.
      */
     @kotlin.jvm.JvmSynthetic
@@ -96,7 +86,7 @@ public object present_requestKt {
     public fun com.google.protobuf.kotlin.DslList<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity, EntitiesProxy>.addAll(values: kotlin.collections.Iterable<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity>) {
       _builder.addAllEntities(values)
     }/**
-     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
+     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 2;</code>
      * @param values The entities to add.
      */
     @kotlin.jvm.JvmSynthetic
@@ -105,7 +95,7 @@ public object present_requestKt {
     public inline operator fun com.google.protobuf.kotlin.DslList<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity, EntitiesProxy>.plusAssign(values: kotlin.collections.Iterable<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity>) {
       addAll(values)
     }/**
-     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
+     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 2;</code>
      * @param index The index to set the value at.
      * @param value The entities to set.
      */
@@ -114,7 +104,7 @@ public object present_requestKt {
     public operator fun com.google.protobuf.kotlin.DslList<org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity, EntitiesProxy>.set(index: kotlin.Int, value: org.jetbrains.embeddings.local.server.stubs.Embeddings.index_entity) {
       _builder.setEntities(index, value)
     }/**
-     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 3;</code>
+     * <code>repeated .org.jetbrains.embeddings.local.server.stubs.index_entity entities = 2;</code>
      */
     @kotlin.jvm.JvmSynthetic
     @kotlin.jvm.JvmName("clearEntities")
