@@ -1,14 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.accessibility
 
-import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.isSupportScreenReadersOverridden
 import com.intellij.ide.ui.laf.setEarlyUiLaF
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
@@ -97,10 +96,8 @@ private fun isWindowsScreenReaderEnabled(): Boolean {
   return retValue && isActive.value.booleanValue()
 }
 
-internal class EnableScreenReaderSupportTask : AppLifecycleListener {
-  override fun appStarted() {
-    if (enable) {
-      service<GeneralSettings>().isSupportScreenReaders = true
-    }
+internal suspend fun enableScreenReaderSupportIfNeeded() {
+  if (enable) {
+    serviceAsync<GeneralSettings>().isSupportScreenReaders = true
   }
 }

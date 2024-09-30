@@ -1922,9 +1922,6 @@
 
     <listener topic="com.intellij.ide.RegionSettings$RegionSettingsListener"
               class="com.intellij.ide.StatisticsRegionSettingsListener"/>
-
-    <listener class="com.intellij.accessibility.EnableScreenReaderSupportTask"
-              topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false" activeInTestMode="false"/>
   </applicationListeners>
 
   <projectListeners>
