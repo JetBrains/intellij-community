@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
@@ -9,9 +9,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
-import com.intellij.openapi.fileChooser.FileElement
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -83,17 +82,14 @@ class EditorConfigPreviewMarkerProvider : LineMarkerProviderDescriptor(), DumbAw
     fun getPattern(header: String): String = header.trimStart('[').trimEnd(']')
 
     fun choosePreviewFile(project: Project, rootDir: VirtualFile, pattern: String): VirtualFile? {
-      val descriptor = object : FileChooserDescriptor(true, false, false, false, false, false) {
-        override fun isFileVisible(file: VirtualFile, showHiddenFiles: Boolean): Boolean =
-          (showHiddenFiles || !FileElement.isFileHidden(file))
-          && Utils.EDITOR_CONFIG_FILE_NAME != file.name
-          && file.length <= EditorConfigEditorProvider.MAX_PREVIEW_LENGTH
-          && matchesPattern(rootDir, pattern, file.path)
-          || file.isDirectory
-
-        override fun isFileSelectable(file: VirtualFile?): Boolean = file != null && !file.isDirectory
-      }.withRoots(rootDir)
-      descriptor.isForcedToUseIdeaFileChooser = true
+      val descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+        .withFileFilter { file ->
+          Utils.EDITOR_CONFIG_FILE_NAME != file.name &&
+          file.length <= EditorConfigEditorProvider.MAX_PREVIEW_LENGTH &&
+          matchesPattern(rootDir, pattern, file.path)
+        }
+        .withRoots(rootDir)
+        .apply { isForcedToUseIdeaFileChooser = true }
       val fileChooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, null)
       val virtualFiles = fileChooser.choose(project, *VirtualFile.EMPTY_ARRAY)
       return if (virtualFiles.isNotEmpty()) virtualFiles[0] else null

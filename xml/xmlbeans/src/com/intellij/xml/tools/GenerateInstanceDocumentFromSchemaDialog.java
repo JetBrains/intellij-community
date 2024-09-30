@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.tools;
 
 
@@ -54,8 +54,7 @@ final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
 
-    UIUtils
-      .configureBrowseButton(project, generateFromUrl, new String[]{"xsd"}, XmlBundle.message("select.xsd.schema.dialog.title"), false);
+    UIUtils.configureBrowseButton(project, generateFromUrl, "xsd", XmlBundle.message("select.xsd.schema.dialog.title"), false);
 
     doInitFor(rootElementChooserText, rootElementChooser);
     doInitFor(generateFromUrlText, generateFromUrl.getTextField());

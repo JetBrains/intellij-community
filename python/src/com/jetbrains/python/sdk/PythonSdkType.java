@@ -140,26 +140,9 @@ public final class PythonSdkType extends SdkType {
           }
         }
       }
-
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        // TODO: add a better, customizable filtering
-        if (!file.isDirectory()) {
-          if (isLocatedInLocalWindowsFS(file)) {
-            String path = file.getPath();
-            boolean looksExecutable = false;
-            for (String ext : PythonSdkUtil.WINDOWS_EXECUTABLE_SUFFIXES) {
-              if (path.endsWith(ext)) {
-                looksExecutable = true;
-                break;
-              }
-            }
-            return looksExecutable && super.isFileVisible(file, showHiddenFiles);
-          }
-        }
-        return super.isFileVisible(file, showHiddenFiles);
-      }
-    }.withTitle(PyBundle.message("sdk.select.path")).withShowHiddenFiles(SystemInfo.isUnix);
+    }
+      .withTitle(PyBundle.message("sdk.select.path"))
+      .withShowHiddenFiles(SystemInfo.isUnix);
 
     // XXX: Workaround for PY-21787 and PY-43507 since the native macOS dialog always follows symlinks
     if (SystemInfo.isMac) {
@@ -167,10 +150,6 @@ public final class PythonSdkType extends SdkType {
     }
 
     return descriptor;
-  }
-
-  private static boolean isLocatedInLocalWindowsFS(@NotNull VirtualFile file) {
-    return SystemInfo.isWindows && !isCustomPythonSdkHomePath(file.getPath());
   }
 
   private static boolean isLocatedInWsl(@NotNull VirtualFile file) {

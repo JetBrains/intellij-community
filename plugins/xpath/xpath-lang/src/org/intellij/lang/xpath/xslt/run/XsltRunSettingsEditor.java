@@ -17,9 +17,11 @@ package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.execution.impl.CheckableRunConfigurationEditor;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -59,7 +61,6 @@ import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
-import org.intellij.lang.xpath.xslt.associations.impl.AnyXMLDescriptor;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,21 +124,15 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
     private final FileChooserDescriptor myXmlDescriptor;
     private final FileChooserDescriptor myXsltDescriptor;
 
-    Editor(final Project project) {
-      final PsiManager psiManager = PsiManager.getInstance(project);
+    Editor(Project project) {
+      var psiManager = PsiManager.getInstance(project);
+      myXsltDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(XmlFileType.INSTANCE)
+        .withFileFilter(file -> {
+          var psiFile = psiManager.findFile(file);
+          return psiFile != null && XsltSupport.isXsltFile(psiFile);
+        })
+        .withTitle(XPathBundle.message("dialog.title.choose.xslt.file"));
 
-      myXsltDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
-        @Override
-        public boolean isFileVisible(final VirtualFile file, boolean showHiddenFiles) {
-          if (file.isDirectory()) return true;
-          if (!super.isFileVisible(file, showHiddenFiles)) return false;
-
-          return ReadAction.compute(() -> {
-            final PsiFile psiFile = psiManager.findFile(file);
-            return psiFile != null && XsltSupport.isXsltFile(psiFile);
-          });
-        }
-      }.withTitle(XPathBundle.message("dialog.title.choose.xslt.file"));
       final TextComponentAccessor<JTextField> projectDefaultAccessor = new TextComponentAccessor<>() {
         @Override
         public String getText(JTextField component) {
@@ -195,7 +190,9 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
 
       myXmlInputFile.getComboBox().setEditable(true);
 
-      myXmlDescriptor = new AnyXMLDescriptor(false).withTitle(XPathBundle.message("dialog.title.choose.xml.file"));
+      myXmlDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+        .withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", "XML"), FileAssociationsManager.Holder.XML_FILES)
+        .withTitle(XPathBundle.message("dialog.title.choose.xml.file"));
       myXmlInputFile.addBrowseFolderListener(project, myXmlDescriptor, new TextComponentAccessor<>() {
         @Override
         public String getText(JComboBox comboBox) {

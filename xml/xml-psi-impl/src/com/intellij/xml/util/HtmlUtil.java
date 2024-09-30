@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInspection.InspectionProfile;
@@ -15,6 +15,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.XmlTypedHandlersAdditionalSupport;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
@@ -707,13 +708,17 @@ public final class HtmlUtil {
   }
 
   public static boolean isHtmlFile(@NotNull PsiElement element) {
-    Language language = element.getLanguage();
+    var language = element.getLanguage();
     return language.isKindOf(HTMLLanguage.INSTANCE) || language.isKindOf(XHTMLLanguage.INSTANCE);
   }
 
   public static boolean isHtmlFile(@NotNull VirtualFile file) {
-    FileType fileType = file.getFileType();
-    return fileType == HtmlFileType.INSTANCE || fileType == XHtmlFileType.INSTANCE;
+    var registry = FileTypeRegistry.getInstance();
+    return registry.isFileOfType(file, HtmlFileType.INSTANCE) || registry.isFileOfType(file, XHtmlFileType.INSTANCE);
+  }
+
+  public static FileType @NotNull [] getHtmlFileTypes() {
+    return new FileType[]{HtmlFileType.INSTANCE, XHtmlFileType.INSTANCE};
   }
 
   public static boolean isHtmlTagContainingFile(PsiElement element) {

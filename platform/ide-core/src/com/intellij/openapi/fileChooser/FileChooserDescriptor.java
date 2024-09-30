@@ -48,7 +48,8 @@ public class FileChooserDescriptor implements Cloneable {
   private boolean myTreeRootVisible = false;
   private boolean myShowHiddenFiles = false;
   private @Nullable Pair<@Nls String, List<String>> myExtensionFilter = null;
-  private Predicate<? super VirtualFile> myFileFilter = null;
+  private FileType @Nullable [] myFileTypeFilter = null;
+  private @Nullable Predicate<? super VirtualFile> myFileFilter = null;
   private boolean myForcedToUseIdeaFileChooser = false;
 
   private final Map<String, Object> myUserData = new HashMap<>();
@@ -89,6 +90,7 @@ public class FileChooserDescriptor implements Cloneable {
     myTreeRootVisible = d.isTreeRootVisible();
     myShowHiddenFiles = d.isShowHiddenFiles();
     myExtensionFilter = d.myExtensionFilter;
+    myFileTypeFilter = d.myFileTypeFilter;
     myFileFilter = d.myFileFilter;
     myForcedToUseIdeaFileChooser = false;
     myUserData.putAll(d.myUserData);
@@ -241,7 +243,7 @@ public class FileChooserDescriptor implements Cloneable {
       .map(matcher -> matcher instanceof ExtensionFileNameMatcher em ? em.getExtension() : null)
       .filter(Objects::nonNull)
       .toArray(String[]::new);
-    myFileFilter = file -> ContainerUtil.exists(types, type -> FileTypeRegistry.getInstance().isFileOfType(file, type));
+    myFileTypeFilter = types;
     return withExtensionFilter(label, extensions);
   }
 
@@ -266,12 +268,19 @@ public class FileChooserDescriptor implements Cloneable {
     return this;
   }
 
+  public FileChooserDescriptor withoutExtensionFilter() {
+    myExtensionFilter = null;
+    myFileTypeFilter = null;
+    return this;
+  }
+
   /**
    * Defines whether a file is visible in the tree.
    *
    * @deprecated ignored by native file choosers; use {@link #withFileFilter} and {@link #withExtensionFilter} instead.
    */
   @Deprecated
+  @ApiStatus.NonExtendable
   public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
     if (file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null) {
       return false;
@@ -287,6 +296,9 @@ public class FileChooserDescriptor implements Cloneable {
         return false;
       }
       if (myExtensionFilter != null && !matchesExtFilter(file, myExtensionFilter.second)) {
+        return false;
+      }
+      if (myFileTypeFilter != null && !matchesTypeFilter(file, myFileTypeFilter)) {
         return false;
       }
       if (myFileFilter != null && !myFileFilter.test(file)) {
@@ -322,11 +334,22 @@ public class FileChooserDescriptor implements Cloneable {
       if (myExtensionFilter != null) {
         return matchesExtFilter(file, myExtensionFilter.second);
       }
+      if (myFileTypeFilter != null) {
+        return matchesTypeFilter(file, myFileTypeFilter);
+      }
       if (myFileFilter != null) {
         return myFileFilter.test(file);
       }
     }
     return acceptAsJarFile(file) || acceptAsGeneralFile(file);
+  }
+
+  private static boolean matchesExtFilter(VirtualFile file, List<String> extensions) {
+    return ContainerUtil.exists(extensions, ext -> Strings.endsWithIgnoreCase(file.getName(), '.' + ext));
+  }
+
+  private static boolean matchesTypeFilter(VirtualFile file, FileType[] types) {
+    return ContainerUtil.exists(types, type -> FileTypeRegistry.getInstance().isFileOfType(file, type));
   }
 
   /**
@@ -423,10 +446,6 @@ public class FileChooserDescriptor implements Cloneable {
       @SuppressWarnings("unchecked") T t = (T)myUserData.get(key.getName());
       return t;
     }
-  }
-
-  private static boolean matchesExtFilter(VirtualFile file, List<String> extensions) {
-    return ContainerUtil.exists(extensions, ext -> Strings.endsWithIgnoreCase(file.getName(), '.' + ext));
   }
 
   public <T> void putUserData(@NotNull DataKey<T> key, @Nullable T data) {

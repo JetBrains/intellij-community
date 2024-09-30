@@ -6,6 +6,7 @@ import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -13,17 +14,10 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.validationErrorIf
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.conda.IntrospectableCommandExecutor
-import com.jetbrains.python.sdk.conda.TargetCommandExecutor
-import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
-import com.jetbrains.python.sdk.conda.condaSupportedLanguages
-import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
-import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
-import com.jetbrains.python.sdk.conda.suggestCondaPath
+import com.jetbrains.python.sdk.conda.*
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -57,10 +51,7 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
   val languageLevels: List<LanguageLevel> = condaSupportedLanguages
 
   val condaPathFileChooser: FileChooserDescriptor
-    get() = object : FileChooserDescriptor(true, false, false, false, false, false) {
-      override fun isFileVisible(file: VirtualFile?, showHiddenFiles: Boolean): Boolean =
-        super.isFileVisible(file, showHiddenFiles) && (file?.let { it.isDirectory || condaPathIsValid(it.path) } != false)
-    }
+    get() = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withFileFilter { condaPathIsValid(it.path) }
 
   /**
    * If target is mutable we can create new env on it

@@ -15,7 +15,6 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
@@ -26,7 +25,6 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -414,13 +412,9 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     TextFieldWithBrowseButton textFieldWithBrowseButton = new TextFieldWithBrowseButton();
     propertiesFile.setComponent(textFieldWithBrowseButton);
 
-    textFieldWithBrowseButton.addBrowseFolderListener(project, new FileChooserDescriptor(true, false, false, false, false, false) {
-      @Override
-      public boolean isFileVisible(VirtualFile virtualFile, boolean showHidden) {
-        if (!showHidden && virtualFile.getName().charAt(0) == '.') return false;
-        return virtualFile.isDirectory() || "properties".equals(virtualFile.getExtension());
-      }
-    }.withTitle(TestngBundle.message("testng.browse.button.title")).withDescription(TestngBundle.message("testng.select.properties.file")));
+    textFieldWithBrowseButton.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor("properties")
+      .withTitle(TestngBundle.message("testng.browse.button.title"))
+      .withDescription(TestngBundle.message("testng.select.properties.file")));
 
     propertiesTableView = new TableView(propertiesTableModel);
 

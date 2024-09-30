@@ -2943,7 +2943,6 @@ c:com.intellij.ide.actions.OpenProjectFileChooserDescriptor
 - <init>(Z,Z):V
 - getIcon(com.intellij.openapi.vfs.VirtualFile):javax.swing.Icon
 - isFileSelectable(com.intellij.openapi.vfs.VirtualFile):Z
-- isFileVisible(com.intellij.openapi.vfs.VirtualFile,Z):Z
 - s:isProjectFile(com.intellij.openapi.vfs.VirtualFile):Z
 c:com.intellij.ide.actions.PasteAction
 - com.intellij.openapi.actionSystem.AnAction

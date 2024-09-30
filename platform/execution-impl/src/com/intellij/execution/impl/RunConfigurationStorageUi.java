@@ -461,18 +461,11 @@ public final class RunConfigurationStorageUi {
     }
 
     private @NotNull ComboBox<String> createPathComboBox(@NotNull Project project, @NotNull Disposable uiDisposable) {
-      ComboBox<String> comboBox = new ComboBox<>(JBUI.scale(500));
+      var comboBox = new ComboBox<String>(JBUI.scale(500));
       comboBox.setEditable(true);
 
-      // chooseFiles is set to true to be able to select project.ipr file in IPR-based projects. Other files are not visible/selectable in the chooser
-      FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false) {
-        @Override
-        public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-          // dotIdeaStoragePath may be a path to the project.ipr file in IPR-based projects
-          if (file.getPath().equals(myDotIdeaStoragePath)) return true;
-          return file.isDirectory() && super.isFileVisible(file, showHiddenFiles);
-        }
-
+      // `chooseFiles` is set to `true` to be able to select 'project.ipr' file in IPR-based projects; other files are not selectable
+      var descriptor = new FileChooserDescriptor(true, true, false, false, false, false) {
         @Override
         public boolean isFileSelectable(@Nullable VirtualFile file) {
           if (file == null) return false;
@@ -485,7 +478,7 @@ public final class RunConfigurationStorageUi {
         }
       };
 
-      Runnable selectFolderAction = new BrowseFolderRunnable<>(project, descriptor, comboBox, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
+      var selectFolderAction = new BrowseFolderRunnable<>(project, descriptor, comboBox, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
       comboBox.initBrowsableEditor(selectFolderAction, uiDisposable);
       return comboBox;
     }

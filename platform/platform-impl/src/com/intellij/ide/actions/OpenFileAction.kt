@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
@@ -72,7 +71,9 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     val showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null
-    val descriptor: FileChooserDescriptor = if (showFiles) ProjectOrFileChooserDescriptor() else ProjectOnlyFileChooserDescriptor()
+    val descriptor =
+      if (showFiles) ProjectOrFileChooserDescriptor()
+      else OpenProjectFileChooserDescriptor(true).withTitle(IdeBundle.message("title.open.project"))
     var toSelect: VirtualFile? = null
     val defaultProjectDirectory = GeneralLocalSettings.getInstance().defaultProjectDirectory
     if (defaultProjectDirectory.isNotEmpty()) {
@@ -129,23 +130,12 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
-private class ProjectOnlyFileChooserDescriptor : OpenProjectFileChooserDescriptor(true) {
-  init {
-    title = IdeBundle.message("title.open.project")
-  }
-}
-
-// vanilla OpenProjectFileChooserDescriptor only accepts project files; this one is overridden to accept any files
+// vanilla `OpenProjectFileChooserDescriptor` only accepts project files; this one is overridden to accept any files
 private class ProjectOrFileChooserDescriptor : OpenProjectFileChooserDescriptor(true) {
   private val myStandardDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withHideIgnored(false)
 
   init {
     title = IdeBundle.message("title.open.file.or.project")
-  }
-
-  override fun isFileVisible(file: VirtualFile, showHiddenFiles: Boolean): Boolean = when {
-    file.isDirectory -> super.isFileVisible(file, showHiddenFiles)
-    else -> myStandardDescriptor.isFileVisible(file, showHiddenFiles)
   }
 
   override fun isFileSelectable(file: VirtualFile?): Boolean = when {

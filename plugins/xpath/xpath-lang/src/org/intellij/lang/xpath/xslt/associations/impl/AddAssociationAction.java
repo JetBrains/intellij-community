@@ -16,18 +16,17 @@
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IconUtil;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
 import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class AddAssociationAction extends AnAction {
   private final FileAssociationsManager myManager;
@@ -54,20 +53,15 @@ class AddAssociationAction extends AnAction {
     }
 
     protected void addAssociation(final PsiFile psiFile) {
-
-        final VirtualFile virtualFile = psiFile.getVirtualFile();
+        var virtualFile = psiFile.getVirtualFile();
         assert virtualFile != null;
 
-        final FileChooserDescriptor descriptor = new AnyXMLDescriptor(true) {
-            @Override
-            public boolean isFileSelectable(@Nullable VirtualFile file) {
-                return super.isFileSelectable(file) && !file.equals(virtualFile);
-            }
-        };
+        var descriptor = FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor()
+          .withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", "XML"), FileAssociationsManager.Holder.XML_FILES)
+          .withFileFilter(file -> !file.equals(virtualFile));
 
-        final VirtualFile[] virtualFiles = FileChooser.chooseFiles(descriptor, psiFile.getProject(), psiFile.getVirtualFile());
-
-        for (VirtualFile file : virtualFiles) {
+        var virtualFiles = FileChooser.chooseFiles(descriptor, psiFile.getProject(), psiFile.getVirtualFile());
+        for (var file : virtualFiles) {
             assert !virtualFile.equals(file);
             myManager.addAssociation(psiFile, file);
         }

@@ -1476,7 +1476,7 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - isChooseJarsAsFiles():Z
 - isChooseMultiple():Z
 - isFileSelectable(com.intellij.openapi.vfs.VirtualFile):Z
-- isFileVisible(com.intellij.openapi.vfs.VirtualFile,Z):Z
+- F:isFileVisible(com.intellij.openapi.vfs.VirtualFile,Z):Z
 - isForcedToUseIdeaFileChooser():Z
 - isHideIgnored():Z
 - isShowFileSystemRoots():Z
@@ -1504,6 +1504,7 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withShowHiddenFiles(Z):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withTitle(java.lang.String):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withTreeRootVisible(Z):com.intellij.openapi.fileChooser.FileChooserDescriptor
+- withoutExtensionFilter():com.intellij.openapi.fileChooser.FileChooserDescriptor
 f:com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 - s:createAllButJarContentsDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
 - s:createMultipleFilesNoJarsDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor

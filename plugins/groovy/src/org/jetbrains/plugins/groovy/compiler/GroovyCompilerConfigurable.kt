@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -93,15 +92,11 @@ class GroovyCompilerConfigurable(private val project: Project) : BoundSearchable
   private fun createExcludedConfigurable(project: Project): ExcludedEntriesConfigurable {
     val configuration = config.excludeFromStubGeneration
     val index = if (project.isDefault) null else ProjectRootManager.getInstance(project).fileIndex
-    val descriptor = object : FileChooserDescriptor(true, true, false, false, false, true) {
-      override fun isFileVisible(file: VirtualFile, showHiddenFiles: Boolean): Boolean {
-        return super.isFileVisible(file, showHiddenFiles) && (index == null || !index.isExcluded(file))
-      }
-    }
-    descriptor.roots = getInstance(project).modules.flatMap { module ->
-      ModuleRootManager.getInstance(module)
-        .getSourceRoots(JavaModuleSourceRootTypes.SOURCES)
-    }
+    val descriptor = FileChooserDescriptor(true, true, false, false, false, true)
+      .withFileFilter { file -> index == null || !index.isExcluded(file) }
+      .withRoots(getInstance(project).modules.flatMap { module ->
+        ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES)
+      })
     return ExcludedEntriesConfigurable(project, descriptor, configuration)
   }
 }

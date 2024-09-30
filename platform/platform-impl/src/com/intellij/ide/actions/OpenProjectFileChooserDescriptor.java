@@ -31,11 +31,6 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   @Override
-  public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-    return super.isFileVisible(file, showHiddenFiles) && (file.isDirectory() || isProjectFile(file));
-  }
-
-  @Override
   public boolean isFileSelectable(@Nullable VirtualFile file) {
     return file != null && (isProjectDirectory(file) || isProjectFile(file));
   }

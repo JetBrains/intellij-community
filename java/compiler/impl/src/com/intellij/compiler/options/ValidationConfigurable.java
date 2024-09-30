@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
 import com.intellij.ide.util.ElementsChooser;
@@ -14,7 +14,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -56,13 +55,9 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
   }
 
   private static ExcludedEntriesConfigurable createExcludedConfigurable(@NotNull Project project) {
-    ProjectFileIndex index = project.isDefault() ? null : ProjectRootManager.getInstance(project).getFileIndex();
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true) {
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return super.isFileVisible(file, showHiddenFiles) && (index == null || !index.isExcluded(file));
-      }
-    };
+    var index = project.isDefault() ? null : ProjectRootManager.getInstance(project).getFileIndex();
+    var descriptor = new FileChooserDescriptor(true, true, false, false, false, true)
+      .withFileFilter(file -> index == null || !index.isExcluded(file));
 
     List<VirtualFile> allContentRoots = new ArrayList<>();
     for (final Module module: ModuleManager.getInstance(project).getModules()) {

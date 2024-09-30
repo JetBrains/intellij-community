@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -18,8 +17,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable.NoScroll;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -232,20 +230,10 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
                                                  AllIcons.Actions.Install) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
-        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, true) {
-          @Override
-          public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-            return super.isFileVisible(file, showHiddenFiles) &&
-                   (file.isDirectory() || "xml".equals(file.getExtension()) || FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE));
-          }
-
-          @Override
-          public boolean isFileSelectable(@Nullable VirtualFile file) {
-            return file != null && FileTypeRegistry.getInstance().isFileOfType(file, StdFileTypes.XML);
-          }
-        };
-        descriptor.setDescription(JavaDebuggerBundle.message("please.select.a.file.to.import"));
-        descriptor.setTitle(JavaDebuggerBundle.message("import.capture.points"));
+        var descriptor = new FileChooserDescriptor(true, false, true, false, true, true)
+          .withExtensionFilter(FileTypeManager.getInstance().getStdFileType("XML"))
+          .withTitle(JavaDebuggerBundle.message("import.capture.points"))
+          .withDescription(JavaDebuggerBundle.message("please.select.a.file.to.import"));
 
         VirtualFile[] files = FileChooser.chooseFiles(descriptor, e.getProject(), null);
         if (ArrayUtil.isEmpty(files)) return;
