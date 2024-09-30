@@ -14,7 +14,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
     <importing.workspaceConfigurator implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenImporterEx"/>
-    <importer implementation="org.jetbrains.kotlin.idea.maven.KotlinCodeStyleMavenImporter" />
+    <importing.afterImportConfigurator implementation="org.jetbrains.kotlin.idea.maven.KotlinCodeStyleMavenImporter"/>
 
     <archetypesProvider implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenArchetypesProvider" />
 

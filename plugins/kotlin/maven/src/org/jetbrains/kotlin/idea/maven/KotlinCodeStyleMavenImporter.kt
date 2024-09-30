@@ -2,43 +2,32 @@
 
 package org.jetbrains.kotlin.idea.maven
 
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.module.Module
-import org.jetbrains.idea.maven.importing.MavenImporter
-import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
+import org.jetbrains.idea.maven.importing.MavenAfterImportConfigurator
+import org.jetbrains.idea.maven.importing.MavenApplicableConfigurator
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
-import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
-import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.maven.KotlinMavenImporter.Companion.KOTLIN_PLUGIN_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.maven.KotlinMavenImporter.Companion.KOTLIN_PLUGIN_GROUP_ID
 
-internal class KotlinCodeStyleMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_ARTIFACT_ID) {
-    companion object {
-        private const val KOTLIN_CODE_STYLE_MAVEN_SETTING = "kotlin.code.style"
+private const val KOTLIN_CODE_STYLE_MAVEN_SETTING = "kotlin.code.style"
 
-        fun getCodeStyleString(mavenProject: MavenProject): String? {
-            return mavenProject.properties.getProperty(KOTLIN_CODE_STYLE_MAVEN_SETTING)
-        }
+internal class KotlinCodeStyleMavenImporter : MavenApplicableConfigurator(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_ARTIFACT_ID), MavenAfterImportConfigurator {
+    private fun getCodeStyleString(mavenProject: MavenProject): String? {
+        return mavenProject.properties.getProperty(KOTLIN_CODE_STYLE_MAVEN_SETTING)
     }
 
     override fun isApplicable(mavenProject: MavenProject): Boolean {
-        return getCodeStyleString(mavenProject) != null
+        return super.isApplicable(mavenProject) && getCodeStyleString(mavenProject) != null
     }
 
-    override fun process(
-      modifiableModelsProvider: IdeModifiableModelsProvider,
-      module: Module,
-      rootModel: MavenRootModelAdapter,
-      mavenModel: MavenProjectsTree,
-      mavenProject: MavenProject,
-      changes: MavenProjectChanges,
-      mavenProjectToModuleName: MutableMap<MavenProject, String>,
-      postTasks: MutableList<MavenProjectsProcessorTask>
-    ) {
-        if (mavenProject !in mavenModel.rootProjects) return
-
-        ProjectCodeStyleImporter.apply(module.project, getCodeStyleString(mavenProject))
+    override fun afterImport(context: MavenAfterImportConfigurator.Context) {
+        val project = context.project
+        val tree = MavenProjectsManager.getInstance(project).projectsTree
+        context.mavenProjectsWithModules.forEach { mavenProjectWithModules ->
+            val mavenProject = mavenProjectWithModules.mavenProject
+            if (mavenProject !in tree.rootProjects) return
+            ProjectCodeStyleImporter.apply(project, getCodeStyleString(mavenProject))
+        }
     }
 }
