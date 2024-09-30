@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 internal class CreateMethodAction(
   targetClass: GrTypeDefinition,
   override val request: CreateMethodRequest,
-  private val abstract: Boolean
+  private val abstract: Boolean,
 ) : CreateMemberAction(targetClass, request), JvmGroupIntentionAction {
 
   override fun getActionGroup(): JvmActionGroup = if (abstract) CreateAbstractMethodActionGroup else CreateMethodActionGroup
@@ -61,7 +61,7 @@ private class MethodRenderer(
   val project: Project,
   val abstract: Boolean,
   val targetClass: GrTypeDefinition,
-  val request: CreateMethodRequest
+  val request: CreateMethodRequest,
 ) {
 
   fun execute() {
@@ -112,6 +112,12 @@ private class MethodRenderer(
   }
 
   private fun insertMethod(method: GrMethod): GrMethod {
-    return targetClass.add(method) as GrMethod
+    val elementToReplace = request.elementToReplace
+    return if (elementToReplace != null && elementToReplace.isValid) {
+      elementToReplace.replace(method) as GrMethod
+    }
+    else {
+      targetClass.add(method) as GrMethod
+    }
   }
 }

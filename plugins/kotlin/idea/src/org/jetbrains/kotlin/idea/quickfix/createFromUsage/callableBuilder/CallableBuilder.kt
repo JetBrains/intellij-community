@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
+import org.jetbrains.kotlin.idea.codeinsight.utils.ValVarExpression
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.createFromUsage.setupEditorSelection
 import org.jetbrains.kotlin.idea.imports.importableFqName
@@ -49,7 +50,6 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.TransformToJavaUtil.transformToJavaMemberIfApplicable
-import org.jetbrains.kotlin.idea.codeinsight.utils.ValVarExpression
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.DialogWithEditor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -161,6 +161,8 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
     private val typeCandidates = HashMap<TypeInfo, List<TypeCandidate>>()
 
     var placement: CallablePlacement? = null
+
+    var elementToReplace: PsiElement? = null
 
     var isStartTemplate: Boolean = true
 
@@ -591,7 +593,12 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             val container = if (containingElement is KtClass && callableInfo.isForCompanion) {
                 containingElement.getOrCreateCompanionObject()
             } else containingElement
-            val declarationInPlace = CreateFromUsageUtil.placeDeclarationInContainer(declaration, container, config.originalElement, ktFileToEdit)
+
+            val declarationInPlace =  if (elementToReplace!=null) {
+                elementToReplace?.replace(declaration) as KtNamedDeclaration
+            } else {
+                CreateFromUsageUtil.placeDeclarationInContainer(declaration, container, config.originalElement, ktFileToEdit)
+            }
 
             if (declarationInPlace is KtSecondaryConstructor) {
                 val containingClass = declarationInPlace.containingClassOrObject!!
