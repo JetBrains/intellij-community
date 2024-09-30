@@ -9,10 +9,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.ast.PyAstTypeParameter
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -46,15 +48,22 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
     override fun visitPyTypeParameterList(node: PyTypeParameterList) {
       val typeParameters = node.typeParameters
       var lastIsDefault = false
+      var lastIsTypeVarTuple = false
       for (typeParameter in typeParameters) {
         if (typeParameter.defaultExpressionText != null) {
           lastIsDefault = true
+          if (lastIsTypeVarTuple && typeParameter.kind == PyAstTypeParameter.Kind.TypeVar) {
+            registerProblem(typeParameter,
+                            PyPsiBundle.message("INSP.type.hints.default.type.var.cannot.follow.type.var.tuple"),
+                            ProblemHighlightType.GENERIC_ERROR)
+          }
         }
         else if (lastIsDefault) {
           registerProblem(typeParameter,
                           PyPsiBundle.message("INSP.type.hints.non.default.type.vars.cannot.follow.defaults"),
                           ProblemHighlightType.GENERIC_ERROR)
         }
+        lastIsTypeVarTuple = typeParameter.kind == PyAstTypeParameter.Kind.TypeVarTuple
       }
     }
 
@@ -127,7 +136,7 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
       PsiTreeUtil.findChildrenOfAnyType(element, false, PyReferenceExpression::class.java)
         .associateWith { Ref.deref(PyTypingTypeProvider.getType(it, myTypeEvalContext)) }
         // if declarationElement a.k.a target expression is null then it most likely resolves to type parameter
-        .filter { (_, v) -> v is PyTypeVarType
+        .filter { (_, v) -> v is PyTypeParameterType
                             && v.declarationElement is PyTargetExpression
                             && ScopeUtil.getScopeOwner(v.declarationElement) !is PyTypeAliasStatement }
         .forEach { (k, _) ->

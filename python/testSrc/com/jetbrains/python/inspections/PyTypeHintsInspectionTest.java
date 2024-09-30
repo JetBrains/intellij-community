@@ -1630,6 +1630,158 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-75759
+  public void testTypeVarDefaultsScoping() {
+    doTestByText("""
+                   from typing import TypeVar, Generic
+                   
+                   S1 = TypeVar("S1")
+                   S2 = TypeVar("S2", default=S1)
+                   StepT = TypeVar("StepT", default=int | None)
+                   StartT = TypeVar("StartT", default="StopT")
+                   StopT = TypeVar("StopT", default=int)
+                   
+                   class slice(Generic[<warning descr="Type parameter has a default type that refers to one or more type variables that are out of scope">StartT</warning>, StopT, StepT]): ...
+                   class slice2(Generic[StopT, StartT, StepT]): ...
+                   
+                   class Foo3(Generic[S1]):
+                       class Bar2(Generic[<warning descr="Type parameter has a default type that refers to one or more type variables that are out of scope">S2</warning>]): ...
+                   """);
+  }
+
+  // PY-75759
+  public void testTypeVarAllowedDefaultValues() {
+    doTestByText("""
+                   from typing import TypeVar, Generic
+                   
+                   T = TypeVar("T", default=<warning descr="Default type must be a type expression">3</warning>)
+                   T1 = TypeVar("T1", default=<warning descr="Default type must be a type expression">True</warning>)
+                   T3 = TypeVar("T3", default="NormalT")
+                   NormalT = TypeVar("NormalT")
+                   T4 = TypeVar("T4", default=NormalT)
+                   T5 = TypeVar("T5", default=list)
+                   class Clazz: ...
+                   T6 = TypeVar("T6", default=Clazz)
+                   """);
+  }
+
+  // PY-75759
+  public void testNewStyleTypeVarAllowedDefaultValues() {
+    doTestByText("""
+                   from typing import TypeVar, Generic, ParamSpec, TypeVarTuple
+                   T1 = TypeVar("T1")
+                   Ts1 = TypeVarTuple("Ts1")
+                   P1 = ParamSpec("P1")
+                   
+                   class Clazz[T = int]: ...
+                   class Clazz[T = dict[int, str]]: ...
+                   class Clazz[T, T1 = T]: ...
+                   class Clazz[T = <warning descr="Default type must be a type expression">1</warning>]: ...
+                   class Clazz[T = <warning descr="Default type must be a type expression">True</warning>]: ...
+                   class Clazz[T = <warning descr="Default type of type parameter 'T' refers to a type variable that is out of scope">T1</warning>]: ...
+                   class Clazz[T = <warning descr="Default type of type parameter 'T' refers to a type variable that is out of scope">Ts1</warning>]: ...
+                   class Clazz[T = <warning descr="Default type of type parameter 'T' refers to a type variable that is out of scope">P1</warning>]: ...
+                   class Clazz[T = <warning descr="Default type of type parameter 'T' refers to a type variable that is out of scope">list[T1]</warning>]: ...
+                   """);
+  }
+
+  // PY-75759
+  public void testParamSpecAllowedDefaultValues() {
+    doTestByText("""
+                   from typing import ParamSpec, TypeVar
+                   T = TypeVar(<warning descr="The argument to 'TypeVar()' must be a string equal to the variable name to which it is assigned">"T1"</warning>)
+                   P = ParamSpec(<warning descr="The argument to 'ParamSpec()' must be a string equal to the variable name to which it is assigned">"P1"</warning>)
+                   
+                   P1 = ParamSpec("P1", default=[])
+                   P2 = ParamSpec("P2", default=[int, str, None, int | None])
+                   P3 = ParamSpec("P3", default=[int, T])
+                   P4 = ParamSpec("P4", default=[int])
+                   P5 = ParamSpec("P5", default=...)
+                   P6 = ParamSpec("P6", default=<warning descr="Default type of ParamSpec must be a ParamSpec type or a list of types">int</warning>)
+                   P7 = ParamSpec("P7", default=<warning descr="Default type of ParamSpec must be a ParamSpec type or a list of types">3</warning>)
+                   P8 = ParamSpec("P8", default=<warning descr="Default type of ParamSpec must be a ParamSpec type or a list of types">(1, int)</warning>)
+                   P9 = ParamSpec("P9", default=P)
+                   P10 = ParamSpec("P10", default=[<warning descr="Default type must be a type expression">1</warning>, <warning descr="Default type must be a type expression">2</warning>])
+                   """);
+  }
+
+  // PY-75759
+  public void testNewStyleParamSpecAllowedDefaultValues() {
+    doTestByText("""
+                   from typing import TypeVar, Generic, ParamSpec, TypeVarTuple
+                   T1 = TypeVar("T1")
+                   Ts1 = TypeVarTuple("Ts1")
+                   P1 = ParamSpec("P1")
+                   
+                   class Clazz[**P = []]: ...
+                   class Clazz[**P = [int]]: ...
+                   class Clazz[**P = [int, str]]: ...
+                   class Clazz[**P = [int, <warning descr="Default type must be a type expression">3</warning>]]: ...
+                   class Clazz[**P = [int, <warning descr="Default type must be a type expression">True</warning>]]: ...
+                   class Clazz[**P = <warning descr="Default type of ParamSpec must be a ParamSpec type or a list of types">True</warning>]: ...
+                   class Clazz[**P = <warning descr="Default type of ParamSpec must be a ParamSpec type or a list of types"><warning descr="Default type of type parameter 'P' refers to a type variable that is out of scope">T1</warning></warning>]: ...
+                   class Clazz[**P = [<warning descr="Default type of type parameter 'P' refers to a type variable that is out of scope">T1</warning>]]: ...
+                   class Clazz[**P = <warning descr="Default type of type parameter 'P' refers to a type variable that is out of scope">P1</warning>]: ...
+                   class Clazz[**P = <warning descr="Default type of ParamSpec must be a ParamSpec type or a list of types"><warning descr="Default type of type parameter 'P' refers to a type variable that is out of scope">Ts1</warning></warning>]: ...
+                   class Clazz[**P = [int, <warning descr="Default type of type parameter 'P' refers to a type variable that is out of scope">list[T1]</warning>]]: ...
+                   
+                   """);
+  }
+
+  // PY-75759
+  public void testTypeVarTupleAllowedDefaultValues() {
+    doTestByText("""
+                   from typing import TypeVarTuple, Unpack, TypeVar
+                   
+                   T = TypeVar("T")
+                   Ts0 = TypeVarTuple("Ts0")
+                   Ts1 = TypeVarTuple("Ts1", default=Unpack[tuple[int]])
+                   Ts2 = TypeVarTuple("Ts2", default=<warning descr="Default type of TypeVarTuple must be unpacked">tuple[int]</warning>)
+                   Ts3 = TypeVarTuple("Ts3", default=<warning descr="Default type of TypeVarTuple must be unpacked">int</warning>)
+                   Ts4 = TypeVarTuple("Ts4", default=Unpack[Ts0])
+                   Ts5 = TypeVarTuple("Ts5", default=<warning descr="Default type of TypeVarTuple must be unpacked">Ts0</warning>)
+                   Ts6 = TypeVarTuple("Ts6", default=Unpack[tuple[int, ...]])
+                   Ts7 = TypeVarTuple("Ts7", default=Unpack[tuple[T, T]])
+                   """);
+  }
+
+  // PY-75759
+  public void testNewStyleTypeVarTupleAllowedDefaultValues() {
+    doTestByText("""
+                   from typing import TypeVar, Generic, ParamSpec, TypeVarTuple, Unpack
+                   T1 = TypeVar("T1")
+                   Ts1 = TypeVarTuple("Ts1")
+                   P1 = ParamSpec("P1")
+                   
+                   class Clazz[*Ts = <warning descr="Default type of type parameter 'Ts' refers to a type variable that is out of scope">Unpack[tuple[int, T1]]</warning>]: ...
+                   class Clazz[*Ts = <warning descr="Default type of TypeVarTuple must be unpacked">1</warning>]: ...
+                   class Clazz[*Ts = <warning descr="Default type of TypeVarTuple must be unpacked">True</warning>]: ...
+                   class Clazz[*Ts = <warning descr="Default type of TypeVarTuple must be unpacked">tuple[int]</warning>]: ...
+                   class Clazz[*Ts = *tuple[int]]: ...
+                   class Clazz[*Ts = Unpack[tuple[int]]]: ...
+                   class Clazz[*Ts = <warning descr="Default type of TypeVarTuple must be unpacked">T1</warning>]: ...
+                   class Clazz[*Ts = <warning descr="Default type of TypeVarTuple must be unpacked">Ts1</warning>]: ...
+                   class Clazz[*Ts = <warning descr="Default type of TypeVarTuple must be unpacked">P1</warning>]: ...
+                   class Clazz[*Ts = Unpack[tuple[int, ...]]]: ...
+                   """);
+  }
+
+  // PY-75759
+  public void testTypeVarCannotFollowTypeVarTuple() {
+    doTestByText("""
+                   from typing import TypeVar, Generic, ParamSpec, TypeVarTuple, Unpack
+                   T = TypeVar("T", default = int)
+                   Ts = TypeVarTuple("Ts")
+                   TsDef = TypeVarTuple("TsDef", default = Unpack[tuple[int, int]])
+                   P = ParamSpec("P", default = [str, bool])
+                   
+                   class Clazz(Generic[Ts, <error descr="TypeVar with a default value cannot follow TypeVarTuple">T</error>]): ...
+                   class Clazz1(Generic[TsDef, <error descr="TypeVar with a default value cannot follow TypeVarTuple">T</error>]): ...
+                   class Clazz2(Generic[TsDef, P]): ...
+                   class Clazz3(Generic[Ts, P]): ...
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

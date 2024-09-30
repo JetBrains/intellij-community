@@ -121,8 +121,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   public static final Set<String> TYPE_DICT_QUALIFIERS = Set.of(REQUIRED, REQUIRED_EXT, NOT_REQUIRED, NOT_REQUIRED_EXT, READONLY, READONLY_EXT);
 
-  private static final String UNPACK = "typing.Unpack";
-  private static final String UNPACK_EXT = "typing_extensions.Unpack";
+  public static final String UNPACK = "typing.Unpack";
+  public static final String UNPACK_EXT = "typing_extensions.Unpack";
 
   public static final String SELF = "typing.Self";
   public static final String SELF_EXT = "typing_extensions.Self";

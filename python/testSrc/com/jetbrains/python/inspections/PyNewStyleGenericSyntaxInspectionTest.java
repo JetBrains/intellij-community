@@ -141,6 +141,17 @@ public class PyNewStyleGenericSyntaxInspectionTest extends PyInspectionTestCase 
                                               """));
   }
 
+  // PY-75759
+  public void testTypeVarCannotFollowTypeVarTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312,
+     () -> doTestByText("""
+                          class ClassA[*Ts, <error descr="TypeVar with a default value cannot follow TypeVarTuple">T = int</error>]: ...
+                          class ClassB[*Ts = *tuple[int], <error descr="TypeVar with a default value cannot follow TypeVarTuple">T = int</error>]: ...
+                          class ClassC[*Ts, **P = [float, bool]]: ...
+                          class ClassD[*Ts, **P]: ...
+                          """));
+  }
+
 
   @Override
   protected @NotNull Class<? extends PyInspection> getInspectionClass() {
