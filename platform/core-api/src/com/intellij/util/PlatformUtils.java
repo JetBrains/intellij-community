@@ -63,7 +63,7 @@ public final class PlatformUtils {
 
   @SuppressWarnings("SSBasedInspection") private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(
     IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, MOBILE_IDE_PREFIX, PYCHARM_PREFIX, DATASPELL_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
-    DBE_PREFIX, RIDER_PREFIX, GOIDE_PREFIX));
+    DBE_PREFIX, RIDER_PREFIX, GOIDE_PREFIX, RUSTROVER_PREFIX, AQUA_PREFIX));
 
   public static @NotNull String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
