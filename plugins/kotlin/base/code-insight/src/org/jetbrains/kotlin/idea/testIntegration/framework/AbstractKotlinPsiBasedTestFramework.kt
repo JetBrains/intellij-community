@@ -18,7 +18,7 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
     protected abstract val disabledTestAnnotation: String
     protected abstract val allowTestMethodsInObject: Boolean
 
-    protected fun isFrameworkAvailable(element: KtElement): Boolean =
+    protected open fun isFrameworkAvailable(element: KtElement): Boolean =
         isFrameworkAvailable(element, markerClassFqn, true)
 
     protected fun isFrameworkAvailable(element: KtElement, markerClassFqn: String, javaOnly: Boolean): Boolean {

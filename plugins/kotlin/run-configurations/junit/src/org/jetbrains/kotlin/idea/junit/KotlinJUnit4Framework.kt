@@ -40,6 +40,10 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
             }
         }
 
+        public override fun isFrameworkAvailable(element: KtElement): Boolean {
+            return super.isFrameworkAvailable(element) || isFrameworkAvailable(element, KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST, false)
+        }
+
         fun isPotentialTestClass(element: PsiElement): Boolean {
             if (element.language != KotlinLanguage.INSTANCE) return false
             val psiElement = (element as? KtLightElement<*, *>)?.kotlinOrigin ?: element
@@ -80,7 +84,7 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
             }
 
         private fun checkJUnit4PotentialTestClass(declaration: KtClassOrObject): ThreeState =
-            if (!isFrameworkAvailable(declaration) && !isFrameworkAvailable(declaration, KotlinPsiBasedTestFramework.KOTLIN_TEST_TEST, false)) {
+            if (!isFrameworkAvailable(declaration)) {
                 NO
             } else {
                 checkIsJUnit4LikeTestClass(declaration, true)
@@ -180,6 +184,10 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
 
     override fun getParametersMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
         return FileTemplateDescriptor("Kotlin JUnit4 Parameters Function.kt")
+    }
+
+    override fun isFrameworkAvailable(clazz: PsiElement): Boolean {
+        return super.isFrameworkAvailable(clazz) || clazz is KtClass && psiBasedDelegate.isFrameworkAvailable(clazz)
     }
 }
 
