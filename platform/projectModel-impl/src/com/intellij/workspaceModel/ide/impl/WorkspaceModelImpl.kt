@@ -389,11 +389,12 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   override suspend fun <T> flowOfDiff(query: CollectionQuery<T>): Flow<Diff<T>> = reactive.flowOfDiff(query)
 
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
-    if (project.isDisposed) return
+    if (project.isDisposed) {
+      return
+    }
 
     initializeBridgesTimeMs.addMeasuredTime {
-      BridgeInitializer.EP_NAME.extensionList.forEach { bridgeInitializer ->
+      for (bridgeInitializer in BridgeInitializer.EP_NAME.extensionList) {
         logErrorOnEventHandling {
           if (bridgeInitializer.isEnabled()) {
             bridgeInitializer.initializeBridges(project, change, builder)
