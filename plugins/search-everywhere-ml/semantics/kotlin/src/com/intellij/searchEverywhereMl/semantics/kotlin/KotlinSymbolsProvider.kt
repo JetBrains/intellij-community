@@ -10,14 +10,11 @@ import org.jetbrains.kotlin.psi.KtFunction
 internal class KotlinSymbolsProvider : SymbolsProvider {
   override fun extract(file: PsiFile): List<IndexableSymbol> {
     return PsiTreeUtil.findChildrenOfAnyType(file, false, KtFunction::class.java).asSequence()
-      .map { f -> f.name }
-      .filterNotNull()
+      .mapNotNull { f -> f.name }
       .filter { name -> name != ANONYMOUS_ID }
       .map { name -> IndexableSymbol(EntityId(name)) }
       .toList()
   }
-
-  companion object {
-    private const val ANONYMOUS_ID = "<anonymous>"
-  }
 }
+
+private const val ANONYMOUS_ID = "<anonymous>"
