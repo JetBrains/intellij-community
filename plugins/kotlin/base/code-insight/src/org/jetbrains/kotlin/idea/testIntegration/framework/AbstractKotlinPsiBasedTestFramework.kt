@@ -45,8 +45,11 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
         }
     }
 
-    override fun checkTestClass(declaration: KtClassOrObject): ThreeState =
-        when {
+    override fun checkTestClass(declaration: KtClassOrObject): ThreeState {
+        if (!isFrameworkAvailable(declaration)) {
+            return NO
+        }
+        return when {
             declaration.isAnnotation() -> NO
             (declaration.isTopLevel() && declaration is KtObjectDeclaration) && !allowTestMethodsInObject -> NO
             declaration.annotationEntries.isNotEmpty() -> UNSURE
@@ -55,6 +58,7 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             declaration.declarations.any { it is KtClassOrObject && !it.isPrivate() } -> UNSURE
             else -> NO
         }
+    }
 
     override fun isTestMethod(declaration: KtNamedFunction): Boolean {
         return when {
