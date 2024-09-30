@@ -704,16 +704,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     return result
   }
 
-
-  internal class WritableJpsFileContent(
-    private val writer: JpsFileContentWriter,
-    private val fileUrl: String,
-  ) {
-    fun saveComponent(componentName: String, componentTag: Element?) {
-      writer.saveComponent(fileUrl, componentName, componentTag)
-    }
-  }
-
   @Suppress("UNCHECKED_CAST")
   override fun saveEntities(
     mainEntities: Collection<ModuleEntity>,
@@ -721,7 +711,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     storage: EntityStorage,
     writer: JpsFileContentWriter,
   ) {
-    saveEntities(mainEntities, entities, storage, WritableJpsFileContent(writer, fileUrl.url), writer)
+    writer.saveFile(fileUrl.url) { fileContentWriter ->
+      saveEntities(mainEntities, entities, storage, fileContentWriter, writer)
+    }
   }
 
   @Suppress("UNCHECKED_CAST")
