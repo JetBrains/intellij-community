@@ -7,7 +7,7 @@ import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import org.jetbrains.kotlin.idea.KotlinModuleFileType
-import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
+import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.metadata.jvm.deserialization.ModuleMapping
 import org.jetbrains.kotlin.name.ClassId
 import java.io.DataInput
@@ -50,7 +50,7 @@ class KotlinJvmModuleAnnotationsIndex internal constructor() : FileBasedIndexExt
                 debugName = file.toString(),
                 skipMetadataVersionCheck = false,
                 isJvmPackageNameSupported = true,
-                metadataVersionFromLanguageVersion = JvmMetadataVersion.INSTANCE,
+                metadataVersionFromLanguageVersion = MetadataVersion.INSTANCE,
             ) {}
 
             if (moduleMapping !== ModuleMapping.EMPTY) {

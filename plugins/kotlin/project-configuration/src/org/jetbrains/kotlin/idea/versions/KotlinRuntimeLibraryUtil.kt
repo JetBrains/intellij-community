@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
-import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
+import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.utils.JsMetadataVersion
@@ -37,8 +37,8 @@ fun getLibraryRootsWithIncompatibleAbi(module: Module): Collection<BinaryVersion
     return if (badRoots.isEmpty()) emptyList() else badRoots.toHashSet()
 }
 
-fun getLibraryRootsWithIncompatibleAbiJvm(module: Module): Collection<BinaryVersionedFile<JvmMetadataVersion>> {
-    return getLibraryRootsWithAbiIncompatibleVersion(module, JvmMetadataVersion.INSTANCE, KotlinJvmMetadataVersionIndex.NAME)
+fun getLibraryRootsWithIncompatibleAbiJvm(module: Module): Collection<BinaryVersionedFile<MetadataVersion>> {
+    return getLibraryRootsWithAbiIncompatibleVersion(module, MetadataVersion.INSTANCE, KotlinJvmMetadataVersionIndex.NAME)
 }
 
 fun getLibraryRootsWithIncompatibleAbiJavaScript(module: Module): Collection<BinaryVersionedFile<JsMetadataVersion>> {
