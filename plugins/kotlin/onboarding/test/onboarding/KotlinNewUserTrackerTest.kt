@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.onboarding
+package onboarding
 
 import com.intellij.internal.statistic.DeviceIdManager
+import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker
 import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_IDEA_USER_DURATION
 import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_USER_DURATION
 import org.jetbrains.kotlin.onboarding.KotlinNewUserTracker.Companion.NEW_USER_RESET
