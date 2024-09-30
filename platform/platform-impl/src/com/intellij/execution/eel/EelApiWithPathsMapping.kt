@@ -64,7 +64,7 @@ private class EelProcessBuilderWithPathsNormalization(
   private val original: EelExecApi.ExecuteProcessBuilder,
   private val normalizeIfPath: (String) -> String,
 ) : EelExecApi.ExecuteProcessBuilder by original {
-  override val workingDirectory: String? = null; get() = field?.let { normalizeIfPath(it) }
+  override val workingDirectory: String? = original.workingDirectory?.let { normalizeIfPath(it) }
   override val args: List<String> = original.args.map { normalizeIfPath(it) }
   override val env: Map<String, String> = original.env.mapValues { (_, value) -> normalizeIfPath(value) }
 }
