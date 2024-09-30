@@ -45,7 +45,7 @@ class PluginLayout private constructor(
   }
 
   @TestOnly
-  fun isLibraryExcluded(name: String): Boolean = excludedLibraries.get(null)?.contains(name) ?: false
+  fun isLibraryExcluded(name: String): Boolean = excludedLibraries.get(null)?.contains(name) == true
 
   var directoryName: String = mainJarNameWithoutExtension
     private set

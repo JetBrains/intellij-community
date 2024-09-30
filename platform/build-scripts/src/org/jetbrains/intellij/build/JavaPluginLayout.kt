@@ -9,7 +9,7 @@ object JavaPluginLayout {
   const val MAIN_FRONTEND_MODULE_NAME = "intellij.java.frontend"
 
   fun javaPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    return PluginLayout.plugin(MAIN_MODULE_NAME, auto = true) { spec ->
+    return PluginLayout.plugin(mainModuleName = MAIN_MODULE_NAME, auto = true) { spec ->
       spec.directoryName = "java"
       spec.mainJarName = "java-impl.jar"
 

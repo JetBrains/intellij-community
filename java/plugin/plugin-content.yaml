@@ -41,7 +41,6 @@
   - name: intellij.java.remoteServers.impl
   - name: intellij.uiDesigner
   - name: intellij.java.analysis.impl
-  - name: intellij.jvm.analysis.impl
   - name: intellij.jvm.analysis.quickFix
   - name: intellij.jvm.analysis.refactoring
   - name: intellij.java.indexing.impl
@@ -133,6 +132,9 @@
 - name: lib/modules/intellij.java.vcs.jar
   contentModules:
   - name: intellij.java.vcs
+- name: lib/modules/intellij.jvm.analysis.impl.jar
+  contentModules:
+  - name: intellij.jvm.analysis.impl
 - name: lib/netty-codec-protobuf.jar
   projectLibraries:
   - name: netty-codec-protobuf
