@@ -9,8 +9,8 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathResult
 import java.nio.ByteBuffer
 
-fun EelFileSystemApi.getPath(string: String): EelPathResult<out EelPath.Absolute> {
-  return EelPath.Absolute.parse(string, when (this) {
+fun EelFileSystemApi.getPath(string: String, vararg other: String): EelPathResult<out EelPath.Absolute> {
+  return EelPath.Absolute.build(listOf(string, *other), when (this) {
     is EelFileSystemPosixApi -> EelPath.Absolute.OS.UNIX
     is EelFileSystemWindowsApi -> EelPath.Absolute.OS.WINDOWS
     else -> throw UnsupportedOperationException("Unsupported OS: ${this::class.java}")
