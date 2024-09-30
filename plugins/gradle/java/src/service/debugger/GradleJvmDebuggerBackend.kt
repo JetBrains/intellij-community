@@ -12,7 +12,6 @@ import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension.RUN
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.service.execution.loadJvmDebugInitScript
-import java.util.*
 
 class GradleJvmDebuggerBackend : DebuggerBackendExtension {
 
@@ -52,13 +51,7 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
     return mapOf(
       "DEBUGGER_ID" to id(),
       "PROCESS_PARAMETERS" to parameters,
-      "PROCESS_OPTIONS" to jvmArgs.asJvmArgsEnvString()
+      "PROCESS_OPTIONS" to jvmArgs.joinToString(", ")
     )
-  }
-
-  private fun List<String>.asJvmArgsEnvString(): String {
-    val joiner = StringJoiner(", ")
-    forEach { env -> joiner.add(env) }
-    return joiner.toString()
   }
 }
