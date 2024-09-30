@@ -39,11 +39,15 @@ internal class ArrayListEelAbsolutePath private constructor(
       when (part) {
         "." -> Unit
 
-        ".." ->
-          if (result.isEmpty())
-            return ErrorResult(Err(toString(), "Traversing beyond the root"))
-          else
-            result.dropLast(1)
+        ".." -> if (result.isNotEmpty() && result.last() != "..") {
+          result.removeLast()
+        }
+        else {
+          // we are either accessing a region of FS outside current relative path, or we are referencing an unknown parent
+          // either way, this kind of normalization requires an access to the FS, which is out of the scope of `normalize`
+          // for further normalization, `canonicalize` is required
+          result += part
+        }
 
         else ->
           result += part
