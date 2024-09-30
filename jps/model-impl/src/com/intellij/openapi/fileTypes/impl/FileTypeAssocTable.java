@@ -106,7 +106,7 @@ public final class FileTypeAssocTable<T> {
         .replace("?", "\uFFFE")
         .replace("*", "\uFFFF"));
 
-    Collections.sort(myMatchingMappings, mostSpecificPatternFirstComparator);
+    myMatchingMappings.sort(mostSpecificPatternFirstComparator);
 
     return Pair.getSecond(previousAssociation);
   }
