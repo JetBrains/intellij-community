@@ -265,6 +265,7 @@ final class PassExecutorService implements Disposable {
                                                      @NotNull List<ScheduledPass> dependentPasses,
                                                      @NotNull DaemonProgressIndicator updateProgress,
                                                      @NotNull AtomicInteger threadsToStartCountdown) {
+    ProgressManager.checkCanceled();
     int passId = pass.getId();
     ScheduledPass scheduledPass = toBeSubmitted.get(passId);
     if (scheduledPass != null) return scheduledPass;
@@ -295,6 +296,7 @@ final class PassExecutorService implements Disposable {
     }
 
     if (pass.isRunIntentionPassAfter() && fileEditor instanceof TextEditor text) {
+      ProgressManager.checkCanceled();
       Editor editor = text.getEditor();
       ShowIntentionsPass ip = new ShowIntentionsPass(psiFile, editor, false);
       assignUniqueId(ip, id2Pass);
