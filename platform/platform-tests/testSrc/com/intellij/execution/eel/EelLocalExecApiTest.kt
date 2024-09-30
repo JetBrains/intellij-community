@@ -8,6 +8,7 @@ import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.impl.local.EelLocalExecApi
+import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.write
@@ -15,6 +16,8 @@ import org.hamcrest.CoreMatchers.anyOf
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.io.TempDir
 import org.junitpioneer.jupiter.cartesian.CartesianTest
@@ -30,6 +33,13 @@ class EelLocalExecApiTest {
     private const val PTY_COLS = 42
     private const val PTY_ROWS = 24
     private val NEW_LINES = Regex("\r?\n")
+
+    // TODO: Remove as soon as we migrate to kotlin script from the python
+    @BeforeAll
+    @JvmStatic
+    fun skipTestOnTcWindows() {
+      assumeFalse(SystemInfoRt.isWindows && IS_UNDER_TEAMCITY, "Test is disabled on TC@WIN as there is no python by default there")
+    }
   }
 
   private data class TtySize(val cols: Int, val rows: Int)
@@ -40,8 +50,9 @@ class EelLocalExecApiTest {
 
   private val helperContent = EelLocalExecApiTest::class.java.classLoader.getResource("helper.py")!!.readBytes()
 
-  // TODO: This tests depends on python interpreter. Rewrite to something linked statically
-  private val python = Path.of(System.getenv(PYTHON_ENV) ?: "/usr/bin/python3")
+  // TODO: This tests depends on python interpreter. Rewrite to kotlin script
+  private val python = Path.of(System.getenv(PYTHON_ENV)
+                               ?: if (!SystemInfoRt.isWindows) "/usr/bin/python3" else error("Provide $PYTHON_ENV env var with path to python"))
 
   @BeforeEach
   fun setUp() {
