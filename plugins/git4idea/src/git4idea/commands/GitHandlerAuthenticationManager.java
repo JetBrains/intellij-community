@@ -194,7 +194,8 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
 
     GitCommand command = myHandler.getCommand();
     boolean needGpgSigning =
-      (command == GitCommand.COMMIT || command == GitCommand.TAG || command == GitCommand.MERGE) &&
+      (command == GitCommand.COMMIT || command == GitCommand.TAG || command == GitCommand.MERGE
+       || command == GitCommand.CHERRY_PICK || command == GitCommand.REBASE) &&
       GitGpgConfigUtilsKt.isGpgSignEnabled(project, root);
 
     if (needGpgSigning) {
