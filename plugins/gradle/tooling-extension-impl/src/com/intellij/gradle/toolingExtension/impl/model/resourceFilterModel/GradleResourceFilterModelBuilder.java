@@ -24,6 +24,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.codehaus.groovy.runtime.DefaultGroovyMethods.invokeMethod;
+
 @ApiStatus.Internal
 public class GradleResourceFilterModelBuilder {
   public static Set<String> getIncludes(Project project, String taskName) {
@@ -54,7 +56,7 @@ public class GradleResourceFilterModelBuilder {
     if (filterableTask instanceof ContentFilterable &&
         !DefaultGroovyMethods.getMetaClass(filterableTask).respondsTo(filterableTask, "getMainSpec").isEmpty()) {
       //noinspection GrUnresolvedAccess
-      Object mainSpec = DefaultGroovyMethods.invokeMethod(filterableTask, "getMainSpec", new Object[0]);
+      Object mainSpec = invokeMethod(filterableTask, "getMainSpec", new Object[0]);
       if (mainSpec == null) {
         return filterReaders;
       }
@@ -124,7 +126,8 @@ public class GradleResourceFilterModelBuilder {
     Map properties = findPropertyWithType(action, Map.class, "properties", "val$properties", "arg$1");
     if ("org.apache.tools.ant.filters.ExpandProperties".equals(filterType)) {
       if (properties != null && properties.get("project") != null) {
-        properties = DefaultGroovyMethods.getProperties(properties.get("project"));
+        Object /*org.apache.tools.ant.Project*/ project = properties.get("project");
+        properties = (Map)invokeMethod(project, "getProperties", new Object[0]);
       }
     }
 
