@@ -106,8 +106,6 @@ public class JavaInheritDocNavigationTest extends LightJavaCodeInsightFixtureTes
     navigateAndCheckLine(0, "* @return return doc");
   }
 
-
-
   public void test_inherit_doc_stack_overflow() {
     myFixture.configureByText("a.java", """
     class Loop {
@@ -129,12 +127,11 @@ public class JavaInheritDocNavigationTest extends LightJavaCodeInsightFixtureTes
     navigateAndCheckLine(0, "* {@inheritDoc}");
   }
 
-
   private void navigateAndCheckLine(int lineOffset, String expectedLine) {
     myFixture.performEditorAction("GotoDeclaration");
     final var selectionModel = myFixture.getEditor().getSelectionModel();
     myFixture.getEditor().getCaretModel().moveCaretRelatively(0, lineOffset, false, false, false);
     selectionModel.selectLineAtCaret();
-    assertEquals(selectionModel.getSelectedText().trim(), expectedLine);
+    assertEquals(expectedLine, selectionModel.getSelectedText().trim());
   }
 }
