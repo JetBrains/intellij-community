@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
 import org.jetbrains.kotlin.analysis.api.components.*
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
@@ -75,7 +74,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
 
         return analyze(codeFragment) {
             try {
-                val compilerTarget = KaCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
+                val compilerTarget = KaCompilerTarget.Jvm(isTestMode = false)
                 val allowedErrorFilter = KotlinCompilerIdeAllowedErrorFilter.getInstance()
 
                 when (val result = compile(codeFragment, compilerConfiguration, compilerTarget, allowedErrorFilter)) {
