@@ -12,8 +12,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.*
 import java.util.function.Supplier
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 @ApiStatus.Internal
 class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorImpl>) {
@@ -88,6 +86,12 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     val disabledModuleToProblematicPlugin = HashMap<String, PluginId>()
 
     m@ for (module in moduleGraph.nodes) {
+      if (module.isUseIdeaClassLoader && !canExtendIdeaClassLoader) {
+        module.isEnabled = false
+        logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because it uses deprecated `use-idea-classloader` attribute but PathClassLoader is disabled")
+        continue@m
+      }
+
       if (module.moduleName == null) {
         if (module.pluginId != PluginManagerCore.CORE_ID && (!module.isEnabled || (disabler != null && disabler(module)))) {
           continue

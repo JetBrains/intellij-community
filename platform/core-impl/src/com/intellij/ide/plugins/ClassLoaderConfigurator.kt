@@ -470,7 +470,15 @@ private fun createModuleContentBasedScope(descriptor: IdeaPluginDescriptorImpl):
       }
       return ""
     }
-  }}
+  }
+}
+
+internal val canExtendIdeaClassLoader: Boolean by lazy {
+  runCatching {
+    MethodHandles.lookup().findVirtual(ClassLoaderConfigurator::class.java.classLoader.javaClass, "addFiles",
+                                       MethodType.methodType(Void.TYPE, MutableList::class.java))
+  }.isSuccess
+}
 
 private fun configureUsingIdeaClassloader(classPath: List<Path>, descriptor: IdeaPluginDescriptorImpl): ClassLoader {
   log.warn("${descriptor.pluginId} uses deprecated `use-idea-classloader` attribute")
