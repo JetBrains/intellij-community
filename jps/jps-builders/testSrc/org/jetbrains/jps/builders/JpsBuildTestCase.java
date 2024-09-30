@@ -29,7 +29,6 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
-import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.indices.impl.IgnoredFileIndexImpl;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
@@ -200,10 +199,10 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
       BuildTargetsState targetsState = new BuildTargetsState(dataPaths, myModel, buildRootIndex);
       PathRelativizerService relativizer = new PathRelativizerService(myModel.getProject());
-      ProjectStamps projectStamps = new ProjectStamps(myDataStorageRoot.toPath(), targetsState);
       BuildDataManager dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, null);
-      return new ProjectDescriptor(myModel, new BuildFSState(true), projectStamps, dataManager, buildLoggingManager, index,
-                                   targetIndex, buildRootIndex, ignoredFileIndex);
+      return new ProjectDescriptor(
+        myModel, new BuildFSState(true), dataManager, buildLoggingManager, index, targetIndex, buildRootIndex, ignoredFileIndex
+      );
     }
     catch (IOException e) {
       throw new RuntimeException(e);

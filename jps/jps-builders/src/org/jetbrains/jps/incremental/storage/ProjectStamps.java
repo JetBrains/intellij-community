@@ -2,7 +2,6 @@
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.NioFiles;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
@@ -10,10 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-/**
- * @author Eugene Zhuravlev
- */
-public final class ProjectStamps {
+
+public final class ProjectStamps implements StorageOwner{
   public static final String PORTABLE_CACHES_PROPERTY = "org.jetbrains.jps.portable.caches";
   public static final boolean PORTABLE_CACHES = Boolean.getBoolean(PORTABLE_CACHES_PROPERTY);
 
@@ -22,10 +19,10 @@ public final class ProjectStamps {
 
   private static final Logger LOG = Logger.getInstance(ProjectStamps.class);
 
-  private final StampsStorage<?> stampStorage;
+  private final FileTimestampStorage stampStorage;
 
   public ProjectStamps(@NotNull Path dataStorageRoot, @NotNull BuildTargetsState targetsState) throws IOException {
-    this.stampStorage = new FileTimestampStorage(dataStorageRoot, targetsState);
+    stampStorage = new FileTimestampStorage(dataStorageRoot, targetsState);
   }
 
   /**
@@ -41,22 +38,18 @@ public final class ProjectStamps {
     return stampStorage;
   }
 
-  public void close() {
-    try {
-      if (stampStorage instanceof StorageOwner) {
-        ((StorageOwner)stampStorage).close();
-      }
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      try {
-        Path root = stampStorage.getStorageRoot();
-        if (root != null) {
-          NioFiles.deleteRecursively(root);
-        }
-      }
-      catch (IOException ignore) {
-      }
-    }
+  @Override
+  public void flush(boolean memoryCachesOnly) {
+    stampStorage.flush(memoryCachesOnly);
+  }
+
+  @Override
+  public void clean() throws IOException {
+    stampStorage.clean();
+  }
+
+  @Override
+  public void close() throws IOException {
+    stampStorage.close();
   }
 }

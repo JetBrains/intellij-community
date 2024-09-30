@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetIndex;
@@ -20,18 +22,14 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
-/**
-* @author Eugene Zhuravlev
-*/
 public final class ProjectDescriptor {
   private final JpsProject myProject;
   private final JpsModel myModel;
   public final BuildFSState fsState;
   public final BuildDataManager dataManager;
-  private final ProjectStamps myProjectStamps;
-
   private final BuildLoggingManager myLoggingManager;
   private final ModuleExcludeIndex myModuleExcludeIndex;
   private int myUseCounter = 1;
@@ -41,9 +39,27 @@ public final class ProjectDescriptor {
   private final BuildTargetIndex myBuildTargetIndex;
   private final IgnoredFileIndex myIgnoredFileIndex;
 
+
+  @ApiStatus.Internal
+  @TestOnly
+  // todo: to be removed later, after KotlinTests update
   public ProjectDescriptor(JpsModel model,
                            BuildFSState fsState,
                            ProjectStamps projectStamps,
+                           BuildDataManager dataManager,
+                           BuildLoggingManager loggingManager,
+                           ModuleExcludeIndex moduleExcludeIndex,
+                           BuildTargetIndex buildTargetIndex,
+                           BuildRootIndex buildRootIndex,
+                           IgnoredFileIndex ignoredFileIndex) {
+    this(model, fsState, dataManager, loggingManager, moduleExcludeIndex, buildTargetIndex, buildRootIndex, ignoredFileIndex);
+    assert dataManager.getFileStampService() == null; // should be not yet initialized
+    dataManager.setFileStampService(projectStamps);
+  }
+
+  @ApiStatus.Internal
+  public ProjectDescriptor(JpsModel model,
+                           BuildFSState fsState,
                            BuildDataManager dataManager,
                            BuildLoggingManager loggingManager,
                            ModuleExcludeIndex moduleExcludeIndex,
@@ -54,8 +70,6 @@ public final class ProjectDescriptor {
     myIgnoredFileIndex = ignoredFileIndex;
     myProject = model.getProject();
     this.fsState = fsState;
-    myProjectStamps = projectStamps;
-    dataManager.fileStampService = projectStamps;
     this.dataManager = dataManager;
     myBuildTargetIndex = buildTargetIndex;
     myBuildRootIndex = buildRootIndex;
@@ -138,6 +152,6 @@ public final class ProjectDescriptor {
   @Deprecated(forRemoval = true)
   public ProjectStamps getProjectStamps() {
     //noinspection removal
-    return dataManager.getFileStampService();
+    return Objects.requireNonNull(dataManager.getFileStampService());
   }
 }

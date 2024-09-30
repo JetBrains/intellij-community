@@ -1883,7 +1883,6 @@ f:org.jetbrains.jps.cmdline.PreloadedData
 f:org.jetbrains.jps.cmdline.ProjectDescriptor
 - f:dataManager:org.jetbrains.jps.incremental.storage.BuildDataManager
 - f:fsState:org.jetbrains.jps.incremental.fs.BuildFSState
-- <init>(org.jetbrains.jps.model.JpsModel,org.jetbrains.jps.incremental.fs.BuildFSState,org.jetbrains.jps.incremental.storage.ProjectStamps,org.jetbrains.jps.incremental.storage.BuildDataManager,org.jetbrains.jps.builders.logging.BuildLoggingManager,org.jetbrains.jps.indices.ModuleExcludeIndex,org.jetbrains.jps.builders.BuildTargetIndex,org.jetbrains.jps.builders.BuildRootIndex,org.jetbrains.jps.indices.IgnoredFileIndex):V
 - getBuildRootIndex():org.jetbrains.jps.builders.BuildRootIndex
 - getBuildTargetIndex():org.jetbrains.jps.builders.BuildTargetIndex
 - getEncodingConfiguration():org.jetbrains.jps.incremental.CompilerEncodingConfiguration
@@ -2695,13 +2694,16 @@ f:org.jetbrains.jps.incremental.storage.OneToManyPathsMapping
 - removeData(java.lang.String,java.lang.String):V
 - setOutputs(java.lang.String,java.util.List):V
 f:org.jetbrains.jps.incremental.storage.ProjectStamps
+- org.jetbrains.jps.incremental.storage.StorageOwner
 - sf:PORTABLE_CACHES:Z
 - sf:PORTABLE_CACHES_PROPERTY:java.lang.String
 - sf:TRACK_LIBRARY_CONTENT:Z
 - sf:TRACK_LIBRARY_CONTENT_PROPERTY:java.lang.String
 - <init>(java.io.File,org.jetbrains.jps.incremental.storage.BuildTargetsState,org.jetbrains.jps.incremental.relativizer.PathRelativizerService):V
 - <init>(java.nio.file.Path,org.jetbrains.jps.incremental.storage.BuildTargetsState):V
+- clean():V
 - close():V
+- flush(Z):V
 - getStampStorage():org.jetbrains.jps.incremental.storage.StampsStorage
 org.jetbrains.jps.incremental.storage.StampsStorage
 - a:getCurrentStampIfUpToDate(java.nio.file.Path,org.jetbrains.jps.builders.BuildTarget,java.nio.file.attribute.BasicFileAttributes):java.lang.Object

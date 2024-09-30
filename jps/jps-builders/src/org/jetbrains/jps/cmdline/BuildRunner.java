@@ -72,16 +72,6 @@ public final class BuildRunner {
     return load(msgHandler, dataStorageRoot.toPath(), fsState);
   }
 
-  private static @Nullable ProjectStamps initProjectStampStorage(@NotNull Path dataStorageRoot,
-                                                                 @NotNull BuildTargetsState targetsState) throws IOException {
-    if (ProjectStamps.PORTABLE_CACHES) {
-      return null;
-    }
-    else {
-      return new ProjectStamps(dataStorageRoot, targetsState);
-    }
-  }
-
   public ProjectDescriptor load(@NotNull MessageHandler msgHandler, @NotNull Path dataStorageRoot, @NotNull BuildFSState fsState) throws IOException {
     final JpsModel jpsModel = myModelLoader.loadModel();
     BuildDataPaths dataPaths = new BuildDataPathsImpl(dataStorageRoot.toFile());
@@ -90,23 +80,18 @@ public final class BuildRunner {
     IgnoredFileIndexImpl ignoredFileIndex = new IgnoredFileIndexImpl(jpsModel);
     BuildRootIndexImpl buildRootIndex = new BuildRootIndexImpl(targetRegistry, jpsModel, index, dataPaths, ignoredFileIndex);
     BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
-    BuildTargetsState targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
 
     PathRelativizerService relativizer = new PathRelativizerService(jpsModel.getProject(), isCompilerReferenceFSCaseSensitive());
 
-    ProjectStamps fileStampService = null;
     BuildDataManager dataManager = null;
     StorageManager storageManager = null;
     try {
-      storageManager = createStorageManager(dataStorageRoot);
-      fileStampService = initProjectStampStorage(dataStorageRoot, targetsState);
-
-      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, storageManager);
-      dataManager.fileStampService = fileStampService;
+      dataManager = new BuildDataManager(dataPaths, new BuildTargetsState(dataPaths, jpsModel, buildRootIndex), relativizer, storageManager = createStorageManager(dataStorageRoot));
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
-        msgHandler.processMessage(new CompilerMessage(getRootCompilerName(), BuildMessage.Kind.INFO,
-                                                      JpsBuildBundle.message("build.message.dependency.data.format.has.changed.project.rebuild.required")));
+        msgHandler.processMessage(new CompilerMessage(
+          getRootCompilerName(), BuildMessage.Kind.INFO, JpsBuildBundle.message("build.message.dependency.data.format.has.changed.project.rebuild.required")
+        ));
       }
     }
     catch (Exception e) {
@@ -116,28 +101,22 @@ public final class BuildRunner {
       if (storageManager != null) {
         storageManager.forceClose();
       }
-
       if (dataManager != null) {
         dataManager.close();
-      }
-      else if (fileStampService != null) {
-        fileStampService.close();
       }
 
       myForceCleanCaches = true;
       FileUtilRt.deleteRecursively(dataStorageRoot);
 
-      storageManager = createStorageManager(dataStorageRoot);
-      targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
-      fileStampService = initProjectStampStorage(dataStorageRoot, targetsState);
-      dataManager = new BuildDataManager(dataPaths, targetsState, relativizer, storageManager);
+      dataManager = new BuildDataManager(dataPaths, new BuildTargetsState(dataPaths, jpsModel, buildRootIndex), relativizer, createStorageManager(dataStorageRoot));
       // the second attempt succeeded
-      msgHandler.processMessage(new CompilerMessage(getRootCompilerName(), BuildMessage.Kind.INFO,
-                                                    JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage())));
+      msgHandler.processMessage(new CompilerMessage(
+        getRootCompilerName(), BuildMessage.Kind.INFO, JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage()))
+      );
     }
 
     return new ProjectDescriptor(
-      jpsModel, fsState, fileStampService, dataManager, BuildLoggingManager.DEFAULT, index, targetIndex, buildRootIndex, ignoredFileIndex
+      jpsModel, fsState, dataManager, BuildLoggingManager.DEFAULT, index, targetIndex, buildRootIndex, ignoredFileIndex
     );
   }
 
