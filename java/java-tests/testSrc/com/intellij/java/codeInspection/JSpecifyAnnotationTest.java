@@ -3,11 +3,12 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase;
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.nullable.NotNullFieldNotInitializedInspection;
@@ -23,7 +24,6 @@ import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
@@ -56,8 +56,8 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
     }
-  }; 
-  
+  };
+
   private static final String PACKAGE_NAME = "org.jspecify.annotations";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/jspecify/");
   @Parameterized.Parameter
@@ -150,7 +150,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
       });
     }
   }
-  
+
   private static class JSpecifyNullableStuffInspection extends NullableStuffInspection {
     private final Map<PsiElement, String> warnings;
 
@@ -215,21 +215,25 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
         }
       }
     }
-    
+
     private static @Nullable String getJSpecifyWarning(NullabilityProblemKind.NullabilityProblem<?> problem) {
       PsiExpression expression = problem.getDereferencedExpression();
       if (expression == null) return null;
       if (problem.getKind() == NullabilityProblemKind.passingToNonAnnotatedParameter) return null;
       if (problem.getKind() == NullabilityProblemKind.nullableReturn) {
-        PsiType returnType = PsiTypesUtil.getMethodReturnType(expression);
-        Nullability nullability = DfaPsiUtil.getTypeNullability(returnType);
-        if (nullability == Nullability.NULLABLE) return null;
-        if (nullability == Nullability.UNKNOWN) return "jspecify_nullness_not_enough_information";
+        final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiLambdaExpression.class);
+        if (methodOrLambda instanceof PsiMethod method) {
+          NullabilityAnnotationInfo info =
+            NullableNotNullManager.getInstance(methodOrLambda.getProject()).findEffectiveNullabilityInfo(method);
+          Nullability nullability = info == null ? Nullability.UNKNOWN : info.getNullability();
+          if (nullability == Nullability.NULLABLE) return null;
+          if (nullability == Nullability.UNKNOWN) return "jspecify_nullness_not_enough_information";
+        }
       }
       return problem.hasUnknownNullability() ? "jspecify_nullness_not_enough_information" : "jspecify_nullness_mismatch";
     }
   }
-  
+
   String getActualText(Map<PsiElement, String> actual, String stripped) {
     StringBuilder sb = new StringBuilder();
     int pos = 0;
