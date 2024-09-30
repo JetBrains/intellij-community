@@ -86,6 +86,7 @@ open class ClientSessionsManager<T : ClientSession> {
     }
   }
 
+  @ApiStatus.Obsolete
   fun isValid(clientId: ClientId): Boolean {
     return getSession(clientId)?.isDisposed == false
   }

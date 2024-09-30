@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
@@ -266,13 +265,6 @@ data class ClientId(val value: String) {
 
     private fun getCurrentIdValidated(): String? {
       val currentId = currentThreadClientId
-      if (currentId != null) {
-        val service = getCachedService()
-        if (service != null && !service.isValid(currentId)) {
-          logger.trace { "Invalid ClientId $currentId replaced with null at ${Throwable().fillInStackTrace()}" }
-          return null
-        }
-      }
       return currentId?.value
     }
 
@@ -356,16 +348,10 @@ data class ClientId(val value: String) {
       }
 
       val clientId = ClientId(clientIdValue)
-      val newClientId = if (service.isValid(clientId)) {
-        if (fakeLocalIds.contains(clientIdValue))
-          localId
-        else
-          clientId
-      }
-      else {
-        logger.trace { "Invalid ClientId $clientIdValue replaced with null at ${Throwable().fillInStackTrace()}" }
-        null
-      }
+      val newClientId = if (fakeLocalIds.contains(clientIdValue))
+        localId
+      else
+        clientId
 
       val currentThreadContext = currentThreadContextOrNull()
       if (currentThreadContext == null) {
