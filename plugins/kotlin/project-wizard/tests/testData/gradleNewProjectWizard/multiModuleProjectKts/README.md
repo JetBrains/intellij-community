@@ -2,7 +2,7 @@
 
 
 This project uses [Gradle](https://gradle.org/). To build and run the application
-either [instruction how to open Gradle window] or run it directly from the terminal:
+use the Gradle tool window by clicking the Gradle icon in the right toolbar, or run it directly from the terminal:
 
 * Run `./gradlew run` to build and run the application
 * Run `./gradlew build` to only build the application
