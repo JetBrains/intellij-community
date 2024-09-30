@@ -4,7 +4,7 @@ package com.intellij.codeInsight.completion
 import com.intellij.lang.logging.JvmLogger
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.patterns.StandardPatterns
+import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.util.ProcessingContext
 import com.siyeh.ig.psiutils.ExpressionUtils
@@ -12,8 +12,8 @@ import com.siyeh.ig.psiutils.ExpressionUtils
 class JvmLoggerCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC,
-           StandardPatterns.or(
-           psiElement().withParent(PsiReferenceExpression::class.java)),
+           psiElement().withParent(PsiReferenceExpression::class.java).andNot(
+             psiElement().withParent(psiElement(PsiReferenceExpression::class.java).withChild(psiElement(PsiExpression::class.java)))),
            object : CompletionProvider<CompletionParameters>() {
              override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                val parent = parameters.position.parent ?: return
@@ -37,5 +37,9 @@ class JvmLoggerCompletionContributor : CompletionContributor() {
                }
              }
            })
+  }
+
+  override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+    super.fillCompletionVariants(parameters, result)
   }
 }

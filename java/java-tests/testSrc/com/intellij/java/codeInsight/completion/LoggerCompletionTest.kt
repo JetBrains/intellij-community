@@ -195,6 +195,18 @@ class LoggerCompletionTest : LightFixtureCompletionTestCase() {
     doTest(1, "long", "log", "clone")
   }
 
+  @NeedsIndex.SmartMode(reason = SMART_MODE_REASON_MESSAGE)
+  fun testNoAutoCompletionAfterReferenceExpression() {
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
+    doAntiTest("logMethod", "anotherLogMethod")
+  }
+
+  @NeedsIndex.SmartMode(reason = SMART_MODE_REASON_MESSAGE)
+  fun testNoAutoCompletionAfterNewExpression() {
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
+    doAntiTest("logMethod", "anotherLogMethod", "clone")
+  }
+
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/logger"
 
 
