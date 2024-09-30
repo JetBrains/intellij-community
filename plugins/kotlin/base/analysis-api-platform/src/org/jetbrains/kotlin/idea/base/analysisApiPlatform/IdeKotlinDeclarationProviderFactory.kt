@@ -5,30 +5,18 @@ package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
-import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.FileBasedIndex.ValueProcessor
-import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinCompositeDeclarationProvider
-import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProvider
-import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory
-import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderMerger
-import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinFileBasedDeclarationProvider
+import org.jetbrains.kotlin.analysis.api.platform.declarations.*
 import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.idea.base.indices.names.KotlinBinaryRootToPackageIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.getNamesInPackage
-import org.jetbrains.kotlin.idea.base.indices.names.isSupportedByBinaryRootToPackageIndex
 import org.jetbrains.kotlin.idea.base.indices.processElementsAndMeasure
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.stubindex.*
@@ -36,7 +24,6 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -136,52 +123,8 @@ private class IdeKotlinDeclarationProvider(
     override val hasSpecificClassifierPackageNamesComputation: Boolean get() = false
     override val hasSpecificCallablePackageNamesComputation: Boolean get() = false
 
-    override fun computePackageNames(): Set<String>? = computePackageNames(contextualModule)
-
-    private fun computePackageNames(module: KaModule?): Set<String>? = when (module) {
-        is KtSourceModuleByModuleInfo -> computeSourceModulePackageSet(module)
-        is KtSdkLibraryModuleByModuleInfo -> computeSdkModulePackageSet(module)
-        is KtLibraryModuleByModuleInfo -> computeLibraryModulePackageSet(module)
-        is KaLibrarySourceModule -> computePackageNames(module.binaryLibrary)
-        is KaBuiltinsModule -> StandardClassIds.builtInsPackages.mapTo(mutableSetOf()) { it.asString() }
-        else -> null
-    }
-
-    private fun computeSourceModulePackageSet(module: KtSourceModuleByModuleInfo): Set<String>? = null // KTIJ-27450
-
-    private fun computeSdkModulePackageSet(module: KtSdkLibraryModuleByModuleInfo): Set<String>? =
-        computePackageSetFromBinaryRoots(module.moduleInfo.sdk.rootProvider.getFiles(OrderRootType.CLASSES))
-
-    private fun computeLibraryModulePackageSet(module: KtLibraryModuleByModuleInfo): Set<String>? =
-        computePackageSetFromBinaryRoots(module.libraryInfo.library.getFiles(OrderRootType.CLASSES))
-
-    private fun computePackageSetFromBinaryRoots(binaryRoots: Array<VirtualFile>): Set<String>? {
-        if (binaryRoots.any { !it.isSupportedByBinaryRootToPackageIndex }) {
-            return null
-        }
-
-        // If the `KotlinBinaryRootToPackageIndex` doesn't contain any of the (supported) binary roots, we can still return an empty set,
-        // because the index is exhaustive for binary libraries. An empty set means that the library doesn't contain any Kotlin
-        // declarations.
-        return buildSet {
-            binaryRoots.forEach { binaryRoot ->
-                FileBasedIndex.getInstance().processValues<String, String>(
-                    KotlinBinaryRootToPackageIndex.NAME,
-                    binaryRoot.name,
-                    null,
-                    ValueProcessor<String> { _, packageName ->
-                        ProgressManager.checkCanceled()
-                        add(packageName)
-                        true
-                    },
-
-                    // We don't need to use the declaration provider's scope, as the binary file name is already sufficiently specific (and
-                    // false positives are admissible).
-                    GlobalSearchScope.allScope(project),
-                )
-            }
-        }
-    }
+    override fun computePackageNames(): Set<String>? =
+        contextualModule?.let { IdeKotlinModulePackageNamesProvider.getInstance(project).computePackageNames(it) }
 
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
         //TODO original LC has platformSourcesFirst()
