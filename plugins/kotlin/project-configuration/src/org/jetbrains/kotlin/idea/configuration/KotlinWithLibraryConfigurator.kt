@@ -217,10 +217,12 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
             ?: error("Kotlin Library has to be created in advance")) as LibraryEx
 
         library.modifiableModel.let { libraryModel ->
-            configureLibraryJar(project, libraryModel, libraryJarDescriptor, collector, ProgressManager.getGlobalProgressIndicator())
-
-            // commit will be performed later on EDT
-            writeActions.addOrExecute { runWriteAction { libraryModel.commit() } }
+            //  will be performed later on EDT
+            writeActions.addOrExecute { runWriteAction {
+                configureLibraryJar(project, libraryModel, libraryJarDescriptor, collector, ProgressManager.getGlobalProgressIndicator())
+                libraryModel.commit()
+            }
+            }
         }
 
         addLibraryToModuleIfNeeded(module, library, collector, writeActions)
@@ -235,6 +237,10 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         }
     }
 
+    /**
+     * Updates KotlinJavaRuntime.xml
+     * Should be performed under a write action.
+     */
     fun configureLibraryJar(
         project: Project,
         library: LibraryEx.ModifiableModelEx,
