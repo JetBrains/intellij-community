@@ -39,6 +39,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
+import com.intellij.platform.project.PROJECT_ID
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.*
@@ -134,6 +136,9 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
     @Suppress("LeakingThis")
     putUserData(CREATION_TIME, System.nanoTime())
+
+    @Suppress("LeakingThis")
+    putUserData(PROJECT_ID, ProjectId.create())
 
     @Suppress("LeakingThis")
     registerServiceInstance(Project::class.java, this, fakeCorePluginDescriptor)
