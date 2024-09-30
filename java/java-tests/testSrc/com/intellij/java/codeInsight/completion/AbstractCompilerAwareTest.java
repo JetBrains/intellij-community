@@ -57,12 +57,6 @@ public abstract class AbstractCompilerAwareTest extends JavaCodeInsightFixtureTe
 
   protected void rebuildProject() {
     for (final CompilerMessage compilerMessage : myCompilerTester.rebuild()) {
-      if (compilerMessage.getMessage().contains("Kotlin compile daemon is ready")) {
-        // For Kotlin, this error does not indicate that the compilation failed and can be ignored.
-        // It will start a second daemon that should compile the project correctly.
-        // See KT-69929
-        continue;
-      }
       assertNotSame("File: " + compilerMessage.getVirtualFile() + ", " + compilerMessage.getMessage(),
                     CompilerMessageCategory.ERROR, compilerMessage.getCategory());
     }

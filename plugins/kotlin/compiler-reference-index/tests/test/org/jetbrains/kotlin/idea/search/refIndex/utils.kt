@@ -6,12 +6,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgu
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 
 internal fun Project.enableK2Compiler() {
-    KotlinCommonCompilerArgumentsHolder.getInstance(this).update {
-        useK2 = true
-        apiVersion = "2.0"
-        languageVersion = "2.0"
-    }
-    KotlinJpsPluginSettings.getInstance(this).setVersion("2.0.20")
+    // The K2 compiler is now bundled to IDEA so we use the bundled version.
 }
 
 internal fun Project.enableK1Compiler() {
