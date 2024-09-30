@@ -7,6 +7,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ExperimentalUI;
@@ -43,24 +44,27 @@ abstract class SEResultsListFactory {
   public static final SimpleTextAttributes SMALL_LABEL_ATTRS = new SimpleTextAttributes(
     SimpleTextAttributes.STYLE_SMALLER, JBUI.CurrentTheme.BigPopup.listTitleLabelForeground());
 
-  protected static final ListCellRenderer<Object> myMoreRenderer = new ColoredListCellRenderer<>() {
+  private static final Key<ListCellRenderer<Object>> MORE_RENDERER_KEY = Key.create("moreRenderer");
 
-    @Override
-    protected int getMinHeight() {
-      return -1;
-    }
-
-    @Override
-    protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
-      if (value != SearchListModel.MORE_ELEMENT) {
-        throw new AssertionError(value);
+  protected static ListCellRenderer<Object> createMoreRenderer() {
+    return new ColoredListCellRenderer<>() {
+      @Override
+      protected int getMinHeight() {
+        return -1;
       }
-      setFont(StartupUiUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
-      append(IdeBundle.message("search.everywhere.points.more"), SMALL_LABEL_ATTRS);
-      setIpad(JBInsets.create(1, 7));
-      setMyBorder(null);
-    }
-  };
+
+      @Override
+      protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
+        if (value != SearchListModel.MORE_ELEMENT) {
+          throw new AssertionError(value);
+        }
+        setFont(StartupUiUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
+        append(IdeBundle.message("search.everywhere.points.more"), SMALL_LABEL_ATTRS);
+        setIpad(JBInsets.create(1, 7));
+        setMyBorder(null);
+      }
+    };
+  }
 
   @ApiStatus.Experimental
   protected static final ListCellRenderer<Object> resultsNotificationElementRenderer = new ColoredListCellRenderer<>() {
@@ -81,6 +85,13 @@ abstract class SEResultsListFactory {
 
   @ApiStatus.Internal
   Component getMoreElementRenderer(@NotNull JList<?> list, int index, boolean selected, boolean hasFocus) {
+    @SuppressWarnings("unchecked")
+    var myMoreRenderer = (ListCellRenderer<Object>)list.getClientProperty(MORE_RENDERER_KEY);
+    if (myMoreRenderer == null) {
+      myMoreRenderer = createMoreRenderer(); // use one more renderer per each list, do not store Swing UI in static
+      list.putClientProperty(MORE_RENDERER_KEY, myMoreRenderer);
+    }
+
     Component component = myMoreRenderer.getListCellRendererComponent(list, SearchListModel.MORE_ELEMENT, index, selected, hasFocus);
     if (!ExperimentalUI.isNewUI()) {
       component.setPreferredSize(UIUtil.updateListRowHeight(component.getPreferredSize()));
