@@ -16,14 +16,12 @@ com/intellij/ide/plugins/newui/PluginsViewCustomizer$ListPluginComponentCustomiz
 com/intellij/ide/ui/LafReference
 com/intellij/ide/ui/laf/UIThemeExportableBean
 com/intellij/ide/util/GotoLineNumberDialog$Coordinates
-com/intellij/internal/inspector/UiInspectorAction$UiInspector
 com/intellij/internal/ml/DecisionFunction
 com/intellij/internal/ml/FeatureMapper
 com/intellij/internal/statistic/StructuredIdeActivity
 com/intellij/openapi/actionSystem/ex/ActionRuntimeRegistrar
 com/intellij/openapi/actionSystem/impl/SuspendingUpdateSession
 com/intellij/openapi/application/ConfigImportProgressDialog$ProgressIndicatorAdapter
-com/intellij/openapi/application/constraints/ConstrainedExecutionScheduler
 com/intellij/openapi/application/impl/ApplicationImpl
 com/intellij/openapi/client/ClientAppSession
 com/intellij/openapi/components/impl/stores/IComponentStore
@@ -47,8 +45,6 @@ com/intellij/openapi/updateSettings/impl/PlatformUpdates$Loaded
 com/intellij/openapi/updateSettings/impl/pluginsAdvertisement/InstallAndEnableTask
 com/intellij/openapi/vfs/impl/http/HttpVirtualFileImpl
 com/intellij/openapi/vfs/newvfs/persistent/FSRecordsImpl
-com/intellij/openapi/vfs/newvfs/persistent/PersistentFSConnection
-com/intellij/openapi/vfs/newvfs/persistent/PersistentFSLoader
 com/intellij/openapi/wm/WelcomeScreenLeftPanel
 com/intellij/openapi/wm/ex/IdeFrameEx
 com/intellij/openapi/wm/impl/DesktopLayout
@@ -61,7 +57,6 @@ com/intellij/openapi/wm/impl/status/InlineProgressIndicator$ProgressButton
 com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory$JActionLinkPanel
 com/intellij/patterns/compiler/PatternCompilerImpl$Node
 com/intellij/platform/diagnostic/telemetry/Scope
-com/intellij/platform/ide/menu/ActionAwareIdeMenuBar
 com/intellij/platform/workspace/jps/serialization/impl/JpsFileContentWriter
 com/intellij/platform/workspace/jps/serialization/impl/JpsProjectSerializersImpl
 com/intellij/platform/workspace/storage/VersionedEntityStorage
