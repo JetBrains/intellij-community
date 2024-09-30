@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="intellij.devkit.testFramework" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" />
     <orderEntry type="module" module-name="intellij.kotlin.devkit" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
   </component>
 </module>
