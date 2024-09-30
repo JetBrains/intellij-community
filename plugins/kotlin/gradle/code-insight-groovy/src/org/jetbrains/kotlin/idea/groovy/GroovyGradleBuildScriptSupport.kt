@@ -581,14 +581,29 @@ class GroovyBuildScriptManipulator(
         ) -> GrStatement
     ) {
         val compilerOption = getCompilerOption(parameterName, parameterValue)
-        var replaced = outerDslBlock.findAndReplaceCompilerOption(parameterName, parameterValue, compilerOption, replaceIt)
-        if (replaced != true) {
+        /*
+        Firstly, we check that `compileKotlin` doesn't contain the option written like: `compilerOptions.optionName`:
+            compileKotlin {
+                compilerOptions.languageVersion.set(KotlinVersion.KOTLIN_1_9)
+            }
+         */
+        var replaced = outerDslBlock.findAndReplaceCompilerOption(parameterName, parameterValue, compilerOption, replaceIt = replaceIt)
+        if (!replaced) {
+            /*
+            If we didn't find, we try to find it in the `compilerOptions {`
+             */
             val compilerOptionsBlock = outerDslBlock.getBlockOrCreate("compilerOptions")
-            replaced = compilerOptionsBlock.findAndReplaceCompilerOption(parameterName, parameterValue, compilerOption, replaceIt)
+            replaced = compilerOptionsBlock.findAndReplaceCompilerOption(
+                parameterName,
+                parameterValue,
+                compilerOption,
+                checkOptionToExist = false,
+                replaceIt = replaceIt
+            )
 
-            if (replaced != true) {
+            if (!replaced) {
                 val added = compilerOptionsBlock.addLastExpressionInBlockIfNeeded(compilerOption.expression)
-                if (added == true) {
+                if (added) {
                     compilerOption.classToImport?.let {
                         addImportIfNeeded(it, gradleFile)
                     }
@@ -601,17 +616,18 @@ class GroovyBuildScriptManipulator(
         parameterName: String,
         parameterValue: String,
         compilerOption: CompilerOption,
+        checkOptionToExist: Boolean = true,
         replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
                                 /* precompiledReplacement = */ String?,
                                 /* insideCompilerOptions = */ Boolean
         ) -> GrStatement
-    ): Boolean? {
+    ): Boolean {
         var insideCompilerOptions = false
         val replaced = statements.firstOrNull { stmt ->
             val statementLeftPartText =
                 (stmt as? GrAssignmentExpression)?.lValue?.text ?: (stmt as? GrMethodCallExpression)?.invokedExpression?.text
             val statementContainsParameterName = if (statementLeftPartText?.contains(parameterName) == true) {
-                if (statementLeftPartText.contains("compilerOptions.$parameterName")) {
+                if (checkOptionToExist && statementLeftPartText.contains("compilerOptions.$parameterName")) {
                     insideCompilerOptions = true
                 }
                 true
