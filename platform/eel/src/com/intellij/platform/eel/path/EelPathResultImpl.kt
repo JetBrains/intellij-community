@@ -2,5 +2,8 @@
 @file:JvmName("EelPathResultImpl")
 package com.intellij.platform.eel.path
 
-internal data class Ok<P : EelPath>(override val path: P) : EelPathResult.Ok<P>
-internal data class Err<P : EelPath>(override val raw: String, override val reason: String) : EelPathResult.Err<P>
+import com.intellij.platform.eel.EelResult
+
+internal data class OkResult<P : EelPath>(override val value: P) : EelResult.Ok<P, EelPathError>
+internal data class ErrorResult<P : EelPath>(override val error: EelPathError) : EelResult.Error<P, EelPathError>
+internal data class Err(override val raw: String, override val reason: String) : EelPathError

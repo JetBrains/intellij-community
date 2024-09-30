@@ -1,15 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.fs
 
+import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserInfo
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelUserWindowsInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.path.EelPathResult
+import com.intellij.platform.eel.path.EelPathError
 import java.nio.ByteBuffer
 
-fun EelFileSystemApi.getPath(string: String, vararg other: String): EelPathResult<out EelPath.Absolute> {
+fun EelFileSystemApi.getPath(string: String, vararg other: String): EelResult<out EelPath.Absolute, EelPathError> {
   return EelPath.Absolute.build(listOf(string, *other), when (this) {
     is EelFileSystemPosixApi -> EelPath.Absolute.OS.UNIX
     is EelFileSystemWindowsApi -> EelPath.Absolute.OS.WINDOWS
@@ -37,7 +38,7 @@ interface EelFileSystemApi {
   /**
    * Returns names of files in a directory. If [path] is a symlink, it will be resolved, but no symlinks are resolved among children.
    */
-  suspend fun listDirectory(path: EelPath.Absolute): EelFsResult<
+  suspend fun listDirectory(path: EelPath.Absolute): EelResult<
     Collection<String>,
     ListDirectoryError>
 
@@ -52,7 +53,7 @@ interface EelFileSystemApi {
   suspend fun listDirectoryWithAttrs(
     path: EelPath.Absolute,
     symlinkPolicy: SymlinkPolicy,
-  ): EelFsResult<
+  ): EelResult<
     Collection<Pair<String, EelFileInfo>>,
     ListDirectoryError>
 
@@ -67,7 +68,7 @@ interface EelFileSystemApi {
   /**
    * Resolves all symlinks in the path. Corresponds to realpath(3) on Unix and GetFinalPathNameByHandle on Windows.
    */
-  suspend fun canonicalize(path: EelPath.Absolute): EelFsResult<
+  suspend fun canonicalize(path: EelPath.Absolute): EelResult<
     EelPath.Absolute,
     CanonicalizeError>
 
@@ -82,7 +83,7 @@ interface EelFileSystemApi {
   /**
    * Similar to stat(2) and lstat(2). [symlinkPolicy] has an impact only on [EelFileInfo.type] if [path] points on a symlink.
    */
-  suspend fun stat(path: EelPath.Absolute, symlinkPolicy: SymlinkPolicy): EelFsResult<EelFileInfo, StatError>
+  suspend fun stat(path: EelPath.Absolute, symlinkPolicy: SymlinkPolicy): EelResult<EelFileInfo, StatError>
 
   /**
    * Defines the behavior of FS operations on symbolic links
@@ -118,7 +119,7 @@ interface EelFileSystemApi {
    * On Unix return true if both paths have the same inode.
    * On Windows some heuristics are used, for more details see https://docs.rs/same-file/1.0.6/same_file/
    */
-  suspend fun sameFile(source: EelPath.Absolute, target: EelPath.Absolute): EelFsResult<
+  suspend fun sameFile(source: EelPath.Absolute, target: EelPath.Absolute): EelResult<
     Boolean,
     SameFileError>
 
@@ -133,7 +134,7 @@ interface EelFileSystemApi {
   /**
    * Opens the file only for reading
    */
-  suspend fun openForReading(path: EelPath.Absolute): EelFsResult<
+  suspend fun openForReading(path: EelPath.Absolute): EelResult<
     EelOpenedFile.Reader,
     FileReaderError>
 
@@ -151,7 +152,7 @@ interface EelFileSystemApi {
    */
   suspend fun openForWriting(
     options: WriteOptions,
-  ): EelFsResult<
+  ): EelResult<
     EelOpenedFile.Writer,
     FileWriterError>
 
@@ -193,7 +194,7 @@ interface EelFileSystemApi {
     interface Other : FileWriterError, EelFsError.Other
   }
 
-  suspend fun openForReadingAndWriting(options: WriteOptions): EelFsResult<EelOpenedFile.ReaderWriter, FileWriterError>
+  suspend fun openForReadingAndWriting(options: WriteOptions): EelResult<EelOpenedFile.ReaderWriter, FileWriterError>
 
   @Throws(DeleteException::class)
   suspend fun delete(path: EelPath.Absolute, removeContent: Boolean)
@@ -297,7 +298,7 @@ sealed interface EelOpenedFile {
       : CloseException(where, additionalMessage), EelFsError.Other
   }
 
-  suspend fun tell(): EelFsResult<
+  suspend fun tell(): EelResult<
     Long,
     TellError>
 
@@ -305,7 +306,7 @@ sealed interface EelOpenedFile {
     interface Other : TellError, EelFsError.Other
   }
 
-  suspend fun seek(offset: Long, whence: SeekWhence): EelFsResult<
+  suspend fun seek(offset: Long, whence: SeekWhence): EelResult<
     Long,
     SeekError>
 
@@ -325,7 +326,7 @@ sealed interface EelOpenedFile {
    * Sometimes, the files are inaccessible via [EelFileSystemApi.stat] -- for example, if they are deleted.
    * In this case, one can get the information about the opened file with the use of this function.
    */
-  suspend fun stat(): EelFsResult<EelFileInfo, StatError>
+  suspend fun stat(): EelResult<EelFileInfo, StatError>
 
 
   interface Reader : EelOpenedFile {
@@ -341,7 +342,7 @@ sealed interface EelOpenedFile {
      *
      * The implementation MAY read less data than the capacity of the buffer even if it's possible to read the whole requested buffer.
      */
-    suspend fun read(buf: ByteBuffer): EelFsResult<ReadResult, ReadError>
+    suspend fun read(buf: ByteBuffer): EelResult<ReadResult, ReadError>
 
     /**
      * Reads data from the position [offset] of the file.
@@ -350,7 +351,7 @@ sealed interface EelOpenedFile {
      *
      * The implementation MAY read less than [offset] bytes even if it's possible to read the whole requested buffer.
      */
-    suspend fun read(buf: ByteBuffer, offset: Long): EelFsResult<ReadResult, ReadError>
+    suspend fun read(buf: ByteBuffer, offset: Long): EelResult<ReadResult, ReadError>
 
     sealed interface ReadResult {
       interface EOF : ReadResult
@@ -372,7 +373,7 @@ sealed interface EelOpenedFile {
      *
      * The implementation MAY write the part of the [buf] even if it's possible to write the whole buffer.
      */
-    suspend fun write(buf: ByteBuffer): EelFsResult<
+    suspend fun write(buf: ByteBuffer): EelResult<
       Int,
       WriteError>
 
@@ -381,7 +382,7 @@ sealed interface EelOpenedFile {
      *
      * The implementation MAY write the part of the [buf] even if it's possible to write the whole buffer.
      */
-    suspend fun write(buf: ByteBuffer, pos: Long): EelFsResult<
+    suspend fun write(buf: ByteBuffer, pos: Long): EelResult<
       Int,
       WriteError>
 
@@ -459,11 +460,11 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
   override suspend fun listDirectoryWithAttrs(
     path: EelPath.Absolute,
     symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
-  ): EelFsResult<
+  ): EelResult<
     Collection<Pair<String, EelPosixFileInfo>>,
     EelFileSystemApi.ListDirectoryError>
 
-  override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelFsResult<
+  override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     EelPosixFileInfo,
     StatError>
 
@@ -528,11 +529,11 @@ interface EelFileSystemWindowsApi : EelFileSystemApi {
   override suspend fun listDirectoryWithAttrs(
     path: EelPath.Absolute,
     symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
-  ): EelFsResult<
+  ): EelResult<
     Collection<Pair<String, EelWindowsFileInfo>>,
     EelFileSystemApi.ListDirectoryError>
 
-  override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelFsResult<
+  override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     EelWindowsFileInfo,
     StatError>
 }

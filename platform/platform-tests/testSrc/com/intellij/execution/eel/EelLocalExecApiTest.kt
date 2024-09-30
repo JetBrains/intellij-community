@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.impl.local.EelLocalExecApi
 import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -90,9 +91,9 @@ class EelLocalExecApiTest {
                   PTYManagement.PTY_RESIZE_LATER -> Pty(PTY_COLS - 1, PTY_ROWS - 1, true) // wrong tty size: will resize in the test
                 })
     when (val r = EelLocalExecApi().execute(builder)) {
-      is EelExecApi.ExecuteProcessResult.Failure -> Assertions.fail(r.message)
-      is EelExecApi.ExecuteProcessResult.Success -> {
-        val process = r.process
+      is EelResult.Error -> Assertions.fail(r.error.message)
+      is EelResult.Ok -> {
+        val process = r.value
 
         // Resize tty
         when (ptyManagement) {

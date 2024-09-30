@@ -1,16 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider
 
+import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFsError
-import com.intellij.platform.eel.fs.EelFsResult
 import com.intellij.platform.eel.fs.EelOpenedFile
 import com.intellij.platform.eel.path.EelPath
 
 @Suppress("unused") // Usages are to be implemented later.
 object EelFsResultImpl {
-  data class Ok<T, E : EelFsError>(override val value: T) : EelFsResult.Ok<T, E>
-  data class Error<T, E : EelFsError>(override val error: E) : EelFsResult.Error<T, E>
+  data class Ok<T, E : EelFsError>(override val value: T) : EelResult.Ok<T, E>
+  data class Error<T, E : EelFsError>(override val error: E) : EelResult.Error<T, E>
 
   data class BytesReadImpl(override val bytesRead: Int) : EelOpenedFile.Reader.ReadResult.Bytes
   data object EOFImpl : EelOpenedFile.Reader.ReadResult.EOF

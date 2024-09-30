@@ -7,14 +7,14 @@ import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.platform.eel.provider.EelUserPosixInfoImpl
 import com.intellij.platform.eel.provider.EelUserWindowsInfoImpl
-import com.intellij.platform.eel.provider.utils.unwrap
 import java.nio.file.Path
 
 internal class LocalEelPathMapper(private val eelApi: EelApi) : EelPathMapper {
   override fun getOriginalPath(path: Path): EelPath.Absolute {
-    return eelApi.fs.getPath(path.toString()).unwrap()
+    return eelApi.fs.getPath(path.toString()).getOrThrow()
   }
 
   override fun toNioPath(path: EelPath.Absolute): Path {

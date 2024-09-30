@@ -2,17 +2,14 @@
 package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath.Absolute.OS
 import java.nio.file.InvalidPathException
 
-sealed interface EelPathResult<P : EelPath> {
-  interface Ok<P : EelPath> : EelPathResult<P> {
-    val path: P
-  }
-  interface Err<P : EelPath> : EelPathResult<P> {
-    val raw: String
-    val reason: String
-  }
+interface EelPathError {
+  val raw: String
+  val reason: String
 }
 
 /**
@@ -26,10 +23,10 @@ sealed interface EelPathResult<P : EelPath> {
 sealed interface EelPath {
   companion object {
     @JvmStatic
-    fun parse(raw: String, os: OS?): EelPathResult<out EelPath> =
+    fun parse(raw: String, os: OS?): EelResult<out EelPath, EelPathError> =
       when (val absoluteResult = Absolute.parse(raw, os)) {
-        is EelPathResult.Ok -> absoluteResult
-        is EelPathResult.Err -> Relative.parse(raw)
+        is EelResult.Ok -> absoluteResult
+        is EelResult.Error -> Relative.parse(raw)
       }
   }
 
@@ -102,7 +99,7 @@ sealed interface EelPath {
    * // TODO Wouldn't it be better to return different types for relative and absolute paths?
    * It should fail in cases like Absolute("/").resolve(Relative("..")).
    */
-  fun resolve(other: Relative): EelPathResult<out EelPath>
+  fun resolve(other: Relative): EelResult<out EelPath, EelPathError>
 
   /**
    * ```kotlin
@@ -114,28 +111,28 @@ sealed interface EelPath {
    * IjentRelativePath.parse("abc", false).getChild("") == Err(...)
    * ```
    */
-  fun getChild(name: String): EelPathResult<out EelPath>
+  fun getChild(name: String): EelResult<out EelPath, EelPathError>
 
   override fun toString(): String
 
   interface Relative : EelPath, Comparable<Relative> {
     companion object {
       @JvmStatic
-      fun parse(raw: String): EelPathResult<out Relative> =
+      fun parse(raw: String): EelResult<out Relative, EelPathError> =
         ArrayListEelRelativePath.parse(raw)
 
       /**
        * The parts of the path must not contain / or \.
        */
       @JvmStatic
-      fun build(vararg parts: String): EelPathResult<out Relative> =
+      fun build(vararg parts: String): EelResult<out Relative, EelPathError> =
         build(listOf(*parts))
 
       /**
        * The parts of the path must not contain / or \.
        */
       @JvmStatic
-      fun build(parts: List<String>): EelPathResult<out Relative> =
+      fun build(parts: List<String>): EelResult<out Relative, EelPathError> =
         ArrayListEelRelativePath.build(parts)
 
       @JvmField
@@ -147,9 +144,9 @@ sealed interface EelPath {
     /** See [java.nio.file.Path.startsWith] */
     fun startsWith(other: Relative): Boolean
 
-    override fun resolve(other: Relative): EelPathResult<out Relative>
+    override fun resolve(other: Relative): EelResult<out Relative, EelPathError>
 
-    override fun getChild(name: String): EelPathResult<out Relative>
+    override fun getChild(name: String): EelResult<out Relative, EelPathError>
 
     override fun compareTo(other: Relative): Int
 
@@ -177,15 +174,15 @@ sealed interface EelPath {
   interface Absolute : EelPath, Comparable<Absolute> {
     companion object {
       @JvmStatic
-      fun parse(raw: String, os: OS?): EelPathResult<out Absolute> =
+      fun parse(raw: String, os: OS?): EelResult<out Absolute, EelPathError> =
         ArrayListEelAbsolutePath.parse(raw, os)
 
       @JvmStatic
-      fun build(vararg parts: String): EelPathResult<out Absolute> =
+      fun build(vararg parts: String): EelResult<out Absolute, EelPathError> =
         build(listOf(*parts), null)
 
       @JvmStatic
-      fun build(parts: List<String>, os: OS?): EelPathResult<out Absolute> =
+      fun build(parts: List<String>, os: OS?): EelResult<out Absolute, EelPathError> =
         ArrayListEelAbsolutePath.build(parts, os)
     }
 
@@ -204,10 +201,10 @@ sealed interface EelPath {
     fun startsWith(other: Absolute): Boolean
 
     /** See [java.nio.file.Path.normalize] */
-    fun normalize(): EelPathResult<out Absolute>
+    fun normalize(): EelResult<out Absolute, EelPathError>
 
     /** See [java.nio.file.Path.resolve] */
-    override fun resolve(other: Relative): EelPathResult<out Absolute>
+    override fun resolve(other: Relative): EelResult<out Absolute, EelPathError>
 
     /**
      * See [java.nio.file.Path.relativize].
@@ -217,9 +214,9 @@ sealed interface EelPath {
      *   == IjentPathAbsolute.parse("..\..\oops", isWindows = true)
      * ```
      */
-    fun relativize(other: Absolute): EelPathResult<out Relative>
+    fun relativize(other: Absolute): EelResult<out Relative, EelPathError>
 
-    override fun getChild(name: String): EelPathResult<out Absolute>
+    override fun getChild(name: String): EelResult<out Absolute, EelPathError>
 
     fun scan(): Sequence<Absolute>
 
@@ -232,11 +229,7 @@ sealed interface EelPath {
 }
 
 @Throws(InvalidPathException::class)
-fun <P : EelPath> EelPathResult<P>.getOrThrow(): P =
-  when (this) {
-    is EelPathResult.Ok -> path
-    is EelPathResult.Err -> throw InvalidPathException(raw, reason)
-  }
+fun <P : EelPath, E : EelPathError> EelResult<P, E>.getOrThrow(): P = getOrThrow { throw InvalidPathException(it.raw, it.reason) }
 
 val EelPlatform.pathOs: OS
   get() = when (this) {

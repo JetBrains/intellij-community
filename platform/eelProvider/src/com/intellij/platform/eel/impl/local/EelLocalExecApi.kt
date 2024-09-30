@@ -2,6 +2,9 @@
 package com.intellij.platform.eel.impl.local
 
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.provider.EelProcessResultImpl
 import com.pty4j.PtyProcessBuilder
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -9,7 +12,7 @@ import java.io.IOException
 
 @ApiStatus.Internal
 class EelLocalExecApi : EelExecApi {
-  override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelExecApi.ExecuteProcessResult {
+  override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
     val args = builder.args.toTypedArray()
     val pty = builder.pty
 
@@ -35,9 +38,9 @@ class EelLocalExecApi : EelExecApi {
         }
       }
       catch (e: IOException) {
-        return EelExecApi.ExecuteProcessResult.Failure(-1, e.toString())
+        return EelProcessResultImpl.createErrorResult(-1, e.toString())
       }
-    return EelExecApi.ExecuteProcessResult.Success(process)
+    return EelProcessResultImpl.createOkResult(process)
   }
 
   override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = System.getenv()

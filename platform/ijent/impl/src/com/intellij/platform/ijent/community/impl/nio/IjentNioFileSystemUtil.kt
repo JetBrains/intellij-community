@@ -3,9 +3,9 @@
 
 package com.intellij.platform.ijent.community.impl.nio
 
+import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFsError
-import com.intellij.platform.eel.fs.EelFsResult
 import com.intellij.platform.eel.fs.EelOpenedFile
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.getOrThrow
@@ -13,16 +13,15 @@ import com.intellij.util.text.nullize
 import kotlinx.coroutines.Dispatchers
 import java.io.IOException
 import java.nio.file.*
-import kotlin.Throws
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.startCoroutine
 
 @Throws(FileSystemException::class)
-internal fun <T, E : EelFsError> EelFsResult<T, E>.getOrThrowFileSystemException(): T =
+internal fun <T, E : EelFsError> EelResult<T, E>.getOrThrowFileSystemException(): T =
   when (this) {
-    is EelFsResult.Ok -> value
-    is EelFsResult.Error -> error.throwFileSystemException()
+    is EelResult.Ok -> value
+    is EelResult.Error -> error.throwFileSystemException()
   }
 
 // TODO There's java.nio.file.FileSystemLoopException, so ELOOP should be added to all error codes for a decent support of all exceptions.

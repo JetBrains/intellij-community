@@ -4,9 +4,10 @@ package com.intellij.execution.eel
 import com.intellij.execution.ijent.nio.IjentEphemeralRootAwarePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.utils.unwrap
+import com.intellij.platform.eel.path.getOrThrow
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -47,7 +48,7 @@ private class EelEphemeralRootAwareMapper(
 ) : EelPathMapper {
   override fun getOriginalPath(path: Path): EelPath.Absolute? {
     return if (path is IjentEphemeralRootAwarePath) {
-      eelApi.fs.getPath(path.originalPath.toString()).unwrap()
+      eelApi.fs.getPath(path.originalPath.toString()).getOrThrow()
     }
     else {
       null
@@ -72,7 +73,7 @@ private class EelExecApiWithNormalization(
   private val original: EelExecApi,
   private val normalize: (EelExecApi.ExecuteProcessBuilder) -> EelExecApi.ExecuteProcessBuilder,
 ) : EelExecApi by original {
-  override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelExecApi.ExecuteProcessResult {
+  override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelResult<EelProcess, ExecuteProcessError> {
     return original.execute(normalize(builder))
   }
 }

@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
-import com.intellij.platform.eel.path.EelPathResult.Err
-import com.intellij.platform.eel.path.EelPathResult.Ok
+import com.intellij.platform.eel.EelResult
 
 internal class ArrayListEelAbsolutePath private constructor(
   private val _root: Root,
@@ -34,7 +33,7 @@ internal class ArrayListEelAbsolutePath private constructor(
     root.fileName == other.root.fileName &&
     (0..<other.nameCount).all { getName(it) == other.getName(it) }
 
-  override fun normalize(): EelPathResult<out EelPath.Absolute> {
+  override fun normalize(): EelResult<out EelPath.Absolute, EelPathError> {
     val result = mutableListOf<String>()
     for (part in parts) {
       when (part) {
@@ -42,7 +41,7 @@ internal class ArrayListEelAbsolutePath private constructor(
 
         ".." ->
           if (result.isEmpty())
-            return Err(toString(), "Traversing beyond the root")
+            return ErrorResult(Err(toString(), "Traversing beyond the root"))
           else
             result.dropLast(1)
 
@@ -50,28 +49,28 @@ internal class ArrayListEelAbsolutePath private constructor(
           result += part
       }
     }
-    return Ok(ArrayListEelAbsolutePath(_root, result))
+    return OkResult(ArrayListEelAbsolutePath(_root, result))
   }
 
-  override fun resolve(other: EelPath.Relative): EelPathResult<out EelPath.Absolute> {
+  override fun resolve(other: EelPath.Relative): EelResult<out EelPath.Absolute, EelPathError> {
     val result = parts.toMutableList()
     for (index in 0..<other.nameCount) {
       val name = other.getName(index).fileName
       if (name.isNotEmpty()) {
         val error = checkFileName(name)
-        if (error != null) return Err(other.toString(), error)
+        if (error != null) return ErrorResult(Err(other.toString(), error))
         result += name
       }
     }
-    return Ok(ArrayListEelAbsolutePath(_root, result))
+    return OkResult(ArrayListEelAbsolutePath(_root, result))
   }
 
-  override fun getChild(name: String): EelPathResult<out EelPath.Absolute> {
+  override fun getChild(name: String): EelResult<out EelPath.Absolute, EelPathError> {
     val error = checkFileName(name)
     return if (error == null)
-      Ok(ArrayListEelAbsolutePath(_root, parts + name))
+      OkResult(ArrayListEelAbsolutePath(_root, parts + name))
     else
-      Err(name, error)
+      ErrorResult(Err(name, error))
   }
 
   override fun scan(): Sequence<EelPath.Absolute> =
@@ -131,9 +130,9 @@ internal class ArrayListEelAbsolutePath private constructor(
     return nameCount - other.nameCount
   }
 
-  override fun relativize(other: EelPath.Absolute): EelPathResult<out EelPath.Relative> {
+  override fun relativize(other: EelPath.Absolute): EelResult<out EelPath.Relative, EelPathError> {
     if (root != other.root) {
-      return Err(other.root.toString(), "The other path has a different root")
+      return ErrorResult(Err(other.root.toString(), "The other path has a different root"))
     }
 
     var firstDifferenceIndex = 0
@@ -171,7 +170,7 @@ internal class ArrayListEelAbsolutePath private constructor(
     })
 
   companion object {
-    fun build(parts: List<String>, os: EelPath.Absolute.OS?): EelPathResult<out EelPath.Absolute> {
+    fun build(parts: List<String>, os: EelPath.Absolute.OS?): EelResult<out EelPath.Absolute, EelPathError> {
       require(parts.isNotEmpty()) { "Can't build an absolute path from no path parts" }
 
       val windowsRoot = when (os) {
@@ -190,44 +189,44 @@ internal class ArrayListEelAbsolutePath private constructor(
             else parts
           for (part in parts) {
             val error = checkFileName(part, isWindows = false)
-            if (error != null) return Err(part, error)
+            if (error != null) return ErrorResult(Err(part, error))
           }
-          return Ok(ArrayListEelAbsolutePath(Root.Unix, parts))
+          return OkResult(ArrayListEelAbsolutePath(Root.Unix, parts))
         }
 
-        is Ok -> {
+        is EelResult.Ok -> {
           @Suppress("NAME_SHADOWING") val parts = parts.drop(1)
           for (part in parts) {
             val error = checkFileName(part, isWindows = true)
-            if (error != null) return Err(part, error)
+            if (error != null) return ErrorResult(Err(part, error))
           }
-          return Ok(ArrayListEelAbsolutePath(windowsRoot.path._root, parts))
+          return OkResult(ArrayListEelAbsolutePath(windowsRoot.value._root, parts))
         }
 
-        is Err -> return windowsRoot
+        is EelResult.Error -> return windowsRoot
       }
     }
 
-    fun parse(raw: String, os: EelPath.Absolute.OS?): EelPathResult<ArrayListEelAbsolutePath> =
+    fun parse(raw: String, os: EelPath.Absolute.OS?): EelResult<ArrayListEelAbsolutePath, EelPathError> =
       when (os) {
         EelPath.Absolute.OS.WINDOWS ->
           findAbsoluteUncPath(raw)
           ?: findAbsoluteTraditionalDosPath(raw)
-          ?: reportError(raw)
+          ?: ErrorResult(createErr(raw))
 
         EelPath.Absolute.OS.UNIX ->
           findAbsoluteUnixPath(raw)
-          ?: reportError(raw)
+          ?: ErrorResult(createErr(raw))
 
         null ->
           findAbsoluteUncPath(raw)
           ?: findAbsoluteTraditionalDosPath(raw)
           ?: findAbsoluteUnixPath(raw)
-          ?: reportError(raw)
+          ?: ErrorResult(createErr(raw))
       }
 
     /** https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#unc-paths */
-    private fun findAbsoluteUncPath(raw: String): EelPathResult<ArrayListEelAbsolutePath>? {
+    private fun findAbsoluteUncPath(raw: String): EelResult<ArrayListEelAbsolutePath, EelPathError>? {
       if (raw.length < 3) return null
       if (raw.getOrNull(0) != raw.getOrNull(1)) return null
 
@@ -239,12 +238,12 @@ internal class ArrayListEelAbsolutePath private constructor(
 
       run {
         val error = checkFileName(raw.substring(2, index), isWindows = true)
-        if (error != null) return Err(raw, "Incorrect server name in UNC path")
+        if (error != null) return ErrorResult(Err(raw, "Incorrect server name in UNC path"))
       }
 
       val shareNameStart = index
 
-      if (++index == raw.length) return Err(raw, "Empty share name in UNC path")
+      if (++index == raw.length) return ErrorResult(Err(raw, "Empty share name in UNC path"))
 
       // Skipping the server/host name.
       while (raw[index] !in "/\\") {
@@ -253,7 +252,7 @@ internal class ArrayListEelAbsolutePath private constructor(
 
       run {
         val error = checkFileName(raw.substring(shareNameStart, index), isWindows = true)
-        if (error != null) return Err(raw, "Incorrect share name in UNC path")
+        if (error != null) return ErrorResult(Err(raw, "Incorrect share name in UNC path"))
       }
 
       val parts = raw.substring(index)
@@ -263,14 +262,14 @@ internal class ArrayListEelAbsolutePath private constructor(
 
       for (part in parts) {
         val error = checkFileName(part, isWindows = true)
-        if (error != null) return Err(raw, error)
+        if (error != null) return ErrorResult(Err(raw, error))
       }
 
-      return Ok(ArrayListEelAbsolutePath(Root.Windows(raw.substring(0, index).replace("/", "\\")), parts))
+      return OkResult(ArrayListEelAbsolutePath(Root.Windows(raw.substring(0, index).replace("/", "\\")), parts))
     }
 
     /** https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#traditional-dos-paths */
-    private fun findAbsoluteTraditionalDosPath(raw: String): EelPathResult<ArrayListEelAbsolutePath>? {
+    private fun findAbsoluteTraditionalDosPath(raw: String): EelResult<ArrayListEelAbsolutePath, EelPathError>? {
       if (raw.length < 3) return null
       if (!raw[0].isLetter()) return null
       if (raw[1] != ':') return null
@@ -283,13 +282,13 @@ internal class ArrayListEelAbsolutePath private constructor(
 
       for (part in parts) {
         val error = checkFileName(part, isWindows = true)
-        if (error != null) return Err(raw, error)
+        if (error != null) return ErrorResult(Err(raw, error))
       }
 
-      return Ok(ArrayListEelAbsolutePath(Root.Windows(raw.substring(0, 3)), parts))
+      return OkResult(ArrayListEelAbsolutePath(Root.Windows(raw.substring(0, 3)), parts))
     }
 
-    private fun findAbsoluteUnixPath(raw: String): EelPathResult<ArrayListEelAbsolutePath>? {
+    private fun findAbsoluteUnixPath(raw: String): EelResult<ArrayListEelAbsolutePath, EelPathError>? {
       if (raw.getOrNull(0) != '/') return null
 
       val parts = raw
@@ -299,13 +298,13 @@ internal class ArrayListEelAbsolutePath private constructor(
 
       for (part in parts) {
         val error = checkFileName(part, isWindows = false)
-        if (error != null) return Err(raw, error)
+        if (error != null) return ErrorResult(Err(raw, error))
       }
 
-      return Ok(ArrayListEelAbsolutePath(Root.Unix, parts))
+      return OkResult(ArrayListEelAbsolutePath(Root.Unix, parts))
     }
 
-    private fun reportError(raw: String): Err<ArrayListEelAbsolutePath> =
+    private fun createErr(raw: String): Err =
       Err(
         raw = raw,
         reason = run {

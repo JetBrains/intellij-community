@@ -5,27 +5,13 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
-import java.io.IOException
-
-/**
- * Unwraps the `ExecuteProcessResult` instance, returning the underlying `EelProcess` if the result is a success,
- * or throws an `IOException` if the result is a failure.
- *
- * @throws IOException if the `ExecuteProcessResult` is `Failure`.
- * @return the `EelProcess` if the `ExecuteProcessResult` is `Success`.
- */
-fun EelExecApi.ExecuteProcessResult.unwrap(): EelProcess {
-  return when (this) {
-    is EelExecApi.ExecuteProcessResult.Success -> process
-    is EelExecApi.ExecuteProcessResult.Failure -> throw RuntimeException(toString())
-  }
-}
 
 /**
  * Function that awaits the completion of an [EelProcess] and retrieves its execution result,
@@ -92,13 +78,13 @@ suspend fun EelApi.where(exe: String): EelPath.Absolute? {
     else -> throw IllegalArgumentException("Unsupported OS: $this")
   }
 
-  val result = exec.executeProcess(tool, exe).unwrap().awaitProcessResult()
+  val result = exec.executeProcess(tool, exe).getOrThrow().awaitProcessResult()
 
   if (result.exitCode != 0) {
     // TODO: log error?/throw Exception?
     return null
   }
   else {
-    return fs.getPath(result.stdout).unwrap()
+    return fs.getPath(result.stdout).getOrThrow()
   }
 }

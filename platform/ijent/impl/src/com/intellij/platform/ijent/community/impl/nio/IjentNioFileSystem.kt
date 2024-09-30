@@ -3,7 +3,9 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.getOrThrow
-import com.intellij.platform.ijent.fs.*
+import com.intellij.platform.ijent.fs.IjentFileSystemApi
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
+import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.FileStore

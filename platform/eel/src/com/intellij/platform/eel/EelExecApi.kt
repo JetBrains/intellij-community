@@ -17,7 +17,7 @@ interface EelExecApi {
    *
    * See [executeProcessBuilder]
    */
-  suspend fun execute(builder: ExecuteProcessBuilder): ExecuteProcessResult
+  suspend fun execute(builder: ExecuteProcessBuilder): EelResult<EelProcess, ExecuteProcessError>
 
   /** Docs: [executeProcessBuilder] */
   interface ExecuteProcessBuilder {
@@ -63,9 +63,9 @@ interface EelExecApi {
    */
   suspend fun fetchLoginShellEnvVariables(): Map<String, String>
 
-  sealed interface ExecuteProcessResult {
-    class Success(val process: EelProcess) : ExecuteProcessResult
-    data class Failure(val errno: Int, val message: String) : ExecuteProcessResult
+  interface ExecuteProcessError {
+    val errno: Int
+    val message: String
   }
 
   /** [echo] must be true in general and must be false when the user is asked for a password. */
@@ -73,7 +73,7 @@ interface EelExecApi {
 }
 
 /** Docs: [EelExecApi.executeProcessBuilder] */
-suspend fun EelExecApi.executeProcess(exe: String, vararg args: String): EelExecApi.ExecuteProcessResult =
+suspend fun EelExecApi.executeProcess(exe: String, vararg args: String): EelResult<EelProcess, EelExecApi.ExecuteProcessError> =
   execute(EelExecApi.executeProcessBuilder(exe).args(listOf(*args)))
 
 /** Docs: [EelExecApi.executeProcessBuilder] */

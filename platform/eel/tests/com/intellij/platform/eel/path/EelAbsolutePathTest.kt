@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
+import com.intellij.platform.eel.EelResult
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.DynamicTest
@@ -36,8 +37,8 @@ class EelAbsolutePathTest {
       add(dynamicTest(rawPath) {
         val eelPath = EelPath.Absolute
           .parse(rawPath, null)
-          .shouldBeInstanceOf<EelPathResult.Ok<EelPath.Absolute>>()
-          .path
+          .shouldBeInstanceOf<EelResult.Ok<EelPath.Absolute, EelPathError>>()
+          .value
         eelPath.toString() shouldBe rawPath
       })
     }

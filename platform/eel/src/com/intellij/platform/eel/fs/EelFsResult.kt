@@ -5,19 +5,6 @@ import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.Nls
 import java.io.IOException
 
-/**
- * [T] should not be `Unit`, throw a subclass of [EelFsIOException] in such cases instead.
- */
-sealed interface EelFsResult<out T, E : EelFsError> {
-  interface Ok<out T, E : EelFsError> : EelFsResult<T, E> {
-    val value: T
-  }
-
-  interface Error<T, E : EelFsError> : EelFsResult<T, E> {
-    val error: E
-  }
-}
-
 sealed interface EelFsError {
   val where: EelPath.Absolute
 

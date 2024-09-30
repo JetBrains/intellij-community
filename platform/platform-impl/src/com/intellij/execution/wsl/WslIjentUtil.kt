@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.Arguments.executeProcessBuilder
+import com.intellij.platform.eel.EelResult
 import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -136,13 +137,13 @@ fun runProcessBlocking(
     .pty(pty)
     .workingDirectory(workingDirectory)
   )) {
-    is EelExecApi.ExecuteProcessResult.Success ->
-      (processResult.process as IjentChildProcess).toProcess(
+    is EelResult.Ok ->
+      (processResult.value as IjentChildProcess).toProcess(
         coroutineScope = scope,
         isPty = pty != null,
         redirectStderr = processBuilder.redirectErrorStream(),
       )
-    is EelExecApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
+    is EelResult.Error -> throw IOException(processResult.error.message)
   }
 }
 
