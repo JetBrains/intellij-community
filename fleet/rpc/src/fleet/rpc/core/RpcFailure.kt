@@ -37,6 +37,7 @@ fun FailureInfo.message(): String {
     this.transportError != null -> this.transportError
 
     this.conflict != null -> this.conflict
+    this.unresolvedService != null -> this.unresolvedService
     this.serviceNotReady != null -> this.serviceNotReady
     this.producerCancelled != null -> this.producerCancelled
     else -> "unknown"
