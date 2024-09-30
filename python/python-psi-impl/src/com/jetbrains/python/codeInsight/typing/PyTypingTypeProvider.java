@@ -1827,6 +1827,11 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return null;
   }
 
+  @NotNull
+  public static List<PyType> getIndexTypesStatic(@NotNull PySubscriptionExpression expression, @NotNull TypeEvalContext context) {
+    return staticWithCustomContext(context, c -> getIndexTypes(expression, c));
+  }
+
   private static @NotNull List<PyType> getIndexTypes(@NotNull PySubscriptionExpression expression, @NotNull Context context) {
     final List<PyType> types = new ArrayList<>();
     final PyExpression indexExpr = expression.getIndexExpression();

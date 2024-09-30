@@ -229,6 +229,9 @@ public final class PyTypeParameterMapping {
       // [T1, T2, ...] <- []
       for (PyType unmatchedType : expectedTypesDeque.toList()) {
         Couple<PyType> fallbackMapping = mapToFallback(unmatchedType, optionSet);
+        if (optionSet.contains(Option.MAP_WITH_DEFAULTS_STRICT) && fallbackMapping == null) {
+          return null;
+        }
         ContainerUtil.addIfNotNull(centerMappedTypes, fallbackMapping);
         sizeMismatch = fallbackMapping == null;
       }
@@ -271,6 +274,7 @@ public final class PyTypeParameterMapping {
   public enum Option {
     MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY,
     USE_DEFAULTS,
+    MAP_WITH_DEFAULTS_STRICT,
   }
 
   private static final class NullTolerantDeque<T> {

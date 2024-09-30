@@ -1782,6 +1782,163 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-75759
+  public void testTypeVarParameterizationWithDefaults() {
+    doTestByText("""
+                   from typing import TypeVar, Generic
+                   
+                   DefaultT = TypeVar("DefaultT", default = str)
+                   DefaultT1 = TypeVar("DefaultT1", default = int)
+                   NoDefaultT2 = TypeVar("NoDefaultT2")
+                   NoDefaultT3 = TypeVar("NoDefaultT3")
+                   NoDefaultT4 = TypeVar("NoDefaultT4")
+                   
+                   class Clazz(Generic[NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT, DefaultT1]): ...
+                   
+                   c1 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 3, got 1">int</weak_warning>]()
+                   c2 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 3, got 2">int, str</weak_warning>]()
+                   c3 = Clazz[int, str, bool]()
+                   c4 = Clazz[int, str, bool, int]()
+                   c5 = Clazz[int, str, bool, int, str]()
+                   c6 = Clazz[<weak_warning descr="Too many type arguments for class 'Clazz': expected no more than 5, got 6">int, str, bool, int, str, int</weak_warning>]()
+                   c7 = Clazz[<weak_warning descr="Too many type arguments for class 'Clazz': expected no more than 5, got 7">int, str, bool, int, str, int, int</weak_warning>]()
+                   """);
+  }
+
+  // PY-75759
+  public void testTypeVarTupleParameterizationWithDefaults() {
+    doTestByText("""
+                   from typing import TypeVar, Generic, TypeVarTuple, Unpack
+                   
+                   DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[int, str]])
+                   class Clazz(Generic[DefaultTs]): ...
+                   
+                   c1 = Clazz[int]()
+                   c2 = Clazz[int, str]()
+                   c3 = Clazz[int, str, bool]()
+                   c4 = Clazz[int, str, bool, int]()
+                   c5 = Clazz[int, str, bool, int, str]()
+                   c6 = Clazz[int, str, bool, int, str, int]()
+                   c7 = Clazz[int, str, bool, int, str, int, int]()
+                   """);
+  }
+
+  // PY-75759
+  public void testDefaultParamSpecFollowingTypeVarTuple() {
+    doTestByText("""
+                   from typing import TypeVar, Generic, TypeVarTuple, ParamSpec, Unpack
+                   
+                   Ts = TypeVarTuple("Ts")
+                   P = ParamSpec("P", default=[float, bool])
+                   
+                   class Clazz(Generic[*Ts, P]): ...
+                   
+                   c1 = Clazz[int]()
+                   c2 = Clazz[int, str]()
+                   c3 = Clazz[int, str, [bool]]()
+                   c4 = Clazz[int, str, [bool, int]]()
+                   c5 = Clazz[int, str, [bool, int, str]]()
+                   c6 = Clazz[int, [str, bool, int, str, int]]()
+                   
+                   Ts1 = TypeVarTuple("Ts1", default=Unpack[tuple[int, str]])
+                   class Clazz1(Generic[*Ts, P]): ...
+                   c11 = Clazz1[int]()
+                   c12 = Clazz1[int, str]()
+                   c13 = Clazz1[int, str, [bool]]()
+                   c14 = Clazz1[int, str, [bool, int]]()
+                   c15 = Clazz1[int, str, [bool, int, str]]()
+                   c16 = Clazz1[int, [str, bool, int, str, int]]()
+                   """);
+  }
+
+  // PY-75759
+  public void testTypeVarAndTypeVarTupleParameterizationWithDefaults() {
+    doTestByText("""
+                   from typing import TypeVar, Generic, TypeVarTuple, Unpack
+                   
+                   DefaultT = TypeVar("DefaultT", default = str)
+                   DefaultT1 = TypeVar("DefaultT1", default = int)
+                   NoDefaultT2 = TypeVar("NoDefaultT2")
+                   NoDefaultT3 = TypeVar("NoDefaultT3")
+                   DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[int, str]])
+                   
+                   
+                   class Clazz(Generic[NoDefaultT2, NoDefaultT3, DefaultT, DefaultT1, DefaultTs]):
+                       ...
+                   
+                   c1 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 2, got 1">int</weak_warning>]()
+                   c2 = Clazz[int, str]()
+                   c3 = Clazz[int, str, bool]()
+                   c4 = Clazz[int, str, bool, int]()
+                   c5 = Clazz[int, str, bool, int, str]()
+                   c6 = Clazz[int, str, bool, int, str, int]()
+                   c7 = Clazz[int, str, bool, int, str, int, int]()
+                   c8 = Clazz[int, str, bool, int, str, int, int, float]()
+                   c9 = Clazz[int, str, bool, int, str, int, int, float, list]()
+                   """);
+  }
+
+  // PY-75759
+  public void testNonDefaultTypeVarsFollowingOnesWithDefaultsNewStyle() {
+    doTestByText("""
+                   class Clazz[NoDefaultT2, NoDefaultT3, NoDefaultT4, DefaultT = int, DefaultT1 = str]:
+                       ...
+                   
+                   c1 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 3, got 1">int</weak_warning>]()
+                   c2 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 3, got 2">int, str</weak_warning>]()
+                   c3 = Clazz[int, str, bool]()
+                   c4 = Clazz[int, str, bool, int]()
+                   c5 = Clazz[int, str, bool, int, str]()
+                   c6 = Clazz[<weak_warning descr="Too many type arguments for class 'Clazz': expected no more than 5, got 6">int, str, bool, int, str, int</weak_warning>]()
+                   c7 = Clazz[<weak_warning descr="Too many type arguments for class 'Clazz': expected no more than 5, got 7">int, str, bool, int, str, int, int</weak_warning>]()
+                   """);
+  }
+
+  // PY-75759
+  public void testTypeParametersOutOfScopeNotReportedMultipleTimes() {
+    doTestByText("""
+                   from typing import TypeVar, Generic
+                   
+                   T1 = TypeVar('T1')
+                   T2 = TypeVar('T2')
+                   T3 = TypeVar('T3', default=T1 | T2)
+                   
+                   class Clazz1(Generic[<warning descr="Type parameter has a default type that refers to one or more type variables that are out of scope">T3</warning>]): ...
+                   class Clazz2[R = <warning descr="Default type of type parameter 'R' refers to a type variable that is out of scope">T1 | T2</warning>]: ...
+                   class Clazz3[T = <warning descr="Default type of type parameter 'T' refers to a type variable that is out of scope">T1 | T2</warning>, T1, T2]: ...
+                   """);
+  }
+
+  // PY-75759
+  public void testTypeVarDefaultTypesAreTypeVars() {
+    doTestByText("""
+                   from typing import TypeVar, TypeVarTuple, ParamSpec
+                   
+                   type A1[**P, T = <warning descr="'ParamSpec' cannot be used in default type of TypeVar">P</warning>] = tuple[P, T]  # false negative
+                   
+                   Ts = TypeVarTuple("Ts")
+                   T1 = TypeVar("T1", default=<warning descr="'TypeVarTuple' cannot be used in default type of TypeVar">Ts</warning>)
+                   
+                   P = ParamSpec("P")
+                   T2 = TypeVar("T2", default=<warning descr="'ParamSpec' cannot be used in default type of TypeVar">P</warning>)
+                   T3 = TypeVar("T3", default=dict[str, <warning descr="'TypeVarTuple' cannot be used in default type of TypeVar">Ts</warning>])
+                   T4 = TypeVar("T4", default=dict[list[<warning descr="'ParamSpec' cannot be used in default type of TypeVar">P</warning>], str])
+                   """);
+  }
+
+  // PY-75759
+  public void testTypeVarTupleIsNotConsideredMandatoryTypeParameter() {
+    doTestByText("""
+                   class Clazz[T1, T2, *Ts, T3]: ...
+                   
+                   c1 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 3, got 1">int</weak_warning>]()
+                   c2 = Clazz[<weak_warning descr="Too few type arguments for class 'Clazz': expected at least 3, got 2">int, str</weak_warning>]()
+                   c3 = Clazz[int, str, bool]()
+                   c4 = Clazz[int, str, bool, float]()
+                   """);
+  }
+
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
