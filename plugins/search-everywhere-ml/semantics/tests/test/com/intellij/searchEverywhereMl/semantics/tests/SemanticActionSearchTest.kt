@@ -4,6 +4,7 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ml.embeddings.actions.ActionEmbeddingStorageManager
@@ -55,6 +56,7 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
     assertContainsElements(items, "Remove All Breakpoints", "Remove All Breakpoints In The Current File")
   }
 
+  @IJIgnore(issue = "JPL-163237")
   fun `test empty query`() = runTest {
     val semanticActionContributor = SemanticActionSearchEverywhereContributor(
       ActionSearchEverywhereContributor.Factory().createContributor(createEvent()) as ActionSearchEverywhereContributor)
