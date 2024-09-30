@@ -322,7 +322,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             val kotlinVersionDefinedExplicitlyEverywhere = allKotlinModules.all { module ->
                 module.getBuildScriptPsiFile()?.let {
                     GradleBuildScriptSupport.getManipulator(it)
-                }?.hasExplicitlyDefinedKotlinVersion() ?: false
+                }?.hasExplicitlyDefinedKotlinVersion() == true
             }
             val addVersionToSettings: Boolean
             // If there are different Kotlin versions in the project, don't add to settings
@@ -566,7 +566,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         version: IdeKotlinVersion,
         changedFiles: ChangedConfiguratorFiles
     ): Boolean {
-        return file.project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", file.name), null) {
+        return file.project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", file.name), groupId = null) {
             changedFiles.storeOriginalFileContent(file)
             val isModified = GradleBuildScriptSupport.getManipulator(file)
                 .configureSettingsFile(getKotlinPluginExpression(file.isKtDsl()), version)
