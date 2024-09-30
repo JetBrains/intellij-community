@@ -2,7 +2,6 @@
 package git4idea.cherrypick
 
 import com.intellij.dvcs.ui.DvcsBundle
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -13,9 +12,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.GitActivity
 import git4idea.GitApplyChangesProcess
 import git4idea.actions.GitAbortOperationAction
-import git4idea.commands.Git
-import git4idea.commands.GitCommandResult
-import git4idea.commands.GitLineHandlerListener
+import git4idea.commands.*
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.isCommitPublished
@@ -92,8 +89,26 @@ internal class GitCherryPickProcess(
     val result = super.executeForCommit(repository, commit, successfulCommits, alreadyPicked)
     if (result) {
       successfullyCherryPickedCount++
+      if (alreadyPicked.isNotEmpty() && alreadyPicked.last() == commit) {
+        skipCherryPick(commit, repository)
+      }
     }
     return result
+  }
+
+  /**
+   * If the last commit in the cherry-pick sequence is already cherry-picked,
+   * will remain in cherry-picking state, unless '--skip' operation is explicitly called
+   */
+  private fun skipCherryPick(commit: VcsCommitMetadata, repository: GitRepository) {
+    LOG.info("Skipping cherry-pick, as the last commit ${commit.id} in the sequence is empty")
+    val handler = GitLineHandler(project, repository.getRoot(), GitCommand.CHERRY_PICK)
+    handler.addParameters("--skip")
+
+    val result = Git.getInstance().runCommand(handler)
+    if (!result.success()) {
+      LOG.warn("Failed to skip cherry-pick")
+    }
   }
 
   private fun cherryPickSingleCommit(
