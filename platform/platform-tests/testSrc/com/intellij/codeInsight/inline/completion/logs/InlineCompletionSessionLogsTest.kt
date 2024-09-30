@@ -68,6 +68,7 @@ internal class InlineCompletionSessionLogsTest : InlineCompletionTestCase() {
       }
       val singleSessionLog = singleSessionLog {
         callInlineCompletion()
+        // now cancel it
         typeChar('a')
       }
       singleSessionLog.assertRequestIdPresent()
