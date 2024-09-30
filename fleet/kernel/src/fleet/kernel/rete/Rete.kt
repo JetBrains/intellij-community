@@ -60,7 +60,7 @@ suspend fun<T> withRete(failWhenPropagationFailed: Boolean = false, body: suspen
   val (commandsSender, commandsReceiver) = channels<Rete.Command>(Channel.UNLIMITED)
   return spannedScope("withRete") {
     val kernel = transactor()
-    kernel.subscribe { db, changes ->
+    kernel.subscribe(Channel.UNLIMITED) { db, changes ->
       val lastKnownDb = MutableStateFlow(db)
       launch {
         spannedScope("rete event loop") {
