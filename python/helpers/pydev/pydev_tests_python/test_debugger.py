@@ -2212,6 +2212,7 @@ def test_remote_debugger_basic(case_setup_remote):
         writer.finished_ok = True
 
 
+@pytest.mark.xfail(IS_PY3K, reason='PY-76342')
 @pytest.mark.skipif(not IS_CPYTHON or not IS_PY37_OR_GREATER, reason='CPython only test.')
 def test_py_37_breakpoint_remote(case_setup_remote):
     with case_setup_remote.test_file('_debugger_case_breakpoint_remote.py') as writer:
