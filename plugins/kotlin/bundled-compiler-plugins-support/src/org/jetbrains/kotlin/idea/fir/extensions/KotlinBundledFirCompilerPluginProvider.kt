@@ -20,6 +20,8 @@ import java.nio.file.Path
  *
  * WARNING: This is a highly experimental API with no stability guarantees.
  * It will most definitely be a subject of change in the future.
+ *
+ * @see CompilerPluginRegistrarUtils
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal

@@ -15,9 +15,6 @@ import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverComponentRegistrar
 import org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingK2CompilerPluginRegistrar
 import org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationComponentRegistrar
 import java.nio.file.Path
-import java.util.zip.ZipFile
-import kotlin.io.path.extension
-import kotlin.io.path.notExists
 import kotlin.reflect.KClass
 
 /**
@@ -91,26 +88,10 @@ enum class KotlinK2BundledCompilerPlugins(
             ?: error("Unable to find .jar for '$registrarClassName' registrar in IDE distribution")
 
     companion object {
-        private val COMPILER_PLUGIN_REGISTRAR_FILES: Set<String> = setOf(
-            "META-INF/services/org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar",   // default registrar location
-            "META-INF/services/org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar",        // old registrar location, see KT-52665
-        )
-
         internal fun findCorrespondingBundledPlugin(originalJar: Path): KotlinK2BundledCompilerPlugins? {
-            val compilerPluginRegistrarContent =
-                COMPILER_PLUGIN_REGISTRAR_FILES.firstNotNullOfOrNull { readFileContentFromJar(originalJar, it) } ?: return null
+            val compilerPluginRegistrarContent = CompilerPluginRegistrarUtils.readRegistrarContent(originalJar) ?: return null
 
             return KotlinK2BundledCompilerPlugins.entries.firstOrNull { it.registrarClassName in compilerPluginRegistrarContent }
         }
-    }
-}
-
-private fun readFileContentFromJar(jarFile: Path, pathInJar: String): String? {
-    if (jarFile.notExists() || jarFile.extension != "jar") return null
-
-    ZipFile(jarFile.toFile()).use { zipFile ->
-        val entry = zipFile.getEntry(pathInJar) ?: return null
-
-        return zipFile.getInputStream(entry).bufferedReader().use { it.readText() }
     }
 }
