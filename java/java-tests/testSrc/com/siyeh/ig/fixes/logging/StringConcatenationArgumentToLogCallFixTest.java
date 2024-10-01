@@ -55,6 +55,7 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
   public void testMessageFormatMoreArguments() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.message.format.call.quickfix")); }
   public void testMessageFormatFormatter() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.message.format.call.quickfix")); }
   public void testSimpleConcatenationInsideMethod() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix")); }
+  public void testConcatenationMessageFormat() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.message.format.call.quickfix")); }
 
   public void testSimpleStringFormat() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
   public void testStringFormatWithWidth() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
@@ -63,6 +64,7 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
   public void testLessArgumentsStringFormat() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
   public void testMoreArgumentsStringFormat() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
   public void testPreviousArgumentStringFormat() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
+  public void testConcatenationStringFormat() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
 
 
   @Override

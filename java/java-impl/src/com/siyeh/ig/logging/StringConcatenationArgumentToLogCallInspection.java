@@ -467,10 +467,14 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
         return null;
       }
       PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
-      if (!(arguments[0] instanceof PsiLiteralExpression literalExpression && literalExpression.getValue() instanceof String pattern)) {
-        return null;
-      }
-
+      if (arguments.length == 0) return null;
+      PsiExpression firstArgument = arguments[0];
+      if (firstArgument == null) return null;
+      TextInfo textInfo = getTextInfo(firstArgument);
+      if (textInfo == null) return null;
+      String pattern = textInfo.formattedString();
+      String text = textInfo.text();
+      if (pattern == null || text.isEmpty()) return null;
       MessageFormatUtil.MessageFormatResult result = MessageFormatUtil.checkFormat(pattern);
       if (!result.valid()) {
         return null;
@@ -488,7 +492,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
           return null;
         }
 
-        TextRange actualRange = ExpressionUtils.findStringLiteralRange(literalExpression, placeholder.range().getStartOffset(),
+        TextRange actualRange = ExpressionUtils.findStringLiteralRange(firstArgument, placeholder.range().getStartOffset(),
                                                                  placeholder.range().getEndOffset());
         if (actualRange == null) {
           return null;
@@ -500,8 +504,33 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       if (argumentIndexes.size() != arguments.length - 1) {
         return null;
       }
-      return new MessageFormatArgumentToLogCallFix(mapping, literalExpression.getText());
+      return new MessageFormatArgumentToLogCallFix(mapping, text);
     }
+  }
+
+  private record TextInfo(String text, String formattedString) {
+  }
+
+  private static @Nullable TextInfo getTextInfo(@NotNull PsiExpression expression) {
+    String text = null;
+    String formattedString = null;
+    if (expression instanceof PsiLiteralExpression literalExpression) {
+      if (!(literalExpression.getValue() instanceof String value)) {
+        return null;
+      }
+      formattedString = value;
+      text = literalExpression.getText();
+    }
+    if (expression instanceof PsiPolyadicExpression polyadicExpression && ExpressionUtils.hasStringType(polyadicExpression)) {
+      PsiConstantEvaluationHelper constantEvaluationHelper =
+        JavaPsiFacade.getInstance(expression.getProject()).getConstantEvaluationHelper();
+      Object o = constantEvaluationHelper.computeConstantExpression(polyadicExpression);
+      if (o instanceof String value) {
+        formattedString = value;
+        text = polyadicExpression.getText();
+      }
+    }
+    return new TextInfo(text, formattedString);
   }
 
   private static class StringFormatArgumentToLogCallFix extends FormatArgumentToLogCallFix {
@@ -527,17 +556,19 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
         return null;
       }
       PsiExpression expression = formatArgument.getExpression();
-      if (!(expression instanceof PsiLiteralExpression literalExpression && literalExpression.getText() != null)) {
+      if (expression == null) return null;
+      TextInfo textInfo = getTextInfo(expression);
+      if (textInfo == null) return null;
+      String formattedString = textInfo.formattedString();
+      String text = textInfo.text();
+      if (formattedString == null || text == null) {
         return null;
       }
       PsiExpression[] arguments = Objects.requireNonNull(callExpression.getArgumentList()).getExpressions();
       int argumentCount = arguments.length - formatArgument.getIndex();
-      if (!(literalExpression.getValue() instanceof String formatterString)) {
-        return null;
-      }
       FormatDecode.Validator[] validators;
       try {
-        validators = FormatDecode.decodeNoVerify(formatterString, argumentCount);
+        validators = FormatDecode.decodeNoVerify(formattedString, argumentCount);
       }
       catch (FormatDecode.IllegalFormatException e) {
         return null;
@@ -566,7 +597,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
         result.put(range, index);
       }
 
-      return new StringFormatArgumentToLogCallFix(result, literalExpression.getText());
+      return new StringFormatArgumentToLogCallFix(result, text);
     }
 
     private static boolean possibleToConvert(@NotNull FormatDecode.Validator validator, PsiExpression argument) {
