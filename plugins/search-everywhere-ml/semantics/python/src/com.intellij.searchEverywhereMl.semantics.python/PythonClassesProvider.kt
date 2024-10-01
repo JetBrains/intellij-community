@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.PyClass
 
 internal class PythonClassesProvider : ClassesProvider {
   override fun extract(fileContent: FileContent): List<IndexableClass> {
-    return fileContent.psiFile.childrenOfType<PyClass>()
+    return fileContent.psiFile.childrenOfType<PyClass>().asSequence()
       .mapNotNull { c -> c.name }
       .filter { name -> name != ANONYMOUS_ID }
       .map { name -> IndexableClass(EntityId(name)) }
