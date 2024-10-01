@@ -2352,6 +2352,7 @@ com.intellij.vcsUtil.VcsSelectionProvider
 f:com.intellij.vcsUtil.VcsUIUtil
 - sf:INSTANCE:com.intellij.vcsUtil.VcsUIUtil
 - f:showPopupAbove(com.intellij.openapi.ui.popup.JBPopup,java.awt.Component):V
+- f:showPopupAbove(com.intellij.openapi.ui.popup.JBPopup,java.awt.Component,java.lang.Integer):V
 f:com.intellij.vcsUtil.VcsUIUtilKt
 - sf:showAbove(com.intellij.openapi.ui.popup.JBPopup,java.awt.Component):V
 f:com.intellij.vcsUtil.VcsUtil
