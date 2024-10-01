@@ -1,0 +1,40 @@
+PyFile:TypeAliasStatementInFunctionBody.py
+  PyFunction('foo')
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('foo')
+    PyParameterList
+      PsiElement(Py:LPAR)('(')
+      PsiElement(Py:RPAR)(')')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyStatementList
+      PyTypeAliasStatement
+        PsiElement(Py:TYPE_KEYWORD)('type')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:IDENTIFIER)('Inner')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:EQ)('=')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: str
+          PsiElement(Py:IDENTIFIER)('str')
+      PsiWhiteSpace('\n    ')
+      PyFunction('bar')
+        PsiElement(Py:DEF_KEYWORD)('def')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:IDENTIFIER)('bar')
+        PyParameterList
+          PsiElement(Py:LPAR)('(')
+          PsiElement(Py:RPAR)(')')
+        PsiElement(Py:COLON)(':')
+        PsiWhiteSpace('\n        ')
+        PyStatementList
+          PyTypeAliasStatement
+            PsiElement(Py:TYPE_KEYWORD)('type')
+            PsiWhiteSpace(' ')
+            PsiElement(Py:IDENTIFIER)('innerBar')
+            PsiWhiteSpace(' ')
+            PsiElement(Py:EQ)('=')
+            PsiWhiteSpace(' ')
+            PyReferenceExpression: int
+              PsiElement(Py:IDENTIFIER)('int')

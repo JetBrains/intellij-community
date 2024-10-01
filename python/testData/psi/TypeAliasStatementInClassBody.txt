@@ -1,0 +1,38 @@
+PyFile:TypeAliasStatementInClassBody.py
+  PyClass: Foo
+    PsiElement(Py:CLASS_KEYWORD)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('Foo')
+    PyArgumentList
+      <empty list>
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyStatementList
+      PyTypeAliasStatement
+        PsiElement(Py:TYPE_KEYWORD)('type')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:IDENTIFIER)('MyInt')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:EQ)('=')
+        PsiWhiteSpace(' ')
+        PyReferenceExpression: int
+          PsiElement(Py:IDENTIFIER)('int')
+      PsiWhiteSpace('\n\n    ')
+      PyClass: Inner
+        PsiElement(Py:CLASS_KEYWORD)('class')
+        PsiWhiteSpace(' ')
+        PsiElement(Py:IDENTIFIER)('Inner')
+        PyArgumentList
+          <empty list>
+        PsiElement(Py:COLON)(':')
+        PsiWhiteSpace('\n        ')
+        PyStatementList
+          PyTypeAliasStatement
+            PsiElement(Py:TYPE_KEYWORD)('type')
+            PsiWhiteSpace(' ')
+            PsiElement(Py:IDENTIFIER)('MyInner')
+            PsiWhiteSpace(' ')
+            PsiElement(Py:EQ)('=')
+            PsiWhiteSpace(' ')
+            PyReferenceExpression: str
+              PsiElement(Py:IDENTIFIER)('str')
