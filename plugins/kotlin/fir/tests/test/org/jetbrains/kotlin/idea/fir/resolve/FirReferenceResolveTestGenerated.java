@@ -1017,6 +1017,11 @@ public abstract class FirReferenceResolveTestGenerated extends AbstractFirRefere
             runTest("../../idea/tests/testData/resolve/references/TypeArgumentBeforeDot2.kt");
         }
 
+        @TestMetadata("TypeArgumentOfUndefinedCode.kt")
+        public void testTypeArgumentOfUndefinedCode() throws Exception {
+            runTest("../../idea/tests/testData/resolve/references/TypeArgumentOfUndefinedCode.kt");
+        }
+
         @TestMetadata("TypeArgumentUnresolvedClass.kt")
         public void testTypeArgumentUnresolvedClass() throws Exception {
             runTest("../../idea/tests/testData/resolve/references/TypeArgumentUnresolvedClass.kt");
