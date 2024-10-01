@@ -7,7 +7,7 @@ LangString installing_product ${LANG_SIMPCHINESE} "  正在安装"
 LangString installation_options ${LANG_SIMPCHINESE} "  安装选项"
 LangString installation_options_prompt ${LANG_SIMPCHINESE} "配置您的 ${MUI_PRODUCT} 安装"
 LangString create_desktop_shortcut ${LANG_SIMPCHINESE} "创建桌面快捷方式"
-LangString update_path_var_group ${LANG_SIMPCHINESE} "更新 PATH 变量(需要重新启动)"
+LangString update_path_var_group ${LANG_SIMPCHINESE} "更新 PATH 变量(需要重启)"
 LangString update_path_var_label ${LANG_SIMPCHINESE} '将 "bin" 文件夹添加到 PATH'
 LangString update_context_menu_group ${LANG_SIMPCHINESE} "更新上下文菜单"
 LangString update_context_menu_label ${LANG_SIMPCHINESE} '添加"将文件夹打开为项目"'
