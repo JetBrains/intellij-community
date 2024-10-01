@@ -10,6 +10,7 @@ import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.Java11Shim
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import java.lang.management.ManagementFactory
 
 @TestOnly
 @Internal
@@ -26,6 +27,7 @@ fun initializeTestEnvironment() {
   if (isTestEnvironmentInitialized) {
     return
   }
+  checkAddOpens()
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true) // from UsefulTestCase
   Logger.setFactory(TestLoggerFactory::class.java) // from UsefulTestCase
   // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
@@ -35,4 +37,11 @@ fun initializeTestEnvironment() {
   StartUpMeasurer.disable() // from TestApplicationManager
   PlatformPrefix.autodetectPlatformPrefix() // from TestApplicationManager
   isTestEnvironmentInitialized = true
+}
+
+fun checkAddOpens() {
+  val jvmArguments = ManagementFactory.getRuntimeMXBean().inputArguments;
+  if ("--add-opens=java.base/java.lang=ALL-UNNAMED" !in jvmArguments) {
+    throw AssertionError("Required --add-opens options are missing in command line. Make sure that Plugin DevKit is installed and enabled.")
+  }
 }
