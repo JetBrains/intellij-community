@@ -147,6 +147,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     parseTypeParameterList();
     checkMatches(PyTokenTypes.EQ, PyParsingBundle.message("PARSE.eq.expected"));
     myContext.getExpressionParser().parseExpression();
+    checkEndOfStatement();
     mark.done(PyElementTypes.TYPE_ALIAS_STATEMENT);
     return true;
   }
