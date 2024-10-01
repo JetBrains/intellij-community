@@ -25,8 +25,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.awt.im.InputMethodRequests;
-import java.beans.PropertyChangeListener;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 
@@ -48,10 +49,9 @@ class JBCefOsrComponent extends JPanel {
 
   private final @NotNull AtomicLong myScheduleResizeMs = new AtomicLong(-1);
   private @Nullable Alarm myResizeAlarm;
-  private @Nullable Alarm myGraphicsConfigurationAlarm;
+  private final @NotNull Alarm myGraphicsConfigurationAlarm = new Alarm();
   private @NotNull Disposable myDisposable;
   private @NotNull MouseWheelEventsAccumulator myWheelEventsAccumulator;
-  private @Nullable PropertyChangeListener myGraphicsConfigurationListener;
 
   JBCefOsrComponent(boolean isMouseWheelEventEnabled) {
     setPreferredSize(JBCefBrowser.DEF_PREF_SIZE);
@@ -79,6 +79,30 @@ class JBCefOsrComponent extends JPanel {
     });
 
     addInputMethodListener(myInputMethodAdapter);
+
+    // This delay is a workaround for JBR-7335.
+    // After the device configuration is changed, the browser reacts to it whether it receives a notification from the client or not.
+    // An additional notification during this time can break the internal state of the browser, which leads to the picture freeze.
+    // The purpose of this delay is to give the browser a chance to handle the graphics configuration change before we update the scale on
+    // our side.
+    AtomicBoolean scaleInitialized = new AtomicBoolean(false);
+    addPropertyChangeListener("graphicsConfiguration", e -> {
+      if (myGraphicsConfigurationAlarm.isDisposed())
+        return;
+
+      myGraphicsConfigurationAlarm.cancelAllRequests();
+      myGraphicsConfigurationAlarm.addRequest(() -> {
+        double oldScale = myScale;
+        double oldDensity = myRenderHandler.getPixelDensity();
+        double pixelDensity = JreHiDpiUtil.isJreHiDPIEnabled() ? JCefAppConfig.getDeviceScaleFactor(this) : 1.0;
+        myScale = (JreHiDpiUtil.isJreHiDPIEnabled() ? 1.0 : JCefAppConfig.getDeviceScaleFactor(this)) *
+                  UISettings.getInstance().getIdeScale();
+        myRenderHandler.setScreenInfo(pixelDensity, myScale);
+        if (oldScale != myScale || oldDensity != pixelDensity) {
+          myBrowser.notifyScreenInfoChanged();
+        }
+      }, scaleInitialized.getAndSet(true) ? 1000 : 0);
+    });
   }
 
   public void setBrowser(@NotNull CefBrowser browser) {
@@ -128,35 +152,13 @@ class JBCefOsrComponent extends JPanel {
     if (!JBCefBrowserBase.isCefBrowserCreationStarted(myBrowser)) {
       myBrowser.createImmediately();
     }
-
-    // It's a workaround for JBR-7335.
-    // After the device configuration is changed, the browser reacts to it whether it receives a notification from the client or not.
-    // An additional notification during this time can break the internal state of the browser, which leads to the picture freeze.
-    // The purpose of this delay is to give the browser a chance to handle the graphics configuration change before we update the scale on
-    // our side.
-    myGraphicsConfigurationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myDisposable);
-    myGraphicsConfigurationListener = e -> {
-      myGraphicsConfigurationAlarm.cancelAllRequests();
-      myGraphicsConfigurationAlarm.addRequest(() -> {
-        double oldScale = myScale;
-        double oldDensity = myRenderHandler.getPixelDensity();
-        double pixelDensity = JreHiDpiUtil.isJreHiDPIEnabled() ? JCefAppConfig.getDeviceScaleFactor(this) : 1.0;
-        myScale = (JreHiDpiUtil.isJreHiDPIEnabled() ? 1.0 : JCefAppConfig.getDeviceScaleFactor(this)) *
-                  UISettings.getInstance().getIdeScale();
-        myRenderHandler.setScreenInfo(pixelDensity, myScale);
-        if (oldScale != myScale || oldDensity != pixelDensity) {
-          myBrowser.notifyScreenInfoChanged();
-        }
-      }, 1000);
-    };
-    addPropertyChangeListener("graphicsConfiguration", myGraphicsConfigurationListener);
   }
 
   @Override
   public void removeNotify() {
-    removePropertyChangeListener("graphicsConfiguration", myGraphicsConfigurationListener);
     super.removeNotify();
     Disposer.dispose(myDisposable);
+    Disposer.dispose(myGraphicsConfigurationAlarm);
   }
 
   @Override
