@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.actions
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -31,14 +32,21 @@ import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.replaceArgumentsWithStarProjections
 
 /**
- * Implementation in K2: [org.jetbrains.kotlin.idea.quickfix.importFix.ExpressionImportWeigher]
+ * Implementation in K2: [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ExpressionImportWeigher]
  */
-internal interface ExpressionWeigher {
+interface ExpressionWeigher {
 
     fun weigh(descriptor: DeclarationDescriptor): Int
 
     companion object {
-        fun createWeigher(element: PsiElement?): ExpressionWeigher =
+        internal fun createWeigher(element: PsiElement?): ExpressionWeigher {
+            for (factory in ExpressionWeigherFactory.EP_NAME.extensionList) {
+                factory.createWeigher(element)?.let { return it }
+            }
+            return createDefaultWeigher(element)
+        }
+        
+        internal fun createDefaultWeigher(element: PsiElement?): ExpressionWeigher =
             when (element) {
                 is KtNameReferenceExpression -> CallExpressionWeigher(element)
                 is KtOperationReferenceExpression -> OperatorExpressionWeigher(element)
@@ -275,4 +283,13 @@ internal class OperatorExpressionWeigher(element: KtOperationReferenceExpression
         return weight
     }
 
+}
+
+interface ExpressionWeigherFactory {
+    fun createWeigher(element: PsiElement?): ExpressionWeigher?
+
+    companion object {
+        internal val EP_NAME: ExtensionPointName<ExpressionWeigherFactory> =
+            ExtensionPointName.create("org.jetbrains.kotlin.expressionWeigherFactory")
+    }
 }

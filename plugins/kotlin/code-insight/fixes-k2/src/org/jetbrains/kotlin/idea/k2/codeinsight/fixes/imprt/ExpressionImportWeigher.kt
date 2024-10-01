@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -28,7 +29,15 @@ interface ExpressionImportWeigher {
 
     companion object {
         context(KaSession)
-        fun createWeigher(element: PsiElement?): ExpressionImportWeigher =
+        fun createWeigher(element: PsiElement?): ExpressionImportWeigher {
+            for (factory in ExpressionImportWeigherFactory.EP_NAME.extensionList) {
+                factory.createWeigher(element)?.let { return it }
+            }
+            return createDefaultWeigher(element)
+        }
+
+        context(KaSession)
+        private fun createDefaultWeigher(element: PsiElement?): ExpressionImportWeigher =
             when (element) {
                 is KtNameReferenceExpression -> CallExpressionImportWeigher(
                     token,
@@ -236,5 +245,15 @@ internal class OperatorExpressionImportWeigher(
         }
 
         return weight
+    }
+}
+
+interface ExpressionImportWeigherFactory {
+    context(KaSession)
+    fun createWeigher(element: PsiElement?): ExpressionImportWeigher?
+
+    companion object {
+        internal val EP_NAME: ExtensionPointName<ExpressionImportWeigherFactory> =
+            ExtensionPointName.create("org.jetbrains.kotlin.expressionImportWeigherFactory")
     }
 }
