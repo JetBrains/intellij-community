@@ -58,6 +58,38 @@ object MavenEelUtil : MavenUtil() {
   }
 
   @JvmStatic
+  fun EelApi.resolveUserSettingsFile(overriddenUserSettingsFile: String?): Path {
+    if (overriddenUserSettingsFile.isNullOrEmpty()) {
+      return resolveM2Dir().resolve(SETTINGS_XML)
+    }
+    else {
+      return Path.of(overriddenUserSettingsFile)
+    }
+  }
+
+  // TODO: use eel?
+  @JvmStatic
+  fun EelApi.resolveGlobalSettingsFile(mavenHomeType: StaticResolvedMavenHomeType): Path? {
+    val directory = getMavenHomeFile(mavenHomeType)
+    return directory?.resolve(CONF_DIR)?.resolve(SETTINGS_XML)
+  }
+
+  @JvmStatic
+  fun EelApi.resolveRepository(
+    overriddenRepository: String?,
+    mavenHome: StaticResolvedMavenHomeType,
+    overriddenUserSettingsFile: String?,
+  ): Path {
+    if (overriddenRepository != null && !isEmptyOrSpaces(overriddenRepository)) {
+      return Path.of(overriddenRepository)
+    }
+    return doResolveLocalRepository(
+      this.resolveUserSettingsFile(overriddenUserSettingsFile),
+      this.resolveGlobalSettingsFile(mavenHome)
+    ) ?: resolveM2Dir().resolve(REPOSITORY_DIR)
+  }
+
+  @JvmStatic
   fun <T> resolveUsingEelBlocking(project: Project?, ordinary: Supplier<T>, eel: Function<EelApi, T>): T {
     return runBlockingMaybeCancellable { resolveUsingEel(project, ordinary) { eel.apply(it) } }
   }
@@ -67,8 +99,11 @@ object MavenEelUtil : MavenUtil() {
    */
   @JvmStatic
   fun getLocalRepoForUserPreview(
-    project: Project?, overriddenLocalRepository: String?, mavenHome: MavenHomeType,
-    mavenSettingsFile: String?, mavenConfig: MavenConfig?,
+    project: Project?,
+    overriddenLocalRepository: String?,
+    mavenHome: MavenHomeType,
+    mavenSettingsFile: String?,
+    mavenConfig: MavenConfig?,
   ): Path {
 
     val staticMavenHome = mavenHome.staticOrBundled()
@@ -77,8 +112,11 @@ object MavenEelUtil : MavenUtil() {
 
   @JvmStatic
   fun getLocalRepo(
-    project: Project?, overriddenLocalRepository: String?, mavenHome: StaticResolvedMavenHomeType,
-    mavenSettingsFile: String?, mavenConfig: MavenConfig?,
+    project: Project?,
+    overriddenLocalRepository: String?,
+    mavenHome: StaticResolvedMavenHomeType,
+    mavenSettingsFile: String?,
+    mavenConfig: MavenConfig?,
   ): Path {
     var settingPath = mavenSettingsFile
     if (mavenSettingsFile.isNullOrBlank()) {
@@ -86,7 +124,7 @@ object MavenEelUtil : MavenUtil() {
     }
     return resolveUsingEelBlocking(project,
                                    { resolveLocalRepository(project, overriddenLocalRepository, mavenHome, settingPath) },
-                                   { resolveLocalRepository(project, overriddenLocalRepository, mavenHome, settingPath) })
+                                   { it.resolveRepository(overriddenLocalRepository, mavenHome, settingPath) })
   }
 
   @JvmStatic
