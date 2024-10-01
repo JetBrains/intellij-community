@@ -43,6 +43,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSyn
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectStoreWithJpsContentReader
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import io.opentelemetry.api.metrics.Meter
+import org.jdom.Attribute
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.util.JpsPathUtil
@@ -201,6 +202,10 @@ private class HalfDirectJpsStorageContentWriter(
 
     fun saveComponent(componentName: String, componentTag: Element?) {
       if (componentTag != null) {
+        if (componentTag.name != "component") {
+          componentTag.attributes.add(0, Attribute("name", componentTag.name))
+          componentTag.name = "component"
+        }
         components[componentName] = componentTag
       }
     }
