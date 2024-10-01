@@ -27,6 +27,7 @@ import com.intellij.util.net.ssl.CertificateWrapper.CommonField
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import fleet.util.logging.logger
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Component
@@ -401,27 +402,32 @@ internal class CertificateWarningDialog(
   private fun getCertificateErrorsMap(): Map<X509Certificate, List<CertificateError>> {
     val result = certificates.associateWith { mutableListOf<CertificateError>() }.toMutableMap()
     val errorMessage = "unable to find valid certification path"
-    val isUntrusted = try {
+    val isPureUntrustedServer = try {
       manager.checkServerTrusted(certificates.toTypedArray(), authType)
       false
     }
     catch (e: CertificateException) {
-      e.message?.contains(errorMessage) == true
+      val hasPathError = e.message?.contains(errorMessage) == true
+      if (!hasPathError) logger<CertificateWarningDialog>().info("Certificate validation message: ${e.message}")
+      hasPathError
     }
-    certificates.reversed().forEach { cert ->
+    val reversedCertList = certificates.reversed()
+    for (i in reversedCertList.indices) {
+      val cert = reversedCertList[i]
       val model = CertificateWrapper(cert)
       val errors = result[cert]!!
-      if (model.isSelfSigned) errors.add(CertificateError.SELF_SIGNED)
-      if (model.isNotYetValid) errors.add(CertificateError.NOT_YET_VALID)
-      if (model.isExpired) errors.add(CertificateError.EXPIRED)
-      if (isUntrusted && !errors.contains(CertificateError.SELF_SIGNED)) {
-        try {
-          manager.checkServerTrusted(arrayOf(cert), authType)
+      if (i == reversedCertList.size - 1 && result.values.flatten().isNotEmpty()) errors.add(CertificateError.UNTRUSTED_AUTHORITY)
+      try {
+        manager.checkServerTrusted(arrayOf(cert), authType)
+      }
+      catch (_: CertificateException) {
+        if (isPureUntrustedServer && !model.isSelfSigned && !result.values.flatten().contains(CertificateError.UNTRUSTED_AUTHORITY)) {
+          errors.add(CertificateError.UNTRUSTED_AUTHORITY)
         }
-        catch (e: CertificateException) {
-          if (e.message?.contains(errorMessage) == true) {
-            errors.add(CertificateError.UNTRUSTED_AUTHORITY)
-          }
+        else {
+          if (model.isSelfSigned) errors.add(CertificateError.SELF_SIGNED)
+          if (model.isNotYetValid) errors.add(CertificateError.NOT_YET_VALID)
+          if (model.isExpired) errors.add(CertificateError.EXPIRED)
         }
       }
     }
