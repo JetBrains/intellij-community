@@ -37,14 +37,15 @@ private const val THREADING_SUPPORT_FQN = "com.intellij.openapi.application.impl
 internal class DebugeeIdeStateRenderer : ExtraDebugNodesProvider {
   override fun addExtraNodes(evaluationContext: EvaluationContext, children: XValueChildrenList) {
     if (!Registry.`is`("devkit.debugger.show.ide.state")) return
+    val debugProcess = evaluationContext.debugProcess as? DebugProcessImpl ?: return
     val supportClass = try {
-      evaluationContext.debugProcess.findClass(evaluationContext, SUPPORT_CLASS_FQN, null) ?: return
+      debugProcess.findLoadedClass(evaluationContext, SUPPORT_CLASS_FQN, evaluationContext.classLoader) ?: return
     }
     catch (_: EvaluateException) {
       return
     }
     val getStateMethod = DebuggerUtils.findMethod(supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE) ?: return
-    val state = evaluationContext.debugProcess.invokeMethod(evaluationContext, supportClass as ClassType, getStateMethod, emptyList<Value>()) as ObjectReference?
+    val state = debugProcess.invokeMethod(evaluationContext, supportClass as ClassType, getStateMethod, emptyList<Value>()) as ObjectReference?
     if (state == null) return
     val stateClass = state.referenceType()
 

@@ -1715,14 +1715,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                  ClassLoaderReference classLoader) throws EvaluateException {
     try {
       DebuggerManagerThreadImpl.assertIsManagerThread();
-      ReferenceType result;
-      List<ReferenceType> types = ContainerUtil.filter(getCurrentVm(evaluationContext).classesByName(className), ReferenceType::isPrepared);
-      // first try to quickly find the equal classloader only
-      result = ContainerUtil.find(types, refType -> Objects.equals(classLoader, refType.classLoader()));
-      // now do the full visibility check
-      if (result == null && classLoader != null) {
-        result = ContainerUtil.find(types, refType -> isVisibleFromClassLoader(classLoader, refType));
-      }
+      ReferenceType result = findLoadedClass(evaluationContext, className, classLoader);
       if (result == null && evaluationContext != null) {
         EvaluationContextImpl evalContext = (EvaluationContextImpl)evaluationContext;
         if (evalContext.isAutoLoadClasses()) {
@@ -1734,6 +1727,19 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
+  }
+
+  public @Nullable ReferenceType findLoadedClass(@Nullable EvaluationContext evaluationContext,
+                                                 String className,
+                                                 ClassLoaderReference classLoader) {
+    List<ReferenceType> types = ContainerUtil.filter(getCurrentVm(evaluationContext).classesByName(className), ReferenceType::isPrepared);
+    // first try to quickly find the equal classloader only
+    ReferenceType result = ContainerUtil.find(types, refType -> Objects.equals(classLoader, refType.classLoader()));
+    // now do the full visibility check
+    if (result == null && classLoader != null) {
+      result = ContainerUtil.find(types, refType -> isVisibleFromClassLoader(classLoader, refType));
+    }
+    return result;
   }
 
   private VirtualMachineProxyImpl getCurrentVm(@Nullable EvaluationContext evaluationContext) {
