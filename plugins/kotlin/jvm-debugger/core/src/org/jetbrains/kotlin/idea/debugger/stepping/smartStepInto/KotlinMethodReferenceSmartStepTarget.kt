@@ -2,10 +2,10 @@
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.engine.MethodFilter
-import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.core.getClassName
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
@@ -26,5 +26,8 @@ class KotlinMethodReferenceSmartStepTarget(
     }
 
     override fun getIcon(): Icon? = KotlinIcons.FUNCTION
-    override fun getClassName(): String? = runReadAction { declarationPtr.element?.getClassName() }
+    override fun getClassName(): String? {
+        val declaration = declarationPtr.getElementInReadAction() ?: return null
+        return runDumbAnalyze(declaration, fallback = null) { declaration.getClassName() }
+    }
 }

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -46,19 +47,17 @@ fun isBreakpointApplicable(file: VirtualFile, line: Int, project: Project, check
     }
 }
 
-internal fun KtElement.hasExecutableCodeInsideOnLine(
+internal suspend fun KtElement.hasExecutableCodeInsideOnLine(
     file: VirtualFile, line: Int, project: Project, checker: (PsiElement) -> ApplicabilityResult
-): Boolean {
-    val document = FileDocumentManager.getInstance().getDocument(file) ?: return false
-    return runReadAction {
-        val minOffset = max(startOffset, document.getLineStartOffset(line))
-        val maxOffset = min(endOffset, document.getLineEndOffset(line))
+): Boolean = readAction {
+    val document = FileDocumentManager.getInstance().getDocument(file) ?: return@readAction false
+    val minOffset = max(startOffset, document.getLineStartOffset(line))
+    val maxOffset = min(endOffset, document.getLineEndOffset(line))
 
-        hasExecutableCodeImpl(checker, visitElements = { processor ->
-            (XDebuggerUtil.getInstance() as XDebuggerUtilImpl).iterateOffsetRange(project, document, minOffset, maxOffset, processor)
-        }) {
-            getTopmostParentWithinOffsetRangeOrSelf(it, minOffset, maxOffset)
-        }
+    hasExecutableCodeImpl(checker, visitElements = { processor ->
+        (XDebuggerUtil.getInstance() as XDebuggerUtilImpl).iterateOffsetRange(project, document, minOffset, maxOffset, processor)
+    }) {
+        getTopmostParentWithinOffsetRangeOrSelf(it, minOffset, maxOffset)
     }
 }
 

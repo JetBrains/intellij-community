@@ -16,7 +16,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
@@ -134,9 +133,9 @@ private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
 }
 
 private fun functionNameByArgument(argument: KtExpression): String? =
-    analyze(argument) {
-        val function = getFunctionSymbol(argument) as? KaNamedFunctionSymbol ?: return null
-        return function.name.asString()
+    runDumbAnalyze(argument, fallback = null) f@{
+        val function = getFunctionSymbol(argument) as? KaNamedFunctionSymbol ?: return@f null
+        function.name.asString()
     }
 
 private fun Location.visibleVariables(debugProcess: DebugProcessImpl): List<LocalVariable> {

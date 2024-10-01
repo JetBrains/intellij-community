@@ -26,11 +26,11 @@ import com.sun.jdi.event.*
 import com.sun.jdi.request.EventRequest
 import com.sun.jdi.request.MethodEntryRequest
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
+import org.jetbrains.kotlin.idea.debugger.base.util.runSmartAnalyze
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import javax.swing.Icon
@@ -145,16 +145,14 @@ class KotlinFieldBreakpoint(
     }
 
     private fun computeBreakpointType(property: KtCallableDeclaration): BreakpointType {
-        return runReadAction {
-            analyze(property) {
-                val hasBackingField = when (val symbol = property.symbol) {
-                    is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.hasBackingField ?: false
-                    is KaKotlinPropertySymbol -> symbol.hasBackingField
-                    else -> false
-                }
-
-                if (hasBackingField) BreakpointType.FIELD else BreakpointType.METHOD
+        return runSmartAnalyze(property) {
+            val hasBackingField = when (val symbol = property.symbol) {
+                is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.hasBackingField ?: false
+                is KaKotlinPropertySymbol -> symbol.hasBackingField
+                else -> false
             }
+
+            if (hasBackingField) BreakpointType.FIELD else BreakpointType.METHOD
         }
     }
 

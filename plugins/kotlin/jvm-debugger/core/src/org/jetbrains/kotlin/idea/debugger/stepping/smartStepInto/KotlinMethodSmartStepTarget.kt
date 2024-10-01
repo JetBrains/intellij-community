@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.core.getClassName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
@@ -81,7 +82,10 @@ class KotlinMethodSmartStepTarget(
     }
 
     override fun getIcon(): Icon = if (methodInfo.isExtension) KotlinIcons.EXTENSION_FUNCTION else KotlinIcons.FUNCTION
-    override fun getClassName(): String? = runReadAction { declarationPtr?.element?.getClassName() }
+    override fun getClassName(): String? {
+        val declaration = getDeclaration() ?: return null
+        return runDumbAnalyze(declaration, fallback = null) { declaration.getClassName() }
+    }
 
     override fun needForceSmartStepInto() = methodInfo.isInvoke && methodInfo.isSuspend
 

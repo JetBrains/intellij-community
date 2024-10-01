@@ -13,11 +13,11 @@ import com.intellij.util.Range
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
+import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
@@ -55,8 +55,9 @@ open class KotlinMethodFilter(
 
     private fun declarationMatches(process: DebugProcessImpl, location: Location): Boolean {
         val currentDeclaration = getCurrentDeclaration(process.positionManager, location) ?: return false
-        analyze(currentDeclaration) {
-            return declarationMatches(currentDeclaration)
+        // Stops at first location in dumb mode
+        return runDumbAnalyze(currentDeclaration, fallback = true) {
+            declarationMatches(currentDeclaration)
         }
     }
 

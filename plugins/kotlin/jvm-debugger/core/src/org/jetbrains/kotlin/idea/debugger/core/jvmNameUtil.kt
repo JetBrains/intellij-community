@@ -2,10 +2,8 @@
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.util.asSafely
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -42,11 +40,11 @@ context(KaSession)
 @ApiStatus.Internal
 fun KaDeclarationSymbol.isInlineClass(): Boolean = this is KaNamedClassSymbol && this.isInline
 
+context(KaSession)
 @ApiStatus.Internal
-@RequiresReadLock
-fun KtDeclaration.getClassName(): String? = analyze(this) {
-    val symbol = symbol as? KaFunctionSymbol ?: return@analyze null
-    symbol.getJvmInternalClassName()?.internalNameToFqn()
+fun KtDeclaration.getClassName(): String? {
+    val symbol = symbol as? KaFunctionSymbol ?: return null
+    return symbol.getJvmInternalClassName()?.internalNameToFqn()
 }
 
 context(KaSession)

@@ -53,7 +53,6 @@ import com.jetbrains.jdi.ReferenceTypeImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import kotlinx.coroutines.*
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -374,10 +373,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         val notInlined = mutableListOf<T>()
         var innermostInlinedElement: T? = null
         for (expression in this) {
-            val isCrossinline = readAction {
-                analyze(expression) {
-                    getInlineArgumentSymbol(expression)?.isCrossinline
-                }
+            val isCrossinline = dumbAnalyze(expression, fallback = false) {
+                getInlineArgumentSymbol(expression)?.isCrossinline
             }
             if (isCrossinline != null && (!isCrossinline || isInlinedArgument(expression, location))) {
                 if (isInsideInlineArgument(expression, location, debugProcess as DebugProcessImpl)) {
@@ -436,10 +433,10 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     private fun KtFunction.getLambdaCallMethod(): KtCallExpression? = parentOfType<KtCallExpression>()
 
-    private fun KtCallExpression.getBytecodeMethodName(): String? = analyze(this) {
-        val resolvedCall = resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return null
-        return symbol.getByteCodeMethodName()
+    private fun KtCallExpression.getBytecodeMethodName(): String? = runDumbAnalyze(this, fallback = null) f@{
+        val resolvedCall = resolveToCall()?.successfulFunctionCallOrNull() ?: return@f null
+        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return@f null
+        symbol.getByteCodeMethodName()
     }
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String, isLambda: Boolean): Boolean {
@@ -470,24 +467,22 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             return null
         }
 
-        return readAction {
-            // To bring the list of fun literals into conformity with list of lambda-methods in bytecode above
-            // it is needed to filter out literals without executable code on current line.
-            val suitableFunLiterals = filter { it.hasExecutableCodeInsideOnLine(lineNumber) }
+        // To bring the list of fun literals into conformity with list of lambda-methods in bytecode above
+        // it is needed to filter out literals without executable code on current line.
+        val suitableFunLiterals = filter { it.hasExecutableCodeInsideOnLine(lineNumber) }
 
-            val methodIdx = lambdas.indexOf(method)
-            if (lambdas.size == suitableFunLiterals.size) {
-                // All lambdas on the line compiled into methods
-                return@readAction suitableFunLiterals[methodIdx]
-            }
-            // SAM lambdas compiled into methods, and other non-SAM lambdas on same line compiled into anonymous classes
-            suitableFunLiterals.getSamLambdaWithIndex(methodIdx)
+        val methodIdx = lambdas.indexOf(method)
+        if (lambdas.size == suitableFunLiterals.size) {
+            // All lambdas on the line compiled into methods
+            return suitableFunLiterals[methodIdx]
         }
+        // SAM lambdas compiled into methods, and other non-SAM lambdas on same line compiled into anonymous classes
+        return suitableFunLiterals.getSamLambdaWithIndex(methodIdx)
     }
 
-    private fun KtFunction.hasExecutableCodeInsideOnLine(lineNumber: Int): Boolean {
-        val file = containingFile.virtualFile
-        return hasExecutableCodeInsideOnLine(file, lineNumber, project) { element ->
+    private suspend fun KtFunction.hasExecutableCodeInsideOnLine(lineNumber: Int): Boolean {
+        val file = readAction { containingFile.virtualFile }
+        return hasExecutableCodeInsideOnLine(file, lineNumber, debugProcess.project) { element ->
             when (element) {
                 is KtNamedFunction -> ApplicabilityResult.UNKNOWN
                 is KtElement -> {
@@ -503,11 +498,11 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         } || hasImplicitReturnOnLine(this, lineNumber)
     }
 
-    private fun hasImplicitReturnOnLine(function: KtFunction, lineNumber: Int): Boolean {
-        if (function !is KtFunctionLiteral || function.getLineNumber(start = false) != lineNumber) {
+    private suspend fun hasImplicitReturnOnLine(function: KtFunction, lineNumber: Int): Boolean {
+        if (function !is KtFunctionLiteral || readAction { function.getLineNumber(start = false) } != lineNumber) {
             return false
         }
-        val isUnitReturnType = analyze(function) {
+        val isUnitReturnType = runDumbAnalyze(function, fallback = false) {
             val functionalType = function.functionType
             (functionalType as? KaFunctionType)?.returnType?.isUnitType == true
         }
@@ -516,14 +511,14 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             return false
         }
         // This check does not cover some more complex cases (e.g. "if" or "when" block expressions)
-        return function.lastStatementSkippingComments() !is KtReturnExpression
+        return readAction { function.lastStatementSkippingComments() } !is KtReturnExpression
     }
 
     private fun KtFunction.lastStatementSkippingComments(): KtElement? {
         return bodyBlockExpression?.childrenOfType<KtElement>()?.lastOrNull()
     }
 
-    private fun List<KtFunction>.getSamLambdaWithIndex(index: Int): KtFunction? {
+    private suspend fun List<KtFunction>.getSamLambdaWithIndex(index: Int): KtFunction? {
         var samLambdaCounter = 0
         for (literal in this) {
             if (literal.isSamLambda()) {
@@ -923,17 +918,17 @@ private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: In
     return targetClasses
 }
 
-private fun KtFunction.isSamLambda(): Boolean {
+private suspend fun KtFunction.isSamLambda(): Boolean {
     if (this !is KtFunctionLiteral && this !is KtNamedFunction) {
         return false
     }
 
-    analyze(this) {
-        val parentCall = KtPsiUtil.getParentCallIfPresent(this@isSamLambda) as? KtCallExpression ?: return false
-        val call = parentCall.resolveToCall()?.successfulFunctionCallOrNull() ?: return false
-        val valueArgument = parentCall.getContainingValueArgument(this@isSamLambda) ?: return false
-        val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
-        return argument.returnType is KaUsualClassType
+    return dumbAnalyze(this, fallback = false) f@{
+        val parentCall = KtPsiUtil.getParentCallIfPresent(this@isSamLambda) as? KtCallExpression ?: return@f false
+        val call = parentCall.resolveToCall()?.successfulFunctionCallOrNull() ?: return@f false
+        val valueArgument = parentCall.getContainingValueArgument(this@isSamLambda) ?: return@f false
+        val argument = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return@f false
+        argument.returnType is KaUsualClassType
     }
 }
 

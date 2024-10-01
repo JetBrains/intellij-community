@@ -19,7 +19,6 @@ import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.ClassNotPreparedException
 import com.sun.jdi.ClassType
 import com.sun.jdi.ReferenceType
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameter
@@ -27,6 +26,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitL
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_RECEIVER_FIELD
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_THIS_FIELD
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.LABELED_THIS_FIELD
+import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllInterfaces
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -67,29 +67,28 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
 
         if (localReferenceExpression !is KtSimpleNameExpression) return null
 
-        analyze(localReferenceExpression) {
+        return runDumbAnalyze(localReferenceExpression, fallback = null) f@ {
             for (symbol in localReferenceExpression.mainReference.resolveToSymbols()) {
                 if (symbol !is KaVariableSymbol) continue
 
                 if (symbol is KaValueParameterSymbol && symbol.isImplicitLambdaParameter) {
                     // symbol.psi is null or lambda, so we need a bit more work to find nearest position.
                     val lambda = symbol.getFunctionLiteralByImplicitLambdaParameterSymbol() ?: continue
-                    return when {
+                    return@f when {
                         nearest -> DebuggerContextUtil.findNearest(context, lambda.containingFile) { _ -> implicitLambdaParameterUsages(lambda) }
                         else -> SourcePosition.createFromOffset(lambda.containingFile, lambda.lBrace.textOffset)
                     }
                 }
 
                 symbol.psi?.let { element ->
-                    return when {
+                    return@f when {
                         nearest -> DebuggerContextUtil.findNearest(context, element, element.containingFile)
                         else -> SourcePosition.createFromOffset(element.containingFile, element.textOffset)
                     }
                 }
             }
+            null
         }
-
-        return null
     }
 
     private fun implicitLambdaParameterUsages(lambda: KtFunctionLiteral): List<TextRange> {
