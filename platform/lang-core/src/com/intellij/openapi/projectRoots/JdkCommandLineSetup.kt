@@ -615,10 +615,6 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     val value = StringUtil.trimStart(vmParameter, prefix)
     val equalsSign = value.indexOf('=')
     val path = if (equalsSign > -1) value.substring(0, equalsSign) else value
-    if (!path.endsWith(".jar")) {
-      // ignore non-cross-platform agents
-      return
-    }
     val suffix = if (equalsSign > -1) value.substring(equalsSign) else ""
     commandLine.addParameter(
       TargetValue.map(requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.AGENTS_VOLUME, path, uploadPathIsFile = true)) { v: String ->
