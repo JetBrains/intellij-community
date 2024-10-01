@@ -15,8 +15,12 @@ class HeadlessFinishEvaluationStep : FinishEvaluationStep {
       }
       else {
         println("Reports:")
-        workspace.getReports().forEach { println("${it.key}: ${it.value}") }
+        workspace.getReports().forEach { println("${it.key}: file://${it.value.toString().escape()}") }
       }
     }
+  }
+
+  private fun String.escape(): String {
+    return replace(" ", "%20")
   }
 }
