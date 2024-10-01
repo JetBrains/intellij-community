@@ -17,6 +17,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 // Since we move Kotlin declarations, we have to add kotlin-compiler-common library to the module classpath.
+
+/**
+ * The command moves declarations from one specified source file to another.
+ * Argument is serialized [MoveDeclarationsData] as json.
+ * NB: Different MoveHandlerDelegates are used to move declarations!
+ */
 class MoveKotlinDeclarationsCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
     const val NAME = "moveDeclarations"
