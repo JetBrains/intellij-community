@@ -32,7 +32,6 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerPsiQuickFixes(KaFirDiagnostic.UnnecessaryLateinit::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(LATEINIT_KEYWORD))
         registerPsiQuickFixes(KaFirDiagnostic.WrongModifierContainingDeclaration::class, RemoveModifierFixBase.removeNonRedundantModifier)
         registerPsiQuickFixes(KaFirDiagnostic.NothingToOverride::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(OVERRIDE_KEYWORD))
-        registerPsiQuickFixes(KaFirDiagnostic.ForbiddenBinaryMod::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(OPERATOR_KEYWORD))
         registerPsiQuickFixes(KaFirDiagnostic.NothingToInline::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(INLINE_KEYWORD))
         registerPsiQuickFixes(KaFirDiagnostic.ConstValNotTopLevelOrObject::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(CONST_KEYWORD))
         registerPsiQuickFixes(KaFirDiagnostic.FunInterfaceWrongCountOfAbstractMembers::class, RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(FUN_KEYWORD))
