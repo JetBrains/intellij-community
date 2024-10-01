@@ -82,13 +82,6 @@ public abstract class XExecutionStack {
   public abstract XStackFrame getTopFrame();
 
   /**
-   * Return the preferable (for selection) stack frame synchronously
-   * @return preferable stack frame or {@code topFrame} if none is preferred
-   */
-  @Nullable
-  public XStackFrame getPreferableFrame() { return getTopFrame(); }
-
-  /**
    * Start computing stack frames top-down starting from {@code firstFrameIndex}. This method is called from the Event Dispatch Thread
    * so it should return quickly
    * @param firstFrameIndex frame index to start from ({@code 1} corresponds to the frame just under the top frame)
