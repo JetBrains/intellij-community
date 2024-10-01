@@ -31,15 +31,12 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   private final Project myProject;
   private volatile boolean myIsLoaded;
   private final Map<String,CodeStyleSettings> mySettingsMap = new HashMap<>();
-  private final boolean mySettingsExist;
-
   private final Object myStateLock = new Object();
 
   public ProjectCodeStyleSettingsManager(@NotNull Project project) {
     myProject = project;
     setMainProjectCodeStyle(null);
     registerExtensionPointListeners(project);
-    mySettingsExist = checkProjectSettingsExist();
   }
 
   @Override
@@ -133,7 +130,6 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   @Override
   public Element getState() {
     synchronized (myStateLock) {
-      checkState();
       Element e = super.getState();
       if (e != null) {
         LOG.info("Saving Project code style");
@@ -149,12 +145,6 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
         }
       }
       return e;
-    }
-  }
-
-  private void checkState() {
-    if (mySettingsExist && !myIsLoaded) {
-      LOG.error("Invalid state: project settings exist but not loaded yet. The call may cause settings damage.");
     }
   }
 
@@ -186,17 +176,6 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   @Override
   protected @NotNull Collection<CodeStyleSettings> enumSettings() {
     return Collections.unmodifiableCollection(mySettingsMap.values());
-  }
-
-  private boolean checkProjectSettingsExist() {
-    VirtualFile projectFile = myProject.getProjectFile();
-    if (projectFile != null) {
-      VirtualFile ideaDir = projectFile.getParent();
-      File projectStyleFile =
-        new File(ideaDir.getPath() + File.separator + "codeStyles" + File.separator + MAIN_PROJECT_CODE_STYLE_NAME + ".xml");
-      return projectStyleFile.exists();
-    }
-    return false;
   }
 
   @Override
