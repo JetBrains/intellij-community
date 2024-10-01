@@ -590,7 +590,6 @@ class GroovyBuildScriptManipulator(
         var foundAndReplaced =
             outerDslBlock.findAndReplaceCompilerOption(
                 parameterName,
-                parameterValue,
                 compilerOption,
                 insideCompilerOptions = true,
                 replaceIt = replaceIt
@@ -603,7 +602,6 @@ class GroovyBuildScriptManipulator(
             if (compilerOptionsBlock != null) {
                 foundAndReplaced = compilerOptionsBlock.findAndReplaceCompilerOption(
                     parameterName,
-                    parameterValue,
                     compilerOption,
                     insideCompilerOptions = false,
                     replaceIt = replaceIt,
@@ -625,7 +623,6 @@ class GroovyBuildScriptManipulator(
 
     private fun GrClosableBlock.findAndReplaceCompilerOption(
         parameterName: String,
-        parameterValue: String,
         compilerOption: CompilerOption,
         insideCompilerOptions: Boolean,
         replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
@@ -637,25 +634,9 @@ class GroovyBuildScriptManipulator(
             val statementLeftPartText =
                 (stmt as? GrAssignmentExpression)?.lValue?.text ?: (stmt as? GrMethodCallExpression)?.invokedExpression?.text
                 ?: return false
-            val statementContainsParameterName = statementLeftPartText.contains(parameterName) == true
-            if (statementContainsParameterName) {
-                if (statementContainsValue(stmt, parameterValue, compilerOption.compilerOptionValue)) {
-                    return@findAndReplaceCompilerOption true // Don't need to replace or update
-                } else {
-                    true
-                }
-            } else {
-                false
-            }
+            statementLeftPartText.contains(parameterName)
         }?.replaceIt(/* insideKotlinOptions = */ false, /* precompiledReplacement = */ compilerOption.expression, insideCompilerOptions)
         return replaced != null
-    }
-
-    private fun statementContainsValue(stmt: GrStatement, parameterValue: String, compilerOptionValue: String?): Boolean {
-        val statementText = (stmt as? GrMethodCallExpression)?.argumentList?.text
-        return statementText?.contains(parameterValue) == true || (compilerOptionValue != null && statementText?.contains(
-            compilerOptionValue
-        ) == true)
     }
 
     private fun addImportIfNeeded(classToImport: FqName, gradleFile: GroovyFile) {
