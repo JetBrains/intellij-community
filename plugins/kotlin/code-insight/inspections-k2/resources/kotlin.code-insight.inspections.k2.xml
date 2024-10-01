@@ -493,13 +493,5 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.redundant.run.catching.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnlabeledReturnInsideLambdaInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
-                     enabledByDefault="true"
-                     level="INFORMATION"
-                     language="kotlin"
-                     key="inspection.unlabeled.return.inside.lambda.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>

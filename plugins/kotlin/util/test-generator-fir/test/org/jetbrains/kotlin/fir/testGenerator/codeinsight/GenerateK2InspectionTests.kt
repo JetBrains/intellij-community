@@ -59,7 +59,6 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             //model("${idea}/inspectionsLocal/unusedSymbol", pattern = pattern)
             model("${idea}/inspectionsLocal/branched/introduceWhenSubject")
             model("${idea}/inspectionsLocal/usePropertyAccessSyntax")
-            model("${idea}/inspectionsLocal/unlabeledReturnInsideLambda")
             model("${idea}/inspectionsLocal/redundantUnitReturnType")
             model("${idea}/inspectionsLocal/suspiciousCollectionReassignment")
             model("${idea}/inspectionsLocal/suspiciousVarProperty")
