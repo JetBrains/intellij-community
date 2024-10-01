@@ -15,6 +15,7 @@
  */
 package git4idea.revert
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsFullCommitDetails
@@ -25,6 +26,7 @@ import git4idea.GitRevisionNumber
 import git4idea.history.GitHistoryUtils
 import git4idea.i18n.GitBundle
 import git4idea.test.*
+import org.junit.Test
 import java.nio.charset.Charset
 
 /**
@@ -257,6 +259,19 @@ class GitRevertTest : GitSingleRepoTest() {
     repo.assertCommitted {
       modified(renamed)
     }
+  }
+
+  fun `test staged changes prevent revert with auto-commit`() {
+    val commit = file("a.txt").create().addCommit("fix #1").details()
+    file("c.txt").create().add()
+
+    revertAutoCommit(commit)
+
+    assertErrorNotification("Revert failed",
+                            GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "revert", "shelve"),
+                            listOf(IdeBundle.message("action.show.files"),
+                                   GitBundle.message("apply.changes.save.and.retry.operation", "Shelve"))
+    )
   }
 
   private fun commitMessageForRevert(commit: VcsFullCommitDetails): String {

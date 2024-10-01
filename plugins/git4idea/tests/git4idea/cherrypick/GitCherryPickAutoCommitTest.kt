@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.cherrypick
 
+import com.intellij.ide.IdeBundle
 import git4idea.i18n.GitBundle
 import git4idea.test.*
 import org.junit.Test
@@ -193,5 +194,19 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
       ${shortHash(commit1)} fix #1
       ${shortHash(commit3)} fix #2
       ${shortHash(emptyCommit)} was skipped, because all changes have already been applied.""")
+  }
+
+  @Test
+  fun `staged changes prevent cherry-pick`() {
+    val commit = file("a.txt").create().addCommit("fix #1").hash()
+    file("b.txt").create().add()
+
+    cherryPick(commit, expectSuccess = false)
+
+    assertErrorNotification("Cherry-pick failed",
+                            GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "cherry-pick", "shelve"),
+                            listOf(IdeBundle.message("action.show.files"),
+                                   GitBundle.message("apply.changes.save.and.retry.operation", "Shelve"))
+    )
   }
 }

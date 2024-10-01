@@ -30,10 +30,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.progress.StepsProgressIndicator;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
-import git4idea.DialogManager;
-import git4idea.GitActivity;
-import git4idea.GitNotificationIdsHolder;
-import git4idea.GitProtectedBranchesKt;
+import git4idea.*;
 import git4idea.branch.GitRebaseParams;
 import git4idea.commands.*;
 import git4idea.config.GitSaveChangesPolicy;
@@ -106,13 +103,7 @@ public class GitRebaseProcess {
     myProgressManager = ProgressManager.getInstance();
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
-    VIEW_STASH_ACTION = NotificationAction.createSimple(
-      mySaver.getSaveMethod().selectBundleMessage(
-        GitBundle.message("rebase.notification.action.view.stash.text"),
-        GitBundle.message("rebase.notification.action.view.shelf.text")
-      ),
-      () -> mySaver.showSavedChanges()
-    );
+    VIEW_STASH_ACTION = new GitRestoreSavedChangesNotificationAction(mySaver);
   }
 
   public void rebase() {

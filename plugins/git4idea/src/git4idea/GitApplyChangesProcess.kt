@@ -8,6 +8,7 @@ import com.intellij.history.LocalHistory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -15,7 +16,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsApplicationSettings
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
@@ -27,6 +30,8 @@ import com.intellij.xml.util.XmlStringUtil.wrapInHtml
 import com.intellij.xml.util.XmlStringUtil.wrapInHtmlTag
 import git4idea.GitUtil.refreshChangedVfs
 import git4idea.actions.GitAbortOperationAction
+import git4idea.applyChanges.GitApplyChangesLocalChangesDetectedNotification
+import git4idea.applyChanges.GitApplyChangesNotificationsHandler
 import git4idea.changes.GitChangeUtils.getStagedChanges
 import git4idea.cherrypick.GitLocalChangesConflictDetector
 import git4idea.commands.GitCommandResult
@@ -34,7 +39,6 @@ import git4idea.commands.GitLineHandlerListener
 import git4idea.commands.GitSimpleEventDetector
 import git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT
 import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector
-import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.index.isStagingAreaAvailable
 import git4idea.index.showStagingArea
@@ -42,6 +46,7 @@ import git4idea.merge.GitConflictResolver
 import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import git4idea.stash.GitChangesSaver
 import git4idea.util.GitUntrackedFilesHelper
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -69,6 +74,7 @@ internal abstract class GitApplyChangesProcess(
   private val vcsNotifier = VcsNotifier.getInstance(project)
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private val vcsHelper = AbstractVcsHelper.getInstance(project)
+  private val notificationsHandler = project.service<GitApplyChangesNotificationsHandler>()
   protected val autoCommit = forceAutoCommit || !changeListManager.areChangeListsEnabled()
 
   protected abstract fun isEmptyCommit(result: GitCommandResult): Boolean
@@ -84,6 +90,11 @@ internal abstract class GitApplyChangesProcess(
   ): GitCommandResult
 
   fun execute() {
+    notificationsHandler.beforeApply()
+    execute(null, commits)
+  }
+
+  private fun execute(changesSaver: GitChangesSaver?, commits: List<VcsCommitMetadata>) {
     // ensure there are no stall changes (ex: from recent commit) that prevent changes from being moved into temp changelist
     if (changeListManager.areChangeListsEnabled()) {
       changeListManager.waitForUpdate()
@@ -92,30 +103,44 @@ internal abstract class GitApplyChangesProcess(
     val commitsInRoots = DvcsUtil.groupCommitsByRoots(repositoryManager, commits)
     LOG.info("${operationName}ing commits: " + toString(commitsInRoots))
 
+    if (changesSaver != null) {
+      if (!trySaveChanges(commitsInRoots.map { (repo, _) -> repo.root }, changesSaver)) {
+        return
+      }
+    }
+
     val successfulCommits = mutableListOf<VcsCommitMetadata>()
     val skippedCommits = mutableListOf<VcsCommitMetadata>()
 
     for ((repository, repoCommits) in commitsInRoots) {
-      val success = executeForRepository(repository, repoCommits, successfulCommits, skippedCommits)
-      if (!success) return
+      try {
+        for (commit in repoCommits) {
+          if (!executeForCommit(repository, commit, successfulCommits, skippedCommits)) {
+            notificationsHandler.operationFailed(operationName, repository, changesSaver)
+            return
+          }
+        }
+      }
+      finally {
+        repository.update()
+      }
     }
+
     notifyResult(successfulCommits, skippedCommits)
+    if (changesSaver != null) {
+      LOG.info("Restoring saved changes after successful $operationName")
+      changesSaver.load()
+    }
   }
 
-  private fun executeForRepository(repository: GitRepository,
-                                   repoCommits: List<VcsCommitMetadata>,
-                                   successfulCommits: MutableList<VcsCommitMetadata>,
-                                   skippedCommits: MutableList<VcsCommitMetadata>): Boolean {
-    try {
-      for (commit in repoCommits) {
-        val success = executeForCommit(repository, commit, successfulCommits, skippedCommits)
-        if (!success) return false
-      }
-      return true
-    }
-    finally {
-      repository.update()
-    }
+  fun trySaveChanges(roots: List<VirtualFile>, changesSaver: GitChangesSaver): Boolean {
+    val errorMessage = changesSaver.saveLocalChangesOrError(roots) ?: return true
+
+    VcsNotifier.getInstance(project)
+      .notifyError(VcsNotificationIdsHolder.UNCOMMITTED_CHANGES_SAVING_ERROR,
+                   VcsBundle.message("notification.title.couldn.t.save.uncommitted.changes"),
+                   errorMessage)
+    return false
   }
 
   /**
@@ -195,9 +220,7 @@ internal abstract class GitApplyChangesProcess(
         return false
       }
       else if (localChangesOverwrittenDetector.isDetected) {
-        val savingStrategy = GitVcsSettings.getInstance(project).saveChangesPolicy
-        val message = GitBundle.message("warning.your.local.changes.would.be.overwritten.by", operationName, savingStrategy.text.lowercase())
-        notifyError(message, commit, successfulCommits)
+        handleLocalChangesDetected(repository, commit.takeIf { localChangesOverwrittenDetector.byMerge }, successfulCommits, alreadyPicked)
         return false
       }
       else if (isEmptyCommit(result)) {
@@ -213,6 +236,23 @@ internal abstract class GitApplyChangesProcess(
       strategy.finish()
       action.finish()
     }
+  }
+
+  private fun handleLocalChangesDetected(
+    repository: GitRepository,
+    failedOnCommit: VcsCommitMetadata?,
+    successfulCommits: MutableList<VcsCommitMetadata>,
+    alreadyPicked: MutableList<VcsCommitMetadata>,
+  ) {
+    val notification = GitApplyChangesLocalChangesDetectedNotification(operationName, failedOnCommit, successfulCommits, repository) { saver ->
+      val alreadyPickedSet = buildSet {
+        addAll(alreadyPicked)
+        addAll(successfulCommits)
+      }
+      LOG.info("Re-trying $operationName, skipping ${alreadyPickedSet.size} already processed commits")
+      execute(saver, commits.filter { commit -> !alreadyPickedSet.contains(commit) })
+    }
+    vcsNotifier.notify(notification)
   }
 
   private abstract class CommitStrategy {
@@ -455,16 +495,8 @@ internal abstract class GitApplyChangesProcess(
   }
 
   @Nls
-  private fun getSuccessfulCommitDetailsIfAny(successfulCommits: List<VcsCommitMetadata>): String {
-    var description = ""
-    if (successfulCommits.isNotEmpty()) {
-      description += UIUtil.HR +
-                     GitBundle.message("apply.changes.operation.successful.for.commits", operationName, successfulCommits.size) +
-                     UIUtil.BR
-      description += getCommitsDetails(successfulCommits)
-    }
-    return description
-  }
+  private fun getSuccessfulCommitDetailsIfAny(successfulCommits: List<VcsCommitMetadata>) =
+    getSuccessfulCommitDetailsIfAny(successfulCommits, operationName)
 
   @Nls
   private fun formSkippedDescription(skipped: List<VcsCommitMetadata>, but: Boolean): String {
@@ -473,21 +505,6 @@ internal abstract class GitApplyChangesProcess(
       return GitBundle.message("apply.changes.skipped", hashes, skipped.size, appliedWord)
     }
     return GitBundle.message("apply.changes.everything.applied", hashes, appliedWord)
-  }
-
-  @NlsSafe
-  private fun getCommitsDetails(successfulCommits: List<VcsCommitMetadata>): String {
-    var description = ""
-    for (commit in successfulCommits) {
-      if (description.isNotEmpty()) description += UIUtil.BR
-      description += commitDetails(commit)
-    }
-    return description
-  }
-
-  @NlsSafe
-  private fun commitDetails(commit: VcsCommitMetadata): String {
-    return commit.id.toShortString() + " " + StringUtil.escapeXmlEntities(commit.subject)
   }
 
   private fun toString(commitsInRoots: Map<GitRepository, List<VcsCommitMetadata>>): String {
@@ -510,8 +527,35 @@ internal abstract class GitApplyChangesProcess(
     }
   }
 
-  companion object {
+  internal companion object {
     private val LOG = logger<GitApplyChangesProcess>()
+
+    @NlsSafe
+    fun commitDetails(commit: VcsCommitMetadata): String {
+      return commit.id.toShortString() + " " + StringUtil.escapeXmlEntities(commit.subject)
+    }
+
+    @Nls
+    fun getSuccessfulCommitDetailsIfAny(successfulCommits: List<VcsCommitMetadata>, operationName: String): String {
+      var description = ""
+      if (successfulCommits.isNotEmpty()) {
+        description += UIUtil.HR +
+                       GitBundle.message("apply.changes.operation.successful.for.commits", operationName, successfulCommits.size) +
+                       UIUtil.BR
+        description += getCommitsDetails(successfulCommits)
+      }
+      return description
+    }
+
+    @NlsSafe
+    private fun getCommitsDetails(successfulCommits: List<VcsCommitMetadata>): String {
+      var description = ""
+      for (commit in successfulCommits) {
+        if (description.isNotEmpty()) description += UIUtil.BR
+        description += commitDetails(commit)
+      }
+      return description
+    }
   }
 }
 

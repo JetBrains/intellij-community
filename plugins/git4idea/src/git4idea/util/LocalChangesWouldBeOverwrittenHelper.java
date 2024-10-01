@@ -30,22 +30,25 @@ public final class LocalChangesWouldBeOverwrittenHelper {
     final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativeFilePaths);
     final List<Change> changes = GitUtil.findLocalChangesForPaths(project, root, absolutePaths, false);
 
+    String description = getOverwrittenByMergeMessage();
     VcsNotifier.importantNotification()
       .createNotification(GitBundle.message("notification.title.git.operation.failed", StringUtil.capitalize(operationName)),
-                          GitBundle.message(getOverwrittenByMergeMessage()),
+                          description,
                           NotificationType.ERROR)
       .setDisplayId(displayId)
       .addAction(NotificationAction.createSimple(
         GitBundle.messagePointer("local.changes.would.be.overwritten.by.merge.view.them.action"), () -> {
-          showErrorDialog(project, operationName, changes, absolutePaths);
+          showErrorDialog(project, operationName, description, changes, absolutePaths);
         }))
       .notify(project);
   }
 
-  private static void showErrorDialog(@NotNull Project project, @NotNull String operationName, @NotNull List<? extends Change> changes,
-                                      @NotNull Collection<String> absolutePaths) {
+  public static void showErrorDialog(@NotNull Project project,
+                                     @NotNull String operationName,
+                                     @Nls String description,
+                                     @NotNull List<? extends Change> changes,
+                                     @NotNull Collection<String> absolutePaths) {
     String title = GitBundle.message("dialog.title.local.changes.prevent.from.operation", StringUtil.capitalize(operationName));
-    String description = GitBundle.message(getOverwrittenByMergeMessage());
     if (changes.isEmpty()) {
       GitUtil.showPathsInDialog(project, absolutePaths, title, description);
     }
@@ -53,7 +56,9 @@ public final class LocalChangesWouldBeOverwrittenHelper {
       ChangesBrowserWithRollback changesViewer = new ChangesBrowserWithRollback(project, changes);
 
       DialogBuilder builder = new DialogBuilder(project);
-      builder.setNorthPanel(new MultiLineLabel(description));
+      if (description != null) {
+        builder.setNorthPanel(new MultiLineLabel(description));
+      }
       builder.setCenterPanel(changesViewer);
       builder.addDisposable(changesViewer);
       builder.addOkAction();

@@ -2,7 +2,6 @@
 package git4idea.cherrypick
 
 import com.intellij.dvcs.ui.DvcsBundle
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -42,10 +41,6 @@ internal class GitCherryPickProcess(
   private var currentCommitCounter = 0
 
   fun isSuccess() = successfullyCherryPickedCount == totalCommitsToCherryPick
-
-  init {
-    project.service<GitCherryPickNotificationsHandler>()
-  }
 
   override fun isEmptyCommit(result: GitCommandResult): Boolean {
     val stdout = result.outputAsJoinedString
