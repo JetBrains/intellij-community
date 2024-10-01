@@ -25,8 +25,14 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.eel.provider.utils.userHomeBlocking
+import com.intellij.platform.eel.provider.utils.where
+import com.intellij.platform.eel.toNioPath
 import com.intellij.ui.navigation.Place
 import com.intellij.util.SystemProperties
 import com.intellij.util.text.VersionComparatorUtil
@@ -67,11 +73,52 @@ object MavenEelUtil : MavenUtil() {
     }
   }
 
-  // TODO: use eel?
   @JvmStatic
   fun EelApi.resolveGlobalSettingsFile(mavenHomeType: StaticResolvedMavenHomeType): Path? {
-    val directory = getMavenHomeFile(mavenHomeType)
+    val directory = if (this is LocalEelApi) {
+      getMavenHomeFile(mavenHomeType)
+    }
+    else {
+      collectMavenDirectories().firstNotNullOfOrNull(::getMavenHomeFile)
+    }
+
     return directory?.resolve(CONF_DIR)?.resolve(SETTINGS_XML)
+  }
+
+  @JvmStatic
+  fun EelApi.collectMavenDirectories(): List<StaticResolvedMavenHomeType> {
+    val result = ArrayList<StaticResolvedMavenHomeType>()
+
+    val m2home = exec.fetchLoginShellEnvVariablesBlocking()[ENV_M2_HOME]
+    if (m2home != null && !isEmptyOrSpaces(m2home)) {
+      val homeFromEnv = fs.getPath(m2home).getOrThrow().toNioPath(this)
+      if (isValidMavenHome(homeFromEnv)) {
+        MavenLog.LOG.debug("resolved maven home using \$M2_HOME as ${homeFromEnv}")
+        result.add(MavenInSpecificPath(m2home))
+      }
+      else {
+        MavenLog.LOG.debug("Maven home using \$M2_HOME is invalid")
+      }
+    }
+
+
+    var home = fs.getPath("/usr/share/maven").getOrThrow().toNioPath(this)
+    if (isValidMavenHome(home)) {
+      MavenLog.LOG.debug("Maven home found at /usr/share/maven")
+      result.add(MavenInSpecificPath(home))
+    }
+
+    home = fs.getPath("/usr/share/maven2").getOrThrow().toNioPath(this)
+    if (isValidMavenHome(home)) {
+      MavenLog.LOG.debug("Maven home found at /usr/share/maven2")
+      result.add(MavenInSpecificPath(home))
+    }
+
+    val path = runBlockingMaybeCancellable { where("mvn") }?.toNioPath(this)?.parent?.parent
+    if (path != null && isValidMavenHome(path)) {
+      result.add(MavenInSpecificPath(path))
+    }
+    return result
   }
 
   @JvmStatic
