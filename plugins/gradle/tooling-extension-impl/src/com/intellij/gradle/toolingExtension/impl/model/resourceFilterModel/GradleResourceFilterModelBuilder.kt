@@ -9,7 +9,6 @@ import org.codehaus.groovy.runtime.StringGroovyMethods
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.file.ContentFilterable
-import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.internal.file.copy.RegExpNameMapper
 import org.gradle.api.internal.file.copy.RenamingCopyAction
 import org.gradle.api.tasks.util.PatternFilterable
@@ -91,7 +90,7 @@ object GradleResourceFilterModelBuilder {
     return filterReaders
   }
 
-  private fun getFilter(project: Project, context: ModelBuilderContext, action: Action<in FileCopyDetails?>): DefaultExternalFilter? {
+  private fun getFilter(project: Project, context: ModelBuilderContext, action: Action<*>): DefaultExternalFilter? {
     try {
       if ("RenamingCopyAction" == action.javaClass.getSimpleName()) {
         return getRenamingCopyFilter(action)
@@ -113,19 +112,19 @@ object GradleResourceFilterModelBuilder {
     return null
   }
 
-  private fun getCommonFilter(action: Action<in FileCopyDetails?>): DefaultExternalFilter {
-    val filterClass = GradleResourceFilterModelBuilder.findPropertyWithType<Class<*>?>(action, Class::class.java, "filterType",
+  private fun getCommonFilter(action: Action<*>): DefaultExternalFilter {
+    val filterClass = GradleResourceFilterModelBuilder.findPropertyWithType<Class<*>>(action, Class::class.java, "filterType",
                                                                                        "val\$filterType", "arg$2", "arg$1")
     requireNotNull(filterClass) { "Unsupported action found: " + action.javaClass.getName() }
 
 
     val filterType = filterClass.getName()
-    var properties = GradleResourceFilterModelBuilder.findPropertyWithType<MutableMap<*, *>?>(action, MutableMap::class.java, "properties",
+    var properties: java.util.Map<*,*>? = GradleResourceFilterModelBuilder.findPropertyWithType<java.util.Map<*,*>>(action, java.util.Map::class.java, "properties",
                                                                                               "val\$properties", "arg$1")
     if ("org.apache.tools.ant.filters.ExpandProperties" == filterType) {
       if (properties != null && properties.get("project") != null) {
-        val  /*org.apache.tools.ant.Project*/project = properties.get("project")
-        properties = DefaultGroovyMethods.invokeMethod(project, "getProperties", arrayOfNulls<Any>(0)) as MutableMap<*, *>?
+        val  /*org.apache.tools.ant.Project*/ project = properties.get("project")
+        properties = DefaultGroovyMethods.invokeMethod(project, "getProperties", arrayOfNulls<Any>(0)) as java.util.Map<*, *>?
       }
     }
 
@@ -139,7 +138,7 @@ object GradleResourceFilterModelBuilder {
     return filter
   }
 
-  private fun getRenamingCopyFilter(action: Action<in FileCopyDetails?>): DefaultExternalFilter? {
+  private fun getRenamingCopyFilter(action: Action<*>): DefaultExternalFilter? {
     assert("RenamingCopyAction" == action.javaClass.getSimpleName())
 
 
@@ -172,7 +171,7 @@ object GradleResourceFilterModelBuilder {
     return filter
   }
 
-  fun <T> findPropertyWithType(self: Any, type: Class<T?>, vararg propertyNames: String): T? {
+  fun <T> findPropertyWithType(self: Any, type: Class<T>, vararg propertyNames: String): T? {
     for (name in propertyNames) {
       try {
         val field = self.javaClass.getDeclaredField(name)
