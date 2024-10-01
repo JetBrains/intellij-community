@@ -204,14 +204,11 @@ object K2CreatePropertyFromUsageBuilder {
         request: AnnotationRequest,
         annotationTarget: AnnotationUseSiteTarget?
     ): KtAnnotationEntry? {
-
-        if (annotationTarget == null) return null
-
         val declaration = target as? KtDeclaration ?: return null
         val classId = ClassId.topLevel(FqName(request.qualifiedName))
 
         val annotationUseSiteTargetPrefix =
-            if (isApplicableTargetSet(declaration, classId, fieldAnnotationTargetCallableId)) {
+            if (annotationTarget == null || isApplicableTargetSet(declaration, classId, fieldAnnotationTargetCallableId)) {
                 ""
             } else {
                 "${annotationTarget.renderName}:"
