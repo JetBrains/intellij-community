@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.liveTemplates.k2.macro.SymbolBasedSuggestVariableNameMacro
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.StandardClassIds
 
 internal class KotlinForPostfixTemplate(provider: KotlinPostfixTemplateProvider) : AbstractKotlinForPostfixTemplate("for", provider)
 
@@ -108,7 +109,7 @@ internal abstract class AbstractKotlinForLoopNumbersPostfixTemplate(
     allExpressions(
         ValuedFilter,
         StatementFilter,
-        ExpressionTypeFilter { it is KaClassType && !it.isMarkedNullable && it.classId == INT_CLASS_ID }),
+        ExpressionTypeFilter { it is KaClassType && !it.isMarkedNullable && it.classId == StandardClassIds.Int }),
     /* provider = */ provider
 ) {
     override fun setVariables(template: Template, element: PsiElement) {
@@ -138,24 +139,15 @@ internal class KotlinForLoopReverseNumbersPostfixTemplate(
     provider
 )
 
-private val INT_CLASS_ID = ClassId.fromString("kotlin/Int")
-
-private val ITERABLE_CLASS_IDS: Set<ClassId> = setOf(
-    ClassId.fromString("kotlin/Array"),
-    ClassId.fromString("kotlin/BooleanArray"),
-    ClassId.fromString("kotlin/ByteArray"),
-    ClassId.fromString("kotlin/CharArray"),
-    ClassId.fromString("kotlin/DoubleArray"),
-    ClassId.fromString("kotlin/FloatArray"),
-    ClassId.fromString("kotlin/IntArray"),
-    ClassId.fromString("kotlin/LongArray"),
-    ClassId.fromString("kotlin/ShortArray"),
-    ClassId.fromString("kotlin/collections/Iterable"),
-    ClassId.fromString("kotlin/collections/Map"),
-    ClassId.fromString("kotlin/sequences/Sequence"),
-    ClassId.fromString("java/util/stream/Stream"),
-    DefaultTypeClassIds.CHAR_SEQUENCE
-)
+private val ITERABLE_CLASS_IDS: Set<ClassId> = buildSet {
+    this += StandardClassIds.Array
+    this += StandardClassIds.primitiveArrayTypeByElementType.values
+    this += StandardClassIds.Iterable
+    this += StandardClassIds.Map
+    this += ClassId.fromString("kotlin/sequences/Sequence")
+    this += ClassId.fromString("java/util/stream/Stream")
+    this += DefaultTypeClassIds.CHAR_SEQUENCE
+}
 
 context(KaSession)
 internal fun canBeIterated(type: KaType, checkNullability: Boolean = true): Boolean {
