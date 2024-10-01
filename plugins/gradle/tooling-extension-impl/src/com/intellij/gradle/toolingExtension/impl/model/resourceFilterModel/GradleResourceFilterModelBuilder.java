@@ -4,6 +4,7 @@ package com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel;
 import com.google.gson.GsonBuilder;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.util.ReflectionUtilRt;
+import groovy.lang.MetaProperty;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.codehaus.groovy.runtime.StringGroovyMethods;
 import org.gradle.api.Action;
@@ -27,7 +28,7 @@ import java.util.regex.Pattern;
 import static org.codehaus.groovy.runtime.DefaultGroovyMethods.invokeMethod;
 
 @ApiStatus.Internal
-public class GradleResourceFilterModelBuilder {
+public final class GradleResourceFilterModelBuilder {
   public static Set<String> getIncludes(Project project, String taskName) {
     Task filterableTask = project.getTasks().findByName(taskName);
     if (filterableTask instanceof PatternFilterable) {
@@ -62,14 +63,15 @@ public class GradleResourceFilterModelBuilder {
       }
 
       Object copyActions = null;
-      Map specProperties = DefaultGroovyMethods.getProperties(mainSpec);
-      if (DefaultGroovyMethods.asBoolean(DefaultGroovyMethods.hasProperty(mainSpec, "allCopyActions"))) {
+      MetaProperty allCopyActionsProp = DefaultGroovyMethods.hasProperty(mainSpec, "allCopyActions");
+      MetaProperty copyActionsProp = DefaultGroovyMethods.hasProperty(mainSpec, "copyActions");
+      if (allCopyActionsProp != null) {
         //noinspection GrUnresolvedAccess
-        copyActions = specProperties.get("allCopyActions");
+        copyActions = allCopyActionsProp.getProperty(mainSpec);
       }
-      else if (DefaultGroovyMethods.asBoolean(DefaultGroovyMethods.hasProperty(mainSpec, "copyActions"))) {
-        //noinspection GrUnresolvedAccess
-        copyActions = specProperties.get("copyActions");
+      else if (copyActionsProp != null) {
+          //noinspection GrUnresolvedAccess
+          copyActions = copyActionsProp.getProperty(mainSpec);
       }
 
       if (copyActions == null) {
