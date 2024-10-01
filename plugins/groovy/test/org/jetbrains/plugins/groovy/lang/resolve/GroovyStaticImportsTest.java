@@ -1,272 +1,279 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.resolve
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiField
-import com.intellij.psi.PsiMethod
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
+import com.intellij.psi.*;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
+import org.junit.Assert;
 
-class GroovyStaticImportsTest extends LightGroovyTestCase {
-
-  @CompileStatic
+public class GroovyStaticImportsTest extends LightGroovyTestCase {
   protected GroovyFile configureByText(String text) {
-    (GroovyFile)fixture.configureByText('_.groovy', text)
+    return (GroovyFile)getFixture().configureByText("_.groovy", text);
   }
 
   protected GroovyResolveResult[] multiResolveByText(String text) {
-    def file = configureByText(text)
-    def reference = file.findReferenceAt(fixture.editor.caretModel.offset)
-    if (reference instanceof GroovyReference) {
-      reference.multiResolve(false)
+    GroovyFile file = configureByText(text);
+    PsiReference reference = file.findReferenceAt(getFixture().getEditor().getCaretModel().getOffset());
+    if (reference instanceof GroovyReference groovyReference) {
+      return groovyReference.multiResolve(false);
     }
     else {
-      [(GroovyResolveResult)reference.resolve()]
+      Assert.fail("Cannot find reference");
+      return GroovyResolveResult.EMPTY_ARRAY;
     }
   }
 
   protected GroovyResolveResult advancedResolveByText(String text) {
-    def results = multiResolveByText(text)
-    assert results.size() == 1
-    return results[0]
+    GroovyResolveResult[] results = multiResolveByText(text);
+    Assert.assertEquals(1, results.length);
+    return results[0];
   }
 
   @Override
-  void setUp() throws Exception {
-    super.setUp()
-    fixture.addFileToProject 'foo/bar/Baz.groovy', '''\
-package foo.bar;
-class Baz {
-  static def getSomeProp() { null }
-  static void getSomeProp(a) {} // not really a getter  
-  
-  static void setSomeProp(a) {}
-  static void setSomeProp() {}  // not really a setter
-  
-  static boolean isSomeProp() { true }
-  static void isSomeProp(v) {}  // not really a boolean getter
-  
-  static Object someProp() { null }
-  static Object someProp(p) { null }
-  
-  static private someProp       // field
-  static class someProp {}
-  
-  static groovyProp             // property with private field and a getter/setter
-  static final finalGroovyProp  // property with private field and a getter
-  static methodWithDefaultParams(a,b,c=1) {}  
-}
-'''
+  public void setUp() throws Exception {
+    super.setUp();
+    getFixture().addFileToProject("foo/bar/Baz.groovy", """
+      package foo.bar;
+      class Baz {
+        static def getSomeProp() { null }
+        static void getSomeProp(a) {} // not really a getter
+
+        static void setSomeProp(a) {}
+        static void setSomeProp() {}  // not really a setter
+
+        static boolean isSomeProp() { true }
+        static void isSomeProp(v) {}  // not really a boolean getter
+
+        static Object someProp() { null }
+        static Object someProp(p) { null }
+
+        static private someProp       // field
+        static class someProp {}
+
+        static groovyProp             // property with private field and a getter/setter
+        static final finalGroovyProp  // property with private field and a getter
+        static methodWithDefaultParams(a,b,c=1) {}
+      }
+      """);
   }
 
-  void 'test static import reference'() {
-    def results
-    def element
+  public void testStaticImportReference() {
 
-    results = multiResolveByText 'import static foo.bar.Baz.<caret>someProp'
-    assert results.size() == 10 // field is not valid result, but groovy ignores it
+    GroovyResolveResult[] results = multiResolveByText("import static foo.bar.Baz.<caret>someProp");
+    Assert.assertEquals(10, results.length); // field is not valid result, but groovy ignores it
 
-    results = multiResolveByText 'import static foo.bar.Baz.<caret>getSomeProp'
-    assert results.size() == 2 // both getter and getter-like method are included
+    results = multiResolveByText("import static foo.bar.Baz.<caret>getSomeProp");
+    Assert.assertEquals(2, results.length);// both getter and getter-like method are included
 
-    results = multiResolveByText 'import static foo.bar.Baz.<caret>groovyProp'
-    assert results.size() == 1 // getter and setter collapsed into property
-    element = results[0].element
-    assert element instanceof GrField
+    results = multiResolveByText("import static foo.bar.Baz.<caret>groovyProp");
+    Assert.assertEquals(1, results.length);// getter and setter collapsed into property
+    PsiElement element = results[0].getElement();
+    Assert.assertTrue(element instanceof GrField);
 
-    results = multiResolveByText 'import static foo.bar.Baz.<caret>getGroovyProp'
-    assert results.size() == 1 // getter only
-    element = results[0].element
-    assert element instanceof GrAccessorMethod
+    results = multiResolveByText("import static foo.bar.Baz.<caret>getGroovyProp");
+    Assert.assertEquals(1, results.length);// getter only
+    element = results[0].getElement();
+    Assert.assertTrue( element instanceof GrAccessorMethod);
 
-    results = multiResolveByText 'import static foo.bar.Baz.<caret>finalGroovyProp'
-    assert results.size() == 1 // getter collapsed into property
-    element = results[0].element
-    assert element instanceof GrField
+    results = multiResolveByText("import static foo.bar.Baz.<caret>finalGroovyProp");
+    Assert.assertEquals(1, results.length);// getter collapsed into property
+    element = results[0].getElement();
+    Assert.assertTrue( element instanceof GrField);
 
-    results = multiResolveByText 'import static foo.bar.Baz.<caret>getFinalGroovyProp'
-    assert results.size() == 1 // getter only
-    element = results[0].element
-    assert element instanceof GrAccessorMethod
+    results = multiResolveByText("import static foo.bar.Baz.<caret>getFinalGroovyProp");
+    Assert.assertEquals(1, results.length);// getter only
+    element = results[0].getElement();
+    Assert.assertTrue( element instanceof GrAccessorMethod);
 
-    results = multiResolveByText 'import static foo.bar.Baz.<caret>methodWithDefaultParams'
-    assert results.size() == 1 // collapsed into base
-    element = results[0].element
-    assert element instanceof GrMethod && !(element instanceof GrReflectedMethod)
+    results = multiResolveByText("import static foo.bar.Baz.<caret>methodWithDefaultParams");
+    Assert.assertEquals(1, results.length);// collapsed into base
+    element = results[0].getElement();
+    Assert.assertTrue( element instanceof GrMethod && !(element instanceof GrReflectedMethod));
   }
 
-  void 'test resolve rValue reference'() {
-    def result = advancedResolveByText '''\
-import static foo.bar.Baz.someProp
-<caret>someProp
-'''
-    def element = result.element
-    assert element instanceof PsiClass
-    assert element.name == 'someProp'
+  public void testResolveRValueReference() {
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.Baz.someProp
+                                                         <caret>someProp
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiClass);
+    Assert.assertEquals("someProp", ((PsiClass)element).getName());
   }
 
-  void 'test resolve rValue reference star import'() {
-    def result = advancedResolveByText '''\
-import static foo.bar.Baz.*
-<caret>someProp
-'''
-    def element = result.element
-    assert element instanceof PsiMethod
-    assert element.name == 'getSomeProp'
-    assert element.parameterList.parametersCount == 0
+  public void testResolveRValueReferenceStarImport() {
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.Baz.*
+                                                         <caret>someProp
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiMethod);
+    PsiMethod psiMethod = (PsiMethod)element;
+    Assert.assertEquals("getSomeProp", psiMethod.getName());
+    Assert.assertEquals(0, psiMethod.getParameterList().getParametersCount());
   }
 
-  void 'test resolve lValue reference'() {
-    def result = advancedResolveByText '''\
-import static foo.bar.Baz.someProp
-<caret>someProp = 1
-'''
-    def element = result.element
-    assert element instanceof PsiClass
-    assert element.name == 'someProp'
+  public void testResolveLValueReference() {
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.Baz.someProp
+                                                         <caret>someProp = 1
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiClass);
+    Assert.assertEquals("someProp", ((PsiClass)element).getName());
   }
 
-  void 'test resolve lValue reference star import'() {
-    def result = advancedResolveByText '''\
-import static foo.bar.Baz.*
-<caret>someProp = 1
-'''
-    def element = result.element
-    assert element instanceof PsiMethod
-    assert element.name == 'setSomeProp'
-    assert element.parameterList.parametersCount == 1
+  public void testResolveLValueReferenceStarImport() {
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.Baz.*
+                                                         <caret>someProp = 1
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiMethod);
+    PsiMethod psiMethod = (PsiMethod)element;
+    Assert.assertEquals("setSomeProp", psiMethod.getName());
+    Assert.assertEquals(1, psiMethod.getParameterList().getParametersCount());
   }
 
-  void 'test resolve call to getter'() {
-    def result = advancedResolveByText '''\
-import static foo.bar.Baz.someProp
-<caret>getSomeProp()
-'''
-    def element = result.element
-    assert element instanceof PsiMethod
-    assert element.name == 'getSomeProp'
-    assert element.parameterList.parametersCount == 0
+  public void testResolveCallToGetter() {
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.Baz.someProp
+                                                         <caret>getSomeProp()
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiMethod);
+    PsiMethod psiMethod = (PsiMethod)element;
+    Assert.assertEquals("getSomeProp", psiMethod.getName());
+    Assert.assertEquals(0, psiMethod.getParameterList().getParametersCount());
   }
 
-  void 'test resolve call to not-a-getter'() {
-    def result = advancedResolveByText '''\
-import static foo.bar.Baz.someProp
-<caret>getSomeProp(2)
-'''
-    def element = result.element
-    assert element instanceof PsiMethod
-    assert element.name == 'getSomeProp'
-    assert element.parameterList.parametersCount == 1
+  public void testResolveCallToNotAGetter() {
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.Baz.someProp
+                                                         <caret>getSomeProp(2)
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiMethod);
+    PsiMethod psiMethod = (PsiMethod)element;
+    Assert.assertEquals("getSomeProp", psiMethod.getName());
+    Assert.assertEquals(1, psiMethod.getParameterList().getParametersCount());
   }
 
-  void 'test resolve call to boolean getter'() {
-    def result = advancedResolveByText '''\
-import static foo.bar.Baz.someProp
-<caret>isSomeProp()
-'''
-    def element = result.element
-    assert element instanceof PsiMethod
-    assert element.name == 'isSomeProp'
-    assert element.parameterList.parametersCount == 0
+  public void testResolveCallToBooleanGetter() {
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.Baz.someProp
+                                                         <caret>isSomeProp()
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiMethod);
+    PsiMethod psiMethod = (PsiMethod)element;
+    Assert.assertEquals("isSomeProp", psiMethod.getName());
+    Assert.assertEquals(0, psiMethod.getParameterList().getParametersCount());
   }
 
-  void 'test resolve call to boolean not-a-getter'() {
-    def result = advancedResolveByText '''\
-import static foo.bar.Baz.someProp
-<caret>isSomeProp(3)
-'''
-    def element = result.element
-    assert element instanceof PsiMethod
-    assert element.name == 'isSomeProp'
-    assert element.parameterList.parametersCount == 1
+  public void testResolveCallToBooleanNotAGetter() {
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.Baz.someProp
+                                                         <caret>isSomeProp(3)
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiMethod);
+    PsiMethod psiMethod = (PsiMethod)element;
+    Assert.assertEquals("isSomeProp", psiMethod.getName());
+    Assert.assertEquals(1, psiMethod.getParameterList().getParametersCount());
   }
 
-  void 'test resolve call to setter'() {
-    def result = advancedResolveByText '''\
-import static foo.bar.Baz.someProp
-<caret>setSomeProp(4)
-'''
-    def element = result.element
-    assert element instanceof PsiMethod
-    assert element.name == 'setSomeProp'
-    assert element.parameterList.parametersCount == 1
+  public void testResolveCallToSetter() {
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.Baz.someProp
+                                                         <caret>setSomeProp(4)
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiMethod);
+    PsiMethod psiMethod = (PsiMethod)element;
+    Assert.assertEquals("setSomeProp", psiMethod.getName());
+    Assert.assertEquals(1, psiMethod.getParameterList().getParametersCount());
   }
 
-  void 'test resolve call to not-a-setter'() {
-    def result = advancedResolveByText '''\
-import static foo.bar.Baz.someProp
-<caret>setSomeProp()
-'''
-    def element = result.element
-    assert element instanceof PsiMethod
-    assert element.name == 'setSomeProp'
-    assert element.parameterList.parametersCount == 0
+  public void testResolveCallToNotASetter() {
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.Baz.someProp
+                                                         <caret>setSomeProp()
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiMethod);
+    PsiMethod psiMethod = (PsiMethod)element;
+    Assert.assertEquals("setSomeProp", psiMethod.getName());
+    Assert.assertEquals(0, psiMethod.getParameterList().getParametersCount());
   }
 
-  void 'test resolve method call'() {
-    def result = advancedResolveByText '''\
-import static foo.bar.Baz.someProp
-<caret>someProp()
-'''
-    def element = result.element
-    assert element instanceof PsiMethod
-    assert element.name == 'someProp'
-    assert element.parameterList.parametersCount == 0
+  public void testResolveMethodCall() {
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.Baz.someProp
+                                                         <caret>someProp()
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiMethod);
+    PsiMethod psiMethod = (PsiMethod)element;
+    Assert.assertEquals("someProp", psiMethod.getName());
+    Assert.assertEquals(0, psiMethod.getParameterList().getParametersCount());
   }
 
-  void 'test resolve another method call'() {
-    def result = advancedResolveByText '''\
-import static foo.bar.Baz.someProp
-<caret>someProp(5)
-'''
-    def element = result.element
-    assert element instanceof PsiMethod
-    assert element.name == 'someProp'
-    assert element.parameterList.parametersCount == 1
+  public void testResolveAnotherMethodCall() {
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.Baz.someProp
+                                                         <caret>someProp(5)
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiMethod);
+    PsiMethod psiMethod = (PsiMethod)element;
+    Assert.assertEquals("someProp", psiMethod.getName());
+    Assert.assertEquals(1, psiMethod.getParameterList().getParametersCount());
   }
 
-  void 'test resolve inner class'() {
-    def result = advancedResolveByText '''\
-import static foo.bar.Baz.someProp
-new <caret>someProp()
-'''
-    def element = result.element
-    assert element instanceof PsiClass
-    assert element.name == 'someProp'
-    assert element.containingClass.qualifiedName == 'foo.bar.Baz'
+  public void testResolveInnerClass() {
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.Baz.someProp
+                                                         new <caret>someProp()
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiClass);
+    PsiClass psiClass = (PsiClass)element;
+    Assert.assertEquals("someProp", psiClass.getName());
+    Assert.assertEquals("foo.bar.Baz", psiClass.getContainingClass().getQualifiedName());
   }
 
-  void 'test resolve to a field'() {
-    fixture.addFileToProject 'foo/bar/ClassWithoutPropertyMethods.groovy', '''\
-package foo.bar;
-
-class ClassWithoutPropertyMethods {
-  static Object someProp() { null }
-  static Object someProp(p) { null }
-  public static someProp
-}
-'''
-    def result = advancedResolveByText '''\
-import static foo.bar.ClassWithoutPropertyMethods.someProp
-<caret>someProp
-'''
-    def element = result.element
-    assert element instanceof PsiField
-    assert element.name == 'someProp'
-    assert element.containingClass.qualifiedName == 'foo.bar.ClassWithoutPropertyMethods'
+  public void testResolveToAField() {
+    getFixture().addFileToProject("foo/bar/ClassWithoutPropertyMethods.groovy", """
+      package foo.bar;
+      
+      class ClassWithoutPropertyMethods {
+        static Object someProp() { null }
+        static Object someProp(p) { null }
+        public static someProp
+      }
+      """);
+    GroovyResolveResult result = advancedResolveByText("""
+                                                         import static foo.bar.ClassWithoutPropertyMethods.someProp
+                                                         <caret>someProp
+                                                         """);
+    PsiElement element = result.getElement();
+    Assert.assertTrue( element instanceof PsiField);
+    PsiField psiField = (PsiField)element;
+    Assert.assertEquals("someProp", psiField.getName());
+    Assert.assertEquals("foo.bar.ClassWithoutPropertyMethods", psiField.getContainingClass().getQualifiedName());
   }
 
-  void 'test resolve property via static getter import with caches'() {
-    fixture.enableInspections GrUnresolvedAccessInspection
-    configureByText "import static foo.bar.Baz.getSomeProp; someProp"
-    fixture.checkHighlighting()
+  public void testResolvePropertyViaStaticGetterImportWithCaches() {
+    getFixture().enableInspections(GrUnresolvedAccessInspection.class);
+    configureByText("import static foo.bar.Baz.getSomeProp; someProp");
+    getFixture().checkHighlighting();
   }
 }
