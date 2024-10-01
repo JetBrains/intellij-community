@@ -102,13 +102,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
   @Override
   protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
-    if (isStressTest()) {
-      // this call is in hot path. make sure it's cached and local, to avoid remote crazy stuff
-      ClientId.Companion.nullizeCachedServiceInTest(runnable);
-    }
-    else {
-      runnable.run();
-    }
+    runnable.run();
   }
 
   public void testReorder() {
