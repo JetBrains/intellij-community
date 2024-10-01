@@ -181,7 +181,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     }
   }
 
-  private void prepareGpgAgentAuth() throws IOException {
+  private void prepareGpgAgentAuth() {
     Project project = myHandler.project();
     VirtualFile root = myHandler.getExecutableContext().getRoot();
     if (project == null || root == null) {
@@ -202,12 +202,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
       PinentryService.PinentryData pinentryData = PinentryService.getInstance(project).startSession();
       if (pinentryData != null) {
         myHandler.addCustomEnvironmentVariable(PinentryService.PINENTRY_USER_DATA_ENV, pinentryData.toEnv());
-        myHandler.addListener(new GitHandlerListener() {
-          @Override
-          public void processTerminated(int exitCode) {
-            PinentryService.getInstance(project).stopSession();
-          }
-        });
+        Disposer.register(myDisposable, () -> PinentryService.getInstance(project).stopSession());
       }
     }
   }

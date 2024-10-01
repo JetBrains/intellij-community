@@ -117,7 +117,7 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
     }
 
     val config = readConfig(gpgAgentConf)
-    if (config.content.isEmpty()) {
+    if (config == null) {
       LOG.debug("Empty $gpgAgentConf, skipping pinentry program configuration")
       return
     }
@@ -137,7 +137,7 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
     generatePinentryLauncher(executable, gpgAgentPaths)
   }
 
-  private fun readConfig(gpgAgentConf: Path): GpgAgentConfig {
+  private fun readConfig(gpgAgentConf: Path): GpgAgentConfig? {
     val config = mutableMapOf<String, String>()
     try {
       for (line in gpgAgentConf.readLines()) {
@@ -158,7 +158,7 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
     }
     catch (e: IOException) {
       LOG.error("Cannot read $gpgAgentConf", e)
-      return GpgAgentConfig(gpgAgentConf, emptyMap())
+      return null
     }
     return GpgAgentConfig(gpgAgentConf, config)
   }
@@ -166,7 +166,7 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
   private fun generatePinentryLauncher(executable: GitExecutable, gpgAgentPaths: GpgAgentPaths) {
     val gpgAgentConfBackup = gpgAgentPaths.gpgAgentConfBackup
     val pinentryFallback = when {
-      gpgAgentConfBackup.exists() -> readConfig(gpgAgentConfBackup).content[GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY]
+      gpgAgentConfBackup.exists() -> readConfig(gpgAgentConfBackup)?.content[GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY]
       else -> null
     }
     if (pinentryFallback.isNullOrBlank()) {
@@ -210,12 +210,12 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
 
   private fun restartAgent(executor: GitExecutable) {
     try {
-      val output = createGpgAgentExecutor(executor).execute("gpg-connect-agent", "reloadagent /bye").lastOrNull()
-      if (output == "OK") {
+      val output = createGpgAgentExecutor(executor).execute("gpg-connect-agent", "reloadagent", "/bye")
+      if (output.contains("OK")) {
         LOG.debug("Gpg Agent restarted successfully")
       }
       else {
-        LOG.warn("Gpg Agent restart failed, restart manually to apply config changes")
+        LOG.warn("Gpg Agent restart failed, restart manually to apply config changes $output")
       }
     }
     catch (e: ExecutionException) {
@@ -233,9 +233,10 @@ internal interface GpgAgentCommandExecutor {
 
 private class LocalGpgAgentCommandExecutor : GpgAgentCommandExecutor {
   override fun execute(command: String, vararg params: String): List<String> {
-    return CapturingProcessHandler
+    val processOutput = CapturingProcessHandler
       .Silent(GeneralCommandLine(command).withParameters(*params))
-      .runProcess(10000, true).stdoutLines
+      .runProcess(10000, true)
+    return processOutput.stdoutLines + processOutput.stderrLines
   }
 }
 
@@ -271,9 +272,10 @@ private class WslGpgAgentCommandExecutor(private val project: Project,
                                          private val executable: GitExecutable.Wsl) : GpgAgentCommandExecutor {
   override fun execute(command: String, vararg params: String): List<String> {
     val commandLine = executable.createBundledCommandLine(project, command).withParameters(*params)
-    return CapturingProcessHandler
+    val processOutput = CapturingProcessHandler
       .Silent(commandLine)
-      .runProcess(10000, true).stdoutLines
+      .runProcess(10000, true)
+    return processOutput.stdoutLines + processOutput.stderrLines
   }
 }
 
