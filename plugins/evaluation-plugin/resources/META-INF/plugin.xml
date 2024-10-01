@@ -83,6 +83,8 @@
   <depends optional="true" config-file="evaluationPlugin-statsCollector.xml">com.intellij.stats.completion</depends>
   <!--suppress PluginXmlValidity -->
   <depends optional="true" config-file="evaluationPlugin-terraform.xml">org.intellij.terraform</depends>
+  <!-- suppress PluginXmlValidity -->
+  <depends optional="true" config-file="evaluationPlugin-sql.xml">com.intellij.database</depends>
   <!--suppress PluginXmlValidity -->
   <depends optional="true" config-file="evaluationPlugin-fullLine.xml">org.jetbrains.completion.full.line</depends>
   <!--suppress PluginXmlValidity -->

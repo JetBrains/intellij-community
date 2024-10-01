@@ -22,6 +22,7 @@
   - name: intellij.evaluationPlugin.languages.cpp
   - name: intellij.evaluationPlugin.languages.csharp
   - name: intellij.evaluationPlugin.languages.terraform
+  - name: intellij.evaluationPlugin.languages.sql
   - name: intellij.tools.ide.metrics.collector
   - name: intellij.evaluationPlugin.languages
     reason: <- intellij.evaluationPlugin
