@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.conversion.copy
 
@@ -20,6 +20,13 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import java.awt.datatransfer.DataFlavor
 
+/**
+ * Provides the functionality to paste Kotlin files into a directory inside the Project tool window.
+ *
+ * This class implements the `PasteProvider` interface to handle pasting operations specifically for Kotlin files.
+ * It fetches the clipboard contents, validates the contents as Kotlin code,
+ * creates a new Kotlin file in the chosen directory, writes the clipboard contents into the file and opens the file.
+ */
 class KotlinFilePasteProvider : PasteProvider {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -38,7 +45,7 @@ class KotlinFilePasteProvider : PasteProvider {
         project.executeWriteCommand(KotlinBundle.message("create.kotlin.file")) {
             val file = try {
                 directory.createFile(fileName)
-            } catch (e: IncorrectOperationException) {
+            } catch (_: IncorrectOperationException) {
                 return@executeWriteCommand
             }
 
@@ -69,5 +76,4 @@ class KotlinFilePasteProvider : PasteProvider {
         val file = KtPsiFactory(project).createFile(text)
         return !PsiTreeUtil.hasErrorElements(file)
     }
-
 }
