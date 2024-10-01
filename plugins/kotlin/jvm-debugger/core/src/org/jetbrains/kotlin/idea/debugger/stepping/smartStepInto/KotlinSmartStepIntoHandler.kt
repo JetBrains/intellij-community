@@ -17,6 +17,7 @@ import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.debugger.statistics.Engine
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
@@ -65,7 +66,7 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
     override fun createMethodFilter(stepTarget: SmartStepTarget?): MethodFilter? =
         when (stepTarget) {
             is KotlinSmartStepTarget -> stepTarget.createMethodFilter()
-            else -> super.createMethodFilter(stepTarget)
+            else -> runReadAction { super.createMethodFilter(stepTarget) }
         }
 
     internal suspend fun findSmartStepTargetsInternal(position: SourcePosition, session: DebuggerSession?): List<SmartStepTarget> =
