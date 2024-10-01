@@ -6,7 +6,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class LearnTabPanel(private val parentDisposable: Disposable) : Wrapper() {
 
   init {

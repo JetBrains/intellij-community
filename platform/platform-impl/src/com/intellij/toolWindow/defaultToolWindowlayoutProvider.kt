@@ -334,6 +334,7 @@ open class IntellijPlatformDefaultToolWindowLayoutProvider : DefaultToolWindowLa
 
 // new API using old API
 
+@Internal
 class DefaultToolWindowLayoutProviderToExtensionAdapter : DefaultToolWindowLayoutExtension {
   override fun buildV1Layout(builder: DefaultToolWindowLayoutBuilder) {
     build(builder) { createV1Layout() }

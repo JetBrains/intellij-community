@@ -15,10 +15,12 @@
  */
 package com.intellij.diagnostic.hprof.util
 
+import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import kotlin.math.min
 
+@ApiStatus.Internal
 class FileBackedHashMap(
   private val buffer: ByteBuffer,
   private val keySize: Int,

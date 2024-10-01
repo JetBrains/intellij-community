@@ -19,7 +19,9 @@ import com.intellij.diagnostic.hprof.parser.Type
 import com.intellij.diagnostic.hprof.util.IDMapper
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ClassStore(private val classes: Long2ObjectMap<ClassDefinition>) {
   private val stringToClassDefinition = HashMap<String, ClassDefinition>()
   private val classDefinitionToShortPrettyName = HashSet<ClassDefinition>()

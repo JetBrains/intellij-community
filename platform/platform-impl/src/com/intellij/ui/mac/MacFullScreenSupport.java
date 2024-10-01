@@ -5,6 +5,7 @@ import com.apple.eawt.FullScreenListener;
 import com.apple.eawt.FullScreenUtilities;
 import com.apple.eawt.event.FullScreenEvent;
 import com.intellij.ui.FullScreenSupport;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,6 +17,7 @@ import java.awt.*;
  *
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 @SuppressWarnings("unused")
 public final class MacFullScreenSupport implements FullScreenSupport {
   private FullScreenListener myListener;

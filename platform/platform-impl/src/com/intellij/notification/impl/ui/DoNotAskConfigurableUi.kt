@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.DefaultListModel
 import javax.swing.JComponent
 import kotlin.math.min
@@ -122,4 +123,5 @@ internal class DoNotAskConfigurableUi {
   }
 }
 
+@ApiStatus.Internal
 data class DoNotAskInfo(val id: String, val name: String, val forProject: Boolean)

@@ -10,10 +10,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 // The only purpose of this action is to serve as placeholder for assigning keyboard shortcuts.
 // For actual tab switching code, see EditorComposite constructor.
+@ApiStatus.Internal
 public final class SelectPreviousEditorTabAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {

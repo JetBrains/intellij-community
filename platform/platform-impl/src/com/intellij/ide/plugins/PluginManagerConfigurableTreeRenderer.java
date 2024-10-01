@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.treeStructure.SimpleTree;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.function.Consumer;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapter implements ConfigurableTreeRenderer, Consumer<Integer> {
   private final CountComponent myCountLabel = new CountComponent();
 

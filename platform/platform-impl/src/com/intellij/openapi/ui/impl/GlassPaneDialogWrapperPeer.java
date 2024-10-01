@@ -44,6 +44,7 @@ import java.awt.image.BufferedImage;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.CompletableFuture;
 
+@ApiStatus.Internal
 public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
   private static final Logger LOG = Logger.getInstance(GlassPaneDialogWrapperPeer.class);
 

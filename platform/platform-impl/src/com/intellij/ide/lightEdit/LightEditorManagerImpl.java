@@ -27,6 +27,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class LightEditorManagerImpl implements LightEditorManager, Disposable {
   private static final Logger LOG = Logger.getInstance(LightEditorManagerImpl.class);
 

@@ -3,12 +3,14 @@ package com.intellij.ui;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.util.textCompletion.TextCompletionCache;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 
+@ApiStatus.Internal
 public abstract class TextFieldWithAutoCompletionWithCacheListProvider<T> extends TextFieldWithAutoCompletionListProvider<T> {
   protected TextCompletionCache<T> myCache;
 

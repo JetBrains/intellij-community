@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.openapi.project.DumbModeStatisticsCollector.DUMB_MODE_STAGE_ACTIVITY;
 import static com.intellij.openapi.project.DumbModeStatisticsCollector.FINISH_TYPE;
 
+@ApiStatus.Internal
 public final class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbModeTask> {
 
   private static final ExtensionPointName<DumbServiceInitializationCondition> DUMB_SERVICE_INITIALIZATION_CONDITION_EXTENSION_POINT_NAME =

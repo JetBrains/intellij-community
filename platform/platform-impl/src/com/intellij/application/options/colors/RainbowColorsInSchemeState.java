@@ -14,6 +14,7 @@ import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
@@ -23,6 +24,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.TreeSet;
 
+@ApiStatus.Internal
 public final class RainbowColorsInSchemeState {
   public static final String DEFAULT_LANGUAGE_NAME = "Default";
   private final EditorColorsScheme myEditedScheme;

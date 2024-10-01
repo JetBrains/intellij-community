@@ -7,7 +7,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PrintModulesAndEntitySources : DumbAwareAction("Print Modules and Entity Sources to Log") {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project

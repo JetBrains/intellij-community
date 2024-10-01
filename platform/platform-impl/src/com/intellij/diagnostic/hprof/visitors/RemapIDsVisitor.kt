@@ -19,9 +19,11 @@ import com.intellij.diagnostic.hprof.parser.*
 import com.intellij.diagnostic.hprof.util.FileBackedHashMap
 import com.intellij.diagnostic.hprof.util.IDMapper
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 
+@ApiStatus.Internal
 abstract class RemapIDsVisitor : HProfVisitor() {
   private var currentID = 0
 

@@ -10,9 +10,11 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class DeleteInColumnModeHandler extends EditorWriteActionHandler {
   private final EditorActionHandler myOriginalHandler;
 

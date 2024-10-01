@@ -2,7 +2,9 @@
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class HttpFileSystemImpl extends HttpFileSystemBase {
   public HttpFileSystemImpl() {
     super(URLUtil.HTTP_PROTOCOL);

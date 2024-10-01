@@ -5,7 +5,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class HeadlessLoggingServiceImpl : HeadlessLogging.HeadlessLoggingService {
 
   private val flow: MutableSharedFlow<HeadlessLogging.LogEntry> = MutableSharedFlow(replay = 0, extraBufferCapacity = 1024, onBufferOverflow = BufferOverflow.SUSPEND)

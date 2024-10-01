@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.sun.management.OperatingSystemMXBean
+import org.jetbrains.annotations.ApiStatus
 import java.lang.management.ManagementFactory
 import kotlin.math.max
 
@@ -63,6 +64,7 @@ private class MemorySizeConfigurator : ProjectActivity {
 }
 
 // Allow overriding in other IDEs
+@ApiStatus.Internal
 open class MemorySizeConfiguratorService {
   companion object {
     fun getInstance(): MemorySizeConfiguratorService = service()

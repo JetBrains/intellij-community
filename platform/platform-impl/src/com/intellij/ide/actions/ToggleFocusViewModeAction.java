@@ -9,8 +9,10 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ToggleFocusViewModeAction extends ToggleAction implements ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {

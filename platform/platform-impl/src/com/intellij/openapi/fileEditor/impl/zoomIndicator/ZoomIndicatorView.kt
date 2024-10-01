@@ -16,11 +16,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.AnActionLink
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadding, ins 0")) {
   var isHovered: Boolean = false; private set
   var lastHoverMs: Long = 0L; private set

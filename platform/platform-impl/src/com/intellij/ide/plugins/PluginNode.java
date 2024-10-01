@@ -645,10 +645,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return externalPluginId == null || externalUpdateId == null || description != null;
   }
 
+  @ApiStatus.Internal
   public @Nullable PageContainer<PluginReviewComment> getReviewComments() {
     return reviewComments;
   }
 
+  @ApiStatus.Internal
   public void setReviewComments(@NotNull PageContainer<PluginReviewComment> reviewComments) {
     this.reviewComments = reviewComments;
   }

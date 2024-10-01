@@ -22,7 +22,9 @@ import com.intellij.diagnostic.hprof.visitors.*
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class HProfMetadata(var classStore: ClassStore, // TODO: private-set, public-get
                     val threads: Long2ObjectMap<ThreadInfo>,
                     var roots: Long2ObjectMap<RootReason>) {

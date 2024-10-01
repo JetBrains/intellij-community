@@ -17,6 +17,7 @@ import java.security.MessageDigest;
 import static com.intellij.util.io.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+@ApiStatus.Internal
 public final class PersistentFSContentAccessor {
 
   private final @NotNull PersistentFSConnection connection;

@@ -10,7 +10,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.MessageConstants
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.util.ui.RestartDialogImpl
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class MergeMenuWithWindowTitleAction : ToggleAction(), DumbAware {
 
   override fun update(e: AnActionEvent) {

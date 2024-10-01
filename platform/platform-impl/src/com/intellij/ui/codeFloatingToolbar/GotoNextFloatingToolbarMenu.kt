@@ -11,7 +11,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class GotoNextFloatingToolbarMenu: AnAction() {
 
   companion object {

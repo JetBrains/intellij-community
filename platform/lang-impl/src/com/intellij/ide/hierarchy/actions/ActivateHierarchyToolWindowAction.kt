@@ -15,7 +15,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.StatusText
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ActivateHierarchyToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.HIERARCHY, AllIcons.Toolwindows.ToolWindowHierarchy) {
   override fun setupEmptyText(project: Project, text: StatusText) {
     text.clear()

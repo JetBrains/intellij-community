@@ -9,11 +9,13 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ExperimentalUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class ViewMainMenuAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {

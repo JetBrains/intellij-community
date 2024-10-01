@@ -11,12 +11,14 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public abstract class ContentLayout {
   ToolWindowContentUi ui;
   BaseLabel idLabel;

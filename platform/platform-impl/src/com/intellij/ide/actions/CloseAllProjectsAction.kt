@@ -7,10 +7,12 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.IdeUICustomization
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 class CloseAllProjectsAction : CloseProjectsActionBase(), ActionRemoteBehaviorSpecification.Frontend {
   init {
     val uiCustomization = IdeUICustomization.getInstance()

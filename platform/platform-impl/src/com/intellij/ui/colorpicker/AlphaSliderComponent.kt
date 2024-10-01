@@ -17,12 +17,14 @@ package com.intellij.ui.colorpicker
 
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import kotlin.math.max
 import kotlin.math.min
 
 private val DEFAULT_SLIDER_BACKGROUND = Color.WHITE
 
+@ApiStatus.Internal
 class AlphaSliderComponent : SliderComponent<Int>(0) {
 
   /**

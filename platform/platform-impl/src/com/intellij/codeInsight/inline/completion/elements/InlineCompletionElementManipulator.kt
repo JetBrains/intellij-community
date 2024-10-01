@@ -57,6 +57,7 @@ interface InlineCompletionElementManipulator {
   }
 }
 
+@ApiStatus.Internal
 class InlineCompletionGrayTextElementManipulator : InlineCompletionElementManipulator {
   override fun isApplicable(element: InlineCompletionElement): Boolean {
     return element is InlineCompletionGrayTextElement
@@ -71,6 +72,7 @@ class InlineCompletionGrayTextElementManipulator : InlineCompletionElementManipu
   }
 }
 
+@ApiStatus.Internal
 class InlineCompletionColorTextElementManipulator : InlineCompletionElementManipulator {
   override fun isApplicable(element: InlineCompletionElement): Boolean {
     return element is InlineCompletionColorTextElement && element !is InlineCompletionGrayTextElement
@@ -85,6 +87,7 @@ class InlineCompletionColorTextElementManipulator : InlineCompletionElementManip
   }
 }
 
+@ApiStatus.Internal
 class InlineCompletionTextElementManipulator : InlineCompletionElementManipulator {
   override fun isApplicable(element: InlineCompletionElement): Boolean {
     return element is InlineCompletionTextElement && element !is InlineCompletionColorTextElement

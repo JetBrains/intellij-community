@@ -6,11 +6,13 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public final class ProjectFileDirectoryRule implements GetDataRule {
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {

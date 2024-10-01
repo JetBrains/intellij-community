@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class IconMapperBean {
   @ApiStatus.Internal
   public static final ExtensionPointName<IconMapperBean> EP_NAME = new ExtensionPointName<>("com.intellij.iconMapper");

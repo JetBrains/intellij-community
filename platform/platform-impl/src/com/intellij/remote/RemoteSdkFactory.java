@@ -3,12 +3,14 @@ package com.intellij.remote;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
 
+@ApiStatus.Internal
 public interface RemoteSdkFactory<T extends RemoteSdkAdditionalData> {
   Sdk createRemoteSdk(@Nullable Project project, @NotNull T data, @Nullable String sdkName, Collection<Sdk> existingSdks)
     throws RemoteSdkException;

@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -15,6 +16,7 @@ import org.jetbrains.concurrency.Promises;
 import java.awt.*;
 import java.awt.event.InputEvent;
 
+@ApiStatus.Internal
 public final class ToggleActionCommand extends AbstractCommand {
 
   public static final String PREFIX = CMD_PREFIX + "toggle";

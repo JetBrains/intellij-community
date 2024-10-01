@@ -2,8 +2,10 @@
 package com.intellij.ide.gdpr
 
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+@ApiStatus.Internal
 interface DataSharingSettingsChangeListener : EventListener {
   companion object {
     @Topic.AppLevel

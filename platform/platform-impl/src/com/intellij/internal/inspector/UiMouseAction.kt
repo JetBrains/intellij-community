@@ -15,11 +15,13 @@ import com.intellij.openapi.keymap.impl.ui.MouseShortcutPanel
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.event.MouseEvent
 
+@ApiStatus.Internal
 abstract class UiMouseAction(val uiActionId: String) : DumbAwareAction() {
   private val myMouseShortcuts: MutableList<MouseShortcut> = ArrayList()
 

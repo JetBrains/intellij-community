@@ -11,10 +11,12 @@ import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public class CloseAllEditorsToTheLeftAction extends CloseEditorsActionBase {
   @Override
   protected boolean isFileToClose(@NotNull EditorComposite editor, @NotNull EditorWindow window, @NotNull FileEditorManagerEx fileEditorManager) {

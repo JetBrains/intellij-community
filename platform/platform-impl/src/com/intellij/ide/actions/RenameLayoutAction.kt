@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RenameLayoutAction(private val layoutName: String) : DumbAwareAction() {
 
   private val manager: ToolWindowDefaultLayoutManager

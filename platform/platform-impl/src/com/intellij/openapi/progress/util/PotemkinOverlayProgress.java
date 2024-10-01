@@ -19,6 +19,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
+@ApiStatus.Internal
 public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   implements StandardProgressIndicator, ProgressIndicatorWithDelayedPresentation, PingProgress, Disposable {
 

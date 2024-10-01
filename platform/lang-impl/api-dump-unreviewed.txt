@@ -1138,8 +1138,9 @@ f:com.intellij.application.options.editor.EditorOptionsProviderEP
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 f:com.intellij.application.options.editor.EditorSmartKeysConfigurable
-- com.intellij.openapi.options.BoundCompositeSearchableConfigurable
+- com.intellij.openapi.options.BoundCompositeConfigurable
 - com.intellij.openapi.options.Configurable$WithEpDependencies
+- com.intellij.openapi.options.SearchableConfigurable
 - com.intellij.openapi.options.SearchableConfigurable$Parent
 - <init>():V
 - apply():V
@@ -10646,9 +10647,6 @@ c:com.intellij.find.SearchTextArea
 - updateExtraActions():V
 - p:updateLayout():V
 - updateUI():V
-f:com.intellij.find.actions.ActivateFindToolWindowAction
-- com.intellij.ide.actions.ToolWindowEmptyStateAction
-- <init>():V
 f:com.intellij.find.actions.CompositeActiveComponent
 - com.intellij.ui.ActiveComponent
 - <init>(com.intellij.ui.ActiveComponent[]):V
@@ -14294,9 +14292,6 @@ f:com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction
 - <init>():V
 f:com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction
 - com.intellij.ide.hierarchy.ChangeHierarchyViewActionBase
-- <init>():V
-f:com.intellij.ide.hierarchy.actions.ActivateHierarchyToolWindowAction
-- com.intellij.ide.actions.ToolWindowEmptyStateAction
 - <init>():V
 f:com.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction
 - com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase
@@ -21364,7 +21359,8 @@ a:com.intellij.profile.codeInspection.ui.header.InspectionProfileSchemesModel
 - pa:onProfileRemoved(com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel):V
 - removeScheme(com.intellij.codeInspection.ex.InspectionProfileModifiableModel):V
 f:com.intellij.profile.codeInspection.ui.header.InspectionProfileSchemesPanel
-- com.intellij.application.options.schemes.AbstractDescriptionAwareSchemesPanel
+- com.intellij.application.options.schemes.AbstractSchemesPanel
+- com.intellij.openapi.Disposable
 - getModel():com.intellij.profile.codeInspection.ui.header.InspectionProfileSchemesModel
 - s:importInspectionProfile(org.jdom.Element,com.intellij.profile.codeInspection.BaseInspectionProfileManager,com.intellij.openapi.project.Project):com.intellij.codeInspection.ex.InspectionProfileImpl
 - selectAnyProfile():V

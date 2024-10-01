@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.NavigatableMessageElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -14,6 +15,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.TooManyListenersException;
 
+@ApiStatus.Internal
 public final class ErrorViewTextExporter implements ExporterToTextFile {
   private final JCheckBox myCbShowDetails;
   private final ErrorViewStructure myStructure;

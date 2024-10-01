@@ -7,6 +7,7 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
@@ -16,6 +17,7 @@ import javax.swing.UIManager
 import javax.swing.border.AbstractBorder
 import javax.swing.border.Border
 
+@ApiStatus.Internal
 open class ToolbarServiceImpl : ToolbarService {
   override fun setCustomTitleBar(window: Window, rootPane: JRootPane, onDispose: (Runnable) -> Unit) {
     if (!SystemInfoRt.isMac) {

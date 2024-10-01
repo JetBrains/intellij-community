@@ -17,6 +17,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import java.util.Objects;
 import static com.intellij.notification.impl.NotificationsManagerImpl.BORDER_COLOR;
 import static com.intellij.notification.impl.NotificationsManagerImpl.FILL_COLOR;
 
+@ApiStatus.Internal
 public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   public static final Topic<BalloonNotificationListener> BALLOON_NOTIFICATION_TOPIC =
     Topic.create("balloon notification changed", BalloonNotificationListener.class);

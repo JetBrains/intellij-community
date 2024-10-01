@@ -6,6 +6,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -14,6 +15,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class PreferenceButton extends JComponent {
   private final String myLabel;
   private final Icon myIcon;

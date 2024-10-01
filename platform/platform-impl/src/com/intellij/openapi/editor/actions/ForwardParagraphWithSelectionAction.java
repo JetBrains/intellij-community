@@ -2,10 +2,12 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Emulates Emacs 'forward-paragraph' action
  */
+@ApiStatus.Internal
 public final class ForwardParagraphWithSelectionAction extends EditorAction {
   public ForwardParagraphWithSelectionAction() {
     super(new ForwardParagraphAction.Handler(true));

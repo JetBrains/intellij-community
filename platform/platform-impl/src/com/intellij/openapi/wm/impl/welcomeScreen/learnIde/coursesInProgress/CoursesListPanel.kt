@@ -3,9 +3,11 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress
 
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPanel
 
 
+@ApiStatus.Internal
 class CoursesListPanel(courses: List<CourseInfo>) : JPanel(VerticalFlowLayout(0, 0)) {
   private val coursesModel: CoursesModel = CoursesModel()
 

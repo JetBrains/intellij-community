@@ -3,7 +3,9 @@ package com.intellij.openapi.project
 
 import com.intellij.platform.backend.observation.ActivityTracker
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DumbServiceTracker : ActivityTracker {
 
   override val presentableName: String = "dumb-mode"

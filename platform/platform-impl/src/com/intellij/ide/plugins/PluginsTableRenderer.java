@@ -23,6 +23,7 @@ import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -33,6 +34,7 @@ import java.util.Objects;
 /**
 * @author Konstantin Bulenkov
 */
+@ApiStatus.Internal
 public class PluginsTableRenderer extends DefaultTableCellRenderer {
 
   protected SimpleColoredComponent myName;

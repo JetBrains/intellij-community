@@ -44,10 +44,12 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 private const val STRIPE_ACTION_GROUP_ID = "TopStripeActionGroup"
 
+@ApiStatus.Internal
 class StripeActionGroup: ActionGroup(), DumbAware {
   private val myFactory: Map<ActivateToolWindowAction, AnAction> = ConcurrentFactoryMap.create(::createAction) {
     CollectionFactory.createConcurrentWeakKeyWeakValueMap()

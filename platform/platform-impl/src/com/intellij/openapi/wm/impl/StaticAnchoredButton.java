@@ -3,12 +3,14 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class StaticAnchoredButton extends AnchoredButton {
   private @NotNull ToolWindowAnchor myToolWindowAnchor;
   private int myMnemonic2;

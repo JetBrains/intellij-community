@@ -14,10 +14,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiFunction
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 class IconMapLoader {
   private val cachedResult = AtomicReference<Map<ClassLoader, Map<String, String>>>()

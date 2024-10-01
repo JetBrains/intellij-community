@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.KillRingTransferable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * <p/>
  * Thread-safe.
  */
+@ApiStatus.Internal
 public final class KillToWordEndAction extends TextComponentEditorAction {
 
   public KillToWordEndAction() {

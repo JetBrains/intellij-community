@@ -48,6 +48,7 @@ private val COLOR_RANGE = 0..255
 private val HUE_RANGE = 0..360
 private val PERCENT_RANGE = 0..100
 
+@Internal
 enum class AlphaFormat {
   BYTE,
   PERCENTAGE;
@@ -58,6 +59,7 @@ enum class AlphaFormat {
   }
 }
 
+@Internal
 enum class ColorFormat {
   RGB,
   HSB;
@@ -68,6 +70,7 @@ enum class ColorFormat {
   }
 }
 
+@Internal
 class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha: Boolean = false, private val showAlphaInPercent: Boolean = true)
   : JPanel(GridBagLayout()), DocumentListener, ColorListener {
 
@@ -355,6 +358,7 @@ private const val BORDER_CORNER_ARC = 7
 private const val ACTION_PRESS_BUTTON_PANEL = "pressButtonPanel"
 private const val ACTION_RELEASE_BUTTON_PANEL = "releaseButtonPanel"
 
+@Internal
 abstract class ButtonPanel : JPanel() {
 
   companion object {

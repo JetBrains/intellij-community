@@ -13,11 +13,13 @@ import com.intellij.platform.workspace.jps.bridge.impl.serialization.DefaultImlN
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.platform.workspace.jps.serialization.impl.isExternalModuleFile
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
+@ApiStatus.Internal
 class CachingJpsFileContentReader(private val configLocation: JpsProjectConfigLocation) : JpsFileContentReader {
   private val projectPathMacroManager = ProjectPathMacroManager.createInstance(
     configLocation::projectFilePath,

@@ -55,6 +55,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * Dead ids won't be reused in the same session of the IDE. </li>
  * </ol>
  */
+@ApiStatus.Internal
 public final class VfsData {
   private static final Logger LOG = Logger.getInstance(VfsData.class);
 

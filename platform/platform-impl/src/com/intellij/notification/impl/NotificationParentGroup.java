@@ -3,6 +3,7 @@ package com.intellij.notification.impl;
 
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import java.util.*;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public final class NotificationParentGroup {
   private static final ExtensionPointName<NotificationParentGroupBean> EP_NAME =

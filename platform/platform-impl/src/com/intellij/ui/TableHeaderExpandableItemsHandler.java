@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class TableHeaderExpandableItemsHandler extends AbstractExpandableItemsHandler<TableColumn, JTableHeader> {
   TableHeaderExpandableItemsHandler(@NotNull JTableHeader component) {
     super(component);

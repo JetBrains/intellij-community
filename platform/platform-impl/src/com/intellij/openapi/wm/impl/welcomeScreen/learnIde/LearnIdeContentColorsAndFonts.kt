@@ -3,10 +3,12 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 
+@ApiStatus.Internal
 object LearnIdeContentColorsAndFonts {
 
   val ActiveInteractiveCoursesBorder: Color? = JBUI.CurrentTheme.Component.FOCUSED_BORDER_COLOR

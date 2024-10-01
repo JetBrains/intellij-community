@@ -1164,6 +1164,7 @@ private fun ensureCouldCloseIfUnableToSave(project: Project): Boolean {
                                   Messages.getWarningIcon()) == Messages.YES
 }
 
+@Internal
 class UnableToSaveProjectNotification(project: Project, readOnlyFiles: List<VirtualFile>) : Notification("Project Settings",
                                                                                                          IdeUICustomization.getInstance().projectMessage(
                                                                                                            "notification.title.cannot.save.project"),
@@ -1435,6 +1436,7 @@ interface ProjectServiceContainerInitializedListener {
   suspend fun execute(project: Project, workspaceIndexReady: () -> Unit)
 }
 
+@Internal
 @TestOnly
 interface ProjectServiceContainerCustomizer {
   companion object {

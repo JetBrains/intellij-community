@@ -300,6 +300,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     rebuild();
   }
 
+  @ApiStatus.Internal
   public @NotNull ContentLayout getCurrentLayout() {
     if (type == ToolWindowContentUiType.TABBED) {
       return tabsLayout;

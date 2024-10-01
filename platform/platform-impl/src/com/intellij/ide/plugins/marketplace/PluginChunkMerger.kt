@@ -5,9 +5,11 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.Chunk
 import com.jetbrains.plugin.blockmap.core.ChunkMerger
+import org.jetbrains.annotations.ApiStatus
 import java.io.*
 
 
+@ApiStatus.Internal
 class PluginChunkMerger(
   oldFile: File,
   oldBlockMap: BlockMap,

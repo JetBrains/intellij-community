@@ -25,6 +25,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.IntUnaryOperator;
 
+@ApiStatus.Internal
 public final class ShowFontsUsedByEditorAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   private static final Logger LOG = Logger.getInstance(ShowFontsUsedByEditorAction.class);
 

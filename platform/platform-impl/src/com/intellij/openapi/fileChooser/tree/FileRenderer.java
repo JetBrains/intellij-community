@@ -7,6 +7,7 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ import javax.swing.JTree;
 import static com.intellij.openapi.fileChooser.FileElement.isFileHidden;
 import static com.intellij.openapi.util.IconLoader.getTransparentIcon;
 
+@ApiStatus.Internal
 public final class FileRenderer {
   private static final Color GRAYED = SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor();
   private static final Color HIDDEN = SimpleTextAttributes.DARK_TEXT.getFgColor();

@@ -9,12 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.ui.components.panels.Wrapper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
+@ApiStatus.Internal
 @SuppressWarnings("HardCodedStringLiteral")
 public final class ShowSouthPanelTestDialogAction extends AnAction implements DumbAware {
   @Override

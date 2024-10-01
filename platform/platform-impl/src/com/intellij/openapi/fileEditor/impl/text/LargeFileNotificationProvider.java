@@ -14,12 +14,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class LargeFileNotificationProvider implements EditorNotificationProvider {
   private static final Key<String> HIDDEN_KEY = Key.create("large.file.editor.notification.hidden");
   private static final String DISABLE_KEY = "large.file.editor.notification.disabled";

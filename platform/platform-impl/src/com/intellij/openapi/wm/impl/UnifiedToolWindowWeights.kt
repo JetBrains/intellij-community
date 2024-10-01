@@ -6,7 +6,9 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Tag("unified_weights")
 @Property(style = Property.Style.ATTRIBUTE)
 class UnifiedToolWindowWeights : BaseState() {

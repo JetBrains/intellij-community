@@ -17,6 +17,7 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 
 
+@ApiStatus.Internal
 class ButtonPanel(val button: JButton) : JPanel(BorderLayout(0, 0)) {
   init {
     val buttonGap = 4

@@ -18,6 +18,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
+@ApiStatus.Internal
 public final class ChooseActionsDialog extends DialogWrapper {
   private final ActionsTree myActionsTree;
   private FilterComponent myFilterComponent;

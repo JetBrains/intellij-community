@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 @ApiStatus.NonExtendable
 public class EncodingPanelWidgetFactory extends StatusBarEditorBasedWidgetFactory {
   @Override

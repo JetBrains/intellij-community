@@ -2,10 +2,12 @@
 package com.intellij.util.ui;
 
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public abstract class ReloadableListPanel<T> extends ReloadablePanel<T> {
   protected JList<T> myList;
   private JPanel myMainPanel;

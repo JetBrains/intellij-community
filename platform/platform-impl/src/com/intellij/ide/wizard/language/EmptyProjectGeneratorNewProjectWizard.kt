@@ -11,8 +11,10 @@ import com.intellij.openapi.module.GeneralModuleType
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+@ApiStatus.Internal
 class EmptyProjectGeneratorNewProjectWizard : GeneratorNewProjectWizard {
   override val id: String = NewProjectWizardConstants.Generators.EMPTY_PROJECT
   override val name: String = UIBundle.message("label.project.wizard.empty.project.generator.name")

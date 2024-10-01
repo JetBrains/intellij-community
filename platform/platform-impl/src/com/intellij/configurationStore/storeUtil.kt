@@ -277,4 +277,5 @@ fun forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project: Project, f
   }
 }
 
+@Internal
 class UnresolvedReadOnlyFilesException(val files: List<VirtualFile>) : RuntimeException()

@@ -1049,6 +1049,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return vfsPeer.getContentRecordId(fileId(file));
   }
 
+  @ApiStatus.Internal
   public boolean isOwnData(@NotNull VfsData data) {
     return data == myVfsData;
   }

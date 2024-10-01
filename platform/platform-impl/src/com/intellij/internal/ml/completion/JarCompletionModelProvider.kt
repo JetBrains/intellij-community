@@ -2,10 +2,12 @@
 package com.intellij.internal.ml.completion
 
 import com.intellij.internal.ml.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 
+@ApiStatus.Internal
 abstract class JarCompletionModelProvider(@Nls(capitalization = Nls.Capitalization.Title) private val displayName: String,
                                           @NonNls private val resourceDirectory: String) : RankingModelProvider {
   private val lazyModel: DecisionFunction by lazy {

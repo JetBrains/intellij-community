@@ -28,6 +28,7 @@ import java.util.function.Supplier
 /**
  * Single-threaded executor for [MergingTaskQueue].
  */
+@ApiStatus.Internal
 @ApiStatus.Experimental
 open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected constructor(val project: Project,
                                                                                     val taskQueue: MergingTaskQueue<T>,

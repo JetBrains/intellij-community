@@ -11,10 +11,12 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ExperimentalUI
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 class ToggleCompactModeAction: DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
 
   override fun isSelected(e: AnActionEvent): Boolean = UISettings.getInstance().uiDensity == UIDensity.COMPACT

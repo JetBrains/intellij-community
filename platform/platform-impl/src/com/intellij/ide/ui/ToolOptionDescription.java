@@ -8,10 +8,12 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class ToolOptionDescription extends BooleanOptionDescription {
   private final Project myProject;
   private final String myShortName;

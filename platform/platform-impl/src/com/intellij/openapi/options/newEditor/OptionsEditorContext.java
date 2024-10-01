@@ -7,6 +7,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -20,6 +21,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import static java.util.Collections.unmodifiableSet;
 
+@ApiStatus.Internal
 public final class OptionsEditorContext {
   CopyOnWriteArraySet<OptionsEditorColleague> myColleagues = new CopyOnWriteArraySet<>();
 

@@ -16,6 +16,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
 
+@ApiStatus.Internal
 public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> extends AbstractSchemesPanel<T, JPanel> implements Disposable {
   private static final String SHOW_DESCRIPTION_CARD = "show.description.card";
   private static final String EDIT_DESCRIPTION_CARD = "edit.description.card";

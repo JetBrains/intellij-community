@@ -2,6 +2,7 @@
 package com.intellij.concurrency;
 
 import com.google.common.util.concurrent.SettableFuture;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ExecutionException;
@@ -9,6 +10,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@ApiStatus.Internal
 public final class AsyncFutureResultImpl<V> implements AsyncFutureResult<V> {
   private final SettableFuture<V> myFuture;
 

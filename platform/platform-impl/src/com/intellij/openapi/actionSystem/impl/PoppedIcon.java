@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,6 +16,7 @@ import static com.intellij.util.ui.JBUI.CurrentTheme.ActionButton.hoverBorder;
  *
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class PoppedIcon implements Icon {
   private final Icon myIcon;
   private final int myWidth;

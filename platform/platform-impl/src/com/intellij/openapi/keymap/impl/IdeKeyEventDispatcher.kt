@@ -93,7 +93,9 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
   private val keyGestureProcessor = KeyboardGestureProcessor(this)
 
   var state: KeyState
+    @ApiStatus.Internal 
     get() = keyState
+    @ApiStatus.Internal
     set(state) {
       keyState = state
       queue?.maybeReady()

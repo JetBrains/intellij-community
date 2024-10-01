@@ -3,7 +3,9 @@ package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PerformGCAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     System.gc()

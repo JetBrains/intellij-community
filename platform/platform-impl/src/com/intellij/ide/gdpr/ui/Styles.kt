@@ -3,10 +3,12 @@ package com.intellij.ide.gdpr.ui
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.StartupUiUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
 
+@ApiStatus.Internal
 object Styles {
     private val foregroundColor: Color = JBColor.BLACK
     private val hintColor: Color = JBColor.GRAY

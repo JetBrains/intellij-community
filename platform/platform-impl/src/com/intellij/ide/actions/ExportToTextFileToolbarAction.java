@@ -5,7 +5,9 @@ import com.intellij.ide.ExporterToTextFile;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class ExportToTextFileToolbarAction extends ExportToTextFileAction {
   private final ExporterToTextFile myExporterToTextFile;
 

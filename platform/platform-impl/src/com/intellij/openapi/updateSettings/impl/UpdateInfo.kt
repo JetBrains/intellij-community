@@ -74,6 +74,7 @@ class BuildInfo internal constructor(node: Element, productCode: String) {
   override fun toString(): String = "${number}/${version}"
 }
 
+@ApiStatus.Internal
 class PatchInfo internal constructor(node: Element) {
   companion object {
     val OS_SUFFIX: String = if (SystemInfo.isWindows) "win" else if (SystemInfo.isMac) "mac" else if (SystemInfo.isUnix) "unix" else "unknown"

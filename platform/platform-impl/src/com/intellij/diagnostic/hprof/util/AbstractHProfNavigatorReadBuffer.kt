@@ -16,7 +16,9 @@
 package com.intellij.diagnostic.hprof.util
 
 import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class AbstractHProfNavigatorReadBuffer(private val parser: HProfEventBasedParser) : HProfReadBuffer() {
   override fun getId(): Long = parser.remap(getRawId())
 }

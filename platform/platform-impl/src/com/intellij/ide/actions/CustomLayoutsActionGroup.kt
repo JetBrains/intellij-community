@@ -9,7 +9,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class CustomLayoutsActionGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   private val childrenCache = NamedLayoutListBasedCache<AnAction>(emptyList(), 0) {

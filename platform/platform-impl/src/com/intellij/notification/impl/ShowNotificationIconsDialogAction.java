@@ -12,11 +12,13 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBDimension;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
+@ApiStatus.Internal
 public final class ShowNotificationIconsDialogAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

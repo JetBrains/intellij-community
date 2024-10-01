@@ -8,6 +8,7 @@ import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Composite configurable that contains several configurables.
@@ -76,6 +77,7 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
   }
 }
 
+@ApiStatus.Internal
 abstract class BoundCompositeSearchableConfigurable<T : UnnamedConfigurable>(@NlsContexts.ConfigurableName displayName: String, helpTopic: String, private val _id: String = helpTopic)
   : BoundCompositeConfigurable<T>(displayName, helpTopic), SearchableConfigurable {
   override fun getId(): String = _id

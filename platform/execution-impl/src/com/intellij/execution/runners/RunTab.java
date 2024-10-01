@@ -95,6 +95,7 @@ public abstract class RunTab implements Disposable {
     });
   }
 
+  @ApiStatus.Internal
   protected @Nullable SingleContentSupplier getSupplier() {
     return null;
   }
@@ -138,6 +139,7 @@ public abstract class RunTab implements Disposable {
    * Default implementation of {@link SingleContentSupplier}.
    * Isn't used directly by {@link RunTab}, but can be used by inheritors.
    */
+  @ApiStatus.Internal
   protected class RunTabSupplier implements SingleContentSupplier {
 
     private final @Nullable ActionGroup myActionGroup;

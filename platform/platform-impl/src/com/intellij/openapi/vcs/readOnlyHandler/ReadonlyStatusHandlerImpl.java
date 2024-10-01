@@ -17,6 +17,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.platform.backend.presentation.TargetPresentationBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@ApiStatus.Internal
 @State(name = "ReadonlyStatusHandler", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
 

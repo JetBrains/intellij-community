@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ToolbarAddQuickActionsAction(private val info: ToolbarAddQuickActionInfo) : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
 
   override fun actionPerformed(e: AnActionEvent) {

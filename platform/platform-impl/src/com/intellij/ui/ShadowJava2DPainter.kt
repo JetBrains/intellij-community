@@ -4,6 +4,7 @@ package com.intellij.ui
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.GradientPaint
 import java.awt.Graphics2D
@@ -16,6 +17,7 @@ private val DEF_COLOR = Gray._200.withAlpha(50)
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCorners: Boolean, private val borderColor: Color? = null) {
   private var hideTopCorners = false
   private var hideBottomSide = false

@@ -10,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.FileSystems;
@@ -19,6 +20,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+@ApiStatus.Internal
 public final class RootFileElement extends FileElement {
 
   private static final Logger LOG = Logger.getInstance(RootFileElement.class);

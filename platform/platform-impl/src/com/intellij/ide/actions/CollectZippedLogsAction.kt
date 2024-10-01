@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.ide.actions
 
 import com.intellij.CommonBundle
@@ -19,6 +21,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.ui.IoErrorText
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 private const val CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog"

@@ -19,6 +19,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import java.util.Objects;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class MergeAllWindowsAction extends IdeDependentAction {
 
   @Override

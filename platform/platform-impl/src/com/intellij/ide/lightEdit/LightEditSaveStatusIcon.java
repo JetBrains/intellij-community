@@ -7,11 +7,13 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 @SuppressWarnings("SameParameterValue")
 public final class LightEditSaveStatusIcon extends ColorIcon {
   private static final int BASE_ICON_SIZE = 7;

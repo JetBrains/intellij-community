@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorTextField
 import com.intellij.util.ui.IoErrorText
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.nio.charset.Charset
@@ -40,6 +41,7 @@ import java.nio.file.Path
 import javax.swing.JFrame
 import javax.swing.ScrollPaneConstants
 
+@ApiStatus.Internal
 abstract class EditCustomSettingsAction : DumbAwareAction() {
   protected abstract fun file(): Path?
   protected abstract fun template(): String
@@ -151,6 +153,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
   }
 }
 
+@ApiStatus.Internal
 class EditCustomPropertiesAction : EditCustomSettingsAction() {
   private companion object {
     val file: Lazy<Path?> = lazy { PathManager.getCustomOptionsDirectory()?.let { Path.of(it, PathManager.PROPERTIES_FILE_NAME) } }

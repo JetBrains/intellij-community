@@ -4,7 +4,9 @@ package com.intellij.notification.impl
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationRouter
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class LocalNotificationRouter: NotificationRouter {
   override fun routeNotification(notification: Notification, project: Project?): Boolean {
     NotificationsManagerImpl.getNotificationsManager().showNotification(notification, project)

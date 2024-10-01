@@ -22,9 +22,11 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.commit.AbstractCommitWorkflowHandler.Companion.getDefaultCommitActionName
 import com.intellij.vcs.commit.message.CommitMessageInspectionsPanel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.File
 
+@ApiStatus.Internal
 class CommitDialogConfigurable(private val project: Project)
   : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(VcsBundle.message("commit.dialog.configurable"), HELP_ID, ID) {
   private val postCommitConfigurables = mutableSetOf<UnnamedConfigurable>()

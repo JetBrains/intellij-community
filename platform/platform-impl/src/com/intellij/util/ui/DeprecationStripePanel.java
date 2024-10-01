@@ -7,12 +7,14 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.impl.welcomeScreen.BottomLineBorder;
 import com.intellij.ui.components.AnActionLink;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class DeprecationStripePanel extends JPanel {
   public DeprecationStripePanel(@NlsContexts.Label @NotNull String mainText, @Nullable Icon icon) {
     super(new FlowLayout(FlowLayout.CENTER));

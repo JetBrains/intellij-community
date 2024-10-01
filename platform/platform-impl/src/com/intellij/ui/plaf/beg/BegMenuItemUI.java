@@ -16,6 +16,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +38,7 @@ import java.util.function.Consumer;
 /**
  * @author Eugene Belyaev
  */
+@ApiStatus.Internal
 public final class BegMenuItemUI extends BasicMenuItemUI {
   private static final String KEEP_MENU_OPEN_PROP = "BegMenuItemUI.keep-menu-open";
 

@@ -5,11 +5,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurableBase;
 import com.intellij.ui.AppUIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ConsentConfigurable extends ConfigurableBase<ConsentSettingsUi, List<Consent>> {
   private final List<Consent> myConsents;
 

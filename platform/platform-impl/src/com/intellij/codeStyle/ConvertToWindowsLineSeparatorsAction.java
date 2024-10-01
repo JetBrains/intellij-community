@@ -3,10 +3,12 @@ package com.intellij.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.util.LineSeparator;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Nikolai Matveev
  */
+@ApiStatus.Internal
 public final class ConvertToWindowsLineSeparatorsAction extends AbstractConvertLineSeparatorsAction {
 
   public ConvertToWindowsLineSeparatorsAction() {

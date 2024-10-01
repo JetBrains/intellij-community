@@ -7,11 +7,14 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ReaderModeDefaultsOverrideImpl : ReaderModeDefaultsOverride {
   override val showWarningsDefault = false
 }
 
+@ApiStatus.Internal
 @State(name = "ReaderModeSettings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], perClient = true)
 class ReaderModeSettingsImpl(override val coroutineScope: CoroutineScope) : PersistentStateComponentWithModificationTracker<ReaderModeSettingsImpl.State>,
                                                                             ReaderModeSettings {

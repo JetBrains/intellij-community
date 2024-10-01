@@ -108,6 +108,7 @@ internal class KeymapFlagsStorage : SimplePersistentStateComponent<KeymapFlagsSt
     filter { it.shortcut == sc.toString() }
 }
 
+@Internal
 enum class KeymapFlagLifetimeKind {
   UNTIL_SHORTCUT_DELETED,
   UNTIL_ACTION_SHORTCUT_UPDATED,

@@ -37,6 +37,7 @@ import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.layout.*;
 import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,7 @@ import java.util.*;
 
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
+@ApiStatus.Internal
 public final class ComponentPropertiesCollector {
   private static final Logger LOG = Logger.getInstance(ComponentPropertiesCollector.class);
 

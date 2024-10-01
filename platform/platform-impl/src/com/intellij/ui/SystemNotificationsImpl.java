@@ -7,11 +7,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
 
+@ApiStatus.Internal
 public final class SystemNotificationsImpl extends SystemNotifications {
   interface Notifier {
     void notify(@NotNull String name, @NotNull String title, @NotNull String description);

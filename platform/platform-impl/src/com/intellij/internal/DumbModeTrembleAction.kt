@@ -13,12 +13,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.TimeoutUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.collections.map
 import kotlin.random.Random
 import kotlin.text.split
 import kotlin.text.toLong
 
+@ApiStatus.Internal
 class DumbModeTrembleAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return

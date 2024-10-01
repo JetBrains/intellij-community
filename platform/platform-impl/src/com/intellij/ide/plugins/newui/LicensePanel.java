@@ -17,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ import java.util.function.Supplier;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class LicensePanel extends NonOpaquePanel {
   private final JLabel mySubMessage = new JLabel();
   private final JPanel myPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));

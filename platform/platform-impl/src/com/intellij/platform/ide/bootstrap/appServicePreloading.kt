@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PerformanceWatcher
@@ -19,6 +21,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.indexing.FileBasedIndex
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 
 fun CoroutineScope.preloadCriticalServices(
   app: ApplicationImpl,

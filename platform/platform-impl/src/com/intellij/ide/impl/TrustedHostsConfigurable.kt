@@ -22,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import kotlin.math.max
 
+@ApiStatus.Internal
 class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurable.trusted.hosts.display.name"), TRUSTED_PROJECTS_HELP_TOPIC),
                                  SearchableConfigurable {
 

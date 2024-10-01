@@ -11,11 +11,13 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ToolWindowKeymapExtension implements KeymapExtension {
   @Override
   public @Nullable KeymapGroup createGroup(Condition<? super AnAction> filtered, Project project) {

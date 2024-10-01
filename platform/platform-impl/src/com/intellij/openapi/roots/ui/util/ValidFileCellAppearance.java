@@ -17,10 +17,12 @@ package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.io.File;
 
+@ApiStatus.Internal
 public class ValidFileCellAppearance extends BaseTextCommentCellAppearance {
   private final VirtualFile myFile;
 

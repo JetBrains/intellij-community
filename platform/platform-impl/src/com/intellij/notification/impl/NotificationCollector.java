@@ -18,6 +18,7 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.util.List;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
 import static com.intellij.notification.impl.NotificationsEventLogGroup.*;
 
+@ApiStatus.Internal
 @Service
 public final class NotificationCollector {
   public static final String UNKNOWN = "unknown";

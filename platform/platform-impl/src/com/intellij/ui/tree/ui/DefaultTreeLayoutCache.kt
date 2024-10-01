@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Rectangle
 import java.util.*
@@ -15,6 +16,7 @@ import javax.swing.tree.TreePath
 import kotlin.collections.ArrayDeque
 import kotlin.math.max
 
+@ApiStatus.Internal
 @VisibleForTesting
 class DefaultTreeLayoutCache(
   private val defaultRowHeight: Int,

@@ -5,6 +5,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ public final class BalloonLayoutData {
 
   public Project project;
 
+  @ApiStatus.Internal
   public BalloonLayoutConfiguration configuration;
 
   public long fadeoutTime;

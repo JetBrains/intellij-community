@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ReflectionUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.KeyboardFocusManager
 import java.awt.Toolkit
@@ -23,6 +24,7 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JWindow
 
+@ApiStatus.Internal
 class DumpFocusableComponentHierarchyAction : AnAction(), DumbAware {
   init {
     isEnabledInModalContext = true

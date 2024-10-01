@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@ApiStatus.Internal
 public final class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {

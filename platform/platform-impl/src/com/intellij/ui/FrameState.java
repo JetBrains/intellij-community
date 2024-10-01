@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.FrameInfoHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AWTAccessor;
 
@@ -13,6 +14,7 @@ import java.awt.event.ComponentListener;
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.FramePeer;
 
+@ApiStatus.Internal
 public class FrameState {
   private Rectangle myBounds;
   private boolean myMaximized;

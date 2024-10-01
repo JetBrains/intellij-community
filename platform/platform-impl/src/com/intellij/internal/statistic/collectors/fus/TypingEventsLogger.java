@@ -25,10 +25,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
+@ApiStatus.Internal
 public final class TypingEventsLogger extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 10);
 

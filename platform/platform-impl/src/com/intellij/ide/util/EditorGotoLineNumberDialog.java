@@ -8,11 +8,13 @@ import com.intellij.openapi.editor.impl.RelativeLineHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.PatternUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@ApiStatus.Internal
 public final class EditorGotoLineNumberDialog extends GotoLineNumberDialog {
   private final Editor myEditor;
   private static final Pattern relativeNumberPattern = PatternUtil.compileSafe("\\s*([+-]\\d+)\\s*", null);

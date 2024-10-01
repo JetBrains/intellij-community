@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.TimerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ import java.awt.event.*;
 import java.util.EventObject;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class LocalHintManager implements ClientHintManager {
   private static final Logger LOG = Logger.getInstance(LocalHintManager.class);
 

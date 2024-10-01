@@ -36,6 +36,7 @@ import java.util.function.Consumer;
 import static com.intellij.util.concurrency.AppJavaExecutorUtil.createBoundedTaskExecutor;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
+@ApiStatus.Internal
 public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   @SuppressWarnings("LoggerInitializedWithForeignClass") private static final Logger LOG = Logger.getInstance(RefreshQueue.class);
 

@@ -17,8 +17,10 @@ package com.intellij.diagnostic.hprof.classstore
 
 import com.intellij.diagnostic.hprof.parser.Type
 import com.intellij.diagnostic.hprof.util.IDMapper
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
+@ApiStatus.Internal
 class ClassDefinition(val name: String,
                       val id: Long,
                       val superClassId: Long,

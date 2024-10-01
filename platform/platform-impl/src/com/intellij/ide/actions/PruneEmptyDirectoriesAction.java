@@ -12,10 +12,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+@ApiStatus.Internal
 public final class PruneEmptyDirectoriesAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {

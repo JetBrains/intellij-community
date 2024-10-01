@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
@@ -42,6 +43,7 @@ private inline fun Logger.debug(project: Project, lazyMessage: (project: String)
   }
 }
 
+@ApiStatus.Internal
 class ToolWindowSetInitializer(private val project: Project, private val manager: ToolWindowManagerImpl) {
   @Volatile
   private var isInitialized = false

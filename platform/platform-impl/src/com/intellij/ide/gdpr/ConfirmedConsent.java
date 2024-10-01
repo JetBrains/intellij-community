@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,6 +11,7 @@ import java.util.StringTokenizer;
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public final class ConfirmedConsent extends ConsentBase {
   private boolean myIsAccepted;
   private long myAcceptanceTime;

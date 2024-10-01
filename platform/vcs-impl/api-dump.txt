@@ -5580,15 +5580,6 @@ f:com.intellij.openapi.vcs.checkout.CompositeCheckoutListener
 - <init>(com.intellij.openapi.project.Project):V
 - checkoutCompleted():V
 - directoryCheckedOut(java.io.File,com.intellij.openapi.vcs.VcsKey):V
-f:com.intellij.openapi.vcs.configurable.CommitDialogConfigurable
-- com.intellij.openapi.options.BoundCompositeSearchableConfigurable
-- sf:Companion:com.intellij.openapi.vcs.configurable.CommitDialogConfigurable$Companion
-- sf:ID:java.lang.String
-- <init>(com.intellij.openapi.project.Project):V
-- createConfigurables():java.util.List
-- createPanel():com.intellij.openapi.ui.DialogPanel
-- disposeUIResources():V
-f:com.intellij.openapi.vcs.configurable.CommitDialogConfigurable$Companion
 c:com.intellij.openapi.vcs.configurable.IssueLinkConfigurationDialog
 - com.intellij.openapi.ui.DialogWrapper
 - b:$$$getRootComponent$$$():javax.swing.JComponent
@@ -5668,15 +5659,6 @@ f:com.intellij.openapi.vcs.configurable.VcsDirectoryConfigurationPanel
 - f:reset():V
 f:com.intellij.openapi.vcs.configurable.VcsDirectoryConfigurationPanel$Companion
 - f:buildVcsesComboBox(com.intellij.openapi.project.Project):com.intellij.openapi.ui.ComboBox
-f:com.intellij.openapi.vcs.configurable.VcsGeneralSettingsConfigurable
-- com.intellij.openapi.options.BoundCompositeSearchableConfigurable
-- com.intellij.openapi.options.Configurable$WithEpDependencies
-- <init>(com.intellij.openapi.project.Project):V
-- createConfigurables():java.util.List
-- createPanel():com.intellij.openapi.ui.DialogPanel
-- disposeUIResources():V
-- getDependencies():java.util.List
-- f:getProject():com.intellij.openapi.project.Project
 f:com.intellij.openapi.vcs.configurable.VcsManagerConfigurable
 - com.intellij.openapi.options.Configurable$NoScroll
 - com.intellij.openapi.options.Configurable$WithEpDependencies
@@ -6671,12 +6653,6 @@ c:com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
 - getPreferredFocusedComponent():javax.swing.JComponent
 - f:getProcessedFiles():java.util.List
 f:com.intellij.openapi.vcs.merge.MultipleFileMergeDialog$Companion
-c:com.intellij.openapi.vcs.readOnlyHandler.VcsHandleType
-- com.intellij.openapi.vcs.readOnlyHandler.HandleType
-- <init>(com.intellij.openapi.vcs.AbstractVcs):V
-- getChangelists():java.util.List
-- getDefaultChangelist():java.lang.String
-- processFiles(java.util.Collection,java.lang.String):V
 a:com.intellij.openapi.vcs.roots.VcsIntegrationEnabler
 - pf:myProject:com.intellij.openapi.project.Project
 - p:<init>(com.intellij.openapi.vcs.AbstractVcs):V
@@ -6762,20 +6738,6 @@ f:com.intellij.openapi.vcs.ui.FontUtil
 - s:getHtmlWithFonts(java.lang.String):java.lang.String
 - s:getHtmlWithFonts(java.lang.String,I,java.awt.Font):java.lang.String
 - s:getStandardAscent(java.awt.Font,java.awt.Graphics):I
-c:com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon
-- com.intellij.ui.popup.list.PopupListElementRenderer
-- com.intellij.ui.popup.list.IconListPopupRenderer
-- p:myIconLabel:com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon$IconComponent
-- <init>(com.intellij.ui.popup.list.ListPopupImpl):V
-- p:createIconBar():javax.swing.JComponent
-- p:createItemComponent():javax.swing.JComponent
-- p:customizeComponent(javax.swing.JList,java.lang.Object,Z):V
-- isIconAt(java.awt.Point):Z
-- p:setComponentIcon(javax.swing.Icon,javax.swing.Icon):V
-c:com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon$IconComponent
-- javax.swing.JLabel
-- <init>():V
-- <init>(javax.swing.border.Border):V
 c:com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 - java.lang.Runnable
 - sf:NOTIFICATION_GROUP:com.intellij.notification.NotificationGroup

@@ -3,11 +3,13 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public abstract class ListActions extends SwingActionDelegate implements ActionRemoteBehaviorSpecification.Frontend {
   private ListActions(String actionId) {
     super(actionId);

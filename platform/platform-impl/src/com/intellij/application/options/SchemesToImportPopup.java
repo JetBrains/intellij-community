@@ -8,12 +8,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
+@ApiStatus.Internal
 public abstract class SchemesToImportPopup<T> {
   private final Component myParent;
 

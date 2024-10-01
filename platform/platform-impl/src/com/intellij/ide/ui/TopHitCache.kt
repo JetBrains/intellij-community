@@ -13,11 +13,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
 private class AppTopHitCache : TopHitCache()
 
+@ApiStatus.Internal
 sealed class TopHitCache : Disposable {
   companion object {
     fun getInstance(): TopHitCache = service<AppTopHitCache>()

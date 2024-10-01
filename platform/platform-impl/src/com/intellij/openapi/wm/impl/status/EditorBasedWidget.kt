@@ -13,9 +13,11 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.ui.EditorTextField
 import com.intellij.util.messages.MessageBusConnection
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.KeyboardFocusManager
 
+@ApiStatus.Internal
 open class EditorBasedWidgetHelper(val project: Project) {
   fun getFocusedEditor(statusBar: StatusBar?): Editor? {
     val component = getFocusedComponent()

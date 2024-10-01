@@ -40,6 +40,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.CancellationException
@@ -53,6 +54,7 @@ private val EDITOR_NOTIFICATION_PROVIDER: Key<MutableMap<Class<EditorNotificatio
 private val PENDING_UPDATE: Key<Boolean> = Key.create("pending.notification.update")
 private val FILE_LEVEL_INTENTIONS: Key<List<IntentionActionWithOptions>> = Key.create("file.level.intentions")
 
+@ApiStatus.Internal
 class EditorNotificationsImpl(private val project: Project,
                               coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
 

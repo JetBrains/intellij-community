@@ -23,6 +23,7 @@ import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import sun.awt.image.ToolkitImage
 import java.awt.*
 import java.awt.event.MouseAdapter
@@ -37,6 +38,7 @@ import kotlin.math.min
 private val KNOB_COLOR = Color.WHITE
 private const val KNOB_RADIUS = 4
 
+@ApiStatus.Internal
 class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JComponent(), ColorListener, ColorPipette.Callback {
   var brightness: Float = 1f
     private set

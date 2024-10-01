@@ -23,6 +23,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.PositionTracker
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
@@ -37,6 +38,7 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 class GotItTooltipService {
   val isFirstRun: Boolean = checkFirstRun()

@@ -12,12 +12,14 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Works like a usual backspace except the situation when the caret is located after white space - all white space symbols
  * (white spaces, tabulations, line feeds) are removed then.
  */
+@ApiStatus.Internal
 public final class HungryBackspaceAction extends TextComponentEditorAction {
 
   public HungryBackspaceAction() {

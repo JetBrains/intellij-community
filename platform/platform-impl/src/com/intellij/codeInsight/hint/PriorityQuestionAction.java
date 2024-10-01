@@ -15,6 +15,9 @@
  */
 package com.intellij.codeInsight.hint;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public interface PriorityQuestionAction extends QuestionAction {
   int getPriority(); // hint with higher priority overlaps hint with lower priority
 

@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.internal.performance
 
 import com.intellij.openapi.editor.Editor
@@ -7,6 +9,7 @@ import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import org.jetbrains.annotations.ApiStatus
 
 internal class LatencyRecorderImpl : LatencyRecorder {
   override fun recordLatencyAwareAction(editor: Editor, actionId: String, timestampMs: Long) {
@@ -42,10 +45,12 @@ class LatencyRecord {
   }
 }
 
+@ApiStatus.Internal
 data class LatencyDistributionRecordKey(val name: String) {
   var details: String? = null
 }
 
+@ApiStatus.Internal
 class LatencyDistributionRecord(val key: LatencyDistributionRecordKey) {
   val totalLatency: LatencyRecord = LatencyRecord()
   val actionLatencyRecords: MutableMap<String, LatencyRecord> = mutableMapOf()

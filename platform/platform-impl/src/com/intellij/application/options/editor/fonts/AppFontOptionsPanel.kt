@@ -15,12 +15,14 @@ import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.util.function.Consumer
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : AbstractFontOptionsPanel() {
 
   protected val defaultPreferences: FontPreferencesImpl = FontPreferencesImpl()

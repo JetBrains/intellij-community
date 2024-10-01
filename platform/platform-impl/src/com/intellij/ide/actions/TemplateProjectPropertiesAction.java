@@ -10,8 +10,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.ui.IdeUICustomization;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class TemplateProjectPropertiesAction extends AnAction implements DumbAware {
   public TemplateProjectPropertiesAction() {
     getTemplatePresentation().setText(() -> IdeUICustomization.getInstance().projectMessage("action.TemplateProjectProperties.text.template", CommonBundle.settingsTitle()));

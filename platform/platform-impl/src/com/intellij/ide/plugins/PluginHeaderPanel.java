@@ -9,6 +9,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,6 +17,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class PluginHeaderPanel {
 
   private IdeaPluginDescriptor myPlugin;

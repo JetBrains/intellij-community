@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:ApiStatus.Internal
+
 package com.intellij.ui.colorpicker
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.ui.picker.ColorListener
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 
 val DEFAULT_PICKER_COLOR: Color = Color(0xFF, 0xFF, 0xFF, 0xFF)

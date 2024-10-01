@@ -9,10 +9,12 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.MutableErrorTreeView;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class HotfixGroupElement extends GroupingElement {
 
   private final Consumer<? super HotfixGate> myHotfix;

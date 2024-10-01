@@ -146,6 +146,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     windowManager.getFrameHelper(null)?.updateView()
   }
 
+  @ApiStatus.Internal
   fun addAction(url: ActionUrl) {
     synchronized(lock) {
       if (!actions.contains(url) && !actions.remove(url.inverted)) {
@@ -157,8 +158,10 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   /**
    * Mutable list is returned.
    */
+  @ApiStatus.Internal
   fun getActions(): List<ActionUrl> = actions
 
+  @ApiStatus.Internal
   fun setActions(newActions: List<ActionUrl>) {
     synchronized(lock) {
       assert(actions !== newActions)
@@ -381,6 +384,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     return true
   }
 
+  @ApiStatus.Internal
   fun getChildActions(url: ActionUrl): List<ActionUrl> = getChildActions(url.groupPath)
 
   internal fun getChildActions(groupPath: List<String>): List<ActionUrl> {

@@ -755,6 +755,7 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
  *
  * To install this extension you need to add styles returned from [getStyles] to your [StyleSheet].
  */
+@ApiStatus.Internal
 @Deprecated(message = "Use JBHtmlPane and <shortcut> element instead")
 class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
   override fun invoke(elem: Element, defaultView: View): View? {

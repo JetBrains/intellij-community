@@ -10,10 +10,12 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
+@ApiStatus.Internal
 public final class FileAppearanceServiceImpl extends FileAppearanceService {
   private static final CellAppearanceEx EMPTY = new CellAppearanceEx() {
     @Override

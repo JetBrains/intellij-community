@@ -35,4 +35,5 @@ class StatusBarWidgetSettings : SerializablePersistentStateComponent<StatusBarSt
   }
 }
 
+@Internal
 data class StatusBarState(@JvmField val widgets: Map<String, Boolean> = emptyMap())

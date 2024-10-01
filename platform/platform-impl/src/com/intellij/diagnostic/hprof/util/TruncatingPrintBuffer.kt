@@ -15,9 +15,11 @@
  */
 package com.intellij.diagnostic.hprof.util
 
+import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 import java.util.*
 
+@ApiStatus.Internal
 class TruncatingPrintBuffer(
   private val headLimit: Int,
   private val tailLimit: Int,

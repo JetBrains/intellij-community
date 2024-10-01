@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.IdeUICustomization
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class IdeDependentAction : DumbAwareAction() {
   private val id by lazy { ActionManager.getInstance().getId(this)!! }
 

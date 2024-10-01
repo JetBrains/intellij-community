@@ -22,6 +22,7 @@ import java.util.*
 import java.util.function.Supplier
 import javax.swing.Icon
 
+@ApiStatus.Internal
 enum class ToolWindowProperty {
   TITLE, ICON, AVAILABLE, STRIPE_TITLE
 }

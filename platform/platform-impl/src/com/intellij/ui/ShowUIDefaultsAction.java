@@ -25,6 +25,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.GrayFilter;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 @SuppressWarnings("HardCodedStringLiteral")
 public final class ShowUIDefaultsAction extends AnAction implements DumbAware {
   @Override

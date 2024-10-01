@@ -4,8 +4,10 @@ package com.intellij.platform.ide.bootstrap
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.util.Java11Shim
 import com.intellij.util.containers.ConcurrentLongObjectMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
+@ApiStatus.Internal
 @VisibleForTesting
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 class Java11ShimImpl : Java11Shim() {

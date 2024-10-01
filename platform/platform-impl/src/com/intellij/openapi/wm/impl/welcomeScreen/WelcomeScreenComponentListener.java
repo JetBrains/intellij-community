@@ -2,11 +2,13 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+@ApiStatus.Internal
 public interface WelcomeScreenComponentListener {
 
   @Topic.AppLevel

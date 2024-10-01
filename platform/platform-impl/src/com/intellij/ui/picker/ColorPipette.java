@@ -16,11 +16,13 @@
 package com.intellij.ui.picker;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.image.ImageObserver;
 
+@ApiStatus.Internal
 public interface ColorPipette extends ImageObserver, Disposable {
   void setInitialColor(@Nullable Color initialColor);
   

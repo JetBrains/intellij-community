@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,6 +13,7 @@ import java.awt.*;
 /**
 * @author Konstantin Bulenkov
 */
+@ApiStatus.Internal
 public final class RatesPanel extends JPanel {
   public static final int MAX_RATE = 5;
 

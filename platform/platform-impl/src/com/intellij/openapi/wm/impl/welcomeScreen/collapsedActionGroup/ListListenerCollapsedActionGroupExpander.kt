@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.DefaultListModel
 import javax.swing.JList
 import javax.swing.event.ListSelectionEvent
@@ -15,6 +16,7 @@ import javax.swing.event.ListSelectionListener
  * Listens for [JList] selection events, and when [CollapsedActionGroup] selected -- substitutes it with children
  * See [expandCollapsableGroupsOnSelection]
  */
+@ApiStatus.Internal
 class ListListenerCollapsedActionGroupExpander private constructor(
   private val list: JList<AnAction>,
   private val model: DefaultListModel<AnAction>) : ListSelectionListener {

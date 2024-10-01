@@ -2,7 +2,9 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.ide.caches.CachesInvalidator
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class WorkspaceModelCachesInvalidator : CachesInvalidator() {
   override fun invalidateCaches() {
     WorkspaceModelCacheImpl.invalidateCaches()

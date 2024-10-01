@@ -66,6 +66,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -1223,7 +1224,7 @@ private fun patchRowHeight(defaults: UIDefaults, key: String, prevScale: Float) 
   defaults.put(key, if (custom >= 0) scale(custom) else if (rowHeight <= 0) 0 else scale((rowHeight / prevScale).toInt()))
 }
 
-fun intSystemPropertyValue(name: String, defaultValue: Int): Int = runCatching {
+private fun intSystemPropertyValue(name: String, defaultValue: Int): Int = runCatching {
   System.getProperty(name)?.toInt() ?: defaultValue
 }.getOrNull() ?: defaultValue
 

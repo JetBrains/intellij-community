@@ -4,12 +4,14 @@ package com.intellij.ui.popup.util;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.popup.WizardPopup;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public abstract class MnemonicsSearch<T> {
   private final WizardPopup myPopup;
   private final Map<String, T> myChar2ValueMap = new HashMap<>();

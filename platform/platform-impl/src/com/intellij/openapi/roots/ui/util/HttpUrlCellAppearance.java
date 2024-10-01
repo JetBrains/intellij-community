@@ -3,9 +3,11 @@ package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class HttpUrlCellAppearance extends ValidFileCellAppearance {
   public HttpUrlCellAppearance(VirtualFile file) {
     super(file);

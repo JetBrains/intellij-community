@@ -11,8 +11,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class GotoLineAction extends AnAction implements DumbAware, LightEditCompatible {
   public GotoLineAction() {
     setEnabledInModalContext(true);

@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.Messages
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 interface RestartDialog {
   fun showRestartRequired()

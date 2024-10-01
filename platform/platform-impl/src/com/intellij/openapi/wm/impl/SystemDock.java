@@ -7,11 +7,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.mac.MacDockDelegate;
 import com.intellij.ui.win.WinDockDelegate;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Nikita Provotorov
  */
+@ApiStatus.Internal
 public final class SystemDock {
   public interface Delegate {
     void updateRecentProjectsMenu();

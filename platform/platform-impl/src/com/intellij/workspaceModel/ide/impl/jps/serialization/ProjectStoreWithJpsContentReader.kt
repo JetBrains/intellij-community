@@ -3,11 +3,14 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface ProjectStoreWithJpsContentReader : IProjectStore {
   fun createContentReader(): JpsFileContentReaderWithCache
 }
 
+@ApiStatus.Internal
 interface JpsFileContentReaderWithCache : JpsFileContentReader {
   fun clearCache()
 }

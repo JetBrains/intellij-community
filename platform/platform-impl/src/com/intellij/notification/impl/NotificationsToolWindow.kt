@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.notification.impl
 
 import com.intellij.icons.AllIcons
@@ -120,6 +122,7 @@ object NotificationsStateWatcher {
   }
 }
 
+@ApiStatus.Internal
 @JvmRecord
 data class StatusMessage(val notification: Notification, val text: @NlsContexts.StatusBarText String, val stamp: Long)
 

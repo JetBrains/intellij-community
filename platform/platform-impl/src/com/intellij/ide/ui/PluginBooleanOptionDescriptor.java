@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class PluginBooleanOptionDescriptor extends BooleanOptionDescription
   implements BooleanOptionDescription.RequiresRebuild, NotABooleanOptionDescription {
 

@@ -5,10 +5,12 @@ import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup.Companion.getGroupTitle
 import com.intellij.notification.impl.NotificationSettings
 import com.intellij.notification.impl.NotificationsConfigurationImpl
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 class NotificationSettingsWrapper internal constructor(var version: NotificationSettings) {
   var isRemoved: Boolean = false
   var title: String? = null

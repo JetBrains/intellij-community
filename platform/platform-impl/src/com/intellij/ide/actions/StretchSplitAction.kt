@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Splitter
 import com.intellij.ui.ComponentUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 
 
@@ -17,6 +18,7 @@ import java.awt.Component
  *
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 abstract class StretchSplitAction(private val direction: StretchDirection) : DumbAwareAction() {
 
   enum class StretchDirection {

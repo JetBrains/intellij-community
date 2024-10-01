@@ -11,6 +11,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.nio.charset.Charset;
 
+@ApiStatus.Internal
 public final class IncompatibleEncodingDialog extends DialogWrapper {
   private final @NotNull VirtualFile virtualFile;
   private final @NotNull Charset charset;

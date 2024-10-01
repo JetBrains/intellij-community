@@ -11,11 +11,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated See {@link ToolWindowViewModeAction} \
  **/
+@ApiStatus.Internal
 @Deprecated
 public class ToggleDockModeAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 

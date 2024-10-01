@@ -54,6 +54,7 @@ import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 import io.opentelemetry.api.metrics.Meter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -62,6 +63,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Manages serialization and deserialization from JPS format (*.iml and *.ipr files, .idea directory) for a workspace model in the IDE.
  */
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   companion object {
@@ -527,6 +529,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   fun getSerializers(): JpsProjectSerializersImpl = serializers.get() as JpsProjectSerializersImpl
 }
 
+@ApiStatus.Internal
 class LoadedProjectEntities(
   val builder: MutableEntityStorage,
   val orphanageBuilder: MutableEntityStorage,

@@ -10,12 +10,14 @@ import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class UiActivityMonitorImpl extends UiActivityMonitor implements ModalityStateListener, Disposable {
   private final Map<Project, BusyContainer> myObjects = FactoryMap.create(this::create);
 

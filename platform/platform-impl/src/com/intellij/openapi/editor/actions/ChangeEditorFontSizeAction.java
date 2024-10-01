@@ -11,12 +11,14 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public abstract class ChangeEditorFontSizeAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   private final float myStep;
   private final boolean myGlobal;

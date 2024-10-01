@@ -3,7 +3,9 @@ package com.intellij.openapi.project.configuration
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class EmptyLoggingService : HeadlessLogging.HeadlessLoggingService {
   private val emptyFlow = MutableSharedFlow<HeadlessLogging.LogEntry>()
   override fun logEntry(exception: HeadlessLogging.LogEntry) {

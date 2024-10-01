@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 
+@ApiStatus.Internal
 public final class KeymapUsageCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("keymaps.name", 2);
   private static final StringEventField KEYMAP_NAME = EventFields.StringValidatedByEnum("keymap_name", "keymaps");

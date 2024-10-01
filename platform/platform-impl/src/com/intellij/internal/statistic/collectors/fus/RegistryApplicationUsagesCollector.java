@@ -21,6 +21,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettingsImpl;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.*;
 
+@ApiStatus.Internal
 public final class RegistryApplicationUsagesCollector extends ApplicationUsagesCollector {
   public static final String DISABLE_INTELLIJ_PROJECT_ANALYTICS = "ide.disable.intellij.project.analytics";
 

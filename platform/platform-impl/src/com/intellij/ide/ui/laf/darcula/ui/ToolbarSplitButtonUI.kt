@@ -12,6 +12,7 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
@@ -27,6 +28,7 @@ private const val DEAD_ZONE = 0
 private const val ACTION_ZONE = 1
 private const val EXPAND_ZONE = 2
 
+@ApiStatus.Internal
 class ToolbarSplitButtonUI : AbstractToolbarComboUI(), PropertyChangeListener {
 
   private val clickListener = MyClickListener()

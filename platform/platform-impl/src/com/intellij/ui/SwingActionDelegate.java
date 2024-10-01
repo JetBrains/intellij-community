@@ -19,6 +19,7 @@ import java.util.function.Function;
 
 import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT;
 
+@ApiStatus.Internal
 public class SwingActionDelegate extends AnAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   private static final Key<Function<String, JComponent>> FUNCTION = Key.create("SwingActionsMapping");
   private final String mySwingActionId;

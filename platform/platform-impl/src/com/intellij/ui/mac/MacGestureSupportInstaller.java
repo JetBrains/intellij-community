@@ -2,12 +2,14 @@
 package com.intellij.ui.mac;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.AWTEventListener;
 
+@ApiStatus.Internal
 public final class MacGestureSupportInstaller {
   public static void installOnComponent(@NotNull JComponent component, @Nullable AWTEventListener listener) {
     try {

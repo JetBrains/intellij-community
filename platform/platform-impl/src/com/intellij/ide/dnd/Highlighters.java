@@ -8,12 +8,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class Highlighters implements DnDEvent.DropTargetHighlightingType {
   private static final List<DropTargetHighlighter> ourHightlighters = new ArrayList<>();
 

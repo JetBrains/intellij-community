@@ -12,11 +12,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.stream.Stream;
 
+@ApiStatus.Internal
 public final class ToggleReadOnlyAttributeAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {

@@ -22,6 +22,7 @@ import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import javax.swing.*;
 import java.util.List;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class FileChangedNotificationProvider implements EditorNotificationProvider, DumbAware {
   private static final Logger LOG = Logger.getInstance(FileChangedNotificationProvider.class);
 

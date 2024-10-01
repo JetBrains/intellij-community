@@ -14,10 +14,12 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.text.DateTimeFormatManager
+import org.jetbrains.annotations.ApiStatus
 import java.text.SimpleDateFormat
 import javax.swing.JEditorPane
 import javax.swing.event.DocumentEvent
 
+@ApiStatus.Internal
 class DateTimeFormatConfigurable :
   BoundSearchableConfigurable(IdeBundle.message("date.time.format.configurable"), helpTopic = "reference.date.formats", _id = "ide.date.format"),
   NoScroll

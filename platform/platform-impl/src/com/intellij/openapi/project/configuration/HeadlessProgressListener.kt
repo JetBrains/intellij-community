@@ -7,8 +7,10 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
+@ApiStatus.Internal
 class HeadlessProgressListener : ProgressManagerListener {
 
   private val taskDurationMap = ConcurrentHashMap<Int, Long>()

@@ -4,7 +4,9 @@ package com.intellij.codeInsight.inline.completion.options
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.ConfigurableEP
 import com.intellij.openapi.options.UnnamedConfigurable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class InlineCompletionConfigurableEP : ConfigurableEP<UnnamedConfigurable>() {
 
   companion object {

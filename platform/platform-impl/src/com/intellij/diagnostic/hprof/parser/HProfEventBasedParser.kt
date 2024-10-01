@@ -20,11 +20,13 @@ import com.intellij.diagnostic.hprof.util.HProfReadBuffer
 import com.intellij.diagnostic.hprof.util.HProfReadBufferSlidingWindow
 import com.intellij.diagnostic.hprof.util.IDMapper
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 import java.io.EOFException
 import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.charset.Charset
 
+@ApiStatus.Internal
 class HProfEventBasedParser(fileChannel: FileChannel) : AutoCloseable {
   companion object {
     private val LOG = logger<HProfEventBasedParser>()

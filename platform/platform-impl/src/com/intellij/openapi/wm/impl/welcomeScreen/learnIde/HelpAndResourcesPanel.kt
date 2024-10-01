@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress.createTitlePanel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -22,6 +23,7 @@ import javax.swing.Box.Filler.LEFT_ALIGNMENT
 import javax.swing.JPanel.LEFT_ALIGNMENT
 import javax.swing.plaf.ComponentUI
 
+@ApiStatus.Internal
 class HelpAndResourcesPanel : JPanel() {
   private val helpAndResourcesHeader: JTextPane = createTitlePanel(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text"))
 

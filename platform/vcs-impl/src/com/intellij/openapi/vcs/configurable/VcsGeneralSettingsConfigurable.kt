@@ -32,6 +32,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.toMultiMap
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
@@ -62,6 +63,7 @@ enum class Location {
   Other
 }
 
+@ApiStatus.Internal
 class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
   message("configurable.VcsGeneralConfigurationConfigurable.display.name"),
   "project.propVCSSupport.Confirmation"

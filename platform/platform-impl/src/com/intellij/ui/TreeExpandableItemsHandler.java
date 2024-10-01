@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.hover.TreeHoverListener;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -21,6 +22,7 @@ import java.beans.PropertyChangeListener;
 
 import static com.intellij.openapi.util.registry.Registry.is;
 
+@ApiStatus.Internal
 public final class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<Integer, JTree> {
   TreeExpandableItemsHandler(final JTree tree) {
     super(tree);

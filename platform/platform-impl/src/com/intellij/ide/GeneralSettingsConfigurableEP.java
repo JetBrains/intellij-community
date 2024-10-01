@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.SearchableConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * To provide additional options in General section register implementation of {@link SearchableConfigurable} in the plugin.xml:
@@ -14,6 +15,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
  * <p>
  * A new instance of the specified class will be created each time then the Settings dialog is opened
  */
+@ApiStatus.Internal
 public final class GeneralSettingsConfigurableEP extends ConfigurableEP<SearchableConfigurable> {
   private GeneralSettingsConfigurableEP() {
     super(ApplicationManager.getApplication());

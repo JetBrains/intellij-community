@@ -9,9 +9,11 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.EdtScheduler
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JLabel
 
+@ApiStatus.Internal
 class AsyncPopupWaiter(step: AsyncPopupStep<*>, point: RelativePoint, onReady: (PopupStep<*>) -> Unit) : Disposable {
   private val myGlassPane = UIUtil.getRootPane(point.component)?.glassPane as? JComponent
   private val myIcon: JComponent?

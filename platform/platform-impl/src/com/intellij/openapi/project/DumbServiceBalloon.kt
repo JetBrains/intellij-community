@@ -28,7 +28,9 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DumbServiceBalloon(private val myProject: Project,
                          private val myService: Service) {
   private var myBalloon: Balloon? = null //used from EDT only

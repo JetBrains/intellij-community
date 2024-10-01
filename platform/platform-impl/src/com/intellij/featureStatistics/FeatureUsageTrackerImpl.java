@@ -35,6 +35,7 @@ import java.util.Set;
 import static com.intellij.configurationStore.XmlSerializer.getJdomSerializer;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
 
+@ApiStatus.Internal
 @State(
   name = "FeatureUsageStatistics",
   storages = {

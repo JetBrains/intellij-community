@@ -2,8 +2,10 @@
 package com.intellij.openapi.project.configuration
 
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
+@ApiStatus.Internal
 class ChannelingProgressIndicator(private val prefix: String) : ProgressIndicatorBase() {
   override fun setIndeterminate(indeterminate: Boolean) {
     super.setIndeterminate(indeterminate)

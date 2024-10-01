@@ -18,6 +18,7 @@ import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public abstract class ContentLabel extends BaseLabel {
   private static final Logger LOG = Logger.getInstance(ContentLabel.class);
   private static final int DEFAULT_HORIZONTAL_INSET = 12;

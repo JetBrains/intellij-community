@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.ide.ui.customization
 
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -8,7 +10,9 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class BeforeAction(private val rootID: String, private val destActionID: String): ToolbarQuickActionInsertStrategy {
   override fun addActions(actionIds: List<String>, schema: CustomActionsSchema): Boolean {
     val group = getGroup(rootID, schema) ?: return false
@@ -23,6 +27,7 @@ class BeforeAction(private val rootID: String, private val destActionID: String)
   override fun checkExists(actionId: String, schema: CustomActionsSchema) = groupContainsAction(rootID, actionId, schema)
 }
 
+@ApiStatus.Internal
 class AfterAction(private val rootID: String, private val destActionID: String): ToolbarQuickActionInsertStrategy {
   override fun addActions(actionIds: List<String>, schema: CustomActionsSchema): Boolean {
     val group = getGroup(rootID, schema) ?: return false

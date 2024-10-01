@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.components.service
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.VisibleForTesting
 /**
  * An entry point for running [IjentApi] over WSL and checking if [IjentApi] even should be used for WSL.
  */
+@ApiStatus.Internal
 @ApiStatus.Experimental
 interface WslIjentManager {
   /**

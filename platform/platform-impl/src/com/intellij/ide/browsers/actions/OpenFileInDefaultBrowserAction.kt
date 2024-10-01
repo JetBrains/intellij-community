@@ -7,7 +7,9 @@ import com.intellij.ide.browsers.*
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class OpenFileInDefaultBrowserAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val result = BaseOpenInBrowserAction.Handler.doUpdate(e) ?: return

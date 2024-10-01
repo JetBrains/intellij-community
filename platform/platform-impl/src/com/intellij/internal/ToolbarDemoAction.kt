@@ -13,11 +13,13 @@ import com.intellij.openapi.wm.impl.headertoolbar.createDemoToolbar
 import com.intellij.ui.JBColor
 import com.intellij.ui.RowIcon
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JOptionPane
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class ToolbarDemoAction: AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
 

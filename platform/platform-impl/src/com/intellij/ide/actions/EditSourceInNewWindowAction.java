@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -17,6 +18,7 @@ import java.util.Arrays;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class EditSourceInNewWindowAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

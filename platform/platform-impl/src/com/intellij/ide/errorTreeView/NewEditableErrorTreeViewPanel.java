@@ -2,8 +2,10 @@
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class NewEditableErrorTreeViewPanel extends NewErrorTreeViewPanel {
 
 

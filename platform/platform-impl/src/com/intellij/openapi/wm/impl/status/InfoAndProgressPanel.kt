@@ -72,6 +72,7 @@ import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+@ApiStatus.Internal
 class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatusBarImpl,
                                                 private val coroutineScope: CoroutineScope) : UISettingsListener {
   companion object {

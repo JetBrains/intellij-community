@@ -6,7 +6,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class MessageBusUtil {
   private static <T> Runnable createPublisherRunnable(final Project project, final Topic<? extends T> topic, final Consumer<? super T> listener) {
     return () -> {

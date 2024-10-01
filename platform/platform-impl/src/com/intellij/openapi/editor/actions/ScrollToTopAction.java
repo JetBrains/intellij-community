@@ -5,12 +5,14 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Scrolls to the top of the target editor without changing its caret position.
  */
+@ApiStatus.Internal
 public final class ScrollToTopAction extends InactiveEditorAction {
 
   public ScrollToTopAction() {

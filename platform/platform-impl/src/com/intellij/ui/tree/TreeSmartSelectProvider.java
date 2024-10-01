@@ -4,6 +4,7 @@ package com.intellij.ui.tree;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.ide.SmartSelectProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class TreeSmartSelectProvider implements SmartSelectProvider<JTree> {
   @Override
   public void increaseSelection(JTree tree) {

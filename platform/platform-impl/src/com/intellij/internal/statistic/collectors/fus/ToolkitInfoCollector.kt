@@ -5,7 +5,9 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ToolkitInfoCollector : ApplicationUsagesCollector() {
 
   private val toolkitNames = listOf("WLToolkit", "XToolkit", "other", "not_set")

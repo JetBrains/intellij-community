@@ -6,12 +6,14 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author gregsh
  */
+@ApiStatus.Internal
 public final class SystemPropertyBean implements PluginAware {
   private PluginDescriptor myPluginDescriptor;
 

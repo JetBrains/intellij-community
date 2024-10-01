@@ -7,8 +7,10 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.BidiTextDirection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class SetEditorBidiTextDirectionAction extends ToggleAction {
   private final BidiTextDirection myDirection;
 

@@ -14,7 +14,9 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.Groups
 import com.intellij.openapi.options.Scheme
 import com.intellij.ui.ExperimentalUI
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class EditorColorSchemesSorterImpl: EditorColorSchemesSorter {
   override fun getOrderedSchemes(schemesMap: Map<String, EditorColorsScheme>): Groups<EditorColorsScheme> {
     val unhandledSchemes = schemesMap.toMutableMap().also { filterOutRedundantSchemes(it) }

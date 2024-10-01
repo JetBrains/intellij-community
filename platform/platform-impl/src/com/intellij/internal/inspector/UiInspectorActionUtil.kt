@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getDelegateChainRootAction
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
+@ApiStatus.Internal
 object UiInspectorActionUtil {
   private fun getRawActionId(action: AnAction): String? {
     return ActionManager.getInstance().getId(action)

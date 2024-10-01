@@ -8,9 +8,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public final class CustomizeUIAction extends AnAction {
   public CustomizeUIAction() {
     super(ActionsBundle.messagePointer("action.CustomizeUIAction.text"));

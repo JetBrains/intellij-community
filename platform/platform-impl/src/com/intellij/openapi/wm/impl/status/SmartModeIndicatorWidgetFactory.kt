@@ -11,10 +11,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 private const val ID = "SmartModeIndicator"
 
+@ApiStatus.Internal
 class SmartModeIndicatorWidgetFactory : StatusBarWidgetFactory, WidgetPresentationFactory {
   override fun getId(): String {
     return ID

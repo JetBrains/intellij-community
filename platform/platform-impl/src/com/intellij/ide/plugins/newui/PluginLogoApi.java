@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.zip.ZipFile;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class PluginLogoApi {
   /**
    * Direct load image from local dir or jar based plugin without background task and caches.

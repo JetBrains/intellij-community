@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ChildContext;
 import com.intellij.util.concurrency.Propagation;
 import kotlin.coroutines.CoroutineContext;
+import org.jetbrains.annotations.ApiStatus;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+@ApiStatus.Internal
 public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   public static final class SubmissionReceipt {
     private final long submittedTaskCount;

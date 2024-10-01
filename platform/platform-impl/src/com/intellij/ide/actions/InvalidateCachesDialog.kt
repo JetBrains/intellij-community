@@ -11,6 +11,7 @@ import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Action
 import javax.swing.JPanel
 
@@ -18,6 +19,7 @@ private var Action.text
   get() = getValue(Action.NAME)
   set(value) = putValue(Action.NAME, value)
 
+@ApiStatus.Internal
 class InvalidateCachesDialog(
   project: Project?,
   private val canRestart: Boolean,

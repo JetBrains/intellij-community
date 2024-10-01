@@ -22,6 +22,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.GlobalEntityBridgeAndEventHa
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import kotlin.io.path.Path
 import kotlin.time.Duration.Companion.seconds
@@ -49,6 +50,7 @@ import kotlin.time.Duration.Companion.seconds
  * 2) Call initialization of bridges after cache loading
  * 3) Reading .xml on delayed sync
  */
+@ApiStatus.Internal
 class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope) : JpsGlobalModelSynchronizer {
   private var loadedFromDisk: Boolean = false
   private val isSerializationProhibited: Boolean

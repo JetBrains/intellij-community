@@ -35,6 +35,7 @@ import com.intellij.util.containers.mapSmartSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -53,6 +54,7 @@ internal data class PluginAdvertiserExtensionsData(
 @Serializable
 private data class PluginAdvertiserExtensionsState(@JvmField val plugins: LinkedHashMap<String, PluginData> = LinkedHashMap())
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 class PluginAdvertiserExtensionsStateService : SettingsSavingComponent {
   companion object {

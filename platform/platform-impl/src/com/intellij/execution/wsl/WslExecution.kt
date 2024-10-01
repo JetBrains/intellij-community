@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("WslExecution")
+@file:ApiStatus.Internal
 
 package com.intellij.execution.wsl
 
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.LineSeparator
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
 @JvmOverloads

@@ -4,8 +4,10 @@ package com.intellij.openapi.project.impl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public interface ProjectStoreFactory {
   @NotNull IProjectStore createStore(@NotNull Project project);
 

@@ -4,8 +4,10 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.editor.ConvertIndentsUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public final class ConvertIndentsToTabsAction extends ConvertIndentsActionBase {
   @Override
   protected int performAction(Editor editor, TextRange textRange) {

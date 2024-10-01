@@ -18,11 +18,13 @@ package com.intellij.diagnostic.hprof.util
 import com.intellij.diagnostic.hprof.parser.*
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
 import java.io.DataOutput
 import java.io.DataOutputStream
 
+@ApiStatus.Internal
 class HprofWriter(
   private val dos: DataOutputStream,
   private val idSize: Int,

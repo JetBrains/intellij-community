@@ -20,12 +20,14 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.text.DateFormatUtil
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 
 private const val TOOLBOX_URL =
   "https://www.jetbrains.com/toolbox-app/?utm_source=product&utm_medium=link&utm_campaign=toolbox_app_in_IDE_updatewindow&utm_content=we_recommend"
 
+@ApiStatus.Internal
 class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNowEnabled: Boolean = true) :
   BoundConfigurable(IdeBundle.message("updates.settings.title"), "preferences.updates") {
 

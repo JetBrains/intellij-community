@@ -5,11 +5,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.TexturePaint
 import kotlin.math.floor
 
+@ApiStatus.Internal
 class GradientTextureCache: Disposable {
   private var texture: TexturePaint? = null
   private var colorStart: Color? = null

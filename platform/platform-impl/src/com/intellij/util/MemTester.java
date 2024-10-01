@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class MemTester {
   private MemTester() { }
 

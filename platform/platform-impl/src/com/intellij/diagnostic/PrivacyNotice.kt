@@ -6,9 +6,11 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.CollapsibleRow
 import com.intellij.ui.dsl.builder.cleanupHtml
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JEditorPane
 
+@ApiStatus.Internal
 class PrivacyNotice(@NlsContexts.Label label: String, @NlsContexts.Label privacyPolicy: String) {
 
   @JvmField

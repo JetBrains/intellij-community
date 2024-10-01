@@ -12,7 +12,9 @@ import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.util.TimeoutUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class LightEditProjectManager {
   companion object {
     private val LOG = logger<LightEditProjectManager>()

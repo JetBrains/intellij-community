@@ -3,6 +3,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.List;
  * </pre>
  * {@code ExporterClass} must extend {@link SchemeExporter}
  */
+@ApiStatus.Internal
 public final class SchemeExporterEP<S extends Scheme> extends SchemeConvertorEPBase<SchemeExporter<S>> {
   public static final ExtensionPointName<SchemeExporterEP<?>> EP_NAME = ExtensionPointName.create("com.intellij.schemeExporter");
 

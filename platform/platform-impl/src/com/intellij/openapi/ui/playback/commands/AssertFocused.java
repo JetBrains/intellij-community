@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.playback.commands;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -12,6 +13,7 @@ import org.jetbrains.concurrency.Promises;
 import java.awt.*;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class AssertFocused extends AbstractCommand {
 
   public static final String PREFIX = CMD_PREFIX + "assert focused";

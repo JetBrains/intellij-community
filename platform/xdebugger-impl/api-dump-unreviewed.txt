@@ -1,6 +1,3 @@
-f:com.intellij.execution.actions.ActivateDebugToolWindowAction
-- com.intellij.ide.actions.ToolWindowEmptyStateAction
-- <init>():V
 a:com.intellij.xdebugger.attach.EnvironmentAwareHost
 - com.intellij.xdebugger.attach.XAttachHost
 - <init>():V

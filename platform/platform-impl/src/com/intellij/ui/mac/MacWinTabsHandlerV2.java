@@ -15,6 +15,7 @@ import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ArrayUtil;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.util.Objects;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class MacWinTabsHandlerV2 extends MacWinTabsHandler {
   private static final String WINDOW_TABS_CONTAINER = "WINDOW_TABS_CONTAINER_KEY";
 

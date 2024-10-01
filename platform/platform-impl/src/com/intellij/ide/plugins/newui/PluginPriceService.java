@@ -11,6 +11,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
@@ -27,6 +28,7 @@ import java.util.Map.Entry;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class PluginPriceService {
   private static final Logger LOG = Logger.getInstance(PluginPriceService.class);
 

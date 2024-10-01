@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog", "ReplacePutWithAssignment")
+@file:ApiStatus.Internal
 
 package com.intellij.openapi.keymap.impl
 
@@ -38,6 +39,7 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap

@@ -6,7 +6,9 @@ import com.intellij.ide.logsUploader.LogPacker
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DefaultReportFeedbackService(override val coroutineScope: CoroutineScope): ReportFeedbackService {
 
   override suspend fun collectLogs(project: Project?): String? {

@@ -25,6 +25,7 @@ class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler(
   }
 }
 
+@ApiStatus.Internal
 abstract class SwitchInlineCompletionVariantAction protected constructor(
   direction: Direction
 ) : EditorAction(Handler(direction)), HintManagerImpl.ActionToIgnore {
@@ -80,9 +81,11 @@ abstract class CancellationKeyInlineCompletionHandler(val originalHandler: Edito
   }
 }
 
+@ApiStatus.Internal
 class EscapeInlineCompletionHandler(originalHandler: EditorActionHandler) :
   CancellationKeyInlineCompletionHandler(originalHandler, FinishType.ESCAPE_PRESSED)
 
+@ApiStatus.Internal
 class BackSpaceInlineCompletionHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
 
   private fun invokeOriginalHandler(editor: Editor, caret: Caret?, dataContext: DataContext?) {
@@ -123,6 +126,7 @@ class BackSpaceInlineCompletionHandler(private val originalHandler: EditorAction
   }
 }
 
+@ApiStatus.Internal
 class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
   class CallInlineCompletionHandler : EditorWriteActionHandler() {
     override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {

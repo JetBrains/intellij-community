@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.ide.ApplicationActivity
@@ -32,6 +34,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.take
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
@@ -194,6 +197,7 @@ private class VFSHealthCheckServiceStarter : ApplicationActivity {
  * Performs VFS self-consistency checks.
  * E.g. fields have reasonable values, all the references (ids) are valid and could be resolved, and so on.
  */
+@ApiStatus.Internal
 class VFSHealthChecker(private val impl: FSRecordsImpl,
                        private val log: Logger = LOG) {
 

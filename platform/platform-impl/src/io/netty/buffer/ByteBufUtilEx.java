@@ -2,10 +2,12 @@
 package io.netty.buffer;
 
 import io.netty.util.CharsetUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import static io.netty.util.internal.StringUtil.isSurrogate;
 
 // todo pull request
+@ApiStatus.Internal
 public final class ByteBufUtilEx {
   private static final byte WRITE_UTF_UNKNOWN = (byte) '?';
 
