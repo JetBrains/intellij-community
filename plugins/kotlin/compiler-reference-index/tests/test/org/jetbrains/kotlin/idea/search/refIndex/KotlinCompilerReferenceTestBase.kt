@@ -22,7 +22,13 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase(),
 
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
         super.tuneFixture(moduleBuilder)
-        moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, TestKotlinArtifacts.kotlinStdlib.path)
+        if (withK2Compiler) {
+            moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, TestKotlinArtifacts.kotlinStdlib.path)
+        } else {
+            // For the K1 tests we want to use a Kotlin 1.x library because Kotlin 2 libraries might not be able to
+            // be consumed by the K1 compiler.
+            moduleBuilder.addMavenLibrary(JavaModuleFixtureBuilder.MavenLib("org.jetbrains.kotlin:kotlin-stdlib:1.9.25"))
+        }
     }
 
     protected open val withK2Compiler: Boolean
@@ -31,7 +37,6 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase(),
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
         KotlinCompilerReferenceIndexService[project]
-
         if (withK2Compiler) {
             project.enableK2Compiler()
         } else {
