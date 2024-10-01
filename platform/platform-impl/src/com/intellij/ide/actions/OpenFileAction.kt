@@ -128,78 +128,75 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-}
 
-// vanilla `OpenProjectFileChooserDescriptor` only accepts project files; this one is overridden to accept any files
-private class ProjectOrFileChooserDescriptor : OpenProjectFileChooserDescriptor(true) {
-  private val myStandardDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withHideIgnored(false)
+  // vanilla `OpenProjectFileChooserDescriptor` only accepts project files; this one is overridden to accept any files
+  private class ProjectOrFileChooserDescriptor : OpenProjectFileChooserDescriptor(true) {
+    private val myStandardDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withHideIgnored(false)
 
-  init {
-    title = IdeBundle.message("title.open.file.or.project")
-  }
-
-  override fun isFileSelectable(file: VirtualFile?): Boolean = when {
-    file == null -> false
-    file.isDirectory -> SlowOperations.knownIssue("IJPL-162827").use {
-      super.isFileSelectable(file)
+    init {
+      title = IdeBundle.message("title.open.file.or.project")
     }
-    else -> myStandardDescriptor.isFileSelectable(file)
-  }
 
-  override fun isChooseMultiple() = true
-}
-
-private suspend fun doOpenFile(project: Project?, virtualFile: VirtualFile) {
-  val file = virtualFile.toNioPath()
-  if (Files.isDirectory(file)) {
-    @Suppress("TestOnlyProblems")
-    ProjectUtil.openExistingDir(file, project)
-    return
-  }
-
-  // try to open as a project - unless the file is an .ipr of the current one
-  if ((project == null || virtualFile != project.projectFile) && OpenProjectFileChooserDescriptor.isProjectFile(virtualFile)) {
-    val answer = shouldOpenNewProject(project, virtualFile)
-    if (answer == Messages.CANCEL) {
-      return
-    }
-    else if (answer == Messages.YES) {
-      val openedProject = ProjectUtil.openOrImportAsync(file, OpenProjectTask { projectToClose = project })
-      openedProject?.let {
-        FileChooserUtil.setLastOpenedFile(it, file)
+    override fun isFileSelectable(file: VirtualFile?): Boolean = when {
+      file == null -> false
+      file.isDirectory -> SlowOperations.knownIssue("IJPL-162827").use {
+        super.isFileSelectable(file)
       }
-      return
+      else -> myStandardDescriptor.isFileSelectable(file)
     }
+
+    override fun isChooseMultiple() = true
   }
 
-  LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, virtualFile)
-  readAction { virtualFile.fileType }.takeIf { it != FileTypes.UNKNOWN }
-  ?: FileTypeChooser.associateFileType(virtualFile.name)
-  ?: return
-  if (project == null || project.isDefault) {
-    PlatformProjectOpenProcessor.createTempProjectAndOpenFileAsync(file, OpenProjectTask { projectToClose = project })
-  }
-  else {
-    NonProjectFileWritingAccessProvider.allowWriting(listOf(virtualFile))
-    if (LightEdit.owns(project)) {
-      LightEditService.getInstance().openFile(virtualFile)
-      LightEditFeatureUsagesUtil.logFileOpen(project, LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction)
+  private suspend fun doOpenFile(project: Project?, virtualFile: VirtualFile) {
+    val file = virtualFile.toNioPath()
+    if (Files.isDirectory(file)) {
+      @Suppress("TestOnlyProblems")
+      ProjectUtil.openExistingDir(file, project)
+      return
+    }
+
+    // try to open as a project - unless the file is an .ipr of the current one
+    if ((project == null || virtualFile != project.projectFile) && OpenProjectFileChooserDescriptor.isProjectFile(virtualFile)) {
+      val answer = shouldOpenNewProject(project, virtualFile)
+      if (answer == Messages.CANCEL) {
+        return
+      }
+      else if (answer == Messages.YES) {
+        val openedProject = ProjectUtil.openOrImportAsync(file, OpenProjectTask { projectToClose = project })
+        openedProject?.let {
+          FileChooserUtil.setLastOpenedFile(it, file)
+        }
+        return
+      }
+    }
+
+    LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, virtualFile)
+    readAction { virtualFile.fileType }.takeIf { it != FileTypes.UNKNOWN }
+    ?: FileTypeChooser.associateFileType(virtualFile.name)
+    ?: return
+    if (project == null || project.isDefault) {
+      PlatformProjectOpenProcessor.createTempProjectAndOpenFileAsync(file, OpenProjectTask { projectToClose = project })
     }
     else {
-      val navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
-      withContext(Dispatchers.EDT) {
-        navigatable.navigate(true)
+      NonProjectFileWritingAccessProvider.allowWriting(listOf(virtualFile))
+      if (LightEdit.owns(project)) {
+        LightEditService.getInstance().openFile(virtualFile)
+        LightEditFeatureUsagesUtil.logFileOpen(project, LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction)
+      }
+      else {
+        val navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
+        withContext(Dispatchers.EDT) {
+          navigatable.navigate(true)
+        }
       }
     }
   }
-}
 
-@Messages.YesNoCancelResult
-private suspend fun shouldOpenNewProject(project: Project?, file: VirtualFile): Int {
-  if (file.fileType is ProjectFileType) {
-    return Messages.YES
+  @Messages.YesNoCancelResult
+  private suspend fun shouldOpenNewProject(project: Project?, file: VirtualFile): Int {
+    if (file.fileType is ProjectFileType) return Messages.YES
+    val provider = getImportProvider(file) ?: return Messages.CANCEL
+    return withContext(Dispatchers.EDT) { provider.askConfirmationForOpeningProject(file, project) }
   }
-
-  val provider = getImportProvider(file) ?: return Messages.CANCEL
-  return withContext(Dispatchers.EDT) { provider.askConfirmationForOpeningProject(file, project) }
 }

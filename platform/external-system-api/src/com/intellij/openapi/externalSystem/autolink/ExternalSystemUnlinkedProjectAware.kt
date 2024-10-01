@@ -14,10 +14,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
- * Allows to show and hide notification about unlinked projects with [systemId].
+ * Allows showing and hiding notification about unlinked projects with [systemId].
  */
 interface ExternalSystemUnlinkedProjectAware {
-
   val systemId: ProjectSystemId
 
   fun buildFileExtensions(): Array<String> = arrayOf()
@@ -34,6 +33,7 @@ interface ExternalSystemUnlinkedProjectAware {
   suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {
     withContext(Dispatchers.EDT) {
       blockingContext {
+        @Suppress("DEPRECATION")
         linkAndLoadProject(project, externalProjectPath)
       }
     }
@@ -46,13 +46,12 @@ interface ExternalSystemUnlinkedProjectAware {
   fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable)
 
   companion object {
-
-    val EP_NAME: ExtensionPointName<ExternalSystemUnlinkedProjectAware> = ExtensionPointName.create<ExternalSystemUnlinkedProjectAware>("com.intellij.externalSystemUnlinkedProjectAware")
+    val EP_NAME: ExtensionPointName<ExternalSystemUnlinkedProjectAware> =
+      ExtensionPointName.create<ExternalSystemUnlinkedProjectAware>("com.intellij.externalSystemUnlinkedProjectAware")
 
     @JvmStatic
-    fun getInstance(systemId: ProjectSystemId): ExternalSystemUnlinkedProjectAware? {
-      return EP_NAME.findFirstSafe { it.systemId == systemId }
-    }
+    fun getInstance(systemId: ProjectSystemId): ExternalSystemUnlinkedProjectAware? =
+      EP_NAME.findFirstSafe { it.systemId == systemId }
 
     @JvmStatic
     @Internal
@@ -64,7 +63,7 @@ interface ExternalSystemUnlinkedProjectAware {
         }
       }
     }
+
+    private val LOG = logger<ExternalSystemUnlinkedProjectAware>()
   }
 }
-
-private val LOG = logger<ExternalSystemUnlinkedProjectAware>()

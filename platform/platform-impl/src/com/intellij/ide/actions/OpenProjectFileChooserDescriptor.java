@@ -77,7 +77,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
     return !file.isDirectory() && file.isValid() && (isIprFile(file) || hasImportProvider(file));
   }
 
-  private static boolean isProjectDirectory(@NotNull VirtualFile file) {
+  private static boolean isProjectDirectory(VirtualFile file) {
     return file.isDirectory() && file.isValid() && (isIdeaDirectory(file) || hasImportProvider(file));
   }
 

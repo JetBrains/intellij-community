@@ -15,11 +15,11 @@ import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -54,11 +54,6 @@ import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.io.FileUtil.isAncestor;
-import static com.intellij.openapi.util.io.FileUtil.toCanonicalPath;
-import static com.intellij.openapi.util.text.StringUtil.isEmpty;
-import static com.intellij.openapi.util.text.StringUtil.join;
-
 /**
  * Holds miscellaneous utility methods.
  */
@@ -73,13 +68,6 @@ public final class GradleUtil {
   public static @NotNull FileChooserDescriptor getGradleProjectFileChooserDescriptor() {
     return new FileChooserDescriptor(true, true, false, false, false, false)
       .withExtensionFilter(GradleBundle.message("gradle.filter.label"), GradleConstants.BUILD_FILE_EXTENSIONS);
-  }
-
-  @NotNull
-  public static FileChooserDescriptor getGradleHomeFileChooserDescriptor() {
-    // allow selecting files to avoid confusion:
-    // on macOS a user can select any file but after clicking OK, dialog is closed, but IDEA doesnt' receive the file and doesn't react
-    return FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
   }
 
   public static boolean isGradleDefaultWrapperFilesExist(@Nullable String gradleProjectPath) {
@@ -178,14 +166,14 @@ public final class GradleUtil {
                                          @NotNull String propertyName,
                                          @NotNull Consumer<@NotNull String> valueConsumer) {
     String value = props.getProperty(propertyName);
-    if (!isEmpty(value)) {
+    if (!StringUtil.isEmpty(value)) {
       valueConsumer.accept(value.trim());
     }
   }
 
   private static @Nullable URI parseDistributionUri(@NotNull Properties props, @NotNull Path propertiesFile) {
     String distributionUrl = props.getProperty(WrapperExecutor.DISTRIBUTION_URL_PROPERTY);
-    if (isEmpty(distributionUrl)) {
+    if (StringUtil.isEmpty(distributionUrl)) {
       GradleLog.LOG.warn(String.format("Wrapper 'distributionUrl' property does not exist in file '%s'", propertiesFile.toAbsolutePath()));
       return null;
     }
@@ -296,7 +284,7 @@ public final class GradleUtil {
       }
       if (candidates.size() != 1) {
         GradleLog.LOG.warn(String.format("%d *.properties files instead of one have been found at the wrapper directory (%s): %s",
-                                         candidates.size(), wrapperDir, join(candidates, ", ")
+                                         candidates.size(), wrapperDir, StringUtil.join(candidates, ", ")
         ));
         return null;
       }
@@ -444,8 +432,8 @@ public final class GradleUtil {
   }
 
   private static boolean isContentRootAncestor(@NotNull ContentRootData data, @NotNull File ideaOutDir) {
-    var canonicalIdeOutPath = toCanonicalPath(ideaOutDir.getPath());
+    var canonicalIdeOutPath = FileUtil.toCanonicalPath(ideaOutDir.getPath());
     var canonicalRootPath = data.getRootPath();
-    return isAncestor(canonicalRootPath, canonicalIdeOutPath, false);
+    return FileUtil.isAncestor(canonicalRootPath, canonicalIdeOutPath, false);
   }
 }

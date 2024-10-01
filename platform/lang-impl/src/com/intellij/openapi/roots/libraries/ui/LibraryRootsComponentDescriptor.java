@@ -35,7 +35,7 @@ public abstract class LibraryRootsComponentDescriptor {
 
   /**
    * Provides root detector for 'Attach Files' button. It will be used to automatically assign {@link OrderRootType}s for selected files.
-   * Also this detector is used when a new library is created
+   * Also, this detector is used when a new library is created.
    *
    * @return {@link LibraryRootsDetector}'s implementation
    */
@@ -52,21 +52,18 @@ public abstract class LibraryRootsComponentDescriptor {
    * @return descriptor for the file chooser which will be shown when 'Attach Files' button is pressed
    */
   public @NotNull FileChooserDescriptor createAttachFilesChooserDescriptor(@Nullable String libraryName) {
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleJavaPathDescriptor();
-    descriptor.setTitle(StringUtil.isEmpty(libraryName) ? ProjectBundle.message("library.attach.files.action")
-                                                        : ProjectBundle.message("library.attach.files.to.library.action", libraryName));
-    descriptor.setDescription(ProjectBundle.message("library.attach.files.description"));
-    return descriptor;
+    return FileChooserDescriptorFactory.createMultipleJavaPathDescriptor()
+      .withTitle(StringUtil.isEmpty(libraryName) ? ProjectBundle.message("library.attach.files.action") : ProjectBundle.message("library.attach.files.to.library.action", libraryName))
+      .withDescription(ProjectBundle.message("library.attach.files.description"));
   }
 
   /**
-   * Creates a instance which will be notified when a root is removed in the library editor.
+   * Creates an instance which will be notified when a root is removed in the library editor.
    */
   public @NotNull RootRemovalHandler createRootRemovalHandler() {
     return new RootRemovalHandler() {
       @Override
-      public void onRootRemoved(@NotNull String rootUrl, @NotNull OrderRootType rootType, @NotNull LibraryEditor libraryEditor) {
-      }
+      public void onRootRemoved(@NotNull String rootUrl, @NotNull OrderRootType rootType, @NotNull LibraryEditor libraryEditor) { }
     };
   }
 
