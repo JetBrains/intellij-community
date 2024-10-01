@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.removeUserData
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -103,7 +104,9 @@ class NotebookCellInlayManager private constructor(
     }
   }
 
-  override fun dispose() {}
+  override fun dispose() {
+    editor.removeUserData(CELL_INLAY_MANAGER_KEY)
+  }
 
   fun getCellForInterval(interval: NotebookCellLines.Interval): EditorCell =
     _cells[interval.ordinal]
@@ -158,8 +161,6 @@ class NotebookCellInlayManager private constructor(
   }
 
   private fun initialize() {
-    // TODO It would be a cool approach to add inlays lazily while scrolling.
-
     editor.putUserData(CELL_INLAY_MANAGER_KEY, this)
 
     val connection = ApplicationManager.getApplication().messageBus.connect(editor.disposable)
@@ -203,7 +204,7 @@ class NotebookCellInlayManager private constructor(
         }
         postponedUpdates.clear()
       }
-    })
+    }, this)
 
     handleRefreshedDocument()
   }
@@ -262,7 +263,7 @@ class NotebookCellInlayManager private constructor(
       override fun caretPositionChanged(event: CaretEvent) {
         updateSelection()
       }
-    })
+    }, this)
   }
 
   private fun updateSelection() {
@@ -316,7 +317,7 @@ class NotebookCellInlayManager private constructor(
           }
         }
       }
-    }, editor.disposable)
+    }, this)
   }
 
   private fun editorCells(region: FoldRegion): List<EditorCell> = _cells.filter { cell ->
@@ -373,7 +374,7 @@ class NotebookCellInlayManager private constructor(
       ).also { Disposer.register(editor.disposable, it) }
       editor.putUserData(isFoldingEnabledKey, Registry.`is`("jupyter.editor.folding.cells"))
       notebookCellInlayManager.initialize()
-      NotebookIntervalPointerFactory.get(editor).changeListeners.addListener(notebookCellInlayManager, editor.disposable)
+      NotebookIntervalPointerFactory.get(editor).changeListeners.addListener(notebookCellInlayManager, notebookCellInlayManager)
       return notebookCellInlayManager
     }
 
