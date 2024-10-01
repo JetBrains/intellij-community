@@ -41,6 +41,7 @@ class KotlinScriptDefinitionsModel(definitions: MutableList<DefinitionModelDescr
         override fun valueOf(item: DefinitionModelDescriptor): String {
             val definition = item.definition
             return definition.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.scriptFilePattern?.pattern
+                ?: (definition as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern
                 ?: (definition as? ScriptDefinition.FromConfigurationsBase)?.filePathPattern
                 ?: ("." + definition.fileExtension)
         }
