@@ -162,12 +162,14 @@ public final class SoftWrapEngine {
   }
 
   private int calcSoftWrapOffset(int minOffset, int maxOffset, boolean preferMinOffset) {
-    if (canBreakBeforeOrAfterCodePoint(Character.codePointAt(myText, maxOffset))) return maxOffset;
-    for (int i = 0, offset = maxOffset; i < BASIC_LOOK_BACK_LENGTH && offset >= minOffset; i++) {
-      int prevOffset = Character.offsetByCodePoints(myText, offset, -1);
-      if (canBreakBeforeOrAfterCodePoint(Character.codePointAt(myText, prevOffset))) return offset;
-      //noinspection AssignmentToForLoopParameter
-      offset = prevOffset;
+    if (!myEditor.getState().getDisableDefaultSoftWrapsCalculation()) {
+      if (canBreakBeforeOrAfterCodePoint(Character.codePointAt(myText, maxOffset))) return maxOffset;
+      for (int i = 0, offset = maxOffset; i < BASIC_LOOK_BACK_LENGTH && offset >= minOffset; i++) {
+        int prevOffset = Character.offsetByCodePoints(myText, offset, -1);
+        if (canBreakBeforeOrAfterCodePoint(Character.codePointAt(myText, prevOffset))) return offset;
+        //noinspection AssignmentToForLoopParameter
+        offset = prevOffset;
+      }
     }
 
     if (myLineWrapPositionStrategy == null) {
