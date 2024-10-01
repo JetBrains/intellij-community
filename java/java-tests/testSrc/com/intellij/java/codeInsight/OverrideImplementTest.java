@@ -260,6 +260,38 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         """);
   }
 
+  public void testOverrideLong() {
+    myFixture.addClass(
+      """
+        package bar;
+        interface A {
+            Long foo();
+        }
+        """);
+    VirtualFile file = myFixture.addClass(
+      """                                            
+        package bar;
+        class Test implements A {
+            <caret>
+        }
+        """
+    ).getContainingFile().getVirtualFile();
+    myFixture.configureFromExistingVirtualFile(file);
+
+    invokeAction(true);
+
+    myFixture.checkResult(
+      """
+        package bar;
+        class Test implements A {
+            @Override
+            public Long foo() {
+                return 0L;
+            }
+        }
+        """);
+  }
+
   public void testTypeAnnotationsInImplementedMethod() {
     OverrideImplementsAnnotationsHandler handler = new OverrideImplementsAnnotationsHandler() {
       @Override

@@ -136,8 +136,9 @@ public final class PsiTypesUtil {
               return typeText + ".empty()";
             case CommonClassNames.JAVA_LANG_STRING:
               return "\"\"";
-            case CommonClassNames.JAVA_LANG_INTEGER:
             case CommonClassNames.JAVA_LANG_LONG:
+              return "0L";
+            case CommonClassNames.JAVA_LANG_INTEGER:
             case CommonClassNames.JAVA_LANG_SHORT:
             case CommonClassNames.JAVA_LANG_BYTE:
               return "0";
