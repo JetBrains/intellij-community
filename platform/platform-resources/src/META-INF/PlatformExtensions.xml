@@ -1844,6 +1844,9 @@
                  defaultValue="false"
                  description="Progress will be reported and collected through Rhizome DB. See PlatformTaskSupport for more info"/>
     <pluginRepositoryAuthProvider implementation="com.intellij.ide.plugins.auth.EnvironmentVariablePluginRepositoryAuthProvider" />
+    <applicationService serviceInterface="com.intellij.auth.GenericAuthService"
+                        serviceImplementation="com.intellij.auth.LocalGenericAuthService"
+                        client="local"/>
   </extensions>
 
   <applicationListeners>
