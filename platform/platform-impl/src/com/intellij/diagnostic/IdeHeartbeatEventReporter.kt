@@ -91,12 +91,12 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
         lastTimeToSafepoint = totalTimeToSafepointMs
         currentTimeToSafepoint
       } ?: -1
-      val timeAtSafepointMs = SafepointBean.totalTimeAtSafepointMs() ?.let { totalTimeAtSafepointMs ->
+      val timeAtSafepointMs = SafepointBean.totalTimeAtSafepointMs()?.let { totalTimeAtSafepointMs ->
         val currentTimeAtSafepoint = (totalTimeAtSafepointMs - lastTimeAtSafepoint).toInt()
         lastTimeAtSafepoint = totalTimeAtSafepointMs
         currentTimeAtSafepoint
       } ?: -1
-      val safepointsCount = SafepointBean.safepointCount()?.let {  totalSafepointCount ->
+      val safepointsCount = SafepointBean.safepointCount()?.let { totalSafepointCount ->
         val currentSafepointsCount = (totalSafepointCount - lastSafepointsCount).toInt()
         lastSafepointsCount = totalSafepointCount
         currentSafepointsCount
@@ -124,7 +124,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 73)
+  private val GROUP = EventLogGroup("performance", 74)
 
   internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
   internal val SWAP_LOAD: IntEventField = Int("swap_load")
@@ -175,7 +175,7 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   @JvmField
   val LOW_MEMORY_CONDITION: EventId2<MemoryKind, Int> = GROUP.registerEvent("low.memory",
                                                                             Enum("type", MemoryKind::class.java),
-                                                                            Int("heap_size"))
+                                                                            Int("heap_size_gigabytes"))
 
   // ==== JVMResponsivenessMonitor: overall system run-time-variability sampling
 
@@ -217,7 +217,7 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun lowMemory(kind: MemoryKind, currentXmx: Int) {
-    LOW_MEMORY_CONDITION.log(kind, currentXmx)
+  fun lowMemory(kind: MemoryKind, currentXmxMegabytes: Int) {
+    LOW_MEMORY_CONDITION.log(kind, (currentXmxMegabytes.toDouble() / 1024).roundToInt())
   }
 }
