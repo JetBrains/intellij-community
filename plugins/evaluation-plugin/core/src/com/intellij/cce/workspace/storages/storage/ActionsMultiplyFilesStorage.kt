@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.workspace.storages.storage
 
 import com.intellij.cce.actions.ActionSerializer
@@ -12,7 +12,7 @@ internal class ActionsMultiplyFilesStorage(storageDir: String) : ActionsStorage 
 
   override fun saveActions(actions: FileActions) {
     filesCounter++
-    keyValueStorage.save("${Paths.get(actions.path).fileName}($filesCounter).json", ActionSerializer.serialize(actions))
+    keyValueStorage.save("${Paths.get(actions.path).fileName}($filesCounter).json", ActionSerializer.serializeFileActions(actions))
   }
 
   override fun computeSessionsCount(): Int {
@@ -27,6 +27,6 @@ internal class ActionsMultiplyFilesStorage(storageDir: String) : ActionsStorage 
   }
 
   override fun getActions(path: String): FileActions {
-    return ActionSerializer.deserialize(keyValueStorage.get(path))
+    return ActionSerializer.deserializeFileActions(keyValueStorage.get(path))
   }
 }

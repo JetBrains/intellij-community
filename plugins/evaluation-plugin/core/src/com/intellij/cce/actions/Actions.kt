@@ -75,9 +75,10 @@ class ActionsBuilder {
     actions.addAll(SessionBuilder().apply(init).build())
   }
 
-  class SessionBuilder {
-    private val sessionId = UUID.randomUUID()
+  class SessionBuilder(
+    private val sessionId: UUID = UUID.randomUUID(),
     private val actions: MutableList<Action> = mutableListOf()
+  ) {
 
     fun build(): List<Action> = actions.toList()
 
