@@ -16,7 +16,7 @@ class Main {
         var zz = <error descr="Variable 'zz' might not have been initialized">zz</error>;
         zz.<error descr="Cannot resolve method 'hashCode()'">hashCode</error>();
     }
-    
+
     static int baz(Object o) {return 42;}
 
     private static  void localVariableType() {
@@ -35,6 +35,7 @@ class Main {
         int el = e.compareTo("");
 
         <error descr="Cannot infer type: lambda expression requires an explicit target type">var</error> f = () -> "hello";
+        <error descr="Cannot infer type: lambda expression requires an explicit target type">var</error> fp = (() -> "hello");
         <error descr="Cannot infer type: method reference requires an explicit target type">var</error> m = Main::localVariableDeclaration;
         <error descr="Cannot infer type: variable initializer is 'null'">var</error> g = null;
         var runnable = true ? <error descr="Lambda expression not expected here">() -> {}</error> : <error descr="Lambda expression not expected here">() -> {}</error>;

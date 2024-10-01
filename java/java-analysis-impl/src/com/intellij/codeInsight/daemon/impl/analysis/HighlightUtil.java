@@ -539,8 +539,9 @@ public final class HighlightUtil {
         HighlightFixUtil.registerSpecifyVarTypeFix((PsiLocalVariable)variable, info);
         return info;
       }
-      if (initializer instanceof PsiFunctionalExpression) {
-        boolean lambda = initializer instanceof PsiLambdaExpression;
+      PsiExpression deparen = PsiUtil.skipParenthesizedExprDown(initializer);
+      if (deparen instanceof PsiFunctionalExpression) {
+        boolean lambda = deparen instanceof PsiLambdaExpression;
         String message = JavaErrorBundle.message(lambda ? "lvti.lambda" : "lvti.method.ref");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement);
       }
@@ -551,7 +552,7 @@ public final class HighlightUtil {
       }
 
       PsiType lType = variable.getType();
-      if (PsiTypes.nullType().equals(lType) && 
+      if (PsiTypes.nullType().equals(lType) &&
           ExpressionUtils.nonStructuralChildren(initializer).allMatch(ExpressionUtils::isNullLiteral)) {
         HighlightInfo.Builder info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
@@ -2104,7 +2105,7 @@ public final class HighlightUtil {
       }
     }
 
-    if (qualifier != null && aClass.isInterface() && expr instanceof PsiSuperExpression && 
+    if (qualifier != null && aClass.isInterface() && expr instanceof PsiSuperExpression &&
         JavaFeature.EXTENSION_METHODS.isSufficient(languageLevel)) {
       //15.12.1 for method invocation expressions; 15.13 for method references
       //If TypeName denotes an interface, I, then let T be the type declaration immediately enclosing the method reference expression.
@@ -2803,7 +2804,7 @@ public final class HighlightUtil {
             field.getContainingClass() == PsiTreeUtil.getParentOfType(expression, PsiClass.class, true)) {
           return null;
         }
-        resolvedName = 
+        resolvedName =
           PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
         referencedClass = field.getContainingClass();
       }
@@ -3276,7 +3277,7 @@ public final class HighlightUtil {
     boolean leftAnonymous = PsiUtil.resolveClassInClassTypeOnly(lType) instanceof PsiAnonymousClass;
     String styledReason = reason.isEmpty() ? "" :
                           String.format("<table><tr><td style=''padding-top: 10px; padding-left: 4px;''>%s</td></tr></table>", reason);
-    IncompatibleTypesTooltipComposer tooltipComposer = (lTypeString, lTypeArguments, rTypeString, rTypeArguments) -> 
+    IncompatibleTypesTooltipComposer tooltipComposer = (lTypeString, lTypeArguments, rTypeString, rTypeArguments) ->
       JavaErrorBundle.message("incompatible.types.html.tooltip",
                               lTypeString, lTypeArguments,
                               rTypeString, rTypeArguments,
