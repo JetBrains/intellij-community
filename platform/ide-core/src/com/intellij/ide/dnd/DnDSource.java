@@ -35,10 +35,10 @@ public interface DnDSource extends DnDDropActionHandler {
    */
   @Deprecated(forRemoval = true, since = "2025.1")
   default void dragDropEnd() {
-    dragDropEnd(null, null);
   }
 
   default void dragDropEnd(@Nullable DnDEvent dragEvent, @Nullable DragSourceDropEvent dropEvent) {
+    dragDropEnd();
   }
 
   @Override
