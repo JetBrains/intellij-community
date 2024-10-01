@@ -62,7 +62,7 @@ import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizar
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
 
-private const val GENERATE_MULTIPLE_MODULES_PROPERTY_NAME: String = "NewProjectWizard.generateMultipleModules"
+private const val GENERATE_SINGLE_MODULE_PROPERTY_NAME: String = "NewProjectWizard.generateSingleModule"
 
 private class GradleKotlinModuleBuilder : AbstractGradleModuleBuilder()
 
@@ -95,13 +95,13 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         override var generateOnboardingTips by generateOnboardingTipsProperty
 
-        val generateMultipleModulesProperty = propertyGraph.property(true)
-            .bindBooleanStorage(GENERATE_MULTIPLE_MODULES_PROPERTY_NAME)
+        val generateSingleModuleProperty = propertyGraph.property(false)
+            .bindBooleanStorage(GENERATE_SINGLE_MODULE_PROPERTY_NAME)
 
-        override var generateMultipleModules by generateMultipleModulesProperty
+        override var generateSingleModule by generateSingleModuleProperty
 
         internal val shouldGenerateMultipleModules
-            get() = generateMultipleModules && gradleDsl == GradleDsl.KOTLIN && context.isCreatingNewProject
+            get() = !generateSingleModule && gradleDsl == GradleDsl.KOTLIN && context.isCreatingNewProject
 
         private fun setupSampleCodeUI(builder: Panel) {
             builder.row {
@@ -125,11 +125,11 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         private fun setupMultipleModulesUI(builder: Panel) {
             builder.row {
-                checkBox(KotlinNewProjectWizardUIBundle.message("label.project.wizard.new.project.generate.multiple.modules"))
-                    .bindSelected(generateMultipleModulesProperty)
+                checkBox(KotlinNewProjectWizardUIBundle.message("label.project.wizard.new.project.generate.single.module"))
+                    .bindSelected(generateSingleModuleProperty)
                     .enabledIf(gradleDslProperty.equalsTo(GradleDsl.KOTLIN))
 
-                contextHelp(KotlinNewProjectWizardUIBundle.message("tooltip.project.wizard.new.project.generate.multiple.modules"))
+                contextHelp(KotlinNewProjectWizardUIBundle.message("tooltip.project.wizard.new.project.generate.single.module"))
             }.visibleIf(gradleDslProperty.equalsTo(GradleDsl.KOTLIN))
         }
 
@@ -367,8 +367,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             )
 
             addAssets(KotlinAssetsProvider.getKotlinGradleIgnoreAssets())
-            addTemplateAsset("gradle.properties", "KotlinCodeStyleProperties")
 
+            addTemplateAsset("gradle.properties", "KotlinSampleProperties", templateParameters)
             addTemplateAsset("gradle/libs.versions.toml", "KotlinSampleGradleToml", templateParameters)
             addTemplateAsset(KOTLIN_DSL_SETTINGS_FILE_NAME, "KotlinSampleSettings", templateParameters)
             addTemplateAsset("README.md", "KotlinSampleReadme", templateParameters)

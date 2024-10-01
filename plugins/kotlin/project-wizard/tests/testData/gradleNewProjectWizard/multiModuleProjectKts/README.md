@@ -1,8 +1,9 @@
 # project
 
 
-This project uses [Gradle](https://gradle.org/). To build and run the application
-use the Gradle tool window by clicking the Gradle icon in the right toolbar, or run it directly from the terminal:
+This project uses [Gradle](https://gradle.org/).
+To build and run the application, use the Gradle tool window by clicking the Gradle icon in the right toolbar,
+or run it directly from the terminal:
 
 * Run `./gradlew run` to build and run the application
 * Run `./gradlew build` to only build the application
@@ -15,7 +16,7 @@ projects. [Learn more about Gradle Wrapper](https://docs.gradle.org/current/user
 [Learn more about Gradle tasks](https://docs.gradle.org/current/userguide/command_line_interface.html#common_tasks)
 
 
-The project follows suggest multi-module setup and consists of "app" and "utils" subprojects.
+The project follows suggested multi-module setup and consists of "app" and "utils" subprojects.
 The shared build logic was extracted to a convention plugin located in "buildSrc".
 
 This project uses version catalog (see "gradle/libs.versions.toml") to declare and version dependencies
