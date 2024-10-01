@@ -10,6 +10,10 @@
     <extensionPoint qualifiedName="intellij.vcs.github.titleAndDescriptionGenerator"
                     interface="org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRTitleAndDescriptionGeneratorExtension"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="intellij.vcs.github.aiReviewViewModelProvider"
+                    interface="org.jetbrains.plugins.github.ai.GHPRAIReviewViewModelProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="intellij.vcs.github.commentViewModelProvider"
                     interface="org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRAICommentViewModelProvider"
                     dynamic="true"/>

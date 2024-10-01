@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui
 
-import com.intellij.collaboration.async.cancelledWith
-import com.intellij.collaboration.async.collectScoped
-import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
 import com.intellij.collaboration.util.ChangesSelection
@@ -15,6 +13,9 @@ import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.ai.GHPRAIReviewViewModel
+import org.jetbrains.plugins.github.ai.GHPRAIReviewViewModelProvider
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -32,16 +33,27 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineViewMode
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 
+@ApiStatus.Internal
+interface GHPRViewModelContainer {
+  val aiReviewVm: StateFlow<GHPRAIReviewViewModel?>
+
+  val infoVm: GHPRInfoViewModel
+  val branchWidgetVm: GHPRBranchWidgetViewModel
+  val diffVm: GHPRDiffViewModel
+  val editorVm: GHPRReviewInEditorViewModel
+  val timelineVm: GHPRTimelineViewModel
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class GHPRViewModelContainer(
+internal class GHPRViewModelContainerImpl(
   project: Project,
   parentCs: CoroutineScope,
   dataContext: GHPRDataContext,
   private val projectVm: GHPRToolWindowProjectViewModel,
   private val pullRequestId: GHPRIdentifier,
   cancelWith: Disposable
-) {
-  private val cs = parentCs.childScope().cancelledWith(cancelWith)
+) : GHPRViewModelContainer {
+  private val cs = parentCs.childScope(javaClass.name).cancelledWith(cancelWith)
 
   private val dataProvider: GHPRDataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequestId, cancelWith)
 
@@ -52,32 +64,37 @@ internal class GHPRViewModelContainer(
       setup()
     }
   }
-  val infoVm: GHPRInfoViewModel by lazyInfoVm
+  override val infoVm: GHPRInfoViewModel by lazyInfoVm
   private val reviewVmHelper: GHPRReviewViewModelHelper by lazy { GHPRReviewViewModelHelper(cs, dataProvider) }
+
+  override val aiReviewVm: StateFlow<GHPRAIReviewViewModel?> =
+    GHPRAIReviewViewModelProvider.EP_NAME.extensionListFlow()
+      .mapScoped { it.firstOrNull()?.provide(project, this, infoVm) }
+      .stateIn(cs, SharingStarted.Eagerly, null)
 
   private val branchStateVm by lazy {
     GHPRReviewBranchStateSharedViewModel(cs, dataContext, dataProvider)
   }
   private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
-  val branchWidgetVm: GHPRBranchWidgetViewModel by lazy {
+  override val branchWidgetVm: GHPRBranchWidgetViewModel by lazy {
     GHPRBranchWidgetViewModelImpl(cs, settings, dataProvider, projectVm, branchStateVm, reviewVmHelper, pullRequestId)
   }
 
   private val threadsVms = GHPRThreadsViewModels(project, cs, dataContext, dataProvider)
-  val diffVm: GHPRDiffViewModel by lazy {
+  override val diffVm: GHPRDiffViewModel by lazy {
     GHPRDiffViewModelImpl(project, cs, dataContext, dataProvider, reviewVmHelper, threadsVms).apply {
       setup()
     }
   }
 
-  val editorVm: GHPRReviewInEditorViewModel by lazy {
+  override val editorVm: GHPRReviewInEditorViewModel by lazy {
     GHPRReviewInEditorViewModelImpl(project, cs, settings, dataContext, dataProvider, branchStateVm, threadsVms) {
       diffSelectionRequests.tryEmit(it)
       projectVm.openPullRequestDiff(pullRequestId, true)
     }
   }
 
-  val timelineVm: GHPRTimelineViewModel by lazy {
+  override val timelineVm: GHPRTimelineViewModel by lazy {
     GHPRTimelineViewModelImpl(project, cs, dataContext, dataProvider).apply {
       setup()
     }
