@@ -1412,22 +1412,15 @@ open class FileEditorManagerImpl(
       openMode = getOpenMode(IdeEventQueue.getInstance().trueCurrentEvent),
     )
 
-    val fileEditors = openFile(file = file, window = null, options = openOptions).allEditors
+    val composite: FileEditorComposite = openFile(file = file, window = null, options = openOptions)
+    val fileEditors = composite.allEditors
 
-    val currentCompositeForFile = getComposite(file)
-    for (editor in fileEditors) {
-      // try to navigate opened editor
-      if (editor is NavigatableFileEditor && currentCompositeForFile?.selectedWithProvider?.fileEditor === editor &&
-          navigateAndSelectEditor(editor, effectiveDescriptor, currentCompositeForFile)) {
-        return fileEditors to editor
-      }
-    }
-
-    for (editor in fileEditors) {
-      // try other editors
-      if (editor is NavigatableFileEditor && currentCompositeForFile?.selectedWithProvider?.fileEditor !== editor &&
-          navigateAndSelectEditor(editor, effectiveDescriptor, currentCompositeForFile)) {
-        return fileEditors to editor
+    if (composite is EditorComposite) {
+      for (editor in fileEditors) {
+        if (editor is NavigatableFileEditor &&
+            navigateAndSelectEditor(editor, effectiveDescriptor, composite)) {
+          return fileEditors to editor
+        }
       }
     }
     return fileEditors to null
