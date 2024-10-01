@@ -105,6 +105,7 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
             notifyCancelled()
           }
         } finally {
+          // Command finished or postponed
           cancelCommandScope()
         }
       }
