@@ -588,7 +588,13 @@ class GroovyBuildScriptManipulator(
             }
          */
         var foundAndReplaced =
-            outerDslBlock.findAndReplaceCompilerOption(parameterName, parameterValue, compilerOption, replaceIt = replaceIt)
+            outerDslBlock.findAndReplaceCompilerOption(
+                parameterName,
+                parameterValue,
+                compilerOption,
+                insideCompilerOptions = true,
+                replaceIt = replaceIt
+            )
         if (!foundAndReplaced) {
             /*
             If we didn't find, we try to find it in the `compilerOptions {`
@@ -599,8 +605,8 @@ class GroovyBuildScriptManipulator(
                     parameterName,
                     parameterValue,
                     compilerOption,
-                    checkCompilerOptionPrefixToExist = false,
-                    replaceIt = replaceIt
+                    insideCompilerOptions = false,
+                    replaceIt = replaceIt,
                 )
             } else {
                 compilerOptionsBlock = outerDslBlock.createBlock("compilerOptions")
@@ -621,25 +627,17 @@ class GroovyBuildScriptManipulator(
         parameterName: String,
         parameterValue: String,
         compilerOption: CompilerOption,
-        checkCompilerOptionPrefixToExist: Boolean = true,
+        insideCompilerOptions: Boolean,
         replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
                                 /* precompiledReplacement = */ String?,
                                 /* insideCompilerOptions = */ Boolean
         ) -> GrStatement
     ): Boolean {
-        var insideCompilerOptions = false
         val replaced = statements.firstOrNull { stmt ->
             val statementLeftPartText =
                 (stmt as? GrAssignmentExpression)?.lValue?.text ?: (stmt as? GrMethodCallExpression)?.invokedExpression?.text
-            val statementContainsParameterName = if (statementLeftPartText?.contains(parameterName) == true) {
-                if (checkCompilerOptionPrefixToExist && statementLeftPartText.contains("compilerOptions.$parameterName")) {
-                    insideCompilerOptions = true
-                }
-                true
-            } else {
-                false
-            }
-
+                ?: return false
+            val statementContainsParameterName = statementLeftPartText.contains(parameterName) == true
             if (statementContainsParameterName) {
                 if (statementContainsValue(stmt, parameterValue, compilerOption.compilerOptionValue)) {
                     return@findAndReplaceCompilerOption true // Don't need to replace or update
