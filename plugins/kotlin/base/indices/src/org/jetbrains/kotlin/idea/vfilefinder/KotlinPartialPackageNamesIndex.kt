@@ -24,6 +24,23 @@ import java.io.DataOutput
 
 private val LOG = logger<KotlinPartialPackageNamesIndex>()
 
+/**
+ * An index from Kotlin packages to their direct subpackage names (or `null` if the package is a leaf).
+ *
+ * #### Example
+ *
+ * ```
+ * package foo.bar.baz
+ * ```
+ *
+ * For this file, the index will contain the following entries:
+ *
+ * ```
+ * "foo.bar.baz" --> null
+ * "foo.bar"     --> "baz"
+ * "foo"         --> "bar
+ * ```
+ */
 class KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>() {
     companion object {
         val NAME: ID<FqName, Name?> = ID.create(KotlinPartialPackageNamesIndex::class.java.canonicalName)
