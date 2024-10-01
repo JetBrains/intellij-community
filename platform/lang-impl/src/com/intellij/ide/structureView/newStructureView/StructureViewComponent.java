@@ -45,6 +45,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -190,6 +191,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     layeredPane.add(content, JLayeredPane.DEFAULT_LAYER);
     layeredPane.add(floatingToolbar, JLayeredPane.POPUP_LAYER);
     setContent(layeredPane);
+    content.getVerticalScrollBar().addAdjustmentListener(event -> floatingToolbar.setScrollingDy(event.getValue()));
 
     myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
@@ -1002,9 +1004,20 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (event.getClickCount() != 1 || event.getID() != MouseEvent.MOUSE_PRESSED) return;
       Optional.ofNullable(getClosestPathForLocation(event.getX(), event.getY()))
         .map(path -> getPathBounds(path))
+        .filter(bounds -> event.getX() >= bounds.x)
         .ifPresent(pathBounds -> {
+          int scrollDy = 0;
+          if (getParent().getParent() instanceof JBScrollPane scrollParent) {
+            scrollDy = scrollParent.getVerticalScrollBar().getValue();
+          }
           floatingToolbar.hideImmediately();
-          floatingToolbar.setBounds(getParent().getBounds().width - 70, pathBounds.y - 5, 60, pathBounds.height + 5);
+          floatingToolbar.setBoundsWithScrollingDy(
+            getParent().getBounds().width - 70,
+            pathBounds.y - 5,
+            60,
+            pathBounds.height + 5,
+            scrollDy
+          );
           floatingToolbar.scheduleShow();
         });
     }

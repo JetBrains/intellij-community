@@ -47,6 +47,7 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.BitUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.TimerUtil
@@ -229,7 +230,7 @@ class StructureViewWrapperImpl(private val project: Project,
   }
 
   private suspend fun setFile(file: VirtualFile?) {
-    if (file?.fileSystem is NonPhysicalFileSystem) {
+    if (file?.fileSystem is NonPhysicalFileSystem && PlatformUtils.isIdeaUltimate()) {
       val notInEditor = withContext(Dispatchers.EDT) {
         !project.serviceAsync<FileEditorManager>().selectedFiles.contains(file)
       }
@@ -362,7 +363,9 @@ class StructureViewWrapperImpl(private val project: Project,
         Disposer.dispose(myModuleStructureComponent!!)
         myModuleStructureComponent = null
       }
-      contentManager.removeAllContents(true)
+      if (!isStructureViewShowing) {
+        contentManager.removeAllContents(true)
+      }
     }
     if (!isStructureViewShowing) {
       return
@@ -419,6 +422,7 @@ class StructureViewWrapperImpl(private val project: Project,
       }
     }
     withContext(Dispatchers.EDT) {
+      contentManager.removeAllContents(true)
       updateHeaderActions(myStructureView)
       if (myModuleStructureComponent == null && myStructureView == null) {
         val panel: JBPanelWithEmptyText = object : JBPanelWithEmptyText() {
