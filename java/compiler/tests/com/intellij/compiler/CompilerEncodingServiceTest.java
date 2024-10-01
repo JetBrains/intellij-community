@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.testFramework.JavaPsiTestCase;
@@ -43,11 +45,26 @@ public class CompilerEncodingServiceTest extends JavaPsiTestCase {
 
   public void testPropertiesEncodingTest() {
     final VirtualFile file = createFile("A.properties");
-    assertEquals(StandardCharsets.ISO_8859_1, file.getCharset());
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
     EncodingProjectManager.getInstance(myProject).setEncoding(file, WINDOWS_1251);
 
     assertSameElements(getService().getAllModuleEncodings(myModule), getProjectDefault());
   }
+
+  public void testPropertiesEncodingFeatureFlagTest() {
+    RegistryValue registryValue = Registry.get("properties.file.encoding.legacy.support");
+    try {
+      registryValue.setValue(true);
+      final VirtualFile file = createFile("A.properties");
+      assertEquals(StandardCharsets.ISO_8859_1, file.getCharset());
+      EncodingProjectManager.getInstance(myProject).setEncoding(file, WINDOWS_1251);
+
+      assertSameElements(getService().getAllModuleEncodings(myModule), getProjectDefault());
+    } finally {
+      registryValue.resetToDefault();
+    }
+  }
+
 
   public void testTwoJavaFilesWithDifferentEncodings() {
     final VirtualFile fileA = createFile("A.java");
@@ -64,11 +81,29 @@ public class CompilerEncodingServiceTest extends JavaPsiTestCase {
     final VirtualFile fileA = createFile("A.java");
     final VirtualFile fileB = createFile("B.properties");
     assertEquals(getProjectDefault(), fileA.getCharset());
-    assertEquals(StandardCharsets.ISO_8859_1, fileB.getCharset());
+    assertEquals(StandardCharsets.UTF_8, fileB.getCharset());
     EncodingProjectManager.getInstance(myProject).setEncoding(fileA, WINDOWS_1251);
     EncodingProjectManager.getInstance(myProject).setEncoding(fileB, WINDOWS_1252);
 
     assertSameElements(getService().getAllModuleEncodings(myModule), projectDefaultPlus(WINDOWS_1251));
+  }
+
+  public void testJavaAndNonJavaFilesWithDifferentEncodingsFeatureFlag() {
+    RegistryValue registryValue = Registry.get("properties.file.encoding.legacy.support");
+    try {
+      registryValue.setValue(true);
+
+      final VirtualFile fileA = createFile("A.java");
+      final VirtualFile fileB = createFile("B.properties");
+      assertEquals(getProjectDefault(), fileA.getCharset());
+      assertEquals(StandardCharsets.ISO_8859_1, fileB.getCharset());
+      EncodingProjectManager.getInstance(myProject).setEncoding(fileA, WINDOWS_1251);
+      EncodingProjectManager.getInstance(myProject).setEncoding(fileB, WINDOWS_1252);
+
+      assertSameElements(getService().getAllModuleEncodings(myModule), projectDefaultPlus(WINDOWS_1251));
+    } finally {
+      registryValue.resetToDefault();
+    }
   }
 
   public void testSourceRootEncodingDominatesOnFileEncoding() {

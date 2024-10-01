@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
@@ -153,12 +154,20 @@ final class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
       }
     }
 
-    final String nullTextValue = IdeBundle.message("encoding.name.properties.default", StandardCharsets.ISO_8859_1.displayName());
+    final String nullTextValue = IdeBundle.message("encoding.name.properties.default", getDefaultCharset().displayName());
     JComponent tablePanel = super.createComponent();
     Dimension size = tablePanel.getPreferredSize();
     tablePanel.setPreferredSize(new Dimension(400, size.height));
     return ui.createContent(tablePanel,
                             createActionPanel(new PerFileConfigurableComboBoxAction(new PropertiesCharsetValue(), null, nullTextValue)));
+  }
+
+  private static @NotNull Charset getDefaultCharset() {
+    if(Registry.is("properties.file.encoding.legacy.support", false)) {
+      return StandardCharsets.ISO_8859_1;
+    } else {
+      return StandardCharsets.UTF_8;
+    }
   }
 
   @Override

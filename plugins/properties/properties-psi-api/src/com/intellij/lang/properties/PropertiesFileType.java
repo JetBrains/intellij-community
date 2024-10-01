@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.ui.IconManager;
@@ -16,8 +17,7 @@ import java.nio.charset.StandardCharsets;
 public final class PropertiesFileType extends LanguageFileType {
   public static final LanguageFileType INSTANCE = new PropertiesFileType();
   public static final String DEFAULT_EXTENSION = "properties";
-  public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
-  public static final Charset PROPERTIES_DEFAULT_CHARSET = StandardCharsets.ISO_8859_1;
+  public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 
   private PropertiesFileType() {
     super(PropertiesLanguage.INSTANCE);
@@ -47,11 +47,19 @@ public final class PropertiesFileType extends LanguageFileType {
   public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     Charset charset = EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file);
     if (charset == null) {
-      charset = PROPERTIES_DEFAULT_CHARSET;
+      charset = getDefaultCharset();
     }
     if (EncodingRegistry.getInstance().isNative2Ascii(file)) {
       charset = Native2AsciiCharset.wrap(charset);
     }
     return charset.name();
+  }
+
+  public @NotNull Charset getDefaultCharset() {
+    if(Registry.is("properties.file.encoding.legacy.support", false)) {
+      return StandardCharsets.ISO_8859_1;
+    } else {
+      return StandardCharsets.UTF_8;
+    }
   }
 }
