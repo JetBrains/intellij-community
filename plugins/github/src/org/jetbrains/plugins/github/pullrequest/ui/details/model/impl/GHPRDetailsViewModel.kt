@@ -9,7 +9,6 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -26,10 +25,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWind
 
 @ApiStatus.Experimental
 interface GHPRDetailsViewModel : CodeReviewDetailsViewModel {
-  val project: Project
-  val gitRepository: GitRepository
-  val dataProvider: GHPRDataProvider
-
   val securityService: GHPRSecurityService
   val avatarIconsProvider: IconsProvider<String>
 
@@ -44,14 +39,13 @@ interface GHPRDetailsViewModel : CodeReviewDetailsViewModel {
 }
 
 internal class GHPRDetailsViewModelImpl(
-  override val project: Project,
+  private val project: Project,
   parentCs: CoroutineScope,
   dataContext: GHPRDataContext,
-  override val dataProvider: GHPRDataProvider,
+  dataProvider: GHPRDataProvider,
   details: GHPullRequest,
 ) : GHPRDetailsViewModel {
-  private val cs = parentCs.childScope()
-  override val gitRepository = dataContext.repositoryDataService.remoteCoordinates.repository
+  private val cs = parentCs.childScope(javaClass.name)
 
   private val detailsState = MutableStateFlow(details)
 

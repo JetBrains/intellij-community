@@ -31,6 +31,8 @@ class GHPRInfoViewModel internal constructor(
   var pullRequestUrl: String? = null
     private set
 
+  val repositoryRoot: String = dataContext.repositoryDataService.repositoryMapping.gitRepository.root.path
+
   //TODO: rework to detailsComputationFlow
   override val detailsVm: StateFlow<ComputedResult<GHPRDetailsViewModel>> = channelFlow<ComputedResult<GHPRDetailsViewModel>> {
     var vm: GHPRDetailsViewModelImpl? = null
