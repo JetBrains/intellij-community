@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.util.serviceGet
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -26,7 +25,7 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 @Service(Service.Level.PROJECT)
 internal class GHRepositoryConnectionManager(project: Project, parentCs: CoroutineScope) :
   SingleHostedGitRepositoryConnectionManager<GHGitRepositoryMapping, GithubAccount, GHRepositoryConnection> {
-  private val cs = parentCs.childScope(this.classAsCoroutineName().name)
+  private val cs = parentCs.childScope(javaClass.name)
 
   private val dataContextRepository = project.serviceGet<GHPRDataContextRepository>()
 
