@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -16,13 +17,17 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public final class PropertiesFileType extends LanguageFileType {
+public class PropertiesFileType extends LanguageFileType {
   public static final LanguageFileType INSTANCE = new PropertiesFileType();
   public static final String DEFAULT_EXTENSION = "properties";
   public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 
   private PropertiesFileType() {
     super(PropertiesLanguage.INSTANCE);
+  }
+
+  protected PropertiesFileType(@NotNull Language language) {
+    super(language);
   }
 
   @Override

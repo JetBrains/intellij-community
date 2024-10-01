@@ -4,6 +4,7 @@ package com.intellij.lang.properties.psi.impl;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
@@ -35,12 +36,16 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
+public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   private static final Logger LOG = Logger.getInstance(PropertiesFileImpl.class);
   private static final TokenSet PROPERTIES_LIST_SET = TokenSet.create(PropertiesElementTypes.PROPERTIES_LIST);
 
   public PropertiesFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, PropertiesLanguage.INSTANCE);
+  }
+
+  public PropertiesFileImpl(FileViewProvider viewProvider, Language language) {
+    super(viewProvider, language);
   }
 
   @Override
