@@ -164,7 +164,6 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     });
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGapsKt.UnscaledGaps(3));
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
-    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, this); // Disable warning in Kotlin UI DSL, see IDEA-309743
   }
 
   private @Nullable Project getProjectIfValid() {
