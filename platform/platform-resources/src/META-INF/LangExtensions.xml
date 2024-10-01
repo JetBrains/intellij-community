@@ -1771,6 +1771,7 @@
     <lang.formatter.restriction implementation="com.intellij.lang.InvalidPsiAutoFormatRestriction"/>
     <findInProjectExtension implementation="com.intellij.psi.search.PredefinedSearchScopeProviderImpl$SelectedFilesFindInProjectExtension" />
 
+    <registryKey defaultValue="false" description="Shows all inheritors and override methods in line markers" key="intellij.platform.shared.source.line.markers.show.all.inheritors"/>
     <!--  Inspection results -->
     <inspectionResultsExportActionProvider implementation="com.intellij.codeInspection.ui.actions.ExportToHTMLAction"/>
     <inspectionResultsExportActionProvider implementation="com.intellij.codeInspection.ui.actions.ExportToXMLAction"/>

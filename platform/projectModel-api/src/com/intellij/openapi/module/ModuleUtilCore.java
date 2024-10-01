@@ -4,6 +4,8 @@ package com.intellij.openapi.module;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInsight.multiverse.ModuleContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -152,6 +154,12 @@ public class ModuleUtilCore {
         }
       }
 
+      if (CodeInsightContextKt.isSharedSourceSupportEnabled(project) && containingFile != null) {
+        var currentContext = CodeInsightContextManager.getInstance(project).getCodeInsightContext(containingFile.getViewProvider());
+        if (currentContext instanceof ModuleContext) {
+          return ((ModuleContext) currentContext).getModule();
+        }
+      }
       return fileIndex.getModuleForFile(vFile);
     }
     if (containingFile != null) {

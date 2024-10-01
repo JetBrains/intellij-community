@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.registry.Registry
 
 /**
  * Represents a context in which a code insight session runs for a given file or a set of files.
@@ -26,4 +28,8 @@ fun isSharedSourceSupportEnabled(project: Project): Boolean {
 
 interface MultiverseEnabler {
   fun enableMultiverse(project: Project) : Boolean
+}
+
+fun isShowAllInheritorsEnabled(): Boolean {
+  return Registry.`is`("intellij.platform.shared.source.line.markers.show.all.inheritors")
 }

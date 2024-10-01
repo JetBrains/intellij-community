@@ -1,0 +1,3 @@
+*f:com.intellij.util.ConcatenationQuery
+- com.intellij.util.AbstractQuery
+- <init>(java.util.List):V

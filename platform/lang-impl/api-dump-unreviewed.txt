@@ -5006,7 +5006,7 @@ f:com.intellij.codeInsight.navigation.IncrementalSearchHandler$UpHandler
 - <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
 - doExecute(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
 - isEnabledForCaret(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):Z
-f:com.intellij.codeInsight.navigation.ItemWithPresentation
+Fc:com.intellij.codeInsight.navigation.ItemWithPresentation
 - com.intellij.model.Pointer
 - <init>(java.lang.Object,com.intellij.platform.backend.presentation.TargetPresentation):V
 - dereference():com.intellij.psi.PsiElement
