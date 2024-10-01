@@ -2,7 +2,7 @@
 
 class Person {
     private String __fname;
-    private final int <caret>myId;
+    private int <caret>myId;
     private String __lname;
     private String __street;
  
