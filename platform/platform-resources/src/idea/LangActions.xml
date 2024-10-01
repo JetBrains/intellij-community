@@ -802,7 +802,7 @@
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuRunGroup"/>
-      <reference ref="RevealGroup"/>
+      <reference ref="SplitRevealGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <reference ref="CacheRecovery"/>
@@ -857,7 +857,7 @@
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuRunGroup"/>
-      <reference ref="RevealGroup"/>
+      <reference ref="SplitRevealGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <reference ref="SynchronizeCurrentFile"/>
@@ -980,7 +980,7 @@
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
-      <reference ref="RevealGroup"/>
+      <reference ref="SplitRevealGroup"/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="CompareTwoFiles"/>
@@ -1012,7 +1012,7 @@
       <group id="EditorPopupMenu.Run">
         <reference ref="RunContextPopupGroup"/>
       </group>
-      <reference id="RevealGroup"/>
+      <reference id="SplitRevealGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
@@ -1028,7 +1028,7 @@
       <reference ref="MarkFileAs"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
-      <reference ref="RevealGroup"/>
+      <reference ref="SplitRevealGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
@@ -1099,7 +1099,7 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
-      <reference ref="RevealGroup"/>
+      <reference ref="SplitRevealGroup"/>
       <separator/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
