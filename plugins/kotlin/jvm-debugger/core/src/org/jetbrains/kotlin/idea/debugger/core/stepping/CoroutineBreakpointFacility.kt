@@ -51,7 +51,8 @@ object CoroutineBreakpointFacility {
         }
 
         val breakpoint = object : StepIntoMethodBreakpoint(method.declaringType().name(), method.name(), method.signature(), project) {
-            override fun stopOnlyInBaseClass() = true
+            override fun isRestoreBreakpoints(): Boolean = false
+            override fun stopOnlyInBaseClass(): Boolean = true
 
             override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent): Boolean {
                 thisLogger().debug("Hit the resume breakpoint at ${context.location}")
