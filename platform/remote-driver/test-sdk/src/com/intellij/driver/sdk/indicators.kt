@@ -45,6 +45,7 @@ fun Driver.waitForIndicators(project: Project, timeout: Duration) {
  * Method waits till project is opened and there are no indicators for 10 seconds.
  */
 fun Driver.waitForIndicators(timeout: Duration) {
+  waitForProjectOpen(timeout)
   waitForIndicators(::singleProject, timeout)
 }
 
