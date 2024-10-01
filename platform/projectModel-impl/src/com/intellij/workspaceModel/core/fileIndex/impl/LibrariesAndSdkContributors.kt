@@ -15,7 +15,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -25,7 +24,6 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryId
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
 import java.util.*
@@ -195,10 +193,8 @@ internal class LibrariesAndSdkContributors(private val project: Project,
   }
 
   companion object {
-    internal fun getGlobalLibraryId(fileSet: WorkspaceFileSet): LibraryId? {
-      return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer.asSafely<GlobalLibraryPointer>()?.library?.let {
-        findLibraryId(library = it)
-      }
+    internal fun getGlobalLibrary(fileSet: WorkspaceFileSet): Library? {
+      return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer.asSafely<GlobalLibraryPointer>()?.library
     }
 
     internal fun getSdk(fileSet: WorkspaceFileSet): Sdk? {
