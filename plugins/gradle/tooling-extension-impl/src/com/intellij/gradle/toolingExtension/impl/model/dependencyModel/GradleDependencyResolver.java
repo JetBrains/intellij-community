@@ -19,8 +19,6 @@ import org.gradle.api.artifacts.result.ResolvedArtifactResult;
 import org.gradle.api.artifacts.result.ResolvedComponentResult;
 import org.gradle.api.artifacts.result.ResolvedDependencyResult;
 import org.gradle.internal.resolve.ModuleVersionResolveException;
-import org.gradle.language.base.artifact.SourcesArtifact;
-import org.gradle.language.java.artifact.JavadocArtifact;
 import org.gradle.util.Path;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -258,11 +256,11 @@ public final class GradleDependencyResolver {
     libraryDependency.setFile(artifactFile);
 
     ComponentIdentifier componentIdentifier = artifact.getId().getComponentIdentifier();
-    File sourcesFile = auxiliaryArtifacts.getArtifact(componentIdentifier, artifactFile, SourcesArtifact.class);
+    File sourcesFile = auxiliaryArtifacts.getSources(componentIdentifier, artifactFile);
     if (sourcesFile != null) {
       libraryDependency.setSource(sourcesFile);
     }
-    File javadocFile = auxiliaryArtifacts.getArtifact(componentIdentifier, artifactFile, JavadocArtifact.class);
+    File javadocFile = auxiliaryArtifacts.getJavadoc(componentIdentifier, artifactFile);
     if (javadocFile != null) {
       libraryDependency.setJavadoc(javadocFile);
     }

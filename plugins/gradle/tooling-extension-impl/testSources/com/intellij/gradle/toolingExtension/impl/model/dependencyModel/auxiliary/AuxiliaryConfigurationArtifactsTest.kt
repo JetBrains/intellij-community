@@ -3,13 +3,8 @@ package com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliar
 
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.api.artifacts.component.ComponentIdentifier
-import org.gradle.ivy.IvyDescriptorArtifact
-import org.gradle.language.base.artifact.SourcesArtifact
-import org.gradle.language.java.artifact.JavadocArtifact
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -29,13 +24,6 @@ class AuxiliaryConfigurationArtifactsTest {
   private fun testFile(name: String) = File(tempDir, name)
 
   @Test
-  fun `choose artifact from empty container`() {
-    val stub = AuxiliaryConfigurationArtifacts(emptyMap(), emptyMap())
-    val main = testFile("foo-bar.jar")
-    assertNull(stub.getArtifact(TestComponentIdentifier(), main, SourcesArtifact::class.java))
-  }
-
-  @Test
   fun `choose javadoc artifact`() {
     val identifier = TestComponentIdentifier()
     val main = testFile("foo-bar.jar")
@@ -47,7 +35,7 @@ class AuxiliaryConfigurationArtifactsTest {
       mapOf(identifier to setOf(javadoc))
     )
 
-    val file = stub.getArtifact(identifier, main, JavadocArtifact::class.java)
+    val file = stub.getJavadoc(identifier, main)
     assertEquals(javadoc, file)
   }
 
@@ -63,17 +51,8 @@ class AuxiliaryConfigurationArtifactsTest {
       mapOf(identifier to setOf(javadoc))
     )
 
-    val file = stub.getArtifact(identifier, main, SourcesArtifact::class.java)
+    val file = stub.getSources(identifier, main)
     assertEquals(sources, file)
-  }
-
-  @Test
-  fun `choose unsupported artifact`() {
-    val stub = AuxiliaryConfigurationArtifacts(emptyMap(), emptyMap())
-    val main = testFile("foo-bar.jar")
-    assertThrows<IllegalArgumentException> {
-      stub.getArtifact(TestComponentIdentifier(), main, IvyDescriptorArtifact::class.java)
-    }
   }
 
   @Test

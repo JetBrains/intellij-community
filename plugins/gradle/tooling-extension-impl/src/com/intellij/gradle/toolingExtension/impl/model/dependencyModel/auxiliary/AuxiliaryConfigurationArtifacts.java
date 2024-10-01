@@ -2,9 +2,6 @@
 package com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary;
 
 import org.gradle.api.artifacts.component.ComponentIdentifier;
-import org.gradle.api.component.Artifact;
-import org.gradle.language.base.artifact.SourcesArtifact;
-import org.gradle.language.java.artifact.JavadocArtifact;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,28 +28,24 @@ public class AuxiliaryConfigurationArtifacts {
     this.javadocs = javadocs;
   }
 
-  public @Nullable File getArtifact(@NotNull ComponentIdentifier identifier,
-                                    @NotNull File artifactFile,
-                                    @NotNull Class<? extends Artifact> artifactType
+  public @Nullable File getJavadoc(@NotNull ComponentIdentifier identifier,
+                                   @NotNull File artifactFile
   ) {
-    Map<ComponentIdentifier, Set<File>> artifactSource = chooseArtifactSource(artifactType);
-    Set<File> files = artifactSource.get(identifier);
+    Set<File> files = javadocs.get(identifier);
     if (files == null) {
       return null;
     }
     return chooseAuxiliaryArtifactFile(artifactFile, files);
   }
 
-  private @NotNull Map<ComponentIdentifier, Set<File>> chooseArtifactSource(@NotNull Class<? extends Artifact> artifactType) {
-    if (SourcesArtifact.class == artifactType) {
-      return sources;
+  public @Nullable File getSources(@NotNull ComponentIdentifier identifier,
+                                   @NotNull File artifactFile
+  ) {
+    Set<File> files = sources.get(identifier);
+    if (files == null) {
+      return null;
     }
-    else if (JavadocArtifact.class == artifactType) {
-      return javadocs;
-    }
-    else {
-      throw new IllegalArgumentException("Unexpected artifact type was requested: " + artifactType.getCanonicalName());
-    }
+    return chooseAuxiliaryArtifactFile(artifactFile, files);
   }
 
   /**
