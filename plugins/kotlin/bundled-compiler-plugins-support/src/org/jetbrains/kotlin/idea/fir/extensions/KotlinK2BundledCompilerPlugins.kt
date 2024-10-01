@@ -35,7 +35,6 @@ import kotlin.reflect.KClass
  * [PathManager.getJarForClass] is used to get the correct location of plugin's jars
  * in any IDE launch scenario (both when run from sources and in dev mode).
  */
-@Suppress("unused")
 @OptIn(ExperimentalCompilerApi::class)
 enum class KotlinK2BundledCompilerPlugins(
     registrarClass: KClass<out CompilerPluginRegistrar>,
@@ -97,7 +96,7 @@ enum class KotlinK2BundledCompilerPlugins(
             "META-INF/services/org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar",        // old registrar location, see KT-52665
         )
 
-        fun findCorrespondingBundledPlugin(originalJar: Path): KotlinK2BundledCompilerPlugins? {
+        internal fun findCorrespondingBundledPlugin(originalJar: Path): KotlinK2BundledCompilerPlugins? {
             val compilerPluginRegistrarContent =
                 COMPILER_PLUGIN_REGISTRAR_FILES.firstNotNullOfOrNull { readFileContentFromJar(originalJar, it) } ?: return null
 

@@ -251,8 +251,8 @@ internal class KtCompilerPluginsProviderIdeImpl(
     private fun substitutePluginJar(userSuppliedPluginJar: Path): Path? {
         ProgressManager.checkCanceled()
 
-        val bundledPlugin = KotlinK2BundledCompilerPlugins.findCorrespondingBundledPlugin(userSuppliedPluginJar)
-        if (bundledPlugin != null) return bundledPlugin.bundledJarLocation
+        val bundledPlugin = KotlinBundledFirCompilerPluginProvider.provideBundledPluginJar(userSuppliedPluginJar)
+        if (bundledPlugin != null) return bundledPlugin
 
         return userSuppliedPluginJar.takeUnless { onlyBundledPluginsEnabled }
     }
