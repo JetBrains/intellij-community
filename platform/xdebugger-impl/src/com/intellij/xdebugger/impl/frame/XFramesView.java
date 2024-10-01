@@ -106,7 +106,7 @@ public final class XFramesView extends XDebugView {
       @Override
       protected void scrollToSource(@NotNull Component list) {
         if (myListenersEnabled) {
-          processFrameSelection(getSession(), true);
+          processFrameSelection(getSession(), true, myRefresh);
         }
       }
     };
@@ -441,6 +441,15 @@ public final class XFramesView extends XDebugView {
         myVisibleRect = myFramesList.getVisibleRect();
       }
 
+      boolean shouldRefresh = event == SessionEvent.SETTINGS_CHANGED;
+      if (shouldRefresh && mySelectedStack != null) {
+        StackFramesListBuilder previousBuilder = myBuilders.get(mySelectedStack);
+        if (previousBuilder != null && previousBuilder.myRunning && !previousBuilder.myRefresh) {
+          // The previous non-refresh builder didn't finish yet, in that case the new builder should not be in the refresh mode.
+          shouldRefresh = false;
+        }
+      }
+
       myListenersEnabled = false;
       myBuilders.values().forEach(StackFramesListBuilder::dispose);
       myBuilders.clear();
@@ -475,7 +484,7 @@ public final class XFramesView extends XDebugView {
       updateFrames(activeExecutionStack,
                    session,
                    event == SessionEvent.FRAME_CHANGED ? currentStackFrame : null,
-                   event == SessionEvent.SETTINGS_CHANGED);
+                   shouldRefresh);
     });
   }
 
@@ -550,7 +559,7 @@ public final class XFramesView extends XDebugView {
     return getMainPanel();
   }
 
-  private void processFrameSelection(XDebugSession session, boolean force) {
+  private void processFrameSelection(XDebugSession session, boolean force, boolean refresh) {
     mySelectedFrame = myFramesList.getSelectedFrame();
     myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrame);
     withCurrentBuilder(b -> b.setToSelect(null));
@@ -558,7 +567,7 @@ public final class XFramesView extends XDebugView {
     Object selected = myFramesList.getSelectedValue();
     if (selected instanceof XStackFrame) {
       if (session != null) {
-        if (force || (!myRefresh && session.getCurrentStackFrame() != selected)) {
+        if (force || (!refresh && session.getCurrentStackFrame() != selected)) {
           int mySelectedFrameIndex = myFramesList.getSelectedIndex();
           session.setCurrentStackFrame(mySelectedStack, (XStackFrame)selected, mySelectedFrameIndex == 0);
           if (force) {
@@ -707,7 +716,7 @@ public final class XFramesView extends XDebugView {
     private boolean selectCurrentFrame() {
       if (selectFrame(myToSelect)) {
         myListenersEnabled = true;
-        processFrameSelection(mySession, false);
+        processFrameSelection(mySession, false, myRefresh);
         return true;
       }
       return false;
