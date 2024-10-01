@@ -418,6 +418,25 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    fun testNullableBoolean() {
+        val text = """
+            fun main() {
+                callNullable(false, false)
+            }
+            
+            fun callNullable(nullable: Boolean?, nonNullable: Boolean) {
+                <caret>val abc = 123
+                if (nullable/*FALSE*/!!) /*unreachable_start*/println("alfa")/*unreachable_end*/
+                if (nullable/*FALSE*/) /*unreachable_start*/println("bravo")/*unreachable_end*/
+                if (nonNullable/*FALSE*/) /*unreachable_start*/println("charlie")/*unreachable_end*/
+            }
+        """
+        doTest(text) { vm, frame ->
+            frame.addVariable("nullable", MockValue.createValue(false, vm))
+            frame.addVariable("nonNullable", MockBooleanValue(vm, false))
+        }
+    }
+
     private fun doTest(text: String, mockValues: BiConsumer<MockVirtualMachine, MockStackFrame>) {
         doTest(text, mockValues, "Test.kt")
     }

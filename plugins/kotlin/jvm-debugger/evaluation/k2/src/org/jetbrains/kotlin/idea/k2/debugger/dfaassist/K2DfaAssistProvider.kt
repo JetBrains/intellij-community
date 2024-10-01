@@ -3,9 +3,11 @@ package org.jetbrains.kotlin.idea.k2.debugger.dfaassist
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint
 import com.intellij.codeInspection.dataFlow.TypeConstraints
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
@@ -171,7 +173,10 @@ class K2DfaAssistProvider : DfaAssistProvider {
         val hints = hashMapOf<PsiElement, DfaHint>()
 
         override fun beforePush(args: Array<out DfaValue>, value: DfaValue, anchor: DfaAnchor, state: DfaMemoryState) {
-            val dfType = state.getDfType(value)
+            var dfType = state.getDfType(value)
+            if (dfType is DfReferenceType && dfType.constraint.unboxedType == DfTypes.BOOLEAN) {
+                dfType = SpecialField.UNBOX.getFromQualifier(state.getDfTypeIncludingDerived(value))
+            }
             var psi = when (anchor) {
                 is KotlinAnchor.KotlinExpressionAnchor -> {
                     if (!shouldTrackExpressionValue(anchor.expression)) return
