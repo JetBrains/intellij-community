@@ -9526,6 +9526,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/increaseVisibility/overriddenProtectedMemberToPublicSingleFile.kt");
             }
 
+            @TestMetadata("overriddenProtectedMemberToPublicSingleFile1.kt")
+            public void testOverriddenProtectedMemberToPublicSingleFile1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/overriddenProtectedMemberToPublicSingleFile1.kt");
+            }
+
             @TestMetadata("privateEmptyPrimaryConstructorToPublic.kt")
             public void testPrivateEmptyPrimaryConstructorToPublic() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/increaseVisibility/privateEmptyPrimaryConstructorToPublic.kt");

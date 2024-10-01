@@ -10092,6 +10092,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/increaseVisibility/overriddenProtectedMemberToPublicSingleFile.kt");
             }
 
+            @TestMetadata("overriddenProtectedMemberToPublicSingleFile1.kt")
+            public void testOverriddenProtectedMemberToPublicSingleFile1() throws Exception {
+                runTest("testData/quickfix/increaseVisibility/overriddenProtectedMemberToPublicSingleFile1.kt");
+            }
+
             @TestMetadata("privateEmptyPrimaryConstructorToPublic.kt")
             public void testPrivateEmptyPrimaryConstructorToPublic() throws Exception {
                 runTest("testData/quickfix/increaseVisibility/privateEmptyPrimaryConstructorToPublic.kt");

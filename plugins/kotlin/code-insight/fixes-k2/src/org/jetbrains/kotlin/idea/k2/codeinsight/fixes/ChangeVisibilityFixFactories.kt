@@ -371,7 +371,7 @@ object ChangeVisibilityFixFactories {
             Visibilities.Public -> ChangeToPublicModCommandAction(
                 declaration,
                 name,
-                forceUsingExplicitModifier = (declaration as? KtParameter)?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true
+                forceUsingExplicitModifier = (declaration as? KtNamedDeclaration)?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true
             )
 
             else -> null
