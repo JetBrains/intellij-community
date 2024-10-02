@@ -24,5 +24,4 @@ tasks.test {
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.compilerOptions {
     jvmTarget.set(JvmTarget.JVM_11)
-    optIn.set(listOf("org.mylibrary.OptInAnnotation"))
 }

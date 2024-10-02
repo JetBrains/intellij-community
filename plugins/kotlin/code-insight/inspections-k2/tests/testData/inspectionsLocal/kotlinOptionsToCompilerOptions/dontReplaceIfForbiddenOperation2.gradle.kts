@@ -23,7 +23,7 @@ kotlin {
     jvmToolchain(8)
 }
 
-tasks.withType<KotlinCompile<*>> {
+tasks.withType<KotlinCompile> {
     <caret>kotlinOptions {
         freeCompilerArgs -= "-Xexport-kdoc"
     }

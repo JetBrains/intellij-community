@@ -8374,6 +8374,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontReplaceWithMinusOperator2.gradle.kts");
             }
 
+            @TestMetadata("dontReplaceWithMinusOperator3.gradle.kts")
+            public void testDontReplaceWithMinusOperator3_gradle() throws Exception {
+                runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontReplaceWithMinusOperator3.gradle.kts");
+            }
+
             @TestMetadata("dontReplaceWithMinusOperator.gradle.kts")
             public void testDontReplaceWithMinusOperator_gradle() throws Exception {
                 runTest("testData/inspectionsLocal/kotlinOptionsToCompilerOptions/dontReplaceWithMinusOperator.gradle.kts");
