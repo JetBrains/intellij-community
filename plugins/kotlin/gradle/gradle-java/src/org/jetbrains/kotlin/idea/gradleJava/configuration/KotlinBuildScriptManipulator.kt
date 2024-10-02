@@ -663,7 +663,7 @@ class KotlinBuildScriptManipulator(
                 prefix = "$parameterName = listOf("
                 postfix = ")"
             } else {
-                prefix = "$parameterName.addAll(listOf("
+                prefix = "$parameterName.addAll(listOf(" // prefix is used only when adding a new value
                 postfix = "))"
             }
             val newText = text.replaceLanguageFeature(

@@ -24,5 +24,5 @@ kotlin {
 
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.compilerOptions {
-    freeCompilerArgs.addAll(listOf("-XXLanguage:+MangleClassMembersReturningInlineClasses"))
+    freeCompilerArgs.set(setOf("-XXLanguage:+MangleClassMembersReturningInlineClasses"))
 }

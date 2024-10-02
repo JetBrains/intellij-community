@@ -43,6 +43,10 @@ object CliArgumentStringBuilder {
         }
     }
 
+    /**
+     *  prefix is used only when there wasn't any value for this parameter before
+     *  postfix is used to correctly split arguments if we replace/add value to the existing collection
+     */
     fun String.replaceLanguageFeature(
       feature: LanguageFeature,
       state: LanguageFeature.State,
