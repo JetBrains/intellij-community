@@ -1947,8 +1947,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       List<PyTypeParameterType> typeAliasTypeParams = collectTypeParametersFromTypeAliasStatement(typeAliasStatement, context);
       if (!typeAliasTypeParams.isEmpty()) {
         PyTypeChecker.GenericSubstitutions substitutions =
-          PyTypeChecker.mapTypeParametersToSubstitutions(new PyTypeChecker.GenericSubstitutions(),
-                                                         typeAliasTypeParams,
+          PyTypeChecker.mapTypeParametersToSubstitutions(typeAliasTypeParams,
                                                          indexTypes,
                                                          Option.USE_DEFAULTS,
                                                          Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);

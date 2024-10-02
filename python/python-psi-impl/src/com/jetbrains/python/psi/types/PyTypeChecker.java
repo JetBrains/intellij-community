@@ -1608,8 +1608,8 @@ public final class PyTypeChecker {
     Generics typeParams = collectGenerics(genericType, context);
     if (!typeParams.isEmpty()) {
       List<PyType> expectedTypeParams = new ArrayList<>(new LinkedHashSet<>(typeParams.getAllTypeParameters()));
-      var substitutions = mapTypeParametersToSubstitutions(new GenericSubstitutions(),
-                                                           expectedTypeParams, actualTypeParams,
+      var substitutions = mapTypeParametersToSubstitutions(expectedTypeParams, 
+                                                           actualTypeParams,
                                                            Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY,
                                                            Option.USE_DEFAULTS);
       if (substitutions == null) return null;
