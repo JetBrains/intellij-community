@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.memory.agent.MemoryAgent;
@@ -773,7 +774,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           Location location = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
 
           if (location == null) {
-            location = ContainerUtil.getFirstItem(clsType.allLineLocations());
+            location = ContainerUtil.getFirstItem(DebuggerUtilsAsync.allLineLocationsSync(clsType));
           }
 
           if (location != null) {

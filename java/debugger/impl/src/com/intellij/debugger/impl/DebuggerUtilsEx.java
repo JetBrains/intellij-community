@@ -559,7 +559,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   @Nullable
   public static List<Location> allLineLocations(ReferenceType cls) {
     try {
-      return cls.allLineLocations();
+      return DebuggerUtilsAsync.allLineLocationsSync(cls);
     }
     catch (AbsentInformationException ignored) {
       return null;

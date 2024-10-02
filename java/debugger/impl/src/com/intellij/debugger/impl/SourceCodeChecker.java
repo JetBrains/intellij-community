@@ -86,7 +86,7 @@ public final class SourceCodeChecker {
         DebuggerUtilsEx.isLambda(method)) {
       return CompletableFuture.completedFuture(ThreeState.UNSURE);
     }
-    return DebuggerUtilsAsync.allLineLocationsAsync(method).thenApply(locations -> {
+    return DebuggerUtilsAsync.allLineLocations(method).thenApply(locations -> {
       if (ContainerUtil.isEmpty(locations)) {
         return ThreeState.UNSURE;
       }
@@ -171,7 +171,7 @@ public final class SourceCodeChecker {
     for (ReferenceType type : types) {
       i++;
       try {
-        for (Location loc : type.allLineLocations()) {
+        for (Location loc : DebuggerUtilsAsync.allLineLocationsSync(type)) {
           SourcePosition position =
             ReadAction.compute(() -> {
               try {

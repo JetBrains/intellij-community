@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.eval4j.jdi.test
 
+import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.sun.jdi.*
 import com.sun.jdi.event.BreakpointEvent
 import com.sun.jdi.event.ClassPrepareEvent
@@ -55,7 +56,7 @@ fun suite(): TestSuite {
                     is ClassPrepareEvent -> {
                         val _class = event.referenceType()!!
                         if (_class.name() == debugeeName) {
-                            for (l in _class.allLineLocations()) {
+                            for (l in DebuggerUtilsAsync.allLineLocationsSync(_class)) {
                                 if (l.method().name() == "main") {
                                     classLoader = l.method().declaringType().classLoader()
                                     val breakpointRequest = vm.eventRequestManager().createBreakpointRequest(l)
