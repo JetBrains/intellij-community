@@ -107,6 +107,10 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun collapseRow(row: Int) {
+    fixture.collapseRow(row)
+  }
+
   fun collapsePath(vararg path: String, fullMatch: Boolean = true) {
     fixture.collapseRow(findExpandedPath(*path, fullMatch = fullMatch)?.row ?: throw PathNotFoundException(path.toList()))
   }
