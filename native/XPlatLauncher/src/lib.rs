@@ -39,11 +39,14 @@ use serde::Deserialize;
 
 #[cfg(target_os = "windows")]
 use {
-    windows::core::{HSTRING, GUID, PCWSTR, PWSTR},
+    std::io::Write,
+    std::ptr::null_mut,
     windows::Win32::Foundation,
-    windows::Win32::UI::Shell,
-    windows::Win32::System::Console::{AllocConsole, ATTACH_PARENT_PROCESS, AttachConsole},
+    windows::Win32::Foundation::HANDLE,
+    windows::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole, SetStdHandle, STD_ERROR_HANDLE, STD_OUTPUT_HANDLE},
     windows::Win32::System::LibraryLoader,
+    windows::Win32::UI::Shell,
+    windows::core::{HSTRING, GUID, PCWSTR, PWSTR},
 };
 
 #[cfg(target_family = "unix")]
@@ -93,11 +96,38 @@ pub fn main_lib() {
 #[cfg(target_os = "windows")]
 fn attach_console() {
     unsafe {
+        let mut err = None;
         if AttachConsole(ATTACH_PARENT_PROCESS).is_err() {
-            eprintln!("AttachConsole(ATTACH_PARENT_PROCESS): {:?}", Foundation::GetLastError());
-            if AllocConsole().is_err() {
-                eprintln!("AllocConsole(): {:?}", Foundation::GetLastError());
+            err = Some(Foundation::GetLastError());
+        }
+
+        // case: races when restarting in remote-dev on Windows
+        // (ssh session -> tb proxy -> tb agent -> IDE -> restarter.exe (dying too fast) -> IDE)
+        // cannot repro on a smaller setup (e.g. cmd /C via ssh)
+        // * case: console is alive, but in a state of being closed
+        // * AttachConsole does not always error
+        // * GetStdHandle for STD_OUT_HANDLE returns without errors and the handle is not zero/invalid
+        // * println!/eprintln! panics when it can't write
+        // * setting various process creation flags in restarter does not seem to help
+        // this is the only reliable way I've found to check if it's possible to call println! without panic
+        if writeln!(std::io::stderr(), ".").is_err() {
+            // usually it's Os { code: 232, kind: BrokenPipe, message: "The pipe is being closed." }
+            // but even if it's some other error, let's not write there
+            // passing null here is not explicitly documented,
+            // but it works and is consistent with the GetStdHandle returning null
+            if SetStdHandle(STD_ERROR_HANDLE, HANDLE(null_mut())).is_err() {
+                std::process::exit(1011)
             }
+        }
+
+        if writeln!(std::io::stdout(), ".").is_err() {
+            if SetStdHandle(STD_OUTPUT_HANDLE, HANDLE(null_mut())).is_err() {
+                std::process::exit(1012)
+            }
+        }
+
+        if let Some(err) = err {
+            eprintln!("AttachConsole(ATTACH_PARENT_PROCESS): {:?}", err)
         }
     }
 }
