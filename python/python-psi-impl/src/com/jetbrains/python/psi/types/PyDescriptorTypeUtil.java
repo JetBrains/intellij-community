@@ -5,6 +5,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,19 @@ public final class PyDescriptorTypeUtil {
   }
 
   @Nullable
+  public static Ref<PyType> getExpectedValueTypeForDunderSet(@NotNull PyQualifiedExpression expression, @Nullable PyType typeFromTargets, @NotNull TypeEvalContext context) {
+    final PyClassLikeType targetType = as(typeFromTargets, PyClassLikeType.class);
+    if (targetType == null || targetType.isDefinition()) return null;
+
+    final PyResolveContext resolveContext = PyResolveContext.noProperties(context);
+    final List<? extends RatedResolveResult> members = targetType.resolveMember(PyNames.DUNDER_SET, expression, AccessDirection.READ,
+                                                                                resolveContext);
+    if (members == null || members.isEmpty()) return null;
+
+    return getExpectedTypeFromDunderSet(expression, typeFromTargets, context);
+  }
+
+  @Nullable
   private static Ref<PyType> getTypeFromSyntheticDunderGetCall(@NotNull PyQualifiedExpression expression, @NotNull PyType typeFromTargets, @NotNull TypeEvalContext context) {
     PyExpression qualifier = expression.getQualifier();
     if (qualifier != null && typeFromTargets instanceof PyCallableType receiverType) {
@@ -49,6 +63,47 @@ public final class PyDescriptorTypeUtil {
         List<PyType> argumentTypes = List.of(instanceArgumentType, instanceTypeArgument);
         PyType type  = PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.GET, receiverType, argumentTypes, context);
         return Ref.create(type);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getExpectedTypeFromDunderSet(@NotNull PyQualifiedExpression expression,
+                                                          @NotNull PyType typeFromTargets,
+                                                          @NotNull TypeEvalContext context) {
+    PyExpression qualifier = expression.getQualifier();
+    PyType objectArgumentType = PyNoneType.INSTANCE;
+
+    if (qualifier != null && typeFromTargets instanceof PyCallableType) {
+      PyType qualifierType = context.getType(qualifier);
+      if (qualifierType instanceof PyClassType classType && !classType.isDefinition()) {
+        objectArgumentType = qualifierType;
+      }
+    }
+
+    List<PyFunction> functions =
+      PySyntheticCallHelper.resolveFunctionsByArgumentTypes(PyNames.DUNDER_SET, List.of(objectArgumentType), typeFromTargets, context);
+    if (functions.isEmpty()) return null;
+
+    PyType expectedSetValueType = StreamEx.of(functions)
+      .nonNull()
+      .map(function -> getExpectedDunderSetValueType(function, typeFromTargets, context))
+      .collect(PyTypeUtil.toUnion());
+    return Ref.create(expectedSetValueType);
+  }
+
+  @Nullable
+  private static PyType getExpectedDunderSetValueType(@NotNull PyFunction function, @NotNull PyType receiverType, @NotNull TypeEvalContext context) {
+    List<PyCallableParameter> parameters = function.getParameters(context);
+    if (parameters.size() != 3) return null;
+    // Parameter names may differ, but 'value' parameter should always be the third one
+    PyCallableParameter valueParameter = parameters.get(2);
+    if (valueParameter != null) {
+      PyType type = valueParameter.getArgumentType(context);
+      if (type != null && receiverType instanceof PyClassType) {
+        PyTypeChecker.GenericSubstitutions subs = PyTypeChecker.unifyReceiver(receiverType, context);
+        return PyTypeChecker.substitute(type, subs, context);
       }
     }
     return null;

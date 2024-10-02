@@ -2170,6 +2170,98 @@ def foo(param: str | int) -> TypeGuard[str]:
                    """);
   }
 
+  // PY-76399
+  public void testAssignedValueMatchesWithDunderSetSimpleCase() {
+    doTestByText("""                   
+                   class MyDescriptor:
+                   
+                       def __set__(self, obj, value: str) -> None:
+                           ...
+                   
+                   class Test:
+                       member: MyDescriptor
+                   
+                   t = Test()
+                   t.member = "str"
+                   t.member = <warning descr="Assigned type 'int' do not match expected type 'str' of value from __set__ descriptor of class 'MyDescriptor'">123</warning>
+                   t.member = <warning descr="Assigned type 'Type[list]' do not match expected type 'str' of value from __set__ descriptor of class 'MyDescriptor'">list</warning>
+                   """);
+  }
+
+  // PY-76399
+  public void testAssignedValueMatchesWithGenericDunderSetSimpleCase() {
+    doTestByText("""                   
+                   class MyDescriptor[T]:
+                   
+                       def __set__(self, obj, value: T) -> None:
+                           ...
+                   
+                   class Test:
+                       member: MyDescriptor[str]
+                   
+                   t = Test()
+                   t.member = "str"
+                   t.member = <warning descr="Assigned type 'int' do not match expected type 'str' of value from __set__ descriptor of class 'MyDescriptor'">123</warning>
+                   t.member = <warning descr="Assigned type 'Type[list]' do not match expected type 'str' of value from __set__ descriptor of class 'MyDescriptor'">list</warning>
+                   """);
+  }
+
+  // PY-76399
+  public void testAssignedValueMatchesWithDunderSetWithOverloads() {
+    doTestByText("""
+                   from typing import overload
+                   
+                   class MyDescriptor:
+                   
+                       @overload
+                       def __set__(self, obj: "Test", value: str) -> None:
+                           ...
+                       @overload
+                       def __set__(self, obj: "Prod", value: "LocalizedString") -> None:
+                           ...
+                       def __set__(self, obj, value) -> None:
+                           ...
+                   
+                   class Test:
+                       member: MyDescriptor
+                   
+                   class Prod:
+                       member: MyDescriptor
+                   
+                   class LocalizedString:
+                       def __init__(self, value: str):
+                           ...
+                   
+                   t = Test()
+                   t.member = "abc"
+                   t.member = <warning descr="Assigned type 'int' do not match expected type 'str' of value from __set__ descriptor of class 'MyDescriptor'">42</warning>
+                   p = Prod()
+                   p.member = <warning descr="Assigned type 'str' do not match expected type 'LocalizedString' of value from __set__ descriptor of class 'MyDescriptor'">"abc"</warning>
+                   p.member = <warning descr="Assigned type 'int' do not match expected type 'LocalizedString' of value from __set__ descriptor of class 'MyDescriptor'">42</warning>
+                   p.member = LocalizedString("abc")
+                   """);
+  }
+
+  // PY-76399
+  public void testAssignedValueMatchesWithDunderSetWithLiteralValue() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   
+                   class MyDescriptor:
+                       def __set__(self, obj, value: Literal[42]) -> None:
+                           ...
+                   
+                   class Test:
+                       member: MyDescriptor
+                   
+                   t = Test()
+                   t.member = 42
+                   t.member = <warning descr="Assigned type 'Literal[43]' do not match expected type 'Literal[42]' of value from __set__ descriptor of class 'MyDescriptor'">43</warning>
+                   t.member = <warning descr="Assigned type 'Literal[\\"42\\"]' do not match expected type 'Literal[42]' of value from __set__ descriptor of class 'MyDescriptor'">"42"</warning>
+                   """);
+  }
+
   // PY-23067
   public void testFunctoolsWrapsMultiFile() {
     doMultiFileTest();
