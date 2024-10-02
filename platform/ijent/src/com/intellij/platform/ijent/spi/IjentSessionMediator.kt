@@ -35,7 +35,11 @@ import kotlin.time.toKotlinDuration
  * [processExit] never throws. When it completes, it either means that the process has finished, or that the whole scope of IJent processes
  * is canceled.
  */
-class IjentSessionMediator private constructor(val scope: CoroutineScope, val process: Process, val processExit: Deferred<Unit>) {
+class IjentSessionMediator private constructor(
+  val ijentProcessScope: CoroutineScope,
+  val process: Process,
+  val processExit: Deferred<Unit>,
+) {
   enum class ExpectedErrorCode {
     /** During initialization, even a sudden successful exit is an error. */
     NO,
