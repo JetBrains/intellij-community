@@ -25,7 +25,7 @@ interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
 
   suspend fun showHint(projectId: ProjectId, hintId: RemoteValueHintId): Flow<Unit>
 
-  suspend fun removeHint(projectId: ProjectId, hintId: RemoteValueHintId)
+  suspend fun removeHint(projectId: ProjectId, hintId: RemoteValueHintId, force: Boolean)
 
   companion object {
     @JvmStatic

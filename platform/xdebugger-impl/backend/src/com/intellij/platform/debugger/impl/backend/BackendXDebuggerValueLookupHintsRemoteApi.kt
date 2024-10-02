@@ -154,12 +154,14 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
     }
   }
 
-  override suspend fun removeHint(projectId: ProjectId, hintId: RemoteValueHintId) {
+  override suspend fun removeHint(projectId: ProjectId, hintId: RemoteValueHintId, force: Boolean) {
     val project = projectId.findProject()
     val hint = BackendDebuggerValueLookupHintsHolder.getInstance(project).getHintById(hintId.id) ?: return
     BackendDebuggerValueLookupHintsHolder.getInstance(project).removeHint(hintId.id)
-    withContext(Dispatchers.EDT) {
-      hint.hideHint()
+    if (force) {
+      withContext(Dispatchers.EDT) {
+        hint.hideHint()
+      }
     }
   }
 }

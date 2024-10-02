@@ -51,14 +51,21 @@ class RemoteValueHint(
       val closedEvent = remoteApi.showHint(projectId, hint)
       withContext(Dispatchers.EDT) {
         closedEvent.collect {
-          hideHint()
+          hideHint(force = false)
           processHintHidden()
         }
       }
     }
   }
 
-  override fun hideHint() {
+  /**
+   * Since by current design AbstractValueHint may be hidden, but not closed,
+   * for example, when we hover variable and click on expand the new popup will be shown,
+   * while ValueLookupManager will forget about this hint and won't control hints hiding.
+   * For this case [force] is used, it is [true] only when we want to close all the popups on backend too
+   * Otherwise, we will forget about the hint on frontend side, and backend will control it.
+   */
+  fun hideHint(force: Boolean) {
     hintCoroutineScope?.launch(Dispatchers.IO) {
       val hint = remoteHint?.await()
       if (hint == null) {
@@ -66,9 +73,13 @@ class RemoteValueHint(
         return@launch
       }
       val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
-      remoteApi.removeHint(projectId, hint)
+      remoteApi.removeHint(projectId, hint, force)
       hintCoroutineScope?.cancel()
     }
     super.hideHint()
+  }
+
+  override fun hideHint() {
+    hideHint(false)
   }
 }

@@ -152,7 +152,14 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
 
   public void hideHint() {
     if (myCurrentHint != null) {
-      myCurrentHint.hideHint();
+      if (myCurrentHint instanceof RemoteValueHint) {
+        // if ValueLookupManager requests hideHint, then it should be closed on backend as well
+        // otherwise the hint may continue living on backend itself
+        ((RemoteValueHint)myCurrentHint).hideHint(true);
+      }
+      else {
+        myCurrentHint.hideHint();
+      }
       myCurrentHint = null;
     }
   }
