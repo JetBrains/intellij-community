@@ -191,9 +191,14 @@ class UITheme internal constructor(
       val theme = readTheme(jsonFactory.createParser(data), warn)
 
       val parentThemeId = theme.parentTheme ?: if (theme.dark) DEFAULT_DARK_PARENT_THEME else DEFAULT_LIGHT_PARENT_THEME
+      val recursiveReloadParent = (theme.parentTheme != null)
       val parentThemeData = UiThemeProviderListManager.getInstance().getThemeJson(parentThemeId)
-      val parentTheme = parentThemeData?.let {
-        readTheme(jsonFactory.createParser(it), warn)
+      val parentTheme = parentThemeData?.let { data ->
+        if (recursiveReloadParent) {
+          loadFromJsonWithParent(data, parentThemeId, classLoader, iconMapper).bean
+        } else {
+          readTheme(jsonFactory.createParser(data), warn)
+        }
       } ?: resolveParentTheme(theme, themeId)
 
       return createTheme(theme = theme,
