@@ -1345,6 +1345,12 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlPWithHintsForHighlightedOnly(marks.get("<arg1>").getTextOffset()).check("a, b, c: str = \"default\"", new String[]{"c: str = \"default\""});
   }
 
+  // PY-76149
+  public void testDataclassTransformConstructorSignatureWithFieldsAnnotatedWithGenericDescriptor() {
+    final Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("id: int, name: str, year: int, new: bool", new String[]{"id: int, "});
+  }
+
   @NotNull
   private Collector feignCtrlP(int offset) {
     return feignCtrlP(offset, myFixture.getFile(), true, myFixture.getEditor());
