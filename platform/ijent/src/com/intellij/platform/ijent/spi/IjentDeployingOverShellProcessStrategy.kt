@@ -105,7 +105,9 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
           }
           buffer.append(c.toChar())
         }
-        LOG.trace { "Read line from stdout: $buffer" }
+        if (buffer.isNotEmpty()) {
+          LOG.trace { "Read line from stdout: $buffer" }
+        }
         buffer.toString()
       }
 
