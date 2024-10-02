@@ -6,12 +6,13 @@ import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.localPort
 
 /**
- * Allows to resolve the stored debugger connection configuration against
- * [TargetEnvironment] and to obtain [RemoteConnection] with the resolved
- * connection parameters for the IDE.
+ * Allows resolving the stored debugger connection configuration against [TargetEnvironment] and to obtain [RemoteConnection] with the
+ * resolved connection parameters for the IDE.
  */
-internal class TargetDebuggerConnection(private val remoteConnection: RemoteConnection,
-                                        val debuggerPortRequest: TargetEnvironment.TargetPortBinding) {
+internal class TargetDebuggerConnection(
+  private val remoteConnection: RemoteConnection,
+  val debuggerPortRequest: TargetEnvironment.TargetPortBinding,
+) {
   private var remoteConnectionResolved: Boolean = false
 
   fun resolveRemoteConnection(environment: TargetEnvironment) {
