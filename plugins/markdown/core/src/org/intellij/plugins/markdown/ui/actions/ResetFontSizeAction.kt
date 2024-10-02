@@ -24,7 +24,7 @@ internal class ResetFontSizeAction: DumbAwareAction() {
   }
 
   override fun update(event: AnActionEvent) {
-    val preview = if (event.place == ActionPlaces.POPUP) {
+    val preview = if (event.place == ActionPlaces.TOOLBAR) {
       event.presentation.text = IdeBundle.message("action.reset.font.size", PreviewLAFThemeStyles.defaultFontSize)
       event.dataContext.getData(PREVIEW_JCEF_PANEL)?.get()
     } else {

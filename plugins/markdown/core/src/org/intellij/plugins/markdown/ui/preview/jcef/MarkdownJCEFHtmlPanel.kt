@@ -50,7 +50,6 @@ import java.awt.Point
 import java.net.URL
 import javax.swing.JComponent
 import kotlin.math.round
-import kotlin.time.Duration.Companion.milliseconds
 
 class MarkdownJCEFHtmlPanel(
   private val project: Project?,
@@ -309,8 +308,10 @@ class MarkdownJCEFHtmlPanel(
 
     coroutineScope.async(context = Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
       panel.startLoading()
-      val viewPort = JBViewport()
-      viewPort.add(previewInnerComponent)
+      val viewPort = JBViewport().apply {
+        layout = BorderLayout()
+      }
+      viewPort.add(previewInnerComponent, BorderLayout.CENTER)
       panel.add(viewPort)
       projectRoot.await()
       panel.stopLoading()
