@@ -575,7 +575,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
             createExpressionArrayChildrenRenderer("toArray()", "!isEmpty()", arrayRenderer));
       setClassName(CommonClassNames.JAVA_UTIL_LIST);
       setIsApplicableChecker(type -> DebuggerUtilsAsync.instanceOf(type, getClassName()));
-      setFullValueEvaluator(new CollectionVisualizerEvaluator(getClassName()));
+      setFullValueEvaluator(CollectionVisualizerEvaluator.createFor(getClassName()));
     }
 
     @Override

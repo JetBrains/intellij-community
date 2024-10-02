@@ -9,29 +9,20 @@ import kotlinx.coroutines.CoroutineScope
 import javax.swing.JComponent
 
 interface CollectionVisualizer {
+  fun applicableFor(collectionClass: String): Boolean
+
   fun createComponent(
     project: Project,
-    baseCollectionClass: String,
     descriptor: ValueDescriptor,
     evaluationContext: EvaluationContextImpl,
     scope: CoroutineScope,
-  ): JComponent?
+  ): JComponent
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<CollectionVisualizer>("com.intellij.debugger.collectionVisualizer")
 
-    fun createComponent(
-      project: Project,
-      baseCollectionClass: String,
-      valueDescriptor: ValueDescriptor,
-      evaluationContext: EvaluationContextImpl,
-      scope: CoroutineScope
-    ): JComponent? {
-      for (visualizer in EP_NAME.extensionList) {
-        val component = visualizer.createComponent(project, baseCollectionClass, valueDescriptor, evaluationContext, scope) ?: continue
-        return component
-      }
-      return null
+    fun findApplicable(collectionClass: String): CollectionVisualizer? {
+      return EP_NAME.findFirstSafe { it.applicableFor(collectionClass) }
     }
   }
 }

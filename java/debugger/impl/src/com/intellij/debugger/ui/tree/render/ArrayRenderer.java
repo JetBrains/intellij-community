@@ -5,10 +5,8 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.ArrayAction;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.collections.visualizer.CollectionVisualizerEvaluator;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -43,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -50,6 +49,8 @@ import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -60,10 +61,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ArrayRenderer extends NodeRendererImpl {
+public class ArrayRenderer extends NodeRendererImpl implements FullValueEvaluatorProvider {
   private static final Logger LOG = Logger.getInstance(ArrayRenderer.class);
 
   public static final @NonNls String UNIQUE_ID = "ArrayRenderer";
+  public static final @NonNls String VISUALIZER_ID = "%Array%";
 
   public int START_INDEX = 0;
   public int END_INDEX = Integer.MAX_VALUE;
@@ -93,6 +95,16 @@ public class ArrayRenderer extends NodeRendererImpl {
   @Override
   public ArrayRenderer clone() {
     return (ArrayRenderer)super.clone();
+  }
+
+  @Override
+  public @Nullable XFullValueEvaluator getFullValueEvaluator(@NotNull EvaluationContextImpl evaluationContext,
+                                                             @NotNull ValueDescriptorImpl valueDescriptor) {
+    CollectionVisualizerEvaluator evaluator = CollectionVisualizerEvaluator.createFor(VISUALIZER_ID);
+    if (evaluator == null) {
+      return null;
+    }
+    return evaluator.getFullValueEvaluator(evaluationContext, valueDescriptor);
   }
 
   @Override

@@ -18,7 +18,7 @@ import kotlinx.coroutines.cancel
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
-class CollectionVisualizerEvaluator(private val baseCollectionClass: String) : FullValueEvaluatorProvider {
+class CollectionVisualizerEvaluator(private val visualizer: CollectionVisualizer) : FullValueEvaluatorProvider {
   override fun getFullValueEvaluator(evaluationContext: EvaluationContextImpl, valueDescriptor: ValueDescriptorImpl): XFullValueEvaluator? {
     val presenterName = valueDescriptor.type?.name() ?: "<unknown name>"
     val scope = evaluationContext.managerThread.coroutineScope.childScope("Collection presentation for $presenterName")
@@ -29,7 +29,7 @@ class CollectionVisualizerEvaluator(private val baseCollectionClass: String) : F
       }
 
       override fun createComponent(fullValue: String?): JComponent? {
-        return CollectionVisualizer.createComponent(evaluationContext.project, baseCollectionClass, valueDescriptor, evaluationContext, scope)
+        return visualizer.createComponent(evaluationContext.project, valueDescriptor, evaluationContext, scope)
       }
 
       override fun showValuePopup(event: MouseEvent, project: Project, editor: Editor?, component: JComponent, cancelCallback: Runnable?) {
@@ -61,5 +61,10 @@ class CollectionVisualizerEvaluator(private val baseCollectionClass: String) : F
         scope.cancel()
       }
     })
+  }
+
+  companion object {
+    @JvmStatic
+    fun createFor(collectionClass: String) = CollectionVisualizer.findApplicable(collectionClass)?.let(::CollectionVisualizerEvaluator)
   }
 }
