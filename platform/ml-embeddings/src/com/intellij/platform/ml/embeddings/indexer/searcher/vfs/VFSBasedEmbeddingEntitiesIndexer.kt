@@ -161,15 +161,15 @@ internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) 
       content.putUserData(PSI_FILE, psiFile) // todo I think we can avoid explicit passing of file
       content.setSubstituteFileType(fileType) // todo we don't want to infer the substituted file type, do we?
 
+      // we can't run processing concurrently because LighterAST is not thread-safe
       if (classesChannel != null) {
-        launch {
-          readActionUndispatched { ClassesProvider.extractClasses(content) }.forEach { classesChannel.send(it) }
-        }
+        val classes = readActionUndispatched { ClassesProvider.extractClasses(content) }
+        classes.forEach { classesChannel.send(it) }
       }
+
       if (symbolsChannel != null) {
-        launch {
-          readActionUndispatched { SymbolsProvider.extractSymbols(content) }.forEach { symbolsChannel.send(it) }
-        }
+        val symbols = readActionUndispatched { SymbolsProvider.extractSymbols(content) }
+        symbols.forEach { symbolsChannel.send(it) }
       }
     }
   }
