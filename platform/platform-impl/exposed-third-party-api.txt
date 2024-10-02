@@ -1,5 +1,3 @@
-com/google/common/net/HostAndPort
-com/google/common/util/concurrent/ListenableFuture
 com/google/gson/Gson
 com/google/gson/JsonParseException
 com/google/gson/TypeAdapter
