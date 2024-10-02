@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.util.imageio.svg
 
-import com.intellij.ui.components.impl.SvgImageDecoder
+import com.intellij.ui.svg.SvgImageDecoder
 import java.util.*
 import javax.imageio.ImageReader
 import javax.imageio.spi.ImageReaderSpi

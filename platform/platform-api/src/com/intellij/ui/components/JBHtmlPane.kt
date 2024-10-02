@@ -133,7 +133,6 @@ open class JBHtmlPane(
     val extensions = ArrayList(myPaneConfiguration.extensions)
     extensions.addAllIfNotNull(
       icons { key: String -> myPaneConfiguration.iconResolver(key) },
-      ExtendableHTMLViewFactory.Extensions.BASE64_IMAGES,
       ExtendableHTMLViewFactory.Extensions.INLINE_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.PARAGRAPH_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.LINE_VIEW_EX,

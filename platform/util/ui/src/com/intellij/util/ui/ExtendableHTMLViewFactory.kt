@@ -53,7 +53,7 @@ class ExtendableHTMLViewFactory internal constructor(
   companion object {
     @JvmField
     internal val DEFAULT_EXTENSIONS: List<Extension> = listOf(
-      Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES,
+      Extensions.ICONS, Extensions.HIDPI_IMAGES,
       Extensions.INLINE_VIEW_EX, Extensions.WBR_SUPPORT, Extensions.PARAGRAPH_VIEW_EX,
       Extensions.LINE_VIEW_EX, Extensions.BLOCK_VIEW_EX
     )
@@ -111,6 +111,7 @@ class ExtendableHTMLViewFactory internal constructor(
      *
      * Syntax is `<img src='data:image/png;base64,ENCODED_IMAGE_HERE'>`
      */
+    @Deprecated(message = "Use HIDPI_IMAGES or FIT_TO_WIDTH_IMAGES, which support base64 as well.")
     @JvmField
     val BASE64_IMAGES: Extension = Base64ImagesExtension()
 

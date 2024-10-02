@@ -130,7 +130,8 @@ class JBHtmlPaneConfiguration private constructor(builder: Builder) {
 
     /**
      * Provide additional resolve for images. The [JBHtmlPane] context can be used to
-     * properly scale the image for HiDpi resolutions.
+     * properly scale the image for HiDpi resolutions. For SVG support, use [com.intellij.util.ui.JBImageToolkit]
+     * to create images.
      */
     fun imageResolverFactory(imageResolverFactory: (JBHtmlPane) -> Dictionary<URL, Image>?): Builder =
       apply { this.imageResolverFactory = imageResolverFactory }

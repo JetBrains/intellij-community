@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.components.impl;
+package com.intellij.ui.svg;
 
 import com.github.weisj.jsvg.attributes.ViewBox;
 import com.github.weisj.jsvg.nodes.SVG;

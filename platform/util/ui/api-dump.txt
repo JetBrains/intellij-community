@@ -3949,6 +3949,13 @@ c:com.intellij.util.ui.JBImageIcon
 - javax.swing.ImageIcon
 - <init>(java.awt.Image):V
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+f:com.intellij.util.ui.JBImageToolkit
+- s:createImage(java.awt.image.ImageProducer):java.awt.Image
+- s:createImage(java.lang.String):java.awt.Image
+- s:createImage(java.net.URL):java.awt.Image
+- s:createImage(B[]):java.awt.Image
+- s:createImage(B[],I,I):java.awt.Image
+- s:prepareImage(java.awt.Image,I,I,java.awt.image.ImageObserver):Z
 c:com.intellij.util.ui.JBInsets
 - java.awt.Insets
 - <init>(I,I,I,I):V

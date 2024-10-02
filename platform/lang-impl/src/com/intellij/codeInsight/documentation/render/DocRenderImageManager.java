@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
-import com.intellij.ui.components.impl.SvgImageDecoder;
+import com.intellij.util.ui.JBImageToolkit;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.image.FileImageSource;
 import sun.awt.image.ImageDecoder;
@@ -121,12 +121,7 @@ final class DocRenderImageManager extends AbstractDocRenderMemoryManager<Image> 
         stream = new BufferedInputStream(stream);
       }
 
-      ImageDecoder result = getDecoder(stream);
-      if (result == null) {
-        result = SvgImageDecoder.Companion.detect(this, stream, -1, -1);
-      }
-
-      return result;
+      return JBImageToolkit.getWithCustomDecoders(this, stream, this::getDecoder);
     }
 
     @Override

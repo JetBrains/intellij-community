@@ -143,6 +143,5 @@
     <orderEntry type="library" scope="RUNTIME" name="bouncy-castle-provider" level="project" />
     <orderEntry type="module" module-name="intellij.platform.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.resources.en" scope="RUNTIME" />
-    <orderEntry type="library" name="jsvg" level="project" />
   </component>
 </module>

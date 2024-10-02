@@ -1,18 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
-package com.intellij.ui.components.impl
+package com.intellij.ui.svg
 
-import com.github.weisj.jsvg.attributes.font.SVGFont
-import com.github.weisj.jsvg.nodes.SVG
-import com.intellij.ui.paint.PaintUtil
-import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.svg.createJSvgDocument
-import com.intellij.util.ui.ImageUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.image.ImageDecoder
 import sun.awt.image.InputStreamImageSource
-import java.awt.image.BufferedImage
 import java.awt.image.ImageConsumer
 import java.io.EOFException
 import java.io.IOException
@@ -29,9 +22,9 @@ class SvgImageDecoder(
   override fun produceImage() {
     try {
       val jSvgDocument = try {
-        createSvgDocument(`is`)
+        JSvgDocument.create(`is`)
       }
-      catch (e: IOException) {
+      catch (e: Exception) {
         throw IOException("Cannot load SVG document", e)
       }
 
@@ -59,56 +52,6 @@ class SvgImageDecoder(
       catch (_: Throwable) {
       }
     }
-  }
-
-  class SvgDocument(
-    val document: SVG,
-    val width: Float,
-    val height: Float,
-  ) {
-
-    fun createImage(preferredWidth: Int?, preferredHeight: Int?): BufferedImage {
-      val width: Float
-      val height: Float
-
-      if (preferredHeight == null && preferredWidth == null) {
-        width = this.width
-        height = this.height
-      }
-      else if (preferredHeight != null && preferredWidth != null) {
-        width = preferredWidth.toFloat()
-        height = preferredHeight.toFloat()
-      }
-      else if (preferredHeight != null) {
-        height = preferredHeight.toFloat()
-        width = (height * this.width) / this.height
-      }
-      else {
-        width = preferredWidth!!.toFloat()
-        height = (width * this.height) / this.width
-      }
-
-      // how to have an hidpi aware image?
-      val bi = ImageUtil.createImage(
-        ScaleContext.create(),
-        width.toDouble(),
-        height.toDouble(),
-        BufferedImage.TYPE_INT_ARGB,
-        PaintUtil.RoundingMode.ROUND
-      )
-      val g = bi.createGraphics()
-
-      ImageUtil.applyQualityRenderingHints(g)
-
-      document.renderWithSize(
-        width,
-        height,
-        SVGFont.defaultFontSize(),
-        g,
-      )
-      return bi
-    }
-
   }
 
   companion object {
@@ -148,7 +91,7 @@ class SvgImageDecoder(
 
         val window = ByteArray(4)
         while (true) {
-          stream.read(window).also { if (it < 0 ) return false }
+          stream.read(window).also { if (it < 0) return false }
 
           when {
             // `<?` Handles the XML declaration
@@ -185,22 +128,6 @@ class SvgImageDecoder(
       }
     }
 
-    @Throws(IOException::class)
-    fun createSvgDocument(inputStream: InputStream): SvgDocument {
-      val svg = createJSvgDocument(inputStream)
-
-      val viewBox = SvgViewBox(svg)
-
-      val width = svg.width.raw().takeIf { it.isFinite() }
-                  ?: viewBox.width.takeIf { it > 0 }
-                  ?: 16f
-      val height = svg.height.raw().takeIf { it.isFinite() }
-                   ?: viewBox.height.takeIf { it > 0 }
-                   ?: 16f
-
-      return SvgDocument(svg, width, height)
-    }
-
   }
 }
 
@@ -221,18 +148,18 @@ private fun InputStream.readFirstAfterWhitespaces(): Int {
 
 private fun InputStream.skipUntil(chars: String) {
   if (chars.length == 1) {
-    while (read().also { if (it < 0 ) return }.toChar() != chars[0]) {
+    while (read().also { if (it < 0) return }.toChar() != chars[0]) {
       // skip until expected chars or EOF
     }
   }
   else {
     val buffer = StringBuffer()
     while (buffer.length < chars.length) {
-      buffer.append(read().also { if (it < 0 ) return }.toChar())
+      buffer.append(read().also { if (it < 0) return }.toChar())
     }
     while (!buffer.startsWith(chars)) {
       buffer.deleteCharAt(0)
-      buffer.append(read().also { if (it < 0 ) return }.toChar())
+      buffer.append(read().also { if (it < 0) return }.toChar())
     }
   }
 }

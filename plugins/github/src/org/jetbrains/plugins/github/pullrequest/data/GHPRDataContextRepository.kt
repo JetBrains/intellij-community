@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.JBImageToolkit
 import git4idea.remote.GitRemoteUrlCoordinates
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.*
@@ -93,7 +94,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val imageLoader = AsyncHtmlImageLoader { _, src ->
         withContext(cs.coroutineContext + IMAGES_DISPATCHER) {
           val bytes = requestExecutor.executeSuspend(GithubApiRequests.getBytes(src))
-          Toolkit.getDefaultToolkit().createImage(bytes)
+          JBImageToolkit.createImage(bytes)
         }
       }
       val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, AvatarLoader(requestExecutor)))
