@@ -1,94 +1,129 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.resolve
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReference
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.testFramework.UsefulTestCase;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.junit.Assert;
 
-abstract class GroovyResolveTestCase extends LightGroovyTestCase {
-  @NonNls protected static final String MARKER = "<ref>"
+import java.io.File;
+import java.io.IOException;
 
+public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
   @Override
-  void setUp() {
-    super.setUp()
-    if (new File("$myFixture.testDataPath/${getTestName(true)}").exists()) {
-      myFixture.copyDirectoryToProject(getTestName(true), "")
+  public void setUp() throws Exception {
+    super.setUp();
+    if (new File(myFixture.getTestDataPath() + "/" + getTestName(true)).exists()) {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
     }
   }
 
-  protected <T extends PsiReference> T configureByFile(@NonNls String filePath, @Nullable String newFilePath = null, Class<T> refType = PsiReference) {
-    def trimmedFilePath = StringUtil.trimStart(filePath, getTestName(true) + "/")
-    VirtualFile vFile = myFixture.tempDirFixture.getFile(filePath)
+  protected <T extends PsiReference> T configureByFile(@NonNls String filePath, @Nullable String newFilePath, Class<T> refType) {
+    String trimmedFilePath = StringUtil.trimStart(filePath, getTestName(true) + "/");
+    VirtualFile vFile = myFixture.getTempDirFixture().getFile(filePath);
     if (vFile == null) {
-      vFile = myFixture.tempDirFixture.getFile(trimmedFilePath)
+      vFile = myFixture.getTempDirFixture().getFile(trimmedFilePath);
     }
-    assertNotNull("file $filePath not found", vFile)
 
-    String fileText
+    Assert.assertNotNull("file " + filePath + " not found", vFile);
+
+    String fileText;
     try {
-      fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile))
+      fileText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vFile));
     }
     catch (IOException e) {
-      throw new RuntimeException(e)
+      throw new RuntimeException(e);
     }
 
-    int offset = fileText.indexOf(MARKER)
-    assertTrue("'ref' marker is not found", offset >= 0)
-    fileText = fileText.substring(0, offset) + fileText.substring(offset + MARKER.length())
+
+    int offset = fileText.indexOf(MARKER);
+    Assert.assertTrue("'ref' marker is not found", offset >= 0);
+    fileText = fileText.substring(0, offset) + fileText.substring(offset + MARKER.length());
 
     if (newFilePath == null) {
-      myFixture.configureByText(vFile.getName(), fileText)
+      myFixture.configureByText(vFile.getName(), fileText);
     }
     else {
-      myFixture.configureByText(newFilePath, fileText)
+      myFixture.configureByText(newFilePath, fileText);
     }
 
-    PsiReference ref = myFixture.file.findReferenceAt(offset)
-    assertInstanceOf(ref, refType)
-    return ref
+
+    PsiReference ref = myFixture.getFile().findReferenceAt(offset);
+    return UsefulTestCase.assertInstanceOf(ref, refType);
   }
 
-  protected <T extends PsiReference> T configureByText(String fileName = '_a.groovy', String text, Class<T> refType = PsiReference) {
-    myFixture.configureByText fileName, text
-    final ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    assertInstanceOf(ref, refType)
-    return ref
+  protected PsiReference configureByFile(@NonNls String filePath, @Nullable String newFilePath) {
+    return configureByFile(filePath, newFilePath, PsiReference.class);
+  }
+
+  protected PsiReference configureByFile(@NonNls String filePath) {
+    return configureByFile(filePath, null, PsiReference.class);
+  }
+
+  protected <T extends PsiReference> T configureByText(String fileName, String text, Class<T> refType) {
+    myFixture.configureByText(fileName, text);
+    final PsiReference ref = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+    return UsefulTestCase.assertInstanceOf(ref, refType);
+  }
+
+  protected PsiReference configureByText(String fileName, String text) {
+    return configureByText(fileName, text, PsiReference.class);
+  }
+
+  protected PsiReference configureByText(String text) {
+    return configureByText("_a.groovy", text, PsiReference.class);
   }
 
   @Nullable
-  protected <T extends PsiElement> T resolve(String fileName = getTestName(false) + ".groovy", Class<T> type = null) {
-    PsiReference ref = configureByFile(getTestName(true) + "/" + fileName)
-    assertNotNull(ref)
-    final resolved = ref.resolve()
-    if (type != null) assertInstanceOf(resolved, type)
-    return resolved
+  protected <T extends PsiElement> PsiElement resolve(String fileName, Class<T> type) {
+    PsiReference ref = configureByFile(getTestName(true) + "/" + fileName);
+    Assert.assertNotNull(ref);
+    final PsiElement resolved = ref.resolve();
+    if (type != null) UsefulTestCase.assertInstanceOf(resolved, type);
+    return resolved;
   }
 
   @Nullable
-  protected <T extends PsiElement> T resolveByText(String text, Class<T> type = PsiElement) {
-    final ref = configureByText(text)
-    assertNotNull(ref)
-    final resolved = ref.resolve()
+  protected PsiElement resolve(String fileName) {
+    return resolve(fileName, null);
+  }
+
+  @Nullable
+  protected PsiElement resolve() {
+    return resolve(getTestName(false) + ".groovy", null);
+  }
+
+  @Nullable
+  protected <T extends PsiElement> T resolveByText(String text, Class<T> type) {
+    final PsiReference ref = configureByText(text);
+    Assert.assertNotNull(ref);
+    final PsiElement resolved = ref.resolve();
     if (type == null) {
-      assertNull(resolved)
+      Assert.assertNull(resolved);
+      return null;
     }
-    else {
-      assertInstanceOf(resolved, type)
-    }
-    return (T)resolved
+    return UsefulTestCase.assertInstanceOf(resolved, type);
+  }
+
+  @Nullable
+  protected PsiElement resolveByText(String text) {
+    return resolveByText(text, PsiElement.class);
   }
 
   @Nullable
   protected GroovyResolveResult advancedResolve(String fileName) {
-    PsiReference ref = configureByFile(getTestName(true) + "/" + fileName)
-    assertInstanceOf(ref, GrReferenceExpression.class)
-    return ((GrReferenceExpression)ref).advancedResolve()
+    PsiReference ref = configureByFile(getTestName(true) + "/" + fileName);
+    UsefulTestCase.assertInstanceOf(ref, GrReferenceExpression.class);
+    return ((GrReferenceExpression)ref).advancedResolve();
   }
+
+  @NonNls protected static final String MARKER = "<ref>";
 }

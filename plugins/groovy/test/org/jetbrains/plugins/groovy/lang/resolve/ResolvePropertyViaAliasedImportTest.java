@@ -1,69 +1,77 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.resolve
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.testFramework.LightProjectDescriptor
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
-import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
+import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-@CompileStatic
-class ResolvePropertyViaAliasedImportTest extends GrHighlightingTestBase {
-
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
-  final String basePath = TestUtils.testDataPath + 'resolve/imports'
-
+public class ResolvePropertyViaAliasedImportTest extends GrHighlightingTestBase {
   @Override
-  void setUp() {
-    super.setUp()
-    fixture.addFileToProject 'com/foo/Bar.groovy', '''\
-package com.foo
-class Bar {
-  static def myProperty = 'hello'
-}
-'''
+  public void setUp() throws Exception {
+    super.setUp();
+    getFixture().addFileToProject("com/foo/Bar.groovy", """
+      package com.foo
+      class Bar {
+        static def myProperty = 'hello'
+      }
+      """);
   }
 
   private void doTest() {
-    fixture.enableInspections GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection
-    fixture.testHighlighting "${getTestName()}.groovy"
+    getFixture().enableInspections(GrUnresolvedAccessInspection.class, GroovyAssignabilityCheckInspection.class);
+    getFixture().testHighlighting(getTestName() + ".groovy");
   }
 
-  void 'test getter with alias'() {
-    doTest()
+  public void testGetterWithAlias() {
+    doTest();
   }
 
-  void 'test getter with getter alias'() {
-    doTest()
+  public void testGetterWithGetterAlias() {
+    doTest();
   }
 
-  void 'test getter with setter alias'() {
-    doTest()
+  public void testGetterWithSetterAlias() {
+    doTest();
   }
 
-  void 'test property with alias'() {
-    doTest()
+  public void testPropertyWithAlias() {
+    doTest();
   }
 
-  void 'test property with getter alias'() {
-    doTest()
+  public void testPropertyWithGetterAlias() {
+    doTest();
   }
 
-  void 'test property with setter alias'() {
-    doTest()
+  public void testPropertyWithSetterAlias() {
+    doTest();
   }
 
-  void 'test setter with alias'() {
-    doTest()
+  public void testSetterWithAlias() {
+    doTest();
   }
 
-  void 'test setter with getter alias'() {
-    doTest()
+  public void testSetterWithGetterAlias() {
+    doTest();
   }
 
-  void 'test setter with setter alias'() {
-    doTest()
+  public void testSetterWithSetterAlias() {
+    doTest();
   }
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
+  @Override
+  public final String getBasePath() {
+    return basePath;
+  }
+
+  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
+  private final String basePath = TestUtils.getTestDataPath() + "resolve/imports";
 }
