@@ -78,11 +78,8 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   private final Set<ActionKey> myBackgroundRunningTasks = ConcurrentCollectionFactory.createConcurrentSet();
 
-  private final FileIndexFacade myExcludedIndex;
-
   public ProjectLevelVcsManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
-    myExcludedIndex = FileIndexFacade.getInstance(project);
 
     myMappings = new NewMappings(myProject, this, coroutineScope);
   }
@@ -693,11 +690,12 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     }
     return ReadAction.compute(() -> {
       if (!vf.isValid()) return false;
+      FileIndexFacade fileIndex = FileIndexFacade.getInstance(myProject);
       boolean isUnderProject = isFileInBaseDir(vf) ||
                                isInDirectoryBasedRoot(vf) ||
                                hasExplicitMapping(vf) ||
-                               myExcludedIndex.isInContent(vf) ||
-                               (!Registry.is("ide.hide.excluded.files") && myExcludedIndex.isExcludedFile(vf));
+                               fileIndex.isInContent(vf) ||
+                               (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcludedFile(vf));
       return isUnderProject && !isIgnored(vf);
     });
   }
@@ -709,10 +707,10 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       if (!vf.isValid()) return false;
 
       if (Registry.is("ide.hide.excluded.files")) {
-        return myExcludedIndex.isExcludedFile(vf);
+        return FileIndexFacade.getInstance(myProject).isExcludedFile(vf);
       }
       else {
-        return myExcludedIndex.isUnderIgnored(vf);
+        return FileIndexFacade.getInstance(myProject).isUnderIgnored(vf);
       }
     });
   }
@@ -724,7 +722,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
       if (Registry.is("ide.hide.excluded.files")) {
         VirtualFile vf = VcsImplUtil.findValidParentAccurately(filePath);
-        return vf != null && myExcludedIndex.isExcludedFile(vf);
+        return vf != null && FileIndexFacade.getInstance(myProject).isExcludedFile(vf);
       }
       else {
         // WARN: might differ from 'myExcludedIndex.isUnderIgnored' if whole content root is under folder with 'ignored' name.
