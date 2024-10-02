@@ -24,7 +24,7 @@ public final class PyDescriptorTypeUtil {
     if (targetType == null || targetType.isDefinition()) return null;
 
     final PyResolveContext resolveContext = PyResolveContext.noProperties(context);
-    final List<? extends RatedResolveResult> members = targetType.resolveMember(PyNames.GET, expression, AccessDirection.READ,
+    final List<? extends RatedResolveResult> members = targetType.resolveMember(PyNames.DUNDER_GET, expression, AccessDirection.READ,
                                                                                 resolveContext);
     if (members == null || members.isEmpty()) return null;
 
@@ -61,7 +61,7 @@ public final class PyDescriptorTypeUtil {
           instanceTypeArgument = PyNoneType.INSTANCE;
         }
         List<PyType> argumentTypes = List.of(instanceArgumentType, instanceTypeArgument);
-        PyType type  = PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.GET, receiverType, argumentTypes, context);
+        PyType type  = PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.DUNDER_GET, receiverType, argumentTypes, context);
         return Ref.create(type);
       }
     }

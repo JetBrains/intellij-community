@@ -72,7 +72,7 @@ public final @NonNls class PyNames {
   public static final String NEW = "__new__";
   public static final String GETATTR = "__getattr__";
   public static final String GETATTRIBUTE = "__getattribute__";
-  public static final String GET = "__get__";
+  public static final String DUNDER_GET = "__get__";
   public static final String DUNDER_SET = "__set__";
   public static final String __CLASS__ = "__class__";
   public static final String DUNDER_METACLASS = "__metaclass__";
