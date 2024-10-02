@@ -119,7 +119,7 @@ fun getSmartSelectSuggestions(
         || isOriginalOffset && element?.node?.elementType == KtTokens.RPAR
         || element is PsiComment
         || element?.getStrictParentOfType<KDoc>() != null
-        || element is LeafPsiElement && element.elementType == KtTokens.DOT
+        || element is LeafPsiElement && (element.elementType == KtTokens.DOT || element.elementType == KtTokens.COMMA)
     ) return getSmartSelectSuggestions(file, offset - 1, elementKind, isOriginalOffset = false)
 
     val elements = ArrayList<KtElement>()
