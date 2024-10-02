@@ -630,12 +630,24 @@ class GroovyBuildScriptManipulator(
                                 /* insideCompilerOptions = */ Boolean
         ) -> GrStatement
     ): Boolean {
+        var precompiledReplacement = compilerOption.expression
         val replaced = statements.firstOrNull { stmt ->
-            val statementLeftPartText =
-                (stmt as? GrAssignmentExpression)?.lValue?.text ?: (stmt as? GrMethodCallExpression)?.invokedExpression?.text
-                ?: return false
+            val statementLeftPartText = when (stmt) {
+                is GrAssignmentExpression -> {
+                    precompiledReplacement = "$parameterName = ${compilerOption.compilerOptionValue}"
+                    stmt.lValue.text
+                }
+
+                is GrMethodCallExpression -> {
+                    stmt.invokedExpression.text
+                }
+
+                else -> {
+                    return false
+                }
+            }
             statementLeftPartText.contains(parameterName)
-        }?.replaceIt(/* insideKotlinOptions = */ false, /* precompiledReplacement = */ compilerOption.expression, insideCompilerOptions)
+        }?.replaceIt(/* insideKotlinOptions = */ false, precompiledReplacement, insideCompilerOptions)
         return replaced != null
     }
 

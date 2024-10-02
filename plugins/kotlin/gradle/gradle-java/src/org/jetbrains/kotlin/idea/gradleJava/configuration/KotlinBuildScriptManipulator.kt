@@ -769,11 +769,31 @@ class KotlinBuildScriptManipulator(
         compilerOptionsBlock: KtBlockExpression, parameterName: String, compilerOption: CompilerOption,
         replaceIt: KtExpression.(/* precompiledReplacement */ String?, /* insideCompilerOptions = */ Boolean) -> PsiElement
     ): PsiElement {
-        val assignment = compilerOptionsBlock.statements.find {
-            (it as? KtDotQualifiedExpression)?.receiverExpression?.text == parameterName
+        var precompiledReplacement = compilerOption.expression
+        var assignment: KtExpression? = compilerOptionsBlock.statements.find { stmt ->
+            when (stmt) {
+                is KtDotQualifiedExpression -> {
+                    stmt.receiverExpression.text == parameterName
+                }
+
+                is KtBinaryExpression -> {
+                    if (stmt.left?.text == parameterName) {
+                        compilerOption.compilerOptionValue?.let {
+                            precompiledReplacement = "$parameterName = $it"
+                        }
+                        true
+                    } else {
+                        false
+                    }
+                }
+
+                else -> {
+                    false
+                }
+            }
         }
         return if (assignment != null) {
-            assignment.replaceIt(/* precompiledReplacement = */ compilerOption.expression, /* insideCompilerOptions = */ true)
+            assignment.replaceIt(precompiledReplacement, /* insideCompilerOptions = */ true)
         } else {
             compilerOptionsBlock.addExpressionIfMissing(compilerOption.expression)
         }
@@ -876,11 +896,12 @@ class KotlinBuildScriptManipulator(
         addAfter(psiFactory.createExpression(it), after)
     }
 
-    internal fun KtBlockExpression.addExpressionIfMissing(text: String, first: Boolean = false): KtExpression = addStatementIfMissing(text) {
-        psiFactory.createExpression(it).let { created ->
-            if (first) addAfter(created, null) else add(created)
+    internal fun KtBlockExpression.addExpressionIfMissing(text: String, first: Boolean = false): KtExpression =
+        addStatementIfMissing(text) {
+            psiFactory.createExpression(it).let { created ->
+                if (first) addAfter(created, null) else add(created)
+            }
         }
-    }
 
     private fun KtBlockExpression.addDeclarationIfMissing(text: String, first: Boolean = false): KtDeclaration =
         addStatementIfMissing(text) {
