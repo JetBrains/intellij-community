@@ -32,13 +32,12 @@ class SetupInlineCompletionListenerCommand(text: String, line: Int) : PlaybackCo
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val project = context.project
-    val editor = readAction { FileEditorManager.getInstance(project).getSelectedTextEditor() ?: error("editor is null") }
+    val editor = readAction { FileEditorManager.getInstance(context.project).getSelectedTextEditor() ?: error("editor is null") }
     val handler = InlineCompletion.getHandlerOrNull(editor) ?: throw IllegalStateException("InlineCompletion handler is null")
     val currentOTContext = Context.current()
-    if (listeners.containsKey(editor)) {
-      handler.removeEventListener(listeners[editor]!!)
-    }
+
+    listeners[editor]?.let(handler::removeEventListener)
+
     val l = object : InlineCompletionEventAdapter {
       private var spanShow: Span? = null
       private var spanHide: Span? = null
