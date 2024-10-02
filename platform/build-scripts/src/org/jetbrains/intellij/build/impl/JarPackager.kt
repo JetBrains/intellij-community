@@ -366,7 +366,7 @@ class JarPackager private constructor(
       }
       else {
         // is it a product module?
-        context.findFileInModuleSources(module, "$moduleName.xml")?.let {
+        findFileInModuleSources(module, "$moduleName.xml")?.let {
           sources.addAll(searchableOptionSet.createSourceByModule(moduleName))
         }
       }

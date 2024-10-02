@@ -7,9 +7,10 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
-import org.jetbrains.intellij.build.telemetry.block
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
@@ -118,10 +119,12 @@ interface BuildContext : CompilationContext {
    * Unlike VM options produced by [org.jetbrains.intellij.build.impl.VmOptionsGenerator],
    * these are hard-coded into launchers and aren't supposed to be changed by a user.
    */
-  fun getAdditionalJvmArguments(os: OsFamily,
-                                arch: JvmArchitecture,
-                                isScript: Boolean = false,
-                                isPortableDist: Boolean = false): List<String>
+  fun getAdditionalJvmArguments(
+    os: OsFamily,
+    arch: JvmArchitecture,
+    isScript: Boolean = false,
+    isPortableDist: Boolean = false,
+  ): List<String>
 
   fun findApplicationInfoModule(): JpsModule
 
@@ -137,9 +140,11 @@ interface BuildContext : CompilationContext {
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
-  suspend fun createCopyForProduct(productProperties: ProductProperties,
-                           projectHomeForCustomizers: Path,
-                           prepareForBuild: Boolean = true): BuildContext
+  suspend fun createCopyForProduct(
+    productProperties: ProductProperties,
+    projectHomeForCustomizers: Path,
+    prepareForBuild: Boolean = true,
+  ): BuildContext
 
   suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
 
@@ -164,7 +169,7 @@ suspend inline fun <T> BuildContext.executeStep(
   coroutineContext: CoroutineContext = EmptyCoroutineContext,
   crossinline step: suspend CoroutineScope.(Span) -> T,
 ): T? {
-  return spanBuilder.block(coroutineContext) { span ->
+  return spanBuilder.use(coroutineContext) { span ->
     try {
       options.buildStepListener.onStart(stepId, messages)
       if (isStepSkipped(stepId)) {
@@ -179,9 +184,15 @@ suspend inline fun <T> BuildContext.executeStep(
     catch (e: CancellationException) {
       throw e
     }
-    catch (failure: Throwable) {
-      options.buildStepListener.onFailure(stepId, failure, messages)
-      null
+    catch (e: Throwable) {
+      if (TeamCityHelper.isUnderTeamCity) {
+        span.recordException(e)
+        options.buildStepListener.onFailure(stepId = stepId, failure = e, messages = messages)
+        null
+      }
+      else {
+        throw e
+      }
     }
     finally {
       options.buildStepListener.onCompletion(stepId, messages)

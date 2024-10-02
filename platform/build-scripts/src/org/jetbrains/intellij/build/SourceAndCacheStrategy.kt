@@ -38,6 +38,9 @@ internal fun createSourceAndCacheStrategyList(sources: List<Source>, productionC
           if (dir.startsWith(productionClassOutDir)) {
             ModuleOutputSourceAndCacheStrategy(source = source, name = productionClassOutDir.relativize(dir).toString())
           }
+          else if (dir.startsWith(productionClassOutDir.resolveSibling("test"))) {
+            ModuleOutputSourceAndCacheStrategy(source = source, name = productionClassOutDir.resolveSibling("test").relativize(dir).toString())
+          }
           else {
             throw UnsupportedOperationException("$source is not supported")
           }

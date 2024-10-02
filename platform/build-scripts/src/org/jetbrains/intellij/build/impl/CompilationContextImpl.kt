@@ -48,7 +48,6 @@ import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsPathMapper
 import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
@@ -329,7 +328,7 @@ class CompilationContextImpl private constructor(
     return module
   }
 
-  override fun findModule(name: String): JpsModule? = nameToModule.get(name)
+  override fun findModule(name: String): JpsModule? = nameToModule.get(name.removeSuffix("._test"))
 
   override suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean): Path {
     val url = JpsJavaExtensionService.getInstance().getOutputUrl(/* module = */ module, /* forTests = */ forTests)
@@ -356,19 +355,11 @@ class CompilationContextImpl private constructor(
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? {
-    return findFileInModuleSources(module = findRequiredModule(moduleName), relativePath = relativePath, forTests)
+    return org.jetbrains.intellij.build.impl.findFileInModuleSources(module = findRequiredModule(moduleName), relativePath = relativePath)
   }
 
   override fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean): Path? {
-    for (info in getSourceRootsWithPrefixes(module, forTests)) {
-      if (relativePath.startsWith(info.second)) {
-        val result = info.first.resolve(relativePath.removePrefix(info.second).removePrefix("/"))
-        if (Files.exists(result)) {
-          return result
-        }
-      }
-    }
-    return null
+    return org.jetbrains.intellij.build.impl.findFileInModuleSources(module, relativePath)
   }
 
   override fun notifyArtifactBuilt(artifactPath: Path) {
@@ -523,31 +514,48 @@ private fun printEnvironmentDebugInfo() {
   // don't write it to a debug log file!
   val env = System.getenv()
   for (key in env.keys.sorted()) {
-    println("ENV $key = ${env[key]}")
+    println("ENV $key = ${env.get(key)}")
   }
 
   val properties = System.getProperties()
   for (propertyName in properties.keys.sortedBy { it as String }) {
-    println("PROPERTY $propertyName = ${properties[propertyName].toString()}")
+    println("PROPERTY $propertyName = ${properties.get(propertyName).toString()}")
   }
 }
 
-private fun getSourceRootsWithPrefixes(module: JpsModule, forTests: Boolean): Sequence<Pair<Path, String>> {
-  return module.sourceRoots.asSequence()
-    .filter { forTests || JavaModuleSourceRootTypes.PRODUCTION.contains(it.rootType) }
-    .map { moduleSourceRoot: JpsModuleSourceRoot ->
-      val properties = moduleSourceRoot.properties
+private val rootTypeOrder = arrayOf(JavaResourceRootType.RESOURCE, JavaSourceRootType.SOURCE, JavaResourceRootType.TEST_RESOURCE, JavaSourceRootType.TEST_SOURCE)
+
+internal fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean = false): Path? {
+  for (type in rootTypeOrder) {
+    for (root in module.sourceRoots) {
+      if (type != root.rootType || (onlyProductionSources && !(root.rootType == JavaResourceRootType.RESOURCE || root.rootType == JavaSourceRootType.SOURCE))) {
+        continue
+      }
+
+      val properties = root.properties
       var prefix = if (properties is JavaSourceRootProperties) {
         properties.packagePrefix.replace('.', '/')
       }
       else {
         (properties as JavaResourceRootProperties).relativeOutputPath
-      }
-      if (!prefix.endsWith('/')) {
+      }.trimStart('/')
+      if (prefix.isNotEmpty() && !prefix.endsWith('/')) {
         prefix += "/"
       }
-      Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), prefix.trimStart('/'))
+
+      if (relativePath.startsWith(prefix)) {
+        val result = Path.of(JpsPathUtil.urlToPath(root.url), relativePath.substring(prefix.length))
+        if (Files.exists(result)) {
+          if (root.rootType == JavaSourceRootType.TEST_SOURCE) {
+            continue
+          }
+
+          return result
+        }
+      }
     }
+  }
+  return null
 }
 
 internal suspend fun resolveProjectDependencies(context: CompilationContext) {

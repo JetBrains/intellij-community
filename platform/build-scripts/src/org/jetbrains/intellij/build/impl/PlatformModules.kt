@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RedundantSuppression")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RedundantSuppression", "ReplaceGetOrSet")
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -275,7 +275,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   val productPluginContentModules = processAndGetProductPluginContentModules(
     context = context,
     layout = layout,
-
     includedPlatformModulesPartialList = (layout.includedModules.asSequence().map { it.moduleName } + computeImplicitRequiredModules(
       explicit = explicitModuleNames,
       layout = layout,
@@ -549,7 +548,7 @@ fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>,
       }
 
       for (module in includedPlatformModulesPartialList) {
-        context.findFileInModuleSources(module, loadPath)?.let {
+        findFileInModuleSources(context.findRequiredModule(module), loadPath)?.let {
           return it
         }
       }
@@ -572,7 +571,7 @@ fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathResolver, 
     val jpsModuleName = moduleName.substringBeforeLast('/')
     val descriptor = getModuleDescriptor(moduleName = moduleName, jpsModuleName = jpsModuleName, xIncludePathResolver = xIncludePathResolver, context = context)
     if (jpsModuleName == moduleName &&
-        (context as BuildContextImpl).jarPackagerDependencyHelper.isPluginModulePackedIntoSeparateJar(context.findRequiredModule(jpsModuleName), layout)) {
+        (context as BuildContextImpl).jarPackagerDependencyHelper.isPluginModulePackedIntoSeparateJar(context.findRequiredModule(jpsModuleName.removeSuffix("._test")), layout)) {
       descriptor.setAttribute("separate-jar", "true")
     }
     moduleElement.setContent(CDATA(JDOMUtil.write(descriptor)))
@@ -589,9 +588,8 @@ private fun toLoadPath(relativePath: String): String {
 }
 
 private fun getModuleDescriptor(moduleName: String, jpsModuleName: String, xIncludePathResolver: XIncludePathResolver, context: BuildContext): Element {
-  val forTests = (context as? BuildContextImpl)?.jarPackagerDependencyHelper?.isTestPluginModule(moduleName) ?: false
   val descriptorFile = "${moduleName.replace('/', '.')}.xml"
-  val file = requireNotNull(context.findFileInModuleSources(jpsModuleName, descriptorFile, forTests)) {
+  val file = requireNotNull(findFileInModuleSources(module = context.findRequiredModule(jpsModuleName), relativePath = descriptorFile)) {
     "Cannot find file $descriptorFile in module $jpsModuleName"
   }
   val xml = JDOMUtil.load(file)
@@ -605,14 +603,15 @@ private fun collectAndEmbedProductModules(root: Element, xIncludePathResolver: X
     val moduleName = moduleElement.getAttributeValue("name") ?: continue
     val relativeOutFile = "modules/$moduleName.jar"
     result.add(ModuleItem(moduleName = moduleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES))
-    PRODUCT_MODULE_IMPL_COMPOSITION[moduleName]?.let {
+    PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let {
       it.mapTo(result) { subModuleName ->
         ModuleItem(moduleName = subModuleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES)
       }
     }
 
     check(moduleElement.content.isEmpty())
-    moduleElement.setContent(CDATA(JDOMUtil.write(getModuleDescriptor(moduleName = moduleName, jpsModuleName = moduleName, xIncludePathResolver = xIncludePathResolver, context = context))))
+    val moduleDescriptor = getModuleDescriptor(moduleName = moduleName, jpsModuleName = moduleName, xIncludePathResolver = xIncludePathResolver, context = context)
+    moduleElement.setContent(CDATA(JDOMUtil.write(moduleDescriptor)))
   }
   return result
 }

@@ -45,7 +45,7 @@ suspend inline fun <T> SpanBuilder.use(
     // inner `withContext` to ensure that we report the end of the span only when all child tasks are completed,
     // the same for `withFlow` - must be out of `withContext`
     withContext(Context.current().with(span).asContextElement() + context) {
-        operation(span)
+      operation(span)
     }
   }
 }

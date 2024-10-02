@@ -14,6 +14,7 @@ import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRe
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.jetbrains.plugin.structure.base.utils.inputStream
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.impl.findFileInModuleSources
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import java.io.InputStream
 import java.nio.file.Files
@@ -43,7 +44,7 @@ internal class OriginalModuleRepositoryImpl(private val context: CompilationCont
                              ?: error("Cannot find product-modules.xml file in $rootModuleName")
     val resolver = object : ResourceFileResolver {
       override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
-        return context.findFileInModuleSources(context.findRequiredModule(moduleId.stringId), relativePath)?.inputStream()
+        return findFileInModuleSources(context.findRequiredModule(moduleId.stringId), relativePath)?.inputStream()
       }
 
       override fun toString(): String {
@@ -65,5 +66,6 @@ internal class OriginalModuleRepositoryImpl(private val context: CompilationCont
   }
 }
 
-internal fun findProductModulesFile(context: CompilationContext, clientMainModuleName: String): Path? =
-  context.findFileInModuleSources(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
+internal fun findProductModulesFile(context: CompilationContext, clientMainModuleName: String): Path? {
+  return findFileInModuleSources(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
+}

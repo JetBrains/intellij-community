@@ -68,10 +68,9 @@ internal suspend fun computeModuleSourcesByContent(
     }
 
     val module = context.findRequiredModule(moduleName)
-    val forTests = (context as? BuildContextImpl)?.jarPackagerDependencyHelper?.isTestPluginModule(moduleName) ?: false
-    val descriptor = readXmlAsModel(context.findFileInModuleSources(module, "$moduleName.xml", forTests)
-                                    ?: error("$moduleName.xml not found in module $moduleName sources"))
-    val useSeparateJar = (descriptor.getAttributeValue("package") == null || helper.isPluginModulePackedIntoSeparateJar(module, layout)) && loadingRule != RuntimeModuleLoadingRule.REQUIRED
+    val descriptor = readXmlAsModel(findFileInModuleSources(module, "$moduleName.xml") ?: error("$moduleName.xml not found in module $moduleName sources"))
+    val useSeparateJar = (descriptor.getAttributeValue("package") == null ||
+                          helper.isPluginModulePackedIntoSeparateJar(module, layout)) && loadingRule != RuntimeModuleLoadingRule.REQUIRED
     jarPackager.computeSourcesForModule(
       item = ModuleItem(
         moduleName = moduleName,
