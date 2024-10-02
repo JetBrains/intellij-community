@@ -395,15 +395,16 @@ private fun CoroutineScope.checkSystemDirs(lockSystemDirJob: Job): Job {
   return launch {
     lockSystemDirJob.join()
 
+    val homePath = PathManager.getHomePath()
     val configPath = PathManager.getConfigDir()
     val systemPath = PathManager.getSystemDir()
-    if (!span("system dirs checking") { doCheckSystemDirs(configPath, systemPath) }) {
+    if (!span("system dirs checking") { doCheckSystemDirs(homePath, configPath, systemPath) }) {
       exitProcess(AppExitCodes.DIR_CHECK_FAILED)
     }
   }
 }
 
-private suspend fun doCheckSystemDirs(configPath: Path, systemPath: Path): Boolean {
+private suspend fun doCheckSystemDirs(homePath: String, configPath: Path, systemPath: Path): Boolean {
   if (configPath == systemPath) {
     StartupErrorReporter.showError(
       BootstrapBundle.message("bootstrap.error.title.settings"),
@@ -412,7 +413,7 @@ private suspend fun doCheckSystemDirs(configPath: Path, systemPath: Path): Boole
     return false
   }
 
-  if (SystemInfoRt.isMac && systemPath.toString().contains(MAGIC_MAC_PATH)) {
+  if (SystemInfoRt.isMac && homePath.contains(MAGIC_MAC_PATH)) {
     StartupErrorReporter.showError(
       BootstrapBundle.message("bootstrap.error.title.settings"),
       BootstrapBundle.message("bootstrap.error.message.mac.trans")
