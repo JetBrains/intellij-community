@@ -139,8 +139,9 @@ class ClassLoaderConfigurator(
           )
         }
         else {
+          val mimicJarUrlConnection = module.vendor == PluginManagerCore.VENDOR_JETBRAINS && module.moduleName == "intellij.rider.test.cases"
           module.pluginClassLoader = PluginClassLoader(
-            classPath = ClassPath(customJarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false),
+            classPath = ClassPath(customJarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, mimicJarUrlConnection),
             parents = dependencies,
             pluginDescriptor = module,
             coreLoader = coreLoader,
