@@ -54,8 +54,7 @@ public abstract class CachedEvaluator {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.find.source", className));
       }
       CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(myReferenceExpression, context);
-      JavaCodeFragment codeFragment = factory.createCodeFragment(myReferenceExpression, overrideContext(context), project);
-      codeFragment.setThisType(psiClassAndType.second);
+      PsiCodeFragment codeFragment = factory.createPsiCodeFragment(myReferenceExpression, overrideContext(context), project);
       DebuggerUtils.checkSyntax(codeFragment);
       cache.myPsiChildrenExpression = codeFragment instanceof PsiExpressionCodeFragment ? ((PsiExpressionCodeFragment)codeFragment).getExpression() : null;
 

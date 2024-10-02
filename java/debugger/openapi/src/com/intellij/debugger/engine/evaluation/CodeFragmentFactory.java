@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaCodeFragment;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +18,29 @@ public abstract class CodeFragmentFactory {
   public static final ExtensionPointName<CodeFragmentFactory> EXTENSION_POINT_NAME =
     ExtensionPointName.create("com.intellij.debugger.codeFragmentFactory");
 
-  public abstract JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project);
+  /**
+   * @deprecated Use {@link CodeFragmentFactory#createPsiCodeFragment} instead
+   */
+  @Deprecated
+  public JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project) {
+    throw new AbstractMethodError();
+  }
 
-  public abstract JavaCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project);
+  /**
+   * @deprecated Use {@link CodeFragmentFactory#createPresentationPsiCodeFragment(TextWithImports, PsiElement, Project)} instead
+   */
+  @Deprecated
+  public JavaCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {
+    throw new AbstractMethodError();
+  }
+
+  public PsiCodeFragment createPsiCodeFragment(TextWithImports item, PsiElement context, Project project) {
+    return createCodeFragment(item, context, project);
+  }
+
+  public PsiCodeFragment createPresentationPsiCodeFragment(TextWithImports item, PsiElement context, Project project) {
+    return createPresentationCodeFragment(item, context, project);
+  }
 
   public abstract boolean isContextAccepted(PsiElement contextElement);
 

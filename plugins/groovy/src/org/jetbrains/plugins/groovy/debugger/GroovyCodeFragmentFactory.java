@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.debugger;
 
-import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
+import com.intellij.debugger.engine.JavaDebuggerCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
@@ -39,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
+public class GroovyCodeFragmentFactory extends JavaDebuggerCodeFragmentFactory {
   private static final String EVAL_NAME = "_JETGROOVY_EVAL_";
   private static final String IMPORTS = "___$$IMPORTS$$___";
   private static final String TEXT = "___$$TEXT$$___";
@@ -54,7 +54,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
   }
 
   @Override
-  public JavaCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
+  public JavaCodeFragment createPsiCodeFragmentImpl(TextWithImports textWithImports, PsiElement context, @NotNull Project project) {
     final Pair<Map<String, String>, GroovyFile> pair = externalParameters(textWithImports.getText(), context);
     GroovyFile toEval = pair.second;
     final Map<String, String> parameters = pair.first;
@@ -290,7 +290,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
   }
 
   @Override
-  public JavaCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {
+  protected JavaCodeFragment createPresentationPsiCodeFragmentImpl(@NotNull TextWithImports item, PsiElement context, @NotNull Project project) {
     GroovyCodeFragment result = new GroovyCodeFragment(project, item.getText());
     result.setContext(context);
     return result;

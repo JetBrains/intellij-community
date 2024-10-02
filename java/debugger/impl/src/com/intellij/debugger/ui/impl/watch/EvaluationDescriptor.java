@@ -54,7 +54,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
 
   public PsiCodeFragment createCodeFragment(PsiElement context) {
     TextWithImports text = getEvaluationText();
-    return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, myProject);
+    return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createPsiCodeFragment(text, context, myProject);
   }
 
   @ApiStatus.Experimental

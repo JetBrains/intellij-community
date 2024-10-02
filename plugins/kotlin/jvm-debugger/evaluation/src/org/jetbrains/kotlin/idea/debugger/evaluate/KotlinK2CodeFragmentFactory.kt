@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
-import com.intellij.debugger.engine.evaluation.CodeFragmentFactory
+import com.intellij.debugger.engine.JavaDebuggerCodeFragmentFactory
 import com.intellij.debugger.engine.evaluation.TextWithImports
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaCodeFragment
@@ -18,9 +18,9 @@ import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
 
-class KotlinK2CodeFragmentFactory : CodeFragmentFactory() {
+class KotlinK2CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
     @OptIn(KaImplementationDetail::class)
-    override fun createCodeFragment(item: TextWithImports, context: PsiElement?, project: Project): JavaCodeFragment {
+    override fun createPsiCodeFragmentImpl(item: TextWithImports, context: PsiElement?, project: Project): JavaCodeFragment {
         val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(context)
 
         return KtBlockCodeFragment(project, "fragment.kt", item.text, item.imports, contextElement).apply {
@@ -38,8 +38,8 @@ class KotlinK2CodeFragmentFactory : CodeFragmentFactory() {
         }
     }
 
-    override fun createPresentationCodeFragment(item: TextWithImports, context: PsiElement?, project: Project): JavaCodeFragment {
-        return createCodeFragment(item, context, project)
+    override fun createPresentationPsiCodeFragmentImpl(item: TextWithImports, context: PsiElement?, project: Project): JavaCodeFragment? {
+        return createPsiCodeFragment(item, context, project)
     }
 
     override fun isContextAccepted(contextElement: PsiElement?): Boolean {

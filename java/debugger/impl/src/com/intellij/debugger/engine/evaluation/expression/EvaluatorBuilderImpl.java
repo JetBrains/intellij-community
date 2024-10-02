@@ -60,7 +60,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
                                           @Nullable final SourcePosition position,
                                           @NotNull Project project) throws EvaluateException {
     CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, contextElement);
-    PsiCodeFragment codeFragment = factory.createCodeFragment(text, contextElement, project);
+    PsiCodeFragment codeFragment = factory.createPsiCodeFragment(text, contextElement, project);
     if (codeFragment == null) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.expression", text.getText()));
     }
@@ -1516,7 +1516,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     private Evaluator buildFromJavaCode(String code, String imports, @NotNull PsiElement context) {
       TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, code, imports, JavaFileType.INSTANCE);
-      JavaCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(text, context, context.getProject());
+      JavaCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createPsiCodeFragment(text, context, context.getProject());
       return accept(codeFragment);
     }
 

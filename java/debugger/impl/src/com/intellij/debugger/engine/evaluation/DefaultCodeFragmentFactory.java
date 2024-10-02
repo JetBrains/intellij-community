@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
+import com.intellij.debugger.engine.JavaDebuggerCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -27,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Eugene Zhuravlev
  */
-public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
+public class DefaultCodeFragmentFactory extends JavaDebuggerCodeFragmentFactory {
   private static final class SingletonHolder {
     public static final DefaultCodeFragmentFactory ourInstance = new DefaultCodeFragmentFactory();
   }
@@ -37,12 +38,14 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
   }
 
   @Override
-  public JavaCodeFragment createPresentationCodeFragment(final TextWithImports item, final PsiElement context, final Project project) {
-    return createCodeFragment(item, context, project);
+  protected JavaCodeFragment createPresentationPsiCodeFragmentImpl(final @NotNull TextWithImports item,
+                                                                   final PsiElement context,
+                                                                   final @NotNull Project project) {
+    return createPsiCodeFragment(item, context, project);
   }
 
   @Override
-  public JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, final Project project) {
+  public JavaCodeFragment createPsiCodeFragmentImpl(TextWithImports item, PsiElement context, final @NotNull Project project) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final String text = item.getText();
 

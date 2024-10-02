@@ -148,7 +148,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
             catch (UnsupportedExpressionException ex) {
               PsiElement context = PositionUtil.getContextElement(debuggerContext);
               ExpressionEvaluator eval = CompilingEvaluatorImpl.create(project, context, e ->
-                factory.createCodeFragment(text.get(), context, project));
+                factory.createPsiCodeFragment(text.get(), context, project));
               if (eval != null) {
                 return eval;
               }

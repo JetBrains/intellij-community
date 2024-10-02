@@ -70,7 +70,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
             TextWithImports callCode = getCallCode();
             PsiElement copyContext = myData.getAnchor();
             CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(callCode, copyContext);
-            return factory.getEvaluatorBuilder().build(factory.createCodeFragment(callCode, copyContext, myProject),
+            return factory.getEvaluatorBuilder().build(factory.createPsiCodeFragment(callCode, copyContext, myProject),
                                                        // can not use evaluation position here, it does not match classes then
                                                        SourcePosition.createFromElement(copyContext));
           }

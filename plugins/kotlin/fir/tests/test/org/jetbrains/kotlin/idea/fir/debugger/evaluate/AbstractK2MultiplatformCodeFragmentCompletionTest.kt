@@ -23,7 +23,7 @@ abstract class AbstractK2MultiplatformCodeFragmentCompletionTest : AbstractK2Cod
         val elementAt = file?.findElementAt(caretOffset)
         val fragmentText = File("$testPath.fragment").readText()
         val textWithImports = TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, fragmentText)
-        val file = KotlinK2CodeFragmentFactory().createCodeFragment(textWithImports, elementAt, project)
+        val file = KotlinK2CodeFragmentFactory().createPsiCodeFragment(textWithImports, elementAt, project)!!
         configureFromExistingVirtualFile(file.virtualFile!!)
     }
 

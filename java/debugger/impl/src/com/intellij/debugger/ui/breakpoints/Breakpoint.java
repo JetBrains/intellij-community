@@ -555,7 +555,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   private static PsiCodeFragment createCodeFragment(Project project, TextWithImports text, PsiElement context) {
-    return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, project);
+    return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createPsiCodeFragment(text, context, project);
   }
 
   protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {

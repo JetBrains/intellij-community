@@ -28,13 +28,13 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
   }
 
   @Override
-  public JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project) {
-    return prepareResolveScope(myDelegate.createCodeFragment(item, wrapContext(project, context), project));
+  public PsiCodeFragment createPsiCodeFragment(TextWithImports item, PsiElement context, Project project) {
+    return prepareResolveScope(myDelegate.createPsiCodeFragment(item, wrapContext(project, context), project));
   }
 
   @Override
-  public JavaCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {
-    return prepareResolveScope(myDelegate.createPresentationCodeFragment(item, wrapContext(project, context), project));
+  public PsiCodeFragment createPresentationPsiCodeFragment(TextWithImports item, PsiElement context, Project project) {
+    return prepareResolveScope(myDelegate.createPresentationPsiCodeFragment(item, wrapContext(project, context), project));
   }
 
   @Override
@@ -53,7 +53,7 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
     return myDelegate.getEvaluatorBuilder();
   }
 
-  private static JavaCodeFragment prepareResolveScope(JavaCodeFragment codeFragment) {
+  private static PsiCodeFragment prepareResolveScope(PsiCodeFragment codeFragment) {
     GlobalSearchScope originalResolveScope = codeFragment.getResolveScope();
     codeFragment.forceResolveScope(new DelegatingGlobalSearchScope(GlobalSearchScope.allScope(codeFragment.getProject())) {
       final Comparator<VirtualFile> myScopeComparator = Comparator.comparing(originalResolveScope::contains).thenComparing(super::compare);
