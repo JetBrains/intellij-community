@@ -34,7 +34,7 @@ class OrderRootComputer {
   }
 
   @NotNull Collection<VirtualFile> computeRoots() {
-    final Collection<VirtualFile> result = new LinkedHashSet<>();
+    Collection<VirtualFile> result = new LinkedHashSet<>();
     myOrderEnumerator.forEach((orderEntry, customHandlers) -> {
       OrderRootType type = myOrderEntryToRootType.apply(orderEntry);
 
@@ -45,7 +45,7 @@ class OrderRootComputer {
         collectModuleRoots(type, rootModel, result, true, includeTests, customHandlers);
       }
       else if (orderEntry instanceof ModuleOrderEntry moduleOrderEntry) {
-        final Module module = moduleOrderEntry.getModule();
+        Module module = moduleOrderEntry.getModule();
         if (module != null) {
           ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
           boolean productionOnTests = ((ModuleOrderEntry)orderEntry).isProductionOnTestDependency();
@@ -75,8 +75,8 @@ class OrderRootComputer {
   private void collectModuleRoots(@NotNull OrderRootType type,
                                   ModuleRootModel rootModel,
                                   @NotNull Collection<? super VirtualFile> result,
-                                  final boolean includeProduction,
-                                  final boolean includeTests,
+                                  boolean includeProduction,
+                                  boolean includeTests,
                                   @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
     if (type.equals(OrderRootType.SOURCES)) {
       if (includeProduction) {
@@ -87,7 +87,7 @@ class OrderRootComputer {
       }
     }
     else if (type.equals(OrderRootType.CLASSES)) {
-      final CompilerModuleExtension extension = rootModel.getModuleExtension(CompilerModuleExtension.class);
+      CompilerModuleExtension extension = rootModel.getModuleExtension(CompilerModuleExtension.class);
       if (extension != null) {
         if (myWithoutSelfModuleOutput && myOrderEnumerator.isRootModuleModel(rootModel)) {
           if (includeTests && includeProduction) {
@@ -112,9 +112,8 @@ class OrderRootComputer {
                                                        @NotNull Collection<? super VirtualFile> result,
                                                        @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
     for (OrderEnumerationHandler handler : customHandlers) {
-      final List<String> urls = new ArrayList<>();
-      final boolean added =
-        handler.addCustomRootsForLibraryOrSdk(forOrderEntry, type, urls);
+      List<String> urls = new ArrayList<>();
+      boolean added = handler.addCustomRootsForLibraryOrSdk(forOrderEntry, type, urls);
       for (String url : urls) {
         ContainerUtil.addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url));
       }
@@ -125,22 +124,20 @@ class OrderRootComputer {
     return false;
   }
 
-  private static boolean addCustomRootsForModule(@NotNull OrderRootType type,
-                                                 @NotNull ModuleRootModel rootModel,
-                                                 @NotNull Collection<? super VirtualFile> result,
-                                                 boolean includeProduction,
-                                                 boolean includeTests,
-                                                 @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
+  private static void addCustomRootsForModule(@NotNull OrderRootType type,
+                                              @NotNull ModuleRootModel rootModel,
+                                              @NotNull Collection<? super VirtualFile> result,
+                                              boolean includeProduction,
+                                              boolean includeTests,
+                                              @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
     for (OrderEnumerationHandler handler : customHandlers) {
-      final List<String> urls = new ArrayList<>();
-      final boolean added = handler.addCustomModuleRoots(type, rootModel, urls, includeProduction, includeTests);
+      List<String> urls = new ArrayList<>();
+      boolean added = handler.addCustomModuleRoots(type, rootModel, urls, includeProduction, includeTests);
       for (String url : urls) {
         ContainerUtil.addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url));
       }
 
-      if (added) return true;
+      if (added) return;
     }
-    return false;
   }
-
 }
