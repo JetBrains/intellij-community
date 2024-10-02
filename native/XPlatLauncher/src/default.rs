@@ -106,7 +106,7 @@ impl DefaultLaunchConfiguration {
         let product_info = read_product_info(&product_info_file)?;
         let (launch_info, custom_data_directory_name) = compute_launch_info(&product_info, args.first())?;
         let vm_options_rel_path = &launch_info.vmOptionsFilePath;
-        let vm_options_path = product_info_file.parent().unwrap().join(vm_options_rel_path);
+        let vm_options_path = product_info_file.parent().context("failed to get product_info_file parent()")?.join(vm_options_rel_path);
         let data_directory_name = custom_data_directory_name.unwrap_or(product_info.dataDirectoryName.clone());
         let user_config_dir = config_home.join(&product_info.productVendor).join(&data_directory_name);
         let user_caches_dir = caches_home.join(&product_info.productVendor).join(&data_directory_name);
@@ -286,15 +286,17 @@ impl DefaultLaunchConfiguration {
             Err(e) => { debug!("Failed: {}", e.to_string()); }
         }
 
-        let real_ide_home = if cfg!(target_os = "macos") { self.ide_home.parent().unwrap() } else { &self.ide_home };
-        let tb_file_base = real_ide_home.file_name().unwrap().to_str().unwrap();
-        let tb_file_path = real_ide_home.parent().unwrap().join(tb_file_base.to_string() + ".vmoptions");
+        let real_ide_home = if cfg!(target_os = "macos") { self.ide_home.parent().context("Failed to get ide_home parent")? } else { &self.ide_home };
+        let tb_file_base = real_ide_home.file_name()
+            .context("Failed to get real_ide_home file_name()")?.to_str()
+            .context("Failed to get to_str() from real_ide_home file_name()")?;
+        let tb_file_path = real_ide_home.parent().context("Failed to get real_ide_home parent()")?.join(tb_file_base.to_string() + ".vmoptions");
         debug!("Checking {:?}", tb_file_path);
         if tb_file_path.is_file() {
             return Ok(tb_file_path);
         }
 
-        let user_file_name = self.vm_options_path.file_name().unwrap();
+        let user_file_name = self.vm_options_path.file_name().context("failed to vm_options_path file_name()")?;
         let user_file_path = self.user_config_dir.join(user_file_name);
         debug!("Checking {:?}", user_file_path);
         if user_file_path.is_file() {
