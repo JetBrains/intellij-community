@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
@@ -24,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public final class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTransferableData> {
   private static final Logger LOG = Logger.getInstance(CopyPasteFoldingProcessor.class);
 

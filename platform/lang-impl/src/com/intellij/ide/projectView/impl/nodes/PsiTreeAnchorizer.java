@@ -8,9 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PsiTreeAnchorizer extends TreeAnchorizer {
   @Override
   public @NotNull Object createAnchor(@NotNull Object element) {

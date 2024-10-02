@@ -5,11 +5,13 @@ package com.intellij.ide.impl.dataRules;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
+@ApiStatus.Internal
 public final class UsageInfo2ListRule implements GetDataRule {
   @Override
   public @Nullable Object getData(final @NotNull DataProvider dataProvider) {

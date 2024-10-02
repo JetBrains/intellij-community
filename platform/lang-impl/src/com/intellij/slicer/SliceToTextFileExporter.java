@@ -3,10 +3,12 @@ package com.intellij.slicer;
 
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.usages.UsageViewSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class SliceToTextFileExporter implements ExporterToTextFile {
   private final SliceTreeBuilder myBuilder;
   private final @NotNull UsageViewSettings myUsageViewSettings;

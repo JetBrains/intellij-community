@@ -22,10 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.usages.ChunkExtractor;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.nio.charset.Charset;
 import java.util.function.Consumer;
@@ -34,6 +31,7 @@ import java.util.stream.IntStream;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
+@ApiStatus.Internal
 public final class NonAsciiCharactersInspection extends LocalInspectionTool {
   public boolean CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME = true;
   public boolean CHECK_FOR_NOT_ASCII_STRING_LITERAL;

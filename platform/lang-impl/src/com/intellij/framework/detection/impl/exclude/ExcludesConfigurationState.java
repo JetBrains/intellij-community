@@ -5,10 +5,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ExcludesConfigurationState {
   private List<String> myFrameworkTypes = new ArrayList<>();
   private List<ExcludedFileState> myFiles = new ArrayList<>();

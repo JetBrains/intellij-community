@@ -22,12 +22,14 @@ import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public abstract class DependenciesHandlerBase {
   protected final @NotNull Project myProject;
   private final List<? extends AnalysisScope> myScopes;

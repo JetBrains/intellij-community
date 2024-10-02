@@ -9,12 +9,14 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@ApiStatus.Internal
 public final class IndexVersion {
   private static final int BASE_VERSION = 15;
   private static final IndexVersion NON_EXISTING_INDEX_VERSION = new IndexVersion(0, -1, -1);

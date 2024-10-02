@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class LocalQuickFixWrapper extends QuickFixAction {
   private final QuickFix<?> myFix;
 

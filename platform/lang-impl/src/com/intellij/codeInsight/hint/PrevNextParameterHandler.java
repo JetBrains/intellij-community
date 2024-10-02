@@ -13,9 +13,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PrevNextParameterHandler extends EditorActionHandler {
   public PrevNextParameterHandler(boolean isNextParameterHandler) {
     myIsNextParameterHandler = isNextParameterHandler;

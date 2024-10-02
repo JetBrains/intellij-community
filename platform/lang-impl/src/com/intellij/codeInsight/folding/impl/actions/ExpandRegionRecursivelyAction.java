@@ -7,11 +7,13 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ExpandRegionRecursivelyAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public ExpandRegionRecursivelyAction() {
     super(new BaseFoldingHandler() {

@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import org.jetbrains.annotations.ApiStatus
 import java.awt.datatransfer.StringSelection
 
 abstract class CopyPathProvider : AnAction() {
@@ -105,6 +106,7 @@ abstract class CopyPathProvider : AnAction() {
 
 abstract class DumbAwareCopyPathProvider : CopyPathProvider(), DumbAware
 
+@ApiStatus.Internal
 class CopyAbsolutePathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): @NlsSafe String? = virtualFile?.presentableUrl
 }
@@ -120,6 +122,7 @@ class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
   }
 }
 
+@ApiStatus.Internal
 class CopyFileWithLineNumberPathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project,
                                 virtualFile: VirtualFile?,
@@ -136,6 +139,7 @@ class CopySourceRootPathProvider : DumbAwareCopyPathProvider() {
     }
 }
 
+@ApiStatus.Internal
 class CopyTBXReferenceProvider : CopyPathProvider() {
   override fun getQualifiedName(project: Project,
                                 elements: List<PsiElement>,
@@ -144,6 +148,7 @@ class CopyTBXReferenceProvider : CopyPathProvider() {
     CopyTBXReferenceAction.createJetBrainsLink(project, elements, editor)
 }
 
+@ApiStatus.Internal
 class CopyFileNameProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): String? = virtualFile?.name
 }

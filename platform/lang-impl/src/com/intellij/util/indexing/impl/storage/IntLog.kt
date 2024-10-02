@@ -11,6 +11,7 @@ import com.intellij.util.io.*
 import com.intellij.util.io.keyStorage.AppendableObjectStorage
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile
 import it.unimi.dsi.fastutil.ints.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.*
 import java.nio.file.FileAlreadyExistsException
@@ -19,6 +20,7 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.math.abs
 
+@ApiStatus.Internal
 interface AbstractIntLog : Closeable, Flushable {
   @FunctionalInterface
   fun interface IntLogEntryProcessor {
@@ -36,6 +38,7 @@ interface AbstractIntLog : Closeable, Flushable {
   fun clear()
 }
 
+@ApiStatus.Internal
 class IntLog @Throws(IOException::class) constructor(private val baseStorageFile: Path,
                                                      compact: Boolean,
                                                      private val storageLockContext: StorageLockContext? = null) : AbstractIntLog {

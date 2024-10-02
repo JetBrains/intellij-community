@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.impl.UsageViewImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ShowRecentFindUsagesGroup extends ActionGroup {
 
   @Override

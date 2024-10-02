@@ -4,8 +4,10 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 @State(name = "ProjectInspectionProfilesVisibleTreeState", storages = @Storage(StoragePathMacros.CACHE_FILE))
 public final class ProjectInspectionProfilesVisibleTreeState implements PersistentStateComponent<VisibleTreeStateComponent> {

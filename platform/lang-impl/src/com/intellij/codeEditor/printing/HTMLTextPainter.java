@@ -26,6 +26,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +59,7 @@ public final class HTMLTextPainter {
   private final Project myProject;
   private final HtmlStyleManager htmlStyleManager;
 
+  @ApiStatus.Internal
   public HTMLTextPainter(@NotNull PsiFile psiFile, @NotNull Project project, @NotNull HtmlStyleManager htmlStyleManager, boolean printLineNumbers, boolean useMethodSeparators) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();

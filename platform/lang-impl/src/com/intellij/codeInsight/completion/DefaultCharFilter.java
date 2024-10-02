@@ -7,7 +7,9 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class DefaultCharFilter extends CharFilter {
 
   @Override

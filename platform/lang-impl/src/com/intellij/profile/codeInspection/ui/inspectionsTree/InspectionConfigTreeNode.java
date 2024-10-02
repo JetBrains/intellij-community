@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
+@ApiStatus.Internal
 public abstract class InspectionConfigTreeNode extends DefaultMutableTreeNode {
   private final ClearableLazyValue<Boolean> myProperSetting = ClearableLazyValue.create(this::calculateIsProperSettings);
 

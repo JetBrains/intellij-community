@@ -20,6 +20,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class SaveProjectAsTemplateDialog extends DialogWrapper {
 
   private final @NotNull Project myProject;

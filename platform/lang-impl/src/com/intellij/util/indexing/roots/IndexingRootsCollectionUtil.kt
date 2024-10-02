@@ -123,11 +123,11 @@ internal data class EntityCustomKindRootsDescription<E : WorkspaceEntity>(val en
   }
 }
 
-fun selectRootVirtualFiles(value: Collection<VirtualFile>): List<VirtualFile> {
+internal fun selectRootVirtualFiles(value: Collection<VirtualFile>): List<VirtualFile> {
   return selectRootItems(value) { file -> file.path }
 }
 
-fun selectRootVirtualFileUrls(urls: Collection<VirtualFileUrl>): List<VirtualFileUrl> {
+internal fun selectRootVirtualFileUrls(urls: Collection<VirtualFileUrl>): List<VirtualFileUrl> {
   return selectRootItems(urls) { url -> JpsPathUtil.urlToPath(url.url) }
 }
 

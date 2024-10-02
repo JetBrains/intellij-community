@@ -7,9 +7,11 @@ import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.psi.ElementDescriptionProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public final class DefaultRefactoringElementDescriptionProvider implements ElementDescriptionProvider {
   public static final DefaultRefactoringElementDescriptionProvider INSTANCE = new DefaultRefactoringElementDescriptionProvider();
 

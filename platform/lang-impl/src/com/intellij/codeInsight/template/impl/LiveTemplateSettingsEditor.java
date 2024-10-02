@@ -36,6 +36,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,6 +52,7 @@ import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class LiveTemplateSettingsEditor extends JPanel {
   private final TemplateImpl myTemplate;
   private final Runnable myNodeChanged;

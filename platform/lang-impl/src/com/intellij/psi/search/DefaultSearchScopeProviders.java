@@ -9,6 +9,7 @@ import com.intellij.openapi.util.ColoredItem;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.FileColorManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.util.List;
 /**
  * @author gregsh
  */
+@ApiStatus.Internal
 public final class DefaultSearchScopeProviders {
   private DefaultSearchScopeProviders() {}
 

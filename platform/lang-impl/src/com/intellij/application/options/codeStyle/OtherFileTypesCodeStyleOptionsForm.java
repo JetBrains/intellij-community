@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.awt.*;
 /**
  * Used for non-language settings (if file type is not supported by Intellij IDEA), for example, plain text.
  */
+@ApiStatus.Internal
 public final class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
   private final IndentOptionsEditorWithSmartTabs myIndentOptionsEditor;
   private JPanel myIndentOptionsPanel;

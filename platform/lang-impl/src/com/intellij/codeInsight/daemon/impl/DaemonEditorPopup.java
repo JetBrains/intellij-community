@@ -22,12 +22,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 import static com.intellij.codeInsight.daemon.impl.ConfigureHighlightingLevelKt.getConfigureHighlightingLevelPopup;
 
+@ApiStatus.Internal
 public final class DaemonEditorPopup extends PopupHandler {
   private final Project myProject;
   private final Editor myEditor;

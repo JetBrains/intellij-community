@@ -5,6 +5,7 @@ package com.intellij.unscramble;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,6 +13,7 @@ import java.awt.*;
 import static com.intellij.openapi.application.ex.ClipboardUtil.getTextInClipboard;
 
 
+@ApiStatus.Internal
 public final class AnalyzeStacktraceDialog extends DialogWrapper {
   private final Project myProject;
   private AnalyzeStacktraceUtil.StacktraceEditorPanel myEditorPanel;

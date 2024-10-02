@@ -17,6 +17,7 @@ import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,6 +28,7 @@ import java.util.List;
 /**
 * @author Konstantin Bulenkov
 */
+@ApiStatus.Internal
 public final class InspectionListCellRenderer extends DefaultListCellRenderer {
   private final SimpleTextAttributes mySelected;
   private final SimpleTextAttributes myPlain;

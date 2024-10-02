@@ -13,10 +13,12 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.selected
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JRadioButton
 
+@ApiStatus.Internal
 class ExportToHTMLDialog(private val fileName: String?,
                          private val directoryName: String?,
                          private val selectedTextEnabled: Boolean,

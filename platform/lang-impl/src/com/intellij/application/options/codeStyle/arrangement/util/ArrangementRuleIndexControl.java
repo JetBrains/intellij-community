@@ -3,10 +3,12 @@ package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class ArrangementRuleIndexControl extends JPanel {
 
   private boolean myIsError;

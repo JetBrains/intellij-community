@@ -23,11 +23,13 @@ import com.intellij.util.Alarm;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 
+@ApiStatus.Internal
 public class LargeFileEncodingWidget extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
   public static final String WIDGET_ID = "largeFileEncodingWidget";
 

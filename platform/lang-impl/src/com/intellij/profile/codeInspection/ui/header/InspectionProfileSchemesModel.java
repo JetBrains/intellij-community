@@ -10,6 +10,7 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public abstract class InspectionProfileSchemesModel implements SchemesModel<InspectionProfileModifiableModel> {
   private static final Logger LOG = Logger.getInstance(InspectionProfileSchemesModel.class);
   private final List<SingleInspectionProfilePanel> myProfilePanels = new ArrayList<>();

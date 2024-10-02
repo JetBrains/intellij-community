@@ -4,8 +4,10 @@ package com.intellij.mock;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class MockGlobalSearchScope extends GlobalSearchScope {
   @Override
   public boolean contains(final @NotNull VirtualFile file) {

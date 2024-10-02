@@ -5,11 +5,13 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class RestoreFoldArrangementCallback implements ArrangementCallback {
 
   private final @NotNull Editor           myEditor;

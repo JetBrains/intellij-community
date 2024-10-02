@@ -17,6 +17,7 @@ import com.intellij.util.io.PersistentHashMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class DetectedFrameworksData {
   private static final Logger LOG = Logger.getInstance(DetectedFrameworksData.class);
   private PersistentHashMap<String, IntSet> myExistentFrameworkFiles;

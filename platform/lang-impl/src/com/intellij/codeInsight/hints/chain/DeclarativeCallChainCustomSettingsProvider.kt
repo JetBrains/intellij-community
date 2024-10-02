@@ -9,9 +9,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.event.ChangeListener
 
+@ApiStatus.Internal
 class DeclarativeCallChainCustomSettingsProvider : InlayHintsCustomSettingsProvider<Int> {
   companion object {
     const val DEFAULT_CHAIN_LENGTH: Int = 2

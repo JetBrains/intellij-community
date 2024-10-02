@@ -6,7 +6,9 @@ import com.intellij.ide.projectView.impl.GroupByTypeComparator
 import com.intellij.ide.projectView.impl.ProjectViewPane.ID
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class FolderNodeComparator(project: Project) : GroupByTypeComparator(project, ID) {
 
   override fun compare(descriptor1: NodeDescriptor<*>?, descriptor2: NodeDescriptor<*>?): Int = when {

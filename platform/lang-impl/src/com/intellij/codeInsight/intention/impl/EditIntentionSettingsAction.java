@@ -13,10 +13,12 @@ import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class EditIntentionSettingsAction extends AbstractEditIntentionSettingsAction implements HighPriorityAction {
 
   private final @NotNull String myIdentifier;

@@ -15,11 +15,13 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class ShowRecentFindUsagesAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override

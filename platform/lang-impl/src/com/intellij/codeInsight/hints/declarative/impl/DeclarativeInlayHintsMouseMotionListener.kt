@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.LightweightHint
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.InputEvent
@@ -19,6 +20,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 
+@ApiStatus.Internal
 class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
   private var areaUnderCursor: InlayMouseArea? = null
   private var inlayUnderCursor: WeakReference<Inlay<*>>? = null

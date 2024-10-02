@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -18,6 +19,7 @@ import java.util.Map;
  * Java logical font names (like 'Monospaced') don't necessarily make sense for other applications, so we try to map those fonts to
  * the corresponding physical font names.
  */
+@ApiStatus.Internal
 public final class FontMapper {
   private static final Logger LOG = Logger.getInstance(FontMapper.class);
 

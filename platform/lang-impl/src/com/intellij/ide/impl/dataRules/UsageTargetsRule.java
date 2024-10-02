@@ -7,9 +7,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.usages.UsageTargetUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class UsageTargetsRule implements GetDataRule {
   @Override
   public @Nullable Object getData(@NotNull DataProvider dataProvider) {

@@ -8,9 +8,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class FoldingPolicy {
   private static final Logger LOG = Logger.getInstance(FoldingPolicy.class);
 

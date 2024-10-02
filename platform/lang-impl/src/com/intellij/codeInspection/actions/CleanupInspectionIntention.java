@@ -24,12 +24,14 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+@ApiStatus.Internal
 public final class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
   private final @NotNull InspectionToolWrapper<?,?> myToolWrapper;
   private final FileModifier myQuickfix;

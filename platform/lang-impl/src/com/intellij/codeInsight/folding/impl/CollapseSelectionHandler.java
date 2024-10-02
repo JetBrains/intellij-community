@@ -13,8 +13,10 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class CollapseSelectionHandler implements CodeInsightActionHandler {
   private static final String ourPlaceHolderText = "...";
   private static final Logger LOG = Logger.getInstance(CollapseSelectionHandler.class);

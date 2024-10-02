@@ -9,8 +9,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.invertBoolean.InvertBooleanDelegate;
 import com.intellij.refactoring.invertBoolean.InvertBooleanHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class InvertBooleanAction extends BaseRefactoringAction {
   @Override
   protected boolean isAvailableInEditorOnly() {

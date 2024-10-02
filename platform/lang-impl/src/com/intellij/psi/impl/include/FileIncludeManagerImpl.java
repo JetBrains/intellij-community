@@ -30,6 +30,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class FileIncludeManagerImpl extends FileIncludeManager implements Disposable {
   private final Project myProject;
   private final PsiManager myPsiManager;

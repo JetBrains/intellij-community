@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class AnalyzeDependenciesHandler extends DependenciesHandlerBase {
   private final int myTransitiveBorder;
 

@@ -7,9 +7,11 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.DisplayPriority;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public final class GeneralCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   public @NotNull Configurable createSettingsPage(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings originalSettings) {

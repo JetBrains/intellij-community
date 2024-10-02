@@ -5,6 +5,7 @@ import com.intellij.util.io.CompactDataInput;
 import com.intellij.util.io.CompactDataOutput;
 import com.intellij.util.io.LZ4Decompressor;
 import net.jpountz.lz4.LZ4DecompressorWithLength;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.io.IOException;
 /**
  * Not synchronized, stream implementations must be used from one thread at a time only
  */
+@ApiStatus.Internal
 public final class OutputInfoSerializer {
   private static final int TEXT_ID = 0;
   private static final int STYLE_ID = 1;

@@ -8,11 +8,13 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class BackwardDependenciesAction extends BaseAnalysisAction {
   private BackwardDependenciesAdditionalUi myPanel;
 

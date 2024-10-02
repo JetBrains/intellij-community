@@ -9,12 +9,14 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.util.Key;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
 
+@ApiStatus.Internal
 public final class ParameterHintsUpdater {
   private static final Key<Boolean> HINT_REMOVAL_DELAYED = Key.create("hint.removal.delayed");
   private static final Key<Boolean> REPEATED_PASS = Key.create("RepeatedParameterHintsPass");

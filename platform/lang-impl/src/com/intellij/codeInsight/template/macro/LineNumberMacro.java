@@ -3,8 +3,10 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class LineNumberMacro extends Macro {
   @Override
   public String getName() {

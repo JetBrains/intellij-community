@@ -13,7 +13,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class BuildViewProblemsService(override val project: Project) : ProblemsProvider {
 

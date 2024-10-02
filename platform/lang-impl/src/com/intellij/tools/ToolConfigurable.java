@@ -5,10 +5,12 @@ package com.intellij.tools;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class ToolConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private BaseToolsPanel myPanel;
 

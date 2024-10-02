@@ -9,10 +9,12 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class CollapseBlockAction extends BaseCodeInsightAction {
   @Override
   protected @NotNull CodeInsightActionHandler getHandler() {

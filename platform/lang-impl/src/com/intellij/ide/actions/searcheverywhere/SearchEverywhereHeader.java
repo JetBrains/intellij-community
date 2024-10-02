@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.ContributorFilterCollector;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
 
+@ApiStatus.Internal
 public final class SearchEverywhereHeader {
   private final @NotNull Runnable myScopeChangedCallback;
   private final Function<? super String, String> myShortcutSupplier;

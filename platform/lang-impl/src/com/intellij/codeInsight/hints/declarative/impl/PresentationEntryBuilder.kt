@@ -6,7 +6,9 @@ import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.SymbolPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.diagnostic.PluginException
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PresentationEntryBuilder(val state: TinyTree<Any?>, private val providerClass: Class<*>) {
   private val entries = ArrayList<InlayPresentationEntry>()
   private var currentClickArea: InlayMouseArea? = null

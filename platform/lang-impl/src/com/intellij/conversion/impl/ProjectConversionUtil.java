@@ -2,6 +2,7 @@
 package com.intellij.conversion.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 
+@ApiStatus.Internal
 public final class ProjectConversionUtil {
   public static final @NonNls String PROJECT_FILES_BACKUP = "projectFilesBackup";
   private static final @NonNls String BACKUP_EXTENSION = "backup";

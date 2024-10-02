@@ -28,6 +28,7 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class ShowUsagesTable extends JBTable implements UiDataProvider {
   final Usage MORE_USAGES_SEPARATOR = new UsageAdapter();
   final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();

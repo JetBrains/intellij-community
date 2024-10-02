@@ -18,11 +18,13 @@ import com.jetbrains.rd.util.reactive.IProperty
 import com.jetbrains.rd.util.reactive.ISource
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.throttleLast
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.time.Duration
 import javax.swing.SwingUtilities
 
+@ApiStatus.Internal
 class EditorAnchoringRect(
   lifetime: Lifetime,
   private val editor: Editor,

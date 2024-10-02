@@ -6,10 +6,12 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Configuration for contributors filter in "Search Everywhere" popup.
  */
+@ApiStatus.Internal
 @Service
 @State(name = "SearchEverywhereConfiguration", storages = @Storage(StoragePathMacros.CACHE_FILE))
 public final class SearchEverywhereConfiguration extends ChooseByNameFilterConfiguration<String>  {

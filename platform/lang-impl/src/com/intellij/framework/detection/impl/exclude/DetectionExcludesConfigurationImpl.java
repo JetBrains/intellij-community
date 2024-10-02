@@ -16,11 +16,13 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 @State(name = "FrameworkDetectionExcludesConfiguration")
 public final class DetectionExcludesConfigurationImpl extends DetectionExcludesConfiguration
          implements PersistentStateComponent<ExcludesConfigurationState>, Disposable {

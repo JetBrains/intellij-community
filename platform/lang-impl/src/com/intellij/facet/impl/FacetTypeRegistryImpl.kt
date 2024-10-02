@@ -15,9 +15,11 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.facet.FacetState
 import java.util.*
 
+@ApiStatus.Internal
 class FacetTypeRegistryImpl : FacetTypeRegistry() {
   private val myTypeIds: MutableMap<String, FacetTypeId<*>> = HashMap()
   private val myFacetTypes: MutableMap<FacetTypeId<*>, FacetType<*, *>> = HashMap()

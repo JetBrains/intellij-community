@@ -36,6 +36,7 @@ import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,6 +46,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class ExtractCodeStyleAction extends AnAction implements DumbAware {
 
   @Override

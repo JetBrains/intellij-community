@@ -45,6 +45,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +63,7 @@ import java.util.Objects;
 /**
  * @author gregsh
  */
+@ApiStatus.Internal
 public final class RunIdeConsoleAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(RunIdeConsoleAction.class);
 

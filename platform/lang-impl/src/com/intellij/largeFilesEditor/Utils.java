@@ -2,7 +2,9 @@
 package com.intellij.largeFilesEditor;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class Utils {
 
   public static int calculatePagePositionPercent(long currentPageNumber, long pageAmount) {

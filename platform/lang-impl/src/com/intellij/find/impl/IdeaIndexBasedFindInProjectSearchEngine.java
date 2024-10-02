@@ -17,10 +17,12 @@ import com.intellij.psi.search.*;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProjectSearchEngine {
   @Override
   public @NotNull FindInProjectSearcher createSearcher(@NotNull FindModel findModel, @NotNull Project project) {

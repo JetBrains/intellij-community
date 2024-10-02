@@ -37,6 +37,7 @@ import java.util.List;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static java.util.Objects.requireNonNull;
 
+@ApiStatus.Internal
 @ApiStatus.NonExtendable
 public class HyperlinkAnnotator implements Annotator, DumbAware {
 

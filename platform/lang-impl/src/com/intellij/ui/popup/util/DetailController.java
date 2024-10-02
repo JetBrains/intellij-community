@@ -3,6 +3,7 @@ package com.intellij.ui.popup.util;
 
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 
+@ApiStatus.Internal
 public class DetailController {
   private final MasterController myMasterController;
   private final Alarm myUpdateAlarm = new Alarm();

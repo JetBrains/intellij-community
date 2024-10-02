@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.ItemWrapper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -23,6 +24,7 @@ import java.awt.*;
 /**
  * @author zajac
  */
+@ApiStatus.Internal
 public final class BookmarkItem extends ItemWrapper implements Comparable<BookmarkItem>{
   private final Bookmark myBookmark;
 

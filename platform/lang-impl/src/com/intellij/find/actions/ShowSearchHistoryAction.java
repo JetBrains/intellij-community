@@ -7,8 +7,10 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ShowSearchHistoryAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend {
   ShowSearchHistoryAction() {
     super(IdeBundle.messagePointer("action.AnAction.text.search.history"),

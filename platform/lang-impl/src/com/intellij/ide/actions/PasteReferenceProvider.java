@@ -19,11 +19,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Producer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
 
+@ApiStatus.Internal
 public final class PasteReferenceProvider implements PasteProvider {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

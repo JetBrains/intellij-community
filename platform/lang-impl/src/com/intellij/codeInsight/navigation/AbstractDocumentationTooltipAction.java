@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.PatchedWeakReference;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.lang.ref.WeakReference;
 /**
  * Expands {@link AnAction} contract for documentation-related actions that may be called from the IDE tooltip.
  */
+@ApiStatus.Internal
 public abstract class AbstractDocumentationTooltipAction extends AnAction {
 
   private @Nullable WeakReference<PsiElement> myDocAnchor;

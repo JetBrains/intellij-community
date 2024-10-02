@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ import javax.swing.*;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class InspectionResultsViewUtil {
   static void releaseEditor(@Nullable Editor editor) {
     if (editor != null && !editor.isDisposed()) {

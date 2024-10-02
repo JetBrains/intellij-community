@@ -21,6 +21,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class CopyHandler extends EditorActionHandler implements CopyAction.TransferableProvider {
   private static final Logger LOG = Logger.getInstance(CopyHandler.class);
 

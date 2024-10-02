@@ -3,9 +3,11 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.actionSystem.AnAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class ActionsEqualityProvider extends AbstractEqualityProvider {
 
   @Override

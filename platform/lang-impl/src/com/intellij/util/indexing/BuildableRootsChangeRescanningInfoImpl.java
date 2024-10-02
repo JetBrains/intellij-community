@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 
+@Internal
 public final class BuildableRootsChangeRescanningInfoImpl extends BuildableRootsChangeRescanningInfoEx {
   private final Set<ModuleId> modules = new SmartHashSet<>();
   private boolean hasInheritedSdk;

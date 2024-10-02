@@ -26,6 +26,7 @@ import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ import static com.intellij.util.ui.tree.TreeUtil.getLastUserObject;
  * @author Anna
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public abstract class ProjectViewDropTarget implements DnDNativeTarget {
   private final JTree myTree;
   private final Project myProject;

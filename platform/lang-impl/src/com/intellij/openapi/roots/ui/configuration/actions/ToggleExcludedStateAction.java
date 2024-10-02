@@ -9,6 +9,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,6 +17,7 @@ import javax.swing.*;
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public final class ToggleExcludedStateAction extends ContentEntryEditingAction {
   private final ContentEntryTreeEditor myEntryTreeEditor;
 

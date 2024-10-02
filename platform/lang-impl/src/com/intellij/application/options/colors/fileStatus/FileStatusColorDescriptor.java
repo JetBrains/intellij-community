@@ -3,10 +3,12 @@ package com.intellij.application.options.colors.fileStatus;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class FileStatusColorDescriptor {
   private final FileStatus myStatus;
   private Color myColor;

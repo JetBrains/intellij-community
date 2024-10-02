@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ExperimentalUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,6 +26,7 @@ import java.util.Objects;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class EditSettingsAction extends InspectionViewActionBase implements DumbAware {
   private static final Logger LOG = Logger.getInstance(EditSettingsAction.class);
 

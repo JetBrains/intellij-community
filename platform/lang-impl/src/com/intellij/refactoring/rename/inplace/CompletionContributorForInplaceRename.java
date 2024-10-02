@@ -7,8 +7,10 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class CompletionContributorForInplaceRename extends CompletionContributor {
 
   @Override

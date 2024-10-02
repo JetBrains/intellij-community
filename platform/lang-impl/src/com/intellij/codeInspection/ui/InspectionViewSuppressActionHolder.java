@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.Interner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@ApiStatus.Internal
 public final class InspectionViewSuppressActionHolder {
   private final Map<String, Map<ContextDescriptor, SuppressIntentionAction[]>> mySuppressActions =
     FactoryMap.create(__ -> new HashMap<>());

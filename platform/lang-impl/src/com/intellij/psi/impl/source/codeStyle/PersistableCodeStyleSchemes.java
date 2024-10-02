@@ -12,12 +12,14 @@ import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author Rustam Vishnyakov
  */
+@ApiStatus.Internal
 @State(
   name = "CodeStyleSchemeSettings",
   storages = @Storage("code.style.schemes.xml"),

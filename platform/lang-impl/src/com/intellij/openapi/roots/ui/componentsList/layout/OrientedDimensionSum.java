@@ -2,8 +2,11 @@
 
 package com.intellij.openapi.roots.ui.componentsList.layout;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class OrientedDimensionSum {
   private final Orientation myOrientation;
   private final Dimension mySum = new Dimension();

@@ -4,9 +4,11 @@ package com.intellij.codeInsight.template.postfix.settings;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.ui.CheckedTreeNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PostfixTemplateCheckedTreeNode extends CheckedTreeNode {
   private final @NotNull PostfixTemplateProvider myTemplateProvider;
   private @NotNull PostfixTemplate myTemplate;

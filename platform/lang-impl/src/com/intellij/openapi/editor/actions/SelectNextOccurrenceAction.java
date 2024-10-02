@@ -13,11 +13,13 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
 
+@ApiStatus.Internal
 public final class SelectNextOccurrenceAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   private SelectNextOccurrenceAction() {
     super(new Handler());

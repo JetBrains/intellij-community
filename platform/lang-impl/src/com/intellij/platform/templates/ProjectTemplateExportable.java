@@ -3,11 +3,13 @@ package com.intellij.platform.templates;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.components.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 @State(name = "ProjectTemplates",
   storages = @Storage(value = "ProjectTemplates.xml", exportable = true, roamingType = RoamingType.DISABLED),//no non-default state, so won't ever be created
   additionalExportDirectory = "projectTemplates",

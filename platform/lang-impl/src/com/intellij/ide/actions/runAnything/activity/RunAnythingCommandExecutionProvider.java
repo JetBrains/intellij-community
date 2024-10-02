@@ -2,9 +2,11 @@
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class RunAnythingCommandExecutionProvider extends RunAnythingCommandProvider {
 
   @Override

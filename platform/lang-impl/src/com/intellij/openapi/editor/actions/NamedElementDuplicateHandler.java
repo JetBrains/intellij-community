@@ -14,9 +14,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class NamedElementDuplicateHandler extends EditorWriteActionHandler.ForEachCaret {
   private final EditorActionHandler myOriginal;
 

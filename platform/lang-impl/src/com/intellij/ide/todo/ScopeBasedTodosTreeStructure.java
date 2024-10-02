@@ -7,8 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ScopeBasedTodosTreeStructure extends TodoTreeStructure {
   private final ScopeChooserCombo myScopes;
 

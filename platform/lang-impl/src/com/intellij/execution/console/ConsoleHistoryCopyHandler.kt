@@ -17,7 +17,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 @JvmField
-val PROMPT_LENGTH_MARKER: Key<Int?> = Key.create<Int>("PROMPT_LENGTH_MARKER")
+internal val PROMPT_LENGTH_MARKER: Key<Int?> = Key.create<Int>("PROMPT_LENGTH_MARKER")
 
 internal class ConsoleHistoryCopyHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
 

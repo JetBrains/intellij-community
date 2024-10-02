@@ -16,6 +16,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@ApiStatus.Internal
 @State(name = "PostfixTemplatesSettings", storages = @Storage("postfixTemplates.xml"), category = SettingsCategory.CODE)
 public final class PostfixTemplatesSettings implements PersistentStateComponent<Element> {
   private Map<String, Set<String>> myProviderToDisabledTemplates = new HashMap<>();

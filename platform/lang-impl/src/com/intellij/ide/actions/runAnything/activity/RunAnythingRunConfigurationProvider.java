@@ -12,6 +12,7 @@ import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import javax.swing.*;
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.EXECUTOR_KEY;
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
+@ApiStatus.Internal
 public abstract class RunAnythingRunConfigurationProvider extends RunAnythingProviderBase<ChooseRunConfigurationPopup.ItemWrapper> {
   @Override
   public @NotNull String getCommand(@NotNull ChooseRunConfigurationPopup.ItemWrapper value) {

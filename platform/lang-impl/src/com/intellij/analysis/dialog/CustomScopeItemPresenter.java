@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class CustomScopeItemPresenter implements ModelScopeItemPresenter {
 
   @Override

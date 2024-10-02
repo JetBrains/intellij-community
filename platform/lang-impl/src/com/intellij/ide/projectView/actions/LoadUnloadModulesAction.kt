@@ -11,9 +11,11 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
+import org.jetbrains.annotations.ApiStatus
 
 private const val ACTION_ID = "LoadUnloadModules"
 
+@ApiStatus.Internal
 class LoadUnloadModulesAction : DumbAwareAction(actionText(ACTION_ID)) {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isEnabled(e)

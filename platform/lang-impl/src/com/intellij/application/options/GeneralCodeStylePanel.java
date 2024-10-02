@@ -34,6 +34,7 @@ import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+@ApiStatus.Internal
 public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final ExtensionPointName<GeneralCodeStyleOptionsProviderEP> EP_NAME = new ExtensionPointName<>("com.intellij.generalCodeStyleOptionsProvider");
 

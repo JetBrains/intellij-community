@@ -20,6 +20,7 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,6 +39,7 @@ public final class SeverityRenderer extends ComboBoxTableRenderer<HighlightSever
   private final ScopesAndSeveritiesTable myTable;
   private final @NotNull Project myProject;
 
+  @ApiStatus.Internal
   public SeverityRenderer(@NotNull InspectionProfileImpl inspectionProfile,
                           @NotNull Project project,
                           @NotNull Runnable onClose,

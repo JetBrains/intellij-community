@@ -19,10 +19,12 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
-val REFACTORING_DATA_KEY = Key.create<SuggestedRefactoringData>("suggested.refactoring.data")
+internal val REFACTORING_DATA_KEY: Key<SuggestedRefactoringData> = Key.create<SuggestedRefactoringData>("suggested.refactoring.data")
 
+@ApiStatus.Internal
 class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
   private val icon = AllIcons.Actions.SuggestedRefactoringBulb
 

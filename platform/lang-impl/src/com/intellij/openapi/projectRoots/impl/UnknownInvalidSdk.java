@@ -11,12 +11,14 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class UnknownInvalidSdk implements UnknownSdk {
   private static final Logger LOG = Logger.getInstance(UnknownInvalidSdk.class);
 

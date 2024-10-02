@@ -3,11 +3,13 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.statistics.StatisticsInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class DefaultCompletionStatistician extends CompletionStatistician{
 
   @Override

@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class ProjectViewUnloadedModuleNode extends ProjectViewNode<UnloadedModuleDescription> {
   public ProjectViewUnloadedModuleNode(Project project, @NotNull UnloadedModuleDescription value, ViewSettings viewSettings) {
     super(project, value, viewSettings);

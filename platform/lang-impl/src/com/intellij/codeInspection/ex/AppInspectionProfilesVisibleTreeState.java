@@ -7,8 +7,10 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 @State(
   name = "AppInspectionProfilesVisibleTreeState",
   storages = @Storage(value = "other.xml", roamingType = RoamingType.DISABLED)

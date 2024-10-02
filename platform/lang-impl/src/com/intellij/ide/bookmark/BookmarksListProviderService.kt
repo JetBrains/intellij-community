@@ -5,10 +5,12 @@ import com.intellij.ide.favoritesTreeView.FavoritesListProvider
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.CommonActionsPanel.Buttons
+import org.jetbrains.annotations.ApiStatus
 import java.util.Collections.unmodifiableList
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class BookmarksListProviderService(project: Project) {
   private val reference = AtomicReference<List<BookmarksListProvider>>()

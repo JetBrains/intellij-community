@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,6 +17,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@ApiStatus.Internal
 public final class ScopeBasedTodosPanel extends TodoPanel {
 
   private final Alarm myAlarm;

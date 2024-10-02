@@ -8,12 +8,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public abstract class BaseMoveHandler extends EditorWriteActionHandler.ForEachCaret {
   protected final boolean isDown;
 

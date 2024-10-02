@@ -15,10 +15,12 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
+@ApiStatus.Internal
 class ScopeChooserGroup(project: Project, parentDisposable: Disposable, initialScope: SearchScope?) : ActionGroup(), CustomComponentAction {
 
   private val scopeModel = project.service<ScopeService>().createModel(setOf(ScopeOption.FROM_SELECTION, ScopeOption.USAGE_VIEW))

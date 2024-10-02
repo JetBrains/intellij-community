@@ -10,9 +10,11 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PostfixTemplateCompletionContributor extends CompletionContributor {
   public PostfixTemplateCompletionContributor() {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new PostfixTemplatesCompletionProvider());

@@ -4,8 +4,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 
+@ApiStatus.Internal
 class CodeVisionVisualVerticalPositionKeeper(vararg editors: Editor) {
   private val map = HashMap<Editor, RangeMarkerWithOffset>()
 

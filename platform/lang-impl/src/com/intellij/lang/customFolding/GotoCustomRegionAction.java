@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class GotoCustomRegionAction extends AnAction implements DumbAware, PopupAction {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {

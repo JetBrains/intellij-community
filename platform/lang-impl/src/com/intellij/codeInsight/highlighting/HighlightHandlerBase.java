@@ -8,11 +8,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author msk
  */
+@ApiStatus.Internal
 public abstract class HighlightHandlerBase {
   public static void setupFindModel(@NotNull Project project) {
     final FindManager findManager = FindManager.getInstance(project);

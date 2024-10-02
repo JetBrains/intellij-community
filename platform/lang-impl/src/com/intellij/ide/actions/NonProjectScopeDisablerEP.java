@@ -3,10 +3,12 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class NonProjectScopeDisablerEP {
   public static final ExtensionPointName<NonProjectScopeDisablerEP> EP_NAME = new ExtensionPointName<>("com.intellij.goto.nonProjectScopeDisabler");
 

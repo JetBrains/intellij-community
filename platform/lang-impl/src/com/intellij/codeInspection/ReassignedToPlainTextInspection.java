@@ -16,12 +16,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 // this file is assigned to "Plain text" file type even though there's a plugin supporting this specific extension/file pattern
+@ApiStatus.Internal
 public final class ReassignedToPlainTextInspection extends LocalInspectionTool {
   @Override
   public @NonNls @NotNull String getShortName() {

@@ -2,6 +2,7 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -10,6 +11,7 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class ScopeOrderComparator implements Comparator<String> {
   private final List<String> myScopesOrder;
 

@@ -4,8 +4,10 @@ package com.intellij.ide.todo;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class CustomChangelistTodoTreeStructure extends TodoTreeStructure {
   private final PsiTodoSearchHelper myCustomSearchHelper;
 

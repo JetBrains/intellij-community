@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.SequentialModalProgressTask;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public final class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
   private static final Logger LOG = Logger.getInstance(CleanupInspectionUtilImpl.class);
 

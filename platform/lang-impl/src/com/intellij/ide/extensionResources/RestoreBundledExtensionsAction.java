@@ -12,10 +12,12 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+@ApiStatus.Internal
 public final class RestoreBundledExtensionsAction extends DumbAwareAction {
 
   @Override

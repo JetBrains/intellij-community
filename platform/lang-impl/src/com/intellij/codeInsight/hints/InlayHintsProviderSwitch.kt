@@ -4,7 +4,9 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class InlayHintsProviderSwitch : InlayHintsSwitch {
   override fun isEnabled(project: Project): Boolean {
     return InlayHintsSettings.instance().hintsEnabledGlobally()

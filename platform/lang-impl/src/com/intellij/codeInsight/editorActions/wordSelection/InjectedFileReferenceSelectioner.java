@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -29,6 +30,7 @@ import static com.intellij.util.ObjectUtils.notNull;
  * and cause long freezes. If the selectioner improperly behaves with a specific language
  * construct please improve it.
  */
+@ApiStatus.Internal
 public final class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
 
   @Override

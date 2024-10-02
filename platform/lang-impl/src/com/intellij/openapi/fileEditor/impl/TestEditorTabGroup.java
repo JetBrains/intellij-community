@@ -6,10 +6,12 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 
+@ApiStatus.Internal
 public final class TestEditorTabGroup {
   private final String name;
 

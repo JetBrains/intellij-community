@@ -4,10 +4,12 @@ package com.intellij.codeInspection.ui;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class InspectionModuleNode extends InspectionTreeNode {
   private final @NotNull Module myModule;
 

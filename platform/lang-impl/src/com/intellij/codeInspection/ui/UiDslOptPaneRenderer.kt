@@ -27,11 +27,13 @@ import com.intellij.util.applyIf
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory
 import com.intellij.util.ui.UIUtil.setEnabledRecursively
+import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
 import javax.swing.*
 import kotlin.math.max
 
 
+@ApiStatus.Internal
 class UiDslOptPaneRenderer : OptionPaneRenderer {
 
   private data class RendererContext(val controller: OptionController, val parent: Disposable, val project: Project)

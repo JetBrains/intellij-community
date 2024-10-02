@@ -45,6 +45,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 public final class ReincludedRootsUtil {
   private static final Logger LOG = Logger.getInstance(ReincludedRootsUtil.class);

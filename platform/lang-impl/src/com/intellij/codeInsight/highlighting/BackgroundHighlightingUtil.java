@@ -22,10 +22,12 @@ import com.intellij.util.TriConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
 
+@ApiStatus.Internal
 public final class BackgroundHighlightingUtil {
   /**
    * start background thread where find injected fragment at the caret position,

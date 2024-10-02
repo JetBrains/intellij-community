@@ -28,6 +28,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Disposable {
   private static final Function<Object, Set<PostfixTemplateCheckedTreeNode>> myNodesComparator = __ -> new TreeSet<>((o1, o2) -> {
     PostfixTemplate template1 = o1.getTemplate();

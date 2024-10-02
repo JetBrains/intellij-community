@@ -3,7 +3,9 @@ package com.intellij.codeInsight.editorActions.moveLeftRight;
 
 import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class MoveElementRightAction extends EditorAction implements PerformWithDocumentsCommitted {
   public MoveElementRightAction() {
     super(new MoveElementLeftRightActionHandler(false));

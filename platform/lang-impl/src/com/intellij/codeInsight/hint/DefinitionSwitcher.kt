@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.util.preferredHeight
 import com.intellij.ui.util.preferredWidth
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.KeyEvent
 import java.util.function.Supplier
@@ -20,6 +21,7 @@ import javax.swing.SwingConstants
 
 private const val NAVIGATION_PLACE = "DefinitionChooser"
 
+@ApiStatus.Internal
 class DefinitionSwitcher<T>(elements: Array<T>,
                             private val component: JComponent,
                             private val onUpdate: (T)-> Unit) {

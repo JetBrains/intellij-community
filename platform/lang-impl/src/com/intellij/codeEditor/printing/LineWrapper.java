@@ -3,7 +3,9 @@ package com.intellij.codeEditor.printing;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class LineWrapper {
   public static IntList calcBreakOffsets(char[] text, int startOffset, int endOffset, boolean lineStart, double x, double clipX,
                                          WidthProvider widthProvider) {

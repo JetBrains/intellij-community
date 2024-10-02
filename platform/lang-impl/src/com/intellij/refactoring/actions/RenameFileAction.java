@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class RenameFileAction extends AnAction implements ActionPromoter {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {

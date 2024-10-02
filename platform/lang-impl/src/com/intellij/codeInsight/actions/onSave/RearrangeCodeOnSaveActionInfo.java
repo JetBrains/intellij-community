@@ -19,6 +19,7 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class RearrangeCodeOnSaveActionInfo extends ActionOnSaveInfoBase {
   private static final String REARRANGE_CODE_ON_SAVE_PROPERTY = "rearrange.code.on.save";
   private static final boolean REARRANGE_CODE_ON_SAVE_DEFAULT = false;

@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.util.List;
 
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
+@ApiStatus.Internal
 public final class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   private final VirtualFile myFile;
   private final Project myProject;

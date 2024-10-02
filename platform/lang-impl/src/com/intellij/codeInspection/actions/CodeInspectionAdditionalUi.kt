@@ -10,7 +10,9 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class CodeInspectionAdditionalUi {
   val browseProfilesCombo: SchemesCombo<InspectionProfileImpl> = object : SchemesCombo<InspectionProfileImpl>() {
     override fun supportsProjectSchemes(): Boolean {

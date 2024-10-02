@@ -9,10 +9,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class SdkOrLibraryWeigher extends ProximityWeigher {
 
   @Override

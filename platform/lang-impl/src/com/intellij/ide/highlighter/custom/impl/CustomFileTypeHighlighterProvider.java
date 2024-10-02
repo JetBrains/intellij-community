@@ -9,10 +9,12 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterProvider;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public final class CustomFileTypeHighlighterProvider implements SyntaxHighlighterProvider {
   @Override
   public @Nullable SyntaxHighlighter create(final @NotNull FileType fileType, final @Nullable Project project, final @Nullable VirtualFile file) {

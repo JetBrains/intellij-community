@@ -20,11 +20,13 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class RenameLibraryHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance(RenameLibraryHandler.class);
 

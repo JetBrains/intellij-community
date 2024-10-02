@@ -10,8 +10,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.EffectPainter2D
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 
+@ApiStatus.Internal
 class CodeVisionRichTextPainter<T>(
   val printer: (T) -> RichText,
   theme: CodeVisionTheme? = null

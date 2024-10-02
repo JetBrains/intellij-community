@@ -25,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -33,6 +34,7 @@ import java.util.List;
 
 import static com.intellij.psi.util.PsiTreeUtil.skipParentsOfType;
 
+@ApiStatus.Internal
 public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
 
   public static final CustomFoldingSurroundDescriptor INSTANCE = new CustomFoldingSurroundDescriptor();

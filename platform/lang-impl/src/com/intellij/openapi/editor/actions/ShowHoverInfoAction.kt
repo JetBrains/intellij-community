@@ -17,7 +17,9 @@ import com.intellij.openapi.project.DumbAware
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ShowHoverInfoAction: AnAction(), ActionToIgnore, PopupAction, DumbAware, PerformWithDocumentsCommitted {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 

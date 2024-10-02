@@ -21,6 +21,7 @@ import java.util.Collection;
  * <p>
  * Presentation may be customized with {@link CustomizingIndexingPresentationContributor}
  */
+@ApiStatus.Internal
 @ApiStatus.OverrideOnly
 @ApiStatus.Experimental
 @Deprecated(forRemoval = true)

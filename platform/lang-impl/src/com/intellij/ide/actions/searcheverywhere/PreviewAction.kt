@@ -18,9 +18,11 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.usages.impl.UsagePreviewPanel.Companion.PREVIEW_EDITOR_FLAG
 import com.intellij.util.containers.DisposableWrapperList
+import org.jetbrains.annotations.ApiStatus
 
 internal const val PREVIEW_ACTION_ID = "Search.Everywhere.Preview"
 
+@ApiStatus.Internal
 class PreviewAction : DumbAwareToggleAction(IdeBundle.messagePointer("search.everywhere.preview.action.text"),
                                             IdeBundle.messagePointer("search.everywhere.preview.action.description"),
                                             AllIcons.General.PreviewHorizontally) {

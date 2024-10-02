@@ -8,6 +8,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.Collection;
 /**
  * @see RelatedFilesRenamer
  */
+@ApiStatus.Internal
 public class RelatedFilesRenamerFactory implements AutomaticRenamerFactory {
 
   @Override

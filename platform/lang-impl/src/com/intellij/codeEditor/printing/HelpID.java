@@ -16,11 +16,13 @@
 
 package com.intellij.codeEditor.printing;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Alexander.Chernikov
  */
+@ApiStatus.Internal
 public interface HelpID {
   @NonNls String EXPORT_TO_HTML = "reference.file.exportToHtml";
   @NonNls String PRINT = "reference.file.print";

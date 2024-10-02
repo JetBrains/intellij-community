@@ -26,8 +26,10 @@ import com.intellij.refactoring.suggested.REFACTORING_DATA_KEY
 import com.intellij.refactoring.suggested.SuggestedRenameData
 import com.intellij.refactoring.suggested.performSuggestedRefactoring
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
   companion object {
     internal const val ID: String = "Rename refactoring"

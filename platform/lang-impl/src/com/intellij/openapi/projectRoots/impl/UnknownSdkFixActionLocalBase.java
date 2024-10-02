@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicReference;
 
+@ApiStatus.Internal
 public abstract class UnknownSdkFixActionLocalBase extends UnknownSdkFixActionBase {
   protected abstract @NotNull Sdk applyLocalFix();
 

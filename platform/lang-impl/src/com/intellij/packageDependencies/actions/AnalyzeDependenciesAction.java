@@ -6,11 +6,13 @@ import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class AnalyzeDependenciesAction extends BaseAnalysisAction {
   private AnalyzeDependenciesAdditionalUi myPanel;
 

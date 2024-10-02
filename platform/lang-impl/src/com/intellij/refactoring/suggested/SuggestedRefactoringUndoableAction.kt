@@ -8,7 +8,9 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class SuggestedRefactoringUndoableAction private constructor(
   document: Document,
   private val project: Project,

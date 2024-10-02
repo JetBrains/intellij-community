@@ -2,11 +2,13 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.JdkFinder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class JdkFinderImpl implements JdkFinder {
   @Override
   public @NotNull List<String> suggestHomePaths() {

@@ -8,12 +8,14 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.TodoItem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+@ApiStatus.Internal
 public final class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
   private final TodoFileNode myFileNode;
 

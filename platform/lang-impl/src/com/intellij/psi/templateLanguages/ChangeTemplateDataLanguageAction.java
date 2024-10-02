@@ -13,12 +13,14 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
 import static com.intellij.psi.templateLanguages.TemplateDataLanguageMappings.getTemplateableLanguages;
 
+@ApiStatus.Internal
 public final class ChangeTemplateDataLanguageAction extends AnAction {
   @Override
   public void update(final @NotNull AnActionEvent e) {

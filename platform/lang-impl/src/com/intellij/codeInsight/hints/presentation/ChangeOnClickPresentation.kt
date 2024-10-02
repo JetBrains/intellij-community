@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.presentation
 
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.event.MouseEvent
 
 /**
  * Presentation, that changes once it is first clicked
  */
+@ApiStatus.Internal
 class ChangeOnClickPresentation(
   private val notClicked: InlayPresentation,
   private val onClick: () -> InlayPresentation

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.BackwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class BackwardDependenciesHandler extends DependenciesHandlerBase {
   private final AnalysisScope myScopeOfInterest;
 

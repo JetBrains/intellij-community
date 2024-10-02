@@ -123,7 +123,7 @@ public final class FileStatusColorsTableModel extends AbstractTableModel {
     }
   }
 
-  public @Nullable FileStatusColorDescriptor getDescriptorAt(int index) {
+  @Nullable FileStatusColorDescriptor getDescriptorAt(int index) {
     if (index >= 0 && index < myDescriptors.size()) {
       return myDescriptors.get(index);
     }

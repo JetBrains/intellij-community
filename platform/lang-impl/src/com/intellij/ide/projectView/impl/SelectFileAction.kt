@@ -116,4 +116,4 @@ internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecifi
     }
 }
 
-val SELECT_IN_LOG = logger<SelectInProjectViewImpl>()
+private val SELECT_IN_LOG = logger<SelectInProjectViewImpl>()

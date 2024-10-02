@@ -15,6 +15,7 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class CodeCleanupOnSaveActionInfo extends ActionOnSaveInfoBase {
   private static final String CODE_CLEANUP_ON_SAVE_PROPERTY = "code.cleanup.on.save";
   private static final boolean CODE_CLEANUP_ON_SAVE_DEFAULT = false;

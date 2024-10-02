@@ -4,8 +4,10 @@ package com.intellij.refactoring.lang;
 
 import com.intellij.lang.LanguageExtension;
 import com.intellij.refactoring.RefactoringActionHandler;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public final class LanguageExtractInclude extends LanguageExtension<RefactoringActionHandler> {
   public static final LanguageExtractInclude INSTANCE = new LanguageExtractInclude();
 

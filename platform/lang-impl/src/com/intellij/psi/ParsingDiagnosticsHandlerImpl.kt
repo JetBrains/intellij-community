@@ -9,10 +9,12 @@ import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.psi.ParsingDiagnostics.ParserDiagnosticsHandler
 import io.opentelemetry.api.metrics.LongCounter
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
 private val metricIdBadCharacters: Regex = Regex("[^\\w.-]+")
 
+@ApiStatus.Internal
 class ParsingDiagnosticsHandlerImpl : ParserDiagnosticsHandler {
   private val meter = TelemetryManager.getInstance().getMeter(PlatformMetrics)
   private val diagnosticsEntries: MutableMap<String, DiagnosticsEntry> = ConcurrentHashMap()

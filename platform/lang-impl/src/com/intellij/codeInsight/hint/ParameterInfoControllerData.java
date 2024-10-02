@@ -3,10 +3,12 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+@ApiStatus.Internal
 public class ParameterInfoControllerData {
 
   protected final @NotNull ParameterInfoHandler<PsiElement, Object> myHandler;

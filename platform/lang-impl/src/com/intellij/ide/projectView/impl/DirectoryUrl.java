@@ -11,8 +11,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
+@ApiStatus.Internal
 public final class DirectoryUrl extends AbstractUrl {
   private static final @NonNls String ELEMENT_TYPE = "directory";
 

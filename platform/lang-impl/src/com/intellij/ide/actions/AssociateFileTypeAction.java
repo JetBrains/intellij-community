@@ -9,8 +9,10 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class AssociateFileTypeAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

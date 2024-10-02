@@ -9,7 +9,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ReferenceBasedCompletionContributor : CompletionContributor(), DumbAware {
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {

@@ -6,12 +6,14 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.DisplayPriority;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Contains settings for non-language options, for example, text files.
  */
+@ApiStatus.Internal
 public final class OtherFileTypesCodeStyleOptionsProvider extends CodeStyleSettingsProvider {
 
   @Override

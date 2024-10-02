@@ -9,7 +9,9 @@ import com.intellij.lang.Language
 import com.intellij.lang.MetaLanguage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DeclarativeHintsDefaultProviderFactory : InlayHintsProviderFactory {
   companion object {
     private val logger: Logger = logger<DeclarativeHintsDefaultProviderFactory>()

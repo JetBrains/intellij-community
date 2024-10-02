@@ -12,10 +12,12 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.function.Supplier
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 @Suppress("ComponentNotRegistered")
 class ExportToHTMLAction : InspectionResultsExportActionProvider(Supplier { "HTML" },
                                                                  InspectionsBundle.messagePointer("inspection.action.export.html.description"),

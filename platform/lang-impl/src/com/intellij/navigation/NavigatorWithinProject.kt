@@ -38,6 +38,7 @@ import com.intellij.util.text.nullize
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -95,6 +96,7 @@ sealed interface ProtocolOpenProjectResult {
   class Error(val message: String) : ProtocolOpenProjectResult
 }
 
+@ApiStatus.Internal
 data class LocationInFile(val line: Int, val column: Int)
 typealias LocationToOffsetConverter = (LocationInFile, Editor) -> Int
 

@@ -6,11 +6,13 @@ import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.PatternSyntaxException;
 
+@ApiStatus.Internal
 public final class RegExMacro extends MacroBase {
   private static final Logger LOG = Logger.getInstance(RegExMacro.class);
 

@@ -20,6 +20,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import java.util.Arrays;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class QuickFixPreviewPanelFactory {
   private static final Logger LOG = Logger.getInstance(QuickFixPreviewPanelFactory.class);
   private static final int MAX_FIX_COUNT = 3;

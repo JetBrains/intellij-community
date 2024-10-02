@@ -4,11 +4,13 @@ package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
 
   public CurrentFileTodosTreeBuilder(@NotNull JTree tree,

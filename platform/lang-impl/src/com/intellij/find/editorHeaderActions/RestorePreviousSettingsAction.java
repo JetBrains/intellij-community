@@ -8,12 +8,14 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 
+@ApiStatus.Internal
 public final class RestorePreviousSettingsAction extends AnAction implements ShortcutProvider, DumbAware, LightEditCompatible {
   @Override
   public void update(@NotNull AnActionEvent e) {

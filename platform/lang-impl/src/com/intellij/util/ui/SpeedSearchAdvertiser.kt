@@ -5,11 +5,13 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.ActionLink
+import org.jetbrains.annotations.ApiStatus
 import java.awt.FlowLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class SpeedSearchAdvertiser : ComponentAdvertiser() {
   fun addSpeedSearchAdvertisement(): JComponent? {
     if (!Registry.`is`("popup.advertiser.speed.search")) {

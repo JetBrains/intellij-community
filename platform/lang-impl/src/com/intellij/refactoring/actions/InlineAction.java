@@ -15,11 +15,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class InlineAction extends BasePlatformRefactoringAction {
 
   public InlineAction() {

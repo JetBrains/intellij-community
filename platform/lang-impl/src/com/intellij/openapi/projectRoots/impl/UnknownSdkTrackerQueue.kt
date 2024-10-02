@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
 internal class UnknownSdkTrackerQueue(coroutineScope: CoroutineScope) : UnknownSdkCollectorQueue(mergingTimeSpaceMillis = 700, coroutineScope = coroutineScope) {
@@ -35,6 +36,7 @@ internal abstract class UnknownSdkCollectorQueue(mergingTimeSpaceMillis : Int, c
   }
 }
 
+@ApiStatus.Internal
 interface UnknownSdkTrackerTask {
   /**
    * Creates the collector or returns null of the task should be ignored

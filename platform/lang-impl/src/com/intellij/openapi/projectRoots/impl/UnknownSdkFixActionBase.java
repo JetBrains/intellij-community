@@ -3,10 +3,12 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@ApiStatus.Internal
 public abstract class UnknownSdkFixActionBase implements UnknownSdkFixAction, FixWithConsent {
   private final EventDispatcher<Listener> myListeners = EventDispatcher.create(Listener.class);
   private boolean hasUserConsent = false;

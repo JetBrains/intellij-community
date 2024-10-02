@@ -7,9 +7,11 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.PathUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class PanelBuilderSettingsStep(private val wizardContext: WizardContext,
                                private val builder: Panel,
                                private val baseStep: NewProjectWizardBaseStep) : SettingsStep {

@@ -10,8 +10,10 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.RuntimeChooserJreValidator.testNewJdkUnderProgress
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.SystemProperties
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+@ApiStatus.Internal
 interface RuntimeChooserItemWithFixedLocation {
   val homeDir: String
   val version: @NlsSafe String?

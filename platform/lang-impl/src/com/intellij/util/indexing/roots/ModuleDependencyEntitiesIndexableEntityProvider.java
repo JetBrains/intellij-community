@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -12,6 +13,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ModuleDependencyEntitiesIndexableEntityProvider implements IndexableEntityProvider.Enforced<ModuleEntity> {
 
   @Override

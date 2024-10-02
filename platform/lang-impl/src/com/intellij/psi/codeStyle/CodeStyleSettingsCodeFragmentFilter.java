@@ -19,6 +19,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.util.*;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsProvider.EXTENSION_POINT_NAME;
 
+@ApiStatus.Internal
 public final class CodeStyleSettingsCodeFragmentFilter {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsCodeFragmentFilter.class);
 

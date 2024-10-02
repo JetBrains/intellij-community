@@ -10,12 +10,14 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class OfflineInspectionRVContentProvider extends InspectionRVContentProvider {
   private final Map<String, Map<String, Set<OfflineProblemDescriptor>>> myContent;
   private final Map<String, Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult>> myResolvedDescriptor =

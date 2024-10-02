@@ -9,9 +9,11 @@ import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class ApplyChangeSignatureAction extends BaseRefactoringIntentionAction {
   private final String myMethodName;
 

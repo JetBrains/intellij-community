@@ -41,6 +41,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class GutterIconsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   public static final @NonNls String ID = "editor.preferences.gutterIcons";
 

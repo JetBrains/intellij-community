@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.Transferable;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public final class FileListPasteProvider implements PasteProvider {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

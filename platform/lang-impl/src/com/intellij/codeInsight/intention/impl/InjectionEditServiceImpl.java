@@ -15,10 +15,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.impl.source.tree.injected.Place;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class InjectionEditServiceImpl implements InjectionEditService {
   @Override
   public @NotNull Disposable synchronizeWithFragment(@NotNull PsiFile injectedFile, @NotNull Document copyDocument) {

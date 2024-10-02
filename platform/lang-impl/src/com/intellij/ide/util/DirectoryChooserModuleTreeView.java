@@ -16,6 +16,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import javax.swing.*;
 import javax.swing.tree.*;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class DirectoryChooserModuleTreeView implements DirectoryChooserView {
   private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = (node1, node2) -> {
     final Object o1 = node1.getUserObject();

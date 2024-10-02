@@ -9,10 +9,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.StringComboboxEditor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class ComboEditorCompletionContributor extends CompletionContributor implements DumbAware {
 
   public static final Key<Boolean> CONTINUE_RUN_COMPLETION = Key.create("CONTINUE_RUN_COMPLETION");

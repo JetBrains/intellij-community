@@ -22,6 +22,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+@ApiStatus.Internal
 public abstract class IntentionSettingsTree {
   private JComponent myComponent;
   private CheckboxTree myTree;

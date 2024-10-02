@@ -14,6 +14,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.Set;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class StructureViewCompositeModel extends StructureViewModelBase
   implements Disposable,
              StructureViewModel.ElementInfoProvider, 

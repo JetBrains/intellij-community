@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -16,6 +17,7 @@ import java.util.Collection;
  * suggests to rename child files as well. Example: when renaming foo.ts file user is suggested to rename generated foo.js and foo.js.map
  * files as well.
  */
+@ApiStatus.Internal
 public class RelatedFilesRenamer extends AutomaticRenamer {
   private static final Logger LOG = Logger.getInstance(RelatedFilesRenamer.class.getName());
 

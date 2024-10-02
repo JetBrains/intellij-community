@@ -7,9 +7,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.StringComboboxEditor;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class RevealingSpaceComboboxEditor extends StringComboboxEditor {
   public RevealingSpaceComboboxEditor(final Project project, ComboBox comboBox) {
     super(project, FileTypes.PLAIN_TEXT, comboBox);

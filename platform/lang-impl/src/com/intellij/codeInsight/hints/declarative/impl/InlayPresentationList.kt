@@ -20,6 +20,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.enumMapOf
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.withTranslated
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics2D
 import java.awt.Point
@@ -28,6 +29,7 @@ import java.awt.geom.Rectangle2D
 /**
  * @see PresentationTreeBuilderImpl
  */
+@ApiStatus.Internal
 class InlayPresentationList(
   private var state: TinyTree<Any?>,
   @TestOnly var hintFormat: HintFormat,

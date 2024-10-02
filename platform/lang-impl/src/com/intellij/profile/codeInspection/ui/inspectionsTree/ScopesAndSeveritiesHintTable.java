@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -18,6 +19,7 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class ScopesAndSeveritiesHintTable extends JBTable {
   private static final int SCOPE_COLUMN = 0;
   private static final int SEVERITY_COLUMN = 1;

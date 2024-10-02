@@ -6,8 +6,10 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public final class ProjectSubViewSelectInTarget implements SelectInTarget, PossiblyDumbAware {
   private final ProjectViewSelectInTarget myBaseTarget;
   private final String mySubId;

@@ -33,6 +33,7 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,6 +78,7 @@ public final class InspectionProfileSchemesPanel extends AbstractDescriptionAwar
     };
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull InspectionProfileSchemesModel getModel() {
     return myModel;

@@ -10,11 +10,13 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.scope.packageSet.FilteredPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.IdeUICustomization;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class NonProjectFilesScope extends NamedScope {
   public static final String NAME = "Non-Project Files";
   public static final NonProjectFilesScope INSTANCE = new NonProjectFilesScope();

@@ -13,8 +13,10 @@ import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.LineSet
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
 
+@ApiStatus.Internal
 @Service
 class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
 

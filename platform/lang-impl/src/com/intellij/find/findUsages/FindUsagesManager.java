@@ -59,10 +59,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -690,6 +687,7 @@ public final class FindUsagesManager {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
+  @ApiStatus.Internal
   public @NotNull UsageHistory getHistory() {
     return myHistory;
   }

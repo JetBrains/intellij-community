@@ -11,12 +11,14 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Context info action
  */
+@ApiStatus.Internal
 public final class ShowContainerInfoAction extends BaseCodeInsightAction{
   @Override
   protected @NotNull CodeInsightActionHandler getHandler() {

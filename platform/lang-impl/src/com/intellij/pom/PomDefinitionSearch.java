@@ -5,11 +5,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTarget;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Gregory.Shrago
  */
+@ApiStatus.Internal
 public final class PomDefinitionSearch implements QueryExecutor<PsiElement, PsiElement> {
   @Override
   public boolean execute(@NotNull PsiElement queryParameters, @NotNull Processor<? super PsiElement> consumer) {

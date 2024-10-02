@@ -36,6 +36,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.NamedColorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +58,7 @@ import static com.intellij.profile.codeInspection.ui.table.SeverityRenderer.EDIT
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class ScopesAndSeveritiesTable extends JBTable {
   private static final Logger LOG = Logger.getInstance(ScopesAndSeveritiesTable.class);
 

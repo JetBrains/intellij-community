@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ import static com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder.createMarku
  * Interoperability with the following applications was tested:
  * MS Office 2010 (Word, PowerPoint, Outlook), OpenOffice (Writer, Impress), Gmail, Mac TextEdit, Mac Mail, Mac Keynote.
  */
+@ApiStatus.Internal
 public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithMarkup> {
   private static final Logger LOG = Logger.getInstance(TextWithMarkupProcessor.class);
 

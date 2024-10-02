@@ -10,12 +10,14 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
+@ApiStatus.Internal
 public final class LookupActionsStep extends BaseListPopupStep<LookupElementAction> implements ClosableByLeftArrow {
   private final LookupImpl myLookup;
   private final LookupElement myLookupElement;

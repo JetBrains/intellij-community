@@ -9,12 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.FileStatusManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class FileStatusColorsConfigurable implements SearchableConfigurable, Configurable.NoScroll, Configurable.VariableProjectAppLevel {
 
   private static final String FILE_STATUS_COLORS_ID = "file.status.colors";

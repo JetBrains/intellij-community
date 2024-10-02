@@ -9,7 +9,9 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.xml.CommonXmlStrings;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class SettingsUtil {
   /**
    * Injects into {@code description} "Powered by " message with a link to the corresponding plugin page based on passed {@code loader}.

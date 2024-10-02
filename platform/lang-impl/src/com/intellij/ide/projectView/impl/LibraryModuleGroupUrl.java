@@ -6,9 +6,11 @@ import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 
+@ApiStatus.Internal
 public final class LibraryModuleGroupUrl extends AbstractUrl {
 
   private static final @NonNls String ELEMENT_TYPE = "libraryModuleGroup";

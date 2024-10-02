@@ -4,8 +4,10 @@ package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class TextConsoleBuilderFactoryImpl extends TextConsoleBuilderFactory {
   @Override
   public @NotNull TextConsoleBuilder createBuilder(final @NotNull Project project) {

@@ -1,4 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:ApiStatus.Internal
+
 package com.intellij.codeInspection.incorrectFormatting
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -15,6 +17,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
 val INSPECTION_KEY: Key<IncorrectFormattingInspection> = Key.create(IncorrectFormattingInspection().shortName)
 

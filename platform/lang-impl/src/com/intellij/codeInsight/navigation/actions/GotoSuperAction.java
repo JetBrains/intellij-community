@@ -13,9 +13,11 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class GotoSuperAction extends PresentableActionHandlerBasedAction implements CodeInsightActionHandler, DumbAware {
 
   public static final @NonNls String FEATURE_ID = "navigation.goto.super";

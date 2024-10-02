@@ -14,12 +14,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 
-fun navigateAndHint(project: Project,
-                    usage: Usage,
-                    hint: @Nls(capitalization = Nls.Capitalization.Sentence) String,
-                    parameters: ShowUsagesParameters,
-                    actionHandler: ShowUsagesActionHandler,
-                    onReady: Runnable) {
+internal fun navigateAndHint(project: Project,
+                             usage: Usage,
+                             hint: @Nls(capitalization = Nls.Capitalization.Sentence) String,
+                             parameters: ShowUsagesParameters,
+                             actionHandler: ShowUsagesActionHandler,
+                             onReady: Runnable) {
   // Code below need EDT
   (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT) {
     NavigationService.getInstance(project).navigate(usage, NavigationOptions.defaultOptions().requestFocus(true))
@@ -36,7 +36,7 @@ fun navigateAndHint(project: Project,
   }
 }
 
-fun getEditorFor(usage: Usage): Editor? {
+internal fun getEditorFor(usage: Usage): Editor? {
   val location = usage.location
   val newFileEditor = location?.editor
   return if (newFileEditor is TextEditor) newFileEditor.editor else null

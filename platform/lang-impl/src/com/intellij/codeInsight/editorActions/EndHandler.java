@@ -14,8 +14,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class EndHandler extends EditorActionHandler.ForEachCaret {
   private final EditorActionHandler myOriginalHandler;
 

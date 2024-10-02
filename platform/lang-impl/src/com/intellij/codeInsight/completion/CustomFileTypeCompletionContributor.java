@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -20,6 +21,7 @@ import static com.intellij.patterns.PlatformPatterns.psiFile;
 import static com.intellij.patterns.StandardPatterns.instanceOf;
 
 
+@ApiStatus.Internal
 public final class CustomFileTypeCompletionContributor extends CompletionContributor implements DumbAware {
   public CustomFileTypeCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inFile(psiFile().withFileType(instanceOf(CustomSyntaxTableFileType.class))),

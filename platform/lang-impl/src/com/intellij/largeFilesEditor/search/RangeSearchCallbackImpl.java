@@ -12,7 +12,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class RangeSearchCallbackImpl implements RangeSearchCallback {
 
   private static final Logger LOG = Logger.getInstance(RangeSearchCallbackImpl.class);

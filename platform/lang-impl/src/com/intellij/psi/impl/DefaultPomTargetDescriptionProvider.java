@@ -12,8 +12,10 @@ import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageViewNodeTextLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class DefaultPomTargetDescriptionProvider extends PomDescriptionProvider {
   @Override
   public String getElementDescription(@NotNull PomTarget element, @NotNull ElementDescriptionLocation location) {

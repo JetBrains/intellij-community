@@ -12,11 +12,13 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class SetTodoFilterAction extends ActionGroup implements DumbAware {
   private final Project myProject;
   private final TodoPanelSettings myToDoSettings;

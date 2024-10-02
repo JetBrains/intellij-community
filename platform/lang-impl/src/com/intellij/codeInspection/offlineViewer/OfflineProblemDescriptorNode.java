@@ -8,8 +8,10 @@ import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   private final OfflineDescriptorResolveResult myDescriptorResolveResult;
   private final OfflineProblemDescriptor myOfflineDescriptor;

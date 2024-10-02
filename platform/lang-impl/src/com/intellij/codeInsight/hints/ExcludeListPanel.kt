@@ -20,6 +20,7 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
@@ -27,6 +28,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 
+@ApiStatus.Internal
 class ExcludeListDialog(val language: Language, private val patternToAdd: String? = null) : DialogWrapper(null) {
   lateinit var myEditor: EditorTextField
   private var myPatternsAreValid = true

@@ -7,11 +7,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 @State(name = "CodeCleanupOnSaveOptions", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class CodeCleanupOnSaveOptions implements PersistentStateComponent<CodeCleanupOnSaveOptions.State> {

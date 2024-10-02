@@ -38,6 +38,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +69,7 @@ public class DirectoryChooser extends DialogWrapper {
     this(project, new DirectoryChooserModuleTreeView(project));
   }
 
+  @ApiStatus.Internal
   public DirectoryChooser(@NotNull Project project, @NotNull DirectoryChooserView view){
     super(project, true);
     myView = view;

@@ -9,12 +9,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class ToggleShowImportPopupsAction extends ToggleAction {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {

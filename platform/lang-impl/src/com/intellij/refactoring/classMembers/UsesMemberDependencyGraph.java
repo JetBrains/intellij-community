@@ -10,12 +10,14 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extends PsiElement, M extends MemberInfoBase<T>> implements MemberDependencyGraph<T, M> {
   private static final Logger LOG = Logger.getInstance(UsesMemberDependencyGraph.class);
   private final HashSet<T> mySelectedNormal;

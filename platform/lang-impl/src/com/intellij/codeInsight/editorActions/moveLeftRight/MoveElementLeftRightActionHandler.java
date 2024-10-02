@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Range;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class MoveElementLeftRightActionHandler extends EditorWriteActionHandler.ForEachCaret {
   private static final Comparator<PsiElement> BY_OFFSET = Comparator.comparingInt(PsiElement::getTextOffset);
 

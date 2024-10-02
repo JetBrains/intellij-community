@@ -11,12 +11,14 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ExpandAllRegionsAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public ExpandAllRegionsAction() {
     super(new BaseFoldingHandler() {

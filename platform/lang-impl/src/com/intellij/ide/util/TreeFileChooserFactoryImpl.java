@@ -6,11 +6,13 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
+@ApiStatus.Internal
 public final class TreeFileChooserFactoryImpl extends TreeFileChooserFactory {
   private final Project myProject;
 

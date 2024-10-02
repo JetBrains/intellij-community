@@ -3,9 +3,11 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 
 
+@ApiStatus.Internal
 class IndexingReasonExplanationLogger {
   companion object {
     private const val MAX_EXPLANATIONS_PER_TYPE: Int = 10

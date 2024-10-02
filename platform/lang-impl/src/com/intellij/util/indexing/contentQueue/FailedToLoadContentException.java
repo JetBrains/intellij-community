@@ -2,8 +2,10 @@
 package com.intellij.util.indexing.contentQueue;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class FailedToLoadContentException extends Exception {
   private final VirtualFile myFile;
 

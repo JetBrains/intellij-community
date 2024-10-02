@@ -3,6 +3,7 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ListExpandableItemsHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -11,6 +12,7 @@ import java.awt.event.*;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class CompletionExtender extends ListExpandableItemsHandler {
 
   public CompletionExtender(final @NotNull JList list) {

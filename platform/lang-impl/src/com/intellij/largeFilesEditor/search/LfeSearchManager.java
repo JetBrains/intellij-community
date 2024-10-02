@@ -8,6 +8,7 @@ import com.intellij.largeFilesEditor.search.searchTask.CloseSearchTask;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public interface LfeSearchManager {
 
   SearchReplaceComponent getSearchReplaceComponent();
 
+  @ApiStatus.Internal
   CloseSearchTask getLastExecutedCloseSearchTask();
 
   void onSearchActionHandlerExecuted();
@@ -42,6 +44,7 @@ public interface LfeSearchManager {
 
   void dispose();
 
+  @ApiStatus.Internal
   List<SearchResult> getSearchResultsInPage(Page page);
 
   boolean isSearchWorkingNow();

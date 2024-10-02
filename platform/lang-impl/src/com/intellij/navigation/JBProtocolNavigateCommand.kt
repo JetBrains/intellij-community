@@ -7,7 +7,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.NlsContexts.DialogMessage
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
   /**
    * The handler parses the following "navigate" command parameters:

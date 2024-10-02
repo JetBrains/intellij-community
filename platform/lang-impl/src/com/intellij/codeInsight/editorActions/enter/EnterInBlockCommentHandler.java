@@ -21,8 +21,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class EnterInBlockCommentHandler extends EnterHandlerDelegateAdapter {
   private static final String WHITESPACE = " \t";
 

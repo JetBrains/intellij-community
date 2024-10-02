@@ -8,12 +8,14 @@ import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class RangeSearchTask extends SearchTaskBase {
   private static final Logger logger = Logger.getInstance(RangeSearchTask.class);
 

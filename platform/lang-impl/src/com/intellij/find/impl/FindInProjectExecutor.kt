@@ -9,8 +9,10 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.table.TableCellRenderer
 
+@ApiStatus.Internal
 open class FindInProjectExecutor {
 
     companion object {

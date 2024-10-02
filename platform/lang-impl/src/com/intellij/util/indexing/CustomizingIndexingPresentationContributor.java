@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Provides opportunity to specify UI and diagnostic messages for indexing entities.
  */
+@ApiStatus.Internal
 @ApiStatus.OverrideOnly
 @ApiStatus.Experimental
 public interface CustomizingIndexingPresentationContributor<E extends WorkspaceEntity> extends WorkspaceFileIndexContributor<E> {

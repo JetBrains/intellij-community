@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.RefactoringCodeVisionSupport
 import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import javax.swing.Icon
@@ -294,6 +295,7 @@ internal fun SuggestedRefactoringSupport.changeSignatureAvailabilityRange(anchor
     ?.extend(document.charsSequence) { it == ' ' || it == '\t' }
 }
 
+@ApiStatus.Internal
 class SuggestedRefactoringGutterMarkPreprocessor : GutterMarkPreprocessor {
   override fun processMarkers(list: List<GutterMark>): List<GutterMark> {
     val mark = list.firstOrNull {

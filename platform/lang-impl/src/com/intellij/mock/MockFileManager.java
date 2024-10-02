@@ -10,12 +10,14 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class MockFileManager implements FileManager {
   private final PsiManagerEx myManager;
   // in mock tests it's LightVirtualFile, they're only alive when they're referenced,

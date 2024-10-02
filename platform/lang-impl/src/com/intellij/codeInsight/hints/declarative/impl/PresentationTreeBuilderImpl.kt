@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.declarative.impl
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.openapi.application.ApplicationManager
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * The presentation is saved into a [TinyTree] during its construction to be compact.
@@ -21,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager
  * Text node has tag [InlayTags.TEXT_TAG] and either [String] or [ActionWithContent] (with String content) data,
  * depending on whether the click handler is available.
  */
+@ApiStatus.Internal
 class PresentationTreeBuilderImpl private constructor(
   private val index: Byte,
   private val context: InlayTreeBuildingContext
@@ -120,6 +122,7 @@ class PresentationTreeBuilderImpl private constructor(
   }
 }
 
+@ApiStatus.Internal
 class ActionWithContent(
   val actionData: InlayActionData,
   val content: Any

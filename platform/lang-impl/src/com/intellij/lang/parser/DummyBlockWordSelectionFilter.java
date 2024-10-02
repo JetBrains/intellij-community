@@ -3,10 +3,12 @@ package com.intellij.lang.parser;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author gregsh
  */
+@ApiStatus.Internal
 public final class DummyBlockWordSelectionFilter implements Condition<PsiElement> {
   @Override
   public boolean value(PsiElement element) {

@@ -9,8 +9,10 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ExperimentalUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ViewNavigationBarMembersAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void update(@NotNull AnActionEvent e) {

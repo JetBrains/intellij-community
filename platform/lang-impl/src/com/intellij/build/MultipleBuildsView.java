@@ -51,6 +51,7 @@ import java.util.stream.IntStream;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 @ApiStatus.Experimental
 public final class MultipleBuildsView implements BuildProgressListener, Disposable {
   private static final Logger LOG = Logger.getInstance(MultipleBuildsView.class);

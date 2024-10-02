@@ -6,8 +6,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class SafeDeleteUsageViewDescriptor implements UsageViewDescriptor {
   private final PsiElement @NotNull [] myElementsToDelete;
 

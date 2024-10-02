@@ -14,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -23,6 +24,7 @@ import java.util.Collection;
 /**
  * @author Maxim.Mossienko
  */
+@ApiStatus.Internal
 public final class GroovyScriptMacro extends Macro {
   private static final Logger LOG = Logger.getInstance(GroovyScriptMacro.class);
 

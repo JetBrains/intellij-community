@@ -7,11 +7,13 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class UnknownMissingSdk {
   public static @NotNull UnknownSdkFix createMissingSdkFix(@Nullable Project project,
                                                            @NotNull UnknownSdk unknownSdk,

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.IntObjectLRUMap;
 import com.intellij.util.io.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 
+@ApiStatus.Internal
 public final class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements Closeable {
   private static volatile int STORAGE_SIZE_LIMIT = 1024 * 1024;
 

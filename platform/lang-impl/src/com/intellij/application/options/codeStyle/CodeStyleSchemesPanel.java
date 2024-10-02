@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.JBDimension;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
   
   private final CodeStyleSchemesModel myModel;

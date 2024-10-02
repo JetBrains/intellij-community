@@ -32,6 +32,7 @@ import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import one.util.streamex.MoreCollectors;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +64,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     return SystemInfo.isMac ? 16 : 0;
   }
 
+  @ApiStatus.Internal
   public static InspectionsConfigTreeTable create(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
     return new InspectionsConfigTreeTable(new InspectionsConfigTreeTableModel(settings, parentDisposable));
   }
@@ -144,6 +146,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     getEmptyText().setText(AnalysisBundle.message("inspections.settings.empty.text"));
   }
 
+  @ApiStatus.Internal
   public @Nullable InspectionConfigTreeNode.Tool getStrictlySelectedToolNode() {
     TreePath[] paths = getTree().getSelectionPaths();
     return paths != null && paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Tool
@@ -151,6 +154,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
            : null;
   }
 
+  @ApiStatus.Internal
   public @Nullable InspectionConfigTreeNode.Group getStrictlySelectedGroupNode() {
     TreePath[] paths = getTree().getSelectionPaths();
     return paths != null && paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Group
@@ -168,6 +172,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     UIUtil.fixOSXEditorBackground(this);
   }
 
+  @ApiStatus.Internal
   public abstract static class InspectionsConfigTreeTableSettings {
     private final TreeNode myRoot;
     private final Project myProject;

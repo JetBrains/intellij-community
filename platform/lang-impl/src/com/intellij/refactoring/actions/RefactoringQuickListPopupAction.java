@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+@ApiStatus.Internal
 public final class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
   public RefactoringQuickListPopupAction() {

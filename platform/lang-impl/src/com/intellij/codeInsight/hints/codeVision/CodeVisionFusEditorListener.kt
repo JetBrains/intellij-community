@@ -12,8 +12,10 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.util.removeUserData
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
+@ApiStatus.Internal
 class CodeVisionFusEditorListener : EditorFactoryListener {
   override fun editorReleased(event: EditorFactoryEvent) {
     if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return

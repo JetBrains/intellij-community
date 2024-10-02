@@ -8,8 +8,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class LookupDocumentSavingVetoer extends FileDocumentSynchronizationVetoer {
   @Override
   public boolean maySaveDocument(@NotNull Document document, boolean isSaveExplicit) {

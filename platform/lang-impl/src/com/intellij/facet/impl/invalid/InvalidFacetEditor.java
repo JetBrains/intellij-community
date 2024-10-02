@@ -6,11 +6,13 @@ import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class InvalidFacetEditor extends FacetEditorTab {
   private final @NlsContexts.DialogMessage String myErrorMessage;
   private JPanel myMainPanel;

@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
@@ -27,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public final class CopyPasteIndentProcessor extends CopyPastePostProcessor<IndentTransferableData> {
   @Override
   public @NotNull List<IndentTransferableData> collectTransferableData(@NotNull PsiFile file,

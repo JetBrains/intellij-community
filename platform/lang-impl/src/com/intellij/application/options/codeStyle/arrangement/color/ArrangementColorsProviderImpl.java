@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementColorsAware;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class ArrangementColorsProviderImpl implements ArrangementColorsProvider {
 
   private final @NotNull Map<ArrangementSettingsToken, TextAttributes> myNormalAttributesCache   =

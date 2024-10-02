@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.NameUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class ConvertToCamelCaseMacro extends MacroBase {
 
   public ConvertToCamelCaseMacro() {

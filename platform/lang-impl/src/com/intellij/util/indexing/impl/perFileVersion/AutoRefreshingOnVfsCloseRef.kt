@@ -3,6 +3,7 @@ package com.intellij.util.indexing.impl.perFileVersion
 
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl
+import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 
 /**
@@ -10,6 +11,7 @@ import java.io.Closeable
  * or [com.intellij.openapi.vfs.newvfs.persistent.dev.FastFileAttributes.Int4FileAttribute]) will be invalidated on VFS close.
  * [AutoRefreshingOnVfsCloseRef] tracks VFS close events and recreates references automatically after VFS re-mounted.
  */
+@ApiStatus.Internal
 class AutoRefreshingOnVfsCloseRef<T : Closeable>(private val factory: (FSRecordsImpl) -> T) : Closeable {
 
   @Volatile

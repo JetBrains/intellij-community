@@ -11,8 +11,10 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class CollapseSelectionAction extends BaseCodeInsightAction implements DumbAware {
   @Override
   protected @NotNull CodeInsightActionHandler getHandler() {

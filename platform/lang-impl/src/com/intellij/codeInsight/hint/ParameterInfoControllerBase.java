@@ -33,6 +33,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -56,6 +57,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   protected final RangeMarker myLbraceMarker;
   private final CaretListener myEditorCaretListener;
 
+  @ApiStatus.Internal
   protected final @NotNull ParameterInfoControllerData myParameterInfoControllerData;
 
   protected final Alarm myAlarm = new Alarm();
@@ -183,6 +185,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     myParameterInfoControllerData.getHandler().syncUpdateOnCaretMove(new MyLazyUpdateParameterInfoContext());
   }
 
+  @ApiStatus.Internal
   protected @NotNull ParameterInfoControllerData createParameterInfoControllerData(@NotNull ParameterInfoHandler<PsiElement, Object> handler) {
     return new ParameterInfoControllerData(handler);
   }

@@ -5,10 +5,12 @@ import com.intellij.codeInsight.intention.impl.config.BeforeAfterMetaData;
 import com.intellij.codeInsight.intention.impl.config.TextDescriptor;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateWrapper;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.template.postfix.settings.PostfixTemplateMetaData.decorateTextDescriptorWithKey;
 
+@ApiStatus.Internal
 public final class PostfixTemplateWrapperMetaData implements BeforeAfterMetaData {
 
   private final @NotNull BeforeAfterMetaData myDelegateMetaData;

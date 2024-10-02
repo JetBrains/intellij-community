@@ -9,8 +9,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class GotoSymbolAction extends SearchEverywhereBaseAction implements DumbAware {
 
   @Override

@@ -6,6 +6,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +16,7 @@ import java.awt.*;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class InspectionViewNavigationPanel extends JPanel implements InspectionTreeLoadingProgressAware {
   private final InspectionTreeNode myNode;
   private final InspectionTree myTree;

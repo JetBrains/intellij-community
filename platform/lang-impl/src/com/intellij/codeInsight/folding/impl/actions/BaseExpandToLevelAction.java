@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+@ApiStatus.Internal
 public abstract class BaseExpandToLevelAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   protected BaseExpandToLevelAction(final int level, final boolean expandAll) {
     super(new BaseFoldingHandler() {

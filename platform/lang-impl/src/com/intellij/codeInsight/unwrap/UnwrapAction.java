@@ -7,8 +7,10 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class UnwrapAction extends BaseCodeInsightAction{
   public UnwrapAction() {
     super(true);

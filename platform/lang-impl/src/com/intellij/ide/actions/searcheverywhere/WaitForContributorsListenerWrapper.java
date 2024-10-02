@@ -17,6 +17,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class WaitForContributorsListenerWrapper implements SearchListener, Disposable {
 
   private static final Logger LOG = Logger.getInstance(WaitForContributorsListenerWrapper.class);

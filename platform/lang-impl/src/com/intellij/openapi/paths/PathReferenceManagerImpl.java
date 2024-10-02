@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class PathReferenceManagerImpl extends PathReferenceManager {
   private final StaticPathReferenceProvider myStaticProvider = new StaticPathReferenceProvider(null);
   private final PathReferenceProvider myGlobalPathsProvider = new GlobalPathReferenceProvider();

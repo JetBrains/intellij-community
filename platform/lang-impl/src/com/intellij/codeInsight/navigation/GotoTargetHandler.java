@@ -41,10 +41,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -329,6 +326,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     public boolean isCanceled;
 
     private boolean hasDifferentNames;
+    @ApiStatus.Internal
     public BackgroundUpdaterTaskBase<ItemWithPresentation> listUpdaterTask;
     private final Set<String> myNames;
     private List<ItemWithPresentation> myItems;

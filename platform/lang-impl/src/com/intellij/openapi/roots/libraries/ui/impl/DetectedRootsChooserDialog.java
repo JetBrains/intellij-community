@@ -20,6 +20,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ComboBoxCellEditor;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,7 @@ import java.util.*;
  * @author max
  * @author Constantine.Plotnikov
  */
+@ApiStatus.Internal
 public final class DetectedRootsChooserDialog extends DialogWrapper {
   private static final ColumnInfo<?, ?> ROOT_COLUMN = new TreeColumnInfo("");
   private static final ColumnInfo<VirtualFileCheckedTreeNode, String> ROOT_TYPE_COLUMN = new ColumnInfo<>("") {

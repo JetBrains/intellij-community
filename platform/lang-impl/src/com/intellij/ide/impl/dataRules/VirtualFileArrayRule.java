@@ -24,6 +24,7 @@ import com.intellij.usages.UsageDataUtil;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class VirtualFileArrayRule implements GetDataRule {
 
   private static final Logger LOG = Logger.getInstance(VirtualFileArrayRule.class);

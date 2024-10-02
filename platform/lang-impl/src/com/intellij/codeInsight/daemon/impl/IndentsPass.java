@@ -33,11 +33,13 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
+@ApiStatus.Internal
 @SuppressWarnings("SSBasedInspection")
 public final class IndentsPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Key<List<RangeHighlighter>> INDENT_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("INDENT_HIGHLIGHTERS_IN_EDITOR_KEY");

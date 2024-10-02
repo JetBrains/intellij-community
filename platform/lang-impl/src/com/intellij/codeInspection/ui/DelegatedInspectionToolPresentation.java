@@ -8,9 +8,11 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.Predicates;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class DelegatedInspectionToolPresentation extends DefaultInspectionToolPresentation {
 
   private final @NotNull InspectionProblemConsumer myDelegate;

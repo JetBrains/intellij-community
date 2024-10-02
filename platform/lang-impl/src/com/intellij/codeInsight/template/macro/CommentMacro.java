@@ -11,11 +11,13 @@ import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public abstract class CommentMacro extends MacroBase {
   private final Function<? super Commenter, String> myCommenterFunction;
 

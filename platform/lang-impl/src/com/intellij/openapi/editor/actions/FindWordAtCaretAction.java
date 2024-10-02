@@ -12,11 +12,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
 
+@ApiStatus.Internal
 public class FindWordAtCaretAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   protected static final class Handler extends EditorActionHandler {
     private final SearchResults.Direction myDirection;

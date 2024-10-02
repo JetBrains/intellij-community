@@ -10,12 +10,14 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public class LiveTemplateDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {

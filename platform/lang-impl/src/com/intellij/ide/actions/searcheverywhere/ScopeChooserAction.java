@@ -24,6 +24,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public abstract class ScopeChooserAction extends ActionGroup implements CustomComponentAction, DumbAware, SearchEverywhereToggleAction {
   static final char CHOOSE = 'O';
   static final char TOGGLE = 'P';

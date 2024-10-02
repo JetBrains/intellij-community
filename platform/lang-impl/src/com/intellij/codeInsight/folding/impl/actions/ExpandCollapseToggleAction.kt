@@ -8,7 +8,9 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.actionSystem.EditorAction
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ExpandCollapseToggleAction : EditorAction(object : BaseFoldingHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
     val line = editor.caretModel.logicalPosition.line

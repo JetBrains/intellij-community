@@ -24,8 +24,10 @@ import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentIntObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import org.jetbrains.annotations.ApiStatus
 import java.util.stream.IntStream
 
+@ApiStatus.Internal
 class InlayHintsPass(
   private val rootElement: PsiElement,
   private val enabledCollectors: List<CollectorWithSettings<out Any>>,

@@ -6,8 +6,10 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class InvertBooleanUsageViewDescriptor implements UsageViewDescriptor {
   private final PsiElement myElement;
 

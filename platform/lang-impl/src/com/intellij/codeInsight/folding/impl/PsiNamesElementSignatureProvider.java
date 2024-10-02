@@ -3,6 +3,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.util.StringTokenizer;
  * <p/>
  * Thread-safe.
  */
+@ApiStatus.Internal
 public final class PsiNamesElementSignatureProvider extends AbstractElementSignatureProvider {
 
   private static final String TYPE_MARKER            = "n";

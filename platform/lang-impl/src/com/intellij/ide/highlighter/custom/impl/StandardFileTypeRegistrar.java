@@ -10,8 +10,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class StandardFileTypeRegistrar implements FileTypeRegistrar {
   @Override
   public void initFileType(final @NotNull FileType fileType) {

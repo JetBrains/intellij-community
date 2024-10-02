@@ -21,12 +21,14 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Optional;
 
+@ApiStatus.Internal
 public final class PSIRenderingUtils {
 
   private PSIRenderingUtils() {}

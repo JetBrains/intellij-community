@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class TestEditorSplitter {
   private final HashMap<String, TestEditorTabGroup> myTabGroups = new HashMap<>();
   private static final String Default = "Default";

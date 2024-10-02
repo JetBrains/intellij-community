@@ -13,11 +13,13 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ExperimentalUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class FindAllAction extends AnAction implements ShortcutProvider, DumbAware {
   private static Icon getFindIcon() {
     return ExperimentalUI.isNewUI() ? AllIcons.General.OpenInToolWindow : AllIcons.General.Pin_tab;

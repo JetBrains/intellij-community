@@ -13,11 +13,13 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.text.MatcherHolder
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Insets
 import javax.swing.*
 
+@ApiStatus.Internal
 class PSIPresentation(val targetPresentation: TargetPresentation) : RemoteSearchEverywherePresentation {
   override fun getPresentationRenderer(): ListCellRenderer<out RemoteSearchEverywherePresentation> = PSIPresentationRenderer()
 }

@@ -17,10 +17,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   @Override
   public boolean startInWriteAction() {

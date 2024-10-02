@@ -33,9 +33,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 
-
+@ApiStatus.Internal
 class ShowSettingsWithAddedPattern : AnAction(), ActionRemoteBehaviorSpecification.BackendOnly {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -63,6 +64,7 @@ class ShowSettingsWithAddedPattern : AnAction(), ActionRemoteBehaviorSpecificati
   }
 }
 
+@ApiStatus.Internal
 class ShowParameterHintsSettings : AnAction(), ActionRemoteBehaviorSpecification.BackendOnly {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -72,7 +74,7 @@ class ShowParameterHintsSettings : AnAction(), ActionRemoteBehaviorSpecification
   }
 }
 
-fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo?) -> String?) {
+private fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo?) -> String?) {
   val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
   val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
@@ -90,6 +92,7 @@ fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo?) -> String
   }
 }
 
+@ApiStatus.Internal
 @Suppress("IntentionDescriptionNotFoundInspection")
 class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityAction {
   override fun getText(): String = CodeInsightBundle.message("inlay.hints.exclude.list.method")
@@ -159,7 +162,7 @@ class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityActio
   override fun startInWriteAction(): Boolean = false
 }
 
-
+@ApiStatus.Internal
 @Suppress("IntentionDescriptionNotFoundInspection")
 class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
   @IntentionName
@@ -203,6 +206,7 @@ class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
   override fun startInWriteAction(): Boolean = false
 }
 
+@ApiStatus.Internal
 @Suppress("IntentionDescriptionNotFoundInspection")
 class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
   @IntentionName
@@ -344,4 +348,4 @@ private fun getInfoForElement(file: PsiFile,
   return provider.getHintInfo(method, file)
 }
 
-fun MethodInfo.toPattern(): String = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'
+private fun MethodInfo.toPattern(): String = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -18,6 +19,7 @@ import java.util.Collections;
 import static com.intellij.refactoring.actions.BaseRefactoringAction.findRefactoringTargetInEditor;
 import static com.intellij.refactoring.actions.BaseRefactoringAction.getPsiElementArray;
 
+@ApiStatus.Internal
 public final class RenameHandlerRenamerFactory implements RenamerFactory {
 
   private static boolean isEnabledOnDataContext(@NotNull DataContext dataContext) {

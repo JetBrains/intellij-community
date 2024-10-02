@@ -14,11 +14,13 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ANY_KEY;
 import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ESCAPE;
 
+@ApiStatus.Internal
 public final class EscapeHandler extends EditorActionHandler {
   private final @NotNull EditorActionHandler myOriginalHandler;
 

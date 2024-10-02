@@ -27,6 +27,7 @@ import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.MultiMap;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ import java.util.function.Supplier;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public final class BuildContentManagerImpl implements BuildContentManager, Disposable {
   public static final Supplier<@NlsContexts.TabTitle String> BUILD_TAB_TITLE_SUPPLIER = LangBundle.messagePointer("tab.title.build");
   private final Supplier<BadgeIconSupplier> TW_ICON = new SynchronizedClearableLazy<>(() -> {

@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.richcopy.model;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.io.LZ4Compressor;
 import net.jpountz.lz4.LZ4CompressorWithLength;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -35,10 +36,12 @@ public final class SyntaxInfo {
     myColorRegistry = colorRegistry;
   }
 
+  @ApiStatus.Internal
   public @NotNull ColorRegistry getColorRegistry() {
     return myColorRegistry;
   }
 
+  @ApiStatus.Internal
   public @NotNull FontNameRegistry getFontNameRegistry() {
     return myFontNameRegistry;
   }
@@ -55,6 +58,7 @@ public final class SyntaxInfo {
     return myFontSize;
   }
 
+  @ApiStatus.Internal
   public void processOutputInfo(MarkupHandler handler) {
     MarkupIterator it = new MarkupIterator();
     while (it.hasNext()) {
@@ -190,6 +194,7 @@ public final class SyntaxInfo {
     }
   }
 
+  @ApiStatus.Internal
   public final class MarkupIterator {
     private int pos;
     private final OutputInfoSerializer.InputStream myOutputInfoStream;

@@ -10,10 +10,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileContent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry implements Disposable {
   private static final Logger LOG = Logger.getInstance(FrameworkDetectorRegistryImpl.class);
 

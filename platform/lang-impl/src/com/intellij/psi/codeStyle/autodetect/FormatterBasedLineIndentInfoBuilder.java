@@ -12,12 +12,14 @@ import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.formatter.common.NewLineBlocksIterator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class FormatterBasedLineIndentInfoBuilder {
   private static final int MAX_NEW_LINE_BLOCKS_TO_PROCESS = 500;
 

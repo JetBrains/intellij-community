@@ -8,9 +8,11 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.serviceContainer.LazyExtensionInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class ProjectFacetListenerEP extends LazyExtensionInstance<ProjectFacetListener<?>> implements PluginAware {
   @Attribute("facet-type")
   @RequiredElement

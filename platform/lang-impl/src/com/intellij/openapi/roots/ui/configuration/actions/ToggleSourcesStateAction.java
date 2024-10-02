@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootPropertiesHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -21,6 +22,7 @@ import java.util.Locale;
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public final class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntryEditingAction {
   private final ContentEntryTreeEditor myEntryTreeEditor;
   private final ModuleSourceRootEditHandler<P> myEditHandler;

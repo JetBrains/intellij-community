@@ -37,6 +37,7 @@ fun install(filterable: Filterable<ExecutionNode>) {
   WarningsToggleAction.install(filterable)
 }
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 open class FilterToggleAction(@NlsContexts.Command text: String,
                               private val stateKey: String?,
@@ -83,6 +84,7 @@ open class FilterToggleAction(@NlsContexts.Command text: String,
   }
 }
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 class SuccessfulStepsToggleAction(filterable: Filterable<ExecutionNode>) :
   FilterToggleAction(LangBundle.message("build.tree.filters.show.succesful"), STATE_KEY, filterable, SUCCESSFUL_STEPS_FILTER, false), DumbAware {
@@ -94,6 +96,7 @@ class SuccessfulStepsToggleAction(filterable: Filterable<ExecutionNode>) :
   }
 }
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 class WarningsToggleAction(filterable: Filterable<ExecutionNode>) :
   FilterToggleAction(LangBundle.message("build.tree.filters.show.warnings"), STATE_KEY, filterable, WARNINGS_FILTER, true), DumbAware {

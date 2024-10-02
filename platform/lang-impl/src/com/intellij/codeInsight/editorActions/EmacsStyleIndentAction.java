@@ -16,8 +16,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class EmacsStyleIndentAction extends BaseCodeInsightAction implements DumbAware {
   @Override
   protected @NotNull CodeInsightActionHandler getHandler() {

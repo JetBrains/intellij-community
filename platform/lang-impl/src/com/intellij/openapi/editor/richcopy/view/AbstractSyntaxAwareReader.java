@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
+@ApiStatus.Internal
 public abstract class AbstractSyntaxAwareReader extends Reader {
 
   private static final Logger LOG = Logger.getInstance(AbstractSyntaxAwareReader.class);

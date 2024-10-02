@@ -13,8 +13,10 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {

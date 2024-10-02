@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.Box
@@ -48,6 +49,7 @@ internal class CasesPanel(
     caseListPanel.updateCheckBoxes()
   }
 }
+@ApiStatus.Internal
 class CaseListPanel(val cases: List<ImmediateConfigurable.Case>, listener: ChangeListener) : JPanel() {
   val checkBoxes: MutableList<JCheckBox> = mutableListOf()
 

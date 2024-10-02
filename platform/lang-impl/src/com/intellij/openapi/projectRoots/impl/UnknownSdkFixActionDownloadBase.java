@@ -10,12 +10,14 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 
+@ApiStatus.Internal
 public abstract class UnknownSdkFixActionDownloadBase extends UnknownSdkFixActionBase {
   private static final Logger LOG = Logger.getInstance(UnknownSdkFixActionDownloadBase.class);
 

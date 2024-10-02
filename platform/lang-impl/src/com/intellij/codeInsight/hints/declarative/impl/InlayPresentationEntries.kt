@@ -38,6 +38,7 @@ sealed class InlayPresentationEntry(
   var isHoveredWithCtrl: Boolean = false
 }
 
+@Internal
 class TextInlayPresentationEntry(
   @TestOnly
   val text: String,

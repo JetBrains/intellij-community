@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.List;
 /**
  * Allows to calculate difference between two versions of document (before and after code style setting value change).
  */
+@ApiStatus.Internal
 public final class ChangesDiffCalculator {
   private static final Logger LOG = Logger.getInstance(ChangesDiffCalculator.class);
 

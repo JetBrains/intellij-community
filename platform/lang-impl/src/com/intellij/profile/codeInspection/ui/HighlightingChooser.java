@@ -32,6 +32,7 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +47,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public abstract class HighlightingChooser extends ComboBoxAction implements DumbAware {
   public static final Map<TextAttributesKey, Supplier<@Nls String>> ATTRIBUTES_CUSTOM_NAMES = new HashMap<>();
 

@@ -38,6 +38,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -54,6 +55,7 @@ import static com.intellij.ui.SimpleTextAttributes.*;
 /**
  * @author gregsh
  */
+@ApiStatus.Internal
 public final class JumpToColorsAndFontsAction extends DumbAwareAction {
 
   public JumpToColorsAndFontsAction() {

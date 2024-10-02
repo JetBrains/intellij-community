@@ -17,10 +17,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,6 +27,7 @@ import java.util.*;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
+@ApiStatus.Internal
 public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel {
 
   private static final Logger LOG = Logger.getInstance(CodeStyleBlankLinesPanel.class);

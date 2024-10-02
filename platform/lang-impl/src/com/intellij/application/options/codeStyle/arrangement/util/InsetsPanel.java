@@ -2,6 +2,7 @@
 package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.util.ui.GridBag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -10,6 +11,7 @@ import java.awt.*;
 /**
  * Panel which occupies horizontal and vertical space even if it's content is invisible.
  */
+@ApiStatus.Internal
 public final class InsetsPanel extends JPanel {
 
   private final @NotNull JComponent myContent;

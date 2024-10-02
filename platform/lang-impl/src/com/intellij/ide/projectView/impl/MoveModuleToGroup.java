@@ -12,12 +12,14 @@ import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class MoveModuleToGroup extends ActionGroup {
   private final ModuleGroup myModuleGroup;
 

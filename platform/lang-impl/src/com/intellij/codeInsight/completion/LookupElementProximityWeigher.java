@@ -5,8 +5,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class LookupElementProximityWeigher extends CompletionWeigher {
 
   @Override

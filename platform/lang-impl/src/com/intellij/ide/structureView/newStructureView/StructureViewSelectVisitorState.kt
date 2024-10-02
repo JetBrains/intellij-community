@@ -3,8 +3,10 @@ package com.intellij.ide.structureView.newStructureView
 
 import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath
 
+@ApiStatus.Internal
 class StructureViewSelectVisitorState {
 
   private var stage: StructureViewSelectVisitorStage = StructureViewSelectVisitorStage.FIRST_PASS
@@ -44,6 +46,7 @@ class StructureViewSelectVisitorState {
 
 }
 
+@ApiStatus.Internal
 enum class StructureViewSelectVisitorStage {
   FIRST_PASS,
   FIRST_PASS_WITH_OPTIMIZATION,

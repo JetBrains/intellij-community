@@ -24,8 +24,10 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.RefactoringCodeVisionSupport
 import com.intellij.refactoring.suggested.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class ChangeSignatureCodeVisionProvider : CodeVisionProvider<Unit> {
   companion object {
     internal const val ID: String = "Change signature"

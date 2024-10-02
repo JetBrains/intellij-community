@@ -4,10 +4,12 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.openapi.ide.CopyPasteManager;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.datatransfer.DataFlavor;
 
 
+@ApiStatus.Internal
 public final class ClipboardMacro extends SimpleMacro {
   public ClipboardMacro() {
     super("clipboard");

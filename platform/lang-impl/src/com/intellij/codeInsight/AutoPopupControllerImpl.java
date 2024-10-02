@@ -27,6 +27,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -38,6 +39,7 @@ import java.util.concurrent.locks.LockSupport;
 
 import static com.intellij.codeInsight.completion.CompletionPhase.*;
 
+@ApiStatus.Internal
 public class AutoPopupControllerImpl extends AutoPopupController {
   private final Project myProject;
   private final Alarm myAlarm;

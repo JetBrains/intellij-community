@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import java.util.Collection;
 /**
  * Hides .idea directory in Project View.
  */
+@ApiStatus.Internal
 public final class ProjectConfigurationDirectoryConcealer implements TreeStructureProvider, DumbAware {
   private final Project myProject;
 

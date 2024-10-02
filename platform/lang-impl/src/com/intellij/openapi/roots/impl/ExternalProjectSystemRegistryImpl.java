@@ -4,8 +4,10 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ExternalProjectSystemRegistryImpl implements ExternalProjectSystemRegistry {
   @Override
   public ProjectModelExternalSource getExternalSource(@NotNull Module module) {

@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ThrowableConsumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
@@ -19,6 +20,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@ApiStatus.Internal
 public final class HTMLExportUtil {
   public static void writeFile(@NotNull Path dir,
                                @NotNull String fileName,

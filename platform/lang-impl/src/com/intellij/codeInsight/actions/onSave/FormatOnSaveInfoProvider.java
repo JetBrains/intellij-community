@@ -7,6 +7,7 @@ import com.intellij.ide.actionsOnSave.ActionOnSaveInfo;
 import com.intellij.ide.actionsOnSave.ActionOnSaveInfoProvider;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static com.intellij.util.PlatformUtils.*;
 
+@ApiStatus.Internal
 public final class FormatOnSaveInfoProvider extends ActionOnSaveInfoProvider {
   @Override
   protected @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull ActionOnSaveContext context) {

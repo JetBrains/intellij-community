@@ -10,8 +10,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class RenameToIgnoredDirectoryFileInputValidator implements RenameInputValidatorEx {
   @Override
   public @Nullable String getErrorMessage(String newName, Project project) {

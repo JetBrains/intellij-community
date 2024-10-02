@@ -26,6 +26,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+@ApiStatus.Internal
 @SuppressWarnings("rawtypes")
 public final class PostfixTemplatesConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll,
                                                            Configurable.WithEpDependencies {

@@ -16,8 +16,10 @@
 
 package com.intellij.ide.projectView;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
+@ApiStatus.Internal
 public interface HelpID {
   @NonNls String PROJECT_VIEWS = "viewingStructure.projectViews";
 }

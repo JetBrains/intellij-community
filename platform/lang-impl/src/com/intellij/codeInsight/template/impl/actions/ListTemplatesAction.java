@@ -7,8 +7,10 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.template.impl.ListTemplatesHandler;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ListTemplatesAction extends BaseCodeInsightAction implements DumbAware {
   @Override
   protected @NotNull CodeInsightActionHandler getHandler() {

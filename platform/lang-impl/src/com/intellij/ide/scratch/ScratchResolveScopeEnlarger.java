@@ -6,12 +6,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ResolveScopeEnlarger;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public final class ScratchResolveScopeEnlarger extends ResolveScopeEnlarger{
   @Override
   public @Nullable SearchScope getAdditionalResolveScope(@NotNull VirtualFile file, @NotNull Project project) {

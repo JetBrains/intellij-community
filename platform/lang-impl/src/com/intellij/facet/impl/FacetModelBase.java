@@ -6,11 +6,13 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetModel;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public abstract class FacetModelBase implements FacetModel {
   private volatile Map<FacetTypeId<?>, Collection<Facet<?>>> myType2Facets;
   private volatile Map<FacetAndType, Collection<Facet<?>>> myChildFacets;

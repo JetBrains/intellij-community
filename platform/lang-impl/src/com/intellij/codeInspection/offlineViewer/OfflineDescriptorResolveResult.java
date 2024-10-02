@@ -32,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,7 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class OfflineDescriptorResolveResult {
   private static final Logger LOG = Logger.getInstance(OfflineDescriptorResolveResult.class);
   private final RefEntity myResolvedEntity;

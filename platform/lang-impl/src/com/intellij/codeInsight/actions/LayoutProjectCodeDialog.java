@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.regex.PatternSyntaxException;
 
+@ApiStatus.Internal
 public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFilesOptions {
   private static final @NonNls String HELP_ID = "Reformat Code on Directory Dialog";
 

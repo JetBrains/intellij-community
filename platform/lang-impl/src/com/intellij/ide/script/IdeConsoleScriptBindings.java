@@ -3,9 +3,11 @@ package com.intellij.ide.script;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class IdeConsoleScriptBindings {
   public static final Binding<IDE> IDE = new Binding<>("IDE", IDE.class);
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ import java.util.regex.Pattern;
  * <p/>
  * Thread-safe.
  */
+@ApiStatus.Internal
 public final class DocPreviewUtil {
   private static final IntSet ALLOWED_LINK_SEPARATORS = new IntOpenHashSet();
   static {

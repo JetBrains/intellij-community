@@ -29,10 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -42,6 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class LossyEncodingInspection extends LocalInspectionTool {
   @Override
   public @Nls @NotNull String getGroupDisplayName() {

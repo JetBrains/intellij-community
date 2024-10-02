@@ -6,11 +6,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.TestsScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 @InternalIgnoreDependencyViolation
 public final class TestScopeProvider extends CustomScopesProviderEx {
   public static TestScopeProvider getInstance(@NotNull Project project) {

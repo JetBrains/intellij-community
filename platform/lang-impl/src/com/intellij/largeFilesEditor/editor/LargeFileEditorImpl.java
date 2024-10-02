@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class LargeFileEditorImpl extends UserDataHolderBase implements LargeFileEditor {
 
   private static final Logger logger = Logger.getInstance(LargeFileEditorImpl.class);

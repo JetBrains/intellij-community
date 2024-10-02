@@ -8,11 +8,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.EffectPainter2D
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
 
+@ApiStatus.Internal
 open class CodeVisionVisionTextPainter<T>(
   val printer: (T) -> String = { it.toString() },
   theme: CodeVisionTheme? = null

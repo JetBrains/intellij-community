@@ -4,10 +4,12 @@ package com.intellij.openapi.editor.richcopy.model;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+@ApiStatus.Internal
 public abstract class AbstractRegistry<T> {
   @SuppressWarnings("SSBasedInspection") private final @NotNull Int2ObjectOpenHashMap<T> myDataById = new Int2ObjectOpenHashMap<>();
 

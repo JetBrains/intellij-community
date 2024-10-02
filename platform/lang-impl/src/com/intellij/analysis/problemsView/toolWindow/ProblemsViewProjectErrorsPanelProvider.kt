@@ -6,8 +6,10 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleTextAttributes
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 
+@ApiStatus.Internal
 class ProblemsViewProjectErrorsPanelProvider(private val project: Project) : ProblemsViewPanelProvider {
   companion object {
     const val ID: String = "ProjectErrors"

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.List;
  *
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class EditorTextFieldActionPromoter implements ActionPromoter {
   private static final Comparator<AnAction> ACTIONS_COMPARATOR = (o1, o2) -> {
     boolean textFieldAction1 = o1 instanceof TextComponentEditorAction;

@@ -22,6 +22,7 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ScopesOrderDialog extends DialogWrapper {
   private final ScopesOrderTable myOptionsTable;
   private final InspectionProfileImpl myInspectionProfile;

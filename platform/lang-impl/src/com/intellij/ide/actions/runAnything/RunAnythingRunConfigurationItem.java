@@ -4,11 +4,13 @@ package com.intellij.ide.actions.runAnything;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class RunAnythingRunConfigurationItem extends RunAnythingItemBase {
   private final ChooseRunConfigurationPopup.ItemWrapper myWrapper;
 

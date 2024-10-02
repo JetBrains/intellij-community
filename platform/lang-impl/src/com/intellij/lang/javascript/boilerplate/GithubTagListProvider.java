@@ -15,6 +15,7 @@ import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
+@ApiStatus.Internal
 public final class GithubTagListProvider {
 
   private static final Logger LOG = Logger.getInstance(GithubTagListProvider.class);

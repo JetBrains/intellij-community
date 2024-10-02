@@ -22,12 +22,14 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Window
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.beans.PropertyChangeListener
 import javax.swing.SwingUtilities
 
+@ApiStatus.Internal
 open class EditorTrackerImpl(@JvmField protected val project: Project) : EditorTracker, Disposable {
   private val windowToEditorsMap = HashMap<Window, MutableList<Editor>>()
   private val windowToWindowFocusListenerMap = HashMap<Window, WindowAdapter>()

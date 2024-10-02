@@ -7,12 +7,14 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public abstract class SplitWordsMacro extends MacroBase {
   private final char mySeparator;
 

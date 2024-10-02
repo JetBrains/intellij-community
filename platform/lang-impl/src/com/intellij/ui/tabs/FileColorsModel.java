@@ -17,6 +17,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class FileColorsModel implements Cloneable {
   public static final String FILE_COLOR = "fileColor";
 

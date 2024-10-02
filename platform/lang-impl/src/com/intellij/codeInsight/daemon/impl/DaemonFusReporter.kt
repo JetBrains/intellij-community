@@ -26,6 +26,7 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.log10
@@ -36,6 +37,7 @@ private val sessionSegmentsTotalDurationMs: Key<AtomicLong> = Key.create("sessio
 
 private data class AnalysisStatus(val stamp: Long, val isDumbMode: Boolean)
 
+@ApiStatus.Internal
 open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
   private data class SessionData(val daemonStartTime: Long = -1L,
                                  val dirtyRange: TextRange? = null,

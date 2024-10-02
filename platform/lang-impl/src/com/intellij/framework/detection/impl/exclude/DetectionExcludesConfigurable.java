@@ -25,6 +25,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class DetectionExcludesConfigurable implements Configurable {
   private final Project myProject;
   private final DetectionExcludesConfigurationImpl myConfiguration;

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class IntentionSettingsPanel implements MasterDetails {
   private JPanel myPanel;
   private final IntentionSettingsTree myIntentionSettingsTree;

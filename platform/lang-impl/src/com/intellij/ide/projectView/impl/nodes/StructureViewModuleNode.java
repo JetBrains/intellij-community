@@ -6,6 +6,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class StructureViewModuleNode extends AbstractModuleNode {
   public StructureViewModuleNode(Project project, @NotNull Module value, ViewSettings viewSettings) {
     super(project, value, viewSettings);

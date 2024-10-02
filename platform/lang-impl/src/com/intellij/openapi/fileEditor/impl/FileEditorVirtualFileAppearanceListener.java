@@ -6,10 +6,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class FileEditorVirtualFileAppearanceListener implements VirtualFileAppearanceListener {
   private final @NotNull Project myProject;
 

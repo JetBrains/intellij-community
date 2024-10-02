@@ -76,7 +76,7 @@ interface ListSplitJoinContext {
 class ListWithElements(val list: PsiElement, val elements: List<PsiElement>)
 enum class JoinOrSplit { JOIN, SPLIT }
 
-fun getListSplitJoinContext(element: PsiElement, joinOrSplit: JoinOrSplit): Pair<ListSplitJoinContext, ListWithElements>? {
+internal fun getListSplitJoinContext(element: PsiElement, joinOrSplit: JoinOrSplit): Pair<ListSplitJoinContext, ListWithElements>? {
   val language = element.language
   val extensions = ListSplitJoinContext.EXTENSION.allForLanguage(language)
   for (extension in extensions) {

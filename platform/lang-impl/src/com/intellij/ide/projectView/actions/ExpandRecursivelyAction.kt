@@ -18,11 +18,13 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
+@ApiStatus.Internal
 @Experimental
 class ExpandRecursivelyAction : DumbAwareAction(), CustomComponentAction, ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

@@ -12,8 +12,10 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class CleanupOnScopeIntention extends CleanupIntention {
   public static final CleanupOnScopeIntention INSTANCE = new CleanupOnScopeIntention();
 

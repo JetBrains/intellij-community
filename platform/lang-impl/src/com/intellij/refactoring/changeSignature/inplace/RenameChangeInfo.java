@@ -9,9 +9,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.rename.RenameProcessor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class RenameChangeInfo implements ChangeInfo {
   private final PsiFile myFile;
   private final int myOffset;

@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public class UnwrapHandler implements CodeInsightActionHandler {
   public static final int HIGHLIGHTER_LEVEL = HighlighterLayer.SELECTION + 1;
 

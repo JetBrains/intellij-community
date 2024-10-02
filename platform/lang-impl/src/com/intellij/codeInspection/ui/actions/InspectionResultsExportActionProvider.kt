@@ -33,7 +33,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-val LOG: Logger = Logger.getInstance(InspectionResultsExportActionProvider::class.java)
+private val LOG: Logger = Logger.getInstance(InspectionResultsExportActionProvider::class.java)
 
 /**
  * Extension point to add actions in the inspection results export popup.

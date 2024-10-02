@@ -6,7 +6,9 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class FileReferenceCharFilter extends CharFilter{
   @Override
   public Result acceptChar(char c, int prefixLength, Lookup lookup) {

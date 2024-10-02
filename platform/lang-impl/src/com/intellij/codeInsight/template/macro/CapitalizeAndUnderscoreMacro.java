@@ -7,9 +7,11 @@ import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.psi.codeStyle.NameUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
+@ApiStatus.Internal
 public final class CapitalizeAndUnderscoreMacro extends MacroBase {
 
   public CapitalizeAndUnderscoreMacro() {

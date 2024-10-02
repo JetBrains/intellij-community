@@ -18,11 +18,13 @@ package com.intellij.refactoring.ui;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
+@ApiStatus.Internal
 public class DelegationPanel extends JPanel {
   private final JRadioButton myRbModifyCalls;
   private final JRadioButton myRbGenerateDelegate;

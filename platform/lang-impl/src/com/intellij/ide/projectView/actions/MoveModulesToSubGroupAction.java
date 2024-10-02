@@ -10,11 +10,13 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
   public MoveModulesToSubGroupAction(ModuleGroup moduleGroup) {
     super(moduleGroup, moduleGroup == null ? IdeBundle.message("action.move.module.new.top.level.group") : IdeBundle.message("action.move.module.to.new.sub.group"));

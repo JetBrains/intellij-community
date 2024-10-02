@@ -11,6 +11,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@ApiStatus.Internal
 public final class FileStatusColorsPanel {
 
   private static final int TABLE_SIZE = 250; // Defined by UI spec

@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.List;
  * <p/>
  * Not thread-safe.
  */
+@ApiStatus.Internal
 public final class ArrangementEntryWrapper<E extends ArrangementEntry> {
 
   private final @NotNull List<ArrangementEntryWrapper<E>> myChildren = new ArrayList<>();

@@ -20,6 +20,7 @@ import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,6 +32,7 @@ import java.util.Set;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public abstract class ScopesChooser extends ComboBoxAction implements DumbAware {
   private final List<? extends Descriptor> myDefaultDescriptors;
   private final @NotNull InspectionProfileImpl myInspectionProfile;

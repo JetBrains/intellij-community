@@ -10,12 +10,14 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
+@ApiStatus.Internal
 @State(
   name = "CodeStyleSchemesUIConfiguration",
   storages = {@Storage(value = "other.xml", roamingType = RoamingType.DISABLED)}

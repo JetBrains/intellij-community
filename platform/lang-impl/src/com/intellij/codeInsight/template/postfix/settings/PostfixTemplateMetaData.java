@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.postfix.templates.editable.EditablePost
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
 
   public static final String KEY = "$key";

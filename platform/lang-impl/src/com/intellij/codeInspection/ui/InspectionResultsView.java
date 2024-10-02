@@ -61,10 +61,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -595,6 +592,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     });
   }
 
+  @ApiStatus.Internal
   public InspectionViewSuppressActionHolder getSuppressActionHolder() {
     return mySuppressActionHolder;
   }

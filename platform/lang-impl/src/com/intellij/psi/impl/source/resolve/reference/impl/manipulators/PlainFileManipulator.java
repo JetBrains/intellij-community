@@ -9,8 +9,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class PlainFileManipulator extends AbstractElementManipulator<PsiPlainTextFile> {
   @Override
   public PsiPlainTextFile handleContentChange(@NotNull PsiPlainTextFile file, @NotNull TextRange range, String newContent)

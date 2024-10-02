@@ -2,9 +2,11 @@
 package com.intellij.tools;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class ToolSelectComboBox extends BaseToolSelectComboBox<Tool> {
   private final @Nullable Project myProject;
 

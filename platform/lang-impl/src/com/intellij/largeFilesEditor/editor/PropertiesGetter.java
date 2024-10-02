@@ -2,7 +2,9 @@
 package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class PropertiesGetter {
   private static final Logger logger = Logger.getInstance(PropertiesGetter.class);
 

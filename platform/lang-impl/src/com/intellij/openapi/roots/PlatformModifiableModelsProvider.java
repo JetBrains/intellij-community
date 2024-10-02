@@ -8,11 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public final class PlatformModifiableModelsProvider implements ModifiableModelsProvider {
   @Override
   public ModifiableRootModel getModuleModifiableModel(final @NotNull Module module) {

@@ -9,11 +9,13 @@ import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public abstract class OccurrenceAction extends DumbAwareAction implements ShortcutProvider, LightEditCompatible {
   protected OccurrenceAction(@NotNull String baseActionId, @NotNull Icon icon) {
     ActionUtil.copyFrom(this, baseActionId);

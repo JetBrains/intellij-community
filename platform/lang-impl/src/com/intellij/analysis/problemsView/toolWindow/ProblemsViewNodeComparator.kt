@@ -2,7 +2,9 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.openapi.util.text.StringUtil.naturalCompare
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 data class ProblemsViewNodeComparator(
   private val sortFoldersFirst: Boolean,
   private val sortBySeverity: Boolean,

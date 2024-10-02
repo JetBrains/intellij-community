@@ -12,6 +12,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.List;
 
 import static com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx.getAllScope;
 
+@ApiStatus.Internal
 public final class NamedScopeFilter implements VirtualFileFilter {
   private static final Logger LOG = Logger.getInstance(NamedScopeFilter.class);
   private final NamedScopesHolder holder;

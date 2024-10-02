@@ -2,8 +2,10 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.TestOnly;
 
+@ApiStatus.Internal
 public interface DaemonCodeAnalysisStatus {
   @TestOnly
   boolean isRunningOrPending();

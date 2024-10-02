@@ -15,6 +15,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.util.Collection;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class GenerateByPatternDialog extends DialogWrapper {
 
   private final Project myProject;

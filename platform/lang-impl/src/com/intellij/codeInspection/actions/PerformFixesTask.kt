@@ -12,8 +12,10 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
 
+@ApiStatus.Internal
 open class PerformFixesTask(project: Project, descriptors: List<CommonProblemDescriptor>, quickFixClass: Class<*>?) :
   AbstractPerformFixesTask(project, descriptors.toTypedArray(), quickFixClass) {
 

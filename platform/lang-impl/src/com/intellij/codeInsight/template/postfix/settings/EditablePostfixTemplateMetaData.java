@@ -10,9 +10,11 @@ import com.intellij.codeInsight.template.postfix.templates.editable.EditablePost
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class EditablePostfixTemplateMetaData implements BeforeAfterMetaData {
 
   private static final @NlsSafe String EXPR = "$EXPR$";

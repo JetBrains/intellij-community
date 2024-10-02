@@ -6,10 +6,12 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ArrangementUiUtil {
   private ArrangementUiUtil() {
   }

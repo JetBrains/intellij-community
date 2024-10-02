@@ -3,7 +3,9 @@ package com.intellij.refactoring.rename
 
 import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider
 import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RenameCodeVisionSettingProvider : CodeVisionGroupSettingProvider {
   override val groupId: String
     get() = PlatformCodeVisionIds.RENAME.key

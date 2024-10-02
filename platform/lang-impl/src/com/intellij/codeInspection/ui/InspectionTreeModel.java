@@ -23,6 +23,7 @@ import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.TreeTraversal;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,19 +131,23 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
     }
   }
 
+  @ApiStatus.Internal
   public @NotNull InspectionModuleNode createModuleNode(@NotNull Module module, @NotNull InspectionTreeNode parent) {
     return getOrAdd(module, parent, () -> new InspectionModuleNode(module, parent));
   }
 
+  @ApiStatus.Internal
   public @NotNull InspectionPackageNode createPackageNode(String packageName, @NotNull InspectionTreeNode parent) {
     return getOrAdd(packageName, parent, () -> new InspectionPackageNode(packageName, parent));
   }
 
+  @ApiStatus.Internal
   @NotNull
   InspectionGroupNode createGroupNode(@Nls String group, @NotNull InspectionTreeNode parent) {
     return getOrAdd(group, parent, () -> new InspectionGroupNode(group, parent));
   }
 
+  @ApiStatus.Internal
   @NotNull
   InspectionSeverityGroupNode createSeverityGroupNode(SeverityRegistrar severityRegistrar,
                                                       HighlightDisplayLevel level,
@@ -174,6 +179,7 @@ public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode>
     getOrAdd(descriptor, parent, () -> ReadAction.compute(() -> new ProblemDescriptionNode(element, descriptor, presentation, parent)));
   }
 
+  @ApiStatus.Internal
   public void createOfflineProblemDescriptorNode(@NotNull OfflineProblemDescriptor offlineDescriptor,
                                                  @NotNull OfflineDescriptorResolveResult resolveResult,
                                                  @NotNull InspectionToolPresentation presentation,

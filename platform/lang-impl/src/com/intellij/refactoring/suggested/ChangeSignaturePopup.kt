@@ -23,6 +23,7 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParam
 import com.intellij.ui.LanguageTextField
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.font.FontRenderContext
@@ -137,6 +138,7 @@ internal class ChangeSignaturePopup(
   }
 }
 
+@ApiStatus.Internal
 data class NewParameterInfo(val newParameterData: SuggestedRefactoringUI.NewParameterData,
                             val name: String,
                             val value: NewParameterValue)

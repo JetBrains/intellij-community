@@ -11,8 +11,10 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiAwareObject;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class PsiElementFromSelectionsRule implements GetDataRule {
 
   @Override

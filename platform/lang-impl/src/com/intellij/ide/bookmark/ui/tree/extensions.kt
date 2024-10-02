@@ -55,7 +55,7 @@ internal fun ProjectViewNode<*>.computeScratchPresentation(file: VirtualFile): P
   }
 }
 
-fun ProjectViewNode<*>.computeDirectoryChildren(): Collection<AbstractTreeNode<*>> {
+internal fun ProjectViewNode<*>.computeDirectoryChildren(): Collection<AbstractTreeNode<*>> {
   val directory = findFileSystemItem(project, virtualFile) as? PsiDirectory ?: return emptyList()
   if (ProjectFileIndex.getInstance(directory.project).getModuleForFile(directory.virtualFile, false) != null) {
     return ProjectViewDirectoryHelper.getInstance(directory.project).getDirectoryChildren(directory, settings, true)

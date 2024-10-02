@@ -5,6 +5,7 @@ import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.ide.bookmark.ui.tree.LineNode
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 class LineBookmarkImpl(override val provider: LineBookmarkProvider, file: VirtualFile, line: Int) : LineBookmark {
@@ -19,6 +20,7 @@ class LineBookmarkImpl(override val provider: LineBookmarkProvider, file: Virtua
   override val attributes: Map<String, String>
     get() = mapOf("url" to file.url, "line" to line.toString())
 
+  @ApiStatus.Internal
   override fun createNode(): LineNode = LineNode(provider.project, this)
 
   override fun canNavigate(): Boolean = !provider.project.isDisposed && descriptor.canNavigate()

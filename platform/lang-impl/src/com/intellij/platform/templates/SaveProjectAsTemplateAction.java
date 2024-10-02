@@ -50,6 +50,7 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.EdtInvocationManager;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +67,7 @@ import java.util.regex.Pattern;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(SaveProjectAsTemplateAction.class);
   private static final @NonNls String PROJECT_TEMPLATE_XML = "project-template.xml";

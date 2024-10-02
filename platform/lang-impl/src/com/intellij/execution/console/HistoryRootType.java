@@ -2,11 +2,13 @@
 package com.intellij.execution.console;
 
 import com.intellij.ide.scratch.RootType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author gregsh
  */
+@ApiStatus.Internal
 public final class HistoryRootType extends RootType {
 
   public HistoryRootType() {

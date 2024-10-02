@@ -5,11 +5,13 @@ import com.intellij.util.indexing.CustomInputMapIndexExtension;
 import com.intellij.util.indexing.CustomInputsIndexFileBasedIndexExtension;
 import com.intellij.util.indexing.InputMapExternalizer;
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class IdIndexImpl extends IdIndex implements CustomInputsIndexFileBasedIndexExtension<IdIndexEntry>,
                                                           CustomInputMapIndexExtension<IdIndexEntry, Integer> {
   @Override

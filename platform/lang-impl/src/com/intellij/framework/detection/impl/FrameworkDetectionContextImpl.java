@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class FrameworkDetectionContextImpl extends FrameworkDetectionContextBase {
   private final Project myProject;
 

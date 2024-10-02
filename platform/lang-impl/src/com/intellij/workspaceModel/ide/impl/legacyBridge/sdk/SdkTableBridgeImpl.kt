@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Compa
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 //TODO::
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.TestOnly
 // [] Strange to have type `SDK` but methods - `updateJDK`
 
 private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
+@ApiStatus.Internal
 class SdkTableBridgeImpl: SdkTableImplementationDelegate {
 
   override fun findSdkByName(name: String): Sdk? {

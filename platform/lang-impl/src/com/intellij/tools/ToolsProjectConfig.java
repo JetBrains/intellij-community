@@ -4,8 +4,10 @@ package com.intellij.tools;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 @State(name = "ToolsProjectConfig", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ToolsProjectConfig implements PersistentStateComponent<ToolsProjectConfig.State> {

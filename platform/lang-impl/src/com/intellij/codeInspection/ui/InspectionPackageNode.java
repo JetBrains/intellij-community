@@ -4,10 +4,12 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class InspectionPackageNode extends InspectionTreeNode {
   private final @NlsSafe String myPackageName;
 

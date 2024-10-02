@@ -7,11 +7,13 @@ import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class SelectionManager {
   private final @NotNull SearchResults mySearchResults;
   private final boolean myHadSelectionInitially;

@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.roots.IconActionComponent;
 import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -16,6 +17,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEditHandler<JavaSourceRootProperties> {
   public JavaSourceRootEditHandlerBase(JpsModuleSourceRootType<JavaSourceRootProperties> rootType) {
     super(rootType);

@@ -14,6 +14,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThrowableConsumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.util.Objects;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class InspectionTreeHtmlWriter {
   @SuppressWarnings("SpellCheckingInspection")
   private static final String ERROR_COLOR = "ffabab";

@@ -10,8 +10,10 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class EditScopesAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {

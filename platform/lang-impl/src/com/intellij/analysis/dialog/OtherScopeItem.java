@@ -2,9 +2,11 @@
 package com.intellij.analysis.dialog;
 
 import com.intellij.analysis.AnalysisScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class OtherScopeItem implements ModelScopeItem {
   private final AnalysisScope myScope;
 
