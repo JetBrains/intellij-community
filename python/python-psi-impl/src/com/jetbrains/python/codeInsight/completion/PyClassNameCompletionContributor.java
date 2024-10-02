@@ -64,6 +64,14 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
 
   @Override
   protected void doFillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    result.restartCompletionWhenNothingMatches();
+    var results = result.runRemainingContributors(parameters, true);
+    if (results.isEmpty() || parameters.isExtendedCompletion()) {
+      fillCompletionVariantsImpl(parameters, result);
+    }
+  }
+
+  private void fillCompletionVariantsImpl(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     boolean isExtendedCompletion = parameters.isExtendedCompletion();
     if (!PyCodeInsightSettings.getInstance().INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION && !isExtendedCompletion) {
       return;
