@@ -19,8 +19,8 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.PlatformUtils;
@@ -188,10 +188,11 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
       archiveFile = null;
 
     ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    final VirtualFile baseDir = project.getBaseDir();
     return (archiveFile != null && index.getContentRootForFile(archiveFile, false) != null) ||
            index.getContentRootForFile(file, false) != null ||
            index.isInLibrary(file) ||
-           Comparing.equal(file.getParent(), project.getBaseDir()) ||
+           (baseDir != null && VfsUtilCore.isAncestor(baseDir, file, false)) ||
            (ScratchUtil.isScratch(file) && ProjectView.getInstance(project).isShowScratchesAndConsoles(ID));
   }
 
