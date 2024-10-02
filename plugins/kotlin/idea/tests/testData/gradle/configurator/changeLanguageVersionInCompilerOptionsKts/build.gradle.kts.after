@@ -8,5 +8,5 @@ plugins {
 val compileKotlin: KotlinCompile by tasks
 
 compileKotlin.compilerOptions {
-    languageVersion = KotlinVersion.KOTLIN_1_9
+    languageVersion = KotlinVersion.KOTLIN_1_7
 }

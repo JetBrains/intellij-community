@@ -1071,15 +1071,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("8.2+") // Don't want to bring a new version of Gradle only because of this test because it will increase common test time
     fun testChangeLanguageVersionInCompilerOptionsKts() {
-        val files = importProjectFromTestData()
-
-        runInEdtAndWait {
-            runWriteAction {
-                KotlinWithGradleConfigurator.changeLanguageVersion(myTestFixture.module, "1.9", null, false)
-            }
-
-            checkFiles(files)
-        }
+        changeLanguageVersion()
     }
 
     @Test
@@ -1105,13 +1097,25 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         addInlineClasses()
     }
 
+    // compilerOptions + same option with another value
     @Test
     fun testChangeFeatureSupportCompilerOptionsKts() {
         addInlineClasses()
     }
 
     @Test
+    @TargetVersions("8.2+")
+    fun testChangeFeatureSupportCompilerOptionsAssignmentSyntaxKts() {
+        addInlineClasses()
+    }
+
+    @Test
     fun testChangeFeatureSupportCompilerOptions() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testChangeFeatureSupportCompilerOptionsAssignmentSyntax() {
         addInlineClasses()
     }
 

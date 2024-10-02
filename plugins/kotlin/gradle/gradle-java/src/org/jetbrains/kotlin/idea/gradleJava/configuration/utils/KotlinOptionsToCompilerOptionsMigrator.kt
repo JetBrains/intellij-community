@@ -217,7 +217,7 @@ private fun getReplacementForOldKotlinOptionIfNeeded(
             operationReplacer
         )
     } else if (jsOptions.contains(optionName)) { // JS options
-        val processedOptionValue = optionValue.removeSurrounding("\"", "\"")
+        val processedOptionValue = optionValue.removeSurrounding("\"").removeSurrounding("'")
         val jsOptionsValuesStringToEnumCorrespondence = jsOptions[optionName] ?: return null
         val jsOptionValue = jsOptionsValuesStringToEnumCorrespondence[processedOptionValue]
         if (jsOptionValue != null) {
@@ -237,7 +237,7 @@ private fun getCompilerOptionForVersionValue(
     optionName: String,
     operationReplacer: String,
 ): CompilerOption? {
-    val processedOptionValue = optionValue.removeSurrounding("\"", "\"")
+    val processedOptionValue = optionValue.removeSurrounding("\"").removeSurrounding("'")
     val convertedValue = versionOptionData.mappingRule.apply(processedOptionValue)
     val compilerOptionValue = if (convertedValue != null) {
         "${versionOptionData.newOptionType}${convertedValue}"
