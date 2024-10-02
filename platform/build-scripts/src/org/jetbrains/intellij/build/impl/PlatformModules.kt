@@ -92,6 +92,8 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   // do we need it?
   "intellij.platform.sqlite",
   //"fleet.rpc.server",
+  // todo not used by platform - move to plugin
+  "intellij.platform.ide.designer",
 )
 
 @Suppress("RemoveRedundantQualifierName")
