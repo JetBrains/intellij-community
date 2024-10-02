@@ -19,7 +19,8 @@ internal class EmbeddingKey(val textHashCode: Int) {
   override fun equals(other: Any?): Boolean = other is EmbeddingKey && other.textHashCode == textHashCode
 
   fun toLong(fileId: Int): Long {
-    return (fileId.toLong() shl 32) + textHashCode.toLong()
+    // https://stackoverflow.com/a/12772968
+    return (fileId.toLong() shl 32) or (0xffffffffL and textHashCode.toLong())
   }
 }
 

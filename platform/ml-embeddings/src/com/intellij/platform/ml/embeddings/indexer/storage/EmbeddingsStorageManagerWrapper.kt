@@ -30,6 +30,7 @@ class EmbeddingsStorageManagerWrapper<KeyT>(
     val result = storageManager.search(project, indexId, query, limit, similarityThreshold)
       .map { (id, similarity) ->
         val entityId = keyProvider.findEntityId(project, indexId, id)
+        if (entityId.isEmpty()) throw IllegalStateException("Entity id returned from EmbeddingStorageKeyProvider cannot be empty")
         ScoredText(entityId, similarity)
       }
     return result

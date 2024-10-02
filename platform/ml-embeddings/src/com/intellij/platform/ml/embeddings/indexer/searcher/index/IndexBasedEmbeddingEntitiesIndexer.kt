@@ -42,7 +42,7 @@ internal class IndexBasedEmbeddingEntitiesIndexer(cs: CoroutineScope) : Embeddin
   ) {
     launch {
       fetchEntities(index, channel, project) { key, name ->
-        LongIndexableEntity(key.toLong(), toIndexableEntity(EntityId(name)))
+        LongIndexableEntity(key, toIndexableEntity(EntityId(name)))
       }
       channel.close()
     }
