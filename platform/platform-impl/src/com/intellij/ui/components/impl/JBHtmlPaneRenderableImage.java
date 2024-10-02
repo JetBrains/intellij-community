@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.documentation;
+package com.intellij.ui.components.impl;
 
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ArrayUtilRt;
@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Vector;
 
-final class DocumentationRenderableImage implements RenderableImage {
+final class JBHtmlPaneRenderableImage implements RenderableImage {
 
   private final @NotNull URL myImageUrl;
   private final @NotNull Component myReferenceComponent;
@@ -27,7 +27,7 @@ final class DocumentationRenderableImage implements RenderableImage {
   private Image myImage;
   private boolean myImageLoaded;
 
-  DocumentationRenderableImage(@NotNull URL imageUrl, @NotNull Component referenceComponent) {
+  JBHtmlPaneRenderableImage(@NotNull URL imageUrl, @NotNull Component referenceComponent) {
     myImageUrl = imageUrl;
     myReferenceComponent = referenceComponent;
   }
@@ -74,6 +74,7 @@ final class DocumentationRenderableImage implements RenderableImage {
 
   @Override
   public RenderedImage createScaledRendering(int w, int h, RenderingHints hints) {
+    // TODO improve rendering of SVGs and re-render in appropriate size
     return createDefaultRendering();
   }
 
@@ -99,6 +100,7 @@ final class DocumentationRenderableImage implements RenderableImage {
   }
 
   private @Nullable Image loadImageFromUrl() {
+    // TODO unify with DocRenderImageManager.ManagedImage
     Image image = ImageLoader.loadFromUrl(myImageUrl);
     if (image != null &&
         image.getWidth(null) > 0 &&

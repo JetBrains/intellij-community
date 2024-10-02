@@ -18,9 +18,12 @@ import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
 import java.awt.Color
 import java.awt.Graphics
+import java.awt.Image
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.beans.PropertyChangeEvent
+import java.net.URL
+import java.util.*
 import javax.swing.JEditorPane
 import javax.swing.KeyStroke
 import javax.swing.text.Document
@@ -106,7 +109,7 @@ import javax.swing.text.html.StyleSheet
 @Suppress("LeakingThis")
 open class JBHtmlPane(
   private val myStyleConfiguration: JBHtmlPaneStyleConfiguration,
-  private val myPaneConfiguration: JBHtmlPaneConfiguration
+  private val myPaneConfiguration: JBHtmlPaneConfiguration,
 ) : JEditorPane(), Disposable {
 
   private val service: ImplService = ApplicationManager.getApplication().service()
@@ -173,7 +176,8 @@ open class JBHtmlPane(
     myText = t?.let { service.transpileHtmlPaneInput(it) } ?: ""
     try {
       super.setText(myText)
-    } catch (e: Throwable) {
+    }
+    catch (e: Throwable) {
       thisLogger().error("Failed to set contents of the HTML pane", e)
     }
   }
@@ -220,7 +224,8 @@ open class JBHtmlPane(
     super.setDocument(doc)
     doc.putProperty("IgnoreCharsetDirective", true)
     if (doc is StyledDocument) {
-      doc.putProperty("imageCache", myPaneConfiguration.imageResolverFactory(this))
+      doc.putProperty("imageCache", myPaneConfiguration.imageResolverFactory(this)
+                                    ?: service.createDefaultImageResolver(this))
     }
   }
 
@@ -234,6 +239,8 @@ open class JBHtmlPane(
     fun getDefaultStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet
 
     fun getEditorColorsSchemeStyleSheet(editorColorsScheme: EditorColorsScheme): StyleSheet
+
+    fun createDefaultImageResolver(pane: JBHtmlPane): Dictionary<URL, Image>
 
   }
 

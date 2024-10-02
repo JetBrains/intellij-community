@@ -10,6 +10,9 @@ import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.util.ui.CSSFontResolver
 import org.jetbrains.annotations.Nls
 import java.awt.Color
+import java.awt.Image
+import java.net.URL
+import java.util.*
 import javax.swing.text.html.StyleSheet
 
 internal class JBHtmlPaneImplService: JBHtmlPane.ImplService {
@@ -25,5 +28,8 @@ internal class JBHtmlPaneImplService: JBHtmlPane.ImplService {
 
   override fun getEditorColorsSchemeStyleSheet(editorColorsScheme: EditorColorsScheme): StyleSheet =
     EditorColorsSchemeStyleSheet(editorColorsScheme)
+
+  override fun createDefaultImageResolver(pane: JBHtmlPane): Dictionary<URL, Image> =
+    JBHtmlPaneImageResolver(pane, null)
 
 }
