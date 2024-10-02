@@ -17,27 +17,22 @@ class VMOptionsServiceImpl : VMOptionsService {
   companion object {
     private val ourData: ConcurrentMap<String, CompletableFuture<JdkOptionsData>> = CollectionFactory.createConcurrentSoftValueMap()
 
-    private const val ENABLE_ASSERTIONS_DESCRIPTION = "Enables assertions with specified granularity."
-    private const val DISABLE_ASSERTIONS_DESCRIPTION = "Disables assertions with specified granularity."
-    private const val ENABLES_SYSTEM_ASSERTIONS_DESCRIPTION = "Enables system assertions."
-    private const val DISABLES_SYSTEM_ASSERTIONS_DESCRIPTION = "Disables system assertions."
-
     @JvmStatic
     @get:JvmName("getStandardOptionList")
     val STANDARD_OPTION_LIST : List<VMOption> = listOf(
-      opt("ea", ENABLE_ASSERTIONS_DESCRIPTION),
-      opt("enableassertions", ENABLE_ASSERTIONS_DESCRIPTION),
-      opt("da", DISABLE_ASSERTIONS_DESCRIPTION),
-      opt("disableassertions", DISABLE_ASSERTIONS_DESCRIPTION),
-      opt("esa", ENABLES_SYSTEM_ASSERTIONS_DESCRIPTION),
-      opt("enablesystemassertions", ENABLES_SYSTEM_ASSERTIONS_DESCRIPTION),
-      opt("dsa", DISABLES_SYSTEM_ASSERTIONS_DESCRIPTION),
-      opt("disablesystemassertions", DISABLES_SYSTEM_ASSERTIONS_DESCRIPTION),
-      opt("agentpath:", "Loads native agent library by &lt;pathname&gt;."),
-      opt("agentlib:", "Loads native agent library by &lt;libname&gt;."),
-      opt("javaagent:", "Loads Java programming language agent by &lt;jarpath&gt;."),
-      opt("D", "Sets a system property in format &lt;name&gt;=&lt;value&gt;."),
-      opt("XX:", "Specify non-standard JVM-specific option.")
+      opt("ea", VMOptionsBundle.message("vm.option.enable.assertions.description")),
+      opt("enableassertions", VMOptionsBundle.message("vm.option.enable.assertions.description")),
+      opt("da", VMOptionsBundle.message("vm.option.disable.assertions.description")),
+      opt("disableassertions", VMOptionsBundle.message("vm.option.disable.assertions.description")),
+      opt("esa", VMOptionsBundle.message("vm.option.enable.system.assertions.description")),
+      opt("enablesystemassertions", VMOptionsBundle.message("vm.option.enable.system.assertions.description")),
+      opt("dsa", VMOptionsBundle.message("vm.option.disable.system.assertions.description")),
+      opt("disablesystemassertions", VMOptionsBundle.message("vm.option.disable.system.assertions.description")),
+      opt("agentpath:",VMOptionsBundle.message("vm.option.agentpath.description")),
+      opt("agentlib:", VMOptionsBundle.message("vm.option.agentlib.description")),
+      opt("javaagent:", VMOptionsBundle.message("vm.option.javaagent.description")),
+      opt("D", VMOptionsBundle.message("vm.option.system.property.description")),
+      opt("XX:", VMOptionsBundle.message("vm.option.advanced.option.description")),
     )
 
     private fun opt(name: String, doc: String): VMOption {
