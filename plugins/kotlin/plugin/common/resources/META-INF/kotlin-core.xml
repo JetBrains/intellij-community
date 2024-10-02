@@ -569,6 +569,11 @@
     </intentionAction>
   </extensions>
 
+  <!-- Copy-paste -->
+  <extensions defaultExtensionNs="com.intellij">
+    <filePasteProvider implementation="org.jetbrains.kotlin.idea.codeInsight.copyPaste.KotlinFilePasteProvider" order="first"/>
+  </extensions>
+
   <actions>
     <action id="Kotlin.NewFile" class="org.jetbrains.kotlin.idea.actions.NewKotlinFileAction"
             icon="org.jetbrains.kotlin.idea.KotlinIcons.FILE">
