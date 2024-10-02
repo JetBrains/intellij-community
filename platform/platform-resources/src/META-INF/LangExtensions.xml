@@ -1514,6 +1514,8 @@
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.ActionsEqualityProvider"/>
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.OptionEqualityProvider"/>
 
+    <searchEverywherePreviewPrimaryUsageFinder id="base" implementation="com.intellij.ide.actions.searcheverywhere.PreviewPrimaryUsageFinderImpl"/>
+
     <applicationService serviceInterface="com.intellij.ide.actions.searcheverywhere.remote.SearchEverywhereRemoteSupportService"
                         serviceImplementation="com.intellij.ide.actions.searcheverywhere.SearchEverywhereRemoteSupportServiceImpl"/>
 

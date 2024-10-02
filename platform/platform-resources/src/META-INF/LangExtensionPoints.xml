@@ -170,6 +170,7 @@
     <extensionPoint name="searchEverywhereSpellingCorrector" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrectorFactory" dynamic="true"/>
     <extensionPoint name="searchEverywhereRemoteConverter" interface="com.intellij.ide.actions.searcheverywhere.remote.RemoteSearchEverywhereConverterSupplier" dynamic="true"/>
     <extensionPoint name="searchEverywhereReorderingService" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereReorderingService" dynamic="true"/>
+    <extensionPoint name="searchEverywherePreviewPrimaryUsageFinder" interface="com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewPrimaryUsageFinder" dynamic="true" />
 
     <extensionPoint name="runAnything.executionProvider" interface="com.intellij.ide.actions.runAnything.activity.RunAnythingProvider" dynamic="true"/>
     <extensionPoint name="runAnything.commandHandler" interface="com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler" dynamic="true"/>
