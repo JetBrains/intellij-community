@@ -981,16 +981,18 @@ object Utils {
    * @return The result of the provided block function.
    */
   @DelicateCoroutinesApi
-  suspend fun <T> cancelCurrentInputEventProcessingAndRun(block: suspend () -> T): T = coroutineScope {
+  suspend fun <T> cancelCurrentInputEventProcessingAndRun(context: CoroutineContext, block: () -> T): T = coroutineScope {
     val cancelJob = launch(cancellationDispatcher) {
       ourCurrentInputEventProcessingJobFlow.collectLatest {
         it?.cancel()
       }
     }
-    val result = block()
-    cancelJob.cancel()
-    result
+    return@coroutineScope withContext(context) {
+      cancelJob.cancel()
+      block()
+    }
   }
+
 
   suspend fun <T> runUpdateSessionForInputEvent(actions: List<AnAction>,
                                                 inputEvent: InputEvent,
