@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.vmOptions
 
+import com.intellij.openapi.diagnostic.Logger
+
 internal object VMOptionsParser {
+  private val LOG = Logger.getInstance(VMOptionsParser::class.java)
+
   internal fun parseXXOptions(text: String) : List<VMOption> {
     val lines = text.lineSequence().drop(1)
     val options = lines.mapNotNull {
@@ -83,7 +87,16 @@ internal object VMOptionsParser {
 
 
     fun build(): VMOption {
-      return VMOption(name, type = null, defaultValue = null, kind = VMOptionKind.Product, doc.joinToString(separator = " ") { it }, variant)
+      val key = getOptionBundleKey(name)
+      val description = if (VMOptionsBundle.isMessageInBundle(key)) { VMOptionsBundle.message(key) } else {
+        LOG.warn("Option $name is not localized. Output of java command will be used instead. Please, localize it with the key=$key in VMOptionsBundle")
+        doc.joinToString(separator = " ")
+      }
+      return VMOption(name, type = null, defaultValue = null, kind = VMOptionKind.Product, doc = description, variant)
     }
+
+    private fun getOptionBundleKey(option: String): String = "vm.option.${getCanonicalOptionName(option)}.description"
+
+    private fun getCanonicalOptionName(option: String): String = option.replace(Regex("[:|\\-]"), ".").trim('=', '.')
   }
 }

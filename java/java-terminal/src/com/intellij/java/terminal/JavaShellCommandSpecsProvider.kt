@@ -4,7 +4,6 @@ package com.intellij.java.terminal
 import com.intellij.execution.vmOptions.VMOptionKind
 import com.intellij.execution.vmOptions.VMOptionVariant
 import com.intellij.execution.vmOptions.VMOptionsService
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandSpec
@@ -81,16 +80,8 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       val optionName = it.optionName
       val presentableName = "${it.variant.prefix()}$optionName"
       option(presentableName) {
-        val optionDescription = if (JavaTerminalBundle.isMessageInBundle(getOptionBundleKey(optionName))) {
-          JavaTerminalBundle.message(getOptionBundleKey(optionName))
-        } else {
-          val descriptionCandidate = it.doc
-          if (descriptionCandidate == null) {
-            LOG.warn("Unknown ${it.variant} option: \"$optionName\". Provide ${getOptionBundleKey(optionName)} and [${getOptionArgumentBundleKey(optionName)}]")
-            return@option
-          }
-          descriptionCandidate
-        }
+        val optionDescription = it.doc
+        if (optionDescription == null) return@option
         description(optionDescription)
 
         val info = OPTION_UI_INFO_MAP[presentableName] ?: DEFAULT_UI_OPTION_INSTANCE
@@ -158,12 +149,6 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       }
     }
   }
-
-  private fun getOptionBundleKey(option: String): String = "java.command.terminal.${getCanonicalOptionName(option)}.option.description"
-
-  private fun getOptionArgumentBundleKey(option: String): String = "java.command.terminal.${getCanonicalOptionName(option)}.option.argument.text"
-
-  private fun getCanonicalOptionName(option: String): String = option.replace(Regex("[:|\\-]"), ".").trim('=', '.')
 }
 
 
@@ -209,5 +194,3 @@ private val OPTION_UI_INFO_MAP = mapOf(
 
 private data class UIOptionInfo(val separator: String? = null, @NlsSafe val argumentName: String? = null, val repeatTimes: Int = 1, val isArgumentOptional: Boolean = false)
 private val DEFAULT_UI_OPTION_INSTANCE = UIOptionInfo()
-
-private val LOG = Logger.getInstance(JavaShellCommandSpecsProvider::class.java)
