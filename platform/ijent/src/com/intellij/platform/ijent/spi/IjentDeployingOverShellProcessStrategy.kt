@@ -76,7 +76,7 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
 
   class ShellProcessWrapper(private var wrapped: Process?) {
     suspend fun write(data: String) {
-      val wrapped = wrapped!!
+      val process = wrapped!!
 
       @Suppress("NAME_SHADOWING")
       val data = if (data.endsWith("\n")) data else "$data\n"
@@ -85,9 +85,9 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
         "Executing a script inside the shell: $debugData"
       }
       withContext(Dispatchers.IO) {
-        wrapped.outputStream.write(data.toByteArray())
+        process.outputStream.write(data.toByteArray())
         ensureActive()
-        wrapped.outputStream.flush()
+        process.outputStream.flush()
         ensureActive()
       }
     }
@@ -110,11 +110,11 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
       }
 
     suspend fun copyDataFrom(stream: InputStream) {
-      val wrapped = wrapped!!
+      val process = wrapped!!
       withContext(Dispatchers.IO) {
-        stream.copyToAsync(wrapped.outputStream)
+        stream.copyToAsync(process.outputStream)
         ensureActive()
-        wrapped.outputStream.flush()
+        process.outputStream.flush()
       }
     }
 
