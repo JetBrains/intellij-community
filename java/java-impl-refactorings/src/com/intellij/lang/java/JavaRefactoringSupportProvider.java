@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
@@ -58,6 +58,14 @@ public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportPr
 
   @Override
   public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement elementToRename, @Nullable PsiElement context) {
+    if (context != null && context.getLanguage() != elementToRename.getLanguage() &&
+        elementToRename instanceof PsiNamedElement namedElement) {
+      String name = namedElement.getName();
+      if (name != null && !LanguageNamesValidation.isIdentifier(context.getLanguage(), name)) {
+        return false;
+      }
+    }
+
     return elementToRename instanceof PsiMember || elementToRename instanceof PsiJavaModule || isCanonicalConstructorParameter(elementToRename);
   }
 
