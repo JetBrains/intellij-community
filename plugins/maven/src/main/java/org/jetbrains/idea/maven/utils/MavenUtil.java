@@ -49,6 +49,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.platform.eel.EelApi;
 import com.intellij.platform.eel.EelPlatform;
+import com.intellij.platform.eel.LocalEelApi;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.utils.EelPathUtilsKt;
 import com.intellij.platform.eel.provider.utils.EelUtilsKt;
@@ -713,7 +714,7 @@ public class MavenUtil {
     }
 
     // TODO: eel
-    if (SystemInfo.isMac) {
+    if (eel instanceof LocalEelApi && SystemInfo.isMac) {
       Path home = fromBrew(eel);
       if (home != null) {
         result.add(new MavenInSpecificPath(home.toAbsolutePath().toString()));
