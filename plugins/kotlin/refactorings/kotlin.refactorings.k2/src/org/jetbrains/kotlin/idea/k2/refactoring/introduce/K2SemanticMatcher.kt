@@ -227,7 +227,11 @@ object K2SemanticMatcher {
                     return oldElement !is KtElement || oldElement.text == expression.text
                 }
             }
-
+            if (targetSymbol is KaSyntheticJavaPropertySymbol && patternSymbol is KaSyntheticJavaPropertySymbol &&
+                targetSymbol.callableId == patternSymbol.callableId
+            ) {
+                return true
+            }
             return targetSymbol == patternSymbol || symbols[targetSymbol] == patternSymbol
         }
 

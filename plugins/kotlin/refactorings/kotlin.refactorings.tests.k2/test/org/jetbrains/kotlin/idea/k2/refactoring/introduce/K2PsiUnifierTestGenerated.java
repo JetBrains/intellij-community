@@ -647,6 +647,11 @@ public abstract class K2PsiUnifierTestGenerated extends AbstractK2PsiUnifierTest
                 public void testMisc3() throws Exception {
                     runTest("../../idea/tests/testData/unifier/equivalence/expressions/misc/misc3.kt");
                 }
+
+                @TestMetadata("misc4.kt")
+                public void testMisc4() throws Exception {
+                    runTest("../../idea/tests/testData/unifier/equivalence/expressions/misc/misc4.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
