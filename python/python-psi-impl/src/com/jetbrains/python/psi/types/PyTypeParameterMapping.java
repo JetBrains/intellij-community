@@ -206,13 +206,17 @@ public final class PyTypeParameterMapping {
         sizeMismatch = false;
       }
       else {
-        sizeMismatch = handleSizeMismatch(onlyLeftExpectedType, centerMappedTypes, optionSet);
+        Couple<PyType> fallbackMapping = mapToFallback(onlyLeftExpectedType, optionSet);
+        ContainerUtil.addIfNotNull(centerMappedTypes, fallbackMapping);
+        sizeMismatch = fallbackMapping == null;
       }
     }
     else {
       sizeMismatch = true;
       for (PyType unmatchedType : expectedTypesDeque.toList()) {
-        sizeMismatch = handleSizeMismatch(unmatchedType, centerMappedTypes, optionSet);
+        Couple<PyType> fallbackMapping = mapToFallback(unmatchedType, optionSet);
+        ContainerUtil.addIfNotNull(centerMappedTypes, fallbackMapping);
+        sizeMismatch = fallbackMapping == null;
       }
     }
     if (sizeMismatch) {
@@ -225,22 +229,16 @@ public final class PyTypeParameterMapping {
     return new PyTypeParameterMapping(resultMapping);
   }
 
-  private static boolean handleSizeMismatch(@Nullable PyType unmatchedExpectedType,
-                                            @NotNull List<Couple<PyType>> centerMappedTypes,
-                                            @NotNull EnumSet<Option> optionSet) {
+  private static @Nullable Couple<PyType> mapToFallback(@Nullable PyType unmatchedExpectedType, @NotNull EnumSet<Option> optionSet) {
     if (optionSet.contains(Option.USE_DEFAULTS) &&
         unmatchedExpectedType instanceof PyTypeParameterType typeParameterType &&
         typeParameterType.getDefaultType() != null) {
-      centerMappedTypes.add(Couple.of(unmatchedExpectedType, typeParameterType.getDefaultType()));
-      return false;
+      return Couple.of(unmatchedExpectedType, typeParameterType.getDefaultType());
     }
     else if (optionSet.contains(Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY)) {
-      centerMappedTypes.add(Couple.of(unmatchedExpectedType, null));
-      return false;
+      return Couple.of(unmatchedExpectedType, null);
     }
-    else {
-      return true;
-    }
+    return null;
   }
 
   private static @NotNull List<PyType> flattenUnpackedTupleTypes(List<? extends PyType> types) {
