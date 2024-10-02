@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.RemoteTransferUIManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -338,6 +339,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
     group.add(actionManager.getAction("Maven.ShowVersions"));
 
     toolWindow.setAdditionalGearActions(group);
+    RemoteTransferUIManager.forceDirectTransfer(panel);
   }
 
   private void initTree() {
