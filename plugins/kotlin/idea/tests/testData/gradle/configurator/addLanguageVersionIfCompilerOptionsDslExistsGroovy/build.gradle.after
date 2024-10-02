@@ -20,7 +20,7 @@ dependencies {
 compileKotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_1_8)
-        languageVersion.set(KotlinVersion.KOTLIN_1_7)
+        languageVersion.set(KotlinVersion.KOTLIN_1_3)
     }
 }
 

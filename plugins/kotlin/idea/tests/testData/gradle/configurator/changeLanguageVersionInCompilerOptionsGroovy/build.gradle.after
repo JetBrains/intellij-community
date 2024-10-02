@@ -19,5 +19,5 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
 }
 compileKotlin {
-    compilerOptions.languageVersion.set(KotlinVersion.KOTLIN_1_7)
+    compilerOptions.languageVersion.set(KotlinVersion.KOTLIN_1_6)
 }

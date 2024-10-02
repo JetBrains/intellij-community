@@ -265,6 +265,7 @@ private fun getCompilerOptionForJsValue(
     return CompilerOption(replacement.toString(), jsOptionValue.fqClassName)
 }
 
+@ApiStatus.Internal
 fun getCompilerOption(optionName: String, optionValue: String): CompilerOption {
     val replacement = StringBuilder()
     val compilerOption = getReplacementForOldKotlinOptionIfNeeded(replacement, optionName, optionValue, operationReference = "=")
