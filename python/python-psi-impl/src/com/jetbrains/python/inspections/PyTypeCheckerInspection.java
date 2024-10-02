@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
@@ -18,6 +19,8 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -144,6 +147,60 @@ public class PyTypeCheckerInspection extends PyInspection {
         String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
         registerProblem(value, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
       }
+
+      matchAssignedAndExpectedDunderSetDescriptorValue(node, value);
+    }
+
+    private void matchAssignedAndExpectedDunderSetDescriptorValue(@NotNull PyTargetExpression targetExpression,
+                                                                  @NotNull PyExpression assignedValue) {
+      final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(targetExpression);
+      if (scopeOwner == null) return;
+
+      Pair<PyType, String> infoFromDunderSet =
+        getExpectedTypeFromDunderSet(targetExpression, scopeOwner, myTypeEvalContext);
+      if (infoFromDunderSet == null) return;
+
+      final PyType expectedTypeFromDunderSet = infoFromDunderSet.first;
+      final PyType actual = tryPromotingType(assignedValue, expectedTypeFromDunderSet);
+
+      String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+      if (expectedTypeFromDunderSet != null && !PyTypeChecker.match(expectedTypeFromDunderSet, actual, myTypeEvalContext)) {
+        String expectedName =
+          PythonDocumentationProvider.getVerboseTypeName(expectedTypeFromDunderSet, myTypeEvalContext);
+        String className = infoFromDunderSet.second;
+
+        if (className != null) {
+          registerProblem(assignedValue,
+                          PyPsiBundle.message("INSP.type.checker.assigned.value.do.not.match.expected.type.from.dunder.set", actualName,
+                                              expectedName, className));
+        }
+      }
+    }
+
+    private Pair<PyType, String> getExpectedTypeFromDunderSet(@NotNull PyTargetExpression targetExpression,
+                                                              @NotNull ScopeOwner scopeOwner,
+                                                              @NotNull TypeEvalContext context) {
+      PyExpression referenceExpressionFromTarget = PyUtil.createExpressionFromFragment(targetExpression.getText(), scopeOwner);
+      if (referenceExpressionFromTarget == null) return null;
+
+      PyType referenceType = myTypeEvalContext.getType(referenceExpressionFromTarget);
+      if (referenceType instanceof PyClassType classType) {
+        Ref<PyType> expectedTypeRefFromSet =
+          PyDescriptorTypeUtil.getExpectedValueTypeForDunderSet(targetExpression, classType, context);
+        if (expectedTypeRefFromSet != null) {
+          final PyResolveContext resolveContext = PyResolveContext.noProperties(context);
+          final List<? extends RatedResolveResult> members =
+            classType.resolveMember(PyNames.DUNDER_SET, targetExpression, AccessDirection.READ,
+                                    resolveContext);
+          if (members == null || members.isEmpty() || !(members.get(0).getElement() instanceof PyFunction dunderSetFunc)) return null;
+          PyClass classContainingDunderSet = dunderSetFunc.getContainingClass();
+
+          if (classContainingDunderSet == null || classContainingDunderSet.getName() == null) return null;
+
+          return Pair.create(Ref.deref(expectedTypeRefFromSet), classContainingDunderSet.getName());
+        }
+      }
+      return null;
     }
 
     private boolean reportTypedDictProblems(@NotNull PyType expected, @NotNull PyTypedDictType actual, @NotNull PyExpression value) {

@@ -76,7 +76,7 @@ public final class PySyntheticCallHelper {
   }
 
 
-  private static @NotNull List<PyFunction> resolveFunctionsByArgumentTypes(@NotNull String functionName,
+  public static @NotNull List<PyFunction> resolveFunctionsByArgumentTypes(@NotNull String functionName,
                                                                            @NotNull List<PyType> argumentTypes,
                                                                            @Nullable PyType receiverType,
                                                                            @NotNull TypeEvalContext context) {
@@ -154,7 +154,7 @@ public final class PySyntheticCallHelper {
     Map<Ref<PyType>, PyCallableParameter> mappedParams = new HashMap<>();
 
     for (int i = 0; i < explicitParameters.size(); i++) {
-      mappedParams.put(Ref.create(arguments.get(i)), explicitParameters.get(i));
+      mappedParams.put(Ref.create(i < arguments.size() ? arguments.get(i) : null), explicitParameters.get(i));
     }
 
     return new SyntheticCallArgumentsMapping(functionType, implicitParameters, mappedParams, unmappedArguments);
