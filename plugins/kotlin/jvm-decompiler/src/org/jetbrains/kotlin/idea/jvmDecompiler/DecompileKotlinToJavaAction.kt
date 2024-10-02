@@ -51,7 +51,7 @@ internal class DecompileKotlinToJavaActionProvider : AttachSourcesProvider {
     ): Collection<AttachSourcesProvider.AttachSourcesAction> {
         if (psiFile !is KtFile || !psiFile.canBeDecompiledToJava()) return emptyList()
 
-        return listOf(object : AttachSourcesProvider.AttachSourcesAction {
+        return listOf(object : AttachSourcesProvider.LightAttachSourcesAction {
             override fun getName() = KotlinJvmDecompilerBundle.message("action.DecompileKotlinToJava.text")
 
             override fun perform(orderEntriesContainingFile: List<LibraryOrderEntry>): ActionCallback {
