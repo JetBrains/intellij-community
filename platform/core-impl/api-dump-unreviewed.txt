@@ -4044,6 +4044,12 @@ f:com.intellij.util.ref.DebugReflectionUtil
 - <init>():V
 - s:walkObjects(I,java.util.Map,java.lang.Class,java.util.function.Predicate,com.intellij.util.PairProcessor):Z
 c:com.intellij.util.ref.DebugReflectionUtil$BackLink
+com.intellij.util.ref.IgnoredTraverseEntry
+- java.util.function.Predicate
+c:com.intellij.util.ref.IgnoredTraverseReference
+- com.intellij.util.ref.IgnoredTraverseEntry
+- <init>(java.lang.String,I):V
+- test(com.intellij.util.ref.DebugReflectionUtil$BackLink):Z
 f:org.jetbrains.ide.PooledThreadExecutor
 - sf:INSTANCE:java.util.concurrent.ExecutorService
 - <init>():V
