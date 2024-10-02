@@ -4,7 +4,6 @@ package com.intellij.remote.ext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.remote.RemoteSdkAdditionalData
-import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 import javax.swing.JTextField
 

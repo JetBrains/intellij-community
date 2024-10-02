@@ -90,7 +90,6 @@
     <orderEntry type="library" name="classgraph" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
-    <orderEntry type="module" module-name="intellij.platform.remote.core" exported="" />
     <orderEntry type="library" name="icu4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />

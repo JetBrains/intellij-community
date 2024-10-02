@@ -152,5 +152,6 @@
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client.cio" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
+    <orderEntry type="module" module-name="intellij.platform.ide.remote" />
   </component>
 </module>
