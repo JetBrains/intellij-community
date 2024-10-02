@@ -3,8 +3,8 @@ def f(data):<fold text='...'>
         case 1:<fold text='...'>
             pass
             pass</fold>
-        case 2:
-            pass
+        case 2:<fold text='...'>
+            pass</fold>
         case 3:<fold text='...'>
             pass
             pass</fold></fold></fold>
@@ -15,5 +15,5 @@ match p:<fold text='...'>
     case 0:<fold text='...'>
         pass
         pass</fold>
-    case 1:
-        pass</fold>
+    case 1:<fold text='...'>
+        pass</fold></fold>
