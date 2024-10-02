@@ -37,3 +37,17 @@ internal data class CopyOptionsImpl(
 
   override fun followLinks(v: Boolean): CopyOptions = apply { followLinks = v }
 }
+
+internal data class TimeSinceEpochImpl(override val seconds: ULong, override val nanoseconds: UInt) : EelFileSystemApi.TimeSinceEpoch
+
+internal data class ChangeAttributesOptionsImpl(
+  override var accessTime: EelFileSystemApi.TimeSinceEpoch? = null,
+  override var modificationTime: EelFileSystemApi.TimeSinceEpoch? = null,
+  override var permissions: EelFileInfo.Permissions? = null,
+) : EelFileSystemApi.ChangeAttributesOptions {
+  override fun accessTime(duration: EelFileSystemApi.TimeSinceEpoch): EelFileSystemApi.ChangeAttributesOptions = apply { accessTime = duration }
+
+  override fun modificationTime(duration: EelFileSystemApi.TimeSinceEpoch): EelFileSystemApi.ChangeAttributesOptions = apply { modificationTime = duration }
+
+  override fun permissions(permissions: EelFileInfo.Permissions): EelFileSystemApi.ChangeAttributesOptions = apply { this.permissions = permissions }
+}

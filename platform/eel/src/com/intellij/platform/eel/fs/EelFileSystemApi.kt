@@ -9,6 +9,7 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathError
 import java.nio.ByteBuffer
+import kotlin.Throws
 
 fun EelFileSystemApi.getPath(string: String, vararg other: String): EelResult<out EelPath.Absolute, EelPathError> {
   return EelPath.Absolute.build(listOf(string, *other), when (this) {
@@ -273,6 +274,34 @@ interface EelFileSystemApi {
     class Other(where: EelPath.Absolute, additionalMessage: String) : MoveException(where, additionalMessage), EelFsError.Other
   }
 
+  /**
+   * Time passed since Jan 1, 1970, 00:00.
+   * [nanoseconds] represent the amount of time passed since the last _second_, i.e., they are never bigger than 999,999,999.
+   */
+  interface TimeSinceEpoch {
+    val seconds: ULong
+    val nanoseconds: UInt
+  }
+
+  interface ChangeAttributesOptions {
+    fun accessTime(duration: TimeSinceEpoch): ChangeAttributesOptions
+    val accessTime: TimeSinceEpoch?
+    fun modificationTime(duration: TimeSinceEpoch): ChangeAttributesOptions
+    val modificationTime: TimeSinceEpoch?
+    fun permissions(permissions: EelFileInfo.Permissions): ChangeAttributesOptions
+    val permissions: EelFileInfo.Permissions?
+  }
+
+  sealed class ChangeAttributesException(where: EelPath.Absolute, additionalMessage: String) : EelFsIOException(where, additionalMessage) {
+    class SourceDoesNotExist(where: EelPath.Absolute) : MoveException(where, "Source does not exist"), EelFsError.DoesNotExist
+    class PermissionDenied(where: EelPath.Absolute) : MoveException(where, "Permission denied"), EelFsError.PermissionDenied
+    class NameTooLong(where: EelPath.Absolute) : MoveException(where, "Name too long"), EelFsError.NameTooLong
+    class Other(where: EelPath.Absolute, additionalMessage: String) : MoveException(where, additionalMessage), EelFsError.Other
+  }
+
+  @Throws(ChangeAttributesException::class)
+  suspend fun changeAttributes(path: EelPath.Absolute, options: ChangeAttributesOptions)
+
   companion object Arguments {
     @JvmStatic
     fun writeOptionsBuilder(path: EelPath.Absolute): WriteOptions =
@@ -281,6 +310,13 @@ interface EelFileSystemApi {
     @JvmStatic
     fun copyOptionsBuilder(source: EelPath.Absolute, target: EelPath.Absolute): CopyOptions =
       CopyOptionsImpl(source, target)
+
+    @JvmStatic
+    fun changeAttributesBuilder(): ChangeAttributesOptions =
+      ChangeAttributesOptionsImpl()
+
+    @JvmStatic
+    fun timeSinceEpoch(seconds: ULong, nanos: UInt): TimeSinceEpoch = TimeSinceEpochImpl(seconds, nanos)
   }
 }
 

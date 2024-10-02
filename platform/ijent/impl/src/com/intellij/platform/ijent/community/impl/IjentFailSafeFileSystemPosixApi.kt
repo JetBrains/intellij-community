@@ -193,6 +193,12 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
   }
 
+  override suspend fun changeAttributes(path: EelPath.Absolute, options: EelFileSystemApi.ChangeAttributesOptions) {
+    holder.withDelegateRetrying {
+      changeAttributes(path, options)
+    }
+  }
+
   override suspend fun createSymbolicLink(target: EelPath, linkPath: EelPath.Absolute) {
     holder.withDelegateRetrying {
       createSymbolicLink(target, linkPath)

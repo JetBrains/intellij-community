@@ -3,14 +3,11 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter
+import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.fs.EelFileInfo.Type.*
-import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateDirectoryException
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateSymbolicLinkException
-import com.intellij.platform.eel.fs.EelFsError
-import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
-import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.getOrThrow
 import com.intellij.platform.eel.provider.EelFsResultImpl
@@ -19,6 +16,7 @@ import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
+import com.intellij.util.io.PosixFilePermissionsUtil
 import com.intellij.util.text.nullize
 import com.sun.nio.file.ExtendedCopyOption
 import java.io.IOException
@@ -28,9 +26,7 @@ import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
 import java.nio.file.StandardOpenOption.*
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.FileAttribute
-import java.nio.file.attribute.FileAttributeView
+import java.nio.file.attribute.*
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ExecutorService
 import kotlin.contracts.ExperimentalContracts
@@ -141,9 +137,10 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun newByteChannel(path: Path, options: Set<OpenOption>, vararg attrs: FileAttribute<*>): SeekableByteChannel =
     newFileChannel(path, options, *attrs)
 
-  override fun newFileChannel(path: Path, options: Set<OpenOption>, vararg attrs: FileAttribute<*>?): FileChannel {
+  override fun newFileChannel(path: Path, options: Set<OpenOption>, vararg attrs: FileAttribute<*>): FileChannel {
     ensureIjentNioPath(path)
     require(path.eelPath is EelPath.Absolute)
+    validateAttributes(attrs)
     // TODO Handle options and attrs
     val fs = path.nioFs
 
@@ -181,6 +178,18 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       fsBlocking {
         IjentNioFileChannel.createReading(fs, path.eelPath)
       }
+    }
+  }
+
+  private fun validateAttributes(attrs: Array<out FileAttribute<*>>) {
+    for (attribute in attrs) {
+      val (viewName, paramName) = parseAttributesParameter(attribute.name())
+      if (viewName == "posix") {
+        if (paramName == listOf("permissions")) {
+          continue
+        }
+      }
+      throw UnsupportedOperationException("Cannot create file with atomically set parameter $paramName")
     }
   }
 
@@ -402,9 +411,30 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
   }
 
-  override fun <V : FileAttributeView?> getFileAttributeView(path: Path, type: Class<V>?, vararg options: LinkOption?): V {
-    TODO("Not yet implemented -> com.intellij.platform.ijent.functional.fs.TodoOperation.READ_ATTRIBUTES")
+  override fun <V : FileAttributeView?> getFileAttributeView(path: Path, type: Class<V>?, vararg options: LinkOption): V? {
+    ensureIjentNioPath(path)
+    ensurePathIsAbsolute(path.eelPath)
+    if (type == BasicFileAttributeView::class.java) {
+      val basicAttributes = readAttributes<BasicFileAttributes>(path, BasicFileAttributes::class.java, *options)
+      @Suppress("UNCHECKED_CAST")
+      return IjentNioBasicFileAttributeView(path.nioFs.ijentFs, path.eelPath, path, basicAttributes) as V
+    }
+    val nioFs = ensureIjentNioPath(path).nioFs
+    when (nioFs.ijentFs) {
+      is IjentFileSystemPosixApi -> {
+        if (type == PosixFileAttributeView::class.java) {
+          val posixAttributes = readAttributes<PosixFileAttributes>(path, PosixFileAttributes::class.java, *options)
+          @Suppress("UNCHECKED_CAST")
+          return IjentNioPosixFileAttributeView(path.nioFs.ijentFs, path.eelPath, path, posixAttributes) as V
+        }
+        else {
+          return null
+        }
+      }
+      is IjentFileSystemWindowsApi -> TODO()
+    }
   }
+
 
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
     val fs = ensureIjentNioPath(path).nioFs
@@ -429,13 +459,78 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     return result as A
   }
 
-  override fun readAttributes(path: Path, attributes: String, vararg options: LinkOption): MutableMap<String, Any> {
-    TODO("Not yet implemented -> com.intellij.platform.ijent.functional.fs.TodoOperation.READ_ATTRIBUTES")
+  override fun readAttributes(path: Path, attributes: String, vararg options: LinkOption): Map<String, Any> {
+    val (viewName, requestedAttributes) = parseAttributesParameter(attributes)
+    val rawMap = when (viewName) {
+      "basic" -> {
+        val basicAttributes = readAttributes(path, BasicFileAttributes::class.java, *options)
+        mapOf(
+          "lastModifiedTime" to basicAttributes.lastModifiedTime(),
+          "lastAccessTime" to basicAttributes.lastAccessTime(),
+          "creationTime" to basicAttributes.creationTime(),
+          "size" to basicAttributes.size(),
+          "isRegularFile" to basicAttributes.isRegularFile,
+          "isDirectory" to basicAttributes.isDirectory,
+          "isSymbolicLink" to basicAttributes.isSymbolicLink,
+          "isOther" to basicAttributes.isOther,
+          "fileKey" to basicAttributes.fileKey(),
+        )
+      }
+      "posix" -> {
+        val posixAttributes = readAttributes(path, PosixFileAttributes::class.java, *options)
+        mapOf(
+          "permissions" to posixAttributes.permissions(),
+          "group" to posixAttributes.group(),
+        )
+      }
+      else -> {
+        throw UnsupportedOperationException("Unsupported file attribute view $attributes")
+      }
+    }
+    return rawMap.filterKeys { requestedAttributes.contains(it) }
   }
 
-  override fun setAttribute(path: Path, attribute: String?, value: Any?, vararg options: LinkOption?) {
-    TODO("Not yet implemented -> com.intellij.platform.ijent.functional.fs.TodoOperation.READ_ATTRIBUTES " +
-         "com.intellij.platform.ijent.functional.fs.TodoOperation.UNIX_ATTRIBUTES")
+  private fun parseAttributesParameter(parameter: String): Pair<String, List<String>> {
+    val viewNameAndList = parameter.split(':')
+    return if (viewNameAndList.size == 2) {
+      viewNameAndList[0] to viewNameAndList[1].split(',')
+    }
+    else {
+      "basic" to viewNameAndList[0].split(',')
+    }
+  }
+
+  override fun setAttribute(path: Path, attribute: String, value: Any, vararg options: LinkOption?) {
+    val (viewName, requestedAttributes) = parseAttributesParameter(attribute)
+    val nioFs = ensureIjentNioPath(path).nioFs
+    val eelPath = ensurePathIsAbsolute(path.eelPath)
+    val builder = EelFileSystemApi.changeAttributesBuilder()
+    when (viewName) {
+      "basic" -> when (requestedAttributes.singleOrNull()) {
+        "lastModifiedTime" -> builder.updateTime(EelFileSystemApi.ChangeAttributesOptions::modificationTime, value)
+        "lastAccessTime" -> builder.updateTime(EelFileSystemApi.ChangeAttributesOptions::accessTime, value)
+        "creationTime" -> value as FileTime // intentionally no-op, like in Java; but we need to throw CCE just in case
+        else -> throw IllegalArgumentException("Unrecognized attribute: $attribute")
+      }
+      "posix" -> when (requestedAttributes.singleOrNull()) {
+        "permissions" -> {
+          value as Set<*> // ClassCastException is expected
+          @Suppress("UNCHECKED_CAST") val mask = PosixFilePermissionsUtil.toUnixMode(value as Set<PosixFilePermission>)
+          val permissions = EelPosixFileInfoImpl.Permissions(0, 0, mask)
+          builder.permissions(permissions)
+        }
+        else -> throw IllegalArgumentException("Unrecognized attribute: $attribute")
+      }
+      else -> throw java.lang.IllegalArgumentException("Unrecognized attribute: $attribute")
+    }
+    try {
+      fsBlocking {
+        nioFs.ijentFs.changeAttributes(eelPath, builder)
+      }
+    }
+    catch (e: EelFileSystemApi.ChangeAttributesException) {
+      e.throwFileSystemException()
+    }
   }
 
   override fun newAsynchronousFileChannel(
@@ -534,4 +629,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     require(uri.query.isNullOrEmpty()) { uri.query }
     require(uri.fragment.isNullOrEmpty()) { uri.fragment }
   }
+}
+
+
+internal fun EelFileSystemApi.ChangeAttributesOptions.updateTime(selector: EelFileSystemApi.ChangeAttributesOptions.(EelFileSystemApi.TimeSinceEpoch) -> Unit, obj: Any) {
+  obj as FileTime // ClassCastException is expected
+  val instant = obj.toInstant()
+  selector(EelFileSystemApi.timeSinceEpoch(instant.epochSecond.toULong(), instant.nano.toUInt()))
 }
