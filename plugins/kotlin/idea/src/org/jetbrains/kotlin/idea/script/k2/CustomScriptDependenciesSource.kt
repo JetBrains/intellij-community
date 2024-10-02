@@ -4,12 +4,15 @@ package org.jetbrains.kotlin.idea.script.k2
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.idea.core.script.*
+import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
+import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEPENDENCIES_SOURCES
+import org.jetbrains.kotlin.idea.core.script.getUpdatedStorage
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesData
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesSource
@@ -51,12 +54,21 @@ class CustomScriptDependenciesSource(override val project: Project) : ScriptDepe
 
     override suspend fun updateModules(dependencies: ScriptDependenciesData, storage: MutableEntityStorage?) {
         val updatedStorage = getUpdatedStorage(
-            project, dependencies,
-            { KotlinCustomScriptModuleEntitySource(it) },
-            { KotlinCustomScriptLibraryModuleEntitySource })
+            project, dependencies
+        ) { KotlinCustomScriptModuleEntitySource(it) }
+
+        val scriptFiles =
+            dependencies.configurations.keys.toSet()
 
         project.workspaceModel.update("Updating MainKts Kotlin Scripts modules") {
-            it.applyChangesFrom(updatedStorage)
+            it.replaceBySource(
+                { source ->
+                    (source as? KotlinCustomScriptModuleEntitySource)?.let {
+                        scriptFiles.contains(it.virtualFileUrl?.virtualFile)
+                    } == true
+                },
+                updatedStorage
+            )
         }
     }
 
@@ -67,8 +79,6 @@ class CustomScriptDependenciesSource(override val project: Project) : ScriptDepe
                 .safeAs<CustomScriptDependenciesSource>()
     }
 
-    data class KotlinCustomScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl) :
+    open class KotlinCustomScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl?) :
         KotlinScriptEntitySource(virtualFileUrl)
-
-    object KotlinCustomScriptLibraryModuleEntitySource : KotlinScriptLibraryEntitySource()
 }

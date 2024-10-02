@@ -118,7 +118,7 @@ internal class LoadKtGradleConfigurationAction : AnAction() {
             return false
         }
 
-        return GradleBuildRootsManager.getInstance(project)?.isConfigurationOutOfDate(file) ?: false
+        return GradleBuildRootsManager.getInstance(project)?.isConfigurationOutOfDate(file) == true
     }
 
     private fun getKotlinScriptFile(editor: Editor): VirtualFile? {

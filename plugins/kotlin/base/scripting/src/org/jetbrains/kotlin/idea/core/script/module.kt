@@ -22,24 +22,23 @@ import kotlin.script.experimental.api.valueOrNull
 const val KOTLIN_SCRIPTS_MODULE_NAME = "Kotlin Scripts"
 
 open class KotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?) : EntitySource
-open class KotlinScriptLibraryEntitySource : KotlinScriptEntitySource(null)
 
 @ApiStatus.Internal
 fun getUpdatedStorage(
     project: Project,
     dependenciesData: ScriptDependenciesData,
-    moduleEntitySourceSupplier: (virtualFileUrl: VirtualFileUrl) -> KotlinScriptEntitySource,
-    libraryEntitySourceSupplier: () -> KotlinScriptLibraryEntitySource,
+    entitySourceSupplier: (virtualFileUrl: VirtualFileUrl) -> KotlinScriptEntitySource,
 ): MutableEntityStorage {
     val updatedStorage = MutableEntityStorage.create()
 
     val projectPath = project.basePath?.let { Path.of(it) } ?: return updatedStorage
 
     val fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-    val libraryDependencyFactory = LibraryDependencyFactory(fileUrlManager, updatedStorage, libraryEntitySourceSupplier)
+    val updatedFactory = LibraryDependencyFactory(fileUrlManager, updatedStorage)
 
     for ((scriptFile, configurationWrapper) in dependenciesData.configurations) {
         val configuration = configurationWrapper.valueOrNull() ?: continue
+        val source = entitySourceSupplier(scriptFile.toVirtualFileUrl(fileUrlManager))
 
         val basePath = projectPath.toFile()
         val file = Path.of(scriptFile.path).toFile()
@@ -57,32 +56,30 @@ fun getUpdatedStorage(
                 ?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
 
         val libraryDependencies = toVfsRoots(configuration.dependenciesClassPath)
-            .map { libraryDependencyFactory.get(it) }
+            .map { updatedFactory.get(it, source) }
 
         val allDependencies = listOfNotNull(sdkDependency) + libraryDependencies
 
-        val source = moduleEntitySourceSupplier(scriptFile.toVirtualFileUrl(fileUrlManager))
         updatedStorage.addEntity(ModuleEntity(moduleName, allDependencies, source))
     }
 
     return updatedStorage
 }
 
-private class LibraryDependencyFactory(
+class LibraryDependencyFactory(
     private val fileUrlManager: VirtualFileUrlManager,
     private val entityStorage: MutableEntityStorage,
-    private val libraryEntitySourceSupplier: () -> KotlinScriptLibraryEntitySource
 ) {
     private val cache = HashMap<VirtualFile, LibraryDependency>()
     private val nameCache = HashMap<String, Int>()
 
-    fun get(file: VirtualFile): LibraryDependency {
+    fun get(file: VirtualFile, source: KotlinScriptEntitySource): LibraryDependency {
         return cache.computeIfAbsent(file) {
-            createLibrary(file)
+            createLibrary(file, source)
         }
     }
 
-    fun createLibrary(file: VirtualFile): LibraryDependency {
+    fun createLibrary(file: VirtualFile, source: KotlinScriptEntitySource): LibraryDependency {
         val fileUrl = file.toVirtualFileUrl(fileUrlManager)
         val libraryRoot = LibraryRoot(fileUrl, LibraryRootTypeId.COMPILED)
 
@@ -94,7 +91,7 @@ private class LibraryDependencyFactory(
         val libraryName = "$fileName$libraryNameSuffix"
 
         val libraryTableId = LibraryTableId.ProjectLibraryTableId
-        val libraryEntity = LibraryEntity(libraryName, libraryTableId, listOf(libraryRoot), libraryEntitySourceSupplier())
+        val libraryEntity = LibraryEntity(libraryName, libraryTableId, listOf(libraryRoot), source)
         val dependencyEntity = entityStorage.addEntity(libraryEntity)
         return LibraryDependency(dependencyEntity.symbolicId, false, DependencyScope.COMPILE)
     }
