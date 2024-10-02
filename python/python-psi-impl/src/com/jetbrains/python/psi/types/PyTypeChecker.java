@@ -1430,7 +1430,7 @@ public final class PyTypeChecker {
   }
 
   @NotNull
-  public static GenericSubstitutions unifyReceiver(@Nullable PyType receiverType, @NotNull TypeEvalContext context) {
+  static GenericSubstitutions unifyReceiver(@Nullable PyType receiverType, @NotNull TypeEvalContext context) {
     // Collect generic params of object type
     final var substitutions = new GenericSubstitutions();
     if (receiverType != null) {
@@ -1640,8 +1640,7 @@ public final class PyTypeChecker {
   }
 
   @NotNull
-  @ApiStatus.Internal
-  public static GenericSubstitutions fillSubstitutionsWithTypeParameters(@NotNull GenericSubstitutions substitutions, @NotNull List<Couple<PyType>> typeParameters) {
+  private static GenericSubstitutions fillSubstitutionsWithTypeParameters(@NotNull GenericSubstitutions substitutions, @NotNull List<Couple<PyType>> typeParameters) {
     for (Couple<PyType> pair : typeParameters) {
       if (pair.getFirst() instanceof PyTypeVarType typeVar) {
         substitutions.typeVars.put(typeVar, pair.getSecond());
