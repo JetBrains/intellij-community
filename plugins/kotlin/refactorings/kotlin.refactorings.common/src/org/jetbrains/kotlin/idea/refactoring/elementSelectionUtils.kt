@@ -4,15 +4,12 @@ package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
 import com.intellij.codeInsight.unwrap.ScopeHighlighter
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.Computable
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
