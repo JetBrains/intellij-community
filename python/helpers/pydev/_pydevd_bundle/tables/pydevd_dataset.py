@@ -49,23 +49,27 @@ def get_data(table, use_csv_serialization, start_index=None, end_index=None, for
     return computed_data
 
 
-def __ipython_display(data):
-    from IPython.display import display
-    display(data)
-
-
 # used by DSTableCommands
 # noinspection PyUnresolvedReferences
 def display_data_csv(table, start_index, end_index):
      # type: (datasets.arrow_dataset.Dataset, int, int) -> None
-    _compute_sliced_data(table, __ipython_display, start_index, end_index)
+    def ipython_display(data):
+        try:
+            data = data.to_csv()
+        except AttributeError:
+            pass
+        print(data)
+    _compute_sliced_data(table, ipython_display, end_index)
 
 
 # used by DSTableCommands
 # noinspection PyUnresolvedReferences
 def display_data_html(table, start_index, end_index):
     # type: (datasets.arrow_dataset.Dataset, int, int) -> None
-    _compute_sliced_data(table, __ipython_display, start_index, end_index)
+    def ipython_display(data):
+        from IPython.display import display
+        display(data)
+    _compute_sliced_data(table, ipython_display, end_index)
 
 
 def __get_data_slice(table, start, end):
