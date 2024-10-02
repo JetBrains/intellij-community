@@ -11,7 +11,6 @@ import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PropertyUtilBase;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,33 +19,41 @@ import java.util.Collections;
 import java.util.List;
 
 public sealed class CreateGetterOrSetterFix extends PsiUpdateModCommandAction<PsiField> {
-  private final boolean myCreateGetter;
-  private final boolean myCreateSetter;
+  private final Create myCreate;
   private final String myPropertyName;
+
+  private enum Create { GETTER , SETTER , GETTER_SETTER }
   
   public static final class CreateGetterFix extends CreateGetterOrSetterFix {
     public CreateGetterFix(@NotNull PsiField field) {
-      super(true, false, field);
+      super(Create.GETTER, field);
     }
   }
 
   public static final class CreateSetterFix extends CreateGetterOrSetterFix {
     public CreateSetterFix(@NotNull PsiField field) {
-      super(false, true, field);
+      super(Create.SETTER, field);
     }
   }
 
   public static final class CreateGetterAndSetterFix extends CreateGetterOrSetterFix {
     public CreateGetterAndSetterFix(@NotNull PsiField field) {
-      super(true, true, field);
+      super(Create.GETTER_SETTER, field);
     }
   }
   
-  private CreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field) {
+  private CreateGetterOrSetterFix(Create create, @NotNull PsiField field) {
     super(field);
-    myCreateGetter = createGetter;
-    myCreateSetter = createSetter;
+    myCreate = create;
     myPropertyName = PropertyUtilBase.suggestPropertyName(field);
+  }
+
+  private boolean createGetter() {
+    return myCreate != Create.SETTER;
+  }
+
+  private boolean createSetter() {
+    return myCreate != Create.GETTER;
   }
 
   @Override
@@ -57,35 +64,24 @@ public sealed class CreateGetterOrSetterFix extends PsiUpdateModCommandAction<Ps
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiField field) {
     final PsiClass aClass = field.getContainingClass();
-    if (aClass == null) {
-      return null;
-    }
+    if (aClass == null) return null;
 
-    if (myCreateGetter){
-      if (isStaticFinal(field) || PropertyUtilBase.findPropertyGetter(aClass, myPropertyName, isStatic(field), false) != null){
+    if (createGetter()) {
+      if (isStaticFinal(field) || PropertyUtilBase.findPropertyGetter(aClass, myPropertyName, isStatic(field), false) != null) {
+        return null;
+      }
+    }
+    if (createSetter()) {
+      if (isFinal(field) || PropertyUtilBase.findPropertySetter(aClass, myPropertyName, isStatic(field), false) != null) {
         return null;
       }
     }
 
-    if (myCreateSetter){
-      if(isFinal(field) || PropertyUtilBase.findPropertySetter(aClass, myPropertyName, isStatic(field), false) != null){
-        return null;
-      }
-    }
-
-    final @NonNls String what;
-    if (myCreateGetter && myCreateSetter) {
-      what = "create.getter.and.setter.for.field";
-    }
-    else if (myCreateGetter) {
-      what = "create.getter.for.field";
-    }
-    else if (myCreateSetter) {
-      what = "create.setter.for.field";
-    }
-    else {
-      throw new IllegalStateException("Either createGetter or createSetter must be true");
-    }
+    final String what = switch (myCreate) {
+      case GETTER_SETTER -> "create.getter.and.setter.for.field";
+      case GETTER -> "create.getter.for.field";
+      case SETTER -> "create.setter.for.field";
+    };
     return Presentation.of(QuickFixBundle.message(what, field.getName()));
   }
 
@@ -105,10 +101,10 @@ public sealed class CreateGetterOrSetterFix extends PsiUpdateModCommandAction<Ps
   protected void invoke(@NotNull ActionContext context, @NotNull PsiField field, @NotNull ModPsiUpdater updater) {
     PsiClass aClass = field.getContainingClass();
     final List<PsiMethod> methods = new ArrayList<>();
-    if (myCreateGetter) {
+    if (createGetter()) {
       Collections.addAll(methods, GetterSetterPrototypeProvider.generateGetterSetters(field, true));
     }
-    if (myCreateSetter) {
+    if (createSetter()) {
       Collections.addAll(methods, GetterSetterPrototypeProvider.generateGetterSetters(field, false));
     }
     assert aClass != null;
