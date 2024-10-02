@@ -49,12 +49,7 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
 
     checkBox(
       text = bundle.getString("userAgreement.dialog.checkBox"),
-      action = { checkBox ->
-        enableAcceptButton(checkBox.isSelected)
-        if (checkBox.isSelected) {
-          focusToAcceptButton()
-        }
-      }
+      action = { checkBox -> enableAcceptButton(checkBox.isSelected) }
     )
 
     if (ApplicationInfoImpl.getShadowInstance().isEAP && !isReleaseAgreementsEnabled()) {
