@@ -14,6 +14,20 @@ public class JetBrainsNotNullByDefault {
   }
 
   <T> T generic(T param) {
+    if (<warning descr="Condition 'param == null' is always 'false'">param == null</warning>) {
+      return param;
+    }
+    return <warning descr="'null' is returned by the method declared as @NotNullByDefault">null</warning>;
+  }
+
+  <T extends Object> T generic2(T param) {
+    if (<warning descr="Condition 'param == null' is always 'false'">param == null</warning>) {
+      return param;
+    }
+    return <warning descr="'null' is returned by the method declared as @NotNullByDefault">null</warning>;
+  }
+
+  <T extends @UnknownNullability Object> T generic3(T param) {
     if (param == null) {
       return <warning descr="'null' is returned by the method which is not declared as @Nullable">param</warning>;
     }
@@ -21,6 +35,15 @@ public class JetBrainsNotNullByDefault {
   }
 
   <T> List<T> genericList(List<T> param) {
+    for (T t : param) {
+      if (<warning descr="Condition 't == null' is always 'false'">t == null</warning>) {
+        return null;
+      }
+    }
+    return param;
+  }
+
+  <T extends @UnknownNullability Object> List<T> genericList2(List<T> param) {
     for (T t : param) {
       if (t == null) {
         return <warning descr="'null' is returned by the method declared as @NotNullByDefault">null</warning>;
@@ -31,9 +54,9 @@ public class JetBrainsNotNullByDefault {
 
   void use2(String s) {
     // T is inferred as String from "hello" type
-    if (generic("hello") == null) {}
+    if (generic3("hello") == null) {}
     // T is inferred as @NotNull String from the `s` type
-    if (<warning descr="Condition 'generic(s) == null' is always 'false'">generic(s) == null</warning>) {}
+    if (<warning descr="Condition 'generic3(s) == null' is always 'false'">generic3(s) == null</warning>) {}
   }
 
   void use(List<String> list) {
@@ -57,4 +80,37 @@ public class JetBrainsNotNullByDefault {
 
 interface NullableMember {
   @Nullable String get();
+}
+
+@NotNullByDefault
+class Test<K> {
+  String field;
+
+  K test(String param) {
+    if (<warning descr="Condition 'param == null' is always 'false'">param == null</warning>) {
+    }
+    if (<warning descr="Condition 'field == null' is always 'false'">field == null</warning>) {
+    }
+    String local = System.getProperty("a");
+    if (local == null) {
+    }
+    return <warning descr="'null' is returned by the method declared as @NotNullByDefault">null</warning>;
+  }
+}
+
+@NotNullByDefault
+class Test2{
+  public static void main(String[] args) {
+    final Test<String> stringTest = new Test<>();
+    final String test = stringTest.test(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    if(<warning descr="Condition 'test != null' is always 'true'">test != null</warning>) {
+      System.out.println("1");
+    }
+    // TODO: should report incompatible bound @Nullable String = K extends @NotNullByDefault Object
+    final Test<@Nullable String> stringTest2 = new Test<>();
+    final String test2 = stringTest2.test(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    if(<warning descr="Condition 'test2 != null' is always 'true'">test2 != null</warning>) {
+      System.out.println("1");
+    }
+  }
 }

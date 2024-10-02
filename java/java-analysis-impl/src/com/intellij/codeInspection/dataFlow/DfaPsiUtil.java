@@ -99,13 +99,13 @@ public final class DfaPsiUtil {
     if (DumbService.isDumb(owner.getProject())) return Nullability.UNKNOWN;
     NullabilityAnnotationInfo fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
     if (fromAnnotation != null) {
-      if (fromAnnotation.getNullability() == Nullability.NULLABLE &&
+      if (fromAnnotation.getNullability() != Nullability.NOT_NULL &&
           owner instanceof PsiMethod method) {
         PsiType type = method.getReturnType();
         PsiAnnotationOwner annotationOwner = fromAnnotation.getAnnotation().getOwner();
         if (PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter &&
             annotationOwner instanceof PsiType && annotationOwner != type) {
-          // Nullable from type hierarchy: should check the instantiation, as it could be more concrete
+          // Nullable/Unknown from type hierarchy: should check the instantiation, as it could be more concrete
           Nullability fromType = getNullabilityFromType(resultType, owner);
           if (fromType != null) return fromType;
         }
@@ -158,7 +158,7 @@ public final class DfaPsiUtil {
     if (owner instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiMethod method) {
       int index = method.getParameterList().getParameterIndex(parameter);
       List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
-      return ContainerUtil.exists(contracts, 
+      return ContainerUtil.exists(contracts,
                                c -> c.getParameterConstraint(index) == StandardMethodContract.ValueConstraint.NULL_VALUE);
     }
     return false;
@@ -210,7 +210,7 @@ public final class DfaPsiUtil {
     if (iteratedValue == null) return null;
 
     PsiType iteratedType = iteratedValue.getType();
-    if (iteratedValue instanceof PsiReferenceExpression refExpr && 
+    if (iteratedValue instanceof PsiReferenceExpression refExpr &&
         refExpr.resolve() instanceof PsiParameter parameter &&
         parameter.getParent() instanceof PsiForeachStatement targetLoop &&
         PsiTreeUtil.isAncestor(targetLoop, loop, true) &&

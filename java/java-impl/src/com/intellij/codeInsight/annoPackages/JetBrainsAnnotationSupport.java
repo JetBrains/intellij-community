@@ -6,6 +6,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,11 +21,15 @@ final class JetBrainsAnnotationSupport implements AnnotationPackageSupport {
                                                                                  PsiAnnotation.TargetType @NotNull [] types,
                                                                                  boolean superPackage) {
     if (superPackage) return null;
-    if (ArrayUtil.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE, types) ||
-        ArrayUtil.contains(PsiAnnotation.TargetType.TYPE_PARAMETER, types)) {
+    if (ArrayUtil.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE, types)) return null;
+    if (!anno.hasQualifiedName(AnnotationUtil.NOT_NULL_BY_DEFAULT)) return null;
+    if (ArrayUtil.contains(PsiAnnotation.TargetType.TYPE_PARAMETER, types)) {
+      if (context instanceof PsiTypeParameter typeParameter && typeParameter.getExtendsListTypes().length == 0) {
+        // Declared type parameter without a bound like <T> is equal to <T extends Object>, and the Object is implicitly annotated as NotNull
+        return new NullabilityAnnotationInfo(anno, Nullability.NOT_NULL, true);
+      }
       return null;
     }
-    if (!anno.hasQualifiedName(AnnotationUtil.NOT_NULL_BY_DEFAULT)) return null;
     if (JSpecifyAnnotationSupport.resolvesToTypeParameter(context)) return null;
     return new NullabilityAnnotationInfo(anno, Nullability.NOT_NULL, true);
   }
