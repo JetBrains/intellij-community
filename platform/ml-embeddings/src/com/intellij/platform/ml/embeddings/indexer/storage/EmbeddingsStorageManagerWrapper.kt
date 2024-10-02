@@ -12,7 +12,7 @@ class EmbeddingsStorageManagerWrapper<KeyT>(
   val storageManager: TextEmbeddingsStorageManager<KeyT>,
   val keyProvider: EmbeddingStorageKeyProvider<KeyT>,
 ) {
-  suspend fun addAbsent(project: Project, entities: List<IndexableEntity>) {
+  suspend fun addAbsent(project: Project?, entities: List<IndexableEntity>) {
     return storageManager.addAbsent(project, indexId, entities.map {
       IndexEntry(
         keyProvider.findKey(project, indexId, it),

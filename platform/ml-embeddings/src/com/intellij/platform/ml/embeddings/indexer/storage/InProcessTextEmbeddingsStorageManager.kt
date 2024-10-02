@@ -12,9 +12,9 @@ import com.intellij.platform.ml.embeddings.indexer.IndexId
 import com.intellij.platform.ml.embeddings.jvm.wrappers.ClassEmbeddingsStorageWrapper
 import com.intellij.platform.ml.embeddings.jvm.wrappers.FileEmbeddingsStorageWrapper
 import com.intellij.platform.ml.embeddings.jvm.wrappers.SymbolEmbeddingsStorageWrapper
-import com.intellij.platform.ml.embeddings.jvm.wrappers.AbstractEmbeddingsStorageWrapper
 import com.intellij.platform.ml.embeddings.jvm.models.LocalEmbeddingServiceProviderImpl
 import com.intellij.platform.ml.embeddings.jvm.wrappers.ActionEmbeddingsStorageWrapper
+import com.intellij.platform.ml.embeddings.jvm.wrappers.EmbeddingsStorageWrapper
 
 @Service(Service.Level.APP)
 class InProcessTextEmbeddingsStorageManager : TextEmbeddingsStorageManager<EntityId> {
@@ -70,11 +70,12 @@ class InProcessTextEmbeddingsStorageManager : TextEmbeddingsStorageManager<Entit
   override fun getBatchSize(): Int = 1 // Empirically selected best value
 
   companion object {
-    private fun getWrapper(project: Project?, indexId: IndexId): AbstractEmbeddingsStorageWrapper {
+    private fun getWrapper(project: Project?, indexId: IndexId): EmbeddingsStorageWrapper {
       return when (indexId) {
         IndexId.CLASSES -> ClassEmbeddingsStorageWrapper.getInstance(project!!)
         IndexId.FILES -> FileEmbeddingsStorageWrapper.getInstance(project!!)
         IndexId.SYMBOLS -> SymbolEmbeddingsStorageWrapper.getInstance(project!!)
+        IndexId.ACTIONS -> ActionEmbeddingsStorageWrapper.getInstance()
         else -> throw IllegalArgumentException("Unsupported index id: $indexId")
       }
     }

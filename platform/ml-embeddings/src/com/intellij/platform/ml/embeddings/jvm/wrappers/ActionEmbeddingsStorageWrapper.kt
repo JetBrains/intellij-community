@@ -14,24 +14,34 @@ import com.intellij.platform.ml.embeddings.jvm.models.LocalEmbeddingServiceProvi
 import com.intellij.platform.ml.embeddings.external.artifacts.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR_NAME
 import com.intellij.platform.ml.embeddings.jvm.indices.EntityId
 import com.intellij.platform.ml.embeddings.indexer.storage.ScoredKey
+import com.intellij.platform.ml.embeddings.jvm.wrappers.AbstractEmbeddingsStorageWrapper.Companion.OLD_API_DIR_NAME
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlin.io.path.Path
+import kotlin.io.path.div
 
 @Service(Service.Level.APP)
-class ActionEmbeddingsStorageWrapper {
-  val index = InMemoryEmbeddingSearchIndex(
+class ActionEmbeddingsStorageWrapper : EmbeddingsStorageWrapper {
+  private val index = InMemoryEmbeddingSearchIndex(
     Path(PathManager.getSystemPath())
-      .resolve(SEMANTIC_SEARCH_RESOURCES_DIR_NAME)
-      .resolve(INDICES_DIR_NAME)
-      .resolve(INDEX_DIR)
+    / SEMANTIC_SEARCH_RESOURCES_DIR_NAME / OLD_API_DIR_NAME / INDICES_DIR_NAME / INDEX_DIR
   )
 
+  override suspend fun addEntries(values: Iterable<Pair<EntityId, FloatTextEmbedding>>) = index.addEntries(values)
+
+  override suspend fun removeEntries(keys: List<EntityId>) {
+    for (key in keys) {
+      index.remove(key)
+    }
+  }
+
+  override suspend fun clear() = index.clear()
+
   @RequiresBackgroundThread
-  suspend fun searchNeighbours(queryEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double?): List<ScoredKey<EntityId>> {
+  override suspend fun searchNeighbours(queryEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double?): List<ScoredKey<EntityId>> {
     ActionEmbeddingStorageManager.getInstance().triggerIndexing() // trigger indexing on first search usage
     if (index.getSize() == 0) return emptyList()
     val searchStartTime = System.nanoTime()
@@ -49,6 +59,16 @@ class ActionEmbeddingsStorageWrapper {
     val embedding = generateEmbedding(text) ?: return emptyFlow()
     return index.streamFindClose(embedding, similarityThreshold)
   }
+
+  override suspend fun startIndexingSession() = index.onIndexingStart()
+
+  override suspend fun finishIndexingSession() = index.onIndexingFinish()
+
+  override suspend fun getSize(): Int = index.getSize()
+
+  override suspend fun estimateMemory(): Long = index.estimateMemoryUsage()
+
+  suspend fun lookup(id: EntityId): FloatTextEmbedding? = index.lookup(id)
 
   companion object {
     private const val INDEX_DIR = "actions"

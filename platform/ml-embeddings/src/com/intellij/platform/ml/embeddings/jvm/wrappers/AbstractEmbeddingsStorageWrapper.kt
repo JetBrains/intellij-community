@@ -31,10 +31,10 @@ abstract class AbstractEmbeddingsStorageWrapper(
   val project: Project,
   val indexId: IndexId,
   private val cs: CoroutineScope,
-) {
+) : EmbeddingsStorageWrapper {
   val index: VanillaEmbeddingSearchIndex = VanillaEmbeddingSearchIndex(
-    Path(PathManager.getSystemPath()) / SEMANTIC_SEARCH_RESOURCES_DIR_NAME / OLD_API_DIR_NAME
-    / indexId.toString() / project.getProjectCacheFileName()
+    Path(PathManager.getSystemPath())
+    / SEMANTIC_SEARCH_RESOURCES_DIR_NAME / OLD_API_DIR_NAME / indexId.toString() / project.getProjectCacheFileName()
   )
 
   private var isIndexLoaded = false
@@ -54,7 +54,7 @@ abstract class AbstractEmbeddingsStorageWrapper(
 
   abstract fun isEnabled(): Boolean
 
-  suspend fun addEntries(values: Iterable<Pair<EntityId, FloatTextEmbedding>>) {
+  override suspend fun addEntries(values: Iterable<Pair<EntityId, FloatTextEmbedding>>) {
     accessTime.set(System.nanoTime())
     if (isEnabled()) {
       indexLoadingMutex.withLock {
@@ -64,7 +64,7 @@ abstract class AbstractEmbeddingsStorageWrapper(
     }
   }
 
-  suspend fun removeEntries(keys: List<EntityId>) {
+  override suspend fun removeEntries(keys: List<EntityId>) {
     accessTime.set(System.nanoTime())
     if (isEnabled()) {
       indexLoadingMutex.withLock {
@@ -76,14 +76,14 @@ abstract class AbstractEmbeddingsStorageWrapper(
     }
   }
 
-  suspend fun startIndexingSession() {
+  override suspend fun startIndexingSession() {
     accessTime.set(System.nanoTime())
     if (isEnabled()) {
       index.onIndexingStart()
     }
   }
 
-  suspend fun finishIndexingSession() {
+  override suspend fun finishIndexingSession() {
     accessTime.set(System.nanoTime())
     if (isEnabled()) {
       index.onIndexingFinish()
@@ -91,7 +91,7 @@ abstract class AbstractEmbeddingsStorageWrapper(
   }
 
   @RequiresBackgroundThread
-  suspend fun searchNeighbours(queryEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double?): List<ScoredKey<EntityId>> {
+  override suspend fun searchNeighbours(queryEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double?): List<ScoredKey<EntityId>> {
     accessTime.set(System.nanoTime())
     loadIndex()
     LocalEmbeddingServiceProviderImpl.getInstance().scheduleCleanup()
@@ -110,19 +110,19 @@ abstract class AbstractEmbeddingsStorageWrapper(
     }
   }
 
-  suspend fun getSize(): Int {
+  override suspend fun getSize(): Int {
     accessTime.set(System.nanoTime())
     loadIndex()
     return index.getSize()
   }
 
-  suspend fun estimateMemory(): Long {
+  override suspend fun estimateMemory(): Long {
     accessTime.set(System.nanoTime())
     loadIndex()
     return index.estimateMemoryUsage()
   }
 
-  suspend fun clear() {
+  override suspend fun clear() {
     accessTime.set(System.nanoTime())
     loadIndex()
     indexLoadingMutex.withLock {

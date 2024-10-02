@@ -101,7 +101,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
     var embedding: FloatTextEmbedding? = null
     if (action != null) {
       embedding = ActionManager.getInstance().getId(action)?.let { id ->
-        runBlockingMaybeCancellable { ActionEmbeddingsStorageWrapper.getInstance().index.lookup(EntityId(id)) }
+        runBlockingMaybeCancellable { ActionEmbeddingsStorageWrapper.getInstance().lookup(EntityId(id)) }
       }
     }
     if (embedding == null && actionText != null) {
