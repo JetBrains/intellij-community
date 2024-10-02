@@ -1,6 +1,7 @@
 package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Driver
+import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.*
 
 fun Finder.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}): WelcomeScreenUI {
@@ -17,6 +18,7 @@ open class WelcomeScreenUI(data: ComponentData) : UiComponent(data) {
 
   val leftItems = tree("//div[@class='Tree']")
 
+  fun openSettingsDialog() = driver.invokeAction("ShowSettings", now = false)
   fun clickProjects() = leftItems.clickPath("Projects")
   fun clickRemoteDev() = leftItems.clickPath("Remote Development")
   fun clickRemoteDevSsh() = leftItems.clickPath("Remote Development", "SSH")
