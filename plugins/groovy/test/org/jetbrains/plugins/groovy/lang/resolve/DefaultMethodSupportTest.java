@@ -1,120 +1,133 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.groovy.lang.resolve
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.psi.PsiMethod
-import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
+import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
+import org.junit.Assert;
 
-class DefaultMethodSupportTest extends GroovyResolveTestCase {
-
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
-
-  void testSuperReferenceWithQualifier() {
-    def method = resolveByText('''
-interface A {
-    default String exec() { 'A' }
-}
-interface B {
-    default String exec() { 'B' }
-}
-
-class C implements A,B {
-    String exec() {A.super.exe<caret>c() }
-}
-''', PsiMethod)
-    assertTrue(method.containingClass.name == 'A')
+public class DefaultMethodSupportTest extends GroovyResolveTestCase {
+  public void testSuperReferenceWithQualifier() {
+    PsiMethod method = resolveByText(
+      """
+        interface A {
+            default String exec() { 'A' }
+        }
+        interface B {
+            default String exec() { 'B' }
+        }
+        
+        class C implements A,B {
+            String exec() {A.super.exe<caret>c() }
+        }
+        """, PsiMethod.class);
+    Assert.assertEquals("A", method.getContainingClass().getName());
   }
 
-  void testSuperReferenceWithQualifier2() {
-    def method = resolveByText('''
-interface A {
-    default String exec() { 'A' }
-}
-interface B {
-    default String exec() { 'B' }
-}
-
-class C implements A, B {
-    String exec() {B.super.exe<caret>c() }
-}
-''', PsiMethod)
-    assertTrue(method.containingClass.name == 'B')
+  public void testSuperReferenceWithQualifier2() {
+    PsiMethod method = resolveByText(
+      """
+        interface A {
+            default String exec() { 'A' }
+        }
+        interface B {
+            default String exec() { 'B' }
+        }
+        
+        class C implements A, B {
+            String exec() {B.super.exe<caret>c() }
+        }
+        """, PsiMethod.class);
+    Assert.assertEquals("B", method.getContainingClass().getName());
   }
 
-  void testClashingMethods() {
-    def method = resolveByText('''
-interface A {
-    default String exec() { 'A' }
-}
-interface B {
-    default String exec() { 'B' }
-}
-
-class C implements A, B {
-    String foo() {exe<caret>c() }
-}
-''', GrTraitMethod)
-    assertEquals("B", method.prototype.containingClass.name)
+  public void testClashingMethods() {
+    GrTraitMethod method = resolveByText(
+      """
+        interface A {
+            default String exec() { 'A' }
+        }
+        interface B {
+            default String exec() { 'B' }
+        }
+        
+        class C implements A, B {
+            String foo() {exe<caret>c() }
+        }
+        """, GrTraitMethod.class);
+    Assert.assertEquals("B", method.getPrototype().getContainingClass().getName());
   }
 
-  void testDefaultMethodFromAsOperator1() {
-    resolveByText('''
-interface A {
-  default foo(){}
-}
-class B {
-  def bar() {}
-}
-
-def v = new B() as A
-v.fo<caret>o()
-''', PsiMethod)
+  public void testDefaultMethodFromAsOperator1() {
+    resolveByText(
+      """
+        interface A {
+          default foo(){}
+        }
+        class B {
+          def bar() {}
+        }
+        
+        def v = new B() as A
+        v.fo<caret>o()
+        """, PsiMethod.class);
   }
 
-  void testDefaultMethodFromAsOperator2() {
-    resolveByText('''
-interface A {
-  default foo(){}
-}
-class B {
-  def bar() {}
-}
-
-def v = new B() as A
-v.ba<caret>r()
-''', PsiMethod)
+  public void testDefaultMethodFromAsOperator2() {
+    resolveByText(
+      """
+        interface A {
+          default foo(){}
+        }
+        class B {
+          def bar() {}
+        }
+        
+        def v = new B() as A
+        v.ba<caret>r()
+        """, PsiMethod.class);
   }
 
-  void testDefaultMethodFromAssigning() {
-    resolveByText '''
-interface I {
-    int foo() 
-    default int bar() {
-        2
-    }
-}
-
-I i = {3}
-i.ba<caret>r()
-''', PsiMethod
+  public void testDefaultMethodFromAssigning() {
+    resolveByText(
+      """
+        interface I {
+            int foo()
+            default int bar() {
+                2
+            }
+        }
+        
+        I i = {3}
+        i.ba<caret>r()
+        """, PsiMethod.class);
   }
 
-  void testDefaultMethodFromJavaInterface() {
-    myFixture.addClass("""
-interface IServiceJava<T> {
-    default void save(T entity) {
-        System.out.println(entity);
-    }
-}
-""")
-    resolveByText '''
-class TestGenericGroovy implements IServiceJava<String> {
-  void save(String entity) {
-    super.sa<caret>ve(entity)
-  }
-}
-''', PsiMethod
+  public void testDefaultMethodFromJavaInterface() {
+    myFixture.addClass(
+      """
+        interface IServiceJava<T> {
+            default void save(T entity) {
+                System.out.println(entity);
+            }
+        }
+        """);
+    resolveByText(
+      """
+        class TestGenericGroovy implements IServiceJava<String> {
+          void save(String entity) {
+            super.sa<caret>ve(entity)
+          }
+        }
+        """, PsiMethod.class);
   }
 
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
+  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0;
 }

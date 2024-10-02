@@ -5,7 +5,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.LightProjectDescriptor;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -805,7 +804,7 @@ public class ResolveWithDelegatesToOnLambdaTest extends GroovyResolveTestCase {
   private void assertScript(String text, String resolvedClass) {
     PsiMethod resolved = resolveByText(text, PsiMethod.class);
     final String containingClass = resolved.getContainingClass().getQualifiedName();
-    TestCase.assertEquals(resolvedClass, containingClass);
+    Assert.assertEquals(resolvedClass, containingClass);
   }
 
   @Override

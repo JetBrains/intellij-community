@@ -6,11 +6,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.UsefulTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.geb.GebTestsTest;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.Assert;
 
 public class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
   public void testNavigationInGroovy() {
@@ -26,7 +26,7 @@ public class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
     TargetElementUtil instance = TargetElementUtil.getInstance();
     PsiElement resolved = instance.findTargetElement(getEditor(), instance.getAllAccepted(), getEditor().getCaretModel().getOffset());
     UsefulTestCase.assertInstanceOf(resolved, PsiMethod.class);
-    TestCase.assertEquals("Page", ((PsiMethod)resolved).getContainingClass().getName());
+    Assert.assertEquals("Page", ((PsiMethod)resolved).getContainingClass().getName());
   }
 
   public void testNavigationInJava() {
@@ -43,7 +43,7 @@ public class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
     PsiElement resolved = instance.findTargetElement(getEditor(), instance.getAllAccepted(), getEditor().getCaretModel().getOffset())
       .getNavigationElement();
     UsefulTestCase.assertInstanceOf(resolved, PsiMethod.class);
-    TestCase.assertEquals("Page", ((PsiMethod)resolved).getContainingClass().getName());
+    Assert.assertEquals("Page", ((PsiMethod)resolved).getContainingClass().getName());
   }
 
   @Override

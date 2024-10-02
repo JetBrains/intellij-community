@@ -1,59 +1,48 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.jetbrains.plugins.groovy.lang.resolve
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
-import com.intellij.psi.PsiFile
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
+import org.junit.Assert;
 
-class GroovyResolveFileWithContextTest extends LightJavaCodeInsightFixtureTestCase {
+public class GroovyResolveFileWithContextTest extends LightJavaCodeInsightFixtureTestCase {
+  public void testResolve() {
+    GroovyFile context = GroovyPsiElementFactory.getInstance(getProject())
+      .createGroovyFile("class DummyClass {" + " String sss1 = null;" + "}", false, null);
 
-  void testResolve() {
-    GroovyFile context = GroovyPsiElementFactory.getInstance(project)
-      .createGroovyFile("class DummyClass {" +
-                        " String sss1 = null;" +
-                        "}" +
-                        "", false, null)
+    GroovyFile file = GroovyPsiElementFactory.getInstance(getProject()).createGroovyFile(
+      """
+        String sss2;
+        def x = sss1 + sss2;
+        """, false, null);
 
-    GroovyFile file = GroovyPsiElementFactory.getInstance(project)
-      .createGroovyFile("""
-String sss2;
-def x = sss1 + sss2;
-""", false, null)
+    if (file instanceof GroovyFileImpl groovyFile) {
+      groovyFile.setContext(context.getLastChild());
+    }
 
-    file.setContext(context.lastChild)
-
-    checkResolved(file, "sss1")
-    checkResolved(file, "sss2")
+    checkResolved(file, "sss1");
+    checkResolved(file, "sss2");
   }
 
   private static void checkResolved(PsiFile file, String referenceText) {
-    int idx = file.text.lastIndexOf(referenceText)
-    assert idx > 0
-    def e = file.findElementAt(idx)
+    int idx = file.getText().lastIndexOf(referenceText);
+    Assert.assertTrue(idx > 0);
+    PsiElement e = file.findElementAt(idx);
 
     while (e != null && !(e instanceof GrReferenceExpression)) {
-      e = e.parent
+      e = e.getParent();
     }
 
-    assert e != null
-    assert e.getTextLength() == referenceText.length()
-    assert e.resolve() != null : referenceText
-  }
 
+    Assert.assertNotNull(e);
+    Assert.assertEquals(e.getTextLength(), referenceText.length());
+    PsiReference reference = (PsiReference)e;
+    Assert.assertNotNull(referenceText, reference.resolve());
+  }
 }
