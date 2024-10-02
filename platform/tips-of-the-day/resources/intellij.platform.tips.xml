@@ -28,6 +28,10 @@
                  restartRequired="false"/>
   </extensions>
 
+  <applicationListeners>
+    <listener class="com.intellij.platform.tips.CloseTipDialogOnPluginUnloadingListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
+  
   <projectListeners>
     <listener class="com.intellij.ide.util.TipsUsageManager$TipsUsageListener"
               activeInTestMode="false"
