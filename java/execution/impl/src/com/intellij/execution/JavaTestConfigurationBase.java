@@ -25,6 +25,8 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
   private ShortenCommandLine myShortenCommandLine = null;
   private boolean myUseModulePath = true;
   private static final @NonNls String USE_CLASS_PATH_ONLY = "useClassPathOnly";
+  private boolean myPrintAsyncStackTraceForExceptions = true;
+  private static final @NonNls String PRINT_ASYNC_STACK_TRACE_FOR_EXCEPTIONS_ATTRIBUTE = "printAsyncStackTraceForExceptions";
 
   public JavaTestConfigurationBase(String name,
                                    @NotNull JavaRunConfigurationModule configurationModule,
@@ -76,6 +78,10 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
     Element mode = element.getChild("shortenClasspath");
     setShortenCommandLine(mode != null ? ShortenCommandLine.valueOf(mode.getAttributeValue("name")) : null);
     myUseModulePath = element.getChild(USE_CLASS_PATH_ONLY) == null;
+    {
+      var value = element.getAttributeValue(PRINT_ASYNC_STACK_TRACE_FOR_EXCEPTIONS_ATTRIBUTE);
+      myPrintAsyncStackTraceForExceptions = value == null || Boolean.parseBoolean(value);
+    }
   }
 
   @Override
@@ -87,6 +93,9 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
     if (!myUseModulePath) {
       element.addContent(new Element(USE_CLASS_PATH_ONLY));
     }
+    if (!myPrintAsyncStackTraceForExceptions) {
+      element.setAttribute(PRINT_ASYNC_STACK_TRACE_FOR_EXCEPTIONS_ATTRIBUTE, "false");
+    }
   }
 
   public boolean isUseModulePath() {
@@ -95,5 +104,13 @@ public abstract class JavaTestConfigurationBase extends JavaRunConfigurationBase
 
   public void setUseModulePath(boolean useModulePath) {
     myUseModulePath = useModulePath;
+  }
+
+  public boolean isPrintAsyncStackTraceForExceptions() {
+    return myPrintAsyncStackTraceForExceptions;
+  }
+
+  public void setPrintAsyncStackTraceForExceptions(boolean printAsyncStackTraceForExceptions) {
+    myPrintAsyncStackTraceForExceptions = printAsyncStackTraceForExceptions;
   }
 }

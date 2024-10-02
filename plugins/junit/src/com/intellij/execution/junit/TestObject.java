@@ -522,6 +522,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return getConfiguration().getForkMode();
   }
 
+  @Override
+  protected boolean isPrintAsyncStackTraceForExceptions() {
+    return getConfiguration().isPrintAsyncStackTraceForExceptions();
+  }
+
   /**
    * Dependencies for full & forked per module configurations are downloaded;
    * <p>

@@ -90,6 +90,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   private JPanel myListenersPanel;
   private LabeledComponent<ShortenCommandLineModeCombo> myShortenCommandLineCombo;
   private LabeledComponent<JCheckBox> myUseModulePath;
+  private LabeledComponent<JCheckBox> myAsyncStackTraceForExceptions;
   TextFieldWithBrowseButton myPatternTextField;
   private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
   private final ArrayList<Map.Entry<String, String>> propertiesList = new ArrayList<>();
@@ -184,6 +185,10 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     myUseModulePath.setAnchor(moduleClasspath.getLabel());
     myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
     myUseModulePath.getComponent().setSelected(true);
+
+    myAsyncStackTraceForExceptions.setAnchor(outputDirectory.getLabel());
+    myAsyncStackTraceForExceptions.getComponent().setText(TestngBundle.message("async.stack.trace.for.exceptions.label"));
+    myAsyncStackTraceForExceptions.getComponent().setSelected(true);
   }
 
   private void evaluateModuleClassPath() {
@@ -282,6 +287,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     myUseDefaultReportersCheckBox.setSelected(data.USE_DEFAULT_REPORTERS);
     myShortenCommandLineCombo.getComponent().setSelectedItem(config.getShortenCommandLine());
     myUseModulePath.getComponent().setSelected(config.isUseModulePath());
+    myAsyncStackTraceForExceptions.getComponent().setSelected(config.isPrintAsyncStackTraceForExceptions());
     if (!project.isDefault()) {
       SwingUtilities.invokeLater(() ->
                                    ReadAction.nonBlocking(() -> FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(project)).length > 0)
@@ -325,6 +331,8 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     config.setShortenCommandLine(myShortenCommandLineCombo.getComponent().getSelectedItem());
 
     config.setUseModulePath(myUseModulePath.isVisible() && myUseModulePath.getComponent().isSelected());
+
+    config.setPrintAsyncStackTraceForExceptions(myAsyncStackTraceForExceptions.getComponent().isSelected());
   }
 
   public ConfigurationModuleSelector getModuleSelector() {

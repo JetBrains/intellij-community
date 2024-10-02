@@ -132,6 +132,11 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   }
 
   @Override
+  protected boolean isPrintAsyncStackTraceForExceptions() {
+    return getConfiguration().isPrintAsyncStackTraceForExceptions();
+  }
+
+  @Override
   public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
     return new SearchingForTestsTask(getServerSocket(), config, myTempFile) {
       @Override

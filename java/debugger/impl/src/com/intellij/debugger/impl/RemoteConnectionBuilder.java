@@ -211,17 +211,20 @@ public class RemoteConnectionBuilder {
             try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307303, EA-835503")) {
               parametersList.add(prefix + agentPath + generateAgentSettings(project));
             }
+            if (Registry.is("debugger.async.stacks.coroutines", false)) {
+              parametersList.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false");
+              parametersList.addProperty("debugger.agent.enable.coroutines", "true");
+              if (Registry.is("debugger.async.stacks.flows", false)) {
+                parametersList.addProperty("kotlinx.coroutines.debug.enable.flows.stack.trace", "true");
+              }
+            }
+            if (!Registry.is("debugger.async.stack.trace.for.exceptions.printing", false)) {
+              parametersList.addProperty("debugger.agent.support.throwable", "false");
+            }
           }
         }
         else {
           LOG.error("Capture agent not found: " + agentArtifactPath);
-        }
-      }
-      if (Registry.is("debugger.async.stacks.coroutines", false)) {
-        parametersList.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false");
-        parametersList.addProperty("debugger.agent.enable.coroutines", "true");
-        if (Registry.is("debugger.async.stacks.flows", false)) {
-          parametersList.addProperty("kotlinx.coroutines.debug.enable.flows.stack.trace", "true");
         }
       }
     }
