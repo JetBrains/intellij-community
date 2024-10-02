@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -118,6 +119,7 @@ fun getSmartSelectSuggestions(
         || isOriginalOffset && element?.node?.elementType == KtTokens.RPAR
         || element is PsiComment
         || element?.getStrictParentOfType<KDoc>() != null
+        || element is LeafPsiElement && element.elementType == KtTokens.DOT
     ) return getSmartSelectSuggestions(file, offset - 1, elementKind, isOriginalOffset = false)
 
     val elements = ArrayList<KtElement>()

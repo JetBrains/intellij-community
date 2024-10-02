@@ -50,6 +50,11 @@ public class SmartSelectionTestGenerated extends AbstractSmartSelectionTest {
         runTest("testData/smartSelection/beforeComment.kt");
     }
 
+    @TestMetadata("beforeDot.kt")
+    public void testBeforeDot() throws Exception {
+        runTest("testData/smartSelection/beforeDot.kt");
+    }
+
     @TestMetadata("beforeKDocComment.kt")
     public void testBeforeKDocComment() throws Exception {
         runTest("testData/smartSelection/beforeKDocComment.kt");
