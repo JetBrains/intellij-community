@@ -243,7 +243,10 @@ private fun KaCallableSymbol.getJvmSignature(): String? {
     val receiver = receiverType?.jvmName(element) ?: ""
     val isSuspend = this is KaFunctionSymbol && isSuspend()
     val parameterTypes = if (this is KaFunctionSymbol) {
-        valueParameters.map { it.returnType.jvmName(element) ?: return null }.joinToString("")
+        valueParameters.map {
+            val typeName = it.returnType.jvmName(element) ?: return null
+            if (it.isVararg) "[$typeName" else typeName
+        }.joinToString("")
     } else ""
     val returnType = when {
         isSuspend -> "Ljava/lang/Object;"
