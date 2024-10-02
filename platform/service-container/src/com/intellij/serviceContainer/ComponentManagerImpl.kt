@@ -76,6 +76,7 @@ val emptyConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE)
 val coroutineScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, CoroutineScope::class.java)
 
 private val applicationMethodType = MethodType.methodType(Void.TYPE, Application::class.java)
+private val applicationAndScopeMethodType = MethodType.methodType(Void.TYPE, Application::class.java, CoroutineScope::class.java)
 private val componentManagerMethodType = MethodType.methodType(Void.TYPE, ComponentManager::class.java)
 
 @Internal
@@ -174,6 +175,7 @@ abstract class ComponentManagerImpl(
     emptyConstructorMethodType,
     coroutineScopeMethodType,
     applicationMethodType,
+    applicationAndScopeMethodType,
     componentManagerMethodType,
   )
 

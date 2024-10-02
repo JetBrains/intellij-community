@@ -16,7 +16,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientAppSession
 import com.intellij.openapi.client.ClientKind
-import com.intellij.openapi.client.ClientSessionsManager.Companion.getAppSession
+import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.client.forEachSession
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -45,12 +45,12 @@ open class CompletionServiceImpl : BaseCompletionService() {
 
     @JvmStatic
     val currentCompletionProgressIndicator: CompletionProgressIndicator?
-      get() = tryGetClientCompletionService(getAppSession())?.currentCompletionProgressIndicator
+      get() = tryGetClientCompletionService(application.currentSessionOrNull)?.currentCompletionProgressIndicator
 
     @SafeVarargs
     @JvmStatic
     fun assertPhase(vararg possibilities: Class<out CompletionPhase>) {
-      val holder = tryGetClientCompletionService(getAppSession())?.completionPhaseHolder ?: DEFAULT_PHASE_HOLDER
+      val holder = tryGetClientCompletionService(application.currentSessionOrNull)?.completionPhaseHolder ?: DEFAULT_PHASE_HOLDER
       if (!isPhase(holder.phase, *possibilities)) {
         reportPhase(holder)
       }
@@ -65,7 +65,7 @@ open class CompletionServiceImpl : BaseCompletionService() {
     @JvmStatic
     val completionPhase: CompletionPhase
       get() {
-        val clientCompletionService = tryGetClientCompletionService(getAppSession()) ?: return DEFAULT_PHASE_HOLDER.phase
+        val clientCompletionService = tryGetClientCompletionService(application.currentSessionOrNull) ?: return DEFAULT_PHASE_HOLDER.phase
         return clientCompletionService.completionPhase
       }
 
@@ -73,7 +73,7 @@ open class CompletionServiceImpl : BaseCompletionService() {
     @JvmStatic
     fun setCompletionPhase(phase: CompletionPhase) {
       LOG.trace("Set completion phase :: phase=$phase")
-      val clientCompletionService = tryGetClientCompletionService(getAppSession()) ?: return
+      val clientCompletionService = tryGetClientCompletionService(application.currentSessionOrNull) ?: return
       clientCompletionService.completionPhase = phase
     }
   }

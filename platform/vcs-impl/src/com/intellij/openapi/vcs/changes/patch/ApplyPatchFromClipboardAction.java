@@ -5,9 +5,10 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ClipboardUtil;
 import com.intellij.openapi.client.ClientAppSession;
-import com.intellij.openapi.client.ClientSessionsManager;
+import com.intellij.openapi.client.ClientSessionsUtil;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -35,7 +36,7 @@ public class ApplyPatchFromClipboardAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
 
-    ClientAppSession appSession = ClientSessionsManager.getAppSession();
+    ClientAppSession appSession = ClientSessionsUtil.getCurrentSessionOrNull(ApplicationManager.getApplication());
     // In a remote development case we cannot receive clipboard content immediately (we need to fetch it from client),
     // so we make the action enabled unconditionally.
     String text = (appSession != null && appSession.isRemote()) ? "" : ClipboardUtil.getTextInClipboard();

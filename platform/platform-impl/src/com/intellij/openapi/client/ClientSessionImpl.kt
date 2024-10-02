@@ -161,6 +161,11 @@ abstract class ClientSessionImpl(
   final override fun toString(): String {
     return "${javaClass.name}(type=${type}, clientId=$clientId)"
   }
+
+  override fun debugString(short: Boolean): String {
+    val className = if (short) javaClass.simpleName else javaClass.name
+    return "$className::$type#$clientId"
+  }
 }
 
 @ApiStatus.Internal
