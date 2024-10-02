@@ -4,6 +4,7 @@ package com.intellij.debugger.settings;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.collections.visualizer.CollectionVisualizerEvaluator;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.JavaValuePresentation;
 import com.intellij.debugger.engine.evaluation.*;
@@ -574,6 +575,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
             createExpressionArrayChildrenRenderer("toArray()", "!isEmpty()", arrayRenderer));
       setClassName(CommonClassNames.JAVA_UTIL_LIST);
       setIsApplicableChecker(type -> DebuggerUtilsAsync.instanceOf(type, getClassName()));
+      setFullValueEvaluator(new CollectionVisualizerEvaluator(getClassName()));
     }
 
     @Override

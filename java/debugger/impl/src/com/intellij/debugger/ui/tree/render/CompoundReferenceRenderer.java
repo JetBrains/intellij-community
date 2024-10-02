@@ -29,6 +29,7 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +113,8 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
     return null;
   }
 
-  void setFullValueEvaluator(FullValueEvaluatorProvider fullValueEvaluatorProvider) {
+  @ApiStatus.Internal
+  public void setFullValueEvaluator(FullValueEvaluatorProvider fullValueEvaluatorProvider) {
     myFullValueEvaluatorProvider = fullValueEvaluatorProvider;
   }
 

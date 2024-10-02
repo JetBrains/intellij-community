@@ -314,6 +314,8 @@
     <extensionPoint qualifiedName="com.intellij.debugger.additionalContextProvider"
                     interface="com.intellij.debugger.engine.evaluation.AdditionalContextProvider" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.debugger.collectionVisualizer"
+                    interface="com.intellij.debugger.collections.visualizer.CollectionVisualizer" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.compiler.inspectionValidator"
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"

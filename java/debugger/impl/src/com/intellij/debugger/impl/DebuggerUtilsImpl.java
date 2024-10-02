@@ -556,14 +556,22 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, type, method, Collections.emptyList());
   }
 
-  public static @Nullable Value invokeObjectMethod(@NotNull EvaluationContext evaluationContext,
+  public static @Nullable Value invokeObjectMethod(@NotNull EvaluationContextImpl evaluationContext,
                                                    @NotNull ObjectReference value,
                                                    @NotNull String methodName,
                                                    @Nullable String signature) throws EvaluateException {
+    return invokeObjectMethod(evaluationContext, value, methodName, signature, Collections.emptyList());
+  }
+
+  public static @Nullable Value invokeObjectMethod(@NotNull EvaluationContextImpl evaluationContext,
+                                                   @NotNull ObjectReference value,
+                                                   @NotNull String methodName,
+                                                   @Nullable String signature,
+                                                   @NotNull List<Value> arguments) throws EvaluateException {
     ReferenceType type = value.referenceType();
     Method method = findMethodOrLogError(type, methodName, signature);
     if (method == null) return null;
-    return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, value, method, Collections.emptyList());
+    return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, value, method, arguments);
   }
 
   private static @Nullable Method findMethodOrLogError(ReferenceType type, @NotNull String methodName, @Nullable String signature) {
