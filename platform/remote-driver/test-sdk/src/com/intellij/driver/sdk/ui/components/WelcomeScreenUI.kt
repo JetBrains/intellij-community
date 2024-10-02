@@ -13,7 +13,7 @@ fun Driver.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}) = this.ui.welc
 class WelcomeScreenUI(data: ComponentData) : UiComponent(data) {
   val createNewProjectButton = x("//div[(@accessiblename='New Project' and @class='JButton') or (@visible_text='New Project' and @class!='JBLabel')]")
   val openProjectButton = x("//div[(@accessiblename='Open' and @class='JButton')  or (@visible_text='Open' and @class!='JBLabel')]")
-  val fromVcsButton = x("//div[@accessiblename='Get from VCS' and @class='JButton']")
+  val fromVcsButton = x("//div[@accessiblename='Clone Repository' and @class='JButton']")
 
   private val leftItems = tree("//div[@class='Tree']")
 
