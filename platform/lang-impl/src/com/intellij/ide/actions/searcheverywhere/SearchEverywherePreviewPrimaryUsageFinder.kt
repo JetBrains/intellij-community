@@ -10,7 +10,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface SearchEverywherePreviewPrimaryUsageFinder {
   
   companion object {
@@ -20,6 +22,7 @@ interface SearchEverywherePreviewPrimaryUsageFinder {
   fun findPrimaryUsageInfo(psiFile: PsiFile): Pair<UsageInfo, Disposable?>?
 }
 
+@ApiStatus.Internal
 class PreviewPrimaryUsageFinderImpl : SearchEverywherePreviewPrimaryUsageFinder {
   override fun findPrimaryUsageInfo(psiFile: PsiFile): Pair<UsageInfo, Disposable?>? {
     val structureViewBuilder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(psiFile);
