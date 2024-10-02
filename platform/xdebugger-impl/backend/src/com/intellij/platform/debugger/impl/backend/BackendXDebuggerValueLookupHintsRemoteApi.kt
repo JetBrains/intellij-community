@@ -4,9 +4,6 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditor
@@ -25,6 +22,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.RemoteValueHintId
+import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
 import com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.change
@@ -131,6 +129,19 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
       }
       RemoteValueHintId(hintEntity.eid)
     }
+  }
+
+  override suspend fun createHintEvaluator(projectId: ProjectId): XDebuggerEvaluatorId? = withKernel {
+    // TODO: leaking evaluator, it is created every time and is not disposed
+    val project = projectId.findProject()
+    val evaluator = XDebuggerManager.getInstance(project).currentSession!!.debugProcess.evaluator!!
+    val evaluatorEntity = change {
+      LocalHintXDebuggerEvaluatorEntity.new {
+        it[XDebuggerEvaluatorEntity.Project] = project.asEntity()
+        it[XDebuggerEvaluatorEntity.Evaluator] = evaluator
+      }
+    }
+    XDebuggerEvaluatorId(evaluatorEntity.eid)
   }
 
   private suspend fun getValueHintFromDebuggerPlugins(

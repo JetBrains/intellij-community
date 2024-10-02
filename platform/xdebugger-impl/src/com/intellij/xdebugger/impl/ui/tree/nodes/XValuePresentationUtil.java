@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -10,6 +10,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,10 +92,11 @@ public final class XValuePresentationUtil {
     return renderer instanceof XValuePresentationTextExtractor;
   }
 
-  private static class XValuePresentationTextExtractor extends XValueTextRendererBase {
+  @ApiStatus.Internal
+  public static class XValuePresentationTextExtractor extends XValueTextRendererBase {
     private final StringBuilder myBuilder;
 
-    XValuePresentationTextExtractor() {
+    public XValuePresentationTextExtractor() {
       myBuilder = new StringBuilder();
     }
 

@@ -4,6 +4,8 @@ package com.intellij.platform.debugger.impl.frontend.evaluate.quick
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.editorId
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.RemoteValueHint
@@ -14,6 +16,7 @@ import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.XDebuggerActiveSessionEntity
 import com.intellij.xdebugger.impl.evaluate.childCoroutineScope
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint
@@ -70,7 +73,23 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
         LOG.error("invalid range: $range, text length = $textLength")
         return@async null
       }
-      if (Registry.`is`("debugger.valueLookupFrontendBackend") || FrontendApplicationInfo.getFrontendType() is FrontendType.RemoteDev) {
+      if (Registry.`is`("debugger.valueLookupFrontendBackend")) {
+        // TODO: use proper coroutine scope
+        val evaluatorScope = editor.childCoroutineScope("XQuickEvaluateHandler#evaluator")
+        val evaluatorId = withKernel {
+          XDebuggerValueLookupHintsRemoteApi.getInstance().createHintEvaluator(projectId)
+        } ?: return@async null
+        val frontendEvaluator = FrontendXDebuggerEvaluator(evaluatorScope, evaluatorId)
+        // TODO: provider proper editorsProvider
+        val editorsProvider = object : XDebuggerEditorsProvider() {
+          override fun getFileType(): FileType {
+            return FileTypes.PLAIN_TEXT
+          }
+        }
+        // TODO: support passing session: basically valueMarkers and currentPosition
+        XValueHint(project, editorsProvider, editor, point, type, expressionInfo, frontendEvaluator, false)
+      }
+      else if (FrontendApplicationInfo.getFrontendType() is FrontendType.RemoteDev) {
         RemoteValueHint(project, projectId, editor, point, type, offset, expressionInfo, fromPlugins = false)
       }
       else {

@@ -45,6 +45,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +80,8 @@ public class XValueHint extends AbstractValueHint {
     this(project, session.getDebugProcess().getEditorsProvider(), editor, point, type, expressionInfo, evaluator, session, fromKeyboard);
   }
 
-  protected XValueHint(@NotNull Project project,
+  @ApiStatus.Internal
+  public XValueHint(@NotNull Project project,
                        @NotNull XDebuggerEditorsProvider editorsProvider,
                        @NotNull Editor editor,
                        @NotNull Point point,
