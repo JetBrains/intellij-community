@@ -2586,6 +2586,7 @@ c:com.intellij.psi.impl.file.PsiDirectoryImpl
 - getChildren():com.intellij.psi.PsiElement[]
 - getContainingFile():com.intellij.psi.PsiFile
 - getFiles():com.intellij.psi.PsiFile[]
+- getFiles(com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.PsiFile[]
 - getLanguage():com.intellij.lang.Language
 - getManager():com.intellij.psi.PsiManager
 - getName():java.lang.String

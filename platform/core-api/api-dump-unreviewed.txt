@@ -3875,6 +3875,7 @@ com.intellij.psi.PsiDirectory
 - a:findFile(java.lang.String):com.intellij.psi.PsiFile
 - a:findSubdirectory(java.lang.String):com.intellij.psi.PsiDirectory
 - a:getFiles():com.intellij.psi.PsiFile[]
+- getFiles(com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.PsiFile[]
 - a:getName():java.lang.String
 - a:getParent():com.intellij.psi.PsiDirectory
 - a:getParentDirectory():com.intellij.psi.PsiDirectory

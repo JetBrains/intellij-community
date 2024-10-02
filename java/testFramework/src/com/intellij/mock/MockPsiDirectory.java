@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
@@ -97,6 +98,11 @@ public class MockPsiDirectory extends MockPsiElement implements PsiDirectory {
 
   @Override
   public PsiFile @NotNull [] getFiles() {
+    throw new UnsupportedOperationException("Method getFiles is not yet implemented in " + getClass().getName());
+  }
+
+  @Override
+  public PsiFile @NotNull [] getFiles(@NotNull GlobalSearchScope scope) {
     throw new UnsupportedOperationException("Method getFiles is not yet implemented in " + getClass().getName());
   }
 

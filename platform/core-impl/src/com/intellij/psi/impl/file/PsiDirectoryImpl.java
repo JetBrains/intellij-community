@@ -28,6 +28,7 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
@@ -139,10 +140,21 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public PsiFile @NotNull [] getFiles() {
+    return getFilesImpl(null);
+  }
+
+  @Override
+  public PsiFile @NotNull [] getFiles(@NotNull GlobalSearchScope scope) {
+    return getFilesImpl(scope);
+  }
+
+  private PsiFile @NotNull [] getFilesImpl(@Nullable GlobalSearchScope scope) {
     if (!myFile.isValid()) throw new InvalidVirtualFileAccessException(myFile);
     VirtualFile[] files = myFile.getChildren();
     ArrayList<PsiFile> psiFiles = new ArrayList<>();
     for (VirtualFile file : files) {
+      // The scope allows us to pre-filter the virtual files and avoid creating unnecessary PSI files.
+      if (scope != null && !scope.contains(file)) continue;
       PsiFile psiFile = myManager.findFile(file);
       if (psiFile != null) {
         psiFiles.add(psiFile);

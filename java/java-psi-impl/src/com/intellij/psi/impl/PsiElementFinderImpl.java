@@ -121,7 +121,7 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
     Set<String> names = null;
     FileIndexFacade facade = FileIndexFacade.getInstance(myProject);
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
-      for (PsiFile file : dir.getFiles()) {
+      for (PsiFile file : dir.getFiles(scope)) {
         if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
           VirtualFile vFile = file.getVirtualFile();
           if (vFile != null &&
