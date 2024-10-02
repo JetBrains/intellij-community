@@ -745,6 +745,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/dynamicType.kt");
         }
 
+        @TestMetadata("enumEntry.kt")
+        public void testEnumEntry() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/enumEntry.kt");
+        }
+
         @TestMetadata("expressionBodyErrorType.kt")
         public void testExpressionBodyErrorType() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/expressionBodyErrorType.kt");

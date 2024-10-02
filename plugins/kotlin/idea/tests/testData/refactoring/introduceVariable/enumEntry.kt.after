@@ -1,0 +1,7 @@
+val rgb1 = 0xFF0000
+
+enum class Color(val rgb: Int) {
+    RED(rgb1),
+    GREEN(0x00FF00),
+    BLUE(0x0000FF)
+}

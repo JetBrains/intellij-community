@@ -747,6 +747,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/dynamicType.kt");
             }
 
+            @TestMetadata("enumEntry.kt")
+            public void testEnumEntry() throws Exception {
+                runTest("testData/refactoring/introduceVariable/enumEntry.kt");
+            }
+
             @TestMetadata("expressionBodyErrorType.kt")
             public void testExpressionBodyErrorType() throws Exception {
                 runTest("testData/refactoring/introduceVariable/expressionBodyErrorType.kt");

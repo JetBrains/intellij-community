@@ -226,7 +226,7 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     is KtBlockExpression -> true
                     is KtWhenEntry -> place == parent.expression
                     is KtDeclarationWithBody -> parent.bodyExpression == place
-                    is KtClassBody -> true
+                    is KtClassBody -> place !is KtEnumEntry
                     is KtFile -> true
                     else -> false
                 }
