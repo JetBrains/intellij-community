@@ -3,7 +3,10 @@ package com.intellij.auth
 
 import com.intellij.openapi.client.ClientSession
 import com.intellij.openapi.components.service
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
+@ApiStatus.Experimental
 interface GenericAuthService {
   companion object {
     fun getInstance(session: ClientSession): GenericAuthService = session.service()

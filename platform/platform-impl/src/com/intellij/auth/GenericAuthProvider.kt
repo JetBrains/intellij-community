@@ -2,32 +2,31 @@
 package com.intellij.auth
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.RequiredElement
-import com.intellij.serviceContainer.BaseKeyedLazyInstance
-import com.intellij.util.KeyedLazyInstance
-import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-class GenericAuthProviderEP : BaseKeyedLazyInstance<GenericAuthProvider>(), KeyedLazyInstance<GenericAuthProvider> {
-  @RequiredElement
-  @Attribute("id")
-  var id: String? = null
-
-  @RequiredElement
-  @Attribute("implementationClass")
-  var implementationClass: String? = null
-
-  override fun getImplementationClassName(): String? = implementationClass
-  override fun getKey(): String = id!!
+interface GenericAuthProviderExtension {
+  val authProviders: List<GenericAuthProvider>
 }
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
 interface GenericAuthProvider {
   companion object {
-    val EP_NAME : ExtensionPointName<GenericAuthProviderEP> = ExtensionPointName<GenericAuthProviderEP>("com.intellij.genericAuthProvider")
+    val EP_NAME : ExtensionPointName<GenericAuthProviderExtension> = ExtensionPointName("com.intellij.genericAuthProvider")
   }
+
+  /**
+   * Should be unique within a [ClientAppSession].
+   */
+  val id: String
+
+  /**
+   * Gives some authentication data for some request.
+   * Data format (e.g. json schema in case of json-serialized data) needs to be specified for each [id] separately.
+   * For example, implementations for some [id] can just forward the request to a third-party tool.
+   * Use [GenericAuthService] to access [GenericAuthProvider] through RD protocol.
+   */
   suspend fun getAuthData(request: String): String
 }

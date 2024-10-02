@@ -593,10 +593,7 @@
       <with attribute="service" implements="com.intellij.openapi.components.PersistentStateComponent"/>
     </extensionPoint>
     <extensionPoint name="genericAuthProvider"
-                    beanClass="com.intellij.auth.GenericAuthProviderEP"
-                    dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.auth.GenericAuthProvider"/>
-    </extensionPoint>
+                    interface="com.intellij.auth.GenericAuthProviderExtension" dynamic="true"/>
 
   </extensionPoints>
 </idea-plugin>
