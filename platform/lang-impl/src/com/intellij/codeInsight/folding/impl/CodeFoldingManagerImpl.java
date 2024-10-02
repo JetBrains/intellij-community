@@ -140,12 +140,14 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     }
 
     List<RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, true);
-
     boolean supportsDumbModeFolding = FoldingUpdate.supportsDumbModeFolding(file);
+    long modStamp = document.getModificationStamp();
 
     return editor -> {
       ThreadingAssertions.assertEventDispatchThread();
-      if (myProject.isDisposed() || editor.isDisposed()) return;
+      if (myProject.isDisposed() || editor.isDisposed() || modStamp != document.getModificationStamp()) {
+        return;
+      }
       final FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
       if (!foldingModel.isFoldingEnabled()) return;
       if (isFoldingsInitializedInEditor(editor)) return;
