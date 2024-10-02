@@ -147,6 +147,7 @@ class JarPackager private constructor(
         isCodesignEnabled = false,
         useCacheAsTargetFile = context.options.isUnpackedDist,
         dryRun = false,
+        helper = packager.helper
       )
     }
 
@@ -200,6 +201,7 @@ class JarPackager private constructor(
         isCodesignEnabled = isCodesignEnabled,
         useCacheAsTargetFile = !dryRun && context.options.isUnpackedDist,
         dryRun = dryRun,
+        helper = packager.helper
       )
 
       return coroutineScope {
@@ -782,7 +784,8 @@ private suspend fun buildJars(
   isCodesignEnabled: Boolean,
   useCacheAsTargetFile: Boolean,
   dryRun: Boolean,
-  layout: BaseLayout?
+  layout: BaseLayout?,
+  helper: JarPackagerDependencyHelper
 ): Map<ZipSource, List<String>> {
   checkAssetUniqueness(assets)
 
@@ -833,7 +836,7 @@ private suspend fun buildJars(
                 }
 
                 override suspend fun produce(targetFile: Path) {
-                  buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = nativeFileHandler, notify = false)
+                  buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = nativeFileHandler, notify = false, addDirEntries = asset.includedModules.any { helper.isTestPluginModule(it.key.moduleName, null) })
                 }
               }
             )

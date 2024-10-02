@@ -43,6 +43,7 @@ internal suspend fun buildJar(
   compress: Boolean = false,
   notify: Boolean = true,
   nativeFileHandler: NativeFileHandler? = null,
+  addDirEntries: Boolean = false,
 ) {
   val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
   writeNewFile(targetFile) { outChannel ->
@@ -67,6 +68,7 @@ internal suspend fun buildJar(
           nativeFileHandler = nativeFileHandler,
           compress = compress,
           filesToMerge = filesToMerge,
+          addClassDir = addDirEntries,
         )
 
         if (notify) {
@@ -79,7 +81,7 @@ internal suspend fun buildJar(
         zipCreator.uncompressedData(nameString = listOfEntitiesFileName, data = filesToMerge.joinToString("\n") { it.trim() })
       }
 
-      packageIndexBuilder?.writePackageIndex(zipCreator)
+      packageIndexBuilder?.writePackageIndex(zipCreator, if (addDirEntries) AddDirEntriesMode.ALL else AddDirEntriesMode.NONE)
     }
   }
 }
@@ -94,6 +96,7 @@ private suspend fun writeSource(
   nativeFileHandler: NativeFileHandler?,
   compress: Boolean,
   filesToMerge: MutableList<CharSequence>,
+  addClassDir: Boolean = false,
 ) {
   val indexWriter = packageIndexBuilder?.indexWriter
   when (source) {
@@ -104,7 +107,7 @@ private suspend fun writeSource(
           false
         }
         else if (uniqueNames.putIfAbsent(name, source.dir) == null && (!source.removeModuleInfo || name != "module-info.class")) {
-          packageIndexBuilder?.addFile(name)
+          packageIndexBuilder?.addFile(name, addClassDir = addClassDir)
           true
         }
         else {
@@ -126,7 +129,7 @@ private suspend fun writeSource(
         throw IllegalStateException("in-memory source must always be first (targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
       }
 
-      packageIndexBuilder?.addFile(source.relativePath)
+      packageIndexBuilder?.addFile(source.relativePath, addClassDir = addClassDir)
       zipCreator.uncompressedData(
         nameString = source.relativePath,
         maxSize = source.data.size,
@@ -141,7 +144,7 @@ private suspend fun writeSource(
         throw IllegalStateException("fileSource source must always be first (targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
       }
 
-      packageIndexBuilder?.addFile(source.relativePath)
+      packageIndexBuilder?.addFile(source.relativePath, addClassDir = addClassDir)
       zipCreator.file(file = source.file, nameString = source.relativePath)
     }
 
@@ -159,6 +162,7 @@ private suspend fun writeSource(
           compress = compress,
           targetFile = targetFile,
           filesToMerge = filesToMerge,
+          addClassDir = addClassDir,
         )
       }
       finally {
@@ -181,7 +185,8 @@ private suspend fun writeSource(
           sources = sources,
           nativeFileHandler = nativeFileHandler,
           compress = compress,
-          filesToMerge = filesToMerge
+          filesToMerge = filesToMerge,
+          addClassDir = addClassDir
         )
       }
     }
@@ -199,6 +204,7 @@ private suspend fun handleZipSource(
   compress: Boolean,
   targetFile: Path,
   filesToMerge: MutableList<CharSequence>,
+  addClassDir: Boolean,
 ) {
   val nativeFiles = if (nativeFileHandler == null) {
     null
@@ -255,7 +261,7 @@ private suspend fun handleZipSource(
         nativeFiles!!.value.add(name)
       }
       else if (shouldStayInJar) {
-        packageIndexBuilder?.addFile(name)
+        packageIndexBuilder?.addFile(name, addClassDir = addClassDir)
 
         // sign it
         val file = nativeFileHandler.sign(name, dataSupplier)
@@ -270,7 +276,7 @@ private suspend fun handleZipSource(
       }
     }
     else if (shouldStayInJar) {
-      packageIndexBuilder?.addFile(name)
+      packageIndexBuilder?.addFile(name, addClassDir = addClassDir)
 
       val data = dataSupplier()
       writeZipData(data)
