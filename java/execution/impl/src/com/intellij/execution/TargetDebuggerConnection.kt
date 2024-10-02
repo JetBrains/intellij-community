@@ -16,7 +16,7 @@ internal class TargetDebuggerConnection(
 
   fun resolveRemoteConnection(environment: TargetEnvironment) {
     val (localEndpoint, _) = environment.targetPortBindings[debuggerPortRequest]
-                             ?: error("Target port binding request $debuggerPortRequest is not registered within the environment: $environment")
+                             ?: error("Target port binding $debuggerPortRequest could not be found in the environment: $environment")
     remoteConnection.apply {
       debuggerHostName = localEndpoint.host
       debuggerAddress = localEndpoint.port.toString()
