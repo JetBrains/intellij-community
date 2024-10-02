@@ -18,7 +18,7 @@
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.util.environment.Environment"
                         serviceImplementation="com.intellij.openapi.externalSystem.util.environment.SystemEnvironment"/>
 
-    <projectConfigurable groupId="build" id="build.tools" groupWeight="1000"
+    <projectConfigurable groupId="build" id="build.tools"
                          instance="com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupConfigurable"
                          key="settings.build.tools.display.name" bundle="messages.ExternalSystemBundle"/>
     <search.optionContributor

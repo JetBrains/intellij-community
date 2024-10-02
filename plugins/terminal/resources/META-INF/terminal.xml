@@ -6,7 +6,7 @@
                 canCloseContents="true"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory"/>
 
-    <projectConfigurable groupId="tools" groupWeight="130"
+    <projectConfigurable groupId="tools"
                          bundle="messages.IdeBundle"
                          key="configurable.TerminalOptionsConfigurable.display.name"
                          id="terminal" instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>

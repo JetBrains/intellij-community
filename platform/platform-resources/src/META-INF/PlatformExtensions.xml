@@ -1269,7 +1269,7 @@
     <!-- Browsers -->
     <applicationService serviceInterface="com.intellij.ide.browsers.BrowserLauncher"
                         serviceImplementation="com.intellij.ide.browsers.BrowserLauncherImpl"/>
-    <applicationConfigurable groupId="tools" groupWeight="160" instance="com.intellij.ide.browsers.BrowserSettings"
+    <applicationConfigurable groupId="tools" instance="com.intellij.ide.browsers.BrowserSettings"
                              id="reference.settings.ide.settings.web.browsers"
                              key="browsers.settings" bundle="messages.IdeBundle"/>
     <stepsBeforeRunProvider implementation="com.intellij.ide.browsers.LaunchBrowserBeforeRunTaskProvider"/>
@@ -1280,7 +1280,6 @@
 
     <!-- Actions on Save -->
     <projectConfigurable groupId="tools"
-                         groupWeight="170"
                          provider="com.intellij.ide.actionsOnSave.ActionsOnSaveConfigurable$ActionsOnSaveConfigurableProvider"
                          id="actions.on.save"
                          bundle="messages.IdeBundle"
