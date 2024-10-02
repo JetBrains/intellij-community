@@ -1,41 +1,54 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.resolve.modifiers
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.resolve.modifiers;
 
-import com.intellij.extapi.psi.PsiFileBase
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiModifierListOwner
-import com.intellij.testFramework.LightProjectDescriptor
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import com.intellij.extapi.psi.PsiFileBase;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.junit.Assert;
 
-import static com.intellij.psi.PsiModifier.*
+import java.util.List;
 
-@CompileStatic
-abstract class GrVisibilityTestBase extends LightGroovyTestCase {
+import static com.intellij.psi.PsiModifier.*;
 
-  private static final String[] VISIBILITY_MODIFIERS = [PUBLIC, PRIVATE, PROTECTED, PACKAGE_LOCAL]
-
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
-
-  protected PsiClass addClass(String packageName = "pckg", String text) {
-    def file = fixture.addFileToProject("$packageName/_.groovy", """\
-package $packageName
-import groovy.transform.PackageScope
-import static groovy.transform.PackageScopeTarget.*
-
-$text
-""") as GroovyFile
-    file.typeDefinitions.first()
+public abstract class GrVisibilityTestBase extends LightGroovyTestCase {
+  protected PsiClass addClass(String packageName, String text) {
+    String fileText = "package " + packageName + "\n" +
+                      """
+                        import groovy.transform.PackageScope
+                        import static groovy.transform.PackageScopeTarget.*
+                        """ +
+                      text;
+    GroovyFile file = (GroovyFile)getFixture().addFileToProject(packageName + "/_.groovy",
+                                                                fileText);
+    return file.getTypeDefinitions()[0];
   }
 
-  protected static void assertVisibility(PsiModifierListOwner listOwner, String modifier) {
-    assert listOwner.hasModifierProperty(modifier)
-    (VISIBILITY_MODIFIERS - modifier).each {
-      assert listOwner.hasModifierProperty(modifier)
+  protected PsiClass addClass(String text) {
+    return addClass("pckg", text);
+  }
+
+  protected static void assertVisibility(@NotNull PsiModifierListOwner listOwner,
+                                         @ModifierConstant @NonNls @NotNull String modifier) {
+    Assert.assertTrue(listOwner.hasModifierProperty(modifier));
+    for (@ModifierConstant String visibilityModifier : VISIBILITY_MODIFIERS) {
+      if (modifier.equals(visibilityModifier)) continue;
+      Assert.assertFalse(listOwner.hasModifierProperty(visibilityModifier));
     }
-    def file = listOwner.containingFile as PsiFileBase
-    assert !file.contentsLoaded
+    PsiFileBase file = (PsiFileBase)listOwner.getContainingFile();
+    Assert.assertFalse(file.isContentsLoaded());
   }
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
+  private static final List<String> VISIBILITY_MODIFIERS = List.of(PUBLIC, PRIVATE, PROTECTED, PACKAGE_LOCAL);
+  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
 }
