@@ -18,6 +18,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,31 +43,52 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
     if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) return null;
-    final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiCodeBlock.class);
-    if (!(parent instanceof PsiMethod method)) return null;
-    final PsiParameterList parameterList = method.getParameterList();
-    if (parameterList.isEmpty()) return null;
-    final PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null || (containingClass.isInterface() && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method))) {
+    final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class, PsiCodeBlock.class);
+    String message;
+    if (parent instanceof PsiMethod method) {
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.isEmpty()) return null;
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null || (containingClass.isInterface() && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method))) {
+        return null;
+      }
+      if ((containingClass instanceof PsiImplicitClass || containingClass instanceof PsiAnonymousClass) && method.isConstructor()) {
+        return null; // constructors can't be declared here, code is broken so don't suggest generating more broken code
+      }
+      if (containingClass.isAnnotationType()) {
+        // Method with parameters in annotation is a compilation error; there's no sense to create overload
+        return null;
+      }
+      message = QuickFixBundle.message("generate.overloaded.method.or.constructor.with.default.parameter.values",
+                                       JavaElementKind.fromElement(method).lessDescriptive().object());
+    }
+    else if (parent instanceof PsiClass aClass && aClass.isRecord()) {
+      PsiRecordHeader header = aClass.getRecordHeader();
+      if (header == null || header.getTextOffset() + header.getTextLength() < element.getTextOffset()) return null;
+      if (header.getRecordComponents().length == 0) return null;
+      message = QuickFixBundle.message("generate.overloaded.method.or.constructor.with.default.parameter.values",
+                                       JavaElementKind.CONSTRUCTOR.lessDescriptive().object());
+    }
+    else {
       return null;
     }
-    if ((containingClass instanceof PsiImplicitClass || containingClass instanceof PsiAnonymousClass) && method.isConstructor()) {
-      return null; // constructors can't be declared here, code is broken so don't suggest generating more broken code
-    }
-    if (containingClass.isAnnotationType()) {
-      // Method with parameters in annotation is a compilation error; there's no sense to create overload
-      return null;
-    }
-    return Presentation.of(QuickFixBundle.message("generate.overloaded.method.or.constructor.with.default.parameter.values",
-                                                  JavaElementKind.fromElement(method).lessDescriptive().object()))
+    return Presentation.of(message)
       .withIcon(AllIcons.Actions.RefactoringBulb)
       .withPriority(PriorityAction.Priority.LOW);
   }
 
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiElement element) {
-    PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    assert method != null;
+    PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
+    PsiMethod method;
+    if (parent instanceof PsiMethod) {
+      method = (PsiMethod)parent;
+    }
+    else if (parent instanceof PsiClass aClass && aClass.isRecord()) {
+      method = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+      assert method != null;
+    }
+    else throw new AssertionError();
     PsiParameterList parameterList = method.getParameterList();
     PsiParameter[] parameters = parameterList.getParameters();
     if (parameters.length == 1) {
@@ -74,23 +96,35 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
                                                                  updater.getWritable(m).getParameterList().getParameters()));
     }
     List<ParameterClassMember> members = ContainerUtil.map(parameters, ParameterClassMember::new);
-    PsiParameter selectedParam = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
-    int idx = selectedParam != null ? ArrayUtil.find(parameters, selectedParam) : -1;
+    int idx = getSelectedIndex(element);
     List<ParameterClassMember> defaultSelection = idx >= 0 ? List.of(members.get(idx)) : members;
     return ModCommand.chooseMultipleMembers(
       QuickFixBundle.message("choose.default.value.parameters.popup.title"),
       members, defaultSelection, 
       sel -> ModCommand.psiUpdate(context, updater -> {
-        invoke(context.project(), updater.getWritable(element), updater,
+        invoke(context.project(), updater.getWritable(method), updater,
                ContainerUtil.map2Array(sel, PsiParameter.EMPTY_ARRAY,
                                        s -> updater.getWritable(((ParameterClassMember)s).getParameter())));
       }));
   }
 
-  private static void invoke(@NotNull Project project, @NotNull PsiElement element, 
+  private static int getSelectedIndex(@NotNull PsiElement element) {
+    PsiVariable selected = PsiTreeUtil.getParentOfType(element, PsiParameter.class, PsiRecordComponent.class);
+    if (selected instanceof PsiParameter parameter) {
+      PsiParameterList parameterList = (PsiParameterList)parameter.getParent();
+      return parameterList.getParameterIndex(parameter);
+    }
+    else if (selected instanceof PsiRecordComponent recordComponent) {
+      PsiRecordHeader recordHeader = (PsiRecordHeader)recordComponent.getParent();
+      return ArrayUtil.find(recordHeader.getRecordComponents(), recordComponent);
+    }
+    else {
+      return -1;
+    }
+  }
+
+  private static void invoke(@NotNull Project project, @NotNull PsiMethod method, 
                              @NotNull ModPsiUpdater updater, @NotNull PsiParameter @NotNull [] parameters) {
-    final PsiMethod method = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class);
-    assert method != null;
     PsiParameterList parameterList = method.getParameterList();
     if (parameters.length == 0) return;
     final PsiMethod methodPrototype = generateMethodPrototype(method, parameters);
@@ -99,8 +133,8 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
     for (PsiMethod existingMethod : containingClass.findMethodsByName(method.getName(), false)) {
       if (MethodSignatureUtil.areParametersErasureEqual(existingMethod, methodPrototype)) {
         updater.moveCaretTo(existingMethod.getTextOffset());
-        updater.message(JavaBundle.message("default.param.value.warning",
-                                           existingMethod.isConstructor() ? 0 : 1));
+        String description = RefactoringUIUtil.getDescription(existingMethod, false);
+        updater.message(StringUtil.capitalize(JavaBundle.message("default.param.value.warning", description)));
         return;
       }
     }
