@@ -249,6 +249,7 @@ private class AgreementUi(@NlsSafe private val htmlText: String,
     buttonPanel.add(Box.createRigidArea(JBUI.size(buttonsEastGap, 5)))
     declineButton!!.isEnabled = true
     acceptButton!!.isEnabled = true
+    rootPane.defaultButton = acceptButton
     return panel
   }
 
