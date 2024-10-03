@@ -3,8 +3,10 @@ package com.intellij.diff;
 
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public interface DiffViewerEx extends FrameDiffTool.DiffViewer {
   default @Nullable PrevNextDifferenceIterable getDifferenceIterable() {
     return null;

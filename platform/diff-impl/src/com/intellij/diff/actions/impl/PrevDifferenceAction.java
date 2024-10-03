@@ -19,7 +19,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public abstract class PrevDifferenceAction extends AnAction implements DumbAware {
   public PrevDifferenceAction() {
     ActionUtil.copyFrom(this, IdeActions.ACTION_PREVIOUS_DIFF);

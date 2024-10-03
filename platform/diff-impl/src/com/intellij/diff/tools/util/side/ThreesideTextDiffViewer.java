@@ -48,6 +48,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,7 +174,6 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   //
   // Diff
   //
-
   @NotNull
   public TextDiffSettings getTextSettings() {
     return TextDiffViewerUtil.getTextSettings(myContext);
@@ -365,6 +365,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     }
   }
 
+  @ApiStatus.Internal
   protected class TextShowPartialDiffAction extends ShowPartialDiffAction {
     public TextShowPartialDiffAction(@NotNull PartialDiffMode mode, boolean hasFourSides) {
       super(mode, hasFourSides);

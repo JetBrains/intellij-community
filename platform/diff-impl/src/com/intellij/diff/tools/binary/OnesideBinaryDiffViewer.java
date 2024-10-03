@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getDiffSettings;
 import static java.util.Collections.singletonList;
 
+@ApiStatus.Internal
 public class OnesideBinaryDiffViewer extends OnesideDiffViewer<BinaryEditorHolder> {
   @NotNull private final TransferableFileEditorStateSupport myTransferableStateSupport;
 

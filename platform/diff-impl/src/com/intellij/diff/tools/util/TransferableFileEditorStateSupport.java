@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class TransferableFileEditorStateSupport {
   @NotNull private static final Key<MyState> TRANSFERABLE_FILE_EDITOR_STATE =
     Key.create("Diff.TransferableFileEditorState");

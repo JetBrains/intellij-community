@@ -29,8 +29,10 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
+@ApiStatus.Internal
 object ExternalDiffTool {
   private val LOG = Logger.getInstance(ExternalDiffTool::class.java)
   private val ERROR_NOTIFICATION_GROUP_ID = "Diff Changes Loading Error"

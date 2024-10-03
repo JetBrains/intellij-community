@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +69,7 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
     super.onDispose();
   }
 
+  @ApiStatus.Internal
   @NotNull
   @Override
   protected TextEditorHolder createEditorHolder(@NotNull EditorHolderFactory<TextEditorHolder> factory) {
@@ -89,7 +91,6 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   //
   // Diff
   //
-
   @NotNull
   public TextDiffSettings getTextSettings() {
     return TextDiffViewerUtil.getTextSettings(myContext);

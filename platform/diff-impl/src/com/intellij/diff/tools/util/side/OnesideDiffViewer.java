@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ import java.util.List;
 
 public abstract class OnesideDiffViewer<T extends EditorHolder> extends ListenerDiffViewerBase {
   @NotNull protected final SimpleDiffPanel myPanel;
+  @ApiStatus.Internal
   @NotNull protected final OnesideContentPanel myContentPanel;
 
   @NotNull private final Side mySide;

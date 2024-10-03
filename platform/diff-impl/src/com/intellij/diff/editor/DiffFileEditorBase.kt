@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
@@ -18,6 +19,7 @@ import javax.swing.JPanel
 /**
  * @see [DiffRequestProcessorEditorCustomizer.Companion.customize]
  */
+@ApiStatus.Internal
 abstract class DiffFileEditorBase(
   private val file: VirtualFile,
   component: JComponent,

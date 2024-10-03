@@ -12,6 +12,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
 import com.intellij.util.xmlb.annotations.XMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.*
 import kotlin.properties.ReadWriteProperty

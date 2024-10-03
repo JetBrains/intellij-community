@@ -17,11 +17,13 @@ package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement;
 import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public class DiffContentPanel extends DiffContentLayoutPanel {
   @Nullable private DiffBreadcrumbsPanel myBreadcrumbs;
 

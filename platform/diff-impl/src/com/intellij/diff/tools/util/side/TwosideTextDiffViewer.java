@@ -124,7 +124,6 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   //
   // Diff
   //
-
   @NotNull
   public TextDiffSettings getTextSettings() {
     return TextDiffViewerUtil.getTextSettings(myContext);

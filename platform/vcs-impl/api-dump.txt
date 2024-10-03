@@ -1254,7 +1254,8 @@ f:com.intellij.openapi.vcs.changes.ChangesPreprocess
 - <init>():V
 - s:preprocessChangesRemoveDeletedForDuplicateMoved(java.util.List):java.util.List
 a:com.intellij.openapi.vcs.changes.ChangesTreeEditorDiffPreview
-- com.intellij.openapi.vcs.changes.EditorTabDiffPreview
+- com.intellij.openapi.util.CheckedDisposable
+- com.intellij.openapi.vcs.changes.DiffPreview
 - <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,javax.swing.JComponent):V
 - b:<init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,javax.swing.JComponent,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - pf:getTree():com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -1585,7 +1586,6 @@ f:com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponent
 - f:updatePreview(Z):V
 c:com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile
 - com.intellij.diff.editor.DiffVirtualFile
-- com.intellij.diff.editor.DiffVirtualFileWithTabName
 - <init>(com.intellij.openapi.vcs.changes.DiffPreviewProvider):V
 - createProcessor(com.intellij.openapi.project.Project):com.intellij.diff.impl.DiffRequestProcessor
 - equals(java.lang.Object):Z
@@ -2213,7 +2213,6 @@ f:com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool
 - <init>():V
 c:com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Simple
 - com.intellij.diff.FrameDiffTool
-- com.intellij.diff.impl.DiffToolSubstitutor
 - <init>():V
 - canShow(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):Z
 - createComponent(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):com.intellij.diff.FrameDiffTool$DiffViewer
@@ -2221,7 +2220,6 @@ c:com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Simp
 - getReplacement(com.intellij.diff.DiffTool,com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):com.intellij.diff.DiffTool
 c:com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Unified
 - com.intellij.diff.FrameDiffTool
-- com.intellij.diff.impl.DiffToolSubstitutor
 - <init>():V
 - canShow(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):Z
 - createComponent(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):com.intellij.diff.FrameDiffTool$DiffViewer
@@ -3449,7 +3447,6 @@ c:com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder$Hunk
 - f:getPatchDeletionRange():com.intellij.diff.util.LineRange
 - f:getPatchInsertionRange():com.intellij.diff.util.LineRange
 f:com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder$PatchSideChange
-- com.intellij.diff.tools.simple.AlignableChange
 - <init>(com.intellij.diff.util.Range):V
 - getDiffType():com.intellij.diff.util.TextDiffType
 - getEndLine(com.intellij.diff.util.Side):I

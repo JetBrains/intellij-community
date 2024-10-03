@@ -7,6 +7,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
+@ApiStatus.Internal
 public class DiffContentLayoutPanel extends JBPanel<DiffContentLayoutPanel> {
   final Wrapper myTitle = new InvisibleWrapper();
   final Wrapper myTopBreadcrumbs = new InvisibleWrapper();

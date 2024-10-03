@@ -23,9 +23,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.lang.ref.WeakReference
 
+@ApiStatus.Internal
 abstract class EditorTabDiffPreview(val project: Project) : CheckedDisposable, DiffPreview {
   abstract fun hasContent(): Boolean
   protected abstract fun createViewer(): DiffEditorViewer
@@ -137,6 +139,7 @@ abstract class EditorTabDiffPreview(val project: Project) : CheckedDisposable, D
 
 }
 
+@ApiStatus.Internal
 fun showExternalToolIfNeeded(project: Project?, diffProducers: ListSelection<out DiffRequestProducer>?): Boolean {
   if (diffProducers == null || diffProducers.isEmpty) return false
 

@@ -122,6 +122,7 @@ data class ProcessorData<T : TextBlockTransferableData>(val processor: CopyPaste
   }
 }
 
+@Internal
 class MergeReferenceData(private val left: List<ProcessorData<*>>,
                          private val right: List<ProcessorData<*>>) {
   fun getReferenceData(side: ThreeSide): List<ProcessorData<*>> = side.selectNotNull(left, emptyList(), right)

@@ -2,12 +2,14 @@
 package com.intellij.diff.util;
 
 import com.intellij.ui.components.panels.Wrapper;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 
+@ApiStatus.Internal
 public class InvisibleWrapper extends Wrapper {
   private final ComponentListener myListener = new MyVisibilityListener();
 

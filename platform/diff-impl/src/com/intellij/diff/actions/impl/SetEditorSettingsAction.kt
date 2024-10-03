@@ -26,11 +26,12 @@ import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.SwingConstants
 
-class SetEditorSettingsAction(
+class SetEditorSettingsAction @ApiStatus.Internal constructor(
   settings: TextDiffSettingsHolder.TextDiffSettings,
   editors: List<Editor?>,
 ) : DumbAwareAction(DiffBundle.message("editor.settings")) {

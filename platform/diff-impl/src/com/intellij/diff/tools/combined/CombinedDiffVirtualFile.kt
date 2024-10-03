@@ -11,6 +11,7 @@ abstract class CombinedDiffVirtualFile(name: String, private val path: String = 
   abstract override fun createViewer(project: Project): CombinedDiffComponentProcessor
 }
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 class CombinedDiffVirtualFileImpl(val project: Project, val producers: List<CombinedBlockProducer>, name: String, path: String = name)
   : CombinedDiffVirtualFile(name, path) {

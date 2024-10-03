@@ -23,6 +23,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +57,7 @@ public class TwosideContentPanel extends JPanel {
     }
   }
 
+  @ApiStatus.Internal
   public void setBreadcrumbs(@NotNull Side side, @Nullable DiffBreadcrumbsPanel breadcrumbs, @NotNull TextDiffSettings settings) {
     if (breadcrumbs != null) {
       DiffContentPanel panel = side.select(myPanels);

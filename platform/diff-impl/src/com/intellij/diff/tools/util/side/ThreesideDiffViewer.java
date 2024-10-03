@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class ThreesideDiffViewer<T extends EditorHolder> extends ListenerDiffViewerBase {
   @NotNull protected final SimpleDiffPanel myPanel;
   @NotNull protected final ThreesideContentPanel myContentPanel;

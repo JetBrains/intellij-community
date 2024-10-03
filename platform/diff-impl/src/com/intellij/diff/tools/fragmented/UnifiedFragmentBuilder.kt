@@ -23,6 +23,7 @@ import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 
 abstract class UnifiedFragmentBuilder(protected val text1: CharSequence,
                                       protected val text2: CharSequence,
@@ -150,6 +151,7 @@ abstract class UnifiedFragmentBuilder(protected val text1: CharSequence,
   protected class BlockLineRange(val blockStart: Int, val insertedStart: Int, val blockEnd: Int)
 }
 
+@ApiStatus.Internal
 class SimpleUnifiedFragmentBuilder(document1: Document,
                                    document2: Document,
                                    masterSide: Side

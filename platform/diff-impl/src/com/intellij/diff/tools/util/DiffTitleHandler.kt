@@ -15,8 +15,10 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.Alarm
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 abstract class DiffTitleHandler private constructor(
   disposable: Disposable,
   private val modalityComponent: JComponent

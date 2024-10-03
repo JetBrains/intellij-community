@@ -18,10 +18,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public abstract class ListenerDiffViewerBase extends DiffViewerBase {
   public ListenerDiffViewerBase(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request);

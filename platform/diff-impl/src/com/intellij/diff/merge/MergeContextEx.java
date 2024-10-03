@@ -16,8 +16,10 @@
 package com.intellij.diff.merge;
 
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class MergeContextEx extends MergeContext {
   /*
    * Destroy active MergeViewer and reopen current MergeRequest in the new one

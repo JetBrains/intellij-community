@@ -13,11 +13,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public class UnifiedEditorHighlighter implements EditorHighlighter {
   private static final Logger LOG = Logger.getInstance(UnifiedEditorHighlighter.class);
 

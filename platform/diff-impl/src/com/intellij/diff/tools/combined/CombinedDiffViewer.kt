@@ -875,6 +875,7 @@ private fun runPreservingViewportContent(scroll: JBScrollPane, blocksPanel: Comb
   scroll.viewport.viewPosition = Point(newViewRect.x, newViewRect.y)
 }
 
+@get:ApiStatus.Internal
 val DiffViewer.currentEditor: Editor?
   get() = when (this) {
     is EditorDiffViewer -> currentEditor
@@ -917,6 +918,7 @@ private fun Rectangle.intersects(bb: BlockBounds): Boolean =
   (bb.maxY > minY && bb.maxY <= maxY) ||
   (bb.minY <= minY && bb.maxY >= maxY)
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 interface BlockListener : EventListener {
   fun blocksHidden(blockIds: Collection<CombinedBlockId>)
