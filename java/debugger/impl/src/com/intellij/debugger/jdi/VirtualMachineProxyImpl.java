@@ -133,7 +133,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   /**
    * Check {@link ReferenceTypeImpl#nestedTypes()}
    */
-  private static void addNestedTypes(ReferenceType base, Collection<ReferenceType> classes, Set<ReferenceType> nested) {
+  @ApiStatus.Internal
+  public static void addNestedTypes(ReferenceType base, Collection<ReferenceType> classes, Collection<ReferenceType> nested) {
     String baseName = base.name();
     int baseLength = baseName.length();
     classes.forEach(type -> {
