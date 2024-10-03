@@ -976,7 +976,7 @@ public class ExprProcessor {
         tracer.incrementCurrentSourceLine();
       }
 
-      expr.getInferredExprType(null);
+      expr.inferExprType(null);
 
       TextBuffer content = expr.toJava(indent, tracer);
 
@@ -1050,7 +1050,8 @@ public class ExprProcessor {
       }
     }
 
-    VarType rightType = exprent.getInferredExprType(leftType);
+    exprent.inferExprType(leftType);
+    VarType rightType = exprent.getExprType();
 
     boolean isCastNull =
       rightType.getType() == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()));

@@ -62,14 +62,14 @@ public final class EliminateLoopsHelper {
       }
     }
 
-    if (stat.type == Statement.StatementType.DO && isLoopRedundant((DoStatement)stat)) {
+    if (stat.type == Statement.StatementType.DO && findAndReduceRedundantLoop((DoStatement)stat)) {
       return true;
     }
 
     return false;
   }
 
-  private static boolean isLoopRedundant(DoStatement loop) {
+  private static boolean findAndReduceRedundantLoop(DoStatement loop) {
 
     if (loop.getLoopType() != DoStatement.LoopType.DO) {
       return false;

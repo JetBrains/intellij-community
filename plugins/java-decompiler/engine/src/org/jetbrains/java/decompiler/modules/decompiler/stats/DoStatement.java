@@ -111,7 +111,7 @@ public final class DoStatement extends Statement {
         Exprent initFirstExprent = initExprent.get(0);
         if (initFirstExprent != null && incFirstExprent != null) {
           buf.appendIndent(indent).append("for(").append(initFirstExprent.toJava(indent, tracer));
-          incFirstExprent.getInferredExprType(null); //TODO: Find a better then null? For now just calls it to clear casts if needed
+          incFirstExprent.inferExprType(null); //TODO: Find a better then null? For now just calls it to clear casts if needed
           buf.append(" : ").append(incFirstExprent.toJava(indent, tracer)).append(") {").appendLineSeparator();
           tracer.incrementCurrentSourceLine();
           buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));

@@ -62,9 +62,13 @@ public abstract class Exprent implements IMatchable {
     return VarType.VARTYPE_VOID;
   }
 
-  // TODO: This captures the state of upperBound, find a way to do it without modifying state?
-  public VarType getInferredExprType(VarType upperBound) {
-    return getExprType();
+
+  /**
+   * Infers and sets the expression type with the given upper bound.
+   *
+   * @param upperBound The upper bound type to be used for inferring the expression type.
+   */
+  public void inferExprType(VarType upperBound) {
   }
 
   public int getExprentUse() {
@@ -315,7 +319,11 @@ public abstract class Exprent implements IMatchable {
           if (type.equals(VarType.VARTYPE_OBJECT) && right.equals(VarType.VARTYPE_OBJECT)) {
             continue;
           }
-          anyMatch |= right.getValue() == null /*null const doesn't need cast*/ || DecompilerContext.getStructContext().instanceOf(right.getValue(), type.getValue());
+          anyMatch = right.getValue() == null /*null const doesn't need cast*/ ||
+                     DecompilerContext.getStructContext().instanceOf(right.getValue(), type.getValue());
+          if (anyMatch) {
+            break;
+          }
         }
 
         if (anyMatch) {

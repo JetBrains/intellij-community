@@ -29,7 +29,8 @@ public class FieldExprent extends Exprent {
   private final boolean isStatic;
   private Exprent instance;
   private final FieldDescriptor descriptor;
-
+  @Nullable
+  private VarType inferredType;
   public FieldExprent(LinkConstant cn, Exprent instance, BitSet bytecodeOffsets) {
     this(cn.elementName, cn.className, instance == null, instance, FieldDescriptor.parseDescriptor(cn.descriptor), bytecodeOffsets);
   }
@@ -47,11 +48,11 @@ public class FieldExprent extends Exprent {
 
   @Override
   public VarType getExprType() {
-    return descriptor.type;
+    return inferredType == null ? descriptor.type : inferredType;
   }
 
   @Override
-  public VarType getInferredExprType(VarType upperBound) {
+  public void inferExprType(VarType upperBound) {
     StructClass cl = DecompilerContext.getStructContext().getClass(classname);
     Map<String, Map<VarType, VarType>> types = cl == null ? Collections.emptyMap() : cl.getAllGenerics();
 
@@ -64,10 +65,8 @@ public class FieldExprent extends Exprent {
     }
 
     if (ft != null && ft.getSignature() != null) {
-      return ft.getSignature().type.remap(types.getOrDefault(cl.qualifiedName, Collections.emptyMap()));
+      inferredType = ft.getSignature().type.remap(types.getOrDefault(cl.qualifiedName, Collections.emptyMap()));
     }
-
-    return getExprType();
   }
 
   @Override

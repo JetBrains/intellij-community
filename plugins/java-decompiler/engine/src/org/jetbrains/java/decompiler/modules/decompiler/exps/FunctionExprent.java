@@ -186,6 +186,8 @@ public class FunctionExprent extends Exprent {
   private VarType implicitType;
   private final List<Exprent> lstOperands;
   private boolean needsCast = true;
+  @Nullable
+  private VarType inferredType;
 
   public FunctionExprent(int funcType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
     this(funcType, new ArrayList<>(), bytecodeOffsets);
@@ -218,9 +220,16 @@ public class FunctionExprent extends Exprent {
 
   @Override
   public VarType getExprType() {
+    if(inferredType != null) {
+      return inferredType;
+    }
     VarType exprType = null;
 
-    if (funcType <= FUNCTION_NEG || funcType == FUNCTION_IPP || funcType == FUNCTION_PPI || funcType == FUNCTION_IMM || funcType == FUNCTION_MMI) {
+    if (funcType <= FUNCTION_NEG ||
+        funcType == FUNCTION_IPP ||
+        funcType == FUNCTION_PPI ||
+        funcType == FUNCTION_IMM ||
+        funcType == FUNCTION_MMI) {
       VarType type1 = lstOperands.get(0).getExprType();
       VarType type2 = null;
       if (lstOperands.size() > 1) {
@@ -274,10 +283,11 @@ public class FunctionExprent extends Exprent {
   }
 
   @Override
-  public VarType getInferredExprType(VarType upperBound) {
+  public void inferExprType(VarType upperBound) {
     if (funcType == FUNCTION_CAST) {
       this.needsCast = true;
-      VarType right = lstOperands.get(0).getInferredExprType(upperBound);
+      lstOperands.get(0).inferExprType(upperBound);
+      VarType right = lstOperands.get(0).getExprType();
       VarType cast = lstOperands.get(1).getExprType();
 
       if (upperBound != null && right != null && (upperBound.isGeneric() || right.isGeneric())) {
@@ -311,7 +321,7 @@ public class FunctionExprent extends Exprent {
           if (arrayDim > 0) {
             right = right.resizeArrayDim(arrayDim);
           }
-          return right;
+          inferredType = right;
         }
       }
       else { //TODO: Capture generics to make cast better?
@@ -319,7 +329,6 @@ public class FunctionExprent extends Exprent {
                          !DecompilerContext.getStructContext().instanceOf(right.getValue(), cast.getValue()));
       }
     }
-    return getExprType();
   }
 
 

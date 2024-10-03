@@ -49,6 +49,8 @@ public class VarExprent extends Exprent {
   private boolean classDef = false;
   private boolean stack = false;
   private LocalVariable lvtEntry = null;
+  @Nullable
+  private VarType inferredType = null;
 
   public VarExprent(int index, VarType varType, VarProcessor processor) {
     this(index, varType, processor, null);
@@ -68,20 +70,19 @@ public class VarExprent extends Exprent {
   }
 
   @Override
-  public VarType getInferredExprType(VarType upperBound) {
+  public void inferExprType(VarType upperBound) {
     if (lvtEntry != null && lvtEntry.getSignature() != null) {
       // TODO; figure out why it's crashing, ugly fix for now
       try {
-        return GenericType.parse(lvtEntry.getSignature());
+        inferredType = GenericType.parse(lvtEntry.getSignature());
       } catch (StringIndexOutOfBoundsException ex) {
         DecompilerContext.getLogger().writeMessage("Inconsistent data: ",
                                                    IFernflowerLogger.Severity.WARN, ex);
       }
     }
     else if (lvtEntry != null) {
-      return lvtEntry.getVarType();
+      inferredType = lvtEntry.getVarType();
     }
-    return getVarType();
   }
 
   @Override
@@ -231,6 +232,9 @@ public class VarExprent extends Exprent {
   }
 
   public VarType getVarType() {
+    if (inferredType != null) {
+      return inferredType;
+    }
     if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES) && lvtEntry != null) {
       return new VarType(lvtEntry.getDescriptor());
     }

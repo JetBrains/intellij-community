@@ -34,7 +34,8 @@ public class NewExprent extends Exprent {
   private boolean methodReference = false;
   private boolean enumConst;
   private List<VarType> genericArgs = new ArrayList<>();
-
+  @Nullable
+  private VarType inferredType;
   public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, BitSet bytecodeOffsets) {
     this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
   }
@@ -70,11 +71,14 @@ public class NewExprent extends Exprent {
 
   @Override
   public VarType getExprType() {
+    if (inferredType != null) {
+      return inferredType;
+    }
     return anonymous ? DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue()).anonymousClassType : newType;
   }
 
   @Override
-  public VarType getInferredExprType(VarType upperBound) {
+  public void inferExprType(VarType upperBound) {
     genericArgs.clear();
     if (newType.getType() == CodeConstants.TYPE_OBJECT && newType.getArrayDim() == 0) {
       StructClass node = DecompilerContext.getStructContext().getClass(newType.getValue());
@@ -83,12 +87,10 @@ public class NewExprent extends Exprent {
         GenericClassDescriptor sig = node.getSignature();
         VarType _new = this.gatherGenerics(upperBound, sig.genericType, sig.fparameters, genericArgs);
         if (sig.genericType != _new) {
-          return _new;
+          inferredType = _new;
         }
       }
     }
-
-    return getExprType();
   }
 
   @Override

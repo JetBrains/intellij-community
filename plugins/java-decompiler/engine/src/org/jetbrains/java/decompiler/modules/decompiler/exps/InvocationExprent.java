@@ -60,7 +60,8 @@ public class InvocationExprent extends Exprent {
   private List<Exprent> parameters = new ArrayList<>();
   private List<PooledConstant> bootstrapArguments;
   private List<VarType> genericArgs = new ArrayList<>();
-
+  @Nullable
+  private VarType inferredType;
   public InvocationExprent() {
     super(EXPRENT_INVOCATION);
   }
@@ -160,12 +161,12 @@ public class InvocationExprent extends Exprent {
 
   @Override
   public VarType getExprType() {
-    return descriptor.ret;
+    return inferredType == null ? descriptor.ret : inferredType;
   }
 
 
   @Override
-  public VarType getInferredExprType(VarType upperBound) {
+  public void inferExprType(VarType upperBound) {
     List<StructMethod> matches = getMatchedDescriptors();
     StructMethod desc = null;
     if(matches.size() == 1) {
@@ -178,7 +179,8 @@ public class InvocationExprent extends Exprent {
       VarType ret = desc.getSignature().returnType;
 
       if (instance != null) {
-        VarType instType = instance.getInferredExprType(upperBound);
+        instance.inferExprType(upperBound);
+        VarType instType = instance.getExprType();
 
         if (instType.isGeneric()) {
           StructClass cls = DecompilerContext.getStructContext().getClass(instType.getValue());
@@ -204,11 +206,9 @@ public class InvocationExprent extends Exprent {
 
       VarType _new = this.gatherGenerics(upperBound, ret, desc.getSignature().typeParameters, genericArgs);
       if (desc.getSignature().returnType != _new) {
-        return _new;
+        inferredType = _new;
       }
     }
-
-    return getExprType();
   }
 
 

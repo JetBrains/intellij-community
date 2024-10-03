@@ -70,7 +70,7 @@ public class VarProcessor {
     Map<Integer, VarVersion> mapOriginalVarIndices = varVersions.getMapOriginalVarIndices();
 
     List<VarVersion> listVars = new ArrayList<>(mapVarNames.keySet());
-    listVars.sort(Comparator.<VarVersion>comparingInt(o -> mapPurgedAssignmentNames.containsKey(o) ? 0 : 1)
+    listVars.sort(Comparator.<VarVersion, Boolean>comparing(o -> !mapPurgedAssignmentNames.containsKey(o))
                     .thenComparingInt(o -> o.var));
 
     Map<String, Integer> mapNames = new HashMap<>();
