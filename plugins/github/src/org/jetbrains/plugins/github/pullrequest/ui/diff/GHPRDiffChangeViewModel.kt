@@ -16,22 +16,16 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
 import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
-import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
@@ -68,7 +62,7 @@ interface GHPRDiffChangeViewModel {
 }
 
 internal class GHPRDiffChangeViewModelImpl(
-  private val project: Project,
+  project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
@@ -111,10 +105,11 @@ internal class GHPRDiffChangeViewModelImpl(
   override val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>> =
     newCommentsContainer.mappingState.mapState { it.values }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override val aiComments: StateFlow<Collection<GHPRAICommentViewModel>> =
-    GHPRAICommentViewModelProvider.EP_NAME.extensionList.firstOrNull()
-      ?.getComments(project, dataProvider, change, diffData)
-      ?.stateIn(cs, SharingStarted.Eagerly, emptyList()) ?: MutableStateFlow(emptyList())
+    GHPRAICommentViewModelProvider.EP_NAME.extensionListFlow()
+      .flatMapLatest { it.firstOrNull()?.getComments(project, dataProvider, change, diffData) ?: flowOf(listOf()) }
+      .stateIn(cs, SharingStarted.Eagerly, emptyList())
 
   init {
     cs.launchNow {
