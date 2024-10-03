@@ -14443,13 +14443,11 @@ com.intellij.openapi.projectRoots.impl.UnknownSdkBlockingCollector
 - a:collectSdksBlocking():com.intellij.openapi.projectRoots.impl.UnknownSdkSnapshot
 c:com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
 - com.intellij.openapi.projectRoots.impl.UnknownSdkBlockingCollector
-- sf:Companion:com.intellij.openapi.projectRoots.impl.UnknownSdkCollector$Companion
 - <init>(com.intellij.openapi.project.Project):V
 - p:checkProjectSdk(com.intellij.openapi.project.Project):Z
 - p:collectModulesToCheckSdk(com.intellij.openapi.project.Project):java.util.List
 - collectSdksBlocking():com.intellij.openapi.projectRoots.impl.UnknownSdkSnapshot
 - p:getContributors():java.util.List
-f:com.intellij.openapi.projectRoots.impl.UnknownSdkCollector$Companion
 com.intellij.openapi.projectRoots.impl.UnknownSdkContributor
 - contributeKnownSdks(com.intellij.openapi.project.Project):java.util.List
 - a:contributeUnknownSdks(com.intellij.openapi.project.Project):java.util.List
