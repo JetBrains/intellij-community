@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.ExecutionException
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.ProjectManager
@@ -23,7 +22,6 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.suggestAssociatedSdkName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 
@@ -31,32 +29,28 @@ import java.nio.file.Path
 suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Path, projectPath: Path): Result<Sdk> {
   val baseSdk = state.baseInterpreter.get()!!
 
-  val venvPathOnTarget = venvPath.convertToPathOnTarget(targetEnvironmentConfiguration)
 
-  val baseSdkPath = when (baseSdk) {
-    is InstallableSelectableInterpreter -> installBaseSdk(baseSdk.sdk, this.existingSdks)?.homePath // todo handle errors
-    is ExistingSelectableInterpreter -> baseSdk.sdk.homePath
-    is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> baseSdk.homePath
-  }
+  val baseSdkPath = Path.of(when (baseSdk) {
+                              is InstallableSelectableInterpreter -> installBaseSdk(baseSdk.sdk, this.existingSdks)?.homePath // todo handle errors
+                              is ExistingSelectableInterpreter -> baseSdk.sdk.homePath
+                              is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> baseSdk.homePath
+                            }!!)
 
 
-  withContext(Dispatchers.EDT) {
-    createVirtualenv(baseSdkPath!!,
-                     venvPathOnTarget,
+  try {
+    createVirtualenv(baseSdkPath,
+                     venvPath,
                      projectPath,
                      inheritSitePackages = state.inheritSitePackages.get())
   }
-
-  if (targetEnvironmentConfiguration != null) error("Remote targets aren't supported")
-  val dir = try {
-    Path.of(venvPathOnTarget)
-  }
-  catch (e: InvalidPathException) {
+  catch (e: ExecutionException) {
     return Result.failure(e)
   }
-  val venvPython = VirtualEnvReader.Instance.findPythonInPythonRoot(dir)
+
+  if (targetEnvironmentConfiguration != null) error("Remote targets aren't supported")
+  val venvPython = VirtualEnvReader.Instance.findPythonInPythonRoot(venvPath)
   if (venvPython == null) {
-    return failure(message("commandLine.directoryCantBeAccessed", venvPathOnTarget))
+    return failure(message("commandLine.directoryCantBeAccessed", venvPath))
   }
 
   val homeFile = try {
@@ -69,7 +63,7 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
     return Result.failure(e)
   }
   if (homeFile == null) {
-    return failure(message("commandLine.directoryCantBeAccessed", venvPathOnTarget))
+    return failure(message("commandLine.directoryCantBeAccessed", venvPath))
   }
 
   // "suggest name" calls external process and can't be called from EDT
