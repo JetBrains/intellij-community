@@ -63,6 +63,8 @@ internal class IndexBasedEmbeddingEntitiesIndexer(cs: CoroutineScope) : Embeddin
       val fileIdsAndNames = smartReadAction(project) {
         chunk.mapNotNull { key ->
           var result: Pair<Long, String>? = null
+          // TODO: besides entity name (id) we should access indexable representation here
+          //  (e.g. via TextRange in index values) because vectors are calculated from it
           fileBasedIndex.processValues(indexId, key, null, { virtualFile, name ->
             if (virtualFile is VirtualFileWithId) {
               result = Pair(key.toLong(virtualFile.id), name)

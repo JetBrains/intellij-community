@@ -3,6 +3,8 @@ package com.intellij.platform.ml.embeddings.indexer
 
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
+import com.intellij.platform.ml.embeddings.indexer.entities.IndexableFile
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil
@@ -14,24 +16,19 @@ internal val FILE_NAME_EMBEDDING_INDEX_NAME = ID.create<EmbeddingKey, String>("F
 internal val CLASS_NAME_EMBEDDING_INDEX_NAME = ID.create<EmbeddingKey, String>("ClassNameEmbeddingIndex")
 internal val SYMBOL_NAME_EMBEDDING_INDEX_NAME = ID.create<EmbeddingKey, String>("SymbolNameEmbeddingIndex")
 
-internal class EmbeddingKey(val textHashCode: Int) {
-  override fun hashCode(): Int = textHashCode.hashCode()
-  override fun equals(other: Any?): Boolean = other is EmbeddingKey && other.textHashCode == textHashCode
-
+@JvmInline
+internal value class EmbeddingKey(val textHashCode: Int) {
   fun toLong(fileId: Int): Long {
     // https://stackoverflow.com/a/12772968
     return (fileId.toLong() shl 32) or (0xffffffffL and textHashCode.toLong())
   }
 }
 
-@JvmInline
-value class IndexingItem(val text: String)
-
 internal class FileNameEmbeddingIndex : BaseEmbeddingIndex() {
   override fun getName(): ID<EmbeddingKey, String> = FILE_NAME_EMBEDDING_INDEX_NAME
   override fun getVersion(): Int = 1
-  override fun index(inputData: FileContent): List<IndexingItem> {
-    return listOf(IndexingItem(inputData.file.name))
+  override fun index(inputData: FileContent): List<IndexableEntity> {
+    return listOf(IndexableFile(inputData.file))
   }
 
   override fun getInputFilter(): FileBasedIndex.InputFilter {
@@ -52,8 +49,8 @@ internal class ClassNameEmbeddingIndex : PsiBaseEmbeddingIndex() {
 
   override fun getName(): ID<EmbeddingKey, String> = CLASS_NAME_EMBEDDING_INDEX_NAME
   override fun getVersion(): Int = 2
-  override fun index(inputData: FileContent): List<IndexingItem> {
-    return ClassesProvider.extractClasses(inputData).map { IndexingItem(it.id.id) }
+  override fun index(inputData: FileContent): List<IndexableEntity> {
+    return ClassesProvider.extractClasses(inputData)
   }
 }
 
@@ -63,8 +60,8 @@ internal class SymbolNameEmbeddingIndex : PsiBaseEmbeddingIndex() {
 
   override fun getName(): ID<EmbeddingKey, String> = SYMBOL_NAME_EMBEDDING_INDEX_NAME
   override fun getVersion(): Int = 2
-  override fun index(inputData: FileContent): List<IndexingItem> {
-    return SymbolsProvider.extractSymbols(inputData).map { IndexingItem(it.id.id) }
+  override fun index(inputData: FileContent): List<IndexableEntity> {
+    return SymbolsProvider.extractSymbols(inputData)
   }
 }
 
@@ -73,14 +70,17 @@ internal abstract class BaseEmbeddingIndex : FileBasedIndexExtension<EmbeddingKe
 
   override fun getIndexer(): DataIndexer<EmbeddingKey, String, FileContent> {
     return DataIndexer { inputData ->
-      index(inputData).associate { item ->
-        val textHashcode = item.text.hashCode()
-        EmbeddingKey(textHashcode) to item.text
+      index(inputData).associate { entity ->
+        // Hash code should be calculated from indexable representation, not identifier
+        val textHashcode = entity.indexableRepresentation.hashCode()
+        // TODO: link to indexable representation (e.g. TextRange in file) should be preserved
+        //  in index values besides id because we calculate vectors based on it
+        EmbeddingKey(textHashcode) to entity.id.id
       }
     }
   }
 
-  abstract fun index(context: FileContent): List<IndexingItem>
+  abstract fun index(context: FileContent): List<IndexableEntity>
 
   override fun getKeyDescriptor(): KeyDescriptor<EmbeddingKey> {
     return object : KeyDescriptor<EmbeddingKey> {
