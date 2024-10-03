@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
-import com.intellij.collaboration.async.classAsCoroutineName
-import com.intellij.collaboration.async.extensionListFlow
+ import com.intellij.collaboration.async.extensionListFlow
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.util.bindContent
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -36,7 +35,7 @@ interface GHPRAICommentComponentFactory {
 
 internal class GHPRAICommentEditorInlayRenderer internal constructor(cs: CoroutineScope, userIcon: Icon, vm: GHPRAICommentViewModel)
   : CodeReviewComponentInlayRenderer(Wrapper().apply {
-  bindContent("${classAsCoroutineName().name}.bindContent", GHPRAICommentComponentFactory.EP_NAME.extensionListFlow()) { extensions ->
+  bindContent("${javaClass.name}.bindContent", GHPRAICommentComponentFactory.EP_NAME.extensionListFlow()) { extensions ->
     val extension = extensions.firstOrNull() ?: return@bindContent null
     extension.createAIThread(cs, userIcon, vm)
   }
