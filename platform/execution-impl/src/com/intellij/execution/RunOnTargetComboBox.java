@@ -15,6 +15,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
   public static final Logger LOGGER = Logger.getInstance(RunOnTargetComboBox.class);
   private final @NotNull Project myProject;

@@ -70,6 +70,7 @@ import javax.swing.SwingConstants
 internal const val CONFIGURATION_NAME_TRIM_SUFFIX_LENGTH: Int = 8
 internal const val CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH: Int = 33 + CONFIGURATION_NAME_TRIM_SUFFIX_LENGTH
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class RunWidgetResumeManager(private val project: Project) {
   companion object {
@@ -167,6 +168,7 @@ private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
   }
 }
 
+@ApiStatus.Internal
 class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
 
   override fun getActionUpdateThread(): ActionUpdateThread {

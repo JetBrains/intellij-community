@@ -5,8 +5,10 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class RunnerLayoutUiFactoryImpl extends RunnerLayoutUi.Factory {
   private final Project myProject;
 

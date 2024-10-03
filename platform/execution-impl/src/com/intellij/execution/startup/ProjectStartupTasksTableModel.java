@@ -5,11 +5,13 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EditableModel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class ProjectStartupTasksTableModel extends AbstractTableModel implements EditableModel {
   public static final int NAME_COLUMN = 0;
   public static final int IS_SHARED_COLUMN = 1;

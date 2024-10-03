@@ -3,7 +3,7 @@ package com.intellij.execution.multilaunch.execution
 import com.intellij.execution.multilaunch.design.ExecutableRow
 import com.intellij.execution.multilaunch.execution.ExecutionDescriptor
 
-object ExecutionDescriptorFactory {
+internal object ExecutionDescriptorFactory {
   fun create(row: ExecutableRow): ExecutionDescriptor? {
     val executable = row.executable ?: return null
     val condition = row.condition ?: return null
@@ -11,5 +11,5 @@ object ExecutionDescriptorFactory {
   }
 }
 
-fun ExecutableRow.toDescriptor() =
+internal fun ExecutableRow.toDescriptor(): ExecutionDescriptor? =
   ExecutionDescriptorFactory.create(this)

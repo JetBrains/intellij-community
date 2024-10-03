@@ -64,6 +64,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.Callable
@@ -303,6 +304,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     }
   }
 
+  @get:ApiStatus.Internal
   open val config by lazy { RunManagerConfig(PropertiesComponent.getInstance(project)) }
 
   /**
@@ -1426,7 +1428,8 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
   private fun newUiRunningIcon(icon: Icon) = IconManager.getInstance().withIconBadge(icon, JBUI.CurrentTheme.IconBadge.SUCCESS)
 }
 
-const val PROJECT_RUN_MANAGER_COMPONENT_NAME = "ProjectRunConfigurationManager"
+@get:ApiStatus.Internal
+const val PROJECT_RUN_MANAGER_COMPONENT_NAME: String = "ProjectRunConfigurationManager"
 
 @Service(Service.Level.PROJECT)
 @State(name = PROJECT_RUN_MANAGER_COMPONENT_NAME, useLoadedStateAsExisting = false /* ProjectRunConfigurationManager is used only for IPR,
@@ -1459,6 +1462,7 @@ internal fun RunConfiguration.cloneBeforeRunTasks() {
   beforeRunTasks = doGetBeforeRunTasks(this).mapSmart { it.clone() }
 }
 
+@ApiStatus.Internal
 fun callNewConfigurationCreated(factory: ConfigurationFactory, configuration: RunConfiguration) {
   @Suppress("UNCHECKED_CAST", "DEPRECATION")
   (factory as? com.intellij.execution.configuration.ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)

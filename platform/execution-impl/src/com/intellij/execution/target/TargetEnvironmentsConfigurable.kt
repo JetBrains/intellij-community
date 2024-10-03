@@ -7,8 +7,10 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DetailsComponent
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class TargetEnvironmentsConfigurable(private val project: Project,
                                      initialSelectedName: String? = null,
                                      defaultLanguageRuntime: LanguageRuntimeType<*>? = null)

@@ -9,7 +9,7 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 @Service(Service.Level.PROJECT)
-class ExecutionSessionManager {
+internal class ExecutionSessionManager {
   companion object {
     fun getInstance(project: Project) = project.service<ExecutionSessionManager>()
   }

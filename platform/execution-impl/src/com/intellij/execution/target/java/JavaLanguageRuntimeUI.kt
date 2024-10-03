@@ -8,8 +8,10 @@ import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
+@ApiStatus.Internal
 class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration,
                             targetType: TargetEnvironmentType<*>,
                             targetProvider: Supplier<out TargetEnvironmentConfiguration>,

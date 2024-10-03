@@ -136,6 +136,7 @@ object RunConfigurationOptionUsagesCollector : CounterUsagesCollector() {
   }
 }
 
+@ApiStatus.Internal
 class FragmentedStatisticsServiceImpl : FragmentStatisticsService() {
   override fun logOptionModified(project: Project?, optionId: String?, runConfigId: String?, inputEvent: AnActionEvent?) {
     RunConfigurationOptionUsagesCollector.logModifyOption(project, optionId, runConfigId, FusInputEvent.from(inputEvent))

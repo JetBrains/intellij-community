@@ -13,10 +13,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.GotItTooltip
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.event.ContainerEvent
 import java.awt.event.ContainerListener
 
+@ApiStatus.Internal
 class RunToolbarMainWidgetComponent(val presentation: Presentation, place: String, group: ActionGroup) :
   FixWidthSegmentedActionToolbarComponent(place, group) {
   companion object {

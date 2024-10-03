@@ -5,9 +5,11 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.Tab;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class TabImpl extends AbstractTab implements Tab {
   TabImpl() {
   }

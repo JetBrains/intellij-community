@@ -27,6 +27,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Dimension
@@ -35,6 +36,7 @@ import java.awt.Point
 import java.beans.PropertyChangeEvent
 import javax.swing.*
 
+@ApiStatus.Internal
 open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {
   companion object {
     private val PROP_ACTIVE_TARGET = Key<ExecutionTarget?>("PROP_ACTIVE_TARGET")

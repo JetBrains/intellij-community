@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.util.SingleAlarm;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class LogFilesManager {
   private final LogConsoleManager myManager;
   private final List<LogFile> myLogFiles = new ArrayList<>();

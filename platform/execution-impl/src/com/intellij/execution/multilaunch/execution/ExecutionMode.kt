@@ -1,19 +1,20 @@
 package com.intellij.execution.multilaunch.execution
 
 import com.intellij.icons.AllIcons
+import javax.swing.Icon
 
 enum class ExecutionMode {
   Run,
   Debug
 }
 
-fun ExecutionMode.getIcon() =
+internal fun ExecutionMode.getIcon(): Icon =
   when (this) {
     ExecutionMode.Debug -> AllIcons.Actions.StartDebugger
     ExecutionMode.Run -> AllIcons.Actions.Execute
   }
 
-fun ExecutionMode.getText() =
+internal fun ExecutionMode.getText(): String =
   when (this) {
     ExecutionMode.Debug -> "Debug"
     ExecutionMode.Run -> "Run"

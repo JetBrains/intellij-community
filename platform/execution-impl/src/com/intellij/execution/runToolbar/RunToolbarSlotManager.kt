@@ -25,8 +25,10 @@ import com.intellij.util.messages.Topic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class RunToolbarSlotManager(private val project: Project, private val coroutineScope: CoroutineScope) {
   companion object {

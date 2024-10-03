@@ -10,7 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RunToolbarSettingsConfigurableProvider(val project: Project) : ConfigurableProvider() {
   override fun createConfigurable(): Configurable {
     return RunToolbarSettingsConfigurable(project)
@@ -21,6 +23,7 @@ class RunToolbarSettingsConfigurableProvider(val project: Project) : Configurabl
   }
 }
 
+@ApiStatus.Internal
 class RunToolbarSettingsConfigurable internal constructor(project: Project)
   : BoundConfigurable(LangBundle.message("run.toolbar.configurable.title")) {
 

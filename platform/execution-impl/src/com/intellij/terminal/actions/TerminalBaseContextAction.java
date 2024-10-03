@@ -4,9 +4,11 @@ package com.intellij.terminal.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.terminal.JBTerminalWidget;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class TerminalBaseContextAction extends DumbAwareAction {
 
   public TerminalBaseContextAction() {

@@ -5,7 +5,9 @@ import com.intellij.icons.AllIcons
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.execution.multilaunch.design.tooltips.TooltipProvider
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class UnknownItemLabel(private val tooltip: String) : SimpleColoredComponent(), TooltipProvider {
   constructor() : this(TEXT.replace("<", "&lt;").replace(">", "&gt;"))
 

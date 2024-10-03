@@ -5,11 +5,13 @@ import com.intellij.execution.runToolbar.RunToolbarProcess
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Font
 import javax.swing.JLabel
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class ProcessesByType : JPanel() {
 
   private var onlyCount = true

@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class EditRunConfigurationTemplatesForNewProjectsAction : DumbAwareAction(ExecutionBundle.message("edit.configuration.templates.action")) {
   override fun actionPerformed(e: AnActionEvent) {
     showTemplatesDialog(ProjectManager.getInstance().defaultProject, null)

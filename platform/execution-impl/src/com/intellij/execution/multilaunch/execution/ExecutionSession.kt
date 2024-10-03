@@ -7,7 +7,7 @@ import com.intellij.openapi.rd.util.lifetime
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
-class ExecutionSession(project: Project, val model: MultiLaunchExecutionModel) {
+internal class ExecutionSession(project: Project, val model: MultiLaunchExecutionModel) {
   private val lifetime = project.lifetime.createNested()
   private val executableLifetimes = model.executables.values.associate { it.descriptor.executable to lifetime.createNested() }
 

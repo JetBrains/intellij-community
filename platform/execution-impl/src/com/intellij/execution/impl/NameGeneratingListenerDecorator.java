@@ -5,9 +5,11 @@ import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public final class NameGeneratingListenerDecorator implements RefactoringElementListener, UndoRefactoringElementListener {
   private final LocatableConfiguration myConfiguration;
   private final RefactoringElementListener myListener;

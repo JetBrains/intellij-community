@@ -48,6 +48,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.datatransfer.Transferable
@@ -75,7 +76,7 @@ internal fun getUserObjectName(userObject: Any): String {
   }
 }
 
-fun createRunConfigurationConfigurable(project: Project): RunConfigurable {
+internal fun createRunConfigurationConfigurable(project: Project): RunConfigurable {
   return when {
     project.isDefault -> RunConfigurable(project)
     else -> ProjectRunConfigurationConfigurable(project)
@@ -106,6 +107,7 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
   private var dialogUpdateCallback: Runnable? = null
 
   companion object {
+    @ApiStatus.Internal
     fun collectNodesRecursively(parentNode: DefaultMutableTreeNode, nodes: MutableList<DefaultMutableTreeNode>, vararg allowed: RunConfigurableNodeKind) {
       for (i in 0 until parentNode.childCount) {
         val child = parentNode.getChildAt(i) as DefaultMutableTreeNode
@@ -116,6 +118,7 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
       }
     }
 
+    @ApiStatus.Internal
     fun getKind(node: DefaultMutableTreeNode?): RunConfigurableNodeKind {
       if (node == null) {
         return UNKNOWN

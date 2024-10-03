@@ -8,6 +8,7 @@ import com.intellij.execution.actions.ExecutorAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 open class RunToolbarProcessAction(override val process: RunToolbarProcess, val executor: Executor) : ExecutorAction(executor), ExecutorRunToolbarAction, DumbAware {
@@ -64,6 +65,7 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
   }
 }
 
+@ApiStatus.Internal
 class RunToolbarGroupProcessAction(process: RunToolbarProcess, executor: Executor) : RunToolbarProcessAction(process, executor) {
   override fun update(e: AnActionEvent) {
     super.update(e)

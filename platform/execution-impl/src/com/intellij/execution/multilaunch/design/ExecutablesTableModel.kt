@@ -4,7 +4,9 @@ import com.intellij.execution.multilaunch.design.columns.impl.ConditionColumn
 import com.intellij.execution.multilaunch.design.columns.impl.ExecutableNameColumn
 import com.intellij.execution.multilaunch.design.columns.impl.DisableDebuggingColumn
 import com.intellij.util.ui.ListTableModel
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ExecutablesTableModel(
   viewModel: MultiLaunchConfigurationViewModel
 ) : ListTableModel<ExecutableRow?>(

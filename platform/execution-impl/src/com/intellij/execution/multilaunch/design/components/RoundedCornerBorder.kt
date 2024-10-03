@@ -1,11 +1,13 @@
 package com.intellij.execution.multilaunch.design.components
 
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import javax.swing.border.Border
 
+@ApiStatus.Internal
 class RoundedCornerBorder(private val cornerRadius: Int) : Border {
 
   override fun getBorderInsets(c: java.awt.Component): java.awt.Insets {

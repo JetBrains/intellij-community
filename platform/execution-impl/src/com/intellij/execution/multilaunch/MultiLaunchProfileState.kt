@@ -16,7 +16,9 @@ import com.intellij.openapi.rd.util.launchBackground
 import com.intellij.openapi.rd.util.lifetime
 import com.intellij.openapi.wm.ToolWindowId
 import com.jetbrains.rd.util.lifetime.isAlive
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class MultiLaunchProfileState(
   private val configuration: MultiLaunchConfiguration,
   private val project: Project

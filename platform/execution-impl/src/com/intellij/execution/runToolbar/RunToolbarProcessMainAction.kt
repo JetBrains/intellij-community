@@ -8,7 +8,9 @@ import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RunToolbarProcessMainAction(process: RunToolbarProcess, executor: Executor) : RunToolbarProcessAction(process, executor) {
   companion object {
     private val LOG = Logger.getInstance(RunToolbarProcessMainAction::class.java)

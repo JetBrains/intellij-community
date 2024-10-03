@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.execution.multilaunch.execution.conditions.impl.ImmediatelyConditionTemplate
 import com.intellij.execution.multilaunch.state.ConditionSnapshot
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
 class ConditionFactory(private val project: Project) {
@@ -12,6 +13,7 @@ class ConditionFactory(private val project: Project) {
     fun getInstance(project: Project) = project.service<ConditionFactory>()
   }
 
+  @ApiStatus.Internal
   fun create(snapshot: ConditionSnapshot): Condition? {
     val templates = ConditionTemplate.EP_NAME.extensionList.associateBy { it.type }
     val type = snapshot.type ?: return null

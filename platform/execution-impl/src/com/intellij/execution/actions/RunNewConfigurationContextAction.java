@@ -4,9 +4,11 @@ package com.intellij.execution.actions;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class RunNewConfigurationContextAction extends RunContextAction {
   public RunNewConfigurationContextAction(@NotNull Executor executor) {
     super(executor);

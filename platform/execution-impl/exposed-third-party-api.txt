@@ -1,9 +1,7 @@
 com/jediterm/core/Color
 com/jediterm/core/util/TermSize
 com/jediterm/terminal/CursorShape
-com/jediterm/terminal/DefaultTerminalCopyPasteHandler
 com/jediterm/terminal/ProcessTtyConnector
-com/jediterm/terminal/SubstringFinder$FindResult
 com/jediterm/terminal/Terminal
 com/jediterm/terminal/TerminalColor
 com/jediterm/terminal/TerminalCopyPasteHandler
@@ -15,7 +13,6 @@ com/jediterm/terminal/emulator/ColorPalette
 com/jediterm/terminal/model/StyleState
 com/jediterm/terminal/model/TerminalTextBuffer
 com/jediterm/terminal/ui/JediTermSearchComponent
-com/jediterm/terminal/ui/JediTermSearchComponentListener
 com/jediterm/terminal/ui/JediTermWidget
 com/jediterm/terminal/ui/TerminalAction
 com/jediterm/terminal/ui/TerminalActionPresentation
@@ -24,10 +21,6 @@ com/jediterm/terminal/ui/TerminalPanel
 com/jediterm/terminal/ui/settings/DefaultSettingsProvider
 com/jediterm/terminal/ui/settings/SettingsProvider
 com/jetbrains/rd/util/lifetime/Lifetime
-com/jetbrains/rd/util/lifetime/LifetimeDefinition
 com/jetbrains/rd/util/lifetime/SequentialLifetimes
-com/jetbrains/rd/util/reactive/Property
-com/jetbrains/rd/util/reactive/ViewableMap
 com/pty4j/PtyProcess
 kotlin/jvm/internal/DefaultConstructorMarker
-kotlin/reflect/KClass

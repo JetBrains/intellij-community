@@ -18,7 +18,7 @@ import com.intellij.execution.multilaunch.servicesView.actions.executable.Cancel
 import javax.swing.Icon
 import javax.swing.JComponent
 
-class ExecutableServiceViewDescriptor(
+internal class ExecutableServiceViewDescriptor(
   private val configurationModel: MultiLaunchExecutionModel,
   private val executableModel: ExecutableExecutionModel,
 ) : ServiceViewDescriptor {

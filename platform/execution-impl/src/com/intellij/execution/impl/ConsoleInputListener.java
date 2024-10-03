@@ -15,11 +15,13 @@
  */
 package com.intellij.execution.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Podkhalyuzin
  */
+@ApiStatus.Internal
 public interface ConsoleInputListener {
   void textEntered(@NotNull String userText);
 }

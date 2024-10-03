@@ -91,6 +91,7 @@ private const val TAG_REGULAR_SHOW = "regular-show" // shown regularly
 private const val TAG_REGULAR_DUPE = "regular-dupe" // shown regularly until search (pinned/recent duplicate)
 private const val TAG_HIDDEN = "hidden"             // hidden until search
 
+@ApiStatus.Internal
 class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification.BackendOnly {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
@@ -369,6 +370,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
   }
 }
 
+@ApiStatus.Internal
 open class AllRunConfigurationsToggle : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification {
   init {
     templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Always
@@ -781,6 +783,7 @@ private open class MyExecutionListener(
   }
 }
 
+@ApiStatus.Internal
 enum class RunState {
   UNDEFINED,
   SCHEDULED,

@@ -29,6 +29,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.text.nullize
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
@@ -623,6 +624,7 @@ private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
 @set:TestOnly
 var writeDefaultAttributeWithFalseValueInTests: Boolean = true
 
+@ApiStatus.Internal
 fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
   when (configuration) {
     is PersistentStateComponent<*> -> serializeStateInto(configuration, element)
@@ -631,6 +633,7 @@ fun serializeConfigurationInto(configuration: RunConfiguration, element: Element
   }
 }
 
+@ApiStatus.Internal
 fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element, isTemplate: Boolean = false) {
   when (configuration) {
     is PersistentStateComponent<*> -> deserializeAndLoadState(configuration, element)
