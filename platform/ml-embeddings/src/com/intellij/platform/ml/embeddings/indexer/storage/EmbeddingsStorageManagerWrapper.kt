@@ -9,8 +9,8 @@ import com.intellij.platform.ml.embeddings.utils.ScoredText
 
 class EmbeddingsStorageManagerWrapper<KeyT>(
   private val indexId: IndexId,
-  val storageManager: TextEmbeddingsStorageManager<KeyT>,
-  val keyProvider: EmbeddingStorageKeyProvider<KeyT>,
+  private val storageManager: TextEmbeddingsStorageManager<KeyT>,
+  private val keyProvider: EmbeddingStorageKeyProvider<KeyT>,
 ) {
   suspend fun addAbsent(project: Project?, entities: List<IndexableEntity>) {
     return storageManager.addAbsent(project, indexId, entities.map {
