@@ -19,8 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -178,7 +176,6 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
                                                                    boolean isDirty) {
     List<HighlightInfo> highlights = new ArrayList<>();
     int offset = editor.getCaretModel().getOffset();
-    MarkupModelEx markupModelEx = editor instanceof EditorImpl ? ((EditorImpl)editor).getFilteredDocumentMarkupModel() : null;
     DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, visibleRange.getStartOffset(), visibleRange.getEndOffset(), info -> {
       //no changes after escape => suggest imports under caret only
       if (!isDirty && !info.containsOffset(offset, true)) {
