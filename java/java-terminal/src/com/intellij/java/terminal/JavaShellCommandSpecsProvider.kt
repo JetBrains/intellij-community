@@ -54,7 +54,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
       argument {
         displayName(CLASSPATH_ARGUMENT_NAME)
-        suggestions(ShellDataGenerators.fileSuggestionsGenerator())
+        suggestions(JavaShellCommandUtils.classpathSuggestionsGenerator())
       }
     }
     option("-showversion") {
@@ -116,7 +116,7 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
       argument {
         displayName(CLASSPATH_ARGUMENT_NAME)
-        suggestions(ShellDataGenerators.fileSuggestionsGenerator())
+        suggestions(JavaShellCommandUtils.classpathSuggestionsGenerator())
       }
     }
     option("--help") {
@@ -161,7 +161,7 @@ private const val MAIN_CLASS_ARGUMENT_NAME: @NlsSafe String = "mainclass"
 private const val JAR_FILE_ARGUMENT_NAME: @NlsSafe String = "jar file"
 private const val CLASS_GC_GNI_ARGUMENT_NAME: @NlsSafe String = "class|gc|gni"
 private const val CLASS_GC_GNI_MODULE_ARGUMENT_NAME: @NlsSafe String = "$CLASS_GC_GNI_ARGUMENT_NAME|<module>"
-private val CLASSPATH_ARGUMENT_NAME: @NlsSafe String = "filepath[${ShellCommandUtils.getClassPathSeparator()}filepath]"
+private val CLASSPATH_ARGUMENT_NAME: @NlsSafe String = "filepath[${JavaShellCommandUtils.getClassPathSeparator()}filepath]"
 
 private val OPTION_UI_INFO_MAP = mapOf(
   "-Xms" to UIOptionInfo(separator = "", argumentName = SIZE_ARGUMENT_NAME),
