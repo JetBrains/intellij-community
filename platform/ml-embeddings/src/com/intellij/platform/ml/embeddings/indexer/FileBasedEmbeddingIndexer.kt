@@ -18,7 +18,6 @@ import com.intellij.platform.ml.embeddings.indexer.searcher.EmbeddingEntitiesInd
 import com.intellij.platform.ml.embeddings.indexer.searcher.index.IndexBasedEmbeddingEntitiesIndexer
 import com.intellij.platform.ml.embeddings.indexer.searcher.vfs.VFSBasedEmbeddingEntitiesIndexer
 import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
-import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettings
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettingsImpl
 import com.intellij.platform.ml.embeddings.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.platform.ml.embeddings.utils.SemanticSearchCoroutineScope
@@ -41,13 +40,13 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
   private val indexedProjects = mutableSetOf<Project>()
   private val indexingJobs = mutableMapOf<Project, Job>()
   private val jobsMutex = Mutex()
-  private val entitiesIndexer: EmbeddingEntitiesIndexer = if (Registry.`is`("intellij.platform.ml.embeddings.use.file.based.index")) IndexBasedEmbeddingEntitiesIndexer(indexerScope)
+  private val entitiesIndexer: EmbeddingEntitiesIndexer = if (Registry.`is`("intellij.platform.ml.embeddings.use.file.based.index"))
+    IndexBasedEmbeddingEntitiesIndexer(indexerScope)
   else VFSBasedEmbeddingEntitiesIndexer(indexerScope)
 
   init {
     Disposer.register(this, entitiesIndexer)
   }
-
 
   fun prepareForSearch(project: Project): Job = cs.launch {
     Disposer.register(project) {
@@ -133,9 +132,7 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
   override fun dispose() {}
 }
 
-private const val BATCHES_IN_BUFFER = 8
-
-suspend fun sendEntities(project: Project, indexId: IndexId, channel: ReceiveChannel<IndexableEntity>) {
+suspend fun addAbsentEntities(project: Project, indexId: IndexId, channel: ReceiveChannel<IndexableEntity>) {
   val wrapper = getStorageManagerWrapper(indexId)
   val entities = ArrayList<IndexableEntity>(wrapper.getBatchSize())
   var index = 0
@@ -152,19 +149,24 @@ suspend fun sendEntities(project: Project, indexId: IndexId, channel: ReceiveCha
   }
 }
 
-internal suspend fun searchAndSendEntities(
+internal suspend fun extractAndAddEntities(
   project: Project,
-  settings: EmbeddingIndexSettings,
   launchSearching: CoroutineScope.(Channel<IndexableEntity>?, Channel<IndexableEntity>?, Channel<IndexableEntity>?) -> Unit,
 ) = coroutineScope {
-  val filesChannel = if (settings.shouldIndexFiles) Channel<IndexableEntity>(capacity = getStorageManagerWrapper(IndexId.FILES).getBatchSize() * BATCHES_IN_BUFFER) else null
-  val classesChannel = if (settings.shouldIndexClasses) Channel<IndexableEntity>(capacity = getStorageManagerWrapper(IndexId.CLASSES).getBatchSize() * BATCHES_IN_BUFFER) else null
-  val symbolsChannel = if (settings.shouldIndexSymbols) Channel<IndexableEntity>(capacity = getStorageManagerWrapper(IndexId.SYMBOLS).getBatchSize() * BATCHES_IN_BUFFER) else null
+  val filesChannel = IndexId.FILES.createEntitiesChannel()
+  val classesChannel = IndexId.CLASSES.createEntitiesChannel()
+  val symbolsChannel = IndexId.SYMBOLS.createEntitiesChannel()
 
   try {
-    if (filesChannel != null) launch { sendEntities(project, IndexId.FILES, filesChannel) }
-    if (classesChannel != null) launch { sendEntities(project, IndexId.CLASSES, classesChannel) }
-    if (symbolsChannel != null) launch { sendEntities(project, IndexId.SYMBOLS, symbolsChannel) }
+    if (filesChannel != null) {
+      launch { addAbsentEntities(project, IndexId.FILES, filesChannel) }
+    }
+    if (classesChannel != null) {
+      launch { addAbsentEntities(project, IndexId.CLASSES, classesChannel) }
+    }
+    if (symbolsChannel != null) {
+      launch { addAbsentEntities(project, IndexId.SYMBOLS, symbolsChannel) }
+    }
 
     coroutineScope {
       launchSearching(this, filesChannel, classesChannel, symbolsChannel)

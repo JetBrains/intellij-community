@@ -26,7 +26,7 @@ internal class IndexBasedEmbeddingEntitiesIndexer(cs: CoroutineScope) : Embeddin
 
   override suspend fun index(project: Project, settings: EmbeddingIndexSettings) {
     indexingScope.launch {
-      searchAndSendEntities(project, settings) { filesChannel, classesChannel, symbolsChannel ->
+      extractAndAddEntities(project) { filesChannel, classesChannel, symbolsChannel ->
         if (filesChannel != null) launchFetchingEntities(FILE_NAME_EMBEDDING_INDEX_NAME, filesChannel, project) { entityId -> IndexableFile(entityId) }
         if (classesChannel != null) launchFetchingEntities(CLASS_NAME_EMBEDDING_INDEX_NAME, classesChannel, project) { entityId -> IndexableClass(entityId) }
         if (symbolsChannel != null) launchFetchingEntities(SYMBOL_NAME_EMBEDDING_INDEX_NAME, symbolsChannel, project) { entityId -> IndexableSymbol(entityId) }

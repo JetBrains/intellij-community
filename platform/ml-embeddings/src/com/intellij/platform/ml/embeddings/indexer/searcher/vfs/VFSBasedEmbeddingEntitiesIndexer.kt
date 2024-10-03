@@ -18,7 +18,7 @@ import com.intellij.platform.ml.embeddings.indexer.SymbolsProvider
 import com.intellij.platform.ml.embeddings.indexer.TOTAL_THREAD_LIMIT_FOR_INDEXING
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableFile
-import com.intellij.platform.ml.embeddings.indexer.searchAndSendEntities
+import com.intellij.platform.ml.embeddings.indexer.extractAndAddEntities
 import com.intellij.platform.ml.embeddings.indexer.searcher.EmbeddingEntitiesIndexer
 import com.intellij.platform.ml.embeddings.indexer.searcher.SemanticSearchFileChangeListener
 import com.intellij.platform.ml.embeddings.settings.EmbeddingIndexSettings
@@ -59,7 +59,7 @@ internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) 
 
     indexingScope.launch {
       val files = scanFiles(project).sortedByDescending { it.name.length }
-      searchAndSendEntities(project, settings) { filesChannel, classesChannel, symbolsChannel ->
+      extractAndAddEntities(project) { filesChannel, classesChannel, symbolsChannel ->
         launch {
           search(project, files, filesChannel, classesChannel, symbolsChannel)
         }
@@ -77,7 +77,7 @@ internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) 
     if (!settings.shouldIndexAnythingFileBased) return
 
     indexingScope.launch {
-      searchAndSendEntities(project, settings) { filesChannel, classesChannel, symbolsChannel ->
+      extractAndAddEntities(project) { filesChannel, classesChannel, symbolsChannel ->
         launch {
           search(project, files, filesChannel, classesChannel, symbolsChannel)
         }
