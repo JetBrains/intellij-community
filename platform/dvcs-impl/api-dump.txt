@@ -609,7 +609,7 @@ a:com.intellij.dvcs.ui.DvcsCloneDialogComponent
 - doValidateAll():java.util.List
 - f:getDirectory():java.lang.String
 - pf:getErrorComponent():com.intellij.util.ui.components.BorderLayoutPanel
-- pf:getMainPanel():javax.swing.JPanel
+- pf:getMainPanel():com.intellij.openapi.ui.DialogPanel
 - getPreferredFocusedComponent():javax.swing.JComponent
 - f:getProject():com.intellij.openapi.project.Project
 - pf:getRememberedInputs():com.intellij.dvcs.DvcsRememberedInputs

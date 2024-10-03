@@ -180,8 +180,12 @@ public class GitImpl extends GitImplBase {
   }
 
   @Override
-  public @NotNull GitCommandResult clone(final @Nullable Project project, final @NotNull File parentDirectory, final @NotNull String url,
-                                         final @NotNull String clonedDirectoryName, final GitLineHandlerListener @NotNull ... listeners) {
+  public @NotNull GitCommandResult clone(final @Nullable Project project,
+                                         final @NotNull File parentDirectory,
+                                         final @NotNull String url,
+                                         final @NotNull String clonedDirectoryName,
+                                         final @Nullable GitShallowCloneOptions shallowCloneOptions,
+                                         final GitLineHandlerListener @NotNull ... listeners) {
     return runCommand(() -> {
       // do not use per-project executable for 'clone' command
       Project defaultProject = ProjectManager.getInstance().getDefaultProject();
@@ -194,6 +198,12 @@ public class GitImpl extends GitImplBase {
       if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(project, handler.getExecutable()) &&
           AdvancedSettings.getBoolean("git.clone.recurse.submodules")) {
         handler.addParameters("--recurse-submodules");
+      }
+      if (shallowCloneOptions != null) {
+        Integer depth = shallowCloneOptions.getDepth();
+        if (depth != null) {
+          handler.addParameters("--depth=" + depth);
+        }
       }
       handler.addParameters(url);
       handler.endOptions();

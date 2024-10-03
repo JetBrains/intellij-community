@@ -4,23 +4,28 @@ package git4idea.ui
 import com.intellij.application.subscribe
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsCloneDialogComponent
+import com.intellij.ide.IdeBundle.message
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.GitNotificationIdsHolder.Companion.CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR
 import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
+import git4idea.commands.GitShallowCloneOptions
 import git4idea.config.*
 import git4idea.i18n.GitBundle
 import git4idea.remote.GitRememberedInputs
@@ -32,7 +37,8 @@ class GitCloneDialogComponent(project: Project,
   DvcsCloneDialogComponent(project,
                            GitUtil.DOT_GIT,
                            GitRememberedInputs.getInstance(),
-                           dialogStateListener) {
+                           dialogStateListener,
+                           GitCloneDialogMainPanelCustomizer()) {
   private val LOG = Logger.getInstance(GitCloneDialogComponent::class.java)
 
   private val executableManager get() = GitExecutableManager.getInstance()
@@ -66,7 +72,16 @@ class GitCloneDialogComponent(project: Project,
     val directoryName = Paths.get(getDirectory()).fileName.toString()
     val parentDirectory = parent.toAbsolutePath().toString()
 
-    GitCheckoutProvider.clone(project, Git.getInstance(), listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory)
+    GitCheckoutProvider.clone(
+      project,
+      Git.getInstance(),
+      listener,
+      destinationParent,
+      sourceRepositoryURL,
+      directoryName,
+      parentDirectory,
+      (mainPanelCustomizer as GitCloneDialogMainPanelCustomizer).getShallowCloneOptions(),
+    )
     val rememberedInputs = GitRememberedInputs.getInstance()
     rememberedInputs.addUrl(sourceRepositoryURL)
     rememberedInputs.cloneParentDir = parentDirectory
@@ -142,5 +157,37 @@ class GitCloneDialogComponent(project: Project,
     SUCCESS,
     IN_PROGRESS,
     FAILED
+  }
+}
+
+private class GitCloneDialogMainPanelCustomizer : DvcsCloneDialogComponent.MainPanelCustomizer() {
+  private var shallowClone = false
+  private var depth = 1
+
+  override fun configure(panel: Panel) {
+    if (Registry.`is`("git.clone.shallow")) {
+      with(panel) {
+        row {
+          var shallowCloneCheckbox = checkBox(GitBundle.message("clone.dialog.shallow.clone"))
+            .gap(RightGap.SMALL)
+            .bindSelected(::shallowClone)
+
+          val depthTextField = intTextField(1..Int.MAX_VALUE, 1)
+            .bindIntText(::depth)
+            .enabledIf(shallowCloneCheckbox.selected)
+            .gap(RightGap.SMALL)
+          depthTextField.component.toolTipText = GIT_CLONE_DEPTH_ARG
+
+          @Suppress("DialogTitleCapitalization")
+          label(GitBundle.message("clone.dialog.shallow.clone.depth"))
+        }.bottomGap(BottomGap.SMALL)
+      }
+    }
+  }
+
+  fun getShallowCloneOptions() = if (shallowClone) GitShallowCloneOptions(depth) else null
+
+  private companion object {
+    const val GIT_CLONE_DEPTH_ARG: @NlsSafe String = "--depth"
   }
 }

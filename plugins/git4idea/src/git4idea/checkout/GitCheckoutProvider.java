@@ -27,10 +27,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitLineHandlerListener;
-import git4idea.commands.GitStandardProgressAnalyzer;
+import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitCloneDialogComponent;
 import org.jetbrains.annotations.NonNls;
@@ -82,9 +79,22 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
           directoryName, parentDirectory);
   }
 
+  public static void clone(final @NotNull Project project,
+                           final @NotNull Git git,
+                           final Listener listener,
+                           final VirtualFile destinationParent,
+                           final String sourceRepositoryURL,
+                           final String directoryName,
+                           final String parentDirectory) {
+    clone(project, git, listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory, null);
+  }
+
   public static void clone(final @NotNull Project project, final @NotNull Git git, final Listener listener,
-                           final VirtualFile destinationParent, final String sourceRepositoryURL,
-                           final String directoryName, final String parentDirectory) {
+                           final VirtualFile destinationParent,
+                           final String sourceRepositoryURL,
+                           final String directoryName,
+                           final String parentDirectory,
+                           final GitShallowCloneOptions shallowCloneOptions) {
     String projectAbsolutePath = Paths.get(parentDirectory, directoryName).toAbsolutePath().toString();
     String projectPath = FileUtilRt.toSystemIndependentName(projectAbsolutePath);
 
@@ -109,7 +119,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
 
         GitCommandResult result;
         try {
-          result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, progressListener);
+          result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, shallowCloneOptions, progressListener);
         }
         catch (Exception e) {
           if (listener instanceof GitCheckoutListener) {
@@ -143,13 +153,25 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
     CloneableProjectsService.getInstance().runCloneTask(projectPath, cloneTask);
   }
 
-  public static boolean doClone(@NotNull Project project, @NotNull Git git,
-                                @NotNull String directoryName, @NotNull String parentDirectory, @NotNull String sourceRepositoryURL) {
+  public static boolean doClone(@NotNull Project project,
+                                @NotNull Git git,
+                                @NotNull String directoryName,
+                                @NotNull String parentDirectory,
+                                @NotNull String sourceRepositoryURL) {
+    return doClone(project, git, directoryName, parentDirectory, sourceRepositoryURL, null);
+  }
+
+  public static boolean doClone(@NotNull Project project,
+                                @NotNull Git git,
+                                @NotNull String directoryName,
+                                @NotNull String parentDirectory,
+                                @NotNull String sourceRepositoryURL,
+                                @Nullable GitShallowCloneOptions shallowCloneOptions) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setIndeterminate(false);
 
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(indicator);
-    GitCommandResult result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, progressListener);
+    GitCommandResult result = git.clone(project, new File(parentDirectory), sourceRepositoryURL, directoryName, shallowCloneOptions, progressListener);
     if (result.success()) {
       return true;
     }

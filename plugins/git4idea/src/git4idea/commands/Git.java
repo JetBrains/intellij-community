@@ -74,7 +74,20 @@ public interface Git {
                                                 @Nullable List<String> relativePaths) throws VcsException;
 
   @NotNull
-  GitCommandResult clone(@Nullable Project project, @NotNull File parentDirectory, @NotNull String url, @NotNull String clonedDirectoryName,
+  default GitCommandResult clone(@Nullable Project project,
+                                 @NotNull File parentDirectory,
+                                 @NotNull String url,
+                                 @NotNull String clonedDirectoryName,
+                                 GitLineHandlerListener @NotNull ... progressListeners) {
+    return clone(project, parentDirectory, url, clonedDirectoryName, null, progressListeners);
+  }
+
+  @NotNull
+  GitCommandResult clone(@Nullable Project project,
+                         @NotNull File parentDirectory,
+                         @NotNull String url,
+                         @NotNull String clonedDirectoryName,
+                         @Nullable GitShallowCloneOptions shallowCloneOptions,
                          GitLineHandlerListener @NotNull ... progressListeners);
 
   @NotNull

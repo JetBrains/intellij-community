@@ -620,6 +620,8 @@
                  description="Enable embedded pinentry application for unlock GPG private key while Git perform commit signing. For remote dev (unix backend) and WSL."/>
     <registryKey key="git.read.branches.from.disk" defaultValue="false"
                  description="When enabled, read the '.git/refs' directory contents. When disabled, delegate to 'git branch' call."/>
+    <registryKey key="git.clone.shallow" defaultValue="false"
+                 description="When enabled, allows shallow cloning of the git repository"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
