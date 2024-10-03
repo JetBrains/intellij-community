@@ -101,6 +101,11 @@
       "key": "Review.Notification.Blue",
       "description": "Color of the notification dot in the list of reviews",
       "since": "[2024.1]"
+    },
+    {
+      "key": "Review.AI.Background",
+      "description": "Background color of AI-generated comments",
+      "since": "[2024.3]"
     }
   ]
 }
