@@ -2,18 +2,20 @@
 package org.jetbrains.idea.maven.server.eel
 
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.RunProfileState
-import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.execution.configurations.*
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.fs.pathSeparator
 import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.maybeUploadPath
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.ijent.tunnels.forwardLocalPort
 import kotlinx.coroutines.GlobalScope
@@ -22,6 +24,7 @@ import org.jetbrains.idea.maven.server.AbstractMavenServerRemoteProcessSupport
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenServerCMDState
 import org.jetbrains.idea.maven.utils.MavenUtil.parseMavenProperties
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.Path
 
@@ -98,14 +101,33 @@ private class EelMavenCmdState(
       parameters.vmParametersList.defineProperty("java.rmi.client.logCalls", "true")
     }
 
-    for (item in parameters.programParametersList.parameters) {
-      eelParams.programParametersList.add(item)
-    }
+    appendTargetedList(eelParams.vmParametersList, parameters.vmParametersList.targetedList)
+
+    appendTargetedList(eelParams.programParametersList, parameters.programParametersList.targetedList)
+
     eelParams.charset = parameters.charset
     eelParams.vmParametersList.add("-classpath")
-    eelParams.vmParametersList.add(parameters.classPath.pathList.mapNotNull { eel.mapper.getOriginalPath(Path(it))?.toString() }.joinToString(":"))
+    eelParams.vmParametersList.add(parameters.classPath.pathList.mapNotNull { runBlockingCancellable { eel.mapper.maybeUploadPath(Path(it), GlobalScope)?.toString() } }.joinToString(eel.fs.pathSeparator))
 
     return eelParams
+  }
+
+  private fun appendTargetedList(sinkParameterList: ParametersList, source: List<CompositeParameterTargetedValue>) {
+    for (item in source) {
+      val localizedItem = buildString {
+        for (part in item.parts) {
+          when (part) {
+            is ParameterTargetValuePart.Const -> append(part.localValue)
+            is ParameterTargetValuePart.Path -> runBlockingCancellable {
+              append(eel.mapper.maybeUploadPath(Path.of(part.localValue), GlobalScope).toString())
+            }
+            ParameterTargetValuePart.PathSeparator -> append(eel.fs.pathSeparator)
+            is ParameterTargetValuePart.PromiseValue -> append(part.localValue) // todo?
+          }
+        }
+      }
+      sinkParameterList.add(localizedItem)
+    }
   }
 
   override fun startProcess(): ProcessHandler {
@@ -117,7 +139,7 @@ private class EelMavenCmdState(
        * Params normalization should be performed automatically
        * @see [com.intellij.execution.eel.EelApiWithPathsNormalization]
        */
-      val builder = EelExecApi.executeProcessBuilder(cmd.exePath)
+      val builder = EelExecApi.executeProcessBuilder(eel.mapper.getOriginalPath(Path.of(cmd.exePath)).toString())
         .args(cmd.parametersList.parameters)
         .env(cmd.environment)
         .workingDirectory(workingDirectory)
