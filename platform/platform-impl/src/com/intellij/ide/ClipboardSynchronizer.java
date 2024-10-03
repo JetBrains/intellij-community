@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.Patches;
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ex.ClipboardUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.UIBundle;
@@ -119,11 +118,23 @@ public final class ClipboardSynchronizer implements Disposable {
 
     public void dispose() { }
 
+    @FunctionalInterface
+    protected interface MultiThrowingSupplier<R, E1 extends Throwable, E2 extends Throwable> {
+      R get() throws E1, E2;
+    }
+    protected <R, E1 extends Throwable, E2 extends Throwable> R wrapClipboardAccess(MultiThrowingSupplier<R, E1, E2> function) throws E1, E2 {
+      return function.get();
+    }
+
+    protected void wrapClipboardAccess(Runnable function) {
+      function.run();
+    }
+
     public boolean areDataFlavorsAvailable(DataFlavor @NotNull ... flavors) {
       Clipboard clipboard = getClipboard();
       if (clipboard == null) return false;
       for (DataFlavor flavor : flavors) {
-        if (clipboard.isDataFlavorAvailable(flavor)) {
+        if (wrapClipboardAccess(() -> clipboard.isDataFlavorAvailable(flavor))) {
           return true;
         }
       }
@@ -135,7 +146,7 @@ public final class ClipboardSynchronizer implements Disposable {
       if (clipboard == null) {
         return null;
       }
-      Transferable contents = clipboard.getContents(this);
+      Transferable contents = wrapClipboardAccess(() -> clipboard.getContents(this));
       if (LOG.isDebugEnabled()) {
         // this temporary logging is needed to investigate clipboard pasting issue (see IDEA-316996)
         LOG.debug("Clipboard class: " + clipboard.getClass().getName());
@@ -153,7 +164,9 @@ public final class ClipboardSynchronizer implements Disposable {
 
     public @Nullable Object getData(@NotNull DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
       Clipboard clipboard = getClipboard();
-      return clipboard == null ? null : clipboard.getData(dataFlavor);
+      return clipboard == null
+             ? null :
+             this.<Object, IOException, UnsupportedFlavorException>wrapClipboardAccess(() -> clipboard.getData(dataFlavor));
     }
 
     public void setContent(@NotNull Transferable content, final @NotNull ClipboardOwner owner) {
@@ -165,7 +178,7 @@ public final class ClipboardSynchronizer implements Disposable {
       IllegalStateException lastException = null;
       for (int i = 0; i < getRetries(); i++) {
         try {
-          clipboard.setContents(content, owner);
+          wrapClipboardAccess(() -> clipboard.setContents(content, owner));
           return;
         }
         catch (IllegalStateException e) {
@@ -410,6 +423,24 @@ public final class ClipboardSynchronizer implements Disposable {
   }
 
   private static final class WindowsClipboardHandler extends ClipboardHandler {
+
+    // Workaround for IJPL-163459: concurrent access to clipboard triggers crashes in JDK on Windows.
+    private final Object syncRoot = new Object();
+
+    @Override
+    protected <R, E1 extends Throwable, E2 extends Throwable> R wrapClipboardAccess(MultiThrowingSupplier<R, E1, E2> function) throws E1, E2 {
+      synchronized (syncRoot) {
+        return super.wrapClipboardAccess(function);
+      }
+    }
+
+    @Override
+    protected void wrapClipboardAccess(Runnable function) {
+      synchronized (syncRoot) {
+        super.wrapClipboardAccess(function);
+      }
+    }
+
     @Override
     protected int getRetries() {
       // Clipboard#setContents throws IllegalStateException if the clipboard is currently unavailable.
