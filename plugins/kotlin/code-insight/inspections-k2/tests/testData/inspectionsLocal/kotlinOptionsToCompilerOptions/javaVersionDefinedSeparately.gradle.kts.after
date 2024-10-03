@@ -1,6 +1,6 @@
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     kotlin("jvm") version "2.0.0"
@@ -24,7 +24,7 @@ tasks.test {
 val javaVersion = JavaVersion.VERSION_1_8
 tasks.withType(KotlinJvmCompile::class.java).configureEach {
     compilerOptions {
-        jvmTarget.set(JvmTarget.fromString(javaVersion.toString()))
+        jvmTarget.set(JvmTarget.fromTarget(javaVersion.toString()))
         freeCompilerArgs.addAll(
             setOf(
                 "-Xjvm-default=all",

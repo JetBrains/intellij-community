@@ -1,5 +1,5 @@
 // FIX: Replace 'kotlinOptions' with 'compilerOptions'
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     kotlin("jvm") version "2.0.0"

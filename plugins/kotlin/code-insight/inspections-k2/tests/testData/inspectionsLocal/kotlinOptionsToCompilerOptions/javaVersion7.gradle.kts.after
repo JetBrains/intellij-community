@@ -23,5 +23,5 @@ tasks.test {
 
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.compilerOptions {
-    jvmTarget.set(JvmTarget.fromString(JavaVersion.VERSION_1_7.toString()))
+    jvmTarget.set(JvmTarget.fromTarget(JavaVersion.VERSION_1_7.toString()))
 }

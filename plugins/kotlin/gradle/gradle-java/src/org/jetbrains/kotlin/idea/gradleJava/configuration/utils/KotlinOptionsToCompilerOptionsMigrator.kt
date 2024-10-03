@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.util.function.Function
-import kotlin.String
 
 data class CompilerOption(val expression: String, val classToImport: FqName? = null, val compilerOptionValue: String? = null)
 
@@ -242,7 +241,7 @@ private fun getCompilerOptionForVersionValue(
     val compilerOptionValue = if (convertedValue != null) {
         "${versionOptionData.newOptionType}${convertedValue}"
     } else if (optionName.contains("jvmTarget")) {
-        "JvmTarget.fromString(${optionValue})"
+        "JvmTarget.fromTarget(${optionValue})"
     } else {
         "KotlinVersion.fromVersion(${optionValue})"
     }
