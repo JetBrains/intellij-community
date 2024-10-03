@@ -74,5 +74,8 @@ class BookmarksPopupUiComponent(data: ComponentData) : UiComponent(data) {
     .map { it.toString().replace("TreePathToRow{path=[", "").dropLast(2) }
 
   fun clickBookmark(textContains: String, doubleClick: Boolean = false) =
-    bookmarksTree.waitAnyTextsContains(text = textContains).first().apply { if (doubleClick) doubleClick() else click() }
+    bookmarksTree.waitAnyTextsContains(text = textContains).first().apply { if (doubleClick) {
+      click()
+      doubleClick()
+    } else click() }
 }
