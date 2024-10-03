@@ -66,7 +66,7 @@ class KotlinFilePasteProvider : PasteProvider {
         val project = CommonDataKeys.PROJECT.getData(dataContext)
         val ideView = LangDataKeys.IDE_VIEW.getData(dataContext)
         if (project == null || ideView == null || ideView.directories.isEmpty()) return false
-        val text = CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor) ?: return false
+        val text = CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor)?.takeIf { it.isNotBlank() } ?: return false
         //todo: KT-25329, to remove these heuristics
         if (text.contains(";\n") ||
             ((text.contains("public interface") || text.contains("public class")) &&
