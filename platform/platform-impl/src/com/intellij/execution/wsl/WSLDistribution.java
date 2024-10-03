@@ -28,6 +28,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -184,6 +185,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @param timeout                timeout in ms
    * @param processHandlerConsumer consumes process handler just before execution, may be used for cancellation
    */
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput executeOnWsl(@NotNull List<String> command,
                                              @NotNull WSLCommandLineOptions options,
                                              int timeout,
@@ -202,6 +204,7 @@ public class WSLDistribution implements AbstractWslDistribution {
     return output;
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput executeOnWsl(int timeout, @NonNls String @NotNull ... command) throws ExecutionException {
     return executeOnWsl(Arrays.asList(command), new WSLCommandLineOptions(), timeout, null);
   }

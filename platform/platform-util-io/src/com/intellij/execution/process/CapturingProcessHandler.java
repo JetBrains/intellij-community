@@ -4,6 +4,7 @@ package com.intellij.execution.process;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +39,12 @@ public class CapturingProcessHandler extends OSProcessHandler {
     return myCharset != null ? myCharset : super.getCharset();
   }
 
+  /**
+   * Blocks until process finished, returns its output
+   */
   @NotNull
-  public ProcessOutput runProcess() {
+  @RequiresBackgroundThread(generateAssertion = false)
+  public final ProcessOutput runProcess() {
     return myProcessRunner.runProcess();
   }
 
@@ -48,6 +53,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
    *
    * @param timeoutInMilliseconds non-positive means infinity
    */
+  @RequiresBackgroundThread(generateAssertion = false)
   public ProcessOutput runProcess(int timeoutInMilliseconds) {
     return myProcessRunner.runProcess(timeoutInMilliseconds);
   }

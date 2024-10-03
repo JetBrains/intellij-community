@@ -218,7 +218,7 @@ c:com.intellij.execution.process.CapturingProcessHandler
 - <init>(java.lang.Process,java.nio.charset.Charset,java.lang.String):V
 - p:createProcessAdapter(com.intellij.execution.process.ProcessOutput):com.intellij.execution.process.CapturingProcessAdapter
 - getCharset():java.nio.charset.Charset
-- runProcess():com.intellij.execution.process.ProcessOutput
+- f:runProcess():com.intellij.execution.process.ProcessOutput
 - runProcess(I):com.intellij.execution.process.ProcessOutput
 - runProcess(I,Z):com.intellij.execution.process.ProcessOutput
 - runProcessWithProgressIndicator(com.intellij.openapi.progress.ProgressIndicator):com.intellij.execution.process.ProcessOutput
@@ -234,7 +234,7 @@ c:com.intellij.execution.process.CapturingProcessRunner
 - <init>(com.intellij.execution.process.BaseProcessHandler,java.util.function.Function):V
 - <init>(com.intellij.execution.process.ProcessHandler):V
 - <init>(com.intellij.execution.process.ProcessHandler,java.util.function.Function):V
-- runProcess():com.intellij.execution.process.ProcessOutput
+- f:runProcess():com.intellij.execution.process.ProcessOutput
 - runProcess(I):com.intellij.execution.process.ProcessOutput
 - runProcess(I,Z):com.intellij.execution.process.ProcessOutput
 - runProcess(com.intellij.openapi.progress.ProgressIndicator):com.intellij.execution.process.ProcessOutput
