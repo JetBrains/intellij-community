@@ -157,7 +157,7 @@ internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) 
 
       // we can't run processing concurrently because LighterAST is not thread-safe
       if (classesChannel != null) {
-          readActionUndispatched { ClassesProvider.extractClasses(content) }.forEach { classesChannel.send(it) }
+          readActionUndispatched { ClassesProvider.extractClasses(content) }.forEach { classesChannel.send(it) } // todo should this send also be wrapped in launch or can we remove launch from filesChannel?
       }
       if (symbolsChannel != null) {
           readActionUndispatched { SymbolsProvider.extractSymbols(content) }.forEach { symbolsChannel.send(it) }
