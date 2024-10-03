@@ -44,6 +44,7 @@ fun Finder.jcef(@Language("xpath") xpath: String? = null, action: JCefUI.() -> U
 class JCefUI(data: ComponentData) : UiComponent(data) {
   private val jcefWorker by lazy {
     driver.new(JcefComponentWrapper::class, component).apply {
+      waitFor("Document exists") { hasDocument() }
       runJs(initScript)
     }
   }
@@ -94,7 +95,6 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
   fun getUrl(): String =  jcefWorker.getUrl()
 
   fun getHtml(): String {
-    waitFor("Document exists") { hasDocument() }
     return callJs("""document.documentElement.outerHTML""")
   }
 

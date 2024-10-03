@@ -49,10 +49,10 @@ internal class JcefComponentWrapper(private val component: Component) {
       jbCefBrowser = currentComponent.getClientProperty(JB_BROWSER_KEY)
       currentComponent = currentComponent.parent as JComponent
     }
-    require(jbCefBrowser != null) {
+    check(jbCefBrowser != null) {
       "Failed to retrieve jbCefBrowser from $component"
     }
-    require(jbCefBrowser is JBCefBrowserBase) {
+    check(jbCefBrowser is JBCefBrowserBase) {
       "$jbCefBrowser is not JBCefBrowser"
     }
     return jbCefBrowser
