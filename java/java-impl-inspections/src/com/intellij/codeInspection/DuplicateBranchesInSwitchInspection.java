@@ -779,16 +779,11 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       }
       int hash = 0;
       if (depth > 0) {
-        int count = 0;
         for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
           if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiJavaToken) {
             continue;
           }
           hash = hash * 31 + hashElement(child, depth - 1);
-          count++;
-        }
-        if (count != 0) {
-          hash = hash * 31 + count;
         }
       }
       IElementType type = PsiUtilCore.getElementType(element);
@@ -806,6 +801,9 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
         return hashExpression(parenthesizedExpression.getExpression());
       }
       short index = expression.getNode().getElementType().getIndex();
+      if (expression instanceof PsiMethodReferenceExpression methodReferenceExpression) {
+        return hashReference(methodReferenceExpression, index) * 31 + hashElement(methodReferenceExpression.getQualifier(), 1);
+      }
       if (expression instanceof PsiReferenceExpression referenceExpression) {
         return hashReference(referenceExpression, index);
       }
