@@ -144,18 +144,12 @@ internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) 
     classesChannel: Channel<IndexableEntity>?,
     symbolsChannel: Channel<IndexableEntity>?,
   ) = coroutineScope {
-    if (filesChannel != null) {
-      launch {
-        filesChannel.send(IndexableFile(file))
-      }
-    }
-
+    filesChannel?.send(IndexableFile(file))
     if (classesChannel != null || symbolsChannel != null) {
-      val (psiFile, fileType) = readActionUndispatched {
-        val psiFile = psiManager.findFile(file) ?: return@readActionUndispatched null
-        val fileType = psiFile.fileType
-        psiFile to fileType
-      } ?: return@coroutineScope
+      val fileType = file.fileType
+      if (fileType !in ClassesProvider.supportedFileTypes && fileType !in SymbolsProvider.supportedFileTypes) return@coroutineScope
+
+      val psiFile = readActionUndispatched { psiManager.findFile(file) } ?: return@coroutineScope
 
       val content: FileContentImpl = FileContentImpl.createByFile(file, psiManager.project) as FileContentImpl
       content.putUserData(PSI_FILE, psiFile) // todo I think we can avoid explicit passing of file
@@ -163,13 +157,10 @@ internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) 
 
       // we can't run processing concurrently because LighterAST is not thread-safe
       if (classesChannel != null) {
-        val classes = readActionUndispatched { ClassesProvider.extractClasses(content) }
-        classes.forEach { classesChannel.send(it) }
+          readActionUndispatched { ClassesProvider.extractClasses(content) }.forEach { classesChannel.send(it) }
       }
-
       if (symbolsChannel != null) {
-        val symbols = readActionUndispatched { SymbolsProvider.extractSymbols(content) }
-        symbols.forEach { symbolsChannel.send(it) }
+          readActionUndispatched { SymbolsProvider.extractSymbols(content) }.forEach { symbolsChannel.send(it) }
       }
     }
   }
