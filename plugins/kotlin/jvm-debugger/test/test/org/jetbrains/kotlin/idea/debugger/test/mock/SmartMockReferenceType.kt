@@ -83,7 +83,10 @@ class SmartMockReferenceType(val classNode: ClassNode, private val context: Smar
     override fun fieldByName(fieldName: String) = TODO()
     override fun getValue(p0: Field?) = TODO()
     override fun visibleFields() = TODO()
-    override fun allLineLocations(stratum: String, sourceName: String) = TODO()
+    override fun allLineLocations(stratum: String?, sourceName: String?): List<Location> {
+        if (stratum != null || sourceName != null) TODO()
+        return allLineLocations()
+    }
     override fun majorVersion() = TODO()
     override fun constantPoolCount() = TODO()
     override fun constantPool() = TODO()
