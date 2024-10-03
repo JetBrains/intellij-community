@@ -27,6 +27,11 @@ interface ProjectUtil {
   fun focusProjectWindow(project: Project?, stealFocusIfAppInactive: Boolean)
 }
 
+@Remote("com.intellij.ide.IdeEventQueue")
+interface IdeEventQueue {
+  fun getInstance(): IdeEventQueue
+  fun flushQueue()
+}
 
 val UiComponent.center: Point get() {
   val location = component.getLocationOnScreen()
