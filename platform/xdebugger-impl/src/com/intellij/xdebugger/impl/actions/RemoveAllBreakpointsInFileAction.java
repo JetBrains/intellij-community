@@ -9,8 +9,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class RemoveAllBreakpointsInFileAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

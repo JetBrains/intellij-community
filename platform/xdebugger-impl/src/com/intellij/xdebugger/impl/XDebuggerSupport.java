@@ -7,6 +7,7 @@ import com.intellij.xdebugger.impl.actions.*;
 import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class XDebuggerSupport extends DebuggerSupport {
@@ -207,6 +208,7 @@ public class XDebuggerSupport extends DebuggerSupport {
     return myMuteBreakpointsHandler;
   }
 
+  @ApiStatus.Internal
   @NotNull
   @Override
   public MarkObjectActionHandler getMarkObjectHandler() {

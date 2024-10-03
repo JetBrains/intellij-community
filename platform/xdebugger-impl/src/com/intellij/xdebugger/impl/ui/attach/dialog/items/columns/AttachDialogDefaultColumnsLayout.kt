@@ -6,7 +6,9 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.*
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogProcessNode
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class AttachDialogDefaultColumnsLayout : AttachDialogColumnsLayout() {
 
   companion object {

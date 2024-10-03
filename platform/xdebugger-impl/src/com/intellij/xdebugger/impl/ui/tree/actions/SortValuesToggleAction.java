@@ -9,8 +9,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class SortValuesToggleAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   @Override

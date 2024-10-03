@@ -18,6 +18,7 @@ import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 import com.intellij.xdebugger.impl.actions.handlers.*
+import org.jetbrains.annotations.ApiStatus
 
 abstract class RunToolbarXDebuggerAction : XDebuggerActionBase(false), RTBarAction {
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
@@ -39,6 +40,7 @@ abstract class RunToolbarXDebuggerAction : XDebuggerActionBase(false), RTBarActi
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 }
 
+@ApiStatus.Internal
 open class RunToolbarPauseAction : RunToolbarXDebuggerAction() {
   private val handler = RunToolbarPauseActionHandler()
 
@@ -51,6 +53,7 @@ open class RunToolbarPauseAction : RunToolbarXDebuggerAction() {
   }
 }
 
+@ApiStatus.Internal
 open class RunToolbarResumeAction : RunToolbarXDebuggerAction() {
   private val handler = RunToolbarResumeActionHandler()
 

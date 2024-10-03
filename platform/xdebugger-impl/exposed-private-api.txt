@@ -1,4 +1,2 @@
-com/intellij/xdebugger/impl/rpc/XDebuggerValueLookupHintsRemoteApi
 com/intellij/xdebugger/impl/ui/EmbeddedComboBoxUI
 com/intellij/xdebugger/memory/component/InstancesTracker$MyState
-com/intellij/xdebugger/memory/utils/AbstractTableModelWithColumns$TableColumnDescriptor

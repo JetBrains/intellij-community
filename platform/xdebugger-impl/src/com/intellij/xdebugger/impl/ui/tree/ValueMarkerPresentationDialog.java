@@ -15,12 +15,14 @@
  */
 package com.intellij.xdebugger.impl.ui.tree;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
 
+@ApiStatus.Internal
 public class ValueMarkerPresentationDialog extends ValueMarkerPresentationDialogBase {
   public ValueMarkerPresentationDialog(@Nullable Component parent, @Nullable String defaultText, @NotNull Collection<ValueMarkup> markups) {
     super(parent, defaultText, markups);

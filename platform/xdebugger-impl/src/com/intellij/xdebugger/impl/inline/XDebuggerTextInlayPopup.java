@@ -26,6 +26,7 @@ import org.jetbrains.concurrency.Promises;
 import java.awt.*;
 import java.util.Collections;
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 public class XDebuggerTextInlayPopup<D> extends XDebuggerTextPopup<D> {
 

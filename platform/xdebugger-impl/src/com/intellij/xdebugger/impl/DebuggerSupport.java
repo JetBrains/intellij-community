@@ -208,6 +208,7 @@ public abstract class DebuggerSupport {
     return DISABLED_TOGGLE_HANDLER;
   }
 
+  @ApiStatus.Internal
   protected static final MarkObjectActionHandler DISABLED_MARK_HANDLER = new MarkObjectActionHandler() {
     @Override
     public boolean isMarked(@NotNull Project project, @NotNull AnActionEvent event) {
@@ -229,6 +230,7 @@ public abstract class DebuggerSupport {
     }
   };
 
+  @ApiStatus.Internal
   public @NotNull MarkObjectActionHandler getMarkObjectHandler() {
     return DISABLED_MARK_HANDLER;
   }

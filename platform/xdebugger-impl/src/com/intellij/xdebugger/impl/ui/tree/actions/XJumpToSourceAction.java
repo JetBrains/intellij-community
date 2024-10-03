@@ -20,8 +20,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class XJumpToSourceAction extends XJumpToSourceActionBase {
   @Override
   protected void startComputingSourcePosition(XValue value, XNavigatable navigatable) {

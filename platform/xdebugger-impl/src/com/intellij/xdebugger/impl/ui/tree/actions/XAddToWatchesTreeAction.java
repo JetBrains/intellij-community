@@ -6,12 +6,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * This action works only in the variables view
  * @see com.intellij.xdebugger.impl.actions.AddToWatchesAction
  */
+@ApiStatus.Internal
 public class XAddToWatchesTreeAction extends XDebuggerTreeActionBase {
   @Override
   protected boolean isEnabled(@NotNull final XValueNodeImpl node, @NotNull AnActionEvent e) {

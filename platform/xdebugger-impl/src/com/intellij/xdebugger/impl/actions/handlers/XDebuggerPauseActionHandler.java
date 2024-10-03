@@ -7,8 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class XDebuggerPauseActionHandler extends XDebuggerActionHandler {
   @Override
   protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {

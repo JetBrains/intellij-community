@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.popup.util.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
 
+@ApiStatus.Internal
 public class BreakpointChooser {
   private static final Logger LOG = Logger.getInstance(BreakpointChooser.class);
 

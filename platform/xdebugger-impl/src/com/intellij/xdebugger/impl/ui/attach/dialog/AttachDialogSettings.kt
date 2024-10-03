@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.RightAlignedToolbarAction
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.ExperimentalUI
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class AttachDialogSettings : NonEmptyActionGroup(), RightAlignedToolbarAction, TooltipDescriptionProvider, DumbAware {
   init {
     templatePresentation.icon =

@@ -9,13 +9,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface RunToCursorService {
   fun shouldShowInlay(): Boolean
   fun isAtExecution(file: VirtualFile, line: Int): Boolean
   suspend fun canRunToCursor(editor: Editor, lineNumber: Int): Boolean
 }
 
+@ApiStatus.Internal
 open class DefaultRunToCursorService(protected val project: Project) : RunToCursorService {
   override fun shouldShowInlay(): Boolean {
     val session = XDebuggerManager.getInstance(project).getCurrentSession() as XDebugSessionImpl?

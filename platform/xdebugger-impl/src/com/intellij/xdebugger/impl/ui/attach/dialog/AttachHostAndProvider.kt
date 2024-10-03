@@ -6,10 +6,12 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachHostProvider
 import com.intellij.xdebugger.attach.XAttachPresentationGroup
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 
+@ApiStatus.Internal
 @Suppress("UNCHECKED_CAST")
 data class AttachHostAndProvider(
   override val host: XAttachHost,

@@ -25,9 +25,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 
 
+@ApiStatus.Internal
 enum class ExecutionPositionNavigationMode {
   SCROLL, OPEN,
 }

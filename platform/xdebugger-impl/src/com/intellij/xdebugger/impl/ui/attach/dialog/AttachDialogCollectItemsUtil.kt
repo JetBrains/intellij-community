@@ -14,6 +14,7 @@ import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase.AttachToPro
 import com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ensureActive
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 import java.util.function.Supplier
 import kotlin.coroutines.coroutineContext
@@ -24,6 +25,7 @@ private val logger = Logger.getInstance("AttachDialogCollectItemsUtil")
  * Actions added to the [AttachDialogSettings] group can implement this interface to
  * affect list of processes. Only processes accepted by all predicates will be shown.
  */
+@ApiStatus.Internal
 interface ProcessPredicate : Supplier<Predicate<ProcessInfo>>
 
 suspend fun collectAttachProcessItemsGroupByProcessInfo(

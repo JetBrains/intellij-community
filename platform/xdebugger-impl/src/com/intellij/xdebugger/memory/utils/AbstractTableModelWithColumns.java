@@ -2,9 +2,11 @@
 package com.intellij.xdebugger.memory.utils;
 
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.table.AbstractTableModel;
 
+@ApiStatus.Internal
 public abstract class AbstractTableModelWithColumns extends AbstractTableModel {
 
   private final TableColumnDescriptor[] myColumnDescriptors;

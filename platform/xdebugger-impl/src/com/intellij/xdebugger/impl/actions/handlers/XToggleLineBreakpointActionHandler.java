@@ -22,6 +22,7 @@ import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
 
   private final boolean myTemporary;

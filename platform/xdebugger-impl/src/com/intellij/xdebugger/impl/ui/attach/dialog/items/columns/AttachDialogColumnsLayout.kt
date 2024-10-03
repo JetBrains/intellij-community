@@ -5,12 +5,14 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessElementsFilters
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.cells.AttachTableCell
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.nodes.AttachDialogProcessNode
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 abstract class AttachDialogColumnsLayout {
 
   abstract fun getColumnInfos(): List<AttachDialogColumnInfo>
 
+  @ApiStatus.Internal
   abstract fun createCell(columnIndex: Int, node: AttachDialogProcessNode, filters: AttachToProcessElementsFilters, isInsideTree: Boolean): AttachTableCell
 
   fun getColumnsCount(): Int = getColumnInfos().size
@@ -43,6 +45,7 @@ abstract class AttachDialogColumnsLayout {
   private fun getDefaultColumnWidth(columnKey: String) = getColumnInfos().first { it.columnKey == columnKey }.defaultColumnWidth
 }
 
+@ApiStatus.Internal
 data class AttachDialogColumnInfo(
   val columnKey: String,
   val columnClass: Class<*>,

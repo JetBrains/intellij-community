@@ -12,6 +12,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -19,6 +20,7 @@ import org.jetbrains.concurrency.Promises;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+@ApiStatus.Internal
 public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler {
   @Override
   protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {

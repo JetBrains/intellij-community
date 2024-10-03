@@ -20,12 +20,14 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 import static com.intellij.ui.components.ComponentsKt.Panel;
 
+@ApiStatus.Internal
 public class DataViewsConfigurableUi {
   public static final String DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY = "debugger.valueTooltipAutoShow";
   public static final String DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_ON_SELECTION_KEY = "debugger.valueTooltipAutoShowOnSelection";

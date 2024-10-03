@@ -54,6 +54,7 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -68,6 +69,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+@ApiStatus.Internal
 public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandler {
   private static final Ref<Boolean> SHOW_AD = new Ref<>(true);
   private static final Logger LOG = Logger.getInstance(XDebuggerSmartStepIntoHandler.class);
