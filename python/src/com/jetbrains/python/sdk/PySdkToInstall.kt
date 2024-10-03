@@ -25,6 +25,7 @@ import org.jetbrains.annotations.CalledInAny
 val LOGGER = Logger.getInstance(PySdkToInstall::class.java)
 
 @CalledInAny
+@Internal
 fun getSdksToInstall(): List<PySdkToInstall> {
   return PySdkToInstallManager.getAvailableVersionsToInstall().map {
     PySdkToInstall(it.value)
@@ -32,6 +33,7 @@ fun getSdksToInstall(): List<PySdkToInstall> {
 }
 
 @RequiresEdt
+@Internal
 fun installSdkIfNeeded(sdk: Sdk, module: Module?, existingSdks: List<Sdk>, context: UserDataHolder? = null): Result<Sdk> =
   if (sdk is PySdkToInstall) sdk.install(module) {
     context?.let { detectSystemWideSdks(module, existingSdks, context) } ?: detectSystemWideSdks(module, existingSdks)
@@ -42,6 +44,7 @@ fun installSdkIfNeeded(sdk: Sdk, module: Module?, existingSdks: List<Sdk>, conte
 /**
  * Generic PySdkToInstall. Compatible with all OS / CpuArch.
  */
+@Internal
 class PySdkToInstall(val installation: BinaryInstallation)
   : ProjectJdkImpl(installation.release.title, PythonSdkType.getInstance(), "", installation.release.version) {
 
@@ -49,6 +52,7 @@ class PySdkToInstall(val installation: BinaryInstallation)
    * Customize [renderer], which is typically either [com.intellij.ui.ColoredListCellRenderer] or [com.intellij.ui.ColoredTreeCellRenderer].
    */
   @CalledInAny
+  @Internal
   fun renderInList(renderer: SimpleColoredComponent) {
     renderer.append(name)
     val preview = installation.toResourcePreview()
