@@ -388,8 +388,13 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   protected String getFileName() {
-    XSourcePosition sourcePosition = myXBreakpoint.getSourcePosition();
-    return sourcePosition != null ? sourcePosition.getFile().getName() : "";
+    VirtualFile file = getVirtualFile();
+    return file != null ? file.getName() : "";
+  }
+
+  @Nullable
+  protected VirtualFile getVirtualFile() {
+    return ObjectUtils.doIfNotNull(ObjectUtils.doIfNotNull(myXBreakpoint, XBreakpoint::getSourcePosition), XSourcePosition::getFile);
   }
 
   @Override

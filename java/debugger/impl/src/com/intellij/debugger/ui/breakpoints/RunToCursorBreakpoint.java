@@ -46,6 +46,11 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
   }
 
   @Override
+  protected @Nullable VirtualFile getVirtualFile() {
+    return myCustomPosition.getFile().getVirtualFile();
+  }
+
+  @Override
   public boolean isRestoreBreakpoints() {
     return myRestoreBreakpoints;
   }
