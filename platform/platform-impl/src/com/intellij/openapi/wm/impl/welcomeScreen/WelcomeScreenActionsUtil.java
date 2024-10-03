@@ -19,9 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
+import java.awt.event.*;
 import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionsButtonBackground;
@@ -42,6 +40,16 @@ final class WelcomeScreenActionsUtil {
         List<AnAction> actions = presentation.getClientProperty(ActionUtil.INLINE_ACTIONS);
         if (actions != null && actions.size() > 1) {
           button.setOptions(actions);
+        }
+        else {
+          button.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+              if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                button.doClick();
+              }
+            }
+          });
         }
         button.setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
         button.putClientProperty(JBOptionButton.PLACE, place);
@@ -97,6 +105,14 @@ final class WelcomeScreenActionsUtil {
         @Override
         public void focusLost(FocusEvent e) {
           updateIconBackground(false);
+        }
+      });
+      myIconButton.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+            myIconButton.doClick();
+          }
         }
       });
       Wrapper iconWrapper = new Wrapper(myIconButton);
