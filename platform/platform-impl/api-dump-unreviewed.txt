@@ -12696,7 +12696,7 @@ e:com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjects
 com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneTask
 - a:run(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneStatus
 - a:taskInfo():com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneTaskInfo
-f:com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneTaskInfo
+c:com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneTaskInfo
 - com.intellij.openapi.progress.TaskInfo
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
 - f:getActionTitle():java.lang.String

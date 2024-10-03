@@ -3,6 +3,7 @@ package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneStatus;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTask;
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneTaskInfo;
+import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.VcsCloneCollector;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -37,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static git4idea.GitNotificationIdsHolder.CLONE_FAILED;
@@ -109,7 +112,14 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
                                  DvcsBundle.message("clone.repository.failed"),
                                  DvcsBundle.message("clone.repository.canceled"),
                                  DvcsBundle.message("clone.stop.message.title"),
-                                 DvcsBundle.message("clone.stop.message.description", sourceRepositoryURL));
+                                 DvcsBundle.message("clone.stop.message.description", sourceRepositoryURL)) {
+          @Override
+          public @NotNull List<@NotNull EventPair<?>> getActivityData() {
+            if (shallowCloneOptions == null || shallowCloneOptions.getDepth() == null) return Collections.emptyList();
+            int depth = shallowCloneOptions.getDepth();
+            return List.of(VcsCloneCollector.SHALLOW_CLONE_DEPTH.with(depth));
+          }
+        };
       }
 
       @Override
