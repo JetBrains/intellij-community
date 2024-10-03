@@ -29,7 +29,8 @@ fun buildComponentModel(): JsonSettingsModel.ComponentModel =
   })
 
 
-internal fun listAppComponents(): List<ComponentDescriptor> {
+@ApiStatus.Internal
+fun listAppComponents(): List<ComponentDescriptor> {
   val descriptors = mutableListOf<ComponentDescriptor>()
   fun processImplementationClass(aClass: Class<*>, descriptor: PluginDescriptor?) {
     if (PersistentStateComponent::class.java.isAssignableFrom(aClass)) {
@@ -64,7 +65,8 @@ private fun getState(aClass: Class<*>): State? {
 }
 
 
-internal data class ComponentDescriptor(
+@ApiStatus.Internal
+data class ComponentDescriptor(
   val name: String,
   val aClass: Class<PersistentStateComponent<*>>,
   val pluginDescriptor: PluginDescriptor?,

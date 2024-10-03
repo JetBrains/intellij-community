@@ -95,6 +95,7 @@
     <orderEntry type="library" name="jsvg" level="project" />
     <orderEntry type="library" scope="TEST" name="hash4j" level="project" />
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.internal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.io.storages" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" scope="TEST" name="ktor-server-cio" level="project" />

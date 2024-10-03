@@ -55,6 +55,7 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="module" module-name="intellij.platform.kernel" />
+    <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.platform.project" />

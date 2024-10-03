@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="gson" level="project" />

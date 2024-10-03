@@ -50,6 +50,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.event.MouseEvent
@@ -321,7 +322,8 @@ private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?
  * Method is added for Demo-action only
  * Do not use it in your code
  */
-internal fun createDemoToolbar(group: ActionGroup): MyActionToolbarImpl = createActionBar(group, null)
+@Internal
+fun createDemoToolbar(group: ActionGroup): MyActionToolbarImpl = createActionBar(group, null)
 
 private fun addWidget(widget: JComponent, parent: JComponent, position: HorizontalLayout.Group) {
   parent.add(widget, position)
@@ -330,7 +332,8 @@ private fun addWidget(widget: JComponent, parent: JComponent, position: Horizont
   }
 }
 
-internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
+@ApiStatus.Internal
+class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, false) {
   private val iconUpdater = HeaderIconUpdater()
 

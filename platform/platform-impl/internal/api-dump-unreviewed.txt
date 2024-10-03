@@ -1,0 +1,154 @@
+f:com.intellij.internal.cachedValueProfiler.CachedValueProfilerDumpHelper
+- s:loadDump(java.io.File,com.intellij.psi.util.CachedValueProfiler$EventConsumer):V
+com.intellij.internal.cachedValueProfiler.CachedValueProfilerDumpHelper$EventConsumerFactory
+- a:createEventConsumer():com.intellij.psi.util.CachedValueProfiler$EventConsumer
+f:com.intellij.internal.ml.BagOfWordsFeature
+- sf:Companion:com.intellij.internal.ml.BagOfWordsFeature$Companion
+- sf:MAX_CACHE_SIZE:I
+- sf:UNDEFINED:java.lang.String
+- <init>(java.lang.String,java.util.Set,com.intellij.internal.ml.BagOfWordsFeature$SplitterDescriptor):V
+- f:component1():java.lang.String
+- f:component2():java.util.Set
+- f:component3():com.intellij.internal.ml.BagOfWordsFeature$SplitterDescriptor
+- f:copy(java.lang.String,java.util.Set,com.intellij.internal.ml.BagOfWordsFeature$SplitterDescriptor):com.intellij.internal.ml.BagOfWordsFeature
+- bs:copy$default(com.intellij.internal.ml.BagOfWordsFeature,java.lang.String,java.util.Set,com.intellij.internal.ml.BagOfWordsFeature$SplitterDescriptor,I,java.lang.Object):com.intellij.internal.ml.BagOfWordsFeature
+- createMapper(java.lang.String):com.intellij.internal.ml.FeatureMapper
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- f:getSplitterDescriptor():com.intellij.internal.ml.BagOfWordsFeature$SplitterDescriptor
+- f:getWords():java.util.Set
+- hashCode():I
+f:com.intellij.internal.ml.BagOfWordsFeature$Companion
+f:com.intellij.internal.ml.BagOfWordsFeature$SplitterDescriptor
+- <init>(Z,Z):V
+- f:component1():Z
+- f:component2():Z
+- f:copy(Z,Z):com.intellij.internal.ml.BagOfWordsFeature$SplitterDescriptor
+- bs:copy$default(com.intellij.internal.ml.BagOfWordsFeature$SplitterDescriptor,Z,Z,I,java.lang.Object):com.intellij.internal.ml.BagOfWordsFeature$SplitterDescriptor
+- equals(java.lang.Object):Z
+- f:getToLowerCase():Z
+- f:getWithStemming():Z
+- hashCode():I
+f:com.intellij.internal.ml.BinaryFeature
+- <init>(java.lang.String,kotlin.Pair,kotlin.Pair,D,Z):V
+- f:component1():java.lang.String
+- f:component2():kotlin.Pair
+- f:component3():kotlin.Pair
+- f:component4():D
+- f:component5():Z
+- f:copy(java.lang.String,kotlin.Pair,kotlin.Pair,D,Z):com.intellij.internal.ml.BinaryFeature
+- bs:copy$default(com.intellij.internal.ml.BinaryFeature,java.lang.String,kotlin.Pair,kotlin.Pair,D,Z,I,java.lang.Object):com.intellij.internal.ml.BinaryFeature
+- createMapper(java.lang.String):com.intellij.internal.ml.FeatureMapper
+- equals(java.lang.Object):Z
+- f:getAllowUndefined():Z
+- f:getDefaultValue():D
+- f:getFirstValueMapping():kotlin.Pair
+- getName():java.lang.String
+- f:getSecondValueMapping():kotlin.Pair
+- hashCode():I
+f:com.intellij.internal.ml.CategoricalFeature
+- sf:Companion:com.intellij.internal.ml.CategoricalFeature$Companion
+- sf:OTHER:java.lang.String
+- <init>(java.lang.String,java.util.Set):V
+- f:component1():java.lang.String
+- f:component2():java.util.Set
+- f:copy(java.lang.String,java.util.Set):com.intellij.internal.ml.CategoricalFeature
+- bs:copy$default(com.intellij.internal.ml.CategoricalFeature,java.lang.String,java.util.Set,I,java.lang.Object):com.intellij.internal.ml.CategoricalFeature
+- createMapper(java.lang.String):com.intellij.internal.ml.FeatureMapper
+- equals(java.lang.Object):Z
+- f:getCategories():java.util.Set
+- getName():java.lang.String
+- hashCode():I
+f:com.intellij.internal.ml.CategoricalFeature$Companion
+f:com.intellij.internal.ml.FloatFeature
+- <init>(java.lang.String,D,Z):V
+- f:component1():java.lang.String
+- f:component2():D
+- f:component3():Z
+- f:copy(java.lang.String,D,Z):com.intellij.internal.ml.FloatFeature
+- bs:copy$default(com.intellij.internal.ml.FloatFeature,java.lang.String,D,Z,I,java.lang.Object):com.intellij.internal.ml.FloatFeature
+- createMapper(java.lang.String):com.intellij.internal.ml.FeatureMapper
+- equals(java.lang.Object):Z
+- f:getAllowUndefined():Z
+- f:getDefaultValue():D
+- getName():java.lang.String
+- hashCode():I
+f:com.intellij.internal.ml.InconsistentMetadataException
+- java.lang.IllegalStateException
+- <init>(java.lang.String):V
+com.intellij.internal.ml.ModelMetadata
+- a:getBinaryFeatures():java.util.List
+- a:getCategoricalFeatures():java.util.List
+- a:getFeaturesOrder():com.intellij.internal.ml.FeatureMapper[]
+- a:getFloatFeatures():java.util.List
+- a:getKnownFeatures():java.util.Set
+- a:getVersion():java.lang.String
+com.intellij.internal.ml.ModelMetadataReader
+- a:allKnown():java.lang.String
+- a:binaryFeatures():java.lang.String
+- a:categoricalFeatures():java.lang.String
+- a:extractVersion():java.lang.String
+- a:featureOrderDirect():java.util.List
+- a:floatFeatures():java.lang.String
+c:com.intellij.internal.ml.ResourcesModelMetadataReader
+- com.intellij.internal.ml.ModelMetadataReader
+- <init>(java.lang.Class,java.lang.String):V
+- allKnown():java.lang.String
+- binaryFeatures():java.lang.String
+- categoricalFeatures():java.lang.String
+- extractVersion():java.lang.String
+- featureOrderDirect():java.util.List
+- floatFeatures():java.lang.String
+- pf:getMetadataHolder():java.lang.Class
+a:com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
+- sf:Companion:com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider$Companion
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- f:assertModelMetadataConsistent():V
+- getDisplayNameInSettings():java.lang.String
+- getModel():com.intellij.internal.ml.DecisionFunction
+- f:getModelDirectory():java.lang.String
+- f:getResourceDirectory():java.lang.String
+f:com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider$Companion
+f:com.intellij.internal.ml.catboost.CatBoostResourcesModelMetadataReader
+- com.intellij.internal.ml.ResourcesModelMetadataReader
+- <init>(java.lang.Class,java.lang.String,java.lang.String):V
+- f:loadModel():com.intellij.internal.ml.catboost.NaiveCatBoostModel
+f:com.intellij.internal.ml.catboost.NaiveCatBoostModel
+- s:loadModel(java.io.InputStream):com.intellij.internal.ml.catboost.NaiveCatBoostModel
+- makePredict(D[]):D
+a:com.intellij.internal.ml.completion.CompletionRankingModelBase
+- <init>(com.intellij.internal.ml.ModelMetadata):V
+- getFeaturesOrder():com.intellij.internal.ml.FeatureMapper[]
+- getRequiredFeatures():java.util.List
+- getUnknownFeatures(java.util.Collection):java.util.List
+- version():java.lang.String
+com.intellij.internal.ml.completion.DecoratingItemsPolicy
+- sf:Companion:com.intellij.internal.ml.completion.DecoratingItemsPolicy$Companion
+- a:itemsToDecorate(java.lang.Iterable):java.util.Set
+f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$ByAbsoluteThreshold
+- com.intellij.internal.ml.completion.DecoratingItemsPolicy
+- <init>(D):V
+- itemsToDecorate(java.lang.Iterable):java.util.Set
+f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$ByRelativeThreshold
+- com.intellij.internal.ml.completion.DecoratingItemsPolicy
+- <init>(D):V
+- itemsToDecorate(java.lang.Iterable):java.util.Set
+f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$Companion
+- f:getDISABLED():com.intellij.internal.ml.completion.DecoratingItemsPolicy
+f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$Composite
+- com.intellij.internal.ml.completion.DecoratingItemsPolicy
+- <init>(com.intellij.internal.ml.completion.DecoratingItemsPolicy[]):V
+- itemsToDecorate(java.lang.Iterable):java.util.Set
+f:com.intellij.internal.performance.LatencyRecord
+- <init>():V
+- f:getAverageLatency():J
+- f:getMaxLatency():I
+- f:getSamples():it.unimi.dsi.fastutil.ints.IntArrayList
+- f:getTotalLatency():J
+- f:percentile(I):I
+- f:setMaxLatency(I):V
+- f:setTotalLatency(J):V
+- f:update(I):V
+com.intellij.internal.statistic.fileTypes.FileTypeStatisticProvider
+- a:accept(com.intellij.openapi.editor.Editor,com.intellij.openapi.fileTypes.FileType):Z
+- a:getPluginId():java.lang.String

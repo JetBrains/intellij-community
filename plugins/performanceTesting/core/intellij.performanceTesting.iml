@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="module-library">
       <library name="github.oshi.core" type="repository">
         <properties maven-id="com.github.oshi:oshi-core:6.6.0">

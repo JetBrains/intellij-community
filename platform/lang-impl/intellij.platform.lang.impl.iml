@@ -102,6 +102,7 @@
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.io.storages" />
+    <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
   </component>
 </module>

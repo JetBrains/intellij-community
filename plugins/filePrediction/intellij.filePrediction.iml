@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
     <orderEntry type="module" module-name="intellij.vcs.git" />
     <orderEntry type="module" module-name="intellij.platform.uast" />
+    <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />

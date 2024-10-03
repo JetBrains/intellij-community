@@ -8,7 +8,6 @@ com/intellij/util/ui/MenuItemLayoutHelper
 com/intellij/util/ui/MenuItemLayoutHelper$LayoutResult
 com/sun/jna/Structure
 io/netty/buffer/ByteBuf
-it/unimi/dsi/fastutil/ints/IntArrayList
 it/unimi/dsi/fastutil/ints/IntSet
 it/unimi/dsi/fastutil/longs/Long2ObjectMap
 it/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap

@@ -888,7 +888,7 @@
     <config.inlaySettingsProvider implementation="com.intellij.codeInsight.hints.settings.providers.NewInlaySettingsProvider"/>
 
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.StatisticsRegionUrlMapperService"
-                        serviceImplementation="com.intellij.ide.StatisticsRegionUrlMapperServiceImpl" preload="notLightEdit"/>
+                        serviceImplementation="com.intellij.internal.statistic.StatisticsRegionUrlMapperServiceImpl" preload="notLightEdit"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.configurationStore.statistic.eventLog.SettingsComponentNameValidator"/>
     <statistics.validation.customValidationRuleFactory implementation="com.intellij.configurationStore.statistic.eventLog.SettingsValueValidatorFactory"/>
@@ -1920,7 +1920,7 @@
               os="windows"/>
 
     <listener topic="com.intellij.ide.RegionSettings$RegionSettingsListener"
-              class="com.intellij.ide.StatisticsRegionSettingsListener"/>
+              class="com.intellij.internal.statistic.StatisticsRegionSettingsListener"/>
   </applicationListeners>
 
   <projectListeners>

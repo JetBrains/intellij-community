@@ -9,12 +9,8 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.ui.LicensingFacade
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 private class InternalFlagDetection : ProjectActivity {
-
   private val internalPluginIds = setOf(
     "com.jetbrains.intellij.api.watcher",
     "com.jetbrains.idea.safepush",

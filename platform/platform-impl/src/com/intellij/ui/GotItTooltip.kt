@@ -70,9 +70,9 @@ class GotItTooltipService {
  * The description of the tooltip can contain inline shortcuts, icons and links.
  * See [GotItTextBuilder] doc for more info.
  */
-class GotItTooltip internal constructor(@NonNls val id: String,
-                                        private val gotItBuilder: GotItComponentBuilder,
-                                        parentDisposable: Disposable? = null) : ToolbarActionTracker<Balloon>() {
+class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
+                                                   private val gotItBuilder: GotItComponentBuilder,
+                                                   parentDisposable: Disposable? = null) : ToolbarActionTracker<Balloon>() {
   private var timeout: Int = -1
   private var maxCount = 1
   private var onBalloonCreated: (Balloon) -> Unit = {}

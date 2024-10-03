@@ -1175,7 +1175,7 @@ private object SequencedEventNestedFieldHolder {
  * and after [processAppActivationEvent], which defeats the very purpose of this flag.
  */
 @Internal
-internal var skipWindowDeactivationEvents: Boolean = false
+var skipWindowDeactivationEvents: Boolean = false
 
 // we have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
 private class EditingCanceller : IdeEventQueue.EventDispatcher {

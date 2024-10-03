@@ -10,8 +10,6 @@ com/intellij/ide/plugins/IdeaPluginDescriptorImpl
 com/intellij/ide/plugins/marketplace/MarketplacePluginDownloadService
 com/intellij/ide/ui/LafReference
 com/intellij/ide/ui/laf/UIThemeExportableBean
-com/intellij/internal/ml/DecisionFunction
-com/intellij/internal/ml/FeatureMapper
 com/intellij/openapi/actionSystem/ex/ActionRuntimeRegistrar
 com/intellij/openapi/actionSystem/impl/SuspendingUpdateSession
 com/intellij/openapi/client/ClientAppSession
@@ -35,7 +33,6 @@ com/intellij/openapi/wm/impl/IdeFrameImpl
 com/intellij/openapi/wm/impl/ToolWindowImpl
 com/intellij/openapi/wm/impl/status/InlineProgressIndicator$ProgressButton
 com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory$JActionLinkPanel
-com/intellij/psi/util/CachedValueProfiler$EventConsumer
 com/intellij/serialization/MutableAccessor
 com/intellij/toolWindow/ToolWindowToolbar
 com/intellij/ui/BadgeIconSupplier

@@ -670,6 +670,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/ide-core-impl/intellij.platform.ide.core.impl.iml" filepath="$PROJECT_DIR$/platform/ide-core-impl/intellij.platform.ide.core.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/designer/intellij.platform.ide.designer.iml" filepath="$PROJECT_DIR$/platform/platform-impl/designer/intellij.platform.ide.designer.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/intellij.platform.ide.impl.iml" filepath="$PROJECT_DIR$/platform/platform-impl/intellij.platform.ide.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/internal/intellij.platform.ide.internal.iml" filepath="$PROJECT_DIR$/platform/platform-impl/internal/intellij.platform.ide.internal.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/new-ui-onboarding/intellij.platform.ide.newUiOnboarding.iml" filepath="$PROJECT_DIR$/platform/new-ui-onboarding/intellij.platform.ide.newUiOnboarding.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/new-users-onboarding/intellij.platform.ide.newUsersOnboarding.iml" filepath="$PROJECT_DIR$/platform/new-users-onboarding/intellij.platform.ide.newUsersOnboarding.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/progress/shared/intellij.platform.ide.progress.iml" filepath="$PROJECT_DIR$/platform/progress/shared/intellij.platform.ide.progress.iml" />

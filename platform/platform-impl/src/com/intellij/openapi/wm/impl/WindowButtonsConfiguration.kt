@@ -1,6 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
-
 package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
@@ -18,8 +17,7 @@ import org.jetbrains.annotations.ApiStatus
  * Cache state for quick application start-up
  */
 @State(name = "WindowButtonsConfiguration", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-internal class WindowButtonsConfiguration(private val scope: CoroutineScope) : PersistentStateComponent<WindowButtonsConfiguration.State?> {
-
+class WindowButtonsConfiguration(private val scope: CoroutineScope) : PersistentStateComponent<WindowButtonsConfiguration.State?> {
   enum class WindowButton {
     MINIMIZE,
     MAXIMIZE,

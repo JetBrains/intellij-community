@@ -6,7 +6,9 @@ import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.java.JavaBundle
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class JavaMLRankingProvider : CatBoostJarCompletionModelProvider(JavaBundle.message("settings.completion.ml.java.display.name"),
                                                                  "java_features", "java_model") {
 
