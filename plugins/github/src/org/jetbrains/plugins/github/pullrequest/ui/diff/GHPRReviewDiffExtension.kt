@@ -5,7 +5,6 @@ import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.viewer.showCodeReview
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
 import com.intellij.collaboration.util.Hideable
@@ -32,14 +31,11 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
-import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRAICommentEditorInlayRenderer
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPREditorMappedComponentModel
-import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRNewCommentEditorInlayRenderer
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewEditorGutterControlsState
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewThreadEditorInlayRenderer
+import org.jetbrains.plugins.github.pullrequest.ui.editor.createRenderer
 import org.jetbrains.plugins.github.util.GithubSettings
-import javax.swing.Icon
 import kotlin.math.max
 import kotlin.math.min
 
@@ -57,7 +53,7 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
 
   @Service(Service.Level.PROJECT)
   private class InlaysController(parentCs: CoroutineScope) {
-    private val cs = parentCs.childScope(Dispatchers.Main)
+    private val cs = parentCs.childScope(javaClass.name, Dispatchers.Main)
 
     fun installInlays(reviewVm: GHPRDiffViewModel, change: RefComparisonChange, viewer: DiffViewerBase) {
       val settings = GithubSettings.getInstance()
@@ -79,13 +75,6 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
         }
       }.cancelOnDispose(viewer)
     }
-
-    private fun CoroutineScope.createRenderer(model: GHPREditorMappedComponentModel.Diff, userIcon: Icon): CodeReviewComponentInlayRenderer =
-      when (model) {
-        is GHPREditorMappedComponentModel.Thread<*> -> GHPRReviewThreadEditorInlayRenderer(this, model.vm)
-        is GHPREditorMappedComponentModel.NewComment<*> -> GHPRNewCommentEditorInlayRenderer(this, model.vm)
-        is GHPREditorMappedComponentModel.AIComment -> GHPRAICommentEditorInlayRenderer(this, userIcon, model.vm)
-      }
   }
 }
 
@@ -94,14 +83,14 @@ private class DiffEditorModel(
   private val diffVm: GHPRDiffChangeViewModel,
   private val locationToLine: (DiffLineLocation) -> Int?,
   private val lineToLocation: (Int) -> DiffLineLocation?,
-) : CodeReviewEditorModel<GHPREditorMappedComponentModel.Diff>,
+) : CodeReviewEditorModel<GHPREditorMappedComponentModel>,
     CodeReviewCommentableEditorModel.WithMultilineComments {
 
   private val threads = diffVm.threads.mapModelsToViewModels { MappedThread(cs, it) }.stateInNow(cs, emptyList())
   private val newComments = diffVm.newComments.mapModelsToViewModels { MappedNewComment(it) }.stateInNow(cs, emptyList())
   private val aiComments = diffVm.aiComments.mapModelsToViewModels { MappedAIComment(it) }.stateInNow(cs, emptyList())
 
-  override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel.Diff>> =
+  override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel>> =
     combineStateIn(cs, threads, newComments, aiComments) { threads, new, ai -> threads + new + ai }
 
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =

@@ -19,16 +19,22 @@ import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
 import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
+import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 
 interface GHPRReviewFileEditorViewModel {
+  val iconProvider: GHAvatarIconsProvider
+  val currentUser: GHUser
+
   val originalContent: StateFlow<ComputedResult<CharSequence>?>
   val changedRanges: List<Range>
 
@@ -53,6 +59,7 @@ private val LOG = logger<GHPRReviewFileEditorViewModelImpl>()
 internal class GHPRReviewFileEditorViewModelImpl(
   project: Project,
   parentCs: CoroutineScope,
+  dataContext: GHPRDataContext,
   dataProvider: GHPRDataProvider,
   private val change: RefComparisonChange,
   private val diffData: GitTextFilePatchWithHistory,
@@ -61,6 +68,9 @@ internal class GHPRReviewFileEditorViewModelImpl(
   private val showDiff: (change: RefComparisonChange, lineIdx: Int?) -> Unit
 ) : GHPRReviewFileEditorViewModel {
   private val cs = parentCs.childScope(javaClass.name)
+
+  override val iconProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
+  override val currentUser: GHUser = dataContext.securityService.currentUser
 
   override val originalContent: StateFlow<ComputedResult<CharSequence>?> =
     flow {
