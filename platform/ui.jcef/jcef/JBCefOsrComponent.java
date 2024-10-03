@@ -87,9 +87,6 @@ class JBCefOsrComponent extends JPanel {
     // our side.
     AtomicBoolean scaleInitialized = new AtomicBoolean(false);
     addPropertyChangeListener("graphicsConfiguration", e -> {
-      if (myGraphicsConfigurationAlarm.isDisposed())
-        return;
-
       myGraphicsConfigurationAlarm.cancelAllRequests();
       myGraphicsConfigurationAlarm.addRequest(() -> {
         double oldScale = myScale;
@@ -158,7 +155,6 @@ class JBCefOsrComponent extends JPanel {
   public void removeNotify() {
     super.removeNotify();
     Disposer.dispose(myDisposable);
-    Disposer.dispose(myGraphicsConfigurationAlarm);
   }
 
   @Override
