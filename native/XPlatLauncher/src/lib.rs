@@ -289,6 +289,7 @@ pub struct ProductInfoCustomCommandField {
     #[serde(default = "Vec::new")]
     pub additionalJvmArguments: Vec<String>,
     pub mainClass: Option<String>,
+    pub envVarBaseName: Option<String>,
     pub dataDirectoryName: Option<String>,
 }
 

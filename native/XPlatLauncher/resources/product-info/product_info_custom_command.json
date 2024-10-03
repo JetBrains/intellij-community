@@ -33,6 +33,7 @@
             "-Dproduct.property=product.value"
           ],
           "mainClass": "com.intellij.idea.CustomMain",
+          "envVarBaseName": "CUSTOM_XPLAT",
           "dataDirectoryName": "XPlatLauncherTestCustom"
         }
       ]
