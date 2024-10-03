@@ -19,16 +19,8 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ReplaceExplic
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ReplaceExplicitLambdaParameterWithItUtils.createAnalyzableExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ReplaceExplicitLambdaParameterWithItUtils.getLambda
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.*
 
 
 internal class ReplaceExplicitFunctionLiteralParamWithItIntention : SelfTargetingIntention<KtElement>(
@@ -65,17 +57,18 @@ internal class ReplaceExplicitFunctionLiteralParamWithItIntention : SelfTargetin
 
     override fun applyTo(element: KtElement, editor: Editor?) {
         val caretOffset = editor?.caretModel?.offset ?: return
-        val functionLiteral = targetFunctionLiteral(element, editor.caretModel.offset) ?: return
+        val functionLiteral = targetFunctionLiteral(element, editor.caretModel.offset, editor) ?: return
         val cursorInParameterList = functionLiteral.valueParameterList?.textRange?.containsOffset(caretOffset) ?: return
         ParamRenamingProcessor(editor, functionLiteral, cursorInParameterList).run()
     }
 
 }
 
-private fun targetFunctionLiteral(element: KtElement, caretOffset: Int): KtFunctionLiteral? {
+private fun targetFunctionLiteral(element: KtElement, caretOffset: Int, editor: Editor? = null): KtFunctionLiteral? {
     val expression = element.getParentOfType<KtNameReferenceExpression>(false)
     if (expression != null) {
-        return computeWithProgressIconIfNeeded(element.findExistingEditor()!!, caretOffset) {
+        val existingEditor = editor ?: element.findExistingEditor() ?: return null
+        return computeWithProgressIconIfNeeded(existingEditor, caretOffset) {
             analyze(expression) {
                 val target = expression.mainReference.resolveToSymbols().singleOrNull() as? KaValueParameterSymbol ?: return@analyze null
                 val functionDescriptor = target.containingSymbol as? KaAnonymousFunctionSymbol ?: return@analyze null

@@ -14,6 +14,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.concurrency.JobLauncher
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -44,21 +45,28 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
     private val javaInspection: UnusedDeclarationInspectionBase = UnusedDeclarationInspectionBase()
 
     init {
-        val profile = InspectionProjectProfileManager.getInstance(ktFile.project).getCurrentProfile().let { p ->
-            InspectionProfileWrapper.getCustomInspectionProfileWrapper(ktFile)?.apply(p)?.inspectionProfile ?: p
+        val project = ktFile.project
+        val profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile().let {
+            InspectionProfileWrapper.getCustomInspectionProfileWrapper(ktFile)?.apply(it)?.inspectionProfile ?: it
         }
         deadCodeKey = HighlightDisplayKey.find("UnusedSymbol")
         deadCodeInspection = profile.getUnwrappedTool("UnusedSymbol", ktFile) as? LocalInspectionTool
 
-        deadCodeInfoType = if (deadCodeKey == null) null else
+        deadCodeInfoType = if (deadCodeKey == null) {
+            null
+        } else {
+            val editorAttributes = profile.getEditorAttributes(deadCodeKey.shortName, ktFile)
             HighlightInfoType.HighlightInfoTypeImpl(
-              profile.getErrorLevel(deadCodeKey, ktFile).severity,
-                ((profile.getEditorAttributes(deadCodeKey.shortName, ktFile)) ?: HighlightInfoType.UNUSED_SYMBOL.getAttributesKey())
+                profile.getErrorLevel(deadCodeKey, ktFile).severity,
+                editorAttributes ?: HighlightInfoType.UNUSED_SYMBOL.getAttributesKey()
             )
+        }
         enabled = deadCodeInspection != null
-                  && deadCodeInfoType != null
-                  && profile.isToolEnabled(deadCodeKey, ktFile)
-                  && HighlightingLevelManager.getInstance(ktFile.project).shouldInspect(ktFile)
+                && deadCodeInfoType != null
+                && profile.isToolEnabled(deadCodeKey, ktFile)
+                && HighlightingLevelManager.getInstance(project).shouldInspect(ktFile) &&
+                !InjectedLanguageManager.getInstance(project).isInjectedViewProvider(ktFile.viewProvider)
+
     }
 
     context(KaSession)
