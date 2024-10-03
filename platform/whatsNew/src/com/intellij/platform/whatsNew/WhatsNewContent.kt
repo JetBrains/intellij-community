@@ -27,7 +27,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 
-internal sealed class WhatsNewContent {
+internal abstract class WhatsNewContent {
   companion object {
     private val DataContext.project: Project?
       get() = CommonDataKeys.PROJECT.getData(this)
