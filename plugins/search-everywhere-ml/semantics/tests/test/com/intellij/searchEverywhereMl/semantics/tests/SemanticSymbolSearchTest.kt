@@ -9,10 +9,10 @@ import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ml.embeddings.indexer.FileBasedEmbeddingIndexer
+import com.intellij.platform.ml.embeddings.indexer.IndexId
+import com.intellij.platform.ml.embeddings.indexer.configuration.EmbeddingsConfiguration
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableClass
-import com.intellij.platform.ml.embeddings.indexer.storage.ScoredKey
 import com.intellij.platform.ml.embeddings.jvm.indices.EntityId
-import com.intellij.platform.ml.embeddings.jvm.wrappers.SymbolEmbeddingsStorageWrapper
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -23,7 +23,6 @@ import com.intellij.testFramework.utils.editor.saveToDisk
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.kotlin.psi.KtFunction
@@ -31,29 +30,26 @@ import kotlin.time.Duration.Companion.seconds
 
 
 class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
-  private val storage
-    get() = SymbolEmbeddingsStorageWrapper.getInstance(project)
+  private val storageWrapper
+    get() = EmbeddingsConfiguration.getStorageManagerWrapper(IndexId.SYMBOLS)
 
   private val model
     get() = GotoSymbolModel2(project, testRootDisposable)
 
   fun `test basic semantics`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    assertEquals(5, storage.getSize())
+    assertEquals(5, storageWrapper.getStorageStats(project).size)
 
-    var neighbours = storage.searchNeighbours(modelService.embed("begin indexing"), 10, 0.5).asFlow().filterByModel()
+    var neighbours = storageWrapper.search(project, "begin indexing", 10, 0.5f).map { it.id }.toSet()
     assertEquals(setOf("startIndexing", "ProjectIndexingTask"), neighbours)
 
-    neighbours = storage.streamSearchNeighbours(modelService.embed("begin indexing"), 0.5).filterByModel()
-    assertEquals(setOf("startIndexing", "ProjectIndexingTask"), neighbours)
-
-    neighbours = storage.streamSearchNeighbours(modelService.embed("handle file with scores"), 0.4).filterByModel()
+    neighbours = storageWrapper.search(project, "handle file with scores", 10, 0.4f).map { it.id }.toSet()
     assertEquals(setOf("handleScoresFile", "clearFileWithScores"), neighbours)
   }
 
   fun `test index ids are not duplicated`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/IndexProjectAction.kt")
-    assertEquals(1, storage.getSize())
+    assertEquals(1, storageWrapper.getStorageStats(project).size)
   }
 
   fun `test search everywhere contributor`() = runTest(
@@ -82,12 +78,12 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test method renaming changes the index`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    assertEquals(5, storage.getSize())
+    assertEquals(5, storageWrapper.getStorageStats(project).size)
 
-    var neighbours = storage.streamSearchNeighbours(modelService.embed("begin indexing"), 0.5).filterByModel()
+    var neighbours = storageWrapper.search(project, "begin indexing", 10, 0.5f).map { it.id }.toSet()
     assertEquals(setOf("ProjectIndexingTask", "startIndexing"), neighbours)
 
-    neighbours = storage.streamSearchNeighbours(modelService.embed("helicopter purchase"), 0.5).filterByModel()
+    neighbours = storageWrapper.search(project, "helicopter purchase", 10, 0.5f).map { it.id }.toSet()
     assertEquals(emptySet<String>(), neighbours)
 
     val nameToReplace = "startIndexing"
@@ -100,21 +96,21 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
     TimeoutUtil.sleep(2000) // wait for two seconds for index update
 
-    neighbours = storage.streamSearchNeighbours(modelService.embed("begin indexing"), 0.5).filterByModel()
+    neighbours = storageWrapper.search(project, "begin indexing", 10, 0.5f).map{ it.id }.filterByModel()
     assertEquals(setOf("ProjectIndexingTask"), neighbours)
 
-    neighbours = storage.streamSearchNeighbours(modelService.embed("helicopter purchase"), 0.5).filterByModel()
+    neighbours = storageWrapper.search(project, "helicopter purchase", 10, 0.5f).map{ it.id }.filterByModel()
     assertEquals(setOf("buyHelicopter"), neighbours)
   }
 
   fun `test removal of file with method changes the index`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    assertEquals(5, storage.getSize())
+    assertEquals(5, storageWrapper.getStorageStats(project).size)
 
-    var neighbours = storage.streamSearchNeighbours(modelService.embed("begin indexing"), 0.5).filterByModel()
+    var neighbours = storageWrapper.search(project, "begin indexing", 10, 0.5f).map { it.id }.toSet()
     assertEquals(setOf("startIndexing", "ProjectIndexingTask"), neighbours)
 
-    neighbours = storage.streamSearchNeighbours(modelService.embed("handle file with scores"), 0.4).filterByModel()
+    neighbours = storageWrapper.search(project, "handle file with scores", 10, 0.4f).map { it.id }.toSet()
     assertEquals(setOf("handleScoresFile", "clearFileWithScores"), neighbours)
 
     WriteCommandAction.runWriteCommandAction(project) {
@@ -123,15 +119,15 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
     TimeoutUtil.sleep(2000) // wait for two seconds for index update
 
-    neighbours = storage.streamSearchNeighbours(modelService.embed("begin indexing"), 0.5).filterByModel()
+    neighbours = storageWrapper.search(project, "begin indexing", 10, 0.5f).map { it.id }.filterByModel()
     assertEquals(emptySet<String>(), neighbours)
 
-    neighbours = storage.streamSearchNeighbours(modelService.embed("handle file with scores"), 0.4).filterByModel()
+    neighbours = storageWrapper.search(project, "handle file with scores", 10, 0.4f).map { it.id }.filterByModel()
     assertEquals(setOf("handleScoresFile", "clearFileWithScores"), neighbours)
   }
 
-  private suspend fun Flow<ScoredKey<EntityId>>.filterByModel(): Set<String> {
-    return this.map { it.key.id }.filter {
+  private suspend fun Iterable<String>.filterByModel(): Set<String> {
+    return filter {
       smartReadAction(project) {
         model.getElementsByName(it, false, it).any { element ->
           (element as PsiElement).isValid
@@ -143,7 +139,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
   private suspend fun setupTest(vararg filePaths: String) {
     myFixture.configureByFiles(*filePaths)
     SearchEverywhereSemanticSettings.getInstance().enabledInSymbolsTab = true
-    storage.index.clear()
+    storageWrapper.clearStorage(project)
     FileBasedEmbeddingIndexer.getInstance().prepareForSearch(project).join()
   }
 }
