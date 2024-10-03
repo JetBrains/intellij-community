@@ -48,7 +48,7 @@ internal class GHPRReviewFileEditorModel internal constructor(
       else null
     }.stateInNow(cs, null)
 
-  override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel.Editor>> = combine(
+  override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel>> = combine(
     fileVm.threads.mapModelsToViewModels { ShiftedThread(it) },
     fileVm.newComments.mapModelsToViewModels { ShiftedNewComment(it) },
   ) { threads, new ->

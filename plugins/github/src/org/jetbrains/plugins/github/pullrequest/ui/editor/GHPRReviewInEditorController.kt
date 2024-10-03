@@ -12,7 +12,6 @@ import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.EditorFactoryEvent
@@ -27,12 +26,9 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
-private val LOG = logger<GHPRReviewInEditorController>()
-
 @OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.PROJECT)
 internal class GHPRReviewInEditorController(private val project: Project, private val cs: CoroutineScope) {
-
   internal class InstallerListener : EditorFactoryListener {
     override fun editorCreated(event: EditorFactoryEvent) {
       val editor = event.editor
@@ -96,7 +92,8 @@ private suspend fun showReview(settings: GithubPullRequestsProjectUISettings, fi
       CodeReviewEditorGutterControlsRenderer.render(model, editor)
     }
     launchNow {
-      editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GHPREditorMappedComponentModel::key)) { createRenderer(it) }
+      val userIcon = fileVm.iconProvider.getIcon(fileVm.currentUser.url, 16)
+      editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GHPREditorMappedComponentModel::key)) { createRenderer(it, userIcon) }
     }
     editor.putUserData(CodeReviewCommentableEditorModel.KEY, model)
     try {
@@ -107,10 +104,3 @@ private suspend fun showReview(settings: GithubPullRequestsProjectUISettings, fi
     }
   }
 }
-
-private fun CoroutineScope.createRenderer(model: GHPREditorMappedComponentModel.Editor): CodeReviewComponentInlayRenderer =
-  when (model) {
-    is GHPREditorMappedComponentModel.Thread<*> -> GHPRReviewThreadEditorInlayRenderer(this, model.vm)
-    is GHPREditorMappedComponentModel.NewComment<*> -> GHPRNewCommentEditorInlayRenderer(this, model.vm)
-  }
-
