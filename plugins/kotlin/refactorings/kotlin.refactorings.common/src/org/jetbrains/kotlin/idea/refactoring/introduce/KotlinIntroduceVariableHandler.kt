@@ -217,7 +217,7 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
         }
 
         fun KtElement.getContainer(): KtElement? {
-            if (this is KtBlockExpression) return this
+            if (this is KtBlockExpression || this is KtClassBody) return this
 
             return (parentsWithSelf.zip(parents)).firstOrNull {
                 val (place, parent) = it

@@ -872,6 +872,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/javaInnerClassQualifier.kt");
             }
 
+            @TestMetadata("KTIJ-14455.kt")
+            public void testKTIJ_14455() throws Exception {
+                runTest("testData/refactoring/introduceVariable/KTIJ-14455.kt");
+            }
+
+            @TestMetadata("KTIJ-9043.kt")
+            public void testKTIJ_9043() throws Exception {
+                runTest("testData/refactoring/introduceVariable/KTIJ-9043.kt");
+            }
+
             @TestMetadata("kt10808.kt")
             public void testKt10808() throws Exception {
                 runTest("testData/refactoring/introduceVariable/kt10808.kt");
