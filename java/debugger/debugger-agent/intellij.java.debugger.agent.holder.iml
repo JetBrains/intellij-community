@@ -7,19 +7,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
       <library name="debugger-agent" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:debugger-agent:1.35">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:debugger-agent:1.40">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-agent/1.35/debugger-agent-1.35.jar">
-              <sha256sum>9001b25c08cb408ceeb419d13000e0bbdd4d75d50d8be52dc8705edc05961642</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-agent/1.40/debugger-agent-1.40.jar">
+              <sha256sum>5bf227b6c3dec2d9b025b1e57510f2df644e7211f32dd0973a04e707b45e4c36</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-agent/1.35/debugger-agent-1.35.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-agent/1.40/debugger-agent-1.40.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-agent/1.35/debugger-agent-1.35-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/debugger-agent/1.40/debugger-agent-1.40-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

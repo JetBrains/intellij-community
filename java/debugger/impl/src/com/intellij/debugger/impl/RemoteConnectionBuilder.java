@@ -217,6 +217,9 @@ public class RemoteConnectionBuilder {
               if (Registry.is("debugger.async.stacks.flows", false)) {
                 parametersList.addProperty("kotlinx.coroutines.debug.enable.flows.stack.trace", "true");
               }
+              if (Registry.is("debugger.async.stacks.state.flows", false)) {
+                parametersList.addProperty("kotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace", "true");
+              }
             }
             if (!Registry.is("debugger.async.stack.trace.for.exceptions.printing", false)) {
               parametersList.addProperty("debugger.agent.support.throwable", "false");
