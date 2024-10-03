@@ -1,3 +1,0 @@
-com/google/common/graph/ElementOrder
-com/google/common/graph/EndpointPair
-com/google/common/graph/MutableNetwork

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.util.DocumentEventUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * A range marker that has to be manually updated with {@link #getUpdatedRange(DocumentEvent, FrozenDocument)}.
  * Can hold PSI-based range and be updated when the document is committed.
  */
+@ApiStatus.Internal
 public class ManualRangeMarker implements Segment {
   private final boolean myGreedyLeft;
   private final boolean myGreedyRight;

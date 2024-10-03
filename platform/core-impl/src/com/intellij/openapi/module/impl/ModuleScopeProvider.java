@@ -17,11 +17,13 @@ package com.intellij.openapi.module.impl;
 
 
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Author: dmitrylomov
  */
+@ApiStatus.Internal
 public interface ModuleScopeProvider {
   /**
    * Returns module scope including sources and tests, excluding libraries and dependencies.

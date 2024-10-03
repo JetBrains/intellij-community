@@ -42,6 +42,7 @@ private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
 /**
  * Do not use [java.io.BufferedInputStream] - buffer is used internally already.
  */
+@ApiStatus.Internal
 fun readModuleDescriptor(
   input: InputStream,
   readContext: ReadModuleContext,
@@ -61,6 +62,7 @@ fun readModuleDescriptor(
   )
 }
 
+@ApiStatus.Internal
 fun readModuleDescriptor(
   input: ByteArray,
   readContext: ReadModuleContext,
@@ -866,6 +868,7 @@ private fun getNullifiedContent(reader: XMLStreamReader2): String? = reader.elem
 
 private fun getNullifiedAttributeValue(reader: XMLStreamReader2, i: Int) = reader.getAttributeValue(i).trim().takeIf { !it.isEmpty() }
 
+@ApiStatus.Internal
 interface ReadModuleContext {
   val interner: XmlInterner
   val isMissingIncludeIgnored: Boolean

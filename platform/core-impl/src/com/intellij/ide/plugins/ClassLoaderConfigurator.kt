@@ -370,6 +370,7 @@ private fun createScopeWithExtraPackage(@Suppress("SameParameterValue") customPa
 // package of module is not taken in an account to support resolving of module libraries -
 // instead, only classes from plugin's modules (content or dependencies) are excluded.
 @VisibleForTesting
+@ApiStatus.Internal
 fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDescriptorImpl, pluginSet: PluginSet): ResolveScopeManager? {
   val contentPackagePrefixes = getPackagePrefixesLoadedBySeparateClassLoaders(descriptor)
   val dependencyPackagePrefixes = getDependencyPackagePrefixes(descriptor, pluginSet)
@@ -496,6 +497,7 @@ private fun configureUsingIdeaClassloader(classPath: List<Path>, descriptor: Ide
 }
 
 @VisibleForTesting
+@ApiStatus.Internal
 fun sortDependenciesInPlace(dependencies: Array<IdeaPluginDescriptorImpl>) {
   if (dependencies.size <= 1) {
     return

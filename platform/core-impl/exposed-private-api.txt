@@ -1,19 +1,14 @@
 com/intellij/concurrency/JobLauncher
 com/intellij/diagnostic/Activity
 com/intellij/diagnostic/ActivityCategory
-com/intellij/ide/plugins/DataLoader
 com/intellij/ide/plugins/DescriptorListLoadingContext
-com/intellij/ide/plugins/IdeaPluginDescriptorImpl
 com/intellij/ide/plugins/PluginLoadingResult
 com/intellij/ide/plugins/PluginManagerState
-com/intellij/ide/plugins/PluginSet
 com/intellij/ide/plugins/RawPluginDescriptor
-com/intellij/ide/plugins/cl/ResolveScopeManager
 com/intellij/lang/impl/PsiBuilderImpl$MyTreeStructure
 com/intellij/lang/impl/PsiBuilderImpl$StartMarker
 com/intellij/openapi/application/TransactionGuardImpl$TransactionIdImpl
 com/intellij/openapi/command/impl/CoreCommandProcessor$CommandDescriptor
-com/intellij/openapi/editor/impl/PersistentRangeMarker$LinesCols
 com/intellij/openapi/extensions/impl/ExtensionsAreaImpl
 com/intellij/psi/impl/DiffLog
 com/intellij/psi/search/ProjectScopeBuilder
@@ -22,7 +17,5 @@ com/intellij/psi/stubs/StubBuilderType
 com/intellij/psi/stubs/StubInconsistencyReporter$EnforcedInconsistencyType
 com/intellij/psi/stubs/StubInconsistencyReporter$SourceOfCheck
 com/intellij/util/CachedValuesFactory
-com/intellij/util/lang/ZipFilePool
 com/intellij/util/messages/ListenerDescriptor
 com/intellij/util/pico/DefaultPicoContainer
-com/intellij/util/xml/dom/XmlInterner

@@ -14,9 +14,11 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class SubstrateRef {
   private static final Logger LOG = Logger.getInstance(SubstrateRef.class);
 

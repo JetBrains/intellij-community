@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,7 @@ import java.util.List;
  * <p/>
  * Not thread-safe.
  */
+@ApiStatus.Internal
 public class TextChangesStorage {
   private final List<ChangeEntry> myChanges = new ArrayList<>();
 

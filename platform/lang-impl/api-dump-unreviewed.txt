@@ -16655,7 +16655,6 @@ f:com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 - s:openEditorFor(com.intellij.psi.PsiFile,com.intellij.openapi.project.Project):com.intellij.openapi.editor.Editor
 - s:processTokens(com.intellij.psi.PsiFile,java.util.List,java.util.function.BiConsumer):V
 - s:putInjectedFileUserData(com.intellij.psi.PsiElement,com.intellij.lang.Language,com.intellij.openapi.util.Key,java.lang.Object):V
-- s:reparse(com.intellij.psi.PsiFile,com.intellij.injected.editor.DocumentWindow,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,com.intellij.psi.FileViewProvider,com.intellij.openapi.progress.ProgressIndicator,com.intellij.lang.ASTNode,com.intellij.lang.ASTNode,com.intellij.psi.impl.PsiDocumentManagerBase):com.intellij.psi.impl.BooleanRunnable
 a:com.intellij.psi.impl.source.tree.injected.changesHandler.BaseInjectedFileChangesHandler
 - com.intellij.injected.editor.InjectedFileChangesHandler
 - pf:myFragmentDocument:com.intellij.openapi.editor.Document

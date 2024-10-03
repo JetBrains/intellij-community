@@ -3,6 +3,7 @@ package com.intellij.util.graph.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.graph.Graph;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -15,6 +16,7 @@ import java.util.function.Consumer;
  *
  * @see <a href="https://github.com/jgrapht/jgrapht/blob/master/jgrapht-core/src/main/java/org/jgrapht/alg/cycle/JohnsonSimpleCycles.java">JGraphT implementation</a>
  */
+@ApiStatus.Internal
 public class SimpleCyclesIterator<Node> {
   // The graph.
   private Graph<Node> myGraph;

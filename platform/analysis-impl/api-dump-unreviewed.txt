@@ -1751,7 +1751,6 @@ f:com.intellij.codeInspection.SuppressIntentionActionFromFix
 - isSuppressAll():Z
 - startInWriteAction():Z
 f:com.intellij.codeInspection.SuppressionUtil
-- com.intellij.codeInspection.SuppressionUtilCore
 - sf:ALL:java.lang.String
 - sf:COMMON_SUPPRESS_REGEXP:java.lang.String
 - sf:FILE_PREFIX:java.lang.String

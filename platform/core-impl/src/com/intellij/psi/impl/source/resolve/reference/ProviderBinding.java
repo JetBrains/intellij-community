@@ -7,10 +7,12 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public interface ProviderBinding {
   class ProviderInfo<T> {
     static final ProviderInfo<?>[] EMPTY_ARRAY = new ProviderInfo[0];

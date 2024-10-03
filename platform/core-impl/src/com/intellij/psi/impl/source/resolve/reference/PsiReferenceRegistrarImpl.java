@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private static final Logger LOG = Logger.getInstance(PsiReferenceRegistrarImpl.class);
   private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = new HashMap<>();

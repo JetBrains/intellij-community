@@ -17,7 +17,9 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.PsiRecursiveVisitor;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public abstract class RecursiveTreeElementVisitor extends TreeElementVisitor implements PsiRecursiveVisitor {
   @Override public void visitLeaf(LeafElement leaf) {
     visitNode(leaf);

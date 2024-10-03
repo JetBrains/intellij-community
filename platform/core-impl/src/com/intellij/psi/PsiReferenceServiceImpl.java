@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -16,6 +17,7 @@ import java.util.Set;
 /**
  * @author Gregory.Shrago
  */
+@ApiStatus.Internal
 public class PsiReferenceServiceImpl extends PsiReferenceService {
 
   private static final Logger LOG = Logger.getInstance(PsiReferenceService.class);

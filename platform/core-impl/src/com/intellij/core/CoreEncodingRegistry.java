@@ -2,5 +2,8 @@
 package com.intellij.core;
 
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public class CoreEncodingRegistry extends CoreEncodingProjectManager {
 }

@@ -5,12 +5,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class AstSpine implements StubbedSpine {
   static final AstSpine EMPTY_SPINE = new AstSpine(Collections.emptyList()); 
   private final List<CompositeElement> myNodes;

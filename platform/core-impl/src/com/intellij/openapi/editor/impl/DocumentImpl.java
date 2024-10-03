@@ -1231,6 +1231,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
            "]";
   }
 
+  @ApiStatus.Internal
   public @NotNull FrozenDocument freeze() {
     FrozenDocument frozen = myFrozen;
     if (frozen == null) {

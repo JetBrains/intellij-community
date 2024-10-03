@@ -8,10 +8,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   private final ASTNode myParent;
   private final List<ASTNode> mySuperParents;

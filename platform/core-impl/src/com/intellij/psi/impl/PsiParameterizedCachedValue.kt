@@ -5,8 +5,10 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.ParameterizedCachedValue
 import com.intellij.psi.util.ParameterizedCachedValueProvider
+import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.SoftReference
 
+@ApiStatus.Internal
 sealed class PsiParameterizedCachedValue<T, P> protected constructor(
   manager: PsiManager,
   private val myProvider: ParameterizedCachedValueProvider<T, P>,
