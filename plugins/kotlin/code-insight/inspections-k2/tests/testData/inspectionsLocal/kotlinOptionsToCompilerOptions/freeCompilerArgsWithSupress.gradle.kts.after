@@ -20,8 +20,11 @@ tasks.test {
     useJUnitPlatform()
 }
 
-val compileKotlin: KotlinCompile by tasks
-compilerOptions {
-    @Suppress("SuspiciousCollectionReassignment")
-    (freeCompilerArgs.addAll(listOf("-Xopt-in=kotlin.RequiresOptIn")))
+tasks.withType<KotlinCompile> {
+    compilerOptions {
+        @Suppress("SuspiciousCollectionReassignment")
+        (freeCompilerArgs.addAll(listOf("-Xopt-in=kotlin.RequiresOptIn")))
+    // KtExpressionImpl performs replaceExpression() and there calls KtPsiUtil.areParenthesesNecessary(). Inside, innerPriority is calculated
+    // for DOT_QUALIFIED_EXPRESSION and it's 14, parentPriority is calculated for ANNOTATED_EXPRESSION is 15, and that's why () are added
+    }
 }
