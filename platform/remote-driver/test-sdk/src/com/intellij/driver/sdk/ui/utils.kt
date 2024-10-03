@@ -7,6 +7,7 @@ import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
+import com.intellij.openapi.diagnostic.fileLogger
 import java.awt.Point
 import java.awt.Rectangle
 
@@ -15,6 +16,7 @@ fun Driver.hasFocus(c: UiComponent) = hasFocus(c.component)
 
 
 fun Driver.requestFocusFromIde(project: Project?) {
+  fileLogger().info("Requesting focus from IDE for project: $project")
   withContext(OnDispatcher.EDT) {
     utility(ProjectUtil::class).focusProjectWindow(project, true)
   }
