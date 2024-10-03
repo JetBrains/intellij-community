@@ -41,6 +41,6 @@ internal class HighlighterFilter private constructor(
     return HighlighterFilter(oldState, oldFilters)
   }
 
-  fun test(highlighter: RangeHighlighter): Boolean =
-    filters.all { it.test(highlighter) }
+  fun shouldRender(highlighter: RangeHighlighter): Boolean =
+    filters.all { it.shouldRender(highlighter) }
 }

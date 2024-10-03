@@ -3831,7 +3831,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private PredicateWrapper(@NotNull Predicate<? super RangeHighlighter> filter) { this.filter = filter; }
 
     @Override
-    public boolean test(@NotNull RangeHighlighter highlighter) {
+    public boolean shouldRender(@NotNull RangeHighlighter highlighter) {
       return filter.test(highlighter);
     }
   }
@@ -3861,8 +3861,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     for (RangeHighlighter highlighter : myEditorFilteringMarkupModel.getDelegate().getAllHighlighters()) {
-      boolean oldAvailable = oldFilter.test(highlighter);
-      boolean newAvailable = myHighlightingFilter.test(highlighter);
+      boolean oldAvailable = oldFilter.shouldRender(highlighter);
+      boolean newAvailable = myHighlightingFilter.shouldRender(highlighter);
       if (oldAvailable != newAvailable) {
         TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
         myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
@@ -3874,7 +3874,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   boolean isHighlighterAvailable(@NotNull RangeHighlighter highlighter) {
-    return myHighlightingFilter.test(highlighter);
+    return myHighlightingFilter.shouldRender(highlighter);
   }
 
   private boolean hasBlockInlay(@NotNull Point point) {

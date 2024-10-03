@@ -8250,7 +8250,7 @@ c:com.intellij.openapi.editor.impl.EditorHeaderComponent
 - paint(java.awt.Graphics):V
 - uiSettingsChanged(com.intellij.ide.ui.UISettings):V
 *:com.intellij.openapi.editor.impl.EditorHighlightingPredicate
-- a:test(com.intellij.openapi.editor.markup.RangeHighlighter):Z
+- a:shouldRender(com.intellij.openapi.editor.markup.RangeHighlighter):Z
 f:com.intellij.openapi.editor.impl.EditorImpl
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.diagnostic.Dumpable

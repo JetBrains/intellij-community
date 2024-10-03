@@ -16,5 +16,5 @@ public interface EditorHighlightingPredicate {
   /**
    * checks that highlighter should be rendered in the corresponding editor
    */
-  boolean test(@NotNull RangeHighlighter highlighter);
+  boolean shouldRender(@NotNull RangeHighlighter highlighter);
 }
