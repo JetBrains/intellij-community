@@ -25,6 +25,7 @@ import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.testFramework.*
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
@@ -84,6 +85,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             LoadingOrder.FIRST,
             newDisposable
         )
+        (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
     }
 
     override fun tearDown() {
