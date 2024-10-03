@@ -41,9 +41,9 @@ internal class WhatsNewShowOnStartCheckService : ProjectActivity {
       if (content != null) {
         if (WhatsNewContentVersionChecker.isNeedToShowContent(content).also { logger.info("Should show What's New: $it") }) {
           val whatsNewAction = service<ActionManager>().getAction("WhatsNewAction") as? WhatsNewAction
-          if (whatsNewAction == null) {
+          if (whatsNewAction != null) {
             val activityTracker = ProjectInitializationDiagnosticService.registerTracker(project, "OpenWhatsNewOnStart");
-            whatsNewAction?.openWhatsNew(project)
+            whatsNewAction.openWhatsNew(project)
             activityTracker.activityFinished()
           }
         }
