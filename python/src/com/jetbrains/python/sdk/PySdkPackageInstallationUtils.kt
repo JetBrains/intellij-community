@@ -125,6 +125,7 @@ internal suspend fun installPipIfNeeded(pythonExecutable: String) {
  * @throws [RunCanceledByUserException] if the user cancels the command execution.
  * @throws [PyExecutionException] if the command execution fails.
  */
+@Internal
 @RequiresBackgroundThread
-internal fun installExecutableViaPythonScript(scriptPath: Path, pythonExecutable: String) =
+fun installExecutableViaPythonScript(scriptPath: Path, pythonExecutable: String) =
   runCommandLine(GeneralCommandLine(pythonExecutable, scriptPath.absolutePathString())).getOrThrow()

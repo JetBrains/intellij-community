@@ -4,8 +4,6 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -26,7 +24,7 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.pipenv.pipEnvPath
-import com.jetbrains.python.sdk.poetry.poetryPath
+import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import com.jetbrains.python.util.ErrorSink
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -176,17 +174,10 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
 
   fun detectPoetryExecutable() {
     // todo this is local case, fix for targets
-    val savedPath = PropertiesComponent.getInstance().poetryPath
-    if (savedPath != null) {
-      state.poetryExecutable.set(savedPath)
-    }
-    else {
-      val modalityState = ModalityState.current().asContextElement()
-      scope.launch(Dispatchers.IO) {
-        val poetryExecutable = com.jetbrains.python.sdk.poetry.detectPoetryExecutable()
-        withContext(Dispatchers.EDT + modalityState) {
-          poetryExecutable?.let { state.poetryExecutable.set(it.pathString) }
-        }
+    scope.launch(Dispatchers.IO) {
+      val poetryExecutable = getPoetryExecutable()
+      withContext(Dispatchers.EDT) {
+        poetryExecutable?.let { state.poetryExecutable.set(it.pathString) }
       }
     }
   }
@@ -200,7 +191,7 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
     else {
       scope.launch(Dispatchers.IO) {
         val detectedExecutable = com.jetbrains.python.sdk.pipenv.detectPipEnvExecutable()
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        withContext(Dispatchers.EDT) {
           detectedExecutable?.let { state.pipenvExecutable.set(it.path) }
         }
       }
