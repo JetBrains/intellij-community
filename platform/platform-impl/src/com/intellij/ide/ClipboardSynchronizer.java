@@ -100,6 +100,7 @@ public final class ClipboardSynchronizer implements Disposable {
 
   private static @Nullable Clipboard getClipboard() {
     try {
+      //noinspection SSBasedInspection: this is low-level clipboard infra, allowed to access the real clipboard
       return Toolkit.getDefaultToolkit().getSystemClipboard();
     }
     catch (IllegalStateException e) {
