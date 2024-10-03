@@ -14,11 +14,8 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ID
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
 
 internal class IndexBasedEmbeddingEntitiesIndexer(cs: CoroutineScope) : EmbeddingEntitiesIndexer {
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -27,9 +24,11 @@ internal class IndexBasedEmbeddingEntitiesIndexer(cs: CoroutineScope) : Embeddin
   override suspend fun index(project: Project, settings: EmbeddingIndexSettings) {
     indexingScope.launch {
       extractAndAddEntities(project) { filesChannel, classesChannel, symbolsChannel ->
-        if (filesChannel != null) launchFetchingEntities(FILE_NAME_EMBEDDING_INDEX_NAME, filesChannel, project) { entityId -> IndexableFile(entityId) }
-        if (classesChannel != null) launchFetchingEntities(CLASS_NAME_EMBEDDING_INDEX_NAME, classesChannel, project) { entityId -> IndexableClass(entityId) }
-        if (symbolsChannel != null) launchFetchingEntities(SYMBOL_NAME_EMBEDDING_INDEX_NAME, symbolsChannel, project) { entityId -> IndexableSymbol(entityId) }
+        coroutineScope {
+          if (filesChannel != null) launchFetchingEntities(FILE_NAME_EMBEDDING_INDEX_NAME, filesChannel, project) { entityId -> IndexableFile(entityId) }
+          if (classesChannel != null) launchFetchingEntities(CLASS_NAME_EMBEDDING_INDEX_NAME, classesChannel, project) { entityId -> IndexableClass(entityId) }
+          if (symbolsChannel != null) launchFetchingEntities(SYMBOL_NAME_EMBEDDING_INDEX_NAME, symbolsChannel, project) { entityId -> IndexableSymbol(entityId) }
+        }
       }
     }.join()
   }

@@ -151,7 +151,7 @@ suspend fun addAbsentEntities(project: Project, indexId: IndexId, channel: Recei
 
 internal suspend fun extractAndAddEntities(
   project: Project,
-  launchSearching: CoroutineScope.(Channel<IndexableEntity>?, Channel<IndexableEntity>?, Channel<IndexableEntity>?) -> Unit,
+  launchSearching: suspend (Channel<IndexableEntity>?, Channel<IndexableEntity>?, Channel<IndexableEntity>?) -> Unit,
 ) = coroutineScope {
   val filesChannel = IndexId.FILES.createEntitiesChannel()
   val classesChannel = IndexId.CLASSES.createEntitiesChannel()
@@ -168,9 +168,7 @@ internal suspend fun extractAndAddEntities(
       launch { addAbsentEntities(project, IndexId.SYMBOLS, symbolsChannel) }
     }
 
-    coroutineScope {
-      launchSearching(this, filesChannel, classesChannel, symbolsChannel)
-    }
+    launchSearching(filesChannel, classesChannel, symbolsChannel)
   }
   finally {
     // Here all producer coroutines launch from launchSearching finished,

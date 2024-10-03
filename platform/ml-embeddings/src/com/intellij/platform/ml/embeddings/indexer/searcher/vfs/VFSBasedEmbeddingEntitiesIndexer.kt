@@ -60,9 +60,7 @@ internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) 
     indexingScope.launch {
       val files = scanFiles(project).sortedByDescending { it.name.length }
       extractAndAddEntities(project) { filesChannel, classesChannel, symbolsChannel ->
-        launch {
-          search(project, files, filesChannel, classesChannel, symbolsChannel)
-        }
+        search(project, files, filesChannel, classesChannel, symbolsChannel)
       }
     }.join()
   }
@@ -78,9 +76,7 @@ internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) 
 
     indexingScope.launch {
       extractAndAddEntities(project) { filesChannel, classesChannel, symbolsChannel ->
-        launch {
-          search(project, files, filesChannel, classesChannel, symbolsChannel)
-        }
+        search(project, files, filesChannel, classesChannel, symbolsChannel)
       }
     }.join()
   }
