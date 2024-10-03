@@ -8273,7 +8273,7 @@ f:com.intellij.openapi.editor.impl.EditorImpl
 - addFocusListener(com.intellij.openapi.editor.ex.FocusChangeListener):V
 - addFocusListener(com.intellij.openapi.editor.ex.FocusChangeListener,com.intellij.openapi.Disposable):V
 - addHighlighterListener(com.intellij.openapi.editor.impl.HighlighterListener,com.intellij.openapi.Disposable):V
-- *:addHighlightingPredicate(com.intellij.openapi.util.Key,com.intellij.openapi.editor.impl.EditorHighlightingPredicate):V
+- *:addHighlightingPredicate(com.intellij.openapi.util.Key,com.intellij.openapi.editor.impl.EditorHighlightingPredicate):com.intellij.openapi.editor.impl.EditorHighlightingPredicate
 - addPropertyChangeListener(java.beans.PropertyChangeListener):V
 - addPropertyChangeListener(java.beans.PropertyChangeListener,com.intellij.openapi.Disposable):V
 - adjustGlobalFontSize(F):V
@@ -8384,6 +8384,7 @@ f:com.intellij.openapi.editor.impl.EditorImpl
 - reinitSettings():V
 - removeEditorMouseListener(com.intellij.openapi.editor.event.EditorMouseListener):V
 - removeEditorMouseMotionListener(com.intellij.openapi.editor.event.EditorMouseMotionListener):V
+- *:removeHighlightingPredicate(com.intellij.openapi.util.Key):com.intellij.openapi.editor.impl.EditorHighlightingPredicate
 - removePropertyChangeListener(java.beans.PropertyChangeListener):V
 - repaint(I,I):V
 - resetSizes():V
