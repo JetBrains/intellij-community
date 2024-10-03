@@ -3306,6 +3306,7 @@ f:com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 - equals(java.lang.Object):Z
 - extractFileEnumeration():com.intellij.psi.search.impl.VirtualFileEnumeration
 - getDisplayName():java.lang.String
+- s:getFileEnumerationUnderRoots(java.util.Collection):com.intellij.psi.search.impl.VirtualFileEnumeration
 - getModule():com.intellij.openapi.module.Module
 - getRoots():java.util.Collection
 - isSearchInLibraries():Z
