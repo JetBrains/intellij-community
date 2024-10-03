@@ -1,105 +1,104 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.resolve
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.openapi.util.RecursionManager
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest
-import org.jetbrains.plugins.groovy.util.ResolveTest
-import org.jetbrains.plugins.groovy.util.TypingTest
-import org.junit.Before
-import org.junit.Ignore
-import org.junit.Test
+import com.intellij.openapi.util.RecursionManager;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
+import org.jetbrains.plugins.groovy.util.ResolveTest;
+import org.jetbrains.plugins.groovy.util.TypingTest;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
-@CompileStatic
-class EmptyListSubstitutorInferenceTest extends GroovyLatestTest implements TypingTest, ResolveTest {
+public class EmptyListSubstitutorInferenceTest extends GroovyLatestTest implements TypingTest, ResolveTest {
 
   @Before
-  void disableRecursion() {
-    RecursionManager.assertOnRecursionPrevention(fixture.testRootDisposable)
+  public void disableRecursion() {
+    RecursionManager.assertOnRecursionPrevention(getFixture().getTestRootDisposable());
   }
 
   @Test
-  void 'simple'() {
-    typingTest('[<caret>]', GrListOrMap, 'java.util.ArrayList')
+  public void simple() {
+    typingTest("[<caret>]", GrListOrMap.class, "java.util.ArrayList");
   }
 
   @Test
-  void 'in untyped variable initializer'() {
-    typingTest('def l = [<caret>]', GrListOrMap, 'java.util.ArrayList')
-    typingTest('def l = []; <caret>l', GrReferenceExpression, 'java.util.ArrayList')
+  public void inUntypedVariableInitializer() {
+    typingTest("def l = [<caret>]", GrListOrMap.class, "java.util.ArrayList");
+    typingTest("def l = []; <caret>l", GrReferenceExpression.class, "java.util.ArrayList");
   }
 
   @Test
-  void 'in raw variable initializer'() {
-    typingTest('List l = [<caret>]', GrListOrMap, 'java.util.ArrayList')
-    typingTest('List l = []; <caret>l', GrReferenceExpression, 'java.util.ArrayList')
+  public void inRawVariableInitializer() {
+    typingTest("List l = [<caret>]", GrListOrMap.class, "java.util.ArrayList");
+    typingTest("List l = []; <caret>l", GrReferenceExpression.class, "java.util.ArrayList");
   }
 
   @Test
-  void 'in typed variable initializer'() {
-    typingTest('List<Integer> l = [<caret>]', GrListOrMap, 'java.util.ArrayList<java.lang.Integer>')
-    typingTest('List<Integer> l = []; <caret>l', GrReferenceExpression, 'java.util.ArrayList<java.lang.Integer>')
+  public void inTypedVariableInitializer() {
+    typingTest("List<Integer> l = [<caret>]", GrListOrMap.class, "java.util.ArrayList<java.lang.Integer>");
+    typingTest("List<Integer> l = []; <caret>l", GrReferenceExpression.class, "java.util.ArrayList<java.lang.Integer>");
   }
 
   @Test
-  void 'in wrongly typed variable initializer'() {
-    typingTest('int l = [<caret>]', GrListOrMap, 'java.util.ArrayList')
+  public void inWronglyTypedVariableInitializer() {
+    typingTest("int l = [<caret>]", GrListOrMap.class, "java.util.ArrayList");
   }
 
   @Test
-  void 'receiver of DGM method'() {
-    typingTest('[<caret>].each {}', GrListOrMap, 'java.util.ArrayList')
+  public void receiverOfDgmMethod() {
+    typingTest("[<caret>].each {}", GrListOrMap.class, "java.util.ArrayList");
   }
 
   @Test
-  void 'receiver of DGM method in untyped variable initializer'() {
-    typingTest('def s = [<caret>].each {}', GrListOrMap, 'java.util.ArrayList')
+  public void receiverOfDgmMethodInUntypedVariableInitializer() {
+    typingTest("def s = [<caret>].each {}", GrListOrMap.class, "java.util.ArrayList");
   }
 
   @Test
-  void 'receiver of DGM method in raw variable initializer'() {
-    typingTest('List l = [<caret>].each {}', GrListOrMap, 'java.util.ArrayList')
+  public void receiverOfDgmMethodInRawVariableInitializer() {
+    typingTest("List l = [<caret>].each {}", GrListOrMap.class, "java.util.ArrayList");
   }
 
   @Test
-  void 'receiver of DGM method in typed variable initializer'() {
-    typingTest('List<Integer> l = [<caret>].each {}', GrListOrMap, 'java.util.ArrayList')
+  public void receiverOfDgmMethodInTypedVariableInitializer() {
+    typingTest("List<Integer> l = [<caret>].each {}", GrListOrMap.class, "java.util.ArrayList");
   }
 
   @Test
-  void 'in argument of new expression'() {
-    typingTest 'new ArrayList<Integer>([<caret>])', GrListOrMap, 'java.util.ArrayList<java.lang.Integer>'
+  public void inArgumentOfNewExpression() {
+    typingTest("new ArrayList<Integer>([<caret>])", GrListOrMap.class, "java.util.ArrayList<java.lang.Integer>");
   }
 
   @Test
-  void 'in argument of diamond new expression'() {
-    typingTest 'new ArrayList<Integer>(new ArrayList<>([<caret>]))', GrListOrMap, 'java.util.ArrayList<java.lang.Integer>'
+  public void inArgumentOfDiamondNewExpression() {
+    typingTest("new ArrayList<Integer>(new ArrayList<>([<caret>]))", GrListOrMap.class, "java.util.ArrayList<java.lang.Integer>");
   }
 
   @Test
-  void 'in argument of nested diamond new expression in variable initializer'() {
-    typingTest 'List<Integer> l = new ArrayList<>(new ArrayList<>([<caret>]))', GrListOrMap, 'java.util.ArrayList<java.lang.Integer>'
+  public void inArgumentOfNestedDiamondNewExpressionInVariableInitializer() {
+    typingTest("List<Integer> l = new ArrayList<>(new ArrayList<>([<caret>]))", GrListOrMap.class,
+               "java.util.ArrayList<java.lang.Integer>");
   }
 
   @Test
-  void 'in argument of generic method call'() {
-    typingTest('def <T> T id(T a) {a}; id([<caret>])', GrListOrMap, 'java.util.ArrayList')
-    typingTest('def <T> T id(T a) {a}; <caret>id([])', GrMethodCall, 'java.util.ArrayList')
+  public void inArgumentOfGenericMethodCall() {
+    typingTest("def <T> T id(T a) {a}; id([<caret>])", GrListOrMap.class, "java.util.ArrayList");
+    typingTest("def <T> T id(T a) {a}; <caret>id([])", GrMethodCall.class, "java.util.ArrayList");
   }
 
   @Test
-  void 'in argument of generic method call with argument'() {
-    typingTest('def <T> List<T> add(List<T> l, T v) {}; add([<caret>], 1)', GrListOrMap, 'java.util.ArrayList<java.lang.Integer>')
-    typingTest('def <T> List<T> add(List<T> l, T v) {}; <caret>add([], 1)', GrMethodCall, 'java.util.List<java.lang.Integer>')
+  public void inArgumentOfGenericMethodCallWithArgument() {
+    typingTest("def <T> List<T> add(List<T> l, T v) {}; add([<caret>], 1)", GrListOrMap.class, "java.util.ArrayList<java.lang.Integer>");
+    typingTest("def <T> List<T> add(List<T> l, T v) {}; <caret>add([], 1)", GrMethodCall.class, "java.util.List<java.lang.Integer>");
   }
 
   @Ignore("Requires list literal inference from both arguments and context type")
   @Test
-  void 'empty list literal from outer list literal'() {
-    typingTest('List<List<Integer>> l = [[<caret>]]', GrListOrMap, 'java.util.List<java.lang.Integer>')
+  public void emptyListLiteralFromOuterListLiteral() {
+    typingTest("List<List<Integer>> l = [[<caret>]]", GrListOrMap.class, "java.util.List<java.lang.Integer>");
   }
 
   /**
@@ -107,8 +106,8 @@ class EmptyListSubstitutorInferenceTest extends GroovyLatestTest implements Typi
    * and should fail when 'empty list literal from outer list literal' will pass.
    */
   @Test
-  void 'list literal with empty list literal'() {
-    typingTest('List<List<Integer>> l = <caret>[[]]', GrListOrMap, 'java.util.ArrayList<java.util.ArrayList>')
-    typingTest('List<List<Integer>> l = [[<caret>]]', GrListOrMap, 'java.util.ArrayList')
+  public void listLiteralWithEmptyListLiteral() {
+    typingTest("List<List<Integer>> l = <caret>[[]]", GrListOrMap.class, "java.util.ArrayList<java.util.ArrayList>");
+    typingTest("List<List<Integer>> l = [[<caret>]]", GrListOrMap.class, "java.util.ArrayList");
   }
 }

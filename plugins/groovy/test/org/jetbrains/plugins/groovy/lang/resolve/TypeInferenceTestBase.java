@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.testFramework.UsefulTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -12,6 +14,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
 
 /**
  * Created by Max Medvedev on 10/02/14
@@ -30,6 +34,14 @@ public abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
     GrReferenceExpression ref =
       (GrReferenceExpression)file.findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
     PsiType actual = ref.getType();
+    LightGroovyTestCase.assertType(type, actual);
+  }
+
+  protected void doTest(String text, @NotNull Class<? extends GrExpression> clazz, @Nullable String type) {
+    PsiFile file = myFixture.configureByText("_.groovy", text);
+    PsiElement ref = file.findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+    GrExpression target = getParentOfType(ref, clazz);
+    PsiType actual = target.getType();
     LightGroovyTestCase.assertType(type, actual);
   }
 

@@ -1,378 +1,399 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.resolve
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.impl.compiled.ClsClassImpl
-import com.intellij.testFramework.LightProjectDescriptor
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.GroovyFileType
-import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor
-import org.jetbrains.plugins.groovy.TestLibrary
-import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
-import org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethod
-import org.jetbrains.plugins.groovy.util.TestUtils
-import org.jetbrains.plugins.groovy.util.ThrowingDecompiler
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.UsefulTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor;
+import org.jetbrains.plugins.groovy.TestLibrary;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethod;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.util.ThrowingDecompiler;
+import org.junit.Assert;
 
-import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.LIB_GROOVY_LATEST
+import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.LIB_GROOVY_LATEST;
 
-@CompileStatic
-class ResolveCompiledTraitTest extends GroovyResolveTestCase {
+public class ResolveCompiledTraitTest extends GroovyResolveTestCase {
 
-  final String basePath = "resolve/"
+  @Override
+  public final String getBasePath() {
+    return "resolve/";
+  }
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
 
   private static final TestLibrary SOME_LIBRARY = new TestLibrary() {
 
     @Override
-    void addTo(@NotNull Module module, @NotNull ModifiableRootModel model) {
-      model.moduleLibraryTable.createLibrary("some-library").modifiableModel.with {
-        def fs = JarFileSystem.instance
-        def root = "${TestUtils.absoluteTestDataPath}/lib"
-        addRoot(fs.refreshAndFindFileByPath("$root/some-library.jar!/"), OrderRootType.CLASSES)
-        addRoot(fs.refreshAndFindFileByPath("$root/some-library-src.jar!/"), OrderRootType.SOURCES)
-        commit()
-      }
+    public void addTo(@NotNull Module module, @NotNull ModifiableRootModel model) {
+      Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("some-library").getModifiableModel();
+      JarFileSystem fs = JarFileSystem.getInstance();
+      String root = TestUtils.getAbsoluteTestDataPath() + "/lib";
+      modifiableModel.addRoot(fs.refreshAndFindFileByPath(root + "/some-library.jar!/"),
+                              OrderRootType.CLASSES);
+      modifiableModel.addRoot(fs.refreshAndFindFileByPath(root + "/some-library-src.jar!/"),
+                              OrderRootType.SOURCES);
+      modifiableModel.commit();
     }
+  };
+
+  private static final LightProjectDescriptor DESCRIPTOR = new LibraryLightProjectDescriptor(LIB_GROOVY_LATEST.plus(SOME_LIBRARY));
+  private final LightProjectDescriptor projectDescriptor = DESCRIPTOR;
+
+  public void testResolveTrait() {
+    resolveByText(
+      """
+        class ExternalConcrete implements somepackage.T<caret>T {
+            @Override
+            def someAbstractMethod() {}
+            @Override
+            void anotherInterfaceMethod() {}
+        }
+        """, ClsClassImpl.class);
   }
 
-  private static final LightProjectDescriptor DESCRIPTOR = new LibraryLightProjectDescriptor(LIB_GROOVY_LATEST + SOME_LIBRARY)
-
-  final LightProjectDescriptor projectDescriptor = DESCRIPTOR
-
-  void 'test resolve trait'() {
-    resolveByText '''\
-class ExternalConcrete implements somepackage.T<caret>T {
-    @Override
-    def someAbstractMethod() {}
-    @Override
-    void anotherInterfaceMethod() {}
-}
-''', ClsClassImpl
+  public void testMethodImplementedInTrait() {
+    resolveByText(
+      """
+        class ExternalConcrete implements somepackage.TT {
+            @Override
+            def someAbstractMethod() {}
+            @Override
+            void anotherInterfaceMethod() {}
+        }
+        new ExternalConcrete().som<caret>eMethod()
+        """, GrTraitMethod.class);
   }
 
-  void 'test method implemented in trait()'() {
-    resolveByText '''\
-class ExternalConcrete implements somepackage.TT {
-    @Override
-    def someAbstractMethod() {}
-    @Override
-    void anotherInterfaceMethod() {}
-}
-new ExternalConcrete().som<caret>eMethod()
-''', GrTraitMethod
+  public void testMethodFromInterfaceImplementedInTrait() {
+    resolveByText(
+      """
+        class ExternalConcrete implements somepackage.TT {
+            @Override
+            def someAbstractMethod() {}
+            @Override
+            void anotherInterfaceMethod() {}
+        }
+        new ExternalConcrete().interface<caret>Method()
+        """, GrTraitMethod.class);
   }
 
-  void 'test method from interface implemented in trait'() {
-    resolveByText '''\
-class ExternalConcrete implements somepackage.TT {
-    @Override
-    def someAbstractMethod() {}
-    @Override
-    void anotherInterfaceMethod() {}
-}
-new ExternalConcrete().interface<caret>Method()
-''', GrTraitMethod
+  public void testStaticTraitMethod() {
+    resolveByText(
+      """
+        class ExternalConcrete implements somepackage.TT {
+            @Override
+            def someAbstractMethod() {}
+            @Override
+            void anotherInterfaceMethod() {}
+        }
+        ExternalConcrete.someStatic<caret>Method()
+        """, GrTraitMethod.class);
   }
 
-  void 'test static trait method'() {
-    resolveByText '''\
-class ExternalConcrete implements somepackage.TT {
-    @Override
-    def someAbstractMethod() {}
-    @Override
-    void anotherInterfaceMethod() {}
-}
-ExternalConcrete.someStatic<caret>Method()
-''', GrTraitMethod
+  public void testTraitField() {
+    resolveByText(
+      """
+        class ExternalConcrete implements somepackage.TT {
+            @Override
+            def someAbstractMethod() {}
+            @Override
+            void anotherInterfaceMethod() {}
+        }
+        ExternalConcrete.some<caret>Field
+        """, GrTraitMethod.class);
   }
 
-  void 'test trait field'() {
-    resolveByText '''\
-class ExternalConcrete implements somepackage.TT {
-    @Override
-    def someAbstractMethod() {}
-    @Override
-    void anotherInterfaceMethod() {}
-}
-ExternalConcrete.some<caret>Field
-''', GrTraitMethod
+  public void testStaticTraitField() {
+    resolveByText(
+      """
+        class ExternalConcrete implements somepackage.TT {
+            @Override
+            def someAbstractMethod() {}
+            @Override
+            void anotherInterfaceMethod() {}
+        }
+        ExternalConcrete.someStatic<caret>Field
+        """, GrTraitMethod.class);
   }
 
-  void 'test static trait field'() {
-    resolveByText '''\
-class ExternalConcrete implements somepackage.TT {
-    @Override
-    def someAbstractMethod() {}
-    @Override
-    void anotherInterfaceMethod() {}
-}
-ExternalConcrete.someStatic<caret>Field
-''', GrTraitMethod
+  public void testTraitFieldFullName() {
+    resolveByText(
+      """
+        class ExternalConcrete implements somepackage.TT {
+            @Override
+            def someAbstractMethod() {}
+            @Override
+            void anotherInterfaceMethod() {}
+        }
+        ExternalConcrete.somepackage_<caret>TT__someField
+        """, GrTraitField.class);
   }
 
-  void 'test trait field full name'() {
-    resolveByText '''\
-class ExternalConcrete implements somepackage.TT {
-    @Override
-    def someAbstractMethod() {}
-    @Override
-    void anotherInterfaceMethod() {}
-}
-ExternalConcrete.somepackage_<caret>TT__someField
-''', GrTraitField
+  public void testStaticTraitFieldFullName() {
+    resolveByText(
+      """
+        class ExternalConcrete implements somepackage.TT {
+            @Override
+            def someAbstractMethod() {}
+            @Override
+            void anotherInterfaceMethod() {}
+        }
+        ExternalConcrete.somepackage_TT_<caret>_someStaticField
+        """, GrTraitField.class);
   }
 
-  void 'test static trait field full name'() {
-    resolveByText '''\
-class ExternalConcrete implements somepackage.TT {
-    @Override
-    def someAbstractMethod() {}
-    @Override
-    void anotherInterfaceMethod() {}
-}
-ExternalConcrete.somepackage_TT_<caret>_someStaticField
-''', GrTraitField
+  public void testHighlightingNoErrors() {
+    testHighlighting(
+      """
+        class ExternalConcrete implements somepackage.TT {
+            @Override
+            def someAbstractMethod() {}
+            @Override
+            void anotherInterfaceMethod() {}
+        }
+        """);
   }
 
-  void 'test highlighting no errors'() {
-    testHighlighting '''
-class ExternalConcrete implements somepackage.TT {
-    @Override
-    def someAbstractMethod() {}
-    @Override
-    void anotherInterfaceMethod() {}
-}
-'''
+  public void testCompiledTraitNoErrors() {
+    testHighlighting(
+      """
+        class ExternalConcrete implements somepackage.TT {
+            @Override
+            def someAbstractMethod() {}
+            @Override
+            void anotherInterfaceMethod() {}
+        }""");
   }
 
-  void 'test compiled trait no errors'() {
-    testHighlighting '''
-class ExternalConcrete implements somepackage.TT {
-    @Override
-    def someAbstractMethod() {}
-    @Override
-    void anotherInterfaceMethod() {}
-}'''
+  public void testNotImplementedCompiledTraitMethod() {
+    testHighlighting(
+      """
+        <error descr="Method 'someAbstractMethod' is not implemented">class ExternalConcrete implements somepackage.TT</error> {
+            @Override
+            void anotherInterfaceMethod() {}
+        }""");
   }
 
-  void 'test not implemented compiled trait method'() {
-    testHighlighting '''
-<error descr="Method 'someAbstractMethod' is not implemented">class ExternalConcrete implements somepackage.TT</error> {
-    @Override
-    void anotherInterfaceMethod() {}
-}'''
+  public void testNotImplementedCompiledInterfaceMethodWithTraitInHierarchy() {
+    testHighlighting(
+      """
+        <error descr="Method 'anotherInterfaceMethod' is not implemented">class ExternalConcrete implements somepackage.TT</error> {
+            @Override
+            def someAbstractMethod() {}
+        }""");
   }
 
-  void 'test not implemented compiled interface method with trait in hierarchy'() {
-    testHighlighting '''
-<error descr="Method 'anotherInterfaceMethod' is not implemented">class ExternalConcrete implements somepackage.TT</error> {
-    @Override
-    def someAbstractMethod() {}
-}'''
+  public void testTraitParameterNotWithinItsBounds() {
+    testHighlighting(
+      """
+        class ExternalConcrete2 implements somepackage.GenericTrait<String, somepackage.Pojo, <warning descr="Type parameter 'java.lang.Integer' is not in its bound; should extend 'A'">Integer</warning>> {}
+        """);
   }
 
-  void 'test trait parameter not within its bounds'() {
-    testHighlighting '''\
-class ExternalConcrete2 implements somepackage.GenericTrait<String, somepackage.Pojo, <warning descr="Type parameter 'java.lang.Integer' is not in its bound; should extend 'A'">Integer</warning>> {}
-'''
+  public void testGenericTraitMethod() {
+    PsiClass definition = configureTraitInheritor();
+    PsiMethod method = definition.findMethodsByName("methodWithTraitGenerics", false)[0];
+    Assert.assertEquals(0, method.getTypeParameters().length);
+    Assert.assertEquals("Pojo", method.getReturnType().getCanonicalText());
+    Assert.assertEquals(2, method.getParameterList().getParametersCount());
+    Assert.assertEquals("java.lang.String", method.getParameterList().getParameters()[0].getType().getCanonicalText());
+    Assert.assertEquals("PojoInheritor", method.getParameterList().getParameters()[1].getType().getCanonicalText());
   }
 
-  void 'test generic trait method'() {
-    def definition = configureTraitInheritor()
-    def method = definition.findMethodsByName("methodWithTraitGenerics", false)[0]
-    assert method.typeParameters.length == 0
-    assert method.returnType.canonicalText == "Pojo"
-    assert method.parameterList.parametersCount == 2
-    assert method.parameterList.parameters[0].type.canonicalText == "java.lang.String"
-    assert method.parameterList.parameters[1].type.canonicalText == "PojoInheritor"
+  public void testGenericTraitMethodWithTypeParameters() {
+    configureTraitInheritor();
+    GrReferenceExpression reference =
+      configureByText("foo.groovy", "new ExternalConcrete().<Integer>methodWit<caret>hMethodGenerics(1, \"2\", null)",
+                      GrReferenceExpression.class);
+    GroovyResolveResult resolved = reference.advancedResolve();
+    PsiMethod method = (PsiMethod)resolved.getElement();
+    PsiSubstitutor substitutor = resolved.getSubstitutor();
+    Assert.assertEquals(1, method.getTypeParameterList().getTypeParameters().length);
+    Assert.assertEquals("java.lang.Integer", substitutor.substitute(method.getReturnType()).getCanonicalText());
+    Assert.assertEquals(3, method.getParameterList().getParametersCount());
+    Assert.assertEquals("java.lang.Integer",
+                        substitutor.substitute(method.getParameterList().getParameters()[0].getType()).getCanonicalText());
+    Assert.assertEquals("java.lang.String", method.getParameterList().getParameters()[1].getType().getCanonicalText());
+    Assert.assertEquals("PojoInheritor", method.getParameterList().getParameters()[2].getType().getCanonicalText());
   }
 
-  void 'test generic trait method with type parameters'() {
-    configureTraitInheritor()
-    def reference = configureByText(
-      'foo.groovy',
-      'new ExternalConcrete().<Integer>methodWit<caret>hMethodGenerics(1, "2", null)',
-      GrReferenceExpression
-    )
-    def resolved = reference.advancedResolve()
-    def method = resolved.element as PsiMethod
-    def substitutor = resolved.substitutor
-    assert method.typeParameterList.typeParameters.length == 1
-    assert substitutor.substitute(method.returnType).canonicalText == "java.lang.Integer"
-    assert method.parameterList.parametersCount == 3
-    assert substitutor.substitute(method.parameterList.parameters[0].type).canonicalText == "java.lang.Integer"
-    assert method.parameterList.parameters[1].type.canonicalText == "java.lang.String"
-    assert method.parameterList.parameters[2].type.canonicalText == "PojoInheritor"
+  public void testGenericTraitMethodTypeParametersClashing() {
+    configureTraitInheritor();
+    GrReferenceExpression reference =
+      configureByText("foo.groovy", "new ExternalConcrete().<Integer>methodWith<caret>MethodGenericsClashing(1,\"\", new PojoInheritor())",
+                      GrReferenceExpression.class);
+    GroovyResolveResult resolved = reference.advancedResolve();
+    PsiMethod method = (PsiMethod)resolved.getElement();
+    PsiSubstitutor substitutor = resolved.getSubstitutor();
+    Assert.assertEquals(1, method.getTypeParameterList().getTypeParameters().length);
+    Assert.assertEquals("java.lang.Integer", substitutor.substitute(method.getReturnType()).getCanonicalText());
+    Assert.assertEquals(3, method.getParameterList().getParametersCount());
+    Assert.assertEquals("java.lang.Integer",
+                        substitutor.substitute(method.getParameterList().getParameters()[0].getType()).getCanonicalText());
+    Assert.assertEquals("java.lang.String", method.getParameterList().getParameters()[1].getType().getCanonicalText());
+    Assert.assertEquals("PojoInheritor", method.getParameterList().getParameters()[2].getType().getCanonicalText());
   }
 
-  void 'test generic trait method type parameters clashing'() {
-    configureTraitInheritor()
-    def reference = configureByText(
-      'foo.groovy',
-      'new ExternalConcrete().<Integer>methodWith<caret>MethodGenericsClashing(1,"", new PojoInheritor())',
-      GrReferenceExpression
-    )
-    def resolved = reference.advancedResolve()
-    def method = resolved.element as PsiMethod
-    def substitutor = resolved.substitutor
-    assert method.typeParameterList.typeParameters.length == 1
-    assert substitutor.substitute(method.returnType).canonicalText == "java.lang.Integer"
-    assert method.parameterList.parametersCount == 3
-    assert substitutor.substitute(method.parameterList.parameters[0].type).canonicalText == "java.lang.Integer"
-    assert method.parameterList.parameters[1].type.canonicalText == "java.lang.String"
-    assert method.parameterList.parameters[2].type.canonicalText == "PojoInheritor"
+  public void testGenericTraitStaticMethod() {
+    PsiClass definition = configureTraitInheritor();
+    PsiMethod method = definition.findMethodsByName("staticMethodWithTraitGenerics", false)[0];
+    Assert.assertEquals(0, method.getTypeParameters().length);
+    Assert.assertEquals("Pojo", method.getReturnType().getCanonicalText());
+    Assert.assertEquals(2, method.getParameterList().getParametersCount());
+    Assert.assertEquals("java.lang.String", method.getParameterList().getParameters()[0].getType().getCanonicalText());
+    Assert.assertEquals("PojoInheritor", method.getParameterList().getParameters()[1].getType().getCanonicalText());
   }
 
-  void 'test generic trait static method'() {
-    def definition = configureTraitInheritor()
-    def method = definition.findMethodsByName("staticMethodWithTraitGenerics", false)[0]
-    assert method.typeParameters.length == 0
-    assert method.returnType.canonicalText == "Pojo"
-    assert method.parameterList.parametersCount == 2
-    assert method.parameterList.parameters[0].type.canonicalText == "java.lang.String"
-    assert method.parameterList.parameters[1].type.canonicalText == "PojoInheritor"
+  public void testGenericTraitStaticMethodWithTypeParameters() {
+    configureTraitInheritor();
+    GrReferenceExpression reference =
+      configureByText("foo.groovy", "new ExternalConcrete().<Integer>staticMethodWit<caret>hMethodGenerics(1, \"2\", null)",
+                      GrReferenceExpression.class);
+    GroovyResolveResult resolved = reference.advancedResolve();
+    PsiMethod method = (PsiMethod)resolved.getElement();
+    PsiSubstitutor substitutor = resolved.getSubstitutor();
+    Assert.assertEquals(1, method.getTypeParameterList().getTypeParameters().length);
+    Assert.assertEquals("java.lang.Integer", substitutor.substitute(method.getReturnType()).getCanonicalText());
+    Assert.assertEquals(3, method.getParameterList().getParametersCount());
+    Assert.assertEquals("java.lang.Integer",
+                        substitutor.substitute(method.getParameterList().getParameters()[0].getType()).getCanonicalText());
+    Assert.assertEquals("java.lang.String", method.getParameterList().getParameters()[1].getType().getCanonicalText());
+    Assert.assertEquals("PojoInheritor", method.getParameterList().getParameters()[2].getType().getCanonicalText());
   }
 
-  void 'test generic trait static method with type parameters'() {
-    configureTraitInheritor()
-    def reference = configureByText(
-      'foo.groovy',
-      'new ExternalConcrete().<Integer>staticMethodWit<caret>hMethodGenerics(1, "2", null)',
-      GrReferenceExpression
-    )
-    def resolved = reference.advancedResolve()
-    def method = resolved.element as PsiMethod
-    def substitutor = resolved.substitutor
-    assert method.typeParameterList.typeParameters.length == 1
-    assert substitutor.substitute(method.returnType).canonicalText == "java.lang.Integer"
-    assert method.parameterList.parametersCount == 3
-    assert substitutor.substitute(method.parameterList.parameters[0].type).canonicalText == "java.lang.Integer"
-    assert method.parameterList.parameters[1].type.canonicalText == "java.lang.String"
-    assert method.parameterList.parameters[2].type.canonicalText == "PojoInheritor"
+  public void testGenericTraitStaticMethodTypeParametersClashing() {
+    configureTraitInheritor();
+    GrReferenceExpression reference = configureByText("foo.groovy",
+                                                      "new ExternalConcrete().<Integer>staticMethodWith<caret>MethodGenericsClashing(1, \"\", new PojoInheritor())",
+                                                      GrReferenceExpression.class);
+    GroovyResolveResult resolved = reference.advancedResolve();
+    PsiMethod method = (PsiMethod)resolved.getElement();
+    PsiSubstitutor substitutor = resolved.getSubstitutor();
+    Assert.assertEquals(1, method.getTypeParameterList().getTypeParameters().length);
+    Assert.assertEquals("java.lang.Integer", substitutor.substitute(method.getReturnType()).getCanonicalText());
+    Assert.assertEquals(3, method.getParameterList().getParametersCount());
+    Assert.assertEquals("java.lang.Integer",
+                        substitutor.substitute(method.getParameterList().getParameters()[0].getType()).getCanonicalText());
+    Assert.assertEquals("java.lang.String", method.getParameterList().getParameters()[1].getType().getCanonicalText());
+    Assert.assertEquals("PojoInheritor", method.getParameterList().getParameters()[2].getType().getCanonicalText());
   }
 
-  void 'test generic trait static method type parameters clashing'() {
-    configureTraitInheritor()
-    def reference = configureByText(
-      'foo.groovy',
-      'new ExternalConcrete().<Integer>staticMethodWith<caret>MethodGenericsClashing(1, "", new PojoInheritor())',
-      GrReferenceExpression
-    )
-    def resolved = reference.advancedResolve()
-    def method = resolved.element as PsiMethod
-    def substitutor = resolved.substitutor
-    assert method.typeParameterList.typeParameters.length == 1
-    assert substitutor.substitute(method.returnType).canonicalText == "java.lang.Integer"
-    assert method.parameterList.parametersCount == 3
-    assert substitutor.substitute(method.parameterList.parameters[0].type).canonicalText == "java.lang.Integer"
-    assert method.parameterList.parameters[1].type.canonicalText == "java.lang.String"
-    assert method.parameterList.parameters[2].type.canonicalText == "PojoInheritor"
+  public void testDoNotResolvePrivateTraitMethod() {
+    getFixture().enableInspections(GrUnresolvedAccessInspection.class, GroovyAccessibilityInspection.class);
+    testHighlighting("""
+                       import privateTraitMethods.C
+                       import privateTraitMethods.T
+                       
+                       def foo(T t) {
+                         t.<warning descr="Cannot resolve symbol 'privateMethod'">privateMethod</warning>() // via interface
+                       }
+                       
+                       new C().<warning descr="Cannot resolve symbol 'privateMethod'">privateMethod</warning>() // via implementation
+                       """);
   }
 
-  void 'test do not resolve private trait method'() {
-    fixture.enableInspections GrUnresolvedAccessInspection, GroovyAccessibilityInspection
-    testHighlighting '''\
-import privateTraitMethods.C 
-import privateTraitMethods.T
-
-def foo(T t) {
-  t.<warning descr="Cannot resolve symbol 'privateMethod'">privateMethod</warning>() // via interface
-}
-
-new C().<warning descr="Cannot resolve symbol 'privateMethod'">privateMethod</warning>() // via implementation
-'''
+  public void testDoNotGetMirrorInCompletion() {
+    ThrowingDecompiler.disableDecompilers(getTestRootDisposable());
+    getFixture().configureByText("_.groovy",
+                                 """
+                                   class CC implements somepackage.TT {
+                                     def foo() {
+                                       someMet<caret>
+                                     }
+                                   }
+                                   """);
+    getFixture().completeBasic();
+    UsefulTestCase.assertContainsElements(getFixture().getLookupElementStrings(), "someMethod", "someAbstractMethod", "someStaticMethod");
   }
 
-  void 'test do not get mirror in completion'() {
-    ThrowingDecompiler.disableDecompilers(testRootDisposable)
-    fixture.configureByText '_.groovy', '''\
-class CC implements somepackage.TT {
-  def foo() {
-    someMet<caret>
-  }
-}
-'''
-    fixture.completeBasic()
-    assertContainsElements(
-      fixture.lookupElementStrings,
-      "someMethod", "someAbstractMethod", "someStaticMethod"
-    )
+  public void testStaticTraitMethodWithDelegatesToType() {
+    configureTraitInheritor();
+    PsiMethod method = resolveByText(
+      """
+        def usage(ExternalConcrete ec) {
+          ec.delegatesTo { <caret>toUpperCase() }
+        }
+        """, PsiMethod.class);
+    Assert.assertEquals("toUpperCase", method.getName());
+    Assert.assertEquals("java.lang.String", method.getContainingClass().getQualifiedName());
   }
 
-  void 'test static trait method with @DelegatesTo(type)'() {
-    configureTraitInheritor()
-    def method = resolveByText '''\
-def usage(ExternalConcrete ec) {
-  ec.delegatesTo { <caret>toUpperCase() }
-}
-''', PsiMethod
-    assert method.name == 'toUpperCase'
-    assert method.containingClass.qualifiedName == 'java.lang.String'
+  public void testStaticTraitMethodWithClosureParamsFromString() {
+    configureTraitInheritor();
+    PsiMethod method = resolveByText("""
+                                       def usage(ExternalConcrete ec) {
+                                         ec.closureParams { it.<caret>toUpperCase() }
+                                       }
+                                       """, PsiMethod.class);
+    Assert.assertEquals("toUpperCase", method.getName());
+    Assert.assertEquals("java.lang.String", method.getContainingClass().getQualifiedName());
   }
 
-  void 'test static trait method with @ClosureParams(FromString)'() {
-    configureTraitInheritor()
-    def method = resolveByText '''\
-def usage(ExternalConcrete ec) {
-  ec.closureParams { it.<caret>toUpperCase() }
-}
-''', PsiMethod
-    assert method.name == 'toUpperCase'
-    assert method.containingClass.qualifiedName == 'java.lang.String'
+  public void testStaticTraitMethodWithDelegatesToTypeOnLambda() {
+    configureTraitInheritor();
+    PsiMethod method = resolveByText("""
+                                       def usage(ExternalConcrete ec) {
+                                         ec.delegatesTo () -> <caret>toUpperCase()
+                                       }
+                                       """, PsiMethod.class);
+    Assert.assertEquals("toUpperCase", method.getName());
+    Assert.assertEquals("java.lang.String", method.getContainingClass().getQualifiedName());
   }
 
-  void 'test static trait method with @DelegatesTo(type) on lambda'() {
-    configureTraitInheritor()
-    def method = resolveByText '''\
-def usage(ExternalConcrete ec) {
-  ec.delegatesTo () -> <caret>toUpperCase()
-}
-''', PsiMethod
-    assert method.name == 'toUpperCase'
-    assert method.containingClass.qualifiedName == 'java.lang.String'
-  }
-
-  void 'test static trait method with @ClosureParams(FromString) on lambda'() {
-    configureTraitInheritor()
-    def method = resolveByText '''\
-def usage(ExternalConcrete ec) {
-  ec.closureParams (it) -> it.<caret>toUpperCase() 
-}
-''', PsiMethod
-    assert method.name == 'toUpperCase'
-    assert method.containingClass.qualifiedName == 'java.lang.String'
+  public void testStaticTraitMethodWithClosureParamsFromStringOnLambda() {
+    configureTraitInheritor();
+    PsiMethod method = resolveByText("""
+                                       def usage(ExternalConcrete ec) {
+                                         ec.closureParams (it) -> it.<caret>toUpperCase()
+                                       }
+                                       """, PsiMethod.class);
+    Assert.assertEquals("toUpperCase", method.getName());
+    Assert.assertEquals("java.lang.String", method.getContainingClass().getQualifiedName());
   }
 
   private PsiClass configureTraitInheritor() {
-    myFixture.addFileToProject "inheritors.groovy", '''\
-class PojoInheritor extends somepackage.Pojo {}
-class ExternalConcrete implements somepackage.GenericTrait<Pojo, String, PojoInheritor> {}
-'''
-    myFixture.findClass("ExternalConcrete")
+    myFixture.addFileToProject("inheritors.groovy", """
+      class PojoInheritor extends somepackage.Pojo {}
+      class ExternalConcrete implements somepackage.GenericTrait<Pojo, String, PojoInheritor> {}
+      """);
+    return myFixture.findClass("ExternalConcrete");
   }
 
-  private testHighlighting(String text) {
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, text)
-    myFixture.testHighlighting(true, false, true)
+  private void testHighlighting(String text) {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, text);
+    myFixture.testHighlighting(true, false, true);
   }
 
-  void 'test trait with @Delegate'() {
-    def resolved = resolveByText '''\
-class Impl implements delegation.T {
-  void usage() {
-    <caret>hi()
-  }
-}
-'''
-    assert resolved instanceof DelegatedMethod
+  public void testTraitWithDelegate() {
+    PsiElement resolved = resolveByText(
+      """
+        class Impl implements delegation.T {
+          void usage() {
+            <caret>hi()
+          }
+        }
+        """);
+    Assert.assertTrue(resolved instanceof DelegatedMethod);
   }
 }

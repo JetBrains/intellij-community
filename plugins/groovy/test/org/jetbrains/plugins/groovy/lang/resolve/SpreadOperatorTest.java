@@ -1,50 +1,51 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.resolve
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.resolve;
 
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.util.BaseTest
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest
-import org.junit.Test
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.util.BaseTest;
+import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
+import org.junit.Assert;
+import org.junit.Test;
 
-import static com.intellij.psi.CommonClassNames.JAVA_UTIL_ARRAY_LIST
-import static org.jetbrains.plugins.groovy.LightGroovyTestCase.assertType
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_ARRAY_LIST;
 
-@CompileStatic
-class SpreadOperatorTest extends GroovyLatestTest implements BaseTest {
-
+public class SpreadOperatorTest extends GroovyLatestTest implements BaseTest {
   @Test
-  void 'spread property'() {
-    def expression = lastExpression("[[['a']]]*.bytes", GrReferenceExpression)
-    def results = expression.multiResolve(false)
-    assert results.size() == 1
-    assert results[0].spreadState != null
-    assertType("$JAVA_UTIL_ARRAY_LIST<$JAVA_UTIL_ARRAY_LIST<$JAVA_UTIL_ARRAY_LIST<byte[]>>>", expression.type)
+  public void spreadProperty() {
+    GrReferenceExpression expression = lastExpression("[[['a']]]*.bytes", GrReferenceExpression.class);
+    GroovyResolveResult[] results = expression.multiResolve(false);
+    Assert.assertEquals(1, results.length);
+    Assert.assertNotNull(results[0].getSpreadState());
+    LightGroovyTestCase.assertType(JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<byte[]>>>",
+                                   expression.getType());
   }
 
   @Test
-  void 'implicit spread property'() {
-    def expression = lastExpression("[[['a']]].bytes", GrReferenceExpression)
-    def results = expression.multiResolve(false)
-    assert results.size() == 1
-    assert results[0].spreadState != null
-    assertType("$JAVA_UTIL_ARRAY_LIST<$JAVA_UTIL_ARRAY_LIST<$JAVA_UTIL_ARRAY_LIST<byte[]>>>", expression.type)
+  public void implicitSpreadProperty() {
+    GrReferenceExpression expression = lastExpression("[[['a']]].bytes", GrReferenceExpression.class);
+    GroovyResolveResult[] results = expression.multiResolve(false);
+    Assert.assertEquals(1, results.length);
+    Assert.assertNotNull(results[0].getSpreadState());
+    LightGroovyTestCase.assertType(JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<byte[]>>>",
+                                   expression.getType());
   }
 
   @Test
-  void 'spread method'() {
-    def expression = lastExpression("[[['a']]]*.getBytes()", GrMethodCall)
-    def results = expression.multiResolve(false)
-    assert results.size() == 0
-    assertType(null, expression.type)
+  public void spreadMethod() {
+    GrMethodCall expression = lastExpression("[[['a']]]*.getBytes()", GrMethodCall.class);
+    GroovyResolveResult[] results = expression.multiResolve(false);
+    Assert.assertEquals(0, results.length);
+    LightGroovyTestCase.assertType(null, expression.getType());
   }
 
   @Test
-  void 'implicit spread method'() {
-    def expression = lastExpression("[[['a']]].getBytes()", GrMethodCall)
-    def results = expression.multiResolve(false)
-    assert results.size() == 0
-    assertType(null, expression.type)
+  public void implicitSpreadMethod() {
+    GrMethodCall expression = lastExpression("[[['a']]].getBytes()", GrMethodCall.class);
+    GroovyResolveResult[] results = expression.multiResolve(false);
+    Assert.assertEquals(0, results.length);
+    LightGroovyTestCase.assertType(null, expression.getType());
   }
 }
