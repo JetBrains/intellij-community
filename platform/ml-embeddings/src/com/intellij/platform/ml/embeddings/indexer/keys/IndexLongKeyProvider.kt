@@ -23,11 +23,11 @@ internal class IndexLongKeyProvider : EmbeddingStorageKeyProvider<Long> {
     fun getInstance(): IndexLongKeyProvider = service()
   }
 
-  override suspend fun findKey(project: Project, indexId: IndexId, entity: IndexableEntity): Long {
+  override suspend fun findKey(project: Project?, indexId: IndexId, entity: IndexableEntity): Long {
     return (entity as LongIndexableEntity).longId
   }
 
-  override suspend fun findEntityId(project: Project, indexId: IndexId, key: Long): String {
+  override suspend fun findEntityId(project: Project?, indexId: IndexId, key: Long): String {
     val fileId = (key shr 32).toInt()
     val file = VirtualFileManager.getInstance().findFileById(fileId)
                ?: throw IllegalArgumentException("Unknown fileId extracted from storage key")
@@ -35,7 +35,7 @@ internal class IndexLongKeyProvider : EmbeddingStorageKeyProvider<Long> {
     var result = ""
     var foundKey = false
     val index = getEmbeddingIndexId(indexId) ?: throw IllegalArgumentException("$indexId request is not supported")
-    smartReadAction(project) {
+    smartReadAction(project!!) {
       FileBasedIndex.getInstance().processValues(
         /* indexId = */ index,
         /* dataKey = */ EmbeddingKey(hash),
