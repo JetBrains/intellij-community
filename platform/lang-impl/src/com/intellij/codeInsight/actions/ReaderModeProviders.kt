@@ -1,13 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.formatting.visualLayer.VisualFormattingLayerService
-import com.intellij.formatting.visualLayer.VisualFormattingLayerService.Companion.visualFormattingLayerCodeStyleSettings
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
@@ -17,7 +15,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.SlowOperations
 
 private class HighlightingReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
@@ -87,20 +84,11 @@ private class DocsRenderingReaderModeProvider : ReaderModeProvider {
 private class VisualFormattingLayerReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     val settings = ReaderModeSettings.getInstance(project).getVisualFormattingCodeStyleSettings(project)
-    val oldSettings = editor.visualFormattingLayerCodeStyleSettings
     if (readerMode && settings != null) {
       VisualFormattingLayerService.enableForEditor(editor, settings)
     }
     else {
       VisualFormattingLayerService.disableForEditor(editor)
-    }
-    if (oldSettings != settings) {
-      val file = SlowOperations.knownIssue("IJPL-162825").use {
-        PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.document)
-      }
-      if (file != null) {
-        DaemonCodeAnalyzer.getInstance(project).restart(file)
-      }
     }
   }
 }
