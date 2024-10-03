@@ -5,11 +5,15 @@ import com.intellij.codeInsight.daemon.ChangeLocalityDetector
 import com.intellij.codeInsight.daemon.impl.HighlightingPsiUtil
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener
 
 @ApiStatus.Internal
 class KotlinChangeLocalityDetector : ChangeLocalityDetector {
     override fun getChangeHighlightingDirtyScopeFor(element: PsiElement): PsiElement? {
+        if (element.language != KotlinLanguage.INSTANCE) {
+            return null
+        }
         if (HighlightingPsiUtil.hasReferenceInside(element)) {
             // turn off optimization when a reference was changed to avoid "unused symbol" false positives
             return null
