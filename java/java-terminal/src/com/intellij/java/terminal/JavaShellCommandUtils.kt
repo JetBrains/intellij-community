@@ -8,13 +8,13 @@ import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 
-internal object JavaShellCommandUtils {
-  internal fun getClassPathSeparator() = when {
+object JavaShellCommandUtils {
+  fun getClassPathSeparator() = when {
     SystemInfo.isWindows -> ";"
     else -> ":"
   }
 
-  internal fun classpathSuggestionsGenerator(): ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> {
+  fun classpathSuggestionsGenerator(): ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> {
     val key = "classpath generator"
     return ShellRuntimeDataGenerator(
       debugName = key,
