@@ -62,4 +62,7 @@ public interface XDebuggerActions {
 
   @NonNls String FOCUS_ON_BREAKPOINT = "Debugger.FocusOnBreakpoint";
   @NonNls String FOCUS_ON_FINISH = "Debugger.FocusOnFinish";
+
+  @NonNls String PARALLEL_STACKS_POPUP_EXTRA_GROUP = "XDebugger.ParallelStacks.Popup.Extra";
+  @NonNls String PARALLEL_STACKS_TOOLBAR_EXTRA_GROUP = "XDebugger.ParallelStacks.ToolBar.Extra";
 }
