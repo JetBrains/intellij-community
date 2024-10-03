@@ -142,6 +142,10 @@
                   "description": "Overrides value of 'mainClass' for the specified commands",
                   "type": "string"
                 },
+                "envVarBaseName": {
+                  "description": "Overrides 'envVarBaseName' from product-info object for the specified commands",
+                  "type": "string"
+                },
                 "dataDirectoryName": {
                   "description": "Overrides 'dataDirectoryName' from product-info object for the specified commands",
                   "type": "string"

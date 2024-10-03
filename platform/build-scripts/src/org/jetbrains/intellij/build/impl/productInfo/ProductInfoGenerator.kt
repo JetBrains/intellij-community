@@ -85,6 +85,7 @@ internal suspend fun generateJetBrainsClientLaunchData(
       bootClassPathJarNames = clientContext.bootClassPathJarNames,
       additionalJvmArguments = clientContext.getAdditionalJvmArguments(os, arch) + ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS,
       mainClass = clientContext.ideMainClassName,
+      envVarBaseName = "JETBRAINS_CLIENT",
       dataDirectoryName = clientContext.systemSelector,
     )
   }
@@ -141,6 +142,7 @@ data class CustomCommandLaunchData(
   val bootClassPathJarNames: List<String> = emptyList(),
   val additionalJvmArguments: List<String> = emptyList(),
   val mainClass: String? = null,
+  val envVarBaseName: String? = null,
   val dataDirectoryName: String? = null,
 )
 
