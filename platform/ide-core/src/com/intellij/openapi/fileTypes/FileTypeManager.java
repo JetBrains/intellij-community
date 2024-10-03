@@ -24,7 +24,7 @@ public abstract class FileTypeManager extends FileTypeRegistry implements Dispos
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static FileTypeManager getInstance() {
     FileTypeRegistry instance = FileTypeRegistry.getInstance();
-    return instance instanceof FileTypeManager ftm ? ftm : new StubFileTypeManager();
+    return instance instanceof FileTypeManager ftm ? ftm : new EmptyFileTypeManager();
   }
 
   protected FileTypeManager() {

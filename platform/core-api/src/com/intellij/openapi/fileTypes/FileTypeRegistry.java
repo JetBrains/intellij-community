@@ -78,7 +78,7 @@ public abstract class FileTypeRegistry {
       catch (ClassNotFoundException ignored) {
       }
       instance = cached = application == null || aClass == null || !application.hasComponent(aClass)
-                          ? new StubFileTypeRegistry() : application.getService(aClass);
+                          ? new EmptyFileTypeRegistry() : application.getService(aClass);
     }
     return cached;
   }

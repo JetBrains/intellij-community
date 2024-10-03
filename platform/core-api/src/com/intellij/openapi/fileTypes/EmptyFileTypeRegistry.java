@@ -11,25 +11,25 @@ import javax.swing.*;
 /**
  * Supplies empty {@link FileTypeRegistry} implementation when {@link com.intellij.openapi.fileTypes.FileTypeManager} is not available
   */
-final class StubFileTypeRegistry extends FileTypeRegistry {
+final class EmptyFileTypeRegistry extends FileTypeRegistry {
   @Override
   public @NotNull FileType getFileTypeByFileName(@NotNull String fileName) {
-    return StubLanguageFileType.INSTANCE;
+    return EmptyLanguageFileType.INSTANCE;
   }
 
   @Override
   public @NotNull FileType getFileTypeByFile(@NotNull VirtualFile file) {
-    return StubLanguageFileType.INSTANCE;
+    return EmptyLanguageFileType.INSTANCE;
   }
 
   @Override
   public @NotNull FileType getFileTypeByExtension(@NotNull String extension) {
-    return StubLanguageFileType.INSTANCE;
+    return EmptyLanguageFileType.INSTANCE;
   }
 
   @Override
   public FileType @NotNull [] getRegisteredFileTypes() {
-    return new FileType[] {StubLanguageFileType.INSTANCE};
+    return new FileType[] {EmptyLanguageFileType.INSTANCE};
   }
 
   @Override
@@ -42,10 +42,10 @@ final class StubFileTypeRegistry extends FileTypeRegistry {
     return null;
   }
 
-  private static final class StubLanguageFileType extends LanguageFileType {
-    static final LanguageFileType INSTANCE = new StubLanguageFileType();
+  private static final class EmptyLanguageFileType extends LanguageFileType {
+    static final LanguageFileType INSTANCE = new EmptyLanguageFileType();
 
-    private StubLanguageFileType() {
+    private EmptyLanguageFileType() {
       super(Language.ANY);
     }
 
