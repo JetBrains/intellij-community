@@ -6368,7 +6368,6 @@ c:com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
 - <init>(com.intellij.openapi.options.SchemeManagerFactory):V
 - fireProfileChanged(com.intellij.codeInspection.ex.InspectionProfileImpl):V
 - f:forceInitProfilesInTestUntil(com.intellij.openapi.Disposable):V
-- getConverter():com.intellij.codeInsight.daemon.InspectionProfileConvertor
 - sf:getInstanceImpl():com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
 - f:getRootProfileName():java.lang.String
 - getState():org.jdom.Element

@@ -6,6 +6,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FlatteningIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
 
+@ApiStatus.Internal
 public abstract class ComparingClassifier<T> extends Classifier<T> {
   private final boolean myNegated;
 

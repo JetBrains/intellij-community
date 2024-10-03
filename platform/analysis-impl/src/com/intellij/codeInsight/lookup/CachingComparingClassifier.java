@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.ForceableComparable;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class CachingComparingClassifier extends ComparingClassifier<LookupElement> {
   private final Map<LookupElement, Comparable> myWeights = new IdentityHashMap<>();
   private final LookupElementWeigher myWeigher;

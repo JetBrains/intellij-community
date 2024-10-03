@@ -1,5 +1,4 @@
 com/intellij/codeInsight/completion/CompletionProcessEx
-com/intellij/openapi/module/impl/scopes/ModuleWithDependentsTestScope
 com/intellij/platform/diagnostic/telemetry/Scope
 com/intellij/psi/impl/source/tree/injected/DocumentWindowImpl
 com/intellij/psi/impl/source/tree/injected/VirtualFileWindowImpl

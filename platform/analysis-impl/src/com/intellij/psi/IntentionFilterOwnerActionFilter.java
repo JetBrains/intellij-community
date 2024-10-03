@@ -17,9 +17,11 @@ package com.intellij.psi;
 
 import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
 import com.intellij.codeInsight.intention.IntentionAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class IntentionFilterOwnerActionFilter implements IntentionActionFilter {
   @Override
   public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file) {

@@ -28,12 +28,14 @@ import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class BackwardDependenciesBuilder extends DependenciesBuilder {
   private final AnalysisScope myForwardScope;
   private final AnalysisScope myScopeOfInterest;

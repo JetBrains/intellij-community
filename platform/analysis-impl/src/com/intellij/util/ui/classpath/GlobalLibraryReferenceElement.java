@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public class GlobalLibraryReferenceElement implements SimpleClasspathElement {
   public static final @NonNls String NAME_ATTRIBUTE = "name";
   public static final @NonNls String LEVEL_ATTRIBUTE = "level";

@@ -6,11 +6,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleScopeProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.IntObjectMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Author: dmitrylomov
  */
+@ApiStatus.Internal
 public class ModuleScopeProviderImpl implements ModuleScopeProvider {
   private final Module myModule;
   private final IntObjectMap<GlobalSearchScope> myScopeCache =

@@ -9,6 +9,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.io.*;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class PlainTextFormatter implements InspectionsReportConverter {
   public static final String NAME = "plain";
   private static final String FILE_ELEMENT = "file";

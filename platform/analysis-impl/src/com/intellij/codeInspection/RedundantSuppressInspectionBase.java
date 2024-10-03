@@ -18,12 +18,14 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspectionTool {
   public static final String SHORT_NAME = "RedundantSuppression";
   private static final Logger LOG = Logger.getInstance(RedundantSuppressInspectionBase.class);

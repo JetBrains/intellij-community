@@ -60,6 +60,7 @@ public class TemplateStateBase {
     myPredefinedVariableValues = predefinedVariableValues;
   }
 
+  @ApiStatus.Internal
   protected void setTemplate(TemplateBase template) {
     myTemplate = template;
   }
@@ -119,6 +120,7 @@ public class TemplateStateBase {
     });
   }
 
+  @ApiStatus.Internal
   protected TemplateBase getTemplate() {
     return myTemplate;
   }
