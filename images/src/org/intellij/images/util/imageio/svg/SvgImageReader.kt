@@ -4,6 +4,7 @@ package org.intellij.images.util.imageio.svg
 import com.github.weisj.jsvg.attributes.font.SVGFont
 import com.github.weisj.jsvg.geometry.size.Length
 import com.github.weisj.jsvg.nodes.SVG
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.createJSvgDocument
@@ -49,8 +50,9 @@ class SvgImageReader(svgImageReaderSpi: SvgImageReaderSpi) : ImageReader(svgImag
             height = svg.height
           }
         }
-      } catch (e: IOException) {
+      } catch (e: Exception) {
         // could not read the SVG document
+        logger.warn("Could not read the SVG document", e)
       }
     }
   }
@@ -108,6 +110,9 @@ class SvgImageReader(svgImageReaderSpi: SvgImageReaderSpi) : ImageReader(svgImag
 
   override fun getImageMetadata(imageIndex: Int) = null
 
+  companion object {
+    private val logger = logger<SvgImageReader>()
+  }
 }
 
 private class ImageInputStreamAdapter(private val imageInputStream: ImageInputStream) : InputStream() {
