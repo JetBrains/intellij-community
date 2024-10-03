@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -41,7 +41,7 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
   }
 
   @Override
-  protected String getFileName() {
+  public String getFileName() {
     return myCustomPosition.getFile().getName();
   }
 

@@ -2133,7 +2133,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         DebuggerInvocationUtil.swingInvokeLater(project, () -> {
           Messages.showErrorDialog(
             JavaDebuggerBundle.message("error.running.to.cursor.no.executable.code",
-                                       myRunToCursorBreakpoint.getSourcePosition().getFile().getName(),
+                                       myRunToCursorBreakpoint.getFileName(),
                                        myRunToCursorBreakpoint.getLineIndex() + 1),
             UIUtil.removeMnemonic(ActionsBundle.actionText(XDebuggerActions.RUN_TO_CURSOR)));
           DebuggerSession session = debugProcess.getSession();
