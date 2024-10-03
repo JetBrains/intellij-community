@@ -2,7 +2,7 @@
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,15 +14,14 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.Plow;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.Group;
 import org.jetbrains.idea.devkit.dom.OverrideText;
+import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 
 import java.util.List;
@@ -81,17 +80,19 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
 
   @Override
   public Object @NotNull [] getVariants() {
-    Project project = getElement().getProject();
-    final GlobalSearchScope scope = ProjectScope.getContentScope(project);
-    return Plow.<ActionOrGroup>of(processor ->
-                                    IdeaPluginRegistrationIndex.processAllActionOrGroup(project, scope, processor))
-      .filter(aog ->
-                myIsAction == ThreeState.UNSURE
-                || myIsAction == ThreeState.YES && aog instanceof Action
-                || myIsAction == ThreeState.NO && aog instanceof Group
-      )
-      .<LookupElement>map(action -> LookupElementBuilder.create(action.getId()))
-      .toArray(LookupElement.EMPTY_ARRAY);
+    ActionOrGroupResolveConverter converter;
+    if (myIsAction == ThreeState.YES) {
+      converter = new ActionOrGroupResolveConverter.OnlyActions();
+    }
+    else if (myIsAction == ThreeState.NO) {
+      converter = new ActionOrGroupResolveConverter.OnlyGroups();
+    }
+    else {
+      converter = new ActionOrGroupResolveConverter();
+    }
+
+    List<ActionOrGroup> variants = converter.getVariants(getElement().getProject(), ModuleUtilCore.findModuleForPsiElement(getElement()));
+    return ContainerUtil.map2Array(variants, LookupElement.class, actionOrGroup -> converter.createLookupElement(actionOrGroup));
   }
 
   private void collectResults(String id,

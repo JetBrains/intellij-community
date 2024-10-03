@@ -25,10 +25,7 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.ResolvingConverter;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
@@ -45,11 +42,16 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   @NotNull
   @Override
   public Collection<? extends ActionOrGroup> getVariants(@NotNull ConvertContext context) {
+    return getVariants(context.getProject(), context.getModule());
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<ActionOrGroup> getVariants(@NotNull Project project, @Nullable Module module) {
     final List<ActionOrGroup> variants = new ArrayList<>();
     final Set<String> processedVariants = new HashSet<>();
 
-    processScopes(context, scope -> {
-      IdeaPluginRegistrationIndex.processAllActionOrGroup(context.getProject(), scope, actionOrGroup -> {
+    processScopes(project, module, scope -> {
+      IdeaPluginRegistrationIndex.processAllActionOrGroup(project, scope, actionOrGroup -> {
         if (isRelevant(actionOrGroup) && processedVariants.add(getName(actionOrGroup))) {
           variants.add(actionOrGroup);
         }
@@ -75,7 +77,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
     final Project project = context.getProject();
     Ref<ActionOrGroup> result = Ref.create();
-    processScopes(context, scope -> {
+    processScopes(context.getProject(), context.getModule(), scope -> {
       return IdeaPluginRegistrationIndex.processActionOrGroup(project, value, scope, actionOrGroup -> {
         if (isRelevant(actionOrGroup)) {
           result.set(actionOrGroup);
@@ -145,11 +147,8 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   }
 
 
-  private static void processScopes(ConvertContext context,
-                                    final Processor<GlobalSearchScope> processor) {
-    final Project project = context.getProject();
+  private static void processScopes(Project project, Module module, final Processor<GlobalSearchScope> processor) {
 
-    Module module = context.getModule();
     if (module == null) {
       final GlobalSearchScope projectScope = GlobalSearchScopesCore.projectProductionScope(project).
         union(ProjectScope.getLibrariesScope(project));
