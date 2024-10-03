@@ -514,6 +514,8 @@
       <add-to-group group-id="CopyFileReference"/>
       <add-to-group group-id="Copy.Paste.Special" relative-to-action="CopyReference" anchor="after"/>
     </group>
+
+    <action id="Git.Unshallow" class="git4idea.actions.GitUnshallowRepositoryAction"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -728,6 +730,7 @@
 
     <backgroundPostStartupActivity implementation="git4idea.ignore.GitIgnoreInStoreDirGeneratorActivity"/>
     <backgroundPostStartupActivity implementation="git4idea.config.GitSetupProjectConfig"/>
+    <backgroundPostStartupActivity implementation="git4idea.repo.GitShallowRepositoryCheck"/>
 
     <registryKey key="git.update.incoming.info.time" defaultValue="20"
                  description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
