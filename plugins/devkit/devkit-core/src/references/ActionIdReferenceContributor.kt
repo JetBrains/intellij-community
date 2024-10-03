@@ -6,6 +6,7 @@ import com.intellij.patterns.uast.injectionHostUExpression
 import com.intellij.psi.*
 import com.intellij.util.ThreeState
 import org.jetbrains.idea.devkit.util.PsiUtil
+import org.jetbrains.uast.evaluateString
 
 private class ActionIdReferenceContributor : PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
@@ -16,11 +17,11 @@ private class ActionIdReferenceContributor : PsiReferenceContributor() {
                              PsiJavaPatterns.psiMethod()
                                .withName("getAction").definedInClass("com.intellij.openapi.actionSystem.ActionManager")
         ),
-      uastInjectionHostReferenceProvider { _, host ->
+      uastInjectionHostReferenceProvider { uhost, host ->
         arrayOf(ActionOrGroupIdReference(
           host,
           ElementManipulators.getValueTextRange(host),
-          ElementManipulators.getValueText(host),
+          uhost.evaluateString() ?: ElementManipulators.getValueText(host),
           ThreeState.UNSURE
         ))
       }

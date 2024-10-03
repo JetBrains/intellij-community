@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.OverrideText;
 import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
@@ -27,7 +28,7 @@ import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import java.util.List;
 import java.util.Objects;
 
-final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElement> {
+final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElement> implements PluginConfigReference {
 
   private final String myId;
   private final ThreeState myIsAction;
@@ -105,5 +106,10 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
     if (myIsAction != ThreeState.YES) {
       IdeaPluginRegistrationIndex.processGroup(project, id, scope, processor);
     }
+  }
+
+  @Override
+  public @NotNull String getUnresolvedMessagePattern() {
+    return DevKitBundle.message("plugin.xml.action.cannot.resolve", myId);
   }
 }

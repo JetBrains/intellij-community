@@ -2,12 +2,14 @@
 package org.jetbrains.idea.devkit.kotlin.codeInsight
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.idea.devkit.inspections.UnresolvedPluginConfigReferenceInspection
 
 class KtActionReferenceTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun setUp() {
     super.setUp()
     myFixture.addClass("package com.intellij.ui.components; public class JBList {}");
+    myFixture.addClass("package com.intellij.openapi.actionSystem; public abstract class AnAction {}");
     myFixture.addClass("""
       package com.intellij.openapi.actionSystem;
       
@@ -65,6 +67,27 @@ class KtActionReferenceTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
     assertSameElements(myFixture.getCompletionVariants("Caller.kt").orEmpty(), "myAction", "myGroup")
+  }
+
+  fun testInvalidActionOrGroupReference() {
+    val DLR = '$'.toString()
+    myFixture.enableInspections(UnresolvedPluginConfigReferenceInspection::class.java)
+    myFixture.createFile("plugin.xml", pluginXmlActions("""
+              <group id="myGroup"></group>
+              <action id="myAction" class="foo.bar.BarAction"></action>
+              <action id="${DLR}myActionDollar" class="foo.bar.BarAction"></action>
+              """
+    ));
+    myFixture.configureByText("Caller.kt", """
+      fun usage(actionManager: com.intellij.openapi.actionSystem.ActionManager){
+      
+         actionManager.getAction("myAction")
+         actionManager.getAction("$DLR{"\$DLR"}myActionDollar")
+         actionManager.getAction("<error descr="Cannot resolve action id 'someUndefinedAction'">someUndefinedAction</error>")
+      
+      }
+    """.trimIndent())
+    myFixture.testHighlighting()
   }
 
   fun testRenameGroup() {
