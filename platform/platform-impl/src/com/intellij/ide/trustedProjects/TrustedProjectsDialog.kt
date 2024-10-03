@@ -3,6 +3,8 @@
 
 package com.intellij.ide.trustedProjects
 
+import com.intellij.diagnostic.WindowsDefenderChecker
+import com.intellij.diagnostic.WindowsDefenderExcludeUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
@@ -12,18 +14,17 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ThreeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import kotlin.io.path.Path
 
 object TrustedProjectsDialog {
   /**
@@ -51,31 +52,20 @@ object TrustedProjectsDialog {
     if (projectTrustedState != ThreeState.UNSURE) {
       return true
     }
-
-    val doNotAskOption = projectRoot.parent?.let(TrustedProjectsDialog::createDoNotAskOptionForLocation)
-    val choice = withContext(Dispatchers.EDT) {
-      MessageDialogBuilder.Message(title, message)
-        .buttons(trustButtonText, distrustButtonText, cancelButtonText)
-        .defaultButton(trustButtonText)
-        .focusedButton(distrustButtonText)
-        .doNotAsk(doNotAskOption)
-        .asWarning()
-        .help(TRUSTED_PROJECTS_HELP_TOPIC)
-        .show()
+    val isWinDefenderEnabled = isWinDefenderEnabled(project, projectRoot)
+    val dialog = withContext(Dispatchers.EDT) {
+      TrustedProjectStartupDialog(project, projectRoot, isWinDefenderEnabled, title, message, trustButtonText, distrustButtonText, cancelButtonText).apply { show() }
     }
-
-    val openChoice = when (choice) {
-      trustButtonText -> OpenUntrustedProjectChoice.TRUST_AND_OPEN
-      distrustButtonText -> OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
-      cancelButtonText, null -> OpenUntrustedProjectChoice.CANCEL
-      else -> {
-        logger<TrustedProjects>().error("Illegal choice $choice")
-        return false
-      }
-    }
-
+    val openChoice = dialog.getOpenChoice()
+    val windowDefenderPathsToExclude = dialog.getWidowsDefenderPathsToExclude()
+    
     if (openChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN) {
       TrustedProjects.setProjectTrusted(locatedProject, true)
+      if (projectRoot.parent != null && dialog.isTrustAll()) {
+        val projectLocationPath = projectRoot.parent.toString()
+        TrustedProjectsStatistics.TRUST_LOCATION_CHECKBOX_SELECTED.log()
+        service<TrustedPathsSettings>().addTrustedPath(projectLocationPath)
+      }
     }
     if (openChoice == OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE) {
       TrustedProjects.setProjectTrusted(locatedProject, false)
@@ -83,26 +73,20 @@ object TrustedProjectsDialog {
 
     TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
 
+    if (isWinDefenderEnabled && project != null && windowDefenderPathsToExclude.isNotEmpty()) {
+      val checker = serviceAsync<WindowsDefenderChecker>()
+      WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, windowDefenderPathsToExclude)
+    }
     return openChoice != OpenUntrustedProjectChoice.CANCEL
   }
 
-  private fun createDoNotAskOptionForLocation(projectLocation: Path): DoNotAskOption {
-    val projectLocationPath = projectLocation.toString()
-    return object : DoNotAskOption.Adapter() {
-      override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
-        if (isSelected && exitCode == Messages.YES) {
-          TrustedProjectsStatistics.TRUST_LOCATION_CHECKBOX_SELECTED.log()
-          service<TrustedPathsSettings>().addTrustedPath(projectLocationPath)
-        }
-      }
 
-      override fun getDoNotShowMessage(): String {
-        val path = FileUtil.getLocationRelativeToUserHome(projectLocationPath, false)
-        return IdeBundle.message("untrusted.project.warning.trust.location.checkbox", path)
-      }
-    }
+  private fun isWinDefenderEnabled(project: Project?, projectPath: Path): Boolean {
+    if (!SystemInfo.isWindows || project == null || Path(System.getProperty("user.home")).resolve("Downloads").equals(projectPath.parent)) return false
+    val defenderChecker = WindowsDefenderChecker.getInstance()
+    return !defenderChecker.isStatusCheckIgnored(project) && defenderChecker.isRealTimeProtectionEnabled == true
   }
-
+  
   suspend fun confirmLoadingUntrustedProjectAsync(
     project: Project,
     @NlsContexts.DialogTitle title: String,

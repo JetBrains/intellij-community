@@ -3270,4 +3270,23 @@ public class StringUtil {
   public static int rankForFileSize(long fileSize) {
     return StringUtilRt.rankForFileSize(fileSize);
   }
+
+  public static List<Integer> findAllIndexesOfSymbol(CharSequence charSequence, char character) {
+    return findAllIndexesOfSymbol(charSequence, character, 0 , false);
+  }
+  
+  public static List<Integer> findAllIndexesOfSymbol(CharSequence charSequence, char character, int startIndex, boolean ignoreCase) {
+    List<Integer> result = new ArrayList<>();
+    int firstIndex = Math.max(startIndex, 0);
+    int lastIndex = charSequence.length() - 1;
+
+    for (int index = firstIndex; index <= lastIndex; index++) {
+      char charAtIndex = charSequence.charAt(index);
+      if (ignoreCase ? Character.toLowerCase(character) == Character.toLowerCase(charAtIndex)
+                     : character == charAtIndex) {
+        result.add(index);
+      }
+    }
+    return result;
+  }
 }

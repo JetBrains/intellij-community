@@ -1695,6 +1695,8 @@ Fc:com.intellij.openapi.util.text.StringUtil
 - s:escapeXmlEntities(java.lang.String):java.lang.String
 - s:escaper(Z,java.lang.String):com.intellij.util.NotNullFunction
 - s:filterEmptyStrings(java.lang.String[]):java.lang.String[]
+- s:findAllIndexesOfSymbol(java.lang.CharSequence,C):java.util.List
+- s:findAllIndexesOfSymbol(java.lang.CharSequence,C,I,Z):java.util.List
 - s:findFirst(java.lang.CharSequence,com.intellij.openapi.util.text.CharFilter):I
 - s:findIgnoreCase(java.lang.String,java.lang.String[]):Z
 - s:findMatches(java.lang.String,java.util.regex.Pattern):java.util.List
