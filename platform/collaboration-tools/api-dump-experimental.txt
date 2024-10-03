@@ -523,9 +523,6 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - bs:create$default(com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory,java.lang.String,Z,I,java.lang.Object):com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 *f:com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory$Companion
 - f:createTreeToolbar(com.intellij.openapi.actionSystem.ActionManager,java.lang.String,javax.swing.JComponent):javax.swing.JComponent
-*f:com.intellij.collaboration.ui.codereview.comment.CodeReviewAIUIUtil
-- sf:INSTANCE:com.intellij.collaboration.ui.codereview.comment.CodeReviewAIUIUtil
-- f:getAI_COLOR():java.awt.Color
 *f:com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 - f:createIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel,com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory$Config,com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$IconConfig):javax.swing.JComponent
@@ -1506,6 +1503,9 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:toAnAction(javax.swing.Action):com.intellij.openapi.actionSystem.AnAction
 *f:com.intellij.collaboration.ui.util.CodeReviewColorUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.util.CodeReviewColorUtil
+*f:com.intellij.collaboration.ui.util.CodeReviewColorUtil$AI
+- sf:INSTANCE:com.intellij.collaboration.ui.util.CodeReviewColorUtil$AI
+- f:getBackground():com.intellij.ui.JBColor
 *f:com.intellij.collaboration.ui.util.CodeReviewColorUtil$Branch
 - sf:INSTANCE:com.intellij.collaboration.ui.util.CodeReviewColorUtil$Branch
 - f:getBackground():com.intellij.ui.JBColor

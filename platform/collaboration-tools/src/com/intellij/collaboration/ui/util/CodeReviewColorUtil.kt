@@ -29,4 +29,8 @@ object CodeReviewColorUtil {
 
     val borderReacted: JBColor = JBColor.namedColor("Review.Reaction.Border.Reacted", JBColor(0x3574F0, 0x548AF7))
   }
+
+  object AI {
+    val background: JBColor = JBColor.namedColor("Review.AI.Background", JBColor(0x834DF0, 0x834DF0))
+  }
 }
