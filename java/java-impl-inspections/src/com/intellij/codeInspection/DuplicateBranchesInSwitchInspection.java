@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -301,13 +301,13 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
   @Contract("null -> false")
   private static boolean isBreakWithoutLabel(@Nullable PsiStatement statement) {
-    return statement instanceof PsiBreakStatement && ((PsiBreakStatement)statement).getLabelIdentifier() == null;
+    return statement instanceof PsiBreakStatement breakStatement && breakStatement.getLabelIdentifier() == null;
   }
 
   @Contract("_,null -> false")
   private static boolean isRedundantComment(@NotNull Set<String> existingComments, @Nullable PsiElement element) {
-    if (element instanceof PsiComment) {
-      String text = TryWithIdenticalCatchesInspection.getCommentText((PsiComment)element);
+    if (element instanceof PsiComment comment) {
+      String text = TryWithIdenticalCatchesInspection.getCommentText(comment);
       return text.isEmpty() || existingComments.contains(text);
     }
     return false;
@@ -706,10 +706,9 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     int effectiveLength() {
-      if (myStatements.length == 1 && myStatements[0] instanceof PsiBlockStatement) {
-        return ((PsiBlockStatement)myStatements[0]).getCodeBlock().getStatementCount();
-      }
-      return myStatements.length;
+      return myStatements.length == 1 && myStatements[0] instanceof PsiBlockStatement blockStatement 
+             ? blockStatement.getCodeBlock().getStatementCount() 
+             : myStatements.length;
     }
 
     int hash() {
@@ -768,20 +767,21 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       return null;
     }
 
-    static int hashElement(@NotNull PsiElement element, int depth) {
-      if (element instanceof PsiExpression) {
-        return hashExpression((PsiExpression)element);
+    private static int hashElement(@Nullable PsiElement element, int depth) {
+      if (element == null) {
+        return 0;
       }
-      if (element instanceof PsiBlockStatement) {
-        return hashStatements(((PsiBlockStatement)element).getCodeBlock().getStatements()) * 31
-               + JavaElementType.BLOCK_STATEMENT.getIndex();
+      if (element instanceof PsiExpression expression) {
+        return hashExpression(expression);
+      }
+      if (element instanceof PsiBlockStatement blockStatement) {
+        return hashStatements(blockStatement.getCodeBlock().getStatements()) * 31 + JavaElementType.BLOCK_STATEMENT.getIndex();
       }
       int hash = 0;
       if (depth > 0) {
         int count = 0;
         for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-          if (child instanceof PsiWhiteSpace || child instanceof PsiComment ||
-              child instanceof PsiJavaToken) { // significant tokens are taken into account by getElementType()
+          if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiJavaToken) {
             continue;
           }
           hash = hash * 31 + hashElement(child, depth - 1);
@@ -798,40 +798,39 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       return hash;
     }
 
-    static int hashExpression(@Nullable PsiExpression expression) {
+    private static int hashExpression(@Nullable PsiExpression expression) {
       if (expression == null) {
         return 0;
       }
-      if (expression instanceof PsiParenthesizedExpression) {
-        return hashExpression(((PsiParenthesizedExpression)expression).getExpression());
+      if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
+        return hashExpression(parenthesizedExpression.getExpression());
       }
-
       short index = expression.getNode().getElementType().getIndex();
-      if (expression instanceof PsiReferenceExpression) {
-        return hashReference((PsiReferenceExpression)expression, index);
+      if (expression instanceof PsiReferenceExpression referenceExpression) {
+        return hashReference(referenceExpression, index);
       }
-      if (expression instanceof PsiMethodCallExpression) {
-        return hashReference(((PsiMethodCallExpression)expression).getMethodExpression(), index);
+      if (expression instanceof PsiMethodCallExpression methodCallExpression) {
+        return hashReference(methodCallExpression.getMethodExpression(), index);
       }
-      if (expression instanceof PsiNewExpression) {
-        PsiJavaCodeReferenceElement reference = ((PsiNewExpression)expression).getClassOrAnonymousClassReference();
+      if (expression instanceof PsiNewExpression newExpression) {
+        PsiJavaCodeReferenceElement reference = newExpression.getClassOrAnonymousClassReference();
         if (reference != null) {
           return hashReference(reference, index);
         }
       }
-      if (expression instanceof PsiAssignmentExpression) {
-        PsiExpression lExpression = ((PsiAssignmentExpression)expression).getLExpression();
-        PsiExpression rExpression = ((PsiAssignmentExpression)expression).getRExpression();
-        return ((hashExpression(lExpression) * 31) + hashExpression(rExpression)) * 31 + index;
+      if (expression instanceof PsiAssignmentExpression assignmentExpression) {
+        PsiExpression lExpression = assignmentExpression.getLExpression();
+        PsiExpression rExpression = assignmentExpression.getRExpression();
+        return (hashExpression(lExpression) * 31 + hashExpression(rExpression)) * 31 + index;
       }
       return index;
     }
 
-    static int hashReference(@NotNull PsiJavaCodeReferenceElement reference, short index) {
-      return Objects.hashCode(reference.getReferenceName()) * 31 + index;
+    private static int hashReference(@Nullable PsiJavaCodeReferenceElement reference, short index) {
+      return reference == null ? 0 : Objects.hashCode(reference.getReferenceName()) * 31 + index;
     }
 
-    static int hashStatements(PsiStatement @NotNull [] statements) {
+    private static int hashStatements(PsiStatement @NotNull [] statements) {
       int hash = statements.length;
       for (PsiStatement statement : statements) {
         hash = hash * 31 + hashElement(statement, 2); // Don't want to hash the whole PSI tree because it might be quite slow
@@ -974,7 +973,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     private static boolean isLeftBrace(PsiElement element) {
-      return element instanceof PsiJavaToken && JavaTokenType.LBRACE.equals(((PsiJavaToken)element).getTokenType());
+      return element instanceof PsiJavaToken token && JavaTokenType.LBRACE.equals(token.getTokenType());
     }
 
     PsiStatement[] getStatementsToDelete() {
@@ -994,8 +993,8 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
           statement instanceof PsiThrowStatement) {
         return true;
       }
-      if (statement instanceof PsiReturnStatement) {
-        return isSimpleExpression(((PsiReturnStatement)statement).getReturnValue());
+      if (statement instanceof PsiReturnStatement returnStatement) {
+        return isSimpleExpression(returnStatement.getReturnValue());
       }
       return false;
     }
@@ -1005,12 +1004,12 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       if (expression == null || expression instanceof PsiLiteralExpression) {
         return true;
       }
-      if (expression instanceof PsiReferenceExpression) {
-        PsiExpression qualifier = ((PsiReferenceExpression)expression).getQualifierExpression();
+      if (expression instanceof PsiReferenceExpression ref) {
+        PsiExpression qualifier = ref.getQualifierExpression();
         return qualifier == null || qualifier instanceof PsiQualifiedExpression;
       }
-      if (expression instanceof PsiUnaryExpression) {
-        return isSimpleExpression(((PsiUnaryExpression)expression).getOperand());
+      if (expression instanceof PsiUnaryExpression unaryExpression) {
+        return isSimpleExpression(unaryExpression.getOperand());
       }
       return false;
     }
@@ -1057,7 +1056,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       TryWithIdenticalCatchesInspection.collectCommentTexts(statement, myTexts);
     }
 
-    public void addPending(PsiElement element) {
+    void addPending(PsiElement element) {
       myPending.add(element);
     }
   }
@@ -1074,7 +1073,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       myCanMergeWithDefaultBranch = SwitchUtils.isCaseNull(rule);
     }
 
-    public static boolean calculateCanMergeBranches(@NotNull PsiSwitchLabelStatementBase rule) {
+    static boolean calculateCanMergeBranches(@NotNull PsiSwitchLabelStatementBase rule) {
       PsiCaseLabelElementList labelElementList = rule.getCaseLabelElementList();
       if (labelElementList == null) return false;
       PsiCaseLabelElement[] elements = labelElementList.getElements();
@@ -1223,7 +1222,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       return true;
     }
 
-    public void deleteRedundantComments() {
+    void deleteRedundantComments() {
       List<PsiElement> redundantComments = new ArrayList<>();
 
       List<PsiElement> mightBeRedundantComments = new ArrayList<>();
@@ -1234,9 +1233,9 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
             break;
           }
         }
-        else if (element instanceof PsiComment psiComment) {
-          if (isRedundantComment(myCommentsToMergeWith, psiComment)) {
-            mightBeRedundantComments.add(psiComment);
+        else if (element instanceof PsiComment comment) {
+          if (isRedundantComment(myCommentsToMergeWith, comment)) {
+            mightBeRedundantComments.add(comment);
           }
         }
       }
@@ -1250,9 +1249,9 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
           }
           continue;
         }
-        else if (element instanceof PsiComment psiComment) {
-          if (isRedundantComment(myCommentsToMergeWith, psiComment)) {
-            mightBeRedundantComments.add(psiComment);
+        else if (element instanceof PsiComment comment) {
+          if (isRedundantComment(myCommentsToMergeWith, comment)) {
+            mightBeRedundantComments.add(comment);
             continue;
           }
         }
@@ -1295,9 +1294,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
   }
 
-  public static void copyCaseValues(@Nullable PsiCaseLabelElementList from,
-                                    @Nullable PsiCaseLabelElementList to,
-                                    boolean mergeWithDefault) {
+  static void copyCaseValues(@Nullable PsiCaseLabelElementList from, @Nullable PsiCaseLabelElementList to, boolean mergeWithDefault) {
     if (from == null || to == null) return;
     for (PsiCaseLabelElement caseValue : from.getElements()) {
       if (mergeWithDefault) {
