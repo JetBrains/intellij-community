@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 
 @JvmInline
 internal value class InlineCompletionJob(private val job: Job) : Disposable {
@@ -30,14 +31,21 @@ internal class SafeInlineCompletionExecutor(private val scope: CoroutineScope) {
 
   init {
     scope.launch {
-      var currentJob: Job? = null
+      val currentJob = AtomicReference<Job>()
       while (isActive) {
         val (nextJob, nextTimestamp) = nextTask.receive()
-        currentJob?.cancelAndJoin()
+        currentJob.get()?.cancelAndJoin()
         ensureActive()
-        currentJob = nextJob
-        currentJob.invokeOnCompletion { lastExecutedJobTimestamp.set(nextTimestamp) }
-        currentJob.start()
+
+        if (!currentJob.compareAndSet(null, nextJob)) {
+          LOG.error("[Inline Completion] request execution was not reset after its finish.")
+          currentJob.set(null)
+        }
+        nextJob.invokeOnCompletion { _ ->
+          currentJob.set(null) // IJPL-159913
+          lastExecutedJobTimestamp.set(nextTimestamp)
+        }
+        nextJob.start()
       }
     }
   }
