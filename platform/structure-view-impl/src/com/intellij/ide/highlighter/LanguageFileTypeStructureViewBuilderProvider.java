@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -31,7 +32,9 @@ class LanguageFileTypeStructureViewBuilderProvider implements StructureViewBuild
     if (factory == null) return null;
     StructureViewBuilder physicalBuilder = factory.getStructureViewBuilder(psiFile);
     if (!(physicalBuilder instanceof TreeBasedStructureViewBuilder treeBasedStructureViewBuilder)) return physicalBuilder;
-    if (ApplicationManager.getApplication().isUnitTestMode()) return physicalBuilder;
+    if (ApplicationManager.getApplication().isUnitTestMode() || !Registry.is("logical.structure.enabled", true)) {
+      return physicalBuilder;
+    }
 
     return new PhysicalAndLogicalStructureViewBuilder(treeBasedStructureViewBuilder, psiFile);
   }
