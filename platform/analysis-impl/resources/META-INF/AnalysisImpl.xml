@@ -52,6 +52,8 @@
                     serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.ResolveScopeManager"
                     serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.module.impl.ModuleScopeProviderFactory"
+                    serviceImplementation="com.intellij.openapi.module.impl.scopes.ModuleScopeProviderFactoryImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.editor.LazyRangeMarkerFactory"
                     serviceImplementation="com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl"/>

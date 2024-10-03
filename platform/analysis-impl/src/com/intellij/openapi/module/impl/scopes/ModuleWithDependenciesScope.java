@@ -191,7 +191,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
    * Compute a set of ids of all files under {@code roots}
    */
   @NotNull
-  static VirtualFileEnumeration getFileEnumerationUnderRoots(@NotNull Collection<? extends VirtualFile> roots) {
+  public static VirtualFileEnumeration getFileEnumerationUnderRoots(@NotNull Collection<? extends VirtualFile> roots) {
     IntSet result = new IntOpenHashSet();
     for (VirtualFile file : roots) {
       if (file instanceof VirtualFileWithId) {
