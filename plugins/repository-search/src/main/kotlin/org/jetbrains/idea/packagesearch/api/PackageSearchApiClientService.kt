@@ -2,15 +2,26 @@ package org.jetbrains.idea.packagesearch.api
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.Service
+import com.intellij.util.io.createParentDirectories
 import io.ktor.client.engine.java.Java
 import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
+import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.headers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.document.database.DataStore
+import kotlinx.document.database.mvstore.MVDataStore
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
@@ -18,16 +29,21 @@ import org.jetbrains.idea.reposearch.DependencySearchProvider
 import org.jetbrains.idea.reposearch.PluginEnvironment
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import org.jetbrains.idea.reposearch.logTrace
+import org.jetbrains.packagesearch.api.PackageSearchApiClientObject
 import org.jetbrains.packagesearch.api.v3.ApiMavenPackage
 import org.jetbrains.packagesearch.api.v3.http.PackageSearchApiClient
 import org.jetbrains.packagesearch.api.v3.http.PackageSearchApiClient.Companion.defaultHttpClient
 import org.jetbrains.packagesearch.api.v3.http.PackageSearchEndpoints
 import org.jetbrains.packagesearch.api.v3.http.searchPackages
 import org.jetbrains.packagesearch.api.v3.search.jvmMavenPackages
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.div
+import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.APP)
-class PackageSearchApiClientService : Disposable, DependencySearchProvider {
+class PackageSearchApiClientService(val coroutineScope: CoroutineScope) : Disposable, DependencySearchProvider {
 
   private val httpClient = defaultHttpClient(engine = Java, protobuf = false) {
     install(UserAgent) {
@@ -35,7 +51,7 @@ class PackageSearchApiClientService : Disposable, DependencySearchProvider {
     }
     install(DefaultRequest) {
       headers {
-        append("Api-Version", "3.1.1")
+        append("Api-Version", PackageSearchApiClientObject.version)
         append("JB-IDE-Version", PluginEnvironment.ideVersion)
       }
     }
@@ -48,18 +64,48 @@ class PackageSearchApiClientService : Disposable, DependencySearchProvider {
         }
       }
     }
+    install(ContentEncoding) {
+      deflate()
+      gzip()
+    }
+    install(HttpRequestRetry) {
+      maxRetries = 5
+      retryOnException(retryOnTimeout = true)
+    }
     install(HttpTimeout) {
       requestTimeoutMillis = 10.seconds.inWholeMilliseconds
+      socketTimeoutMillis = 3.seconds.inWholeMilliseconds
+      connectTimeoutMillis = 3.seconds.inWholeMilliseconds
+    }
+    install(UserAgent) {
+      agent = intelliJ()
     }
   }
 
+  private val cacheFilePath
+    get() = appSystemDir / "caches" / "packagesearch" / "${PackageSearchApiClientObject.version}.db"
+
+
+  private val mvDataStore = MVDataStore.open(
+    getCacheFile(),
+    DataStore.CommitStrategy.Periodic(5.seconds))
+
   val client = PackageSearchApiClient(
+    dataStore = mvDataStore,
     endpoints = PackageSearchEndpoints.PROD,
     httpClient = httpClient
   )
 
+  private fun getCacheFile(): Path {
+    if (!cacheFilePath.exists()) cacheFilePath.createParentDirectories().absolutePathString()
+    return cacheFilePath
+  }
+
   override fun dispose() {
     httpClient.close()
+    coroutineScope.launch(Dispatchers.IO) {
+      mvDataStore.close()
+    }
   }
 
   @Deprecated("Use directly the client instead")
@@ -126,3 +172,16 @@ private fun ApiMavenPackage.repositoryArtifactData(): MavenRepositoryArtifactInf
     /* version = */ versions.toTypedArray()
   )
 }
+
+private fun UserAgent.Config.intelliJ(): String {
+  val app = ApplicationManager.getApplication()
+  if (app != null && !app.isDisposed) {
+    val productName = ApplicationNamesInfo.getInstance().fullProductName
+    val version = ApplicationInfo.getInstance().build.asStringWithoutProductCode()
+    return "$productName/$version"
+  }
+  else {
+    return "IntelliJ"
+  }
+}
+

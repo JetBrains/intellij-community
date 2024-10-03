@@ -50,5 +50,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
     <orderEntry type="library" exported="" name="package-search-api-client" level="project" />
+    <orderEntry type="library" name="mvstore" level="project" />
   </component>
 </module>

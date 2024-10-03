@@ -1,21 +1,33 @@
 <component name="libraryTable">
   <library name="package-search-api-client" type="repository">
-    <properties maven-id="org.jetbrains.packagesearch:packagesearch-api-client-jvm:3.1.1">
+    <properties maven-id="org.jetbrains.packagesearch:packagesearch-api-client-jvm:3.3.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.1.1/packagesearch-api-client-jvm-3.1.1.jar">
-          <sha256sum>15cf65b66dc121308517db68e82d8930d7e227257bdb862ca07f1328515eea6b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.3.1/packagesearch-api-client-jvm-3.3.1.jar">
+          <sha256sum>d7e293f78f1be85cec7a1ad3dfec5b5a868074b00a90a8be2438c25660526019</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.1.1/packagesearch-http-models-jvm-3.1.1.jar">
-          <sha256sum>d8eeccae53547378ea2d1aaab6efa94d65c4693e3bcdefed13c44b8ce8a52df9</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.3.1/packagesearch-http-models-jvm-3.3.1.jar">
+          <sha256sum>0318b967115de0c7c8fbd93bc6e3d279c82de2954f90794146962921de45972d</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.1.1/packagesearch-api-models-jvm-3.1.1.jar">
-          <sha256sum>eac34c241019a23d3b0a07b4e04888b110aa4c06a826f80de19d2457f6be4b81</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.3.1/packagesearch-api-models-jvm-3.3.1.jar">
+          <sha256sum>a16f54c2126f9289610438d4f5592cd386113110cb8180ccfbe6999f5b1a3dbf</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.1.1/packagesearch-version-utils-jvm-3.1.1.jar">
-          <sha256sum>ec7192861556914e6edb5ce0b901848431b03a327a3ca4045c332ab5b3b24ff8</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-mvstore/0.0.4/kotlinx-document-store-mvstore-0.0.4.jar">
+          <sha256sum>956a4c7faad66e3471861adaa278d9486f3a050ac25fb6a99ca90809d379adfe</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.3.1/packagesearch-version-utils-jvm-3.3.1.jar">
+          <sha256sum>4c86546693efaeb889e02d043521cda15da5f10853b0471095b7db80dc0540e7</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/com/soywiz/korlibs/krypto/krypto-jvm/4.0.10/krypto-jvm-4.0.10.jar">
           <sha256sum>0fe8dcdf54b13b5ec56fdb5f63c057364264bb2f51b7f7bc3c271d5b1ba68dcb</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-core-jvm/0.0.4/kotlinx-document-store-core-jvm-0.0.4.jar">
+          <sha256sum>7e638082b4a14e3a96ca90f3f5db70ac65591e0b6c6670629e849d22ec34455f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.5.0/kotlinx-io-core-jvm-0.5.0.jar">
+          <sha256sum>f43dd81cf3c7f87abdc80100607b3892a5eb13d87b4d1ceccb7dfb53a68fa4ca</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.5.0/kotlinx-io-bytestring-jvm-0.5.0.jar">
+          <sha256sum>9b462754c2a574cb7720b16ef1129e6ea76d360d7c84c58684fcab77b17f844d</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -38,22 +50,33 @@
         <dependency maven-id="org.jetbrains:annotations" />
         <dependency maven-id="io.ktor:ktor-serialization-kotlinx-protobuf-jvm" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-protobuf" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json" />
+        <dependency maven-id="com.h2database:h2" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.1.1/packagesearch-api-client-jvm-3.1.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.1.1/packagesearch-http-models-jvm-3.1.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.1.1/packagesearch-api-models-jvm-3.1.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.1.1/packagesearch-version-utils-jvm-3.1.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.3.1/packagesearch-api-client-jvm-3.3.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.3.1/packagesearch-http-models-jvm-3.3.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.3.1/packagesearch-api-models-jvm-3.3.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-mvstore/0.0.4/kotlinx-document-store-mvstore-0.0.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.3.1/packagesearch-version-utils-jvm-3.3.1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/soywiz/korlibs/krypto/krypto-jvm/4.0.10/krypto-jvm-4.0.10.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-core-jvm/0.0.4/kotlinx-document-store-core-jvm-0.0.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.5.0/kotlinx-io-core-jvm-0.5.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.5.0/kotlinx-io-bytestring-jvm-0.5.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.1.1/packagesearch-api-client-jvm-3.1.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.1.1/packagesearch-http-models-jvm-3.1.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.1.1/packagesearch-api-models-jvm-3.1.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.1.1/packagesearch-version-utils-jvm-3.1.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.3.1/packagesearch-api-client-jvm-3.3.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.3.1/packagesearch-http-models-jvm-3.3.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.3.1/packagesearch-api-models-jvm-3.3.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-mvstore/0.0.4/kotlinx-document-store-mvstore-0.0.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.3.1/packagesearch-version-utils-jvm-3.3.1-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/soywiz/korlibs/krypto/krypto-jvm/4.0.10/krypto-jvm-4.0.10-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-core-jvm/0.0.4/kotlinx-document-store-core-jvm-0.0.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.5.0/kotlinx-io-core-jvm-0.5.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.5.0/kotlinx-io-bytestring-jvm-0.5.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
