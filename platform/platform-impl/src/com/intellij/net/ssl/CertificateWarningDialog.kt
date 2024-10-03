@@ -85,17 +85,19 @@ internal class CertificateWarningDialog(
     val panel = panel {
       row {
         var error: String? = null
-        certificates.forEach {
-          val errors = certificateErrorsMap[it]!!
-          when {
-            errors.contains(CertificateError.UNTRUSTED_AUTHORITY) -> IdeBundle.message("label.certificate.signed.by.untrusted.authority")
-            errors.contains(CertificateError.SELF_SIGNED) -> IdeBundle.message("label.certificate.self.signed")
-            errors.contains(CertificateError.NOT_YET_VALID) -> IdeBundle.message("label.certificate.not.yet.valid")
-            errors.contains(CertificateError.EXPIRED) -> IdeBundle.message("label.certificate.expired")
-            else -> null
-          }?.let {
-            error = it
-            return@forEach
+        run breaking@{
+          certificates.forEach {
+            val errors = certificateErrorsMap[it]!!
+            when {
+              errors.contains(CertificateError.SELF_SIGNED) -> IdeBundle.message("label.certificate.self.signed")
+              errors.contains(CertificateError.NOT_YET_VALID) -> IdeBundle.message("label.certificate.not.yet.valid")
+              errors.contains(CertificateError.EXPIRED) -> IdeBundle.message("label.certificate.expired")
+              errors.contains(CertificateError.UNTRUSTED_AUTHORITY) -> IdeBundle.message("label.certificate.signed.by.untrusted.authority")
+              else -> null
+            }?.let {
+              error = it
+              return@breaking
+            }
           }
         }
         icon(AllIcons.General.WarningDialog)
