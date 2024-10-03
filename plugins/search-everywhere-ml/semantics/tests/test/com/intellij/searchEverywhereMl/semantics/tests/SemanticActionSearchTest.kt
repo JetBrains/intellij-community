@@ -58,7 +58,6 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
     assertContainsElements(items, "Remove All Breakpoints", "Remove All Breakpoints In The Current File")
   }
 
-  @IJIgnore(issue = "JPL-163237")
   fun `test empty query`() = runTest {
     val semanticActionContributor = readAction {
       SemanticActionSearchEverywhereContributor(
