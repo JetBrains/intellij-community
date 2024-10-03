@@ -266,6 +266,25 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/basic/enum")
+    public static class Enum extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("EnumEntryCompletion.kt")
+        public void testEnumEntryCompletion() throws Exception {
+            runTest("../testData/handlers/basic/enum/EnumEntryCompletion.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/exclChar")
     public static class ExclChar extends AbstractBasicCompletionHandlerTest {
         @java.lang.Override
@@ -680,6 +699,25 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("FunctionShortName.kt")
         public void testFunctionShortName() throws Exception {
             runTest("../testData/handlers/basic/kdoc/FunctionShortName.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/basic/object")
+    public static class Object extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ObjectMethodCompletion.kt")
+        public void testObjectMethodCompletion() throws Exception {
+            runTest("../testData/handlers/basic/object/ObjectMethodCompletion.kt");
         }
     }
 

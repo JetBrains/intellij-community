@@ -30,6 +30,11 @@ public class K2JvmBasicCompletionFullJdkTestGenerated extends AbstractK2JvmBasic
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("JDKEnumEntryCompletion.kt")
+    public void testJDKEnumEntryCompletion() throws Exception {
+        runTest("../../completion/testData/basic/fullJdk/JDKEnumEntryCompletion.kt");
+    }
+
     @TestMetadata("KT-69416.kt")
     public void testKT_69416() throws Exception {
         runTest("../../completion/testData/basic/fullJdk/KT-69416.kt");

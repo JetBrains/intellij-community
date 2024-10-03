@@ -682,6 +682,35 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/basic/common/enums")
+        public static class Enums extends AbstractK1JvmBasicCompletionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("EnumEntryCompletion.kt")
+            public void testEnumEntryCompletion() throws Exception {
+                runTest("../testData/basic/common/enums/EnumEntryCompletion.kt");
+            }
+
+            @TestMetadata("EnumEntryCompletionRendering.kt")
+            public void testEnumEntryCompletionRendering() throws Exception {
+                runTest("../testData/basic/common/enums/EnumEntryCompletionRendering.kt");
+            }
+
+            @TestMetadata("EnumEntryEmptyCompletion.kt")
+            public void testEnumEntryEmptyCompletion() throws Exception {
+                runTest("../testData/basic/common/enums/EnumEntryEmptyCompletion.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/basic/common/extensionDeclarations")
         public static class ExtensionDeclarations extends AbstractK1JvmBasicCompletionTest {
             @java.lang.Override
@@ -1811,6 +1840,21 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
 
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ObjectMethodCompletion.kt")
+            public void testObjectMethodCompletion() throws Exception {
+                runTest("../testData/basic/common/objects/ObjectMethodCompletion.kt");
+            }
+
+            @TestMetadata("ObjectMethodCompletionRendering.kt")
+            public void testObjectMethodCompletionRendering() throws Exception {
+                runTest("../testData/basic/common/objects/ObjectMethodCompletionRendering.kt");
+            }
+
+            @TestMetadata("ObjectMethodEmptyCompletion.kt")
+            public void testObjectMethodEmptyCompletion() throws Exception {
+                runTest("../testData/basic/common/objects/ObjectMethodEmptyCompletion.kt");
             }
 
             @TestMetadata("PropertyFromCompanionObjectFromTypeAliasToNestedInObjectClass.kt")

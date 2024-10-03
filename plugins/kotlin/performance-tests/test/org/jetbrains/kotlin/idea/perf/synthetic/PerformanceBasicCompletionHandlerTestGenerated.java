@@ -266,6 +266,25 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/testData/handlers/basic/enum")
+    public static class Enum extends AbstractPerformanceBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("EnumEntryCompletion.kt")
+        public void testEnumEntryCompletion() throws Exception {
+            runTest("../completion/testData/handlers/basic/enum/EnumEntryCompletion.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../completion/testData/handlers/basic/exclChar")
     public static class ExclChar extends AbstractPerformanceBasicCompletionHandlerTest {
         @java.lang.Override
@@ -680,6 +699,25 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("FunctionShortName.kt")
         public void testFunctionShortName() throws Exception {
             runTest("../completion/testData/handlers/basic/kdoc/FunctionShortName.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/testData/handlers/basic/object")
+    public static class Object extends AbstractPerformanceBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ObjectMethodCompletion.kt")
+        public void testObjectMethodCompletion() throws Exception {
+            runTest("../completion/testData/handlers/basic/object/ObjectMethodCompletion.kt");
         }
     }
 

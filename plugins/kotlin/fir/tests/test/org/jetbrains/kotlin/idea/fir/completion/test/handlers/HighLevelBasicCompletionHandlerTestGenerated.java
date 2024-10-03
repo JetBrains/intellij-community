@@ -268,6 +268,25 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../completion/testData/handlers/basic/enum")
+        public static class Enum extends AbstractHighLevelBasicCompletionHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("EnumEntryCompletion.kt")
+            public void testEnumEntryCompletion() throws Exception {
+                runTest("../../completion/testData/handlers/basic/enum/EnumEntryCompletion.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/handlers/basic/exclChar")
         public static class ExclChar extends AbstractHighLevelBasicCompletionHandlerTest {
             @java.lang.Override
@@ -682,6 +701,25 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("FunctionShortName.kt")
             public void testFunctionShortName() throws Exception {
                 runTest("../../completion/testData/handlers/basic/kdoc/FunctionShortName.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../completion/testData/handlers/basic/object")
+        public static class Object extends AbstractHighLevelBasicCompletionHandlerTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ObjectMethodCompletion.kt")
+            public void testObjectMethodCompletion() throws Exception {
+                runTest("../../completion/testData/handlers/basic/object/ObjectMethodCompletion.kt");
             }
         }
 
@@ -1940,6 +1978,25 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             public void testInsideBracketsVariable() throws Exception {
                 runTest("../../completion/testData/handlers/basic/withTab/InsideBracketsVariable.kt");
             }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/handlers/basic/enum")
+    public static class Enum extends AbstractHighLevelBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("EnumEntryCompletion.kt")
+        public void testEnumEntryCompletion() throws Exception {
+            runTest("../../completion/testData/handlers/basic/enum/EnumEntryCompletion.kt");
         }
     }
 

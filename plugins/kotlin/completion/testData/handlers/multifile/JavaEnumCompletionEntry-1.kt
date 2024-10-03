@@ -1,0 +1,10 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
+
+fun foo() {
+
+    FOO<caret>
+}
+
+// ELEMENT: FOO
+// INVOCATION_COUNT: 2

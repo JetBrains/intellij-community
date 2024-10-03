@@ -20,8 +20,8 @@ import org.jetbrains.kotlin.idea.fir.completion.*
 import org.jetbrains.kotlin.idea.fir.completion.kmpBasic.AbstractKotlinKmpCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.*
 import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
-import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralKotlinToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirKotlinToKotlinMultiDollarStringsCopyPasteTest
+import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralKotlinToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralTextToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocMultiplatformTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
@@ -280,6 +280,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
 
         testClass<AbstractHighLevelBasicCompletionHandlerTest> {
             model("handlers/basic", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
+            model("handlers/basic/enum", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
             model("handlers", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX, isRecursive = false)
         }
 

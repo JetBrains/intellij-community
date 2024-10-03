@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.util.parents
@@ -103,14 +105,13 @@ internal open class FirCallableCompletionContributor(
     protected open fun filter(symbol: KaCallableSymbol, sessionParameters: FirCompletionSessionParameters): Boolean =
         sessionParameters.allowExpectedDeclarations || !symbol.isExpect
 
-    private val shouldCompleteTopLevelCallablesFromIndex: Boolean
-        get() = prefixMatcher.prefix.isNotEmpty()
-
+    // todo replace with a sealed hierarchy; too many arguments
     protected data class CallableWithMetadataForCompletion(
         private val _signature: KaCallableSignature<*>,
-        private val _explicitReceiverTypeHint: KaType?,
+        private val _explicitReceiverTypeHint: KaType? = null,
         val options: CallableInsertionOptions,
         val symbolOrigin: CompletionSymbolOrigin,
+        val lookupString: @NlsSafe String? = null, // todo extract; only used for objects/enums
     ) : KaLifetimeOwner {
         override val token: KaLifetimeToken
             get() = _signature.token
@@ -153,6 +154,7 @@ internal open class FirCallableCompletionContributor(
                 signature = callableWithMetadata.signature,
                 options = callableWithMetadata.options,
                 symbolOrigin = callableWithMetadata.symbolOrigin,
+                lookupString = callableWithMetadata.lookupString,
                 priority = null,
                 explicitReceiverTypeHint = callableWithMetadata.explicitReceiverTypeHint,
                 withTrailingLambda = withTrailingLambda,
@@ -209,16 +211,37 @@ internal open class FirCallableCompletionContributor(
         }
         availableStaticAndTopLevelNonExtensions.forEach { yield(createCallableWithMetadata(it.signature, it.scopeKind)) }
 
+        if (prefixMatcher.prefix.isNotEmpty()) {
+            val members = if (parameters.invocationCount > 1)
+                symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(scopeNameFilter) { declaration ->
+                    !visibilityChecker.isDefinitelyInvisibleByPsi(declaration)
+                } + symbolFromIndexProvider.getKotlinEnumEntriesByNameFilter(scopeNameFilter) {
+                    !visibilityChecker.isDefinitelyInvisibleByPsi(it)
+                } + symbolFromIndexProvider.getJavaFieldsByNameFilter(scopeNameFilter) {
+                    it is PsiEnumConstant
+                }
+            else
+                symbolFromIndexProvider.getTopLevelCallableSymbolsByNameFilter(scopeNameFilter) {
+                    !visibilityChecker.isDefinitelyInvisibleByPsi(it)
+                }
 
-        if (shouldCompleteTopLevelCallablesFromIndex) {
-            val topLevelCallablesFromIndex = symbolFromIndexProvider.getTopLevelCallableSymbolsByNameFilter(scopeNameFilter) {
-                !visibilityChecker.isDefinitelyInvisibleByPsi(it) && it.canBeAnalysed()
-            }
-
-            topLevelCallablesFromIndex
-                .filter { filter(it, sessionParameters) }
+            members.filter { filter(it, sessionParameters) }
                 .filter { visibilityChecker.isVisible(it) }
-                .forEach { yield(createCallableWithMetadata(it.asSignature(), CompletionSymbolOrigin.Index)) }
+                .map { it.asSignature() }
+                .map { signature ->
+                    val lookupString = signature.callableId?.let { id ->
+                        id.className?.let { className ->
+                            className.asString() + "." + id.callableName.asString()
+                        }
+                    }
+
+                    CallableWithMetadataForCompletion(
+                        _signature = signature,
+                        options = getOptions(signature),
+                        symbolOrigin = CompletionSymbolOrigin.Index,
+                        lookupString = lookupString,
+                    )
+                }.forEach { yield(it) }
         }
 
         collectExtensionsFromIndexAndResolveExtensionScope(

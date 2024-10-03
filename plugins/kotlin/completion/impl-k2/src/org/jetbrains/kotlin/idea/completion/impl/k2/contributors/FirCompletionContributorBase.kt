@@ -7,7 +7,9 @@ import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.openapi.project.Project
+import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
@@ -83,6 +85,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         signature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
         symbolOrigin: CompletionSymbolOrigin,
+        lookupString: String? = null, // todo extract; too many arguments already, is used only for objects/enums
         priority: ItemPriority? = null,
         explicitReceiverTypeHint: KaType? = null,
         withTrailingLambda: Boolean = false, // TODO find a better solution
@@ -95,7 +98,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
         val shortName = namedSymbol.name
 
-        val lookups = sequence {
+        sequence {
             KotlinFirLookupElementFactory.createCallableLookupElement(
                 name = shortName,
                 signature = signature,
@@ -110,9 +113,20 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
                     options = options,
                 )?.let { yield(it) }
             }
-        }
+        }.map { builder ->
+            builder.applyIf(lookupString != null) {
+                withRenderer(object : LookupElementRenderer<LookupElement>() {
 
-        for (lookup in lookups) {
+                    override fun renderElement(
+                        element: LookupElement,
+                        presentation: LookupElementPresentation,
+                    ) {
+                        this@applyIf.renderElement(presentation)
+                        presentation.itemText = lookupString
+                    }
+                })
+            }
+        }.forEach { lookup ->
             lookup.priority = priority
             Weighers.applyWeighsToLookupElementForCallable(context, lookup, signature, symbolOrigin)
             sink.addElement(lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render(position = Variance.INVARIANT)))

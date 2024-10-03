@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.serialization.deserialization.METADATA_FILE_EXTENSION
 
 @OptIn(KaExperimentalApi::class)
@@ -92,17 +93,24 @@ class KtSymbolFromIndexProvider private constructor(
                 declarationsFromExtension
 
     context(KaSession)
+    @KaExperimentalApi
+    fun getKotlinEnumEntriesByNameFilter(
+        nameFilter: (Name) -> Boolean,
+        psiFilter: (KtEnumEntry) -> Boolean = { true },
+    ): Sequence<KaEnumEntrySymbol> = KotlinFullClassNameIndex.getAllElements<KtEnumEntry>(
+        project = project,
+        scope = scope,
+        keyFilter = { nameFilter(getShortName(it)) },
+    ) { it.isAcceptable(psiFilter) }
+        .map { it.symbol }
+
+    context(KaSession)
     fun getJavaClassesByNameFilter(
         nameFilter: (Name) -> Boolean,
         psiFilter: (PsiClass) -> Boolean = { true }
     ): Sequence<KaNamedClassSymbol> {
         val names = buildSet {
-            val processor = Processor { nameString: String ->
-                Name.identifierIfValid(nameString)
-                    ?.takeIf(nameFilter)
-                    ?.let(::add)
-                true
-            }
+            val processor = createNamesProcessor(nameFilter)
 
             nonKotlinNamesCaches.forEach {
                 it.processAllClassNames(processor, scope, null)
@@ -125,6 +133,27 @@ class KtSymbolFromIndexProvider private constructor(
         }.filter { it.isAcceptable(psiFilter) }
             .mapNotNull { it.namedClassSymbol }
     }
+
+    context(KaSession)
+    fun getKotlinCallableSymbolsByNameFilter(
+        nameFilter: (Name) -> Boolean,
+        psiFilter: (KtCallableDeclaration) -> Boolean = { true },
+    ): Sequence<KaCallableSymbol> = sequenceOf(
+        KotlinFunctionShortNameIndex,
+        KotlinPropertyShortNameIndex,
+    ).flatMap { index ->
+        index.getAllElements<KtCallableDeclaration>(
+            project = project,
+            scope = scope,
+            keyFilter = { nameFilter(getShortName(it)) },
+        ) { declaration ->
+            declaration.isAcceptable(psiFilter)
+                    && !declaration.isExtensionDeclaration()
+                    && !declaration.isKotlinBuiltins()
+        }
+    }.map { it.symbol }
+        .filterIsInstance<KaCallableSymbol>() +
+            resolveExtensionScopeWithTopLevelDeclarations.callables(nameFilter)
 
     context(KaSession)
     fun getKotlinCallableSymbolsByName(
@@ -151,6 +180,23 @@ class KtSymbolFromIndexProvider private constructor(
     }.map { it.symbol }
         .filterIsInstance<KaCallableSymbol>() +
             resolveExtensionScopeWithTopLevelDeclarations.callables(name)
+
+    context(KaSession)
+    fun getJavaFieldsByNameFilter(
+        nameFilter: (Name) -> Boolean,
+        psiFilter: (PsiField) -> Boolean = { true }
+    ): Sequence<KaCallableSymbol> {
+        val names = buildSet {
+            val processor = createNamesProcessor(nameFilter)
+
+            nonKotlinNamesCaches.forEach {
+                it.processAllFieldNames(processor, scope, null)
+            }
+        }
+
+        return names.asSequence()
+            .flatMap { getJavaFieldsByName(it, psiFilter) }
+    }
 
     context(KaSession)
     fun getJavaMethodsByName(
@@ -218,7 +264,7 @@ class KtSymbolFromIndexProvider private constructor(
                     val key = KotlinExtensionsByReceiverTypeStubIndexHelper.Companion.Key(receiverTypeName, name)
 
                     indexHelper.getAllElements(key.key, project, scope) { declaration ->
-                        declaration.isAcceptable(psiFilter)
+                                declaration.isAcceptable(psiFilter)
                                 && !declaration.isKotlinBuiltins()
                     }
                 }
@@ -353,4 +399,13 @@ private fun KtCallableDeclaration.isKotlinBuiltins(): Boolean {
     if (virtualFile.extension == METADATA_FILE_EXTENSION) return true
     if (this !is KtNamedFunction) return false
     return file.packageFqName.asString().replace(".", "/") + "/" + virtualFile.nameWithoutExtension in KotlinBuiltins
+}
+
+private fun MutableSet<Name>.createNamesProcessor(
+    nameFilter: (Name) -> Boolean,
+) = Processor { name: String ->
+    Name.identifierIfValid(name)
+        ?.takeIf(nameFilter)
+        ?.let(this@createNamesProcessor::add)
+    true
 }
