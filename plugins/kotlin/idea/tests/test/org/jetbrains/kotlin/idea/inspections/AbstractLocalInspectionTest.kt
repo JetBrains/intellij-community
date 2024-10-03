@@ -245,7 +245,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         val fixDescription = localFixTextString?.let { "with specified text '$localFixTextString'" } ?: ""
         if (localFixTextString != "none") {
-            assertTrue("Fix $fixDescription not found among ${allLocalFixActions.size} actions available:\n $availableDescription",
+            assertTrue("Fix '$fixDescription' not found among ${allLocalFixActions.size} actions available:\n $availableDescription",
               localFixActions.isNotEmpty()
             )
         }
