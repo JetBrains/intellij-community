@@ -250,10 +250,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
     PsiFile psi = PsiDocumentManager.getInstance(project).getPsiFile(doc);
     DocumentContent content = FileBasedIndexImpl.findLatestContent(doc, psi);
-    return FileContentImpl.createByContent(file, () -> {
-      var text = content.getText();
-      return text.toString().getBytes(file.getCharset());
-    }, project);
+    return FileContentImpl.createByText(file, content.getText(), project);
   }
 
   public void dispose() {
