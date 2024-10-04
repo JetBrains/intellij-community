@@ -62,7 +62,7 @@ class LocalArtifactsManager {
     project: Project? = null,
     retryIfCanceled: Boolean = true,
   ) {
-    if (ApplicationManager.getApplication().isUnitTestMode || (!retryIfCanceled && downloadCanceled)) return
+    if (!retryIfCanceled && downloadCanceled) return
 
     withContext(downloadContext) {
       val absentArtifacts: MutableList<DownloadableArtifact> = availableModels.filter { !it.checkPresent() }.toMutableList()
