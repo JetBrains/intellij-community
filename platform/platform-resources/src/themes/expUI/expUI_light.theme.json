@@ -149,6 +149,11 @@
       "hoverSeparatorColor": "Gray8"
     },
 
+    "Badge": {
+      "greenOutlineForeground": "Green4",
+      "greenOutlineBorderColor": "Green6"
+    },
+
     "Bookmark": {
       "Mnemonic.iconForeground": "Gray1",
       "MnemonicAvailable.borderColor": "Gray9",
