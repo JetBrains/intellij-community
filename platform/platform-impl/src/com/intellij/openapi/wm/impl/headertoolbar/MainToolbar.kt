@@ -166,7 +166,7 @@ class MainToolbar(
   private fun migrateVcsActions(schema: CustomActionsSchema) {
     if (AppMode.isRemoteDevHost()) return
     val allActions = schema.getActions().toMutableList()
-    val actionsToRemove = setOf("Vcs.Push", "Vcs.UpdateProject")
+    val actionsToRemove = setOf("main.toolbar.git.update", "main.toolbar.git.push")
     val wereRemoved = allActions.removeIf { it.groupPath.contains("Main Toolbar") && it.component in actionsToRemove }
     if (wereRemoved) {
       schema.setActions(allActions)

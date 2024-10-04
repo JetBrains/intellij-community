@@ -484,8 +484,6 @@
     <group id="MainToolbarVCSGroup">
       <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" />
       <action id="main.toolbar.git.MergeRebase" class="git4idea.ui.toolbar.GitMergeRebaseWidget"/>
-      <action id="main.toolbar.git.update" class="git4idea.ui.toolbar.GitMainToolbarUpdateProjectAction"/>
-      <action id="main.toolbar.git.push" class="git4idea.ui.toolbar.GitMainToolbarPushAction"/>
       <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
     </group>
 
