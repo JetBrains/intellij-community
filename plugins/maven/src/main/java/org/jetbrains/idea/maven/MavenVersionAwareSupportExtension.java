@@ -27,7 +27,7 @@ public interface MavenVersionAwareSupportExtension {
   Path getMavenHomeFile(@Nullable StaticResolvedMavenHomeType mavenHomeType);
 
   @NotNull
-  List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution);
+  List<Path> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution);
 
   @NotNull
   default List<@NonNls String> getAdditionalVmParameters() {

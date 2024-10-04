@@ -1760,8 +1760,8 @@ public class MavenUtil {
     return null;
   }
 
-  public static File getMavenPluginParentFile() {
-    return Paths.get(PathManager.getCommunityHomePath(), "plugins", "maven").toFile();
+  public static Path getMavenPluginParentFile() {
+    return Paths.get(PathManager.getCommunityHomePath(), "plugins", "maven");
   }
 
   @ApiStatus.Internal
@@ -1884,10 +1884,10 @@ public class MavenUtil {
     return MavenProjectModelReadHelper.getInstance(project);
   }
 
-  public static Collection<File> collectClasspath(Collection<Class<?>> classes) {
-    var result = new ArrayList<File>();
+  public static Collection<Path> collectClasspath(Collection<Class<?>> classes) {
+    var result = new ArrayList<Path>();
     for (Class<?> c : classes) {
-      result.add(new File(PathUtil.getJarPathForClass(c)));
+      result.add(Path.of(PathUtil.getJarPathForClass(c)));
     }
     return result;
   }

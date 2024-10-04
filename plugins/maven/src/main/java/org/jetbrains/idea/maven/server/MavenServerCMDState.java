@@ -21,6 +21,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -153,7 +154,7 @@ public class MavenServerCMDState extends CommandLineState {
     checkExtension(extension);
     setupMainClass(params, extension);
     assert extension != null; //checked in the method above, need to make static analyzer happy
-    params.getClassPath().addAllFiles(extension.collectClassPathAndLibsFolder(myDistribution));
+    params.getClassPath().addAllFiles(ContainerUtil.map(extension.collectClassPathAndLibsFolder(myDistribution), it -> it.toFile()));
 
     params.getVMParametersList().addAll(extension.getAdditionalVmParameters());
 
