@@ -116,7 +116,7 @@ class NativeServerConnection private constructor(
       startupArguments: NativeServerStartupArguments,
       startupTimeout: Duration,
       onStartupTimeout: () -> Unit,
-    ): NativeServerConnection = coroutineScope {
+    ): NativeServerConnection = withContext(Dispatchers.Default) {
       if (!serverPath.exists()) throw NativeServerException(IllegalArgumentException("Server file does not exist"))
       if (!serverPath.isRegularFile()) throw NativeServerException(IllegalArgumentException("Server file is not a regular file"))
       serverPath.toFile().setExecutable(true)
@@ -141,7 +141,7 @@ class NativeServerConnection private constructor(
 
       val channel = ManagedChannelBuilder
         .forAddress(LOCAL_HOSTNAME, port)
-        .usePlaintext() // TODO: should we?
+        .usePlaintext()
         .maxInboundMessageSize(CLIENT_MAX_SEND_MESSAGE_LENGTH)
         .executor(Dispatchers.IO.asExecutor())
         .build()
