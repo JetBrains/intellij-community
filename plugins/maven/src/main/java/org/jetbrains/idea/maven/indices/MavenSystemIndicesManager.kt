@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.getOpenedProjects
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -33,13 +34,13 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.io.File
 import java.net.URI
 import java.net.URISyntaxException
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
 
@@ -186,7 +187,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
 
 
   private fun getCanonicalUrl(repo: MavenRepositoryInfo): String {
-    if (File(repo.url).isDirectory) return File(repo.url).canonicalPath
+    if (Path.of(repo.url).isDirectory()) return Path.of(repo.url).toCanonicalPath()
     try {
       val uri = URI(repo.url)
       if (uri.scheme == null || uri.scheme.lowercase() == "file") {
