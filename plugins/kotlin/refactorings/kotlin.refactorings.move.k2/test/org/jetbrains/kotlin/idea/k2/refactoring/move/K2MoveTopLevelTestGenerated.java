@@ -250,6 +250,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveCollectionLiteralUsage/moveCollectionLiteralUsage.test");
     }
 
+    @TestMetadata("kotlin/moveDeleteIfOnlyFileAnnotation/moveDeleteIfOnlyFileAnnotation.test")
+    public void testKotlin_moveDeleteIfOnlyFileAnnotation_MoveDeleteIfOnlyFileAnnotation() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveDeleteIfOnlyFileAnnotation/moveDeleteIfOnlyFileAnnotation.test");
+    }
+
     @TestMetadata("kotlin/moveEscapedKeyword/moveEscapedKeyword.test")
     public void testKotlin_moveEscapedKeyword_MoveEscapedKeyword() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/moveEscapedKeyword/moveEscapedKeyword.test");
