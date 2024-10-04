@@ -98,7 +98,7 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
     }
 
     override fun getPreferredSize(): Dimension =
-      Dimension(JBUI.scale(120), ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height + insets.top + insets.bottom)
+      Dimension(JBUI.scale(125), ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height + insets.top + insets.bottom)
 
     private fun getNormalizedText(): String? {
       val editorField = editor.editorComponent as JTextField
