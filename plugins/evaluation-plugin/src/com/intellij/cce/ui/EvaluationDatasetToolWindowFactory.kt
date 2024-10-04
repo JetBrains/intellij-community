@@ -16,7 +16,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.components.JBScrollPane
@@ -27,6 +27,7 @@ import javax.swing.JButton
 import javax.swing.JPanel
 import javax.swing.JTextArea
 
+@Suppress("HardCodedStringLiteral")
 class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val myToolWindow = EvaluationDatasetToolWindow(project)
@@ -127,13 +128,18 @@ class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
 
     private fun createActionButton(text: String, action: () -> Unit): JButton {
       return createButton(text) {
+        val editor = getCurrentEditor()
+        if (editor == null) {
+          Messages.showErrorDialog(project, "No opened editor", "Error")
+          return@createButton
+        }
         loadSession()
         action()
         displaySession()
       }
     }
 
-    private fun createButton(@NlsSafe text: String, action: () -> Unit): JButton {
+    private fun createButton(text: String, action: () -> Unit): JButton {
       val button = JButton(text)
       button.addActionListener {
         action()
@@ -175,11 +181,16 @@ class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
       fileActions = ActionSerializer.deserializeFileActions(datasetArea.text)
     }
 
-    private fun getCurrentOffset(): Int = getCurrentEditor()?.caretModel?.currentCaret?.offset ?: -1
+    private fun getCurrentOffset(): Int {
+      val editor = getCurrentEditor()
+      check(editor != null)
+      return editor.caretModel.currentCaret.offset
+    }
 
     private fun getCurrentSelectionOffsets(): Pair<Int, Int> {
       val editor = getCurrentEditor()
-      return (editor?.selectionModel?.selectionStart ?: -1) to (editor?.selectionModel?.selectionEnd ?: -1)
+      check(editor != null)
+      return (editor.selectionModel.selectionStart) to (editor.selectionModel.selectionEnd)
     }
 
     private fun getCurrentSelectionText(): String = getCurrentEditor()?.selectionModel?.selectedText ?: ""
