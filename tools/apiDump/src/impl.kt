@@ -12,7 +12,6 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
 import java.nio.file.Path
-import kotlin.collections.set
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
@@ -86,6 +85,14 @@ class API internal constructor(
   val publicApi: List<ApiClass> by lazy {
     publicApi(index, signatures)
   }
+
+  private val stableAndExperimentalApi: Pair<List<ApiClass>, List<ApiClass>> by lazy {
+    stableAndExperimentalApi(publicApi)
+  }
+
+  val stableApi: List<ApiClass> get() = stableAndExperimentalApi.first
+
+  val experimentalApi: List<ApiClass> get() = stableAndExperimentalApi.second
 }
 
 /**
@@ -255,6 +262,40 @@ private fun publicApi(index: ApiIndex, classSignatures: List<ClassBinarySignatur
     )
   }
   return result
+}
+
+private fun stableAndExperimentalApi(classSignatures: List<ApiClass>): Pair<List<ApiClass>, List<ApiClass>> {
+  val stableClassSignatures = ArrayList<ApiClass>()
+  val experimentalClassSignatures = ArrayList<ApiClass>()
+  for (classSignature in classSignatures) {
+    if (classSignature.flags.annotationExperimental) {
+      // the whole class is experimental
+      experimentalClassSignatures.add(classSignature)
+      continue
+    }
+    val stableMembers = ArrayList<ApiMember>()
+    val experimentalMembers = ArrayList<ApiMember>()
+    for (member in classSignature.members) {
+      val memberList = if (member.flags.annotationExperimental) {
+        experimentalMembers
+      }
+      else {
+        stableMembers
+      }
+      memberList.add(member)
+    }
+    if (experimentalMembers.isEmpty()) {
+      // a stable class has only stable members
+      stableClassSignatures.add(classSignature)
+      continue
+    }
+    // keep only experimental members
+    experimentalClassSignatures.add(classSignature.copy(members = experimentalMembers))
+
+    // keep only stable members but also keep the signature in the stable list even if all members are experimental
+    stableClassSignatures.add(classSignature.copy(members = stableMembers))
+  }
+  return Pair(stableClassSignatures, experimentalClassSignatures)
 }
 
 @OptIn(ExperimentalPathApi::class)
