@@ -56,6 +56,15 @@ interface PluginManagementPolicy {
    */
   fun isInstallFromDiskAllowed(): Boolean
 
+  /**
+   * Allows or prohibits the plugin auto-update. If prohibited, the corresponding setting is forcefully disabled and inactive.
+   *
+   * Note: added in 24.3, a default implementation is given for compatibility.
+   *
+   * @see com.intellij.openapi.updateSettings.impl.PluginAutoUpdateService
+   */
+  fun isPluginAutoUpdateAllowed(): Boolean = DefaultPluginManagementPolicyImpl.isPluginAutoUpdateAllowed()
+
   companion object {
     @JvmStatic
     fun getInstance(): PluginManagementPolicy = service()
