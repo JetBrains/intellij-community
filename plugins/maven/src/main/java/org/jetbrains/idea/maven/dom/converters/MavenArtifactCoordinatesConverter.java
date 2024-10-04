@@ -38,6 +38,7 @@ import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
@@ -59,8 +60,8 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       MavenRepositoryInfo repository = MavenIndexUtils.getLocalRepository(contextProject);
       if (repository == null) return null;
       Path artifactPath = MavenUtil.getArtifactPath(Path.of(repository.getUrl()), id, "pom", null);
-      if (artifactPath != null && artifactPath.toFile().exists()) {
-        MavenIndicesManager.getInstance(contextProject).scheduleArtifactIndexing(id, artifactPath.toFile(), repository.getUrl());
+      if (artifactPath != null && Files.exists(artifactPath)) {
+        MavenIndicesManager.getInstance(contextProject).scheduleArtifactIndexing(id, artifactPath, repository.getUrl());
         return s;
       }
       return null;

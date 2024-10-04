@@ -15,7 +15,6 @@ import org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
-import java.io.File
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
@@ -148,22 +147,21 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
 
   }
 
-  override fun tryAddArtifacts(artifactFiles: Collection<File>): List<AddArtifactResponse> {
+  override fun tryAddArtifacts(artifactFiles: Collection<Path>): List<AddArtifactResponse> {
     val result = ArrayList<AddArtifactResponse>()
     artifactFiles.forEach {
-      val file = it.absoluteFile
-      if (!FileUtil.isAncestor(repoFile.pathString, it.path, true)) {
-        result.add(AddArtifactResponse(file, null))
+      if (!FileUtil.isAncestor(repoFile.pathString, it.pathString, true)) {
+        result.add(AddArtifactResponse(it.toAbsolutePath().toFile(), null))
       }
       else {
-        val id = extractMavenId(file.toPath())
+        val id = extractMavenId(it)
         if (id == null) {
-          result.add(AddArtifactResponse(file, null))
+          result.add(AddArtifactResponse(it.toAbsolutePath().toFile(), null))
         }
         else {
           addTo(group2Artifacts, id.groupId!!, id.artifactId!!)
           addTo(mavenIds2Versions, id2string(id.groupId!!, id.artifactId!!), id.version!!)
-          result.add(AddArtifactResponse(file, IndexedMavenId(id.groupId, id.artifactId, id.version, "", "")))
+          result.add(AddArtifactResponse(it.toAbsolutePath().toFile(), IndexedMavenId(id.groupId, id.artifactId, id.version, "", "")))
         }
       }
     }

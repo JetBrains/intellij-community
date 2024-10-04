@@ -173,8 +173,8 @@ public class MavenArchetypeManager {
     MavenRepositoryInfo localRepo = MavenIndexUtils.getLocalRepository(myProject);
     if (localRepo == null) return;
     Path artifactPath = MavenUtil.getArtifactPath(Path.of(localRepo.getUrl()), mavenId, "jar", null);
-    if (artifactPath != null && artifactPath.toFile().exists()) {
-      MavenIndicesManager.getInstance(myProject).scheduleArtifactIndexing(mavenId, artifactPath.toFile(), localRepo.getUrl());
+    if (artifactPath != null && Files.exists(artifactPath)) {
+      MavenIndicesManager.getInstance(myProject).scheduleArtifactIndexing(mavenId, artifactPath, localRepo.getUrl());
     }
   }
 

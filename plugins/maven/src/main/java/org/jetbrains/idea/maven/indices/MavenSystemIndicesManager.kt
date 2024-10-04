@@ -152,7 +152,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
   private fun getIndexProperty(dir: Path,
                                repo: MavenRepositoryInfo): MavenIndexUtils.IndexPropertyHolder {
     val holder = getProperties(dir) ?: MavenIndexUtils.IndexPropertyHolder(
-      dir.toFile(),
+      dir,
       repo.kind,
       setOf(repo.id),
       repo.url
@@ -163,7 +163,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
 
   private fun getProperties(dir: Path): MavenIndexUtils.IndexPropertyHolder? {
     try {
-      return MavenIndexUtils.readIndexProperty(dir.toFile())
+      return MavenIndexUtils.readIndexProperty(dir)
     }
     catch (e: MavenIndexException) {
       MavenLog.LOG.warn(e)

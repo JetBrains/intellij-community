@@ -5,7 +5,7 @@ import org.apache.http.annotation.Obsolete
 import org.jetbrains.idea.maven.server.AddArtifactResponse
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
-import java.io.File
+import java.nio.file.Path
 
 interface MavenUpdatableIndex : MavenRepositoryIndex {
   /***
@@ -20,6 +20,6 @@ interface MavenUpdatableIndex : MavenRepositoryIndex {
     updateOrRepair(true, indicator, explicit)
   }
 
-  fun tryAddArtifacts(artifactFiles: Collection<File>): List<AddArtifactResponse>
+  fun tryAddArtifacts(artifactFiles: Collection<Path>): List<AddArtifactResponse>
 }
 

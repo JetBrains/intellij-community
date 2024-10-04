@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,9 +39,9 @@ public final class MavenIndexUtils {
   private MavenIndexUtils() { }
 
   @Nullable
-  public static IndexPropertyHolder readIndexProperty(File dir) throws MavenIndexException {
+  public static IndexPropertyHolder readIndexProperty(Path dir) throws MavenIndexException {
     Properties props = new Properties();
-    try (FileInputStream s = new FileInputStream(new File(dir, INDEX_INFO_FILE))) {
+    try (InputStream s = Files.newInputStream(dir.resolve(INDEX_INFO_FILE))) {
       props.load(s);
     }
     catch (FileNotFoundException e) {
@@ -89,7 +90,7 @@ public final class MavenIndexUtils {
     if (index.getDataDirName() != null) props.setProperty(DATA_DIR_NAME_KEY, index.getDataDirName());
     if (index.getFailureMessage() != null) props.setProperty(FAILURE_MESSAGE_KEY, index.getFailureMessage());
 
-    try (FileOutputStream s = new FileOutputStream(new File(index.getDir(), INDEX_INFO_FILE))) {
+    try (OutputStream s = Files.newOutputStream(index.getDir().resolve(INDEX_INFO_FILE))) {
       props.store(s, null);
     }
     catch (IOException e) {
@@ -152,7 +153,7 @@ public final class MavenIndexUtils {
   }
 
   public static class IndexPropertyHolder {
-    final File dir;
+    final Path dir;
     final RepositoryKind kind;
     final Set<String> repositoryIds;
     final String repositoryPathOrUrl;
@@ -160,7 +161,7 @@ public final class MavenIndexUtils {
     final String dataDirName;
     final String failureMessage;
 
-    IndexPropertyHolder(File dir,
+    IndexPropertyHolder(Path dir,
                         RepositoryKind kind,
                         Set<String> repositoryIds,
                         String url,
@@ -176,7 +177,7 @@ public final class MavenIndexUtils {
       this.failureMessage = message;
     }
 
-    IndexPropertyHolder(File dir,
+    IndexPropertyHolder(Path dir,
                         RepositoryKind kind,
                         Set<String> repositoryIds,
                         String url) {
