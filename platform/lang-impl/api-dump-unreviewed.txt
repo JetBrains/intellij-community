@@ -7751,12 +7751,17 @@ c:com.intellij.find.actions.FindUsagesAction
 - p:startFindUsages(com.intellij.psi.PsiElement):V
 - p:toShowDialog():Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-- s:updateFindUsagesAction(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.find.actions.FindUsagesAction$ShowSettingsAndFindUsages
 - com.intellij.find.actions.FindUsagesAction
 - <init>():V
 f:com.intellij.find.actions.FindUsagesInFileAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.project.PossiblyDumbAware
 - <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- isDumbAware():Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 - s:updateFindUsagesAction(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.find.actions.ReplaceInPathAction
 - com.intellij.openapi.project.DumbAwareAction

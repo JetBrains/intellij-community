@@ -111,7 +111,7 @@
       <action id="ShowSettingsAndFindUsages" class="com.intellij.find.actions.FindUsagesAction$ShowSettingsAndFindUsages"/>
       <action id="ShowUsages" class="com.intellij.find.actions.ShowUsagesAction"/>
       <separator/>
-      <action id="FindUsagesInFile" class="com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction"/>
+      <action id="FindUsagesInFile" class="com.intellij.find.actions.FindUsagesInFileAction"/>
       <action id="HighlightUsagesInFile" class="com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction"/>
       <action id="GotoNextElementUnderCaretUsage"
               class="com.intellij.codeInsight.daemon.impl.actions.GotoNextElementUnderCaretUsageAction"/>
