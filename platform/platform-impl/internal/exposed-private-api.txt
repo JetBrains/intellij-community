@@ -1,3 +1,2 @@
 com/intellij/internal/ml/DecisionFunction
-com/intellij/internal/ml/FeatureMapper
 com/intellij/psi/util/CachedValueProfiler$EventConsumer

@@ -4,8 +4,9 @@ package com.intellij.internal.ml.completion
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeatureMapper
 import com.intellij.internal.ml.ModelMetadata
+import org.jetbrains.annotations.ApiStatus
 
-
+@ApiStatus.Internal
 abstract class CompletionRankingModelBase(private val metadata: ModelMetadata) : DecisionFunction {
   private val isPositionBased = metadata.checkIfPositionFeatureUsed()
 
