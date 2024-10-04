@@ -8,8 +8,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.util.ThrowingTransformation;
+import org.junit.Assert;
 
 public class ResolveFieldVsAccessorTest extends GroovyResolveTestCase {
+
+  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
   public void testImplicitThis() {
     ThrowingTransformation.disableTransformations(getTestRootDisposable());
     resolveByText("""
@@ -48,7 +57,7 @@ public class ResolveFieldVsAccessorTest extends GroovyResolveTestCase {
                                         }
                                       }
                                       """, GrMethod.class);
-    assert method.getName().equals("getProp");
+    Assert.assertEquals("getProp", method.getName());
   }
 
   public void testInnerClass() {
@@ -99,7 +108,7 @@ public class ResolveFieldVsAccessorTest extends GroovyResolveTestCase {
           }
         }
         """, GrMethod.class);
-    assert method.getContainingClass() instanceof GrAnonymousClassDefinition;
+    Assert.assertTrue(method.getContainingClass() instanceof GrAnonymousClassDefinition);
   }
 
   public void testImplicitSuper() {
@@ -131,11 +140,4 @@ public class ResolveFieldVsAccessorTest extends GroovyResolveTestCase {
                     }
                     """, GrMethod.class);
   }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
 }

@@ -19,6 +19,14 @@ import org.junit.Assert;
  * @author Max Medvedev
  */
 public class ResolveWithDelegatesToOnLambdaTest extends GroovyResolveTestCase {
+
+  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
   public void testOwnerFirstMethod() {
     assertScript(
       """
@@ -806,11 +814,4 @@ public class ResolveWithDelegatesToOnLambdaTest extends GroovyResolveTestCase {
     final String containingClass = resolved.getContainingClass().getQualifiedName();
     Assert.assertEquals(resolvedClass, containingClass);
   }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
 }

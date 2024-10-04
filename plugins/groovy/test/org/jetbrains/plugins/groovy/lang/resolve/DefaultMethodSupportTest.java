@@ -9,6 +9,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.junit.Assert;
 
 public class DefaultMethodSupportTest extends GroovyResolveTestCase {
+
+  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0;
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
   public void testSuperReferenceWithQualifier() {
     PsiMethod method = resolveByText(
       """
@@ -123,11 +131,4 @@ public class DefaultMethodSupportTest extends GroovyResolveTestCase {
         }
         """, PsiMethod.class);
   }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0;
 }

@@ -13,6 +13,20 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.junit.Assert;
 
 public class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
+
+  private final String basePath = TestUtils.getTestDataPath() + "resolve/clsMethod";
+  private final LightProjectDescriptor projectDescriptor = GebTestsTest.DESCRIPTOR;
+
+  @Override
+  public final String getBasePath() {
+    return basePath;
+  }
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
   public void testNavigationInGroovy() {
     myFixture.configureByText("A.groovy", """
       import geb.Page;
@@ -45,17 +59,4 @@ public class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
     UsefulTestCase.assertInstanceOf(resolved, PsiMethod.class);
     Assert.assertEquals("Page", ((PsiMethod)resolved).getContainingClass().getName());
   }
-
-  @Override
-  public final String getBasePath() {
-    return basePath;
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  private final String basePath = TestUtils.getTestDataPath() + "resolve/clsMethod";
-  private final LightProjectDescriptor projectDescriptor = GebTestsTest.DESCRIPTOR;
 }

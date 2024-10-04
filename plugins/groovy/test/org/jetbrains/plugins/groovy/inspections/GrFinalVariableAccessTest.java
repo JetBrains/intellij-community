@@ -442,7 +442,7 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
-  public void test_Field_And_Parameter_With_The_Same_Name() {
+  public void testFieldAndParameterWithTheSameName() {
     doTestHighlighting("""
                          class Aaa {
                              final int foo
