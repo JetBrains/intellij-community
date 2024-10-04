@@ -26,7 +26,7 @@ interface DbSource {
 
     override fun updateThreadContext(context: CoroutineContext): DbContext<*>? {
       // resuming
-      val oldState = if (DbContext.isBound()) DbContext.threadBound else null
+      val oldState = DbContext.threadBoundOrNull
       runCatching { dbSource.latest }
         .onSuccess { latest ->
           val ctx = DbContext<DB>(latest, dbSource)

@@ -28,5 +28,6 @@
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
   </component>
 </module>

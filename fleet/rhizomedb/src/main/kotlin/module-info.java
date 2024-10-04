@@ -7,6 +7,7 @@ module fleet.rhizomedb {
   requires it.unimi.dsi.fastutil;
   requires transitive kotlinx.serialization.core;
   requires kotlinx.serialization.json;
+  requires org.jetbrains.annotations;
   exports com.jetbrains.rhizomedb;
   exports com.jetbrains.rhizomedb.impl;
   exports com.jetbrains.rhizomedb.rql;
