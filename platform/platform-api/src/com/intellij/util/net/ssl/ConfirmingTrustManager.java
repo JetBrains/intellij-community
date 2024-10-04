@@ -320,6 +320,9 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       if (parameters.myOnUserAcceptCallback != null) {
         parameters.myOnUserAcceptCallback.run();
       }
+      if (!selectedCerts.contains(endPoint)) {
+        accepted = false;
+      }
     }
     return accepted;
   }
