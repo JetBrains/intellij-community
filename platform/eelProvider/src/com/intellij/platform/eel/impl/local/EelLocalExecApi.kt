@@ -18,11 +18,13 @@ class EelLocalExecApi : EelExecApi {
 
     val process: LocalEelProcess =
       try {
+        // Inherit env vars, because lack of `PATH` might break things
+        val environment = System.getenv() + builder.env
         if (pty != null) {
           LocalEelProcess(PtyProcessBuilder()
                             .setConsole(true)
                             .setCommand(arrayOf(builder.exe) + args)
-                            .setEnvironment(builder.env)
+                            .setEnvironment(environment)
                             .setDirectory(builder.workingDirectory)
                             .setInitialColumns(pty.columns)
                             .setInitialRows(pty.rows)
@@ -30,7 +32,7 @@ class EelLocalExecApi : EelExecApi {
         }
         else {
           LocalEelProcess(ProcessBuilder(builder.exe, *args).apply {
-            environment().putAll(builder.env)
+            environment().putAll(environment)
             builder.workingDirectory?.let {
               directory(File(it))
             }
