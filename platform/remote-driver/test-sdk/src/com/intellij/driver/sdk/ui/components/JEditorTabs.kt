@@ -11,6 +11,7 @@ fun Finder.editorTabs(@Language("xpath") xpath: String? = null, action: EditorTa
 class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
 
   private val editorTabsComponent by lazy { driver.cast(component, EditorTabsRef::class) }
+  val editorAndPreviewActionButton: ActionButtonUi = actionButton { byAccessibleName("Editor and Preview") }
 
   fun getTabs() = editorTabsComponent.getTabs().map { Tab(it) }
 

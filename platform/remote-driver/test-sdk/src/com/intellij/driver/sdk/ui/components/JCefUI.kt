@@ -53,6 +53,10 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
     ignoreUnknownKeys = true
   }
 
+  fun getYOffset(): Double {
+    return callJs("window.pageYOffset.toString()").toDouble()
+  }
+
   fun findElement(@Language("XPath") xpath: String, wait: Duration = 5.seconds): DomElement {
     return waitForOne("Find element by '$xpath' in the embedded browser($component)", wait,
             getter = { findElements(xpath) } )

@@ -2,9 +2,12 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.QueryBuilder
 
 fun Finder.actionButton(text: String) =
   x("//div[@class='ActionButton' and @visible_text='$text']", ActionButtonUi::class.java)
+
+fun Finder.actionButton(init: QueryBuilder.() -> String) = x(ActionButtonUi::class.java, init)
 
 fun Finder.actionButtonByXpath(xpath: String) =
   x(xpath, ActionButtonUi::class.java)

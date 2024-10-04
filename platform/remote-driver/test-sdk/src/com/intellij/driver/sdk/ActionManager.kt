@@ -44,7 +44,7 @@ interface ActionCallback {
   fun getError(): String
 }
 
-fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Component? = null, rdTarget: RdTarget? = null) {
+fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Component? = null, place: String? = null, rdTarget: RdTarget? = null) {
   val actionCallback = withContext(OnDispatcher.EDT) {
     val target = rdTarget ?: if (isRemoteIdeMode) RdTarget.FRONTEND else RdTarget.DEFAULT
     val actionManager = service<ActionManager>(target)
@@ -54,7 +54,7 @@ fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Compon
     }
     else {
       fileLogger().info("Invoking action $actionId on $target")
-      actionManager.tryToExecute(action, null, component, null, now)
+      actionManager.tryToExecute(action, null, component, place, now)
     }
   }
   withContext(OnDispatcher.DEFAULT) {
