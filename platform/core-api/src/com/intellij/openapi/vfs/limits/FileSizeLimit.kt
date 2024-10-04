@@ -42,7 +42,7 @@ interface FileSizeLimit {
     }
 
     @JvmStatic
-    fun isTooLarge(fileSize: Long, extension: String? = ""): Boolean {
+    fun isTooLarge(fileSize: Long, extension: String?): Boolean {
       val fileContentLoadLimit = getContentLoadLimit(extension)
       return fileSize > fileContentLoadLimit
     }
@@ -56,7 +56,7 @@ interface FileSizeLimit {
     }
 
     @JvmStatic
-    fun getContentLoadLimit(): Int = getContentLoadLimit(null)
+    fun getDefaultContentLoadLimit(): Int = getContentLoadLimit(null)
 
     @JvmStatic
     fun getIntellisenseLimit(): Int = getIntellisenseLimit(null)
@@ -69,9 +69,9 @@ interface FileSizeLimit {
     }
 
     @JvmStatic
-    fun getPreviewLimit(extension: String? = ""): Int {
+    fun getPreviewLimit(extension: String?): Int {
       @Suppress("DEPRECATION")
-      val limit = findApplicable(extension?:"")?.preview ?: FileUtilRt.LARGE_FILE_PREVIEW_SIZE
+      val limit = findApplicable(extension ?: "")?.preview ?: FileUtilRt.LARGE_FILE_PREVIEW_SIZE
       return limit
     }
 
@@ -79,10 +79,15 @@ interface FileSizeLimit {
       val extensions = EP.extensionsIfPointIsRegistered
 
       val duplicates: Map<String, Int> = extensions.flatMap { it.acceptableExtensions }.groupingBy { it }.eachCount().filter { it.value > 1 }
-      duplicates.forEach {(element, count) ->
-          thisLogger().warn("For file type $element $count limits are registered. Extensions: ${extensions.joinToString { 
-            "${it.javaClass.name}: ${it.acceptableExtensions.joinToString()}" }}")
-        }
+      duplicates.forEach { (element, count) ->
+        thisLogger().warn("For file type $element $count limits are registered. Extensions: ${
+          extensions
+            .filter { it.acceptableExtensions.contains(element) }
+            .joinToString { extension ->
+              "${extension.javaClass.name}: ${extension.acceptableExtensions.joinToString()}"
+            }
+        }")
+      }
 
       val newLimits = extensions.flatMap { extension -> extension.acceptableExtensions.map { it to extension.getLimits() } }.toMap()
       return newLimits

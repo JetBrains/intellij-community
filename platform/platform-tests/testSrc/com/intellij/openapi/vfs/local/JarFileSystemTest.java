@@ -255,7 +255,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     FileUtil.writeToFile(new File(root, "small1"), "some text");
     FileUtil.writeToFile(new File(root, "small2"), "another text");
     try (InputStream is = new ZeroInputStream(); OutputStream os = new FileOutputStream(new File(root, "large"))) {
-      FileUtil.copy(is, FileSizeLimit.getContentLoadLimit() * 2, os);
+      FileUtil.copy(is, FileSizeLimit.getDefaultContentLoadLimit() * 2, os);
     }
     File jar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"), root);
 

@@ -919,7 +919,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   public void testBigFileInsideJarCorrectlyHandlesBOM() throws IOException {
     File tmpDir = createTempDirectory();
     File jar = new File(tmpDir, "x.jar");
-    String bigText = StringUtil.repeat("u", FileSizeLimit.getContentLoadLimit() + 1);
+    String bigText = StringUtil.repeat("u", FileSizeLimit.getDefaultContentLoadLimit() + 1);
     byte[] utf16beBytes = ArrayUtil.mergeArrays(CharsetToolkit.UTF16BE_BOM, bigText.getBytes(StandardCharsets.UTF_16BE));
     String name = "some_random_name";
     IoTestUtil.createTestJar(jar, Collections.singletonList(Pair.create(name, utf16beBytes)));

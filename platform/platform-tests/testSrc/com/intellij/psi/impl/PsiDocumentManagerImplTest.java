@@ -771,7 +771,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   @NotNull
   private static String getTooLargeContent() {
-    return StringUtil.repeat("a", FileSizeLimit.getContentLoadLimit() + 1);
+    return StringUtil.repeat("a", FileSizeLimit.getDefaultContentLoadLimit() + 1);
   }
 
   public void testDefaultProjectDocumentsAreAutoCommitted() throws IOException {

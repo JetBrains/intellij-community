@@ -45,7 +45,7 @@ import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
  */
 @Deprecated
 public final class JsonSchemaReader {
-  private static final int MAX_SCHEMA_LENGTH = FileSizeLimit.getContentLoadLimit();
+  private static final int MAX_SCHEMA_LENGTH = FileSizeLimit.getDefaultContentLoadLimit();
   private static final ObjectMapper jsonObjectMapper = new ObjectMapper(new JsonFactory());
 
   private final Map<String, JsonSchemaObjectImpl> myIds = new HashMap<>();

@@ -61,7 +61,7 @@ public class LoadTextUtilTest extends LightPlatformTestCase {
   }
 
   public void testVfsUtilLoadBytesMustIncludeBOMForBigRegularVirtualFile() throws IOException {
-    String text = "A".repeat(FileSizeLimit.getContentLoadLimit() + 1);
+    String text = "A".repeat(FileSizeLimit.getDefaultContentLoadLimit() + 1);
     byte[] stringBytes = text.getBytes(StandardCharsets.UTF_16BE);
     byte[] expectedAllBytes = ArrayUtil.mergeArrays(CharsetToolkit.UTF16BE_BOM, stringBytes);
 
@@ -82,7 +82,7 @@ public class LoadTextUtilTest extends LightPlatformTestCase {
     assertVfsUtilVariousGettersAreConsistent(vFile, text, stringBytes, expectedAllBytes);
   }
   public void testVfsUtilLoadBytesMustIncludeBOMForBigLightVirtualFile() throws IOException {
-    String text = "A".repeat(FileSizeLimit.getContentLoadLimit() + 1);
+    String text = "A".repeat(FileSizeLimit.getDefaultContentLoadLimit() + 1);
     byte[] stringBytes = text.getBytes(StandardCharsets.UTF_16BE);
     byte[] expectedAllBytes = ArrayUtil.mergeArrays(CharsetToolkit.UTF16BE_BOM, stringBytes);
     LightVirtualFile vFile = new LightVirtualFile("test.txt", PlainTextFileType.INSTANCE, text, StandardCharsets.UTF_16BE, 2);

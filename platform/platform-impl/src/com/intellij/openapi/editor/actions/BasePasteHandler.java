@@ -64,13 +64,13 @@ public class BasePasteHandler extends EditorWriteActionHandler {
   }
 
   public static boolean isContentTooLarge(int contentLength) {
-    return contentLength > FileSizeLimit.getContentLoadLimit();
+    return contentLength > FileSizeLimit.getDefaultContentLoadLimit();
   }
 
   public static void contentLengthLimitExceededMessage(int contentLength) {
     Messages.showErrorDialog(EditorBundle.message("content.to.paste.too.large.message",
                                                   StringUtil.formatFileSize(contentLength),
-                                                  StringUtil.formatFileSize(FileSizeLimit.getContentLoadLimit())),
+                                                  StringUtil.formatFileSize(FileSizeLimit.getDefaultContentLoadLimit())),
                              EditorBundle.message("content.to.paste.too.large.title"));
   }
 }

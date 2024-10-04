@@ -31,7 +31,7 @@ public class FileBasedIndexTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testLargeFile() {
-    String largeFileText = "class Foo { String bar; }" + StringUtil.repeat(" ", FileSizeLimit.getContentLoadLimit() + 42);
+    String largeFileText = "class Foo { String bar; }" + StringUtil.repeat(" ", FileSizeLimit.getDefaultContentLoadLimit() + 42);
     VirtualFile file = myFixture.addFileToProject("Foo.java", largeFileText).getVirtualFile();
     int fileId = ((VirtualFileWithId)file).getId();
 

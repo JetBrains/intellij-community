@@ -1010,7 +1010,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileContentWithAlmostTooLargeLength() throws IOException {
-    byte[] expectedContent = new byte[FileSizeLimit.getContentLoadLimit()];
+    byte[] expectedContent = new byte[FileSizeLimit.getDefaultContentLoadLimit()];
     Arrays.fill(expectedContent, (byte) 'a');
     File file = tempDir.newFile("test.txt");
     FileUtil.writeToFile(file, expectedContent);

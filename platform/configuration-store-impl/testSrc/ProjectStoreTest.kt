@@ -83,11 +83,11 @@ class ProjectStoreTest {
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
 
-      testComponent.state!!.AAValue = "s".repeat(FileSizeLimit.getContentLoadLimit() + 1024)
+      testComponent.state!!.AAValue = "s".repeat(FileSizeLimit.getDefaultContentLoadLimit() + 1024)
       project.stateStore.save()
 
       // we should save twice (first call - virtual file size is not yet set)
-      testComponent.state!!.AAValue = "b".repeat(FileSizeLimit.getContentLoadLimit() + 1024)
+      testComponent.state!!.AAValue = "b".repeat(FileSizeLimit.getDefaultContentLoadLimit() + 1024)
       project.stateStore.save()
     }
   }

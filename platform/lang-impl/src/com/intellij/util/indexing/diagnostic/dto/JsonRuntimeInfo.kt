@@ -21,7 +21,7 @@ data class JsonRuntimeInfo(
         runtime.availableProcessors(),
         UnindexedFilesUpdater.getMaxNumberOfIndexingThreads(),
         FileSizeLimit.getIntellisenseLimit(),
-        FileSizeLimit.getContentLoadLimit()
+        FileSizeLimit.getDefaultContentLoadLimit()
       )
     }
   }

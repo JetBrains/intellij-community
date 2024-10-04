@@ -203,7 +203,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     int totalSize = 0;
     for (Document document : documents) {
       totalSize += document.getTextLength();
-      if (totalSize > FileSizeLimit.getContentLoadLimit()) return true;
+      if (totalSize > FileSizeLimit.getDefaultContentLoadLimit()) return true;
     }
     return false;
   }

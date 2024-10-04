@@ -124,7 +124,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
         myConsoleBufferSizeWarningLabel.setText(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size.warning.unlimited"));
         return;
       }
-      if (value > FileSizeLimit.getContentLoadLimit() / 1024) {
+      if (value > FileSizeLimit.getDefaultContentLoadLimit() / 1024) {
         myConsoleBufferSizeWarningLabel.setText(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size.warning.too.large"));
         return;
       }
