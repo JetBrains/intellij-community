@@ -175,6 +175,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/jvm/KotlinInjection.kt");
         }
 
+        @TestMetadata("KotlinSimpleInjection.kt")
+        public void testKotlinSimpleInjection() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/KotlinSimpleInjection.kt");
+        }
+
         @TestMetadata("NonExistingKotlinMethodFromJava.kt")
         public void testNonExistingKotlinMethodFromJava() throws Exception {
             runTest("testData/highlighterMetaInfo/jvm/NonExistingKotlinMethodFromJava.kt");

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.base.highlighting.beforeResolve
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
 import org.jetbrains.kotlin.idea.highlighter.visitor.AbstractHighlightingVisitor
@@ -13,7 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class AnnotationEntryHighlightingVisitor(
     holder: HighlightInfoHolder
-) : AbstractHighlightingVisitor(holder) {
+) : AbstractHighlightingVisitor(holder), DumbAware {
     override fun visitAnnotationEntry(annotationEntry: KtAnnotationEntry) {
         val range = annotationEntry.getTextRangeToHighlight() ?: return
         highlightName(annotationEntry.project, range, KotlinHighlightInfoTypeSemanticNames.ANNOTATION)
