@@ -8,7 +8,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.BinaryFileDecompiler
 import com.intellij.openapi.fileTypes.FileTypeExtension
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.vfs.VirtualFile
@@ -17,13 +16,13 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
-class TextPresentationTranformers : FileTypeExtension<TextPresentationTransformer>(EP), Disposable.Default {
+class TextPresentationTransformers : FileTypeExtension<TextPresentationTransformer>(EP), Disposable.Default {
   init {
-    val extensionPoint = ApplicationManager.getApplication().extensionArea.getExtensionPointIfRegistered<BinaryFileDecompiler>(EP.name)
-    extensionPoint?.addChangeListener({ notifyDecompilerSetChange() }, null)
+    val extensionPoint = ApplicationManager.getApplication().extensionArea.getExtensionPointIfRegistered<TextPresentationTransformer>(EP.name)
+    extensionPoint?.addChangeListener({ notifyTextPresentationSetChange() }, null)
   }
 
-  private fun notifyDecompilerSetChange() {
+  private fun notifyTextPresentationSetChange() {
     val fileTypes = EP.extensionsIfPointIsRegistered.map {
       val key = it.key
       FileTypeRegistry.getInstance().getFileTypeByExtension(key)
@@ -37,7 +36,7 @@ class TextPresentationTranformers : FileTypeExtension<TextPresentationTransforme
 
     @JvmStatic
     fun fromPersistent(text: CharSequence, virtualFile: VirtualFile): CharSequence {
-      val transformer = service<TextPresentationTranformers>().forFileType(virtualFile.fileType)
+      val transformer = service<TextPresentationTransformers>().forFileType(virtualFile.fileType)
       if (transformer == null) {
         return text
       }
@@ -47,7 +46,7 @@ class TextPresentationTranformers : FileTypeExtension<TextPresentationTransforme
 
     @JvmStatic
     fun toPersistent(text: CharSequence, virtualFile: VirtualFile): CharSequence {
-      val transformer = service<TextPresentationTranformers>().forFileType(virtualFile.fileType)
+      val transformer = service<TextPresentationTransformers>().forFileType(virtualFile.fileType)
       if (transformer == null) {
         return text
       }

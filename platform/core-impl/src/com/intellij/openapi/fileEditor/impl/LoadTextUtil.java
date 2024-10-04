@@ -18,7 +18,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import com.intellij.openapi.vfs.transformer.TextPresentationTranformers;
+import com.intellij.openapi.vfs.transformer.TextPresentationTransformers;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.text.ByteArrayCharSequence;
@@ -406,7 +406,7 @@ public final class LoadTextUtil {
                            @NotNull String text,
                            long newModificationStamp) throws IOException {
     Charset existing = virtualFile.getCharset();
-    text = TextPresentationTranformers.toPersistent(text, virtualFile).toString();
+    text = TextPresentationTransformers.toPersistent(text, virtualFile).toString();
     Pair.NonNull<Charset, byte[]> chosen = charsetForWriting(project, virtualFile, text, existing);
     Charset charset = chosen.first;
     byte[] buffer = chosen.second;
@@ -568,7 +568,7 @@ public final class LoadTextUtil {
     ConvertResult result = convertBytesAndSetSeparator(bytes, bytes.length, virtualFile,
                                                        saveDetectedSeparators, info, info.hardCodedCharset);
     if (applyTextTransformer) {
-      return TextPresentationTranformers.fromPersistent(result.text, virtualFile);
+      return TextPresentationTransformers.fromPersistent(result.text, virtualFile);
     } else {
       return result.text;
     }
