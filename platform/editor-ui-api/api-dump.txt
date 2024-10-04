@@ -1131,7 +1131,6 @@ com.intellij.openapi.actionSystem.ActionToolbar
 - a:getActions():java.util.List
 - a:getComponent():javax.swing.JComponent
 - s:getDataContextFor(java.awt.Component):com.intellij.openapi.actionSystem.DataContext
-- getLayoutPolicy():I
 - a:getLayoutStrategy():com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 - a:getMaxButtonHeight():I
 - a:getMinimumButtonSize():java.awt.Dimension
