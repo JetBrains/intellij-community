@@ -43,7 +43,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
    * Blocks until process finished, returns its output
    */
   @NotNull
-  @RequiresBackgroundThread(generateAssertion = false)
+  @RequiresBackgroundThread
   public final ProcessOutput runProcess() {
     return myProcessRunner.runProcess();
   }
@@ -53,7 +53,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
    *
    * @param timeoutInMilliseconds non-positive means infinity
    */
-  @RequiresBackgroundThread(generateAssertion = false)
+  @RequiresBackgroundThread
   public ProcessOutput runProcess(int timeoutInMilliseconds) {
     return myProcessRunner.runProcess(timeoutInMilliseconds);
   }
