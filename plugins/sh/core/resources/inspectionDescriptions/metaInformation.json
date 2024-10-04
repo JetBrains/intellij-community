@@ -1,0 +1,8 @@
+{
+  "inspections": [
+    {
+      "id": "ShellCheck",
+      "codeQualityCategory": "Security"
+    }
+  ]
+}

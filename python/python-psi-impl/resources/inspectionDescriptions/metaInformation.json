@@ -1,0 +1,284 @@
+{
+  "inspections": [
+    {
+      "id": "PyProtocolInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyMethodMayBeStaticInspection",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PyAssignmentToLoopOrWithParameterInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PySuperArgumentsInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyAttributeOutsideInitInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyMissingTypeHintsInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyComparisonWithNoneInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyMethodParametersInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyNamedTupleInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyPropertyDefinitionInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyIncorrectDocstringInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyStringFormatInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyOldStyleClassesInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyAugmentAssignmentInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyNoneFunctionAssignmentInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyTrailingSemicolonInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyPropertyAccessInspection",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "PyOverloadsInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyDeprecationInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyUnnecessaryBackslashInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PySingleQuotedDocstringInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyTypedDictInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyCallingNonCallableInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyTypeCheckerInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyDecoratorInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyPackageRequirementsInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "PyRedundantParenthesesInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyRedeclarationInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyProtectedMemberInspection",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "PyChainedComparisonsInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyCompatibilityInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "PyTypeHintsInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyNonAsciiCharInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyAbstractClassInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyDefaultArgumentInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyMethodOverridingInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyDocstringTypesInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyClassHasNoInitInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyUnboundLocalVariableInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyOverridesInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PySimplifyBooleanCheckInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyUnreachableCodeInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyDictCreationInspection",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PyExceptionInheritInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyShadowingNamesInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyInconsistentIndentationInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyTupleItemAssignmentInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyAsyncCallInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyClassVarInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyArgumentListInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyExceptClausesOrderInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyClassicStyleClassInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PySetFunctionToLiteralInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyInitNewSignatureInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyMissingConstructorInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyBroadExceptionInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyFinalInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyUnusedLocalInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyMethodFirstArgAssignmentInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyDataclassInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyGlobalUndefinedInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyMissingOrEmptyDocstringInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyDictDuplicateKeysInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyStatementEffectInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyMandatoryEncodingInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyNewStyleGenericSyntaxInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyArgumentEqualDefaultInspection",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PyFromFutureImportInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyInterpreterInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "PyListCreationInspection",
+      "codeQualityCategory": "Performance"
+    }
+  ]
+}

@@ -95,6 +95,7 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
 
         try {
           val language = wrapper.language
+          val extraState = inspectionExtraState.inspections.get(wrapper.id)
           availablePlugins.get(pluginId)!!.inspections.add(Inspection(
             id = wrapper.tool.alternativeID ?: wrapper.id,
             name = wrapper.displayName,
@@ -107,7 +108,8 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
             isCleanup = wrapper.isCleanupTool,
             isEnabledDefault = wrapper.isEnabledByDefault,
             options = panelInfo,
-            cweIds = inspectionExtraState.inspections.get(wrapper.id)?.cweIds,
+            cweIds = extraState?.cweIds,
+            codeQualityCategory = extraState?.codeQualityCategory,
           ))
         }
         catch (e: Throwable) {

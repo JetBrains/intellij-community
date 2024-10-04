@@ -5,6 +5,66 @@
       "cweIds": [
         597
       ]
+    },
+    {
+      "id": "ObjectsEqualsCanBeSimplified",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JavacQuirks",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ReplacePrintlnWithLogging",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "IncorrectFormatting",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ReassignedToPlainText",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "LossyEncoding",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "RedundantSuppression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TodoComment",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EmptyDirectory",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "NonAsciiCharacters",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "IgnoreFileDuplicateEntry",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "InconsistentLineSeparators",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ProblematicWhitespace",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LongLine",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "Annotator",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

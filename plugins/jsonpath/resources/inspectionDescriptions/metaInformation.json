@@ -1,0 +1,16 @@
+{
+  "inspections": [
+    {
+      "id": "JsonPathUnknownFunction",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JsonPathUnknownOperator",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JsonPathEvaluateUnknownKey",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

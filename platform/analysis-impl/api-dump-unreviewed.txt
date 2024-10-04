@@ -2444,6 +2444,19 @@ c:com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerBase
 - setRootProfile(java.lang.String):V
 f:com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerBase$Companion
 - f:getInstanceBase():com.intellij.codeInspection.ex.ApplicationInspectionProfileManagerBase
+e:com.intellij.codeInspection.ex.CodeQualityCategories
+- java.lang.Enum
+- sf:CODE_STYLE:com.intellij.codeInspection.ex.CodeQualityCategories
+- sf:LEGAL:com.intellij.codeInspection.ex.CodeQualityCategories
+- sf:PERFORMANCE:com.intellij.codeInspection.ex.CodeQualityCategories
+- sf:RELIABILITY:com.intellij.codeInspection.ex.CodeQualityCategories
+- sf:SANITY:com.intellij.codeInspection.ex.CodeQualityCategories
+- sf:SECURITY:com.intellij.codeInspection.ex.CodeQualityCategories
+- sf:UNSPECIFIED:com.intellij.codeInspection.ex.CodeQualityCategories
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getId():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.codeInspection.ex.CodeQualityCategories
+- s:values():com.intellij.codeInspection.ex.CodeQualityCategories[]
 com.intellij.codeInspection.ex.DynamicGroupTool
 - a:getChildren():java.util.List
 com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection
@@ -2751,14 +2764,16 @@ c:com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 - isUnfair():Z
 - runForWholeFile():Z
 f:com.intellij.codeInspection.ex.MetaInformation
-- <init>(java.lang.String,java.util.List,java.util.List):V
+- <init>(java.lang.String,java.util.List,java.lang.String,java.util.List):V
 - f:component1():java.lang.String
 - f:component2():java.util.List
-- f:component3():java.util.List
-- f:copy(java.lang.String,java.util.List,java.util.List):com.intellij.codeInspection.ex.MetaInformation
-- bs:copy$default(com.intellij.codeInspection.ex.MetaInformation,java.lang.String,java.util.List,java.util.List,I,java.lang.Object):com.intellij.codeInspection.ex.MetaInformation
+- f:component3():java.lang.String
+- f:component4():java.util.List
+- f:copy(java.lang.String,java.util.List,java.lang.String,java.util.List):com.intellij.codeInspection.ex.MetaInformation
+- bs:copy$default(com.intellij.codeInspection.ex.MetaInformation,java.lang.String,java.util.List,java.lang.String,java.util.List,I,java.lang.Object):com.intellij.codeInspection.ex.MetaInformation
 - equals(java.lang.Object):Z
 - f:getCategories():java.util.List
+- f:getCodeQualityCategory():java.lang.String
 - f:getCweIds():java.util.List
 - f:getId():java.lang.String
 - hashCode():I

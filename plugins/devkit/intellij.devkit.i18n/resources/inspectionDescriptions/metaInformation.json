@@ -1,0 +1,20 @@
+{
+  "inspections": [
+    {
+      "id": "LiveTemplateI18n",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PluginXmlI18n",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "DevKitPropertiesMessageValidation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PluginXmlCapitalization",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

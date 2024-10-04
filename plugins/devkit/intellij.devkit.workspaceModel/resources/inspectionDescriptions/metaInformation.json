@@ -1,0 +1,12 @@
+{
+  "inspections": [
+    {
+      "id": "WorkspaceEntityMutableField",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "WorkspaceImplObsolete",
+      "codeQualityCategory": "Sanity"
+    }
+  ]
+}

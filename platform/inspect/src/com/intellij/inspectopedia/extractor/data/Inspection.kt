@@ -24,7 +24,8 @@ internal data class Inspection(
   @JvmField val extendedDescription: String? = null,
   @JvmField val isHasOptionsPanel: Boolean = false,
   @JvmField val options: List<OptionsPanelInfo>? = null,
-  @JvmField val cweIds: List<Int>? = null
+  @JvmField val cweIds: List<Int>? = null,
+  @JvmField val codeQualityCategory: String? = null,
 ) : Comparable<Inspection> {
   fun cleanHtml(@NlsSafe src: String): String {
     val doc = Jsoup.parse(Jsoup.clean(src, WHITELIST))

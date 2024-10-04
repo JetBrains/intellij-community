@@ -1,0 +1,104 @@
+{
+  "inspections": [
+    {
+      "id": "LoggingConditionDisagreesWithLogLevelStatement",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SerializableHasSerialVersionUIDField",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "TestMethodWithoutAssertion",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SuppressionAnnotation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LoggingSimilarMessage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LoggingGuardedByCondition",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SourceToSinkFlow",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "UnstableApiUsage",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "Since15",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "TestFailedLine",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "TestInProductSource",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "LoggingStringTemplateAsArgument",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "UrlHashCode",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "LogStatementNotGuardedByLogCondition",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "LoggingPlaceholderCountMatchesArgumentCount",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "TestCaseWithNoTestMethods",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SystemGetProperty",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "BlockingMethodInNonBlockingContext",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "AssertBetweenInconvertibleTypes",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MissingDeprecatedAnnotationOnScheduledForRemovalApi",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "Dependency",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "ThreadRun",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MustAlreadyBeRemovedApi",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "NonExtendableApiUsage",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UsagesOfObsoleteApi",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

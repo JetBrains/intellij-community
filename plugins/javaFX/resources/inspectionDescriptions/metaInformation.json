@@ -1,0 +1,24 @@
+{
+  "inspections": [
+    {
+      "id": "JavaFxEventHandler",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JavaFxDefaultTag",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JavaFxColorRgb",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JavaFxUnresolvedFxIdReference",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "JavaFxUnusedImports",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

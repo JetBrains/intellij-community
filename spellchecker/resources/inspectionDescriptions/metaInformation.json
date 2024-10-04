@@ -1,0 +1,8 @@
+{
+  "inspections": [
+    {
+      "id": "SpellCheckingInspection",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

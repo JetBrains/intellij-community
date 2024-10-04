@@ -1,0 +1,56 @@
+{
+  "inspections": [
+    {
+      "id": "RegExpEscapedMetaCharacter",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RegExpSingleCharAlternation",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "RegExpRedundantEscape",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RegExpRedundantNestedCharacterClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RegExpOctalEscape",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RegExpDuplicateAlternationBranch",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "RegExpUnexpectedAnchor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RegExpSimplifiable",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RegExpEmptyAlternationBranch",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RegExpSuspiciousBackref",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RegExpRepeatedSpace",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RegExpDuplicateCharacterInClass",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RegExpRedundantClassElement",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

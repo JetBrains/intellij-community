@@ -1,0 +1,20 @@
+{
+  "inspections": [
+    {
+      "id": "UseEllipsisInPropertyInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AlphaUnsortedPropertiesFile",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TrailingSpacesInProperty",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "WrongPropertyKeyValueDelimiter",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

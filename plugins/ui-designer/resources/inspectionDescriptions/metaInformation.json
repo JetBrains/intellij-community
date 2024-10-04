@@ -1,0 +1,32 @@
+{
+  "inspections": [
+    {
+      "id": "InvalidPropertyKeyForm",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MissingMnemonic",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "FormSpellChecking",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "I18nForm",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "DuplicateMnemonic",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "NoScrollPane",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NoButtonGroup",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

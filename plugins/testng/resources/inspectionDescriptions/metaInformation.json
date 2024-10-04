@@ -1,0 +1,40 @@
+{
+  "inspections": [
+    {
+      "id": "groupsTestNG",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "JUnitTestNG",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "UndeclaredTests",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "ConvertJavadoc",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "DataProviderReturnType",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MalformedDataProvider",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ExpectedExceptionNeverThrownTestNG",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ConvertOldAnnotations",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "DuplicatedDataProviderNames",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "inspections": [
+    {
+      "id": "ExpectedExceptionNeverThrown",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JUnitMixedFramework",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "IgnoredJUnitTest",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JUnit3StyleTestMethodInJUnit4Class",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JUnitMalformedDeclaration",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JUnit5AssertionsConverter",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ParameterizedParametersStaticCollection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MigrateAssertToMatcherAssert",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AssertEqualsMayBeAssertSame",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SuperTearDownInFinally",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AssertEqualsCalledOnArray",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JUnit5Converter",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MultipleExceptionsDeclaredOnTestMethod",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "Junit4RunWithInspection",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

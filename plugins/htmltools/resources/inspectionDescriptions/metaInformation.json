@@ -1,0 +1,44 @@
+{
+  "inspections": [
+    {
+      "id": "HtmlRequiredSummaryAttribute",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlRequiredTitleAttribute",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlRequiredAltAttribute",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlPresentationalElement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "HtmlDeprecatedTag",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "HtmlFormInputWithoutLabel",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlRequiredTitleElement",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "HtmlDeprecatedAttribute",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CheckImageSize",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "HtmlRequiredLangAttribute",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

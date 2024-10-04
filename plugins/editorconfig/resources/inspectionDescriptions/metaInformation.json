@@ -1,0 +1,88 @@
+{
+  "inspections": [
+    {
+      "id": "EditorConfigNumerousWildcards",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "EditorConfigKeyCorrectness",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigEncoding",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigEmptyHeader",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigSpaceInHeader",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigUnusedDeclaration",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigRootDeclarationUniqueness",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigShadowedOption",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigReferenceCorrectness",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EditorConfigPartialOverride",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigListAcceptability",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigPatternEnumerationRedundancy",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EditorConfigNoMatchingFiles",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigHeaderUniqueness",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigValueCorrectness",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EditorConfigRootDeclarationCorrectness",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigPatternRedundancy",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigDeprecatedDescriptor",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigCharClassRedundancy",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigEmptySection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigVerifyByCore",
+      "codeQualityCategory": "Sanity"
+    }
+  ]
+}
