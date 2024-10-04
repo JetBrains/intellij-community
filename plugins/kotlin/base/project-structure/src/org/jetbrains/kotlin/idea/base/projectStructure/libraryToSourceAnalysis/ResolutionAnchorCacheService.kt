@@ -12,6 +12,11 @@ interface ResolutionAnchorCacheService {
     val librariesForResolutionAnchors: Map<ModuleSourceInfo, List<LibraryInfo>>
 
     /**
+    See [org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinAnchorModuleProvider.getAllAnchorModulesIfComputed] for KDoc
+     */
+    val librariesForResolutionAnchorsIfComputed: Map<ModuleSourceInfo, List<LibraryInfo>>?
+
+    /**
      * Anchor module is a source module that could replace library.
      *
      * Let's say:
@@ -32,6 +37,7 @@ interface ResolutionAnchorCacheService {
         val Empty = object : ResolutionAnchorCacheService {
             override val resolutionAnchorsForLibraries: Map<LibraryInfo, ModuleSourceInfo> get() = emptyMap()
             override val librariesForResolutionAnchors: Map<ModuleSourceInfo, List<LibraryInfo>> get() = emptyMap()
+            override val librariesForResolutionAnchorsIfComputed: Map<ModuleSourceInfo, List<LibraryInfo>> get() = emptyMap()
             override fun getDependencyResolutionAnchors(libraryInfo: LibraryInfo): Set<ModuleSourceInfo> = emptySet()
         }
 
