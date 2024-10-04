@@ -243,7 +243,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     }
     resultSink.accept(InjectedLanguageManagerImpl.INJECTION_BACKGROUND_TOOL_ID, injectedPsi, result);
   }
-
+  @NotNull
   private static List<HighlightInfo> createPatchedInfos(@NotNull HighlightInfo info,
                                                         @NotNull PsiFile injectedPsi,
                                                         @NotNull DocumentWindow documentWindow,
@@ -276,10 +276,13 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
 
       info.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
         List<TextRange> editableQF = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, quickfixTextRange);
-        for (TextRange editableRange : editableQF) {
-          TextRange hostEditableRange = documentWindow.injectedToHost(editableRange);
-          patched.registerFix(descriptor.getAction(), descriptor.myOptions, descriptor.getDisplayName(), hostEditableRange, descriptor.myKey);
-        }
+        List<HighlightInfo.IntentionActionDescriptor> fixes =
+          ContainerUtil.map(editableQF, editableRange ->
+          {
+            TextRange patchedFixRange = documentWindow.injectedToHost(editableRange);
+            return descriptor.withFixRange(patchedFixRange);
+          });
+        patched.registerFixes(fixes);
         return null;
       });
       patched.markFromInjection();

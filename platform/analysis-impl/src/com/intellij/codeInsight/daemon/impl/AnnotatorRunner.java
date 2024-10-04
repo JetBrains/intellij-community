@@ -187,14 +187,16 @@ final class AnnotatorRunner {
                           false, 0, injectedInfo.getProblemGroup(), injectedInfo.toolId, injectedInfo.getGutterIconRenderer(), injectedInfo.getGroup(), injectedInfo.unresolvedReference);
       patched.setHint(injectedInfo.hasHint());
 
+      List<HighlightInfo.IntentionActionDescriptor> quickFixes = new ArrayList<>();
       injectedInfo.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
         List<TextRange> editableQF = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, quickfixTextRange);
         for (TextRange editableRange : editableQF) {
           TextRange hostEditableRange = documentWindow.injectedToHost(editableRange);
-          patched.registerFix(descriptor.getAction(), descriptor.myOptions, descriptor.getDisplayName(), hostEditableRange, descriptor.myKey);
+          quickFixes.add(descriptor.withFixRange(hostEditableRange));
         }
         return null;
       });
+      patched.registerFixes(quickFixes);
       patched.markFromInjection();
       outHostInfos.add(patched);
     }

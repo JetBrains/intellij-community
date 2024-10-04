@@ -57,7 +57,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
                                                                                            AllIcons.Actions.IntentionBulb,
                                                                                            sourceKey,
                                                                                            null,
-                                                                                           null));
+                                                                                           null, null));
           isQuickFixListEmpty = false;
         }
       }
