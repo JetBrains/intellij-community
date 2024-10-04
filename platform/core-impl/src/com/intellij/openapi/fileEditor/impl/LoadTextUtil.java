@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.impl.converter.FileTextConverter;
 import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.CharsetUtil;
@@ -19,6 +18,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.transformer.TextPresentationTranformers;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.text.ByteArrayCharSequence;
@@ -333,6 +333,7 @@ public final class LoadTextUtil {
   }
 
   private static final boolean GUESS_UTF = Boolean.parseBoolean(System.getProperty("idea.guess.utf.encoding", "true"));
+
   private static @NotNull DetectResult guessFromContent(@NotNull VirtualFile virtualFile, byte @NotNull [] content, int length) {
     AutoDetectionReason detectedFromBytes = null;
     try {
@@ -405,6 +406,7 @@ public final class LoadTextUtil {
                            @NotNull String text,
                            long newModificationStamp) throws IOException {
     Charset existing = virtualFile.getCharset();
+    text = TextPresentationTranformers.toPersistent(text, virtualFile).toString();
     Pair.NonNull<Charset, byte[]> chosen = charsetForWriting(project, virtualFile, text, existing);
     Charset charset = chosen.first;
     byte[] buffer = chosen.second;
@@ -523,10 +525,8 @@ public final class LoadTextUtil {
       throw new IllegalArgumentException("Attempt to load truncated text for binary file: " + file.getPresentableUrl() + ". File type: " + type.getName());
     }
 
-    limit = FileTextConverter.updateFileSizeLoadLimit(file, limit);
     if (file instanceof LightVirtualFile) {
       CharSequence text = ((LightVirtualFile)file).getContent();
-      text = FileTextConverter.convertToLoadDocumentTextFromFile(text, file);
       return limitCharSequence(text, limit);
     }
 
@@ -535,11 +535,7 @@ public final class LoadTextUtil {
     }
     try {
       byte[] bytes = limit == UNLIMITED ? file.contentsToByteArray() : VfsUtilCore.loadNBytes(file, limit);
-      CharSequence text = getTextByBinaryPresentation(bytes, file);
-
-      //In case of notebook we need additionally to transform text representation to other text
-      text = FileTextConverter.convertToLoadDocumentTextFromFile(text, file);
-      return text;
+      return getTextByBinaryPresentation(bytes, file);
     }
     catch (IOException e) {
       LOG.debug(e);
@@ -559,9 +555,23 @@ public final class LoadTextUtil {
                                                                   @NotNull VirtualFile virtualFile,
                                                                   boolean saveDetectedSeparators,
                                                                   boolean saveBOM) {
-    DetectResult info = detectInternalCharsetAndSetBOM(virtualFile, bytes, bytes.length, saveBOM, virtualFile.getFileType());
-    ConvertResult result = convertBytesAndSetSeparator(bytes, bytes.length, virtualFile, saveDetectedSeparators, info, info.hardCodedCharset);
-    return result.text;
+    return getTextByBinaryPresentation(bytes, virtualFile, saveDetectedSeparators, saveBOM, true);
+  }
+
+  public static @NotNull CharSequence getTextByBinaryPresentation(byte @NotNull [] bytes,
+                                                                  @NotNull VirtualFile virtualFile,
+                                                                  boolean saveDetectedSeparators,
+                                                                  boolean saveBOM,
+                                                                  boolean applyTextTransformer) {
+    FileType type = virtualFile.getFileType();
+    DetectResult info = detectInternalCharsetAndSetBOM(virtualFile, bytes, bytes.length, saveBOM, type);
+    ConvertResult result = convertBytesAndSetSeparator(bytes, bytes.length, virtualFile,
+                                                       saveDetectedSeparators, info, info.hardCodedCharset);
+    if (applyTextTransformer) {
+      return TextPresentationTranformers.fromPersistent(result.text, virtualFile);
+    } else {
+      return result.text;
+    }
   }
 
   static @NotNull Set<String> detectAllLineSeparators(@NotNull VirtualFile virtualFile) {

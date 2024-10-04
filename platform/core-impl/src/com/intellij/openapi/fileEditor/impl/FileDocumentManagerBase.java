@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class FileDocumentManagerBase extends FileDocumentManager {
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
@@ -173,6 +174,13 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   public void reloadBinaryFiles() {
     List<VirtualFile> binaries = ContainerUtil.filter(myDocumentCache.keySet(), file -> file.getFileType().isBinary());
     FileContentUtilCore.reparseFiles(binaries);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void reloadFileTypes(@NotNull Set<FileType> fileTypes) {
+    List<VirtualFile> supported = ContainerUtil.filter(myDocumentCache.keySet(), file -> fileTypes.contains(file.getFileType()));
+    FileContentUtilCore.reparseFiles(supported);
   }
 
   @Override

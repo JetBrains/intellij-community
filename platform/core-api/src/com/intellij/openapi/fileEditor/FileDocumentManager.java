@@ -6,6 +6,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Computable;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkListener;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -201,6 +203,9 @@ public abstract class FileDocumentManager implements SavingRequestor {
 
   @ApiStatus.Internal
   public void reloadBinaryFiles() { }
+
+  @ApiStatus.Internal
+  public void reloadFileTypes(@NotNull Set<FileType> fileTypes) { }
 
   @ApiStatus.Internal
   public @Nullable FileViewProvider findCachedPsiInAnyProject(@NotNull VirtualFile file) {
