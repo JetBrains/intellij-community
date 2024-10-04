@@ -76,10 +76,6 @@ a:com.intellij.coverage.CoverageDataManager
 - a:removeCoverageSuite(com.intellij.coverage.CoverageSuite):V
 - a:triggerPresentationUpdate():V
 - a:unregisterCoverageSuite(com.intellij.coverage.CoverageSuite):V
-*:com.intellij.coverage.CoverageEditorAnnotator
-- com.intellij.openapi.Disposable
-- a:hideCoverage():V
-- a:showCoverage(com.intellij.coverage.CoverageSuitesBundle):V
 a:com.intellij.coverage.CoverageEngine
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
@@ -273,7 +269,6 @@ a:com.intellij.coverage.view.CoverageViewExtension
 - <init>(com.intellij.openapi.project.Project,com.intellij.coverage.CoverageSuitesBundle,com.intellij.coverage.view.CoverageViewManager$StateBean):V
 - canSelectInCoverageView(java.lang.Object):Z
 - a:createColumnInfos():com.intellij.util.ui.ColumnInfo[]
-- *:createExtraToolbarActions():java.util.List
 - a:createRootNode():com.intellij.ide.util.treeView.AbstractTreeNode
 - createTopLevelNodes():java.util.List
 - a:getChildrenNodes(com.intellij.ide.util.treeView.AbstractTreeNode):java.util.List
@@ -306,8 +301,6 @@ f:com.intellij.coverage.view.CoverageViewManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.coverage.view.CoverageViewManager
 - f:getInstanceIfCreated(com.intellij.openapi.project.Project):com.intellij.coverage.view.CoverageViewManager
 f:com.intellij.coverage.view.CoverageViewManager$StateBean
-- *f:isShowOnlyModified():Z
-- *f:setShowOnlyModified(Z):V
 c:com.intellij.coverage.view.DirectoryCoverageViewExtension
 - com.intellij.coverage.view.CoverageViewExtension
 - pf:myAnnotator:com.intellij.coverage.CoverageAnnotator

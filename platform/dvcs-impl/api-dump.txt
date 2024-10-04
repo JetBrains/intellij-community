@@ -285,7 +285,6 @@ f:com.intellij.dvcs.push.PushController
 - com.intellij.openapi.Disposable
 - <init>(com.intellij.openapi.project.Project,com.intellij.dvcs.push.ui.VcsPushDialog,java.util.Collection,java.util.List,com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource):V
 - createAdditionalPanels():java.util.Map
-- *:createCustomPanels(java.util.Collection):java.util.Map
 - createTopPanel():javax.swing.JComponent
 - dispose():V
 - executeHandlers(com.intellij.openapi.progress.ProgressIndicator):com.intellij.dvcs.push.PrePushHandler$Result
@@ -314,8 +313,6 @@ c:com.intellij.dvcs.push.ui.CommitNode
 - getTooltip():java.lang.String
 - getUserObject():com.intellij.vcs.log.VcsFullCommitDetails
 - render(com.intellij.ui.ColoredTreeCellRenderer):V
-*:com.intellij.dvcs.push.ui.CommitNodeUiRenderExtension
-- a:render(com.intellij.openapi.project.Project,com.intellij.ui.ColoredTreeCellRenderer,com.intellij.dvcs.push.ui.CommitNode):V
 f:com.intellij.dvcs.push.ui.PushLog
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
@@ -408,7 +405,6 @@ c:com.intellij.dvcs.push.ui.VcsPushDialog
 - enableOkActions(Z):V
 - executeAfterRunningPrePushHandlers(com.intellij.openapi.progress.Task$Backgroundable):V
 - getAdditionalOptionValue(com.intellij.dvcs.push.PushSupport):com.intellij.dvcs.push.VcsPushOptionValue
-- *:getCustomParams():java.util.Map
 - getData(java.lang.String):java.lang.Object
 - p:getDimensionServiceKey():java.lang.String
 - p:getHelpId():java.lang.String
@@ -426,7 +422,6 @@ com.intellij.dvcs.push.ui.VcsPushUi
 - a:executeAfterRunningPrePushHandlers(com.intellij.openapi.progress.Task$Backgroundable):V
 - a:getAdditionalOptionValue(com.intellij.dvcs.push.PushSupport):com.intellij.dvcs.push.VcsPushOptionValue
 - a:getSelectedPushSpecs():java.util.Map
-- *:hasWarnings():Z
 - a:push(Z):V
 a:com.intellij.dvcs.repo.AbstractRepositoryManager
 - com.intellij.dvcs.repo.RepositoryManager

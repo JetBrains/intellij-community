@@ -1,18 +1,3 @@
-*a:com.intellij.codeInsight.hints.VcsCodeVisionCurlyBracketLanguageContext
-- com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext
-- <init>():V
-- computeEffectiveRange(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
-- pa:isRBrace(com.intellij.psi.PsiElement):Z
-*:com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext
-- *sf:Companion:com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext$Companion
-- sf:EXTENSION:java.lang.String
-- computeEffectiveRange(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
-- a:handleClick(java.awt.event.MouseEvent,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement):V
-- a:isAccepted(com.intellij.psi.PsiElement):Z
-- *:isCustomFileAccepted(com.intellij.psi.PsiFile):Z
-*f:com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext$Companion
-- sf:EXTENSION:java.lang.String
-- f:getProvidersExtensionPoint():com.intellij.lang.LanguageExtension
 f:com.intellij.openapi.diff.impl.patch.formove.FilePathComparator
 - java.util.Comparator
 - <init>():V
@@ -1136,9 +1121,6 @@ com.intellij.openapi.vcs.changes.CommitExecutor
 - requiresSyncCommitChecks():Z
 - supportsPartialCommit():Z
 - useDefaultAction():Z
-*:com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
-- com.intellij.openapi.vcs.changes.CommitExecutor
-- a:getText(com.intellij.vcs.commit.CommitWorkflowHandlerState):java.lang.String
 com.intellij.openapi.vcs.changes.CommitResultHandler
 - java.util.EventListener
 - onCancel():V
@@ -1347,11 +1329,6 @@ a:com.intellij.openapi.vcs.changes.VcsDirtyScope
 - a:getVcs():com.intellij.openapi.vcs.AbstractVcs
 - a:isEmpty():Z
 - a:wasEveryThingDirty():Z
-*:com.intellij.openapi.vcs.changes.VcsDirtyScopeBuilder
-- a:addDirtyPathFast(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,Z):V
-- a:belongsTo(com.intellij.openapi.vcs.FilePath):Z
-- a:markEverythingDirty():V
-- a:pack():com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
 a:com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 - <init>():V
 - a:dirDirtyRecursively(com.intellij.openapi.vcs.FilePath):V
@@ -1501,20 +1478,6 @@ com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 - com.intellij.openapi.vcs.checkin.CheckinModificationHandler
 - a:runCheckinHandlers(java.lang.Runnable):V
 com.intellij.openapi.vcs.checkin.CheckinModificationHandler
-*:com.intellij.openapi.vcs.checkin.CommitCheck
-- com.intellij.openapi.project.PossiblyDumbAware
-- a:getExecutionOrder():com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
-- a:isEnabled():Z
-- a:runCheck(com.intellij.openapi.vcs.checkin.CommitInfo,kotlin.coroutines.Continuation):java.lang.Object
-*e:com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
-- java.lang.Enum
-- sf:EARLY:com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
-- sf:LATE:com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
-- sf:MODIFICATION:com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
-- sf:POST_COMMIT:com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
-- s:values():com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder[]
 f:com.intellij.openapi.vcs.checkin.CommitCheckKt
 - sf:getCommittedVirtualFiles(com.intellij.openapi.vcs.checkin.CommitInfo):java.util.List
 com.intellij.openapi.vcs.checkin.CommitInfo
@@ -1525,21 +1488,6 @@ com.intellij.openapi.vcs.checkin.CommitInfo
 - a:getCommittedChanges():java.util.List
 - a:getExecutor():com.intellij.openapi.vcs.changes.CommitExecutor
 - a:isVcsCommit():Z
-*:com.intellij.openapi.vcs.checkin.CommitProblem
-- *sf:Companion:com.intellij.openapi.vcs.checkin.CommitProblem$Companion
-- a:getText():java.lang.String
-- showModalSolution(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CommitInfo):com.intellij.openapi.vcs.checkin.CheckinHandler$ReturnResult
-*f:com.intellij.openapi.vcs.checkin.CommitProblem$Companion
-- f:createError(java.lang.Throwable):com.intellij.openapi.vcs.checkin.CommitProblem
-*:com.intellij.openapi.vcs.checkin.CommitProblemWithDetails
-- com.intellij.openapi.vcs.checkin.CommitProblem
-- a:getShowDetailsAction():java.lang.String
-- getShowDetailsLink():java.lang.String
-- a:showDetails(com.intellij.openapi.project.Project):V
-*:com.intellij.openapi.vcs.checkin.PostCommitChangeConverter
-- a:areConsequentCommits(java.util.List):Z
-- a:collectChangesAfterCommit(com.intellij.openapi.vcs.changes.CommitContext):java.util.List
-- a:isFailureUpToDate(java.util.List):Z
 f:com.intellij.openapi.vcs.checkin.TextCommitProblem
 - com.intellij.openapi.vcs.checkin.CommitProblem
 - <init>(java.lang.String):V
@@ -2224,13 +2172,6 @@ com.intellij.vcs.branch.BranchStateProvider
 com.intellij.vcs.branch.LinkedBranchData
 - com.intellij.vcs.branch.BranchData
 - a:getLinkedBranchName():java.lang.String
-*:com.intellij.vcs.commit.AmendCommitHandler
-- a:addAmendCommitModeListener(com.intellij.vcs.commit.AmendCommitModeListener,com.intellij.openapi.Disposable):V
-- a:isAmendCommitMode():Z
-- a:isAmendCommitModeSupported():Z
-- a:isAmendCommitModeTogglingEnabled():Z
-- a:setAmendCommitMode(Z):V
-- a:setAmendCommitModeTogglingEnabled(Z):V
 com.intellij.vcs.commit.AmendCommitModeListener
 - java.util.EventListener
 - a:amendCommitModeToggled():V
@@ -2283,16 +2224,6 @@ com.intellij.vcs.commit.CommitWorkflowHandler
 - a:getExecutor(java.lang.String):com.intellij.openapi.vcs.changes.CommitExecutor
 - getState():com.intellij.vcs.commit.CommitWorkflowHandlerState
 - a:isExecutorEnabled(com.intellij.openapi.vcs.changes.CommitExecutor):Z
-*f:com.intellij.vcs.commit.CommitWorkflowHandlerState
-- <init>(Z,Z):V
-- f:component1():Z
-- f:component2():Z
-- f:copy(Z,Z):com.intellij.vcs.commit.CommitWorkflowHandlerState
-- bs:copy$default(com.intellij.vcs.commit.CommitWorkflowHandlerState,Z,Z,I,java.lang.Object):com.intellij.vcs.commit.CommitWorkflowHandlerState
-- equals(java.lang.Object):Z
-- hashCode():I
-- f:isAmend():Z
-- f:isSkipCommitChecks():Z
 com.intellij.vcs.commit.CommitWorkflowUi
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
@@ -2409,8 +2340,3 @@ f:com.intellij.vcsUtil.VcsUtil
 - s:shouldDetectVcsMappingsFor(com.intellij.openapi.project.Project):Z
 - s:sortPathsFromOutermost(com.intellij.openapi.vcs.FilePath[]):com.intellij.openapi.vcs.FilePath[]
 - s:trimCommitMessageToSaneSize(java.lang.String):java.lang.String
-*:com.intellij.vfs.AsyncVfsEventsListener
-- a:filesChanged(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
-*:com.intellij.vfs.AsyncVfsEventsPostProcessor
-- a:addListener(com.intellij.vfs.AsyncVfsEventsListener,kotlinx.coroutines.CoroutineScope):V
-- s:getInstance():com.intellij.vfs.AsyncVfsEventsPostProcessor

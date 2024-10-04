@@ -7,4 +7,3 @@ a:com.intellij.openapi.extensions.AbstractExtensionPointBean
 - getPluginId():com.intellij.openapi.extensions.PluginId
 - f:setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 f:com.intellij.serviceContainer.ContextKt
-- *sf:instance(java.lang.Class,kotlin.coroutines.Continuation):java.lang.Object

@@ -1806,7 +1806,6 @@ f:com.intellij.ui.ComponentUtil
 - s:isFocusProxy(java.awt.Component):Z
 - s:isMeaninglessFocusOwner(java.awt.Component):Z
 - s:isMinimized(java.awt.Window):Z
-- *s:isShowing(java.awt.Component,Z):Z
 - s:putClientProperty(javax.swing.JComponent,com.intellij.openapi.util.Key,java.lang.Object):V
 com.intellij.ui.DarculaColors
 - sf:BLUE:java.awt.Color
@@ -3215,7 +3214,6 @@ com.intellij.ui.paint.RegionPainter2D
 - a:paint(java.awt.Graphics2D,D,D,D,D,java.lang.Object):V
 f:com.intellij.ui.render.RenderingUtil
 - sf:ALWAYS_PAINT_SELECTION_AS_FOCUSED:com.intellij.openapi.util.Key
-- *sf:PAINT_HOVERED_BACKGROUND:com.intellij.openapi.util.Key
 - <init>():V
 - s:getBackground(javax.swing.JList):java.awt.Color
 - s:getBackground(javax.swing.JList,Z):java.awt.Color
@@ -4740,9 +4738,6 @@ f:com.intellij.util.ui.JBValue$UIInteger
 - com.intellij.util.ui.JBValue
 - <init>(java.lang.String,I):V
 - getUnscaled():F
-*f:com.intellij.util.ui.JLabelUtil
-- sf:INSTANCE:com.intellij.util.ui.JLabelUtil
-- sf:setTrimOverflow(javax.swing.JLabel,Z):V
 f:com.intellij.util.ui.Layers
 - javax.swing.JLayeredPane
 - <init>():V
@@ -5189,7 +5184,6 @@ f:com.intellij.util.ui.UIUtil
 - s:getOptionPaneBackground():java.awt.Color
 - s:getOptionPaneMessageFont():java.awt.Font
 - s:getPanelBackground():java.awt.Color
-- *s:getParent(java.awt.Component):java.awt.Component
 - s:getParentOfType(java.lang.Class,java.awt.Component):java.lang.Object
 - s:getPreferredFocusedComponent(java.awt.Container):javax.swing.JComponent
 - s:getPropertyMaxGutterIconWidth(java.lang.String):java.lang.Integer
@@ -5255,7 +5249,6 @@ f:com.intellij.util.ui.UIUtil
 - s:getWindow(java.awt.Component):java.awt.Window
 - s:getWindowColor():java.awt.Color
 - s:hasComponentOfType(java.awt.Component,java.lang.Class[]):Z
-- *s:hasFocus(java.awt.Component):Z
 - s:hasScrollPane(java.awt.Component):Z
 - s:haveCommonOwner(java.awt.Component,java.awt.Component):Z
 - s:htmlInjectionGuard(java.lang.Object):java.lang.Object
@@ -5287,8 +5280,6 @@ f:com.intellij.util.ui.UIUtil
 - s:isRetina(java.awt.Graphics2D):Z
 - s:isRetina(java.awt.GraphicsDevice):Z
 - s:isSelectionButtonDown(java.awt.event.MouseEvent):Z
-- *s:isShowing(java.awt.Component):Z
-- *s:isShowing(java.awt.Component,Z):Z
 - s:isSimpleWindow(java.awt.Window):Z
 - s:isToUseDottedCellBorder():Z
 - s:isToggleListSelectionEvent(java.awt.event.MouseEvent):Z

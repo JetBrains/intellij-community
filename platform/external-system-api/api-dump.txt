@@ -1,7 +1,6 @@
 com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 - getAffectedExternalProjectFiles(java.lang.String,com.intellij.openapi.project.Project):java.util.List
 - a:getAffectedExternalProjectPath(java.lang.String,com.intellij.openapi.project.Project):java.lang.String
-- *:isApplicable(com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy):Z
 com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware
 - a:getConfigurable(com.intellij.openapi.project.Project):com.intellij.openapi.options.Configurable
 com.intellij.openapi.externalSystem.ExternalSystemManager
@@ -9,7 +8,6 @@ com.intellij.openapi.externalSystem.ExternalSystemManager
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - createTestConsoleProperties(com.intellij.openapi.project.Project,com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration):java.lang.Object
 - a:getExecutionSettingsProvider():com.intellij.util.Function
-- *:getExtensionPointsForResolver():java.util.List
 - a:getExternalProjectDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
 - a:getLocalSettingsProvider():com.intellij.util.Function
 - a:getProjectResolverClass():java.lang.Class
@@ -55,10 +53,8 @@ e:com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 - s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 - s:values():com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType[]
 com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
-- *:adjustModificationType(java.lang.String,com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType):com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 - a:getProjectId():com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 - a:getSettingsFiles():java.util.Set
-- *:isIgnoredSettingsFileEvent(java.lang.String,com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext):Z
 - a:reloadProject(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext):V
 - a:subscribe(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectListener,com.intellij.openapi.Disposable):V
 f:com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
@@ -133,34 +129,10 @@ e:com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus
 - s:values():com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus[]
-*:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext
-- a:getEvent():com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event
-- a:getModificationType():com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
-- a:getReloadStatus():com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
-*e:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event
-- java.lang.Enum
-- sf:CREATE:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event
-- sf:DELETE:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event
-- sf:UPDATE:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event
-- s:values():com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event[]
-*e:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
-- java.lang.Enum
-- sf:IDLE:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
-- sf:IN_PROGRESS:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
-- sf:JUST_FINISHED:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
-- sf:JUST_STARTED:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
-- s:values():com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus[]
 com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesReloadContext
 - a:getCreated():java.util.Set
 - a:getDeleted():java.util.Set
 - a:getUpdated():java.util.Set
-*:com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectLinkListener
-- onProjectLinked(java.lang.String):V
-- onProjectUnlinked(java.lang.String):V
 com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 - sf:Companion:com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware$Companion
 - buildFileExtensions():java.lang.String[]
@@ -324,9 +296,6 @@ f:com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - attachExecutionConsole(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.task.ExternalSystemTask,com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.process.ProcessHandler):com.intellij.execution.ui.ExecutionConsole
-- *:getCustomActions(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.task.ExternalSystemTask,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.openapi.actionSystem.AnAction[]
-- *:getCustomContextActions(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.task.ExternalSystemTask,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.openapi.actionSystem.AnAction[]
-- *:getCustomExecutionFilters(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.task.ExternalSystemTask,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.filters.Filter[]
 - a:getExternalSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - a:getRestartActions(com.intellij.execution.ui.ExecutionConsole):com.intellij.openapi.actionSystem.AnAction[]
 - a:isApplicableFor(com.intellij.openapi.externalSystem.model.task.ExternalSystemTask):Z
@@ -356,15 +325,11 @@ c:com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - dontReportRefreshErrors():com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - forceWhenUptodate(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - navigateToError():com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
-- *:projectResolverPolicy(com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - use(com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - usePreviewMode():com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withArguments(java.lang.String):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withUserData(com.intellij.openapi.util.UserDataHolderBase):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withVmOptions(java.lang.String):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
-*:com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
-- java.io.Serializable
-- a:isPartialDataResolveAllowed():Z
 c:com.intellij.openapi.externalSystem.model.DataNode
 - com.intellij.openapi.util.UserDataHolderEx
 - java.io.Serializable
@@ -771,9 +736,6 @@ f:com.intellij.openapi.externalSystem.model.project.TestData
 - getSourceFolders():java.util.Set
 - getTestName():java.lang.String
 - getTestTaskName():java.lang.String
-*:com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
-- com.intellij.openapi.externalSystem.model.project.ExternalEntityData
-- a:find(java.lang.String):java.lang.Object
 c:com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings
 - com.intellij.openapi.util.UserDataHolder
 - java.io.Serializable
@@ -900,10 +862,6 @@ f:com.intellij.openapi.externalSystem.model.task.TaskData
 - setJvmTest(Z):V
 - setTest(Z):V
 - setType(java.lang.String):V
-*c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
-- com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
-- <init>(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.build.events.BuildEvent):V
-- getBuildEvent():com.intellij.build.events.BuildEvent
 f:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemFinishEvent
 - com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent
 - <init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor,com.intellij.openapi.externalSystem.model.task.event.OperationResult):V
@@ -1044,10 +1002,7 @@ com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallba
 - onSuccess(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.openapi.externalSystem.model.DataNode):V
 com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
 - a:cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):Z
-- *:resolveProjectInfo(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):com.intellij.openapi.externalSystem.model.DataNode
 - resolveProjectInfo(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):com.intellij.openapi.externalSystem.model.DataNode
-*:com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkspaceContributor
-- a:findProjectId(com.intellij.openapi.module.Module):com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
 com.intellij.openapi.externalSystem.service.project.IdeModelsProvider
 - a:findIdeLibrary(com.intellij.openapi.externalSystem.model.project.LibraryData):com.intellij.openapi.roots.libraries.Library
 - a:findIdeModule(com.intellij.openapi.externalSystem.model.project.ModuleData):com.intellij.openapi.module.Module
@@ -1074,28 +1029,17 @@ com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 - a:createLibrary(java.lang.String):com.intellij.openapi.roots.libraries.Library
 - a:createLibrary(java.lang.String,com.intellij.openapi.roots.ProjectModelExternalSource):com.intellij.openapi.roots.libraries.Library
 - a:dispose():V
-- *a:findModifiableModel(java.lang.Class):com.intellij.openapi.externalSystem.service.project.ModifiableModel
-- *a:findModuleByPublication(com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):java.lang.String
 - a:getModalityStateForQuestionDialogs():com.intellij.openapi.application.ModalityState
 - a:getModifiableFacetModel(com.intellij.openapi.module.Module):com.intellij.facet.ModifiableFacetModel
 - a:getModifiableLibraryModel(com.intellij.openapi.roots.libraries.Library):com.intellij.openapi.roots.libraries.Library$ModifiableModel
-- *a:getModifiableModel(java.lang.Class):com.intellij.openapi.externalSystem.service.project.ModifiableModel
 - a:getModifiableModuleModel():com.intellij.openapi.module.ModifiableModuleModel
 - a:getModifiableProjectLibrariesModel():com.intellij.openapi.roots.libraries.LibraryTable$ModifiableModel
 - a:getModifiableRootModel(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ModifiableRootModel
 - a:getProductionModuleName(com.intellij.openapi.module.Module):java.lang.String
-- *a:isSubstituted(java.lang.String):Z
 - a:newModule(com.intellij.openapi.externalSystem.model.project.ModuleData):com.intellij.openapi.module.Module
 - a:newModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
-- *a:registerModulePublication(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):V
 - a:removeLibrary(com.intellij.openapi.roots.libraries.Library):V
 - a:setTestModuleProperties(com.intellij.openapi.module.Module,java.lang.String):V
-- *a:trySubstitute(com.intellij.openapi.module.Module,com.intellij.openapi.roots.LibraryOrderEntry,com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):com.intellij.openapi.roots.ModuleOrderEntry
-*:com.intellij.openapi.externalSystem.service.project.ModifiableModel
-- a:commit():V
-- a:dispose():V
-*:com.intellij.openapi.externalSystem.service.project.ModifiableModelsProviderExtension
-- a:create(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):com.intellij.openapi.util.Pair
 com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 - a:createModifiableModelsProvider(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 - a:ensureTheDataIsReadyToUse(com.intellij.openapi.externalSystem.model.DataNode):V
@@ -1126,7 +1070,6 @@ com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManag
 - a:isIgnored(com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String):Z
 - a:refreshProject(java.lang.String,com.intellij.openapi.externalSystem.importing.ImportSpec):V
 - a:runWhenInitialized(java.lang.Runnable):V
-- *a:runWhenInitializedInBackground(java.lang.Runnable):V
 - a:setIgnored(com.intellij.openapi.externalSystem.model.DataNode,Z):V
 com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -1145,29 +1088,10 @@ com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService
 - onSuccessImport(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModelsProvider):V
 - postProcess(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):V
 - a:removeData(com.intellij.openapi.util.Computable,java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):V
-*:com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager
-- a:addSourceFolder(com.intellij.openapi.module.Module,java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType):V
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager
-- a:removeSourceFolders(com.intellij.openapi.module.Module):V
-- a:setSourceFolderGenerated(java.lang.String,Z):V
-- a:setSourceFolderPackagePrefix(java.lang.String,java.lang.String):V
-*:com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataService
-- *sf:Companion:com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataService$Companion
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:getTargetDataKey():com.intellij.openapi.externalSystem.model.Key
-- importData(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.platform.workspace.storage.MutableEntityStorage):V
-*f:com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataService$Companion
 com.intellij.openapi.externalSystem.service.project.settings.BeforeRunTaskImporter
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:canImport(java.lang.String):Z
 - a:process(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,com.intellij.execution.configurations.RunConfiguration,java.util.List,java.util.Map):java.util.List
-*:com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- apply(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData):V
-- apply(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData):V
-- apply(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData):V
-- onSuccessImport(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.service.project.IdeModelsProvider,com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData):V
-- onSuccessImport(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.externalSystem.service.project.IdeModelsProvider,com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData):V
 com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:canHandle(java.lang.String):Z
@@ -1454,14 +1378,6 @@ f:com.intellij.openapi.externalSystem.util.ExternalSystemContentRootContributor$
 - f:getPath():java.nio.file.Path
 - f:getRootType():com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 - hashCode():I
-*:com.intellij.openapi.externalSystem.util.ExternalSystemCrcCalculator
-- *sf:Companion:com.intellij.openapi.externalSystem.util.ExternalSystemCrcCalculator$Companion
-- a:calculateCrc(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.CharSequence):java.lang.Long
-- s:getInstance(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.externalSystem.util.ExternalSystemCrcCalculator
-- a:isApplicable(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.vfs.VirtualFile):Z
-*f:com.intellij.openapi.externalSystem.util.ExternalSystemCrcCalculator$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-- f:getInstance(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.externalSystem.util.ExternalSystemCrcCalculator
 f:com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
 - <init>():V
 - f:externalSystemActivityStarted():V

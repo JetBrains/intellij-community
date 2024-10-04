@@ -35,10 +35,6 @@ c:com.intellij.xdebugger.DefaultDebugProcessHandler
 com.intellij.xdebugger.Obsolescent
 - org.jetbrains.concurrency.Obsolescent
 - isObsolete():Z
-*:com.intellij.xdebugger.XAlternativeSourceHandler
-- a:getAlternativePosition(com.intellij.xdebugger.frame.XStackFrame):com.intellij.xdebugger.XSourcePosition
-- a:getAlternativeSourceKindState():kotlinx.coroutines.flow.StateFlow
-- a:isAlternativeSourceKindPreferred(com.intellij.xdebugger.frame.XSuspendContext):Z
 a:com.intellij.xdebugger.XDebugProcess
 - p:<init>(com.intellij.xdebugger.XDebugSession):V
 - checkCanInitBreakpoints():Z
@@ -46,13 +42,10 @@ a:com.intellij.xdebugger.XDebugProcess
 - createConsole():com.intellij.execution.ui.ExecutionConsole
 - createTabLayouter():com.intellij.xdebugger.ui.XDebugTabLayouter
 - createValueMarkerProvider():com.intellij.xdebugger.frame.XValueMarkerProvider
-- *:dependsOnPlugin(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - p:doGetProcessHandler():com.intellij.execution.process.ProcessHandler
-- *:getAlternativeSourceHandler():com.intellij.xdebugger.XAlternativeSourceHandler
 - getBreakpointHandlers():com.intellij.xdebugger.breakpoints.XBreakpointHandler[]
 - getCurrentStateHyperlinkListener():javax.swing.event.HyperlinkListener
 - getCurrentStateMessage():java.lang.String
-- *:getDropFrameHandler():com.intellij.xdebugger.frame.XDropFrameHandler
 - a:getEditorsProvider():com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - getEvaluator():com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 - f:getProcessHandler():com.intellij.execution.process.ProcessHandler
@@ -206,11 +199,6 @@ a:com.intellij.xdebugger.XSourcePositionWrapper
 - getFile():com.intellij.openapi.vfs.VirtualFile
 - f:getLine():I
 - f:getOffset():I
-*:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler
-- *sf:Companion:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler$Companion
-- a:areInlineBreakpointsDisabled(com.intellij.openapi.vfs.VirtualFile):Z
-*f:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler$Companion
-- f:getEP():com.intellij.openapi.extensions.ExtensionPointName
 e:com.intellij.xdebugger.breakpoints.SuspendPolicy
 - java.lang.Enum
 - sf:ALL:com.intellij.xdebugger.breakpoints.SuspendPolicy
@@ -457,7 +445,6 @@ a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - a:getFileType():com.intellij.openapi.fileTypes.FileType
 - getInlineDebuggerHelper():com.intellij.xdebugger.evaluation.InlineDebuggerHelper
 - getSupportedLanguages(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition):java.util.Collection
-- *:isEvaluateExpressionFieldEnabled():Z
 a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProviderBase
 - com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - sf:DEBUGGER_FILE_KEY:com.intellij.openapi.util.Key
@@ -509,9 +496,6 @@ a:com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 - getShortcutSupplier():java.util.function.Supplier
 - getTextAttributes():com.intellij.ui.SimpleTextAttributes
 - a:onClick(java.awt.event.MouseEvent):V
-*:com.intellij.xdebugger.frame.XDropFrameHandler
-- a:canDrop(com.intellij.xdebugger.frame.XStackFrame):Z
-- a:drop(com.intellij.xdebugger.frame.XStackFrame):V
 a:com.intellij.xdebugger.frame.XExecutionStack
 - sf:EMPTY_ARRAY:com.intellij.xdebugger.frame.XExecutionStack[]
 - p:<init>(java.lang.String):V
@@ -572,8 +556,6 @@ a:com.intellij.xdebugger.frame.XStackFrame
 - getEqualityObject():java.lang.Object
 - getEvaluator():com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 - getSourcePosition():com.intellij.xdebugger.XSourcePosition
-*:com.intellij.xdebugger.frame.XStringValueModifier
-- a:stringToXExpression(java.lang.String):com.intellij.xdebugger.XExpression
 a:com.intellij.xdebugger.frame.XSuspendContext
 - <init>():V
 - computeExecutionStacks(com.intellij.xdebugger.frame.XSuspendContext$XExecutionStackContainer):V
@@ -775,13 +757,6 @@ com.intellij.xdebugger.ui.DebuggerColors
 - sf:NOT_TOP_FRAME_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:SMART_STEP_INTO_SELECTION:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:SMART_STEP_INTO_TARGET:com.intellij.openapi.editor.colors.TextAttributesKey
-*:com.intellij.xdebugger.ui.TextValueVisualizer
-- a:visualize(java.lang.String):java.util.List
-*:com.intellij.xdebugger.ui.VisualizedContentTab
-- a:createComponent(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):javax.swing.JComponent
-- a:getId():java.lang.String
-- a:getName():java.lang.String
-- onShown(com.intellij.openapi.project.Project,Z):V
 c:com.intellij.xdebugger.ui.XDebugTabLayouter
 - <init>():V
 - registerAdditionalContent(com.intellij.execution.ui.RunnerLayoutUi):V

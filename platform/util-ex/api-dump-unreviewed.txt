@@ -55,8 +55,6 @@ f:com.intellij.util.LazyKt
 - sf:lazyUnsafe(kotlin.jvm.functions.Function0):kotlin.Lazy
 - sf:recursionSafeLazy(java.lang.Object,kotlin.jvm.functions.Function0):kotlin.Lazy
 - bs:recursionSafeLazy$default(java.lang.Object,kotlin.jvm.functions.Function0,I,java.lang.Object):kotlin.Lazy
-- *sf:suspendingLazy(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):com.intellij.util.SuspendingLazy
-- *bs:suspendingLazy$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):com.intellij.util.SuspendingLazy
 com.intellij.util.ResettableLazy
 - a:getValue():java.lang.Object
 - a:getValue(java.lang.Object,kotlin.reflect.KProperty):java.lang.Object
@@ -72,10 +70,6 @@ f:com.intellij.util.ResourceUtil
 - s:getResourceAsStream(java.lang.ClassLoader,java.lang.String,java.lang.String):java.io.InputStream
 - s:loadText(java.io.InputStream):java.lang.String
 - s:loadText(java.net.URL):java.lang.String
-*:com.intellij.util.SuspendingLazy
-- a:getInitialized():java.lang.Object
-- a:getValue(kotlin.coroutines.Continuation):java.lang.Object
-- a:isInitialized():Z
 c:com.intellij.util.containers.HashMap
 - java.util.HashMap
 - <init>():V
@@ -150,7 +144,3 @@ f:com.intellij.util.io.PathKt
 - sf:write(java.nio.file.Path,B[],I,I):java.nio.file.Path
 - bs:write$default(java.nio.file.Path,java.lang.CharSequence,java.nio.charset.Charset,Z,I,java.lang.Object):java.nio.file.Path
 - sf:writeChild(java.nio.file.Path,java.lang.String,java.lang.String):java.nio.file.Path
-*f:com.intellij.util.text.TextRangeUtils
-- sf:splitLineRanges(java.lang.CharSequence):kotlin.sequences.Sequence
-- sf:splitToTextRanges(java.lang.CharSequence,java.lang.String,Z):kotlin.sequences.Sequence
-- bs:splitToTextRanges$default(java.lang.CharSequence,java.lang.String,Z,I,java.lang.Object):kotlin.sequences.Sequence

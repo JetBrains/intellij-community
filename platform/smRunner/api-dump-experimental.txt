@@ -1,0 +1,7 @@
+c:com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView
+- com.intellij.execution.testframework.TestTreeView
+- *:setAccessibleStatus(java.lang.String):V
+c:com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer
+- com.intellij.ui.ColoredTreeCellRenderer
+- *:getAccessibleStatus():java.lang.String
+- *:setAccessibleStatus(com.intellij.openapi.util.Computable):V

@@ -612,11 +612,6 @@ c:com.intellij.openapi.vcs.changes.BaseRevision
 - getPath():java.lang.String
 - getRevision():com.intellij.openapi.vcs.history.VcsRevisionNumber
 - getVcs():com.intellij.openapi.vcs.AbstractVcs
-*:com.intellij.openapi.vcs.changes.ChangeListChangeAssigner
-- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
-- a:beforeChangesProcessing(com.intellij.openapi.vcs.changes.VcsDirtyScope):V
-- a:getChangeListIdFor(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.ChangeListManagerGate):java.lang.String
-- a:markChangesProcessed(com.intellij.openapi.vcs.changes.VcsDirtyScope):V
 f:com.intellij.openapi.vcs.changes.ChangeListData
 - sf:Companion:com.intellij.openapi.vcs.changes.ChangeListData$Companion
 - <init>():V
@@ -944,10 +939,6 @@ com.intellij.openapi.vcs.changes.ChangesViewModifier
 com.intellij.openapi.vcs.changes.ChangesViewModifier$ChangesViewModifierListener
 - java.util.EventListener
 - a:updated():V
-*:com.intellij.openapi.vcs.changes.ChangesViewNodeAction
-- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
-- a:createNodeHoverIcon(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.changes.ui.HoverIcon
-- handleDoubleClick(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
 f:com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 - com.intellij.openapi.Disposable
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -3293,7 +3284,6 @@ c:com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 - f:myRoot:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory):V
 - build():javax.swing.tree.DefaultTreeModel
-- *:build(Z):javax.swing.tree.DefaultTreeModel
 - s:buildEmpty():javax.swing.tree.DefaultTreeModel
 - s:buildFromChangeLists(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory,java.util.Collection):javax.swing.tree.DefaultTreeModel
 - s:buildFromChangeLists(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory,java.util.Collection,Z):javax.swing.tree.DefaultTreeModel
@@ -4535,9 +4525,6 @@ com.intellij.vcs.AnnotationProviderEx
 - a:annotate(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsRevisionNumber):com.intellij.openapi.vcs.annotate.FileAnnotation
 - isAnnotationValid(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsRevisionNumber):Z
 - isAnnotationValid(com.intellij.openapi.vcs.history.VcsFileRevision):Z
-*:com.intellij.vcs.CacheableAnnotationProvider
-- a:getFromCache(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.annotate.FileAnnotation
-- a:populateCache(com.intellij.openapi.vfs.VirtualFile):V
 c:com.intellij.vcs.CommittedChangeListForRevision
 - com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl
 - com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware
@@ -4747,10 +4734,6 @@ a:com.intellij.vcs.commit.AbstractCommitter
 - pa:commit():V
 - f:runCommit(java.lang.String,Z):V
 f:com.intellij.vcs.commit.AbstractCommitter$Companion
-*:com.intellij.vcs.commit.AmendCommitAware
-- a:getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile):org.jetbrains.concurrency.CancellablePromise
-- a:getLastCommitMessage(com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- a:isAmendCommitSupported():Z
 f:com.intellij.vcs.commit.ChangeListCommitState
 - <init>(com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List,java.lang.String):V
 - f:getChangeList():com.intellij.openapi.vcs.changes.LocalChangeList
@@ -4952,17 +4935,6 @@ c:com.intellij.vcs.commit.CommitProgressPanel
 - f:setup(com.intellij.vcs.commit.CommitWorkflowUi,com.intellij.ui.EditorTextComponent,javax.swing.border.Border):V
 - pf:stateFlag():kotlin.properties.ReadWriteProperty
 - pf:update():V
-*:com.intellij.vcs.commit.CommitProgressUi
-- a:addCommitCheckFailure(com.intellij.vcs.commit.CommitCheckFailure):V
-- a:clearCommitCheckFailures():V
-- a:getCommitCheckFailures():java.util.List
-- a:isDumbMode():Z
-- a:isEmptyChanges():Z
-- a:isEmptyMessage():Z
-- a:runWithProgress(Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- a:setDumbMode(Z):V
-- a:setEmptyChanges(Z):V
-- a:setEmptyMessage(Z):V
 c:com.intellij.vcs.commit.CommitProjectPanelAdapter
 - com.intellij.openapi.vcs.CheckinProjectPanel
 - <init>(com.intellij.vcs.commit.AbstractCommitWorkflowHandler):V
@@ -5061,12 +5033,6 @@ com.intellij.vcs.commit.CommitterResultHandler
 - onCancel():V
 - onFailure():V
 - onSuccess():V
-*:com.intellij.vcs.commit.DelayedCommitMessageProvider
-- com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
-- a:init(com.intellij.openapi.project.Project,com.intellij.vcs.commit.CommitMessageUi,com.intellij.openapi.Disposable):V
-*:com.intellij.vcs.commit.EditedCommitDetails
-- a:getCommit():com.intellij.vcs.log.VcsFullCommitDetails
-- a:getCurrentUser():com.intellij.vcs.log.VcsUser
 f:com.intellij.vcs.commit.EditedCommitNodeKt
 - sf:insertEditedCommitNode(com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder,com.intellij.vcs.commit.EditedCommitPresentation):V
 com.intellij.vcs.commit.EditedCommitPresentation

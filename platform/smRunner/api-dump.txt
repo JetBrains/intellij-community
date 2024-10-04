@@ -609,7 +609,6 @@ c:com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView
 - getResultsViewer():com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
 - getSelectedTest(javax.swing.tree.TreePath):com.intellij.execution.testframework.sm.runner.SMTestProxy
 - s:getTestProxyFor(java.lang.Object):com.intellij.execution.testframework.sm.runner.SMTestProxy
-- *:setAccessibleStatus(java.lang.String):V
 - setTestResultsViewer(com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler
@@ -665,12 +664,10 @@ c:com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer
 - com.intellij.ui.ColoredTreeCellRenderer
 - <init>(com.intellij.execution.testframework.TestConsoleProperties):V
 - customizeCellRenderer(javax.swing.JTree,java.lang.Object,Z,Z,Z,I,Z):V
-- *:getAccessibleStatus():java.lang.String
 - getConsoleProperties():com.intellij.execution.testframework.TestConsoleProperties
 - getPreferredSize():java.awt.Dimension
 - p:paintComponent(java.awt.Graphics):V
 - removeAdditionalRootFormatter():V
-- *:setAccessibleStatus(com.intellij.openapi.util.Computable):V
 - setAdditionalRootFormatter(com.intellij.execution.testframework.sm.runner.ui.SMRootTestProxyFormatter):V
 f:com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil
 - s:formatRootNodeWithChildren(com.intellij.execution.testframework.sm.runner.SMTestProxy$SMRootTestProxy,com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer):V

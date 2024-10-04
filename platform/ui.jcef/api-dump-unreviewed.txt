@@ -2,17 +2,6 @@ c:com.intellij.ui.jcef.CefBrowserFactoryImpl
 - com.intellij.ui.jcef.CefOsrBrowserFactory
 - <init>():V
 - createOsrBrowser(com.intellij.ui.jcef.JBCefOSRHandlerFactory,org.cef.CefClient,java.lang.String,org.cef.browser.CefRequestContext,org.cef.browser.CefBrowser,java.awt.Point,Z,org.cef.CefBrowserSettings):org.cef.browser.CefBrowser
-*:com.intellij.ui.jcef.CefOsrBrowserFactory
-- a:createOsrBrowser(com.intellij.ui.jcef.JBCefOSRHandlerFactory,org.cef.CefClient,java.lang.String,org.cef.browser.CefRequestContext,org.cef.browser.CefBrowser,java.awt.Point,Z,org.cef.CefBrowserSettings):org.cef.browser.CefBrowser
-- s:getInstance():com.intellij.ui.jcef.CefOsrBrowserFactory
-*c:com.intellij.ui.jcef.HwFacadeHelper
-- sf:TRANSPARENT_COLOR:java.awt.Color
-- addNotify():V
-- s:create(javax.swing.JComponent):com.intellij.ui.jcef.HwFacadeHelper
-- hide():V
-- paint(java.awt.Graphics,java.util.function.Consumer):V
-- removeNotify():V
-- show():V
 c:com.intellij.ui.jcef.HwFacadeJPanel
 - javax.swing.JPanel
 - <init>():V
@@ -47,12 +36,6 @@ com.intellij.ui.jcef.JBCefApp$JBCefCustomSchemeHandlerFactory
 - a:getDomainName():java.lang.String
 - a:getSchemeName():java.lang.String
 - a:registerCustomScheme(org.cef.callback.CefSchemeRegistrar):V
-*f:com.intellij.ui.jcef.JBCefAppArmorUtils
-- <init>():V
-- s:areUnprivilegedUserNamespacesRestricted():Z
-- s:createUnprivilegedUserNamespacesRestrictedBanner():com.intellij.ui.InlineBanner
-- s:getUnprivilegedUserNamespacesRestrictedStubPanel():javax.swing.JPanel
-- s:showUnprivilegedUserNamespacesRestrictedDialog(java.awt.Component):V
 com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider
 - sf:Companion:com.intellij.ui.jcef.JBCefAppRequiredArgumentsProvider$Companion
 - a:getOptions():java.util.List

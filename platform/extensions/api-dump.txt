@@ -1,17 +1,6 @@
 com.intellij.ide.plugins.cl.PluginAwareClassLoader
 - a:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 - a:getPluginId():com.intellij.openapi.extensions.PluginId
-*e:com.intellij.openapi.client.ClientKind
-- java.lang.Enum
-- sf:ALL:com.intellij.openapi.client.ClientKind
-- sf:CONTROLLER:com.intellij.openapi.client.ClientKind
-- sf:GUEST:com.intellij.openapi.client.ClientKind
-- sf:LOCAL:com.intellij.openapi.client.ClientKind
-- sf:OWNER:com.intellij.openapi.client.ClientKind
-- sf:REMOTE:com.intellij.openapi.client.ClientKind
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.openapi.client.ClientKind
-- s:values():com.intellij.openapi.client.ClientKind[]
 com.intellij.openapi.components.BaseComponent
 - com.intellij.openapi.components.NamedComponent
 - disposeComponent():V
@@ -108,7 +97,6 @@ f:com.intellij.openapi.extensions.ExtensionPointName
 - f:addExtensionPointListener(com.intellij.openapi.extensions.AreaInstance,com.intellij.openapi.extensions.ExtensionPointListener):V
 - f:addExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener):V
 - f:addExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener,com.intellij.openapi.Disposable):V
-- *f:computeIfAbsent(java.lang.Class,java.util.function.Supplier):java.lang.Object
 - f:computeSafeIfAny(java.util.function.Function):java.lang.Object
 - sf:create(java.lang.String):com.intellij.openapi.extensions.ExtensionPointName
 - f:extensions():java.util.stream.Stream
@@ -168,7 +156,6 @@ com.intellij.openapi.extensions.PluginDescriptor
 - allowBundledUpdate():Z
 - a:getCategory():java.lang.String
 - a:getChangeNotes():java.lang.String
-- *:getClassLoader():java.lang.ClassLoader
 - a:getDescription():java.lang.String
 - getDisplayCategory():java.lang.String
 - getDownloads():java.lang.String
@@ -209,7 +196,6 @@ f:com.intellij.openapi.extensions.ProjectExtensionPointName
 - <init>(java.lang.String):V
 - f:addChangeListener(com.intellij.openapi.extensions.AreaInstance,java.lang.Runnable,com.intellij.openapi.Disposable):V
 - f:addExtensionPointListener(com.intellij.openapi.extensions.AreaInstance,com.intellij.openapi.extensions.ExtensionPointListener,com.intellij.openapi.Disposable):V
-- *f:asSequence(com.intellij.openapi.extensions.AreaInstance):kotlin.sequences.Sequence
 - f:computeSafeIfAny(com.intellij.openapi.extensions.AreaInstance,java.util.function.Function):java.lang.Object
 - f:findExtension(java.lang.Class,com.intellij.openapi.extensions.AreaInstance):java.lang.Object
 - f:findExtensionOrFail(java.lang.Class,com.intellij.openapi.extensions.AreaInstance):java.lang.Object

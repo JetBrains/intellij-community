@@ -1,0 +1,250 @@
+*c:com.intellij.build.events.BuildEventsNls
+- <init>():V
+*@:com.intellij.build.events.BuildEventsNls$Description
+- java.lang.annotation.Annotation
+*@:com.intellij.build.events.BuildEventsNls$Hint
+- java.lang.annotation.Annotation
+*@:com.intellij.build.events.BuildEventsNls$Message
+- java.lang.annotation.Annotation
+*@:com.intellij.build.events.BuildEventsNls$Title
+- java.lang.annotation.Annotation
+a:com.intellij.execution.ExecutionManager
+- *a:executePreparationTasks(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.configurations.RunProfileState):org.jetbrains.concurrency.Promise
+a:com.intellij.execution.Executor
+- *:isSupportedOnTarget():Z
+*f:com.intellij.execution.configurations.JavaTargetDependentParameters
+- <init>():V
+- addParameter(java.util.function.Function):V
+- asTargetParameters():java.util.List
+- getTargetEnvironment():com.intellij.execution.target.TargetEnvironment
+- setTargetEnvironment(com.intellij.execution.target.TargetEnvironment):V
+- toLocalParameters():java.util.List
+a:com.intellij.execution.configurations.RunConfigurationBase
+- com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.execution.configurations.ConfigurationCreationListener
+- com.intellij.execution.configurations.RunConfiguration
+- com.intellij.execution.configurations.TargetAwareRunProfile
+- com.intellij.execution.ui.FragmentedSettings
+- *:setOptionsFromConfigurationFile(com.intellij.openapi.components.BaseState):V
+*:com.intellij.execution.configurations.SyntheticConfigurationTypeProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getConfigurationTypes():java.util.Collection
+f:com.intellij.execution.runners.ExecutionEnvironment
+- com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.openapi.Disposable
+- *:getPreparedTargetEnvironment(com.intellij.execution.configurations.RunProfileState,com.intellij.execution.target.TargetProgressIndicator):com.intellij.execution.target.TargetEnvironment
+- *:isHeadless():Z
+- *:prepareTargetEnvironment(com.intellij.execution.configurations.RunProfileState,com.intellij.execution.target.TargetProgressIndicator):com.intellij.execution.target.TargetEnvironment
+- *:setHeadless():V
+*:com.intellij.execution.target.ExternallySynchronized
+- a:getSynchronizedVolumes():java.util.List
+*@:com.intellij.execution.target.HideFromRunOn
+- java.lang.annotation.Annotation
+*a:com.intellij.execution.target.TargetEnvironment
+- <init>(com.intellij.execution.target.TargetEnvironmentRequest):V
+- a:createProcess(com.intellij.execution.target.TargetedCommandLine,com.intellij.openapi.progress.ProgressIndicator):java.lang.Process
+- bs:createProcess$default(com.intellij.execution.target.TargetEnvironment,com.intellij.execution.target.TargetedCommandLine,com.intellij.openapi.progress.ProgressIndicator,I,java.lang.Object):java.lang.Process
+- getDownloadVolumes():java.util.Map
+- getLocalPortBindings():java.util.Map
+- getRequest():com.intellij.execution.target.TargetEnvironmentRequest
+- a:getTargetPlatform():com.intellij.execution.target.TargetPlatform
+- getTargetPortBindings():java.util.Map
+- getUploadVolumes():java.util.Map
+- a:shutdown():V
+*:com.intellij.execution.target.TargetEnvironment$BatchUploader
+- a:canUploadInBatches():Z
+- a:runBatchUpload(java.util.List,com.intellij.execution.target.TargetProgressIndicator):V
+*f:com.intellij.execution.target.TargetEnvironment$DownloadRoot
+- <init>(java.nio.file.Path,com.intellij.execution.target.TargetEnvironment$TargetPath):V
+- <init>(java.nio.file.Path,com.intellij.execution.target.TargetEnvironment$TargetPath,java.lang.String):V
+- b:<init>(java.nio.file.Path,com.intellij.execution.target.TargetEnvironment$TargetPath,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.nio.file.Path
+- f:component2():com.intellij.execution.target.TargetEnvironment$TargetPath
+- f:component3():java.lang.String
+- f:copy(java.nio.file.Path,com.intellij.execution.target.TargetEnvironment$TargetPath,java.lang.String):com.intellij.execution.target.TargetEnvironment$DownloadRoot
+- bs:copy$default(com.intellij.execution.target.TargetEnvironment$DownloadRoot,java.nio.file.Path,com.intellij.execution.target.TargetEnvironment$TargetPath,java.lang.String,I,java.lang.Object):com.intellij.execution.target.TargetEnvironment$DownloadRoot
+- equals(java.lang.Object):Z
+- f:getLocalRootPath():java.nio.file.Path
+- f:getPersistentId():java.lang.String
+- f:getTargetRootPath():com.intellij.execution.target.TargetEnvironment$TargetPath
+- hashCode():I
+*:com.intellij.execution.target.TargetEnvironment$DownloadableVolume
+- com.intellij.execution.target.TargetEnvironment$Volume
+- a:download(java.lang.String,com.intellij.openapi.progress.ProgressIndicator):V
+*f:com.intellij.execution.target.TargetEnvironment$LocalPortBinding
+- <init>(I,java.lang.Integer):V
+- f:component1():I
+- f:component2():java.lang.Integer
+- f:copy(I,java.lang.Integer):com.intellij.execution.target.TargetEnvironment$LocalPortBinding
+- bs:copy$default(com.intellij.execution.target.TargetEnvironment$LocalPortBinding,I,java.lang.Integer,I,java.lang.Object):com.intellij.execution.target.TargetEnvironment$LocalPortBinding
+- equals(java.lang.Object):Z
+- f:getLocal():I
+- f:getTarget():java.lang.Integer
+- hashCode():I
+*:com.intellij.execution.target.TargetEnvironment$MappingWithLocalPath
+- a:getLocalRootPath():java.nio.file.Path
+*f:com.intellij.execution.target.TargetEnvironment$SynchronizedVolume
+- com.intellij.execution.target.TargetEnvironment$MappingWithLocalPath
+- <init>(java.nio.file.Path,java.lang.String):V
+- f:component1():java.nio.file.Path
+- f:component2():java.lang.String
+- f:copy(java.nio.file.Path,java.lang.String):com.intellij.execution.target.TargetEnvironment$SynchronizedVolume
+- bs:copy$default(com.intellij.execution.target.TargetEnvironment$SynchronizedVolume,java.nio.file.Path,java.lang.String,I,java.lang.Object):com.intellij.execution.target.TargetEnvironment$SynchronizedVolume
+- equals(java.lang.Object):Z
+- getLocalRootPath():java.nio.file.Path
+- f:getTargetPath():java.lang.String
+- hashCode():I
+*a:com.intellij.execution.target.TargetEnvironment$TargetPath
+*f:com.intellij.execution.target.TargetEnvironment$TargetPath$Persistent
+- com.intellij.execution.target.TargetEnvironment$TargetPath
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.execution.target.TargetEnvironment$TargetPath$Persistent
+- bs:copy$default(com.intellij.execution.target.TargetEnvironment$TargetPath$Persistent,java.lang.String,I,java.lang.Object):com.intellij.execution.target.TargetEnvironment$TargetPath$Persistent
+- equals(java.lang.Object):Z
+- f:getAbsolutePath():java.lang.String
+- hashCode():I
+*f:com.intellij.execution.target.TargetEnvironment$TargetPath$Temporary
+- com.intellij.execution.target.TargetEnvironment$TargetPath
+- <init>():V
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- equals(java.lang.Object):Z
+- f:getHint():java.lang.String
+- f:getParentDirectory():java.lang.String
+- f:getPrefix():java.lang.String
+- hashCode():I
+*f:com.intellij.execution.target.TargetEnvironment$TargetPortBinding
+- <init>(java.lang.Integer,I):V
+- f:component1():java.lang.Integer
+- f:component2():I
+- f:copy(java.lang.Integer,I):com.intellij.execution.target.TargetEnvironment$TargetPortBinding
+- bs:copy$default(com.intellij.execution.target.TargetEnvironment$TargetPortBinding,java.lang.Integer,I,I,java.lang.Object):com.intellij.execution.target.TargetEnvironment$TargetPortBinding
+- equals(java.lang.Object):Z
+- f:getLocal():java.lang.Integer
+- f:getTarget():I
+- hashCode():I
+*f:com.intellij.execution.target.TargetEnvironment$UploadRoot
+- com.intellij.execution.target.TargetEnvironment$MappingWithLocalPath
+- <init>(java.nio.file.Path,com.intellij.execution.target.TargetEnvironment$TargetPath):V
+- <init>(java.nio.file.Path,com.intellij.execution.target.TargetEnvironment$TargetPath,Z):V
+- b:<init>(java.nio.file.Path,com.intellij.execution.target.TargetEnvironment$TargetPath,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.nio.file.Path
+- f:component2():com.intellij.execution.target.TargetEnvironment$TargetPath
+- f:component3():Z
+- f:copy(java.nio.file.Path,com.intellij.execution.target.TargetEnvironment$TargetPath,Z):com.intellij.execution.target.TargetEnvironment$UploadRoot
+- bs:copy$default(com.intellij.execution.target.TargetEnvironment$UploadRoot,java.nio.file.Path,com.intellij.execution.target.TargetEnvironment$TargetPath,Z,I,java.lang.Object):com.intellij.execution.target.TargetEnvironment$UploadRoot
+- equals(java.lang.Object):Z
+- getLocalRootPath():java.nio.file.Path
+- f:getRemoveAtShutdown():Z
+- f:getTargetRootPath():com.intellij.execution.target.TargetEnvironment$TargetPath
+- f:getVolumeData():com.intellij.execution.target.TargetEnvironmentType$TargetSpecificVolumeData
+- hashCode():I
+- f:setVolumeData(com.intellij.execution.target.TargetEnvironmentType$TargetSpecificVolumeData):V
+*:com.intellij.execution.target.TargetEnvironment$UploadableVolume
+- com.intellij.execution.target.TargetEnvironment$Volume
+- a:upload(java.lang.String,com.intellij.execution.target.TargetProgressIndicator):V
+*:com.intellij.execution.target.TargetEnvironment$Volume
+- a:getLocalRoot():java.nio.file.Path
+- a:getTargetRoot():java.lang.String
+- a:resolveTargetPath(java.lang.String):java.lang.String
+*:com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
+- com.intellij.execution.configurations.RunProfileState
+- createCustomTargetEnvironmentRequest():com.intellij.execution.target.TargetEnvironmentRequest
+- a:handleCreatedTargetEnvironment(com.intellij.execution.target.TargetEnvironment,com.intellij.execution.target.TargetProgressIndicator):V
+- a:prepareTargetEnvironmentRequest(com.intellij.execution.target.TargetEnvironmentRequest,com.intellij.execution.target.TargetProgressIndicator):V
+- prepareTargetToCommandExecution(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.openapi.diagnostic.Logger,java.lang.String,com.intellij.openapi.util.ThrowableComputable):org.jetbrains.concurrency.Promise
+*:com.intellij.execution.target.TargetEnvironmentRequest
+- duplicate():com.intellij.execution.target.TargetEnvironmentRequest
+- a:getConfiguration():com.intellij.execution.target.TargetEnvironmentConfiguration
+- getDefaultVolume():com.intellij.execution.target.TargetEnvironmentRequest$Volume
+- getDownloadVolumes():java.util.Set
+- getLocalPortBindings():java.util.Set
+- a:getProjectPathOnTarget():java.lang.String
+- a:getTargetPlatform():com.intellij.execution.target.TargetPlatform
+- getTargetPortBindings():java.util.Set
+- getUploadVolumes():java.util.Set
+- a:onEnvironmentPrepared(kotlin.jvm.functions.Function2):V
+- a:prepareEnvironment(com.intellij.execution.target.TargetProgressIndicator):com.intellij.execution.target.TargetEnvironment
+- a:setProjectPathOnTarget(java.lang.String):V
+*:com.intellij.execution.target.TargetEnvironmentRequest$Volume
+- a:createUpload(java.lang.String):com.intellij.execution.target.value.TargetValue
+- a:getPlatform():com.intellij.execution.Platform
+- a:getVolumeId():java.lang.String
+a:com.intellij.execution.target.TargetEnvironmentType
+- com.intellij.execution.target.ContributedTypeBase
+- *sf:getTargetTypesForRunConfigurations():java.util.List
+f:com.intellij.execution.target.TargetEnvironmentType$Companion
+- *f:getTargetTypesForRunConfigurations():java.util.List
+*f:com.intellij.execution.target.java.JavaTargetParameter
+- *sf:Companion:com.intellij.execution.target.java.JavaTargetParameter$Companion
+- sf:fixed(java.lang.String):com.intellij.execution.target.java.JavaTargetParameter
+- f:getParameter():com.intellij.execution.target.value.TargetValue
+- f:resolvePaths(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
+- f:toLocalParameter():java.lang.String
+*f:com.intellij.execution.target.java.JavaTargetParameter$Builder
+- <init>(com.intellij.execution.target.java.TargetPaths):V
+- <init>(java.util.Set,java.util.Set):V
+- b:<init>(java.util.Set,java.util.Set,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:build():com.intellij.execution.target.java.JavaTargetParameter
+- f:fixed(java.lang.String):com.intellij.execution.target.java.JavaTargetParameter$Builder
+- f:resolved(java.lang.String):com.intellij.execution.target.java.JavaTargetParameter$Builder
+*f:com.intellij.execution.target.java.JavaTargetParameter$Companion
+- f:fixed(java.lang.String):com.intellij.execution.target.java.JavaTargetParameter
+*f:com.intellij.execution.target.java.TargetPath
+- *sf:Companion:com.intellij.execution.target.java.TargetPath$Companion
+- f:getAfterUploadOrDownloadResolved():kotlin.jvm.functions.Function1
+- f:getBeforeUploadOrDownloadResolved():kotlin.jvm.functions.Function1
+- f:getLocalPath():java.lang.String
+- f:toLocalPath():com.intellij.execution.target.value.TargetValue
+*f:com.intellij.execution.target.java.TargetPath$Companion
+- f:toDownload(java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.execution.target.java.TargetPath
+- bs:toDownload$default(com.intellij.execution.target.java.TargetPath$Companion,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.target.java.TargetPath
+- f:toUpload(java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.execution.target.java.TargetPath
+- bs:toUpload$default(com.intellij.execution.target.java.TargetPath$Companion,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.target.java.TargetPath
+*a:com.intellij.execution.target.java.TargetPaths
+- *sf:Companion:com.intellij.execution.target.java.TargetPaths$Companion
+- sf:ordered(kotlin.jvm.functions.Function1):com.intellij.execution.target.java.TargetPaths
+- sf:unordered(java.util.Set,java.util.Set):com.intellij.execution.target.java.TargetPaths
+*f:com.intellij.execution.target.java.TargetPaths$Companion
+- f:ordered(kotlin.jvm.functions.Function1):com.intellij.execution.target.java.TargetPaths
+- f:unordered(java.util.Set,java.util.Set):com.intellij.execution.target.java.TargetPaths
+- bs:unordered$default(com.intellij.execution.target.java.TargetPaths$Companion,java.util.Set,java.util.Set,I,java.lang.Object):com.intellij.execution.target.java.TargetPaths
+*f:com.intellij.execution.target.java.TargetPaths$OrderBuilder
+- <init>():V
+- f:build():com.intellij.execution.target.java.TargetPaths
+- f:download(java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.execution.target.java.TargetPaths$OrderBuilder
+- bs:download$default(com.intellij.execution.target.java.TargetPaths$OrderBuilder,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.target.java.TargetPaths$OrderBuilder
+- f:upload(java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.execution.target.java.TargetPaths$OrderBuilder
+- bs:upload$default(com.intellij.execution.target.java.TargetPaths$OrderBuilder,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.target.java.TargetPaths$OrderBuilder
+f:com.intellij.execution.target.value.TargetEnvironmentFunctions
+- *sf:targetPath(java.nio.file.Path):java.util.function.Function
+*a:com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
+- java.util.function.Function
+- *sf:Companion:com.intellij.execution.target.value.TraceableTargetEnvironmentFunction$Companion
+- <init>():V
+- andThen(java.util.function.Function):com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
+- f:apply(com.intellij.execution.target.TargetEnvironment):java.lang.Object
+- a:applyInner(com.intellij.execution.target.TargetEnvironment):java.lang.Object
+- pf:getCreationStack():java.lang.Throwable
+- sf:invoke(kotlin.jvm.functions.Function1):com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
+*f:com.intellij.execution.target.value.TraceableTargetEnvironmentFunction$Companion
+- f:invoke(kotlin.jvm.functions.Function1):com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
+*c:com.intellij.execution.ui.ExecutionUiService
+- <init>():V
+- createSettingsEditorFragmentWrapper(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.options.SettingsEditor,java.util.function.Predicate):com.intellij.openapi.options.SettingsEditor
+- s:getInstance():com.intellij.execution.ui.ExecutionUiService
+- showRunContent(com.intellij.execution.ExecutionResult,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.ui.RunContentDescriptor
+c:com.intellij.execution.ui.RunContentDescriptor
+- com.intellij.openapi.Disposable
+- *:getDisplayNameProperty():com.intellij.execution.ui.ReactiveProperty
+- *:getIconProperty():com.intellij.execution.ui.ReactiveProperty
+- *:isHiddenContent():Z
+- *p:setDisplayName(java.lang.String):V
+- *p:setIcon(javax.swing.Icon):V
+com.intellij.execution.wsl.AbstractWslDistribution
+- *a:getUNCRootPath():java.nio.file.Path
+f:com.intellij.execution.wsl.WSLCommandLineOptions
+- *:setExecuteCommandInDefaultShell(Z):com.intellij.execution.wsl.WSLCommandLineOptions

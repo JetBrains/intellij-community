@@ -91,17 +91,6 @@ e:com.intellij.find.FindModel$SearchContext
 - sf:IN_STRING_LITERALS:com.intellij.find.FindModel$SearchContext
 - s:valueOf(java.lang.String):com.intellij.find.FindModel$SearchContext
 - s:values():com.intellij.find.FindModel$SearchContext[]
-*:com.intellij.find.TextSearchService
-- s:getInstance():com.intellij.find.TextSearchService
-- a:isInSearchableScope(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
-- a:processFilesWithText(java.lang.String,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope):com.intellij.find.TextSearchService$TextSearchResult
-*e:com.intellij.find.TextSearchService$TextSearchResult
-- java.lang.Enum
-- sf:FINISHED:com.intellij.find.TextSearchService$TextSearchResult
-- sf:NO_TRIGRAMS:com.intellij.find.TextSearchService$TextSearchResult
-- sf:STOPPED:com.intellij.find.TextSearchService$TextSearchResult
-- s:valueOf(java.lang.String):com.intellij.find.TextSearchService$TextSearchResult
-- s:values():com.intellij.find.TextSearchService$TextSearchResult[]
 c:com.intellij.lang.cacheBuilder.DefaultWordsScanner
 - com.intellij.lang.cacheBuilder.VersionedWordsScanner
 - <init>(com.intellij.lexer.Lexer,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):V
@@ -160,69 +149,6 @@ c:com.intellij.lang.findUsages.LanguageFindUsages
 - s:getNodeText(com.intellij.psi.PsiElement,Z):java.lang.String
 - s:getType(com.intellij.psi.PsiElement):java.lang.String
 - s:getWordsScanner(com.intellij.lang.Language):com.intellij.lang.cacheBuilder.WordsScanner
-*:com.intellij.model.search.CodeReferenceSearcher
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:getReferences(com.intellij.model.Symbol,com.intellij.model.search.LeafOccurrence):java.util.Collection
-- a:getReferencingLanguage(com.intellij.model.Symbol):com.intellij.lang.Language
-- a:getSearchRequest(com.intellij.openapi.project.Project,com.intellij.model.Symbol):com.intellij.model.search.SearchRequest
-*:com.intellij.model.search.LeafOccurrence
-- component1():com.intellij.psi.PsiElement
-- component2():com.intellij.psi.PsiElement
-- component3():I
-- a:getOffsetInStart():I
-- a:getScope():com.intellij.psi.PsiElement
-- a:getStart():com.intellij.psi.PsiElement
-*:com.intellij.model.search.LeafOccurrenceMapper
-- a:mapOccurrence(com.intellij.model.search.LeafOccurrence):java.util.Collection
-- s:withPointer(com.intellij.model.Pointer,com.intellij.model.search.LeafOccurrenceMapper$Parameterized):com.intellij.model.search.LeafOccurrenceMapper
-*:com.intellij.model.search.LeafOccurrenceMapper$Parameterized
-- a:mapOccurrence(java.lang.Object,com.intellij.model.search.LeafOccurrence):java.util.Collection
-*:com.intellij.model.search.PsiSymbolDeclarationSearcher
-- com.intellij.model.search.Searcher
-*e:com.intellij.model.search.SearchContext
-- java.lang.Enum
-- sf:IN_CODE:com.intellij.model.search.SearchContext
-- sf:IN_CODE_HOSTS:com.intellij.model.search.SearchContext
-- sf:IN_COMMENTS:com.intellij.model.search.SearchContext
-- sf:IN_PLAIN_TEXT:com.intellij.model.search.SearchContext
-- sf:IN_STRINGS:com.intellij.model.search.SearchContext
-- s:mask(java.util.Collection):S
-- s:valueOf(java.lang.String):com.intellij.model.search.SearchContext
-- s:values():com.intellij.model.search.SearchContext[]
-*:com.intellij.model.search.SearchParameters
-- a:areValid():Z
-- a:getProject():com.intellij.openapi.project.Project
-*:com.intellij.model.search.SearchService
-- s:getInstance():com.intellij.model.search.SearchService
-- a:merge(java.util.List):com.intellij.util.Query
-- a:searchParameters(com.intellij.model.search.SearchParameters):com.intellij.util.Query
-- a:searchPsiSymbolDeclarations(com.intellij.openapi.project.Project,com.intellij.model.Symbol,com.intellij.psi.search.SearchScope):com.intellij.util.Query
-- a:searchPsiSymbolReferences(com.intellij.openapi.project.Project,com.intellij.model.Symbol,com.intellij.psi.search.SearchScope):com.intellij.util.Query
-- a:searchWord(com.intellij.openapi.project.Project,java.lang.String):com.intellij.model.search.SearchWordQueryBuilder
-*:com.intellij.model.search.SearchWordQueryBuilder
-- a:buildLeafOccurrenceQuery():com.intellij.util.Query
-- a:buildOccurrenceQuery():com.intellij.util.Query
-- a:buildQuery(com.intellij.model.search.LeafOccurrenceMapper):com.intellij.util.Query
-- a:caseSensitive(Z):com.intellij.model.search.SearchWordQueryBuilder
-- a:inContexts(com.intellij.model.search.SearchContext,com.intellij.model.search.SearchContext[]):com.intellij.model.search.SearchWordQueryBuilder
-- a:inContexts(java.util.Set):com.intellij.model.search.SearchWordQueryBuilder
-- a:inFilesWithLanguage(com.intellij.lang.Language):com.intellij.model.search.SearchWordQueryBuilder
-- a:inFilesWithLanguageOfKind(com.intellij.lang.Language):com.intellij.model.search.SearchWordQueryBuilder
-- a:inInjections():com.intellij.model.search.SearchWordQueryBuilder
-- a:inInjections(com.intellij.lang.Language):com.intellij.model.search.SearchWordQueryBuilder
-- a:inInjectionsOfKind(com.intellij.lang.Language):com.intellij.model.search.SearchWordQueryBuilder
-- a:inScope(com.intellij.psi.search.SearchScope):com.intellij.model.search.SearchWordQueryBuilder
-- a:includeInjections():com.intellij.model.search.SearchWordQueryBuilder
-- a:restrictFileTypes(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileType[]):com.intellij.model.search.SearchWordQueryBuilder
-- a:withContainerName(java.lang.String):com.intellij.model.search.SearchWordQueryBuilder
-*:com.intellij.model.search.Searcher
-- collectImmediateResults(com.intellij.model.search.SearchParameters):java.util.Collection
-- collectSearchRequest(com.intellij.model.search.SearchParameters):com.intellij.util.Query
-- collectSearchRequests(com.intellij.model.search.SearchParameters):java.util.Collection
-*:com.intellij.model.search.TextOccurrence
-- a:getElement():com.intellij.psi.PsiElement
-- a:getOffsetInElement():I
-- s:of(com.intellij.psi.PsiElement,I):com.intellij.model.search.TextOccurrence
 com.intellij.psi.impl.cache.CacheManager
 - a:getFilesWithWord(java.lang.String,S,com.intellij.psi.search.GlobalSearchScope,Z):com.intellij.psi.PsiFile[]
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.impl.cache.CacheManager
@@ -232,13 +158,10 @@ com.intellij.psi.impl.cache.CacheManager
 f:com.intellij.psi.impl.cache.CacheManager$SERVICE
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.impl.cache.CacheManager
 f:com.intellij.psi.search.FileTypeIndex
-- *sf:INDEX_CHANGE_TOPIC:com.intellij.util.messages.Topic
 - s:containsFileOfType(com.intellij.openapi.fileTypes.FileType,com.intellij.psi.search.GlobalSearchScope):Z
 - s:getFiles(com.intellij.openapi.fileTypes.FileType,com.intellij.psi.search.GlobalSearchScope):java.util.Collection
 - s:getIndexedFileType(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.fileTypes.FileType
 - s:processFiles(com.intellij.openapi.fileTypes.FileType,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope):Z
-*:com.intellij.psi.search.FileTypeIndex$IndexChangeListener
-- a:onChangedForFileType(com.intellij.openapi.fileTypes.FileType):V
 f:com.intellij.psi.search.FilenameIndex
 - s:getAllFilenames(com.intellij.openapi.project.Project):java.lang.String[]
 - s:getAllFilesByExt(com.intellij.openapi.project.Project,java.lang.String):java.util.Collection
@@ -261,7 +184,6 @@ f:com.intellij.psi.search.IndexPattern
 - getOptimizedIndexingPattern():java.util.regex.Pattern
 - getPattern():java.util.regex.Pattern
 - getPatternString():java.lang.String
-- *:getWordToHighlight():java.lang.String
 - getWordsToFindFirst():java.util.List
 - hashCode():I
 - isCaseSensitive():Z
@@ -499,7 +421,6 @@ a:com.intellij.psi.stubs.StubIndex
 - s:getElements(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter,java.lang.Class):java.util.Collection
 - s:getElements(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope,java.lang.Class):java.util.Collection
 - s:getInstance():com.intellij.psi.stubs.StubIndex
-- *a:getMaxContainingFileCount(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope):I
 - processAllKeys(com.intellij.psi.stubs.StubIndexKey,com.intellij.openapi.project.Project,com.intellij.util.Processor):Z
 - processAllKeys(com.intellij.psi.stubs.StubIndexKey,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope):Z
 - processAllKeys(com.intellij.psi.stubs.StubIndexKey,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
@@ -529,32 +450,10 @@ com.intellij.util.gist.VirtualFileGist
 - a:getUpToDateOrNull(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.function.Supplier
 com.intellij.util.gist.VirtualFileGist$GistCalculator
 - a:calcData(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.Object
-*Fa:com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
-- com.intellij.openapi.project.RootsChangeRescanningInfo
-- a:addInheritedSdk():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
-- a:addLibrary(com.intellij.openapi.roots.libraries.Library):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
-- a:addModule(com.intellij.openapi.module.Module):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
-- a:addSdk(com.intellij.openapi.projectRoots.Sdk):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
-- a:buildInfo():com.intellij.openapi.project.RootsChangeRescanningInfo
-- s:newInstance():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
-*:com.intellij.util.indexing.CompositeDataIndexer
-- com.intellij.util.indexing.DataIndexer
-- a:calculateSubIndexer(com.intellij.util.indexing.IndexedFile):java.lang.Object
-- a:getSubIndexerVersion(java.lang.Object):java.lang.Object
-- a:getSubIndexerVersionDescriptor():com.intellij.util.io.KeyDescriptor
-- map(com.intellij.util.indexing.FileContent):java.util.Map
-- a:map(com.intellij.util.indexing.FileContent,java.lang.Object):java.util.Map
-- requiresContentForSubIndexerEvaluation(com.intellij.util.indexing.IndexedFile):Z
 c:com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 - com.intellij.util.indexing.FileBasedIndex$FileTypeSpecificInputFilter
 - <init>(com.intellij.openapi.fileTypes.FileType[]):V
 - acceptInput(com.intellij.openapi.vfs.VirtualFile):Z
-- registerFileTypesUsedForIndexing(com.intellij.util.Consumer):V
-*c:com.intellij.util.indexing.DefaultFileTypeSpecificWithProjectInputFilter
-- com.intellij.util.indexing.FileBasedIndex$FileTypeSpecificInputFilter
-- com.intellij.util.indexing.FileBasedIndex$ProjectSpecificInputFilter
-- <init>(com.intellij.openapi.fileTypes.FileType[]):V
-- acceptInput(com.intellij.util.indexing.IndexedFile):Z
 - registerFileTypesUsedForIndexing(com.intellij.util.Consumer):V
 e:com.intellij.util.indexing.DumbModeAccessType
 - java.lang.Enum
@@ -569,7 +468,6 @@ Fa:com.intellij.util.indexing.FileBasedIndex
 - a:findFileById(com.intellij.openapi.project.Project,I):com.intellij.openapi.vfs.VirtualFile
 - a:getAllKeys(com.intellij.util.indexing.ID,com.intellij.openapi.project.Project):java.util.Collection
 - a:getContainingFiles(com.intellij.util.indexing.ID,java.lang.Object,com.intellij.psi.search.GlobalSearchScope):java.util.Collection
-- *a:getContainingFilesIterator(com.intellij.util.indexing.ID,java.lang.Object,com.intellij.psi.search.GlobalSearchScope):java.util.Iterator
 - a:getFileBeingCurrentlyIndexed():com.intellij.openapi.vfs.VirtualFile
 - a:getFileData(com.intellij.util.indexing.ID,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.util.Map
 - s:getFileId(com.intellij.openapi.vfs.VirtualFile):I
@@ -578,15 +476,12 @@ Fa:com.intellij.util.indexing.FileBasedIndex
 - s:getInstance():com.intellij.util.indexing.FileBasedIndex
 - a:getSingleEntryIndexData(com.intellij.util.indexing.ID,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.lang.Object
 - a:getValues(com.intellij.util.indexing.ID,java.lang.Object,com.intellij.psi.search.GlobalSearchScope):java.util.List
-- *:ignoreDumbMode(com.intellij.util.indexing.DumbModeAccessType,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- *:ignoreDumbMode(com.intellij.util.indexing.DumbModeAccessType,java.lang.Runnable):V
 - invalidateCaches():V
 - a:iterateIndexableFiles(com.intellij.openapi.roots.ContentIterator,com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator):V
 - s:iterateRecursively(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.ContentIterator,com.intellij.openapi.progress.ProgressIndicator,java.util.Set,com.intellij.openapi.roots.ProjectFileIndex):V
 - a:processAllKeys(com.intellij.util.indexing.ID,com.intellij.util.Processor,com.intellij.openapi.project.Project):Z
 - processAllKeys(com.intellij.util.indexing.ID,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
 - a:processFilesContainingAllKeys(com.intellij.util.indexing.ID,java.util.Collection,com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.util.Condition,com.intellij.util.Processor):Z
-- *:processFilesContainingAllKeys(java.util.Collection,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor):Z
 - a:processFilesContainingAnyKey(com.intellij.util.indexing.ID,java.util.Collection,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter,com.intellij.openapi.util.Condition,com.intellij.util.Processor):Z
 - a:processValues(com.intellij.util.indexing.ID,java.lang.Object,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.indexing.FileBasedIndex$ValueProcessor,com.intellij.psi.search.GlobalSearchScope):Z
 - processValues(com.intellij.util.indexing.ID,java.lang.Object,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.indexing.FileBasedIndex$ValueProcessor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
@@ -594,27 +489,17 @@ Fa:com.intellij.util.indexing.FileBasedIndex
 - a:requestRebuild(com.intellij.util.indexing.ID,java.lang.Throwable):V
 - a:requestReindex(com.intellij.openapi.vfs.VirtualFile):V
 - a:scheduleRebuild(com.intellij.util.indexing.ID,java.lang.Throwable):V
-*f:com.intellij.util.indexing.FileBasedIndex$AllKeysQuery
-- <init>(com.intellij.util.indexing.ID,java.util.Collection,com.intellij.openapi.util.Condition):V
-- getDataKeys():java.util.Collection
-- getIndexId():com.intellij.util.indexing.ID
-- getValueChecker():com.intellij.openapi.util.Condition
 com.intellij.util.indexing.FileBasedIndex$FileTypeSpecificInputFilter
 - com.intellij.util.indexing.FileBasedIndex$InputFilter
 - a:registerFileTypesUsedForIndexing(com.intellij.util.Consumer):V
 com.intellij.util.indexing.FileBasedIndex$InputFilter
 - a:acceptInput(com.intellij.openapi.vfs.VirtualFile):Z
-*:com.intellij.util.indexing.FileBasedIndex$ProjectSpecificInputFilter
-- com.intellij.util.indexing.FileBasedIndex$InputFilter
-- acceptInput(com.intellij.openapi.vfs.VirtualFile):Z
-- a:acceptInput(com.intellij.util.indexing.IndexedFile):Z
 com.intellij.util.indexing.FileBasedIndex$ValueProcessor
 - a:process(com.intellij.openapi.vfs.VirtualFile,java.lang.Object):Z
 a:com.intellij.util.indexing.FileBasedIndexExtension
 - com.intellij.util.indexing.IndexExtension
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
-- *:canBeShared():Z
 - a:dependsOnFileContent():Z
 - getCacheSize():I
 - getFileTypesWithSizeLimitNotApplicable():java.util.Collection
@@ -630,7 +515,6 @@ a:com.intellij.util.indexing.IdFilter
 a:com.intellij.util.indexing.IndexableSetContributor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
-- *:acceptFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 - getAdditionalProjectRootsToIndex(com.intellij.openapi.project.Project):java.util.Set
 - a:getAdditionalRootsToIndex():java.util.Set
 - getDebugName():java.lang.String
@@ -657,25 +541,6 @@ a:com.intellij.util.indexing.SingleEntryIndexer
 - p:<init>(Z):V
 - pa:computeValue(com.intellij.util.indexing.FileContent):java.lang.Object
 - f:map(com.intellij.util.indexing.FileContent):java.util.Map
-*:com.intellij.util.indexing.hints.FileTypeIndexingHint
-- a:acceptsFileTypeFastPath(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
-- a:slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
-*:com.intellij.util.indexing.roots.IndexableFilesContributor
-- a:getIndexableFiles(com.intellij.openapi.project.Project):java.util.List
-- a:getOwnFilePredicate(com.intellij.openapi.project.Project):java.util.function.Predicate
-*:com.intellij.util.indexing.roots.IndexableFilesIterator
-- a:getDebugName():java.lang.String
-- a:getIndexingProgressText():java.lang.String
-- a:getOrigin():com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-- a:getRootUrls(com.intellij.openapi.project.Project):java.util.Set
-- a:getRootsScanningProgressText():java.lang.String
-- a:iterateFiles(com.intellij.openapi.project.Project,com.intellij.openapi.roots.ContentIterator,com.intellij.openapi.vfs.VirtualFileFilter):Z
-*:com.intellij.util.indexing.roots.kind.ContentOrigin
-- com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-*:com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-*:com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin
-- com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-- a:getFileOrDir():com.intellij.openapi.vfs.VirtualFile
 c:com.intellij.util.xml.XmlFileHeader
 - sf:EMPTY:com.intellij.util.xml.XmlFileHeader
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V

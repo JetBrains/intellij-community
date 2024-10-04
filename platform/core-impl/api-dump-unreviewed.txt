@@ -417,18 +417,6 @@ c:com.intellij.ide.highlighter.custom.tokens.WhitespaceParser
 - hasToken(I):Z
 f:com.intellij.ide.plugins.IdeaPluginDescriptorImplKt
 - sf:toPluginIdSet(java.lang.Iterable):java.util.Set
-*:com.intellij.ide.plugins.PluginEnabler
-- sf:HEADLESS:com.intellij.ide.plugins.PluginEnabler$Headless
-- a:disable(java.util.Collection):Z
-- disableById(java.util.Set):Z
-- a:enable(java.util.Collection):Z
-- enableById(java.util.Set):Z
-- s:getInstance():com.intellij.ide.plugins.PluginEnabler
-- a:isDisabled(com.intellij.openapi.extensions.PluginId):Z
-*:com.intellij.ide.plugins.PluginEnabler$Headless
-- com.intellij.ide.plugins.PluginEnabler
-- a:isIgnoredDisabledPlugins():Z
-- a:setIgnoredDisabledPlugins(Z):V
 f:com.intellij.ide.plugins.PluginLoadingError
 - sf:Companion:com.intellij.ide.plugins.PluginLoadingError$Companion
 - f:disabledDependency:com.intellij.openapi.extensions.PluginId
@@ -777,14 +765,6 @@ a:com.intellij.lang.impl.PsiBuilderImpl$ProductionMarker
 - isCollapsed():Z
 - remapTokenType(com.intellij.psi.tree.IElementType):V
 - a:tokenTextMatches(java.lang.CharSequence):Z
-*c:com.intellij.lang.impl.TokenSequence
-- com.intellij.lexer.TokenList
-- getTokenCount():I
-- getTokenEnd(I):I
-- getTokenStart(I):I
-- getTokenType(I):com.intellij.psi.tree.IElementType
-- getTokenizedText():java.lang.CharSequence
-- s:performLexing(java.lang.CharSequence,com.intellij.lexer.Lexer):com.intellij.lang.impl.TokenSequence
 c:com.intellij.mock.MockApplication
 - com.intellij.mock.MockComponentManager
 - com.intellij.openapi.application.ex.ApplicationEx
@@ -976,8 +956,6 @@ com.intellij.openapi.application.ex.ApplicationEx
 - restart():V
 - a:restart(Z):V
 - a:restart(Z,Z):V
-- *:runWriteActionWithCancellableProgressInDispatchThread(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent,java.util.function.Consumer):Z
-- *:runWriteActionWithNonCancellableProgressInDispatchThread(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent,java.util.function.Consumer):Z
 - a:setSaveAllowed(Z):V
 - a:tryRunReadAction(java.lang.Runnable):Z
 a:com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -1013,7 +991,6 @@ a:com.intellij.openapi.application.ex.ApplicationInfoEx
 - a:getWinKeymapUrl():java.lang.String
 - a:getYoutrackUrl():java.lang.String
 - a:isMajorEAP():Z
-- *a:isPreview():Z
 - a:isShowWhatsNewOnUpdate():Z
 - f:isVendorJetBrains():Z
 - a:usesJetBrainsPluginRepository():Z
@@ -1267,15 +1244,6 @@ f:com.intellij.openapi.editor.impl.DocumentImpl
 - stripTrailingSpaces(com.intellij.openapi.project.Project,Z):Z
 - suppressGuardedExceptions():V
 - unSuppressGuardedExceptions():V
-*a:com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- <init>():V
-- ps:fail(java.lang.String):com.intellij.openapi.editor.impl.DocumentWriteAccessGuard$Result
-- a:isWritable(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.impl.DocumentWriteAccessGuard$Result
-- ps:success():com.intellij.openapi.editor.impl.DocumentWriteAccessGuard$Result
-*c:com.intellij.openapi.editor.impl.DocumentWriteAccessGuard$Result
-- getFailureReason():java.lang.String
-- isSuccess():Z
 c:com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.editor.ex.DocumentEx
@@ -1390,7 +1358,6 @@ a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - ps:getPreviewCharCount(com.intellij.openapi.vfs.VirtualFile):I
 - ps:isBinaryWithoutDecompiler(com.intellij.openapi.vfs.VirtualFile):Z
 - isPartialPreviewOfALargeFile(com.intellij.openapi.editor.Document):Z
-- *s:isTrackable(com.intellij.openapi.vfs.VirtualFile):Z
 - reloadBinaryFiles():V
 - ps:setDocumentTooLarge(com.intellij.openapi.editor.Document,Z):V
 f:com.intellij.openapi.fileEditor.impl.LoadTextUtil
@@ -2394,7 +2361,6 @@ f:com.intellij.psi.impl.PsiModificationTrackerImpl
 - getJavaStructureModificationTracker():com.intellij.openapi.util.ModificationTracker
 - getModificationCount():J
 - incCounter():V
-- *:incLanguageModificationCount(com.intellij.lang.Language):V
 - incOutOfCodeBlockModificationCounter():V
 - treeChanged(com.intellij.psi.impl.PsiTreeChangeEventImpl):V
 f:com.intellij.psi.impl.PsiParserFacadeImpl
@@ -2656,7 +2622,6 @@ f:com.intellij.psi.impl.file.PsiFileImplUtil
 - s:checkSetName(com.intellij.psi.PsiFile,java.lang.String):V
 - s:doDelete(com.intellij.psi.PsiFile):V
 - s:setName(com.intellij.psi.PsiFile,java.lang.String):com.intellij.psi.PsiFile
-- *s:setNonPhysicalFileDeleteHandler(com.intellij.psi.PsiFile,java.util.function.Consumer):V
 a:com.intellij.psi.impl.file.PsiPackageBase
 - com.intellij.psi.impl.PsiElementBase
 - com.intellij.openapi.ui.Queryable
@@ -3033,8 +2998,6 @@ c:com.intellij.psi.impl.source.resolve.ResolveCache
 - dispose():V
 - getCachedResults(com.intellij.psi.PsiPolyVariantReference,Z,Z,Z):com.intellij.psi.ResolveResult[]
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.impl.source.resolve.ResolveCache
-- *:resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
-- *:resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,Z,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
 - resolveWithCaching(com.intellij.psi.PsiPolyVariantReference,com.intellij.psi.impl.source.resolve.ResolveCache$PolyVariantContextResolver,Z,Z,com.intellij.psi.PsiFile):com.intellij.psi.ResolveResult[]
 - resolveWithCaching(com.intellij.psi.PsiPolyVariantReference,com.intellij.psi.impl.source.resolve.ResolveCache$PolyVariantResolver,Z,Z):com.intellij.psi.ResolveResult[]
 - resolveWithCaching(com.intellij.psi.PsiPolyVariantReference,com.intellij.psi.impl.source.resolve.ResolveCache$PolyVariantResolver,Z,Z,com.intellij.psi.PsiFile):com.intellij.psi.ResolveResult[]
@@ -3046,8 +3009,6 @@ com.intellij.psi.impl.source.resolve.ResolveCache$PolyVariantContextResolver
 com.intellij.psi.impl.source.resolve.ResolveCache$PolyVariantResolver
 - com.intellij.psi.impl.source.resolve.ResolveCache$AbstractResolver
 - a:resolve(com.intellij.psi.PsiPolyVariantReference,Z):com.intellij.psi.ResolveResult[]
-*:com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver
-- a:resolve(com.intellij.model.psi.PsiSymbolReference):java.util.Collection
 com.intellij.psi.impl.source.resolve.ResolveCache$Resolver
 - com.intellij.psi.impl.source.resolve.ResolveCache$AbstractResolver
 f:com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP

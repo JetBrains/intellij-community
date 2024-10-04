@@ -17,8 +17,6 @@ c:com.intellij.openapi.progress.ProcessCanceledException
 - <init>():V
 - p:<init>(java.lang.String):V
 - <init>(java.lang.Throwable):V
-*@:com.intellij.openapi.util.NlsSafe
-- java.lang.annotation.Annotation
 com.intellij.openapi.util.Segment
 - sf:BY_START_OFFSET_THEN_END_OFFSET:java.util.Comparator
 - sf:EMPTY_ARRAY:com.intellij.openapi.util.Segment[]

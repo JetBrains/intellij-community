@@ -47,61 +47,6 @@ f:com.intellij.ide.highlighter.HighlighterFactory
 - s:createHighlighter(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.colors.EditorColorsScheme,com.intellij.openapi.project.Project):com.intellij.openapi.editor.highlighter.EditorHighlighter
 f:com.intellij.ide.lightEdit.LightEdit
 - s:owns(com.intellij.openapi.project.Project):Z
-*:com.intellij.ide.lightEdit.LightEditService
-- a:closeEditorWindow():Z
-- a:createNewDocument(java.nio.file.Path):com.intellij.ide.lightEdit.LightEditorInfo
-- a:getEditorManager():com.intellij.ide.lightEdit.LightEditorManager
-- s:getInstance():com.intellij.ide.lightEdit.LightEditService
-- a:getProject():com.intellij.openapi.project.Project
-- a:getSelectedFile():com.intellij.openapi.vfs.VirtualFile
-- a:getSelectedFileEditor():com.intellij.openapi.fileEditor.FileEditor
-- s:getWindowName():java.lang.String
-- a:isAutosaveMode():Z
-- a:isForceOpenInLightEditMode():Z
-- a:isLightEditEnabled():Z
-- a:isPreferProjectMode():Z
-- a:isTabNavigationAvailable(com.intellij.openapi.actionSystem.AnAction):Z
-- a:navigateToTab(com.intellij.openapi.actionSystem.AnAction):V
-- a:openFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.project.Project
-- a:openFile(java.nio.file.Path,Z):com.intellij.openapi.project.Project
-- a:saveNewDocuments():V
-- a:saveToAnotherFile(com.intellij.openapi.vfs.VirtualFile):V
-- a:setAutosaveMode(Z):V
-- a:showEditorWindow():V
-- a:updateFileStatus(java.util.Collection):V
-*:com.intellij.ide.lightEdit.LightEditServiceListener
-- lightEditWindowClosed(com.intellij.openapi.project.Project):V
-- lightEditWindowOpened(com.intellij.openapi.project.Project):V
-*:com.intellij.ide.lightEdit.LightEditTabAttributesProvider
-- a:calcAttributes(com.intellij.ide.lightEdit.LightEditorInfo):com.intellij.openapi.editor.markup.TextAttributes
-*:com.intellij.ide.lightEdit.LightEditorInfo
-- a:getFile():com.intellij.openapi.vfs.VirtualFile
-- a:getFileEditor():com.intellij.openapi.fileEditor.FileEditor
-- a:getPreferredSavePath():java.nio.file.Path
-- a:isNew():Z
-- a:isSaveRequired():Z
-- a:isUnsaved():Z
-- a:setPreferredSavePath(java.nio.file.Path):V
-*:com.intellij.ide.lightEdit.LightEditorListener
-- java.util.EventListener
-- afterClose(com.intellij.ide.lightEdit.LightEditorInfo):V
-- afterCreate(com.intellij.ide.lightEdit.LightEditorInfo):V
-- afterSelect(com.intellij.ide.lightEdit.LightEditorInfo):V
-- autosaveModeChanged(Z):V
-- beforeClose(com.intellij.ide.lightEdit.LightEditorInfo):V
-- fileStatusChanged(java.util.Collection):V
-*:com.intellij.ide.lightEdit.LightEditorManager
-- a:addListener(com.intellij.ide.lightEdit.LightEditorListener):V
-- a:addListener(com.intellij.ide.lightEdit.LightEditorListener,com.intellij.openapi.Disposable):V
-- a:closeEditor(com.intellij.ide.lightEdit.LightEditorInfo):V
-- a:containsUnsavedDocuments():Z
-- a:createEditor(com.intellij.openapi.vfs.VirtualFile):com.intellij.ide.lightEdit.LightEditorInfo
-- a:createEmptyEditor(java.lang.String):com.intellij.ide.lightEdit.LightEditorInfo
-- a:getEditors(com.intellij.openapi.vfs.VirtualFile):java.util.Collection
-- a:getOpenFiles():java.util.Collection
-- a:isFileOpen(com.intellij.openapi.vfs.VirtualFile):Z
-- a:isImplicitSaveAllowed(com.intellij.openapi.editor.Document):Z
-- a:saveAs(com.intellij.ide.lightEdit.LightEditorInfo,com.intellij.openapi.vfs.VirtualFile):com.intellij.ide.lightEdit.LightEditorInfo
 c:com.intellij.ide.projectView.PresentationData
 - com.intellij.navigation.ColoredItemPresentation
 - com.intellij.navigation.LocationPresentation
@@ -218,7 +163,6 @@ com.intellij.ide.structureView.StructureViewModel$ElementInfoProvider
 - a:isAlwaysLeaf(com.intellij.ide.structureView.StructureViewTreeElement):Z
 - a:isAlwaysShowsPlus(com.intellij.ide.structureView.StructureViewTreeElement):Z
 com.intellij.ide.structureView.StructureViewModel$ExpandInfoProvider
-- *:getMinimumAutoExpandDepth():I
 - a:isAutoExpand(com.intellij.ide.structureView.StructureViewTreeElement):Z
 - a:isSmartExpand():Z
 c:com.intellij.ide.structureView.StructureViewModelBase
@@ -353,21 +297,6 @@ f:com.intellij.ide.ui.NotRoamableUiSettings
 - f:setPresentationModeIdeScale(F):V
 f:com.intellij.ide.ui.NotRoamableUiSettings$Companion
 - f:getInstance():com.intellij.ide.ui.NotRoamableUiSettings
-*:com.intellij.ide.ui.ToolbarSettings
-- com.intellij.openapi.components.PersistentStateComponent
-- *sf:Companion:com.intellij.ide.ui.ToolbarSettings$Companion
-- sf:INCLUSION_STATE:java.lang.String
-- sf:ROLLBACK_ACTION_ID:java.lang.String
-- s:getInstance():com.intellij.ide.ui.ToolbarSettings
-- a:isAvailable():Z
-- a:isEnabled():Z
-- a:isVisible():Z
-- a:setEnabled(Z):V
-- a:setVisible(Z):V
-*f:com.intellij.ide.ui.ToolbarSettings$Companion
-- sf:INCLUSION_STATE:java.lang.String
-- sf:ROLLBACK_ACTION_ID:java.lang.String
-- f:getInstance():com.intellij.ide.ui.ToolbarSettings
 e:com.intellij.ide.ui.UIDensity
 - java.lang.Enum
 - sf:COMPACT:com.intellij.ide.ui.UIDensity
@@ -1052,8 +981,6 @@ com.intellij.injected.editor.InjectedFileChangesHandler
 - a:tryReuse(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):Z
 com.intellij.injected.editor.InjectedFileChangesHandlerProvider
 - a:createFileChangesHandler(java.util.List,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile):com.intellij.injected.editor.InjectedFileChangesHandler
-*f:com.intellij.injected.editor.InjectionMeta
-- s:getInjectionIndent():com.intellij.openapi.util.Key
 f:com.intellij.lang.LanguageStructureViewBuilder
 - com.intellij.lang.LanguageExtension
 - sf:INSTANCE:com.intellij.lang.LanguageStructureViewBuilder
@@ -1192,8 +1119,6 @@ a:com.intellij.openapi.actionSystem.AnAction
 - <init>(java.lang.String):V
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon):V
 - <init>(java.util.function.Supplier):V
-- *:<init>(java.util.function.Supplier,java.util.function.Supplier):V
-- *:<init>(java.util.function.Supplier,java.util.function.Supplier,java.util.function.Supplier):V
 - <init>(java.util.function.Supplier,java.util.function.Supplier,javax.swing.Icon):V
 - <init>(java.util.function.Supplier,javax.swing.Icon):V
 - <init>(javax.swing.Icon):V
@@ -1585,21 +1510,6 @@ e:com.intellij.openapi.editor.CaretVisualAttributes$Weight
 - getDelta():I
 - s:valueOf(java.lang.String):com.intellij.openapi.editor.CaretVisualAttributes$Weight
 - s:values():com.intellij.openapi.editor.CaretVisualAttributes$Weight[]
-*:com.intellij.openapi.editor.CustomFoldRegion
-- com.intellij.openapi.editor.FoldRegion
-- a:getGutterIconRenderer():com.intellij.openapi.editor.markup.GutterIconRenderer
-- a:getHeightInPixels():I
-- a:getLocation():java.awt.Point
-- a:getRenderer():com.intellij.openapi.editor.CustomFoldRegionRenderer
-- a:getWidthInPixels():I
-- a:repaint():V
-- a:update():V
-*:com.intellij.openapi.editor.CustomFoldRegionRenderer
-- calcGutterIconRenderer(com.intellij.openapi.editor.CustomFoldRegion):com.intellij.openapi.editor.markup.GutterIconRenderer
-- a:calcHeightInPixels(com.intellij.openapi.editor.CustomFoldRegion):I
-- a:calcWidthInPixels(com.intellij.openapi.editor.CustomFoldRegion):I
-- getContextMenuGroup(com.intellij.openapi.editor.CustomFoldRegion):com.intellij.openapi.actionSystem.ActionGroup
-- a:paint(com.intellij.openapi.editor.CustomFoldRegion,java.awt.Graphics2D,java.awt.geom.Rectangle2D,com.intellij.openapi.editor.markup.TextAttributes):V
 f:com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 - sf:BLOCK_COMMENT:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:BRACES:com.intellij.openapi.editor.colors.TextAttributesKey
@@ -1914,7 +1824,6 @@ com.intellij.openapi.editor.FoldRegion
 - setPlaceholderText(java.lang.String):V
 - a:shouldNeverExpand():Z
 com.intellij.openapi.editor.FoldingModel
-- *:addCustomLinesFolding(I,I,com.intellij.openapi.editor.CustomFoldRegionRenderer):com.intellij.openapi.editor.CustomFoldRegion
 - a:addFoldRegion(I,I,java.lang.String):com.intellij.openapi.editor.FoldRegion
 - a:getAllFoldRegions():com.intellij.openapi.editor.FoldRegion[]
 - a:getCollapsedRegionAtOffset(I):com.intellij.openapi.editor.FoldRegion
@@ -2058,10 +1967,6 @@ c:com.intellij.openapi.editor.LogicalPosition
 f:com.intellij.openapi.editor.PlatformEditorBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
-*:com.intellij.openapi.editor.ScrollPositionCalculator
-- calcOffsetsToScroll(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):java.awt.Point
-- a:getHorizontalOffset(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):I
-- a:getVerticalOffset(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):I
 e:com.intellij.openapi.editor.ScrollType
 - java.lang.Enum
 - sf:CENTER:com.intellij.openapi.editor.ScrollType
@@ -2275,7 +2180,6 @@ a:com.intellij.openapi.editor.colors.EditorColorsManager
 - s:getInstance():com.intellij.openapi.editor.colors.EditorColorsManager
 - a:getScheme(java.lang.String):com.intellij.openapi.editor.colors.EditorColorsScheme
 - getSchemeForCurrentUITheme():com.intellij.openapi.editor.colors.EditorColorsScheme
-- *a:getSchemeModificationCounter():J
 - isDarkEditor():Z
 - a:isDefaultScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):Z
 - a:isUseOnlyMonospacedFonts():Z
@@ -2550,7 +2454,6 @@ com.intellij.openapi.editor.highlighter.HighlighterIterator
 - a:getEnd():I
 - a:getStart():I
 - a:getTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
-- *:getTextAttributesKeys():com.intellij.openapi.editor.colors.TextAttributesKey[]
 - a:getTokenType():com.intellij.psi.tree.IElementType
 - a:retreat():V
 com.intellij.openapi.editor.markup.ActiveGutterRenderer
@@ -2563,15 +2466,7 @@ com.intellij.openapi.editor.markup.ActiveGutterRenderer
 - getAccessibleName():java.lang.String
 - getAccessibleTooltipText():java.lang.String
 - getTooltipText():java.lang.String
-*e:com.intellij.openapi.editor.markup.CustomHighlighterOrder
-- java.lang.Enum
-- sf:AFTER_BACKGROUND:com.intellij.openapi.editor.markup.CustomHighlighterOrder
-- sf:AFTER_TEXT:com.intellij.openapi.editor.markup.CustomHighlighterOrder
-- sf:BEFORE_BACKGROUND:com.intellij.openapi.editor.markup.CustomHighlighterOrder
-- s:valueOf(java.lang.String):com.intellij.openapi.editor.markup.CustomHighlighterOrder
-- s:values():com.intellij.openapi.editor.markup.CustomHighlighterOrder[]
 com.intellij.openapi.editor.markup.CustomHighlighterRenderer
-- *:getOrder():com.intellij.openapi.editor.markup.CustomHighlighterOrder
 - isForeground():Z
 - a:paint(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.markup.RangeHighlighter,java.awt.Graphics):V
 com.intellij.openapi.editor.markup.GutterDraggableObject
@@ -2944,7 +2839,6 @@ com.intellij.ui.PlaceProvider
 - a:getPlace():java.lang.String
 com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 - a:acceptElement(com.intellij.psi.PsiElement):Z
-- *:acceptStickyElement(com.intellij.psi.PsiElement):Z
 - getChildren(com.intellij.psi.PsiElement):java.util.List
 - getContextActions(com.intellij.psi.PsiElement):java.util.List
 - getElementIcon(com.intellij.psi.PsiElement):javax.swing.Icon
@@ -2973,8 +2867,6 @@ e:com.intellij.ui.tree.LeafState
 - s:values():com.intellij.ui.tree.LeafState[]
 com.intellij.ui.tree.LeafState$Supplier
 - a:getLeafState():com.intellij.ui.tree.LeafState
-*:com.intellij.ui.tree.SuspendingTreeVisitor
-- a:visit(javax.swing.tree.TreePath,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.ui.tree.TreeCollector
 - add(java.lang.Object):Z
 - get():java.util.List
@@ -3002,7 +2894,6 @@ com.intellij.ui.tree.TreePathBackgroundSupplier
 - a:getPathBackground(javax.swing.tree.TreePath,I):java.awt.Color
 com.intellij.ui.tree.TreeVisitor
 - a:visit(javax.swing.tree.TreePath):com.intellij.ui.tree.TreeVisitor$Action
-- *:visitThread():com.intellij.ui.tree.TreeVisitor$VisitThread
 com.intellij.ui.tree.TreeVisitor$Acceptor
 - a:accept(com.intellij.ui.tree.TreeVisitor):org.jetbrains.concurrency.Promise
 e:com.intellij.ui.tree.TreeVisitor$Action
@@ -3033,9 +2924,3 @@ com.intellij.ui.tree.TreeVisitor$LoadingAwareAcceptor
 - com.intellij.ui.tree.TreeVisitor$Acceptor
 - accept(com.intellij.ui.tree.TreeVisitor):org.jetbrains.concurrency.Promise
 - a:accept(com.intellij.ui.tree.TreeVisitor,Z):org.jetbrains.concurrency.Promise
-*e:com.intellij.ui.tree.TreeVisitor$VisitThread
-- java.lang.Enum
-- sf:BGT:com.intellij.ui.tree.TreeVisitor$VisitThread
-- sf:EDT:com.intellij.ui.tree.TreeVisitor$VisitThread
-- s:valueOf(java.lang.String):com.intellij.ui.tree.TreeVisitor$VisitThread
-- s:values():com.intellij.ui.tree.TreeVisitor$VisitThread[]

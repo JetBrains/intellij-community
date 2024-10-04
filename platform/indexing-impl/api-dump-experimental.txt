@@ -1,0 +1,62 @@
+*f:com.intellij.util.indexing.hints.AcceptAllFilesAndDirectoriesIndexingHint
+- com.intellij.util.indexing.FileBasedIndex$InputFilter
+- sf:INSTANCE:com.intellij.util.indexing.hints.AcceptAllFilesAndDirectoriesIndexingHint
+- acceptInput(com.intellij.openapi.vfs.VirtualFile):Z
+*f:com.intellij.util.indexing.hints.AcceptAllRegularFilesIndexingHint
+- com.intellij.util.indexing.hints.BaseFileTypeInputFilter
+- sf:INSTANCE:com.intellij.util.indexing.hints.AcceptAllRegularFilesIndexingHint
+- acceptFileType(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
+- slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
+*a:com.intellij.util.indexing.hints.BaseFileTypeInputFilter
+- com.intellij.util.indexing.FileBasedIndex$ProjectSpecificInputFilter
+- com.intellij.util.indexing.hints.FileTypeIndexingHint
+- <init>(com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy):V
+- a:acceptFileType(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
+- f:acceptInput(com.intellij.util.indexing.IndexedFile):Z
+- f:acceptsFileTypeFastPath(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
+*e:com.intellij.util.indexing.hints.BinaryFileTypePolicy
+- java.lang.Enum
+- sf:BINARY:com.intellij.util.indexing.hints.BinaryFileTypePolicy
+- sf:BINARY_OR_NON_BINARY:com.intellij.util.indexing.hints.BinaryFileTypePolicy
+- sf:NON_BINARY:com.intellij.util.indexing.hints.BinaryFileTypePolicy
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.util.indexing.hints.BinaryFileTypePolicy
+- s:values():com.intellij.util.indexing.hints.BinaryFileTypePolicy[]
+*f:com.intellij.util.indexing.hints.ExactFileNameInputFilter
+- com.intellij.util.indexing.hints.BaseFileTypeInputFilter
+- <init>(java.lang.String,Z,com.intellij.util.indexing.hints.BinaryFileTypePolicy):V
+- b:<init>(java.lang.String,Z,com.intellij.util.indexing.hints.BinaryFileTypePolicy,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
+*f:com.intellij.util.indexing.hints.FileNameExtensionInputFilter
+- com.intellij.util.indexing.hints.BaseFileTypeInputFilter
+- <init>(java.lang.String,Z,com.intellij.util.indexing.hints.BinaryFileTypePolicy):V
+- b:<init>(java.lang.String,Z,com.intellij.util.indexing.hints.BinaryFileTypePolicy,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
+*f:com.intellij.util.indexing.hints.FileNameSuffixInputFilter
+- com.intellij.util.indexing.hints.BaseFileTypeInputFilter
+- <init>(java.lang.String,Z,com.intellij.util.indexing.hints.BinaryFileTypePolicy):V
+- b:<init>(java.lang.String,Z,com.intellij.util.indexing.hints.BinaryFileTypePolicy,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
+*f:com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
+- com.intellij.util.indexing.hints.BaseFileTypeInputFilter
+- <init>(com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy,kotlin.jvm.functions.Function1):V
+- <init>(kotlin.jvm.functions.Function1):V
+- <init>(com.intellij.openapi.fileTypes.FileType[]):V
+- acceptFileType(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
+- slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
+*e:com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
+- java.lang.Enum
+- sf:AFTER_SUBSTITUTION:com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
+- sf:BEFORE_SUBSTITUTION:com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
+- s:values():com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy[]
+*f:com.intellij.util.indexing.hints.NonBinaryFileTypeInputFilter
+- com.intellij.util.indexing.hints.BaseFileTypeInputFilter
+- <init>(com.intellij.util.indexing.FileBasedIndex$InputFilter):V
+- acceptFileType(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
+- slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
+*f:com.intellij.util.indexing.hints.RejectAllIndexingHint
+- com.intellij.util.indexing.FileBasedIndex$InputFilter
+- sf:INSTANCE:com.intellij.util.indexing.hints.RejectAllIndexingHint
+- acceptInput(com.intellij.openapi.vfs.VirtualFile):Z

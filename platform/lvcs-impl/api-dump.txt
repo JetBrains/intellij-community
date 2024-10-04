@@ -7,14 +7,6 @@ a:com.intellij.history.core.Content
 - a:isAvailable():Z
 - a:release():V
 - write(java.io.DataOutput):V
-*f:com.intellij.history.core.HistoryPathFilter
-- *sf:Companion:com.intellij.history.core.HistoryPathFilter$Companion
-- f:affectsMatching(java.lang.String):Z
-- sf:create(java.lang.String,com.intellij.openapi.project.Project):com.intellij.history.core.HistoryPathFilter
-- sf:create(java.lang.String,java.lang.String):com.intellij.history.core.HistoryPathFilter
-- f:getMatcher():com.intellij.psi.codeStyle.MinusculeMatcher
-*f:com.intellij.history.core.HistoryPathFilter$Companion
-- f:create(java.lang.String,com.intellij.openapi.project.Project):com.intellij.history.core.HistoryPathFilter
 c:com.intellij.history.core.LocalHistoryFacade
 - f:accept(com.intellij.history.core.changes.ChangeVisitor):V
 - f:addChangeInTests(com.intellij.history.core.changes.StructuralChange):V
@@ -38,7 +30,6 @@ a:com.intellij.history.core.LocalHistoryFacade$Listener
 - changeAdded(com.intellij.history.core.changes.Change):V
 - changeSetFinished(com.intellij.history.core.changes.ChangeSet):V
 f:com.intellij.history.core.LocalHistoryFacadeKt
-- *sf:collectChanges(com.intellij.history.core.LocalHistoryFacade,java.lang.String,java.lang.String,com.intellij.history.core.HistoryPathFilter,kotlin.jvm.functions.Function1):V
 f:com.intellij.history.core.Paths
 - sf:DELIM:C
 - <init>():V

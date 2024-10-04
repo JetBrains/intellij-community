@@ -322,10 +322,3 @@ com.intellij.remote.ui.RemoteSdkEditorForm
 - a:isSdkInConsistentState(com.intellij.remote.CredentialsType):Z
 com.intellij.remote.ui.RemoteSdkUpdatedCallback
 - a:updated(com.intellij.remote.RemoteSdkProperties):V
-*:com.intellij.remote.ui.SdkScopeController
-- a:addListener(com.intellij.remote.ui.SdkScopeController$SdkScopeChangeListener):V
-- a:isProjectLevel():Z
-- a:isProjectLevelSupported():Z
-- a:setProjectLevel(Z):V
-*:com.intellij.remote.ui.SdkScopeController$SdkScopeChangeListener
-- a:onSdkScopeChanged():V

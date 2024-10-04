@@ -1,0 +1,25 @@
+*:com.intellij.find.FindInProjectSearchEngine
+- a:createSearcher(com.intellij.find.FindModel,com.intellij.openapi.project.Project):com.intellij.find.FindInProjectSearchEngine$FindInProjectSearcher
+*:com.intellij.find.FindInProjectSearchEngine$FindInProjectSearcher
+- a:isCovered(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isReliable():Z
+- a:searchForOccurrences():java.util.Collection
+*c:com.intellij.refactoring.RefactoringUiService
+- <init>():V
+- createConflictsDialog(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap,java.lang.Runnable,Z,Z):com.intellij.refactoring.ConflictsDialogBase
+- createRenameRefactoringDialog(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor):com.intellij.refactoring.rename.RenameRefactoringDialog
+- findUsages(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.psi.PsiFile,com.intellij.openapi.fileEditor.FileEditor,Z,com.intellij.psi.search.SearchScope):V
+- s:getInstance():com.intellij.refactoring.RefactoringUiService
+- highlightUsageReferences(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor,Z):V
+- setStatusBarInfo(com.intellij.openapi.project.Project,java.lang.String):V
+- showRefactoringMessageDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,com.intellij.openapi.project.Project):Z
+- showReplacePromptDialog(Z,java.lang.String,com.intellij.openapi.project.Project):I
+- startFindUsages(com.intellij.psi.PsiElement,com.intellij.find.findUsages.FindUsagesOptions):V
+*:com.intellij.refactoring.changeSignature.ChangeSignatureUsageProvider
+- a:createOverrideUsageInfo(com.intellij.refactoring.changeSignature.ChangeInfo,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,Z,Z,Z,java.util.List):com.intellij.usageView.UsageInfo
+- a:createUsageInfo(com.intellij.refactoring.changeSignature.ChangeInfo,com.intellij.psi.PsiReference,com.intellij.psi.PsiElement,Z,Z):com.intellij.usageView.UsageInfo
+*:com.intellij.refactoring.rename.Renamer
+- a:getPresentableText():java.lang.String
+- a:performRename():V
+*:com.intellij.refactoring.rename.RenamerFactory
+- a:createRenamers(com.intellij.openapi.actionSystem.DataContext):java.util.Collection

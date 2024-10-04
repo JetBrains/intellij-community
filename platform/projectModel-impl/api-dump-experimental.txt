@@ -1,0 +1,72 @@
+*:com.intellij.workspaceModel.core.fileIndex.DependencyDescription
+*f:com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnChild
+- com.intellij.workspaceModel.core.fileIndex.DependencyDescription
+- <init>(java.lang.Class,kotlin.jvm.functions.Function1):V
+- f:component1():java.lang.Class
+- f:component2():kotlin.jvm.functions.Function1
+- f:copy(java.lang.Class,kotlin.jvm.functions.Function1):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnChild
+- bs:copy$default(com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnChild,java.lang.Class,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnChild
+- equals(java.lang.Object):Z
+- f:getChildClass():java.lang.Class
+- f:getParentGetter():kotlin.jvm.functions.Function1
+- hashCode():I
+*f:com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnParent
+- com.intellij.workspaceModel.core.fileIndex.DependencyDescription
+- <init>(java.lang.Class,kotlin.jvm.functions.Function1):V
+- f:component1():java.lang.Class
+- f:component2():kotlin.jvm.functions.Function1
+- f:copy(java.lang.Class,kotlin.jvm.functions.Function1):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnParent
+- bs:copy$default(com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnParent,java.lang.Class,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.workspaceModel.core.fileIndex.DependencyDescription$OnParent
+- equals(java.lang.Object):Z
+- f:getChildrenGetter():kotlin.jvm.functions.Function1
+- f:getParentClass():java.lang.Class
+- hashCode():I
+*e:com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
+- java.lang.Enum
+- sf:MAIN:com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
+- sf:UNLOADED:com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
+- s:values():com.intellij.workspaceModel.core.fileIndex.EntityStorageKind[]
+*:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+- *sf:Companion:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex$Companion
+- a:findFileSet(com.intellij.openapi.vfs.VirtualFile,Z,Z,Z,Z,Z):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
+- a:findFileSetWithCustomData(com.intellij.openapi.vfs.VirtualFile,Z,Z,Z,Z,Z,java.lang.Class):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+- a:getContentFileSetRoot(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.vfs.VirtualFile
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+- a:isInContent(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInWorkspace(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isUrlInContent(java.lang.String):com.intellij.util.ThreeState
+*f:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+*:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+- getDependenciesOnOtherEntities():java.util.List
+- a:getEntityClass():java.lang.Class
+- getStorageKind():com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
+- a:registerFileSets(com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar,com.intellij.platform.workspace.storage.EntityStorage):V
+*e:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+- java.lang.Enum
+- sf:CONTENT:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+- sf:CUSTOM:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+- sf:EXTERNAL:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+- sf:EXTERNAL_SOURCE:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+- sf:TEST_CONTENT:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+- s:getEntries():kotlin.enums.EnumEntries
+- f:isContent():Z
+- s:valueOf(java.lang.String):com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+- s:values():com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind[]
+*:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
+- a:getKind():com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+- a:getRoot():com.intellij.openapi.vfs.VirtualFile
+*:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
+*:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
+- a:registerExcludedRoot(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.WorkspaceEntity):V
+- a:registerExcludedRoot(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity):V
+- a:registerExclusionCondition(com.intellij.platform.workspace.storage.url.VirtualFileUrl,kotlin.jvm.functions.Function1,com.intellij.platform.workspace.storage.WorkspaceEntity):V
+- a:registerExclusionPatterns(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.util.List,com.intellij.platform.workspace.storage.WorkspaceEntity):V
+- a:registerFileSet(com.intellij.openapi.vfs.VirtualFile,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData):V
+- a:registerFileSet(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData):V
+- a:registerNonRecursiveFileSet(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData):V
+*:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+- com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
+- a:getData():com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData

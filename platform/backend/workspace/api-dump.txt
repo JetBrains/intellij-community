@@ -1,13 +1,6 @@
 f:com.intellij.platform.backend.workspace.VirtualFileUrls
 - sf:getVirtualFile(com.intellij.platform.workspace.storage.url.VirtualFileUrl):com.intellij.openapi.vfs.VirtualFile
 - sf:toVirtualFileUrl(com.intellij.openapi.vfs.VirtualFile,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
-*:com.intellij.platform.backend.workspace.WorkspaceEntityLifecycleSupporter
-- *sf:Companion:com.intellij.platform.backend.workspace.WorkspaceEntityLifecycleSupporter$Companion
-- a:createSampleEntity(com.intellij.openapi.project.Project):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
-- a:getEntityClass():java.lang.Class
-- a:haveEqualData(com.intellij.platform.workspace.storage.WorkspaceEntity$Builder,com.intellij.platform.workspace.storage.WorkspaceEntity):Z
-*f:com.intellij.platform.backend.workspace.WorkspaceEntityLifecycleSupporter$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 com.intellij.platform.backend.workspace.WorkspaceModel
 - sf:Companion:com.intellij.platform.backend.workspace.WorkspaceModel$Companion
 - a:getCurrentSnapshot():com.intellij.platform.workspace.storage.ImmutableEntityStorage

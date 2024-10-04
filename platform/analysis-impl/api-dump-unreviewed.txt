@@ -407,9 +407,6 @@ f:com.intellij.codeInsight.completion.DeclarativeInsertHandler$RelativeTextEdit
 - f:getRangeTo():I
 - hashCode():I
 - f:toAbsolute(I):com.intellij.codeInsight.completion.DeclarativeInsertHandler$AbsoluteTextEdit
-*f:com.intellij.codeInsight.completion.EmptyDeclarativeInsertHandler
-- com.intellij.codeInsight.completion.DeclarativeInsertHandler
-- sf:INSTANCE:com.intellij.codeInsight.completion.EmptyDeclarativeInsertHandler
 c:com.intellij.codeInsight.completion.GroupingWeigher
 - com.intellij.codeInsight.completion.CompletionWeigher
 - <init>():V
@@ -435,10 +432,6 @@ c:com.intellij.codeInsight.completion.PriorityWeigher
 - com.intellij.codeInsight.completion.CompletionWeigher
 - <init>():V
 - weigh(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.completion.CompletionLocation):java.lang.Double
-*f:com.intellij.codeInsight.completion.SingleInsertionDeclarativeInsertHandler
-- com.intellij.codeInsight.completion.DeclarativeInsertHandler
-- <init>(java.lang.String,com.intellij.codeInsight.completion.DeclarativeInsertHandler$PopupOptions):V
-- handleInsert(com.intellij.codeInsight.completion.InsertionContext,com.intellij.codeInsight.lookup.LookupElement):V
 f:com.intellij.codeInsight.completion.StatisticsWeigher
 - com.intellij.codeInsight.completion.CompletionWeigher
 - <init>():V
@@ -529,7 +522,6 @@ a:com.intellij.codeInsight.daemon.RainbowVisitor
 com.intellij.codeInsight.daemon.ReferenceImporter
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - autoImportReferenceAtCursor(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
-- *:computeAutoImportAtOffset(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I,Z):java.util.function.BooleanSupplier
 - isAddUnambiguousImportsOnTheFlyEnabled(com.intellij.psi.PsiFile):Z
 f:com.intellij.codeInsight.daemon.UsedColors
 - <init>():V
@@ -550,9 +542,6 @@ e:com.intellij.codeInsight.daemon.Validator$ValidationHost$ErrorType
 - s:values():com.intellij.codeInsight.daemon.Validator$ValidationHost$ErrorType[]
 com.intellij.codeInsight.daemon.impl.AsyncDescriptionSupplier
 - a:requestDescription():org.jetbrains.concurrency.Promise
-*f:com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
-- <init>():V
-- s:setHighlightersToEditor(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,I,I,java.util.Collection,I):V
 a:com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 - com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 - <init>():V
@@ -661,7 +650,6 @@ com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:range(com.intellij.psi.PsiElement,I,I):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:range(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:registerFix(com.intellij.codeInsight.intention.IntentionAction,java.util.List,java.lang.String,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
-- *:registerFix(com.intellij.modcommand.ModCommandAction,java.util.List,java.lang.String,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:severity(com.intellij.lang.annotation.HighlightSeverity):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:textAttributes(com.intellij.openapi.editor.colors.TextAttributesKey):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:textAttributes(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
@@ -839,30 +827,6 @@ a:com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspecti
 - applyFix(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):V
 - p:createSuppression(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
 - generatePreview(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-- p:getCommentLanguage(com.intellij.psi.PsiElement):com.intellij.lang.Language
-- p:getCommentsFor(com.intellij.psi.PsiElement):java.util.List
-- a:getContainer(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-- getFamilyName():java.lang.String
-- getIcon(I):javax.swing.Icon
-- getName():java.lang.String
-- getText():java.lang.String
-- invoke(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):V
-- isAvailable(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):Z
-- isShouldBeAppliedToInjectionHost():com.intellij.util.ThreeState
-- isSuppressAll():Z
-- pf:replaceSuppressionComment(com.intellij.psi.PsiElement):V
-- p:replaceSuppressionComments(com.intellij.psi.PsiElement):Z
-- setShouldBeAppliedToInjectionHost(com.intellij.util.ThreeState):V
-- p:setText(java.lang.String):V
-*a:com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentModCommandFix
-- com.intellij.modcommand.PsiUpdateModCommandQuickFix
-- com.intellij.codeInspection.ContainerBasedSuppressQuickFix
-- com.intellij.codeInspection.InjectionAwareSuppressQuickFix
-- com.intellij.openapi.util.Iconable
-- pf:myID:java.lang.String
-- <init>(java.lang.String,Z):V
-- p:applyFix(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.modcommand.ModPsiUpdater):V
-- p:createSuppression(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
 - p:getCommentLanguage(com.intellij.psi.PsiElement):com.intellij.lang.Language
 - p:getCommentsFor(com.intellij.psi.PsiElement):java.util.List
 - a:getContainer(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
@@ -1138,7 +1102,6 @@ com.intellij.codeInsight.lookup.LookupEx
 - a:hideLookup(Z):V
 - a:performGuardedChange(java.lang.Runnable):Z
 - a:setCurrentItem(com.intellij.codeInsight.lookup.LookupElement):V
-- *a:setPresentation(com.intellij.codeInsight.lookup.LookupPresentation):V
 - a:showElementActions(java.awt.event.InputEvent):V
 c:com.intellij.codeInsight.lookup.LookupItem
 - com.intellij.codeInsight.lookup.LookupElement
@@ -3667,9 +3630,6 @@ a:com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHel
 - getTargetContexts(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z):java.util.Collection
 - isFallback():Z
 - a:isMine(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
-- *:isMine(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):Z
-- *:processContexts(com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSetParameters,com.intellij.openapi.vfs.VirtualFile,Z,com.intellij.util.Processor):Z
-- *:processTargetContexts(com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSetParameters,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):Z
 - registerFixes(com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference):java.util.List
 - trimUrl(java.lang.String):java.lang.String
 f:com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelperRegistrar
@@ -3677,7 +3637,6 @@ f:com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHel
 - s:getHelpers():com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper[]
 - s:getHelpers(com.intellij.psi.PsiFileSystemItem):java.util.List
 com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceResolver
-- *:getRelativePath(com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference,com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.PsiElement):java.lang.String
 - a:getVariants(com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference):java.util.Collection
 - a:resolveFileReference(com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference,java.lang.String):com.intellij.psi.PsiFileSystemItem
 c:com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
@@ -3733,10 +3692,6 @@ c:com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
 - p:useIncludingFileAsContext():Z
 com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet$TargetContextEvaluator
 - a:getTargetContexts(com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSetParameters,com.intellij.psi.PsiFile):java.util.Collection
-*:com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSetParameters
-- a:getElement():com.intellij.psi.PsiElement
-- a:getPathString():java.lang.String
-- a:isAbsolutePathReference():Z
 c:com.intellij.psi.impl.source.resolve.reference.impl.providers.FileTargetContext
 - <init>(com.intellij.psi.PsiFileSystemItem):V
 - <init>(com.intellij.psi.PsiFileSystemItem,java.lang.String[]):V

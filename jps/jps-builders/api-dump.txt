@@ -2388,13 +2388,6 @@ a:org.jetbrains.jps.incremental.artifacts.instructions.SourceFileFilter
 - <init>():V
 - a:accept(java.lang.String):Z
 - a:shouldBeCopied(java.lang.String,org.jetbrains.jps.cmdline.ProjectDescriptor):Z
-*a:org.jetbrains.jps.incremental.dependencies.DependencyAuthenticationDataProvider
-- <init>():V
-- a:provideAuthenticationData(java.lang.String):org.jetbrains.jps.incremental.dependencies.DependencyAuthenticationDataProvider$AuthenticationData
-*f:org.jetbrains.jps.incremental.dependencies.DependencyAuthenticationDataProvider$AuthenticationData
-- <init>(java.lang.String,java.lang.String):V
-- getPassword():java.lang.String
-- getUserName():java.lang.String
 f:org.jetbrains.jps.incremental.dependencies.ProjectDependenciesResolver
 - org.jetbrains.jps.incremental.TargetBuilder
 - sf:TARGET_TYPE_ID:java.lang.String

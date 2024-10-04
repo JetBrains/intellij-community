@@ -1,0 +1,6 @@
+*:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
+- *sf:Companion:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
+- a:getElements(java.lang.Object):java.util.List
+- isApplicable(java.lang.Object):Z
+*f:com.intellij.ide.structureView.logical.LogicalStructureElementsProvider$Companion
+- f:getProviders(java.lang.Object):kotlin.sequences.Sequence

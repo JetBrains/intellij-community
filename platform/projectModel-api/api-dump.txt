@@ -148,7 +148,6 @@ a:com.intellij.openapi.components.SimplePersistentStateComponent
 - a:defaultStateAsResource():Z
 - a:exportable():Z
 - a:externalStorageOnly():Z
-- *a:getStateRequiresEdt():Z
 - a:name():java.lang.String
 - a:presentableName():java.lang.Class
 - a:reloadable():Z
@@ -221,43 +220,22 @@ com.intellij.openapi.module.ModifiableModuleModel
 - a:loadModule(java.nio.file.Path):com.intellij.openapi.module.Module
 - a:newModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
 - newModule(java.nio.file.Path,java.lang.String):com.intellij.openapi.module.Module
-- *:newNonPersistentModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
 - a:renameModule(com.intellij.openapi.module.Module,java.lang.String):V
 - a:setModuleGroupPath(com.intellij.openapi.module.Module,java.lang.String[]):V
 com.intellij.openapi.module.ModuleComponent
 - com.intellij.openapi.components.BaseComponent
-*a:com.intellij.openapi.module.ModuleGrouper
-- *sf:Companion:com.intellij.openapi.module.ModuleGrouper$Companion
-- a:getCompactGroupNodes():Z
-- a:getGroupPath(com.intellij.openapi.module.Module):java.util.List
-- a:getGroupPath(com.intellij.openapi.module.ModuleDescription):java.util.List
-- a:getGroupPathByModuleName(java.lang.String):java.util.List
-- a:getModuleAsGroupPath(com.intellij.openapi.module.Module):java.util.List
-- a:getShortenedName(com.intellij.openapi.module.Module):java.lang.String
-- a:getShortenedName(com.intellij.openapi.module.Module,java.lang.String):java.lang.String
-- a:getShortenedNameByFullModuleName(java.lang.String):java.lang.String
-- a:getShortenedNameByFullModuleName(java.lang.String,java.lang.String):java.lang.String
-- sf:instanceFor(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModuleGrouper
-- sf:instanceFor(com.intellij.openapi.project.Project,com.intellij.openapi.module.ModifiableModuleModel):com.intellij.openapi.module.ModuleGrouper
-*f:com.intellij.openapi.module.ModuleGrouper$Companion
-- f:instanceFor(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModuleGrouper
-- f:instanceFor(com.intellij.openapi.project.Project,com.intellij.openapi.module.ModifiableModuleModel):com.intellij.openapi.module.ModuleGrouper
-- bs:instanceFor$default(com.intellij.openapi.module.ModuleGrouper$Companion,com.intellij.openapi.project.Project,com.intellij.openapi.module.ModifiableModuleModel,I,java.lang.Object):com.intellij.openapi.module.ModuleGrouper
 Fa:com.intellij.openapi.module.ModuleManager
 - com.intellij.openapi.util.SimpleModificationTracker
 - sf:Companion:com.intellij.openapi.module.ModuleManager$Companion
 - <init>():V
 - a:disposeModule(com.intellij.openapi.module.Module):V
 - a:findModuleByName(java.lang.String):com.intellij.openapi.module.Module
-- *a:getAllModuleDescriptions():java.util.Collection
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModuleManager
 - a:getModifiableModel():com.intellij.openapi.module.ModifiableModuleModel
 - a:getModuleDependentModules(com.intellij.openapi.module.Module):java.util.List
 - a:getModuleGrouper(com.intellij.openapi.module.ModifiableModuleModel):com.intellij.openapi.module.ModuleGrouper
 - a:getModules():com.intellij.openapi.module.Module[]
 - a:getSortedModules():com.intellij.openapi.module.Module[]
-- *a:getUnloadedModuleDescription(java.lang.String):com.intellij.openapi.module.UnloadedModuleDescription
-- *a:getUnloadedModuleDescriptions():java.util.Collection
 - a:isModuleDependent(com.intellij.openapi.module.Module,com.intellij.openapi.module.Module):Z
 - a:loadModule(java.lang.String):com.intellij.openapi.module.Module
 - a:loadModule(java.nio.file.Path):com.intellij.openapi.module.Module
@@ -266,9 +244,6 @@ Fa:com.intellij.openapi.module.ModuleManager
 - a:moduleGraph(Z):com.intellij.util.graph.Graph
 - a:newModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
 - f:newModule(java.nio.file.Path,java.lang.String):com.intellij.openapi.module.Module
-- *:newNonPersistentModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
-- *:removeUnloadedModules(java.util.Collection):V
-- *a:setUnloadedModules(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 - a:setUnloadedModulesSync(java.util.List):V
 f:com.intellij.openapi.module.ModuleManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModuleManager
@@ -320,13 +295,6 @@ com.intellij.openapi.project.ModuleListener
 - modulesRenamed(com.intellij.openapi.project.Project,java.util.List,com.intellij.util.Function):V
 com.intellij.openapi.project.ProjectCloseHandler
 - a:canClose(com.intellij.openapi.project.Project):Z
-*:com.intellij.openapi.project.ProjectCloseListener
-- *sf:Companion:com.intellij.openapi.project.ProjectCloseListener$Companion
-- sf:TOPIC:com.intellij.util.messages.Topic
-- projectClosed(com.intellij.openapi.project.Project):V
-- projectClosing(com.intellij.openapi.project.Project):V
-- projectClosingBeforeSave(com.intellij.openapi.project.Project):V
-*f:com.intellij.openapi.project.ProjectCloseListener$Companion
 Fa:com.intellij.openapi.project.ProjectManager
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:addProjectManagerListener(com.intellij.openapi.project.Project,com.intellij.openapi.project.ProjectManagerListener):V
@@ -367,9 +335,6 @@ f:com.intellij.openapi.project.ProjectTypeService
 - s:getProjectTypeIds(com.intellij.openapi.project.Project):java.util.Set
 - s:getProjectTypes(com.intellij.openapi.project.Project):java.util.Collection
 - s:setProjectType(com.intellij.openapi.project.Project,com.intellij.openapi.project.ProjectType):V
-*:com.intellij.openapi.project.ProjectTypesProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:inferProjectTypes(com.intellij.openapi.project.Project):java.util.Collection
 f:com.intellij.openapi.project.ProjectUtilCore
 - sf:appendModuleName(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String,Z):java.lang.String
 - sf:decorateWithLibraryName(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String):java.lang.String
@@ -446,10 +411,6 @@ com.intellij.openapi.projectRoots.SdkTypeId
 - a:saveAdditionalData(com.intellij.openapi.projectRoots.SdkAdditionalData,org.jdom.Element):V
 - versionComparator():java.util.Comparator
 - versionStringComparator():java.util.Comparator
-*:com.intellij.openapi.roots.AdditionalLibraryRootsListener
-- sf:TOPIC:com.intellij.util.messages.Topic
-- s:fireAdditionalLibraryChanged(com.intellij.openapi.project.Project,java.lang.String,java.util.Collection,java.util.Collection,java.lang.String):V
-- a:libraryRootsChanged(java.lang.String,java.util.Collection,java.util.Collection,java.lang.String):V
 com.intellij.openapi.roots.AdditionalLibraryRootsListenerHelper
 - s:getInstance():com.intellij.openapi.roots.AdditionalLibraryRootsListenerHelper
 - a:handleAdditionalLibraryRootsChanged(com.intellij.openapi.project.Project,java.lang.String,java.util.Collection,java.util.Collection,java.lang.String):V
@@ -546,11 +507,6 @@ com.intellij.openapi.roots.ExportableOrderEntry
 - a:isExported():Z
 - a:setExported(Z):V
 - a:setScope(com.intellij.openapi.roots.DependencyScope):V
-*:com.intellij.openapi.roots.ExternalProjectSystemRegistry
-- sf:EXTERNAL_SYSTEM_ID_KEY:java.lang.String
-- a:getExternalSource(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ProjectModelExternalSource
-- s:getInstance():com.intellij.openapi.roots.ExternalProjectSystemRegistry
-- a:getSourceById(java.lang.String):com.intellij.openapi.roots.ProjectModelExternalSource
 com.intellij.openapi.roots.FileIndex
 - a:isInContent(com.intellij.openapi.vfs.VirtualFile):Z
 - a:isInSourceContent(com.intellij.openapi.vfs.VirtualFile):Z
@@ -805,7 +761,6 @@ c:com.intellij.openapi.roots.PersistentOrderRootType
 - p:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
 com.intellij.openapi.roots.ProjectFileIndex
 - com.intellij.openapi.roots.FileIndex
-- *a:findContainingLibraries(com.intellij.openapi.vfs.VirtualFile):java.util.Collection
 - a:getClassRootForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - a:getContainingSourceRootType(com.intellij.openapi.vfs.VirtualFile):org.jetbrains.jps.model.module.JpsModuleSourceRootType
 - a:getContentRootForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
@@ -832,11 +787,6 @@ f:com.intellij.openapi.roots.ProjectFileIndex$SERVICE
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.roots.ProjectFileIndex
 com.intellij.openapi.roots.ProjectModelBuildableElement
 - com.intellij.openapi.roots.ProjectModelElement
-*:com.intellij.openapi.roots.ProjectModelElement
-- *a:getExternalSource():com.intellij.openapi.roots.ProjectModelExternalSource
-*:com.intellij.openapi.roots.ProjectModelExternalSource
-- a:getDisplayName():java.lang.String
-- a:getId():java.lang.String
 Fa:com.intellij.openapi.roots.ProjectRootManager
 - com.intellij.openapi.util.SimpleModificationTracker
 - a:getContentRootUrls():java.util.List
@@ -923,19 +873,6 @@ a:com.intellij.openapi.roots.ex.ProjectRootManagerEx
 com.intellij.openapi.roots.ex.ProjectRootManagerEx$ProjectJdkListener
 - java.util.EventListener
 - a:projectJdkChanged():V
-*:com.intellij.openapi.roots.impl.FilePropertyPusher
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:acceptsDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
-- acceptsFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
-- afterRootsChanged(com.intellij.openapi.project.Project):V
-- a:getDefaultValue():java.lang.Object
-- getFileDataKey():com.intellij.openapi.util.Key
-- getFilePropertyKey():com.intellij.psi.FilePropertyKey
-- a:getImmediateValue(com.intellij.openapi.module.Module):java.lang.Object
-- a:getImmediateValue(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.Object
-- initExtra(com.intellij.openapi.project.Project):V
-- a:persistAttribute(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.Object):V
-- a:pushDirectoriesOnly():Z
 a:com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 - <init>():V
 - a:filePropertiesChanged(com.intellij.openapi.vfs.VirtualFile):V

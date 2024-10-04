@@ -134,8 +134,6 @@ com.intellij.diff.FrameDiffTool
 - com.intellij.diff.DiffTool
 - a:createComponent(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):com.intellij.diff.FrameDiffTool$DiffViewer
 - getToolType():com.intellij.diff.DiffToolType
-*:com.intellij.diff.FrameDiffTool$DiffInfo
-- a:getComponent():javax.swing.JComponent
 com.intellij.diff.FrameDiffTool$DiffViewer
 - com.intellij.openapi.Disposable
 - a:dispose():V

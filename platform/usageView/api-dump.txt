@@ -280,9 +280,6 @@ com.intellij.usages.UsagePresentation
 - a:getPlainText():java.lang.String
 - a:getText():com.intellij.usages.TextChunk[]
 - a:getTooltipText():java.lang.String
-*:com.intellij.usages.UsageSearchPresentation
-- a:getOptionsString():java.lang.String
-- a:getSearchTargetString():java.lang.String
 com.intellij.usages.UsageSearcher
 - com.intellij.util.Generator
 - a:generate(com.intellij.util.Processor):V
@@ -623,8 +620,6 @@ c:com.intellij.usages.similarity.clustering.UsageCluster
 - contains(com.intellij.usageView.UsageInfo):Z
 - getOnlySelectedUsages(java.util.Set):java.util.Set
 - getUsages():java.util.Set
-*:com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider
-- a:getFeatures(com.intellij.psi.PsiElement):com.intellij.usages.similarity.bag.Bag
 c:com.intellij.usages.similarity.features.UsageSimilarityFeaturesRecorder
 - <init>(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
 - addAllFeatures(com.intellij.psi.PsiElement,java.lang.String):V
@@ -641,12 +636,6 @@ c:com.intellij.usages.similarity.usageAdapter.SimilarReadWriteUsageInfo2UsageAda
 - <init>(com.intellij.usageView.UsageInfo,com.intellij.codeInsight.highlighting.ReadWriteAccessDetector$Access,com.intellij.usages.similarity.bag.Bag,com.intellij.usages.similarity.clustering.ClusteringSearchSession):V
 - getClusteringSession():com.intellij.usages.similarity.clustering.ClusteringSearchSession
 - getFeatures():com.intellij.usages.similarity.bag.Bag
-*:com.intellij.usages.similarity.usageAdapter.SimilarUsage
-- com.intellij.usages.Usage
-- a:getClusteringSession():com.intellij.usages.similarity.clustering.ClusteringSearchSession
-- a:getElement():com.intellij.psi.PsiElement
-- a:getFeatures():com.intellij.usages.similarity.bag.Bag
-- a:getUsageInfo():com.intellij.usageView.UsageInfo
 c:com.intellij.usages.similarity.usageAdapter.SimilarUsageInfo2UsageAdapter
 - com.intellij.usages.UsageInfo2UsageAdapter
 - com.intellij.usages.similarity.usageAdapter.SimilarUsage

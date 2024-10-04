@@ -1,0 +1,1036 @@
+*:com.intellij.execution.process.ElevationService
+- a:authorizeService():V
+- createProcess(com.intellij.execution.configurations.GeneralCommandLine):java.lang.Process
+- a:createProcess(java.lang.ProcessBuilder):java.lang.Process
+- a:createProcessHandler(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.OSProcessHandler
+- s:getInstance():com.intellij.execution.process.ElevationService
+- isAvailable():Z
+*f:com.intellij.execution.ui.utils.Fragment
+- com.intellij.execution.ui.utils.AbstractFragmentBuilder
+- <init>(java.lang.String,javax.swing.JComponent):V
+- build():com.intellij.execution.ui.SettingsEditorFragment
+- f:getApply():kotlin.jvm.functions.Function2
+- f:getCommandLinePosition():I
+- f:getEditorGetter():kotlin.jvm.functions.Function1
+- f:getHint():java.lang.String
+- f:getId():java.lang.String
+- f:getName():java.lang.String
+- f:getOnToggle():kotlin.jvm.functions.Function1
+- f:getReset():kotlin.jvm.functions.Function2
+- f:getValidation():kotlin.jvm.functions.Function2
+- f:getVisible():kotlin.jvm.functions.Function1
+- f:isRemovable():Z
+- f:setApply(kotlin.jvm.functions.Function2):V
+- f:setCommandLinePosition(I):V
+- f:setEditorGetter(kotlin.jvm.functions.Function1):V
+- f:setHint(java.lang.String):V
+- f:setName(java.lang.String):V
+- f:setOnToggle(kotlin.jvm.functions.Function1):V
+- f:setRemovable(Z):V
+- f:setReset(kotlin.jvm.functions.Function2):V
+- f:setValidation(kotlin.jvm.functions.Function2):V
+- f:setVisible(kotlin.jvm.functions.Function1):V
+*f:com.intellij.execution.ui.utils.FragmentsBuilder
+- <init>(java.lang.String,java.lang.String,java.util.List):V
+- f:asFragment(javax.swing.JComponent,java.lang.String,kotlin.jvm.functions.Function1):com.intellij.execution.ui.SettingsEditorFragment
+- f:build():java.util.List
+- f:customFragment(com.intellij.execution.ui.SettingsEditorFragment):com.intellij.execution.ui.SettingsEditorFragment
+- f:fragment(java.lang.String,javax.swing.JComponent,kotlin.jvm.functions.Function1):com.intellij.execution.ui.SettingsEditorFragment
+- f:getFullId():java.lang.String
+- f:group(java.lang.String,java.lang.String,kotlin.jvm.functions.Function1):com.intellij.execution.ui.NestedGroupFragment
+- f:tag(java.lang.String,java.lang.String,kotlin.jvm.functions.Function1):com.intellij.execution.ui.SettingsEditorFragment
+- f:variantableTag(java.lang.String,java.lang.String,kotlin.jvm.functions.Function1):V
+- f:withCustomBuilder(com.intellij.execution.ui.utils.AbstractFragmentBuilder,kotlin.jvm.functions.Function1):com.intellij.execution.ui.SettingsEditorFragment
+*f:com.intellij.execution.ui.utils.Group
+- com.intellij.execution.ui.utils.AbstractFragmentBuilder
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.util.List):V
+- build():com.intellij.execution.ui.NestedGroupFragment
+- f:getApplyVisibility():kotlin.jvm.functions.Function2
+- f:getChildren():kotlin.jvm.functions.Function1
+- f:getChildrenGroupName():java.lang.String
+- f:getId():java.lang.String
+- f:getName():java.lang.String
+- f:getParentId():java.lang.String
+- f:getVisible():kotlin.jvm.functions.Function1
+- f:setApplyVisibility(kotlin.jvm.functions.Function2):V
+- f:setChildren(kotlin.jvm.functions.Function1):V
+- f:setChildrenGroupName(java.lang.String):V
+- f:setVisible(kotlin.jvm.functions.Function1):V
+*f:com.intellij.execution.ui.utils.Tag
+- com.intellij.execution.ui.utils.AbstractFragmentBuilder
+- <init>(java.lang.String,java.lang.String):V
+- build():com.intellij.execution.ui.SettingsEditorFragment
+- f:getGetter():kotlin.jvm.functions.Function1
+- f:getId():java.lang.String
+- f:getName():java.lang.String
+- f:getSetter():kotlin.jvm.functions.Function2
+- f:getToolTip():java.lang.String
+- f:getValidation():kotlin.jvm.functions.Function2
+- f:setGetter(kotlin.jvm.functions.Function1):V
+- f:setSetter(kotlin.jvm.functions.Function2):V
+- f:setToolTip(java.lang.String):V
+- f:setValidation(kotlin.jvm.functions.Function2):V
+*f:com.intellij.execution.ui.utils.VariantableTag
+- com.intellij.execution.ui.utils.AbstractFragmentBuilder
+- <init>(java.lang.String,java.lang.String):V
+- build():com.intellij.execution.ui.SettingsEditorFragment
+- f:getId():java.lang.String
+- f:getName():java.lang.String
+- f:getVisible():kotlin.jvm.functions.Function1
+- f:setVisible(kotlin.jvm.functions.Function1):V
+- f:variant(java.lang.Object,java.lang.String,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1):V
+- bs:variant$default(com.intellij.execution.ui.utils.VariantableTag,java.lang.Object,java.lang.String,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+*:com.intellij.featureStatistics.FeaturesRegistryListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:featureUsed(com.intellij.featureStatistics.FeatureDescriptor):V
+*e:com.intellij.ide.Region
+- java.lang.Enum
+- sf:AFRICA:com.intellij.ide.Region
+- sf:AMERICAS:com.intellij.ide.Region
+- sf:APAC:com.intellij.ide.Region
+- sf:CHINA:com.intellij.ide.Region
+- sf:EUROPE:com.intellij.ide.Region
+- sf:MIDDLE_EAST:com.intellij.ide.Region
+- sf:NOT_SET:com.intellij.ide.Region
+- sf:OCEANIA:com.intellij.ide.Region
+- externalName():java.lang.String
+- s:fromExternalName(java.lang.String):com.intellij.ide.Region
+- getDisplayKey():java.lang.String
+- getDisplayName():java.lang.String
+- getDisplayOrdinal():I
+- s:valueOf(java.lang.String):com.intellij.ide.Region
+- s:values():com.intellij.ide.Region[]
+*f:com.intellij.ide.RegionSettings
+- s:getRegion():com.intellij.ide.Region
+a:com.intellij.ide.SaveAndSyncHandler
+- *f:getExternalChangesTracker():com.intellij.openapi.util.ModificationTracker
+*:com.intellij.ide.SaveAndSyncHandlerListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- beforeRefresh():V
+- beforeSave(com.intellij.ide.SaveAndSyncHandler$SaveTask,Z):V
+f:com.intellij.ide.dnd.SmoothAutoScroller
+- *sf:ENABLED:com.intellij.openapi.util.Key
+- *s:getSharedListener():java.awt.dnd.DropTargetListener
+- *s:installDropTargetAsNecessary(javax.swing.JComponent):V
+*:com.intellij.ide.environment.EnvironmentKeyProvider
+- *sf:Companion:com.intellij.ide.environment.EnvironmentKeyProvider$Companion
+- a:getKnownKeys():java.util.Map
+- a:getRequiredKeys(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.ide.environment.EnvironmentKeyProvider$Companion
+*@:com.intellij.ide.environment.EnvironmentKeyProvider$EnvironmentKeyDescription
+- java.lang.annotation.Annotation
+*:com.intellij.ide.environment.EnvironmentService
+- a:getEnvironmentValue(com.intellij.ide.environment.EnvironmentKey,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- a:getEnvironmentValue(com.intellij.ide.environment.EnvironmentKey,kotlin.coroutines.Continuation):java.lang.Object
+a:com.intellij.ide.ui.LafManager
+- *a:getInstalledThemes():kotlin.sequences.Sequence
+*:com.intellij.ide.ui.PopupLocator
+- a:getPositionFor(com.intellij.openapi.ui.popup.JBPopup):java.awt.Point
+*:com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
+- a:dispose():V
+- a:getAuthor():java.lang.String
+- a:getEditorSchemeId():java.lang.String
+- a:getId():java.lang.String
+- a:getName():java.lang.String
+- a:getProviderClassLoader():java.lang.ClassLoader
+- a:installEditorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):V
+- a:installTheme(javax.swing.UIDefaults):V
+- a:isDark():Z
+- a:isInitialized():Z
+c:com.intellij.openapi.actionSystem.PlatformDataKeys
+- com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+- *sf:CONTEXT_MENU_LOCATOR:com.intellij.openapi.actionSystem.DataKey
+f:com.intellij.openapi.actionSystem.ex.ActionUtil
+- *sf:createToolbarComponent(javax.swing.JComponent,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,Z):javax.swing.JComponent
+- *sf:getAction(java.lang.String):com.intellij.openapi.actionSystem.AnAction
+- *sf:getActionGroup(java.lang.String):com.intellij.openapi.actionSystem.ActionGroup
+- *sf:getActionGroup(java.lang.String[]):com.intellij.openapi.actionSystem.ActionGroup
+- *sf:getShortcutSet(java.lang.String):com.intellij.openapi.actionSystem.ShortcutSet
+c:com.intellij.openapi.actionSystem.ex.ComboBoxAction$ComboBoxButton
+- javax.swing.JButton
+- com.intellij.ui.UserActivityProviderComponent
+- *p:doShiftClick():V
+com.intellij.openapi.fileEditor.AsyncFileEditorProvider
+- com.intellij.openapi.fileEditor.FileEditorProvider
+- com.intellij.openapi.project.DumbAware
+- *:createFileEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
+- *bs:createFileEditor$suspendImpl(com.intellij.openapi.fileEditor.AsyncFileEditorProvider,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- *sf:Companion:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Companion
+- s:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
+- s:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0$Multicaster
+- s:create2():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2$Multicaster
+- a:filterEvents(kotlin.jvm.functions.Function1):com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- a:ignoreParameters():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- a:mapParameters(kotlin.jvm.functions.Function1):com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- a:onceWhenEventHappened(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- onceWhenEventHappened(kotlin.jvm.functions.Function1):V
+- a:whenEventHappened(I,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- whenEventHappened(I,kotlin.jvm.functions.Function1):V
+- a:whenEventHappened(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- whenEventHappened(kotlin.jvm.functions.Function1):V
+*f:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Companion
+- f:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
+- f:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0$Multicaster
+- f:create2():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2$Multicaster
+*:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
+- com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- a:fireEvent(java.lang.Object):V
+*Fa:com.intellij.openapi.observable.operation.core.AbstractObservableOperationTrace
+- com.intellij.openapi.observable.operation.core.ObservableTaskOperationTrace
+- <init>():V
+- getDetachTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- getFinishObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- getFinishTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2
+- getScheduleObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- getScheduleTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- getStartObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- getStartTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+*f:com.intellij.openapi.observable.operation.core.AtomicOperationTrace
+- com.intellij.openapi.observable.operation.core.AbstractObservableOperationTrace
+- com.intellij.openapi.observable.operation.core.MutableOperationTrace
+- *sf:Companion:com.intellij.openapi.observable.operation.core.AtomicOperationTrace$Companion
+- <init>():V
+- <init>(java.lang.String):V
+- <init>(java.lang.String,Z):V
+- <init>(Z):V
+- detach(com.intellij.openapi.observable.operation.OperationExecutionId):V
+- detachAll():V
+- getName():java.lang.String
+- getState():com.intellij.openapi.observable.operation.core.ObservableOperationState
+- getStatus():com.intellij.openapi.observable.operation.core.ObservableOperationStatus
+- traceFinish(com.intellij.openapi.observable.operation.OperationExecutionId,com.intellij.openapi.observable.operation.OperationExecutionStatus):V
+- traceSchedule(com.intellij.openapi.observable.operation.OperationExecutionId):V
+- traceStart(com.intellij.openapi.observable.operation.OperationExecutionId):V
+*f:com.intellij.openapi.observable.operation.core.AtomicOperationTrace$Companion
+*:com.intellij.openapi.observable.operation.core.ObservableOperationTrace
+- a:getFinishObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- a:getName():java.lang.String
+- a:getScheduleObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- a:getStartObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- a:getStatus():com.intellij.openapi.observable.operation.core.ObservableOperationStatus
+f:com.intellij.openapi.observable.util.ListenerUiUtil
+- *sf:whenItemSelectedFromUi(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- *bs:whenItemSelectedFromUi$default(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- *sf:whenStateChangedFromUi(javax.swing.JCheckBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- *bs:whenStateChangedFromUi$default(javax.swing.JCheckBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- *sf:whenTextChangedFromUi(com.intellij.openapi.ui.TextFieldWithBrowseButton,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- *sf:whenTextChangedFromUi(com.intellij.ui.SearchTextField,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- *sf:whenTextChangedFromUi(javax.swing.text.JTextComponent,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- *bs:whenTextChangedFromUi$default(com.intellij.openapi.ui.TextFieldWithBrowseButton,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- *bs:whenTextChangedFromUi$default(com.intellij.ui.SearchTextField,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- *bs:whenTextChangedFromUi$default(javax.swing.text.JTextComponent,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+f:com.intellij.openapi.observable.util.PropertyOperationUtil
+- *sf:backwardFilter(com.intellij.openapi.observable.properties.ObservableMutableProperty,kotlin.jvm.functions.Function1):com.intellij.openapi.observable.properties.ObservableMutableProperty
+*:com.intellij.openapi.options.ConfigurableWithOptionDescriptors
+- a:getOptionDescriptors(java.lang.String,java.util.function.Function):java.util.List
+*:com.intellij.openapi.options.OptionEditor
+- a:getComponent():javax.swing.JComponent
+- a:result():java.lang.Object
+*:com.intellij.openapi.options.OptionEditorProvider
+- sf:EXTENSION:com.intellij.openapi.util.ClassExtension
+- a:createOptionEditor(java.lang.Object):com.intellij.openapi.options.OptionEditor
+- s:forOptions(java.lang.Object):com.intellij.openapi.options.OptionEditor
+*f:com.intellij.openapi.progress.TasksKt
+- sf:runBlockingModal(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2):java.lang.Object
+- sf:runBlockingModal(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2):java.lang.Object
+- bs:runBlockingModal$default(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,I,java.lang.Object):java.lang.Object
+- sf:runBlockingModalWithRawProgressReporter(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2):java.lang.Object
+- sf:runBlockingModalWithRawProgressReporter(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2):java.lang.Object
+- bs:runBlockingModalWithRawProgressReporter$default(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,I,java.lang.Object):java.lang.Object
+- sf:runWithModalProgressBlocking(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2):java.lang.Object
+- sf:runWithModalProgressBlocking(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2):java.lang.Object
+- bs:runWithModalProgressBlocking$default(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,I,java.lang.Object):java.lang.Object
+- sf:withBackgroundProgress(com.intellij.openapi.project.Project,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- sf:withBackgroundProgress(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- sf:withBackgroundProgress(com.intellij.openapi.project.Project,java.lang.String,Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- sf:withBackgroundProgressIndicator(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- sf:withBackgroundProgressIndicator(com.intellij.openapi.project.Project,java.lang.String,Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- sf:withModalProgress(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- sf:withModalProgress(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- sf:withModalProgressIndicator(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+*c:com.intellij.openapi.ui.BrowseFolderRunnable
+- java.lang.Runnable
+- pf:myAccessor:com.intellij.openapi.ui.TextComponentAccessor
+- pf:myFileChooserDescriptor:com.intellij.openapi.fileChooser.FileChooserDescriptor
+- p:myTextComponent:javax.swing.JComponent
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,javax.swing.JComponent,com.intellij.openapi.ui.TextComponentAccessor):V
+- <init>(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,javax.swing.JComponent,com.intellij.openapi.ui.TextComponentAccessor):V
+- p:chooseFile(com.intellij.openapi.fileChooser.FileChooserDescriptor):V
+- p:chosenFileToResultingText(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- p:expandPath(java.lang.String):java.lang.String
+- p:getComponentText():java.lang.String
+- p:getInitialFile():com.intellij.openapi.vfs.VirtualFile
+- pf:getProject():com.intellij.openapi.project.Project
+- p:onFileChosen(com.intellij.openapi.vfs.VirtualFile):V
+- run():V
+c:com.intellij.openapi.ui.ComboBox
+- com.intellij.openapi.ui.ComboBoxWithWidePopup
+- java.awt.event.AWTEventListener
+- *:initBrowsableEditor(java.lang.Runnable,com.intellij.openapi.Disposable):V
+*:com.intellij.openapi.ui.ComboBox$SelectableItem
+- a:isSelectable():Z
+*:com.intellij.openapi.ui.ComboBoxPopupState
+- a:hasSubstep(java.lang.Object):Z
+- a:onChosen(java.lang.Object):javax.swing.ListModel
+a:com.intellij.openapi.ui.DialogWrapper
+- *:isKeepPopupsOpen():Z
+- *:setKeepPopupsOpen(Z):V
+*:com.intellij.openapi.ui.UiSwitcher
+- *sf:Companion:com.intellij.openapi.ui.UiSwitcher$Companion
+- s:append(javax.swing.JComponent,com.intellij.openapi.ui.UiSwitcher):V
+- s:appendAll(javax.swing.JComponent,java.util.Set):V
+- s:removeAll(javax.swing.JComponent,java.util.Set):V
+- a:show():Z
+- s:show(java.awt.Component):V
+*f:com.intellij.openapi.ui.UiSwitcher$Companion
+- f:append(javax.swing.JComponent,com.intellij.openapi.ui.UiSwitcher):V
+- f:appendAll(javax.swing.JComponent,java.util.Set):V
+- f:removeAll(javax.swing.JComponent,java.util.Set):V
+- f:show(java.awt.Component):V
+*a:com.intellij.openapi.ui.cellvalidators.CellComponentProvider
+- pf:owner:javax.swing.JComponent
+- <init>(javax.swing.JComponent):V
+- s:forTable(javax.swing.JTable):com.intellij.openapi.ui.cellvalidators.CellComponentProvider
+- a:getCellRect(java.awt.event.MouseEvent):java.awt.Rectangle
+- a:getCellRendererComponent(java.awt.event.MouseEvent):javax.swing.JComponent
+- f:getOwner():javax.swing.JComponent
+*c:com.intellij.openapi.ui.cellvalidators.CellComponentProvider$TableProvider
+- com.intellij.openapi.ui.cellvalidators.CellComponentProvider
+- p:<init>(javax.swing.JTable):V
+- getCellRect(java.awt.event.MouseEvent):java.awt.Rectangle
+- getCellRendererComponent(java.awt.event.MouseEvent):javax.swing.JComponent
+- isEditing(java.awt.event.MouseEvent):Z
+- isEditingStarted(java.beans.PropertyChangeEvent):Z
+f:com.intellij.openapi.ui.cellvalidators.CellTooltipManager
+- *:<init>(com.intellij.openapi.Disposable):V
+- *:installOn(javax.swing.JComponent):V
+- *:withCellComponentProvider(com.intellij.openapi.ui.cellvalidators.CellComponentProvider):com.intellij.openapi.ui.cellvalidators.CellTooltipManager
+- *:withHyperlinkListener(javax.swing.event.HyperlinkListener):com.intellij.openapi.ui.cellvalidators.CellTooltipManager
+c:com.intellij.openapi.ui.cellvalidators.StatefulValidatingCellEditor
+- javax.swing.DefaultCellEditor
+- java.util.function.Supplier
+- *:withStateUpdater(java.util.function.Consumer):com.intellij.openapi.ui.cellvalidators.StatefulValidatingCellEditor
+*:com.intellij.openapi.ui.cellvalidators.TableCellValidator
+- a:validate(java.lang.Object,I,I):com.intellij.openapi.ui.ValidationInfo
+c:com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
+- com.intellij.ui.CellRendererPanel
+- javax.swing.table.TableCellRenderer
+- *:<init>(javax.swing.table.TableCellRenderer):V
+- *:bindToEditorSize(java.util.function.Supplier):com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
+- *:withCellValidator(com.intellij.openapi.ui.cellvalidators.TableCellValidator):com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
+*:com.intellij.openapi.wm.WelcomeScreenCustomization
+- sf:WELCOME_SCREEN_CUSTOMIZATION:com.intellij.openapi.extensions.ExtensionPointName
+- createMainPanelToolbar(com.intellij.openapi.Disposable):javax.swing.JComponent
+- createQuickAccessActions(com.intellij.openapi.Disposable):java.util.List
+- createQuickAccessComponent(com.intellij.openapi.Disposable):java.awt.Component
+*:com.intellij.platform.ide.navigation.NavigationOptions
+- *sf:Companion:com.intellij.platform.ide.navigation.NavigationOptions$Companion
+- s:defaultOptions():com.intellij.platform.ide.navigation.NavigationOptions
+- a:preserveCaret(Z):com.intellij.platform.ide.navigation.NavigationOptions
+- a:requestFocus(Z):com.intellij.platform.ide.navigation.NavigationOptions
+*f:com.intellij.platform.ide.navigation.NavigationOptions$Companion
+- f:defaultOptions():com.intellij.platform.ide.navigation.NavigationOptions
+*:com.intellij.platform.ide.navigation.NavigationService
+- *sf:Companion:com.intellij.platform.ide.navigation.NavigationService$Companion
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ide.navigation.NavigationService
+- a:navigate(com.intellij.openapi.actionSystem.DataContext,com.intellij.platform.ide.navigation.NavigationOptions,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.ide.navigation.NavigationService$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ide.navigation.NavigationService
+*:com.intellij.ui.AutoScrollToSourceTaskManager
+- *sf:Companion:com.intellij.ui.AutoScrollToSourceTaskManager$Companion
+- s:getInstance():com.intellij.ui.AutoScrollToSourceTaskManager
+- a:scheduleScrollToSource(com.intellij.ui.AutoScrollToSourceHandler,com.intellij.openapi.actionSystem.DataContext):V
+*f:com.intellij.ui.AutoScrollToSourceTaskManager$Companion
+- f:getInstance():com.intellij.ui.AutoScrollToSourceTaskManager
+a:com.intellij.ui.ColoredTreeCellRenderer
+- com.intellij.ui.SimpleColoredComponent
+- javax.swing.tree.TreeCellRenderer
+- *:setAccessibleStatusText(java.lang.String):V
+*f:com.intellij.ui.HelpIdAwareLinkListener
+- com.intellij.ui.BrowserHyperlinkListener
+- <init>():V
+- s:getInstance():com.intellij.ui.HelpIdAwareLinkListener
+*c:com.intellij.ui.HtmlToSimpleColoredComponentConverter
+- sf:DEFAULT_TAG_HANDLER:com.intellij.ui.HtmlToSimpleColoredComponentConverter$StyleTagHandler
+- <init>():V
+- <init>(com.intellij.ui.HtmlToSimpleColoredComponentConverter$StyleTagHandler):V
+- appendHtml(com.intellij.ui.SimpleColoredComponent,java.lang.String,com.intellij.ui.SimpleTextAttributes):V
+- convert(java.lang.String,com.intellij.ui.SimpleTextAttributes):java.util.List
+*c:com.intellij.ui.HtmlToSimpleColoredComponentConverter$Fragment
+- <init>(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
+- getAttributes():com.intellij.ui.SimpleTextAttributes
+- getText():java.lang.String
+*:com.intellij.ui.HtmlToSimpleColoredComponentConverter$StyleTagHandler
+- a:calcAttributes(javax.swing.text.html.HTML$Tag,javax.swing.text.MutableAttributeSet):com.intellij.ui.SimpleTextAttributes
+- extendWith(com.intellij.ui.HtmlToSimpleColoredComponentConverter$StyleTagHandler):com.intellij.ui.HtmlToSimpleColoredComponentConverter$StyleTagHandler
+*f:com.intellij.ui.ScrollableContentBorder
+- com.intellij.ui.SideBorder
+- *sf:Companion:com.intellij.ui.ScrollableContentBorder$Companion
+- sf:getTargetComponent(javax.swing.JScrollPane):javax.swing.JComponent
+- f:isVisible():Z
+- paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
+- f:setVisible(Z):V
+- sf:setup(javax.swing.JComponent,com.intellij.ui.Side):V
+- sf:setup(javax.swing.JComponent,java.util.Set):V
+- sf:setup(javax.swing.JScrollPane,com.intellij.ui.Side):V
+- sf:setup(javax.swing.JScrollPane,com.intellij.ui.Side,javax.swing.JComponent):V
+- sf:setup(javax.swing.JScrollPane,java.util.Set):V
+- sf:setup(javax.swing.JScrollPane,java.util.Set,javax.swing.JComponent):V
+*f:com.intellij.ui.ScrollableContentBorder$Companion
+- f:getTargetComponent(javax.swing.JScrollPane):javax.swing.JComponent
+- f:setup(javax.swing.JComponent,com.intellij.ui.Side):V
+- f:setup(javax.swing.JComponent,java.util.Set):V
+- f:setup(javax.swing.JScrollPane,com.intellij.ui.Side):V
+- f:setup(javax.swing.JScrollPane,com.intellij.ui.Side,javax.swing.JComponent):V
+- f:setup(javax.swing.JScrollPane,java.util.Set):V
+- f:setup(javax.swing.JScrollPane,java.util.Set,javax.swing.JComponent):V
+- bs:setup$default(com.intellij.ui.ScrollableContentBorder$Companion,javax.swing.JScrollPane,com.intellij.ui.Side,javax.swing.JComponent,I,java.lang.Object):V
+- bs:setup$default(com.intellij.ui.ScrollableContentBorder$Companion,javax.swing.JScrollPane,java.util.Set,javax.swing.JComponent,I,java.lang.Object):V
+*c:com.intellij.ui.components.JBHtmlPane
+- javax.swing.JEditorPane
+- com.intellij.openapi.Disposable
+- <init>(com.intellij.ui.components.JBHtmlPaneStyleConfiguration,com.intellij.ui.components.JBHtmlPaneConfiguration):V
+- dispose():V
+- f:getBackgroundFlow():kotlinx.coroutines.flow.StateFlow
+- getText():java.lang.String
+- p:paintComponent(java.awt.Graphics):V
+- p:processKeyEvent(java.awt.event.KeyEvent):V
+- setDocument(javax.swing.text.Document):V
+- setEditorKit(javax.swing.text.EditorKit):V
+- setText(java.lang.String):V
+*f:com.intellij.ui.components.JBHtmlPaneConfiguration
+- *sf:Companion:com.intellij.ui.components.JBHtmlPaneConfiguration$Companion
+- <init>():V
+- <init>(kotlin.jvm.functions.Function1):V
+- sf:builder():com.intellij.ui.components.JBHtmlPaneConfiguration$Builder
+*f:com.intellij.ui.components.JBHtmlPaneConfiguration$Builder
+- <init>():V
+- f:build():com.intellij.ui.components.JBHtmlPaneConfiguration
+- f:customStyleSheet(java.lang.String):com.intellij.ui.components.JBHtmlPaneConfiguration$Builder
+- f:customStyleSheetProvider(kotlin.jvm.functions.Function1):com.intellij.ui.components.JBHtmlPaneConfiguration$Builder
+- f:extensions(java.util.List):com.intellij.ui.components.JBHtmlPaneConfiguration$Builder
+- f:extensions(com.intellij.util.ui.ExtendableHTMLViewFactory$Extension[]):com.intellij.ui.components.JBHtmlPaneConfiguration$Builder
+- f:fontResolver(com.intellij.util.ui.CSSFontResolver):com.intellij.ui.components.JBHtmlPaneConfiguration$Builder
+- f:getCustomStyleSheetProviders():java.util.List
+- f:getExtensions():java.util.List
+- f:getFontResolver():com.intellij.util.ui.CSSFontResolver
+- f:getIconResolver():kotlin.jvm.functions.Function1
+- f:getImageResolverFactory():kotlin.jvm.functions.Function1
+- f:getKeyboardActions():java.util.Map
+- f:getUnderlinedHoveredHyperlink():Z
+- f:iconResolver(kotlin.jvm.functions.Function1):com.intellij.ui.components.JBHtmlPaneConfiguration$Builder
+- f:imageResolverFactory(kotlin.jvm.functions.Function1):com.intellij.ui.components.JBHtmlPaneConfiguration$Builder
+- f:keyboardActions(java.util.Map):com.intellij.ui.components.JBHtmlPaneConfiguration$Builder
+- f:keyboardActions(kotlin.Pair[]):com.intellij.ui.components.JBHtmlPaneConfiguration$Builder
+- f:setFontResolver(com.intellij.util.ui.CSSFontResolver):V
+- f:setIconResolver(kotlin.jvm.functions.Function1):V
+- f:setImageResolverFactory(kotlin.jvm.functions.Function1):V
+- f:setUnderlinedHoveredHyperlink(Z):V
+*f:com.intellij.ui.components.JBHtmlPaneConfiguration$Companion
+- f:builder():com.intellij.ui.components.JBHtmlPaneConfiguration$Builder
+*f:com.intellij.ui.components.JBHtmlPaneStyleConfiguration
+- *sf:Companion:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Companion
+- <init>():V
+- <init>(kotlin.jvm.functions.Function1):V
+- sf:builder():com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- equals(java.lang.Object):Z
+- sf:getDefaultSpaceAfterParagraph():I
+- sf:getDefaultSpaceBeforeParagraph():I
+- sf:getEditorColorClassPrefix():java.lang.String
+- hashCode():I
+*f:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- <init>():V
+- f:build():com.intellij.ui.components.JBHtmlPaneStyleConfiguration
+- f:colorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:editorInlineContext(Z):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:enableCodeBlocksBackground(Z):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:enableInlineCodeBackground(Z):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:getColorScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
+- f:getEditorInlineContext():Z
+- f:getElementStyleOverrides():com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides
+- f:getEnableCodeBlocksBackground():Z
+- f:getEnableInlineCodeBackground():Z
+- f:getInlineCodeParentSelectors():java.util.List
+- f:getLargeCodeFontSizeSelectors():java.util.List
+- f:getSpaceAfterParagraph():I
+- f:getSpaceBeforeParagraph():I
+- f:getUseFontLigaturesInCode():Z
+- f:inlineCodeParentSelectors(java.util.List):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:inlineCodeParentSelectors(java.lang.String[]):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:largeCodeFontSizeSelectors(java.util.List):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:largeCodeFontSizeSelectors(java.lang.String[]):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:overrideElementStyle(com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:overrideElementStyle(kotlin.jvm.functions.Function1):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:setColorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):V
+- f:setEditorInlineContext(Z):V
+- f:setElementStyleOverrides(com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides):V
+- f:setEnableCodeBlocksBackground(Z):V
+- f:setEnableInlineCodeBackground(Z):V
+- f:setInlineCodeParentSelectors(java.util.List):V
+- f:setLargeCodeFontSizeSelectors(java.util.List):V
+- f:setSpaceAfterParagraph(I):V
+- f:setSpaceBeforeParagraph(I):V
+- f:setUseFontLigaturesInCode(Z):V
+- f:spaceAfterParagraph(I):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:spaceBeforeParagraph(I):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:useFontLigaturesInCode(Z):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+*f:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Companion
+- f:builder():com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:getDefaultSpaceAfterParagraph():I
+- f:getDefaultSpaceBeforeParagraph():I
+- f:getEditorColorClassPrefix():java.lang.String
+*e:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementKind
+- java.lang.Enum
+- sf:CodeBlock:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementKind
+- sf:CodeInline:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementKind
+- sf:Shortcut:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementKind
+- f:getColorSchemeKey():com.intellij.openapi.editor.colors.TextAttributesKey
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getId():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementKind
+- s:values():com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementKind[]
+*e:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementProperty
+- java.lang.Enum
+- sf:BackgroundColor:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementProperty
+- sf:BackgroundOpacity:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementProperty
+- sf:BorderColor:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementProperty
+- sf:BorderRadius:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementProperty
+- sf:BorderWidth:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementProperty
+- sf:ForegroundColor:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementProperty
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getId():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementProperty
+- s:values():com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementProperty[]
+*f:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides
+- *sf:Companion:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides$Companion
+- <init>(com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides$Builder):V
+- sf:builder():com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides$Builder
+- equals(java.lang.Object):Z
+- hashCode():I
+*f:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides$Builder
+- <init>():V
+- f:build():com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides
+- f:elementKindThemePropertySuffix(java.lang.String):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides$Builder
+- f:getElementKindThemePropertySuffix():java.lang.String
+- f:overrideThemeProperties(com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementKind,com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementProperty[]):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides$Builder
+- f:setElementKindThemePropertySuffix(java.lang.String):V
+*f:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides$Companion
+- f:builder():com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides$Builder
+c:com.intellij.ui.components.JBScrollPane
+- javax.swing.JScrollPane
+- *sf:FORCE_HORIZONTAL_SCROLL:com.intellij.openapi.util.Key
+c:com.intellij.ui.components.fields.ExtendableTextField
+- com.intellij.ui.components.JBTextField
+- com.intellij.ui.components.fields.ExtendableTextComponent
+- *:addBrowseExtension(java.lang.Runnable,com.intellij.openapi.Disposable):com.intellij.ui.components.fields.ExtendableTextField
+*f:com.intellij.ui.components.panels.ListLayout
+- java.awt.LayoutManager2
+- *sf:Companion:com.intellij.ui.components.panels.ListLayout$Companion
+- b:<init>(com.intellij.ui.components.panels.ListLayout$Axis,com.intellij.ui.components.panels.ListLayout$Alignment,com.intellij.ui.components.panels.ListLayout$GrowPolicy,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- addLayoutComponent(java.awt.Component,java.lang.Object):V
+- addLayoutComponent(java.lang.String,java.awt.Component):V
+- getLayoutAlignmentX(java.awt.Container):F
+- getLayoutAlignmentY(java.awt.Container):F
+- sf:horizontal(I,com.intellij.ui.components.panels.ListLayout$Alignment,com.intellij.ui.components.panels.ListLayout$GrowPolicy):com.intellij.ui.components.panels.ListLayout
+- invalidateLayout(java.awt.Container):V
+- layoutContainer(java.awt.Container):V
+- maximumLayoutSize(java.awt.Container):java.awt.Dimension
+- minimumLayoutSize(java.awt.Container):java.awt.Dimension
+- preferredLayoutSize(java.awt.Container):java.awt.Dimension
+- removeLayoutComponent(java.awt.Component):V
+- sf:vertical(I,com.intellij.ui.components.panels.ListLayout$Alignment,com.intellij.ui.components.panels.ListLayout$GrowPolicy):com.intellij.ui.components.panels.ListLayout
+*e:com.intellij.ui.components.panels.ListLayout$Alignment
+- java.lang.Enum
+- sf:CENTER:com.intellij.ui.components.panels.ListLayout$Alignment
+- sf:END:com.intellij.ui.components.panels.ListLayout$Alignment
+- sf:START:com.intellij.ui.components.panels.ListLayout$Alignment
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.components.panels.ListLayout$Alignment
+- s:values():com.intellij.ui.components.panels.ListLayout$Alignment[]
+*e:com.intellij.ui.components.panels.ListLayout$Axis
+- java.lang.Enum
+- sf:X:com.intellij.ui.components.panels.ListLayout$Axis
+- sf:Y:com.intellij.ui.components.panels.ListLayout$Axis
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.components.panels.ListLayout$Axis
+- s:values():com.intellij.ui.components.panels.ListLayout$Axis[]
+*f:com.intellij.ui.components.panels.ListLayout$Companion
+- f:horizontal(I,com.intellij.ui.components.panels.ListLayout$Alignment,com.intellij.ui.components.panels.ListLayout$GrowPolicy):com.intellij.ui.components.panels.ListLayout
+- bs:horizontal$default(com.intellij.ui.components.panels.ListLayout$Companion,I,com.intellij.ui.components.panels.ListLayout$Alignment,com.intellij.ui.components.panels.ListLayout$GrowPolicy,I,java.lang.Object):com.intellij.ui.components.panels.ListLayout
+- f:vertical(I,com.intellij.ui.components.panels.ListLayout$Alignment,com.intellij.ui.components.panels.ListLayout$GrowPolicy):com.intellij.ui.components.panels.ListLayout
+- bs:vertical$default(com.intellij.ui.components.panels.ListLayout$Companion,I,com.intellij.ui.components.panels.ListLayout$Alignment,com.intellij.ui.components.panels.ListLayout$GrowPolicy,I,java.lang.Object):com.intellij.ui.components.panels.ListLayout
+*e:com.intellij.ui.components.panels.ListLayout$GrowPolicy
+- java.lang.Enum
+- sf:GROW:com.intellij.ui.components.panels.ListLayout$GrowPolicy
+- sf:NO_GROW:com.intellij.ui.components.panels.ListLayout$GrowPolicy
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.components.panels.ListLayout$GrowPolicy
+- s:values():com.intellij.ui.components.panels.ListLayout$GrowPolicy[]
+*:com.intellij.ui.dsl.gridLayout.ComponentHelper
+- a:getBaseline(I,I):java.lang.Integer
+*f:com.intellij.ui.dsl.gridLayout.Constraints
+- <init>(com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper):V
+- b:<init>(com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():com.intellij.ui.dsl.gridLayout.Grid
+- f:component10():com.intellij.ui.dsl.gridLayout.UnscaledGaps
+- f:component11():java.lang.String
+- f:component12():com.intellij.ui.dsl.gridLayout.ComponentHelper
+- f:component2():I
+- f:component3():I
+- f:component4():I
+- f:component5():I
+- f:component6():com.intellij.ui.dsl.gridLayout.HorizontalAlign
+- f:component7():com.intellij.ui.dsl.gridLayout.VerticalAlign
+- f:component8():Z
+- f:component9():com.intellij.ui.dsl.gridLayout.UnscaledGaps
+- f:copy(com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper):com.intellij.ui.dsl.gridLayout.Constraints
+- bs:copy$default(com.intellij.ui.dsl.gridLayout.Constraints,com.intellij.ui.dsl.gridLayout.Grid,I,I,I,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.Constraints
+- equals(java.lang.Object):Z
+- f:getBaselineAlign():Z
+- *f:getComponentHelper():com.intellij.ui.dsl.gridLayout.ComponentHelper
+- f:getGaps():com.intellij.ui.dsl.gridLayout.UnscaledGaps
+- f:getGrid():com.intellij.ui.dsl.gridLayout.Grid
+- f:getHeight():I
+- f:getHorizontalAlign():com.intellij.ui.dsl.gridLayout.HorizontalAlign
+- f:getVerticalAlign():com.intellij.ui.dsl.gridLayout.VerticalAlign
+- f:getVisualPaddings():com.intellij.ui.dsl.gridLayout.UnscaledGaps
+- f:getWidth():I
+- f:getWidthGroup():java.lang.String
+- f:getX():I
+- f:getY():I
+- hashCode():I
+- f:setVisualPaddings(com.intellij.ui.dsl.gridLayout.UnscaledGaps):V
+*f:com.intellij.ui.dsl.gridLayout.GridLayout
+- java.awt.LayoutManager2
+- <init>():V
+- addLayoutComponent(java.awt.Component,java.lang.Object):V
+- addLayoutComponent(java.lang.String,java.awt.Component):V
+- f:addLayoutSubGrid(com.intellij.ui.dsl.gridLayout.Constraints):com.intellij.ui.dsl.gridLayout.Grid
+- f:getConstraints(com.intellij.ui.dsl.gridLayout.Grid):com.intellij.ui.dsl.gridLayout.Constraints
+- f:getConstraints(javax.swing.JComponent):com.intellij.ui.dsl.gridLayout.Constraints
+- getLayoutAlignmentX(java.awt.Container):F
+- getLayoutAlignmentY(java.awt.Container):F
+- f:getRootGrid():com.intellij.ui.dsl.gridLayout.Grid
+- invalidateLayout(java.awt.Container):V
+- layoutContainer(java.awt.Container):V
+- maximumLayoutSize(java.awt.Container):java.awt.Dimension
+- minimumLayoutSize(java.awt.Container):java.awt.Dimension
+- preferredLayoutSize(java.awt.Container):java.awt.Dimension
+- removeLayoutComponent(java.awt.Component):V
+- f:setComponentConstrains(javax.swing.JComponent,com.intellij.ui.dsl.gridLayout.Constraints):V
+*e:com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty
+- java.lang.Enum
+- sf:SUB_GRID_AUTO_VISUAL_PADDINGS:com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty
+- s:values():com.intellij.ui.dsl.gridLayout.GridLayoutComponentProperty[]
+*f:com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+- <init>(javax.swing.JComponent,com.intellij.ui.dsl.gridLayout.Grid):V
+- b:<init>(javax.swing.JComponent,com.intellij.ui.dsl.gridLayout.Grid,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:addResizableColumn():V
+- f:cell(javax.swing.JComponent,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+- bs:cell$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,javax.swing.JComponent,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+- f:columnsGaps(java.util.List):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+- f:constraints(I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper):com.intellij.ui.dsl.gridLayout.Constraints
+- bs:constraints$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,java.lang.String,com.intellij.ui.dsl.gridLayout.ComponentHelper,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.Constraints
+- f:defaultBaselineAlign(Z):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+- f:defaultVerticalAlign(com.intellij.ui.dsl.gridLayout.VerticalAlign):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+- f:getColumnsCount():I
+- f:getGrid():com.intellij.ui.dsl.gridLayout.Grid
+- f:getResizableColumns():java.util.Set
+- f:getX():I
+- f:resizableRow():com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+- f:row(com.intellij.ui.dsl.gridLayout.UnscaledGapsY,Z):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+- bs:row$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,com.intellij.ui.dsl.gridLayout.UnscaledGapsY,Z,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+- f:setRowGaps(com.intellij.ui.dsl.gridLayout.UnscaledGapsY):V
+- f:skip(I):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+- bs:skip$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,I,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+- f:subGrid(I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.gridLayout.Grid
+- bs:subGrid$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.Grid
+- f:subGridBuilder(I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+- bs:subGridBuilder$default(com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder,I,com.intellij.ui.dsl.gridLayout.HorizontalAlign,com.intellij.ui.dsl.gridLayout.VerticalAlign,Z,Z,com.intellij.ui.dsl.gridLayout.UnscaledGaps,com.intellij.ui.dsl.gridLayout.UnscaledGaps,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+*f:com.intellij.ui.dsl.listCellRenderer.LcrIconInitParams
+- com.intellij.ui.dsl.listCellRenderer.LcrInitParams
+- <init>():V
+*a:com.intellij.ui.dsl.listCellRenderer.LcrInitParams
+- f:getAccessibleName():java.lang.String
+- f:getAlign():com.intellij.ui.dsl.listCellRenderer.LcrInitParams$Align
+- f:setAccessibleName(java.lang.String):V
+- f:setAlign(com.intellij.ui.dsl.listCellRenderer.LcrInitParams$Align):V
+*e:com.intellij.ui.dsl.listCellRenderer.LcrInitParams$Align
+- java.lang.Enum
+- sf:CENTER:com.intellij.ui.dsl.listCellRenderer.LcrInitParams$Align
+- sf:LEFT:com.intellij.ui.dsl.listCellRenderer.LcrInitParams$Align
+- sf:RIGHT:com.intellij.ui.dsl.listCellRenderer.LcrInitParams$Align
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.listCellRenderer.LcrInitParams$Align
+- s:values():com.intellij.ui.dsl.listCellRenderer.LcrInitParams$Align[]
+*:com.intellij.ui.dsl.listCellRenderer.LcrRow
+- a:gap(com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap):V
+- a:getBackground():java.awt.Color
+- a:getCellHasFocus():Z
+- a:getIndex():I
+- a:getList():javax.swing.JList
+- a:getSelected():Z
+- a:getSelectionColor():java.awt.Color
+- a:getValue():java.lang.Object
+- a:icon(javax.swing.Icon,kotlin.jvm.functions.Function1):V
+- bs:icon$default(com.intellij.ui.dsl.listCellRenderer.LcrRow,javax.swing.Icon,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- a:separator(kotlin.jvm.functions.Function1):V
+- a:setBackground(java.awt.Color):V
+- a:setSelectionColor(java.awt.Color):V
+- a:text(java.lang.String,kotlin.jvm.functions.Function1):V
+- bs:text$default(com.intellij.ui.dsl.listCellRenderer.LcrRow,java.lang.String,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+*e:com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap
+- java.lang.Enum
+- sf:DEFAULT:com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap
+- sf:NONE:com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap
+- s:values():com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap[]
+*:com.intellij.ui.dsl.listCellRenderer.LcrSeparator
+- a:getText():java.lang.String
+- a:setText(java.lang.String):V
+*f:com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
+- com.intellij.ui.dsl.listCellRenderer.LcrInitParams
+- <init>(java.awt.Color):V
+- f:getAttributes():com.intellij.ui.SimpleTextAttributes
+- f:getFont():java.awt.Font
+- f:getForeground():java.awt.Color
+- f:getGreyForeground():java.awt.Color
+- f:getSpeedSearchHighlighting():Z
+- f:setAttributes(com.intellij.ui.SimpleTextAttributes):V
+- f:setFont(java.awt.Font):V
+- f:setForeground(java.awt.Color):V
+- f:setSpeedSearchHighlighting(Z):V
+*a:com.intellij.ui.hover.HoverListener
+- <init>():V
+- f:addTo(javax.swing.JComponent):V
+- f:addTo(javax.swing.JComponent,com.intellij.openapi.Disposable):V
+- a:mouseEntered(java.awt.Component,I,I):V
+- a:mouseExited(java.awt.Component):V
+- a:mouseMoved(java.awt.Component,I,I):V
+- f:removeFrom(javax.swing.JComponent):V
+*a:com.intellij.ui.hover.HoverStateListener
+- com.intellij.ui.hover.HoverListener
+- <init>():V
+- pa:hoverChanged(java.awt.Component,Z):V
+- mouseEntered(java.awt.Component,I,I):V
+- mouseExited(java.awt.Component):V
+- mouseMoved(java.awt.Component,I,I):V
+*a:com.intellij.ui.hover.ListHoverListener
+- com.intellij.ui.hover.HoverListener
+- sf:DEFAULT:com.intellij.ui.hover.HoverListener
+- <init>():V
+- s:getHoveredIndex(javax.swing.JList):I
+- f:mouseEntered(java.awt.Component,I,I):V
+- f:mouseExited(java.awt.Component):V
+- f:mouseMoved(java.awt.Component,I,I):V
+- a:onHover(javax.swing.JList,I):V
+*a:com.intellij.ui.hover.TableHoverListener
+- com.intellij.ui.hover.HoverListener
+- sf:DEFAULT:com.intellij.ui.hover.HoverListener
+- <init>():V
+- s:getHoveredRow(javax.swing.JTable):I
+- f:mouseEntered(java.awt.Component,I,I):V
+- f:mouseExited(java.awt.Component):V
+- f:mouseMoved(java.awt.Component,I,I):V
+- a:onHover(javax.swing.JTable,I,I):V
+*a:com.intellij.ui.hover.TreeHoverListener
+- com.intellij.ui.hover.HoverListener
+- sf:DEFAULT:com.intellij.ui.hover.HoverListener
+- <init>():V
+- s:getHoveredRow(javax.swing.JTree):I
+- f:mouseEntered(java.awt.Component,I,I):V
+- f:mouseExited(java.awt.Component):V
+- f:mouseMoved(java.awt.Component,I,I):V
+- a:onHover(javax.swing.JTree,I):V
+*a:com.intellij.ui.popup.PopupState
+- <init>():V
+- s:forBalloon():com.intellij.ui.popup.PopupState
+- s:forPopup():com.intellij.ui.popup.PopupState
+- s:forPopupMenu():com.intellij.ui.popup.PopupState
+- getPopup():java.lang.Object
+- hidePopup():V
+- isHidden():Z
+- isRecentlyHidden():Z
+- isShowing():Z
+- prepareToShow(java.lang.Object):V
+*c:com.intellij.ui.popup.list.SelectablePanel
+- javax.swing.JPanel
+- *sf:Companion:com.intellij.ui.popup.list.SelectablePanel$Companion
+- <init>():V
+- <init>(java.awt.Color):V
+- b:<init>(java.awt.Color,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getAccessibleContext():javax.accessibility.AccessibleContext
+- *f:getAccessibleContextProvider():java.awt.Component
+- f:getPreferredHeight():java.lang.Integer
+- getPreferredSize():java.awt.Dimension
+- f:getSelectionArc():I
+- f:getSelectionArcCorners():com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- f:getSelectionColor():java.awt.Color
+- f:getSelectionInsets():java.awt.Insets
+- p:paintComponent(java.awt.Graphics):V
+- *f:setAccessibleContextProvider(java.awt.Component):V
+- f:setPreferredHeight(java.lang.Integer):V
+- f:setSelectionArc(I):V
+- f:setSelectionArcCorners(com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners):V
+- f:setSelectionColor(java.awt.Color):V
+- f:setSelectionInsets(java.awt.Insets):V
+- sf:wrap(java.awt.Component):com.intellij.ui.popup.list.SelectablePanel
+- sf:wrap(java.awt.Component,java.awt.Color):com.intellij.ui.popup.list.SelectablePanel
+*f:com.intellij.ui.popup.list.SelectablePanel$Companion
+- f:wrap(java.awt.Component):com.intellij.ui.popup.list.SelectablePanel
+- f:wrap(java.awt.Component,java.awt.Color):com.intellij.ui.popup.list.SelectablePanel
+- bs:wrap$default(com.intellij.ui.popup.list.SelectablePanel$Companion,java.awt.Component,java.awt.Color,I,java.lang.Object):com.intellij.ui.popup.list.SelectablePanel
+*e:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- java.lang.Enum
+- sf:ALL:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:BOTTOM:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:BOTTOM_LEFT:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:BOTTOM_RIGHT:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:LEFT:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:NONE:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:RIGHT:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:TOP:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:TOP_LEFT:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- sf:TOP_RIGHT:com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners
+- s:values():com.intellij.ui.popup.list.SelectablePanel$SelectionArcCorners[]
+*:com.intellij.ui.speedSearch.SpeedSearchSupply$SpeedSearchLocator
+- a:getSizeAndLocation(javax.swing.JComponent):com.intellij.ui.awt.RelativeRectangle
+*:com.intellij.ui.treeStructure.TreeDomainModel
+- a:accessData(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- a:computeRoot(kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.ui.treeStructure.TreeDomainModelKt
+- *sf:TreeDomainModel(com.intellij.ide.util.treeView.AbstractTreeStructure,Z,I):com.intellij.ui.treeStructure.TreeDomainModel
+*:com.intellij.ui.treeStructure.TreeNodeDomainModel
+- a:computeChildren(kotlin.coroutines.Continuation):java.lang.Object
+- a:computeLeafState(kotlin.coroutines.Continuation):java.lang.Object
+- a:computePresentation(com.intellij.ui.treeStructure.TreeNodePresentationBuilder,kotlin.coroutines.Continuation):java.lang.Object
+- a:getUserObject():java.lang.Object
+*:com.intellij.ui.treeStructure.TreeNodePresentation
+- a:getFullText():java.util.List
+- a:getIcon():javax.swing.Icon
+- a:getMainText():java.lang.String
+- a:getToolTip():java.lang.String
+- a:isLeaf():Z
+*:com.intellij.ui.treeStructure.TreeNodePresentationBuilder
+- a:appendTextFragment(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
+- a:build():com.intellij.ui.treeStructure.TreeNodePresentation
+- a:setIcon(javax.swing.Icon):V
+- a:setMainText(java.lang.String):V
+- a:setToolTipText(java.lang.String):V
+*:com.intellij.ui.treeStructure.TreeNodeTextFragment
+- a:getAttributes():com.intellij.ui.SimpleTextAttributes
+- a:getText():java.lang.String
+*:com.intellij.ui.treeStructure.TreeNodeViewModel
+- a:getChildren():kotlinx.coroutines.flow.Flow
+- a:getPresentation():kotlinx.coroutines.flow.Flow
+- a:getUserObject():java.lang.Object
+- a:presentationSnapshot():com.intellij.ui.treeStructure.TreeNodePresentation
+*:com.intellij.ui.treeStructure.TreeSwingModel
+- com.intellij.ui.tree.TreeVisitor$LoadingAwareAcceptor
+- com.intellij.ui.treeStructure.BgtAwareTreeModel
+- javax.swing.tree.TreeModel
+- a:getChild(java.lang.Object,I):com.intellij.ui.treeStructure.TreeNodeViewModel
+- a:getRoot():com.intellij.ui.treeStructure.TreeNodeViewModel
+- a:getShowLoadingNode():Z
+- a:setShowLoadingNode(Z):V
+f:com.intellij.ui.treeStructure.TreeSwingModelKt
+- *sf:TreeSwingModel(kotlinx.coroutines.CoroutineScope,com.intellij.ui.treeStructure.TreeViewModel):com.intellij.ui.treeStructure.TreeSwingModel
+*:com.intellij.ui.treeStructure.TreeViewModel
+- a:accept(com.intellij.ui.tree.SuspendingTreeVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
+- a:accept(com.intellij.ui.tree.TreeVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
+- a:getComparator():java.util.Comparator
+- a:getDomainModel():com.intellij.ui.treeStructure.TreeDomainModel
+- a:getRoot():kotlinx.coroutines.flow.Flow
+- a:invalidate(javax.swing.tree.TreePath,Z,kotlin.coroutines.Continuation):java.lang.Object
+- a:setComparator(java.util.Comparator):V
+f:com.intellij.ui.treeStructure.TreeViewModelKt
+- *sf:TreeViewModel(kotlinx.coroutines.CoroutineScope,com.intellij.ui.treeStructure.TreeDomainModel):com.intellij.ui.treeStructure.TreeViewModel
+*c:com.intellij.ui.viewModel.extraction.ToolWindowExtractorEP
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- id:java.lang.String
+- mode:com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
+- <init>():V
+*e:com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
+- java.lang.Enum
+- sf:DISABLE:com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
+- sf:FALLBACK:com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
+- sf:MIRROR:com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
+- sf:PER_CLIENT:com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
+- sf:PROJECTOR_INSTANCING:com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
+- sf:PROJECTOR_STEALING:com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
+- sf:UNSUPPORTED:com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
+- isMirrorLike():Z
+- isPerClientLike():Z
+- isProjected():Z
+- isUnsupported():Z
+- s:valueOf(java.lang.String):com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode
+- s:values():com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode[]
+*:com.intellij.ui.viewModel.extraction.ViewModelToolWindowFactory
+- com.intellij.openapi.wm.ToolWindowFactory
+*f:com.intellij.util.animation.Animation
+- <init>(java.util.function.DoubleConsumer):V
+- <init>(java.util.function.DoubleFunction,java.util.function.Consumer):V
+- <init>(java.util.function.DoubleConsumer[]):V
+- addListener(com.intellij.util.animation.Animation$Listener):com.intellij.util.animation.Animation
+- fireEvent(com.intellij.util.animation.Animation$Phase):V
+- getDelay():I
+- getDuration():I
+- getEasing():com.intellij.util.animation.Easing
+- getFinish():I
+- runWhenCancelled(java.lang.Runnable):com.intellij.util.animation.Animation
+- runWhenExpired(java.lang.Runnable):com.intellij.util.animation.Animation
+- runWhenExpiredOrCancelled(java.lang.Runnable):com.intellij.util.animation.Animation
+- runWhenScheduled(java.lang.Runnable):com.intellij.util.animation.Animation
+- runWhenUpdated(java.lang.Runnable):com.intellij.util.animation.Animation
+- setDelay(I):com.intellij.util.animation.Animation
+- setDuration(I):com.intellij.util.animation.Animation
+- setEasing(com.intellij.util.animation.Easing):com.intellij.util.animation.Animation
+- s:withContext(com.intellij.util.animation.AnimationContext,java.util.function.DoubleFunction):com.intellij.util.animation.Animation
+*:com.intellij.util.animation.Animation$Listener
+- a:update(com.intellij.util.animation.Animation$Phase):V
+*e:com.intellij.util.animation.Animation$Phase
+- java.lang.Enum
+- sf:CANCELLED:com.intellij.util.animation.Animation$Phase
+- sf:EXPIRED:com.intellij.util.animation.Animation$Phase
+- sf:SCHEDULED:com.intellij.util.animation.Animation$Phase
+- sf:UPDATED:com.intellij.util.animation.Animation$Phase
+- s:valueOf(java.lang.String):com.intellij.util.animation.Animation$Phase
+- s:values():com.intellij.util.animation.Animation$Phase[]
+*f:com.intellij.util.animation.AnimationContext
+- java.util.function.Consumer
+- <init>():V
+- accept(java.lang.Object):V
+- getValue():java.lang.Object
+*f:com.intellij.util.animation.Animations
+- sf:animation():com.intellij.util.animation.Animation
+- sf:animation(D,D,java.util.function.DoubleConsumer):com.intellij.util.animation.Animation
+- sf:animation(F,F,com.intellij.util.animation.FloatConsumer):com.intellij.util.animation.Animation
+- sf:animation(I,I,java.util.function.IntConsumer):com.intellij.util.animation.Animation
+- sf:animation(J,J,java.util.function.LongConsumer):com.intellij.util.animation.Animation
+- sf:animation(com.intellij.util.animation.AnimationContext,java.util.function.DoubleFunction):com.intellij.util.animation.Animation
+- sf:animation(java.awt.Color,java.awt.Color,java.util.function.Consumer):com.intellij.util.animation.Animation
+- sf:animation(java.awt.Dimension,java.awt.Dimension,java.util.function.Consumer):com.intellij.util.animation.Animation
+- sf:animation(java.awt.Point,java.awt.Point,java.util.function.Consumer):com.intellij.util.animation.Animation
+- sf:animation(java.awt.Rectangle,java.awt.Rectangle,java.util.function.Consumer):com.intellij.util.animation.Animation
+- sf:animation(java.lang.String,java.lang.String,java.util.function.Consumer):com.intellij.util.animation.Animation
+- sf:animation(java.util.function.DoubleConsumer):com.intellij.util.animation.Animation
+- sf:animation(java.lang.Object[],java.util.function.Consumer):com.intellij.util.animation.Animation
+- sf:consumer(java.util.function.DoubleFunction,java.util.function.Consumer):java.util.function.DoubleConsumer
+- sf:makeSequent(com.intellij.util.animation.Animation[]):java.util.Collection
+- sf:transparent(java.awt.Color,java.util.function.Consumer):com.intellij.util.animation.Animation
+*f:com.intellij.util.animation.CubicBezierEasing
+- com.intellij.util.animation.Easing
+- <init>(D,D,D,D):V
+- <init>(D,D,D,D,I):V
+- calc(D):D
+- getSize():I
+- update(D,D,D,D):V
+*f:com.intellij.util.animation.DoubleArrayFunction
+- java.util.function.DoubleFunction
+- <init>(java.lang.Object[]):V
+- apply(D):java.lang.Object
+- f:getArray():java.lang.Object[]
+*f:com.intellij.util.animation.DoubleColorFunction
+- java.util.function.DoubleFunction
+- <init>(java.awt.Color,java.awt.Color):V
+- apply(D):java.awt.Color
+- f:getFrom():java.awt.Color
+- f:getTo():java.awt.Color
+*f:com.intellij.util.animation.DoubleDimensionFunction
+- java.util.function.DoubleFunction
+- <init>(java.awt.Dimension,java.awt.Dimension):V
+- apply(D):java.awt.Dimension
+- f:getFrom():java.awt.Dimension
+- f:getTo():java.awt.Dimension
+*f:com.intellij.util.animation.DoublePointFunction
+- java.util.function.DoubleFunction
+- <init>(java.awt.Point,java.awt.Point):V
+- apply(D):java.awt.Point
+- f:getFrom():java.awt.Point
+- f:getTo():java.awt.Point
+*f:com.intellij.util.animation.DoubleRectangleFunction
+- java.util.function.DoubleFunction
+- <init>(java.awt.Rectangle,java.awt.Rectangle):V
+- apply(D):java.awt.Rectangle
+- f:getFrom():java.awt.Rectangle
+- f:getTo():java.awt.Rectangle
+*:com.intellij.util.animation.Easing
+- sf:EASE:com.intellij.util.animation.Easing
+- sf:EASE_IN:com.intellij.util.animation.Easing
+- sf:EASE_IN_OUT:com.intellij.util.animation.Easing
+- sf:EASE_OUT:com.intellij.util.animation.Easing
+- sf:LINEAR:com.intellij.util.animation.Easing
+- s:bezier(D,D,D,D):com.intellij.util.animation.Easing
+- a:calc(D):D
+- coerceIn(D,D):com.intellij.util.animation.Easing
+- convert(D,D,D,D):com.intellij.util.animation.Easing
+- freeze(D,D):com.intellij.util.animation.Easing
+- invert():com.intellij.util.animation.Easing
+- mirror():com.intellij.util.animation.Easing
+- reverse():com.intellij.util.animation.Easing
+- stateful():com.intellij.util.animation.Easing$Stateful
+*f:com.intellij.util.animation.Easing$Stateful
+- com.intellij.util.animation.Easing
+- value:D
+- calc(D):D
+*:com.intellij.util.animation.FloatConsumer
+- a:accept(F):V
+*f:com.intellij.util.animation.JBAnimator
+- com.intellij.openapi.Disposable
+- <init>():V
+- <init>(com.intellij.openapi.Disposable):V
+- <init>(com.intellij.util.Alarm$ThreadToUse,com.intellij.openapi.Disposable):V
+- animate(java.util.Collection):J
+- animate(com.intellij.util.animation.Animation[]):J
+- dispose():V
+- getName():java.lang.String
+- getPeriod():I
+- getType():com.intellij.util.animation.JBAnimator$Type
+- ignorePowerSaveMode():com.intellij.util.animation.JBAnimator
+- isCyclic():Z
+- isRunning(J):Z
+- setCyclic(Z):com.intellij.util.animation.JBAnimator
+- setName(java.lang.String):com.intellij.util.animation.JBAnimator
+- setPeriod(I):com.intellij.util.animation.JBAnimator
+- setType(com.intellij.util.animation.JBAnimator$Type):com.intellij.util.animation.JBAnimator
+- stop():V
+*e:com.intellij.util.animation.JBAnimator$Type
+- java.lang.Enum
+- sf:EACH_FRAME:com.intellij.util.animation.JBAnimator$Type
+- sf:IN_TIME:com.intellij.util.animation.JBAnimator$Type
+- s:valueOf(java.lang.String):com.intellij.util.animation.JBAnimator$Type
+- s:values():com.intellij.util.animation.JBAnimator$Type[]
+com.intellij.util.net.JdkProxyCustomizer
+- *a:getOriginalAuthenticator():java.net.Authenticator
+- *a:getOriginalProxySelector():java.net.ProxySelector
+com.intellij.util.net.ProxySettings
+- *a:setProxyConfiguration(com.intellij.util.net.ProxyConfiguration):V
+*:com.intellij.util.ui.table.EditableTable
+- sf:KEY:com.intellij.openapi.util.Key
+- a:updateAction(com.intellij.openapi.actionSystem.Presentation,I,I):V
+*:com.intellij.util.ui.tree.EditableNode
+- a:updateAction(com.intellij.openapi.actionSystem.Presentation):V
+*:com.intellij.util.ui.tree.EditableTree
+- sf:KEY:com.intellij.openapi.util.Key
+- a:updateAction(com.intellij.openapi.actionSystem.Presentation,javax.swing.tree.TreePath):V
+*e:com.intellij.util.ui.tree.ExpandOnDoubleClick
+- java.lang.Enum
+- sf:ALWAYS:com.intellij.util.ui.tree.ExpandOnDoubleClick
+- sf:DEFAULT:com.intellij.util.ui.tree.ExpandOnDoubleClick
+- sf:NAVIGATABLE:com.intellij.util.ui.tree.ExpandOnDoubleClick
+- sf:NEVER:com.intellij.util.ui.tree.ExpandOnDoubleClick
+- s:getBehavior(javax.swing.JTree):com.intellij.util.ui.tree.ExpandOnDoubleClick
+- installOn(javax.swing.JTree):V
+- s:valueOf(java.lang.String):com.intellij.util.ui.tree.ExpandOnDoubleClick
+- s:values():com.intellij.util.ui.tree.ExpandOnDoubleClick[]
+f:com.intellij.util.ui.tree.TreeUtil
+- *s:getNodeRowX(javax.swing.JTree,I):I
+- *s:invalidateCacheAndRepaint(javax.swing.plaf.TreeUI):V
+- *s:isLocationInExpandControl(javax.swing.JTree,I,I):Z
+- *s:isLocationInExpandControl(javax.swing.JTree,javax.swing.tree.TreePath,I,I):Z

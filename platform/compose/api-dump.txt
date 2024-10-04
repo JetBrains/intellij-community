@@ -1,2 +1,1 @@
 f:com.intellij.platform.compose.JBComposePanelKt
-- *sf:JBComposePanel(kotlin.jvm.functions.Function2):javax.swing.JComponent

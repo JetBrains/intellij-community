@@ -260,21 +260,6 @@ f:com.intellij.ui.OverlaidOffsetIconsIcon
 f:com.intellij.ui.RightAlignedLabelUI
 - javax.swing.plaf.basic.BasicLabelUI
 - <init>():V
-*f:com.intellij.ui.RoundedIcon
-- com.intellij.util.ui.JBScalableIcon
-- com.intellij.ui.icons.DarkIconProvider
-- com.intellij.ui.icons.IconWithToolTip
-- <init>(java.awt.Image,D):V
-- <init>(java.awt.Image,D,Z):V
-- <init>(javax.swing.Icon,D):V
-- <init>(javax.swing.Icon,D,Z):V
-- equals(java.lang.Object):Z
-- getDarkIcon(Z):javax.swing.Icon
-- getIconHeight():I
-- getIconWidth():I
-- getToolTip(Z):java.lang.String
-- hashCode():I
-- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 c:com.intellij.ui.RowIcon
 - com.intellij.util.ui.JBCachingScalableIcon
 - com.intellij.ui.icons.IconWithToolTip

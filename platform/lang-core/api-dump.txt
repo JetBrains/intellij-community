@@ -22,7 +22,6 @@ c:com.intellij.execution.configurations.SimpleJavaParameters
 - getMainClass():java.lang.String
 - getModuleName():java.lang.String
 - getModulePath():com.intellij.util.PathsList
-- *:getTargetDependentParameters():com.intellij.execution.configurations.JavaTargetDependentParameters
 - getVMParametersList():com.intellij.execution.configurations.ParametersList
 - isArgFile():Z
 - isClasspathFile():Z

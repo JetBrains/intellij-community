@@ -36,12 +36,6 @@ com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder
 - a:startRescan(java.lang.Runnable):V
 com.intellij.dvcs.push.CommitLoader
 - a:reloadCommits():V
-*:com.intellij.dvcs.push.CustomPushOptionsPanelFactory
-- *sf:Companion:com.intellij.dvcs.push.CustomPushOptionsPanelFactory$Companion
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:createOptionsPanel(com.intellij.openapi.Disposable,java.util.Collection):com.intellij.dvcs.push.VcsPushOptionsPanel
-- a:getId():java.lang.String
-*f:com.intellij.dvcs.push.CustomPushOptionsPanelFactory$Companion
 a:com.intellij.dvcs.push.OutgoingCommitsProvider
 - <init>():V
 - a:getOutgoingCommits(com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSpec,Z):com.intellij.dvcs.push.OutgoingResult
@@ -104,7 +98,6 @@ a:com.intellij.dvcs.push.PushTargetPanel
 a:com.intellij.dvcs.push.Pusher
 - <init>():V
 - a:push(java.util.Map,com.intellij.dvcs.push.VcsPushOptionValue,Z):V
-- *:push(java.util.Map,com.intellij.dvcs.push.VcsPushOptionValue,Z,java.util.Map):V
 c:com.intellij.dvcs.push.VcsError
 - <init>(java.lang.String):V
 - <init>(java.lang.String,com.intellij.dvcs.push.VcsErrorHandler):V

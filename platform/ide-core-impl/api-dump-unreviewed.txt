@@ -319,8 +319,6 @@ f:com.intellij.notification.impl.NotificationGroupEP
 - getDisplayName(com.intellij.openapi.extensions.PluginDescriptor):java.lang.String
 - getDisplayType():com.intellij.notification.NotificationDisplayType
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
-*:com.intellij.openapi.actionSystem.DependentTransientComponent
-- a:getPermanentComponent():java.awt.Component
 f:com.intellij.openapi.actionSystem.impl.SimpleDataContext
 - com.intellij.openapi.actionSystem.CustomizedDataContext
 - s:builder():com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
@@ -634,23 +632,18 @@ com.intellij.openapi.fileEditor.impl.EditorTabColorProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getEditorTabColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.awt.Color
-- *:getEditorTabForegroundColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.editor.colors.ColorKey
 - getProjectViewColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.awt.Color
 f:com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 - sf:INSTANCE:com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 - sf:getCustomEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- *f:getCustomEditorTabTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - sf:getEditorTabBackgroundColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.awt.Color
 - sf:getEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- *f:getEditorTabTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - sf:getFileBackgroundColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.awt.Color
 - sf:getUniqueEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 - com.intellij.openapi.project.DumbAware
 - sf:Companion:com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider$Companion
 - a:getEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- *:getEditorTabTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
-- *bs:getEditorTabTitleAsync$suspendImpl(com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - getEditorTabTooltipText(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 f:com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider$Companion
 com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
@@ -764,10 +757,7 @@ com.intellij.openapi.project.ex.ProjectEx
 a:com.intellij.openapi.project.ex.ProjectManagerEx
 - com.intellij.openapi.project.ProjectManager
 - sf:Companion:com.intellij.openapi.project.ex.ProjectManagerEx$Companion
-- *sf:IS_PER_PROJECT_INSTANCE_ENABLED:Z
-- *sf:IS_PER_PROJECT_INSTANCE_READY:Z
 - sf:PER_PROJECT_OPTION_NAME:java.lang.String
-- *sf:PER_PROJECT_SUFFIX:java.lang.String
 - <init>():V
 - a:canClose(com.intellij.openapi.project.Project):Z
 - a:closeAndDisposeAllProjects(Z):Z
@@ -786,7 +776,6 @@ f:com.intellij.openapi.project.ex.ProjectManagerEx$Companion
 - f:getInstanceEx():com.intellij.openapi.project.ex.ProjectManagerEx
 - f:getInstanceExAsync(kotlin.coroutines.Continuation):java.lang.Object
 - f:getInstanceExIfCreated():com.intellij.openapi.project.ex.ProjectManagerEx
-- *f:isChildProcessPath(java.nio.file.Path):Z
 e:com.intellij.openapi.project.ex.ProjectManagerEx$PerProjectState
 - java.lang.Enum
 - sf:DISABLED:com.intellij.openapi.project.ex.ProjectManagerEx$PerProjectState
@@ -797,7 +786,6 @@ e:com.intellij.openapi.project.ex.ProjectManagerEx$PerProjectState
 - s:values():com.intellij.openapi.project.ex.ProjectManagerEx$PerProjectState[]
 com.intellij.openapi.project.ex.ProjectNameProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- *:getNameFile(com.intellij.openapi.project.Project):java.nio.file.Path
 com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker
 com.intellij.openapi.vfs.local.FileWatcherNotificationSink
 - a:notifyDirtyDirectory(java.lang.String):V
@@ -829,7 +817,6 @@ f:com.intellij.openapi.vfs.newvfs.VfsImplUtil
 - s:getJarInvalidationEvents(com.intellij.openapi.vfs.newvfs.events.VFileEvent,java.util.List):java.util.List
 - s:refresh(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,Z):V
 - s:refreshAndFindFileByPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.vfs.newvfs.NewVirtualFile
-- *s:refreshAndFindFileByPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String,java.util.function.Consumer):V
 - s:releaseHandler(java.lang.String):V
 f:com.intellij.openapi.vfs.newvfs.VfsImplUtil$PathFromRoot
 - java.lang.Record

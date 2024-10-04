@@ -1,0 +1,36 @@
+*:com.intellij.openapi.vcs.changes.ChangeListChangeAssigner
+- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
+- a:beforeChangesProcessing(com.intellij.openapi.vcs.changes.VcsDirtyScope):V
+- a:getChangeListIdFor(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.ChangeListManagerGate):java.lang.String
+- a:markChangesProcessed(com.intellij.openapi.vcs.changes.VcsDirtyScope):V
+*:com.intellij.openapi.vcs.changes.ChangesViewNodeAction
+- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
+- a:createNodeHoverIcon(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.changes.ui.HoverIcon
+- handleDoubleClick(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
+c:com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+- com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
+- *:build(Z):javax.swing.tree.DefaultTreeModel
+*:com.intellij.vcs.CacheableAnnotationProvider
+- a:getFromCache(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.annotate.FileAnnotation
+- a:populateCache(com.intellij.openapi.vfs.VirtualFile):V
+*:com.intellij.vcs.commit.AmendCommitAware
+- a:getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile):org.jetbrains.concurrency.CancellablePromise
+- a:getLastCommitMessage(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- a:isAmendCommitSupported():Z
+*:com.intellij.vcs.commit.CommitProgressUi
+- a:addCommitCheckFailure(com.intellij.vcs.commit.CommitCheckFailure):V
+- a:clearCommitCheckFailures():V
+- a:getCommitCheckFailures():java.util.List
+- a:isDumbMode():Z
+- a:isEmptyChanges():Z
+- a:isEmptyMessage():Z
+- a:runWithProgress(Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- a:setDumbMode(Z):V
+- a:setEmptyChanges(Z):V
+- a:setEmptyMessage(Z):V
+*:com.intellij.vcs.commit.DelayedCommitMessageProvider
+- com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
+- a:init(com.intellij.openapi.project.Project,com.intellij.vcs.commit.CommitMessageUi,com.intellij.openapi.Disposable):V
+*:com.intellij.vcs.commit.EditedCommitDetails
+- a:getCommit():com.intellij.vcs.log.VcsFullCommitDetails
+- a:getCurrentUser():com.intellij.vcs.log.VcsUser

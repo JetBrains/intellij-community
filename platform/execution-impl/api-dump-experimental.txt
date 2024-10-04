@@ -1,0 +1,24 @@
+*:com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate
+- *sf:Companion:com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate$Companion
+- a:createCondition():com.intellij.execution.multilaunch.execution.conditions.Condition
+- a:getType():java.lang.String
+*f:com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+*a:com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate
+- com.intellij.execution.multilaunch.execution.executables.ExecutableTemplate
+- *sf:Companion:com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate$Companion
+- <init>():V
+*f:com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+f:com.intellij.execution.runners.RunContentBuilder
+- com.intellij.execution.runners.RunTab
+- *sf:RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP:java.lang.String
+- *sf:RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP:java.lang.String
+- *sf:RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP:java.lang.String
+a:com.intellij.execution.runners.RunTab
+- com.intellij.openapi.Disposable
+- *sf:KEY:com.intellij.openapi.actionSystem.DataKey
+- *sf:PREFERRED_PLACE:com.intellij.openapi.util.Key
+f:com.intellij.execution.util.EnvFilesUtilKt
+- *sf:configureEnvsFromFiles(com.intellij.execution.EnvFilesOptions,Z):java.util.Map
+- *bs:configureEnvsFromFiles$default(com.intellij.execution.EnvFilesOptions,Z,I,java.lang.Object):java.util.Map

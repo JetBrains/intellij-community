@@ -129,7 +129,6 @@ com.intellij.formatting.Formatter
 - a:getContinuationWithoutFirstIndent(Z):com.intellij.formatting.Indent
 - a:getIndent(com.intellij.formatting.Indent$Type,I,Z,Z):com.intellij.formatting.Indent
 - a:getIndent(com.intellij.formatting.Indent$Type,Z,Z):com.intellij.formatting.Indent
-- *a:getIndentEnforcedToChildrenToBeRelativeToMe(com.intellij.formatting.Indent$Type,I):com.intellij.formatting.Indent
 - s:getInstance():com.intellij.formatting.Formatter
 - a:getLabelIndent():com.intellij.formatting.Indent
 - a:getNoneIndent():com.intellij.formatting.Indent
@@ -202,8 +201,6 @@ a:com.intellij.formatting.Indent
 - s:getContinuationWithoutFirstIndent(Z):com.intellij.formatting.Indent
 - s:getIndent(com.intellij.formatting.Indent$Type,I,Z,Z):com.intellij.formatting.Indent
 - s:getIndent(com.intellij.formatting.Indent$Type,Z,Z):com.intellij.formatting.Indent
-- *s:getIndentEnforcedToChildrenToBeRelativeToMe():com.intellij.formatting.Indent
-- *s:getIndentEnforcedToChildrenToBeRelativeToMe(com.intellij.formatting.Indent$Type,I):com.intellij.formatting.Indent
 - s:getLabelIndent():com.intellij.formatting.Indent
 - s:getNoneIndent():com.intellij.formatting.Indent
 - s:getNormalIndent():com.intellij.formatting.Indent
@@ -219,8 +216,6 @@ f:com.intellij.formatting.Indent$Type
 - sf:LABEL:com.intellij.formatting.Indent$Type
 - sf:NONE:com.intellij.formatting.Indent$Type
 - sf:NORMAL:com.intellij.formatting.Indent$Type
-- *sf:OUTDENT_NORMAL:com.intellij.formatting.Indent$Type
-- *sf:OUTDENT_SPACES:com.intellij.formatting.Indent$Type
 - sf:SPACES:com.intellij.formatting.Indent$Type
 com.intellij.formatting.InjectedFormattingOptionsProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -394,7 +389,6 @@ c:com.intellij.openapi.editor.DefaultLineWrapPositionStrategy
 c:com.intellij.openapi.editor.EditorModificationUtilEx
 - <init>():V
 - s:calcAfterLineEnd(com.intellij.openapi.editor.Editor):I
-- *s:calcAfterLineEnd(com.intellij.openapi.editor.Editor,I,com.intellij.openapi.editor.LogicalPosition,com.intellij.openapi.editor.VisualPosition):I
 - s:calcStringToFillVirtualSpace(com.intellij.openapi.editor.Editor):java.lang.String
 - s:calcStringToFillVirtualSpace(com.intellij.openapi.editor.Editor,I):java.lang.String
 - s:deleteSelectedText(com.intellij.openapi.editor.Editor):V
@@ -658,10 +652,6 @@ c:com.intellij.psi.codeStyle.CodeStyleSettingsManager
 - setTemporarySettings(com.intellij.psi.codeStyle.CodeStyleSettings):V
 - subscribe(com.intellij.psi.codeStyle.CodeStyleSettingsListener):V
 - subscribe(com.intellij.psi.codeStyle.CodeStyleSettingsListener,com.intellij.openapi.Disposable):V
-*:com.intellij.psi.codeStyle.CommentStyleSettings
-- a:isBlockCommentIncludesSpace():Z
-- a:isLineCommentFollowedWithSpace():Z
-- a:isLineCommentInTheFirstColumn():Z
 c:com.intellij.psi.codeStyle.CommonCodeStyleSettings
 - com.intellij.psi.codeStyle.CommentStyleSettings
 - ALIGN_CONSECUTIVE_ASSIGNMENTS:Z
@@ -965,20 +955,6 @@ c:com.intellij.psi.codeStyle.ExcludedFiles$State
 - <init>(com.intellij.psi.codeStyle.ExcludedFiles):V
 - getDescriptors():java.util.List
 - setDescriptors(java.util.List):V
-*:com.intellij.psi.codeStyle.ExternalFormatProcessor
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- s:activeExternalFormatProcessor(com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.ExternalFormatProcessor
-- a:activeForFile(com.intellij.psi.PsiFile):Z
-- createConfiguration(com.intellij.openapi.project.Project):V
-- s:findExternalFormatter(java.lang.String):java.util.Optional
-- a:format(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,Z,Z,Z,I):com.intellij.openapi.util.TextRange
-- s:formatElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):com.intellij.psi.PsiElement
-- s:formatRangeInFile(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,Z,Z):com.intellij.openapi.util.TextRange
-- s:formatRangeInFile(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,Z,Z,Z,I):com.intellij.openapi.util.TextRange
-- a:getId():java.lang.String
-- a:indent(com.intellij.psi.PsiFile,I):java.lang.String
-- s:indentLine(com.intellij.psi.PsiFile,I):java.lang.String
-- s:useExternalFormatter(com.intellij.psi.PsiFile):Z
 com.intellij.psi.codeStyle.FileCodeStyleProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getSettings(com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.CodeStyleSettings
@@ -1524,13 +1500,6 @@ com.intellij.psi.codeStyle.lineIndent.LineIndentProvider
 f:com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP
 - <init>():V
 - s:findLineIndentProvider(com.intellij.lang.Language):com.intellij.psi.codeStyle.lineIndent.LineIndentProvider
-*:com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- getDisablingFunction(com.intellij.openapi.project.Project):java.util.function.Consumer
-- a:getName():java.lang.String
-- a:getStatusBarUiContributor(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings):com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
-- mayOverrideSettingsOf(com.intellij.openapi.project.Project):Z
-- a:modifySettings(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings,com.intellij.psi.PsiFile):Z
 com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 - a:areActionsAvailable(com.intellij.openapi.vfs.VirtualFile):Z
 - a:createDisableAction(com.intellij.openapi.project.Project):com.intellij.openapi.actionSystem.AnAction

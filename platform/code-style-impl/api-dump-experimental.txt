@@ -1,0 +1,2 @@
+com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
+- *:check(com.intellij.lang.Language,java.lang.CharSequence,I,I):I

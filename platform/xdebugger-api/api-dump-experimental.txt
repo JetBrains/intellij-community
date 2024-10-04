@@ -1,0 +1,27 @@
+*:com.intellij.xdebugger.XAlternativeSourceHandler
+- a:getAlternativePosition(com.intellij.xdebugger.frame.XStackFrame):com.intellij.xdebugger.XSourcePosition
+- a:getAlternativeSourceKindState():kotlinx.coroutines.flow.StateFlow
+- a:isAlternativeSourceKindPreferred(com.intellij.xdebugger.frame.XSuspendContext):Z
+a:com.intellij.xdebugger.XDebugProcess
+- *:dependsOnPlugin(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
+- *:getAlternativeSourceHandler():com.intellij.xdebugger.XAlternativeSourceHandler
+- *:getDropFrameHandler():com.intellij.xdebugger.frame.XDropFrameHandler
+*:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler
+- *sf:Companion:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler$Companion
+- a:areInlineBreakpointsDisabled(com.intellij.openapi.vfs.VirtualFile):Z
+*f:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler$Companion
+- f:getEP():com.intellij.openapi.extensions.ExtensionPointName
+a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+- *:isEvaluateExpressionFieldEnabled():Z
+*:com.intellij.xdebugger.frame.XDropFrameHandler
+- a:canDrop(com.intellij.xdebugger.frame.XStackFrame):Z
+- a:drop(com.intellij.xdebugger.frame.XStackFrame):V
+*:com.intellij.xdebugger.frame.XStringValueModifier
+- a:stringToXExpression(java.lang.String):com.intellij.xdebugger.XExpression
+*:com.intellij.xdebugger.ui.TextValueVisualizer
+- a:visualize(java.lang.String):java.util.List
+*:com.intellij.xdebugger.ui.VisualizedContentTab
+- a:createComponent(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):javax.swing.JComponent
+- a:getId():java.lang.String
+- a:getName():java.lang.String
+- onShown(com.intellij.openapi.project.Project,Z):V

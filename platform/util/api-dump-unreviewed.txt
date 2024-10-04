@@ -38,21 +38,6 @@ f:com.intellij.Patches
 - sf:SUN_BUG_ID_6322854:Z
 - sf:TEXT_LAYOUT_IS_SLOW:Z
 - <init>():V
-*:com.intellij.concurrency.IntelliJContextElement
-- kotlin.coroutines.CoroutineContext$Element
-- afterChildCompleted(kotlin.coroutines.CoroutineContext):V
-- beforeChildStarted(kotlin.coroutines.CoroutineContext):V
-- produceChildElement(kotlin.coroutines.CoroutineContext,Z):com.intellij.concurrency.IntelliJContextElement
-*f:com.intellij.concurrency.IntelliJContextElement$DefaultImpls
-- s:fold(com.intellij.concurrency.IntelliJContextElement,java.lang.Object,kotlin.jvm.functions.Function2):java.lang.Object
-- s:get(com.intellij.concurrency.IntelliJContextElement,kotlin.coroutines.CoroutineContext$Key):kotlin.coroutines.CoroutineContext$Element
-- s:minusKey(com.intellij.concurrency.IntelliJContextElement,kotlin.coroutines.CoroutineContext$Key):kotlin.coroutines.CoroutineContext
-- s:plus(com.intellij.concurrency.IntelliJContextElement,kotlin.coroutines.CoroutineContext):kotlin.coroutines.CoroutineContext
-*f:com.intellij.concurrency.ThreadContext
-- sf:currentThreadContext():kotlin.coroutines.CoroutineContext
-- sf:installThreadContext(kotlin.coroutines.CoroutineContext,Z):com.intellij.openapi.application.AccessToken
-- bs:installThreadContext$default(kotlin.coroutines.CoroutineContext,Z,I,java.lang.Object):com.intellij.openapi.application.AccessToken
-- sf:resetThreadContext():com.intellij.openapi.application.AccessToken
 f:com.intellij.execution.CommandLineUtil
 - <init>():V
 - s:escapeParameterOnWindows(java.lang.String,Z):java.lang.String
@@ -428,9 +413,6 @@ f:com.intellij.openapi.diagnostic.LoggerKt
 - bs:debug$default(com.intellij.openapi.diagnostic.Logger,java.lang.Exception,kotlin.jvm.functions.Function0,I,java.lang.Object):V
 - sf:trace(com.intellij.openapi.diagnostic.Logger,kotlin.jvm.functions.Function0):V
 - sf:traceThrowable(com.intellij.openapi.diagnostic.Logger,kotlin.jvm.functions.Function0):V
-*:com.intellij.openapi.diagnostic.ReportingClassSubstitutor
-- s:getClassToReport(java.lang.Object):java.lang.Class
-- a:getSubstitutedClass():java.lang.Class
 c:com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 - java.lang.RuntimeException
 - com.intellij.openapi.diagnostic.ExceptionWithAttachments
@@ -1085,7 +1067,6 @@ c:com.intellij.openapi.util.UserDataHolderBase
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - getUserDataString():java.lang.String
 - p:getUserMap():com.intellij.util.keyFMap.KeyFMap
-- *p:isCopyableDataEqual(com.intellij.openapi.util.UserDataHolderBase):Z
 - isUserDataEmpty():Z
 - putCopyableUserData(com.intellij.openapi.util.Key,java.lang.Object):V
 - putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
@@ -1397,8 +1378,6 @@ f:com.intellij.openapi.util.io.JarUtil
 - s:loadProperties(java.io.File,java.lang.String):java.util.Properties
 f:com.intellij.openapi.util.io.NioFiles
 - sf:BROKEN_SYMLINK:java.nio.file.attribute.BasicFileAttributes
-- *s:copyRecursively(java.nio.file.Path,java.nio.file.Path):V
-- *s:copyRecursively(java.nio.file.Path,java.nio.file.Path,java.util.function.Consumer):V
 - s:createDirectories(java.nio.file.Path):java.nio.file.Path
 - s:createIfNotExists(java.nio.file.Path):java.nio.file.Path
 - s:createParentDirectories(java.nio.file.Path):java.nio.file.Path
@@ -1598,10 +1577,6 @@ c:com.intellij.openapi.util.text.HtmlChunk$Element
 - setClass(java.lang.String):com.intellij.openapi.util.text.HtmlChunk$Element
 - style(java.lang.String):com.intellij.openapi.util.text.HtmlChunk$Element
 f:com.intellij.openapi.util.text.HtmlChunkUtilKt
-- *sf:buildChildren(com.intellij.openapi.util.text.HtmlChunk$Element,kotlin.jvm.functions.Function1):com.intellij.openapi.util.text.HtmlChunk$Element
-- *sf:buildHtml(kotlin.jvm.functions.Function1):java.lang.String
-- *sf:buildHtmlChunk(kotlin.jvm.functions.Function1):com.intellij.openapi.util.text.HtmlChunk
-- *sf:plus(com.intellij.openapi.util.text.HtmlChunk,com.intellij.openapi.util.text.HtmlChunk):com.intellij.openapi.util.text.HtmlChunk
 f:com.intellij.openapi.util.text.LineColumn
 - f:column:I
 - f:line:I
@@ -1948,7 +1923,6 @@ f:com.intellij.ui.ColorHexUtil
 com.intellij.ui.IconManager
 - sf:Companion:com.intellij.ui.IconManager$Companion
 - colorize(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color):javax.swing.Icon
-- *:colorizedIcon(javax.swing.Icon,kotlin.jvm.functions.Function0):javax.swing.Icon
 - a:createDeferredIcon(javax.swing.Icon,java.lang.Object,kotlin.jvm.functions.Function1):javax.swing.Icon
 - createEmptyIcon(javax.swing.Icon):javax.swing.Icon
 - a:createLayered(javax.swing.Icon[]):javax.swing.Icon
@@ -2169,7 +2143,6 @@ f:com.intellij.util.EnvironmentUtil
 - sf:SHELL_LOGIN_ARGUMENT:java.lang.String
 - sf:SHELL_SOURCE_COMMAND:java.lang.String
 - sf:SHELL_VARIABLE_NAME:java.lang.String
-- *s:buildShellProcessCommand(java.lang.String,Z,Z,Z):java.util.List
 - s:containsEnvKeySubstitution(java.lang.String,java.lang.String):Z
 - s:getEnvironmentMap():java.util.Map
 - s:getValue(java.lang.String):java.lang.String
@@ -2251,8 +2224,6 @@ com.intellij.util.JavaContinuation
 - a:getContext():kotlin.coroutines.CoroutineContext
 - a:resume(java.lang.Object):V
 - a:resumeWithException(java.lang.Throwable):V
-*f:com.intellij.util.JavaCoroutines
-- sf:suspendJava(java.util.function.Consumer,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.util.JavaModuleOptions
 - s:readOptions(java.io.InputStream,com.intellij.util.system.OS):java.util.List
 - s:readOptions(java.nio.file.Path,com.intellij.util.system.OS):java.util.List
@@ -2612,12 +2583,7 @@ com.intellij.util.Time
 - sf:WEEK:I
 f:com.intellij.util.TimeoutUtil
 - <init>():V
-- *s:compute(com.intellij.openapi.util.ThrowableComputable,J,java.util.function.LongConsumer):java.lang.Object
-- *s:compute(com.intellij.openapi.util.ThrowableComputable,java.util.function.LongConsumer):java.lang.Object
 - s:getDurationMillis(J):J
-- *s:measureExecutionTime(com.intellij.util.ThrowableRunnable):J
-- *s:run(com.intellij.util.ThrowableRunnable,J,java.util.function.LongConsumer):V
-- *s:run(com.intellij.util.ThrowableRunnable,java.util.function.LongConsumer):V
 - s:sleep(J):V
 f:com.intellij.util.TreeItem
 - <init>(java.lang.Object):V
@@ -4335,10 +4301,6 @@ f:com.intellij.util.indexing.impl.InputIndexDataExternalizer
 - <init>(com.intellij.util.io.KeyDescriptor,com.intellij.util.indexing.IndexId):V
 - read(java.io.DataInput):java.util.Collection
 - save(java.io.DataOutput,java.util.Collection):V
-*f:com.intellij.util.indexing.impl.MapReduceIndexMappingException
-- java.lang.RuntimeException
-- <init>(java.lang.Throwable,java.lang.Class):V
-- getClassToBlame():java.lang.Class
 com.intellij.util.indexing.impl.ValueSerializationProblemReporter
 - a:reportProblem(java.lang.Exception):V
 com.intellij.util.indexing.impl.forward.ForwardIndex
@@ -4848,8 +4810,6 @@ c:com.intellij.util.io.IntInlineKeyDescriptor
 - fromInt(I):java.lang.Integer
 - toInt(java.lang.Integer):I
 f:com.intellij.util.io.IoKt
-- *sf:copyToAsync(java.io.InputStream,java.io.OutputStream,I,J,kotlin.coroutines.Continuation):java.lang.Object
-- *bs:copyToAsync$default(java.io.InputStream,java.io.OutputStream,I,J,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - sf:decodeBase64(java.lang.String):B[]
 - sf:encodeUrlQueryParameter(java.lang.String):java.lang.String
 - sf:readCharSequence(java.io.Reader,I):java.lang.CharSequence
@@ -4860,13 +4820,6 @@ com.intellij.util.io.KeyDescriptor
 - com.intellij.util.io.DataExternalizer
 - a:getHashCode(java.lang.Object):I
 - a:save(java.io.DataOutput,java.lang.Object):V
-*:com.intellij.util.io.KeyValueStore
-- com.intellij.openapi.Forceable
-- java.io.Closeable
-- a:force():V
-- a:get(java.lang.Object):java.lang.Object
-- a:isDirty():Z
-- a:put(java.lang.Object,java.lang.Object):V
 f:com.intellij.util.io.MultiCloseable
 - java.lang.AutoCloseable
 - <init>():V
@@ -4912,60 +4865,12 @@ com.intellij.util.io.PersistentHashMap$ValueDataAppender
 - com.intellij.util.io.AppendablePersistentMap$ValueDataAppender
 com.intellij.util.io.PersistentMap
 - com.intellij.util.io.KeyValueStore
-- *:closeAndClean():V
 - a:containsMapping(java.lang.Object):Z
 - a:isClosed():Z
 - a:isDirty():Z
 - a:markDirty():V
 - a:processKeys(com.intellij.util.Processor):Z
 - a:remove(java.lang.Object):V
-*:com.intellij.util.io.PersistentMapBase
-- appendData(java.lang.Object,com.intellij.util.io.AppendablePersistentMap$ValueDataAppender):V
-- s:canonicalize(com.intellij.util.io.PersistentMapBase,com.intellij.util.io.PersistentMapBase,java.util.function.Function):com.intellij.util.io.PersistentMapBase
-- s:canonicalize(com.intellij.util.io.PersistentMapBase,com.intellij.util.io.PersistentMapBase,java.util.function.Function,java.util.function.Function):com.intellij.util.io.PersistentMapBase
-- a:close():V
-- a:closeAndDelete():V
-- a:containsKey(java.lang.Object):Z
-- a:force():V
-- a:get(java.lang.Object):java.lang.Object
-- a:getValuesExternalizer():com.intellij.util.io.DataExternalizer
-- a:isClosed():Z
-- a:isDirty():Z
-- keysCount():I
-- markCorrupted():V
-- a:markDirty():V
-- a:processExistingKeys(com.intellij.util.Processor):Z
-- a:processKeys(com.intellij.util.Processor):Z
-- a:put(java.lang.Object,java.lang.Object):V
-- a:remove(java.lang.Object):V
-*f:com.intellij.util.io.PersistentMapBuilder
-- build():com.intellij.util.io.PersistentHashMap
-- buildImplementation():com.intellij.util.io.PersistentMapBase
-- compactOnClose():com.intellij.util.io.PersistentMapBuilder
-- copy():com.intellij.util.io.PersistentMapBuilder
-- copyWithFile(java.nio.file.Path):com.intellij.util.io.PersistentMapBuilder
-- getCompactOnClose(Z):Z
-- getFile():java.nio.file.Path
-- getInitialSize(I):I
-- getInlineValues(Z):Z
-- getKeyDescriptor():com.intellij.util.io.KeyDescriptor
-- getReadOnly(Z):Z
-- getValueExternalizer():com.intellij.util.io.DataExternalizer
-- getVersion(I):I
-- getWalExecutor():java.util.concurrent.ExecutorService
-- hasChunks(Z):com.intellij.util.io.PersistentMapBuilder
-- hasNoChunks():com.intellij.util.io.PersistentMapBuilder
-- inlineValues():com.intellij.util.io.PersistentMapBuilder
-- inlineValues(Z):com.intellij.util.io.PersistentMapBuilder
-- isEnableWal():Z
-- s:newBuilder(java.nio.file.Path,com.intellij.util.io.KeyDescriptor,com.intellij.util.io.DataExternalizer):com.intellij.util.io.PersistentMapBuilder
-- readonly():com.intellij.util.io.PersistentMapBuilder
-- withCompactOnClose(Z):com.intellij.util.io.PersistentMapBuilder
-- withInitialSize(I):com.intellij.util.io.PersistentMapBuilder
-- withReadonly(Z):com.intellij.util.io.PersistentMapBuilder
-- withVersion(I):com.intellij.util.io.PersistentMapBuilder
-- withWal(Z):com.intellij.util.io.PersistentMapBuilder
-- withWalExecutor(java.util.concurrent.ExecutorService):com.intellij.util.io.PersistentMapBuilder
 f:com.intellij.util.io.PersistentMapInMemory
 - com.intellij.util.io.PersistentMapBase
 - <init>(com.intellij.util.io.PersistentMapBuilder):V

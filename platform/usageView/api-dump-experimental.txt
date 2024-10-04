@@ -1,0 +1,11 @@
+*:com.intellij.usages.UsageSearchPresentation
+- a:getOptionsString():java.lang.String
+- a:getSearchTargetString():java.lang.String
+*:com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider
+- a:getFeatures(com.intellij.psi.PsiElement):com.intellij.usages.similarity.bag.Bag
+*:com.intellij.usages.similarity.usageAdapter.SimilarUsage
+- com.intellij.usages.Usage
+- a:getClusteringSession():com.intellij.usages.similarity.clustering.ClusteringSearchSession
+- a:getElement():com.intellij.psi.PsiElement
+- a:getFeatures():com.intellij.usages.similarity.bag.Bag
+- a:getUsageInfo():com.intellij.usageView.UsageInfo
