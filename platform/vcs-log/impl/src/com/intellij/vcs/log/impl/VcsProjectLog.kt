@@ -134,7 +134,9 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
 
     try {
       withTimeout(CLOSE_LOG_TIMEOUT) {
-        launchDisposeLog(useRawSwingDispatcher = useRawSwingDispatcher).join()
+        mutex.withLock {
+          disposeLogInternal(useRawSwingDispatcher = useRawSwingDispatcher)
+        }
       }
     }
     catch (e: TimeoutCancellationException) {
