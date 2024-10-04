@@ -82,6 +82,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import java.io.File;
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
@@ -351,11 +352,11 @@ public class MavenUtil {
   }
 
   @Nullable
-  public static File getProfilesXmlIoFile(VirtualFile pomFile) {
+  public static Path getProfilesXmlNioFile(VirtualFile pomFile) {
     if (pomFile == null) return null;
     VirtualFile parent = pomFile.getParent();
     if (parent == null) return null;
-    return new File(parent.getPath(), MavenConstants.PROFILES_XML);
+    return parent.toNioPath().resolve(MavenConstants.PROFILES_XML);
   }
 
   public static <T, U> List<T> collectFirsts(List<? extends Pair<T, U>> pairs) {
@@ -1308,7 +1309,7 @@ public class MavenUtil {
 
   @Nullable
   public static VirtualFile resolveSuperPomFile(@NotNull Path mavenHome, String superPomName) {
-    return doResolveSuperPomFile(mavenHome.resolve(LIB_DIR).toFile(), superPomName);
+    return doResolveSuperPomFile(mavenHome.resolve(LIB_DIR), superPomName);
   }
 
   @Nullable
@@ -1323,18 +1324,23 @@ public class MavenUtil {
   }
 
   @Nullable
-  private static VirtualFile doResolveSuperPomFile(@NotNull File libDir, String superPomName) {
-    File[] libraries = libDir.listFiles();
-    if (libraries == null) return null;
+  private static VirtualFile doResolveSuperPomFile(@NotNull Path libDir, String superPomName) {
+    Path[] libraries;
+    try {
+      libraries = Files.list(libDir).toArray(Path[]::new);
+    }
+    catch (IOException e) {
+      return null;
+    }
 
-    for (File library : libraries) {
-      if ((library.getName().startsWith("maven-model-builder-") && library.getName().endsWith(".jar"))) {
+    for (Path library : libraries) {
+      if ((library.getFileName().toString().startsWith("maven-model-builder-") && library.getFileName().toString().endsWith(".jar"))) {
         VirtualFile result = tryReadFromLib(library, "org/apache/maven/model/" + superPomName);
         if (result != null) {
           return result;
         }
       }
-      else if ((library.getName().startsWith("maven-") && library.getName().endsWith("-uber.jar"))) {
+      else if ((library.getFileName().toString().startsWith("maven-") && library.getFileName().getFileName().toString().endsWith("-uber.jar"))) {
         //old maven versions
         VirtualFile result = tryReadFromLib(library, "org/apache/maven/project/" + superPomName);
         if (result != null) {
@@ -1345,8 +1351,8 @@ public class MavenUtil {
     return null;
   }
 
-  private static @Nullable VirtualFile tryReadFromLib(File library, @NotNull String pathInJar) {
-    VirtualFile libraryVirtualFile = LocalFileSystem.getInstance().findFileByNioFile(library.toPath());
+  private static @Nullable VirtualFile tryReadFromLib(Path library, @NotNull String pathInJar) {
+    VirtualFile libraryVirtualFile = LocalFileSystem.getInstance().findFileByNioFile(library);
     if (libraryVirtualFile == null) return null;
     VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(libraryVirtualFile);
     if (root == null) return null;
@@ -1706,7 +1712,7 @@ public class MavenUtil {
       if (mavenProject == null) {
         throw new IllegalArgumentException("Project should be not-nul for non-absolute paths");
       }
-      path = new File(mavenProject.getDirectory(), path).getPath();
+      path = Path.of(mavenProject.getDirectory(), path).toString();
     }
     return new MavenPathWrapper(path);
   }

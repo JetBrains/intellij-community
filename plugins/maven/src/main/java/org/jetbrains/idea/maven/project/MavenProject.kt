@@ -36,6 +36,7 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
+import kotlin.Throws
 
 class MavenProject(val file: VirtualFile) {
   enum class ConfigFileKind(val myRelativeFilePath: String, val myValueIfMissing: String) {
@@ -203,6 +204,9 @@ class MavenProject(val file: VirtualFile) {
 
   val profilesXmlFile: VirtualFile?
     get() = MavenUtil.findProfilesXmlFile(file)
+
+  val profilesXmlNioFile: Path?
+    get() = MavenUtil.getProfilesXmlNioFile(file)
 
   fun hasUnrecoverableReadingProblems(): Boolean {
     return myState.readingProblems.any { !it.isRecoverable }
