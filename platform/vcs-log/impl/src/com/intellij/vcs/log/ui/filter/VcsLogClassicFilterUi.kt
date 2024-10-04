@@ -288,7 +288,6 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
       toolbar.setCustomButtonLook(FieldInplaceActionButtonLook())
       toolbar.isReservePlaceAutoPopupIcon = false
       toolbar.targetComponent = editor
-      toolbar.updateActionsImmediately()
       return toolbar
     }
   }
