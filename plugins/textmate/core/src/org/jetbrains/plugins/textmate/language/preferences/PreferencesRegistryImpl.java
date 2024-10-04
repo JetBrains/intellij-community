@@ -4,13 +4,10 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.Constants;
-import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
-import org.jetbrains.plugins.textmate.plist.Plist;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public final class PreferencesRegistryImpl implements PreferencesRegistry {
   @NotNull private final Set<Preferences> myPreferences = new HashSet<>();
@@ -28,27 +25,6 @@ public final class PreferencesRegistryImpl implements PreferencesRegistry {
     fillHighlightingBraces(preferences.getHighlightingPairs());
     fillSmartTypingBraces(preferences.getSmartTypingPairs());
     myPreferences.add(preferences);
-  }
-
-  /**
-   * Append table with new preferences
-   *
-   * @deprecated use {@link this#addPreferences(Preferences)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public synchronized void fillFromPList(@NotNull CharSequence scopeName, @NotNull Plist plist) {
-    final Set<TextMateBracePair> highlightingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.HIGHLIGHTING_PAIRS_KEY));
-    Set<TextMateBracePair> rawSmartTypingPairs = PreferencesReadUtil.readPairs(plist.getPlistValue(Constants.SMART_TYPING_PAIRS_KEY));
-    final Set<TextMateAutoClosingPair> smartTypingPairs = rawSmartTypingPairs != null ? rawSmartTypingPairs.stream().map(p -> {
-      return new TextMateAutoClosingPair(p.getLeft(), p.getRight(), null);
-    }).collect(Collectors.toSet()) : null;
-    final IndentationRules indentationRules = PreferencesReadUtil.loadIndentationRules(plist);
-    final Set<OnEnterRule> onEnterRules = Collections.emptySet(); // seems fine, since fillFromPList is deprecated anyway
-    fillHighlightingBraces(highlightingPairs);
-    fillSmartTypingBraces(smartTypingPairs);
-    if (highlightingPairs != null || smartTypingPairs != null || !indentationRules.isEmpty()) {
-      myPreferences.add(new Preferences(scopeName, highlightingPairs, smartTypingPairs, Collections.emptySet(), null, indentationRules, onEnterRules));
-    }
   }
 
   private synchronized void fillHighlightingBraces(Collection<TextMateBracePair> highlightingPairs) {
