@@ -908,6 +908,8 @@
     <statistics.projectUsagesCollector
       implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.ProjectStructureUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
+    <statistics.projectUsagesCollector
+      implementation="com.intellij.internal.statistic.collectors.fus.otherIde.LaunchJsonUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.plugins.PluginsUsagesCollector"
                                            allowOnStartup="true"/>
     <statistics.applicationUsagesCollector
