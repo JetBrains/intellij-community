@@ -4245,7 +4245,6 @@ com.intellij.psi.PsiDocumentListener
 - fileCreated(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document):V
 a:com.intellij.psi.PsiDocumentManager
 - <init>():V
-- a:addListener(com.intellij.psi.PsiDocumentManager$Listener):V
 - a:commitAllDocuments():V
 - a:commitAllDocumentsUnderProgress():Z
 - a:commitAndRunReadAction(com.intellij.openapi.util.Computable):java.lang.Object
