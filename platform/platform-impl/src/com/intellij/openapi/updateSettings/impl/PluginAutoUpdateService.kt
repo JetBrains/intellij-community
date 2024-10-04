@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PluginAutoUpdateRepository
 import com.intellij.openapi.application.PluginAutoUpdater
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -50,9 +51,14 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
           downloadManagerJob = cs.launchDownloadManager()
         }
       } else {
-        downloadManagerJob?.cancel()
+        val job = downloadManagerJob
+        job?.cancel()
         while (true) { // drain pending downloads
           pendingDownloads.tryReceive().getOrNull() ?: break
+        }
+        cs.launch(Dispatchers.IO) { // TODO this coroutine might race with next downloadManagerJob
+          job?.join()
+          dropDownloadedUpdates()
         }
       }
     }
@@ -171,15 +177,33 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
     setupDownloadManager()
   }
 
+  internal fun onSettingsChanged() {
+    LOG.debug { "onSettingsChanged: " +
+                "allowed=${PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()} " +
+                "enabled=${UpdateSettings.getInstance().isPluginsAutoUpdateEnabled} " }
+    // should erase already downloaded updates if the setting gets disabled
+    // TODO this thing is not bullet-proof, only explicit setting change from the UI is tracked
+    cs.launch {
+      setupDownloadManager()
+    }
+  }
+
+  private fun dropDownloadedUpdates() {
+    updatesState.clear()
+    if (PluginAutoUpdateRepository.getAutoUpdateDirPath().exists()) {
+      LOG.info("plugin auto-update repository is deleted because auto-update is disabled")
+      try {
+        PluginAutoUpdateRepository.clearUpdates()
+      } catch (e: Exception) {
+        LOG.error(e)
+      }
+    }
+  }
+
   internal class PluginAutoUpdateAppLifecycleListener : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
-      if (!isAutoUpdateEnabled() && PluginAutoUpdateRepository.getAutoUpdateDirPath().exists()) {
-        LOG.info("plugin auto-update repository is deleted because auto-update is disabled")
-        try {
-          PluginAutoUpdateRepository.clearUpdates()
-        } catch (e: Exception) {
-          LOG.error(e)
-        }
+      if (!isAutoUpdateEnabled()) {
+        serviceIfCreated<PluginAutoUpdateService>()?.dropDownloadedUpdates()
       }
     }
   }

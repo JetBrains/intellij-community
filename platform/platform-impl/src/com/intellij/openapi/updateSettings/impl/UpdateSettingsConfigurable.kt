@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.newui.reloadPluginIcon
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
@@ -78,9 +79,15 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
           checkBox(IdeBundle.message("updates.plugins.autoupdate.settings.checkbox"))
             .bindSelected(settings.state::isPluginsAutoUpdateEnabled)
             .comment(IdeBundle.message("updates.plugins.autoupdate.settings.comment"))
+            .onApply {
+              service<PluginAutoUpdateService>().onSettingsChanged()
+            }
             .also {
               if (!PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()) {
-                settings.isPluginsAutoUpdateEnabled = false
+                if (settings.isPluginsAutoUpdateEnabled) {
+                  settings.isPluginsAutoUpdateEnabled = false
+                  service<PluginAutoUpdateService>().onSettingsChanged()
+                }
                 enabled(false)
                 icon(AllIcons.General.Warning).applyToComponent {
                   toolTipText = IdeBundle.message("updates.plugins.autoupdate.settings.prohibited.by.policy.comment")
