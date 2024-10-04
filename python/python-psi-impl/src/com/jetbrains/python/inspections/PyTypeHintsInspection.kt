@@ -60,7 +60,8 @@ class PyTypeHintsInspection : PyInspection() {
       val callee = node.callee as? PyReferenceExpression
       val calleeQName = callee?.let { PyResolveUtil.resolveImportedElementQNameLocally(it) } ?: emptyList()
 
-      if (QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_VAR) in calleeQName) {
+      if (QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_VAR) in calleeQName ||
+        QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_VAR_EXT) in calleeQName) {
         val target = getTargetFromAssignment(node)
 
         checkTypeVarPlacement(node, target)
