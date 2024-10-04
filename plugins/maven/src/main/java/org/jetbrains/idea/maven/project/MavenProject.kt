@@ -921,7 +921,7 @@ class MavenProject(val file: VirtualFile) {
 
   val localRepositoryPath: Path
     get() {
-      return myState.localRepository!!
+      return myState.localRepository!!.toPath()
     }
 
   val remoteRepositories: List<MavenRemoteRepository>
@@ -1184,7 +1184,7 @@ class MavenProject(val file: VirtualFile) {
       return state.copy(
         lastReadStamp = lastReadStamp,
         readingProblems = readingProblems,
-        localRepository = settings.effectiveRepositoryPath,
+        localRepository = settings.effectiveRepositoryPath.toFile(),
         activatedProfilesIds = activatedProfiles,
         mavenId = model.mavenId,
         parentId = model.parent?.mavenId,
