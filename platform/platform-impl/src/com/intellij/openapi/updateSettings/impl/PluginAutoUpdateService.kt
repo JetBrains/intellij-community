@@ -62,6 +62,9 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
     return launch(CoroutineName("Download manager")) {
       for (downloaders in pendingDownloads) {
         ensureActive()
+        if (!isAutoUpdateEnabled()) {
+          throw CancellationException(("auto-update disabled"))
+        }
         LOG.debug { "new plugin updates: ${downloaders.joinToString { it.pluginName }}" }
         val activeProject = ProjectUtil.getActiveProject()
         val downloadedList = if (activeProject != null) {
