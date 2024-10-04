@@ -4,7 +4,6 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT
 import com.intellij.ide.util.gotoByName.GotoActionModel
-import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Disposer
@@ -51,7 +50,7 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
     }
     Disposer.register(project, searchEverywhereUI)
 
-    val elements = runBlocking(Dispatchers.EDT) { searchEverywhereUI.findElementsForPattern("delete all breakpoints") }.get()
+    val elements = runOnEdt { searchEverywhereUI.findElementsForPattern("delete all breakpoints") }.await()
 
     val items = elements.filterIsInstance<GotoActionModel.MatchedValue>().map { (it.value as GotoActionModel.ActionWrapper).actionText }
 
@@ -67,7 +66,7 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
     val semanticSearchEverywhereUI = runBlocking(Dispatchers.EDT) { SearchEverywhereUI(project, listOf(semanticActionContributor)) }
     Disposer.register(project, semanticSearchEverywhereUI)
 
-    val results = runBlocking(Dispatchers.EDT) { semanticSearchEverywhereUI.findElementsForPattern("") }.get()
+    val results = runOnEdt { semanticSearchEverywhereUI.findElementsForPattern("") }.await()
 
     assertEquals("expected no results from semantic contributor for empty query",
                  0, results.filterIsInstance<GotoActionModel.MatchedValue>().mapNotNull { it.value as? GotoActionModel.MatchedValue }.size)
@@ -96,8 +95,8 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
       prefixes.addAll(lastAdded)
     }
 
-    fun findResultsFromUI(ui: SearchEverywhereUI, query: String): List<String> {
-      return runBlocking(Dispatchers.EDT) { ui.findElementsForPattern(query) }.get()
+    suspend fun findResultsFromUI(ui: SearchEverywhereUI, query: String): List<String> {
+      return runOnEdt { ui.findElementsForPattern(query) }.await()
         .filterIsInstance<GotoActionModel.MatchedValue>()
         .mapNotNull { it.value as? GotoActionModel.ActionWrapper }
         // 'Include disabled actions' checkbox is automatically set in standard search when no results found.

@@ -62,7 +62,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     val searchEverywhereUI = runBlocking(Dispatchers.EDT) { SearchEverywhereUI(project, listOf(contributor), { _ -> null }, null) }
     Disposer.register(project, searchEverywhereUI)
 
-    val elements = runBlocking(Dispatchers.EDT) { searchEverywhereUI.findElementsForPattern("begin indexing") }.get()
+    val elements = runOnEdt { searchEverywhereUI.findElementsForPattern("begin indexing") }.await()
 
     val items: List<PsiElement> = elements.filterIsInstance<PsiItemWithSimilarity<*>>().mapNotNull { extractPsiElement(it) }
     assertEquals(2, items.size)
