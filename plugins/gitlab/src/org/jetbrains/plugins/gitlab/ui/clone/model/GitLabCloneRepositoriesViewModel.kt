@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.gitlab.ui.clone.model
 
 import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -16,26 +14,22 @@ import com.intellij.platform.util.coroutines.childScope
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.ui.GitShallowCloneViewModel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
-import org.jetbrains.plugins.gitlab.api.request.getCloneableProjects
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
-import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneException
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneListItem
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel.SearchModel
-import java.net.ConnectException
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Paths
 
 internal interface GitLabCloneRepositoriesViewModel : GitLabClonePanelViewModel {
-  val isLoading: Flow<Boolean>
-  val accountsUpdatedRequest: SharedFlow<Set<GitLabAccount>>
+  val listVm: GitLabCloneRepositoriesListViewModel
 
-  val items: SharedFlow<List<GitLabCloneListItem>>
   val searchValue: SharedFlow<SearchModel>
   val selectedUrl: SharedFlow<String?>
 
@@ -48,8 +42,6 @@ internal interface GitLabCloneRepositoriesViewModel : GitLabClonePanelViewModel 
   fun setSearchValue(text: String)
 
   fun setDirectoryPath(path: String)
-
-  fun reload()
 
   fun doClone(checkoutListener: CheckoutProvider.Listener)
 
@@ -64,46 +56,16 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
   private val accountManager: GitLabAccountManager,
-  private val switchToLoginAction: (GitLabAccount) -> Unit,
+  switchToLoginAction: (GitLabAccount) -> Unit,
 ) : GitLabCloneRepositoriesViewModel {
   private val apiManager: GitLabApiManager = service<GitLabApiManager>()
   private val vcsNotifier: VcsNotifier = VcsNotifier.getInstance(project)
 
-  private val cs: CoroutineScope = parentCs.childScope("GitLabCloneRepositoriesViewModel")
+  private val cs: CoroutineScope = parentCs.childScope(javaClass.name)
 
-  private val taskLauncher: SingleCoroutineLauncher = SingleCoroutineLauncher(cs.childScope("TaskLauncher", context = Dispatchers.IO))
-  override val isLoading: Flow<Boolean> = taskLauncher.busy
+  override val listVm: GitLabCloneRepositoriesListViewModel = GitLabCloneRepositoriesListViewModelImpl(cs, accountManager, switchToLoginAction)
 
-  private val reloadRepositoriesRequest: MutableSharedFlow<Unit> = MutableSharedFlow(replay = 1)
-
-  override val accountsUpdatedRequest: SharedFlow<Set<GitLabAccount>> = accountManager.accountsState.transformLatest { accounts ->
-    emit(accounts)
-    coroutineScope {
-      accounts.forEach { account ->
-        launch {
-          accountManager.getCredentialsFlow(account).collectLatest {
-            emit(accounts)
-          }
-        }
-      }
-    }
-  }.modelFlow(cs, thisLogger())
-
-  private val _selectedItem: MutableStateFlow<GitLabCloneListItem?> = MutableStateFlow(null)
-
-  override val items: SharedFlow<List<GitLabCloneListItem>> = combine(reloadRepositoriesRequest, accountsUpdatedRequest, ::Pair)
-    .transformLatest { (_, accounts) ->
-      taskLauncher.launch {
-        val repositories = mutableListOf<GitLabCloneListItem>()
-        accounts.forEach { account ->
-          collectRepositoriesByAccount(account)
-            .collect {
-              repositories.addAll(it)
-              emit(repositories)
-            }
-        }
-      }
-    }.modelFlow(cs, thisLogger())
+  private val selectedItem: MutableStateFlow<GitLabCloneListItem?> = MutableStateFlow(null)
 
   private val _searchValue: MutableStateFlow<String> = MutableStateFlow("")
   override val searchValue: SharedFlow<SearchModel> = _searchValue.mapState(cs) { text ->
@@ -117,7 +79,7 @@ internal class GitLabCloneRepositoriesViewModelImpl(
     }
   }
 
-  private val _selectedUrl: StateFlow<String?> = combine(searchValue, _selectedItem) { searchValue, selectedItem ->
+  private val _selectedUrl: StateFlow<String?> = combine(searchValue, selectedItem) { searchValue, selectedItem ->
     when {
       searchValue is SearchModel.Url -> searchValue.url
       selectedItem != null && selectedItem is GitLabCloneListItem.Repository -> selectedItem.project.httpUrlToRepo
@@ -136,7 +98,7 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   }
 
   override fun selectItem(item: GitLabCloneListItem?) {
-    _selectedItem.value = item
+    selectedItem.value = item
   }
 
   override fun setSearchValue(text: String) {
@@ -145,12 +107,6 @@ internal class GitLabCloneRepositoriesViewModelImpl(
 
   override fun setDirectoryPath(path: String) {
     directoryPath.value = path
-  }
-
-  override fun reload() {
-    cs.launch {
-      reloadRepositoriesRequest.emit(Unit)
-    }
   }
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener) {
@@ -187,30 +143,6 @@ internal class GitLabCloneRepositoriesViewModelImpl(
       shallowCloneVm.getShallowCloneOptions(),
     )
   }
-
-  private fun collectRepositoriesByAccount(account: GitLabAccount): Flow<List<GitLabCloneListItem>> =
-    flow {
-      try {
-        val token = accountManager.findCredentials(account) ?: run {
-          emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken { switchToLoginAction(account) })))
-          return@flow
-        }
-        val apiClient = apiManager.getClient(account.server) { token }
-        apiClient.graphQL.getCloneableProjects()
-          .map { l -> l.map { GitLabCloneListItem.Repository(account, it) } }
-          .collect { emit(it) }
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (_: ConnectException) {
-        emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.ConnectionError(::reload))))
-      }
-      catch (e: Throwable) {
-        val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("clone.dialog.error.load.repositories")
-        emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.Unknown(errorMessage, ::reload))))
-      }
-    }
 
   private fun notifyCreateDirectoryFailed(message: String) {
     thisLogger().error(CollaborationToolsBundle.message("clone.dialog.error.unable.to.create.destination.directory"), message)

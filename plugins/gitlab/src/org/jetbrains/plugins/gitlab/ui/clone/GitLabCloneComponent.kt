@@ -26,7 +26,7 @@ import javax.swing.JComponent
 internal class GitLabCloneComponent(
   private val project: Project,
   parentCs: CoroutineScope,
-  private val vm: GitLabCloneViewModel
+  private val vm: GitLabCloneViewModel,
 ) : VcsCloneDialogExtensionComponent() {
   private val cs: CoroutineScope = parentCs.childScope(javaClass.name, Dispatchers.Main)
 
@@ -48,7 +48,7 @@ internal class GitLabCloneComponent(
           }
 
           innerCs.launchNow {
-            panelVm.accountsUpdatedRequest.collectLatest {
+            panelVm.listVm.allItems.collectLatest {
               dialogStateListener.onListItemChanged()
             }
           }

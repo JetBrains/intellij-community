@@ -52,7 +52,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
     project: Project,
     cs: CoroutineScope,
     repositoriesVm: GitLabCloneRepositoriesViewModel,
-    cloneVm: GitLabCloneViewModel
+    cloneVm: GitLabCloneViewModel,
   ): DialogPanel {
     val searchField = createSearchField(repositoriesVm)
     val directoryField = createDirectoryField(project, cs, repositoriesVm)
@@ -105,7 +105,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
     cs: CoroutineScope,
     repositoriesVm: GitLabCloneRepositoriesViewModel,
     accountsModel: ListModel<GitLabAccount>,
-    repositoriesModel: ListModel<GitLabCloneListItem>
+    repositoriesModel: ListModel<GitLabCloneListItem>,
   ): JBList<GitLabCloneListItem> {
     return JBList(repositoriesModel).apply {
       cellRenderer = createRepositoryRenderer(accountsModel, repositoriesModel)
@@ -113,7 +113,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
       selectionModel.addListSelectionListener {
         repositoriesVm.selectItem(selectedValue)
       }
-      bindBusyIn(cs, repositoriesVm.isLoading)
+      bindBusyIn(cs, repositoriesVm.listVm.isLoading)
 
       val mouseAdapter = LinkActionMouseAdapter(this)
       addMouseListener(mouseAdapter)
@@ -133,8 +133,8 @@ internal object GitLabCloneRepositoriesComponentFactory {
   private fun createAccountsModel(cs: CoroutineScope, repositoriesVm: GitLabCloneRepositoriesViewModel): ListModel<GitLabAccount> {
     val accountsModel = CollectionListModel<GitLabAccount>()
     cs.launch {
-      repositoriesVm.accountsUpdatedRequest.collectLatest { accounts ->
-        accountsModel.replaceAll(accounts.toList())
+      repositoriesVm.listVm.allAccounts.collectLatest { accounts ->
+        accountsModel.replaceAll(accounts)
       }
     }
 
@@ -143,11 +143,11 @@ internal object GitLabCloneRepositoriesComponentFactory {
 
   private fun createRepositoriesModel(
     cs: CoroutineScope,
-    repositoriesVm: GitLabCloneRepositoriesViewModel
+    repositoriesVm: GitLabCloneRepositoriesViewModel,
   ): ListModel<GitLabCloneListItem> {
     val repositoriesModel = CollectionListModel<GitLabCloneListItem>()
     cs.launch {
-      repositoriesVm.items.collectLatest { items ->
+      repositoriesVm.listVm.allItems.collectLatest { items ->
         repositoriesModel.replaceAll(items)
       }
     }
@@ -157,7 +157,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
 
   private fun createRepositoryRenderer(
     accountsModel: ListModel<GitLabAccount>,
-    repositoriesModel: ListModel<GitLabCloneListItem>
+    repositoriesModel: ListModel<GitLabCloneListItem>,
   ): ListCellRenderer<GitLabCloneListItem> {
     return GroupedRenderer.create(
       baseRenderer = GitLabCloneListRenderer(),
@@ -189,7 +189,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
   private fun createDirectoryField(
     project: Project,
     cs: CoroutineScope,
-    repositoriesVm: GitLabCloneRepositoriesViewModel
+    repositoriesVm: GitLabCloneRepositoriesViewModel,
   ): TextFieldWithBrowseButton {
     val directoryField = TextFieldWithBrowseButton().apply {
       addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()

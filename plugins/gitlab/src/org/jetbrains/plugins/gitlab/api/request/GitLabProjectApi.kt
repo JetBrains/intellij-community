@@ -8,7 +8,6 @@ import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.api.page.ApiPageUtil
-import com.intellij.collaboration.async.collectBatches
 import com.intellij.collaboration.util.resolveRelative
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -73,7 +72,7 @@ internal fun GitLabApi.GraphQL.getCloneableProjects(): Flow<List<GitLabProjectFo
     withErrorStats(GitLabGQLQuery.GET_MEMBER_PROJECTS_FOR_CLONE) {
       loadResponse<GitLabProjectsForCloneDTO>(request, "projects").body()
     }
-  }.map { it.nodes }.collectBatches()
+  }.map { it.nodes }
 
 @SinceGitLab("10.3")
 suspend fun GitLabApi.Rest.getProjectNamespace(namespaceId: String): HttpResponse<out GitLabNamespaceRestDTO> {
@@ -89,7 +88,7 @@ suspend fun GitLabApi.GraphQL.createMergeRequest(
   project: GitLabProjectCoordinates,
   sourceBranch: String,
   targetBranch: String,
-  title: String
+  title: String,
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
   val parameters = mapOf(
     "projectId" to project.projectPath.fullPath(),
@@ -113,5 +112,5 @@ private class WorkItemConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List
 private class GitLabCreateMergeRequestResult(
   mergeRequest: GitLabMergeRequestDTO,
   errors: List<String>?,
-  override val value: GitLabMergeRequestDTO = mergeRequest
+  override val value: GitLabMergeRequestDTO = mergeRequest,
 ) : GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>(errors)
