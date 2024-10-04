@@ -58,6 +58,7 @@ abstract class AbstractEmbeddingsStorageWrapper(
     accessTime.set(System.nanoTime())
     if (isEnabled()) {
       indexLoadingMutex.withLock {
+        if (EmbeddingIndexMemoryManager.getInstance().checkCanAddEntry()) return@withLock
         load()
         index.addEntries(values)
       }
@@ -78,6 +79,7 @@ abstract class AbstractEmbeddingsStorageWrapper(
 
   override suspend fun startIndexingSession() {
     accessTime.set(System.nanoTime())
+    EmbeddingIndexMemoryManager.getInstance().registerIndex(index)
     if (isEnabled()) {
       index.onIndexingStart()
     }

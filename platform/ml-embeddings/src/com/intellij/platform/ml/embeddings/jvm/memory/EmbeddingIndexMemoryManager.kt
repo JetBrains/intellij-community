@@ -22,7 +22,9 @@ class EmbeddingIndexMemoryManager {
       } else null
     }
 
-  fun registerIndex(index: EmbeddingSearchIndex) = trackedIndices.add(index)
+  fun registerIndex(index: EmbeddingSearchIndex) {
+    trackedIndices.add(index)
+  }
 
   suspend fun checkCanAddEntry(): Boolean {
     val limit = applicationEmbeddingsMemoryLimit
