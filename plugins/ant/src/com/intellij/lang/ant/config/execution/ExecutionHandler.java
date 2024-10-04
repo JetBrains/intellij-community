@@ -42,7 +42,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -75,15 +74,6 @@ public final class ExecutionHandler {
     return null;
   }
 
-
-  @Deprecated(forRemoval = true)
-  public static void runBuild(final AntBuildFileBase buildFile,
-                              String[] targets,
-                              @Nullable final AntBuildMessageView buildMessageViewToReuse,
-                              final DataContext dataContext,
-                              List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
-    runBuild(buildFile, Arrays.asList(targets), buildMessageViewToReuse, dataContext, additionalProperties, antBuildListener);
-  }
 
   /**
    * @param antBuildListener should not be null. Use {@link AntBuildListener#NULL}
