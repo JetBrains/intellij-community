@@ -367,9 +367,6 @@ public class BreakpointsDialog extends DialogWrapper {
 
   private void collectGroupingRules() {
     myRulesAvailable.addAll(XBreakpointGroupingRule.EP.getExtensionList());
-    for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
-      provider.createBreakpointsGroupingRules(myRulesAvailable);
-    }
     myRulesAvailable.sort(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
 
     myRulesEnabled.clear();

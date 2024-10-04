@@ -49,9 +49,6 @@ public abstract class DebuggerSupport {
   }
 
   private static final BreakpointPanelProvider<?> EMPTY_PANEL_PROVIDER = new BreakpointPanelProvider<>() {
-    @Override
-    public void createBreakpointsGroupingRules(Collection collection) {
-    }
 
     @Override
     public void addListener(BreakpointsListener listener, Project project, Disposable disposable) {

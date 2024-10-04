@@ -394,7 +394,6 @@ c:com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider
 - com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider
 - <init>():V
 - addListener(com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider$BreakpointsListener,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
-- createBreakpointsGroupingRules(java.util.Collection):V
 - findBreakpoint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,I):com.intellij.xdebugger.breakpoints.XBreakpoint
 - getBreakpointGutterIconRenderer(java.lang.Object):com.intellij.openapi.editor.markup.GutterIconRenderer
 - getPriority():I
@@ -485,7 +484,6 @@ a:com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 a:com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider
 - <init>():V
 - a:addListener(com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider$BreakpointsListener,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
-- a:createBreakpointsGroupingRules(java.util.Collection):V
 - a:findBreakpoint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,I):java.lang.Object
 - a:getBreakpointGutterIconRenderer(java.lang.Object):com.intellij.openapi.editor.markup.GutterIconRenderer
 - a:getPriority():I

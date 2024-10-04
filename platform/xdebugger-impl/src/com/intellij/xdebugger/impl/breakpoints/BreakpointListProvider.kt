@@ -114,7 +114,6 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
         val manager = XDebuggerManager.getInstance(project).breakpointManager as? XBreakpointManagerImpl
         val selectedRules = manager?.breakpointsDialogSettings?.selectedGroupingRules
         val enabledRules = mutableListOf<XBreakpointGroupingRule<Any, XBreakpointGroup>>()
-          .apply { providers.forEach { it.createBreakpointsGroupingRules(this) } }
           .apply { addAll(XBreakpointGroupingRule.EP.extensionList) }
           .filter { it.isAlwaysEnabled || true == selectedRules?.contains(it.id) }
           .toSortedSet(XBreakpointGroupingRule.PRIORITY_COMPARATOR)
