@@ -140,7 +140,7 @@ internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
     return
   }
 
-  val mnemonic = TextWithMnemonic.fromMnemonicText(label.text, true)
+  val mnemonic = TextWithMnemonic.fromMnemonicText(label.text, false)
   val mnemonicExists = label.displayedMnemonic != 0 || label.displayedMnemonicIndex >= 0 || mnemonic?.hasMnemonic() == true
   if (cell !is CellImpl<*>) {
     if (mnemonicExists) {
