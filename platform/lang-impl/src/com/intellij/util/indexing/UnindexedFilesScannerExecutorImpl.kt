@@ -8,8 +8,6 @@ import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -254,12 +252,6 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, private va
     task as UnindexedFilesScanner
     LOG.debug(Throwable("submit task, ${project.name}[${project.locationHash}], thread=${Thread.currentThread()}"))
 
-    var modality = ModalityState.defaultModalityState()
-    if (modality == ModalityState.any()) {
-      LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL")
-      modality = ModalityState.nonModal()
-    }
-
     val historyFuture = SettableFuture.create<ProjectScanningHistory>()
     if (ApplicationManager.getApplication().isDispatchThread) {
       ApplicationManager.getApplication().runWriteAction {
@@ -267,7 +259,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, private va
       }
     }
     else {
-      schedulingTasksScope.launch(modality.asContextElement() + Dispatchers.EDT, start = CoroutineStart.ATOMIC) {
+      schedulingTasksScope.launch(Dispatchers.EDT, start = CoroutineStart.ATOMIC) {
         try {
           ensureActive()
           blockingContext {
