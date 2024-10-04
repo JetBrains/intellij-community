@@ -18,7 +18,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneListItem
@@ -56,14 +55,13 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
   private val accountManager: GitLabAccountManager,
-  switchToLoginAction: (GitLabAccount) -> Unit,
 ) : GitLabCloneRepositoriesViewModel {
   private val apiManager: GitLabApiManager = service<GitLabApiManager>()
   private val vcsNotifier: VcsNotifier = VcsNotifier.getInstance(project)
 
   private val cs: CoroutineScope = parentCs.childScope(javaClass.name)
 
-  override val listVm: GitLabCloneRepositoriesListViewModel = GitLabCloneRepositoriesListViewModelImpl(cs, accountManager, switchToLoginAction)
+  override val listVm: GitLabCloneRepositoriesListViewModel = GitLabCloneRepositoriesListViewModelImpl(cs, accountManager)
 
   private val selectedItem: MutableStateFlow<GitLabCloneListItem?> = MutableStateFlow(null)
 

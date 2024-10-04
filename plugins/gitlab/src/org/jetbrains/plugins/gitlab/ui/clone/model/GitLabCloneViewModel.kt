@@ -29,10 +29,10 @@ internal class GitLabCloneViewModelImpl(
   parentCs: CoroutineScope,
   accountManager: GitLabAccountManager
 ) : GitLabCloneViewModel {
-  private val cs: CoroutineScope = parentCs.childScope()
+  private val cs: CoroutineScope = parentCs.childScope(javaClass.name)
 
   private val loginVm = GitLabCloneLoginViewModelImpl(cs, accountManager)
-  private val repositoriesVm = GitLabCloneRepositoriesViewModelImpl(project, cs, accountManager, ::switchToLoginPanel)
+  private val repositoriesVm = GitLabCloneRepositoriesViewModelImpl(project, cs, accountManager)
 
   private val accounts: SharedFlow<Set<GitLabAccount>> = accountManager.accountsState
 

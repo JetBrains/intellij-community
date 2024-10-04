@@ -35,7 +35,6 @@ private class GitLabCloneRepositoriesForAccountViewModelImpl(
   parentCs: CoroutineScope,
   private val accountManager: GitLabAccountManager,
   override val account: GitLabAccount,
-  private val switchToLoginAction: (GitLabAccount) -> Unit,
 ) : GitLabCloneRepositoriesForAccountViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -48,10 +47,11 @@ private class GitLabCloneRepositoriesForAccountViewModelImpl(
   @OptIn(ExperimentalCoroutinesApi::class)
   override val items: StateFlow<List<GitLabCloneListItem>> =
     reloadSignal.withInitial(Unit).transformLatest { _ ->
-      try {
-        _isLoading.value = true
-        val token = accountManager.findCredentials(account) ?: run {
-          emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken{ switchToLoginAction(account) })))
+
+        try {
+          _isLoading.value = true
+          val token = accountManager.findCredentials(account) ?: run {
+            emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken(account))))
           return@transformLatest
         }
         val apiClient = apiManager.getClient(account.server) { token }
@@ -64,12 +64,11 @@ private class GitLabCloneRepositoriesForAccountViewModelImpl(
         throw e
       }
       catch (_: ConnectException) {
-        emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.ConnectionError(::reload))))
+        emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.ConnectionError(account))))
       }
       catch (e: Throwable) {
-
           val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("clone.dialog.error.load.repositories")
-          emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.Unknown(errorMessage, ::reload))))
+          emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.Unknown(account, errorMessage))))
       }
       finally {
         _isLoading.value = false
@@ -108,7 +107,6 @@ internal interface GitLabCloneRepositoriesListViewModel {
 internal class GitLabCloneRepositoriesListViewModelImpl(
   parentCs: CoroutineScope,
   accountManager: GitLabAccountManager,
-  private val switchToLoginAction: (GitLabAccount) -> Unit,
 ) : GitLabCloneRepositoriesListViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -117,7 +115,7 @@ internal class GitLabCloneRepositoriesListViewModelImpl(
   @OptIn(ExperimentalCoroutinesApi::class)
   private val listsPerAccount = reloadSignal.withInitial(Unit).flatMapLatest { _ ->
     accountManager.accountsState.mapModelsToViewModels<GitLabAccount, GitLabCloneRepositoriesForAccountViewModel> { account ->
-      GitLabCloneRepositoriesForAccountViewModelImpl(this, accountManager, account, switchToLoginAction)
+      GitLabCloneRepositoriesForAccountViewModelImpl(this, accountManager, account)
     }
   }.stateIn(cs, SharingStarted.Eagerly, listOf())
 

@@ -65,7 +65,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
       VcsCloneDialogUiSpec.Components.avatarSize,
       AccountsPopupConfig(cloneVm)
     )
-    val repositoryList = createRepositoryList(cs, repositoriesVm, accountsModel, repositoriesModel)
+    val repositoryList = createRepositoryList(cs, cloneVm, repositoriesVm, accountsModel, repositoriesModel)
     CollaborationToolsUIUtil.attachSearch(repositoryList, searchField) { cloneItem ->
       when (cloneItem) {
         is GitLabCloneListItem.Error -> ""
@@ -103,12 +103,13 @@ internal object GitLabCloneRepositoriesComponentFactory {
 
   private fun createRepositoryList(
     cs: CoroutineScope,
+    cloneVm: GitLabCloneViewModel,
     repositoriesVm: GitLabCloneRepositoriesViewModel,
     accountsModel: ListModel<GitLabAccount>,
     repositoriesModel: ListModel<GitLabCloneListItem>,
   ): JBList<GitLabCloneListItem> {
     return JBList(repositoriesModel).apply {
-      cellRenderer = createRepositoryRenderer(accountsModel, repositoriesModel)
+      cellRenderer = createRepositoryRenderer(cloneVm, repositoriesVm, accountsModel, repositoriesModel)
       isFocusable = false
       selectionModel.addListSelectionListener {
         repositoriesVm.selectItem(selectedValue)
@@ -156,11 +157,13 @@ internal object GitLabCloneRepositoriesComponentFactory {
   }
 
   private fun createRepositoryRenderer(
+    cloneVm: GitLabCloneViewModel,
+    repositoriesVm: GitLabCloneRepositoriesViewModel,
     accountsModel: ListModel<GitLabAccount>,
     repositoriesModel: ListModel<GitLabCloneListItem>,
   ): ListCellRenderer<GitLabCloneListItem> {
     return GroupedRenderer.create(
-      baseRenderer = GitLabCloneListRenderer(),
+      baseRenderer = GitLabCloneListRenderer(cloneVm, repositoriesVm.listVm),
       hasSeparatorAbove = { value, index ->
         when (index) {
           0 -> accountsModel.size > 1
