@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public enum BidiTextDirection {
   CONTENT_BASED, LTR, RTL
 }

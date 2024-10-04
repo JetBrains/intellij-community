@@ -8,6 +8,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 class P3PathsEx(private val projectStoreBaseDir: Path) {
   companion object {
     @ApiStatus.Experimental

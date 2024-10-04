@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@ApiStatus.Internal
 public abstract class DataValidators {
   private static final Logger LOG = Logger.getInstance(DataValidators.class);
 

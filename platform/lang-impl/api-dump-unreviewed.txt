@@ -8434,8 +8434,8 @@ f:com.intellij.framework.library.impl.FrameworkLibraryVersionImpl
 - getPresentableName():java.lang.String
 - getVersionNumber():java.lang.String
 c:com.intellij.framework.library.impl.LibraryVersionsFetcher
-- com.intellij.util.download.impl.FileSetVersionsFetcherBase
 - com.intellij.framework.library.DownloadableLibraryDescription
+- com.intellij.util.download.DownloadableFileSetVersions
 - <init>(java.lang.String,java.net.URL[]):V
 - p:createAvailabilityCondition(com.intellij.facet.frameworks.beans.Artifact):com.intellij.framework.FrameworkAvailabilityCondition
 - p:createFileDescription(com.intellij.facet.frameworks.beans.ArtifactItem,java.lang.String,java.lang.String):com.intellij.framework.library.DownloadableLibraryFileDescription

@@ -7255,12 +7255,6 @@ f:com.intellij.openapi.editor.actions.EditorActionUtil
 - s:findFirstNonSpaceColumnOnTheLine(com.intellij.openapi.editor.Editor,I):I
 - s:findFirstNonSpaceOffsetInRange(java.lang.CharSequence,I,I):I
 - s:findFirstNonSpaceOffsetOnTheLine(com.intellij.openapi.editor.Document,I):I
-- s:getNextCaretStopOffset(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.actions.CaretStopPolicy,Z):I
-- s:getNextCaretStopOffset(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.actions.CaretStopPolicy,Z,Z):I
-- s:getNextLineStopOffset(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.actions.CaretStop):I
-- s:getPreviousCaretStopOffset(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.actions.CaretStopPolicy,Z):I
-- s:getPreviousCaretStopOffset(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.actions.CaretStopPolicy,Z,Z):I
-- s:getPreviousLineStopOffset(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.actions.CaretStop):I
 - s:getRangeToWordEnd(com.intellij.openapi.editor.Editor,Z,Z):com.intellij.openapi.util.TextRange
 - s:getRangeToWordStart(com.intellij.openapi.editor.Editor,Z,Z):com.intellij.openapi.util.TextRange
 - s:indentLine(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,I):V
@@ -7287,8 +7281,6 @@ f:com.intellij.openapi.editor.actions.EditorActionUtil
 - s:moveCaretToPreviousWord(com.intellij.openapi.editor.Editor,Z,Z):V
 - s:moveCaretToTextEnd(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):V
 - s:moveCaretToTextStart(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):V
-- s:moveToNextCaretStop(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.actions.CaretStopPolicy,Z,Z):V
-- s:moveToPreviousCaretStop(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.actions.CaretStopPolicy,Z,Z):V
 - s:scrollRelatively(com.intellij.openapi.editor.Editor,I,I,Z):V
 - s:selectEntireLines(com.intellij.openapi.editor.Caret):V
 - s:selectEntireLines(com.intellij.openapi.editor.Caret,Z):V
@@ -9805,10 +9797,9 @@ f:com.intellij.openapi.fileTypes.ex.FileTypeChooser
 - getPreferredFocusedComponent():javax.swing.JComponent
 - getSelectedType():com.intellij.openapi.fileTypes.FileType
 c:com.intellij.openapi.fileTypes.impl.AbstractFileType
-- com.intellij.openapi.fileTypes.UserFileType
 - com.intellij.openapi.fileTypes.PlainTextLikeFileType
+- com.intellij.openapi.fileTypes.UserFileType
 - com.intellij.openapi.fileTypes.ex.ExternalizableFileType
-- com.intellij.openapi.fileTypes.impl.AbstractFileTypeBase
 - com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType
 - com.intellij.openapi.options.ExternalizableScheme
 - <init>(com.intellij.ide.highlighter.custom.SyntaxTable):V

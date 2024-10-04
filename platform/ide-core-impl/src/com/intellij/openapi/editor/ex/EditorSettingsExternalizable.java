@@ -123,6 +123,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
 
+    @ApiStatus.Internal
     public BidiTextDirection BIDI_TEXT_DIRECTION = BidiTextDirection.CONTENT_BASED;
 
     // todo: useful? schedule for removal?
@@ -176,6 +177,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     storages = @Storage(value = "editor.os-specific.xml", roamingType = RoamingType.PER_OS),
     category = SettingsCategory.CODE
   )
+  @ApiStatus.Internal
   public static final class OsSpecificState implements PersistentStateComponent<OsSpecificState> {
     public CaretStopOptions CARET_STOP_OPTIONS = new CaretStopOptions();
 
@@ -212,6 +214,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     this(ApplicationManager.getApplication().getService(OsSpecificState.class));
   }
 
+  @ApiStatus.Internal
   @NonInjectable
   public EditorSettingsExternalizable(@NotNull OsSpecificState state) {
     myOsSpecificState = state;
@@ -1033,10 +1036,12 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ADD_CARETS_ON_DOUBLE_CTRL, old, val);
   }
 
+  @ApiStatus.Internal
   public BidiTextDirection getBidiTextDirection() {
     return myOptions.BIDI_TEXT_DIRECTION;
   }
 
+  @ApiStatus.Internal
   public void setBidiTextDirection(BidiTextDirection direction) {
     BidiTextDirection old = myOptions.BIDI_TEXT_DIRECTION;
     if (old == direction) return;
@@ -1081,10 +1086,12 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SOFT_WRAP_FILE_MASKS, old, value);
   }
 
+  @ApiStatus.Internal
   public @NotNull CaretStopOptions getCaretStopOptions() {
     return myOsSpecificState.CARET_STOP_OPTIONS;
   }
 
+  @ApiStatus.Internal
   public void setCaretStopOptions(@NotNull CaretStopOptions options) {
     myOsSpecificState.CARET_STOP_OPTIONS = options;
   }

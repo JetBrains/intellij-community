@@ -2,9 +2,11 @@
 package com.intellij.util;
 
 import com.intellij.util.containers.IntObjectLRUMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class IntSLRUCache<T> {
   private static final boolean ourPrintDebugStatistics = false;
   private final IntObjectLRUMap<T> myProtectedQueue;
