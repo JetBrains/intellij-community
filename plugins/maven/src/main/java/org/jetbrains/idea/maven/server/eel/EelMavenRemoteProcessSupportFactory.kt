@@ -45,10 +45,12 @@ class EelRemotePathTransformFactory : RemotePathTransformerFactory {
 
     return object : RemotePathTransformerFactory.Transformer {
       override fun toRemotePath(localPath: String): String {
+        if (localPath.isEmpty()) return localPath
         return eel.mapper.getOriginalPath(Path(localPath)).toString()
       }
 
       override fun toIdePath(remotePath: String): String {
+        if (remotePath.isEmpty()) return remotePath
         return eel.mapper.toNioPath(eel.fs.getPath(remotePath).getOrThrow()).toString()
       }
 
