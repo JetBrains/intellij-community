@@ -38,6 +38,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 
 @ApiStatus.Internal
 public final class StubIndexImpl extends StubIndexEx {
@@ -277,15 +278,15 @@ public final class StubIndexImpl extends StubIndexEx {
   @Override
   void cleanupMemoryStorage() {
     UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> stubUpdatingIndex = getStubUpdatingIndex();
-    stubUpdatingIndex.getLock().writeLock().lock();
-
+    Lock mainIndexWriteLock = stubUpdatingIndex.getLock().writeLock();
+    mainIndexWriteLock.lock();
     try {
       for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
         index.cleanupMemoryStorage();
       }
     }
     finally {
-      stubUpdatingIndex.getLock().writeLock().unlock();
+      mainIndexWriteLock.unlock();
     }
   }
 
