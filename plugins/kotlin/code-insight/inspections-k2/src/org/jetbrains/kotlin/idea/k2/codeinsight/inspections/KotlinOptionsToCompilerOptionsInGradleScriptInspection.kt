@@ -8,7 +8,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.prevLeafs
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -140,10 +139,14 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
 
     private fun isDescendantOfDslInWhichReplacementIsNotNeeded(ktExpression: KtExpression): Boolean {
         val scriptText = ktExpression.containingFile.text
-        if (scriptText.contains("android")) {
-            return ktExpression.prevLeafs.any { it.text == "android" }
+        return if (scriptText.contains("android")) {
+            val parents = generateSequence<PsiElement>(ktExpression) { it.parent }.toList()
+            parents.any {
+                it is KtCallExpression && it.text.startsWith("android")
+            }
+        } else {
+            false
         }
-        return false
     }
 
     private fun expressionsContainForbiddenOperations(element: PsiElement): Boolean {
