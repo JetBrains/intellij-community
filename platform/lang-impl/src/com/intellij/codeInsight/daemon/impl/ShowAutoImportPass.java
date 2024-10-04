@@ -69,7 +69,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (InlinePrompt.isInlinePromptShown(myEditor)) {
+    if (isInlinePromptShown()) {
       return;
     }
 
@@ -109,7 +109,7 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
         return;
       }
 
-      if (InlinePrompt.isInlinePromptShown(myEditor)) {
+      if (isInlinePromptShown()) {
         return;
       }
 
@@ -137,6 +137,10 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
         }
       }
     }, myProject.getDisposed());
+  }
+
+  private boolean isInlinePromptShown() {
+    return InlinePrompt.isInlinePromptShown(myEditor) || InlinePrompt.isInlinePromptGenerating(myEditor);
   }
 
   private void importUnambiguousImports() {
