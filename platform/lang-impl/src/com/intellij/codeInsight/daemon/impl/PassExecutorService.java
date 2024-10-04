@@ -102,6 +102,7 @@ final class PassExecutorService implements Disposable {
       // must not wait in EDT because waitFor() might inadvertently steal some work from FJP and try to run it and fail with "must not execute in EDT"
       ThreadingAssertions.assertBackgroundThread();
     }
+    // there's a bug in CHM which leads to very slow .clear() after many puts (see e.g. IJPL-163472 Freeze in DaemonListeners$MyApplicationListener.writeActionFinished). So we toss the old CHM and replace with the new
     Map<? extends ScheduledPass, ? extends Job> submittedPasses = mySubmittedPasses.getAndSet(new ConcurrentHashMap<>());
     try {
       for (Map.Entry<? extends ScheduledPass, ? extends Job> entry : submittedPasses.entrySet()) {
