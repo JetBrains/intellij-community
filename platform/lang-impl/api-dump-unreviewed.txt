@@ -3616,7 +3616,6 @@ f:com.intellij.codeInsight.highlighting.HighlightManagerImpl
 - addOccurrenceHighlight(com.intellij.openapi.editor.Editor,I,I,com.intellij.openapi.editor.colors.TextAttributesKey,I,java.util.Collection):V
 - addOccurrenceHighlight(com.intellij.openapi.editor.Editor,I,I,com.intellij.openapi.editor.markup.TextAttributes,I,java.util.Collection,java.awt.Color):V
 - addOccurrenceHighlights(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement[],com.intellij.openapi.editor.colors.TextAttributesKey,Z,java.util.Collection):V
-- addOccurrenceHighlights(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement[],com.intellij.openapi.editor.markup.TextAttributes,Z,java.util.Collection):V
 - addOccurrenceHighlights(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiReference[],com.intellij.openapi.editor.colors.TextAttributesKey,Z,java.util.Collection):V
 - addRangeHighlight(com.intellij.openapi.editor.Editor,I,I,com.intellij.openapi.editor.colors.TextAttributesKey,Z,java.util.Collection):V
 - addRangeHighlight(com.intellij.openapi.editor.Editor,I,I,com.intellij.openapi.editor.colors.TextAttributesKey,Z,Z,java.util.Collection):V
@@ -12479,7 +12478,6 @@ f:com.intellij.ide.util.EditorHelper
 f:com.intellij.ide.util.FileStructurePopup
 - com.intellij.ide.structureView.newStructureView.TreeActionsOwner
 - com.intellij.openapi.Disposable
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.FileEditor,com.intellij.ide.structureView.StructureView,Z):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.FileEditor,com.intellij.ide.structureView.StructureViewModel):V
 - createCenterPanel():javax.swing.JComponent
 - dispose():V
@@ -14045,7 +14043,6 @@ f:com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 - s:appendStyledSpan(java.lang.StringBuilder,com.intellij.openapi.editor.colors.TextAttributesKey,java.lang.String,F):java.lang.StringBuilder
 - s:appendStyledSpan(java.lang.StringBuilder,com.intellij.openapi.editor.markup.TextAttributes,java.lang.String,F):java.lang.StringBuilder
 - s:appendStyledSpan(java.lang.StringBuilder,java.lang.String,java.lang.String[]):java.lang.StringBuilder
-- s:getHighlightedByLexerAndEncodedAsHtmlCodeSnippet(com.intellij.openapi.project.Project,com.intellij.lang.Language,java.lang.String,F):java.lang.String
 - s:getHtmlContent(com.intellij.psi.PsiFile,java.lang.CharSequence,com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder$RangeIterator,com.intellij.openapi.editor.colors.EditorColorsScheme,I,I):java.lang.CharSequence
 - s:getHtmlContent(java.lang.CharSequence,com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder$RangeIterator,com.intellij.openapi.editor.colors.EditorColorsScheme,I):java.lang.CharSequence
 - s:getStyledSpan(com.intellij.openapi.editor.colors.TextAttributesKey,java.lang.String,F):java.lang.String

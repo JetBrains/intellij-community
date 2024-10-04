@@ -376,7 +376,6 @@ f:com.intellij.util.SystemProperties
 - s:getFloatProperty(java.lang.String,F):F
 - s:getIntProperty(java.lang.String,I):I
 - s:getJavaHome():java.lang.String
-- s:getLineSeparator():java.lang.String
 - s:getLongProperty(java.lang.String,J):J
 - s:getUserHome():java.lang.String
 - s:getUserName():java.lang.String

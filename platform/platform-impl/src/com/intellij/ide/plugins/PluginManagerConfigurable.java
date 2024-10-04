@@ -1964,14 +1964,6 @@ public final class PluginManagerConfigurable
     myPluginModel.clear(myCardPanel);
   }
 
-  /**
-   * @deprecated Please use {@link #select(Collection)}.
-   */
-  @Deprecated(since = "2020.2", forRemoval = true)
-  public void select(@NotNull IdeaPluginDescriptor @NotNull ... descriptors) {
-    select(ContainerUtil.newHashSet(descriptors));
-  }
-
   private void select(@NotNull Set<? extends IdeaPluginDescriptor> descriptors) {
     select(ContainerUtil.map(descriptors, IdeaPluginDescriptor::getPluginId));
   }

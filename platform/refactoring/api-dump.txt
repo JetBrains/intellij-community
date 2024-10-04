@@ -6,7 +6,6 @@ a:com.intellij.codeInsight.highlighting.HighlightManager
 - a:addOccurrenceHighlight(com.intellij.openapi.editor.Editor,I,I,com.intellij.openapi.editor.colors.TextAttributesKey,I,java.util.Collection):V
 - a:addOccurrenceHighlight(com.intellij.openapi.editor.Editor,I,I,com.intellij.openapi.editor.markup.TextAttributes,I,java.util.Collection,java.awt.Color):V
 - a:addOccurrenceHighlights(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement[],com.intellij.openapi.editor.colors.TextAttributesKey,Z,java.util.Collection):V
-- a:addOccurrenceHighlights(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiElement[],com.intellij.openapi.editor.markup.TextAttributes,Z,java.util.Collection):V
 - a:addOccurrenceHighlights(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiReference[],com.intellij.openapi.editor.colors.TextAttributesKey,Z,java.util.Collection):V
 - a:addRangeHighlight(com.intellij.openapi.editor.Editor,I,I,com.intellij.openapi.editor.colors.TextAttributesKey,Z,java.util.Collection):V
 - a:addRangeHighlight(com.intellij.openapi.editor.Editor,I,I,com.intellij.openapi.editor.colors.TextAttributesKey,Z,Z,java.util.Collection):V

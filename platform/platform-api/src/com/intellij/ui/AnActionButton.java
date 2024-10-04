@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -214,31 +213,15 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
 
   /** @deprecated Use {@link ToolbarDecorator#addExtraAction(AnAction)} directly */
   @Deprecated(forRemoval = true)
-  public static class ToggleableButtonWrapper extends AnActionButtonWrapper implements Toggleable {
+  private static class ToggleableButtonWrapper extends AnActionButtonWrapper implements Toggleable {
     public ToggleableButtonWrapper(Presentation presentation, @NotNull AnAction action) {
       super(presentation, action);
     }
   }
 
-  /** @deprecated Use regular <b>popup</b> {@link ActionGroup} instead */
-  @Deprecated(forRemoval = true)
-  public static class GroupPopupWrapper extends AnActionButtonWrapper {
-    public GroupPopupWrapper(@NotNull ActionGroup group) {
-      super(group.getTemplatePresentation(), group);
-      setShortcut(group.getShortcutSet());
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      RelativePoint relativePoint = getPreferredPopupPoint();
-      JBPopupMenu.showAt(relativePoint, ActionManager.getInstance().createActionPopupMenu(
-        e.getPlace(), (ActionGroup)getDelegate()).getComponent());
-    }
-  }
-
   /** @deprecated See {@link AnActionButtonWrapper} and {@link #getPreferredPopupPoint}*/
   @Deprecated(forRemoval = true)
-  public static final class AnActionEventWrapper extends AnActionEvent {
+  private static final class AnActionEventWrapper extends AnActionEvent {
     private final AnActionButton myPeer;
 
     private AnActionEventWrapper(AnActionEvent e, AnActionButton peer) {

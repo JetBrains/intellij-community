@@ -26,9 +26,6 @@ a:com.intellij.codeInspection.AbstractInspectionToolStarter
 - p:getApplication():com.intellij.codeInspection.InspectionApplicationBase
 - main(java.util.List):V
 - premain(java.util.List):V
-f:com.intellij.codeInspection.InspectionApplication
-- com.intellij.codeInspection.InspectionApplicationBase
-- <init>():V
 c:com.intellij.codeInspection.InspectionApplicationBase
 - com.intellij.ide.CommandLineInspectionProgressReporter
 - sf:LOG:com.intellij.openapi.diagnostic.Logger

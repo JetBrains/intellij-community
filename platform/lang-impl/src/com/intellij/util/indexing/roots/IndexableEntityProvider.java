@@ -93,30 +93,6 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
   }
 
   /**
-   * @deprecated This interface is deprecated and will be removed in a future release. For creation of iterators
-   * for existing {@link WorkspaceEntity} {@link com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor} is used.
-   */
-  @Deprecated(forRemoval = true)
-  interface Existing<E extends WorkspaceEntity> extends IndexableEntityProvider<E> {
-
-    /**
-     * Provides builders for iterators to index files when just project is indexed, no events given
-     */
-    default @NotNull Collection<? extends IndexableIteratorBuilder> getExistingEntityIteratorBuilder(@NotNull E entity,
-                                                                                            @NotNull Project project) {
-      return getAddedEntityIteratorBuilders(entity, project);
-    }
-
-    /**
-     * Provides builders for iterators to index files belonging to a module when just module content is indexed, no events given
-     */
-    @NotNull
-    Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
-                                                                                        @NotNull EntityStorage entityStorage,
-                                                                                        @NotNull Project project);
-  }
-
-  /**
    * Idea behind this marker interface is to mark that something should be reindexed as cheap as possible,
    * with expensive checks and merges made in batch in corresponding
    * {@link com.intellij.util.indexing.roots.builders.IndexableIteratorBuilderHandler#instantiate(Collection, Project, EntityStorage)}

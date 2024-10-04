@@ -484,7 +484,6 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - sf:getPlugin(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.IdeaPluginDescriptor
 - sf:getPluginByClassName(java.lang.String):com.intellij.openapi.extensions.PluginId
 - sf:getPluginNameAndVendor(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
-- sf:getPluginOrPlatformByClassName(java.lang.String):com.intellij.openapi.extensions.PluginId
 - sf:getPlugins():com.intellij.ide.plugins.IdeaPluginDescriptor[]
 - f:initializePlugins(com.intellij.ide.plugins.DescriptorListLoadingContext,com.intellij.ide.plugins.PluginLoadingResult,java.lang.ClassLoader,Z,com.intellij.diagnostic.Activity):com.intellij.ide.plugins.PluginManagerState
 - sf:invalidatePlugins():V
@@ -810,11 +809,9 @@ c:com.intellij.mock.MockApplication
 - getCurrentModalityState():com.intellij.openapi.application.ModalityState
 - getDefaultModalityState():com.intellij.openapi.application.ModalityState
 - getIdleTime():J
-- getInvokator():com.intellij.openapi.application.ModalityInvokator
 - getModalityStateForComponent(java.awt.Component):com.intellij.openapi.application.ModalityState
 - getNoneModalityState():com.intellij.openapi.application.ModalityState
 - f:getService(java.lang.Class):java.lang.Object
-- getServiceByClassName(java.lang.String):java.lang.Object
 - f:getServiceIfCreated(java.lang.Class):java.lang.Object
 - getStartTime():J
 - hasWriteAction(java.lang.Class):Z
@@ -2068,7 +2065,6 @@ f:com.intellij.psi.impl.DebugUtil
 - s:checkTreeStructure(com.intellij.lang.ASTNode):V
 - s:currentStackTrace():java.lang.String
 - s:diagnosePsiDocumentInconsistency(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document):java.lang.String
-- s:finishPsiModification():V
 - s:graphToString(com.intellij.util.graph.InboundSemiGraph):java.lang.String
 - s:graphToString(com.intellij.util.graph.OutboundSemiGraph):java.lang.String
 - s:lightTreeToString(com.intellij.util.diff.FlyweightCapableTreeStructure,Z):java.lang.String
@@ -2090,7 +2086,6 @@ f:com.intellij.psi.impl.DebugUtil
 - s:runWithCheckInternalInvariantsDisabled(com.intellij.util.ThrowableRunnable):V
 - s:runWithCheckInternalInvariantsEnabled(com.intellij.util.ThrowableRunnable):V
 - s:sleep(J):V
-- s:startPsiModification(java.lang.String):V
 - s:stubTreeToBuffer(com.intellij.psi.stubs.Stub,java.lang.Appendable,I):V
 - s:stubTreeToString(com.intellij.psi.stubs.Stub):java.lang.String
 - s:treeToBuffer(java.lang.Appendable,com.intellij.lang.ASTNode,I,Z,Z,Z,Z,Z):V

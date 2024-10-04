@@ -134,11 +134,9 @@ c:com.intellij.ide.projectView.PresentationData
 - setAttributesKey(com.intellij.openapi.editor.colors.TextAttributesKey):V
 - f:setBackground(java.awt.Color):V
 - setChanged(Z):V
-- setClosedIcon(javax.swing.Icon):V
 - setForcedTextForeground(java.awt.Color):V
 - setIcon(javax.swing.Icon):V
 - setLocationString(java.lang.String):V
-- setOpenIcon(javax.swing.Icon):V
 - setPresentableText(java.lang.String):V
 - setSeparatorAbove(Z):V
 - setTooltip(java.lang.String):V
@@ -1965,7 +1963,6 @@ com.intellij.openapi.editor.Inlay
 - a:isValid():Z
 - a:repaint():V
 - a:update():V
-- updateSize():V
 e:com.intellij.openapi.editor.Inlay$Placement
 - java.lang.Enum
 - sf:ABOVE_LINE:com.intellij.openapi.editor.Inlay$Placement

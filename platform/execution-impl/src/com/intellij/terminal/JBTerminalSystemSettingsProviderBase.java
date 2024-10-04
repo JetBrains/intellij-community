@@ -310,14 +310,4 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
                                                          ? KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.META_DOWN_MASK)
                                                          : KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
   }
-
-  /**
-   * @deprecated use {@link org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider#getCloseTabActionPresentation()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull TerminalActionPresentation getCloseSessionActionPresentation() {
-    return new TerminalActionPresentation("Close Session", ClientSystemInfo.isMac()
-                                                           ? KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.META_DOWN_MASK)
-                                                           : KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
-  }
 }

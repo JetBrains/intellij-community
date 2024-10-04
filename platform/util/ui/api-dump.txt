@@ -2509,7 +2509,6 @@ c:com.intellij.ui.JBColor
 - hashCode():I
 - s:isBright():Z
 - s:lazy(java.util.function.Supplier):com.intellij.ui.JBColor
-- s:link():java.awt.Color
 - s:marker(java.lang.String):java.awt.Color
 - s:namedColor(java.lang.String):com.intellij.ui.JBColor
 - s:namedColor(java.lang.String,I):com.intellij.ui.JBColor

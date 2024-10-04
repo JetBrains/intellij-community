@@ -1677,7 +1677,6 @@ f:com.intellij.openapi.actionSystem.Constraints
 - <init>(com.intellij.openapi.actionSystem.Anchor,java.lang.String):V
 - clone():java.lang.Object
 com.intellij.openapi.actionSystem.DataConstants
-- sf:EDITOR:java.lang.String
 - sf:PROJECT:java.lang.String
 - sf:VIRTUAL_FILE:java.lang.String
 c:com.intellij.openapi.actionSystem.DecorativeElement
@@ -5163,7 +5162,6 @@ a:com.intellij.openapi.ui.popup.JBPopupFactory
 - createActionGroupPopup(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,java.lang.Runnable,I):com.intellij.openapi.ui.popup.ListPopup
 - a:createActionGroupPopup(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition):com.intellij.openapi.ui.popup.ListPopup
 - a:createActionsStep(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,Z,Z,java.lang.String,java.awt.Component,Z,I,Z):com.intellij.openapi.ui.popup.ListPopupStep
-- createActionsStep(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,java.lang.String,java.awt.Component,Z):com.intellij.openapi.ui.popup.ListPopupStep
 - createActionsStep(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,java.lang.String,java.awt.Component,Z,I,Z):com.intellij.openapi.ui.popup.ListPopupStep
 - a:createBalloonBuilder(javax.swing.JComponent):com.intellij.openapi.ui.popup.BalloonBuilder
 - a:createComponentPopupBuilder(javax.swing.JComponent,javax.swing.JComponent):com.intellij.openapi.ui.popup.ComponentPopupBuilder
@@ -5211,7 +5209,6 @@ com.intellij.openapi.ui.popup.ListPopupStepEx
 - com.intellij.openapi.ui.popup.ListPopupStep
 - getSecondaryTextFor(java.lang.Object):java.lang.String
 - a:getTooltipTextFor(java.lang.Object):java.lang.String
-- getValueFor(java.lang.Object):java.lang.String
 - onChosen(java.lang.Object,Z,I):com.intellij.openapi.ui.popup.PopupStep
 - onChosen(java.lang.Object,Z,java.awt.event.InputEvent):com.intellij.openapi.ui.popup.PopupStep
 - a:setEmptyText(com.intellij.util.ui.StatusText):V
@@ -6023,20 +6020,9 @@ c:com.intellij.ui.AnActionButton$AnActionButtonWrapper
 - getDelegate():com.intellij.openapi.actionSystem.AnAction
 - isDumbAware():Z
 - updateButton(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ui.AnActionButton$AnActionEventWrapper
-- com.intellij.openapi.actionSystem.AnActionEvent
-- showPopup(com.intellij.openapi.ui.popup.JBPopup):V
 c:com.intellij.ui.AnActionButton$CheckedAnActionButton
 - com.intellij.ui.AnActionButton$AnActionButtonWrapper
 - com.intellij.openapi.actionSystem.CheckedActionGroup
-- <init>(com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.AnAction):V
-c:com.intellij.ui.AnActionButton$GroupPopupWrapper
-- com.intellij.ui.AnActionButton$AnActionButtonWrapper
-- <init>(com.intellij.openapi.actionSystem.ActionGroup):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-c:com.intellij.ui.AnActionButton$ToggleableButtonWrapper
-- com.intellij.ui.AnActionButton$AnActionButtonWrapper
-- com.intellij.openapi.actionSystem.Toggleable
 - <init>(com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.AnAction):V
 com.intellij.ui.AnActionButtonRunnable
 - com.intellij.util.ParameterizedRunnable
@@ -6806,7 +6792,6 @@ f:com.intellij.ui.IdeBorderFactory
 - s:createBorder(java.awt.Color):javax.swing.border.Border
 - s:createBorder(java.awt.Color,I):javax.swing.border.Border
 - s:createEmptyBorder():javax.swing.border.Border
-- s:createEmptyBorder(I):javax.swing.border.Border
 - s:createEmptyBorder(I,I,I,I):javax.swing.border.Border
 - s:createEmptyBorder(java.awt.Insets):javax.swing.border.Border
 - s:createRoundedBorder():com.intellij.ui.RoundedLineBorder
@@ -7222,7 +7207,6 @@ a:com.intellij.ui.PopupHandler
 - s:installFollowingSelectionTreePopup(javax.swing.JTree,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.PopupHandler
 - s:installPopupHandler(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):java.awt.event.MouseListener
 - s:installPopupHandler(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,com.intellij.openapi.actionSystem.ActionManager):java.awt.event.MouseListener
-- s:installPopupHandler(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,com.intellij.openapi.actionSystem.ActionManager,javax.swing.event.PopupMenuListener):java.awt.event.MouseListener
 - s:installPopupHandler(javax.swing.JComponent,java.lang.String,java.lang.String):V
 - s:installPopupMenu(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):com.intellij.ui.PopupHandler
 - s:installPopupMenu(javax.swing.JComponent,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,javax.swing.event.PopupMenuListener):com.intellij.ui.PopupHandler
@@ -12455,11 +12439,6 @@ f:com.intellij.util.ui.TimedDeadzone
 c:com.intellij.util.ui.TimedDeadzone$Length
 - <init>(I):V
 - getLength():I
-c:com.intellij.util.ui.Tree
-- com.intellij.ui.treeStructure.Tree
-- <init>():V
-- <init>(javax.swing.tree.TreeModel):V
-- <init>(javax.swing.tree.TreeNode):V
 f:com.intellij.util.ui.UI
 - <init>():V
 - s:scale(I):I

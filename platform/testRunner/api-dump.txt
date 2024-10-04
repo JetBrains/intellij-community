@@ -274,7 +274,6 @@ c:com.intellij.execution.testframework.ToolbarPanel
 - hasPreviousOccurence():Z
 - setModel(com.intellij.execution.testframework.TestFrameworkRunningModel):V
 f:com.intellij.execution.testframework.TrackRunningTestUtil
-- s:installStopListeners(javax.swing.JTree,com.intellij.openapi.Disposable,com.intellij.openapi.util.Pass):V
 - s:installStopListeners(javax.swing.JTree,com.intellij.openapi.Disposable,java.util.function.Consumer):V
 a:com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction
 - com.intellij.openapi.actionSystem.AnAction

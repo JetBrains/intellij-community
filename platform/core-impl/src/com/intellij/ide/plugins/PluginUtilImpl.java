@@ -2,13 +2,11 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -21,16 +19,6 @@ import java.util.StringTokenizer;
 @ApiStatus.Internal
 public class PluginUtilImpl implements PluginUtil {
   private static final Logger LOG = Logger.getInstance(PluginUtilImpl.class);
-
-  @Override
-  public @Nullable PluginId getCallerPlugin(int stackFrameCount) {
-    Class<?> aClass = ReflectionUtil.getCallerClass(stackFrameCount + 1);
-    if (aClass == null) {
-      return null;
-    }
-    ClassLoader classLoader = aClass.getClassLoader();
-    return classLoader instanceof PluginAwareClassLoader ? ((PluginAwareClassLoader)classLoader).getPluginId() : null;
-  }
 
   @Override
   public @Nullable PluginId findPluginId(@NotNull Throwable t) {

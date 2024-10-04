@@ -5,11 +5,9 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.ViewStructureAction;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.SearchableTextProvider;
-import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.newStructureView.*;
@@ -132,18 +130,6 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   private boolean myCanClose = true;
   private boolean myDisposed;
-  /**
-   * @noinspection unused
-   * @deprecated use {@link #FileStructurePopup(Project, FileEditor, StructureViewModel)}
-   */
-  @Deprecated(forRemoval = true)
-  public FileStructurePopup(@NotNull Project project,
-                            @NotNull FileEditor fileEditor,
-                            @NotNull StructureView structureView,
-                            boolean applySortAndFilter) {
-    this(project, fileEditor, ViewStructureAction.createStructureViewModel(project, fileEditor, structureView));
-    Disposer.register(this, structureView);
-  }
 
   public FileStructurePopup(@NotNull Project project,
                             @NotNull FileEditor fileEditor,

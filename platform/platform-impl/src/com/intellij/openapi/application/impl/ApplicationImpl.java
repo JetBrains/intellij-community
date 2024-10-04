@@ -245,13 +245,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     return getThreadingSupport().isWriteIntentLocked();
   }
 
-  @Deprecated
-  @Override
-  public @NotNull ModalityInvokator getInvokator() {
-    PluginException.reportDeprecatedUsage("Application.getInvokator", "Use `invokeLater` instead");
-    return myInvokator;
-  }
-
   @Override
   public void invokeLater(@NotNull Runnable runnable) {
     invokeLater(runnable, getDisposed());

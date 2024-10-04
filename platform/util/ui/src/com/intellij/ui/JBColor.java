@@ -178,14 +178,6 @@ public class JBColor extends Color {
 
   private static final Color CACHED_NULL = marker("CACHED_NULL");
 
-  /**
-   * @deprecated use {@link CurrentTheme.Link.Foreground#ENABLED}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull Color link() {
-    return CurrentTheme.Link.Foreground.ENABLED;
-  }
-
   public static void setDark(boolean dark) {
     DARK.setValue(dark);
   }

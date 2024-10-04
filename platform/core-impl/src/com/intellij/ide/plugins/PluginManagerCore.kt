@@ -196,11 +196,6 @@ object PluginManagerCore {
     return if (id == null || CORE_ID == id) null else id
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link PluginManager#getPluginByClass}.")
-  @JvmStatic
-  fun getPluginOrPlatformByClassName(className: String): PluginId? = getPluginDescriptorOrPlatformByClassName(className)?.getPluginId()
-
   @Internal
   @JvmStatic
   fun isPlatformClass(fqn: String): Boolean =

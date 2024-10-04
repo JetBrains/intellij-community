@@ -197,12 +197,6 @@ public final class FSRecords {
 
   /** @deprecated replace with apt FSRecords.getInstance() instance method */
   @Deprecated(forRemoval = true)
-  public static int getParent(int fileId) {
-    return implOrFail().getParent(fileId);
-  }
-
-  /** @deprecated replace with apt FSRecords.getInstance() instance method */
-  @Deprecated(forRemoval = true)
   public static boolean isDeleted(int fileId) {
     return implOrFail().isDeleted(fileId);
   }

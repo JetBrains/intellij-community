@@ -65,6 +65,5 @@ private class ApplicationInfoServiceDelegate : ApplicationInfoEx() {
   override fun getDefaultDarkLaf(): String? = delegate.defaultDarkLaf
   override fun getDefaultClassicDarkLaf(): String? = delegate.defaultClassicDarkLaf
   override fun isEAP(): Boolean = delegate.isEAP
-  override fun getBuildNumber(): String? = delegate.buildNumber
   override fun getSplashImageUrl(): String? = delegate.splashImageUrl
 }

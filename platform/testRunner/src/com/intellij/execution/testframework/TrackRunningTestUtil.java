@@ -4,7 +4,6 @@ package com.intellij.execution.testframework;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pass;
 import com.intellij.ui.ClickListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,12 +18,6 @@ import java.util.function.Consumer;
 
 public final class TrackRunningTestUtil {
   private TrackRunningTestUtil() { }
-
-  /** @deprecated use {@link #installStopListeners(JTree, Disposable, Consumer)} */
-  @Deprecated(forRemoval = true)
-  public static void installStopListeners(JTree tree, Disposable parentDisposable, Pass<? super AbstractTestProxy> setSelection) {
-    installStopListeners(tree, parentDisposable, (Consumer<? super AbstractTestProxy>)setSelection);
-  }
 
   public static void installStopListeners(JTree tree, Disposable parentDisposable, Consumer<? super AbstractTestProxy> setSelection) {
     final ClickListener userSelectionListener = new ClickListener() {

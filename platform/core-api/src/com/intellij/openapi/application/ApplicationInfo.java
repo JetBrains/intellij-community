@@ -126,13 +126,6 @@ public abstract class ApplicationInfo {
     return info != null && info.hasContextHelp();
   }
 
-  /** @deprecated use {@link #getBuild()} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public String getBuildNumber() {
-    return getBuild().asString();
-  }
-
   public boolean isEAP() {
     return false;
   }

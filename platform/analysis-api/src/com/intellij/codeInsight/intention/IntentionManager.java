@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
@@ -27,14 +26,6 @@ public abstract class IntentionManager {
    * should be shown.
    */
   public static final Key<Boolean> SHOW_INTENTION_OPTIONS_KEY = Key.create("SHOW_INTENTION_OPTIONS_KEY");
-
-  /**
-   * @deprecated Use {@link #getInstance()} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static IntentionManager getInstance(Project project) {
-    return getInstance();
-  }
 
   public static IntentionManager getInstance() {
     return ApplicationManager.getApplication().getService(IntentionManager.class);

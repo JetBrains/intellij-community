@@ -897,7 +897,6 @@ f:com.intellij.notification.Notifications$Bus
 - s:notify(com.intellij.notification.Notification):V
 - s:notify(com.intellij.notification.Notification,com.intellij.openapi.project.Project):V
 - *s:notifyAndHide(com.intellij.notification.Notification,com.intellij.openapi.project.Project):V
-- s:register(java.lang.String,com.intellij.notification.NotificationDisplayType):V
 a:com.intellij.notification.NotificationsConfiguration
 - com.intellij.notification.Notifications
 - sf:LIGHTWEIGHT_PREFIX:java.lang.String
@@ -1361,7 +1360,6 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:GROUP_NAVBAR_POPUP:java.lang.String
 - sf:GROUP_NAVBAR_TOOLBAR:java.lang.String
 - sf:GROUP_NEW:java.lang.String
-- sf:GROUP_OTHER_MENU:java.lang.String
 - sf:GROUP_PARAMETERS_VIEW_POPUP:java.lang.String
 - sf:GROUP_PROJECT_VIEW_POPUP:java.lang.String
 - sf:GROUP_REFACTOR:java.lang.String

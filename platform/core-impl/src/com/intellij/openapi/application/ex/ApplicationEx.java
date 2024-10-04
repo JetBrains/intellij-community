@@ -218,12 +218,6 @@ public interface ApplicationEx extends Application {
   }
 
   // in some cases, we cannot get service by class
-  /**
-   * Light service is not supported.
-   */
-  @Override
-  @ApiStatus.Internal
-  <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
 
   /**
    * @deprecated Use {@link com.intellij.ide.IdeEventQueue#flushNativeEventQueue IdeEventQueue.flushNativeEventQueue()}

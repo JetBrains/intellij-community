@@ -5241,7 +5241,6 @@ c:com.intellij.ui.popup.util.SplitterItem
 - updateAccessoryView(javax.swing.JComponent):V
 a:com.intellij.util.ActionRunner
 - <init>():V
-- s:runInsideReadAction(com.intellij.util.ActionRunner$InterruptibleRunnable):V
 - s:runInsideWriteAction(com.intellij.util.ActionRunner$InterruptibleRunnable):V
 - s:runInsideWriteAction(com.intellij.util.ActionRunner$InterruptibleRunnableWithResult):java.lang.Object
 com.intellij.util.ActionRunner$InterruptibleRunnable

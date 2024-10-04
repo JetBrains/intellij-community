@@ -55,20 +55,6 @@ public final class HtmlSyntaxInfoUtil {
     return appendStyledSpan(new StringBuilder(), attributes, value, saturationFactor).toString();
   }
 
-  /**
-   * @deprecated Use {@link QuickDocHighlightingHelper} for adding code fragments to documentation
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull String getHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-    @NotNull Project project,
-    @NotNull Language language,
-    @Nullable String codeSnippet,
-    float saturationFactor
-  ) {
-    return appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(new StringBuilder(), project, language, codeSnippet, saturationFactor)
-      .toString();
-  }
-
   public static @NotNull StringBuilder appendStyledSpan(
     @NotNull StringBuilder buffer,
     @Nullable String value,

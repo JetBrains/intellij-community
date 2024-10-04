@@ -45,11 +45,6 @@ public class DarculaButtonUI extends BasicButtonUI {
   protected final Rectangle iconRect = new Rectangle();
 
   protected static JBValue HELP_BUTTON_DIAMETER = new JBValue.Float(22);
-  /**
-   * @deprecated Use {@link JBUI.CurrentTheme.Button#minimumSize()}
-   */
-  @Deprecated(forRemoval = true)
-  protected static JBValue MINIMUM_BUTTON_WIDTH = new JBValue.Float(72);
   protected static JBValue HORIZONTAL_PADDING = new JBValue.Float(14);
 
   public static final Key<Boolean> DEFAULT_STYLE_KEY = Key.create("JButton.styleDefault");

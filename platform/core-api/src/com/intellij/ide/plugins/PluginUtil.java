@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.ApiStatus.Internal;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,15 +13,6 @@ public interface PluginUtil {
   static PluginUtil getInstance() {
     return ApplicationManager.getApplication().getService(PluginUtil.class);
   }
-
-  /**
-   * @deprecated This function is dangerous because it can be used in class initializers.
-   * This function was unintentionally exposed.
-   * This function was not expected to be used outside the code which deals with plugins (i.e., platform code).
-   */
-  @ScheduledForRemoval
-  @Deprecated
-  @Nullable PluginId getCallerPlugin(int stackFrameCount);
 
   @Nullable PluginId findPluginId(@NotNull Throwable t);
 

@@ -314,7 +314,6 @@ com.intellij.ide.plugins.IdeaPluginDescriptor
 com.intellij.ide.plugins.PluginUtil
 - a:findPluginId(java.lang.Throwable):com.intellij.openapi.extensions.PluginId
 - a:findPluginName(com.intellij.openapi.extensions.PluginId):java.lang.String
-- a:getCallerPlugin(I):com.intellij.openapi.extensions.PluginId
 - s:getInstance():com.intellij.ide.plugins.PluginUtil
 a:com.intellij.ide.util.PropertiesComponent
 - <init>():V
@@ -1290,7 +1289,6 @@ com.intellij.openapi.application.Application
 - exit(Z,Z,Z,I):V
 - a:getDefaultModalityState():com.intellij.openapi.application.ModalityState
 - a:getIdleTime():J
-- a:getInvokator():com.intellij.openapi.application.ModalityInvokator
 - a:getModalityStateForComponent(java.awt.Component):com.intellij.openapi.application.ModalityState
 - a:getStartTime():J
 - a:hasWriteAction(java.lang.Class):Z
@@ -1335,7 +1333,6 @@ a:com.intellij.openapi.application.ApplicationInfo
 - a:getApiVersion():java.lang.String
 - a:getBuild():com.intellij.openapi.util.BuildNumber
 - a:getBuildDate():java.util.Calendar
-- getBuildNumber():java.lang.String
 - a:getCompanyName():java.lang.String
 - a:getCompanyURL():java.lang.String
 - a:getFullApplicationName():java.lang.String
@@ -2350,9 +2347,6 @@ a:com.intellij.openapi.progress.EmptyProgressIndicatorBase
 - start():V
 - startNonCancelableSection():V
 - stop():V
-com.intellij.openapi.progress.NonCancelableSection
-- sf:EMPTY:com.intellij.openapi.progress.NonCancelableSection
-- a:done():V
 com.intellij.openapi.progress.PerformInBackgroundOption
 - sf:ALWAYS_BACKGROUND:com.intellij.openapi.progress.PerformInBackgroundOption
 - sf:DEAF:com.intellij.openapi.progress.PerformInBackgroundOption

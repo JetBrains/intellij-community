@@ -2238,7 +2238,6 @@ c:com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 - copyOnSelect():Z
 - getBufferMaxLinesCount():I
 - getClearBufferActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
-- getCloseSessionActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
 - getCopyActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
 - getCursorShape():com.jediterm.terminal.CursorShape
 - getDefaultBackground():com.jediterm.terminal.TerminalColor
@@ -2399,11 +2398,6 @@ f:com.intellij.terminal.TerminalShellCommandHandler$Companion
 - f:executeShellCommandHandler(com.intellij.openapi.project.Project,java.lang.String,Z,java.lang.String,com.intellij.execution.Executor):V
 - f:getEP():com.intellij.openapi.extensions.ExtensionPointName
 - f:matches(com.intellij.openapi.project.Project,java.lang.String,Z,java.lang.String):Z
-a:com.intellij.terminal.TerminalSplitAction
-- com.jediterm.terminal.ui.TerminalAction
-- actionPerformed(java.awt.event.KeyEvent):Z
-- s:create(Z,com.intellij.terminal.JBTerminalWidgetListener):com.intellij.terminal.TerminalSplitAction
-- a:split(Z):V
 f:com.intellij.terminal.TerminalTitle
 - <init>():V
 - f:addTitleListener(com.intellij.terminal.TerminalTitleListener,com.intellij.openapi.Disposable):V

@@ -518,7 +518,6 @@ com.intellij.util.PlatformIcons
 - sf:CUSTOM_FILE_ICON:javax.swing.Icon
 - sf:DELETE_ICON:javax.swing.Icon
 - sf:DIRECTORY_CLOSED_ICON:javax.swing.Icon
-- sf:DIRECTORY_OPEN_ICON:javax.swing.Icon
 - sf:EDIT:javax.swing.Icon
 - sf:EDIT_IN_SECTION_ICON:javax.swing.Icon
 - sf:ENUM_ICON:javax.swing.Icon

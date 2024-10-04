@@ -262,7 +262,6 @@ c:com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 - setTemplateFontSize(I):V
 - setUseLigatures(Z):V
 - useLigatures():Z
-com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme
 com.intellij.openapi.editor.ex.MarkupModelEx
 - com.intellij.openapi.editor.markup.MarkupModel
 - a:addMarkupModelListener(com.intellij.openapi.Disposable,com.intellij.openapi.editor.impl.event.MarkupModelListener):V

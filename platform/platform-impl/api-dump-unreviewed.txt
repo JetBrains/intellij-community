@@ -5152,13 +5152,11 @@ c:com.intellij.ide.ui.laf.darcula.DarculaLaf
 - getName():java.lang.String
 - getSupportsWindowDecorations():Z
 - initialize():V
-- sf:isAltPressed():Z
 - isNativeLookAndFeel():Z
 - isSupportedLookAndFeel():Z
 - p:loadSystemColors(javax.swing.UIDefaults,java.lang.String[],Z):V
 - uninitialize():V
 f:com.intellij.ide.ui.laf.darcula.DarculaLaf$Companion
-- f:isAltPressed():Z
 f:com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
 - javax.swing.UIManager$LookAndFeelInfo
 - sf:CLASS_NAME:java.lang.String
@@ -5250,7 +5248,6 @@ c:com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 - sf:DEFAULT_STYLE_KEY:com.intellij.openapi.util.Key
 - ps:HELP_BUTTON_DIAMETER:com.intellij.util.ui.JBValue
 - ps:HORIZONTAL_PADDING:com.intellij.util.ui.JBValue
-- ps:MINIMUM_BUTTON_WIDTH:com.intellij.util.ui.JBValue
 - pf:iconRect:java.awt.Rectangle
 - pf:textRect:java.awt.Rectangle
 - pf:viewRect:java.awt.Rectangle
@@ -8765,7 +8762,6 @@ Fa:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 - com.intellij.ui.switcher.QuickActionProvider
 - javax.swing.JPanel
-- <init>(com.intellij.openapi.actionSystem.ActionGroup):V
 - <init>(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.Disposable):V
 - addNotify():V
 - hideImmediately():V
@@ -8812,11 +8808,6 @@ f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultIm
 - s:register(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
 f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarUtilKt
 - sf:isInsideMainEditor(com.intellij.openapi.actionSystem.DataContext):Z
-com.intellij.openapi.fileChooser.FileSystemTreeFactory
-- a:createDefaultFileSystemActions(com.intellij.openapi.fileChooser.FileSystemTree):com.intellij.openapi.actionSystem.DefaultActionGroup
-- a:createFileSystemTree(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor):com.intellij.openapi.fileChooser.FileSystemTree
-f:com.intellij.openapi.fileChooser.FileSystemTreeFactory$SERVICE
-- s:getInstance():com.intellij.openapi.fileChooser.FileSystemTreeFactory
 a:com.intellij.openapi.fileChooser.actions.FileChooserAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
@@ -17480,7 +17471,6 @@ a:com.intellij.ui.popup.WizardPopup
 - p:myChild:com.intellij.ui.popup.WizardPopup
 - pf:myStep:com.intellij.openapi.ui.popup.PopupStep
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.ui.popup.JBPopup,com.intellij.openapi.ui.popup.PopupStep):V
-- <init>(com.intellij.openapi.ui.popup.PopupStep):V
 - f:actionPerformed(java.awt.event.ActionEvent):V
 - p:afterShow():V
 - cancel(java.awt.event.InputEvent):V

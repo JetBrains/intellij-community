@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,14 +60,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   private final InputMap myInputMap = new InputMap();
 
   private boolean myKeyPressedReceived;
-
-  /**
-   * @deprecated use {@link #WizardPopup(Project, JBPopup, PopupStep)}
-   */
-  @Deprecated(forRemoval = true)
-  public WizardPopup(@NotNull PopupStep<Object> aStep) {
-    this(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), null, aStep);
-  }
 
   public WizardPopup(@Nullable Project project, @Nullable JBPopup aParent, @NotNull PopupStep<Object> aStep) {
     myParent = (WizardPopup) aParent;

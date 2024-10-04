@@ -636,7 +636,6 @@ a:com.intellij.codeInsight.intention.IntentionManager
 - a:getAvailableIntentions(java.util.Collection):java.util.List
 - a:getCleanupIntentionOptions():java.util.List
 - s:getInstance():com.intellij.codeInsight.intention.IntentionManager
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.intention.IntentionManager
 - a:getIntentionActions():com.intellij.codeInsight.intention.IntentionAction[]
 - a:getStandardIntentionOptions(com.intellij.codeInsight.daemon.HighlightDisplayKey,com.intellij.psi.PsiElement):java.util.List
 - a:registerIntentionAndMetaData(com.intellij.codeInsight.intention.IntentionAction,java.lang.String[]):V

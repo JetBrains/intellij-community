@@ -25,7 +25,6 @@ import com.intellij.util.*;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.graph.OutboundSemiGraph;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -713,21 +712,4 @@ public final class DebugUtil {
       DebugUtil.CHECK = oldDebugUtilCheck;
     }
   }
-
-  //<editor-fold desc="Deprecated stuff">
-
-  /** @deprecated use {@link #performPsiModification} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static void startPsiModification(@Nullable String trace) {
-    beginPsiModification(trace);
-  }
-
-  /** @deprecated use {@link #performPsiModification} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static void finishPsiModification() {
-    endPsiModification();
-  }
-  //</editor-fold>
 }

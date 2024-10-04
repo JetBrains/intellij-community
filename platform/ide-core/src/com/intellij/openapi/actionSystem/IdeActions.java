@@ -242,11 +242,6 @@ public interface IdeActions {
 
   String GROUP_COMPILER_ERROR_VIEW_POPUP = "CompilerErrorViewPopupMenu";
 
-  /**
-   * @deprecated this group isn't registered by the platform anymore, use other groups instead
-   */
-  @Deprecated(forRemoval = true)
-  String GROUP_OTHER_MENU = "OtherMenu";
   String GROUP_EDITOR = "EditorActions";
   String GROUP_EDITOR_BIDI_TEXT_DIRECTION = "EditorBidiTextDirection";
 
