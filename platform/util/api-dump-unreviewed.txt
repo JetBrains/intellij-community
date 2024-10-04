@@ -775,9 +775,6 @@ f:com.intellij.openapi.util.MutualMap
 - put(java.lang.Object,java.lang.Object):V
 - remove(java.lang.Object):V
 - size():I
-com.intellij.openapi.util.NamedJDOMExternalizable
-- com.intellij.openapi.util.JDOMExternalizable
-- a:getExternalFileName():java.lang.String
 @:com.intellij.openapi.util.NlsContext
 - java.lang.annotation.Annotation
 - a:prefix():java.lang.String
