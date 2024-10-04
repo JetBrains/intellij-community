@@ -558,6 +558,7 @@ public final class LoadTextUtil {
     return getTextByBinaryPresentation(bytes, virtualFile, saveDetectedSeparators, saveBOM, true);
   }
 
+  @ApiStatus.Internal
   public static @NotNull CharSequence getTextByBinaryPresentation(byte @NotNull [] bytes,
                                                                   @NotNull VirtualFile virtualFile,
                                                                   boolean saveDetectedSeparators,
