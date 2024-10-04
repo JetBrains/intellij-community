@@ -32,6 +32,9 @@ private const val GET_STATE_METHOD_SIGNATURE = "()Lcom/intellij/ide/debug/Applic
 private const val READ_ACTION_ALLOWED_FIELD_NAME = "readActionAllowed"
 private const val WRITE_ACTION_ALLOWED_FIELD_NAME = "writeActionAllowed"
 private const val THREADING_SUPPORT_FQN = "com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport"
+private const val APPLICATION_IMPL_FQN = "com.intellij.openapi.application.impl.ApplicationImpl"
+private const val COROUTINES_KT_FQN = "com.intellij.openapi.application.CoroutinesKt"
+private const val ACTIONS_KT_FQN = "com.intellij.openapi.application.ActionsKt"
 
 
 internal class DebugeeIdeStateRenderer : ExtraDebugNodesProvider {
@@ -178,29 +181,37 @@ private fun isLockAccessMethod(frame: StackFrameProxy, isRead: Boolean): Boolean
 
 private fun isReadAccessCall(className: String, methodName: String): Boolean =
   className == "com.intellij.openapi.application.impl.NonBlockingReadActionImpl" && methodName == "executeSynchronously"
-  || ((className == "com.intellij.openapi.application.Application" || className == "com.intellij.openapi.application.impl.ApplicationImpl")
-      && (methodName == "runReadAction" || methodName == "runWriteIntentReadAction" || methodName == "tryRunReadAction"))
-  || className == "com.intellij.openapi.application.ActionsKt" && methodName == "runReadAction"
+  || (className == THREADING_SUPPORT_FQN || className == APPLICATION_IMPL_FQN) && isApplicationReadAccess(methodName)
+  || className == ACTIONS_KT_FQN && methodName == "runReadAction"
   || (className == "com.intellij.openapi.application.ReadAction"
       && (methodName == "run" || methodName == "execute" || methodName == "compute" || methodName == "computeCancellable"))
   || (className == "com.intellij.openapi.application.WriteIntentReadAction"
       && (methodName == "run" || methodName == "compute"))
-  || (className == "com.intellij.openapi.application.CoroutinesKt"
+  || (className == COROUTINES_KT_FQN
       && (methodName == "readAction" || methodName == "smartReadAction" || methodName == "constrainedReadAction"
           || methodName == "readActionUndispatched" || methodName == "constrainedReadActionUndispatched"
           || methodName == "readActionBlocking" || methodName == "smartReadActionBlocking"
           || methodName == "constrainedReadActionBlocking" || methodName == "writeIntentReadAction"))
 
 private fun isWriteAccessCall(className: String, methodName: String): Boolean =
-  ((className == "com.intellij.openapi.application.Application" || className == "com.intellij.openapi.application.impl.ApplicationImpl")
-   && (methodName == "runWriteAction" || methodName == "runWriteActionWithNonCancellableProgressInDispatchThread"
-       || methodName == "runIntendedWriteActionOnCurrentThread"))
-  || className == "com.intellij.openapi.application.ActionsKt" && methodName == "runWriteAction"
+  className == ACTIONS_KT_FQN && methodName == "runWriteAction"
   || (className == "com.intellij.openapi.application.WriteAction"
       && (methodName == "run" || methodName == "execute" || methodName == "compute" || methodName == "runAndWait" || methodName == "computeAndWait"))
-  || (className == "com.intellij.openapi.application.CoroutinesKt"
+  || (className == COROUTINES_KT_FQN
       && (methodName == "writeAction" || methodName == "readAndWriteAction" || methodName == "constrainedReadAndWriteAction"))
+  || (className == THREADING_SUPPORT_FQN || className == APPLICATION_IMPL_FQN) && isApplicationWriteAccess(methodName)
 
+private fun isApplicationReadAccess(methodName: String) =
+  methodName == "runReadAction"
+  || methodName == "runWriteIntentReadAction"
+  || methodName == "tryRunReadAction"
+  || methodName == "runIntendedWriteActionOnCurrentThread"
+
+private fun isApplicationWriteAccess(methodName: String) =
+  methodName == "runWriteAction"
+  || methodName == "executeSuspendingWriteAction"
+  || methodName == "runWriteActionWithNonCancellableProgressInDispatchThread"
+  || methodName == "runWriteActionWithCancellableProgressInDispatchThread"
 
 private fun addLinkToLockAccess(
   isRead: Boolean,
