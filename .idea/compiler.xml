@@ -59,7 +59,7 @@
       <module name="intellij.platform.lang.impl" options="-Xlint:unchecked --add-exports java.desktop/sun.awt.image=ALL-UNNAMED --add-exports java.desktop/sun.awt=ALL-UNNAMED" />
       <module name="intellij.platform.testFramework.common" options="-Xlint:unchecked --add-exports java.desktop/sun.awt=ALL-UNNAMED" />
       <module name="intellij.platform.ui.jcef" options="-Xlint:unchecked --add-exports java.desktop/sun.awt=ALL-UNNAMED --add-exports java.desktop/java.awt.peer=ALL-UNNAMED" />
-      <module name="intellij.platform.util.ui" options="-Xlint:unchecked --add-exports java.desktop/sun.font=ALL-UNNAMED" />
+      <module name="intellij.platform.util.ui" options="-Xlint:unchecked --add-exports java.desktop/sun.font=ALL-UNNAMED --add-exports java.desktop/sun.awt.image=ALL-UNNAMED" />
     </option>
     <option name="MAXIMUM_HEAP_SIZE" value="400" />
   </component>
