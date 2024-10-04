@@ -26,6 +26,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
 
+//MAYBE RC: MapReduceIndex vs MapReduceIndexBase is a bit odd naming/semantics, because MapReduceIndexBase is an abstract
+//          implementation of UpdatableIndex, but significant part of UpdatableIndex methods are implemented in MapReduceIndex
+//          Probably, it is better to rename MapReduceIndexBase -> MapReduceUpdatableIndex?
 @Internal
 public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex<Key, Value, Input>,
                                                                    MeasurableIndexStore {

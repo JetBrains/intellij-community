@@ -182,6 +182,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
   @Override
   public void cleanupForNextTest() {
     IndexStorage<Key, Value> memStorage = getStorage();
+    //TODO RC: why readLock is used for update operation?
+    //         Other modifications (e.g.removeTransientDataForFile) are protected with writeLock!
     ConcurrencyUtil.withLock(getLock().readLock(), () -> memStorage.clearCaches());
   }
 
