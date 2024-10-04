@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ref;
 
 import com.intellij.openapi.util.EmptyRunnable;
@@ -155,6 +155,7 @@ public final class GCWatcher {
       Path file = Paths.get(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), "GCWatcher.hprof.zip");
       MemoryDumpHelper.captureMemoryDumpZipped(file);
 
+      message += "\nMemory snapshot is available at " + file + "\n";
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println("##teamcity[publishArtifacts '" + file + "']");
     }
