@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
-class SettingChooserItemAction(val product: Product, val provider: ActionsDataProvider<*>, private val controller: ImportSettingsController) : DumbAwareAction() {
+internal class SettingChooserItemAction(val product: Product, val provider: ActionsDataProvider<*>, private val controller: ImportSettingsController) : DumbAwareAction() {
 
   override fun displayTextInToolbar(): Boolean {
     return true

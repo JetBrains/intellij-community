@@ -666,10 +666,10 @@ class IdeEventQueue private constructor() : EventQueue() {
     try {
       maybeReady()
       val me = e as? MouseEvent
-      val ke = e as? KeyEvent
-      val consumed = ke == null || ke.isConsumed
+      val keyEvent = e as? KeyEvent
+      val consumed = keyEvent == null || keyEvent.isConsumed
       if (me != null && (me.isPopupTrigger || e.id == MouseEvent.MOUSE_PRESSED) ||
-          ke != null /*&& ke.keyCode == KeyEvent.VK_CONTEXT_MENU*/) {
+          keyEvent != null /*&& ke.keyCode == KeyEvent.VK_CONTEXT_MENU*/) {
         popupTriggerTime = System.nanoTime()
       }
       val source = e.source
@@ -678,8 +678,8 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
       super.dispatchEvent(e)
       // collect mnemonics statistics only if a key event was processed above
-      if (!consumed && ke!!.isConsumed && KeyEvent.KEY_PRESSED == ke.id) {
-        logMnemonicUsed(ke)
+      if (!consumed && keyEvent.isConsumed && KeyEvent.KEY_PRESSED == keyEvent.id) {
+        logMnemonicUsed(keyEvent)
       }
     }
     catch (t: Throwable) {
@@ -703,24 +703,26 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
-  fun pumpEventsForHierarchy(modalComponent: Component, exitCondition: Future<*>, eventConsumer: Consumer<AWTEvent>) = resetThreadContext().use {
-    EDT.assertIsEdt()
-    Logs.LOG.debug { "pumpEventsForHierarchy($modalComponent, $exitCondition)" }
+  fun pumpEventsForHierarchy(modalComponent: Component, exitCondition: Future<*>, eventConsumer: Consumer<AWTEvent>) {
+    resetThreadContext().use {
+      EDT.assertIsEdt()
+      Logs.LOG.debug { "pumpEventsForHierarchy($modalComponent, $exitCondition)" }
 
-    while (!exitCondition.isDone) {
-      try {
-        val event = nextEvent
-        val consumed = consumeUnrelatedEvent(modalComponent, event)
-        if (!consumed) {
-          dispatchEvent(event)
+      while (!exitCondition.isDone) {
+        try {
+          val event = nextEvent
+          val consumed = consumeUnrelatedEvent(modalComponent, event)
+          if (!consumed) {
+            dispatchEvent(event)
+          }
+          eventConsumer.accept(event)
         }
-        eventConsumer.accept(event)
+        catch (e: Throwable) {
+          Logs.LOG.error(e)
+        }
       }
-      catch (e: Throwable) {
-        Logs.LOG.error(e)
-      }
+      Logs.LOG.debug { "pumpEventsForHierarchy.exit($modalComponent, $exitCondition)" }
     }
-    Logs.LOG.debug { "pumpEventsForHierarchy.exit($modalComponent, $exitCondition)" }
   }
 
   fun interface EventDispatcher {
@@ -912,11 +914,11 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
-  fun getPostedEventCount() = eventsPosted.get()
+  fun getPostedEventCount(): Long = eventsPosted.get()
 
-  fun getReturnedEventCount() = eventsReturned.get()
+  fun getReturnedEventCount(): Long = eventsReturned.get()
 
-  fun getPostedSystemEventCount() = (AppContext.getAppContext()?.get("jb.postedSystemEventCount") as? AtomicLong)?.get() ?: -1
+  fun getPostedSystemEventCount(): Long = (AppContext.getAppContext()?.get("jb.postedSystemEventCount") as? AtomicLong)?.get() ?: -1
 
   fun flushNativeEventQueue() {
     SunToolkit.flushPendingEvents()

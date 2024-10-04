@@ -73,8 +73,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
@@ -104,7 +102,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     fun canRunConfiguration(environment: ExecutionEnvironment): Boolean {
       return environment.runnerAndConfigurationSettings?.let {
         canRunConfiguration(it, environment.executor)
-      } ?: false
+      } == true
     }
 
     @JvmStatic
@@ -113,13 +111,13 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
         ThreadingAssertions.assertBackgroundThread()
         configuration.checkSettings(executor)
       }
-      catch (ignored: IndexNotReadyException) {
+      catch (_: IndexNotReadyException) {
         return false
       }
-      catch (ignored: RuntimeConfigurationError) {
+      catch (_: RuntimeConfigurationError) {
         return false
       }
-      catch (ignored: RuntimeConfigurationException) {
+      catch (_: RuntimeConfigurationException) {
       }
       return true
     }
@@ -305,7 +303,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
   }
 
   @get:ApiStatus.Internal
-  open val config by lazy { RunManagerConfig(PropertiesComponent.getInstance(project)) }
+  open val config: RunManagerConfig by lazy { RunManagerConfig(PropertiesComponent.getInstance(project)) }
 
   /**
    * Template configuration is not included
@@ -327,9 +325,11 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
   override val allConfigurationsList: List<RunConfiguration>
     get() = allSettings.mapSmart { it.configuration }
 
-  fun getSettings(configuration: RunConfiguration) = allSettings.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
+  fun getSettings(configuration: RunConfiguration): RunnerAndConfigurationSettingsImpl? {
+    return allSettings.firstOrNull { it.configuration === configuration } as? RunnerAndConfigurationSettingsImpl
+  }
 
-  override fun getConfigurationSettingsList(type: ConfigurationType) = allSettings.filter { it.type === type }
+  override fun getConfigurationSettingsList(type: ConfigurationType): List<RunnerAndConfigurationSettings> = allSettings.filter { it.type === type }
 
   fun getConfigurationsGroupedByTypeAndFolder(isIncludeUnknown: Boolean): Map<ConfigurationType, Map<String?, List<RunnerAndConfigurationSettings>>> {
     val result = LinkedHashMap<ConfigurationType, MutableMap<String?, MutableList<RunnerAndConfigurationSettings>>>()
@@ -563,7 +563,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
           if (removed == null) {
             removed = ArrayList()
           }
-          removed!!.add(settings)
+          removed.add(settings)
           if (--excess <= 0) {
             break
           }
@@ -976,7 +976,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     eventPublisher.runConfigurationSelected(selectedConfiguration)
   }
 
-  override fun hasSettings(settings: RunnerAndConfigurationSettings) = lock.read { idToSettings.get(settings.uniqueID) == settings }
+  override fun hasSettings(settings: RunnerAndConfigurationSettings): Boolean = lock.read { idToSettings.get(settings.uniqueID) == settings }
 
   private fun findExistingConfigurationId(settings: RunnerAndConfigurationSettings): String? {
     for ((key, value) in idToSettings) {
@@ -1249,7 +1249,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     return result ?: emptyList()
   }
 
-  override fun getBeforeRunTasks(configuration: RunConfiguration) = doGetBeforeRunTasks(configuration)
+  override fun getBeforeRunTasks(configuration: RunConfiguration): List<BeforeRunTask<*>> = doGetBeforeRunTasks(configuration)
 
   fun shareConfiguration(settings: RunnerAndConfigurationSettings, value: Boolean) {
     if (settings.isShared == value) {

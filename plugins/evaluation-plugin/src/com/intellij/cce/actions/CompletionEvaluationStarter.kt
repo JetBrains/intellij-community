@@ -18,12 +18,13 @@ import com.intellij.cce.evaluation.FinishEvaluationStep
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
 import com.intellij.cce.evaluation.step.runInIntellij
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
+import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
+import com.intellij.ide.commandNameFromExtension
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.application.ex.ApplicationEx.FORCE_EXIT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.platform.ide.bootstrap.commandNameFromExtension
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
@@ -70,14 +71,17 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
 
     protected val featureName by argument(name = "Feature name").default("rename")
 
-    protected fun <T : EvaluationStrategy> loadConfig(configPath: Path, strategySerializer: StrategySerializer<T>) = try {
-      println("Load config: $configPath")
-      val config = ConfigFactory.load(configPath, strategySerializer)
-      println("Config loaded!")
-      config
-    }
-    catch (e: Throwable) {
-      fatalError("Error for loading config: $configPath, $e. StackTrace: ${stackTraceToString(e)}")
+    protected fun <T : EvaluationStrategy> loadConfig(configPath: Path, strategySerializer: StrategySerializer<T>): Config {
+      try {
+        println("Load config: $configPath")
+        val config = ConfigFactory.load(configPath, strategySerializer)
+        println("Config loaded!")
+        return config
+      }
+      catch (e: Throwable) {
+        fatalError("Error for loading config: $configPath, $e. StackTrace: ${stackTraceToString(e)}")
+        throw e
+      }
     }
 
     protected fun runPreliminarySteps(feature: EvaluableFeature<*>, workspace: EvaluationWorkspace) {
@@ -93,7 +97,6 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
   }
 
   abstract class EvaluationCommandBase(name: String, help: String) : EvaluationCommand(name, help) {
-
     private val configPath by argument(name = "config-path", help = "Path to config").default(ConfigFactory.DEFAULT_CONFIG_NAME)
 
     override fun run() {
@@ -240,14 +243,17 @@ private fun readWorkspacesFromDirectory(directory: String): List<String> {
   return result
 }
 
-private fun exit(exitCode: Int): Nothing = try {
-  ApplicationManagerEx.getApplicationEx().exit(FORCE_EXIT, exitCode)
-  throw IllegalStateException("Process should be finished!!!")
-} catch (t: Throwable) {
-  exitProcess(exitCode)
+private fun exit(exitCode: Int) {
+  try {
+    ApplicationManagerEx.getApplicationEx().exit(FORCE_EXIT, exitCode)
+    throw IllegalStateException("Process should be finished!!!")
+  }
+  catch (_: Throwable) {
+    exitProcess(exitCode)
+  }
 }
 
-private fun fatalError(msg: String): Nothing {
+private fun fatalError(msg: String) {
   System.err.println("Evaluation failed: $msg")
   exit(1)
 }

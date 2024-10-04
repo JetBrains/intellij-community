@@ -3,12 +3,16 @@
 
 package com.intellij.ide.ui.laf.darcula
 
+import com.intellij.ide.ui.laf.createBaseLaF
 import com.intellij.ide.ui.laf.createRawDarculaTheme
 import com.intellij.ide.ui.laf.initBaseLaF
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.*
-import com.intellij.platform.ide.bootstrap.createBaseLaF
-import javax.swing.*
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsSafe
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.LookAndFeel
+import javax.swing.UIDefaults
 import javax.swing.plaf.basic.BasicLookAndFeel
 
 /**

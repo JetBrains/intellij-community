@@ -81,7 +81,8 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
   }
 }
 
-internal fun showDataSharingAgreement() {
+@ApiStatus.Internal
+fun showDataSharingAgreement() {
   showAgreementUi {
     configureDataSharing(bundle = DynamicBundle.getResourceBundle(this::class.java.classLoader, "messages.AgreementsBundle", Locale.getDefault()))
   }

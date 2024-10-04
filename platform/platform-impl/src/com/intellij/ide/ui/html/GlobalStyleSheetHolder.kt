@@ -44,7 +44,8 @@ object GlobalStyleSheetHolder {
 /**
  * Returns a global style sheet dynamically updated when LAF changes
  */
-internal fun createGlobalStyleSheet(): StyleSheet {
+@Internal
+fun createGlobalStyleSheet(): StyleSheet {
   // return a linked sheet to avoid mutation of a global variable
   val result = StyleSheet()
   result.addStyleSheet(globalStyleSheet)
@@ -69,7 +70,8 @@ internal suspend fun updateGlobalStyleSheet() {
   }
 }
 
-internal suspend fun initGlobalStyleSheet() {
+@Internal
+suspend fun initGlobalStyleSheet() {
   coroutineScope {
     launch(CoroutineName("EditorColorsManager preloading")) {
       serviceAsync<EditorColorsManager>()

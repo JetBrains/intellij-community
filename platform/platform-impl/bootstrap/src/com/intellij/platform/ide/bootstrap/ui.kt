@@ -7,8 +7,8 @@ import com.intellij.ide.AssertiveRepaintManager
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.html.createGlobalStyleSheet
-import com.intellij.ide.ui.laf.IdeaLaf
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
+import com.intellij.ide.ui.laf.createBaseLaF
 import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
@@ -26,19 +26,15 @@ import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
 import java.awt.dnd.DragSource
 import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 import javax.swing.JOptionPane
-import javax.swing.LookAndFeel
 import javax.swing.RepaintManager
 import javax.swing.UIManager
-import javax.swing.plaf.basic.BasicLookAndFeel
 import kotlin.system.exitProcess
 
 internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean, asyncScope: CoroutineScope) {
@@ -198,7 +194,7 @@ private fun blockATKWrapper() {
 
   val activity = StartUpMeasurer.startActivity("atk wrapper blocking")
   if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
-    // Replacing `AtkWrapper` with a fake `Object`. It'll be instantiated & garbage collected right away, a NOP.
+    // Replacing `AtkWrapper` with a fake `Object`. It'll be instantiated, and garbage collected right away, a NOP.
     System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object")
     logger<AppStarter>().info("${ScreenReader.ATK_WRAPPER} is blocked, see IDEA-149219")
   }
@@ -263,44 +259,4 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
       WeakFocusStackManager.getInstance()
     }
   }
-}
-
-// used by Rider
-@ApiStatus.Internal
-fun createBaseLaF(): LookAndFeel {
-  if (SystemInfoRt.isMac) {
-    val aClass = ClassLoader.getPlatformClassLoader().loadClass("com.apple.laf.AquaLookAndFeel")
-    return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
-  }
-  else if (!SystemInfoRt.isLinux || GraphicsEnvironment.isHeadless()) {
-    return IdeaLaf(customFontDefaults = null)
-  }
-
-  // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
-  // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
-  // and scale them based on Xft.dpi value.
-  try {
-    val aClass = ClassLoader.getPlatformClassLoader().loadClass("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
-    val gtk = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
-      .findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as LookAndFeel
-    // GTK is available
-    if (gtk.isSupportedLookAndFeel) {
-      // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
-      gtk.initialize()
-      val fontDefaults = HashMap<Any, Any?>()
-      val gtkDefaults = gtk.defaults
-      for (key in gtkDefaults.keys) {
-        if (key.toString().endsWith(".font")) {
-          // `UIDefaults#get` unwraps lazy values
-          fontDefaults.put(key, gtkDefaults[key])
-        }
-      }
-      @Suppress("UsePropertyAccessSyntax")
-      return IdeaLaf(customFontDefaults = if (fontDefaults.isEmpty()) null else fontDefaults)
-    }
-  }
-  catch (e: Exception) {
-    logger<AppStarter>().warn(e)
-  }
-  return IdeaLaf(customFontDefaults = null)
 }

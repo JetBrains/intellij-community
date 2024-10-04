@@ -27,8 +27,7 @@ internal class TestCoroutineProgressAction : AnAction() {
         awaitCancellation()
       }
     }
-    catch (ignored: ProcessCanceledException) {
-
+    catch (_: ProcessCanceledException) {
     }
 
     val project = e.project ?: return

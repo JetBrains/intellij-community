@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
+import com.intellij.ide.CommandLineProcessorKt;
 import com.intellij.ide.impl.OpenProjectTaskKt;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationStarter;
@@ -12,7 +13,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.platform.ide.bootstrap.ApplicationLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import kotlin.Unit;
@@ -80,7 +80,7 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
   }
 
   private void printUsageHint() {
-    var commandName = ApplicationLoader.getCommandNameFromExtension(this);
+    var commandName = CommandLineProcessorKt.getCommandNameFromExtension(this);
     System.out.printf(
       """
         Usage: %s pluginId* repository* (--for-project=<project-path>)* [--give-consent-to-use-third-party-plugins]
@@ -167,7 +167,7 @@ public class HeadlessPluginsInstaller implements ApplicationStarter {
   }
 
   private static void logInfo(String message) {
-    // info level logs are not printed to stdout/stderr by default and toolbox does not include stdout/stderr in its log
+    // info level logs are not printed to stdout/stderr by default, and toolbox does not include stdout/stderr in its log
     System.out.println(message);
     LOG.info(message);
   }

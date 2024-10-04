@@ -83,7 +83,10 @@ open class IdeStarter : ModernApplicationStarter() {
         serviceAsync<RecentProjectsManager>().updateLastProjectPath()
       }
 
-      val starter = FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(this@IdeStarter)
+      val starterClass = this@IdeStarter.javaClass
+      val starter = FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(
+        close = isHeadless || (starterClass != IdeStarter::class.java && starterClass != StandaloneLightEditStarter::class.java),
+      )
       if (starter != null) {
         if ((app as ApplicationEx).isLightEditMode) {
           FUSProjectHotStartUpMeasurer.lightEditProjectFound()

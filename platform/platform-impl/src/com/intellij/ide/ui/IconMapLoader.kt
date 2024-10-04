@@ -10,7 +10,6 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.LazyExtension
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.*
@@ -24,7 +23,7 @@ import java.util.function.BiFunction
 class IconMapLoader {
   private val cachedResult = AtomicReference<Map<ClassLoader, Map<String, String>>>()
 
-  internal suspend fun preloadIconMapping() {
+  suspend fun preloadIconMapping() {
     if (!IconMapperBean.EP_NAME.hasAnyExtensions()) {
       cachedResult.compareAndSet(null, emptyMap())
       return

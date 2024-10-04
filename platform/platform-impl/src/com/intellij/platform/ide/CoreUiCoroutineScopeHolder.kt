@@ -7,4 +7,4 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 @Service(value = [Service.Level.APP, Service.Level.PROJECT])
-internal class CoreUiCoroutineScopeHolder(@JvmField val coroutineScope: CoroutineScope)
+class CoreUiCoroutineScopeHolder(@JvmField val coroutineScope: CoroutineScope)

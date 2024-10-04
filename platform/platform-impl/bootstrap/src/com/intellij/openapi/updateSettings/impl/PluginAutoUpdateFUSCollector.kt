@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.application.PluginAutoUpdater
 
-internal class PluginAutoUpdateFUSCollector : ApplicationUsagesCollector() {
+private class PluginAutoUpdateFUSCollector : ApplicationUsagesCollector() {
   private val GROUP = EventLogGroup("ide.plugins.autoupdate", 1)
 
   override fun getGroup(): EventLogGroup = GROUP

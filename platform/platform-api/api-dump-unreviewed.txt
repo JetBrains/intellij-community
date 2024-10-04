@@ -10523,6 +10523,8 @@ com.intellij.ui.viewModel.extraction.ToolWindowViewModelListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:toolWindowChanged(java.lang.String):V
 - a:toolWindowsChanged():V
+f:com.intellij.util.ApplicationKt
+- sf:getApplication():com.intellij.openapi.application.Application
 c:com.intellij.util.ContentsUtil
 - <init>():V
 - s:addContent(com.intellij.ui.content.ContentManager,com.intellij.ui.content.Content,Z):V

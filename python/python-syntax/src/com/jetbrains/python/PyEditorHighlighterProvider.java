@@ -11,7 +11,7 @@ import com.jetbrains.python.highlighting.PythonEditorHighlighter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class PyEditorHighlighterProvider implements EditorHighlighterProvider {
+final class PyEditorHighlighterProvider implements EditorHighlighterProvider {
   @Override
   public EditorHighlighter getEditorHighlighter(@Nullable Project project,
                                                 @NotNull FileType fileType, @Nullable VirtualFile virtualFile,

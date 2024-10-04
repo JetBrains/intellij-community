@@ -21,14 +21,11 @@ import kotlin.system.measureNanoTime
  * future troubleshooting, reporting and investigation.
  */
 class DeferredRemoteProcess(private val promise: Promise<RemoteProcess>) : RemoteProcess() {
-  override fun getOutputStream(): OutputStream =
-    DeferredOutputStream()
+  override fun getOutputStream(): OutputStream = DeferredOutputStream()
 
-  override fun getInputStream(): InputStream =
-    DeferredInputStream { it.inputStream }
+  override fun getInputStream(): InputStream = DeferredInputStream { it.inputStream }
 
-  override fun getErrorStream(): InputStream =
-    DeferredInputStream { it.errorStream }
+  override fun getErrorStream(): InputStream = DeferredInputStream { it.errorStream }
 
   override fun waitFor(): Int = get().waitFor()
 
@@ -41,9 +38,10 @@ class DeferredRemoteProcess(private val promise: Promise<RemoteProcess>) : Remot
     return process?.waitFor(restTimeoutNanos, TimeUnit.NANOSECONDS) ?: false
   }
 
-  override fun exitValue(): Int =
-    tryGet()?.exitValue()
-    ?: throw IllegalStateException("Process is not terminated")
+  override fun exitValue(): Int {
+    return tryGet()?.exitValue()
+           ?: throw IllegalStateException("Process is not terminated")
+  }
 
   override fun destroy() {
     runNowOrSchedule {
@@ -51,11 +49,11 @@ class DeferredRemoteProcess(private val promise: Promise<RemoteProcess>) : Remot
     }
   }
 
-  override fun killProcessTree(): Boolean =
-    runNowOrSchedule {
+  override fun killProcessTree(): Boolean {
+    return runNowOrSchedule {
       it.killProcessTree()
-    }
-    ?: false
+    } ?: false
+  }
 
   override fun isDisconnected(): Boolean =
     tryGet()?.isDisconnected
@@ -82,16 +80,15 @@ class DeferredRemoteProcess(private val promise: Promise<RemoteProcess>) : Remot
     tryGet()?.isAlive
     ?: true
 
-  override fun onExit(): CompletableFuture<Process> =
-    CompletableFuture<Process>().also {
+  override fun onExit(): CompletableFuture<Process> {
+    return CompletableFuture<Process>().also {
       promise.then(it::complete)
     }
+  }
 
-  private fun get(): RemoteProcess =
-    promise.blockingGet(Int.MAX_VALUE)!!
+  private fun get(): RemoteProcess = promise.blockingGet(Int.MAX_VALUE)!!
 
-  private fun tryGet(): RemoteProcess? =
-    promise.takeUnless { it.isPending }?.blockingGet(0)
+  private fun tryGet(): RemoteProcess? = promise.takeUnless { it.isPending }?.blockingGet(0)
 
   private fun <T> runNowOrSchedule(handler: (RemoteProcess) -> T): T? {
     val process = tryGet()

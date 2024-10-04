@@ -54,7 +54,7 @@ internal fun <T : Any> computeAfterUpdateChanges(project: Project, parent: Corou
           indicator
         )
       }
-      catch (e: ProcessCanceledException) {
+      catch (_: ProcessCanceledException) {
         promise.cancel()
       }
       catch (e: Throwable) {

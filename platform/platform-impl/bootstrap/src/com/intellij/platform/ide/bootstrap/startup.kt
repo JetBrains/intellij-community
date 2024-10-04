@@ -209,7 +209,7 @@ fun CoroutineScope.startApplication(
   }
 
   val pluginSetDeferred = async {
-    // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
+    // plugins cannot be loaded when a config import is necessary, because plugins may be added after importing
     configImportDeferred.join()
 
     if (!PluginAutoUpdater.shouldSkipAutoUpdate()) {
@@ -298,7 +298,7 @@ fun CoroutineScope.startApplication(
     val starter = appLoaded.await()
 
     val isInitialStart = configImportDeferred.await()
-    // appLoaded not only provides starter, but also loads app, that's why it is here
+    // appLoaded not only provides starter but also loads app, that's why it is here
     launch {
       if (ConfigImportHelper.isFirstSession()) {
         IdeStartupWizardCollector.logWizardExperimentState()

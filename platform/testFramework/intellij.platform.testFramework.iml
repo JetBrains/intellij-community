@@ -13,10 +13,12 @@
     <orderEntry type="module" module-name="intellij.platform.lang" exported="" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="library" exported="" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />
     <orderEntry type="module" module-name="intellij.tools.testsBootstrap" />
     <orderEntry type="module" module-name="intellij.java.resources.en" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.java.rt" exported="" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.images" exported="" scope="RUNTIME" />

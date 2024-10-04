@@ -25,7 +25,7 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.*
 
-class ImportProgressPage(
+internal class ImportProgressPage(
   importFromProduct: DialogImportData,
   controller: ImportSettingsController,
   importTitleOverride:  @DialogTitle String?

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
@@ -24,7 +23,7 @@ import com.jetbrains.rd.util.lifetime.intersect
 import java.awt.*
 import javax.swing.*
 
-class ProductChooserPage(val controller: ImportSettingsController, override val backgroundImage: Image?) : OnboardingPage {
+internal class ProductChooserPage(val controller: ImportSettingsController, override val backgroundImage: Image?) : OnboardingPage {
   override val stage = StartupWizardStage.ProductChoicePage
   override fun confirmExit(parentComponent: Component?): Boolean {
     return true

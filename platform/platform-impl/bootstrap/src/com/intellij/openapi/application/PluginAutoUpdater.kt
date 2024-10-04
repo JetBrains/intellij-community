@@ -1,14 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.ide.plugins.IdeaPluginDependency
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginInstaller
-import com.intellij.ide.plugins.PluginLoadingResult
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.isBrokenPlugin
-import com.intellij.ide.plugins.loadDescriptorFromArtifact
-import com.intellij.ide.plugins.loadDescriptors
+import com.intellij.ide.plugins.*
 import com.intellij.openapi.application.PluginAutoUpdateRepository.PluginUpdateInfo
 import com.intellij.openapi.application.PluginAutoUpdateRepository.clearUpdates
 import com.intellij.openapi.application.PluginAutoUpdateRepository.getAutoUpdateDirPath
@@ -18,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.openapi.updateSettings.impl.findUnsatisfiedDependencies
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import kotlinx.coroutines.CompletableDeferred
@@ -27,9 +21,6 @@ import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.Result
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.forEach
 import kotlin.io.path.exists
 
 @ApiStatus.Internal
@@ -184,24 +175,6 @@ object PluginAutoUpdater {
       updatesToApply.add(id)
     }
     return UpdateCheckResult(updatesToApply, rejectedUpdates)
-  }
-
-  // TODO such functionality must be extracted into a single place com.intellij.ide.plugins.PluginInstaller.findNotInstalledPluginDependencies
-  //          com.intellij.ide.plugins.PluginInstallOperation.checkMissingDependencies
-  /**
-   * @returns a list of unmet dependencies
-   */
-  fun findUnsatisfiedDependencies(
-    updateDescriptor: Collection<IdeaPluginDependency>,
-    enabledModules: Collection<PluginId>,
-  ): List<IdeaPluginDependency> {
-    return updateDescriptor.filter { dep ->
-      if (dep.isOptional) {
-        return@filter false
-      }
-      val dependencySatisfied = enabledModules.any { it == dep.pluginId }
-      !dependencySatisfied
-    }
   }
 
   /**

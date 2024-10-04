@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.plugin" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="kotlin.base.indices" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.psi" />

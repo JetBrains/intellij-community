@@ -46,7 +46,7 @@
     <orderEntry type="library" name="commons-imaging" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
-    <orderEntry type="module" module-name="intellij.platform.analysis.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" exported="" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
@@ -91,7 +91,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="library" name="icu4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
-    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="library" name="aalto-xml" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
@@ -123,7 +123,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="jetbrains.intellij.deps.rwmutex.idea" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.bootstrap.coroutine" />
     <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
@@ -133,7 +132,6 @@
     <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" />
     <orderEntry type="module" module-name="intellij.platform.kernel" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
-    <orderEntry type="library" name="googlecode.plist.dd" level="project" />
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="intellij.platform.jbr" />
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" />

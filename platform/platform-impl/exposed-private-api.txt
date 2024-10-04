@@ -3,7 +3,6 @@ com/intellij/codeInsight/inline/completion/logs/InlineCompletionUsageTracker$Sho
 com/intellij/diagnostic/ActivityCategory
 com/intellij/ide/RecentProjectColorInfo
 com/intellij/ide/actions/cache/RecoveryScope
-com/intellij/ide/bootstrap/InitAppContext
 com/intellij/ide/errorTreeView/NewErrorTreeViewPanel$MessageViewState
 com/intellij/ide/gdpr/ConsentAttributes
 com/intellij/ide/plugins/IdeaPluginDescriptorImpl

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac
 
 import com.intellij.diagnostic.LoadingState
@@ -33,9 +33,11 @@ import io.netty.handler.codec.http.QueryStringDecoder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Desktop
 import java.awt.event.MouseEvent
 import java.io.File
+import java.net.URLDecoder
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
@@ -48,7 +50,8 @@ private val ENABLED = AtomicBoolean(true)
 @Suppress("unused")
 private var UPDATE_CALLBACK_REF: Any? = null
 
-internal fun initMacApplication(mainScope: CoroutineScope) {
+@Internal
+fun initMacApplication(mainScope: CoroutineScope) {
   val desktop = Desktop.getDesktop()
   desktop.setAboutHandler {
     if (LoadingState.COMPONENTS_LOADED.isOccurred) {
@@ -100,7 +103,6 @@ internal fun initMacApplication(mainScope: CoroutineScope) {
     installProtocolHandler()
   }
 }
-
 
 private fun installAutoUpdateMenu() {
   val pool = Foundation.invoke("NSAutoreleasePool", "new")
@@ -193,6 +195,7 @@ private fun installProtocolHandler() {
   Desktop.getDesktop().setOpenURIHandler { event ->
     val uri = event.uri
     var uriString = uri.toString()
+    URLDecoder.decode(uriString, "UTF-8")
     if ("open" == uri.host && QueryStringDecoder(uri).parameters()["file"] != null) {
       uriString = CommandLineProcessor.SCHEME_INTERNAL + uriString
     }

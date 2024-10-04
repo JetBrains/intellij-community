@@ -228,6 +228,7 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
   }
 
   override fun documentChanged(event: DocumentEvent) = clearError()
+
   override fun inclusionChanged() = clearError()
 
   protected fun update() {

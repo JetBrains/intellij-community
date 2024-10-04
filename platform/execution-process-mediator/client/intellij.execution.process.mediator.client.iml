@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="intellij.execution.process.mediator.daemon" />
     <orderEntry type="module" module-name="intellij.execution.process.mediator.common" />
     <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />

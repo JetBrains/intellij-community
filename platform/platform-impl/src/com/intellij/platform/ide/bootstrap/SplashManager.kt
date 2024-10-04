@@ -29,6 +29,7 @@ import com.intellij.util.lang.ByteBufferCleaner
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.image.SunWritableRaster
 import java.awt.*
 import java.awt.event.*
@@ -57,7 +58,8 @@ private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "
 
 private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred
 
-internal fun CoroutineScope.scheduleShowSplashIfNeeded(lockSystemDirsJob: Job, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
+@Internal
+fun CoroutineScope.scheduleShowSplashIfNeeded(lockSystemDirsJob: Job, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
   launch(CoroutineName("showSplashIfNeeded")) {
     if (!AppMode.isLightEdit() && !isRealRemoteDevHost(args) && CommandLineArgs.isSplashNeeded(args)) {
       lockSystemDirsJob.join()
@@ -173,7 +175,7 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
           showJob.join()
         }
       }
-      catch (ignore: CancellationException) {
+      catch (_: CancellationException) {
         SPLASH_WINDOW = null
         Toolkit.getDefaultToolkit().removeAWTEventListener(deactivationListener)
         splash.isVisible = false
@@ -275,7 +277,7 @@ private fun doShowFrame(savedBounds: Rectangle, backgroundColor: Color, extended
   frame.isAutoRequestFocus = false
   frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
   val devicePair = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds)
-  // this functionality under the flag - fully correct behavior is not needed here (that's default is not applied if null)
+  // this functionality under the flag - fully correct behavior is unnecessary here (that's default is not applied if null)
   if (devicePair != null) {
     frame.bounds = devicePair.first
   }
@@ -407,7 +409,7 @@ private suspend fun readImage(file: Path, scale: Float, isJreHiDPIEnabled: Boole
       }
     }
   }
-  catch (ignore: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
     return null
   }
 
@@ -477,7 +479,7 @@ private fun writeImage(file: Path, image: BufferedImage) {
   try {
     Files.move(tempFile, file, StandardCopyOption.ATOMIC_MOVE)
   }
-  catch (e: AtomicMoveNotSupportedException) {
+  catch (_: AtomicMoveNotSupportedException) {
     Files.move(tempFile, file)
   }
 }

@@ -76,7 +76,7 @@ internal class ConfigurationFileManager(project: Project): Disposable {
           }
 
           if (event is VFileCreateEvent) {
-            // VFileCreateEvent computes file on request, so, avoid getFile call
+            // VFileCreateEvent computes a file on request, so, avoid getFile call
             if (event.isDirectory || !isConfigurationFile(event.childName)) {
               continue
             }

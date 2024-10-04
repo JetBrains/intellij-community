@@ -9,6 +9,7 @@ import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.ui.svg.activeSvgCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -17,7 +18,8 @@ private fun nowAsDuration() = System.currentTimeMillis().toDuration(DurationUnit
 
 // icons maybe loaded before app loaded, so, SvgCacheMapper cannot be as a service
 @Service(Service.Level.APP)
-internal class IconDbMaintainer : SettingsSavingComponent {
+@Internal
+class IconDbMaintainer : SettingsSavingComponent {
   // we save only once every 2 minutes, and not earlier than 2 minutes after the start
   private var lastSaved = nowAsDuration()
 

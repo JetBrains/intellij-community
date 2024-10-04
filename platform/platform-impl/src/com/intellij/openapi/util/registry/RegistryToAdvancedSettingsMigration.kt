@@ -10,8 +10,10 @@ import com.intellij.openapi.editor.impl.TabCharacterPaintMode
 import com.intellij.openapi.options.advanced.AdvancedSettingBean
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.SystemInfo
+import org.jetbrains.annotations.ApiStatus
 
-internal suspend fun migrateRegistryToAdvSettings() {
+@ApiStatus.Internal
+suspend fun migrateRegistryToAdvSettings() {
   val propertyName = "registry.to.advanced.settings.migration.build"
   val propertyManager = serviceAsync<PropertiesComponent>()
   val lastMigratedVersion = propertyManager.getValue(propertyName)

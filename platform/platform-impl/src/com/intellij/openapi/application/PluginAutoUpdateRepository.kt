@@ -61,7 +61,7 @@ object PluginAutoUpdateRepository {
   }
 
   @Synchronized
-  internal fun clearUpdates() {
+  fun clearUpdates() {
     if (getAutoUpdateDirPath().exists()) {
       getAutoUpdateDirPath().delete(recursively = true)
     }

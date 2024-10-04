@@ -5,9 +5,9 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagementPolicy
+import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PluginAutoUpdateRepository
-import com.intellij.openapi.application.PluginAutoUpdater
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
@@ -23,6 +23,7 @@ import com.intellij.util.io.move
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
@@ -111,7 +112,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
         LOG.debug { "skipping the update for plugin ${downloader.pluginName}, since it is already downloaded" }
         return@filter false
       }
-      val unsatisfiedDependencies = PluginAutoUpdater.findUnsatisfiedDependencies(
+      val unsatisfiedDependencies = findUnsatisfiedDependencies(
         updateDescriptor = downloader.toPluginNode().dependencies,
         enabledModules = enabledModules,
       )
@@ -208,7 +209,6 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
     }
   }
 
-  private data class DownloadedUpdate(val pluginId: PluginId, val version: String, val updatePath: Path)
 
   private companion object {
     fun isAutoUpdateEnabled(): Boolean = PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() &&
@@ -216,4 +216,26 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
   }
 }
 
-private val LOG get() = logger<PluginAutoUpdateService>()
+private data class DownloadedUpdate(@JvmField val pluginId: PluginId, @JvmField val version: String, @JvmField val updatePath: Path)
+
+private val LOG
+  get() = logger<PluginAutoUpdateService>()
+
+// TODO such functionality must be extracted into a single place com.intellij.ide.plugins.PluginInstaller.findNotInstalledPluginDependencies
+//          com.intellij.ide.plugins.PluginInstallOperation.checkMissingDependencies
+/**
+ * @returns a list of unmet dependencies
+ */
+@ApiStatus.Internal
+fun findUnsatisfiedDependencies(
+  updateDescriptor: Collection<IdeaPluginDependency>,
+  enabledModules: Collection<PluginId>,
+): List<IdeaPluginDependency> {
+  return updateDescriptor.filter { dep ->
+    if (dep.isOptional) {
+      return@filter false
+    }
+    val dependencySatisfied = enabledModules.any { it == dep.pluginId }
+    !dependencySatisfied
+  }
+}

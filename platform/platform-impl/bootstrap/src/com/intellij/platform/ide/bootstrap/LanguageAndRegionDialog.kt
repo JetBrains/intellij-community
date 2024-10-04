@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.ui
+package com.intellij.platform.ide.bootstrap
 
 import com.dd.plist.NSDictionary
 import com.dd.plist.PropertyListParser
@@ -40,11 +40,16 @@ import javax.swing.*
 import javax.swing.border.Border
 import javax.swing.event.HyperlinkEvent
 
-private val languageMapping = mapOf(Locale.CHINA to listOf("zh-CN", "zh-Hans"), Locale.JAPANESE to listOf("ja"),
+private val languageMapping = mapOf(Locale.CHINA to listOf("zh-CN", "zh-Hans"),
+                                    Locale.JAPANESE to listOf("ja"),
                                     Locale.KOREAN to listOf("ko"))
 private val regionMapping = mapOf(Region.CHINA to "CN")
 
-private class LanguageAndRegionDialog(private var selectedLanguage: Locale, private var selectedRegion: Region, osLocale: Locale) : DialogWrapper(null, null, true, IdeModalityType.IDE, false) {
+private class LanguageAndRegionDialog(
+  private var selectedLanguage: Locale,
+  private var selectedRegion: Region,
+  osLocale: Locale,
+) : DialogWrapper(null, null, true, IdeModalityType.IDE, false) {
   val source = EventSource.PRE_EUA_DIALOG
 
   init {
@@ -87,11 +92,14 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
     return centerPanel
   }
 
-  private fun getLanguageButton() =
-    ButtonPanel(createButton(false, getLocaleName(selectedLanguage), AllIcons.General.ChevronDown) { createLanguagePopup(it) })
+  private fun getLanguageButton(): ButtonPanel {
+    return ButtonPanel(createButton(false, getLocaleName(selectedLanguage), AllIcons.General.ChevronDown) { createLanguagePopup(it) })
+  }
 
-  private fun getRegionButton() = ButtonPanel(
-    createButton(false, getRegionLabel(selectedRegion), AllIcons.General.ChevronDown) { createRegionPopup(it) })
+  private fun getRegionButton(): ButtonPanel {
+    return ButtonPanel(
+      createButton(false, getRegionLabel(selectedRegion), AllIcons.General.ChevronDown) { createRegionPopup(it) })
+  }
 
   private fun getNextButton() = ButtonPanel(createButton(true, getMessageBundle().getString("button.next"), null) { this.doOKAction() })
 
@@ -172,7 +180,6 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
   private fun getRegionLabel(region: Region): String {
     return getMessageBundle().getString(if (region == Region.NOT_SET) "title.region.not.set.label" else region.displayKey)
   }
-
 
   override fun doOKAction() {
     LocalizationActionsStatistics.nextButtonPressed(selectedLanguage, selectedRegion, source)

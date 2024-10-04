@@ -28,6 +28,8 @@
     <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.xml.frontback" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core" />

@@ -2083,7 +2083,6 @@ f:com.intellij.execution.wsl.WslDistributionExKt
 f:com.intellij.execution.wsl.target.WslTargetEnvironment
 - com.intellij.execution.target.TargetEnvironment
 - com.intellij.execution.target.ExternallySynchronized
-- sf:Companion:com.intellij.execution.wsl.target.WslTargetEnvironment$Companion
 - <init>(com.intellij.execution.wsl.target.WslTargetEnvironmentRequest,com.intellij.execution.wsl.WSLDistribution):V
 - createProcess(com.intellij.execution.target.TargetedCommandLine,com.intellij.openapi.progress.ProgressIndicator):java.lang.Process
 - getDownloadVolumes():java.util.Map
@@ -2094,8 +2093,6 @@ f:com.intellij.execution.wsl.target.WslTargetEnvironment
 - getTargetPortBindings():java.util.Map
 - getUploadVolumes():java.util.Map
 - shutdown():V
-f:com.intellij.execution.wsl.target.WslTargetEnvironment$Companion
-- f:getLOG():com.intellij.openapi.diagnostic.Logger
 f:com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 - com.intellij.execution.target.TargetConfigurationWithId
 - com.intellij.execution.target.PersistentTargetEnvironmentConfiguration

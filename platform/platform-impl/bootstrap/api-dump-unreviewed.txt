@@ -1,0 +1,54 @@
+c:com.intellij.idea.IdeStarter
+- com.intellij.openapi.application.ApplicationStarter
+- sf:Companion:com.intellij.idea.IdeStarter$Companion
+- <init>():V
+- isHeadless():Z
+- p:openProjectIfNeeded(java.util.List,com.intellij.openapi.application.Application,kotlinx.coroutines.CoroutineScope,com.intellij.ide.AppLifecycleListener,kotlin.coroutines.Continuation):java.lang.Object
+- start(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.idea.IdeStarter$Companion
+- f:openFilesOnLoading(java.util.List):V
+- f:openUriOnLoading(java.lang.String):V
+com.intellij.platform.ide.bootstrap.AppStarter
+- beforeImportConfigs():V
+- importFinished(java.nio.file.Path):V
+- prepareStart(java.util.List):V
+- a:start(com.intellij.ide.bootstrap.InitAppContext,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ide.bootstrap.IdeStartupExperiment
+- sf:INSTANCE:com.intellij.platform.ide.bootstrap.IdeStartupExperiment
+- f:getExperimentGroup():I
+- f:getExperimentGroupKind():com.intellij.platform.ide.bootstrap.IdeStartupExperiment$GroupKind
+- f:isFeedbackSurveyExperimentEnabled():Z
+e:com.intellij.platform.ide.bootstrap.IdeStartupExperiment$GroupKind
+- java.lang.Enum
+- sf:Control:com.intellij.platform.ide.bootstrap.IdeStartupExperiment$GroupKind
+- sf:ExperimentalFeedbackSurvey:com.intellij.platform.ide.bootstrap.IdeStartupExperiment$GroupKind
+- sf:ExperimentalWizard:com.intellij.platform.ide.bootstrap.IdeStartupExperiment$GroupKind
+- sf:Undefined:com.intellij.platform.ide.bootstrap.IdeStartupExperiment$GroupKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.ide.bootstrap.IdeStartupExperiment$GroupKind
+- s:values():com.intellij.platform.ide.bootstrap.IdeStartupExperiment$GroupKind[]
+f:com.intellij.platform.ide.bootstrap.IdeStartupWizardCollector
+- sf:INSTANCE:com.intellij.platform.ide.bootstrap.IdeStartupWizardCollector
+- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
+- f:logInitialStartSuccess():V
+- f:logInitialStartTimeout():V
+- f:logStartupStageTime(com.intellij.platform.ide.bootstrap.StartupWizardStage,java.time.Duration):V
+f:com.intellij.platform.ide.bootstrap.StartupUtil
+- sf:logEssentialInfoAboutIde(com.intellij.openapi.diagnostic.Logger,com.intellij.openapi.application.ApplicationInfo,java.util.List):V
+- sf:startApplication(kotlinx.coroutines.CoroutineScope,java.util.List,kotlinx.coroutines.Deferred,java.nio.file.Path,kotlinx.coroutines.Deferred,kotlinx.coroutines.Deferred,kotlinx.coroutines.CoroutineScope,java.lang.Thread):V
+e:com.intellij.platform.ide.bootstrap.StartupWizardStage
+- java.lang.Enum
+- sf:ImportProgressPage:com.intellij.platform.ide.bootstrap.StartupWizardStage
+- sf:InitialStart:com.intellij.platform.ide.bootstrap.StartupWizardStage
+- sf:ProductChoicePage:com.intellij.platform.ide.bootstrap.StartupWizardStage
+- sf:SettingsToImportPage:com.intellij.platform.ide.bootstrap.StartupWizardStage
+- sf:SettingsToSyncPage:com.intellij.platform.ide.bootstrap.StartupWizardStage
+- sf:WizardKeymapPage:com.intellij.platform.ide.bootstrap.StartupWizardStage
+- sf:WizardPluginPage:com.intellij.platform.ide.bootstrap.StartupWizardStage
+- sf:WizardProgressPage:com.intellij.platform.ide.bootstrap.StartupWizardStage
+- sf:WizardThemePage:com.intellij.platform.ide.bootstrap.StartupWizardStage
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.ide.bootstrap.StartupWizardStage
+- s:values():com.intellij.platform.ide.bootstrap.StartupWizardStage[]
+f:com.intellij.platform.ide.bootstrap.UiKt
+- sf:checkHiDPISettings():V

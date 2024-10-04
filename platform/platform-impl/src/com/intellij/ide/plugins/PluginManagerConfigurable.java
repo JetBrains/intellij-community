@@ -879,7 +879,7 @@ public final class PluginManagerConfigurable
                   }
                 }
 
-                PluginManagerUsageCollector.performMarketplaceSearch(
+                PluginManagerUsageCollector.INSTANCE.performMarketplaceSearch(
                   ProjectUtil.getActiveProject(), parser, result.descriptors, searchIndex, pluginToScore);
               }
               catch (IOException e) {
@@ -899,7 +899,7 @@ public final class PluginManagerConfigurable
 
       @Override
       protected void onSearchReset() {
-        PluginManagerUsageCollector.searchReset();
+        PluginManagerUsageCollector.INSTANCE.searchReset();
       }
     };
   }
@@ -1064,7 +1064,7 @@ public final class PluginManagerConfigurable
 
       @Override
       protected void onSearchReset() {
-        PluginManagerUsageCollector.searchReset();
+        PluginManagerUsageCollector.INSTANCE.searchReset();
       }
 
       @Override

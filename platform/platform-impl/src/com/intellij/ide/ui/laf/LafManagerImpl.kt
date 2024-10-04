@@ -46,7 +46,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.ide.bootstrap.createBaseLaF
 import com.intellij.ui.*
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.mac.MacFullScreenControlsManager
@@ -66,7 +65,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -74,12 +72,15 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.UIResource
+import javax.swing.plaf.basic.BasicLookAndFeel
 
 // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
 private const val WINDOW_ALPHA = "Window.alpha"
@@ -164,7 +165,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   override fun getDefaultLightLaf(): UIThemeLookAndFeelInfo = getDefaultLaf(isDark = false)
 
-  override fun getDefaultDarkLaf() = getDefaultLaf(isDark = true)
+  override fun getDefaultDarkLaf(): UIThemeLookAndFeelInfo = getDefaultLaf(isDark = true)
 
   @Suppress("removal")
   override fun addLafManagerListener(listener: LafManagerListener) {
@@ -189,7 +190,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  internal suspend fun applyInitState() {
+  @Internal
+  suspend fun applyInitState() {
     span("laf initialization in EDT", RawSwingDispatcher) {
       initInEdt()
     }
@@ -1078,7 +1080,7 @@ private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory
       val info = try {
         MouseInfo.getPointerInfo()
       }
-      catch (e: InternalError) {
+      catch (_: InternalError) {
         // http://www.jetbrains.net/jira/browse/IDEADEV-21390
         // may happen under Mac OSX 10.5
         return Point(x, y)

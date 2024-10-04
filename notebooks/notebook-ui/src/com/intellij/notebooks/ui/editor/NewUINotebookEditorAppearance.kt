@@ -1,11 +1,11 @@
 package com.intellij.notebooks.ui.editor
 
+import com.intellij.notebooks.ui.visualization.NotebookEditorAppearance
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl
 import com.intellij.openapi.options.Scheme
-import com.intellij.notebooks.ui.visualization.NotebookEditorAppearance
 import java.awt.Color
 
 object NewUINotebookEditorAppearance: NotebookEditorAppearance by DefaultNotebookEditorAppearance {

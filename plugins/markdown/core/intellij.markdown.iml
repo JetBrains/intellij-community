@@ -13,8 +13,11 @@
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
@@ -36,5 +39,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" exported="" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>
 </module>

@@ -563,23 +563,6 @@ private suspend fun handleExternalCommand(args: List<String>, currentDirectory: 
   }
 }
 
-private const val APP_STARTER_EP_NAME = "com.intellij.appStarter"
-
-@Suppress("DEPRECATION")
-fun findStarter(key: String): ApplicationStarter? =
-  ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME).findByIdOrFromInstance(key) { it.commandName }
-
-/**
- * Returns name of the command for this [ApplicationStarter] specified in plugin.xml file.
- * It should be used instead of deprecated [ApplicationStarter.commandName].
- */
-val ApplicationStarter.commandNameFromExtension: String?
-  get() =
-    ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME)
-      .filterableLazySequence()
-      .find { it.implementationClassName == javaClass.name }
-      ?.id
-
 @VisibleForTesting
 fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>) {
   for (listener in listeners) {

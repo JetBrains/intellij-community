@@ -2,7 +2,7 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.idea.AppMode
+import com.intellij.ide.isIdeStartupWizardEnabled
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -23,14 +22,9 @@ import kotlin.time.Duration.Companion.milliseconds
 private val LOG: Logger
   get() = logger<IdeStartupWizard>()
 
-val isIdeStartupDialogEnabled: Boolean
+internal val isIdeStartupDialogEnabled: Boolean
   get() = !ApplicationManagerEx.isInIntegrationTest() &&
           System.getProperty("intellij.startup.dialog", "true").toBoolean()
-
-val isIdeStartupWizardEnabled: Boolean
-  get() = !ApplicationManagerEx.isInIntegrationTest() &&
-          !AppMode.isRemoteDevHost() &&
-          System.getProperty("intellij.startup.wizard", "true").toBoolean()
 
 @ExperimentalCoroutinesApi
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
@@ -124,10 +118,10 @@ enum class StartupWizardStage {
   WizardProgressPage
 }
 
-@Internal
 object IdeStartupWizardCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("wizard.startup", 7)
-  override fun getGroup() = GROUP
+  private val GROUP = EventLogGroup("wizard.startup", 7)
+
+  override fun getGroup(): EventLogGroup = GROUP
 
   private val initialStartSucceeded = GROUP.registerEvent("initial_start_succeeded")
   fun logInitialStartSuccess() {

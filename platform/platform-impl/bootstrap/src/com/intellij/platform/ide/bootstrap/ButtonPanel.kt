@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.ui
+package com.intellij.platform.ide.bootstrap
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons.BUTTON_HOVER_BORDER_COLOR
@@ -7,7 +7,6 @@ import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons.DEFAULT_BUTTON
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Graphics
@@ -16,9 +15,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 
-
-@ApiStatus.Internal
-class ButtonPanel(val button: JButton) : JPanel(BorderLayout(0, 0)) {
+internal class ButtonPanel(@JvmField val button: JButton) : JPanel(BorderLayout(0, 0)) {
   init {
     val buttonGap = 4
     preferredSize = JBDimension(280, 40 + (buttonGap * 2))
@@ -28,7 +25,6 @@ class ButtonPanel(val button: JButton) : JPanel(BorderLayout(0, 0)) {
   }
 }
 
-@ApiStatus.Internal
 internal fun createButton(isDefault: Boolean, @Nls text: String, icon: Icon? = null, onClick: (JButton) -> Unit): JButton {
   val btn = object : JButton() {
     override fun getComponentGraphics(g: Graphics?): Graphics {

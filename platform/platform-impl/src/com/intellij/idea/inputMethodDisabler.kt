@@ -24,6 +24,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Container
 import java.util.*
@@ -37,7 +38,8 @@ private var IS_NOTIFICATION_REGISTERED = false
 
 // TODO: consider to detect IM-freezes and then notify user (offer to disable IM)
 
-internal suspend fun disableInputMethodsIfPossible() {
+@ApiStatus.Internal
+suspend fun disableInputMethodsIfPossible() {
   if (SystemInfo.isWindows || SystemInfo.isMac || !SystemInfo.isJetBrainsJvm) {
     return
   }

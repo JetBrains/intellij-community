@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="intellij.tools.ide.performanceTesting.commands" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
   </component>
 </module>

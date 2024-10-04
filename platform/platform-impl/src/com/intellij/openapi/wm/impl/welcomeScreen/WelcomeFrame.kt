@@ -42,6 +42,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.ActionListener
@@ -153,7 +154,8 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
       prepareToShow()?.invoke()
     }
 
-    internal fun prepareToShow(): (() -> Unit)? {
+    @Internal
+    fun prepareToShow(): (() -> Unit)? {
       if (instance != null) {
         return null
       }

@@ -17,7 +17,10 @@
     <orderEntry type="library" name="JUnit5" level="project" />
     <orderEntry type="library" name="JUnit5Jupiter" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" exported="" />
     <orderEntry type="module" module-name="intellij.java.rt" />

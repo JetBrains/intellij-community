@@ -11,13 +11,13 @@ import java.awt.Component
 import java.awt.Graphics
 import javax.swing.Icon
 
-class JbChooserAction(callback: ImportSettingsController) : MainChooserAction<JbService>(JBrActionsDataProvider.getInstance(), callback) {
+internal class JbChooserAction(callback: ImportSettingsController) : MainChooserAction<JbService>(JBrActionsDataProvider.getInstance(), callback) {
   override fun getIcon(products: List<Product>): Icon {
     return ImportJbIcon(products) { provider.getProductIcon(it) }
   }
 }
 
-class ExpChooserAction(
+internal class ExpChooserAction(
   provider: ExtActionsDataProvider,
   callback: ImportSettingsController
 ) : MainChooserAction<ExternalProductService>(provider, callback) {
@@ -25,7 +25,7 @@ class ExpChooserAction(
     provider.productService.productId.icon(IconProductSize.SMALL)
 }
 
-class SyncChooserAction(controller: ImportSettingsController, syncDataProvider: SyncActionsDataProvider) : MainChooserAction<SyncService>(syncDataProvider,
+internal class SyncChooserAction(controller: ImportSettingsController, syncDataProvider: SyncActionsDataProvider) : MainChooserAction<SyncService>(syncDataProvider,
                                                                                                controller) {
   private val service = SettingsService.getInstance()
 

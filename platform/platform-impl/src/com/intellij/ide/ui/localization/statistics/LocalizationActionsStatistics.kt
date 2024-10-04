@@ -12,7 +12,8 @@ import com.jetbrains.rd.util.collections.SynchronizedList
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
-internal object LocalizationActionsStatistics: CounterUsagesCollector() {
+@Internal
+object LocalizationActionsStatistics: CounterUsagesCollector() {
   private val localizationActionsGroup = EventLogGroup("localization.actions.info", 5)
   private val eventSource: EnumEventField<EventSource> = EventFields.Enum<EventSource>("event_source")
   private val availableLanguages = listOf(Locale.CHINA, Locale.JAPANESE, Locale.KOREAN, Locale.ENGLISH).map { it.toLanguageTag() }
