@@ -45,12 +45,12 @@ interface PluginManagementPolicy {
   fun canEnablePlugin(descriptor: IdeaPluginDescriptor?): Boolean
 
   /**
-   * Allows to prohibit installation of [descriptor] from remote repositories
+   * Allows or prohibits installation of [descriptor] from remote repositories
    */
   fun canInstallPlugin(descriptor: IdeaPluginDescriptor?): Boolean
 
   /**
-   * Allows to prohibit installation of plugins from disk. Disables relevant item in the cog menu of Marketplace UI
+   * Allows or prohibits installation of plugins from disk. Disables relevant item in the cog menu of Marketplace UI
    *
    * @see com.intellij.ide.plugins.InstallFromDiskAction
    */
