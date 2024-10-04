@@ -4,9 +4,19 @@ package com.intellij.tools.apiDump
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import java.io.PrintWriter
+import java.io.StringWriter
 
-fun PrintWriter.dumpApi(api: API) {
-  for (classData in api.publicApi) {
+fun dumpApi(classSignatures: List<ApiClass>): String {
+  return StringWriter().use {
+    PrintWriter(it).use { printer ->
+      printer.dumpApi(classSignatures)
+    }
+    it.buffer.toString()
+  }
+}
+
+fun PrintWriter.dumpApi(classSignatures: List<ApiClass>) {
+  for (classData in classSignatures) {
     printClassHeader(classData.className, classData.flags)
     printSupers(classData.supers)
     printMembers(classData.members)
