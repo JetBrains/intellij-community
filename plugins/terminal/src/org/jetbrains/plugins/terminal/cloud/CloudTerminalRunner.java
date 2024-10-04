@@ -28,15 +28,6 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
     myTtyResizeHandler = resizeHandler;
   }
 
-  /**
-   * @deprecated use {@link CloudTerminalRunner#CloudTerminalRunner(Project, String, CloudTerminalProcess, TtyResizeHandler)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public CloudTerminalRunner(@NotNull Project project, @NotNull @NlsSafe String pipeName, @NotNull CloudTerminalProcess process,
-                             @Nullable TtyResizeHandler resizeHandler, boolean ignored) {
-    this(project, pipeName, process, resizeHandler);
-  }
-
   public CloudTerminalRunner(@NotNull Project project, @NotNull @NlsSafe String pipeName, CloudTerminalProcess process) {
     this(project, pipeName, process, null);
   }
