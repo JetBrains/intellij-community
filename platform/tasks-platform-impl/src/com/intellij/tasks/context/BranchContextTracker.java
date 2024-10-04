@@ -12,10 +12,12 @@ import com.intellij.tasks.BranchInfo;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class BranchContextTracker implements BranchChangeListener {
 
   public static final NotificationGroup NOTIFICATION = NotificationGroupManager.getInstance().getNotificationGroup("Branch Context group");

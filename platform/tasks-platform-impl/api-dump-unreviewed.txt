@@ -1,26 +1,6 @@
 f:com.intellij.tasks.TaskBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
-c:com.intellij.tasks.context.BookmarkContextProvider
-- com.intellij.tasks.context.WorkingContextProvider
-- <init>():V
-- clearContext(com.intellij.openapi.project.Project):V
-- getDescription():java.lang.String
-- getId():java.lang.String
-- loadContext(com.intellij.openapi.project.Project,org.jdom.Element):V
-- saveContext(com.intellij.openapi.project.Project,org.jdom.Element):V
-c:com.intellij.tasks.context.BranchContextTracker
-- com.intellij.openapi.vcs.BranchChangeListener
-- sf:NOTIFICATION:com.intellij.notification.NotificationGroup
-- <init>(com.intellij.openapi.project.Project):V
-- branchHasChanged(java.lang.String):V
-- branchWillChange(java.lang.String):V
-c:com.intellij.tasks.context.ConfigureBranchContextDialog
-- com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
-- p:<init>(com.intellij.openapi.project.Project):V
-- p:createCenterPanel():javax.swing.JComponent
-- p:doOKAction():V
 c:com.intellij.tasks.context.ContextInfo
 - f:comment:java.lang.String
 - f:date:J
@@ -52,12 +32,6 @@ f:com.intellij.tasks.context.WorkingContextManager
 - saveContext(com.intellij.tasks.Task):V
 - saveContext(java.lang.String,java.lang.String):V
 - saveContext(org.jdom.Element):V
-c:com.intellij.tasks.impl.DefaultCommitPlaceholderProvider
-- com.intellij.tasks.CommitPlaceholderProvider
-- <init>():V
-- getPlaceholderDescription(java.lang.String):java.lang.String
-- getPlaceholderValue(com.intellij.tasks.LocalTask,java.lang.String):java.lang.String
-- getPlaceholders(com.intellij.tasks.TaskRepository):java.lang.String[]
 c:com.intellij.tasks.impl.LocalTaskImpl
 - com.intellij.tasks.LocalTask
 - sf:DEFAULT_TASK_ID:java.lang.String
@@ -194,19 +168,6 @@ c:com.intellij.tasks.impl.TaskManagerImpl$Config
 - updateIssuesCount:I
 - useBranch:Z
 - <init>():V
-f:com.intellij.tasks.impl.TaskProjectConfiguration
-- com.intellij.openapi.components.PersistentStateComponent
-- servers:java.util.List
-- <init>():V
-- <init>(com.intellij.openapi.project.Project):V
-- getState():com.intellij.tasks.impl.TaskProjectConfiguration
-- loadState(com.intellij.tasks.impl.TaskProjectConfiguration):V
-c:com.intellij.tasks.impl.TaskProjectConfiguration$SharedServer
-- type:java.lang.String
-- url:java.lang.String
-- <init>():V
-- equals(java.lang.Object):Z
-- hashCode():I
 f:com.intellij.tasks.impl.TaskUtil
 - s:encodeUrl(java.lang.String):java.lang.String
 - s:filterTasks(java.lang.String,java.util.List):java.util.List

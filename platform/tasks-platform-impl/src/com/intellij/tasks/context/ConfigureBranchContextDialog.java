@@ -8,10 +8,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public class ConfigureBranchContextDialog extends DialogWrapper {
   private final Project myProject;
   private JPanel myPanel;
