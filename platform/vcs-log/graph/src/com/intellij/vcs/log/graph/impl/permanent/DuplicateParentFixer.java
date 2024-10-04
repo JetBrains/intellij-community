@@ -4,10 +4,12 @@ package com.intellij.vcs.log.graph.impl.permanent;
 
 
 import com.intellij.vcs.log.graph.GraphCommit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class DuplicateParentFixer {
 
   public static <CommitId> AbstractList<? extends GraphCommit<CommitId>> fixDuplicateParentCommits(final List<? extends GraphCommit<CommitId>> finalCommits) {

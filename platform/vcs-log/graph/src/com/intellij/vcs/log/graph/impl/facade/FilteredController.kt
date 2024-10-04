@@ -8,7 +8,9 @@ import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
 import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.getReachableMatchingNodes
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class FilteredController(delegateLinearGraphController: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<*>,
                          buildCollapsedGraph: () -> CollapsedGraph) :
   CascadeController(delegateLinearGraphController, permanentGraphInfo) {

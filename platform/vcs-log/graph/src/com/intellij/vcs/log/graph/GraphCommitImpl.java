@@ -3,10 +3,12 @@ package com.intellij.vcs.log.graph;
 
 import com.google.common.primitives.Ints;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitId> {
   @NotNull private final CommitId myId;
   @NotNull private final Object myParents;

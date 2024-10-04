@@ -11,8 +11,10 @@ import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder.getHeads
 import com.intellij.vcs.log.graph.utils.Dfs
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
+@ApiStatus.Internal
 object FirstParentController {
   fun create(delegateController: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<*>,
              matchedIds: Set<Int>?, visibleHeadsIds: Set<Int>? = null): FilteredController {

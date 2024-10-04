@@ -17,8 +17,10 @@ package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.vcs.log.graph.utils.IntToIntMap;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class IDIntToIntMap implements IntToIntMap {
   @NotNull public static final UpdatableIntToIntMap EMPTY = new EmptyIDIntToIntMap();
 

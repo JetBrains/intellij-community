@@ -4,10 +4,12 @@ package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public final class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableIntToIntMap {
   public static final int DEFAULT_BLOCK_SIZE = 30;
 

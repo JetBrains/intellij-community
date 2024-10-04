@@ -10,7 +10,9 @@ import com.intellij.vcs.log.graph.utils.walk
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntComparator
 import it.unimi.dsi.fastutil.ints.IntList
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object GraphLayoutBuilder {
   private val LOG = Logger.getInstance(GraphLayoutBuilder::class.java)
 

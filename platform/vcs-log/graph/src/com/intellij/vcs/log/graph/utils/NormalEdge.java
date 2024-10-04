@@ -15,6 +15,9 @@
  */
 package com.intellij.vcs.log.graph.utils;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public class NormalEdge {
   public final int up;
   public final int down;

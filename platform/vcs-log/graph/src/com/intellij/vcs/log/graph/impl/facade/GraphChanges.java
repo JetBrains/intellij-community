@@ -15,11 +15,13 @@
  */
 package com.intellij.vcs.log.graph.impl.facade;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+@ApiStatus.Internal
 public interface GraphChanges<NodeId> {
 
   @NotNull

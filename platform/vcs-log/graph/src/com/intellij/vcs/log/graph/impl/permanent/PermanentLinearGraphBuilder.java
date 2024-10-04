@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.util.function.Function;
 
 import static com.intellij.vcs.log.graph.impl.permanent.DuplicateParentFixer.fixDuplicateParentCommits;
 
+@ApiStatus.Internal
 public final class PermanentLinearGraphBuilder<CommitId> {
 
   @NotNull private final List<? extends GraphCommit<CommitId>> myCommits;

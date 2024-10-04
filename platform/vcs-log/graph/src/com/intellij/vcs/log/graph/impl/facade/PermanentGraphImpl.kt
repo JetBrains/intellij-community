@@ -19,6 +19,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Function
@@ -119,9 +120,14 @@ class PermanentGraphImpl<CommitId : Any> private constructor(private val permane
     return ContainedInBranchCondition(branchNodes)
   }
 
+  @ApiStatus.Internal
   override fun getPermanentCommitsInfo(): PermanentCommitsInfoImpl<CommitId> = permanentCommitsInfo
+  
   override fun getLinearGraph(): PermanentLinearGraphImpl = permanentLinearGraph
+  
+  @ApiStatus.Internal
   override fun getPermanentGraphLayout(): GraphLayoutImpl = permanentGraphLayout
+  
   override fun getBranchNodeIds(): Set<Int> = branchNodeIds
 
   private class NotLoadedCommitsIdsGenerator<CommitId> : Function<CommitId, Int> {
