@@ -8,10 +8,12 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
+import org.jetbrains.annotations.ApiStatus
 
 internal class ShelveSilentlyAction : ShelveSilentlyActionBase(rollbackChanges = true)
 internal class SaveToShelveAction : ShelveSilentlyActionBase(rollbackChanges = false)
 
+@ApiStatus.Internal
 abstract class ShelveSilentlyActionBase(val rollbackChanges: Boolean) : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project

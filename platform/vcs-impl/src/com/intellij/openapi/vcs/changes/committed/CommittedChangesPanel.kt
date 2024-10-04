@@ -11,10 +11,12 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 abstract class CommittedChangesPanel(val project: Project) : BorderLayoutPanel(), UiDataProvider, Disposable {
 
   protected val browser: CommittedChangesTreeBrowser =

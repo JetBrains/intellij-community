@@ -3,12 +3,14 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ShelvedBinaryFilePatch extends FilePatch {
   private final ShelvedBinaryFile myShelvedBinaryFile;
 
+  @ApiStatus.Internal
   public ShelvedBinaryFilePatch(@NotNull final ShelvedBinaryFile shelvedBinaryFile) {
     myShelvedBinaryFile = shelvedBinaryFile;
     setBeforeName(myShelvedBinaryFile.BEFORE_PATH);
@@ -46,6 +48,7 @@ public final class ShelvedBinaryFilePatch extends FilePatch {
     return myShelvedBinaryFile.AFTER_PATH == null;
   }
 
+  @ApiStatus.Internal
   @NotNull
   public ShelvedBinaryFile getShelvedBinaryFile() {
     return myShelvedBinaryFile;

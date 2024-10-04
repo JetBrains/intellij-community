@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -17,6 +18,7 @@ import static com.intellij.util.Functions.identity;
 import static com.intellij.vcsUtil.VcsUtil.groupByRoots;
 import static java.util.Objects.requireNonNull;
 
+@ApiStatus.Internal
 public final class TriggerAdditionOrDeletion {
   private static final Logger LOG = Logger.getInstance(TriggerAdditionOrDeletion.class);
 

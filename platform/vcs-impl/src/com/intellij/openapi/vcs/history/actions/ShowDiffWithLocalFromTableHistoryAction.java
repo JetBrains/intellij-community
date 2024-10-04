@@ -26,8 +26,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ShowDiffWithLocalFromTableHistoryAction implements AnActionExtensionProvider {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

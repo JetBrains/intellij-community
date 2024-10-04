@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
   public AnnotateRevisionActionBase(@Nullable @NlsActions.ActionText String text,
                                     @Nullable @NlsActions.ActionDescription String description,

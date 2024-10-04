@@ -6,10 +6,12 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.util.SystemInfo.isMac;
 
+@ApiStatus.Internal
 public class LimitHistoryCheck {
   @NotNull private final Project myProject;
   @NotNull private final String myFilePath;

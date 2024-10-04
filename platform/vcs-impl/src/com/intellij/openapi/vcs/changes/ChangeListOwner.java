@@ -3,10 +3,12 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public interface ChangeListOwner {
   void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<Change> changes);
 

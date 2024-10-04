@@ -34,14 +34,17 @@ import com.intellij.util.ui.UIUtil.getWarningIcon
 import com.intellij.vcs.commit.isPostCommitCheck
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return TodoCheckinHandler(panel.project)
   }
 }
 
+@ApiStatus.Internal
 class TodoCommitProblem(private val worker: TodoCheckinHandlerWorker,
                         private val isPostCommit: Boolean) : CommitProblemWithDetails {
   override val text: String get() = message("label.todo.items.found", worker.inOneList().size)
@@ -58,6 +61,7 @@ class TodoCommitProblem(private val worker: TodoCheckinHandlerWorker,
     get() = message("todo.in.new.review.button")
 }
 
+@ApiStatus.Internal
 class TodoCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck, DumbAware {
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
   private val todoSettings: TodoPanelSettings get() = settings.myTodoPanelSettings

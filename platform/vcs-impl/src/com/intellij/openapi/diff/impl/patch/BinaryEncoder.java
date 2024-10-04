@@ -3,6 +3,7 @@ package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x;
 import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -18,6 +19,7 @@ import java.util.zip.Inflater;
 import static com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x.decodeChar;
 import static com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x.encodeChar;
 
+@ApiStatus.Internal
 public final class BinaryEncoder {
 
   private static char getCharForLineSize(int lineSize) throws BinaryPatchException, Base85x.Base85FormatException {

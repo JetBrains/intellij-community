@@ -18,8 +18,10 @@ package com.intellij.vcsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
+@ApiStatus.Internal
 public class FilesProgress {
   private final double myTotal;
   private final @Nls String myPrefix;

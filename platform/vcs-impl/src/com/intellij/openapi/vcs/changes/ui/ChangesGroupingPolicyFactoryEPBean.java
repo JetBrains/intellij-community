@@ -4,8 +4,10 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class ChangesGroupingPolicyFactoryEPBean extends BaseKeyedLazyInstance<ChangesGroupingPolicyFactory> {
   public static final int DEFAULT_WEIGHT = 100;
 

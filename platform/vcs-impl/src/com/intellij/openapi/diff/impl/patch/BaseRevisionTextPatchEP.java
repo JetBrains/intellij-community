@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.project.ProjectKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class BaseRevisionTextPatchEP implements PatchEP {
   public static final Key<Boolean> ourProvideStoredBaseRevisionTextKey =
     Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourProvideStoredBaseRevisionTextKey");

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -24,6 +25,7 @@ import java.util.*;
 /**
  * author: lesya
  */
+@ApiStatus.Internal
 public class GroupByPackages {
   private final Map<File, Collection<File>> myParentToChildrenMap = new HashMap<>();
   private final Collection<File> myRoots = new HashSet<>();

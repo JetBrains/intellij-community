@@ -14,7 +14,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.withProgressText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class CodeProcessorCheckinHandler(
   val project: Project
 ) : CheckinHandler(),

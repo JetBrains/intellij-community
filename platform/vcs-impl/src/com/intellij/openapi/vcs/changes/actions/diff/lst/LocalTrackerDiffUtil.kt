@@ -45,6 +45,7 @@ import com.intellij.util.CommonProcessors.FindProcessor
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ComponentAdapter
@@ -56,6 +57,7 @@ import javax.swing.JPanel
 import kotlin.math.max
 import kotlin.math.min
 
+@ApiStatus.Internal
 object LocalTrackerDiffUtil {
   @JvmStatic
   fun computeDifferences(tracker: LineStatusTracker<*>?,

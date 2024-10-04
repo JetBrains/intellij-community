@@ -8,7 +8,9 @@ import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class AbstractShowDiffForSavedPatchesAction : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean {
     return e.getData(SavedPatchesUi.SAVED_PATCHES_UI) != null
@@ -62,12 +64,14 @@ abstract class AbstractShowDiffForSavedPatchesAction : AnActionExtensionProvider
   abstract fun getDiffRequestProducer(changesBrowser: SavedPatchesChangesBrowser, userObject: Any): ChangeDiffRequestChain.Producer?
 }
 
+@ApiStatus.Internal
 class ShowDiffForSavedPatchesAction : AbstractShowDiffForSavedPatchesAction() {
   override fun getDiffRequestProducer(changesBrowser: SavedPatchesChangesBrowser, userObject: Any): ChangeDiffRequestChain.Producer? {
     return changesBrowser.getDiffRequestProducer(userObject)
   }
 }
 
+@ApiStatus.Internal
 class CompareWithLocalForSavedPatchesAction : AbstractShowDiffForSavedPatchesAction() {
   override fun getDiffRequestProducer(changesBrowser: SavedPatchesChangesBrowser, userObject: Any): ChangeDiffRequestChain.Producer? {
     return changesBrowser.getDiffWithLocalRequestProducer(userObject, false)
@@ -78,6 +82,7 @@ class CompareWithLocalForSavedPatchesAction : AbstractShowDiffForSavedPatchesAct
   }
 }
 
+@ApiStatus.Internal
 class CompareBeforeWithLocalForSavedPatchesAction : AbstractShowDiffForSavedPatchesAction() {
   override fun getDiffRequestProducer(changesBrowser: SavedPatchesChangesBrowser, userObject: Any): ChangeDiffRequestChain.Producer? {
     return changesBrowser.getDiffWithLocalRequestProducer(userObject, true)

@@ -4,8 +4,10 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.util.SingleAlarm;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class DnDActivateOnHoldTarget implements DnDTarget {
   private final SingleAlarm myAlarm;
 

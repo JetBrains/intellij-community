@@ -19,10 +19,12 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class ApplyPatchDiffRequest extends DiffRequest implements ApplyPatchRequest {
   @NotNull private final DocumentContent myResultContent;
   @NotNull private final AppliedTextPatch myAppliedPatch;

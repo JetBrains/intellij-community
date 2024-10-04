@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.io.DigestUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.intellij.util.containers.ContainerUtil.find;
 import static com.intellij.util.io.DigestUtilKt.hashToHexString;
 
+@ApiStatus.Internal
 public final class CachesHolder {
   @NonNls private static final String VCS_CACHE_PATH = "vcsCache";
 

@@ -20,11 +20,13 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.LogicalLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
+@ApiStatus.Internal
 public class ChangesBrowserLogicallyLockedFile extends ChangesBrowserFileNode {
   private final LogicalLock myLogicalLock;
 

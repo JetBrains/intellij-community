@@ -236,7 +236,7 @@ a:com.intellij.dvcs.commit.AmendCommitService
 f:com.intellij.dvcs.commit.CommitAndPushExecutorKt
 - sf:getCommitAndPushActionName(com.intellij.vcs.commit.CommitWorkflowHandlerState):java.lang.String
 f:com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer
-- com.intellij.openapi.vcs.FilesProcessorImpl
+- com.intellij.openapi.vcs.FilesProcessor
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:clearFiles(java.util.Collection):Z
 - doActionOnChosenFiles(java.util.Collection):V

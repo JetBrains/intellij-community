@@ -31,11 +31,13 @@ import com.intellij.util.Processor
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import kotlinx.coroutines.Runnable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 @Deprecated("Use EditorTabDiffPreview")
 abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor) :
   EditorTabPreviewBase(diffProcessor.project!!, diffProcessor) {
@@ -44,6 +46,7 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
   override val previewFile: VirtualFile = EditorTabDiffPreviewVirtualFile(diffProcessor, updatePreviewProcessor, ::getCurrentName)
 }
 
+@ApiStatus.Internal
 @Deprecated("Use EditorTabDiffPreview")
 abstract class EditorTabPreviewBase(protected val project: Project,
                                     protected val parentDisposable: Disposable) : DiffPreview {

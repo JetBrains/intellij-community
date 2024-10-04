@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,6 +35,7 @@ import static com.intellij.openapi.vcs.configurable.VcsDirectoryConfigurationPan
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 
+@ApiStatus.Internal
 public class VcsMappingConfigurationDialog extends DialogWrapper {
   private final @NotNull Project myProject;
   private ComboBox<AbstractVcs> myVCSComboBox;

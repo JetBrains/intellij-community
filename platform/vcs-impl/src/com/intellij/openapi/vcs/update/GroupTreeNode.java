@@ -10,10 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
@@ -23,6 +20,7 @@ import java.util.*;
 /**
  * author: lesya
  */
+@ApiStatus.Internal
 public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   private final @Nls String myName;
   private final boolean mySupportsDeletion;

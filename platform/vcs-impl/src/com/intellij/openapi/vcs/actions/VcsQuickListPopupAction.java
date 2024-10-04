@@ -23,6 +23,7 @@ import java.util.List;
  * <p>
  * Can be customized using {@link VcsQuickListContentProvider} extension point.
  */
+@ApiStatus.Internal
 public final class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements DumbAware {
   public VcsQuickListPopupAction() {
     myActionPlace = ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION;

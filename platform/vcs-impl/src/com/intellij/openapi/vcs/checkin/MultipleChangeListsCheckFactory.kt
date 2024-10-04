@@ -6,7 +6,9 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.CommitContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class MultipleChangeListsCheckFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
     MultipleChangeListsCheckHandler(panel, commitContext)

@@ -3,9 +3,11 @@ package com.intellij.vcs.commit
 
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
 
+@ApiStatus.Internal
 class FixedSizeScrollPanel(view: Component, private val fixedSize: Dimension) : JBScrollPane(view) {
   init {
     border = JBUI.Borders.empty()

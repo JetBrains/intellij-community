@@ -2,11 +2,13 @@
 package com.intellij.util.progress
 
 import com.intellij.openapi.application.ModalityState
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 /**
  * Shows [progressDisplayComponent] when there's at least one running task and hides it when there are none
  */
+@ApiStatus.Internal
 class ComponentVisibilityProgressManager(private val progressDisplayComponent: JComponent) : ProgressVisibilityManager() {
   override fun getModalityState(): ModalityState {
     return ModalityState.stateForComponent(progressDisplayComponent)

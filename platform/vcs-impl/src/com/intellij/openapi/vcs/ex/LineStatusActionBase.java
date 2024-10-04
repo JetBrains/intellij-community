@@ -25,9 +25,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class LineStatusActionBase extends DumbAwareAction {
   public static final DataKey<Integer> SELECTED_OFFSET_KEY = DataKey.create("VCS_LINE_MARKER_SELECTED_OFFSET_KEY");
 

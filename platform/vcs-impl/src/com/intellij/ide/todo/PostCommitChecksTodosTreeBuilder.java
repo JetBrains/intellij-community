@@ -9,12 +9,14 @@ import com.intellij.openapi.vcs.checkin.TodoCheckinHandlerWorker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.TodoItem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class PostCommitChecksTodosTreeBuilder extends CustomChangelistTodosTreeBuilder {
   private final Map<VirtualFile, Change> myChanges = new HashMap<>();
 

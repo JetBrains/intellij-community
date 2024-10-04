@@ -9,6 +9,7 @@ import com.intellij.openapi.diff.impl.patch.PatchLine;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.util.Objects;
 
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 
+@ApiStatus.Internal
 public final class PlainSimplePatchApplier {
   private static final Logger LOG = getInstance(PlainSimplePatchApplier.class);
 

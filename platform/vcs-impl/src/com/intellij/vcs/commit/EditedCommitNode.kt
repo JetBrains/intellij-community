@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 fun insertEditedCommitNode(builder: ChangesViewModelBuilder, editedCommit: EditedCommitPresentation) {
@@ -25,6 +26,7 @@ fun insertEditedCommitNode(builder: ChangesViewModelBuilder, editedCommit: Edite
   }
 }
 
+@ApiStatus.Internal
 class EditedCommitNode(editedCommit: EditedCommitDetails) : ChangesBrowserNode<EditedCommitDetails>(editedCommit) {
   private val editedCommit: EditedCommitDetails get() = getUserObject()
   val commit: VcsFullCommitDetails get() = editedCommit.commit
@@ -50,6 +52,7 @@ class EditedCommitNode(editedCommit: EditedCommitDetails) : ChangesBrowserNode<E
   override fun getTextPresentation(): String = getUserObject().commit.subject
 }
 
+@ApiStatus.Internal
 class EditedCommitLoadingNode(editedCommit: EditedCommitPresentation.Loading)
   : ChangesBrowserNode<EditedCommitPresentation.Loading>(editedCommit) {
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {

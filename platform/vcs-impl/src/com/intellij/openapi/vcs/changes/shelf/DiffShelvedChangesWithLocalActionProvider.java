@@ -5,8 +5,10 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class DiffShelvedChangesWithLocalActionProvider implements AnActionExtensionProvider {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

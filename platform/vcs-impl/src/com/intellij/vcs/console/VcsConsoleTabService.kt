@@ -18,9 +18,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 interface VcsConsoleTabService {
   companion object {
     @JvmStatic
@@ -49,6 +51,7 @@ interface VcsConsoleTabService {
   fun showConsoleTabAndScrollToTheEnd()
 }
 
+@ApiStatus.Internal
 class MockVcsConsoleTabService : VcsConsoleTabService {
   @CalledInAny
   override fun addMessage(message: @Nls String?, contentType: ConsoleViewContentType) {

@@ -1,5 +1,4 @@
 com/google/gson/Gson
 it/unimi/dsi/fastutil/Hash$Strategy
-it/unimi/dsi/fastutil/ints/IntList
 kotlin/jvm/internal/DefaultConstructorMarker
 kotlin/reflect/KMutableProperty0

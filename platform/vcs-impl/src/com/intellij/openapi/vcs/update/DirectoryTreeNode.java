@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,6 +16,7 @@ import java.util.Collection;
 /**
  * author: lesya
  */
+@ApiStatus.Internal
 public class DirectoryTreeNode extends FileOrDirectoryTreeNode{
 
   public DirectoryTreeNode(String path, Project project, String parentPath) {

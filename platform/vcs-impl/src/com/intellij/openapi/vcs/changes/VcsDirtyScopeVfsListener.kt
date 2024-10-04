@@ -17,12 +17,14 @@ import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl.Companion.waitEventsProc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.coroutineContext
 
 /**
  * Listens to file system events and notifies VcsDirtyScopeManagers responsible for changed files to mark these files dirty.
  */
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class VcsDirtyScopeVfsListener(private val project: Project, coroutineScope: CoroutineScope) : AsyncVfsEventsListener {
   // for tests only

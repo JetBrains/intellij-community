@@ -7,8 +7,10 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 class ChangesBrowserConflictsNode(val project: Project) : ChangesBrowserNode<Unit>(Unit) {
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     renderer.append(VcsBundle.message("changes.nodetitle.merge.conflicts"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)

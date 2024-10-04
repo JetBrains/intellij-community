@@ -24,11 +24,13 @@
 
 package com.intellij.openapi.vcs.changes.ignore.lang;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * Class containing common constant variables.
  */
+@ApiStatus.Internal
 public final class IgnoreFileConstants {
   /**
    * New line character.

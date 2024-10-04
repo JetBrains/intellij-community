@@ -4,6 +4,7 @@ package com.intellij.openapi.diff.impl.patch;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsUserImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
@@ -12,6 +13,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.openapi.diff.impl.patch.PatchReader.HASH_PATTERN;
 
+@ApiStatus.Internal
 public final class PatchFileHeaderParser {
 
   @NonNls private static final Pattern ourBaseRevisionPattern = Pattern.compile("From\\s+(" + HASH_PATTERN + ")\\s+.*");

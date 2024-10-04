@@ -5,8 +5,10 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class VcsManagerConfigurableProvider extends ConfigurableProvider {
   @NotNull private final Project myProject;
 

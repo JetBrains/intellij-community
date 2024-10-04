@@ -18,10 +18,12 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChange;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class ShelvedChangeListDragBean {
   @NotNull private final List<ShelvedChange> myShelvedChanges;
   @NotNull private final List<ShelvedBinaryFile> myBinaries;

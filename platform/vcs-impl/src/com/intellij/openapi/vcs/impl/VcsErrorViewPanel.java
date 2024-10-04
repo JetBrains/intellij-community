@@ -3,7 +3,9 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class VcsErrorViewPanel extends NewErrorTreeViewPanel {
   VcsErrorViewPanel(Project project) {
     super(project, null);

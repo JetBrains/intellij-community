@@ -1338,6 +1338,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     return textFilePatches;
   }
 
+  @ApiStatus.Internal
   @RequiresEdt
   public static void unshelveSilentlyWithDnd(@NotNull Project project,
                                              @NotNull ShelvedChangeListDragBean shelvedChangeListDragBean,

@@ -8,12 +8,14 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.util.ui.JButtonAction
 import com.intellij.vcs.commit.CommitWorkflowHandler
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JButton
 
 /**
  * @see com.intellij.openapi.vcs.VcsActions.PRIMARY_COMMIT_EXECUTORS_GROUP,
  * @see com.intellij.openapi.vcs.VcsActions.COMMIT_EXECUTORS_GROUP
  */
+@ApiStatus.Internal
 abstract class CommitExecutorAction : JButtonAction(null) {
   init {
     isEnabledInModalContext = true

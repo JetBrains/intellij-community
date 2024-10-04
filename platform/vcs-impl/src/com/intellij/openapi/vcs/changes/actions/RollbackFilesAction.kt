@@ -16,7 +16,9 @@ import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.cleanActionText
 import com.intellij.vcs.commit.getProjectCommitMode
 import com.intellij.vcsUtil.RollbackUtil.getRollbackOperationName
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RollbackFilesAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT

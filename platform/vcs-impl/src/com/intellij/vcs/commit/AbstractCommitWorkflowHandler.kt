@@ -176,6 +176,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     return workflow.canExecute(sessionInfo, getIncludedChanges())
   }
 
+  @ApiStatus.Internal
   protected open suspend fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
     return workflow.executeSession(sessionInfo, commitInfo)
   }
@@ -281,6 +282,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   }
 }
 
+@ApiStatus.Internal
 class StaticCommitInfo(
   override val commitContext: CommitContext,
   override val isVcsCommit: Boolean,
@@ -291,6 +293,7 @@ class StaticCommitInfo(
   override val commitMessage: String,
 ) : CommitInfo
 
+@ApiStatus.Internal
 class DynamicCommitInfoImpl(
   override val commitContext: CommitContext,
   private val sessionInfo: CommitSessionInfo,
@@ -324,6 +327,7 @@ class DynamicCommitInfoImpl(
   }
 }
 
+@ApiStatus.Internal
 interface DynamicCommitInfo : CommitInfo {
   fun asStaticInfo(): StaticCommitInfo
 }

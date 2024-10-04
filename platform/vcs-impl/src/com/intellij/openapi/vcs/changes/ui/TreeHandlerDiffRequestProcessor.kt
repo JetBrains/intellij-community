@@ -19,6 +19,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.beans.PropertyChangeListener
@@ -250,6 +251,7 @@ abstract class ChangesTreeDiffPreviewHandler {
   }
 }
 
+@ApiStatus.Internal
 abstract class ChangesTreeDiffPreviewHandlerBase : ChangesTreeDiffPreviewHandler() {
   override fun iterateSelectedChanges(tree: ChangesTree): JBIterable<Wrapper> {
     return collectWrappers(VcsTreeModelData.selected(tree))

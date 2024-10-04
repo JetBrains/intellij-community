@@ -2,11 +2,13 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.vcs.changes.Change
+import org.jetbrains.annotations.ApiStatus
 
 private val MODIFIED_FILTER = { it: Change -> it.type == Change.Type.MODIFICATION || it.type == Change.Type.MOVED }
 private val NEW_FILTER = { it: Change -> it.type == Change.Type.NEW }
 private val DELETED_FILTER = { it: Change -> it.type == Change.Type.DELETED }
 
+@ApiStatus.Internal
 class ChangeInfoCalculator : CommitLegendPanel.InfoCalculator {
   private var myDisplayedChanges = emptyList<Change>()
   private var myIncludedChanges = emptyList<Change>()

@@ -9,12 +9,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.*;
 
+@ApiStatus.Internal
 public final class UnshelveSilentlyAction extends AnAction implements DumbAware {
 
   @Override

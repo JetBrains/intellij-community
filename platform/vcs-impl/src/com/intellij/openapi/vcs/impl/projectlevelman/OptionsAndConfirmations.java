@@ -18,11 +18,13 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public class OptionsAndConfirmations {
   private final Map<@NonNls String, Boolean> myOptionsValues = new HashMap<>();
   private final Map<@NonNls String, VcsShowConfirmationOption.Value> myConfirmationsValues = new HashMap<>();

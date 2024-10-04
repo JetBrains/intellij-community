@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +15,7 @@ import static com.intellij.openapi.vcs.changes.ChangesUtil.processVirtualFilesBy
 import static com.intellij.ui.SimpleTextAttributes.*;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
+@ApiStatus.Internal
 public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode<ChangesBrowserNode.Tag> implements TreeLinkMouseListener.HaveTooltip {
 
   @NotNull private static final SimpleTextAttributes CLEANUP_LINK_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE, JBColor.RED);

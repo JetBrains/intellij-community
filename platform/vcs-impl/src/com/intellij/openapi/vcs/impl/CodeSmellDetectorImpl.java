@@ -33,6 +33,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ui.MessageCategory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class CodeSmellDetectorImpl extends CodeSmellDetector {
   private static final Key<Boolean> CODE_SMELL_DETECTOR_KEY = new Key<Boolean>("CODE_SMELL_DETECTOR_KEY");
 

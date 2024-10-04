@@ -4,6 +4,7 @@ package com.intellij.openapi.diff.impl.patch;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +13,7 @@ import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@ApiStatus.Internal
 public final class BinaryPatchContentParser {
   @NonNls private static final Pattern ourGitBinaryLineSize = Pattern.compile("literal\\s+(\\d+)\\s*");
 

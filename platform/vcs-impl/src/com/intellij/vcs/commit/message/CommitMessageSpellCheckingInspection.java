@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
 
+@ApiStatus.Internal
 public final class CommitMessageSpellCheckingInspection extends BaseCommitMessageInspection {
   private static final Logger LOG = Logger.getInstance(CommitMessageSpellCheckingInspection.class);
 

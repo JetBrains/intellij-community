@@ -19,10 +19,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.List;
@@ -39,6 +36,7 @@ import static com.intellij.util.text.DateFormatUtil.formatPrettyDateTime;
 import static com.intellij.util.ui.UIUtil.*;
 import static java.lang.String.format;
 
+@ApiStatus.Internal
 public final class ChangeListDetailsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

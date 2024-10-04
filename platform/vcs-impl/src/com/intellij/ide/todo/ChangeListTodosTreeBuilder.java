@@ -3,10 +3,12 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class ChangeListTodosTreeBuilder extends TodoTreeBuilder {
 
   public ChangeListTodosTreeBuilder(@NotNull JTree tree,

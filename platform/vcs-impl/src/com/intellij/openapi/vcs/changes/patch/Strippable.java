@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public interface Strippable {
   void reset();// down - restore dirs...
 

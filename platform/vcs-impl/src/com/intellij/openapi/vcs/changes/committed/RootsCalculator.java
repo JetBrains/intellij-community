@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.function.Function.identity;
 
+@ApiStatus.Internal
 public final class RootsCalculator {
   private final static Logger LOG = Logger.getInstance(RootsCalculator.class);
 

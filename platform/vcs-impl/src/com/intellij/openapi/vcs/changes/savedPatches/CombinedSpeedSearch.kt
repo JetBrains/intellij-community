@@ -3,12 +3,14 @@ package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.ui.speedSearch.SpeedSearchSupply
+import org.jetbrains.annotations.ApiStatus
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
 /**
  * Speed search which redirects to [mainSpeedSearch], but also highlight matches from the query in [externalSpeedSearch].
  */
+@ApiStatus.Internal
 class CombinedSpeedSearch private constructor(private val mainSpeedSearch: SpeedSearchSupply,
                                               private val externalSpeedSearch: SpeedSearchSupply) : SpeedSearchSupply() {
 

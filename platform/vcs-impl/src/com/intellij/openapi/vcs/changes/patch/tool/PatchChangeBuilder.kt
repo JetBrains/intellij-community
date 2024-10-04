@@ -18,7 +18,9 @@ import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.AppliedSplitPatch
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PatchChangeBuilder {
   private val textBuilder = StringBuilder()
   private val convertor1 = LineNumberConvertor.Builder()
@@ -197,6 +199,7 @@ class PatchChangeBuilder {
   }
 }
 
+@ApiStatus.Internal
 class SideBySidePatchChangeBuilder {
   private val textBuilder1 = StringBuilder()
   private val textBuilder2 = StringBuilder()

@@ -31,13 +31,14 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcsUtil.VcsUIUtil
 import com.intellij.vcsUtil.VcsUtil.getFilePath
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.coroutines.coroutineContext
 import kotlin.properties.Delegates.observable
 
-class ChangesViewCommitPanel(project: Project, private val changesViewHost: ChangesViewPanel)
+class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, private val changesViewHost: ChangesViewPanel)
   : NonModalCommitPanel(project), ChangesViewCommitWorkflowUi {
 
   private val changesView get() = changesViewHost.changesView

@@ -929,6 +929,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     }
   }
 
+  @ApiStatus.Internal
   public CachesHolder getCachesHolder() {
     return myCachesHolder;
   }

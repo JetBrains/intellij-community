@@ -11,6 +11,7 @@ import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.ui.content.Content;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.function.Supplier;
  * <p>
  * Classes specified in attributes may receive {@link Project} in constructor parameter.
  */
+@ApiStatus.Internal
 public final class ChangesViewContentEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance(ChangesViewContentEP.class);
 

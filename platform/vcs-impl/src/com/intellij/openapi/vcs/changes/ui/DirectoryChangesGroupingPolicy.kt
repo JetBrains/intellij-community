@@ -4,9 +4,11 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.DIRECTORY_CACHE
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.PATH_NODE_BUILDER
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 import javax.swing.tree.DefaultTreeModel
 
+@ApiStatus.Internal
 class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
   override fun getParentNodeFor(nodePath: StaticFilePath,
                                 node: ChangesBrowserNode<*>,

@@ -6,10 +6,12 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public class ScheduleForRemovalAction extends AbstractMissingFilesAction {
   @Override
   protected List<VcsException> processFiles(final AbstractVcs vcs, final List<? extends FilePath> files) {

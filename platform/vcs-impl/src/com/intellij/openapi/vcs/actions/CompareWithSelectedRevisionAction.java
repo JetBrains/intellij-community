@@ -25,6 +25,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
+@ApiStatus.Internal
 public final class CompareWithSelectedRevisionAction extends DumbAwareAction {
   private static class Holder {
     private static final ColumnInfo<TreeNodeAdapter, String> BRANCH_COLUMN =

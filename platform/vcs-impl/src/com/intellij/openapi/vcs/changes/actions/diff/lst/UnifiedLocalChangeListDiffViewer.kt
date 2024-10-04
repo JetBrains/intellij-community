@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.ex.countAffectedVisibleChanges
 import com.intellij.openapi.vcs.ex.createClientIdGutterIconRenderer
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.MouseAdapter
@@ -48,6 +49,7 @@ import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class UnifiedLocalChangeListDiffViewer(context: DiffContext,
                                        private val localRequest: LocalChangeListDiffRequest)
   : UnifiedDiffViewer(context, localRequest.request) {

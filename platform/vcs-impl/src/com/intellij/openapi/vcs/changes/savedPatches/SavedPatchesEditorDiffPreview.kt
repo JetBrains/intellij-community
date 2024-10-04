@@ -7,9 +7,11 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import com.intellij.openapi.wm.IdeFocusManager
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.lang.ref.WeakReference
 
+@ApiStatus.Internal
 class SavedPatchesEditorDiffPreview(
   private val changesBrowser: SavedPatchesChangesBrowser,
   private val focusMainComponent: (Component?) -> Unit,

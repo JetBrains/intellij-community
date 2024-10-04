@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.APP)
 @State(name = "VcsEditorTab.Settings", storages = [(Storage(value = "vcs.xml"))])
@@ -71,6 +72,7 @@ class VcsEditorTabFilesManager :
   }
 }
 
+@ApiStatus.Internal
 interface VcsEditorTabFilesListener {
   @RequiresEdt
   fun shouldOpenInNewWindowChanged(file: VirtualFile, shouldOpenInNewWindow: Boolean)

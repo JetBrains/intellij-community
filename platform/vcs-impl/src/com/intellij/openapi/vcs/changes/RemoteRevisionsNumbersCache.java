@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -25,6 +26,7 @@ import static com.intellij.vcsUtil.VcsUtil.*;
 /**
  * for vcses where it is reasonable to ask revision of each item separately
  */
+@ApiStatus.Internal
 public final class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   public static final Logger LOG = Logger.getInstance(RemoteRevisionsNumbersCache.class);
 

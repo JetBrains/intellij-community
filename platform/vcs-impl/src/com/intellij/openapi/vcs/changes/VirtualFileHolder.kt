@@ -5,7 +5,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class VirtualFileHolder(private val myProject: Project) : FileHolder {
   private val myFiles = hashSetOf<VirtualFile>()
 

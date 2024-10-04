@@ -58,6 +58,7 @@ internal class GeneralVcsSettingsProviderEP(project: Project) : ConfigurableEP<U
   }
 }
 
+@ApiStatus.Internal
 enum class Location {
   Confirmations,
   Other
@@ -260,6 +261,7 @@ private enum class ShowPatchAfterCreationEnum(private val text: () -> @Nls Strin
   }
 }
 
+@ApiStatus.Internal
 class OptionEnabledPredicate(private val comboBox: ComboBox<VcsShowConfirmationOption.Value>) : ComponentPredicate() {
   override fun addListener(listener: (Boolean) -> Unit) {
     comboBox.addItemListener { listener(invoke()) }
@@ -268,6 +270,7 @@ class OptionEnabledPredicate(private val comboBox: ComboBox<VcsShowConfirmationO
   override fun invoke(): Boolean = comboBox.item == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY
 }
 
+@ApiStatus.Internal
 class OptionVisibleForVcsesPredicate(private val project: Project,
                                      private val setting: PersistentVcsSetting,
                                      private val vcsListeners: MutableList<Runnable>) : ComponentPredicate() {

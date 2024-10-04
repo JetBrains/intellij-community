@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<ShelvedBinaryFilePatch> {
   public ApplyBinaryShelvedFilePatch(ShelvedBinaryFilePatch patch) {
     super(patch);

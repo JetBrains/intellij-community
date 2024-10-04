@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 
 
+@ApiStatus.Internal
 public abstract class AbstractSelectFilesDialog extends DialogWrapper {
   private final @NlsContexts.Label String myPrompt;
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.nio.file.Path;
 /**
  * to be called after checkout - notifiers extenders on checkout completion
  */
+@ApiStatus.Internal
 public final class CompositeCheckoutListener implements CheckoutProvider.Listener {
   private static final Logger LOG = Logger.getInstance(CompositeCheckoutListener.class);
 

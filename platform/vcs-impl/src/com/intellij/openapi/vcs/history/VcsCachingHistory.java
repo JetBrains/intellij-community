@@ -18,6 +18,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.openapi.vcs.impl.BackgroundableActionLock.getLock;
 
+@ApiStatus.Internal
 public final class VcsCachingHistory {
   @NotNull private final Project myProject;
   @NotNull private final VcsHistoryCache myVcsHistoryCache;

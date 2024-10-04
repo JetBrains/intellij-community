@@ -78,6 +78,7 @@ interface LocalLineStatusTracker<R : Range> : LineStatusTracker<R> {
   }
 }
 
+@ApiStatus.Internal
 abstract class LocalLineStatusTrackerImpl<R : Range>(
   final override val project: Project,
   document: Document,

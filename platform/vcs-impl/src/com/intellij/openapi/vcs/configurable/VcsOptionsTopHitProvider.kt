@@ -38,7 +38,7 @@ private fun cdShowChangesLastNDays(project: Project): CheckboxDescriptor {
   return CheckboxDescriptor(name, vcsCA::isShow, vcsCA::setShow, groupName = vcsOptionGroupName)
 }
 
-fun cdShowReadOnlyStatusDialog(project: Project): CheckboxDescriptor {
+internal fun cdShowReadOnlyStatusDialog(project: Project): CheckboxDescriptor {
   val state = (ReadonlyStatusHandler.getInstance(project) as ReadonlyStatusHandlerImpl).state
   val name = VcsBundle.message("checkbox.show.clear.read.only.status.dialog")
   val vcses = ProjectLevelVcsManager.getInstance(project).allSupportedVcss
@@ -58,7 +58,7 @@ private fun cdShowRightMargin(project: Project): CheckboxDescriptor {
 }
 
 // @formatter:off
-fun cdShowDirtyRecursively(project: Project): CheckboxDescriptor =                  CheckboxDescriptor(VcsBundle.message("checkbox.show.dirty.recursively"), vcsConfiguration(project)::SHOW_DIRTY_RECURSIVELY, groupName = vcsOptionGroupName)
+internal fun cdShowDirtyRecursively(project: Project): CheckboxDescriptor =         CheckboxDescriptor(VcsBundle.message("checkbox.show.dirty.recursively"), vcsConfiguration(project)::SHOW_DIRTY_RECURSIVELY, groupName = vcsOptionGroupName)
 private fun cdWrapTypingOnRightMargin(project: Project): CheckboxDescriptor =       CheckboxDescriptor(ApplicationBundle.message("checkbox.wrap.typing.on.right.margin"), vcsConfiguration(project)::WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN, groupName = commitMessageOptionGroupName)
 private fun cdClearInitialCommitMessage(project: Project): CheckboxDescriptor =     CheckboxDescriptor(VcsBundle.message("checkbox.clear.initial.commit.message"), vcsConfiguration(project)::CLEAR_INITIAL_COMMIT_MESSAGE, groupName = commitMessageOptionGroupName)
 private fun cdIncludeShelfBaseContent(project: Project): CheckboxDescriptor =       CheckboxDescriptor(VcsBundle.message("vcs.shelf.store.base.content"), vcsConfiguration(project)::INCLUDE_TEXT_INTO_SHELF, groupName = confirmationOptionGroupName)

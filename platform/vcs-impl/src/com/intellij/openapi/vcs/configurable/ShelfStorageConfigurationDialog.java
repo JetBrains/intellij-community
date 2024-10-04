@@ -19,6 +19,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import static com.intellij.openapi.vcs.configurable.ShelfProjectConfigurable.get
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ui.UIUtil.*;
 
+@ApiStatus.Internal
 public class ShelfStorageConfigurationDialog extends DialogWrapper {
   @NotNull private final Project myProject;
   @NotNull private final VcsConfiguration myVcsConfiguration;

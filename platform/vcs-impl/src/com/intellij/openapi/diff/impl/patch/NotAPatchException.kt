@@ -2,5 +2,7 @@
 package com.intellij.openapi.diff.impl.patch
 
 import com.intellij.openapi.vcs.VcsBundle
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class NotAPatchException : PatchSyntaxException(VcsBundle.message("patch.apply.not.patch"))

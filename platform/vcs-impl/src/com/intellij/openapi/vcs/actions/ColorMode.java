@@ -18,13 +18,11 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vcs.VcsBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import static com.intellij.openapi.vcs.VcsBundle.BUNDLE;
 
+@ApiStatus.Internal
 public enum ColorMode {
   AUTHOR("author", "annotations.color.mode.author"),
   ORDER("order", "annotations.color.mode.order"),

@@ -1585,6 +1585,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     myShowLocalChangesInvalidated = true;
   }
 
+  @ApiStatus.Internal
   public ChangelistConflictTracker getConflictTracker() {
     return myConflictTracker;
   }

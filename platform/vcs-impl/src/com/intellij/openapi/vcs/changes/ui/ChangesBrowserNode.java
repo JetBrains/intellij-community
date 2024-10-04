@@ -336,10 +336,12 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return (T)userObject;
   }
 
+  @ApiStatus.Internal
   public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
     return false;
   }
 
+  @ApiStatus.Internal
   public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
   }
 

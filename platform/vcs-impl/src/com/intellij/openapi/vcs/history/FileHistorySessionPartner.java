@@ -25,6 +25,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.history.FileHistoryPanelImpl.sameHistories;
 
+@ApiStatus.Internal
 public final class FileHistorySessionPartner implements VcsHistorySessionConsumer, Disposable {
   @NotNull private final AbstractVcs myVcs;
   @NotNull private final VcsHistoryProvider myVcsHistoryProvider;

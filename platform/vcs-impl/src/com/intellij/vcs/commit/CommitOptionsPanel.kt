@@ -12,6 +12,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.removeMnemonic
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import javax.swing.JCheckBox
@@ -19,6 +20,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 
+@ApiStatus.Internal
 class CommitOptionsPanel(private val project: Project,
                          private val actionNameSupplier: () -> @Nls String,
                          private val nonFocusable: Boolean,

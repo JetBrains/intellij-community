@@ -10,6 +10,7 @@ import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public abstract class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   public static final TodoItem[] EMPTY_ITEMS = TodoItem.EMPTY_ARRAY;
 

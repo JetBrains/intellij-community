@@ -18,6 +18,7 @@ import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.EditedCommitDetails
 import com.intellij.vcs.commit.EditedCommitNode
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 private fun wrap(project: Project,
@@ -161,6 +162,7 @@ private class ChangeListWrapper(override val userObject: ChangeList) : ChangesVi
   override fun toString(): String = userObject.name
 }
 
+@ApiStatus.Internal
 interface ChangesViewUserObjectTag : ChangesBrowserNode.Tag {
   val userObject: Any
 }

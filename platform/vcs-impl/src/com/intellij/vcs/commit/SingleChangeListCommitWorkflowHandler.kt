@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
 
 class SingleChangeListCommitWorkflowHandler(
@@ -33,6 +34,7 @@ class SingleChangeListCommitWorkflowHandler(
     }
   }
 
+  @ApiStatus.Internal
   override val amendCommitHandler: AmendCommitHandlerImpl = AmendCommitHandlerImpl(this)
 
   private fun getChangeList() = ui.getChangeList()

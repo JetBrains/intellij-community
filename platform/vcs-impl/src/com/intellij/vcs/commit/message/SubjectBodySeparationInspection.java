@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.util.DocumentUtil.getLineTextRange;
 import static com.intellij.util.containers.ContainerUtil.ar;
 
+@ApiStatus.Internal
 public class SubjectBodySeparationInspection extends BaseCommitMessageInspection {
   @Nls
   @NotNull

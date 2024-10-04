@@ -18,9 +18,11 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.StatusText
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import javax.swing.tree.DefaultTreeModel
 
+@ApiStatus.Internal
 class SavedPatchesChangesBrowser(project: Project, internal val isShowDiffWithLocal: () -> Boolean, parentDisposable: Disposable)
   : AsyncChangesBrowserBase(project, false, false), Disposable {
 

@@ -59,6 +59,7 @@ import com.intellij.vcs.commit.isPostCommitCheck
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import kotlin.reflect.KMutableProperty0
@@ -68,6 +69,7 @@ class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
     CodeAnalysisBeforeCheckinHandler(panel.project)
 }
 
+@ApiStatus.Internal
 class CodeAnalysisCommitProblem(private val codeSmells: List<CodeSmellInfo>,
                                 private val errors: Int, private val warnings: Int) : CommitProblemWithDetails {
   override val text: String
@@ -94,6 +96,7 @@ class CodeAnalysisCommitProblem(private val codeSmells: List<CodeSmellInfo>,
  * The check-in handler which performs code analysis before check-in. Source code for this class
  * is provided as a sample of using the [CheckinHandler] API.
  */
+@ApiStatus.Internal
 class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
   CheckinHandler(), CommitCheck {
 
@@ -253,6 +256,7 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
   }
 }
 
+@ApiStatus.Internal
 class ProfileChooser(private val project: Project,
                      private val property: KMutableProperty0<Boolean>,
                      private val isLocalProperty: KMutableProperty0<Boolean>,

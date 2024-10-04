@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Predicate
 import javax.swing.SwingUtilities
@@ -49,6 +50,7 @@ interface VcsStartupActivity {
   }
 }
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class VcsInitialization(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val lock = Any()

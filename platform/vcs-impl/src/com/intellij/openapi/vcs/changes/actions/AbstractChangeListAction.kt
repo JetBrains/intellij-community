@@ -8,7 +8,9 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class AbstractChangeListAction : DumbAwareAction() {
   protected fun updateEnabledAndVisible(e: AnActionEvent, enabled: Boolean, contextMenuVisible: Boolean = true) = with(e.presentation) {
     isEnabled = enabled

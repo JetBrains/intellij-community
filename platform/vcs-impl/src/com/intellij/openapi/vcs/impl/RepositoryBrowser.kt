@@ -35,6 +35,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.PlatformIcons
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.io.File
 import javax.swing.Icon
@@ -79,6 +80,7 @@ object RepositoryBrowser {
   private fun getIcon(): Icon? = if (ExperimentalUI.isNewUI()) AllIcons.Toolwindows.Repositories else null
 }
 
+@ApiStatus.Internal
 class RepositoryBrowserPanel(
   val project: Project,
   val root: AbstractVcsVirtualFile,
@@ -176,6 +178,7 @@ internal class DiffRepoWithLocalAction : AnActionExtensionProvider {
   }
 }
 
+@ApiStatus.Internal
 class VcsVirtualFileContentRevision(private val vcsVirtualFile: VcsVirtualFile) : ContentRevision, ByteBackedContentRevision {
   override fun getContent(): String? =
     contentAsBytes?.let { LoadTextUtil.getTextByBinaryPresentation(it, vcsVirtualFile).toString() }

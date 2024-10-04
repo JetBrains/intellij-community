@@ -12,6 +12,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,6 +106,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     return getUserObject().getName().trim();
   }
 
+  @ApiStatus.Internal
   @Override
   public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
     final List<Change> changes = dragBean.getChanges();
@@ -117,6 +119,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     return true;
   }
 
+  @ApiStatus.Internal
   @Override
   public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
     if (!(userObject instanceof LocalChangeList)) {

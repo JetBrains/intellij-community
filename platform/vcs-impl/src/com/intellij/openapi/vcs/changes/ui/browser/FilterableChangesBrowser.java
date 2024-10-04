@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.ui.components.ProgressBarLoadingDecorator;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class FilterableChangesBrowser extends ChangesBrowserBase implements Disposable {
   private final ChangesFilterer myChangesFilterer;
   private ProgressBarLoadingDecorator myLoadingDecorator;

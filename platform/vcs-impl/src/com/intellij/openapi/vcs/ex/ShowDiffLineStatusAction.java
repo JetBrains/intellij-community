@@ -3,11 +3,13 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class ShowDiffLineStatusAction extends LineStatusActionBase {
   @Override
   protected void doAction(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor, @Nullable Range range) {

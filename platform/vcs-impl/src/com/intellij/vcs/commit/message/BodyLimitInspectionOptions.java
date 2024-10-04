@@ -6,10 +6,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.ui.JBIntSpinner;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public class BodyLimitInspectionOptions implements ConfigurableUi<Project> {
   @NotNull private final BodyLimitInspection myInspection;
   private JBIntSpinner myMarginSpinner;

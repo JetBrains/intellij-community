@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import org.jetbrains.annotations.ApiStatus
 
 interface CommitOptions {
   val vcsOptions: Map<AbstractVcs, RefreshableOnComponent>
@@ -12,11 +13,12 @@ interface CommitOptions {
   val extensionOptions: List<RefreshableOnComponent>
 }
 
-val CommitOptions.allOptions: Sequence<RefreshableOnComponent>
+internal val CommitOptions.allOptions: Sequence<RefreshableOnComponent>
   get() = sequenceOf(vcsOptions.values, beforeCommitChecksOptions, postCommitChecksOptions, afterOptions, extensionOptions).flatten()
-val CommitOptions.isEmpty: Boolean
+internal val CommitOptions.isEmpty: Boolean
   get() = allOptions.none()
 
+@ApiStatus.Internal
 class CommitOptionsImpl(
   override val vcsOptions: Map<AbstractVcs, RefreshableOnComponent>,
   override val beforeCommitChecksOptions: List<RefreshableOnComponent>,
@@ -25,6 +27,7 @@ class CommitOptionsImpl(
   override val extensionOptions: List<RefreshableOnComponent>,
 ) : CommitOptions
 
+@ApiStatus.Internal
 class MutableCommitOptions : CommitOptions {
   override val vcsOptions: MutableMap<AbstractVcs, RefreshableOnComponent> = mutableMapOf()
   override val beforeCommitChecksOptions: MutableList<RefreshableOnComponent> = mutableListOf()

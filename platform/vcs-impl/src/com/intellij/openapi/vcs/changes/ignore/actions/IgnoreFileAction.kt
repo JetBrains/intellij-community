@@ -25,7 +25,9 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.asJBIterable
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class IgnoreFileAction(private val ignoreFile: VirtualFile) : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
@@ -44,6 +46,7 @@ class IgnoreFileAction(private val ignoreFile: VirtualFile) : DumbAwareAction() 
 
 }
 
+@ApiStatus.Internal
 class CreateNewIgnoreFileAction(private val ignoreFileName: String, private val ignoreFileRoot: VirtualFile) : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT

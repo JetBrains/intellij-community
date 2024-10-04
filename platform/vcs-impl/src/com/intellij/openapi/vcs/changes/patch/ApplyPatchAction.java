@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,6 +93,7 @@ public final class ApplyPatchAction extends DumbAwareAction {
   /**
    * @deprecated Use {@link ApplyPatchUtil#applyContent(Project, ApplyFilePatchBase, ApplyPatchContext, VirtualFile, CommitContext, boolean, String, String)} instead.
    */
+  @ApiStatus.Internal
   @Deprecated
   public static @NotNull ApplyPatchStatus applyContent(@NotNull Project project,
                                                        @NotNull ApplyFilePatchBase<?> patch,

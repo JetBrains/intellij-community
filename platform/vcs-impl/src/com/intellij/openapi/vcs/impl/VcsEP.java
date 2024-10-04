@@ -8,8 +8,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class VcsEP implements PluginAware {
   public static final ExtensionPointName<VcsEP> EP_NAME = new ExtensionPointName<>("com.intellij.vcs");
 

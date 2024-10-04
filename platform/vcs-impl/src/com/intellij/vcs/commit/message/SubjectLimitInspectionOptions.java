@@ -4,10 +4,12 @@ package com.intellij.vcs.commit.message;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBIntSpinner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public class SubjectLimitInspectionOptions implements ConfigurableUi<Project> {
   @NotNull private final SubjectLimitInspection myInspection;
   private JBIntSpinner myMarginSpinner;

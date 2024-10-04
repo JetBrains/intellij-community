@@ -18,9 +18,11 @@ package com.intellij.openapi.vcs.annotate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public interface TextAnnotationPresentation {
   int getAnnotationLine(int editorLine);
   int getAnnotationLine(int editorLine, boolean approximate);

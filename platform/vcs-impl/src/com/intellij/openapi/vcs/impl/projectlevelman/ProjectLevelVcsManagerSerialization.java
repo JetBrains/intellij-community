@@ -5,9 +5,11 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ProjectLevelVcsManagerSerialization {
   @NonNls private static final String OPTIONS_SETTING = "OptionsSetting";
   @NonNls private static final String CONFIRMATIONS_SETTING = "ConfirmationsSetting";

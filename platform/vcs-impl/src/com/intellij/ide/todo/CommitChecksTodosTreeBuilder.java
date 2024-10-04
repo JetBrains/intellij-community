@@ -10,12 +10,14 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.TodoItem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class CommitChecksTodosTreeBuilder extends CustomChangelistTodosTreeBuilder {
   private static final Logger LOG = Logger.getInstance(CommitChecksTodosTreeBuilder.class);
 

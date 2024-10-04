@@ -5,7 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.WritingAccessProvider
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ShelfFileWritingAccessProvider(val myProject: Project) : WritingAccessProvider() {
   override fun requestWriting(files: MutableCollection<out VirtualFile>): MutableCollection<VirtualFile> {
     val shelvingFiles = ShelveChangesManager.getInstance(myProject).shelvingFiles

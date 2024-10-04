@@ -18,6 +18,7 @@ import java.util.*
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 
+@ApiStatus.Internal
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use [com.intellij.openapi.vcs.actions.commit.CheckinActionUtil] instead")
 abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
