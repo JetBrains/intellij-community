@@ -69,7 +69,8 @@ class UnifiedEditorRangeHighlighter {
       int newStart = base.getStartOffset() + relativeStart;
       int newEnd = base.getStartOffset() + relativeEnd;
 
-      if (newEnd - newStart <= 0) return true;
+      if (newEnd - newStart < 0) return true;
+      if (newEnd == newStart && !marker.isAfterEndOfLine()) return true;
 
       if (myPieces.size() % 1014 == 0) ProgressManager.checkCanceled();
       myPieces.add(new Element(marker, newStart, newEnd));
