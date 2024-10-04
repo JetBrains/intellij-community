@@ -31,6 +31,10 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.SOURCE_MODULE_DEPENDENCIES
+import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.SOURCE_MODULE_DEPENDENCIES_IGNORED
+import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.TEST_MODULE_DEPENDENCIES
+import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.TEST_MODULE_DEPENDENCIES_IGNORED
 import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.kotlinForwardDeclarationsWorkspaceEntity
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.LibrarySourcesScope
@@ -42,6 +46,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
 @ApiStatus.Internal
@@ -236,13 +241,13 @@ fun ModuleSourceInfo.collectDependencies(collectionMode: ModuleDependencyCollect
     }
     val key = when (sourceRootType) {
         SourceKotlinRootType -> when (collectionMode) {
-            ModuleDependencyCollector.CollectionMode.COLLECT_IGNORED -> DependencyKeys.SOURCE_MODULE_DEPENDENCIES_IGNORED
-            ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED  -> DependencyKeys.SOURCE_MODULE_DEPENDENCIES
+            ModuleDependencyCollector.CollectionMode.COLLECT_IGNORED -> SOURCE_MODULE_DEPENDENCIES_IGNORED
+            ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED  -> SOURCE_MODULE_DEPENDENCIES
         }
 
         TestSourceKotlinRootType -> when (collectionMode) {
-            ModuleDependencyCollector.CollectionMode.COLLECT_IGNORED  -> DependencyKeys.TEST_MODULE_DEPENDENCIES_IGNORED
-            ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED  -> DependencyKeys.TEST_MODULE_DEPENDENCIES
+            ModuleDependencyCollector.CollectionMode.COLLECT_IGNORED  -> TEST_MODULE_DEPENDENCIES_IGNORED
+            ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED  -> TEST_MODULE_DEPENDENCIES
         }
     }
     return CachedValuesManager.getManager(project).getCachedValue(
@@ -269,11 +274,18 @@ private fun ModuleSourceInfo.calculateModuleDependencies(
 }
 
 private object DependencyKeys {
-    val SOURCE_MODULE_DEPENDENCIES = Key.create<CachedValue<List<KaModule>>>("SOURCE_MODULE_DEPENDENCIES")
-    val SOURCE_MODULE_DEPENDENCIES_IGNORED = Key.create<CachedValue<List<KaModule>>>("SOURCE_MODULE_DEPENDENCIES_IGNORED")
+    private val map = ConcurrentHashMap<String, Key<CachedValue<List<KaModule>>>>()
 
-    val TEST_MODULE_DEPENDENCIES = Key.create<CachedValue<List<KaModule>>>("TEST_MODULE_DEPENDENCIES")
-    val TEST_MODULE_DEPENDENCIES_IGNORED = Key.create<CachedValue<List<KaModule>>>("TEST_MODULE_DEPENDENCIES_IGNORED")
+    private fun getKey(key: String, moduleInfo: ModuleSourceInfo): Key<CachedValue<List<KaModule>>> =
+        (key + moduleInfo.javaClass.name).let { key ->
+            map.computeIfAbsent(key) { Key.create(it) }
+        }
+
+    val ModuleSourceInfo.SOURCE_MODULE_DEPENDENCIES get() = getKey("SOURCE_MODULE_DEPENDENCIES", this)
+    val ModuleSourceInfo.SOURCE_MODULE_DEPENDENCIES_IGNORED get() = getKey("SOURCE_MODULE_DEPENDENCIES_IGNORED", this)
+
+    val ModuleSourceInfo.TEST_MODULE_DEPENDENCIES get() = getKey("TEST_MODULE_DEPENDENCIES", this)
+    val ModuleSourceInfo.TEST_MODULE_DEPENDENCIES_IGNORED get() = getKey("TEST_MODULE_DEPENDENCIES_IGNORED", this)
 }
 
 @ApiStatus.Internal
