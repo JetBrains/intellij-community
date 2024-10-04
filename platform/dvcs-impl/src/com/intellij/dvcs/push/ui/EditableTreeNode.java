@@ -16,12 +16,14 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.OutgoingResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
+@ApiStatus.Internal
 public interface EditableTreeNode extends CustomRenderedTreeNode {
 
   void fireOnChange();
