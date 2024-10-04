@@ -78,12 +78,5 @@ open class LinuxDistributionCustomizer {
    */
   open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
     RepairUtilityBuilder.bundle(context = context, os = OsFamily.LINUX, arch = arch, distributionDir = targetDir)
-
-    @Suppress("DEPRECATION")
-    copyAdditionalFilesBlocking(context, targetDir, arch)
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Please migrate the build script to Kotlin and override `copyAdditionalFiles`")
-  open fun copyAdditionalFilesBlocking(context: BuildContext, targetDir: Path, arch: JvmArchitecture) { }
 }

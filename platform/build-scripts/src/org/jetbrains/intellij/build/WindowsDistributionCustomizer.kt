@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 
@@ -75,14 +74,7 @@ open class WindowsDistributionCustomizer {
    */
   open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
     RepairUtilityBuilder.bundle(context, OsFamily.WINDOWS, arch, targetDir)
-
-    @Suppress("DEPRECATION")
-    copyAdditionalFilesBlocking(context, targetDir, arch)
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Please migrate the build script to Kotlin and override `copyAdditionalFiles`")
-  open fun copyAdditionalFilesBlocking(context: BuildContext, targetDir: Path, arch: JvmArchitecture) { }
 
   /**
    * The returned name will be shown in Windows Installer and used in Registry keys.
