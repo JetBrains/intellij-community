@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PluginAutoUpdateRepository
 import com.intellij.openapi.application.PluginAutoUpdater
@@ -19,15 +20,8 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.io.move
 import com.intellij.util.text.VersionComparatorUtil
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
@@ -190,7 +184,8 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
   private data class DownloadedUpdate(val pluginId: PluginId, val version: String, val updatePath: Path)
 
   private companion object {
-    fun isAutoUpdateEnabled(): Boolean = UpdateSettings.getInstance().isPluginsAutoUpdateEnabled
+    fun isAutoUpdateEnabled(): Boolean = PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() &&
+                                         UpdateSettings.getInstance().isPluginsAutoUpdateEnabled
   }
 }
 
