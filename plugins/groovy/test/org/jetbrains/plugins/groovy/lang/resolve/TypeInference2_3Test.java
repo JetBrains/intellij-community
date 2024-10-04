@@ -12,6 +12,15 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
  * Created by Max Medvedev on 10/02/14
  */
 public class TypeInference2_3Test extends TypeInferenceTestBase {
+
+  @NotNull
+  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_3;
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
   public void testContravariantType() {
     doTest("""
              import groovy.transform.CompileStatic
@@ -411,18 +420,11 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
 
   public void testTypeOfMethodReturningNullInCompileStatic() {
     doTest("""
-                 @groovy.transform.CompileStatic
-                 class B {
-                     void m() { <caret>method() }
-                     private List method() { return null }
-                 }
-                 """, GrMethodCall.class, "java.util.List");
+             @groovy.transform.CompileStatic
+             class B {
+                 void m() { <caret>method() }
+                 private List method() { return null }
+             }
+             """, GrMethodCall.class, "java.util.List");
   }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_3;
 }

@@ -10,6 +10,23 @@ import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 public class ResolvePropertyViaAliasedImportTest extends GrHighlightingTestBase {
+
+  @NotNull
+  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
+
+  @NotNull
+  private final String basePath = TestUtils.getTestDataPath() + "resolve/imports";
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
+  @Override
+  public final @NotNull String getBasePath() {
+    return basePath;
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -61,17 +78,4 @@ public class ResolvePropertyViaAliasedImportTest extends GrHighlightingTestBase 
   public void testSetterWithSetterAlias() {
     doTest();
   }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  @Override
-  public final String getBasePath() {
-    return basePath;
-  }
-
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
-  private final String basePath = TestUtils.getTestDataPath() + "resolve/imports";
 }

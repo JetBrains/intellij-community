@@ -9,6 +9,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHARACTER;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 
 public class ExpressionTypeTest extends GroovyLatestTest implements TypingTest {
+
   @Test
   public void untypedLocalVariableReferenceCs() {
     typingTest("@groovy.transform.CompileStatic def usage() { def a; <caret>a }", JAVA_LANG_OBJECT);

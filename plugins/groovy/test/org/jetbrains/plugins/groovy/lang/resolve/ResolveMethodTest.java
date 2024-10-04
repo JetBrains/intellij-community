@@ -34,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ResolveMethodTest extends GroovyLatestTest implements ResolveTest {
+
   public ResolveMethodTest() {
     super("resolve/method");
   }

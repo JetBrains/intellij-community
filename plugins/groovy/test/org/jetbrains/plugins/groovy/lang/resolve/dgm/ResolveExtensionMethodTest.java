@@ -15,6 +15,15 @@ import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveTestCase;
 import static org.jetbrains.plugins.groovy.dgm.DGMUtil.ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE;
 
 public class ResolveExtensionMethodTest extends GroovyResolveTestCase {
+
+  @NotNull
+  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
   private void addExtension(String directory, String text) {
     PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
     GroovyFile file =
@@ -101,11 +110,4 @@ public class ResolveExtensionMethodTest extends GroovyResolveTestCase {
         "hi".<caret>myMethod()
         """, GrGdkMethod.class);
   }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
 }

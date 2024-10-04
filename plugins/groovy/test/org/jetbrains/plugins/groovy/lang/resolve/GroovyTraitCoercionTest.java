@@ -18,6 +18,18 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class GroovyTraitCoercionTest extends GroovyResolveTestCase {
+
+  private LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
+
+  @Override
+  public @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
+  public void setProjectDescriptor(LightProjectDescriptor projectDescriptor) {
+    this.projectDescriptor = projectDescriptor;
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -160,15 +172,4 @@ public class GroovyTraitCoercionTest extends GroovyResolveTestCase {
       Assert.assertEquals(resolveByText(entry.getKey(), GrMethod.class).getContainingClass(), getFixture().findClass(entry.getValue()));
     }
   }
-
-  @Override
-  public @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  public void setProjectDescriptor(LightProjectDescriptor projectDescriptor) {
-    this.projectDescriptor = projectDescriptor;
-  }
-
-  private LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
 }

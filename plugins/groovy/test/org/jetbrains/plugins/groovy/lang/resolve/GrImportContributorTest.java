@@ -14,6 +14,19 @@ import java.util.Arrays;
 import java.util.List;
 
 public class GrImportContributorTest extends LightGroovyTestCase {
+
+  @NotNull
+  private LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
+
+  @Override
+  public @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
+  public void setProjectDescriptor(@NotNull LightProjectDescriptor projectDescriptor) {
+    this.projectDescriptor = projectDescriptor;
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -85,20 +98,9 @@ public class GrImportContributorTest extends LightGroovyTestCase {
     }, myFixture.getTestRootDisposable());
     JavaCodeInsightTestFixture fixture = getFixture();
     fixture.configureByText("a.groovy", """
-          println foo()
-          println <warning>hello</warning>()
-          println BAR""");
+      println foo()
+      println <warning>hello</warning>()
+      println BAR""");
     fixture.checkHighlighting();
   }
-
-  @Override
-  public @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  public void setProjectDescriptor(LightProjectDescriptor projectDescriptor) {
-    this.projectDescriptor = projectDescriptor;
-  }
-
-  private LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
 }

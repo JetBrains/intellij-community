@@ -10,6 +10,15 @@ import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveTestCase;
 import org.junit.Assert;
 
 public class ResolveDGMMethod23Test extends GroovyResolveTestCase {
+
+  @NotNull
+  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_3;
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
   public void testIsNumber() {
     GrGdkMethod resolved = resolveByText("\"1.2.3\".isN<caret>umber()", GrGdkMethod.class);
     Assert.assertEquals("org.codehaus.groovy.runtime.StringGroovyMethods",
@@ -32,11 +41,4 @@ public class ResolveDGMMethod23Test extends GroovyResolveTestCase {
                                            """, GrGdkMethod.class);
     Assert.assertEquals("org.codehaus.groovy.runtime.NioGroovyMethods", resolved.getStaticMethod().getContainingClass().getQualifiedName());
   }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_3;
 }

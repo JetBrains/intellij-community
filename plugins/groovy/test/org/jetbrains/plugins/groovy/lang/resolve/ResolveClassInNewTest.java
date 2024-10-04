@@ -18,6 +18,23 @@ import java.util.Collections;
 import java.util.List;
 
 public class ResolveClassInNewTest extends LightGroovyTestCase {
+
+  @NotNull
+  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
+
+  @NotNull
+  private final String basePath = TestUtils.getTestDataPath() + "/resolve/classInNew";
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
+  @Override
+  public final @NotNull String getBasePath() {
+    return basePath;
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -144,17 +161,4 @@ public class ResolveClassInNewTest extends LightGroovyTestCase {
   public void testDoNotResolveOthers() {
     doDirectoryTest(null);
   }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  @Override
-  public final String getBasePath() {
-    return basePath;
-  }
-
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
-  private final String basePath = TestUtils.getTestDataPath() + "/resolve/classInNew";
 }

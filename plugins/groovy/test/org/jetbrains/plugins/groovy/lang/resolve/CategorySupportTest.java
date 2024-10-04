@@ -10,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class CategorySupportTest extends GroovyLatestTest implements ResolveTest {
+
   @Test
   public void staticCategoryMethodOutsideOfCategory() {
     GrReflectedMethod resolved = resolveTest(

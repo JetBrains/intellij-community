@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
 
 public class GrRuntimeMixinTest extends GrHighlightingTestBase {
+
   public void testIsNotUnnecessarilyQualified() {
     doTestHighlighting("""
                          class SomeCategoryClass {

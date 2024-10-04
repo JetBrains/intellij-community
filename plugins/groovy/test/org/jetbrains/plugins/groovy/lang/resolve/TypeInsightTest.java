@@ -9,6 +9,7 @@ import org.junit.Test;
 import static com.intellij.psi.CommonClassNames.*;
 
 public class TypeInsightTest extends GroovyLatestTest implements TypingTest {
+
   @Test
   public void mapIterator() {
     typingTest("def usage(Map<String, Integer> m) { <caret>m.iterator() }", GrMethodCall.class,

@@ -9,6 +9,19 @@ import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveTestCase;
 import org.junit.Assert;
 
 public class ResolveDGMMethodLatestTest extends GroovyResolveTestCase {
+
+  @NotNull
+  private LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
+
+  @Override
+  public @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
+  public void setProjectDescriptor(@NotNull LightProjectDescriptor projectDescriptor) {
+    this.projectDescriptor = projectDescriptor;
+  }
+
   public void testCloseable() {
     myFixture.addClass("package java.io; class Closeable {}");
     GrGdkMethod resolved = resolveByText(
@@ -19,15 +32,4 @@ public class ResolveDGMMethodLatestTest extends GroovyResolveTestCase {
     Assert.assertEquals("org.codehaus.groovy.runtime.IOGroovyMethods",
                         resolved.getStaticMethod().getContainingClass().getQualifiedName());
   }
-
-  @Override
-  public @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  public void setProjectDescriptor(LightProjectDescriptor projectDescriptor) {
-    this.projectDescriptor = projectDescriptor;
-  }
-
-  private LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
 }

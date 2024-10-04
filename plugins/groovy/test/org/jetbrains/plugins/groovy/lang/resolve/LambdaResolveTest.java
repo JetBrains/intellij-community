@@ -7,6 +7,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 
 public class LambdaResolveTest extends GroovyResolveTestCase {
+
+  @NotNull
+  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0;
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return projectDescriptor;
+  }
+
   public void testResolveUpperBoundTypeMethod() {
     PsiMethod method = resolveByText(
       """
@@ -84,11 +93,4 @@ public class LambdaResolveTest extends GroovyResolveTestCase {
         c.curry(3, 4).call(5).<caret>intValue()
         """, PsiMethod.class);
   }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0;
 }

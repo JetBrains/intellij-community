@@ -15,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class ResolveNextPreviousOperatorTest extends GroovyLatestTest implements ResolveTest {
+
   @Before
   public void addClasses() {
     getFixture().addFileToProject("classes.groovy",

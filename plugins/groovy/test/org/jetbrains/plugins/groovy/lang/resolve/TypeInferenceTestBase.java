@@ -21,6 +21,10 @@ import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
  * Created by Max Medvedev on 10/02/14
  */
 public abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
+
+  @NotNull
+  private final String basePath = TestUtils.getTestDataPath() + "resolve/inference/";
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -68,9 +72,7 @@ public abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
   }
 
   @Override
-  public final String getBasePath() {
+  public final @NotNull String getBasePath() {
     return basePath;
   }
-
-  private final String basePath = TestUtils.getTestDataPath() + "resolve/inference/";
 }

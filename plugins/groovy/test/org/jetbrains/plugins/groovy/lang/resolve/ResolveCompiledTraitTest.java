@@ -42,6 +42,7 @@ public class ResolveCompiledTraitTest extends GroovyResolveTestCase {
     return projectDescriptor;
   }
 
+  @NotNull
   private static final TestLibrary SOME_LIBRARY = new TestLibrary() {
 
     @Override
@@ -57,7 +58,10 @@ public class ResolveCompiledTraitTest extends GroovyResolveTestCase {
     }
   };
 
+  @NotNull
   private static final LightProjectDescriptor DESCRIPTOR = new LibraryLightProjectDescriptor(LIB_GROOVY_LATEST.plus(SOME_LIBRARY));
+
+  @NotNull
   private final LightProjectDescriptor projectDescriptor = DESCRIPTOR;
 
   public void testResolveTrait() {

@@ -13,6 +13,7 @@ import org.junit.Test;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_ARRAY_LIST;
 
 public class SpreadOperatorTest extends GroovyLatestTest implements BaseTest {
+
   @Test
   public void spreadProperty() {
     GrReferenceExpression expression = lastExpression("[[['a']]]*.bytes", GrReferenceExpression.class);
