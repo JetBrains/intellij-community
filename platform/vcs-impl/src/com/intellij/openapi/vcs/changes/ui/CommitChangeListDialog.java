@@ -134,19 +134,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
                                       @Nullable LocalChangeList initialChangeList,
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
-    return commitChanges(project, null, included, initialChangeList, executor, comment);
-  }
-
-  /**
-   * @deprecated Prefer using {@link #commitWithExecutor} or {@link #commitVcsChanges}.
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean commitChanges(@NotNull Project project,
-                                      @SuppressWarnings("unused") @Nullable Collection<? extends Change> ignored_parameter,
-                                      @NotNull Collection<?> included,
-                                      @Nullable LocalChangeList initialChangeList,
-                                      @Nullable CommitExecutor executor,
-                                      @Nullable String comment) {
     if (executor != null) {
       return commitWithExecutor(project, included, initialChangeList, executor, comment, null);
     }

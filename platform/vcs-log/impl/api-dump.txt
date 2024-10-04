@@ -399,14 +399,12 @@ f:com.intellij.vcs.log.impl.SimpleRefGroup
 - <init>(java.lang.String,java.util.List):V
 - <init>(java.lang.String,java.util.List,Z):V
 - b:<init>(java.lang.String,java.util.List,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- sf:buildGroups(com.intellij.util.containers.MultiMap,Z,Z,java.util.List):V
 - sf:buildGroups(java.util.List,com.intellij.util.containers.MultiMap,Z,Z):java.util.List
 - getColors():java.util.List
 - getName():java.lang.String
 - getRefs():java.util.List
 - isExpanded():Z
 f:com.intellij.vcs.log.impl.SimpleRefGroup$Companion
-- f:buildGroups(com.intellij.util.containers.MultiMap,Z,Z,java.util.List):V
 - f:buildGroups(java.util.List,com.intellij.util.containers.MultiMap,Z,Z):java.util.List
 c:com.intellij.vcs.log.impl.SimpleRefType
 - com.intellij.vcs.log.VcsRefType

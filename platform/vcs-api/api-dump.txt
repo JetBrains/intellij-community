@@ -1319,13 +1319,6 @@ f:com.intellij.openapi.vcs.changes.LogicalLock
 - getExpirationDate():java.util.Date
 - getOwner():java.lang.String
 - isIsLocal():Z
-f:com.intellij.openapi.vcs.changes.PseudoMap
-- com.intellij.util.NullableFunction
-- com.intellij.util.PairConsumer
-- <init>():V
-- consume(java.lang.Object,java.lang.Object):V
-- fun(java.lang.Object):java.lang.Object
-- f:getCommitContext():com.intellij.openapi.vcs.changes.CommitContext
 f:com.intellij.openapi.vcs.changes.TextRevisionNumber
 - com.intellij.openapi.vcs.history.ShortVcsRevisionNumber
 - <init>(java.lang.String):V

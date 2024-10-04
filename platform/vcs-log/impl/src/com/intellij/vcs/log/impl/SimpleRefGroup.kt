@@ -51,17 +51,5 @@ class SimpleRefGroup @JvmOverloads constructor(private val name: @Nls String,
       }
       return result
     }
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use buildGroups(List<? extends RefGroup>, MultiMap<VcsRefType, VcsRef>, boolean, boolean) function instead")
-    @JvmStatic
-    fun buildGroups(groupedRefs: MultiMap<VcsRefType, VcsRef>,
-                    compact: Boolean,
-                    showTagNames: Boolean,
-                    result: MutableList<RefGroup>) {
-      val groups = buildGroups(result, groupedRefs, compact, showTagNames)
-      result.clear()
-      result.addAll(groups)
-    }
   }
 }
