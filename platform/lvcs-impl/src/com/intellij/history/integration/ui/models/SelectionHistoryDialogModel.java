@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+@ApiStatus.Internal
 public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   private RevisionSelectionCalculator myCalculatorCache;
   private final int myFrom;

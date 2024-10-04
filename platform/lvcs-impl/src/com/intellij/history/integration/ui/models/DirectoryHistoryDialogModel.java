@@ -21,6 +21,7 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
     super(p, gw, vcs, f);
   }
 
+  @ApiStatus.Internal
   @Override
   protected DirectoryChange createChange(@NotNull Difference d) {
     return new DirectoryChange(myGateway, d);

@@ -9,7 +9,9 @@ import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.platform.lvcs.impl.RevisionId
 import com.intellij.platform.lvcs.impl.diff.findEntry
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class SelectionCalculator(private val gateway: IdeaGateway,
                                    internal val revisions: List<RevisionId>,
                                    private val fromLine: Int,

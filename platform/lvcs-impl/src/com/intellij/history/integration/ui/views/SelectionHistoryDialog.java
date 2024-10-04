@@ -8,8 +8,10 @@ import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.SelectionHistoryDialogModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class SelectionHistoryDialog extends FileHistoryDialog {
   private final int myFrom;
   private final int myTo;

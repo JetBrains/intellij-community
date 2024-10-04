@@ -13,10 +13,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lvcs.impl.RevisionId
 import com.intellij.util.PairProcessor
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 data class RevisionData(val currentRevision: Revision, val revisions: List<RevisionItem>)
 
-val RevisionData.allRevisions get() = listOf(currentRevision) + revisions.map { it.revision }
+internal val RevisionData.allRevisions get() = listOf(currentRevision) + revisions.map { it.revision }
 
 internal fun Revision.toRevisionId() = if (changeSetId == null) RevisionId.Current else RevisionId.ChangeSet(changeSetId!!)
 
@@ -50,8 +52,8 @@ private fun mergeLabelsWithRevisions(revisions: List<Revision>): List<RevisionIt
   return result.asReversed()
 }
 
-fun LocalHistoryFacade.filterContents(gateway: IdeaGateway, file: VirtualFile, revisions: List<Revision>, filter: String,
-                                      before: Boolean): Set<Long> {
+internal fun LocalHistoryFacade.filterContents(gateway: IdeaGateway, file: VirtualFile, revisions: List<Revision>, filter: String,
+                                               before: Boolean): Set<Long> {
   val result = mutableSetOf<Long>()
   processContents(gateway, file, revisions, before) { revision, content ->
     if (Thread.currentThread().isInterrupted) return@processContents false
@@ -64,7 +66,7 @@ fun LocalHistoryFacade.filterContents(gateway: IdeaGateway, file: VirtualFile, r
   return result
 }
 
-fun filterContents(selectionCalculator: SelectionCalculator, filter: String): MutableSet<Long> {
+internal fun filterContents(selectionCalculator: SelectionCalculator, filter: String): MutableSet<Long> {
   val result = mutableSetOf<Long>()
   selectionCalculator.processContents { id, contents ->
     if (Thread.currentThread().isInterrupted) return@processContents false

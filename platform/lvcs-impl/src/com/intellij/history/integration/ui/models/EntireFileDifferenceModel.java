@@ -6,9 +6,11 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.lvcs.impl.diff.EntryDiffContentKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class EntireFileDifferenceModel extends FileDifferenceModel {
   private final @Nullable Entry myLeft;
   private final @Nullable Entry myRight;

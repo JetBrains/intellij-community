@@ -41,6 +41,7 @@ open class LocalHistoryFacade internal constructor() {
     changeList = ChangeList(createStorage())
   }
 
+  @ApiStatus.Internal
   protected open fun createStorage(): ChangeListStorage {
     var storage: ChangeListStorage
     try {
@@ -56,6 +57,7 @@ open class LocalHistoryFacade internal constructor() {
 
   private val listeners: MutableList<Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
+  @get:ApiStatus.Internal
   @get:TestOnly
   val changeListInTests get() = changeList
   internal val changes: Iterable<ChangeSet> get() = changeList.iterChanges()
@@ -84,6 +86,7 @@ open class LocalHistoryFacade internal constructor() {
               else CreateFileChange(changeList.nextId(), path))
   }
 
+  @ApiStatus.Internal
   fun contentChanged(path: String, oldContent: Content, oldTimestamp: Long) {
     addChange(ContentChange(changeList.nextId(), path, oldContent, oldTimestamp))
   }
@@ -104,10 +107,12 @@ open class LocalHistoryFacade internal constructor() {
     addChange(DeleteChange(changeList.nextId(), path, deletedEntry))
   }
 
+  @ApiStatus.Internal
   fun putSystemLabel(name: @NlsContexts.Label String, projectId: String, color: Int): LabelImpl {
     return putLabel(PutSystemLabelChange(changeList.nextId(), name, projectId, color))
   }
 
+  @ApiStatus.Internal
   fun putUserLabel(name: @NlsContexts.Label String, projectId: String): LabelImpl {
     return putLabel(PutLabelChange(changeList.nextId(), name, projectId))
   }
@@ -214,6 +219,7 @@ interface ChangeProcessor {
   fun process(changeSet: ChangeSet, change: Change, changePath: String)
 }
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 open class ChangeProcessorBase(
   private val projectId: String?,

@@ -5,7 +5,9 @@ import com.intellij.history.core.revisions.Revision
 import com.intellij.history.core.tree.Entry
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.platform.lvcs.impl.RevisionId
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RevisionSelectionCalculator(gateway: IdeaGateway, revisions: List<Revision>, fromLine: Int, toLine: Int) :
   SelectionCalculator(gateway, revisions.map { it.toRevisionId() }, fromLine, toLine) {
 

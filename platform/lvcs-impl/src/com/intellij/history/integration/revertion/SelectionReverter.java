@@ -16,12 +16,14 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.lvcs.impl.RevisionId;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class SelectionReverter extends Reverter {
   private final SelectionCalculator myCalculator;
   private final @NotNull RevisionId myTargetRevisionId;
