@@ -38,7 +38,11 @@ interface FileSizeLimit {
      * Fingerprint of the current state (to contribute to indexing fingerprint)
      */
     fun getFingerprint(): Int {
-      return getLimitsByExtension().hashCode()
+      val limitsByExtensions = getLimitsByExtension().entries
+        .sortedBy { it.key }
+        .map { it.key to it.value }
+        .toList()
+      return limitsByExtensions.hashCode()
     }
 
     @JvmStatic
