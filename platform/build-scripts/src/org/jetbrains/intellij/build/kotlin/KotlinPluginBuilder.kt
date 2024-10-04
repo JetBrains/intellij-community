@@ -188,7 +188,6 @@ object KotlinPluginBuilder {
     "kotlin.highlighting.k2",
     "kotlin.uast.uast-kotlin.k2",
     "kotlin.uast.uast-kotlin-idea.k2",
-    "kotlin.fir.fir-low-level-api-ide-impl",
     "kotlin.navigation",
     "kotlin.refactorings.common",
     "kotlin.refactorings.k2",

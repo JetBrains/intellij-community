@@ -43,7 +43,6 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.new.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.k2.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />

@@ -1,5 +1,0 @@
-public final inline [ResolvedTo(BODY_RESOLVE)] fun require([ResolvedTo(BODY_RESOLVE)] value: R|kotlin/Boolean|): R|kotlin/Unit|
-    [R|Contract description]
-     <
-        Returns(WILDCARD) -> value
-    >

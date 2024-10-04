@@ -248,7 +248,6 @@
   - name: kotlin.highlighting.k2
   - name: kotlin.uast.uast-kotlin.k2
   - name: kotlin.uast.uast-kotlin-idea.k2
-  - name: kotlin.fir.fir-low-level-api-ide-impl
   - name: kotlin.navigation
   - name: kotlin.refactorings.common
   - name: kotlin.refactorings.k2

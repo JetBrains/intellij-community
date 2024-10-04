@@ -1,2 +1,0 @@
-public final [ResolvedTo(BODY_RESOLVE)] val str: R|kotlin/String!|
-    public [ResolvedTo(BODY_RESOLVE)] get(): R|kotlin/String!|
