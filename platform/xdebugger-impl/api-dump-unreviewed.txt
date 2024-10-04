@@ -1278,15 +1278,18 @@ com.intellij.xdebugger.impl.ui.XValueTextProvider
 - *a:shouldShowTextValue():Z
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogCollectItemsUtilKt
 - sf:collectAttachProcessItemsGroupByProcessInfo(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,java.util.List,kotlin.coroutines.Continuation):java.lang.Object
-e:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
-- java.lang.Enum
-- sf:DOCKER:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
-- sf:LOCAL:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
-- sf:REMOTE:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
+a:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
+- <init>(java.lang.String):V
 - f:getDisplayText():java.lang.String
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
-- s:values():com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType[]
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType$DOCKER
+- com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
+- sf:INSTANCE:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType$DOCKER
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType$LOCAL
+- com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
+- sf:INSTANCE:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType$LOCAL
+f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType$REMOTE
+- com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
+- sf:INSTANCE:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType$REMOTE
 c:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 - sf:Companion:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem$Companion
 - p:<init>(com.intellij.execution.process.ProcessInfo,java.util.List,com.intellij.openapi.util.UserDataHolder):V
