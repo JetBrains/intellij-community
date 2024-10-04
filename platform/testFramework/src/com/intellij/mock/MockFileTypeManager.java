@@ -44,10 +44,6 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   }
 
   @Override
-  @SuppressWarnings("removal")
-  public void registerFileType(@NotNull FileType type, String @Nullable ... defaultAssociatedExtensions) { }
-
-  @Override
   public void fireFileTypesChanged() { }
 
   @Override

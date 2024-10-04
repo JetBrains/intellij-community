@@ -9876,7 +9876,6 @@ c:com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 - loadState(org.jdom.Element):V
 - makeFileTypesChange(java.lang.String,java.lang.Runnable):V
 - registerFileType(com.intellij.openapi.fileTypes.FileType,java.util.List,com.intellij.openapi.Disposable,com.intellij.openapi.extensions.PluginDescriptor):V
-- registerFileType(com.intellij.openapi.fileTypes.FileType,java.lang.String[]):V
 - removeAssociation(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileNameMatcher):V
 - removePlainTextAssociationsForFile(java.lang.CharSequence):V
 - setIgnoredFilesList(java.lang.String):V

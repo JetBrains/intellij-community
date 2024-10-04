@@ -968,18 +968,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return descriptor == null ? coreDescriptorFor(UnknownFileType.INSTANCE) : descriptor;
   }
 
-  @Override
-  public void registerFileType(@NotNull FileType type, String @Nullable ... defaultAssociatedExtensions) {
-    PluginException.reportDeprecatedUsage("FileTypeManager#registerFileType", "Use `com.intellij.fileType` extension or `FileTypeFactory` instead.");
-    List<FileNameMatcher> matchers = new ArrayList<>();
-    if (defaultAssociatedExtensions != null) {
-      for (String extension : defaultAssociatedExtensions) {
-        matchers.add(new ExtensionFileNameMatcher(extension));
-      }
-    }
-    doRegisterFileType(type, matchers);
-  }
-
   @TestOnly
   public void registerFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations, @NotNull Disposable disposable,
                                @NotNull PluginDescriptor pluginDescriptor) {

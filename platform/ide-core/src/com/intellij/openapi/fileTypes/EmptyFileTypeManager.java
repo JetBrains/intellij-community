@@ -33,10 +33,6 @@ final class EmptyFileTypeManager extends FileTypeManager {
   }
 
   @Override
-  @SuppressWarnings("removal")
-  public void registerFileType(@NotNull FileType type, String @Nullable ... defaultAssociatedExtensions) { }
-
-  @Override
   public boolean isFileIgnored(@NotNull String name) {
     return false;
   }

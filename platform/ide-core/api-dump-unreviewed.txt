@@ -1586,7 +1586,6 @@ a:com.intellij.openapi.fileTypes.FileTypeManager
 - a:getStdFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
 - a:isFileIgnored(java.lang.String):Z
 - s:parseFromString(java.lang.String):com.intellij.openapi.fileTypes.FileNameMatcher
-- a:registerFileType(com.intellij.openapi.fileTypes.FileType,java.lang.String[]):V
 - f:removeAssociatedExtension(com.intellij.openapi.fileTypes.FileType,java.lang.String):V
 - a:removeAssociation(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileNameMatcher):V
 - a:setIgnoredFilesList(java.lang.String):V

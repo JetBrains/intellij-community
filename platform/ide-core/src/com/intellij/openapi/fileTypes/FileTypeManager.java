@@ -34,10 +34,6 @@ public abstract class FileTypeManager extends FileTypeRegistry implements Dispos
   public void dispose() {
   }
 
-  /** @deprecated use {@code com.intellij.fileType} extension point instead */
-  @Deprecated(forRemoval = true)
-  public abstract void registerFileType(@NotNull FileType type, String @Nullable ... defaultAssociatedExtensions);
-
   /**
    * Checks if the specified file is ignored by the IDE. Ignored files are not visible in
    * different project views and cannot be opened in the editor. They will neither be parsed nor compiled.
