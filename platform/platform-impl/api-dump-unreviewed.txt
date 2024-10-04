@@ -3971,6 +3971,7 @@ f:com.intellij.ide.plugins.DefaultPluginManagementPolicy
 - canInstallPlugin(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - isDowngradeAllowed(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - isInstallFromDiskAllowed():Z
+- isPluginAutoUpdateAllowed():Z
 - isUpgradeAllowed(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 com.intellij.ide.plugins.DependencyCollector
 - a:collectDependencies(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
