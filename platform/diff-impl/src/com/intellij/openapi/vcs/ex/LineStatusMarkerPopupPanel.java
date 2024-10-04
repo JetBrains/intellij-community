@@ -26,6 +26,7 @@ import com.intellij.ui.*;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,13 +60,13 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     boolean isEditorVisible = myEditorComponent != null;
 
     JComponent toolbarComponent = toolbar.getComponent();
-    toolbarComponent.setBorder(null);
+    toolbarComponent.setBorder(JBUI.Borders.empty(2, 0));
     toolbarComponent.setBackground(TOOLBAR_BACKGROUND_COLOR);
 
-    JComponent toolbarPanel = JBUI.Panels.simplePanel(toolbarComponent);
+    JComponent toolbarPanel = JBUI.Panels.simplePanel().addToLeft(new BorderLayoutPanel().addToTop(toolbarComponent));
     Border outsideToolbarBorder = JBUI.Borders.customLine(getBorderColor(), 1, 1, isEditorVisible ? 0 : 1, 1);
     JBInsets insets = JBUI.insets("VersionControl.MarkerPopup.borderInsets",
-                                  ExperimentalUI.isNewUI() ? JBUI.insets(6, 8, 6, 10) : JBInsets.create(1, 5));
+                                  ExperimentalUI.isNewUI() ? JBUI.insets(3, 8, 3, 10) : JBInsets.create(1, 5));
     Border insideToolbarBorder = JBUI.Borders.empty(insets);
     toolbarPanel.setBorder(BorderFactory.createCompoundBorder(outsideToolbarBorder, insideToolbarBorder));
     toolbarPanel.setBackground(TOOLBAR_BACKGROUND_COLOR);
