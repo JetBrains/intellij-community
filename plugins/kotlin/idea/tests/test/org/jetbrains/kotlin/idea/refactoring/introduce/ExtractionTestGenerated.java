@@ -173,6 +173,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/extractToScope/itInsideNestedLamba.kt");
             }
 
+            @TestMetadata("KTIJ-17001.kt")
+            public void testKTIJ_17001() throws Exception {
+                runTest("testData/refactoring/introduceVariable/extractToScope/KTIJ-17001.kt");
+            }
+
             @TestMetadata("outerItInsideNestedLamba.kt")
             public void testOuterItInsideNestedLamba() throws Exception {
                 runTest("testData/refactoring/introduceVariable/extractToScope/outerItInsideNestedLamba.kt");

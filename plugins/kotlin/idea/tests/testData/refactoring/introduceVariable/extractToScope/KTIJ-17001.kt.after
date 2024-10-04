@@ -1,0 +1,18 @@
+fun main() {
+
+    var b = 42
+
+    val b1 = b
+    run {
+        run {
+            run {
+                b1
+                b1
+            }
+            b1
+        }
+        b1
+    }
+
+    b1
+}
