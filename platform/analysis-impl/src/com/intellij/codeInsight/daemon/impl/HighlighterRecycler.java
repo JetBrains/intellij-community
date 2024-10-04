@@ -32,7 +32,7 @@ final class HighlighterRecycler {
 
   // return true if RH is successfully recycled, false if race condition intervened
   synchronized void recycleHighlighter(@NotNull HighlightInfo info) {
-    RangeHighlighterEx highlighter = info.highlighter;
+    RangeHighlighterEx highlighter = info.getHighlighter();
     assert !(info.isFromHighlightVisitor() || info.isFromAnnotator() || info.isFromInspection() || info.isInjectionRelated()) : info;
     assert highlighter != null;
     if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
@@ -50,7 +50,7 @@ final class HighlighterRecycler {
     if (collection != null) {
       for (int i = 0; i < collection.size(); i++) {
         HighlightInfo info = collection.get(i);
-        RangeHighlighterEx highlighter = info.highlighter;
+        RangeHighlighterEx highlighter = info.getHighlighter();
         if (highlighter.isValid() && highlighter.getLayer() == layer) {
           collection.remove(info);
           if (collection.isEmpty()) {

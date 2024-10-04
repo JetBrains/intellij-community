@@ -37,8 +37,8 @@ final class ManagedHighlighterRecycler {
   // return true if RH is successfully recycled, false if race condition intervened
   synchronized void recycleHighlighter(@NotNull PsiElement psiElement, @NotNull HighlightInfo info) {
     assert info.isFromHighlightVisitor() || info.isFromAnnotator() || info.isFromInspection() || info.isInjectionRelated(): info;
-    assert info.highlighter != null;
-    RangeHighlighterEx highlighter = info.highlighter;
+    assert info.getHighlighter() != null;
+    RangeHighlighterEx highlighter = info.getHighlighter();
     if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
       UpdateHighlightersUtil.LOG.debug("recycleHighlighter " + highlighter + HighlightInfoUpdaterImpl.currentProgressInfo());
     }
@@ -54,7 +54,7 @@ final class ManagedHighlighterRecycler {
     if (list != null) {
       for (int i = 0; i < list.size(); i++) {
         InvalidPsi psi = list.get(i);
-        RangeHighlighterEx highlighter = psi.info().highlighter;
+        RangeHighlighterEx highlighter = psi.info().getHighlighter();
         if (highlighter.isValid() && highlighter.getLayer() == layer) {
           list.remove(i);
           if (list.isEmpty()) {

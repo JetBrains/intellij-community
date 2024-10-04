@@ -73,7 +73,7 @@ public final class BackgroundUpdateHighlightersUtil {
         if (!myInfoIsError && UpdateHighlightersUtil.isCovered(info, severityRegistrar, oldInfo)) {
           return false;
         }
-        RangeHighlighterEx oldHighlighter = oldInfo.highlighter;
+        RangeHighlighterEx oldHighlighter = oldInfo.getHighlighter();
         if (oldHighlighter != null && oldInfo.equals(info)) {
           recycler.recycleHighlighter(info);
         }

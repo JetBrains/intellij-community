@@ -80,7 +80,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
           }""";
         configureByText(JavaFileType.INSTANCE, text);
         assertEquals(MyStoppableAnnotator.SWEARING, assertOneElement(highlightErrors()).getDescription());
-        assertEquals("//XXX", assertOneElement(highlightErrors()).highlighter.getTextRange().substring(getFile().getText()));
+        assertEquals("//XXX", assertOneElement(highlightErrors()).getHighlighter().getTextRange().substring(getFile().getText()));
 
         VirtualFile virtualFile = getFile().getVirtualFile();
         closeEditorAndEnsureTheDocumentMarkupIsGced(virtualFile);
@@ -151,7 +151,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
           }""";
         configureByText(JavaFileType.INSTANCE, text);
         assertEquals(MyStoppableAnnotator.SWEARING, assertOneElement(highlightErrors()).getDescription());
-        assertEquals("//XXX", assertOneElement(highlightErrors()).highlighter.getTextRange().substring(getFile().getText()));
+        assertEquals("//XXX", assertOneElement(highlightErrors()).getHighlighter().getTextRange().substring(getFile().getText()));
 
         VirtualFile virtualFile = getFile().getVirtualFile();
         closeEditorAndEnsureTheDocumentMarkupIsGced(virtualFile);

@@ -230,8 +230,8 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
           int r = Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(o1, o2);
           if (r != 0) return r;
           // have to compare highlighters because we don't want to remove otherwise equal HighlightInfo except for its (recreated) highlighter
-          RangeHighlighterEx h1 = o1.highlighter;
-          RangeHighlighterEx h2 = o2.highlighter;
+          RangeHighlighterEx h1 = o1.getHighlighter();
+          RangeHighlighterEx h2 = o2.getHighlighter();
           return System.identityHashCode(h1)-System.identityHashCode(h2);
         }, true, (info, result) -> {
           if (result == ContainerUtil.MergeResult.COPIED_FROM_LIST1) {
@@ -264,9 +264,9 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
           //  that PSI has a big chance to be recreated in that exact place later, when a (major) chunk of the file is reparsed, so we do not kill that highlighter, just recycle it to avoid annoying blinking
           // if however, that invalid PSI highlighter wasn't recycled after a short delay, kill it (runWithInvalidPsiRecycler()) to improve responsiveness to outdated infos
           if (LOG.isDebugEnabled()) {
-            LOG.debug("recycleInvalidPsiElements (predicate=" +toolIdPredicate + ") "+info.highlighter +
-                      "; compositeDocumentDirtyRange="+compositeDocumentDirtyRange+
-                      "; toolIdPredicate="+toolIdPredicate+
+            LOG.debug("recycleInvalidPsiElements (predicate=" + toolIdPredicate + ") " + info.getHighlighter() +
+                      "; compositeDocumentDirtyRange=" + compositeDocumentDirtyRange +
+                      "; toolIdPredicate=" + toolIdPredicate +
                       " for invalid " + psiElement + " from " + requestor +
                       currentProgressInfo());
           }
@@ -495,7 +495,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     Set<HighlightInfo> fromData = getData(psiFile).values().stream()
       .flatMap(t -> t.elementHighlights.values().stream())
       .flatMap(l->l.stream())
-      .filter(h -> h.highlighter != null && h.highlighter.isValid()) // maybe LIP isn't started yet and its recycleInvalidPsi wasn't run
+      .filter(h -> h.getHighlighter() != null && h.getHighlighter().isValid()) // maybe LIP isn't started yet and its recycleInvalidPsi wasn't run
       .collect(Collectors.toSet());
 
     Set<HighlightInfo> fromMarkup = getInfosFromMarkup(psiFile.getFileDocument(), psiFile.getProject());
@@ -1072,9 +1072,9 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     List<HighlightInfo> result = List.copyOf(newInfosToStore == null ? sorted : newInfosToStore);
     for (int i = 0; i < result.size(); i++) {
       HighlightInfo info = result.get(i);
-      assert info.highlighter != null;
-      assert info.highlighter.isValid();
-      assert HighlightInfo.fromRangeHighlighter(info.highlighter) == info;
+      assert info.getHighlighter() != null;
+      assert info.getHighlighter().isValid();
+      assert HighlightInfo.fromRangeHighlighter(info.getHighlighter()) == info;
       if (i>0) {
         assert Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(result.get(i-1), result.get(i)) <= 0 : "assignRangeHighlighters returned unsorted list: "+result;
       }
@@ -1119,7 +1119,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     }
     else {
       // recycle
-      RangeHighlighterEx highlighter = recycled.info().highlighter;
+      RangeHighlighterEx highlighter = recycled.info().getHighlighter();
       if (isFileLevel) {
         RangeHighlighterEx highlighterToUse =
           createOrReuseFakeFileLevelHighlighter(DaemonCodeAnalyzerEx.ANY_GROUP, newInfo, highlighter, markup);

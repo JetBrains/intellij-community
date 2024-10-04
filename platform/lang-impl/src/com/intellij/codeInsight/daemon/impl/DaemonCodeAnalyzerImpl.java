@@ -321,7 +321,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       getFileEditorManager().removeTopComponent(fileEditor, component);
       info.removeFileLeverComponent(fileEditor);
     }
-    RangeHighlighterEx highlighter = info.highlighter;
+    RangeHighlighterEx highlighter = info.getHighlighter();
     if (highlighter != null) {
       highlighter.dispose();
     }
@@ -405,7 +405,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             fileEditorManager.removeTopComponent(fileEditor, component);
             fileLevelInfo.removeFileLeverComponent(fileEditor);
           }
-          RangeHighlighterEx highlighter = fileLevelInfo.highlighter;
+          RangeHighlighterEx highlighter = fileLevelInfo.getHighlighter();
           if (highlighter != null && highlighter != toReuse) {
             highlighter.dispose();
           }
