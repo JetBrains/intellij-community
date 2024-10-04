@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.ide.plugins.PluginManagementPolicy;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,8 +54,14 @@ public class UpdateSettings implements PersistentStateComponentWithModificationT
     myState.setCheckNeeded(value);
   }
 
+  /**
+   * Usages must also honor {@link PluginManagementPolicy#isPluginAutoUpdateAllowed()}
+   */
   public boolean isPluginsAutoUpdateEnabled() { return myState.isPluginsAutoUpdateEnabled(); }
 
+  /**
+   * Usages must also honor {@link PluginManagementPolicy#isPluginAutoUpdateAllowed()}
+   */
   public void setPluginsAutoUpdateEnabled(boolean value) { myState.setPluginsAutoUpdateEnabled(value); }
 
   public boolean isPluginsCheckNeeded() {
