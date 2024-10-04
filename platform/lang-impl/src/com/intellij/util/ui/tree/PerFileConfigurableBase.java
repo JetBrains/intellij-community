@@ -46,10 +46,7 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -505,7 +502,12 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
         return ObjectUtils.notNull(newFile, startValue);
       }
     });
-    myTable.getColumnModel().getColumn(1).setCellEditor(new AbstractTableCellEditor() {
+    myTable.getColumnModel().getColumn(1).setCellEditor(createMappingCellEditor());
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull TableCellEditor createMappingCellEditor() {
+    return new AbstractTableCellEditor() {
       T editorValue;
 
       @Override
@@ -549,7 +551,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       public Object getCellEditorValue() {
         return editorValue;
       }
-    });
+    };
   }
 
   protected @NotNull JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value) {
