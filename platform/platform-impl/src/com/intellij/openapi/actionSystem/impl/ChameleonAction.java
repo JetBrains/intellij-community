@@ -18,9 +18,14 @@ import java.util.Map;
 
 @ApiStatus.Internal
 public final class ChameleonAction extends AnAction {
+  @NotNull private final String myActionId;
   private final Map<ProjectType, AnAction> myActions = new HashMap<>();
 
-  public ChameleonAction(@NotNull AnAction first, @Nullable ProjectType projectType, @NotNull Function1<? super String, ? extends AnAction> actionSupplier) {
+  public ChameleonAction(@NotNull String actionId,
+                         @NotNull AnAction first,
+                         @Nullable ProjectType projectType,
+                         @NotNull Function1<? super String, ? extends AnAction> actionSupplier) {
+    myActionId = actionId;
     addAction(first, projectType, actionSupplier);
     copyFrom(myActions.values().iterator().next());
   }
@@ -28,7 +33,9 @@ public final class ChameleonAction extends AnAction {
   /**
    * @return true on success, false on an action conflict
    */
-  boolean addAction(@NotNull AnAction action, @Nullable ProjectType projectType, @NotNull Function1<? super String, ? extends AnAction> actionSupplier) {
+  boolean addAction(@NotNull AnAction action,
+                    @Nullable ProjectType projectType,
+                    @NotNull Function1<? super String, ? extends AnAction> actionSupplier) {
     if (action instanceof ActionStub actionStub) {
       action = ActionManagerImplKt.convertStub(actionStub, actionSupplier);
       if (action == null) {
@@ -71,8 +78,12 @@ public final class ChameleonAction extends AnAction {
     return action != null ? action : myActions.get(null);
   }
 
-  @ApiStatus.Internal
+
   public Map<ProjectType, AnAction> getActions() {
     return myActions;
+  }
+
+  public @NotNull String getActionId() {
+    return myActionId;
   }
 }

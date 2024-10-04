@@ -1770,7 +1770,7 @@ private fun addToMap(actionId: String,
     }
     existing != null -> {
       // we need to create ChameleonAction even if 'projectType==null', in case 'ActionStub.getProjectType() != null'
-      val chameleonAction = ChameleonAction(existing, null) { registrar.getAction(it) }
+      val chameleonAction = ChameleonAction(actionId, existing, null) { registrar.getAction(it) }
       if (chameleonAction.addAction(action, projectType, actionSupplier)) {
         registrar.putAction(actionId, chameleonAction)
         return true
@@ -1778,7 +1778,7 @@ private fun addToMap(actionId: String,
       return false
     }
     projectType != null -> {
-      registrar.putAction(actionId, ChameleonAction(action, projectType, actionSupplier))
+      registrar.putAction(actionId, ChameleonAction(actionId, action, projectType, actionSupplier))
       return true
     }
     else -> {
@@ -1848,6 +1848,9 @@ private class PostInitActionRegistrar(
   fun getId(action: AnAction): String? {
     if (action is ActionStubBase) {
       return action.id
+    }
+    if (action is ChameleonAction) {
+      return action.actionId
     }
     synchronized(state.lock) {
       return state.actionToId.get(action)
@@ -2122,8 +2125,12 @@ private fun replaceStub(stub: ActionStubBase, convertedAction: AnAction, actionR
   updateHandlers(convertedAction)
 
   actionRegistrar.state.actionToId.put(convertedAction, stub.id)
-  val result = (if (stub is ActionStub) stub.projectType else null)
-                 ?.let { ChameleonAction(convertedAction, it) { actionRegistrar.getAction(it) } } ?: convertedAction
+
+  val projectType = (stub as? ActionStub)?.projectType
+  val result = when {
+    projectType != null -> ChameleonAction(stub.id, convertedAction, projectType) { actionRegistrar.getAction(it) }
+    else -> convertedAction
+  }
   actionRegistrar.putAction(stub.id, result)
   return result
 }
