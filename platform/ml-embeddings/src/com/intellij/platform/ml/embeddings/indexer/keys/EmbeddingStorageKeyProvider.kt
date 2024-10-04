@@ -14,5 +14,5 @@ interface EmbeddingStorageKeyProvider<KeyT> {
   /**
    * Finds identifier that could be used to retrieve PsiElement
    */
-  suspend fun findEntityId(project: Project?, indexId: IndexId, key: KeyT): String
+  suspend fun findEntityId(project: Project?, indexId: IndexId, key: KeyT): String?
 }

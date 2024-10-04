@@ -25,7 +25,7 @@ class IntegerStorageKeyProvider : EmbeddingStorageKeyProvider<Long>, Disposable 
     return getEnumerator(project, indexId).enumerate(entity.id.id + "$$$" + entity.indexableRepresentation).toLong()
   }
 
-  override suspend fun findEntityId(project: Project?, indexId: IndexId, key: Long): String {
+  override suspend fun findEntityId(project: Project?, indexId: IndexId, key: Long): String? {
     return getEnumerator(project, indexId).valueOf(key.toInt())?.split("$$$", limit = 2)?.first() ?: ""
   }
 

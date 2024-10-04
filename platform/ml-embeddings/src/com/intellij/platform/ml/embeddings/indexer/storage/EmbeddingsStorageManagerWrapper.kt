@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.embeddings.indexer.storage
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ml.embeddings.indexer.IndexId
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
@@ -26,16 +27,19 @@ class EmbeddingsStorageManagerWrapper<KeyT>(
   }
 
   suspend fun search(
-    project: Project,
+    project: Project?,
     query: String,
     limit: Int,
     similarityThreshold: Float? = null,
   ): List<ScoredText> {
     val result = storageManager.search(project, indexId, query, limit, similarityThreshold)
-      .map { (id, similarity) ->
+      .mapNotNull { (id, similarity) ->
         val entityId = keyProvider.findEntityId(project, indexId, id)
-        if (entityId.isEmpty()) throw IllegalStateException("Entity id returned from EmbeddingStorageKeyProvider cannot be empty")
-        ScoredText(entityId, similarity)
+        if (entityId != null) ScoredText(entityId, similarity)
+        else {
+          thisLogger().warn("Entity id returned from EmbeddingStorageKeyProvider cannot be empty")
+          null
+        }
       }
     return result
   }

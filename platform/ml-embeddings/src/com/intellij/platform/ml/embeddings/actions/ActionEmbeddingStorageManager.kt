@@ -86,7 +86,7 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
     EmbeddingsConfiguration.getStorageManagerWrapper(IndexId.ACTIONS).startIndexingSession(null)
   }
 
-  private fun onFirstIndexingFinish(): Job = cs.launch {
+  private suspend fun onFirstIndexingFinish() {
     EmbeddingsConfiguration.getStorageManagerWrapper(IndexId.ACTIONS).finishIndexingSession(null)
   }
 

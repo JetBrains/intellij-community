@@ -11,7 +11,7 @@ class EntityIdStorageKeyProvider : EmbeddingStorageKeyProvider<EntityId> {
     return entity.id
   }
 
-  override suspend fun findEntityId(project: Project?, indexId: IndexId, key: EntityId): String {
+  override suspend fun findEntityId(project: Project?, indexId: IndexId, key: EntityId): String? {
     return key.id
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.platform.ml.embeddings.indexer.keys
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ml.embeddings.indexer.CLASS_NAME_EMBEDDING_INDEX_NAME
@@ -27,28 +28,27 @@ internal class IndexLongKeyProvider : EmbeddingStorageKeyProvider<Long> {
     return (entity as LongIndexableEntity).longId
   }
 
-  override suspend fun findEntityId(project: Project?, indexId: IndexId, key: Long): String {
+  override suspend fun findEntityId(project: Project?, indexId: IndexId, key: Long): String? {
     val fileId = (key shr 32).toInt()
     val file = VirtualFileManager.getInstance().findFileById(fileId)
-               ?: throw IllegalArgumentException("Unknown fileId extracted from storage key")
+    if (file == null) {
+      thisLogger().warn("Unknown fileId extracted from storage key")
+      return null
+    }
     val hash = key.toInt()
-    var result = ""
-    var foundKey = false
+    var result: String? = null
     val index = getEmbeddingIndexId(indexId) ?: throw IllegalArgumentException("$indexId request is not supported")
     smartReadAction(project!!) {
       FileBasedIndex.getInstance().processValues(
         /* indexId = */ index,
         /* dataKey = */ EmbeddingKey(hash),
         /* inFile = */ file,
-        /* processor = */ FileBasedIndex.ValueProcessor { _, value ->
-        foundKey = true
-        result = value
-        false
-      },
+        /* processor = */ FileBasedIndex.ValueProcessor { _, value -> result = value; false },
         /* filter = */ GlobalSearchScope.fileScope(project, file))
     }
-    if (!foundKey)
-      throw IllegalArgumentException("File based index key extracted from storage key not found in file scope")
+    if (result == null) {
+      thisLogger().warn("File based index key extracted from storage key not found in file scope")
+    }
     return result
   }
 
