@@ -67,8 +67,13 @@ private class GitLabCloneRepositoriesForAccountViewModelImpl(
         emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.ConnectionError(account))))
       }
       catch (e: Throwable) {
-          val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("clone.dialog.error.load.repositories")
-          emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.Unknown(account, errorMessage))))
+          if (e is HttpStatusErrorException && e.statusCode == 401) {
+            emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken(account))))
+          }
+          else {
+            val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("clone.dialog.error.load.repositories")
+            emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.Unknown(account, errorMessage))))
+          }
       }
       finally {
         _isLoading.value = false
