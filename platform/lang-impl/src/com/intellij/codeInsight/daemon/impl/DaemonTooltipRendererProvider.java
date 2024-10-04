@@ -68,7 +68,7 @@ public final class DaemonTooltipRendererProvider implements ErrorStripTooltipRen
         if (i != 0) return i;
         return StringUtil.compare(o1.getToolTip(), o2.getToolTip(), false);
       });
-      HighlightInfoComposite composite = HighlightInfoComposite.create(infos);
+      HighlightInfo composite = HighlightInfo.createComposite(infos);
       String toolTip = composite.getToolTip();
       TooltipAction action = TooltipActionProvider.calcTooltipAction(composite, myProject, myEditor);
       LineTooltipRenderer myRenderer = calcTooltipRenderer(toolTip, action, 0);

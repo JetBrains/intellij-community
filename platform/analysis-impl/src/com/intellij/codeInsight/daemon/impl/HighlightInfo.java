@@ -118,7 +118,7 @@ public class HighlightInfo implements Segment {
   private @Nullable Object fileLevelComponentsStorage;
 
   private @Nullable("null means it the same as highlighter") RangeMarker fixMarker;
-  volatile RangeHighlighterEx highlighter;
+  private volatile RangeHighlighterEx highlighter;
   /**
    * in case this HighlightInfo is created to highlight unresolved reference, store this reference here to be able to call {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider} later
    */
@@ -1092,5 +1092,68 @@ public class HighlightInfo implements Segment {
   @ApiStatus.Internal
   boolean isInjectionRelated() {
     return HighlightInfoUpdaterImpl.isInjectionRelated(toolId);
+  }
+  static @NotNull HighlightInfo createComposite(@NotNull List<? extends HighlightInfo> infos) {
+    // derive composite's offsets from an result with tooltip, if present
+    HighlightInfo anchorInfo = ContainerUtil.find(infos, info -> info.getToolTip() != null);
+    if (anchorInfo == null) anchorInfo = infos.get(0);
+    HighlightInfo result = new HighlightInfo(null, null, anchorInfo.type, anchorInfo.startOffset, anchorInfo.endOffset,
+                                           createCompositeDescription(infos), createCompositeTooltip(infos),
+                                           anchorInfo.type.getSeverity(null), false, null, false, 0,
+                                           anchorInfo.getProblemGroup(), null, anchorInfo.getGutterIconRenderer(), anchorInfo.getGroup(),
+                                           null);
+    result.highlighter = anchorInfo.getHighlighter();
+    //result.myIntentionActionDescriptors = ContainerUtil.concat(ContainerUtil.map(infos, i->((HighlightInfo)i).myIntentionActionDescriptors));
+    List<Pair<IntentionActionDescriptor, RangeMarker>> markers = ContainerUtil.emptyList();
+    List<Pair<IntentionActionDescriptor, TextRange>> ranges = ContainerUtil.emptyList();
+    for (HighlightInfo info : infos) {
+      if (info.quickFixActionMarkers != null) {
+        if (markers == ContainerUtil.<Pair<IntentionActionDescriptor, RangeMarker>>emptyList()) markers = new ArrayList<>();
+        markers.addAll(info.quickFixActionMarkers);
+      }
+      if (info.quickFixActionRanges != null) {
+        if (ranges == ContainerUtil.<Pair<IntentionActionDescriptor, TextRange>>emptyList()) ranges = new ArrayList<>();
+        ranges.addAll(info.quickFixActionRanges);
+      }
+    }
+    result.quickFixActionMarkers = ContainerUtil.createLockFreeCopyOnWriteList(markers);
+    result.quickFixActionRanges = ContainerUtil.createLockFreeCopyOnWriteList(ranges);
+    return result;
+  }
+  private static @Nullable @NlsSafe String createCompositeDescription(@NotNull List<? extends HighlightInfo> infos) {
+    StringBuilder description = new StringBuilder();
+    boolean isNull = true;
+    for (HighlightInfo info : infos) {
+      String itemDescription = info.getDescription();
+      if (itemDescription != null) {
+        itemDescription = itemDescription.trim();
+        description.append(itemDescription);
+        if (!itemDescription.endsWith(".")) {
+          description.append('.');
+        }
+        description.append(' ');
+
+        isNull = false;
+      }
+    }
+    return isNull ? null : description.toString();
+  }
+
+  private static @Nullable @NlsSafe String createCompositeTooltip(@NotNull List<? extends HighlightInfo> infos) {
+    StringBuilder result = new StringBuilder();
+    for (HighlightInfo info : infos) {
+      String toolTip = info.getToolTip();
+      if (toolTip != null) {
+        if (!result.isEmpty()) {
+          result.append("<hr size=1 noshade>");
+        }
+        toolTip = XmlStringUtil.stripHtml(toolTip);
+        result.append(toolTip);
+      }
+    }
+    if (result.isEmpty()) {
+      return null;
+    }
+    return XmlStringUtil.wrapInHtml(result);
   }
 }

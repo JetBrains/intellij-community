@@ -1069,7 +1069,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       if (foundInfoList.isEmpty()) return null;
       if (foundInfoList.size() == 1) return foundInfoList.get(0);
       foundInfoList.sort(Comparator.comparing(HighlightInfo::getSeverity).reversed());
-      return HighlightInfoComposite.create(foundInfoList);
+      return HighlightInfo.createComposite(foundInfoList);
     }
   }
 
