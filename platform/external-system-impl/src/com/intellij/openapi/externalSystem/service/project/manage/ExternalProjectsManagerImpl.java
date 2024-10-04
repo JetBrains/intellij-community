@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -142,6 +143,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     return myProject;
   }
 
+  @ApiStatus.Internal
   public ExternalSystemShortcutsManager getShortcutsManager() {
     return myShortcutsManager;
   }
@@ -274,6 +276,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     ExternalSystemUtil.scheduleExternalViewStructureUpdate(myProject, projectSystemId);
   }
 
+  @ApiStatus.Internal
   @Override
   @RequiresReadLock
   public @NotNull ExternalProjectsState getState() {
@@ -288,6 +291,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     return myState;
   }
 
+  @ApiStatus.Internal
   public @NotNull ExternalProjectsStateProvider getStateProvider() {
     return new ExternalProjectsStateProvider() {
       @Override
@@ -334,6 +338,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     ExternalSystemKeymapExtension.updateActions(myProject, ExternalSystemApiUtil.findAllRecursively(dataNode, TASK));
   }
 
+  @ApiStatus.Internal
   @Override
   public void loadState(@NotNull ExternalProjectsState state) {
     myState = state;
@@ -353,6 +358,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     myRunManagerListener.detach();
   }
 
+  @ApiStatus.Internal
   public interface ExternalProjectsStateProvider {
     class TasksActivation {
       public final ProjectSystemId systemId;

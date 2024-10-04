@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecution
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,7 @@ import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   @NotNull private static final Comparator<TreeNode> NODE_COMPARATOR = (t1, t2) -> {
     Object e1 = ((ExternalSystemNode<?>)t1).getDescriptor().getElement();

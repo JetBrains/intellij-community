@@ -27,6 +27,7 @@ import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsColle
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.treeStructure.SimpleTree;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
 public class RunConfigurationNode extends ExternalSystemNode {
   private final RunnerAndConfigurationSettings mySettings;
 
+  @ApiStatus.Internal
   public RunConfigurationNode(@NotNull ExternalProjectsView externalProjectsView,
                               RunConfigurationsNode parent,
                               @NotNull RunnerAndConfigurationSettings settings) {

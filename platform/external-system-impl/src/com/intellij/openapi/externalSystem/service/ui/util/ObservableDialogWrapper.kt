@@ -5,8 +5,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CopyOnWriteArrayList
 
+@ApiStatus.Internal
 abstract class ObservableDialogWrapper(project: Project?) : DialogWrapper(project) {
   private val okButtonListeners = CopyOnWriteArrayList<() -> Unit>()
 

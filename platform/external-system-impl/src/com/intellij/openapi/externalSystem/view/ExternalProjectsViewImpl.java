@@ -156,6 +156,7 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
     return myUiAware;
   }
 
+  @ApiStatus.Internal
   @Override
   public ExternalSystemShortcutsManager getShortcutsManager() {
     return myProjectsManager.getShortcutsManager();

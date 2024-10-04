@@ -9,7 +9,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 class ExternalSystemRunConfigurationExtensionManager
   : RunConfigurationExtensionsManager<ExternalSystemRunConfiguration, ExternalSystemRunConfigurationExtension>(EP_NAME) {

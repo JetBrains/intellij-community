@@ -19,6 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -26,6 +27,7 @@ import javax.swing.event.HyperlinkEvent;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class OpenProjectJdkSettingsCallback extends NotificationListener.Adapter {
 
   public final static String ID = "#open_project_jdk_settings";

@@ -9,8 +9,10 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ExternalProjectPathLookupElement extends LookupElement {
   
   @NotNull private final String myProjectName;

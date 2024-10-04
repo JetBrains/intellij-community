@@ -11,6 +11,7 @@ import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTaskExecutionInfo> {
 
   private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;

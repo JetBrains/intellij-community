@@ -17,12 +17,14 @@ package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public class ExternalSystemNodeDescriptor<T> extends PresentableNodeDescriptor<T> {
 
   @NotNull private final T myElement;

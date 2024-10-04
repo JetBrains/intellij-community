@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xmlb.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class ExternalProjectsState {
   private final Map<String, State> myExternalSystemsState = FactoryMap.create(key -> new State());
 
