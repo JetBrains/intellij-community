@@ -11,16 +11,19 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
-import com.intellij.refactoring.util.RefactoringConflictsUtil;
+import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -98,7 +101,9 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> usages = new SmartList<>();
     for (var psiField : myRecordCandidate.getFieldAccessors().keySet()) {
       if (!psiField.hasModifierProperty(PRIVATE)) {
-        usages.add(new FieldUsageInfo(psiField));
+        for (PsiReference reference : ReferencesSearch.search(psiField)) {
+          usages.add(new FieldUsageInfo(psiField, reference));
+        }
       }
     }
 
@@ -164,7 +169,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
           result.add(new BrokenEncapsulationUsageInfo(psiField, JavaRefactoringBundle
             .message("convert.to.record.accessor.more.accessible",
                      StringUtil.capitalize(RefactoringUIUtil.getDescription(psiField, false)),
-                     VisibilityUtil.getVisibilityStringToDisplay(psiField), 
+                     VisibilityUtil.getVisibilityStringToDisplay(psiField),
                      VisibilityUtil.toPresentableText(PsiModifier.PUBLIC))));
         }
       }
@@ -195,21 +200,28 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     final UsageInfo[] usages = refUsages.get();
     MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     RenameUtil.addConflictDescriptions(usages, conflicts);
-    Set<PsiField> conflictingFields = new SmartHashSet<>();
     for (UsageInfo usage : usages) {
       if (usage instanceof BrokenEncapsulationUsageInfo) {
         conflicts.putValue(usage.getElement(), ((BrokenEncapsulationUsageInfo)usage).myErrMsg);
       }
-      else if (usage instanceof FieldUsageInfo) {
-        conflictingFields.add(((FieldUsageInfo)usage).myField);
+      else if (usage instanceof FieldUsageInfo fieldUsageInfo) {
+        PsiElement element = fieldUsageInfo.getElement();
+        if (element != null && !isAccessible(element, fieldUsageInfo.myField)) {
+          boolean canBeFixed = element instanceof PsiReferenceExpression refExpr && !PsiUtil.isAccessedForWriting(refExpr);
+          if (!canBeFixed) {
+            final PsiElement container = ConflictsUtil.getContainer(element);
+            String message = JavaRefactoringBundle.message("0.will.become.inaccessible.from.1",
+                                                           RefactoringUIUtil.getDescription(fieldUsageInfo.myField, true),
+                                                           RefactoringUIUtil.getDescription(container, true));
+            conflicts.putValue(element, message);
+          }
+        }
       }
       else if (usage instanceof RenameMethodUsageInfo renameMethodInfo) {
         RenamePsiElementProcessor renameMethodProcessor = RenamePsiElementProcessor.forElement(renameMethodInfo.myMethod);
         renameMethodProcessor.findExistingNameConflicts(renameMethodInfo.myMethod, renameMethodInfo.myNewName, conflicts, myAllRenames);
       }
     }
-    RefactoringConflictsUtil.getInstance()
-      .analyzeAccessibilityConflictsAfterMemberMove(myRecordCandidate.getPsiClass(), PRIVATE, conflictingFields, conflicts);
 
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       if (!ConflictsInTestsException.isTestIgnore()) {
@@ -276,12 +288,31 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
       }
       nextElement = nextElement.getNextSibling();
     }
+    useAccessorsWhenNecessary(usages);
     CallMatcher redundantObjectMethods = findRedundantObjectMethods();
     PsiClass result = (PsiClass)psiClass.replace(recordBuilder.build());
     tryToCompactCanonicalCtor(result);
     removeRedundantObjectMethods(result, redundantObjectMethods);
     generateJavaDocForDocumentedFields(result);
     CodeStyleManager.getInstance(myProject).reformat(result);
+  }
+
+  private void useAccessorsWhenNecessary(UsageInfo @NotNull [] usages) {
+    for (UsageInfo usage : usages) {
+      if (usage instanceof FieldUsageInfo fieldUsageInfo) {
+        PsiField field = fieldUsageInfo.myField;
+        PsiElement target = fieldUsageInfo.getElement();
+        if (target instanceof PsiReferenceExpression refExpr && !PsiUtil.isAccessedForWriting(refExpr) && !isAccessible(target, field)) {
+          refExpr.replace(JavaPsiFacade.getElementFactory(myProject).createExpressionFromText(refExpr.getText() + "()", refExpr));
+        }
+      }
+    }
+  }
+
+  private boolean isAccessible(@NotNull PsiElement place, @NotNull PsiField psiField) {
+    return JavaPsiFacade.getInstance(myProject).getResolveHelper()
+      .isAccessible(psiField, new LightModifierList(psiField.getManager(), psiField.getLanguage(), PRIVATE),
+                    place, null, null);
   }
 
   private void renameMembers(UsageInfo @NotNull [] usages) {
@@ -313,7 +344,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     }
     return CallMatcher.anyOf(result.toArray(new CallMatcher[0]));
   }
-  
+
   private static class HashCodeVisitor extends JavaRecursiveElementWalkingVisitor {
     private final CallMatcher OBJECTS_CALL = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "hash", "hashCode");
     private final CallMatcher FLOAT_CALL = CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "floatToIntBits");
