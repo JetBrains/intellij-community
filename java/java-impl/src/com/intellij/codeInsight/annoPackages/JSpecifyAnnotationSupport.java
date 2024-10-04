@@ -4,6 +4,7 @@ package com.intellij.codeInsight.annoPackages;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,10 @@ public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport
     if (superPackage) return null;
     String name = anno.getQualifiedName();
     if (name == null) return null;
+    PsiExpression parentExpression = PsiTreeUtil.getParentOfType(context, PsiExpression.class);
+    if (parentExpression instanceof PsiTypeCastExpression cast && PsiTreeUtil.isAncestor(cast.getCastType(), context, false)) {
+      return null;
+    }
     if (ArrayUtil.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE, types)) return null;
     Nullability nullability;
     switch (name) {

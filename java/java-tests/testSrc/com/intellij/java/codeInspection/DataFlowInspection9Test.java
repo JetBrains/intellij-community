@@ -3,6 +3,7 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +27,7 @@ public class DataFlowInspection9Test extends DataFlowInspectionTestCase {
   public void testOptionalStreamInlining() { doTest(); }
 
   public void testNullabilityAnnotationOnModule() {
-    addJSpecifyNullMarked();
+    addJSpecifyNullMarked(myFixture);
     myFixture.addFileToProject("module-info.java", """
       import org.jspecify.annotations.NullMarked;
 
@@ -38,23 +39,23 @@ public class DataFlowInspection9Test extends DataFlowInspectionTestCase {
   }
 
   public void testJSpecifyNullMarkedLocals() {
-    addJSpecifyNullMarked();
+    addJSpecifyNullMarked(myFixture);
     doTest();
   }
 
   public void testJSpecifyUpperBound() {
-    addJSpecifyNullMarked();
+    addJSpecifyNullMarked(myFixture);
     DataFlowInspection8Test.setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
 
-  private void addJSpecifyNullMarked() {
+  static void addJSpecifyNullMarked(JavaCodeInsightTestFixture fixture) {
     @Language("JAVA") String nullMarked =
       """
         package org.jspecify.annotations;
         import java.lang.annotation.*;
         @Target({ElementType.TYPE, ElementType.MODULE})
         public @interface NullMarked {}""";
-    myFixture.addClass(nullMarked);
+    fixture.addClass(nullMarked);
   }
 }

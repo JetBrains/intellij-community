@@ -123,11 +123,12 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
                          }""");
     checkHighlighting();
   }
-  
+
   public void testAssertJAssert() {
+    DataFlowInspection9Test.addJSpecifyNullMarked(myFixture);
     checkHighlighting();
   }
-  
+
   public void testHardcodedContractNotNullOverride() {
     checkHighlighting();
   }
@@ -145,7 +146,7 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
   public void testDateTimeComparing()  {
     checkHighlighting();
   }
-  
+
   public void testAssertInstanceOf() {
     myFixture.addClass("""
                          package org.junit.jupiter.api;
