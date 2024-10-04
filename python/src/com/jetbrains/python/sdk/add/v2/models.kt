@@ -10,7 +10,6 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.extensions.failure
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyBundle.message
@@ -159,7 +158,6 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
     manuallyAddedInterpreters.value += ExistingSelectableInterpreter(sdk, PySdkUtil.getLanguageLevelForSdk(sdk), sdk.isSystemWide)
   }
 
-  suspend fun suggestVenvPath(): String? = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(myProjectPathFlows.projectPathWithDefault.first().toString()))
 }
 
 abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModelParams)

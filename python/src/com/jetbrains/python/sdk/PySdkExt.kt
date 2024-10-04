@@ -58,12 +58,9 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import com.jetbrains.python.ui.PyUiUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -417,19 +414,6 @@ internal val Sdk.isSystemWide: Boolean
   get() = !PythonSdkUtil.isRemote(this) && !PythonSdkUtil.isVirtualEnv(
     this) && !PythonSdkUtil.isCondaVirtualEnv(this)
 
-@Suppress("unused")
-private val Sdk.associatedPathFromDotProject: String?
-  get() {
-    val binaryPath = homePath ?: return null
-    val virtualEnvRoot = PythonSdkUtil.getVirtualEnvRoot(binaryPath) ?: return null
-    val projectFile = File(virtualEnvRoot, ".project")
-    return try {
-      projectFile.readText().trim()
-    }
-    catch (e: IOException) {
-      null
-    }
-  }
 
 private val Sdk.associatedPathFromAdditionalData: String?
   get() = (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath
