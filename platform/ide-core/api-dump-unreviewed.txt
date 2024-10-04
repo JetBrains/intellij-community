@@ -2995,7 +2995,6 @@ f:com.intellij.util.WaitForProgressToShow
 Fa:com.intellij.util.download.DownloadableFileService
 - <init>():V
 - a:createDownloader(com.intellij.util.download.DownloadableFileSetDescription):com.intellij.util.download.FileDownloader
-- a:createDownloader(java.util.List,com.intellij.openapi.project.Project,javax.swing.JComponent,java.lang.String):com.intellij.util.download.FileDownloader
 - a:createDownloader(java.util.List,java.lang.String):com.intellij.util.download.FileDownloader
 - a:createFileDescription(java.lang.String,java.lang.String):com.intellij.util.download.DownloadableFileDescription
 - a:createFileSetVersions(java.lang.String,java.net.URL[]):com.intellij.util.download.DownloadableFileSetVersions
@@ -3008,12 +3007,10 @@ a:com.intellij.util.download.DownloadableFileSetVersions$FileSetVersionsCallback
 - onError(java.lang.String):V
 - a:onSuccess(java.util.List):V
 com.intellij.util.download.FileDownloader
-- a:download():com.intellij.openapi.vfs.VirtualFile[]
 - a:download(java.io.File):java.util.List
 - a:downloadFilesWithProgress(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent):java.util.List
 - a:downloadWithBackgroundProgress(java.lang.String,com.intellij.openapi.project.Project):java.util.concurrent.CompletableFuture
 - a:downloadWithProgress(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent):java.util.List
-- a:toDirectory(java.lang.String):com.intellij.util.download.FileDownloader
 f:com.intellij.util.io.HttpRequests
 - sf:CONNECTION_TIMEOUT:I
 - sf:CUSTOM_ERROR_CODE:I

@@ -2,12 +2,10 @@
 package com.intellij.util.download;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.net.URL;
 import java.util.List;
 
@@ -35,12 +33,4 @@ public abstract class DownloadableFileService {
 
   @NotNull
   public abstract FileDownloader createDownloader(@NotNull List<? extends DownloadableFileDescription> fileDescriptions, @NotNull String presentableDownloadName);
-
-  /**
-   * @deprecated use {@link #createDownloader(List, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public abstract FileDownloader createDownloader(List<? extends DownloadableFileDescription> fileDescriptions, @Nullable Project project,
-                                                  JComponent parent, @NotNull String presentableDownloadName);
 }
