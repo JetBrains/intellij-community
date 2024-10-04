@@ -177,11 +177,8 @@ public final class Group implements KeymapGroup {
       if (child instanceof String) {
         if (id.equals(child)) {
           AnAction action = presentable ? ActionManager.getInstance().getActionOrStub(id) : null;
-          String path;
-          if (action != null) {
-            path = action.getTemplatePresentation().getText();
-          }
-          else {
+          String path = action != null ? action.getTemplatePresentation().getText() : null;
+          if (StringUtil.isEmpty(path)) {
             path = id;
           }
           return !isRoot() ? getName(presentable) + SETTINGS_GROUP_SEPARATOR + path : path;
