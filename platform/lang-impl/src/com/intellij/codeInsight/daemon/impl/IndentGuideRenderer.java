@@ -84,8 +84,7 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
     var vfmtRightShift = 0;
     if (virtualGuideInfo.isVirtualFormattingEnabled(editor)) {
       vfmtRightShift = virtualGuideInfo
-        .getVisualFormattingInlineInlays(editor, doc.getLineStartOffset(doc.getLineNumber(startOffset)),
-                                         doc.getLineEndOffset(doc.getLineNumber(startOffset)))
+        .getVisualFormattingInlineInlays(editor, startOffset, startOffset)
         .stream()
         .map(inlay -> inlay.getWidthInPixels())
         .reduce(0, Integer::sum);
