@@ -85,6 +85,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static final String TUPLE = "typing.Tuple";
   public static final String CLASS_VAR = "typing.ClassVar";
   public static final String TYPE_VAR = "typing.TypeVar";
+  public static final String TYPE_VAR_EXT = "typing_extensions.TypeVar";
   public static final String TYPE_VAR_TUPLE = "typing.TypeVarTuple";
   public static final String TYPE_VAR_TUPLE_EXT = "typing_extensions.TypeVarTuple";
   public static final String TYPING_PARAM_SPEC = "typing.ParamSpec";
@@ -178,6 +179,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     .add(PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD.name())
     .add(ANY)
     .add(TYPE_VAR)
+    .add(TYPE_VAR_EXT)
     .add(TYPE_VAR_TUPLE)
     .add(TYPE_VAR_TUPLE_EXT)
     .add(GENERIC)
@@ -433,6 +435,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
     final PyClass initializedClass = PyUtil.turnConstructorIntoClass(function);
     if (initializedClass != null && (TYPE_VAR.equals(initializedClass.getQualifiedName()) ||
+                                     TYPE_VAR_EXT.equals(initializedClass.getQualifiedName()) ||
                                      TYPE_VAR_TUPLE.equals(initializedClass.getQualifiedName()) ||
                                      TYPE_VAR_TUPLE_EXT.equals(initializedClass.getQualifiedName()))) {
       // `typing.TypeVar` call should be assigned to a target and hence should be processed by [getReferenceType]
@@ -1568,7 +1571,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       final PyExpression callee = assignedCall.getCallee();
       if (callee != null) {
         final Collection<String> calleeQNames = resolveToQualifiedNames(callee, context.getTypeContext());
-        if (calleeQNames.contains(TYPE_VAR) || calleeQNames.contains(TYPE_VAR_TUPLE) || calleeQNames.contains(TYPE_VAR_TUPLE_EXT)) {
+        if (calleeQNames.contains(TYPE_VAR) || calleeQNames.contains(TYPE_VAR_EXT)
+            || calleeQNames.contains(TYPE_VAR_TUPLE) || calleeQNames.contains(TYPE_VAR_TUPLE_EXT)) {
           final PyExpression[] arguments = assignedCall.getArguments();
           if (arguments.length > 0) {
             final PyExpression firstArgument = arguments[0];
