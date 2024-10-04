@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.utils
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.io.zip.JBZipFile
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.idea.maven.indices.IndicesBundle
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -13,7 +14,6 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.*
-import java.util.zip.ZipFile
 
 @Obsolete
 fun MavenArtifact.resolved() = isResolved
@@ -180,13 +180,13 @@ object MavenArtifactUtil {
     try {
       if (!Files.exists(file)) return null
 
-      ZipFile(file.toFile()).use { jar ->
+      JBZipFile(file.toFile()).use { jar ->
         val entry = jar.getEntry(MAVEN_PLUGIN_DESCRIPTOR)
         if (entry == null) {
           MavenLog.LOG.info(IndicesBundle.message("repository.plugin.corrupt", file))
           return null
         }
-        jar.getInputStream(entry).use { `is` ->
+        entry.getInputStream().use { `is` ->
           val bytes = FileUtil.loadBytes(`is`)
           return MavenPluginInfo(bytes)
         }
