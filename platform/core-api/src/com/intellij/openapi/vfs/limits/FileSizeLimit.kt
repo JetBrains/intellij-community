@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
 @Suppress("DEPRECATION")
 @ApiStatus.Internal
 interface FileSizeLimit {
-  val acceptableExtensions: String
+  val acceptableExtensions: List<String>
 
   fun getLimits(): ExtensionSizeLimitInfo
 
@@ -77,15 +77,14 @@ interface FileSizeLimit {
 
     private fun getLimits(): Map<String, ExtensionSizeLimitInfo> {
       val extensions = EP.extensionsIfPointIsRegistered
-      val grouped = extensions.groupBy { it.acceptableExtensions }
-      grouped.forEach { (type, checkers) ->
-        if (checkers.size > 1) {
-          thisLogger().warn("For file type $type several limits from extensions: ${checkers.joinToString { it::class.java.name }}. " +
-                            "IDE can work incorrectly")
-        }
-      }
 
-      val newLimits = grouped.map { it.key to it.value.first().getLimits() }.toMap()
+      val duplicates: Map<String, Int> = extensions.flatMap { it.acceptableExtensions }.groupingBy { it }.eachCount().filter { it.value > 1 }
+      duplicates.forEach {(element, count) ->
+          thisLogger().warn("For file type $element $count limits are registered. Extensions: ${extensions.joinToString { 
+            "${it.javaClass.name}: ${it.acceptableExtensions.joinToString()}" }}")
+        }
+
+      val newLimits = extensions.flatMap { extension -> extension.acceptableExtensions.map { it to extension.getLimits() } }.toMap()
       return newLimits
     }
 
