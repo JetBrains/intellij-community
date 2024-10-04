@@ -24,10 +24,10 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
 import com.intellij.openapi.startup.InitProjectActivity
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.isTooLarge
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.project.stateStore
@@ -652,7 +652,7 @@ private class MyFileDocumentManagerListener(private val project: Project) : File
 
   override fun fileContentReloaded(file: VirtualFile, document: Document) {
     val psiFile = fileManager.findCachedViewProvider(file)
-    if (file.isValid && psiFile != null && FileUtilRt.isTooLarge(file.length) && psiFile !is PsiLargeFile) {
+    if (file.isValid && psiFile != null && file.isTooLarge() && psiFile !is PsiLargeFile) {
       ApplicationManager.getApplication().runWriteAction(ExternalChangeAction { fileManager.reloadPsiAfterTextChange(psiFile, file) })
     }
   }

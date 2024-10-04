@@ -6,8 +6,8 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
@@ -21,7 +21,8 @@ final class LargeFilesAnnotator implements Annotator {
       if (SingleRootFileViewProvider.isTooLargeForIntelligence(file)) {
         holder.newAnnotation(HighlightSeverity.WARNING, CodeInsightBundle.message("message.file.size.0.exceeds.code.insight.limit.1",
                                                                                   StringUtil.formatFileSize(file.getLength()),
-                                                                                  StringUtil.formatFileSize(PersistentFSConstants.getMaxIntellisenseFileSize())))
+                                                                                  StringUtil.formatFileSize(
+                                                                                    FileSizeLimit.getIntellisenseLimit(file.getExtension()))))
           .fileLevel()
           .create();
       }

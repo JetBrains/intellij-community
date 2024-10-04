@@ -10,14 +10,13 @@ import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.jar.TimedZipHandler;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
@@ -256,7 +255,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     FileUtil.writeToFile(new File(root, "small1"), "some text");
     FileUtil.writeToFile(new File(root, "small2"), "another text");
     try (InputStream is = new ZeroInputStream(); OutputStream os = new FileOutputStream(new File(root, "large"))) {
-      FileUtil.copy(is, FileUtilRt.LARGE_FOR_CONTENT_LOADING * 2, os);
+      FileUtil.copy(is, FileSizeLimit.getContentLoadLimit() * 2, os);
     }
     File jar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"), root);
 

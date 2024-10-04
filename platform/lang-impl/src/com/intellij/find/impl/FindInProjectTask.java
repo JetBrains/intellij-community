@@ -32,7 +32,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.FilesScanExecutor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -225,7 +224,7 @@ final class FindInProjectTask {
     boolean skipProjectFile = ProjectUtil.isProjectOrWorkspaceFile(virtualFile) && !myFindModel.isSearchInProjectFiles();
     if (skipProjectFile && !Registry.is("find.search.in.project.files")) return true;
 
-    if (fileLength > FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+    if (VirtualFileUtil.isTooLarge(virtualFile)) {
       myLargeFiles.add(virtualFile);
       return true;
     }

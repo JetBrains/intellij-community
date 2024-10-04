@@ -10,10 +10,10 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileTooBigException;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LargeFileWriteRequestor;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.LineSeparator;
@@ -197,7 +197,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   }
 
   private void checkNotTooLarge(@Nullable Object requestor) throws FileTooBigException {
-    if (!(requestor instanceof LargeFileWriteRequestor) && FileUtilRt.isTooLarge(getLength())) throw new FileTooBigException(getPath());
+    if (!(requestor instanceof LargeFileWriteRequestor) && VirtualFileUtil.isTooLarge(this)) throw new FileTooBigException(getPath());
   }
 
   @Override

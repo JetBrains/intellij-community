@@ -16,11 +16,11 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.encoding.EncodingReference;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.ui.AddEditDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
@@ -124,7 +124,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
         myConsoleBufferSizeWarningLabel.setText(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size.warning.unlimited"));
         return;
       }
-      if (value > FileUtilRt.LARGE_FOR_CONTENT_LOADING / 1024) {
+      if (value > FileSizeLimit.getContentLoadLimit() / 1024) {
         myConsoleBufferSizeWarningLabel.setText(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size.warning.too.large"));
         return;
       }

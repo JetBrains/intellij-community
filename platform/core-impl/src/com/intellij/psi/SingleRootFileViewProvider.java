@@ -10,9 +10,9 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiFileEx;
@@ -166,19 +166,20 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     if (file instanceof LightVirtualFile && ((LightVirtualFile)file).isTooLargeForIntelligence() == ThreeState.YES) {
       return false;
     }
-    int maxSize = PersistentFSConstants.getMaxIntellisenseFileSize();
+    int maxSize = FileSizeLimit.getIntellisenseLimit(file.getExtension());
     return contentSize == null
            ? fileSizeIsGreaterThan(file, maxSize)
            : contentSize > maxSize;
   }
 
   public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile) {
-    return fileSizeIsGreaterThan(vFile, PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD);
+    int contentLoadLimit = FileSizeLimit.getContentLoadLimit(vFile.getExtension());
+    return fileSizeIsGreaterThan(vFile, contentLoadLimit);
   }
 
   public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile,
                                                     @Nullable("if content size should be retrieved from a file") Long contentSize) {
-    long maxLength = PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
+    long maxLength = FileSizeLimit.getContentLoadLimit(vFile.getExtension());
     return contentSize == null
            ? fileSizeIsGreaterThan(vFile, maxLength)
            : contentSize > maxLength;

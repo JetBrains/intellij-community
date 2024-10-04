@@ -33,8 +33,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
-import com.intellij.openapi.vfs.PersistentFSConstants
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isTooLargeForIntellijSense
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
@@ -63,7 +63,6 @@ import java.awt.Color
 import java.awt.Container
 import java.awt.KeyboardFocusManager
 import java.awt.event.HierarchyEvent
-import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -485,7 +484,7 @@ class StructureViewWrapperImpl(private val project: Project,
   }
 
   private suspend fun createStructureViewBuilder(file: VirtualFile): StructureViewBuilder? {
-    if (file.length > PersistentFSConstants.getMaxIntellisenseFileSize()) return null
+    if (file.isTooLargeForIntellijSense()) return null
     val providers = getInstance().getProvidersAsync(project, file)
     val provider = (if (providers.isEmpty()) null else providers[0]) ?: return null
     if (provider is StructureViewFileEditorProvider) {

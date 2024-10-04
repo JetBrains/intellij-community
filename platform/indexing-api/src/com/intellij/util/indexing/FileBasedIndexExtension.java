@@ -4,7 +4,6 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
@@ -84,7 +83,7 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
    * For most indices the method should return an empty collection.
    *
    * @return collection of file types to which file size limit will not be applied when indexing.
-   * This allows indexing of files whose limit exceeds {@link PersistentFSConstants#getMaxIntellisenseFileSize()}.
+   * This allows indexing of files whose limit exceeds {@link com.intellij.openapi.vfs.limits.FileSizeLimit#getIntellisenseLimit(FileType)}}.
    * <p>
    * Use carefully, because indexing large files may influence index update speed dramatically.
    */

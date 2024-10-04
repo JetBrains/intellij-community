@@ -3,7 +3,6 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -23,7 +22,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.converter.FileTextConverter;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -39,6 +37,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
@@ -204,7 +203,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     int totalSize = 0;
     for (Document document : documents) {
       totalSize += document.getTextLength();
-      if (totalSize > FileUtilRt.LARGE_FOR_CONTENT_LOADING) return true;
+      if (totalSize > FileSizeLimit.getContentLoadLimit()) return true;
     }
     return false;
   }
@@ -432,9 +431,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
       String text = document.getText();
       String lineSeparator = getLineSeparator(document, file);
-
-      //Some files have document.text different from file representation
-      text = FileTextConverter.convertToSaveDocumentTextToFile(text, file);
 
       if (!lineSeparator.equals("\n")) {
         text = StringUtil.convertLineSeparators(text, lineSeparator);

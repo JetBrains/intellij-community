@@ -2968,6 +2968,8 @@ f:com.intellij.openapi.vfs.VirtualFileUtil
 - sf:findOrCreateFile(com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - sf:findPsiFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.psi.PsiFile
 - sf:isFile(com.intellij.openapi.vfs.VirtualFile):Z
+- sf:isTooLarge(com.intellij.openapi.vfs.VirtualFile):Z
+- sf:isTooLargeForIntellijSense(com.intellij.openapi.vfs.VirtualFile):Z
 - sf:originalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - sf:originalFileOrSelf(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - sf:readBytes(com.intellij.openapi.vfs.VirtualFile):B[]

@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.*;
@@ -237,7 +236,7 @@ public final class ExtensionsRootType extends RootType {
         }
         if (file.isDirectory()) return CONTINUE;
         if (file.getFileType().isBinary()) return CONTINUE;
-        if (file.getLength() > FileUtilRt.LARGE_FOR_CONTENT_LOADING) return CONTINUE;
+        if (VirtualFileUtil.isTooLarge(file)) return CONTINUE;
 
         String newText = FileUtil.loadTextAndClose(file.getInputStream());
         String oldText = child.exists() ? FileUtil.loadFile(child) : "";

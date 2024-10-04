@@ -34,10 +34,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.wm.impl.status.EncodingPanel;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -919,7 +919,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   public void testBigFileInsideJarCorrectlyHandlesBOM() throws IOException {
     File tmpDir = createTempDirectory();
     File jar = new File(tmpDir, "x.jar");
-    String bigText = StringUtil.repeat("u", FileUtilRt.LARGE_FOR_CONTENT_LOADING+1);
+    String bigText = StringUtil.repeat("u", FileSizeLimit.getContentLoadLimit() + 1);
     byte[] utf16beBytes = ArrayUtil.mergeArrays(CharsetToolkit.UTF16BE_BOM, bigText.getBytes(StandardCharsets.UTF_16BE));
     String name = "some_random_name";
     IoTestUtil.createTestJar(jar, Collections.singletonList(Pair.create(name, utf16beBytes)));

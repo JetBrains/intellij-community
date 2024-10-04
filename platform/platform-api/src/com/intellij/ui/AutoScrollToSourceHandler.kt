@@ -12,8 +12,8 @@ import com.intellij.openapi.fileTypes.INativeFileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.PersistentFSConstants
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isTooLargeForIntellijSense
 import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -175,7 +175,7 @@ abstract class AutoScrollToSourceHandler {
     }
 
     //IDEA-84881 Don't autoscroll to very large files
-    return file.length <= PersistentFSConstants.getMaxIntellisenseFileSize()
+    return !file.isTooLargeForIntellijSense()
   }
 
   @RequiresEdt

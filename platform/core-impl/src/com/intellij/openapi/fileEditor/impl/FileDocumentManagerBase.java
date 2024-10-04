@@ -10,10 +10,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
@@ -56,7 +56,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       return null;
     }
 
-    boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+    boolean tooLarge = FileSizeLimit.isTooLarge(file.getLength(), file.getExtension());
     if (file.getFileType().isBinary() && tooLarge) {
       return null;
     }
@@ -203,7 +203,9 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   protected static int getPreviewCharCount(@NotNull VirtualFile file) {
     Charset charset = EncodingManager.getInstance().getEncoding(file, false);
     float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
-    return (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
+
+    int largeFilePreviewSize = FileSizeLimit.getPreviewLimit(file.getExtension());
+    return (int)(largeFilePreviewSize / bytesPerChar);
   }
 
   private void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {

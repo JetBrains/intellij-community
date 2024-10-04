@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
@@ -359,7 +360,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     //          as a first file.size() request alone. So that optimization needs to be carefully benchmarked to prove it
     //          does provide anything -- and my guess: it probably doesn't
     var length = Files.size(nioFile);
-    if (FileUtilRt.isTooLarge(length)) {
+
+    if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(nioFile.getFileName().toString()))) {
       throw new FileTooBigException("File " + nioFile.toAbsolutePath() + " is too large (=" + length + " b)");
     }
     return Files.readAllBytes(nioFile);

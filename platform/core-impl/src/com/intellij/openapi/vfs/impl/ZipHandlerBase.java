@@ -6,11 +6,11 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.util.io.ResourceHandle;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -87,7 +87,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
       ZipEntry entry = zip.getEntry(relativePath);
       if (entry != null) {
         long length = entry.getSize();
-        if (FileUtilRt.isTooLarge(length)) {
+        if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(entry.getName()))) {
           throw new FileTooBigException(getFile() + "!/" + relativePath);
         }
         try (InputStream stream = zip.getInputStream(entry)) {
@@ -113,7 +113,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
         InputStream stream = zip.getInputStream(entry);
         if (stream != null) {
           long length = entry.getSize();
-          if (!FileUtilRt.isTooLarge(length)) {
+          if (!FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(entry.getName()))) {
             try {
               return new BufferExposingByteArrayInputStream(FileUtil.loadBytes(stream, (int)length));
             }

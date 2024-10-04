@@ -8,9 +8,9 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
@@ -51,7 +51,7 @@ public final class LargeFileNotificationProvider implements EditorNotificationPr
       return panel.text(IdeBundle.message(
         "large.file.preview.notification",
         StringUtil.formatFileSize(file.getLength()),
-        StringUtil.formatFileSize(FileUtilRt.LARGE_FILE_PREVIEW_SIZE)
+        StringUtil.formatFileSize(FileSizeLimit.getPreviewLimit(file.getExtension()))
       ));
     };
   }

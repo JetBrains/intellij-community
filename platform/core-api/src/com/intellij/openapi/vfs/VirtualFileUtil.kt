@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
 import com.intellij.openapi.util.io.relativizeToClosestAncestor
+import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFileBase
@@ -50,6 +51,15 @@ fun VirtualFile.readBytes(): ByteArray {
 @RequiresWriteLock
 fun VirtualFile.writeBytes(content: ByteArray) {
   setBinaryContent(content)
+}
+
+fun VirtualFile.isTooLarge(): Boolean {
+  return FileSizeLimit.isTooLarge(length, extension)
+}
+
+fun VirtualFile.isTooLargeForIntellijSense(): Boolean {
+  val maxFileSize = FileSizeLimit.getIntellisenseLimit(extension)
+  return length > maxFileSize
 }
 
 fun VirtualFile.toNioPathOrNull(): Path? {

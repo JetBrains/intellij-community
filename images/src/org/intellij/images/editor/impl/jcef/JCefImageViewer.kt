@@ -15,17 +15,19 @@ import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isTooLarge
 import com.intellij.ui.jcef.*
 import com.intellij.util.IncorrectOperationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
-import org.cef.handler.*
+import org.cef.handler.CefLoadHandler
+import org.cef.handler.CefLoadHandlerAdapter
+import org.cef.handler.CefRequestHandler
 import org.intellij.images.ImagesBundle
 import org.intellij.images.editor.ImageZoomModel
 import org.intellij.images.editor.impl.ImageFileEditorState
@@ -209,7 +211,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
     myRequestHandler.addResource(IMAGE_PATH) {
       var stream: InputStream? = null
       try {
-        stream = if (FileUtilRt.isTooLarge(myFile.length)) myFile.inputStream
+        stream = if (myFile.isTooLarge()) myFile.inputStream
         else ByteArrayInputStream(myDocument.text.toByteArray(StandardCharsets.UTF_8))
       }
       catch (e: IOException) {

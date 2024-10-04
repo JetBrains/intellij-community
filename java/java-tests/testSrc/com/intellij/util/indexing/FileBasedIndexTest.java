@@ -6,10 +6,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
@@ -31,7 +31,7 @@ public class FileBasedIndexTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testLargeFile() {
-    String largeFileText = "class Foo { String bar; }" + StringUtil.repeat(" ", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 42);
+    String largeFileText = "class Foo { String bar; }" + StringUtil.repeat(" ", FileSizeLimit.getContentLoadLimit() + 42);
     VirtualFile file = myFixture.addFileToProject("Foo.java", largeFileText).getVirtualFile();
     int fileId = ((VirtualFileWithId)file).getId();
 

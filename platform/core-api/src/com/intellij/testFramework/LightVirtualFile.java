@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ThreeState;
@@ -126,7 +127,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
   @Override
   public byte @NotNull [] contentsToByteArray() throws IOException {
     long cachedLength = myCachedLength;
-    if (cachedLength > FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+    if (FileSizeLimit.isTooLarge(cachedLength, FileUtilRt.getExtension(getNameSequence()).toString())) {
       throw new FileTooBigException("file too big, length = "+cachedLength);
     }
     return doGetContent();

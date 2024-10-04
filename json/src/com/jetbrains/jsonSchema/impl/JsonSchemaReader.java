@@ -9,10 +9,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -45,7 +45,7 @@ import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
  */
 @Deprecated
 public final class JsonSchemaReader {
-  private static final int MAX_SCHEMA_LENGTH = FileUtilRt.LARGE_FOR_CONTENT_LOADING;
+  private static final int MAX_SCHEMA_LENGTH = FileSizeLimit.getContentLoadLimit();
   private static final ObjectMapper jsonObjectMapper = new ObjectMapper(new JsonFactory());
 
   private final Map<String, JsonSchemaObjectImpl> myIds = new HashMap<>();

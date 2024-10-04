@@ -25,8 +25,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -124,7 +124,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
             // Can't trust 0 length, at it might be a lie (and loading empty content into memory shouldn't hurt much).
             contentsEquals = false;
           }
-          else if (FileUtilRt.isTooLarge(length1) || FileUtilRt.isTooLarge(length2)) {
+          else if (VirtualFileUtil.isTooLarge(file1) || VirtualFileUtil.isTooLarge(file2)) {
             return new ComparisonData(ThreeState.UNSURE, () -> DiffBundle.message("error.files.too.large.to.compare.text"));
           }
           else {
