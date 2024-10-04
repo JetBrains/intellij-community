@@ -48,7 +48,10 @@ class JBCefOsrComponent extends JPanel {
 
   private final @NotNull AtomicLong myScheduleResizeMs = new AtomicLong(-1);
   private @Nullable Alarm myResizeAlarm;
+
   private final @NotNull Alarm myGraphicsConfigurationAlarm = new Alarm();
+  AtomicBoolean myScaleInitialized = new AtomicBoolean(false);
+
   private @NotNull Disposable myDisposable;
   private @NotNull MouseWheelEventsAccumulator myWheelEventsAccumulator;
 
@@ -86,15 +89,14 @@ class JBCefOsrComponent extends JPanel {
     // our side.
     // The first graphicsConfiguration call is caused by the adding the browser component and doesn't need to be delayed.
     // Further calls might be caused by the hardware setup or resolution changes.
-    AtomicBoolean scaleInitialized = new AtomicBoolean(false);
     addPropertyChangeListener("graphicsConfiguration", e -> {
       myGraphicsConfigurationAlarm.cancelAllRequests();
-      if (scaleInitialized.get()) {
+      if (myScaleInitialized.get()) {
         myGraphicsConfigurationAlarm.addRequest(this::onGraphicsConfigurationChanged, 1000);
       }
       else {
         onGraphicsConfigurationChanged();
-        scaleInitialized.set(true);
+        myScaleInitialized.set(true);
       }
     });
   }
@@ -148,6 +150,9 @@ class JBCefOsrComponent extends JPanel {
   public void removeNotify() {
     super.removeNotify();
     Disposer.dispose(myDisposable);
+
+    myGraphicsConfigurationAlarm.cancelAllRequests();
+    myScaleInitialized.set(false);
   }
 
   @Override
