@@ -29,6 +29,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.*
+import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil.getCustomEditorTabTitle
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.LightEditActionFactory
@@ -48,10 +49,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.JBScrollPane.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.hover.ListHoverListener
 import com.intellij.ui.popup.PopupUpdateProcessorBase
@@ -571,7 +573,11 @@ object Switcher : BaseSwitcherAction(null) {
       ReadAction.nonBlocking<List<ListItemData>> {
         items.map {
           val parentPath = Path(it.file.presentableUrl).parent
-          val result = if (parentPath == null || parentPath.nameCount == 0) "" else {
+          val sameNameFiles = FilenameIndex.getVirtualFilesByName(it.file.name, GlobalSearchScope.projectScope(project))
+          val result = if (parentPath == null ||
+                           parentPath.nameCount == 0 ||
+                           sameNameFiles.size <= 1) ""
+          else {
             val filePath = parentPath.pathString
             val projectPath = project.basePath?.let { FileUtil.toSystemDependentName(it) }
             if (projectPath != null && FileUtil.isAncestor(projectPath, filePath, true)) {
@@ -588,7 +594,7 @@ object Switcher : BaseSwitcherAction(null) {
           }
 
           ListItemData(item = it,
-                       mainText = VfsPresentationUtil.getPresentableNameForUI(it.project, it.file),
+                       mainText = getCustomEditorTabTitle(project, it.file) ?: it.mainText,
                        statusText = FileUtil.getLocationRelativeToUserHome((it.file.parent ?: it.file).presentableUrl),
                        pathText = result,
                        backgroundColor = VfsPresentationUtil.getFileBackgroundColor(it.project, it.file),
