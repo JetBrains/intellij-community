@@ -5,10 +5,12 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.ui.VcsBookmarkRef;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+@ApiStatus.Internal
 public class GraphCommitCell {
 
   private final @NotNull String myText;

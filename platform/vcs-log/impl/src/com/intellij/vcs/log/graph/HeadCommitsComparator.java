@@ -8,12 +8,14 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.RefsModel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.Map;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class HeadCommitsComparator implements Comparator<Integer> {
   private static final Logger LOG = Logger.getInstance(HeadCommitsComparator.class);
   private final @NotNull RefsModel myRefsModel;

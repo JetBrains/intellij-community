@@ -6,12 +6,14 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.util.VcsUserUtil
+import org.jetbrains.annotations.ApiStatus
 
 interface VcsLogUserResolver {
   fun resolveUserName(name: String): Set<VcsUser>
   fun resolveCurrentUser(root: VirtualFile): Set<VcsUser>
 }
 
+@ApiStatus.Internal
 abstract class VcsLogUserResolverBase : VcsLogUserResolver {
   abstract val currentUsers: Map<VirtualFile, VcsUser>
   abstract val allUsers: Set<VcsUser>

@@ -55,6 +55,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
   protected val dateFilterModel: DateFilterModel
   protected val structureFilterModel: FileFilterModel
   protected val textFilterModel: TextFilterModel
+  @ApiStatus.Internal
   protected val parentFilterModel: ParentFilterModel
 
   private val textFilterField: VcsLogTextFilterField

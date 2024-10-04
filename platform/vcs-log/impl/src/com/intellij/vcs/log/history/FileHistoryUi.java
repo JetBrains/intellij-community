@@ -26,6 +26,7 @@ import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   private final @NotNull FileHistoryFilterUi myFilterUi;
   private final @NotNull FileHistoryPanel myFileHistoryPanel;
 
+  @ApiStatus.Internal
   public FileHistoryUi(@NotNull VcsLogData logData,
                        @NotNull FileHistoryUiProperties uiProperties,
                        @NotNull VisiblePackRefresher refresher,
@@ -145,6 +147,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return myPath.equals(targetPath) && Objects.equals(myRevision, targetRevision);
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull FileHistoryFilterUi getFilterUi() {
     return myFilterUi;
@@ -171,6 +174,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return myFileHistoryPanel.getToolbar();
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull FileHistoryUiProperties getProperties() {
     return myUiProperties;

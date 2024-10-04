@@ -4,8 +4,10 @@ package com.intellij.vcs.log.util
 import com.intellij.openapi.util.NlsActions
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.graph.PermanentGraph
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 object GraphOptionsUtil {
 
   @JvmStatic

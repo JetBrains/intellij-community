@@ -25,6 +25,7 @@ import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcsUtil.VcsImplUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public class GoToHashOrRefPopup {
   private static final Logger LOG = Logger.getInstance(GoToHashOrRefPopup.class);
 

@@ -6,7 +6,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class CachingVcsCommitsDataLoader<T>(
   private val loader: VcsCommitsDataLoader<T>,
   cacheSize: Long = 150

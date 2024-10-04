@@ -8,7 +8,9 @@ import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ParentFilterModel(uiProperties: MainVcsLogUiProperties,
                         private val logProviders: Map<VirtualFile, VcsLogProvider>,
                         private val visibleRootsProvider: () -> Collection<VirtualFile>? = { null }, filters: VcsLogFilterCollection?) :

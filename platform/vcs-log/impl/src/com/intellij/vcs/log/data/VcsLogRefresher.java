@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -9,6 +10,7 @@ import java.util.Collection;
 /**
  * Prepares the initial {@link DataPack} and handles subsequent VCS Log refreshes.
  */
+@ApiStatus.Internal
 public interface VcsLogRefresher {
 
   /**

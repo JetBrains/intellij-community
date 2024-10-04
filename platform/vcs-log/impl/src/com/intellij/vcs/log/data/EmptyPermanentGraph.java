@@ -6,6 +6,7 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.visible.EmptyVisibleGraph;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public class EmptyPermanentGraph implements PermanentGraph<Integer> {
 
   private static final PermanentGraph<Integer> INSTANCE = new EmptyPermanentGraph();

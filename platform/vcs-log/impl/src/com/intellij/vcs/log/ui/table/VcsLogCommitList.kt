@@ -41,10 +41,10 @@ interface VcsLogCommitListModel {
   fun getId(row: Int): Int
 }
 
-fun VcsLogCommitListModel.getCommitId(row: Int): CommitId? {
+internal fun VcsLogCommitListModel.getCommitId(row: Int): CommitId? {
   return dataProvider.getCommitId(getId(row))
 }
 
-fun VcsLogCommitListModel.getCachedCommitMetadata(row: Int): VcsCommitMetadata? {
+internal fun VcsLogCommitListModel.getCachedCommitMetadata(row: Int): VcsCommitMetadata? {
   return dataProvider.commitMetadataCache.getCachedData(getId(row))
 }

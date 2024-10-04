@@ -18,6 +18,7 @@ import com.intellij.vcs.commit.message.SubjectLimitInspection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +37,7 @@ import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.
 import static com.intellij.openapi.vcs.ui.FontUtil.getCommitMessageFont;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
+@ApiStatus.Internal
 public final class CommitPresentationUtil {
   private static final @NotNull Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
 

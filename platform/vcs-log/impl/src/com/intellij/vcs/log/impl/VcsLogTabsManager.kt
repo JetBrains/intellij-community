@@ -149,7 +149,8 @@ class VcsLogTabsManager internal constructor(private val project: Project,
     val TAB_GROUP_ID = TabGroupId(VcsLogContentProvider.TAB_NAME, { VcsLogBundle.message("vcs.log.tab.name") }, true)
 
     private fun generateShortDisplayName(ui: VcsLogUiEx): @TabTitle String {
-      val options = ui.properties.getOrNull(MainVcsLogUiProperties.GRAPH_OPTIONS)
+      val options = ui.properties.
+      getOrNull(MainVcsLogUiProperties.GRAPH_OPTIONS)
       val optionsPresentation = options?.presentationForTabTitle ?: ""
       val filters = ui.filterUi.filters
       val filtersPresentation = if (filters.isEmpty) "" else filters.getPresentation(withPrefix = optionsPresentation.isNotEmpty())

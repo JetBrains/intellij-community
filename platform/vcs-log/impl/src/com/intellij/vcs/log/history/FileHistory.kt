@@ -499,4 +499,5 @@ private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
 @JvmField
 internal val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
 
+@ApiStatus.Internal
 data class EdgeData<T>(@JvmField val parent: T, @JvmField val child: T)

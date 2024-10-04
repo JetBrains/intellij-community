@@ -520,7 +520,7 @@ internal data class FilterByDetailsResult(val matchingCommits: IntSet?,
 
 private data class FilterByHashResult(val visiblePack: VisiblePack, val commitCount: CommitCountStage, val filterKind: FilterKind)
 
-fun areFiltersAffectedByIndexing(filters: VcsLogFilterCollection, roots: List<VirtualFile>): Boolean {
+internal fun areFiltersAffectedByIndexing(filters: VcsLogFilterCollection, roots: List<VirtualFile>): Boolean {
   val detailsFilters = filters.detailsFilters
   if (detailsFilters.isEmpty()) return false
 

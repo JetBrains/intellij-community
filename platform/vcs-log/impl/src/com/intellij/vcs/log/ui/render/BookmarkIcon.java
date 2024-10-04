@@ -5,12 +5,14 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.vcs.log.ui.VcsBookmarkRef;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 
+@ApiStatus.Internal
 public class BookmarkIcon implements Icon {
   private final Color BOOKMARK_REF_TYPE_COLOR = JBColor.namedColor("VersionControl.RefLabel.bookmarkBackground",
                                                                    new JBColor(0xf4af3d, 0xd9a343));

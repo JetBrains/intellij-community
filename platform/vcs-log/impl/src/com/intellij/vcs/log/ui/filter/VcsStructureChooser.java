@@ -37,10 +37,7 @@ import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -54,6 +51,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
+@ApiStatus.Internal
 public class VcsStructureChooser extends DialogWrapper {
   private static final int MAX_FOLDERS = 100;
   public static final Border BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);

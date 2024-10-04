@@ -2,7 +2,9 @@
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class BekUtil {
   public static boolean isBekEnabled() { // todo drop later
     return !Registry.is("vcs.log.bek.sort.disabled");
