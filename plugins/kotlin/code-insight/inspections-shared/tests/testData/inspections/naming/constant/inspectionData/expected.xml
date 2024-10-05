@@ -1,28 +1,28 @@
 <problems>
   <problem>
     <file>test.kt</file>
-    <line>14</line>
+    <line>17</line>
     <module>light_idea_test_case</module>
     <entry_point TYPE="file" FQNAME="temp:///src/test.kt"/>
     <description>Const property name &lt;code&gt;lowerCase1&lt;/code&gt; should not contain lowercase letters #loc</description>
   </problem>
   <problem>
     <file>test.kt</file>
-    <line>16</line>
+    <line>19</line>
     <module>light_idea_test_case</module>
     <entry_point TYPE="file" FQNAME="temp:///src/test.kt"/>
     <description>Const property name &lt;code&gt;`BAD CHAR`&lt;/code&gt; may contain only letters and digits #loc</description>
   </problem>
   <problem>
     <file>test.kt</file>
-    <line>26</line>
+    <line>29</line>
     <module>light_idea_test_case</module>
     <entry_point TYPE="file" FQNAME="temp:///src/test.kt"/>
     <description>Const property name &lt;code&gt;lowerCase1&lt;/code&gt; should not contain lowercase letters #loc</description>
   </problem>
   <problem>
     <file>test.kt</file>
-    <line>28</line>
+    <line>31</line>
     <module>light_idea_test_case</module>
     <entry_point TYPE="file" FQNAME="temp:///src/test.kt"/>
     <description>Const property name &lt;code&gt;`BAD CHAR`&lt;/code&gt; may contain only letters and digits #loc</description>

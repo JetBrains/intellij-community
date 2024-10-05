@@ -5,7 +5,8 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.options.OptPane
-import com.intellij.codeInspection.options.OptPane.*
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptPane.string
 import com.intellij.codeInspection.options.OptionController
 import com.intellij.codeInspection.options.RegexValidator
 import com.intellij.codeInspection.reference.RefEntity
@@ -261,7 +262,7 @@ abstract class PropertyNameInspectionBase protected constructor(
         override fun visitProperty(property: KtProperty) {
             if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
             if (property.getKind() == kind) {
-                verifyName(property, holder)
+                verifyName(property, holder, additionalCheck = { additionalPropertyCheck(property) })
             }
         }
 
@@ -280,6 +281,8 @@ abstract class PropertyNameInspectionBase protected constructor(
             }
         }
     }
+
+    protected open fun additionalPropertyCheck(property: KtNamedDeclaration): Boolean = true
 
     private val PsiNamedElement.isSingleUnderscore: Boolean
         get() = name == "_"
@@ -349,6 +352,9 @@ class ConstPropertyNameInspection : PropertyNameInspectionBase(
     "[A-Z][_A-Z\\d]*"
 ) {
     override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_LOWER, NO_BAD_CHARACTERS)
+
+    override fun additionalPropertyCheck(property: KtNamedDeclaration): Boolean =
+        property.name != "serialVersionUID"
 }
 
 class LocalVariableNameInspection : PropertyNameInspectionBase(
