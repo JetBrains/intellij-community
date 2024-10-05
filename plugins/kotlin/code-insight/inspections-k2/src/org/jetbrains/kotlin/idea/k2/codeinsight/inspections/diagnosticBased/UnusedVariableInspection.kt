@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -26,10 +27,16 @@ internal class UnusedVariableInspection :
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean,
-    ) = object : KtVisitorVoid() {
-
-        override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
-            visitTargetElement(declaration, holder, isOnTheFly)
+    ): KtVisitorVoid {
+        val file = holder.file
+        return if (file !is KtFile || InjectedLanguageManager.getInstance(holder.project).isInjectedViewProvider(file.viewProvider)) {
+            KtVisitorVoid()
+        } else {
+            object : KtVisitorVoid() {
+                override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+                    visitTargetElement(declaration, holder, isOnTheFly)
+                }
+            }
         }
     }
 
