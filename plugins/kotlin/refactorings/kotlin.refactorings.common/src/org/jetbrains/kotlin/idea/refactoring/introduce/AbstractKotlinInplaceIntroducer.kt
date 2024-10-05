@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import java.awt.BorderLayout
 
-const val TYPE_REFERENCE_VARIABLE_NAME: String = "TypeReferenceVariable";
+const val TYPE_REFERENCE_VARIABLE_NAME: String = "TypeReferenceVariable"
 
 abstract class AbstractKotlinInplaceIntroducer<D : KtNamedDeclaration>(
     localVariable: D?,
