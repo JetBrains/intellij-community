@@ -53,6 +53,7 @@ abstract class AbstractKotlinInplaceIntroducer<D : KtNamedDeclaration>(
     }
 
     protected fun updateVariableName() {
+        if (localVariable == null) return
         val currentName = inputName.quoteIfNeeded()
         if (currentName.isIdentifier()) {
             localVariable.setName(currentName)
