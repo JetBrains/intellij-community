@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -92,11 +91,11 @@ public final class SafeDeleteHandler implements RefactoringActionHandler {
     if (checkDelegates) {
       for (PsiElement element : tempToDelete) {
         boolean found = false;
-        for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
+        for (SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
           if (delegate.handlesElement(element)) {
             found = true;
-            Collection<? extends PsiElement> addElements = delegate instanceof SafeDeleteProcessorDelegateBase
-                                                           ? ((SafeDeleteProcessorDelegateBase)delegate).getElementsToSearch(element, module, elementsSet)
+            Collection<? extends PsiElement> addElements = delegate instanceof SafeDeleteProcessorDelegateBase base
+                                                           ? base.getElementsToSearch(element, module, elementsSet)
                                                            : delegate.getElementsToSearch(element, elementsSet);
             if (addElements == null) return;
             fullElementsSet.addAll(addElements);
