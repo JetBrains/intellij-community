@@ -26,7 +26,7 @@ import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -86,10 +86,10 @@ object MavenProjectImporterUtil {
     // it doesn't finish in time.
     // I couldn't manage to write a test for this since behaviour of VirtualFileManager
     // and FileWatcher differs from real-life execution.
-    val files = HashSet<File>()
+    val files = HashSet<Path>()
     for (project in projectsToRefresh) {
       for (dependency in project.dependencies) {
-        files.add(dependency.file)
+        files.add(dependency.file.toPath())
       }
     }
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
@@ -100,7 +100,7 @@ object MavenProjectImporterUtil {
     }
   }
 
-  private class RefreshingFilesTask(private val myFiles: Set<File>) : MavenProjectsProcessorTask {
+  private class RefreshingFilesTask(private val myFiles: Set<Path>) : MavenProjectsProcessorTask {
     override fun perform(project: Project,
                          embeddersManager: MavenEmbeddersManager,
                          indicator: ProgressIndicator) {
@@ -120,8 +120,8 @@ object MavenProjectImporterUtil {
     javacOptions.ADDITIONAL_OPTIONS_STRING = options
   }
 
-  private fun doRefreshFiles(files: Set<File>) {
-    LocalFileSystem.getInstance().refreshIoFiles(files)
+  private fun doRefreshFiles(files: Set<Path>) {
+    LocalFileSystem.getInstance().refreshNioFiles(files)
   }
 
   @JvmStatic
