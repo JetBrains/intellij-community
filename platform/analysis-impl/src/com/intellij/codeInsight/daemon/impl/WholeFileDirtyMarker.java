@@ -9,6 +9,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class WholeFileDirtyMarker implements RangeMarker {
+  static final RangeMarker INSTANCE = new WholeFileDirtyMarker();
+
+  private WholeFileDirtyMarker() {}
+
   @Override
   public @NotNull Document getDocument() {
     throw new UnsupportedOperationException();

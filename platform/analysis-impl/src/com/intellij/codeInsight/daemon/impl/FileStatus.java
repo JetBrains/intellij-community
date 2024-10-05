@@ -28,15 +28,15 @@ final class FileStatus {
   }
 
   private void markWholeFileDirty(@NotNull Project project) {
-    setDirtyScope(Pass.UPDATE_ALL, FileStatusMap.WHOLE_FILE_DIRTY_MARKER);
-    setDirtyScope(Pass.EXTERNAL_TOOLS, FileStatusMap.WHOLE_FILE_DIRTY_MARKER);
-    setDirtyScope(Pass.LOCAL_INSPECTIONS, FileStatusMap.WHOLE_FILE_DIRTY_MARKER);
-    setDirtyScope(Pass.LINE_MARKERS, FileStatusMap.WHOLE_FILE_DIRTY_MARKER);
-    setDirtyScope(Pass.SLOW_LINE_MARKERS, FileStatusMap.WHOLE_FILE_DIRTY_MARKER);
-    setDirtyScope(Pass.INJECTED_GENERAL, FileStatusMap.WHOLE_FILE_DIRTY_MARKER);
+    setDirtyScope(Pass.UPDATE_ALL, WholeFileDirtyMarker.INSTANCE);
+    setDirtyScope(Pass.EXTERNAL_TOOLS, WholeFileDirtyMarker.INSTANCE);
+    setDirtyScope(Pass.LOCAL_INSPECTIONS, WholeFileDirtyMarker.INSTANCE);
+    setDirtyScope(Pass.LINE_MARKERS, WholeFileDirtyMarker.INSTANCE);
+    setDirtyScope(Pass.SLOW_LINE_MARKERS, WholeFileDirtyMarker.INSTANCE);
+    setDirtyScope(Pass.INJECTED_GENERAL, WholeFileDirtyMarker.INSTANCE);
     TextEditorHighlightingPassRegistrarEx registrar = (TextEditorHighlightingPassRegistrarEx) TextEditorHighlightingPassRegistrar.getInstance(project);
     for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
-      setDirtyScope(factory.getPassId(), FileStatusMap.WHOLE_FILE_DIRTY_MARKER);
+      setDirtyScope(factory.getPassId(), WholeFileDirtyMarker.INSTANCE);
     }
   }
 
@@ -53,8 +53,8 @@ final class FileStatus {
 
   private static final TextRange WHOLE_FILE_TEXT_RANGE = new UnfairTextRange(-1, -1);
   private static @NotNull RangeMarker combineScopes(@Nullable RangeMarker old, @NotNull TextRange scope, @NotNull Document document) {
-    if (scope == WHOLE_FILE_TEXT_RANGE || old == FileStatusMap.WHOLE_FILE_DIRTY_MARKER) {
-      return FileStatusMap.WHOLE_FILE_DIRTY_MARKER;
+    if (scope == WHOLE_FILE_TEXT_RANGE || old == WholeFileDirtyMarker.INSTANCE) {
+      return WholeFileDirtyMarker.INSTANCE;
     }
     TextRange oldRange = old == null ? null : old.getTextRange();
     TextRange result = oldRange == null ? scope : scope.union(oldRange);
@@ -63,7 +63,7 @@ final class FileStatus {
     }
     if (result.getEndOffset() > document.getTextLength()) {
       if (result.getStartOffset() == 0) {
-        return FileStatusMap.WHOLE_FILE_DIRTY_MARKER;
+        return WholeFileDirtyMarker.INSTANCE;
       }
       result =  result.intersection(new TextRange(0, document.getTextLength()));
     }
@@ -83,7 +83,7 @@ final class FileStatus {
       +(errorFound ? "; errorFound = "+errorFound : "")
       +(dirtyScopes.isEmpty() ? "" : "; dirtyScopes: (" +
                                      StringUtil.join(dirtyScopes.int2ObjectEntrySet(), e ->
-        " pass: "+e.getIntKey()+" -> "+(e.getValue() == FileStatusMap.WHOLE_FILE_DIRTY_MARKER ? "Whole file" : e.getValue()), ";") + ")");
+        " pass: "+e.getIntKey()+" -> "+(e.getValue() == WholeFileDirtyMarker.INSTANCE ? "Whole file" : e.getValue()), ";") + ")");
   }
 
   private void setDirtyScope(int passId, @Nullable RangeMarker scope) {

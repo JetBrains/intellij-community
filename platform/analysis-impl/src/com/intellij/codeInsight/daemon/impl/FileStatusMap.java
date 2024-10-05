@@ -132,7 +132,7 @@ public final class FileStatusMap implements Disposable {
       int end = Integer.MIN_VALUE;
 
       for (RangeMarker marker : status.dirtyScopes.values()) {
-        if (marker != null && marker != WHOLE_FILE_DIRTY_MARKER && marker.isValid()) {
+        if (marker != null && marker != WholeFileDirtyMarker.INSTANCE && marker.isValid()) {
           TextRange markerRange = marker.getTextRange();
           start = Math.min(start, markerRange.getStartOffset());
           end = Math.max(end, markerRange.getEndOffset());
@@ -150,7 +150,7 @@ public final class FileStatusMap implements Disposable {
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) {
-        marker = WHOLE_FILE_DIRTY_MARKER;
+        marker = WholeFileDirtyMarker.INSTANCE;
       }
       else {
         if (status.defensivelyMarked) {
@@ -164,7 +164,7 @@ public final class FileStatusMap implements Disposable {
     if (marker == null) {
       return null;
     }
-    if (marker == WHOLE_FILE_DIRTY_MARKER) {
+    if (marker == WholeFileDirtyMarker.INSTANCE) {
       return psiFile.getTextRange();
     }
     return marker.isValid() ? marker.getTextRange() : new TextRange(0, document.getTextLength());
@@ -250,8 +250,6 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  private static final RangeMarker WHOLE_FILE_DIRTY_MARKER = new WholeFileDirtyMarker();
-
   // logging
   private static final ConcurrentMap<Thread, Integer> threads = CollectionFactory.createConcurrentWeakMap();
 
@@ -274,15 +272,15 @@ public final class FileStatusMap implements Disposable {
   public void addDocumentDirtyRange(@NotNull DocumentEvent event) {
     Document document = event.getDocument();
     RangeMarker oldRange = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
-    if (oldRange != WHOLE_FILE_DIRTY_MARKER && oldRange != null && oldRange.isValid() && oldRange.getTextRange().containsRange(event.getOffset(), event.getOffset()+event.getNewLength())) {
+    if (oldRange != WholeFileDirtyMarker.INSTANCE && oldRange != null && oldRange.isValid() && oldRange.getTextRange().containsRange(event.getOffset(), event.getOffset()+event.getNewLength())) {
       // optimisation: the change is inside the RangeMarker which should take care of the change by itself
       return;
     }
     TextRange scope = new TextRange(event.getOffset(), Math.min(event.getOffset() + event.getNewLength(), document.getTextLength()));
-    RangeMarker combined = oldRange == WHOLE_FILE_DIRTY_MARKER || event.isWholeTextReplaced() ||
-                           scope.getStartOffset() == 0 && scope.getEndOffset() == document.getTextLength() ? WHOLE_FILE_DIRTY_MARKER :
+    RangeMarker combined = oldRange == WholeFileDirtyMarker.INSTANCE || event.isWholeTextReplaced() ||
+                           scope.getStartOffset() == 0 && scope.getEndOffset() == document.getTextLength() ? WholeFileDirtyMarker.INSTANCE :
                            FileStatus.combineScopes(oldRange, scope, document);
-    if (combined != WHOLE_FILE_DIRTY_MARKER) {
+    if (combined != WholeFileDirtyMarker.INSTANCE) {
       combined.setGreedyToRight(true);
       combined.setGreedyToLeft(true);
     }
@@ -294,7 +292,7 @@ public final class FileStatusMap implements Disposable {
   @ApiStatus.Internal
   public TextRange getCompositeDocumentDirtyRange(@NotNull Document document) {
     RangeMarker change = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
-    return change == WHOLE_FILE_DIRTY_MARKER ? new TextRange(0, document.getTextLength()) :
+    return change == WholeFileDirtyMarker.INSTANCE ? new TextRange(0, document.getTextLength()) :
            change == null || !change.isValid() ? TextRange.EMPTY_RANGE :
            change.getTextRange();
   }
