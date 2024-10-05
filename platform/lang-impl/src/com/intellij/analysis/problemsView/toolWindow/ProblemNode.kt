@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.Problem
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor

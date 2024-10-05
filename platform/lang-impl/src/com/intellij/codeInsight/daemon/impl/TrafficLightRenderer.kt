@@ -10,8 +10,7 @@ import com.intellij.codeInsight.daemon.ProblemHighlightFilter
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
-import com.intellij.codeInsight.multiverse.EditorContextManager
-import com.intellij.codeInsight.multiverse.defaultContext
+import com.intellij.codeInsight.multiverse.*
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.icons.AllIcons
@@ -64,7 +63,7 @@ open class TrafficLightRenderer private constructor(
 ) : ErrorStripeRenderer, Disposable {
   private val daemonCodeAnalyzer: DaemonCodeAnalyzerImpl
   private val severityRegistrar: SeverityRegistrar
-  private val errorCount = Object2IntMaps.synchronize(Object2IntOpenHashMap<HighlightSeverity>())
+  private val errorCount = Object2IntMaps.synchronize(Object2IntOpenHashMap<HighlightKey>())
   @JvmField
   @ApiStatus.Internal
   protected val uiController: UIController
@@ -125,14 +124,18 @@ open class TrafficLightRenderer private constructor(
 
   @RequiresReadLock
   private fun  getPsiFile(): PsiFile? {
-    val context = if (editor != null) {
+    val context = getContext()
+    return PsiDocumentManager.getInstance(project).getPsiFile(document, context)
+  }
+
+  private fun getContext(): CodeInsightContext {
+    return if (editor != null) {
       EditorContextManager.getEditorContext(editor, project)
     }
     else {
       // todo ijpl-339 choose proper file here?
       defaultContext()
     }
-    return PsiDocumentManager.getInstance(project).getPsiFile(document, context)
   }
 
   open val errorCounts: IntArray
@@ -144,9 +147,11 @@ open class TrafficLightRenderer private constructor(
     get() {
       val severities = severityRegistrar.allSeverities
       val cachedErrors = IntArray(severities.size)
+      val context = getContext()
       for (severity in severities) {
         val severityIndex = severityRegistrar.getSeverityIdx(severity)
-        cachedErrors[severityIndex] = errorCount.getInt(severity)
+        val highlightKey = HighlightKey(severity, context)
+        cachedErrors[severityIndex] = errorCount.getInt(highlightKey)
       }
       return cachedErrors
     }
@@ -162,7 +167,18 @@ open class TrafficLightRenderer private constructor(
     val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return
     val infoSeverity = info.severity
     if (infoSeverity > HighlightSeverity.TEXT_ATTRIBUTES) {
-      errorCount.mergeInt(infoSeverity, delta, Integer::sum)
+      val context: CodeInsightContext = if (isSharedSourceSupportEnabled(project)) {
+        highlighter.codeInsightContext ?: run {
+          // todo ijpl-339 please improve this code if context can indeed be null
+          // logger<TrafficLightRenderer>().error("highlightInfo's rangeHighlighter must have a context")
+          defaultContext()
+        }
+      }
+      else {
+        defaultContext()
+      }
+      val highlightKey = HighlightKey(infoSeverity, context)
+      errorCount.mergeInt(highlightKey, delta, Integer::sum)
     }
   }
 
@@ -639,3 +655,8 @@ open class TrafficLightRenderer private constructor(
     }
  }
 }
+
+private data class HighlightKey(
+  val severity: HighlightSeverity,
+  val context: CodeInsightContext,
+)
