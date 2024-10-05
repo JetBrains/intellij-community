@@ -248,6 +248,11 @@ public class GitExecutableDetector {
         return exec;
       }
 
+      exec = checkAppLocal();
+      if (exec != null) {
+        return exec;
+      }
+
       exec = checkCygwin();
       if (exec != null) {
         return exec;
@@ -257,13 +262,28 @@ public class GitExecutableDetector {
     }
 
     private @Nullable String checkProgramFiles() {
-      final String[] PROGRAM_FILES = {"Program Files", "Program Files (x86)"};
+      String[] PROGRAM_FILES = {"Program Files", "Program Files (x86)"};
 
       // collecting all potential msys distributives
       List<File> distrs = new ArrayList<>();
       for (String programFiles : PROGRAM_FILES) {
         File pf = new File(getWinRoot(), programFiles);
         distrs.addAll(findGitDistrsIn(pf));
+      }
+
+      return getPreferredDistrExecutablePath(distrs);
+    }
+
+    private static @Nullable String checkAppLocal() {
+      String appLocal = System.getenv("LocalAppData");
+      if (StringUtil.isEmpty(appLocal)) return null;
+
+      File[] PROGRAM_FILES = {new File(appLocal + "\\Programs")};
+
+      // collecting all potential msys distributives
+      List<File> distrs = new ArrayList<>();
+      for (File programFiles : PROGRAM_FILES) {
+        distrs.addAll(findGitDistrsIn(programFiles));
       }
 
       return getPreferredDistrExecutablePath(distrs);
