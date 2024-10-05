@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
+import com.intellij.codeInsight.DumbAwareAnnotationUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.callMatcher.CallHandler;
@@ -30,8 +32,10 @@ public final class ChronoUtil {
   public static final String CHRONO_FIELD = "java.time.temporal.ChronoField";
   public static final String CHRONO_UNIT = "java.time.temporal.ChronoUnit";
 
+  private static final String JAVA_TEXT_SIMPLE_DATE_FORMAT = "java.text.SimpleDateFormat";
+
   private static final CallMatcher FORMAT_PATTERN_METHOD_MATCHER = CallMatcher.anyOf(
-    CallMatcher.instanceCall("java.text.SimpleDateFormat", "applyPattern", "applyLocalizedPattern").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
+    CallMatcher.instanceCall(JAVA_TEXT_SIMPLE_DATE_FORMAT, "applyPattern", "applyLocalizedPattern").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
     CallMatcher.staticCall("java.time.format.DateTimeFormatter", "ofPattern"),
     CallMatcher.instanceCall("java.time.format.DateTimeFormatterBuilder", "appendPattern").parameterTypes(CommonClassNames.JAVA_LANG_STRING)
   );
@@ -84,7 +88,7 @@ public final class ChronoUtil {
 
   private static final Map<String, BiPredicate<PsiNewExpression, PsiElement>> SKIP_ARGUMENT_CONSTRUCTOR_HANDLER =
     Map.ofEntries(
-      Map.entry("java.text.SimpleDateFormat", (expression, psiElement) -> argumentNumber(0, expression).test(psiElement))
+      Map.entry(JAVA_TEXT_SIMPLE_DATE_FORMAT, (expression, psiElement) -> argumentNumber(0, expression).test(psiElement))
     );
 
   private interface ArgumentMatcher extends Predicate<PsiElement> { }
@@ -143,13 +147,14 @@ public final class ChronoUtil {
   }
 
   /**
-   * @return true if {@code literalExpression} is used as pattern for date formatters (SimpleDateFormat,  DateTimeFormatter)
+   * @return true if {@code literalExpression} is used as pattern for date formatters (SimpleDateFormat, DateTimeFormatter)
+   * This method can work in dumb mode
    */
   public static boolean isPatternForDateFormat(@NotNull PsiLiteralExpression literalExpression) {
-    PsiType type = literalExpression.getType();
-    if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+    if (!hasStringType(literalExpression)) {
       return false;
     }
+
     PsiElement element = ExpressionUtils.getPassThroughParent(literalExpression);
     if (element == null) {
       return false;
@@ -163,17 +168,52 @@ public final class ChronoUtil {
     }
 
     if (psiCall instanceof PsiMethodCallExpression callExpression) {
+      return isCallExpressionContainsDateFormatMethods(literalExpression, callExpression);
+    }
+    if (psiCall instanceof PsiNewExpression newExpression) {
+      return isConstructorOfSimpleDateFormat(literalExpression, newExpression);
+    }
+    return false;
+  }
+
+  private static boolean hasStringType(PsiLiteralExpression literalExpression) {
+    if (!DumbService.isDumb(literalExpression.getProject())) {
+      PsiType type = literalExpression.getType();
+      if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        return false;
+      }
+      return true;
+    }
+
+    String text = literalExpression.getText();
+    return text.startsWith("\"") && text.endsWith("\"");
+  }
+
+  private static boolean isCallExpressionContainsDateFormatMethods(@NotNull PsiLiteralExpression literalExpression, PsiMethodCallExpression callExpression) {
+    if (!DumbService.isDumb(literalExpression.getProject())) {
       ArgumentMatcher matcher = SKIP_ARGUMENT_METHOD_HANDLER.mapFirst(callExpression);
       if (matcher == null) {
         return false;
       }
       return matcher.test(literalExpression);
     }
-    if (psiCall instanceof PsiNewExpression newExpression) {
-      PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
-      if (reference == null) {
-        return false;
-      }
+
+    PsiReferenceExpression referenceExpression = callExpression.getMethodExpression();
+    String referenceName = referenceExpression.getReferenceName();
+
+    return referenceName != null &&
+           (referenceName.equals("applyPattern") ||
+            referenceName.equals("applyLocalizedPattern") ||
+            referenceName.equals("ofPattern") ||
+            referenceName.equals("appendPattern"));
+  }
+
+  private static boolean isConstructorOfSimpleDateFormat(@NotNull PsiLiteralExpression literalExpression, PsiNewExpression newExpression) {
+    PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
+    if (reference == null) {
+      return false;
+    }
+    if (!DumbService.isDumb(literalExpression.getProject())) {
       BiPredicate<PsiNewExpression, PsiElement> predicate =
         SKIP_ARGUMENT_CONSTRUCTOR_HANDLER.get(reference.getQualifiedName());
       if (predicate == null) {
@@ -181,7 +221,15 @@ public final class ChronoUtil {
       }
       return predicate.test(newExpression, literalExpression);
     }
-    return false;
+
+
+    String text = DumbAwareAnnotationUtil.getFormattedReferenceFqn(reference.getText());
+    if (reference.isQualified() && text.equals(JAVA_TEXT_SIMPLE_DATE_FORMAT)) {
+      return true;
+    }
+
+    String name = reference.getReferenceName();
+    return name != null && name.equals("SimpleDateFormat");
   }
 
   @Nullable
