@@ -158,7 +158,7 @@ public class GitExecutableDetector {
     return getDefaultExecutable();
   }
 
-  public @NotNull List<Detector> collectDetectors(@Nullable WSLDistribution projectWslDistribution) {
+  private @NotNull List<Detector> collectDetectors(@Nullable WSLDistribution projectWslDistribution) {
     List<Detector> detectors = new ArrayList<>();
     if (projectWslDistribution != null &&
         GitExecutableManager.supportWslExecutable()) {
@@ -166,7 +166,12 @@ public class GitExecutableDetector {
     }
 
     detectors.add(new EnvDetector());
-    detectors.add(new SystemPathDetector());
+    if (SystemInfo.isWindows) {
+      detectors.add(new WinSystemPathDetector());
+    }
+    else {
+      detectors.add(new UnixSystemPathDetector());
+    }
 
     if (projectWslDistribution == null &&
         GitExecutableManager.supportWslExecutable() &&
@@ -202,7 +207,7 @@ public class GitExecutableDetector {
     }
   }
 
-  private class SystemPathDetector implements Detector {
+  private class UnixSystemPathDetector implements Detector {
     @Override
     public @Nullable DetectedPath getPath() {
       return mySystemExecutable.get();
@@ -210,7 +215,7 @@ public class GitExecutableDetector {
 
     @Override
     public void runDetection() {
-      String executable = SystemInfo.isWindows ? detectForWindows() : detectForUnix();
+      String executable = detectForUnix();
       mySystemExecutable.set(new DetectedPath(executable));
     }
 
@@ -222,6 +227,19 @@ public class GitExecutableDetector {
         }
       }
       return null;
+    }
+  }
+
+  private class WinSystemPathDetector implements Detector {
+    @Override
+    public @Nullable DetectedPath getPath() {
+      return mySystemExecutable.get();
+    }
+
+    @Override
+    public void runDetection() {
+      String executable = detectForWindows();
+      mySystemExecutable.set(new DetectedPath(executable));
     }
 
     private @Nullable String detectForWindows() {
