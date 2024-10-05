@@ -390,14 +390,10 @@ class PsiVFSListener internal constructor(private val project: Project) {
     val oldParentDirs = ArrayList<PsiDirectory?>(events.size)
     val newParentDirs = ArrayList<PsiDirectory?>(events.size)
 
-    var allMovedFilesAreRegularFiles = true
-
     // find old directories before removing invalid ones
     for (e in events) {
       val event = e as VFileMoveEvent
       val vFile = event.file
-
-      allMovedFilesAreRegularFiles = allMovedFilesAreRegularFiles and !vFile.isDirectory
 
       var oldParentDir = fileManager.findDirectory(event.oldParent)
       var newParentDir = fileManager.findDirectory(event.newParent)
@@ -422,27 +418,7 @@ class PsiVFSListener internal constructor(private val project: Project) {
       oldParentDirs.add(oldParentDir)
       newParentDirs.add(newParentDir)
     }
-
-    if (allMovedFilesAreRegularFiles) {
-      /*
-        Optimization:
-         `myFileManager.removeInvalidFilesAndDirs` can execute heavy operations for each PSI file currently stored to remove all invalid
-         files and directories.
-
-         If all files that were moved are regular files, and not directories,
-         all files that were *not* moved cannot become invalid,
-         so they can be skipped.
-         This is not the case if at least one moved file is a directory, since that also invalidates files in it.
-       */
-      val movedFilesSet: MutableSet<VirtualFile> = HashSet()
-      for (e in events) {
-        val file = e.file ?: continue
-        movedFilesSet.add(file)
-      }
-      fileManager.removeInvalidFilesAndDirs(movedFilesSet)
-    } else {
-      fileManager.removeInvalidFilesAndDirs(true)
-    }
+    fileManager.removeInvalidFilesAndDirs(true)
 
     for ((i, event) in events.withIndex()) {
       val vFile = event.file!!
