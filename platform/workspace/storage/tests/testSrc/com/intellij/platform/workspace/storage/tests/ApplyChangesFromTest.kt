@@ -14,6 +14,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import com.intellij.testFramework.assertErrorLogged
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.RepetitionInfo
@@ -314,7 +315,7 @@ class ApplyChangesFromTest {
       children = emptyList()
     }
 
-    assertThrowsLogError<ApplyChangesFromException> {
+    assertErrorLogged<ApplyChangesFromException> {
       source.applyChanges(target)
     }
   }
@@ -332,7 +333,7 @@ class ApplyChangesFromTest {
       this.myName = "Name"
     }
 
-    assertThrowsLogError<ApplyChangesFromException> {
+    assertErrorLogged<ApplyChangesFromException> {
       source.applyChanges(target)
     }
   }

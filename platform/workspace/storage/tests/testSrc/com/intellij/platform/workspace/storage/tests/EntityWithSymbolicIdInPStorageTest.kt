@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlready
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import com.intellij.testFramework.assertErrorLogged
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -83,7 +84,7 @@ class EntityWithSymbolicIdInPStorageTest {
   @Test
   fun `add entity with existing persistent id`() {
     builder = createEmptyBuilder()
-    assertThrowsLogError<SymbolicIdAlreadyExistsException> {
+    assertErrorLogged<SymbolicIdAlreadyExistsException> {
       builder addEntity NamedEntity("MyName", MySource) {
         this.additionalProperty = null
         children = emptyList()
@@ -118,7 +119,7 @@ class EntityWithSymbolicIdInPStorageTest {
   @Test
   fun `modify entity to repeat persistent id`() {
     builder = createEmptyBuilder()
-    assertThrowsLogError<SymbolicIdAlreadyExistsException> {
+    assertErrorLogged<SymbolicIdAlreadyExistsException> {
       builder addEntity NamedEntity("MyName", MySource) {
         this.additionalProperty = null
         children = emptyList()
@@ -136,7 +137,7 @@ class EntityWithSymbolicIdInPStorageTest {
   @Test
   fun `modify entity to repeat persistent id - restoring after exception`() {
     builder = createEmptyBuilder()
-    assertThrowsLogError<SymbolicIdAlreadyExistsException> {
+    assertErrorLogged<SymbolicIdAlreadyExistsException> {
       builder addEntity NamedEntity("MyName", MySource) {
         this.additionalProperty = null
         children = emptyList()
