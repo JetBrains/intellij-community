@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -83,67 +83,67 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("IFoo");
   }
 
-  public void testUsageInExtendsList() throws Exception {
+  public void testUsageInExtendsList() {
     doSingleFileTest();
   }
 
-  public void testDeepDeleteParameterSimple() throws Exception {
+  public void testDeepDeleteParameterSimple() {
     doSingleFileTest();
   }
 
-  public void testDeepDeleteParameterOtherTypeInBinaryExpression() throws Exception {
+  public void testDeepDeleteParameterOtherTypeInBinaryExpression() {
     doSingleFileTest();
   }
 
-  public void testDeepDeleteFieldAndAssignedParameter() throws Exception {
+  public void testDeepDeleteFieldAndAssignedParameter() {
     doSingleFileTest();
   }
 
-  public void testImpossibleToDeepDeleteParameter() throws Exception {
+  public void testImpossibleToDeepDeleteParameter() {
     doSingleFileTest();
   }
 
-  public void testNoDeepDeleteParameterUsedInCallQualifier() throws Exception {
+  public void testNoDeepDeleteParameterUsedInCallQualifier() {
     doSingleFileTest();
   }
 
-  public void testNoDeepDeleteParameterUsedInNextArgumentExpression() throws Exception {
+  public void testNoDeepDeleteParameterUsedInNextArgumentExpression() {
     doSingleFileTest();
   }
 
-  public void testToDeepDeleteParameterOverriders() throws Exception {
+  public void testToDeepDeleteParameterOverriders() {
     doSingleFileTest();
   }
 
-  public void testDeleteParameterOfASiblingMethod() throws Exception {
+  public void testDeleteParameterOfASiblingMethod() {
     doSingleFileTest();
   }
 
-  public void testDeleteMethodCascade() throws Exception {
+  public void testDeleteMethodCascade() {
     doSingleFileTest();
   }
 
-  public void testDeleteMethodKeepEnumValues() throws Exception {
+  public void testDeleteMethodKeepEnumValues() {
     doSingleFileTest();
   }
 
-  public void testDeleteMethodCascadeRecursive() throws Exception {
+  public void testDeleteMethodCascadeRecursive() {
     doSingleFileTest();
   }
 
-  public void testDeleteMethodCascadeOverridden() throws Exception {
+  public void testDeleteMethodCascadeOverridden() {
     doSingleFileTest();
   }
 
-  public void testDeleteParameterAndUpdateJavadocRef() throws Exception {
+  public void testDeleteParameterAndUpdateJavadocRef() {
     doSingleFileTest();
   }
 
-  public void testDeleteConstructorParameterWithAnonymousClassUsage() throws Exception {
+  public void testDeleteConstructorParameterWithAnonymousClassUsage() {
     doSingleFileTest();
   }
 
-  public void testAccidentalPropertyRef() throws Exception {
+  public void testAccidentalPropertyRef() {
     doSingleFileTest();
   }
 
@@ -204,7 +204,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("UserFlags");
   }
 
-  public void testSafeDeleteOfFieldAndParameterOfConstructor() throws Exception {
+  public void testSafeDeleteOfFieldAndParameterOfConstructor() {
     doSingleFileTest();
   }
 
@@ -238,47 +238,43 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      String message = e.getMessage();
-      assertEquals("Method <b><code>Super.foo()</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Method <b><code>Super.foo()</code></b> has 1 usage that is not safe to delete.", e.getMessage());
     }
   }
 
-  public void testParameterFromFunctionalInterface() throws Exception {
+  public void testParameterFromFunctionalInterface() {
     try {
       IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
       doSingleFileTest();
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      String message = e.getMessage();
-      assertEquals("Interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", e.getMessage());
     }
   }
 
-  public void testFunctionalInterfaceMethod() throws Exception {
+  public void testFunctionalInterfaceMethod() {
     try {
       IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
       doSingleFileTest();
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      String message = e.getMessage();
-      assertEquals("Interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", e.getMessage());
     }
   }
 
-  public void testAmbiguityAfterParameterDelete() throws Exception {
+  public void testAmbiguityAfterParameterDelete() {
     try {
       doSingleFileTest();
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      String message = e.getMessage();
-      assertEquals("Method foo() is already defined in the class <b><code>Test</code></b>", message);
+      assertEquals("Method foo() is already defined in the class <b><code>Test</code></b>", e.getMessage());
     }
   }
 
-  public void testFunctionalInterfaceDefaultMethod() throws Exception {
+  public void testFunctionalInterfaceDefaultMethod() {
     IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
     doSingleFileTest();
   }
@@ -287,15 +283,15 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("Super");
   }
 
-  public void testInterfaceAsTypeParameterBound() throws Exception {
+  public void testInterfaceAsTypeParameterBound() {
     doSingleFileTest();
   }
 
-  public void testNestedTypeParameterBounds() throws Exception {
+  public void testNestedTypeParameterBounds() {
     doSingleFileTest();
   }
 
-  public void testTypeParameterWithoutOwner() throws Exception {
+  public void testTypeParameterWithoutOwner() {
     doSingleFileTest();
   }
 
@@ -305,8 +301,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Side effect was ignored");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      String message = e.getMessage();
-      assertEquals("Local variable <b><code>varName</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Local variable <b><code>varName</code></b> has 1 usage that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -316,8 +311,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Side effect was ignored");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      String message = e.getMessage();
-      assertEquals("Parameter <b><code>i</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Parameter <b><code>i</code></b> has 1 usage that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -325,44 +319,44 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("A");
   }
 
-  public void testLastResourceVariable() throws Exception {
+  public void testLastResourceVariable() {
     IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
     doSingleFileTest();
   }
 
-  public void testLastResourceVariableConflictingVar() throws Exception {
+  public void testLastResourceVariableConflictingVar() {
     IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
     doSingleFileTest();
   }
 
-  public void testLastResourceVariableWithFinallyBlock() throws Exception {
+  public void testLastResourceVariableWithFinallyBlock() {
     IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
     doSingleFileTest();
   }
 
-  public void testLastTypeParam() throws Exception {
+  public void testLastTypeParam() {
     IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
     doSingleFileTest();
   }
 
-  public void testTypeParamFromDiamond() throws Exception {
+  public void testTypeParamFromDiamond() {
     IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
     doSingleFileTest();
   }
 
-  public void testStripOverride() throws Exception {
+  public void testStripOverride() {
     doSingleFileTest();
   }
 
-  public void testEmptyIf() throws Exception {
+  public void testEmptyIf() {
     doSingleFileTest();
   }
 
-  public void testTypeParameterWithinMethodHierarchy() throws Exception {
+  public void testTypeParameterWithinMethodHierarchy() {
     doSingleFileTest();
   }
 
-  public void testTypeParameterNoMethodHierarchy() throws Exception {
+  public void testTypeParameterNoMethodHierarchy() {
     doSingleFileTest();
   }
 
@@ -370,39 +364,37 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("ClassWithInnerStaticImport");
   }
 
-  public void testInnerClassUsedInTheSameFile() throws Exception {
+  public void testInnerClassUsedInTheSameFile() {
     try {
       doSingleFileTest();
       fail("Side effect was ignored");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      String message = e.getMessage();
-      assertEquals("Class <b><code>Test.Foo</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Class <b><code>Test.Foo</code></b> has 1 usage that is not safe to delete.", e.getMessage());
     }
   }
 
-  public void testConflictInInheritor() throws Exception {
+  public void testConflictInInheritor() {
     try {
       doSingleFileTest();
       fail("Side effect was ignored");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      String message = e.getMessage();
-      assertEquals("Method foo() is already defined in the class <b><code>B</code></b>", message);
+      assertEquals("Method foo() is already defined in the class <b><code>B</code></b>", e.getMessage());
     }
   }
 
-  public void testParameterInMethodUsedInMethodReference() throws Exception {
+  public void testParameterInMethodUsedInMethodReference() {
     IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doSingleFileTest());
   }
 
-  public void testNoConflictOnDeleteParameterWithMethodRefArg() throws Exception {
+  public void testNoConflictOnDeleteParameterWithMethodRefArg() {
     IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
     doSingleFileTest();
   }
 
-  public void testShowConflictsButRemoveAnnotationsIfAnnotationTypeIsDeleted() throws Exception {
+  public void testShowConflictsButRemoveAnnotationsIfAnnotationTypeIsDeleted() {
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doSingleFileTest());
   }
 
@@ -424,35 +416,35 @@ public class SafeDeleteTest extends MultiFileTestCase {
     });
   }
 
-  public void testDeepDeleteFieldAndInitializerMethod() throws Exception {
+  public void testDeepDeleteFieldAndInitializerMethod() {
     doSingleFileTest();
   }
 
-  public void testDeleteMethodCascadeWithField() throws Exception {
+  public void testDeleteMethodCascadeWithField() {
     doSingleFileTest();
   }
 
-  public void testForInitExpr() throws Exception {
+  public void testForInitExpr() {
     doSingleFileTest();
   }
 
-  public void testForInitList() throws Exception {
+  public void testForInitList() {
     doSingleFileTest();
   }
 
-  public void testForUpdateExpr() throws Exception {
+  public void testForUpdateExpr() {
     doSingleFileTest();
   }
 
-  public void testForUpdateList() throws Exception {
+  public void testForUpdateList() {
     doSingleFileTest();
   }
 
-  public void testUpdateContractOnParameterRemoval() throws Exception {
+  public void testUpdateContractOnParameterRemoval() {
     doSingleFileTest();
   }
 
-  public void testSealedParent() throws Exception {
+  public void testSealedParent() {
     IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_17, getTestRootDisposable());
     doSingleFileTest();
   }
@@ -461,7 +453,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17, () -> doTest("Parent"));
   }
 
-  public void testRecordImplementsInterface() throws Exception {
+  public void testRecordImplementsInterface() {
     IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_16, getTestRootDisposable());
     doSingleFileTest();
   }
@@ -472,8 +464,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      String message = e.getMessage();
-      assertEquals("Class <b><code>foo.Parent</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("Class <b><code>foo.Parent</code></b> has 1 usage that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -507,10 +498,15 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
-  private void doSingleFileTest() throws Exception {
-    configureByFile(getTestRoot() + getTestName(false) + ".java");
-    performAction();
-    checkResultByFile(getTestRoot() + getTestName(false) + "_after.java");
+  private void doSingleFileTest() {
+    try {
+      configureByFile(getTestRoot() + getTestName(false) + ".java");
+      performAction();
+      checkResultByFile(getTestRoot() + getTestName(false) + "_after.java");
+    }
+    catch (Exception e) {
+      throw e instanceof RuntimeException r ? r : new RuntimeException(e);
+    }
   }
 
   private void performAction(final String qClassName) {

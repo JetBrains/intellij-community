@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -31,10 +31,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ContractConverter;
@@ -65,34 +62,41 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Override
   public boolean handlesElement(PsiElement element) {
-    return element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiRecordComponent ||
-           element instanceof PsiField || element instanceof PsiParameter || element instanceof PsiLocalVariable || element instanceof PsiPackage;
+    return element instanceof PsiClass || 
+           element instanceof PsiMethod ||
+           element instanceof PsiRecordComponent ||
+           element instanceof PsiField ||
+           element instanceof PsiParameter ||
+           element instanceof PsiLocalVariable ||
+           element instanceof PsiPackage;
   }
 
   @Override
   @Nullable
-  public NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete, @NotNull List<? super UsageInfo> usages) {
+  public NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element,
+                                           PsiElement @NotNull [] allElementsToDelete,
+                                           @NotNull List<? super UsageInfo> usages) {
     Condition<PsiElement> insideDeletedCondition = getUsageInsideDeletedFilter(allElementsToDelete);
-    if (element instanceof PsiClass) {
-      findClassUsages((PsiClass) element, allElementsToDelete, usages);
-      if (element instanceof PsiTypeParameter) {
-        findTypeParameterExternalUsages((PsiTypeParameter)element, usages);
+    if (element instanceof PsiClass aClass) {
+      findClassUsages(aClass, allElementsToDelete, usages);
+      if (element instanceof PsiTypeParameter typeParameter) {
+        findTypeParameterExternalUsages(typeParameter, usages);
       }
       else {
-        appendCallees((PsiClass)element, usages);
+        appendCallees(aClass, usages);
       }
       ModuleInfoUsageDetector.createSafeDeleteUsageInstance(element.getProject(), allElementsToDelete)
         .detectModuleStatementsUsed(usages, MultiMap.create());
     }
-    else if (element instanceof PsiMethod) {
-      insideDeletedCondition = findMethodUsages((PsiMethod) element, allElementsToDelete, usages);
+    else if (element instanceof PsiMethod method) {
+      insideDeletedCondition = findMethodUsages(method, allElementsToDelete, usages);
     }
-    else if (element instanceof PsiField) {
-      insideDeletedCondition = findFieldUsages((PsiField)element, usages, allElementsToDelete);
+    else if (element instanceof PsiField field) {
+      insideDeletedCondition = findFieldUsages(field, usages, allElementsToDelete);
     }
-    else if (element instanceof PsiParameter) {
-      LOG.assertTrue(((PsiParameter) element).getDeclarationScope() instanceof PsiMethod);
-      findParameterUsages((PsiParameter)element, usages);
+    else if (element instanceof PsiParameter parameter) {
+      LOG.assertTrue(parameter.getDeclarationScope() instanceof PsiMethod);
+      findParameterUsages(parameter, usages);
     }
     else if (element instanceof PsiLocalVariable) {
       for (PsiReference reference : ReferencesSearch.search(element)) {
@@ -108,10 +112,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         boolean isSafeToDelete = PsiUtil.isAccessedForWriting(referencedElement);
         boolean hasSideEffects = false;
         if (PsiUtil.isOnAssignmentLeftHand(referencedElement)) {
-          hasSideEffects =
-            RemoveUnusedVariableUtil
-              .checkSideEffects(((PsiAssignmentExpression)referencedElement.getParent()).getRExpression(), (PsiLocalVariable)element,
-                                new ArrayList<>());
+          PsiExpression rhs = ((PsiAssignmentExpression)referencedElement.getParent()).getRExpression();
+          hasSideEffects = RemoveUnusedVariableUtil.checkSideEffects(rhs, (PsiLocalVariable)element, new ArrayList<>());
         }
         usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(statementOrExprInList, element, isSafeToDelete && !hasSideEffects));
       }
@@ -125,20 +127,19 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
                                                               @Nullable Module module,
                                                               @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     Project project = element.getProject();
-    if (element instanceof PsiPackage && module != null) {
-      PsiDirectory[] directories = ((PsiPackage)element).getDirectories(module.getModuleScope());
+    if (element instanceof PsiPackage aPackage && module != null) {
+      PsiDirectory[] directories = aPackage.getDirectories(module.getModuleScope());
       if (directories.length == 0) return null;
       return Arrays.asList(directories);
     }
-    if (element instanceof PsiMethod) {
+    if (element instanceof PsiMethod method) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         return Collections.singletonList(element);
       }
-      PsiMethod[] methods =
-        SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, allElementsToDelete);
+      PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods(method, allElementsToDelete);
       if (methods.length == 0) return null;
       ArrayList<PsiMethod> psiMethods = new ArrayList<>(Arrays.asList(methods));
-      psiMethods.add((PsiMethod)element);
+      psiMethods.add(method);
       return psiMethods;
     }
     if (element instanceof PsiParameter param && param.getDeclarationScope() instanceof PsiMethod method) {
@@ -172,8 +173,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       }
       return parametersToDelete;
     }
-    if (element instanceof PsiTypeParameter) {
-      PsiTypeParameterListOwner owner = ((PsiTypeParameter)element).getOwner();
+    if (element instanceof PsiTypeParameter typeParameter) {
+      PsiTypeParameterListOwner owner = typeParameter.getOwner();
       if (owner instanceof PsiMethod && !owner.hasModifierProperty(PsiModifier.STATIC)) {
         PsiTypeParameterList typeParameterList = owner.getTypeParameterList();
         if (typeParameterList != null) {
@@ -209,8 +210,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     List<PsiElement> overridingMethods = new ArrayList<>();
     List<UsageInfo> others = new ArrayList<>();
     for (UsageInfo usage : usages) {
-      if (usage instanceof SafeDeleteOverridingMethodUsageInfo) {
-        overridingMethods.add(((SafeDeleteOverridingMethodUsageInfo)usage).getOverridingMethod());
+      if (usage instanceof SafeDeleteOverridingMethodUsageInfo info) {
+        overridingMethods.add(info.getOverridingMethod());
       }
       else {
         others.add(usage);
@@ -221,11 +222,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     for (int i = 0; i < targets.length; i++) {
       targets[i] = new PsiElement2UsageTargetAdapter(i < elements.length ? elements[i] : overridingMethods.get(i - elements.length));
     }
-
-    return manager.showUsages(targets,
-                              UsageInfoToUsageConverter.convert(elements,
-                                                                others.toArray(UsageInfo.EMPTY_ARRAY)),
-                              presentation
+    return manager.showUsages(targets, UsageInfoToUsageConverter.convert(elements, others.toArray(UsageInfo.EMPTY_ARRAY)), presentation
     );
   }
 
@@ -308,11 +305,11 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Override
   public Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete) {
-    if (element instanceof PsiMethod) {
-      PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+    if (element instanceof PsiMethod method) {
+      PsiClass containingClass = method.getContainingClass();
 
       if (containingClass != null && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        PsiMethod[] superMethods = ((PsiMethod) element).findSuperMethods();
+        PsiMethod[] superMethods = method.findSuperMethods();
         for (PsiMethod superMethod : superMethods) {
           if (isInside(superMethod, allElementsToDelete)) continue;
           if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -323,11 +320,11 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         }
       }
     }
-    else if (element instanceof PsiParameter) {
-      PsiElement scope = ((PsiParameter)element).getDeclarationScope();
+    else if (element instanceof PsiParameter parameter) {
+      PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof PsiMethod method) {
         MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-        collectMethodConflicts(conflicts, method, (PsiParameter)element);
+        collectMethodConflicts(conflicts, method, parameter);
         return conflicts.values();
       }
     }
@@ -478,19 +475,18 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   @Override
   public void prepareForDeletion(@NotNull PsiElement element) throws IncorrectOperationException {
-    if (element instanceof PsiVariable) {
-      ((PsiVariable)element).normalizeDeclaration();
+    if (element instanceof PsiVariable var) {
+      var.normalizeDeclaration();
     }
-    if (element instanceof PsiParameter && element.getParent() instanceof PsiParameterList parameterList) {
+    if (element instanceof PsiParameter parameter && element.getParent() instanceof PsiParameterList parameterList) {
       PsiMethod method = ObjectUtils.tryCast(parameterList.getParent(), PsiMethod.class);
       if (method != null) {
         PsiAnnotation contract = method.getModifierList().findAnnotation(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
         if (contract != null) {
-          ParameterInfoImpl[] info = ParameterInfoImpl.fromMethodExceptParameter(method, (PsiParameter)element);
+          ParameterInfoImpl[] info = ParameterInfoImpl.fromMethodExceptParameter(method, parameter);
           try {
             String[] names = ContainerUtil.map(parameterList.getParameters(), PsiParameter::getName, ArrayUtilRt.EMPTY_STRING_ARRAY);
-            PsiAnnotation newContract =
-              ContractConverter.convertContract(method, names, info);
+            PsiAnnotation newContract = ContractConverter.convertContract(method, names, info);
             if (newContract != null && newContract != contract) {
               contract.replace(newContract);
             }
@@ -680,8 +676,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   private static void appendCallees(@NotNull PsiMember method, @NotNull List<? super UsageInfo> usages) {
-    List<PsiElement> calleesSafeToDelete = SafeDeleteFix.computeReferencedCodeSafeToDelete(method);
-    for (PsiElement callee : calleesSafeToDelete) {
+    for (PsiElement callee : SafeDeleteFix.computeReferencedCodeSafeToDelete(method)) {
       usages.add(new SafeDeleteMemberCalleeUsageInfo(callee, method));
     }
   }
@@ -714,7 +709,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   @Nullable
-  private static Condition<PsiElement> findConstructorUsages(PsiMethod constructor, Collection<PsiReference> originalReferences, @NotNull List<? super UsageInfo> usages,
+  private static Condition<PsiElement> findConstructorUsages(PsiMethod constructor,
+                                                             Collection<PsiReference> originalReferences,
+                                                             @NotNull List<? super UsageInfo> usages,
                                                              PsiElement[] allElementsToDelete) {
     if (isTheOnlyEmptyDefaultConstructor(constructor)) return null;
 
@@ -824,8 +821,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   private static boolean isMultipleInterfacesImplementation(PsiMethod method,
                                                             PsiMethod originalMethod,
                                                             PsiElement[] allElementsToDelete) {
-    PsiMethod[] methods = method.findSuperMethods();
-    for(PsiMethod superMethod: methods) {
+    for(PsiMethod superMethod: method.findSuperMethods()) {
       if (ArrayUtil.find(allElementsToDelete, superMethod) < 0 && !MethodSignatureUtil.isSuperMethod(originalMethod, superMethod)) {
         return true;
       }
@@ -853,7 +849,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     return null;
   }
 
-  static boolean canBePrivate(@NotNull PsiMethod method, @NotNull Collection<? extends PsiReference> references, @NotNull Collection<? extends PsiElement> deleted,
+  static boolean canBePrivate(@NotNull PsiMethod method,
+                              @NotNull Collection<? extends PsiReference> references,
+                              @NotNull Collection<? extends PsiElement> deleted,
                               PsiElement @NotNull [] allElementsToDelete) {
     PsiClass containingClass = method.getContainingClass();
     if(containingClass == null) {
@@ -883,11 +881,11 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   private static Condition<PsiElement> findFieldUsages(PsiField psiField, List<? super UsageInfo> usages, PsiElement[] allElementsToDelete) {
-    Condition<PsiElement> isInsideDeleted = getUsageInsideDeletedFilter(allElementsToDelete);
+    Condition <PsiElement> isInsideDeleted = getUsageInsideDeletedFilter(allElementsToDelete);
     Set<PsiParameter> parameters = new LinkedHashSet<>();
     ReferencesSearch.search(psiField).forEach(reference -> {
-      if (!isInsideDeleted.value(reference.getElement())) {
-        PsiElement element = reference.getElement();
+      PsiElement element = reference.getElement();
+      if (!isInsideDeleted.test(element)) {
         PsiElement parent = element.getParent();
         if (parent instanceof PsiAssignmentExpression assignment && element == assignment.getLExpression()) {
           usages.add(new SafeDeleteFieldWriteReference(assignment, psiField));
@@ -942,7 +940,8 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   private static SafeDeleteParameterCallHierarchyUsageInfo createParameterCallHierarchyUsageInfo(PsiMethod called,
                                                                                                  PsiParameter calledParameter,
-                                                                                                 PsiMethod caller, PsiParameter parameterInCaller) {
+                                                                                                 PsiMethod caller, 
+                                                                                                 PsiParameter parameterInCaller) {
     return ApplicationManager.getApplication().isUnitTestMode()
            ? new SafeDeleteParameterCallHierarchyUsageInfo(caller, parameterInCaller, caller, parameterInCaller)
            : new SafeDeleteParameterCallHierarchyUsageInfo(called, calledParameter, caller, parameterInCaller);
@@ -998,16 +997,12 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     findFunctionalExpressions(usages, method);
   }
 
-
   private static boolean isInside(@NotNull PsiElement place, PsiElement @NotNull [] ancestors) {
     return isInside(place, Arrays.asList(ancestors));
   }
 
   private static boolean isInside(@NotNull PsiElement place, @NotNull Collection<? extends PsiElement> ancestors) {
-    for (PsiElement element : ancestors) {
-      if (isInside(place, element)) return true;
-    }
-    return false;
+    return ContainerUtil.exists(ancestors, element -> isInside(place, element));
   }
 
   public static boolean isInside(@NotNull PsiElement place, PsiElement ancestor) {
