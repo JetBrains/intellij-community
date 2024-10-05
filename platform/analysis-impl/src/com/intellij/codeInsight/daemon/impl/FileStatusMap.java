@@ -75,7 +75,7 @@ public final class FileStatusMap implements Disposable {
   public void setErrorFoundFlag(@NotNull Project project, @NotNull Document document, boolean errorFound) {
     //GHP has found error. Flag is used by ExternalToolPass to decide whether to run or not
     synchronized(myDocumentToStatusMap) {
-      myDocumentToStatusMap.computeIfAbsent(document, __->new FileStatus(project)).errorFound = errorFound;
+      myDocumentToStatusMap.computeIfAbsent(document, __->new FileStatus(project)).setErrorFound(errorFound);
     }
   }
 
@@ -83,7 +83,7 @@ public final class FileStatusMap implements Disposable {
   public boolean wasErrorFound(@NotNull Document document) {
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
-      return status != null && status.errorFound;
+      return status != null && status.isErrorFound();
     }
   }
 
@@ -108,11 +108,11 @@ public final class FileStatusMap implements Disposable {
   public void markFileUpToDate(@NotNull Document document, int passId) {
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.computeIfAbsent(document, __ -> new FileStatus(myProject));
-      status.defensivelyMarked = false;
+      status.setDefensivelyMarked(false);
       if (passId == Pass.WOLF) {
-        status.wolfPassFinished = true;
+        status.setWolfPassFinished();
       }
-      else if (status.dirtyScopes.containsKey(passId)) {
+      else if (status.containsDirtyScope(passId)) {
         status.setDirtyScope(passId, null);
       }
       if (status.allDirtyScopesAreNull()) {
@@ -131,7 +131,7 @@ public final class FileStatusMap implements Disposable {
       int start = Integer.MAX_VALUE;
       int end = Integer.MIN_VALUE;
 
-      for (RangeMarker marker : status.dirtyScopes.values()) {
+      for (RangeMarker marker : status.getAllDirtyScopes()) {
         if (marker != null && marker != WholeFileDirtyMarker.INSTANCE && marker.isValid()) {
           TextRange markerRange = marker.getTextRange();
           start = Math.min(start, markerRange.getStartOffset());
@@ -153,12 +153,12 @@ public final class FileStatusMap implements Disposable {
         marker = WholeFileDirtyMarker.INSTANCE;
       }
       else {
-        if (status.defensivelyMarked) {
+        if (status.isDefensivelyMarked()) {
           status.markWholeFileDirty(myProject);
-          status.defensivelyMarked = false;
+          status.setDefensivelyMarked(false);
         }
         assertPassIsRegistered(passId, status);
-        marker = status.dirtyScopes.get(passId);
+        marker = status.getDirtyScope(passId);
       }
     }
     if (marker == null) {
@@ -171,7 +171,7 @@ public final class FileStatusMap implements Disposable {
   }
 
   private static void assertPassIsRegistered(int passId, @NotNull FileStatus status) {
-    if (!status.dirtyScopes.containsKey(passId)) {
+    if (!status.containsDirtyScope(passId)) {
       throw new IllegalStateException("Unknown pass " + passId);
     }
   }
@@ -185,7 +185,7 @@ public final class FileStatusMap implements Disposable {
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) return; // all dirty already
-      status.defensivelyMarked = true;
+      status.setDefensivelyMarked(true);
     }
   }
 
@@ -206,8 +206,8 @@ public final class FileStatusMap implements Disposable {
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) return;
-      if (status.defensivelyMarked) {
-        status.defensivelyMarked = false;
+      if (status.isDefensivelyMarked()) {
+        status.setDefensivelyMarked(false);
       }
       status.combineScopesWith(scope, document);
     }
@@ -216,7 +216,7 @@ public final class FileStatusMap implements Disposable {
   public boolean allDirtyScopesAreNull(@NotNull Document document) {
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
-      return status != null && !status.defensivelyMarked && status.wolfPassFinished && status.allDirtyScopesAreNull();
+      return status != null && !status.isDefensivelyMarked() && status.isWolfPassFinished() && status.allDirtyScopesAreNull();
     }
   }
 
@@ -230,7 +230,7 @@ public final class FileStatusMap implements Disposable {
   public void assertAllDirtyScopesAreNull(@NotNull Document document) {
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
-      assert status != null && !status.defensivelyMarked && status.wolfPassFinished && status.allDirtyScopesAreNull() : status;
+      assert status != null && !status.isDefensivelyMarked() && status.isWolfPassFinished() && status.allDirtyScopesAreNull() : status;
     }
   }
 
