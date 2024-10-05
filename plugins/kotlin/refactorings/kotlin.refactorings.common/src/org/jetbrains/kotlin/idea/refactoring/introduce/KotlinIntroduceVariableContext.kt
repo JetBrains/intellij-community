@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isLambdaOutsideParentheses
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
@@ -86,7 +87,7 @@ abstract class KotlinIntroduceVariableContext(
         addToReferences: Boolean,
         lambdaArgumentName: Name?,
     ): KtExpression {
-        val isActualExpression = actualExpression == expressionToReplace
+        val isActualExpression = actualExpression.getOutermostParenthesizerOrThis() == expressionToReplace
 
         val replacement = psiFactory.createExpression(nameSuggestions.single().first())
         val substringInfo = expressionToReplace.extractableSubstringInfo

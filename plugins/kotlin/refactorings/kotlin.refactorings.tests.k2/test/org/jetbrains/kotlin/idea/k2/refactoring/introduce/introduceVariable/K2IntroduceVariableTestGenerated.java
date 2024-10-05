@@ -880,6 +880,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/KTIJ-14455.kt");
         }
 
+        @TestMetadata("KTIJ-6396.kt")
+        public void testKTIJ_6396() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/KTIJ-6396.kt");
+        }
+
         @TestMetadata("KTIJ-9043.kt")
         public void testKTIJ_9043() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/KTIJ-9043.kt");

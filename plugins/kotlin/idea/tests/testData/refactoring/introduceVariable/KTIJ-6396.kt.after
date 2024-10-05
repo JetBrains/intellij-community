@@ -1,0 +1,7 @@
+fun foo() {
+    val a = 1
+    val b = if (a > 0) {
+        val i = a + 1
+        i + 2
+    } else 0
+}

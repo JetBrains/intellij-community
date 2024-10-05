@@ -882,6 +882,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/KTIJ-14455.kt");
             }
 
+            @TestMetadata("KTIJ-6396.kt")
+            public void testKTIJ_6396() throws Exception {
+                runTest("testData/refactoring/introduceVariable/KTIJ-6396.kt");
+            }
+
             @TestMetadata("KTIJ-9043.kt")
             public void testKTIJ_9043() throws Exception {
                 runTest("testData/refactoring/introduceVariable/KTIJ-9043.kt");
