@@ -55,7 +55,6 @@ public class GitExecutableDetector {
     "/Library/Preferences/com.apple.dt.Xcode"
   };
 
-  private static final File WIN_ROOT = new File("C:\\"); // the constant is extracted to be able to create files in "Program Files" in tests
   private static final List<String> WIN_BIN_DIRS = Arrays.asList("cmd", "bin");
 
   private static final @NonNls String UNIX_EXECUTABLE = "git";
@@ -71,6 +70,12 @@ public class GitExecutableDetector {
   private final @NotNull Map<WSLDistribution, DetectedPath> myWslExecutables = new ConcurrentHashMap<>();
   private volatile boolean myWslDistributionsProcessed;
 
+  /**
+   * Default choice if detection failed - just an executable name to be resolved by $PATH.
+   */
+  public static @NotNull String getDefaultExecutable() {
+    return SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
+  }
 
   public @Nullable String getExecutable(@Nullable WSLDistribution projectWslDistribution, boolean detectIfNeeded) {
     if (detectIfNeeded) {
@@ -208,6 +213,95 @@ public class GitExecutableDetector {
       String executable = SystemInfo.isWindows ? detectForWindows() : detectForUnix();
       mySystemExecutable.set(new DetectedPath(executable));
     }
+
+    private static @Nullable String detectForUnix() {
+      for (String p : UNIX_PATHS) {
+        File f = new File(p, UNIX_EXECUTABLE);
+        if (f.exists()) {
+          return f.getPath();
+        }
+      }
+      return null;
+    }
+
+    private @Nullable String detectForWindows() {
+      String exec = checkProgramFiles();
+      if (exec != null) {
+        return exec;
+      }
+
+      exec = checkCygwin();
+      if (exec != null) {
+        return exec;
+      }
+
+      return null;
+    }
+
+    private @Nullable String checkProgramFiles() {
+      final String[] PROGRAM_FILES = {"Program Files", "Program Files (x86)"};
+
+      // collecting all potential msys distributives
+      List<File> distrs = new ArrayList<>();
+      for (String programFiles : PROGRAM_FILES) {
+        File pf = new File(getWinRoot(), programFiles);
+        File[] children = pf.listFiles(pathname -> pathname.isDirectory() && StringUtil.toLowerCase(pathname.getName()).startsWith("git"));
+        if (!pf.exists() || children == null) {
+          continue;
+        }
+        distrs.addAll(Arrays.asList(children));
+      }
+
+      // greater is better => sorting in the descending order to match the best version first, when iterating
+      distrs.sort(Collections.reverseOrder(new VersionDirsComparator()));
+
+      for (File distr : distrs) {
+        String exec = checkDistributive(distr);
+        if (exec != null) {
+          return exec;
+        }
+      }
+      return null;
+    }
+
+    private @Nullable String checkCygwin() {
+      final String[] OTHER_WINDOWS_PATHS = {FileUtil.toSystemDependentName("cygwin/bin/git.exe")};
+      for (String otherPath : OTHER_WINDOWS_PATHS) {
+        File file = new File(getWinRoot(), otherPath);
+        if (file.exists()) {
+          return file.getPath();
+        }
+      }
+      return null;
+    }
+
+    private static @Nullable String checkDistributive(@Nullable File gitDir) {
+      if (gitDir == null || !gitDir.exists()) {
+        return null;
+      }
+
+      for (String binDir : WIN_BIN_DIRS) {
+        String exec = checkBinDir(new File(gitDir, binDir));
+        if (exec != null) {
+          return exec;
+        }
+      }
+
+      return null;
+    }
+
+    private static @Nullable String checkBinDir(@NotNull File binDir) {
+      if (!binDir.exists()) {
+        return null;
+      }
+
+      File fe = new File(binDir, WIN_EXECUTABLE);
+      if (fe.exists()) {
+        return fe.getPath();
+      }
+
+      return null;
+    }
   }
 
   private class WslDetector implements Detector {
@@ -260,74 +354,6 @@ public class GitExecutableDetector {
     }
   }
 
-  /**
-   * Default choice if detection failed - just an executable name to be resolved by $PATH.
-   */
-  public static @NotNull String getDefaultExecutable() {
-    return SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
-  }
-
-  private static @Nullable String detectForUnix() {
-    for (String p : UNIX_PATHS) {
-      File f = new File(p, UNIX_EXECUTABLE);
-      if (f.exists()) {
-        return f.getPath();
-      }
-    }
-    return null;
-  }
-
-  private @Nullable String detectForWindows() {
-    String exec = checkProgramFiles();
-    if (exec != null) {
-      return exec;
-    }
-
-    exec = checkCygwin();
-    if (exec != null) {
-      return exec;
-    }
-
-    return null;
-  }
-
-  private @Nullable String checkProgramFiles() {
-    final String[] PROGRAM_FILES = {"Program Files", "Program Files (x86)"};
-
-    // collecting all potential msys distributives
-    List<File> distrs = new ArrayList<>();
-    for (String programFiles : PROGRAM_FILES) {
-      File pf = new File(getWinRoot(), programFiles);
-      File[] children = pf.listFiles(pathname -> pathname.isDirectory() && StringUtil.toLowerCase(pathname.getName()).startsWith("git"));
-      if (!pf.exists() || children == null) {
-        continue;
-      }
-      distrs.addAll(Arrays.asList(children));
-    }
-
-    // greater is better => sorting in the descending order to match the best version first, when iterating
-    distrs.sort(Collections.reverseOrder(new VersionDirsComparator()));
-
-    for (File distr : distrs) {
-      String exec = checkDistributive(distr);
-      if (exec != null) {
-        return exec;
-      }
-    }
-    return null;
-  }
-
-  private @Nullable String checkCygwin() {
-    final String[] OTHER_WINDOWS_PATHS = {FileUtil.toSystemDependentName("cygwin/bin/git.exe")};
-    for (String otherPath : OTHER_WINDOWS_PATHS) {
-      File file = new File(getWinRoot(), otherPath);
-      if (file.exists()) {
-        return file.getPath();
-      }
-    }
-    return null;
-  }
-
   private static @Nullable String checkWslDistribution(@NotNull WSLDistribution distribution) {
     if (distribution.getVersion() != 2) return null;
 
@@ -358,35 +384,7 @@ public class GitExecutableDetector {
 
   @VisibleForTesting
   protected @NotNull File getWinRoot() {
-    return WIN_ROOT;
-  }
-
-  private static @Nullable String checkDistributive(@Nullable File gitDir) {
-    if (gitDir == null || !gitDir.exists()) {
-      return null;
-    }
-
-    for (String binDir : WIN_BIN_DIRS) {
-      String exec = checkBinDir(new File(gitDir, binDir));
-      if (exec != null) {
-        return exec;
-      }
-    }
-
-    return null;
-  }
-
-  private static @Nullable String checkBinDir(@NotNull File binDir) {
-    if (!binDir.exists()) {
-      return null;
-    }
-
-    File fe = new File(binDir, WIN_EXECUTABLE);
-    if (fe.exists()) {
-      return fe.getPath();
-    }
-
-    return null;
+    return new File("C:\\");
   }
 
   @VisibleForTesting
