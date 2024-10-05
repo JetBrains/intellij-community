@@ -50,7 +50,6 @@ public final class PatchDiffRequestFactory {
     return proxyProducer.process(context, indicator);
   }
 
-  @ApiStatus.Internal
   @NotNull
   @CalledInAny
   public static DiffRequest createConflictDiffRequest(@Nullable Project project,

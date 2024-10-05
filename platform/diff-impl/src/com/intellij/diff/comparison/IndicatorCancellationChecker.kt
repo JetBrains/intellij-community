@@ -3,9 +3,7 @@ package com.intellij.diff.comparison
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class IndicatorCancellationChecker(private val myIndicator: ProgressIndicator) : CancellationChecker {
   @Throws(ProcessCanceledException::class)
   override fun checkCanceled() {

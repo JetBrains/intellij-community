@@ -21,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 private class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
@@ -80,7 +79,6 @@ private class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
   }
 }
 
-@ApiStatus.Internal
 interface DiffVirtualFileWithTabName {
   fun getEditorTabName(project: Project, editors: List<FileEditor>): @NlsContexts.TabTitle String?
 }

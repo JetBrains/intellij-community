@@ -3,12 +3,7 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.chains.DiffRequestProducer
-import com.intellij.diff.editor.DiffEditorEscapeAction
-import com.intellij.diff.editor.DiffEditorTabFilesManager
-import com.intellij.diff.editor.DiffEditorViewerFileEditor
-import com.intellij.diff.editor.DiffViewerVirtualFile
-import com.intellij.diff.editor.DiffVirtualFileWithProducers
-import com.intellij.diff.editor.DiffVirtualFileWithTabName
+import com.intellij.diff.editor.*
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.openapi.ListSelection
@@ -27,7 +22,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.lang.ref.WeakReference
 
-@ApiStatus.Internal
 abstract class EditorTabDiffPreview(val project: Project) : CheckedDisposable, DiffPreview {
   abstract fun hasContent(): Boolean
   protected abstract fun createViewer(): DiffEditorViewer

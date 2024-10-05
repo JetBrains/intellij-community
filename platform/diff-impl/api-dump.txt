@@ -174,6 +174,10 @@ f:com.intellij.diff.comparison.DiffIterableUtilEx
 - s:diff(java.util.List,java.util.List,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.comparison.iterables.FairDiffIterable
 - s:diff(I[],I[],com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.comparison.iterables.FairDiffIterable
 - s:diff(java.lang.Object[],java.lang.Object[],com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.comparison.iterables.FairDiffIterable
+f:com.intellij.diff.comparison.IndicatorCancellationChecker
+- com.intellij.diff.comparison.CancellationChecker
+- <init>(com.intellij.openapi.progress.ProgressIndicator):V
+- checkCanceled():V
 a:com.intellij.diff.contents.DocumentContentBase
 - com.intellij.diff.contents.DiffContentBase
 - com.intellij.diff.contents.DocumentContent
@@ -216,6 +220,7 @@ c:com.intellij.diff.contents.FileDocumentContentImpl
 - onAssigned(Z):V
 c:com.intellij.diff.editor.ChainDiffVirtualFile
 - com.intellij.diff.editor.DiffVirtualFile
+- com.intellij.diff.editor.DiffVirtualFileWithTabName
 - <init>(com.intellij.diff.chains.DiffRequestChain,java.lang.String):V
 - createProcessor(com.intellij.openapi.project.Project):com.intellij.diff.impl.DiffRequestProcessor
 - f:getChain():com.intellij.diff.chains.DiffRequestChain
@@ -296,6 +301,10 @@ a:com.intellij.diff.editor.DiffVirtualFileBase
 f:com.intellij.diff.editor.DiffVirtualFileBase$Companion
 - f:turnOffReopeningWindow(com.intellij.openapi.vfs.VirtualFile):V
 - f:useDiffWindowDimensionKey(com.intellij.openapi.vfs.VirtualFile):V
+com.intellij.diff.editor.DiffVirtualFileWithProducers
+- a:collectDiffProducers(Z):com.intellij.openapi.ListSelection
+com.intellij.diff.editor.DiffVirtualFileWithTabName
+- a:getEditorTabName(com.intellij.openapi.project.Project,java.util.List):java.lang.String
 f:com.intellij.diff.editor.SimpleDiffEditorEscapeAction
 - com.intellij.openapi.project.DumbAwareAction
 - com.intellij.diff.editor.DiffEditorEscapeAction
@@ -540,6 +549,18 @@ c:com.intellij.diff.requests.LoadingDiffRequest
 - com.intellij.diff.requests.MessageDiffRequest
 - <init>():V
 - <init>(java.lang.String):V
+c:com.intellij.diff.requests.OperationCanceledDiffRequest
+- com.intellij.diff.requests.MessageDiffRequest
+- <init>():V
+- <init>(java.lang.String):V
+c:com.intellij.diff.requests.UnknownFileTypeDiffRequest
+- com.intellij.diff.requests.ComponentDiffRequest
+- <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
+- <init>(java.lang.String,java.lang.String):V
+- s:createComponent(java.lang.String,com.intellij.diff.DiffContext):javax.swing.JComponent
+- getComponent(com.intellij.diff.DiffContext):javax.swing.JComponent
+- getFileName():java.lang.String
+- getTitle():java.lang.String
 c:com.intellij.diff.tools.ErrorDiffTool
 - com.intellij.diff.FrameDiffTool
 - sf:INSTANCE:com.intellij.diff.tools.ErrorDiffTool
@@ -1072,7 +1093,7 @@ pc:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyInitialScrollHelpe
 - p:doScrollToChange():Z
 - p:doScrollToFirstChange():Z
 pc:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyPrevNextDifferenceIterable
-- com.intellij.diff.tools.util.PrevNextDifferenceIterable
+- com.intellij.diff.tools.util.PrevNextDifferenceIterableBase
 - p:<init>(com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx):V
 - p:getChanges():java.util.List
 - p:getEditor():com.intellij.openapi.editor.ex.EditorEx
@@ -1217,6 +1238,21 @@ com.intellij.diff.tools.util.PrevNextDifferenceIterable
 - a:canGoPrev():Z
 - a:goNext():V
 - a:goPrev():V
+a:com.intellij.diff.tools.util.PrevNextDifferenceIterableBase
+- com.intellij.diff.tools.util.PrevNextDifferenceIterable
+- <init>():V
+- canGoNext():Z
+- canGoPrev():Z
+- pa:getChanges():java.util.List
+- getCurrentLineRange():com.intellij.diff.util.LineRange
+- getCurrentLineRangeByLine(I):com.intellij.diff.util.LineRange
+- pa:getEditor():com.intellij.openapi.editor.ex.EditorEx
+- pa:getEndLine(java.lang.Object):I
+- pa:getStartLine(java.lang.Object):I
+- goNext():V
+- goPrev():V
+- p:scrollToChange(java.lang.Object):V
+- p:scrollToChangeUnderCommand(java.lang.Object):V
 c:com.intellij.diff.tools.util.SimpleDiffPanel
 - com.intellij.diff.tools.util.base.DiffPanelBase
 - <init>(javax.swing.JComponent,com.intellij.diff.DiffContext):V
@@ -1689,6 +1725,12 @@ com.intellij.diff.tools.util.text.FineMergeLineFragment
 - com.intellij.diff.fragments.MergeLineFragment
 - a:getConflictType():com.intellij.diff.util.MergeConflictType
 - a:getInnerFragments():com.intellij.diff.tools.util.text.MergeInnerDifferences
+c:com.intellij.diff.tools.util.text.FineMergeLineFragmentImpl
+- com.intellij.diff.fragments.MergeLineFragmentImpl
+- com.intellij.diff.tools.util.text.FineMergeLineFragment
+- <init>(com.intellij.diff.fragments.MergeLineFragment,com.intellij.diff.util.MergeConflictType,com.intellij.diff.tools.util.text.MergeInnerDifferences):V
+- getConflictType():com.intellij.diff.util.MergeConflictType
+- getInnerFragments():com.intellij.diff.tools.util.text.MergeInnerDifferences
 f:com.intellij.diff.tools.util.text.LineOffsetsUtil
 - <init>():V
 - s:create(com.intellij.openapi.editor.Document):com.intellij.diff.tools.util.text.LineOffsets
@@ -2126,6 +2168,25 @@ com.intellij.openapi.vcs.changes.DiffPreview
 f:com.intellij.openapi.vcs.changes.DiffPreview$Companion
 - f:closePreviewFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
 - f:setPreviewVisible(com.intellij.openapi.vcs.changes.DiffPreview,Z):V
+a:com.intellij.openapi.vcs.changes.EditorTabDiffPreview
+- com.intellij.openapi.util.CheckedDisposable
+- com.intellij.openapi.vcs.changes.DiffPreview
+- <init>(com.intellij.openapi.project.Project):V
+- closePreview():V
+- pa:collectDiffProducers(Z):com.intellij.openapi.ListSelection
+- createEscapeHandler():com.intellij.openapi.actionSystem.AnAction
+- pa:createViewer():com.intellij.diff.impl.DiffEditorViewer
+- dispose():V
+- pa:getEditorTabName(com.intellij.diff.impl.DiffEditorViewer):java.lang.String
+- f:getPreviewFile():com.intellij.openapi.vfs.VirtualFile
+- f:getProject():com.intellij.openapi.project.Project
+- p:handleEscapeKey():V
+- a:hasContent():Z
+- isDisposed():Z
+- f:isPreviewOpen():Z
+- openPreview(Z):Z
+- performDiffAction():Z
+- updateDiffAction(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.openapi.vcs.ex.BlockI
 - a:getEnd():I
 - a:getStart():I

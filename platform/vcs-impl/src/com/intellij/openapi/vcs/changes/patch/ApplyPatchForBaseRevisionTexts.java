@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +38,6 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
-@ApiStatus.Internal
 public class ApplyPatchForBaseRevisionTexts {
   private static final Logger LOG = Logger.getInstance(ApplyPatchForBaseRevisionTexts.class);
 

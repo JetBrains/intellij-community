@@ -838,8 +838,7 @@ f:com.intellij.openapi.vcs.changes.ChangesPreprocess
 - <init>():V
 - s:preprocessChangesRemoveDeletedForDuplicateMoved(java.util.List):java.util.List
 a:com.intellij.openapi.vcs.changes.ChangesTreeEditorDiffPreview
-- com.intellij.openapi.util.CheckedDisposable
-- com.intellij.openapi.vcs.changes.DiffPreview
+- com.intellij.openapi.vcs.changes.EditorTabDiffPreview
 - <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,javax.swing.JComponent):V
 - b:<init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,javax.swing.JComponent,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - pf:getTree():com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -1031,6 +1030,7 @@ f:com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponent
 - f:updatePreview(Z):V
 c:com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile
 - com.intellij.diff.editor.DiffVirtualFile
+- com.intellij.diff.editor.DiffVirtualFileWithTabName
 - <init>(com.intellij.openapi.vcs.changes.DiffPreviewProvider):V
 - createProcessor(com.intellij.openapi.project.Project):com.intellij.diff.impl.DiffRequestProcessor
 - equals(java.lang.Object):Z
@@ -1865,6 +1865,14 @@ c:com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog
 com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor
 - a:apply(java.util.List,com.intellij.util.containers.MultiMap,com.intellij.openapi.vcs.changes.LocalChangeList,java.lang.String,com.intellij.openapi.util.ThrowableComputable):V
 - a:getName():java.lang.String
+c:com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts
+- <init>(java.lang.String,java.lang.String,java.lang.String,Z):V
+- s:create(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.openapi.diff.impl.patch.TextFilePatch,java.lang.CharSequence):com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts
+- getBase():java.lang.String
+- getLocal():java.lang.String
+- getPatched():java.lang.String
+- isAppliedSomehow():Z
+- isBaseRevisionLoaded():Z
 e:com.intellij.openapi.vcs.changes.patch.ApplyPatchMode
 - java.lang.Enum
 - sf:APPLY:com.intellij.openapi.vcs.changes.patch.ApplyPatchMode
@@ -1926,6 +1934,7 @@ f:com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory
 - s:createBadDiffRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.vcs.changes.patch.AppliedTextPatch,java.lang.String,java.lang.String,java.lang.String,java.lang.String):com.intellij.diff.requests.DiffRequest
 - s:createBadMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.vcs.changes.patch.AppliedTextPatch,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
 - s:createBadMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.vcs.changes.patch.AppliedTextPatch,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
+- s:createConflictDiffRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.diff.impl.patch.TextFilePatch,java.lang.String,com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts,java.lang.String):com.intellij.diff.requests.DiffRequest
 - s:createDiffRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.Change,java.lang.String,com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
 - s:createMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.String,java.lang.String,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
 - s:createMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
@@ -1954,6 +1963,17 @@ f:com.intellij.openapi.vcs.changes.patch.TextFilePatchInProgress
 - com.intellij.openapi.vcs.changes.patch.AbstractFilePatchInProgress
 - getDiffRequestProducers(com.intellij.openapi.project.Project,com.intellij.openapi.diff.impl.patch.PatchReader):com.intellij.diff.chains.DiffRequestProducer
 - getNewContentRevision():com.intellij.openapi.vcs.changes.ContentRevision
+c:com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffRequest
+- com.intellij.diff.requests.DiffRequest
+- com.intellij.openapi.util.UserDataHolder
+- <init>(com.intellij.diff.contents.DocumentContent,com.intellij.openapi.vcs.changes.patch.AppliedTextPatch,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
+- getLocalContent():java.lang.String
+- getLocalTitle():java.lang.String
+- getPatch():com.intellij.openapi.vcs.changes.patch.AppliedTextPatch
+- getPatchTitle():java.lang.String
+- getResultContent():com.intellij.diff.contents.DocumentContent
+- getResultTitle():java.lang.String
+- getTitle():java.lang.String
 c:com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeRequest
 - com.intellij.diff.merge.MergeRequest
 - com.intellij.openapi.util.UserDataHolder
@@ -1966,6 +1986,14 @@ c:com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeRequest
 - getProject():com.intellij.openapi.project.Project
 - getResultContent():com.intellij.diff.contents.DocumentContent
 - getResultTitle():java.lang.String
+- getTitle():java.lang.String
+f:com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest
+- com.intellij.diff.requests.DiffRequest
+- <init>(com.intellij.openapi.diff.impl.patch.TextFilePatch):V
+- <init>(com.intellij.openapi.diff.impl.patch.TextFilePatch,java.lang.String,java.lang.String,java.lang.String):V
+- f:getContentTitle1():java.lang.String
+- f:getContentTitle2():java.lang.String
+- f:getPatch():com.intellij.openapi.diff.impl.patch.TextFilePatch
 - getTitle():java.lang.String
 a:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesOperationsGroup
 - com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -3567,6 +3595,9 @@ f:com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 - setBaseRevision(java.lang.CharSequence):V
 f:com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker$Companion
 - f:createTracker(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
+com.intellij.openapi.vcs.ex.VcsActivationListener
+- java.util.EventListener
+- a:vcsesActivated(java.util.List):V
 a:com.intellij.openapi.vcs.history.BaseDiffFromHistoryHandler
 - com.intellij.openapi.vcs.history.DiffFromHistoryHandler
 - pf:myProject:com.intellij.openapi.project.Project
