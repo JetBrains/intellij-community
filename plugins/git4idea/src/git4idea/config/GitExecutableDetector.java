@@ -263,23 +263,10 @@ public class GitExecutableDetector {
       List<File> distrs = new ArrayList<>();
       for (String programFiles : PROGRAM_FILES) {
         File pf = new File(getWinRoot(), programFiles);
-        File[] children = pf.listFiles(pathname -> pathname.isDirectory() && StringUtil.toLowerCase(pathname.getName()).startsWith("git"));
-        if (!pf.exists() || children == null) {
-          continue;
-        }
-        distrs.addAll(Arrays.asList(children));
+        distrs.addAll(findGitDistrsIn(pf));
       }
 
-      // greater is better => sorting in the descending order to match the best version first, when iterating
-      distrs.sort(Collections.reverseOrder(new VersionDirsComparator()));
-
-      for (File distr : distrs) {
-        String exec = checkDistributive(distr);
-        if (exec != null) {
-          return exec;
-        }
-      }
-      return null;
+      return getPreferredDistrExecutablePath(distrs);
     }
 
     private @Nullable String checkCygwin() {
@@ -293,29 +280,43 @@ public class GitExecutableDetector {
       return null;
     }
 
-    private static @Nullable String checkDistributive(@Nullable File gitDir) {
-      if (gitDir == null || !gitDir.exists()) {
-        return null;
+    private static @NotNull List<File> findGitDistrsIn(@NotNull File dir) {
+      File[] children = dir.listFiles(pathname -> pathname.isDirectory() && StringUtil.toLowerCase(pathname.getName()).startsWith("git"));
+      if (!dir.exists() || children == null) {
+        return Collections.emptyList();
       }
+      return Arrays.asList(children);
+    }
 
-      for (String binDir : WIN_BIN_DIRS) {
-        String exec = checkBinDir(new File(gitDir, binDir));
+    private static @Nullable String getPreferredDistrExecutablePath(@NotNull List<File> distrs) {
+      // greater is better => sorting in the descending order to match the best version first, when iterating
+      distrs.sort(Collections.reverseOrder(new VersionDirsComparator()));
+
+      for (File distr : distrs) {
+        String exec = getDistrExecutablePath(distr);
         if (exec != null) {
           return exec;
         }
       }
-
       return null;
     }
 
-    private static @Nullable String checkBinDir(@NotNull File binDir) {
-      if (!binDir.exists()) {
+    /**
+     * @param distr folder with git distribution, "C:\Program Files\Git"
+     */
+    private static @Nullable String getDistrExecutablePath(@Nullable File distr) {
+      if (distr == null || !distr.exists()) {
         return null;
       }
 
-      File fe = new File(binDir, WIN_EXECUTABLE);
-      if (fe.exists()) {
-        return fe.getPath();
+      for (String binDirName : WIN_BIN_DIRS) {
+        File binDir = new File(distr, binDirName);
+        if (!binDir.exists()) continue;
+
+        File fe = new File(binDir, WIN_EXECUTABLE);
+        if (fe.exists()) {
+          return fe.getPath();
+        }
       }
 
       return null;
