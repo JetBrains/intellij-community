@@ -503,6 +503,20 @@ public final class FileManagerImpl implements FileManager {
   }
 
   @RequiresWriteLock
+  void removeInvalidFilesAndDirs(@NotNull Set<@NotNull VirtualFile> affectedFiles) {
+    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = getVFileToViewProviderMap();
+    ConcurrentMap<VirtualFile, PsiDirectory> fileToPsiDirMap = myVFileToPsiDirMap.get();
+
+    for (VirtualFile file : affectedFiles) {
+      fileToPsiDirMap.remove(file);
+      FileViewProvider viewProvider = fileToPsiFileMap.get(file);
+      if (viewProvider != null) {
+        clearPsiCaches(viewProvider);
+      }
+    }
+  }
+
+  @RequiresWriteLock
   void removeInvalidFilesAndDirs(boolean useFind) {
     removeInvalidDirs();
 
