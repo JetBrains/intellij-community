@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language
 
-import junit.framework.TestCase.assertTrue
+import org.junit.Assert
 
 internal fun <T> assertIterableEquals(first: Iterable<T>, second: Iterable<T>) {
-  assertTrue(first.all(second::contains))
-  assertTrue(second.all(first::contains))
+  Assert.assertEquals(first.toSet(), second.toSet())
 }
