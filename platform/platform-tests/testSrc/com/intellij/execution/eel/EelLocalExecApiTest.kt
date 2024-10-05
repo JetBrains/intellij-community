@@ -111,6 +111,8 @@ class EelLocalExecApiTest {
           }
         }
 
+        Assertions.assertEquals("hello", process.stderr.receive().decodeToString().trim())
+
         // Test tty api
         // tty might insert "\r\n", we need to remove them. Hence, NEW_LINES.
         val pyOutputStr = process.stdout.receive().decodeToString().replace(NEW_LINES, "")
@@ -125,6 +127,7 @@ class EelLocalExecApiTest {
             Assertions.assertNull(pyOutputObj.size, "size must not be set if no tty")
           }
         }
+
 
         // Test kill api
         when (exitType) {

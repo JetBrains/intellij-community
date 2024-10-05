@@ -12,7 +12,6 @@ from time import sleep
 def exit_42(*_):
   exit(42)
 
-
 signal.signal(signal.SIGINT, exit_42)
 
 is_tty = sys.stdin.isatty()
@@ -23,12 +22,17 @@ try:
 except OSError:
   pass
 
+
+sys.stderr.write("hello\n")
+sys.stderr.flush()
+
 json.dump({
   "tty": is_tty,
   "size": {"cols": terminal_size.columns, "rows":terminal_size.lines} if terminal_size else None
 }, sys.stdout)
-
 sys.stdout.flush()
+
+
 command = input().strip()
 if command == "exit":
   exit(0)
