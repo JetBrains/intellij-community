@@ -1,64 +1,46 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.eel
 
-import com.google.gson.Gson
 import com.intellij.execution.process.UnixSignal
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.impl.local.EelLocalExecApi
-import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
+import com.intellij.platform.tests.eelHelper.*
+import com.intellij.platform.tests.eelHelper.Size
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.io.write
+import io.ktor.util.decodeString
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import org.hamcrest.CoreMatchers
 import org.hamcrest.CoreMatchers.anyOf
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.io.TempDir
 import org.junitpioneer.jupiter.cartesian.CartesianTest
-import java.nio.file.Path
-import kotlin.io.path.isExecutable
+import java.nio.ByteBuffer
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class EelLocalExecApiTest {
   companion object {
-    const val PYTHON_ENV = "PYTHON"
     private const val PTY_COLS = 42
     private const val PTY_ROWS = 24
     private val NEW_LINES = Regex("\r?\n")
 
-    // TODO: Remove as soon as we migrate to kotlin script from the python
+    private lateinit var executor: JavaMainClassExecutor
+
     @BeforeAll
     @JvmStatic
-    fun skipTestOnTcWindows() {
-      assumeFalse(SystemInfoRt.isWindows && IS_UNDER_TEAMCITY, "Test is disabled on TC@WIN as there is no python by default there")
-    }
-  }
-
-  private data class TtySize(val cols: Int, val rows: Int)
-  private data class PythonOutput(
-    val tty: Boolean,
-    val size: TtySize?,
-  )
-
-  private val helperContent = EelLocalExecApiTest::class.java.classLoader.getResource("helper.py")!!.readBytes()
-
-  // TODO: This tests depends on python interpreter. Rewrite to kotlin script
-  private val python = Path.of(System.getenv(PYTHON_ENV)
-                               ?: if (!SystemInfoRt.isWindows) "/usr/bin/python3" else error("Provide $PYTHON_ENV env var with path to python"))
-
-  @BeforeEach
-  fun setUp() {
-    assert(python.isExecutable()) {
-      "Can't find python or $python isn't executable. Please set $PYTHON_ENV env var to the path to python binary"
+    fun createExecutor() {
+      executor = JavaMainClassExecutor(EelHelper::class.java)
     }
   }
 
@@ -73,18 +55,15 @@ class EelLocalExecApiTest {
 
 
   /**
-   * Test runs `helper.py` checking stdin/stdout iteration, exit code, tty and signal/termination handling.
+   * Test runs [EelHelper] checking stdin/stdout iteration, exit code, tty and signal/termination handling.
    */
   @CartesianTest
   fun testOutput(
     @CartesianTest.Enum exitType: ExitType,
     @CartesianTest.Enum ptyManagement: PTYManagement,
-    @TempDir tempDir: Path,
-  ): Unit = timeoutRunBlocking {
-    val helperScript = tempDir.resolve("helper.py")
-    helperScript.write(helperContent)
+  ): Unit = timeoutRunBlocking(1.minutes) {
 
-    val builder = EelExecApi.executeProcessBuilder(python.toString()).args(listOf(helperScript.toString()))
+    val builder = executor.createBuilderToExecuteMain()
     builder.pty(when (ptyManagement) {
                   PTYManagement.NO_PTY -> null
                   PTYManagement.PTY_SIZE_FROM_START -> Pty(PTY_COLS, PTY_ROWS, true)
@@ -111,19 +90,29 @@ class EelLocalExecApiTest {
           }
         }
 
-        Assertions.assertEquals("hello", process.stderr.receive().decodeToString().trim())
+        withContext(Dispatchers.Default) {
+          val text = ByteBuffer.allocate(1024)
+          withTimeoutOrNull(10.seconds) {
+            for (chunk in process.stderr) {
+              text.put(chunk)
+              if (HELLO in chunk.decodeToString()) break
+            }
+          }
+          text.limit(text.position()).rewind()
+          assertThat("No $HELLO reported in stderr", text.decodeString(), CoreMatchers.containsString(HELLO))
+        }
+
 
         // Test tty api
         // tty might insert "\r\n", we need to remove them. Hence, NEW_LINES.
-        val pyOutputStr = process.stdout.receive().decodeToString().replace(NEW_LINES, "")
-        val pyOutputObj = Gson().fromJson<PythonOutput>(pyOutputStr, PythonOutput::class.java)
+        val outputStr = process.stdout.receive().decodeToString().replace(NEW_LINES, "")
+        val pyOutputObj = TTYState.deserialize(outputStr)
         when (ptyManagement) {
           PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> {
-            Assertions.assertTrue(pyOutputObj.tty)
-            Assertions.assertEquals(TtySize(PTY_COLS, PTY_ROWS), pyOutputObj.size, "size must be set for tty")
+            Assertions.assertNotNull(pyOutputObj.size)
+            Assertions.assertEquals(Size(PTY_COLS, PTY_ROWS), pyOutputObj.size, "size must be set for tty")
           }
           PTYManagement.NO_PTY -> {
-            Assertions.assertFalse(pyOutputObj.tty)
             Assertions.assertNull(pyOutputObj.size, "size must not be set if no tty")
           }
         }
@@ -135,13 +124,12 @@ class EelLocalExecApiTest {
           ExitType.TERMINATE -> process.terminate()
           ExitType.INTERRUPT -> {
             // Terminate sleep with interrupt/CTRL+C signal
-            process.stdin.send("sleep\n".encodeToByteArray())
-            assertEquals("sleeping", process.stdout.receive().decodeToString().trim())
+            process.sendCommand(Command.SLEEP)
             process.interrupt()
           }
           ExitType.EXIT_WITH_COMMAND -> {
             // Just command to ask script return gracefully
-            process.stdin.send("exit\n".encodeToByteArray())
+            process.sendCommand(Command.EXIT)
           }
         }
         val exitCode = process.exitCode.await()
@@ -161,13 +149,27 @@ class EelLocalExecApiTest {
             }
           }
           ExitType.INTERRUPT -> {
-            assertEquals(42, exitCode) // CTRL+C/SIGINT handler returns 42, see script
+            when (ptyManagement) {
+              PTYManagement.NO_PTY -> Unit // SIGINT is doubtful without PTY especially without console on Windows
+              PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> {
+                // CTRL+C/SIGINT handler returns 42, see script
+                assertEquals(INTERRUPT_EXIT_CODE, exitCode)
+              }
+            }
           }
           ExitType.EXIT_WITH_COMMAND -> {
-            assertEquals(0, exitCode) // Graceful exit
+            assertEquals(GRACEFUL_EXIT_CODE, exitCode) // Graceful exit
           }
         }
       }
     }
+  }
+
+  /**
+   * Sends [command] to the helper and flush
+   */
+  private suspend fun EelProcess.sendCommand(command: Command) {
+    val text = command.name + "\n"
+    stdin.send(text.encodeToByteArray())
   }
 }

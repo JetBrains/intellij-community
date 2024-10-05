@@ -107,5 +107,6 @@
     <orderEntry type="library" scope="TEST" name="rhino" level="project" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.eelHelper" scope="TEST" />
   </component>
 </module>

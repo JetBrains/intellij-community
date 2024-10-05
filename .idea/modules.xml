@@ -647,6 +647,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/eel/intellij.platform.eel.iml" filepath="$PROJECT_DIR$/platform/eel/intellij.platform.eel.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/eelProvider/intellij.platform.eel.provider.iml" filepath="$PROJECT_DIR$/platform/eelProvider/intellij.platform.eel.provider.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/eel/intellij.platform.eel.tests.iml" filepath="$PROJECT_DIR$/platform/eel/intellij.platform.eel.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/eel-helper/intellij.platform.eelHelper.iml" filepath="$PROJECT_DIR$/platform/platform-tests/eel-helper/intellij.platform.eelHelper.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/execution/intellij.platform.execution.iml" filepath="$PROJECT_DIR$/platform/execution/intellij.platform.execution.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/execution.dashboard/intellij.platform.execution.dashboard.iml" filepath="$PROJECT_DIR$/platform/execution.dashboard/intellij.platform.execution.dashboard.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/execution-impl/intellij.platform.execution.impl.iml" filepath="$PROJECT_DIR$/platform/execution-impl/intellij.platform.execution.impl.iml" />
