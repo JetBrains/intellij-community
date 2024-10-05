@@ -5,14 +5,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
-import java.util.EventListener
+import java.util.*
 
 interface EditorContextManager {
   companion object {
@@ -24,6 +23,17 @@ interface EditorContextManager {
       project.serviceAsync<EditorContextManager>()
 
     val topic: Topic<ChangeEventListener> = Topic(ChangeEventListener::class.java)
+
+    @RequiresBackgroundThread
+    @RequiresReadLock
+    @JvmStatic
+    fun getEditorContext(editor: Editor, project: Project): CodeInsightContext {
+      if (!isSharedSourceSupportEnabled(project)) {
+        return defaultContext()
+      }
+      val editorContextManager = getInstance(project)
+      return editorContextManager.getEditorContexts(editor).mainContext
+    }
   }
 
   /**
@@ -66,11 +76,6 @@ interface EditorSelectedContexts {
 
   operator fun contains(context: CodeInsightContext): Boolean
 }
-
-// todo ijpl-339 hide this key
-@ApiStatus.Internal
-@JvmField
-val highlighterContextKey = Key.create<CodeInsightContext>("highlighterContextKey")
 
 // todo ijpl-339 get rid of???
 class SingleEditorContext(override val mainContext: CodeInsightContext) : EditorSelectedContexts {

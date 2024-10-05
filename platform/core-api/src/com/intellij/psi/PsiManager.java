@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -46,7 +47,28 @@ public abstract class PsiManager extends UserDataHolderBase {
   @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
 
+
+  /**
+   * @deprecated very-internal api, please don't use
+   * todo ijpl-339 remove this method
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false)
+  public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull CodeInsightContext context);
+
   public abstract @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file);
+
+  /**
+   * @deprecated very-internal api, please don't use
+   * todo ijpl-339 remove this method
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false)
+  public abstract @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file, @NotNull CodeInsightContext context);
 
   /**
    * Returns the PSI directory corresponding to the specified virtual file system directory.

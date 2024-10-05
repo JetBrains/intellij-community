@@ -1954,6 +1954,8 @@
               topic="com.intellij.codeInsight.template.TemplateManagerListener"/>
     <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener"
               topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+    <listener class="com.intellij.codeInsight.multiverse.EditorFilterUpdater"
+              topic="com.intellij.codeInsight.multiverse.EditorContextManager$ChangeEventListener"/>
   </projectListeners>
 
   <xi:include href="/META-INF/RemoteDevUtil.xml">

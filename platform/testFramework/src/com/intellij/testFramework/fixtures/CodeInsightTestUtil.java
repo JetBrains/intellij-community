@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.codeInsight.template.Template;
@@ -347,7 +348,8 @@ public final class CodeInsightTestUtil {
       ReadAction.nonBlocking(() -> {
         DaemonProgressIndicator indicator = new DaemonProgressIndicator();
         ProgressManager.getInstance().runProcess(() -> {
-          HighlightingSessionImpl.runInsideHighlightingSession(psiFile, editor.getColorsScheme(), ProperTextRange.create(psiFile.getTextRange()), false, session -> {
+          // todo ijpl-339 figure out what is the correct context here
+          HighlightingSessionImpl.runInsideHighlightingSession(psiFile, FileViewProviderUtil.getCodeInsightContext(psiFile), editor.getColorsScheme(), ProperTextRange.create(psiFile.getTextRange()), false, session -> {
             pass.doCollectInformation(session);
           });
         }, indicator);

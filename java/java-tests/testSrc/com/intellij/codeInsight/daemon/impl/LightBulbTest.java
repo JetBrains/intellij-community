@@ -15,6 +15,7 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -265,9 +266,9 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
         UIUtil.dispatchAllInvocationEvents();
         caretLeft();
         myDaemonCodeAnalyzer.restart();
-        assertFalse(myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument()));
+        assertFalse(myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument(), EditorContextManager.getEditorContext(myEditor, myProject)));
         long daemonStartDeadline = System.currentTimeMillis() + 5000;
-        while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument()) && System.currentTimeMillis() < daemonStartDeadline) { // wait until the daemon started
+        while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument(), EditorContextManager.getEditorContext(myEditor, myProject)) && System.currentTimeMillis() < daemonStartDeadline) { // wait until the daemon started
           UIUtil.dispatchAllInvocationEvents();
         }
         if (System.currentTimeMillis() > daemonStartDeadline) {

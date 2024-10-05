@@ -10,6 +10,8 @@ import com.intellij.codeInsight.daemon.ProblemHighlightFilter
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
+import com.intellij.codeInsight.multiverse.EditorContextManager
+import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.icons.AllIcons
@@ -57,7 +59,7 @@ import java.util.concurrent.CancellationException
 open class TrafficLightRenderer private constructor(
   protected val project: Project,
   private val document: Document,
-  editor: Editor?,
+  private val editor: Editor?,
   info: TrafficLightRendererInfo,
 ) : ErrorStripeRenderer, Disposable {
   private val daemonCodeAnalyzer: DaemonCodeAnalyzerImpl
@@ -121,7 +123,17 @@ open class TrafficLightRenderer private constructor(
     @JvmField val shouldHighlight: Boolean,
   )
 
-  private fun getPsiFile(): PsiFile? = PsiDocumentManager.getInstance(this.project).getPsiFile(document)
+  @RequiresReadLock
+  private fun  getPsiFile(): PsiFile? {
+    val context = if (editor != null) {
+      EditorContextManager.getEditorContext(editor, project)
+    }
+    else {
+      // todo ijpl-339 choose proper file here?
+      defaultContext()
+    }
+    return PsiDocumentManager.getInstance(project).getPsiFile(document, context)
+  }
 
   open val errorCounts: IntArray
     /**

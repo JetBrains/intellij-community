@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -589,6 +591,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   synchronized void assertMarkupDataConsistent(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
     if (!isAssertInvariants()) return;
     Collection<HighlightInfo> fromMarkup = getInfosFromMarkup(psiFile, toolIdPredicate);
+    // todo ijpl-339 process top level infos
     Set<HighlightInfo> fromData = new HashSet<>(getAllData(psiFile, toolIdPredicate));
 
     if (!new HashSet<>(fromMarkup).equals(fromData)) {
@@ -1236,11 +1239,16 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     TextAttributes infoAttributes = newInfo.getTextAttributes(psiFile, session.getColorsScheme());
     com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
       BackgroundUpdateHighlightersUtil.changeAttributes(finalHighlighter, newInfo, session.getColorsScheme(), psiFile, infoAttributes);
+
+      CodeInsightContext context = session.getCodeInsightContext();
+      CodeInsightContextHighlightingUtil.installCodeInsightContext(finalHighlighter, session.getProject(), context);
+
       newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
     };
     if (LOG.isDebugEnabled()) {
       LOG.debug("remap: create " + (recycled == null ? "(new RH)" : "(recycled)") + newInfo + currentProgressInfo());
     }
+
     RangeHighlighterEx highlighter;
     if (recycled == null) {
       // create new

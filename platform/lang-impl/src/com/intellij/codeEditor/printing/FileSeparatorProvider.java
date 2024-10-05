@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl;
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
@@ -27,7 +28,8 @@ final class FileSeparatorProvider {
     DaemonProgressIndicator indicator = new DaemonProgressIndicator();
 
     ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-      HighlightingSessionImpl.runInsideHighlightingSession(file, null, ProperTextRange.create(file.getTextRange()), false, __ -> {
+      // todo ijpl-339 figure out what is the correct context here
+      HighlightingSessionImpl.runInsideHighlightingSession(file, FileViewProviderUtil.getCodeInsightContext(file), null, ProperTextRange.create(file.getTextRange()), false, __ -> {
         for (LineMarkerInfo<?> lineMarkerInfo : LineMarkersPass.queryLineMarkers(file, document)) {
           if (lineMarkerInfo.separatorColor != null) {
             result.add(lineMarkerInfo);

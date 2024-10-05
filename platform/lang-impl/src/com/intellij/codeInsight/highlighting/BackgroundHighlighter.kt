@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
+import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
@@ -384,9 +385,13 @@ private fun submitIdentifierHighlighterPass(
     @Suppress("DEPRECATION")
     ProgressIndicatorUtils.runWithWriteActionPriority(
       {
-        val hostPsiFile = PsiDocumentManager.getInstance(newFile.project).getPsiFile(hostEditor.document)
+        val project = newFile.project
+        val hostPsiFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.document)
                           ?: return@runWithWriteActionPriority
+
+        val context = EditorContextManager.getEditorContext(hostEditor, project)
         HighlightingSessionImpl.runInsideHighlightingSession(hostPsiFile,
+                                                             context,
                                                              hostEditor.colorsScheme,
                                                              ProperTextRange.create(hostPsiFile.textRange),
                                                              false) {

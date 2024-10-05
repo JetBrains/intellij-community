@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,6 +53,7 @@ import java.util.stream.Collectors;
 public final class HighlightingSessionImpl implements HighlightingSession {
   private static final Logger LOG = Logger.getInstance(HighlightingSessionImpl.class);
   private final @NotNull PsiFile myPsiFile;
+  private final @NotNull CodeInsightContext myCodeInsightContext;
   private final @NotNull ProgressIndicator myProgressIndicator;
   private final EditorColorsScheme myEditorColorsScheme;
   private final @NotNull Project myProject;
@@ -69,6 +71,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   private volatile HighlightSeverity myMinimumSeverity;
 
   private HighlightingSessionImpl(@NotNull PsiFile psiFile,
+                                  @NotNull CodeInsightContext codeInsightContext,
                                   @NotNull DaemonProgressIndicator progressIndicator,
                                   @Nullable EditorColorsScheme editorColorsScheme,
                                   @NotNull ProperTextRange visibleRange,
@@ -76,6 +79,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                   @NotNull Number daemonCancelEventCount,
                                   @NotNull TextRange compositeDocumentDirtyRange) {
     myPsiFile = psiFile;
+    myCodeInsightContext = codeInsightContext;
     myProgressIndicator = progressIndicator;
     myEditorColorsScheme = editorColorsScheme;
     myProject = ReadAction.compute(() -> psiFile.getProject());
@@ -127,18 +131,20 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   static void getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
+                                             @NotNull CodeInsightContext codeInsightContext,
                                              @NotNull DaemonProgressIndicator progressIndicator,
                                              @NotNull ProperTextRange visibleRange,
                                              @NotNull TextRange compositeDocumentDirtyRange) {
     Map<PsiFile, List<HighlightingSession>> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     List<HighlightingSession> sessions = map == null ? null : map.get(psiFile);
     if (sessions == null) {
-      createHighlightingSession(psiFile, progressIndicator, null, visibleRange, CanISilentlyChange.Result.UH_UH, 0, compositeDocumentDirtyRange);
+      createHighlightingSession(psiFile, codeInsightContext, progressIndicator, null, visibleRange, CanISilentlyChange.Result.UH_UH, 0, compositeDocumentDirtyRange);
     }
   }
 
   @ApiStatus.Internal
   public static @NotNull HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
+                                                                    @NotNull CodeInsightContext codeInsightContext,
                                                                     @Nullable Editor editor,
                                                                     @Nullable EditorColorsScheme editorColorsScheme,
                                                                     @NotNull DaemonProgressIndicator progressIndicator,
@@ -149,10 +155,11 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     ProperTextRange visibleRange = editor == null ? ProperTextRange.create(ObjectUtils.notNull(fileRange, TextRange.EMPTY_RANGE))
                                   : editor.calculateVisibleRange();
     CanISilentlyChange.Result canChangeFileSilently = CanISilentlyChange.thisFile(psiFile);
-    return createHighlightingSession(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently, daemonCancelEventCount, compositeDocumentDirtyRange);
+    return createHighlightingSession(psiFile, codeInsightContext, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently, daemonCancelEventCount, compositeDocumentDirtyRange);
   }
 
   private static @NotNull HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
+                                                                            @NotNull CodeInsightContext codeInsightContext,
                                                                             @NotNull DaemonProgressIndicator progressIndicator,
                                                                             @Nullable EditorColorsScheme editorColorsScheme,
                                                                             @NotNull ProperTextRange visibleRange,
@@ -161,20 +168,21 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                                             @NotNull TextRange compositeDocumentDirtyRange) {
     // no assertIsDispatchThread() is necessary
     Map<PsiFile, List<HighlightingSession>> map = ConcurrencyUtil.computeIfAbsent(progressIndicator, HIGHLIGHTING_SESSION, () -> new ConcurrentHashMap<>());
-    HighlightingSessionImpl session = new HighlightingSessionImpl(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently, daemonCancelEventCount, compositeDocumentDirtyRange);
+    HighlightingSessionImpl session = new HighlightingSessionImpl(psiFile, codeInsightContext, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently, daemonCancelEventCount, compositeDocumentDirtyRange);
     map.compute(psiFile, (__, oldSessions) -> ContainerUtil.append(ContainerUtil.notNullize(oldSessions), session));
     return session;
   }
 
   @ApiStatus.Internal
   public static void runInsideHighlightingSession(@NotNull PsiFile file,
+                                                  @NotNull CodeInsightContext codeInsightContext,
                                                   @Nullable EditorColorsScheme editorColorsScheme,
                                                   @NotNull ProperTextRange visibleRange,
                                                   boolean canChangeFileSilently,
                                                   @NotNull Consumer<? super @NotNull HighlightingSession> runnable) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
-    HighlightingSessionImpl session = createHighlightingSession(file, indicator, editorColorsScheme, visibleRange, canChangeFileSilently
+    HighlightingSessionImpl session = createHighlightingSession(file, codeInsightContext, indicator, editorColorsScheme, visibleRange, canChangeFileSilently
                                                                                                                  ? CanISilentlyChange.Result.UH_HUH
                                                                                                                  : CanISilentlyChange.Result.UH_UH,
                                                                 0, TextRange.EMPTY_RANGE);
@@ -189,20 +197,19 @@ public final class HighlightingSessionImpl implements HighlightingSession {
 
   @ApiStatus.Internal
   static void runInsideHighlightingSessionInEDT(@NotNull PsiFile file,
+                                                @NotNull CodeInsightContext codeInsightContext,
                                                 @Nullable EditorColorsScheme editorColorsScheme,
                                                 @NotNull ProperTextRange visibleRange,
                                                 boolean canChangeFileSilently,
                                                 @NotNull Consumer<? super @NotNull HighlightingSession> runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!(ProgressIndicatorProvider.getGlobalProgressIndicator() instanceof DaemonProgressIndicator)) {
-      ProgressManager.getInstance().executeProcessUnderProgress(()->runInsideHighlightingSessionInEDT(file, editorColorsScheme, visibleRange, canChangeFileSilently, runnable), new DaemonProgressIndicator());
+      ProgressManager.getInstance().executeProcessUnderProgress(()->runInsideHighlightingSessionInEDT(file, codeInsightContext, editorColorsScheme, visibleRange, canChangeFileSilently, runnable), new DaemonProgressIndicator());
       return;
     }
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
-    HighlightingSessionImpl session = createHighlightingSession(file, indicator, editorColorsScheme, visibleRange, canChangeFileSilently
-                                                                                                                 ? CanISilentlyChange.Result.UH_HUH
-                                                                                                                 : CanISilentlyChange.Result.UH_UH,
-                                                                0, TextRange.EMPTY_RANGE);
+    CanISilentlyChange.Result result = canChangeFileSilently ? CanISilentlyChange.Result.UH_HUH : CanISilentlyChange.Result.UH_UH;
+    HighlightingSessionImpl session = createHighlightingSession(file, codeInsightContext, indicator, editorColorsScheme, visibleRange, result, 0, TextRange.EMPTY_RANGE);
     session.myInContent = true;
     try {
       runnable.accept(session);
@@ -291,6 +298,12 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   @Override
   public boolean isEssentialHighlightingOnly() {
     return myIsEssentialHighlightingOnly;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull CodeInsightContext getCodeInsightContext() {
+    return myCodeInsightContext;
   }
 
   @Override

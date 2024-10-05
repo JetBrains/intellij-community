@@ -2,6 +2,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.core.CoreBundle;
@@ -95,11 +96,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public @Nullable PsiFile getPsiFile(@NotNull Document document) {
+    return getPsiFile(document, CodeInsightContextKt.anyContext());
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable PsiFile getPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
     if (document instanceof DocumentWindow && !((DocumentWindow)document).isValid()) {
       return null;
     }
 
-    PsiFile psiFile = getCachedPsiFile(document);
+    PsiFile psiFile = getCachedPsiFile(document, context);
     if (psiFile != null) {
       return ensureValidFile(psiFile, "Cached PSI");
     }
@@ -107,7 +114,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !virtualFile.isValid()) return null;
 
-    psiFile = getPsiFile(virtualFile);
+    psiFile = getFileManager().findFile(virtualFile, context);
     if (psiFile == null) return null;
 
     fireFileCreated(document, psiFile);
@@ -134,9 +141,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public final PsiFile getCachedPsiFile(@NotNull Document document) {
+  public final @Nullable PsiFile getCachedPsiFile(@NotNull Document document) {
+    return getCachedPsiFile(document, CodeInsightContextKt.anyContext());
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public final PsiFile getCachedPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    return virtualFile == null || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile);
+    return virtualFile == null || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile, context);
   }
 
   /**
@@ -144,14 +157,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    * It's guaranteed to not perform any expensive ops like creating files/reparse/resurrecting PsiFile from temp comatose state.
    */
   @ApiStatus.Internal
-  public PsiFile getRawCachedFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context) {
+  public final @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context) {
     FileManagerImpl manager = ((FileManagerImpl)getFileManager());
     return manager.getRawCachedFile(virtualFile, context);
   }
 
   @Nullable
   @ApiStatus.Internal
-  public FileViewProvider getCachedViewProvider(@NotNull Document document) {
+  public final FileViewProvider getCachedViewProvider(@NotNull Document document) {
     VirtualFile virtualFile = getVirtualFile(document);
     if (virtualFile == null) return null;
     return getFileManager().findCachedViewProvider(virtualFile);
@@ -163,14 +176,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return virtualFile;
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public PsiFile getCachedPsiFile(@NotNull VirtualFile virtualFile) {
-    return getFileManager().getCachedPsiFile(virtualFile);
-  }
-
-  private @Nullable PsiFile getPsiFile(@NotNull VirtualFile virtualFile) {
-    return getFileManager().findFile(virtualFile);
+  public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context) {
+    return getFileManager().getCachedPsiFile(virtualFile, context);
   }
 
   private @NotNull FileManager getFileManager() {

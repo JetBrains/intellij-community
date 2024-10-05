@@ -6,6 +6,8 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -65,7 +67,11 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
       LOG.error(document + documentManager.someDocumentDebugInfo(document));
     }
 
-    PsiFile psiFile = renewFile(project, document);
+    CodeInsightContext context = editor != null
+                                 ? EditorContextManager.getEditorContext(editor, project)
+                                 : CodeInsightContextKt.anyContext();
+
+    PsiFile psiFile = renewFile(project, document, context);
     if (psiFile == null) return List.of();
 
     int[] effectivePassesToIgnore =
@@ -104,9 +110,8 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
   }
 
   @ApiStatus.Internal
-  public static @Nullable PsiFile renewFile(@NotNull Project project, @NotNull Document document)  {
-    // todo ijpl-339 use context here
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+  public static @Nullable PsiFile renewFile(@NotNull Project project, @NotNull Document document, @NotNull CodeInsightContext context)  {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document, context);
     if (psiFile instanceof PsiCompiledFile compiled) {
       psiFile = compiled.getDecompiledPsiFile();
     }

@@ -80,7 +80,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
       LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, markers, getId(), myHighlightingSession);
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-      fileStatusMap.markFileUpToDate(myDocument, getId());
+      fileStatusMap.markFileUpToDate(myDocument, getContext(), getId());
     }
     catch (IndexNotReadyException ignored) {
     }
@@ -110,7 +110,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
                elements.inside(), root, providersList, (__, info) -> {
                  info.updatePass = passId;
                  lineMarkers.add(info);
-                 LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
+                 LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info, myHighlightingSession);
                });
              queryProviders(elements.outside(), root, providersList,
                (__, info) -> {

@@ -11,6 +11,8 @@ import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeWithMe.ClientId;
@@ -554,11 +556,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
     // previous passes can be canceled but still in flight. wait for them to avoid interference
     myPassExecutorService.cancelAll(false, "DaemonCodeAnalyzerImpl.runPasses");
+
+    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(file); // todo ijpl-339 ???
+
     waitForUpdateFileStatusBackgroundQueueInTests(); // update the file status map before prohibiting its modifications
     FileStatusMap fileStatusMap = getFileStatusMap();
     fileStatusMap.runAllowingDirt(canChangeDocument, () -> {
       for (int ignoreId : passesToIgnore) {
-        fileStatusMap.markFileUpToDate(document, ignoreId);
+        fileStatusMap.markFileUpToDate(document, context, ignoreId);
       }
       ThrowableRunnable<Exception> doRunPasses = () -> doRunPasses(textEditor, passesToIgnore, canChangeDocument, callbackWhileWaiting);
       if (isDebugMode) {
@@ -579,7 +584,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       VirtualFile virtualFile = textEditor.getFile();
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       assert document != null : "Document is null for " + virtualFile + "; file type=" + virtualFile.getFileType();
-      PsiFile psiFile = TextEditorBackgroundHighlighter.renewFile(myProject, document);
+
+      Editor editor = textEditor.getEditor();
+      CodeInsightContext context = EditorContextManager.getEditorContext(editor, myProject);
+      PsiFile psiFile = TextEditorBackgroundHighlighter.renewFile(myProject, document, context);
       FileASTNode fileNode = psiFile.getNode();
       HighlightingSession session = queuePassesCreation(textEditor, virtualFile, passesToIgnore);
       if (session == null) {
@@ -856,20 +864,22 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     if (myDisposed) return false;
     assertMyFile(psiFile.getProject(), psiFile);
     Document document = psiFile.getViewProvider().getDocument();
+    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
     return document != null &&
            PsiDocumentManager.getInstance(myProject).isCommitted(document) &&
            document.getModificationStamp() == psiFile.getViewProvider().getModificationStamp() &&
-           myFileStatusMap.allDirtyScopesAreNull(document);
+           myFileStatusMap.allDirtyScopesAreNull(document, context);
   }
 
   @Override
   public boolean isErrorAnalyzingFinished(@NotNull PsiFile psiFile) {
     if (myDisposed) return false;
     assertMyFile(psiFile.getProject(), psiFile);
+    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
     Document document = psiFile.getViewProvider().getDocument();
     return document != null &&
            document.getModificationStamp() == psiFile.getViewProvider().getModificationStamp() &&
-           myFileStatusMap.getFileDirtyScope(document, psiFile, Pass.UPDATE_ALL) == null;
+           myFileStatusMap.getFileDirtyScope(document, context, psiFile, Pass.UPDATE_ALL) == null;
   }
 
   @Override
@@ -1327,7 +1337,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     try (AccessToken ignored = ClientId.withExplicitClientId(ClientFileEditorManager.getClientId(fileEditor))) {
       Document document = editor == null ? FileDocumentManager.getInstance().getCachedDocument(virtualFile) : editor.getDocument();
       EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
-      PsiFile psiFileToSubmit = TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, CodeInsightContextKt.anyContext()); // todo IJPL-339 fix me
+      CodeInsightContext context = editor != null
+                                   ? EditorContextManager.getEditorContext(editor, myProject)
+                                   : CodeInsightContextKt.anyContext();
+      PsiFile psiFileToSubmit = TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, context);
       if (psiFileToSubmit == null || document == null) {
         String reason = document == null ? "queuePassesCreation: couldn't submit" +  virtualFile + " because document is null: fileEditor="+ fileEditor+" ("+ fileEditor.getClass()+")"
                         : "queuePassesCreation: psiFile is null for "+virtualFile+"; PsiDocumentManager.getPsiFile()="+PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -1339,8 +1352,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             if (!myProject.isDisposed()) {
               // refresh current file and cache it (in background) so that FileDocumentManager.getCachedDocument above could retrieve it later
               Document renewedDocument = editor == null ? FileDocumentManager.getInstance().getDocument(virtualFile) : editor.getDocument();
+              CodeInsightContext renewedContext = editor != null
+                                                  ? EditorContextManager.getEditorContext(editor, myProject)
+                                                  : CodeInsightContextKt.anyContext();
               if (renewedDocument != null) {
-                TextEditorBackgroundHighlighter.renewFile(myProject, renewedDocument);
+                TextEditorBackgroundHighlighter.renewFile(myProject, renewedDocument, renewedContext);
               }
             }
           });
@@ -1349,7 +1365,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         return null;
       }
       TextRange compositeDocumentDirtyRange = myFileStatusMap.getCompositeDocumentDirtyRange(document);
-      session = HighlightingSessionImpl.createHighlightingSession(psiFileToSubmit, editor, scheme, progress, daemonCancelEventCount, compositeDocumentDirtyRange);
+      session = HighlightingSessionImpl.createHighlightingSession(psiFileToSubmit, context, editor, scheme, progress, daemonCancelEventCount, compositeDocumentDirtyRange);
       JobLauncher.getInstance().submitToJobThread(ThreadContext.captureThreadContext(Context.current().wrap(() ->
             submitInBackground(fileEditor, document, virtualFile, psiFileToSubmit, highlighter, passesToIgnore, progress, session))),
             // manifest exceptions in EDT to avoid storing them in the Future and abandoning
@@ -1418,7 +1434,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         }
         // synchronize on TextEditorHighlightingPassRegistrarImpl instance to avoid concurrent modification of TextEditorHighlightingPassRegistrarImpl.nextAvailableId
         synchronized (TextEditorHighlightingPassRegistrar.getInstance(myProject)) {
-          myPassExecutorService.submitPasses(document, virtualFile, psiFile, fileEditor, passes, progress);
+          myPassExecutorService.submitPasses(document, session.getCodeInsightContext(), virtualFile, psiFile, fileEditor, passes, progress);
         }
         ProgressManager.checkCanceled();
       }), progress);

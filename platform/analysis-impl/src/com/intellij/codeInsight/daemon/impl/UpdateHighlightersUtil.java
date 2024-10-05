@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.codeInsight.multiverse.*;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
@@ -169,7 +170,7 @@ public final class UpdateHighlightersUtil {
     }
     if (psiFile != null) {
       DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(group, psiFile);
-      HighlightingSessionImpl.runInsideHighlightingSessionInEDT(psiFile, colorsScheme, ProperTextRange.create(startOffset, endOffset), false, session ->
+      HighlightingSessionImpl.runInsideHighlightingSessionInEDT(psiFile, FileViewProviderUtil.getCodeInsightContext(psiFile), colorsScheme, ProperTextRange.create(startOffset, endOffset), false, session ->
         setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session)
       );
     }
@@ -187,7 +188,7 @@ public final class UpdateHighlightersUtil {
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     boolean[] changed = {false};
     HighlighterRecycler.runWithRecycler(session, infosToRemove -> {
-      DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
+      DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), session.getCodeInsightContext(), info -> {
         if (info.getGroup() == group) {
           int hiEnd = info.getEndOffset();
           boolean willBeRemoved = range.contains(info)
@@ -297,6 +298,9 @@ public final class UpdateHighlightersUtil {
 
     int layer = getLayer(info, severityRegistrar);
     TextAttributes infoAttributes = info.getTextAttributes(psiFile, colorsScheme);
+
+    CodeInsightContext context = highlightingSession.getCodeInsightContext();
+    Project project = highlightingSession.getProject();
     Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
       TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
       finalHighlighter.setTextAttributesKey(textAttributesKey);
@@ -316,6 +320,8 @@ public final class UpdateHighlightersUtil {
       finalHighlighter.setErrorStripeTooltip(info);
       GutterMark renderer = info.getGutterIconRenderer();
       finalHighlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
+
+      CodeInsightContextHighlightingUtil.installCodeInsightContext(finalHighlighter, project, context);
 
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };

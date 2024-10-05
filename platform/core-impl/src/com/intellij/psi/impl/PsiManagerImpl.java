@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,10 +28,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -163,10 +161,24 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     return myFileManager.findFile(file);
   }
 
+  @ApiStatus.Internal
+  @Override
+  public @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
+    ProgressIndicatorProvider.checkCanceled();
+    return myFileManager.findFile(file, context);
+  }
+
   @Override
   public @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findViewProvider(file);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
+    ProgressIndicatorProvider.checkCanceled();
+    return myFileManager.findViewProvider(file, context);
   }
 
   @Override

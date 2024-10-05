@@ -204,7 +204,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
         });
         if (success) {
           if (myUpdateAll) {
-            daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(myProject, getDocument(), myHasErrorSeverity);
+            daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(getDocument(), getContext(), myHasErrorSeverity);
             reportErrorsToWolf(myHasErrorSeverity);
           }
         }
