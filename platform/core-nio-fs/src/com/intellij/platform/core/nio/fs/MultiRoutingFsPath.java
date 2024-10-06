@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,8 @@ import java.util.Iterator;
 import java.util.Objects;
 
 @SuppressWarnings("UnnecessaryFullyQualifiedName")
-final class MultiRoutingFsPath implements Path, sun.nio.fs.BasicFileAttributesHolder {
+@ApiStatus.Internal
+public final class MultiRoutingFsPath implements Path, sun.nio.fs.BasicFileAttributesHolder {
   private final Path myDelegate;
   private final MultiRoutingFileSystem myFileSystem;
 
