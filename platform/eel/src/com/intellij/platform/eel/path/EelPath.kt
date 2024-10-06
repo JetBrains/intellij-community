@@ -228,6 +228,8 @@ sealed interface EelPath {
   }
 }
 
+operator fun EelPath.div(part: String): EelPath = resolve(EelPath.Relative.parse(part).getOrThrow()).getOrThrow()
+
 @Throws(InvalidPathException::class)
 fun <P : EelPath, E : EelPathError> EelResult<P, E>.getOrThrow(): P = getOrThrow { throw InvalidPathException(it.raw, it.reason) }
 
