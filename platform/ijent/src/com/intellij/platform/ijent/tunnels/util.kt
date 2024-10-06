@@ -8,18 +8,13 @@ import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.component1
 import com.intellij.platform.eel.component2
 import com.intellij.platform.eel.withConnectionToRemotePort
-import com.intellij.platform.ijent.*
+import com.intellij.platform.ijent.coroutineNameAppended
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.ServerSocket
-import java.net.Socket
-import java.net.SocketException
-import java.net.SocketTimeoutException
+import java.net.*
 import java.nio.ByteBuffer
 import java.util.concurrent.CancellationException
 import kotlin.time.Duration.Companion.seconds
@@ -58,11 +53,13 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
         val currentConnection = connectionCounter
         connectionCounter++
         launch {
-          tunnels.withConnectionToRemotePort(address, {
-            LOG.error("Failed to connect to remote port: $it")
-          }) { (channelTo, channelFrom) ->
-            redirectClientConnectionDataToIJent(currentConnection, socket, channelTo)
-            redirectIJentDataToClientConnection(currentConnection, socket, channelFrom)
+          socket.use {
+            tunnels.withConnectionToRemotePort(address, {
+              LOG.error("Failed to connect to remote port: $it")
+            }) { (channelTo, channelFrom) ->
+              redirectClientConnectionDataToIJent(currentConnection, socket, channelTo)
+              redirectIJentDataToClientConnection(currentConnection, socket, channelFrom)
+            }
           }
         }
       }
