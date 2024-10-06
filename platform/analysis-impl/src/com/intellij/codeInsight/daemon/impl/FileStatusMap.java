@@ -60,6 +60,8 @@ public final class FileStatusMap implements Disposable {
   public static @Nullable("null means the file is clean") TextRange getDirtyTextRange(@NotNull Editor editor, int passId) {
     Document document = editor.getDocument();
     Project project = editor.getProject();
+    if (project == null) return null;
+
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     return psiFile == null ? null : getDirtyTextRange(document, psiFile, passId);
   }
