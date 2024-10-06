@@ -22,20 +22,10 @@ public final class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
 
   @Override
   public boolean isHandled(@Nullable PsiElement element, @NotNull PsiClassType exceptionType, PsiElement topElement) {
-    PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, PsiTryStatement.class, PsiMethod.class);
-    if (parent instanceof PsiLambdaExpression) {
-      // lambda it's another scope, @SneakyThrows annotation can't neglect exceptions in lambda only on method, constructor
-      return false;
-    }
-    if (parent instanceof PsiTryStatement && isHandledByTryCatch(exceptionType, (PsiTryStatement)parent)) {
-      // that exception MAY be already handled by regular try-catch statement
+    if (isHandledByParent(element, exceptionType)) {
       return false;
     }
 
-    if (topElement instanceof PsiTryStatement && isHandledByTryCatch(exceptionType, (PsiTryStatement)topElement)) {
-      // that exception MAY be already handled by regular try-catch statement (don't forget about nested try-catch)
-      return false;
-    }
     if (!(topElement instanceof PsiCodeBlock)) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (psiMethod != null) {
@@ -47,6 +37,24 @@ public final class SneakyThrowsExceptionHandler extends CustomExceptionHandler {
       }
     }
     return false;
+  }
+
+  private static boolean isHandledByParent(@Nullable PsiElement element, @NotNull PsiClassType exceptionType) {
+    PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, PsiTryStatement.class, PsiMethod.class);
+    if(parent == null) {
+      return false;
+    } else if (parent instanceof PsiMethod) {
+      // we out of the scope of the method, so the exception wasn't handled inside the method
+      return false;
+    } else if (parent instanceof PsiLambdaExpression) {
+      // lambda it's another scope, @SneakyThrows annotation can't neglect exceptions in lambda only on method, constructor
+      return true;
+    } else if (parent instanceof PsiTryStatement && isHandledByTryCatch(exceptionType, (PsiTryStatement) parent)) {
+      // that exception MAY be already handled by regular try-catch statement
+      return true;
+    }
+    // in case if the try block inside the lambda or inside another try-catch. GitHub issue: 1170
+    return isHandledByParent(parent, exceptionType);
   }
 
   private static boolean isConstructorMethodWithExceptionInSiblingConstructorCall(@NotNull PsiMethod containingMethod,
