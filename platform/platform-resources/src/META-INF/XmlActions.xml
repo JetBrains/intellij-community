@@ -16,7 +16,7 @@
       <add-to-group group-id="NewWebDevelopment" anchor="first"/>
     </group>
 
-    <group id="NewXmlDescriptor" class="com.intellij.ide.actions.NonTrivialActionGroup" popup="true" icon="AllIcons.FileTypes.Xml">
+    <group id="NewXmlDescriptor" class="com.intellij.xml.actions.CreateXmlDescriptorGroup" popup="true" icon="AllIcons.FileTypes.Xml">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 

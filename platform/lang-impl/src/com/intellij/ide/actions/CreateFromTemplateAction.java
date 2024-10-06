@@ -31,6 +31,10 @@ import java.util.function.Supplier;
 
 public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction implements WriteActionAware {
 
+  /**
+   * @deprecated Declare your own LOG where needed.
+   */
+  @Deprecated
   protected static final Logger LOG = Logger.getInstance(CreateFromTemplateAction.class);
 
   protected CreateFromTemplateAction() {

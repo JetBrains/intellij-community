@@ -4,6 +4,7 @@ package org.editorconfig.configmanagement.create;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.actions.NewFileActionWithCategory;
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.lang.Language;
 import com.intellij.notification.Notification;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;
 
-public final class CreateEditorConfigAction extends AnAction implements DumbAware {
+public final class CreateEditorConfigAction extends AnAction implements DumbAware, NewFileActionWithCategory {
   private final static Logger LOG = Logger.getInstance(CreateEditorConfigAction.class);
 
   @Override
@@ -75,6 +76,11 @@ public final class CreateEditorConfigAction extends AnAction implements DumbAwar
         }
       }
     }
+  }
+
+  @Override
+  public @NotNull String getCategory() {
+    return "EditorConfig";
   }
 
   @Nullable

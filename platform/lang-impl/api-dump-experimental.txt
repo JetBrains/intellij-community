@@ -482,6 +482,10 @@ c:com.intellij.find.actions.FindUsagesAction
 - a:getSearchTarget():com.intellij.find.usages.api.SearchTarget
 *:com.intellij.find.usages.symbol.SymbolSearchTargetFactory
 - a:searchTarget(com.intellij.openapi.project.Project,com.intellij.model.Symbol):com.intellij.find.usages.api.SearchTarget
+*:com.intellij.ide.actions.NewFileActionCategoryHandler
+- a:isVisible(com.intellij.openapi.actionSystem.DataContext,java.lang.String):com.intellij.util.ThreeState
+*:com.intellij.ide.actions.NewFileActionWithCategory
+- a:getCategory():java.lang.String
 *:com.intellij.ide.actions.searcheverywhere.PromoAction
 - a:getCallToAction():java.lang.String
 - a:getPromotedProductIcon():javax.swing.Icon

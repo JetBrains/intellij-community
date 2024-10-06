@@ -8271,6 +8271,8 @@ a:com.intellij.ide.actions.CreateFromTemplateAction
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.ide.actions.CreateTemplateInPackageAction
 - com.intellij.ide.actions.CreateFromTemplateAction
+- com.intellij.ide.actions.NewFileActionWithCategory
+- sf:JAVA_NEW_FILE_CATEGORY:java.lang.String
 - p:<init>(java.lang.String,java.lang.String,javax.swing.Icon,java.util.Set):V
 - p:<init>(java.util.function.Supplier,java.util.function.Supplier,java.util.function.Supplier,java.util.Set):V
 - p:<init>(java.util.function.Supplier,java.util.function.Supplier,javax.swing.Icon,java.util.Set):V
@@ -8279,6 +8281,7 @@ a:com.intellij.ide.actions.CreateTemplateInPackageAction
 - pa:checkPackageExists(com.intellij.psi.PsiDirectory):Z
 - p:createFile(java.lang.String,java.lang.String,com.intellij.psi.PsiDirectory):com.intellij.psi.PsiElement
 - pa:doCreate(com.intellij.psi.PsiDirectory,java.lang.String,java.lang.String):com.intellij.psi.PsiElement
+- getCategory():java.lang.String
 - pa:getNavigationElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - p:isAvailable(com.intellij.openapi.actionSystem.DataContext):Z
 - s:isAvailable(com.intellij.openapi.actionSystem.DataContext,java.util.Set,java.util.function.Predicate):Z
@@ -11382,30 +11385,6 @@ c:com.intellij.ide.scratch.ScratchFileActions$ChangeLanguageAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - p:getChangeLanguageActionName(java.lang.String):java.lang.String
 - p:getChangeLanguageTitle():java.lang.String
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.scratch.ScratchFileActions$ExportToScratchAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.scratch.ScratchFileActions$NewBufferAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.scratch.ScratchFileActions$NewFileAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.scratch.ScratchFileActions$ShowFilesPopupAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.ide.scratch.ScratchFileCreationHelper
 - sf:EXTENSION:com.intellij.lang.LanguageExtension

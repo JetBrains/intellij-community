@@ -7,6 +7,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -26,9 +27,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Supplier;
 
-/**
- * @author Dmitry Avdeev
- */
 public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAction<PsiFile> {
 
   protected CreateFileFromTemplateAction() {
@@ -114,7 +112,7 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
       throw e;
     }
     catch (Exception e) {
-      LOG.error(e);
+      Logger.getInstance(CreateFileFromTemplateAction.class).error(e);
     }
 
     return null;

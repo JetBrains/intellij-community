@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateDirectoryOrPackageHandler;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
+import com.intellij.ide.actions.NewFileActionWithCategory;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -31,11 +32,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
-public final class CreatePackageAction extends DumbAwareAction {
+public final class CreatePackageAction extends DumbAwareAction implements NewFileActionWithCategory {
   private static final Logger LOG = Logger.getInstance(CreatePackageAction.class);
+
   private static final @NonNls String NAMESPACE_PACKAGE_TYPE = "Namespace Package";
   private static final @NonNls String ORDINARY_PACKAGE_TYPE = "Package";
-
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -92,6 +93,11 @@ public final class CreatePackageAction extends DumbAwareAction {
                      return PyBundle.message("command.name.create.new.package", name);
                    }
                  }, EmptyConsumer.getInstance());
+  }
+
+  @Override
+  public @NotNull String getCategory() {
+    return "Python";
   }
 
   private static CreateDirectoryOrPackageHandler getNewOrdinaryPackageHandler(@NotNull Project project,

@@ -1658,6 +1658,10 @@
                     implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix"/>
     <stripTrailingSpacesFilterFactory implementation="com.intellij.codeEditor.JavaStripTrailingSpacesFilterFactory"/>
 
+    <advancedSetting id="java.show.irrelevant.templates.in.source.roots" default="false"
+                     groupKey="advanced.settings.group.java" bundle="messages.JavaBundle"/>
+    <newFileActionCategoryHandler implementation="com.intellij.ide.actions.JavaNewFileCategoryHandler"/>
+
     <inspection.basicVisitor class="com.intellij.psi.JavaElementVisitor"/>
 
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"

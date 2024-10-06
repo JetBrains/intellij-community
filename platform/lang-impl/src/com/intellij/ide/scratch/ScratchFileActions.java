@@ -3,6 +3,7 @@ package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.NewActionGroup;
+import com.intellij.ide.actions.NewFileActionWithCategory;
 import com.intellij.ide.actions.RecentLocationsAction;
 import com.intellij.ide.scratch.ScratchImplUtil.LanguageItem;
 import com.intellij.ide.util.DeleteHandler;
@@ -62,8 +63,7 @@ public final class ScratchFileActions {
     return ourCurrentBuffer;
   }
 
-
-  public static final class NewFileAction extends DumbAwareAction {
+  static final class NewFileAction extends DumbAwareAction implements NewFileActionWithCategory {
     private static final String ACTION_ID = "NewScratchFile";
 
     private final NotNullLazyValue<@Nls String> myActionText = NotNullLazyValue.lazy(() -> {
@@ -169,9 +169,14 @@ public final class ScratchFileActions {
         presentation.setIcon(null);
       }
     }
+
+    @Override
+    public @NotNull String getCategory() {
+      return "Scratch";
+    }
   }
 
-  public static final class NewBufferAction extends DumbAwareAction {
+  static final class NewBufferAction extends DumbAwareAction {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -388,7 +393,7 @@ public final class ScratchFileActions {
     }
   }
 
-  public static final class ShowFilesPopupAction extends DumbAwareAction {
+  static final class ShowFilesPopupAction extends DumbAwareAction {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
@@ -447,7 +452,7 @@ public final class ScratchFileActions {
     }
   }
 
-  public static final class ExportToScratchAction extends DumbAwareAction {
+  static final class ExportToScratchAction extends DumbAwareAction {
     {
       setEnabledInModalContext(true);
     }
