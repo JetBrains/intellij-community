@@ -11,7 +11,7 @@ import javax.swing.JPanel
 import kotlin.math.max
 import kotlin.math.min
 
-internal class InnerComponent : JPanel() {
+class InnerComponent : JPanel() {
   data class Constraint(val widthStretching: NotebookOutputComponentFactory.WidthStretching, val limitedHeight: Boolean)
 
   var maxHeight: Int = Int.MAX_VALUE
