@@ -13,7 +13,8 @@ abstract class LogicalModelPresentationProvider<T>: PresentationProvider<T>() {
     private val PROVIDERS = ClassExtension<PresentationProvider<*>>(PROVIDER_EP.name)
 
     fun <T> getForObject(obj: T): LogicalModelPresentationProvider<T>? {
-      return PROVIDERS.findSingle(obj!!::class.java) as? LogicalModelPresentationProvider<T>
+      return PROVIDERS.forKey(obj!!::class.java)
+        .firstOrNull { it is LogicalModelPresentationProvider<*> } as? LogicalModelPresentationProvider<T>
     }
   }
 
