@@ -13,10 +13,11 @@ import javax.swing.JComponent
 class FloatingToolbar(
   private val ownerComponent: JComponent,
   actionGroup: ActionGroup,
-  private val parentDisposable: Disposable
+  private val parentDisposable: Disposable,
 ) : AbstractFloatingToolbarComponent(actionGroup, parentDisposable) {
 
   override val autoHideable: Boolean = true
+
   private var boundsWithoutScrolling: Rectangle? = null
 
   override fun isComponentOnHold(): Boolean {
@@ -45,7 +46,22 @@ class FloatingToolbar(
     setBounds(bounds.x, bounds.y - scrollingDy, bounds.width, bounds.height)
   }
 
+  @ApiStatus.Internal
+  fun setX(x: Int) {
+    val oldBounds = boundsWithoutScrolling ?: bounds
+    setBoundsWithScrollingDy(
+      x,
+      oldBounds.getY().toInt(),
+      oldBounds.getWidth().toInt(),
+      oldBounds.getHeight().toInt(),
+      oldBounds.getY().toInt() - bounds.getY().toInt()
+    )
+  }
+
   init {
     init(ownerComponent)
+    showingTime = 150
+    hidingTime = 50
+    //backgroundAlpha = 1F
   }
 }

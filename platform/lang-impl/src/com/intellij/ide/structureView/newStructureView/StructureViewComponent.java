@@ -78,6 +78,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
@@ -186,12 +188,16 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       (ActionGroup) ActionManager.getInstance().getAction(ActionPlaces.STRUCTURE_VIEW_FLOATING_TOOLBAR),
       this
     );
-    floatingToolbar.setShowingTime(150);
-    floatingToolbar.setHidingTime(50);
     layeredPane.add(content, JLayeredPane.DEFAULT_LAYER);
     layeredPane.add(floatingToolbar, JLayeredPane.POPUP_LAYER);
     setContent(layeredPane);
     content.getVerticalScrollBar().addAdjustmentListener(event -> floatingToolbar.setScrollingDy(event.getValue()));
+    addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        floatingToolbar.setX(getBounds().width - 50);
+      }
+    });
 
     myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
@@ -1012,9 +1018,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
           }
           floatingToolbar.hideImmediately();
           floatingToolbar.setBoundsWithScrollingDy(
-            getParent().getBounds().width - 70,
+            getParent().getBounds().width - 50,
             pathBounds.y - 5,
-            60,
+            40,
             pathBounds.height + 5,
             scrollDy
           );

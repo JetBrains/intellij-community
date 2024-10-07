@@ -32,6 +32,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl.Companion.isLight
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isTooLargeForIntellijSense
@@ -349,11 +350,15 @@ class StructureViewWrapperImpl(private val project: Project,
 
   private suspend fun rebuildImpl() {
     val container: Container = myToolWindow.component
-    val wasFocused = UIUtil.isFocusAncestor(container)
     val contentManager = myToolWindow.contentManager
+    var wasFocused: Boolean
     withContext(Dispatchers.EDT) {
+      wasFocused = UIUtil.isFocusAncestor(container)
       if (myStructureView != null) {
         myStructureView!!.storeState()
+        contentManager.selectedContent?.tabName
+          ?.takeIf { it.isNotEmpty() }
+          ?.let { project.putUserData(STRUCTURE_VIEW_SELECTED_TAB_KEY, it) }
         Disposer.dispose(myStructureView!!)
         myStructureView = null
         myFileEditor = null
@@ -435,6 +440,10 @@ class StructureViewWrapperImpl(private val project: Project,
       for (i in panels.indices) {
         val content = ContentFactory.getInstance().createContent(panels[i], names[i], false)
         contentManager.addContent(content)
+        val previouslySelectedTab = project.getUserData(STRUCTURE_VIEW_SELECTED_TAB_KEY)
+        if (panels.size > 1 && names[i] == previouslySelectedTab) {
+          contentManager.setSelectedContent(content)
+        }
         if (i == 0 && myStructureView != null) {
           Disposer.register(content, myStructureView!!)
         }
@@ -523,6 +532,7 @@ class StructureViewWrapperImpl(private val project: Project,
     @ApiStatus.Experimental
     @JvmField
     val STRUCTURE_VIEW_TARGET_FILE_KEY: DataKey<Optional<VirtualFile?>> = DataKey.create("STRUCTURE_VIEW_TARGET_FILE_KEY")
+    private val STRUCTURE_VIEW_SELECTED_TAB_KEY: Key<String> = Key.create("STRUCTURE_VIEW_SELECTED_TAB")
 
     private val LOG = Logger.getInstance(StructureViewWrapperImpl::class.java)
     private val WRAPPER_DATA_KEY = DataKey.create<StructureViewWrapper>("WRAPPER_DATA_KEY")
