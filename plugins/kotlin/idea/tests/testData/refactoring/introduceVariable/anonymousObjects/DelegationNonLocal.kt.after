@@ -1,0 +1,7 @@
+// IGNORE_K1
+interface A
+interface B
+
+val a: A = object : A, B {}
+
+class Impl : A by a

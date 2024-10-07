@@ -1,0 +1,8 @@
+// IGNORE_K1
+interface A
+interface B
+
+class ClassPropertyAmbiguous {
+    val b1: A = object : B, A {}
+    val b: A = b1
+}

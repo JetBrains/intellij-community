@@ -21,6 +21,70 @@ import org.junit.runner.RunWith;
 @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable")
 public abstract class K2IntroduceVariableTestGenerated extends AbstractK2IntroduceVariableTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects")
+    public static class AnonymousObjects extends AbstractK2IntroduceVariableTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ClassProperty.kt")
+        public void testClassProperty() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/ClassProperty.kt");
+        }
+
+        @TestMetadata("ClassPropertyAmbiguous.kt")
+        public void testClassPropertyAmbiguous() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/ClassPropertyAmbiguous.kt");
+        }
+
+        @TestMetadata("DefaultParamLocal.kt")
+        public void testDefaultParamLocal() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/DefaultParamLocal.kt");
+        }
+
+        @TestMetadata("DefaultParamNonLocal.kt")
+        public void testDefaultParamNonLocal() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/DefaultParamNonLocal.kt");
+        }
+
+        @TestMetadata("DefaultParamNonLocalAmbiguous.kt")
+        public void testDefaultParamNonLocalAmbiguous() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/DefaultParamNonLocalAmbiguous.kt");
+        }
+
+        @TestMetadata("DelegationLocal.kt")
+        public void testDelegationLocal() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/DelegationLocal.kt");
+        }
+
+        @TestMetadata("DelegationNonLocal.kt")
+        public void testDelegationNonLocal() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/DelegationNonLocal.kt");
+        }
+
+        @TestMetadata("NoContext.kt")
+        public void testNoContext() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/NoContext.kt");
+        }
+
+        @TestMetadata("NoSupertypes.kt")
+        public void testNoSupertypes() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/NoSupertypes.kt");
+        }
+
+        @TestMetadata("Param.kt")
+        public void testParam() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/anonymousObjects/Param.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/introduceVariable/collectionElement")
     public static class CollectionElement extends AbstractK2IntroduceVariableTest {
         @java.lang.Override
@@ -668,11 +732,6 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("AnonymousType.kt")
-        public void testAnonymousType() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/introduceVariable/AnonymousType.kt");
         }
 
         @TestMetadata("ArrayAccessExpr.kt")

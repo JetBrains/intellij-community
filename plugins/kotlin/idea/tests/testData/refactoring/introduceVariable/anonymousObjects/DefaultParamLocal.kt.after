@@ -1,0 +1,8 @@
+// IGNORE_K1
+interface A
+interface B
+
+fun bar() {
+    val a = object : A, B {}
+    fun foo(b: B = a) {}
+}
