@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 
 class ReaderModeDefaultsOverrideImpl : ReaderModeDefaultsOverride {
   override val showWarningsDefault = false
+  override fun getEnableVirtualFormattingDefault() = true
 }
 
 @State(name = "ReaderModeSettings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], perClient = true)
@@ -24,7 +25,7 @@ class ReaderModeSettingsImpl(override val coroutineScope: CoroutineScope) : Pers
     }
 
     var visualFormattingChosenScheme: SchemeState by property(SchemeState())
-    @get:ReportValue var enableVisualFormatting: Boolean by property(true)
+    @get:ReportValue var enableVisualFormatting: Boolean by property(ReaderModeDefaultsOverride.getInstance().getEnableVirtualFormattingDefault())
     @get:ReportValue var useActiveSchemeForVisualFormatting: Boolean by property(true)
     @get:ReportValue var showLigatures: Boolean by property(EditorColorsManager.getInstance().globalScheme.fontPreferences.useLigatures())
     @get:ReportValue var increaseLineSpacing: Boolean by property(false)
