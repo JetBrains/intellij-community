@@ -1,8 +1,8 @@
-09:47:03: Executing ':cleanJvmTest :jvmTest --tests "foo.bar.CommonTest"'…
-09:47:06: Execution finished ':cleanJvmTest :jvmTest --tests "foo.bar.CommonTest"'.
+<time>: Executing ':cleanJvmTest :jvmTest --tests "foo.bar.CommonTest"'…
+<time>: Execution finished ':cleanJvmTest :jvmTest --tests "foo.bar.CommonTest"'.
 
 
-com.intellij.openapi.externalSystem.model.ExternalSystemException: There were failing tests. See the report at: file:///private/var/folders/1j/4f6kfm9d3fq98slcxvk2dr7c0000gn/T/unitTest_commonTest_2mbEIjqWRHVprTFR6f21p0INRfd/tmp/testDir1727336800275/project/build/reports/tests/jvmTest/index.html
-org.gradle.api.internal.exceptions.MarkedVerificationException: There were failing tests. See the report at: file:///private/var/folders/1j/4f6kfm9d3fq98slcxvk2dr7c0000gn/T/unitTest_commonTest_2mbEIjqWRHVprTFR6f21p0INRfd/tmp/testDir1727336800275/project/build/reports/tests/jvmTest/index.html
+com.intellij.openapi.externalSystem.model.ExternalSystemException: There were failing tests. See the report at: file:
+org.gradle.api.internal.exceptions.MarkedVerificationException: There were failing tests. See the report at: file:
 
 <exitCode: 1>
