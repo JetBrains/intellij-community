@@ -1,30 +1,18 @@
 <component name="libraryTable">
   <library name="pty4j" type="repository">
-    <properties maven-id="org.jetbrains.pty4j:pty4j:0.12.35">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.pty4j:pty4j:0.13.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.35/pty4j-0.12.35.jar">
-          <sha256sum>5cc94b4f25919137ab443c1db6271507da5994448b1842ce0729d906c1489b00</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/purejavacomm/0.0.11.1/purejavacomm-0.0.11.1.jar">
-          <sha256sum>31c048a86057e07272429aa26e90713edbde96af9747362f27470d8e86a398a3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.13.0/pty4j-0.13.0.jar">
+          <sha256sum>7c32981abb52efa20560ffbc506d160cb5c8c213e302decfeb5de86a845e7738</sha256sum>
         </artifact>
       </verification>
-      <exclude>
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-        <dependency maven-id="org.jetbrains:annotations" />
-        <dependency maven-id="org.slf4j:slf4j-api" />
-        <dependency maven-id="net.java.dev.jna:jna" />
-        <dependency maven-id="net.java.dev.jna:jna-platform" />
-      </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.35/pty4j-0.12.35.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/purejavacomm/0.0.11.1/purejavacomm-0.0.11.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.13.0/pty4j-0.13.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.12.35/pty4j-0.12.35-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/purejavacomm/0.0.11.1/purejavacomm-0.0.11.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.13.0/pty4j-0.13.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

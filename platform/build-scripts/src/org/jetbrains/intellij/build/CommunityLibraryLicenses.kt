@@ -994,9 +994,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("pty4j", libraryName = "pty4j", url = "https://github.com/JetBrains/pty4j")
       .eplV1("https://github.com/JetBrains/pty4j/blob/master/LICENSE"),
 
-    LibraryLicense("PureJavaComm", libraryName = "pty4j", transitiveDependency = true, version = "0.0.11.1", url = "https://github.com/nyholku/purejavacomm")
-      .newBsd("https://github.com/nyholku/purejavacomm/blob/master/LICENSE.txt"),
-
     LibraryLicense("pycodestyle", version = "2.8.0", attachedTo = "intellij.python", url = "https://pycodestyle.pycqa.org/")
       .mit("https://github.com/PyCQA/pycodestyle/blob/main/LICENSE"),
 
