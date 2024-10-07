@@ -246,7 +246,21 @@ private class ElementsBuilder {
 
     override fun getValue(): Any = grouper
 
-    override fun getPresentation(): ItemPresentation = getPresentationData(grouper)
+    override fun getPresentation(): ItemPresentation {
+      if (grouper is ContainerElementsProvider<*, *>) {
+        val presentationProvider = LogicalContainerPresentationProvider.getForObject(grouper)
+        if (presentationProvider != null) {
+          val coloredText = presentationProvider.getColoredText(parentAssembledModel.model!!)
+          val presentationData = PresentationData()
+          if (coloredText.isNotEmpty()) {
+            coloredText.forEach(presentationData::addText)
+            presentationData.setIcon(presentationProvider.getIcon(grouper))
+            return presentationData
+          }
+        }
+      }
+      return getPresentationData(grouper)
+    }
 
     override fun getChildren(): Array<TreeElement> {
       if (grouper is ExternalElementsProvider<*, *>) {
