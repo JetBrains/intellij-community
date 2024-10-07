@@ -20,7 +20,7 @@
       description="KInference model version"
       key="intellij.platform.ml.embeddings.ki.model.version"/>
 
-    <registryKey defaultValue="2.0.142"
+    <registryKey defaultValue="2.0.143"
                  description="Embeddings native server version"
                  key="intellij.platform.ml.embeddings.server.version"/>
 

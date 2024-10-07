@@ -47,6 +47,23 @@ public object start_requestKt {
     public fun hasLocation(): kotlin.Boolean {
       return _builder.hasLocation()
     }
+
+    /**
+     * <code>bool remove_unseen_keys = 2;</code>
+     */
+    public var removeUnseenKeys: kotlin.Boolean
+      @JvmName("getRemoveUnseenKeys")
+      get() = _builder.getRemoveUnseenKeys()
+      @JvmName("setRemoveUnseenKeys")
+      set(value) {
+        _builder.setRemoveUnseenKeys(value)
+      }
+    /**
+     * <code>bool remove_unseen_keys = 2;</code>
+     */
+    public fun clearRemoveUnseenKeys() {
+      _builder.clearRemoveUnseenKeys()
+    }
   }
 }
 public inline fun org.jetbrains.embeddings.local.server.stubs.Embeddings.start_request.copy(block: org.jetbrains.embeddings.local.server.stubs.start_requestKt.Dsl.() -> kotlin.Unit): org.jetbrains.embeddings.local.server.stubs.Embeddings.start_request =
