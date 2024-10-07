@@ -63,6 +63,9 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[THREADS_LIST] = this
+    stackUnderMouse?.stack?.let {
+      sink[XExecutionStack.SELECTED_STACKS] = listOf(it)
+    }
   }
 
   private fun doInit() {

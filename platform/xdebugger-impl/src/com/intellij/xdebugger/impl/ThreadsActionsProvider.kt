@@ -6,12 +6,18 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface ThreadsActionsProvider {
-  val freezeThreadHandler: DebuggerActionHandler?
+  val freezeActiveThreadHandler: DebuggerActionHandler?
     get() = null
-  val thawThreadHandler: DebuggerActionHandler?
+  val thawActiveThreadHandler: DebuggerActionHandler?
     get() = null
-  val freezeOtherThreadsHandler: DebuggerActionHandler?
+  val freezeInactiveThreadsHandler: DebuggerActionHandler?
     get() = null
   val thawAllThreadsHandler: DebuggerActionHandler?
+    get() = null
+  val freezeInactiveThreadsAmongSelectedHandler: DebuggerActionHandler?
+    get() = null
+  val freezeSelectedThreads: DebuggerActionHandler?
+    get() = null
+  val thawSelectedThreads: DebuggerActionHandler?
     get() = null
 }

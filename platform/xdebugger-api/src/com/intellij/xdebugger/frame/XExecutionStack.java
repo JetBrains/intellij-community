@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.frame;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.xdebugger.Obsolescent;
@@ -18,6 +19,8 @@ import java.util.List;
  * 'Debug' tool window
  */
 public abstract class XExecutionStack {
+  public static final DataKey<List<XExecutionStack>> SELECTED_STACKS = DataKey.create("XExecutionStacks");
+
   public static final XExecutionStack[] EMPTY_ARRAY = new XExecutionStack[0];
   private final @Nls String myDisplayName;
   private Icon myIcon;

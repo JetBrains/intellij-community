@@ -18,10 +18,10 @@ package com.intellij.xdebugger.impl.actions;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
-public class ThawThreadAction extends XDebuggerIdeCustomizableAction {
+public class FreezeInactiveThreadsAmongSelectedAction extends XDebuggerIdeCustomizableAction {
   @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
-    return DebuggerThreadActionHandler.ThawThread;
+    return DebuggerThreadActionHandler.FreezeInactiveThreadsAmongSelected;
   }
 }

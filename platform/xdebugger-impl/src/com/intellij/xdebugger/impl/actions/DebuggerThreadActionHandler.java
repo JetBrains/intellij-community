@@ -27,10 +27,14 @@ import java.util.function.Function;
 
 public class DebuggerThreadActionHandler extends DebuggerActionHandler {
 
-  public static final DebuggerThreadActionHandler FreezeThread = new DebuggerThreadActionHandler(provider -> provider.getFreezeThreadHandler());
-  public static final DebuggerThreadActionHandler ThawThread = new DebuggerThreadActionHandler(provider -> provider.getThawThreadHandler());
-  public static final DebuggerThreadActionHandler FreezeOtherThreads = new DebuggerThreadActionHandler(provider -> provider.getFreezeOtherThreadsHandler());
+  public static final DebuggerThreadActionHandler FreezeActiveThread = new DebuggerThreadActionHandler(provider -> provider.getFreezeActiveThreadHandler());
+  public static final DebuggerThreadActionHandler ThawActiveThread = new DebuggerThreadActionHandler(provider -> provider.getThawActiveThreadHandler());
+  public static final DebuggerThreadActionHandler FreezeInactiveThreads = new DebuggerThreadActionHandler(provider -> provider.getFreezeInactiveThreadsHandler());
   public static final DebuggerThreadActionHandler ThawAllThreads = new DebuggerThreadActionHandler(provider -> provider.getThawAllThreadsHandler());
+
+  public static final DebuggerThreadActionHandler FreezeInactiveThreadsAmongSelected = new DebuggerThreadActionHandler(provider -> provider.getFreezeInactiveThreadsAmongSelectedHandler());
+  public static final DebuggerThreadActionHandler FreezeSelectedThreads = new DebuggerThreadActionHandler(provider -> provider.getFreezeSelectedThreads());
+  public static final DebuggerThreadActionHandler ThawSelectedThreads = new DebuggerThreadActionHandler(provider -> provider.getThawSelectedThreads());
 
   private final Function<ThreadsActionsProvider, DebuggerActionHandler> myGetHandler;
 
