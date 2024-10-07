@@ -70,15 +70,6 @@ fun ChangeScope.cascadeDelete(parent: Entity, child: Entity?) {
   }
 }
 
-fun <T : LegacyEntity> ChangeScope.newOrMutateSingleton(c: KClass<T>, initMutate: T.() -> Unit): T {
-  val res = byEntityType(c)
-  return when {
-    res.isEmpty() -> new(c, defaultPart, initMutate)
-    res.size == 1 -> res.single().apply(initMutate)
-    else -> error("entity of type $c is not single: $res")
-  }
-}
-
 
 suspend inline fun <reified E : LegacyEntity, R : Any> getOrCreate(property: KMutableProperty1<E, R>,
                                                              value: R,
