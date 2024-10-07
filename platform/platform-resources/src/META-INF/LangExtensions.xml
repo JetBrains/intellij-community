@@ -790,6 +790,9 @@
 
     <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.DefaultFindUsagesHandlerFactory" id="default" order="last"/>
     <usageTargetProvider implementation="com.intellij.find.findUsages.DefaultUsageTargetProvider" id="default" order="last"/>
+    <registryKey defaultValue="false"
+                 description="If enabled, the Show Usages popup will always use the last size and won't try to be smart about it"
+                 key="find.usages.disable.smart.size" />
 
     <cutElementMarker implementation="com.intellij.ide.PsiCutElementMarker"/>
 

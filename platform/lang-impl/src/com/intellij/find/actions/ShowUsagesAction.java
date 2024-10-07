@@ -1417,6 +1417,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                    boolean showCodePreview,
                                    int dataSize) {
 
+    if (Registry.is("find.usages.disable.smart.size", false)) return;
+
     if (isCodeWithMeClientInstance(popup)) return;
 
     Component toolbarComponent = ((BorderLayout)popup.getComponent().getLayout()).getLayoutComponent(BorderLayout.NORTH);
