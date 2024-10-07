@@ -58,6 +58,11 @@
                      groupBundle="messages.PropertiesBundle" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.lang.properties.UnusedMessageFormatParameterInspection"/>
+    <localInspection groupPath="Java" language="UAST" shortName="UnsupportedCharacter" bundle="messages.JavaI18nBundle"
+                     key="unsupported.character.display.name"
+                     groupBundle="messages.PropertiesBundle" groupKey="properties.files.inspection.group.display.name"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.lang.properties.UnsupportedCharacterInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DuplicateStringLiteralInspection" bundle="messages.JavaI18nBundle"
                      key="inspection.duplicates.display.name" groupKey="group.names.internationalization.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false"
                      level="WARNING"

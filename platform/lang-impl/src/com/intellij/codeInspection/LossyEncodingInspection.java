@@ -12,11 +12,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
@@ -31,9 +30,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.*;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -173,17 +170,12 @@ public final class LossyEncodingInspection extends LocalInspectionTool {
                                                            @NotNull CharSequence text,
                                                            @NotNull Charset charset,
                                                            @NotNull List<ProblemDescriptor> descriptors) {
-    CharBuffer buffer = CharBuffer.wrap(text);
-
-    int textLength = text.length();
-    CharBuffer back = CharBuffer.allocate(textLength); // must be enough, error otherwise
-
-    Ref<ByteBuffer> outRef = Ref.create();
-
     //do not report too many errors
     for (int pos = 0, errorCount = 0; pos < text.length() && errorCount < 200; errorCount++) {
-      TextRange errRange = nextUnmappable(buffer, pos, outRef, back, charset);
+      TextRange errRange = CharsetUtil.findUnmappableCharacters(text.subSequence(pos, text.length()), charset);
       if (errRange == null) break;
+      errRange = errRange.shiftRight(pos);
+
       ProblemDescriptor lastDescriptor = ContainerUtil.getLastItem(descriptors);
       if (lastDescriptor != null && lastDescriptor.getTextRangeInElement().getEndOffset() == errRange.getStartOffset()) {
         // combine two adjacent descriptors
@@ -197,70 +189,6 @@ public final class LossyEncodingInspection extends LocalInspectionTool {
       descriptors.add(descriptor);
       pos = errRange.getEndOffset();
     }
-  }
-
-  // returns null if OK
-  // range of the characters either failed to be encoded to bytes or failed to be decoded back or decoded to the chars different from the original
-  private static TextRange nextUnmappable(@NotNull CharBuffer in,
-                                          int position,
-                                          @NotNull Ref<ByteBuffer> outRef,
-                                          @NotNull CharBuffer back,
-                                          @NotNull Charset charset) {
-    CharsetEncoder encoder = charset.newEncoder()
-                                    .onUnmappableCharacter(CodingErrorAction.REPORT)
-                                    .onMalformedInput(CodingErrorAction.REPORT);
-    int textLength = in.limit() - position;
-
-    ByteBuffer out = outRef.get();
-    if (out == null) {
-      outRef.set(out = ByteBuffer.allocate((int)(encoder.averageBytesPerChar() * textLength)));
-    }
-    out.rewind();
-    out.limit(out.capacity());
-    in.rewind();
-    in.position(position);
-    CoderResult cr;
-    for (;;) {
-      cr = in.hasRemaining() ? encoder.encode(in, out, true) : CoderResult.UNDERFLOW;
-      if (cr.isUnderflow()) {
-        cr = encoder.flush(out);
-      }
-
-      if (!cr.isOverflow()) {
-        break;
-      }
-
-      int n = 3 * out.capacity()/2 + 1;
-      ByteBuffer tmp = ByteBuffer.allocate(n);
-      out.flip();
-      tmp.put(out);
-      outRef.set(out = tmp);
-    }
-    if (cr.isError()) {
-      return TextRange.from(in.position(), cr.length());
-    }
-    // phew, encoded successfully. now check if we can decode it back with char-to-char precision
-    int outLength = out.position();
-    CharsetDecoder decoder = charset.newDecoder()
-                                    .onUnmappableCharacter(CodingErrorAction.REPORT)
-                                    .onMalformedInput(CodingErrorAction.REPORT);
-    out.rewind();
-    out.limit(outLength);
-    back.rewind();
-    CoderResult dr = decoder.decode(out, back, true);
-    if (dr.isError()) {
-      return TextRange.from(back.position(), dr.length());
-    }
-    if (back.position() != textLength) {
-      return TextRange.from(Math.min(textLength, back.position()), 1);
-    }
-    // ok, we decoded it back to string. now compare if the strings are identical
-    in.rewind();
-    in.position(position);
-    back.rewind();
-    int len = StringUtil.commonPrefixLength(in, back);
-    if (len == textLength) return null;
-    return TextRange.from(len, 1);  // let's report only the first diff char
   }
 
   private static final class ReloadInAnotherEncodingFix extends ChangeEncodingFix {

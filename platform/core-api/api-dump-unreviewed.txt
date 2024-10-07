@@ -1895,6 +1895,7 @@ f:com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 f:com.intellij.openapi.fileTypes.CharsetUtil
 - <init>():V
 - s:extractCharsetFromFileContent(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileTypes.FileType,java.lang.CharSequence):java.nio.charset.Charset
+- s:findUnmappableCharacters(java.lang.CharSequence,java.nio.charset.Charset):com.intellij.openapi.util.TextRange
 com.intellij.openapi.fileTypes.DirectoryFileType
 - com.intellij.openapi.fileTypes.FileType
 com.intellij.openapi.fileTypes.FileType
