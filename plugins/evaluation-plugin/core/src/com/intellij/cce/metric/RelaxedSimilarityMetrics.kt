@@ -77,7 +77,7 @@ object RelaxedSimilarityUtils {
   }
 }
 
-abstract class BaseRelaxedMetric(showByDefault: Boolean) : LineSimularityMetric(showByDefault) {
+abstract class BaseRelaxedMetric(showByDefault: Boolean) : LineSimilarityMetric(showByDefault) {
   abstract val onlyValuable: Boolean
   abstract val metric: RelaxedSimilarityUtils.RelaxedMetric
 
