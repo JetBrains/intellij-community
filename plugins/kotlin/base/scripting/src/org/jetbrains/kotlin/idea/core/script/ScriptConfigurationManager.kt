@@ -71,14 +71,6 @@ interface ScriptConfigurationManager : ScriptDependencyAware {
      */
     fun getConfiguration(file: KtFile): ScriptCompilationConfigurationWrapper?
 
-    @Deprecated("Use getScriptClasspath(KtFile) instead")
-    fun getScriptClasspath(file: VirtualFile): List<VirtualFile>
-
-    /**
-     * @see [getConfiguration]
-     */
-    fun getScriptClasspath(file: KtFile): List<VirtualFile>
-
     /**
      * Check if configuration is already cached for [file] (in cache or FileAttributes).
      * The result may be true, even cached configuration is considered out-of-date.

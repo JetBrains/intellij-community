@@ -25,8 +25,9 @@ import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTrack
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifier
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifierK1
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifierK2
-import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
-import org.jetbrains.kotlin.idea.core.script.ucache.*
+import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
+import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsCache
+import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsUpdater
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -203,17 +204,4 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
 
     override fun getScriptDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile> =
         classpathRoots.getScriptDependenciesSourceFiles(file)
-
-    ///////////////////
-    // Adapters for deprecated API
-    //
-
-    @Deprecated("Use getScriptClasspath(KtFile) instead")
-    override fun getScriptClasspath(file: VirtualFile): List<VirtualFile> {
-        val ktFile = project.getKtFile(file) ?: return emptyList()
-        return getScriptClasspath(ktFile)
-    }
-
-    override fun getScriptClasspath(file: KtFile): List<VirtualFile> =
-        ScriptConfigurationManager.toVfsRoots(getConfiguration(file)?.dependenciesClassPath.orEmpty())
 }
