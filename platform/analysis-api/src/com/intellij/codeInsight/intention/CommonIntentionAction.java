@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInspection.util.IntentionFamilyName;
@@ -10,19 +10,19 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A common interface for two ways to define a registered intention action
- * (visible in Editor | Intentions): either legacy {@link IntentionAction},
- * or new {@link com.intellij.modcommand.ModCommandAction}
- * 
+ * (visible in <em>Settings | Editor | Intentions</em>): either legacy {@link IntentionAction},
+ * or new {@link com.intellij.modcommand.ModCommandAction}.
+ *
  * @see IntentionAction
  * @see com.intellij.modcommand.ModCommandAction
  */
 @ApiStatus.NonExtendable
 public interface CommonIntentionAction {
   /**
-   * Empty array constant for convenience
+   * Empty array constant for convenience.
    */
   CommonIntentionAction[] EMPTY_ARRAY = new CommonIntentionAction[0];
-  
+
   /**
    * Returns the name of the family of intentions.
    * It is used to externalize the "auto-show" state of intentions.
@@ -44,7 +44,7 @@ public interface CommonIntentionAction {
 
   /**
    * @return ModCommandAction; either wrapped into this {@link CommonIntentionAction}, or this action itself.
-   * May return null if this is a legacy IntentionAction, which does not wrap {@link ModCommandAction}.
+   * May return {@code null} if this is a legacy {@link IntentionAction} which does not wrap {@link ModCommandAction}.
    */
   @Nullable ModCommandAction asModCommandAction();
 }
