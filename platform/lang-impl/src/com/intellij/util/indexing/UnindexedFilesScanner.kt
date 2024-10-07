@@ -365,7 +365,7 @@ class UnindexedFilesScanner @JvmOverloads constructor(
 
         // CollectingIterator should skip failing files by itself. But if provider.iterateFiles cannot iterate files and throws exception,
         // we want to ignore the whole origin and let other origins complete normally.
-        LOG.error("Error while scanning files of ${provider.debugName}. To reindex files under this origin IDEA has to be restarted", e)
+        LOG.error("Error while scanning files of ${provider.debugName}. To reindex files under this origin IDE has to be restarted", e)
       }
       finally {
         scanningStatistics.totalOneThreadTimeWithPauses = System.nanoTime() - providerScanningStartTime

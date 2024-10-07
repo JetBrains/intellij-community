@@ -254,7 +254,7 @@ class IndexUpdateRunner(
     catch (e: Throwable) {
       FileBasedIndexImpl.LOG.error("""
   Error while indexing ${fileIndexingRequest.file.presentableUrl}
-  To reindex this file IDEA has to be restarted
+  To reindex this file IDE has to be restarted
   """.trimIndent(), e)
     }
   }

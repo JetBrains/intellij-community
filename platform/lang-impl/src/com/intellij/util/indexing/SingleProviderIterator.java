@@ -99,7 +99,7 @@ final class SingleProviderIterator implements ContentIterator {
     }
     catch (Exception e) {
       UnindexedFilesScanner.LOG.error("Error while scanning " + fileOrDir.getPresentableUrl() + "\n" +
-                                      "To reindex this file IDEA has to be restarted", e);
+                                      "To reindex this file IDE has to be restarted", e);
     }
     return true;
   }
