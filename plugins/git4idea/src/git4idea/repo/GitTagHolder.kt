@@ -2,6 +2,8 @@
 package git4idea.repo
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.dvcs.branch.DvcsBranchManager
+import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
 import com.intellij.dvcs.repo.RepoStateException
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.diagnostic.logger
@@ -44,14 +46,22 @@ class GitTagHolder(val repository: GitRepository) {
   private var hashToTagCache: Map<String, GitTag> = mapOf()
 
   private val updateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
-  private var isEnabled = false
+  private var isEnabled: Boolean
 
   private val isLoadingFlow = MutableStateFlow(false)
   val isLoading: Boolean get() = isLoadingFlow.value
 
-  fun updateEnabled() {
+  init {
     isEnabled = GitVcsSettings.getInstance(repository.project).showTags()
     reload()
+
+    repository.project.messageBus.connect(cs)
+      .subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED, object : DvcsBranchManagerListener {
+        override fun showTagsSettingsChanged(state: Boolean) {
+          isEnabled = state
+          reload()
+        }
+      })
   }
 
   fun reload() {

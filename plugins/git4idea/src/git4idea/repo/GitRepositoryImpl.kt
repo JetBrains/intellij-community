@@ -60,9 +60,8 @@ class GitRepositoryImpl private constructor(
     untrackedFilesHolder = GitUntrackedFilesHolder(this)
     Disposer.register(this, untrackedFilesHolder)
 
-    tagHolder = GitTagHolder(this)
     repoInfo = readRepoInfo()
-    tagHolder.updateEnabled()
+    tagHolder = GitTagHolder(this)
   }
 
   @Deprecated("Deprecated in Java")

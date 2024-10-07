@@ -228,7 +228,6 @@ abstract class GitRepositoryReaderNewTest(val usingReftable: Boolean) : GitPlatf
       val not_annotated_hash = HashImpl.build(git("rev-parse HEAD"))
 
       val tagHolder = repo.tagHolder
-      tagHolder.updateEnabled()
       tagHolder.ensureUpToDateForTests()
 
       val tags = tagHolder.getTags()

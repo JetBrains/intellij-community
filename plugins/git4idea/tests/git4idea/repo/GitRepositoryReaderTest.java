@@ -132,7 +132,6 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
       Mockito.when(repo.getRepositoryFiles()).thenReturn(myRepoFiles);
       Mockito.when(repo.getCoroutineScope()).thenReturn(GlobalScope.INSTANCE);
       GitTagHolder holder = new GitTagHolder(repo);
-      holder.updateEnabled();
       holder.ensureUpToDateForTests$intellij_vcs_git();
       Map<GitTag, Hash> tags = holder.getTags();
       assertReferences(tags, readRefs(myTempDir, RefType.TAG));

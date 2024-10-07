@@ -64,7 +64,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     val repositories = repositoryManager.repositories
 
     val settings = GitVcsSettings.getInstance(project)
-    val defaultSettings = GitVcsSettings()
+    val defaultSettings = GitVcsSettings(project)
 
     addIfDiffers(set, settings, defaultSettings, { it.syncSetting }, REPO_SYNC, REPO_SYNC_VALUE)
     addIfDiffers(set, settings, defaultSettings, { it.updateMethod }, UPDATE_TYPE, UPDATE_TYPE_VALUE)

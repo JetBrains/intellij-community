@@ -310,7 +310,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
                      }
                    }
 
-                   override fun showTagsSettingsChanged() {
+                   override fun showTagsSettingsChanged(state: Boolean) {
                      refresh()
                    }
                  })

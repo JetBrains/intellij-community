@@ -64,7 +64,7 @@ internal class BranchesDashboardController(
         toggleGrouping(key, state)
       }
 
-      override fun showTagsSettingsChanged() {
+      override fun showTagsSettingsChanged(state: Boolean) {
         ui.updateBranchesTree(false)
       }
     })

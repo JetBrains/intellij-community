@@ -27,12 +27,6 @@ internal class GitBranchesTreeShowTagsAction :
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
     GitVcsSettings.getInstance(project).setShowTags(state)
-
-    for (repository in GitRepositoryManager.getInstance(project).repositories) {
-      repository.tagHolder.updateEnabled()
-    }
-
-    project.getMessageBus().syncPublisher(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED).showTagsSettingsChanged()
   }
 
   companion object {
