@@ -187,7 +187,12 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
   }
 
-  override suspend fun move(source: EelPath.Absolute, target: EelPath.Absolute, replaceExisting: Boolean, followLinks: Boolean) {
+  override suspend fun move(
+    source: EelPath.Absolute,
+    target: EelPath.Absolute,
+    replaceExisting: EelFileSystemApi.ReplaceExistingDuringMove,
+    followLinks: Boolean,
+  ) {
     holder.withDelegateRetrying {
       move(source, target, replaceExisting, followLinks)
     }

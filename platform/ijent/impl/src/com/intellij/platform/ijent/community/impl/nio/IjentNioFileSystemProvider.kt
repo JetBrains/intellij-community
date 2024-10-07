@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.fs.EelFileInfo.Type.*
+import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.*
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateDirectoryException
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateSymbolicLinkException
 import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
@@ -328,7 +329,14 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
         source.nioFs.ijentFs.move(
           sourcePath,
           targetPath,
-          replaceExisting = true,
+          replaceExisting = run {
+            // This code may change when implementing Windows support.
+            when {
+              StandardCopyOption.ATOMIC_MOVE in options -> DO_NOT_REPLACE_DIRECTORIES
+              StandardCopyOption.REPLACE_EXISTING in options -> REPLACE_EVERYTHING
+              else -> DO_NOT_REPLACE
+            }
+          },
           // In NIO, `move` does not follow links. This behavior is not influenced by the presense of NOFOLLOW_LINKS in CopyOptions
           // See java.nio.file.CopyMoveHelper.convertMoveToCopyOptions
           followLinks = false)

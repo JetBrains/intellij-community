@@ -261,12 +261,22 @@ interface EelFileSystemApi {
     class Other(where: EelPath.Absolute, additionalMessage: String) : CopyException(where, additionalMessage), EelFsError.Other
   }
 
+  enum class ReplaceExistingDuringMove {
+    REPLACE_EVERYTHING,
+
+    /** For compatibility with Java NIO. */
+    DO_NOT_REPLACE_DIRECTORIES,
+
+    DO_NOT_REPLACE,
+  }
+
   @Throws(MoveException::class)
-  suspend fun move(source: EelPath.Absolute, target: EelPath.Absolute, replaceExisting: Boolean, followLinks: Boolean)
+  suspend fun move(source: EelPath.Absolute, target: EelPath.Absolute, replaceExisting: ReplaceExistingDuringMove, followLinks: Boolean)
 
   sealed class MoveException(where: EelPath.Absolute, additionalMessage: String) : EelFsIOException(where, additionalMessage) {
     class SourceDoesNotExist(where: EelPath.Absolute) : MoveException(where, "Source does not exist"), EelFsError.DoesNotExist
     class TargetAlreadyExists(where: EelPath.Absolute) : MoveException(where, "Target already exists"), EelFsError.AlreadyExists
+    class TargetIsDirectory(where: EelPath.Absolute) : MoveException(where, "Target already exists and it is a directory"), EelFsError.AlreadyExists
     class PermissionDenied(where: EelPath.Absolute) : MoveException(where, "Permission denied"), EelFsError.PermissionDenied
     class NameTooLong(where: EelPath.Absolute) : MoveException(where, "Name too long"), EelFsError.NameTooLong
     class ReadOnlyFileSystem(where: EelPath.Absolute) : MoveException(where, "File system is read-only"), EelFsError.ReadOnlyFileSystem
