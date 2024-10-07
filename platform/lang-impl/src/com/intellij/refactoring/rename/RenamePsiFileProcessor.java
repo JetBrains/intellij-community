@@ -27,8 +27,7 @@ public class RenamePsiFileProcessor extends RenamePsiElementProcessor {
     return new PsiFileRenameDialog(project, element, nameSuggestionContext, editor);
   }
 
-  @ApiStatus.Internal
-  protected static boolean getSearchForReferences(PsiElement element) {
+  private static boolean getSearchForReferences(PsiElement element) {
     return element instanceof PsiFile
       ? RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_FILE
       : RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY;
