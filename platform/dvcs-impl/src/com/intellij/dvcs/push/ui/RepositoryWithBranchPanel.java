@@ -13,6 +13,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -119,10 +120,12 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
       RepositoryNode node = (RepositoryNode)value;
       myRepositoryCheckbox.setSelected(node.isChecked());
       myRepositoryCheckbox.setVisible(true);
+      myTextRenderer.setIpad(JBUI.emptyInsets());
       myTextRenderer.append(getRepositoryName(), SimpleTextAttributes.GRAY_ATTRIBUTES);
       myTextRenderer.appendTextPadding(120);
     }
     else {
+      myTextRenderer.setIpad(JBUI.insetsLeft(10));
       myRepositoryCheckbox.setVisible(false);
       myTextRenderer.append(" ");
     }
