@@ -1,7 +1,4 @@
-package pack1;
-
-import java.util.ArrayList;
-import java.util.List;
+package pack1
 
 public class A {
 }
