@@ -685,6 +685,7 @@
       "resourceBundle.svg": "nodes/resourceBundle.svg",
       "servlet.svg": "nodes/servlet.svg",
       "sourceRoot.svg": "modules/sourceRoot.svg",
+      "sourceRootFileLayer.svg": "modules/sourceRootFileLayer.svg",
       "star.svg": "nodes/favorite.svg",
       "starEmpty.svg": "nodes/notFavoriteOnHover.svg",
       "static.svg": "nodes/static.svg",

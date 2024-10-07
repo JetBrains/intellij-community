@@ -876,7 +876,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon GeneratedTestRoot = load("expui/nodes/generatedTestRoot.svg", "modules/generatedTestRoot.svg", -1234922153, 0);
     /** 16x16 */ public static final @NotNull Icon ResourcesRoot = load("expui/nodes/resourcesRoot.svg", "modules/resourcesRoot.svg", -1812051386, 0);
     /** 16x16 */ public static final @NotNull Icon SourceRoot = load("expui/nodes/sourceRoot.svg", "modules/sourceRoot.svg", 1687981214, 0);
-    /** 16x16 */ public static final @NotNull Icon SourceRootFileLayer = load("modules/sourceRootFileLayer.svg", 241453801, 0);
+    /** 16x16 */ public static final @NotNull Icon SourceRootFileLayer = load("expui/nodes/sourceRootFileLayer.svg", "modules/sourceRootFileLayer.svg", 241453801, 0);
     /** 16x16 */ public static final @NotNull Icon Split = load("expui/actions/split.svg", "modules/split.svg", 2103687526, 2);
     /** 16x16 */ public static final @NotNull Icon TestResourcesRoot = load("expui/nodes/testResourcesRoot.svg", "modules/testResourcesRoot.svg", 779023858, 0);
     /** 16x16 */ public static final @NotNull Icon TestRoot = load("expui/nodes/testRoot.svg", "modules/testRoot.svg", -1260358372, 0);
