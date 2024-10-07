@@ -114,3 +114,32 @@ class Test2{
     }
   }
 }
+
+class InheritNotNullByDefault {
+  static class StaticInner implements NullableMember {
+
+    @Override
+    public String get(String s) {
+      if(<warning descr="Condition 's == null' is always 'false'">s == null</warning>) {
+        return null;
+
+      }
+      return <warning descr="'null' is returned by the method declared as @NotNullByDefault">null</warning>;
+
+    }
+
+    public static void main(String[] args) {
+      final StaticInner staticInner = new StaticInner();
+      final String s = staticInner.get("1");
+      if(<warning descr="Condition 's == null' is always 'false'">s == null</warning>) {
+        System.out.println("null");
+      }
+      final String s1 = staticInner.get(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    }
+  }
+
+  @NotNullByDefault
+  interface NullableMember {
+    String get(String s);
+  }
+}

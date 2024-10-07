@@ -149,27 +149,14 @@ public abstract class NullableNotNullManager {
 
   protected final @Nullable NullabilityAnnotationInfo doFindEffectiveNullabilityAnnotation(@NotNull PsiModifierListOwner owner) {
     NullabilityAnnotationDataHolder annotations = getAllNullabilityAnnotationsWithNickNames();
-    NullabilityAnnotationInfo result = findPlainAnnotation(owner, false, annotations);
-    if (result != null) {
-      return result;
-    }
-
-    boolean lambdaParameter = owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList &&
-                              owner.getParent().getParent() instanceof PsiLambdaExpression;
-
-    if (!lambdaParameter) {
-      // For lambda parameter, inherited annotation overrides the default one
-      NullabilityAnnotationInfo defaultInfo = findNullityDefaultFiltered(owner);
-      if (defaultInfo != null) return defaultInfo;
-    }
+    NullabilityAnnotationInfo result = findPlainOrContainerAnnotation(owner, annotations);
+    if (result != null) return result;
 
     if (owner instanceof PsiMethod) {
-      AnnotationAndOwner inHierarchy =
-        findAnnotationAndOwnerInHierarchy(owner, annotations.qualifiedNames(), false);
-      if (inHierarchy != null) {
-        Nullability nullability = annotations.getNullability(inHierarchy.annotation.getQualifiedName());
-        if (nullability != null) {
-          return new NullabilityAnnotationInfo(inHierarchy.annotation, nullability, inHierarchy.owner, false);
+      for (PsiModifierListOwner superOwner : getSuperAnnotationOwners(owner)) {
+        NullabilityAnnotationInfo superAnno = findPlainOrContainerAnnotation(superOwner, annotations);
+        if (superAnno != null) {
+          return superAnno.withInheritedFrom(superOwner);
         }
       }
     }
@@ -190,8 +177,23 @@ public abstract class NullableNotNullManager {
       }
     }
 
-    if (lambdaParameter) {
-      return findNullityDefaultFiltered(owner);
+    return null;
+  }
+
+  private @Nullable NullabilityAnnotationInfo findPlainOrContainerAnnotation(@NotNull PsiModifierListOwner owner,
+                                                                             @NotNull NullabilityAnnotationDataHolder annotations) {
+    NullabilityAnnotationInfo result = findPlainAnnotation(owner, false, annotations);
+    if (result != null) {
+      return result;
+    }
+
+    boolean lambdaParameter = owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList &&
+                              owner.getParent().getParent() instanceof PsiLambdaExpression;
+
+    if (!lambdaParameter) {
+      // For lambda parameter, default annotation is ignored
+      NullabilityAnnotationInfo defaultInfo = findNullityDefaultFiltered(owner);
+      if (defaultInfo != null) return defaultInfo;
     }
     return null;
   }
