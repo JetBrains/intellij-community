@@ -13,24 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.codeInspection.dependencies
+package org.jetbrains.plugins.groovy.codeInspection.dependencies;
 
-import com.intellij.packageDependencies.DependenciesBuilder
-import com.intellij.packageDependencies.DependencyVisitorFactory
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.DependencyVisitorFactory;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 
-@CompileStatic
-class GrDependencyVisitorTest extends LightGroovyTestCase {
+import java.util.ArrayList;
+import java.util.List;
 
-  void test() {
-    def file = myFixture.addFileToProject("C.groovy", "import groovy.util.ConfigObject\nclass C { }")
+public class GrDependencyVisitorTest extends LightGroovyTestCase {
+  public void test() {
+    PsiFile file = myFixture.addFileToProject("C.groovy", "import groovy.util.ConfigObject\nclass C { }");
 
-    def deps = []
-    DependenciesBuilder.analyzeFileDependencies(file, { _, dep -> deps << dep }, DependencyVisitorFactory.VisitorOptions.SKIP_IMPORTS)
-    assert deps.size() == 0
+    final List<Object> deps = new ArrayList<>();
+    DependenciesBuilder.analyzeFileDependencies(file, (place, dependency) -> {
+      deps.add(dependency);
+    }, DependencyVisitorFactory.VisitorOptions.SKIP_IMPORTS);
+    assert deps.isEmpty();
 
-    DependenciesBuilder.analyzeFileDependencies(file, { _, dep -> deps << dep }, DependencyVisitorFactory.VisitorOptions.INCLUDE_IMPORTS)
-    assert deps.size() == 3
+    DependenciesBuilder.analyzeFileDependencies(file, (place, dependency) -> {
+      deps.add(dependency);
+    }, DependencyVisitorFactory.VisitorOptions.INCLUDE_IMPORTS);
+    assert deps.size() == 3;
   }
 }
