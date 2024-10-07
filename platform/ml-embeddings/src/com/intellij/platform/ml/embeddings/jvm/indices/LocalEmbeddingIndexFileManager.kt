@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.platform.ml.embeddings.jvm.utils.SuspendingReadWriteLock
-import com.intellij.util.io.outputStream
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
@@ -20,6 +19,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
+import kotlin.io.path.outputStream
 
 class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = DEFAULT_DIMENSIONS) {
   private val lock = SuspendingReadWriteLock()
@@ -36,7 +36,7 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
   private val embeddingsPath
     get() = rootPath.resolve(EMBEDDINGS_FILENAME)
 
-  val embeddingSizeInBytes = dimensions * EMBEDDING_ELEMENT_SIZE
+  val embeddingSizeInBytes: Int = dimensions * EMBEDDING_ELEMENT_SIZE
 
   /** Provides reading access to the embedding vector at the specified index
    *  without reading the whole file into memory
@@ -55,12 +55,14 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
   /** Provides writing access to embedding vector at the specified index
    *  without writing the other vectors
    */
-  suspend fun set(index: Int, embedding: FloatTextEmbedding) = lock.write {
-    RandomAccessFile(embeddingsPath.toFile(), "rw").use { output ->
-      output.seek(getIndexOffset(index))
-      val buffer = ByteBuffer.allocate(EMBEDDING_ELEMENT_SIZE)
-      embedding.values.forEach {
-        output.write(buffer.putFloat(0, it).array())
+  suspend fun set(index: Int, embedding: FloatTextEmbedding) {
+    lock.write {
+      RandomAccessFile(embeddingsPath.toFile(), "rw").use { output ->
+        output.seek(getIndexOffset(index))
+        val buffer = ByteBuffer.allocate(EMBEDDING_ELEMENT_SIZE)
+        embedding.values.forEach {
+          output.write(buffer.putFloat(0, it).array())
+        }
       }
     }
   }
@@ -69,23 +71,25 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
    * Removes the embedding vector at the specified index.
    * To do so, replaces this vector with the last vector in the file and shrinks the file size.
    */
-  suspend fun removeAtIndex(index: Int) = lock.write {
-    RandomAccessFile(embeddingsPath.toFile(), "rw").use { file ->
-      if (file.length() < embeddingSizeInBytes) return@write
-      if (file.length() - embeddingSizeInBytes != getIndexOffset(index)) {
-        file.seek(file.length() - embeddingSizeInBytes)
-        val array = ByteArray(EMBEDDING_ELEMENT_SIZE)
-        val embedding = FloatTextEmbedding(FloatArray(dimensions) {
-          file.read(array)
-          ByteBuffer.wrap(array).getFloat()
-        })
-        file.seek(getIndexOffset(index))
-        val buffer = ByteBuffer.allocate(EMBEDDING_ELEMENT_SIZE)
-        embedding.values.forEach {
-          file.write(buffer.putFloat(0, it).array())
+  suspend fun removeAtIndex(index: Int) {
+    lock.write {
+      RandomAccessFile(embeddingsPath.toFile(), "rw").use { file ->
+        if (file.length() < embeddingSizeInBytes) return@write
+        if (file.length() - embeddingSizeInBytes != getIndexOffset(index)) {
+          file.seek(file.length() - embeddingSizeInBytes)
+          val array = ByteArray(EMBEDDING_ELEMENT_SIZE)
+          val embedding = FloatTextEmbedding(FloatArray(dimensions) {
+            file.read(array)
+            ByteBuffer.wrap(array).getFloat()
+          })
+          file.seek(getIndexOffset(index))
+          val buffer = ByteBuffer.allocate(EMBEDDING_ELEMENT_SIZE)
+          embedding.values.forEach {
+            file.write(buffer.putFloat(0, it).array())
+          }
         }
+        file.setLength(file.length() - embeddingSizeInBytes)
       }
-      file.setLength(file.length() - embeddingSizeInBytes)
     }
   }
 
@@ -111,16 +115,18 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
         }
         LoadedIndex(ids, embeddings)
       }
-      catch (e: JsonProcessingException) {
+      catch (_: JsonProcessingException) {
         return@read null
       }
     }
   }
 
-  suspend fun saveIds(ids: List<EntityId>) = lock.write {
-    withNotEnoughSpaceCheck {
-      idsPath.outputStream().buffered().use { output ->
-        mapper.writer(prettyPrinter).writeValue(output, ids)
+  suspend fun saveIds(ids: List<EntityId>) {
+    lock.write {
+      withNotEnoughSpaceCheck {
+        idsPath.outputStream().buffered().use { output ->
+          mapper.writer(prettyPrinter).writeValue(output, ids)
+        }
       }
     }
   }
@@ -169,8 +175,8 @@ class LocalEmbeddingIndexFileManager(root: Path, private val dimensions: Int = D
   }
 
   companion object {
-    const val DEFAULT_DIMENSIONS = 128
-    const val EMBEDDING_ELEMENT_SIZE = 4
+    const val DEFAULT_DIMENSIONS: Int = 128
+    const val EMBEDDING_ELEMENT_SIZE: Int = 4
 
     private const val IDS_FILENAME = "ids.json"
     private const val SOURCE_TYPES_FILENAME = "sourceTypes.json"

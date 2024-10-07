@@ -60,7 +60,7 @@ class EmbeddingsStorageManagerWrapper<KeyT>(
     return storageManager.getStorageStats(project, indexId)
   }
 
-  fun getBatchSize() = storageManager.getBatchSize()
+  fun getBatchSize(): Int = storageManager.getBatchSize()
 
   companion object {
     private const val INDEXABLE_REPRESENTATION_CHAR_LIMIT = 64

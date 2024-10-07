@@ -62,6 +62,6 @@ class ServerDiagnosticsListener : ProcessListener {
   }
 
   companion object {
-    const val MAX_HISTORY_SIZE = 1_000
+    const val MAX_HISTORY_SIZE: Int = 1_000
   }
 }

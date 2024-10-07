@@ -10,7 +10,7 @@ import com.intellij.platform.ml.embeddings.indexer.IndexId
  */
 interface IndexPersistedEventsCounter {
   companion object {
-    val EP_NAME = ProjectExtensionPointName<IndexPersistedEventsCounter>("com.intellij.platform.ml.embeddings.indexPersistedEventsCounter")
+    val EP_NAME: ProjectExtensionPointName<IndexPersistedEventsCounter> = ProjectExtensionPointName<IndexPersistedEventsCounter>("com.intellij.platform.ml.embeddings.indexPersistedEventsCounter")
   }
 
   suspend fun sendPersistedCount(indexId: IndexId, project: Project)

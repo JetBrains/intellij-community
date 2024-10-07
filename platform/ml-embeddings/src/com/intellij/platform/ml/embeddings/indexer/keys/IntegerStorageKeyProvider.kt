@@ -53,8 +53,8 @@ class IntegerStorageKeyProvider : EmbeddingStorageKeyProvider<Long>, Disposable 
   }
 
   companion object {
-    private const val ENUMERATOR_FOLDER = "enumerator"
-    private const val ENUMERATOR_FILE = "ids.enum"
+    private const val ENUMERATOR_FOLDER: String = "enumerator"
+    private const val ENUMERATOR_FILE: String = "ids.enum"
 
     fun getInstance(): IntegerStorageKeyProvider = service()
   }

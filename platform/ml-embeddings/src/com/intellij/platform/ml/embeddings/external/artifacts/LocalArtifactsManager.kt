@@ -22,7 +22,6 @@ import com.intellij.platform.ml.embeddings.external.artifacts.LocalArtifactsMana
 import com.intellij.platform.ml.embeddings.external.artifacts.LocalArtifactsManager.Companion.getArchitectureId
 import com.intellij.platform.ml.embeddings.external.artifacts.LocalArtifactsManager.Companion.getOsId
 import com.intellij.platform.ml.embeddings.indexer.FileBasedEmbeddingIndexer.Companion.INDEXING_VERSION
-import com.intellij.platform.ml.embeddings.jvm.models.CustomRootDataLoader
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.io.ZipUtil
@@ -54,8 +53,6 @@ class LocalArtifactsManager {
 
   // TODO: the list may be changed depending on the project size
   private val availableModels = listOf(ModelArtifact.SmallModelArtifact)
-
-  fun getCustomRootDataLoader() = CustomRootDataLoader(modelsRoot)
 
   @RequiresBackgroundThread
   suspend fun downloadArtifactsIfNecessary(
@@ -90,9 +87,7 @@ class LocalArtifactsManager {
 
   // TODO: provide model id in arguments
   fun getModelArtifact(): ModelArtifact = availableModels.first()
-  fun getServerArtifact() = NativeServerArtifact
-
-  fun checkArtifactsPresent(): Boolean = availableModels.all { it.checkPresent() }
+  fun getServerArtifact(): NativeServerArtifact = NativeServerArtifact
 
   private fun downloadArtifacts(artifacts: List<DownloadableArtifact>) {
     try {
@@ -136,9 +131,9 @@ class LocalArtifactsManager {
   }
 
   companion object {
-    const val SEMANTIC_SEARCH_RESOURCES_DIR_NAME = "semantic-search" // TODO: move to common constants
+    const val SEMANTIC_SEARCH_RESOURCES_DIR_NAME: String = "semantic-search" // TODO: move to common constants
 
-    const val INDICES_DIR_NAME = "indices"
+    const val INDICES_DIR_NAME: String = "indices"
     private const val MODELS_DIR_NAME = "models"
     private const val SERVER_DIR_NAME = "server"
 
@@ -204,7 +199,7 @@ sealed class ModelArtifact(
 ) : DownloadableArtifact {
   data object SmallModelArtifact : ModelArtifact("small", "dan_100k_optimized.onnx", "bert-base-uncased.txt")
 
-  final override val archiveName = "$name.zip"
+  final override val archiveName: String = "$name.zip"
   override val downloadLink: String = listOf(CDN_LINK_BASE, MODEL_VERSION, archiveName).joinToString(separator = "/")
   override val destination: Path = LocalArtifactsManager.modelsRoot / name
 

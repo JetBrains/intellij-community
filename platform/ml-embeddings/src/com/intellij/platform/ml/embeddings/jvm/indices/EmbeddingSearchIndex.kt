@@ -17,7 +17,7 @@ interface EmbeddingSearchIndex {
   suspend fun contains(id: EntityId): Boolean
   suspend fun lookup(id: EntityId): FloatTextEmbedding?
   suspend fun clear()
-  suspend fun clearBySourceType(sourceType: EntitySourceType) = Unit
+  suspend fun clearBySourceType(sourceType: EntitySourceType) {}
   suspend fun remove(id: EntityId)
 
   suspend fun onIndexingStart()

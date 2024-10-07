@@ -8,5 +8,5 @@ enum class EntitySourceType {
   EXTERNAL;
 
   @JsonValue
-  fun value() = ordinal
+  fun value(): Int = ordinal
 }

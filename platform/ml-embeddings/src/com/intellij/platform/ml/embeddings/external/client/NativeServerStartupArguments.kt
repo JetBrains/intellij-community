@@ -9,7 +9,7 @@ enum class EmbeddingDistanceMetric(val label: String) {
   COSINE("cos"),
   SQUARED_EUCLIDEAN("l2sq");
 
-  override fun toString() = label
+  override fun toString(): String = label
 }
 
 enum class EmbeddingQuantization(val label: String) {
@@ -18,7 +18,7 @@ enum class EmbeddingQuantization(val label: String) {
   INT8("i8"),
   BINARY("b1x8");
 
-  override fun toString() = label
+  override fun toString(): String = label
 }
 
 data class NativeServerStartupArguments(

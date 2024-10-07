@@ -12,7 +12,7 @@ class SemanticSearchCoroutineScope(private val cs: CoroutineScope) : Disposable 
   override fun dispose() {}
 
   companion object {
-    fun getScope(project: Project) = project.service<SemanticSearchCoroutineScope>().cs
+    fun getScope(project: Project): CoroutineScope = project.service<SemanticSearchCoroutineScope>().cs
 
     fun getInstance(project: Project): SemanticSearchCoroutineScope = project.service()
   }

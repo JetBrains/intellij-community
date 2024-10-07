@@ -22,16 +22,18 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
 
   private val fileManager = LocalEmbeddingIndexFileManager(root)
 
-  override suspend fun getSize() = lock.read { idToEmbedding.size }
+  override suspend fun getSize(): Int = lock.read { idToEmbedding.size }
 
-  override suspend fun setLimit(value: Int?) = lock.write {
-    // Shrink index if necessary:
-    if (value != null && value < idToEmbedding.size) {
-      val remaining = idToEmbedding.asSequence().take(value).map { it.toPair() }.toList()
-      idToEmbedding.clear()
-      idToEmbedding.putAll(remaining)
+  override suspend fun setLimit(value: Int?) {
+    lock.write {
+      // Shrink index if necessary:
+      if (value != null && value < idToEmbedding.size) {
+        val remaining = idToEmbedding.asSequence().take(value).map { it.toPair() }.toList()
+        idToEmbedding.clear()
+        idToEmbedding.putAll(remaining)
+      }
+      limit = value
     }
-    limit = value
   }
 
   override suspend fun contains(id: EntityId): Boolean = lock.read {
@@ -40,9 +42,11 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
 
   override suspend fun lookup(id: EntityId): FloatTextEmbedding? = lock.read { idToEmbedding[id] }
 
-  override suspend fun clear() = lock.write {
-    idToEmbedding.clear()
-    uncheckedIds.clear()
+  override suspend fun clear() {
+    lock.write {
+      idToEmbedding.clear()
+      uncheckedIds.clear()
+    }
   }
 
   override suspend fun remove(id: EntityId) {
@@ -58,34 +62,44 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
     }
   }
 
-  override suspend fun onIndexingFinish() = lock.write {
-    uncheckedIds.forEach { idToEmbedding.remove(it) }
-    uncheckedIds.clear()
+  override suspend fun onIndexingFinish() {
+    lock.write {
+      uncheckedIds.forEach { idToEmbedding.remove(it) }
+      uncheckedIds.clear()
+    }
   }
 
   override suspend fun addEntries(
     values: Iterable<Pair<EntityId, FloatTextEmbedding>>,
     shouldCount: Boolean,
-  ) = lock.write {
-    if (limit != null) {
-      val list = values.toList()
-      list.forEach { uncheckedIds.remove(it.first) }
-      idToEmbedding.putAll(list.take(minOf(limit!! - idToEmbedding.size, list.size)))
-    }
-    else {
-      idToEmbedding.putAll(values)
+  ) {
+    lock.write {
+      if (limit != null) {
+        val list = values.toList()
+        list.forEach { uncheckedIds.remove(it.first) }
+        idToEmbedding.putAll(list.take(minOf(limit!! - idToEmbedding.size, list.size)))
+      }
+      else {
+        idToEmbedding.putAll(values)
+      }
     }
   }
 
-  override suspend fun saveToDisk() = lock.read { save() }
-
-  override suspend fun loadFromDisk() = lock.write {
-    val (ids, embeddings) = fileManager.loadIndex() ?: return@write
-    idToEmbedding.clear()
-    idToEmbedding.putAll(ids zip embeddings)
+  override suspend fun saveToDisk() {
+    lock.read { save() }
   }
 
-  override suspend fun offload() = lock.write { idToEmbedding.clear() }
+  override suspend fun loadFromDisk() {
+    lock.write {
+      val (ids, embeddings) = fileManager.loadIndex() ?: return@write
+      idToEmbedding.clear()
+      idToEmbedding.putAll(ids zip embeddings)
+    }
+  }
+
+  override suspend fun offload() {
+    lock.write { idToEmbedding.clear() }
+  }
 
   override suspend fun findClosest(
     searchEmbedding: FloatTextEmbedding,
@@ -108,7 +122,7 @@ class InMemoryEmbeddingSearchIndex(root: Path, override var limit: Int? = null) 
     }
   }
 
-  override suspend fun estimateMemoryUsage() = fileManager.embeddingSizeInBytes.toLong() * getSize()
+  override suspend fun estimateMemoryUsage(): Long = fileManager.embeddingSizeInBytes.toLong() * getSize()
 
   override fun estimateLimitByMemory(memory: Long): Int {
     return (memory / fileManager.embeddingSizeInBytes).toInt()

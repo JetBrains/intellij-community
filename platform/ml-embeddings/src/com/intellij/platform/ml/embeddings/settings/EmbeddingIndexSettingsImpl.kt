@@ -24,14 +24,18 @@ class EmbeddingIndexSettingsImpl : EmbeddingIndexSettings {
   private val mutex = ReentrantReadWriteLock()
   private val clientSettings = mutableListOf<EmbeddingIndexSettings>()
 
-  fun registerClientSettings(settings: EmbeddingIndexSettings) = mutex.write {
-    if (settings in clientSettings) return@write
-    clientSettings.add(settings)
+  fun registerClientSettings(settings: EmbeddingIndexSettings) {
+    mutex.write {
+      if (settings in clientSettings) return@write
+      clientSettings.add(settings)
+    }
   }
 
   @Suppress("unused")
-  fun unregisterClientSettings(settings: EmbeddingIndexSettings) = mutex.write {
-    clientSettings.remove(settings)
+  fun unregisterClientSettings(settings: EmbeddingIndexSettings) {
+    mutex.write {
+      clientSettings.remove(settings)
+    }
   }
 
   companion object {

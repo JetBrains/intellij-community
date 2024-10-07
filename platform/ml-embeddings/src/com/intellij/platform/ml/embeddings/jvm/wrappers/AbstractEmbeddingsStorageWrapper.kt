@@ -167,6 +167,6 @@ abstract class AbstractEmbeddingsStorageWrapper(
     private val OFFLOAD_TIMEOUT = 10.seconds
     private val logger = Logger.getInstance(AbstractEmbeddingsStorageWrapper::class.java)
 
-    const val OLD_API_DIR_NAME = "old-api"
+    const val OLD_API_DIR_NAME: String = "old-api"
   }
 }

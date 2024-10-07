@@ -31,15 +31,17 @@ open class VanillaEmbeddingSearchIndex(val root: Path, override var limit: Int? 
 
   private val fileManager = LocalEmbeddingIndexFileManager(root)
 
-  override suspend fun setLimit(value: Int?) = lock.write {
-    if (value != null) {
-      // Shrink index if necessary:
-      while (idToEntry.size > value) {
-        delete(indexToId[idToEntry.size - 1]!!, all = true, shouldSaveIds = false)
+  override suspend fun setLimit(value: Int?) {
+    lock.write {
+      if (value != null) {
+        // Shrink index if necessary:
+        while (idToEntry.size > value) {
+          delete(indexToId[idToEntry.size - 1]!!, all = true, shouldSaveIds = false)
+        }
+        saveIds()
       }
-      saveIds()
+      limit = value
     }
-    limit = value
   }
 
   private data class IndexEntry(
@@ -48,19 +50,19 @@ open class VanillaEmbeddingSearchIndex(val root: Path, override var limit: Int? 
     val embedding: FloatTextEmbedding,
   )
 
-  override suspend fun getSize() = lock.read { idToEntry.size }
+  override suspend fun getSize(): Int = lock.read { idToEntry.size }
 
-  override suspend fun contains(id: EntityId): Boolean = lock.read {
-    id in idToEntry
-  }
+  override suspend fun contains(id: EntityId): Boolean = lock.read { id in idToEntry }
 
   override suspend fun lookup(id: EntityId): FloatTextEmbedding? = lock.read { idToEntry[id]?.embedding }
 
-  override suspend fun clear() = lock.write {
-    indexToId.clear()
-    idToEntry.clear()
-    uncheckedIds.clear()
-    changed = false
+  override suspend fun clear() {
+    lock.write {
+      indexToId.clear()
+      idToEntry.clear()
+      uncheckedIds.clear()
+      changed = false
+    }
   }
 
   override suspend fun onIndexingStart() {
@@ -71,55 +73,65 @@ open class VanillaEmbeddingSearchIndex(val root: Path, override var limit: Int? 
     }
   }
 
-  override suspend fun onIndexingFinish() = lock.write {
-    if (uncheckedIds.size > 0) changed = true
-    logger.debug { "Deleted ${uncheckedIds.size} unchecked ids" }
-    uncheckedIds.forEach {
-      delete(it, all = true, shouldSaveIds = false)
+  override suspend fun onIndexingFinish() {
+    lock.write {
+      if (uncheckedIds.isNotEmpty()) changed = true
+      logger.debug { "Deleted ${uncheckedIds.size} unchecked ids" }
+      uncheckedIds.forEach {
+        delete(it, all = true, shouldSaveIds = false)
+      }
+      uncheckedIds.clear()
     }
-    uncheckedIds.clear()
   }
 
   override suspend fun addEntries(
     values: Iterable<Pair<EntityId, FloatTextEmbedding>>,
     shouldCount: Boolean,
-  ) = lock.write {
-    for ((id, embedding) in values) {
-      checkCancelled()
-      uncheckedIds.remove(id)
-      if (limit != null && idToEntry.size >= limit!!) break
-      val entry = idToEntry.getOrPut(id) {
-        changed = true
-        val index = idToEntry.size
+  ) {
+    lock.write {
+      for ((id, embedding) in values) {
+        checkCancelled()
+        uncheckedIds.remove(id)
+        if (limit != null && idToEntry.size >= limit!!) break
+        val entry = idToEntry.getOrPut(id) {
+          changed = true
+          val index = idToEntry.size
+          indexToId[index] = id
+          IndexEntry(index = index, count = 0, embedding = embedding)
+        }
+        if (shouldCount || entry.count == 0) {
+          entry.count += 1
+        }
+      }
+    }
+  }
+
+  override suspend fun saveToDisk() {
+    lock.read {
+      val ids = idToEntry.asSequence().sortedBy { it.value.index }.map { it.key }.toList()
+      val embeddings = ids.map { idToEntry[it]!!.embedding }
+      fileManager.saveIndex(ids, embeddings)
+    }
+  }
+
+  override suspend fun loadFromDisk() {
+    lock.write {
+      indexToId.clear()
+      idToEntry.clear()
+      val (ids, embeddings) = fileManager.loadIndex() ?: return@write
+      for ((index, id) in ids.withIndex()) {
+        val embedding = embeddings[index]
         indexToId[index] = id
-        IndexEntry(index = index, count = 0, embedding = embedding)
-      }
-      if (shouldCount || entry.count == 0) {
-        entry.count += 1
+        idToEntry[id] = IndexEntry(index = index, count = 0, embedding = embedding)
       }
     }
   }
 
-  override suspend fun saveToDisk() = lock.read {
-    val ids = idToEntry.asSequence().sortedBy { it.value.index }.map { it.key }.toList()
-    val embeddings = ids.map { idToEntry[it]!!.embedding }
-    fileManager.saveIndex(ids, embeddings)
-  }
-
-  override suspend fun loadFromDisk() = lock.write {
-    indexToId.clear()
-    idToEntry.clear()
-    val (ids, embeddings) = fileManager.loadIndex() ?: return@write
-    for ((index, id) in ids.withIndex()) {
-      val embedding = embeddings[index]
-      indexToId[index] = id
-      idToEntry[id] = IndexEntry(index = index, count = 0, embedding = embedding)
+  override suspend fun offload() {
+    lock.write {
+      indexToId.clear()
+      idToEntry.clear()
     }
-  }
-
-  override suspend fun offload() = lock.write {
-    indexToId.clear()
-    idToEntry.clear()
   }
 
   override suspend fun findClosest(
@@ -154,7 +166,7 @@ open class VanillaEmbeddingSearchIndex(val root: Path, override var limit: Int? 
     }
   }
 
-  override suspend fun estimateMemoryUsage() = fileManager.embeddingSizeInBytes.toLong() * getSize()
+  override suspend fun estimateMemoryUsage(): Long = fileManager.embeddingSizeInBytes.toLong() * getSize()
 
   override fun estimateLimitByMemory(memory: Long): Int {
     return (memory / fileManager.embeddingSizeInBytes).toInt()
@@ -164,32 +176,32 @@ open class VanillaEmbeddingSearchIndex(val root: Path, override var limit: Int? 
     limit == null || idToEntry.size < limit!!
   }
 
-  suspend fun deleteEntry(id: EntityId, syncToDisk: Boolean) = lock.write {
-    delete(id = id, shouldSaveIds = syncToDisk)
-  }
-
-  suspend fun addEntry(id: EntityId, embedding: FloatTextEmbedding) = lock.write {
-    uncheckedIds.remove(id)
-    add(id = id, embedding = embedding)
+  suspend fun deleteEntry(id: EntityId, syncToDisk: Boolean) {
+    lock.write {
+      delete(id = id, shouldSaveIds = syncToDisk)
+    }
   }
 
   /* Optimization for consequent delete and add operations */
-  suspend fun updateEntry(id: EntityId, newId: EntityId, embedding: FloatTextEmbedding) = lock.write {
-    if (id !in idToEntry) return@write
-    if (idToEntry[id]!!.count == 1 && newId !in idToEntry) {
-      val index = idToEntry[id]!!.index
-      fileManager.set(index, embedding)
+  @Suppress("unused")
+  suspend fun updateEntry(id: EntityId, newId: EntityId, embedding: FloatTextEmbedding) {
+    lock.write {
+      if (id !in idToEntry) return@write
+      if (idToEntry[id]!!.count == 1 && newId !in idToEntry) {
+        val index = idToEntry[id]!!.index
+        fileManager.set(index, embedding)
 
-      idToEntry.remove(id)
-      idToEntry[newId] = IndexEntry(index = index, count = 1, embedding = embedding)
-      indexToId[index] = newId
+        idToEntry.remove(id)
+        idToEntry[newId] = IndexEntry(index = index, count = 1, embedding = embedding)
+        indexToId[index] = newId
 
-      saveIds()
-    }
-    else {
-      // Do not apply optimization
-      delete(id)
-      add(id = newId, embedding = embedding)
+        saveIds()
+      }
+      else {
+        // Do not apply optimization
+        delete(id)
+        add(id = newId, embedding = embedding)
+      }
     }
   }
 

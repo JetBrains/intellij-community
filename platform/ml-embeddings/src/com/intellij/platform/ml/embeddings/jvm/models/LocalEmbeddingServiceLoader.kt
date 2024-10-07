@@ -16,7 +16,7 @@ class LocalEmbeddingServiceLoader {
       val network = loadNetwork(loader)
       val encoder = loadTextEncoder(loader)
       return LocalEmbeddingService(network, encoder)
-    } catch (e: EOFException) {
+    } catch (_: EOFException) {
       return null
     }
   }
@@ -33,8 +33,8 @@ class LocalEmbeddingServiceLoader {
   }
 
   companion object {
-    const val MODEL_NAME = "dan-bert-tiny"
-    const val MODEL_FILENAME = "dan_optimized_fp16.onnx"
+    const val MODEL_NAME: String = "dan-bert-tiny"
+    const val MODEL_FILENAME: String = "dan_optimized_fp16.onnx"
   }
 }
 

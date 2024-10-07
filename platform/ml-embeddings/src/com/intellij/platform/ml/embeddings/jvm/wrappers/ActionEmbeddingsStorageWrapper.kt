@@ -30,7 +30,9 @@ class ActionEmbeddingsStorageWrapper : EmbeddingsStorageWrapper {
     / SEMANTIC_SEARCH_RESOURCES_DIR_NAME / OLD_API_DIR_NAME / INDICES_DIR_NAME / INDEX_DIR
   )
 
-  override suspend fun addEntries(values: Iterable<Pair<EntityId, FloatTextEmbedding>>) = index.addEntries(values)
+  override suspend fun addEntries(values: Iterable<Pair<EntityId, FloatTextEmbedding>>) {
+    index.addEntries(values)
+  }
 
   override suspend fun removeEntries(keys: List<EntityId>) {
     for (key in keys) {
@@ -38,7 +40,9 @@ class ActionEmbeddingsStorageWrapper : EmbeddingsStorageWrapper {
     }
   }
 
-  override suspend fun clear() = index.clear()
+  override suspend fun clear() {
+    index.clear()
+  }
 
   @RequiresBackgroundThread
   override suspend fun searchNeighbours(queryEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double?): List<ScoredKey<EntityId>> {
@@ -60,9 +64,13 @@ class ActionEmbeddingsStorageWrapper : EmbeddingsStorageWrapper {
     return index.streamFindClose(embedding, similarityThreshold)
   }
 
-  override suspend fun startIndexingSession() = index.onIndexingStart()
+  override suspend fun startIndexingSession() {
+    index.onIndexingStart()
+  }
 
-  override suspend fun finishIndexingSession() = index.onIndexingFinish()
+  override suspend fun finishIndexingSession() {
+    index.onIndexingFinish()
+  }
 
   override suspend fun getSize(): Int = index.getSize()
 

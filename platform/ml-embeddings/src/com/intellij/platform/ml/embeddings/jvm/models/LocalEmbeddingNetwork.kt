@@ -30,7 +30,7 @@ class LocalEmbeddingNetwork(
       return LocalEmbeddingNetwork(KIEngine.loadModel(data), maxLen ?: DEFAULT_MAX_LEN)
     }
 
-    const val DEFAULT_MAX_LEN = 512
+    const val DEFAULT_MAX_LEN: Int = 512
   }
 
   @Suppress("Unused") // useful for older versions of kinference where operators for mean pooling are not supported

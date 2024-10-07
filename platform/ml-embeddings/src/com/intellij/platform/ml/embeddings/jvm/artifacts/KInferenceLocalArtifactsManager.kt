@@ -49,29 +49,31 @@ class KInferenceLocalArtifactsManager {
     root.toPath().listDirectoryEntries().filter { it.name != MODEL_ARTIFACTS_DIR }.forEach { it.delete(recursively = true) }
   }
 
-  fun getCustomRootDataLoader() = CustomRootDataLoader(modelArtifactsRoot.toPath())
+  fun getCustomRootDataLoader(): CustomRootDataLoader = CustomRootDataLoader(modelArtifactsRoot.toPath())
 
   @RequiresBackgroundThread
   suspend fun downloadArtifactsIfNecessary(project: Project? = null,
-                                           retryIfCanceled: Boolean = true) = withContext(downloadContext) {
-    if (!checkArtifactsPresent() && !ApplicationManager.getApplication().isUnitTestMode && (retryIfCanceled || !downloadCanceled)) {
-      logger.debug("Semantic search artifacts are not present, starting the download...")
-      if (project != null) {
-        withBackgroundProgress(project, ARTIFACTS_DOWNLOAD_TASK_NAME) {
-          try {
-            coroutineToIndicator { // platform code relies on the existence of indicator
-              downloadArtifacts()
+                                           retryIfCanceled: Boolean = true) {
+    withContext(downloadContext) {
+      if (!checkArtifactsPresent() && !ApplicationManager.getApplication().isUnitTestMode && (retryIfCanceled || !downloadCanceled)) {
+        logger.debug("Semantic search artifacts are not present, starting the download...")
+        if (project != null) {
+          withBackgroundProgress(project, ARTIFACTS_DOWNLOAD_TASK_NAME) {
+            try {
+              coroutineToIndicator { // platform code relies on the existence of indicator
+                downloadArtifacts()
+              }
+            }
+            catch (e: CancellationException) {
+              logger.debug("Artifacts downloading was canceled")
+              downloadCanceled = true
+              throw e
             }
           }
-          catch (e: CancellationException) {
-            logger.debug("Artifacts downloading was canceled")
-            downloadCanceled = true
-            throw e
-          }
         }
-      }
-      else {
-        downloadArtifacts()
+        else {
+          downloadArtifacts()
+        }
       }
     }
   }
@@ -107,7 +109,7 @@ class KInferenceLocalArtifactsManager {
   }
 
   companion object {
-    const val SEMANTIC_SEARCH_RESOURCES_DIR = "semantic-search"
+    const val SEMANTIC_SEARCH_RESOURCES_DIR: String = "semantic-search"
 
     private val ARTIFACTS_DOWNLOAD_TASK_NAME
       get() = EmbeddingsBundle.getMessage("ml.embeddings.artifacts.download.name")
