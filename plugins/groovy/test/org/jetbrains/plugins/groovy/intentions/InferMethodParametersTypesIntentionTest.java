@@ -1,567 +1,572 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.intentions
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.intentions;
 
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
-
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK
-
-  InferMethodParametersTypesIntentionTest() {
-    super("Add explicit types to parameters")
-  }
-
-  @Override
-  void setUp() {
-    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(true)
-    super.setUp()
+public class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
+  public InferMethodParametersTypesIntentionTest() {
+    super("Add explicit types to parameters");
   }
 
 
   @Override
-  void tearDown() {
-    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault()
-    super.tearDown()
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK;
   }
 
-  final String basePath = TestUtils.testDataPath + 'refactoring/inferMethodParametersTypes'
+  @Override
+  public final String getBasePath() {
+    return TestUtils.getTestDataPath() + "refactoring/inferMethodParametersTypes";
+  }
 
-  void testStringInference() {
-    doTest(true)
+  @Override
+  public void setUp() throws Exception {
+    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(true);
+    super.setUp();
   }
 
-  void testSeveralArguments() {
-    doTest(true)
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
-  void testNoInferenceInMethodBody() {
-    doTest(false)
+  public void testStringInference() {
+    doTest(true);
   }
 
-  void testNoInferenceWithoutNontypedArguments() {
-    doTest(false)
+  public void testSeveralArguments() {
+    doTest(true);
   }
 
-  void testNoResolveForTypeParameters() {
-    doTest(true)
+  public void testNoInferenceInMethodBody() {
+    doTest(false);
   }
 
-  void testLeaveUnusedTypeParameter() {
-    doTest(true)
+  public void testNoInferenceWithoutNontypedArguments() {
+    doTest(false);
   }
 
-  void testCustomInheritance() {
-    doTest(true)
+  public void testNoResolveForTypeParameters() {
+    doTest(true);
   }
 
-  void testResolvedMethodCallInside() {
-    doTest(true)
+  public void testLeaveUnusedTypeParameter() {
+    doTest(true);
   }
 
-  void testDependencyOnTypeParameter() {
-    doTest(true)
+  public void testCustomInheritance() {
+    doTest(true);
   }
 
-  void testOperatorInference() {
-    doTest(true)
+  public void testResolvedMethodCallInside() {
+    doTest(true);
   }
 
-  void testSearchEverywhere() {
-    doTest(true)
+  public void testDependencyOnTypeParameter() {
+    doTest(true);
   }
 
-  void testUpperBoundByTypeParameter() {
-    doTest(true)
+  public void testOperatorInference() {
+    doTest(true);
   }
 
-  void testInferWildcardsDependencies() {
-    doTest(true)
+  public void testSearchEverywhere() {
+    doTest(true);
   }
 
-  void testRelatedWildcards() {
-    doTest(true)
+  public void testUpperBoundByTypeParameter() {
+    doTest(true);
   }
 
-  void testDeepEqualityOfWildcards() {
-    doTest(true)
+  public void testInferWildcardsDependencies() {
+    doTest(true);
   }
 
-  void testDeepDependencyOfWildcards() {
-    doTest(true)
+  public void testRelatedWildcards() {
+    doTest(true);
   }
 
-  void testDeepDependencyOfWildcards2() {
-    doTest(true)
+  public void testDeepEqualityOfWildcards() {
+    doTest(true);
   }
 
-  void testDeepDependencyOfWildcards3() {
-    doTest(true)
+  public void testDeepDependencyOfWildcards() {
+    doTest(true);
   }
 
-  void testAppearedWildcard() {
-    doTest(true)
+  public void testDeepDependencyOfWildcards2() {
+    doTest(true);
   }
 
-  void testAppearedWildcard2() {
-    doTest(true)
+  public void testDeepDependencyOfWildcards3() {
+    doTest(true);
   }
 
-  void testConstructor() {
-    doTest(true)
+  public void testAppearedWildcard() {
+    doTest(true);
   }
 
-  void testConstructor2() {
-    doTest(true)
+  public void testAppearedWildcard2() {
+    doTest(true);
   }
 
-  void testConstructor3() {
-    doTest(true)
+  public void testConstructor() {
+    doTest(true);
   }
 
-  void testConstructor4() {
-    doTest(true)
+  public void testConstructor2() {
+    doTest(true);
   }
 
-  void testRedundantTypeParameter() {
-    doTest(true)
+  public void testConstructor3() {
+    doTest(true);
   }
 
-  void testTwoTypeParameters() {
-    doTest(true)
+  public void testConstructor4() {
+    doTest(true);
   }
 
-  void testTwoSupertypes() {
-    doTest(true)
+  public void testRedundantTypeParameter() {
+    doTest(true);
   }
 
-  void testTwoSupertypes2() {
-    doTest(true)
+  public void testTwoTypeParameters() {
+    doTest(true);
   }
 
-  void testTwoSupertypes3() {
-    doTest(true)
+  public void testTwoSupertypes() {
+    doTest(true);
   }
 
-  void testTwoSupertypes4() {
-    doTest(true)
+  public void testTwoSupertypes2() {
+    doTest(true);
   }
 
-  void testTwoSupertypes5() {
-    doTest(true)
+  public void testTwoSupertypes3() {
+    doTest(true);
   }
 
-  void testThreeSupertypes() {
-    doTest(true)
+  public void testTwoSupertypes4() {
+    doTest(true);
   }
 
-  void testThreeSupertypes2() {
-    doTest(true)
+  public void testTwoSupertypes5() {
+    doTest(true);
   }
 
-  void testCustomSetter() {
-    doTest(true)
+  public void testThreeSupertypes() {
+    doTest(true);
   }
 
-  void testCustomSetter2() {
-    doTest(true)
+  public void testThreeSupertypes2() {
+    doTest(true);
   }
 
-  void testMultipleInterfaces() {
-    doTest(true)
+  public void testCustomSetter() {
+    doTest(true);
   }
 
-  void testMultipleInterfaces2() {
-    doTest(true)
+  public void testCustomSetter2() {
+    doTest(true);
   }
 
-  void testRaw() {
-    doTest(true)
+  public void testMultipleInterfaces() {
+    doTest(true);
   }
 
-  void testDefaultValues() {
-    doTest(true)
+  public void testMultipleInterfaces2() {
+    doTest(true);
   }
 
-  void testDefaultValues2() {
-    doTest(true)
+  public void testRaw() {
+    doTest(true);
   }
 
-  void testDiamond() {
-    doTest(true)
+  public void testDefaultValues() {
+    doTest(true);
   }
 
-  void testParametrizedInterface() {
-    doTest(true)
+  public void testDefaultValues2() {
+    doTest(true);
   }
 
-  void testParametrizedInterface2() {
-    doTest(true)
+  public void testDiamond() {
+    doTest(true);
   }
 
-  void testParametrizedInterface3() {
-    doTest(true)
+  public void testParametrizedInterface() {
+    doTest(true);
   }
 
-  void testIntersectionInArgument() {
-    doTest(true)
+  public void testParametrizedInterface2() {
+    doTest(true);
   }
 
-  void testParametrizedMethod() {
-    doTest(true)
+  public void testParametrizedInterface3() {
+    doTest(true);
   }
 
-  void testBasicClosure() {
-    doTest(true)
+  public void testIntersectionInArgument() {
+    doTest(true);
   }
 
-  void testImplicitClosureParameter() {
-    doTest(true)
+  public void testParametrizedMethod() {
+    doTest(true);
   }
 
-  void testInterfaceInClosureSignature() {
-    doTest(true)
+  public void testBasicClosure() {
+    doTest(true);
   }
 
-  void testClosureParameterDependsOnMethodParameter() {
-    doTest(true)
+  public void testImplicitClosureParameter() {
+    doTest(true);
   }
 
-  void testClosureParameterDependsOnMethodParameter2() {
-    doTest(true)
+  public void testInterfaceInClosureSignature() {
+    doTest(true);
   }
 
-  void testTwoClosuresAsArgument() {
-    doTest(true)
+  public void testClosureParameterDependsOnMethodParameter() {
+    doTest(true);
   }
 
-  void testDeepClosureDependency() {
-    doTest(true)
+  public void testClosureParameterDependsOnMethodParameter2() {
+    doTest(true);
   }
 
-  void testDeepClosureDependency2() {
-    doTest(true)
+  public void testTwoClosuresAsArgument() {
+    doTest(true);
   }
 
-  void testDeepClosureDependency3() {
-    doTest(true)
+  public void testDeepClosureDependency() {
+    doTest(true);
   }
 
-  void testDeepClosureDependency4() {
-    doTest(true)
+  public void testDeepClosureDependency2() {
+    doTest(true);
   }
 
-  void testClosureSignatureFromInnerCalls() {
-    doTest(true)
+  public void testDeepClosureDependency3() {
+    doTest(true);
   }
 
-  void testArrayOfPrimitiveTypes() {
-    doTest(true)
+  public void testDeepClosureDependency4() {
+    doTest(true);
   }
 
-  void testParametrizedArray() {
-    doTest(true)
+  public void testClosureSignatureFromInnerCalls() {
+    doTest(true);
   }
 
-  void testCallWithArrayParameter() {
-    doTest(true)
+  public void testArrayOfPrimitiveTypes() {
+    doTest(true);
   }
 
-  void testDifferentCallPlaces() {
-    doTest(true)
+  public void testParametrizedArray() {
+    doTest(true);
   }
 
-  void testAuxiliaryStatements() {
-    doTest(true)
+  public void testCallWithArrayParameter() {
+    doTest(true);
   }
 
-  void testExplicitCallForClosureParameter() {
-    doTest(true)
+  public void testDifferentCallPlaces() {
+    doTest(true);
   }
 
-  void testSentClosure() {
-    doTest(true)
+  public void testAuxiliaryStatements() {
+    doTest(true);
   }
 
-  void testVariance() {
-    doTest(true)
+  public void testExplicitCallForClosureParameter() {
+    doTest(true);
   }
 
-  void testVariance2() {
-    doTest(true)
+  public void testSentClosure() {
+    doTest(true);
   }
 
-  void testVariance3() {
-    doTest(true)
+  public void testVariance() {
+    doTest(true);
   }
 
-  void testMutualDependency() {
-    doTest(true)
+  public void testVariance2() {
+    doTest(true);
   }
 
-  void testMutualDependency2() {
-    doTest(true)
+  public void testVariance3() {
+    doTest(true);
   }
 
-  void testOverriddenMethod() {
-    doTest(true)
+  public void testMutualDependency() {
+    doTest(true);
   }
 
-  void testOverriddenMethodInClass() {
-    doTest(true)
+  public void testMutualDependency2() {
+    doTest(true);
   }
 
-  void testOverriddenMethodWithoutOverrideAnnotation() {
-    doTest(true)
+  public void testOverriddenMethod() {
+    doTest(true);
   }
 
-  void testOverriddenMethodWithOtherOverloads() {
-    doTest(true)
+  public void testOverriddenMethodInClass() {
+    doTest(true);
   }
 
-  void testOverriddenMethodWithErasure() {
-    doTest(true)
+  public void testOverriddenMethodWithoutOverrideAnnotation() {
+    doTest(true);
   }
 
-  void testOverriddenMethodWithoutType() {
-    doTest(true)
+  public void testOverriddenMethodWithOtherOverloads() {
+    doTest(true);
   }
 
-//  void testDeepCollectingOfCalls() {
-//    doTest(true)
-//  }
+  public void testOverriddenMethodWithErasure() {
+    doTest(true);
+  }
 
-  void testAssignment() {
-    doTest(true)
+  public void testOverriddenMethodWithoutType() {
+    doTest(true);
   }
 
-  void testAssignment2() {
-    doTest(true)
+  public void testAssignment() {
+    doTest(true);
   }
 
-  void testAssignment3() {
-    doTest(true)
+  public void testAssignment2() {
+    doTest(true);
   }
 
-  void testVarargAcceptance() {
-    doTest(true)
+  public void testAssignment3() {
+    doTest(true);
   }
 
-  void testVarargInference() {
-    doTest(true)
+  public void testVarargAcceptance() {
+    doTest(true);
   }
 
-  void testGenericConstructor() {
-    doTest(true)
+  public void testVarargInference() {
+    doTest(true);
   }
 
-  void testClosureParamsInfluence() {
-    doTest(true)
+  public void testGenericConstructor() {
+    doTest(true);
   }
 
-  void testClosureParamsInfluence2() {
-    doTest(true)
+  public void testClosureParamsInfluence() {
+    doTest(true);
   }
 
-  void testClosurePassedToDgm() {
-    doTest(true)
+  public void testClosureParamsInfluence2() {
+    doTest(true);
   }
 
-  void testPreserveAnnotations() {
-    doTest(true)
+  public void testClosurePassedToDgm() {
+    doTest(true);
   }
 
-  void testInferClassParameter() {
-    doTest(true)
+  public void testPreserveAnnotations() {
+    doTest(true);
   }
 
-  void testInferClassParameter2() {
-    doTest(true)
+  public void testInferClassParameter() {
+    doTest(true);
   }
 
-  void testInferClassParameter3() {
-    doTest(true)
+  public void testInferClassParameter2() {
+    doTest(true);
   }
 
-  void testInferClassParameter4() {
-    doTest(true)
+  public void testInferClassParameter3() {
+    doTest(true);
   }
 
-  void testInferClassParameter5() {
-    doTest(true)
+  public void testInferClassParameter4() {
+    doTest(true);
   }
 
-  void testInferClassParameter6() {
-    doTest(true)
+  public void testInferClassParameter5() {
+    doTest(true);
   }
 
-  void testInferClassParameter7() {
-    doTest(true)
+  public void testInferClassParameter6() {
+    doTest(true);
   }
 
-  void testInferClassParameter8() {
-    doTest(true)
+  public void testInferClassParameter7() {
+    doTest(true);
   }
 
-  void testParameterDependencyInsideClosure() {
-    doTest(true)
+  public void testInferClassParameter8() {
+    doTest(true);
   }
 
-  void testSuperCallInConstructor() {
-    doTest(true)
+  public void testParameterDependencyInsideClosure() {
+    doTest(true);
   }
 
-  void testParameterizedMethod2() {
-    doTest(true)
+  public void testSuperCallInConstructor() {
+    doTest(true);
   }
 
-//  void testDeepEquality() {
-//    doTest(true)
-//  }
+  public void testParameterizedMethod2() {
+    doTest(true);
+  }
 
-  void testClosureAndSamInterface() {
-    doTest(true)
+  public void testClosureAndSamInterface() {
+    doTest(true);
   }
 
-  void testSuperWildcard() {
-    doTest(true)
+  public void testSuperWildcard() {
+    doTest(true);
   }
 
-  void testCapturedWildcard() {
-    doTest(true)
+  public void testCapturedWildcard() {
+    doTest(true);
   }
 
-  void testCapturedWildcard2() {
-    doTest(true)
+  public void testCapturedWildcard2() {
+    doTest(true);
   }
 
-  void testDelegatingClosure() {
-    doTest(true)
+  public void testDelegatingClosure() {
+    doTest(true);
   }
 
-  void testDelegateViaRehydrate() {
-    doTest(true)
+  public void testDelegateViaRehydrate() {
+    doTest(true);
   }
 
-  void testDelegateToParameter() {
-    doTest(true)
+  public void testDelegateToParameter() {
+    doTest(true);
   }
 
-  void testDelegatesToNamedTarget() {
-    doTest(true)
+  public void testDelegatesToNamedTarget() {
+    doTest(true);
   }
 
-  void testDelegatesToWithStrategy() {
-    doTest(true)
+  public void testDelegatesToWithStrategy() {
+    doTest(true);
   }
 
-  void testDelegateInferenceFromInnerMethod() {
-    doTest(true)
+  public void testDelegateInferenceFromInnerMethod() {
+    doTest(true);
   }
 
-  void testDelegationFromDgm() {
-    doTest(true)
+  public void testDelegationFromDgm() {
+    doTest(true);
   }
 
-  void testDelegationFromType() {
-    doTest(true)
+  public void testDelegationFromType() {
+    doTest(true);
   }
 
-  void testReturnTypeInfluence() {
-    doTest(true)
+  public void testReturnTypeInfluence() {
+    doTest(true);
   }
 
-  void testDgm() {
-    doTest(true)
+  public void testDgm() {
+    doTest(true);
   }
 
-  void testIndirectBoundConstraint() {
-    doTest(true)
+  public void testIndirectBoundConstraint() {
+    doTest(true);
   }
 
-  void testIntersectionAsParameter() {
-    doTest(true)
+  public void testIntersectionAsParameter() {
+    doTest(true);
   }
 
-  void testSuperWildcardAsParameter() {
-    doTest(true)
+  public void testSuperWildcardAsParameter() {
+    doTest(true);
   }
 
-  void testWideSearch() {
-    myFixture.addFileToProject 'other.groovy', '''
-AA.foo(1)
-'''
-    doTextTest """
-class AA { static def fo<caret>o(a) {} }
-""", """
-class AA { static void fo<caret>o(Integer a) {} }
-"""
+  public void testWideSearch() {
+    myFixture.addFileToProject("other.groovy", """
+      AA.foo(1)
+      """);
+    doTextTest("""
+                 class AA { static def fo<caret>o(a) {} }
+                 """, """
+                 class AA { static void fo<caret>o(Integer a) {} }
+                 """);
   }
 
-  void testElvisOperator() {
-    doTest(true)
+  public void testElvisOperator() {
+    doTest(true);
   }
 
-  void testIndexPropertyWithSpecialSyntax() {
-    doTest(true)
+  public void testIndexPropertyWithSpecialSyntax() {
+    doTest(true);
   }
 
-  void testWeirdClassName() {
-    doTest(true)
+  public void testWeirdClassName() {
+    doTest(true);
   }
 
-  void testInferCommonClassType() {
-    doTest(true)
+  public void testInferCommonClassType() {
+    doTest(true);
   }
 
-  void testUnresolvedCode() {
-    doTest(true)
+  public void testUnresolvedCode() {
+    doTest(true);
   }
 
-  void testUnresolvedCode2() {
-    doTest(true)
+  public void testUnresolvedCode2() {
+    doTest(true);
   }
 
-  void testCallWithInnerTypeParameter() {
-    doTest(true)
+  public void testCallWithInnerTypeParameter() {
+    doTest(true);
   }
 
-  void testUnresolvedCode3() {
-    doTest(true)
+  public void testUnresolvedCode3() {
+    doTest(true);
   }
 
-  void testPassClosureInClosure() {
-    doTest(true)
+  public void testPassClosureInClosure() {
+    doTest(true);
   }
 
-  void testRequiredBoxingForPrimitiveType() {
-    doTest(true)
+  public void testRequiredBoxingForPrimitiveType() {
+    doTest(true);
   }
 
-  void testOffsetSensitiveMethodCreating() {
-    doTest(true)
+  public void testOffsetSensitiveMethodCreating() {
+    doTest(true);
   }
 
-  void testAvoidInfiniteLoopForPlusAssignment() {
-    doTest(true)
+  public void testAvoidInfiniteLoopForPlusAssignment() {
+    doTest(true);
   }
 
-  void testOverriddenVarargParameter() {
-    doTest(true)
+  public void testOverriddenVarargParameter() {
+    doTest(true);
   }
 
-  void testForInLoop() {
-    doTest(true)
+  public void testForInLoop() {
+    doTest(true);
   }
 
-  void testForInLoopWithMap() {
-    doTest(true)
+  public void testForInLoopWithMap() {
+    doTest(true);
   }
 
-  void testRecursiveCalls() {
-    doTest(true)
+  public void testRecursiveCalls() {
+    doTest(true);
   }
 }
