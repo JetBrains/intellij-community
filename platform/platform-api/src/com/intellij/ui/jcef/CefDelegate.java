@@ -25,4 +25,5 @@ public interface CefDelegate {
   @NotNull CefClient createClient();
   boolean isInitialized(@NotNull CefBrowser browser);
   @NotNull CefMessageRouter createMessageRouter(@Nullable CefMessageRouter.CefMessageRouterConfig config);
+  void disableNavigation(@NotNull CefBrowser browser);
 }
