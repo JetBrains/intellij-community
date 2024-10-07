@@ -185,7 +185,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @param timeout                timeout in ms
    * @param processHandlerConsumer consumes process handler just before execution, may be used for cancellation
    */
-  @RequiresBackgroundThread(generateAssertion = true)
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput executeOnWsl(@NotNull List<String> command,
                                              @NotNull WSLCommandLineOptions options,
                                              int timeout,
@@ -204,7 +204,7 @@ public class WSLDistribution implements AbstractWslDistribution {
     return output;
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput executeOnWsl(int timeout, @NonNls String @NotNull ... command) throws ExecutionException {
     return executeOnWsl(Arrays.asList(command), new WSLCommandLineOptions(), timeout, null);
   }
