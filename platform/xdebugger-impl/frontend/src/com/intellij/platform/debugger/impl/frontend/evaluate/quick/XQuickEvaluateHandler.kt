@@ -8,8 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.RemoteValueHint
 import com.intellij.platform.debugger.impl.frontend.withCurrentDb
-import com.intellij.platform.frontend.FrontendApplicationInfo
-import com.intellij.platform.frontend.FrontendType
+import com.intellij.frontend.FrontendApplicationInfo
+import com.intellij.frontend.FrontendType
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
 import com.intellij.platform.project.projectId
