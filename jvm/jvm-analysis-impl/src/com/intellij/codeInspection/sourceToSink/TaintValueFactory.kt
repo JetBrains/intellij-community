@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink
 
 import com.intellij.codeInsight.AnnotationTargetUtil
@@ -176,11 +176,11 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
       return TaintValue.UNKNOWN
     }
     val annotationsManager = ExternalAnnotationsManager.getInstance(owner.project)
-    val annotations = annotationsManager.findExternalAnnotations(owner)
-    return annotations.asSequence()
-             .map { fromAnnotation(it) }
-             .filterNotNull()
-             .firstOrNull() ?: TaintValue.UNKNOWN
+    val annotations: Array<out PsiAnnotation>? = annotationsManager.findExternalAnnotations(owner)
+    return annotations?.asSequence()
+             ?.map { fromAnnotation(it) }
+             ?.filterNotNull()
+             ?.firstOrNull() ?: TaintValue.UNKNOWN
   }
 
   private fun of(annotationOwner: PsiModifierListOwner): TaintValue {
