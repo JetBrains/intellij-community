@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptModel
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.div
@@ -63,19 +64,21 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
 
         val psiFile = myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
 
-        val dependenciesSource = object : GradleScriptDependenciesSource(project) {
-            override suspend fun updateModules(
-                dependencies: ScriptDependenciesData,
-                storage: MutableEntityStorage?
-            ) {
-                //do nothing because adding modules is not permitted in light tests
+        if ((myFixture.file as? KtFile)?.isScript() == true) {
+            val dependenciesSource = object : GradleScriptDependenciesSource(project) {
+                override suspend fun updateModules(
+                    dependencies: ScriptDependenciesData,
+                    storage: MutableEntityStorage?
+                ) {
+                    //do nothing because adding modules is not permitted in light tests
+                }
             }
-        }
-        project.registerExtension(SCRIPT_DEPENDENCIES_SOURCES, dependenciesSource, testRootDisposable)
+            project.registerExtension(SCRIPT_DEPENDENCIES_SOURCES, dependenciesSource, testRootDisposable)
 
-        val script = GradleScriptModel(psiFile.virtualFile)
-        runWithModalProgressBlocking(project, "Testing") {
-            dependenciesSource.updateDependenciesAndCreateModules(setOf(script))
+            val script = GradleScriptModel(psiFile.virtualFile)
+            runWithModalProgressBlocking(project, "Testing") {
+                dependenciesSource.updateDependenciesAndCreateModules(setOf(script))
+            }
         }
         super.doTest(path)
     }
