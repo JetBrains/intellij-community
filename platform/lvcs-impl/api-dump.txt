@@ -327,6 +327,10 @@ pf:com.intellij.history.integration.IdeaGateway$VersionedFilterData
 f:com.intellij.history.integration.LocalHistoryBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+a:com.intellij.history.integration.LocalHistoryEx
+- com.intellij.history.LocalHistory
+- com.intellij.openapi.Disposable
+- a:getFacade():com.intellij.history.core.LocalHistoryFacade
 f:com.intellij.history.integration.revertion.DifferenceReverter
 - com.intellij.history.integration.revertion.Reverter
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,java.util.List,com.intellij.history.core.revisions.Revision):V
