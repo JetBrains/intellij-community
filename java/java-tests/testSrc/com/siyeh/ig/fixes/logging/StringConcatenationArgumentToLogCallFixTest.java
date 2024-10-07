@@ -71,6 +71,8 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
   public void testPreviousArgumentStringFormat() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
   public void testConcatenationStringFormat() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
   public void testSimpleStringFormatWithException() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
+  public void testStringFormatWithNewLine() { doTest( InspectionsBundle.message("fix.all.inspection.problems.in.file",
+                                                                                InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.display.name"))); }
 
 
   @Override

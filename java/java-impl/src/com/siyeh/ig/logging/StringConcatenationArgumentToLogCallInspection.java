@@ -602,7 +602,30 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
         if (range == null) return null;
         result.put(range, index);
       }
-
+      int start = 0;
+      while ((start = formattedString.indexOf("%n", start)) != -1) {
+        int escaped = 0;
+        while (true) {
+          if (start - escaped == 0) {
+            break;
+          }
+          if(formattedString.charAt(start - escaped - 1) == '%') {
+            escaped++;
+            continue;
+          }
+          break;
+        }
+        if (escaped % 2 == 1) {
+          start++;
+          continue;
+        }
+        TextRange range = ExpressionUtils.findStringLiteralRange(expression, start, start + 2);
+        if (range == null) {
+          return null;
+        }
+        text = StringUtil.replaceSubstring(text, range, "\\n");
+        start++;
+      }
       return new StringFormatArgumentToLogCallFix(result, text);
     }
 
