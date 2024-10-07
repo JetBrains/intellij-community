@@ -10,7 +10,7 @@ internal object ApiDumpUtil {
   }
 
   fun isApiDumpExperimentalFile(virtualFile: VirtualFile): Boolean {
-    return virtualFile.name == ApiDumpConstants.API_DUMP_EXPERIMENTAL
+    return virtualFile.name == ApiDumpConstants.API_DUMP_EXPERIMENTAL_FILENAME
   }
 
   fun isApiDumpUnreviewedFile(virtualFile: VirtualFile): Boolean {
