@@ -5,6 +5,8 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampl
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logGenerateSingleModuleBuildChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logGenerateSingleModuleBuildFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.AssetsJava
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
@@ -128,6 +130,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 checkBox(KotlinNewProjectWizardUIBundle.message("label.project.wizard.new.project.generate.single.module"))
                     .bindSelected(generateSingleModuleProperty)
                     .enabledIf(gradleDslProperty.equalsTo(GradleDsl.KOTLIN))
+                    .whenStateChangedFromUi { logGenerateSingleModuleBuildChanged(it) }
+                    .onApply { logGenerateSingleModuleBuildFinished(generateSingleModule) }
 
                 contextHelp(KotlinNewProjectWizardUIBundle.message("tooltip.project.wizard.new.project.generate.single.module"))
             }.visibleIf(gradleDslProperty.equalsTo(GradleDsl.KOTLIN))
