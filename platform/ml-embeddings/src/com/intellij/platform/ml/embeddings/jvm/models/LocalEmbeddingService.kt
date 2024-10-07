@@ -4,8 +4,8 @@ package com.intellij.platform.ml.embeddings.jvm.models
 import ai.grazie.emb.FloatTextEmbedding
 import ai.grazie.emb.SuspendableTextEmbeddingsService
 import ai.grazie.nlp.encoder.PreTrainedTextEncoder
-import ai.grazie.utils.ki.TensorUtils
 import io.kinference.ndarray.arrays.FloatNDArray
+import io.kinference.ndarray.arrays.IntNDArray
 
 class LocalEmbeddingService(
   private val network: LocalEmbeddingNetwork,
@@ -13,10 +13,12 @@ class LocalEmbeddingService(
 ) : SuspendableTextEmbeddingsService<FloatTextEmbedding> {
   suspend fun embed(texts: List<String>): List<FloatTextEmbedding> {
     val tokenIds = encoder.encodeAsIds(texts, withSpecialTokens = true, maxLen = network.maxLen)
-    val attentionMask = tokenIds.map { List(it.size) { 1 } }
 
-    val tokensPadded = TensorUtils.create2DInt32Array(tokenIds, encoder.padId)
-    val attentionMaskPadded = TensorUtils.create2DInt32Array(attentionMask, paddingIdx = 0)
+    val batchSize = tokenIds.size
+    val seqLen = tokenIds.maxOf { it.size }
+
+    val tokensPadded = IntNDArray(batchSize, seqLen) { (batchIdx, seqIdx): IntArray -> tokenIds[batchIdx].getOrNull(seqIdx) ?: encoder.padId  }
+    val attentionMaskPadded = IntNDArray(batchSize, seqLen) { (batchIdx, seqIdx): IntArray -> if (seqIdx < tokenIds[batchIdx].size) 1 else 0 }
 
     val embeddings: FloatNDArray = network.predict(tokensPadded, attentionMaskPadded)
     return embeddings.split(parts = embeddings.shape[0], axis = 0)

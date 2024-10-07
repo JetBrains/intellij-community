@@ -13,82 +13,6 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
-    <orderEntry type="module-library">
-      <library name="ai.grazie.utils.ki" type="repository">
-        <properties maven-id="ai.grazie.utils:utils-ki-jvm:0.3.132">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-ki-jvm/0.3.132/utils-ki-jvm-0.3.132.jar">
-              <sha256sum>1efdb1279d4449e94c05318f4714369c7b6c234f1ab37d6314703be3558d45e1</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.23-kotlin18/ndarray-core-jvm-0.2.23-kotlin18.jar">
-              <sha256sum>8ad1a945ecaa3fd4f3ae5435bb6c2b151990833c914141891e36c1c6d9de36dc</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.26-kotlin18/primitives-annotations-jvm-0.1.26-kotlin18.jar">
-              <sha256sum>9c6c0096105fbc6d87b0dda7d27e4042a99b0132427370ae8d4be66b1ef14b13</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-math4-core/4.0-beta1/commons-math4-core-4.0-beta1.jar">
-              <sha256sum>0a694f3203cd94b0ea2804e0fd927c651a5120ceb8504d128cfb9e199783c188</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-numbers-core/1.1/commons-numbers-core-1.1.jar">
-              <sha256sum>966896d9bb1e77cdd13830738acbcda22daeba57b4b093f7f4167828add95b58</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.3.132/utils-common-jvm-0.3.132.jar">
-              <sha256sum>c543a072a0f4d96c3afa37756f694be4a9348777fd7690ab4bd21e7df466a309</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.23-kotlin18/ndarray-api-jvm-0.2.23-kotlin18.jar">
-              <sha256sum>12411d370c565053bc382d8c86233370333ae14913b3a304261b6f9230187740</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/utils-common-jvm/0.2.23-kotlin18/utils-common-jvm-0.2.23-kotlin18.jar">
-              <sha256sum>1e162665cba5871cba770c7fb2ade4af5a8a29c085a506eba07d7ce703ebe3f6</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.23-kotlin18/inference-api-jvm-0.2.23-kotlin18.jar">
-              <sha256sum>888f3673d378b68bc25e218cb57787e1a0b87d56ea87b6c501483f2347463521</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.4.0/okio-jvm-3.4.0.jar">
-              <sha256sum>0139ec7a506dbbd54cad62291b019cb850534be097c8c66c1000d5fbe8edef3e</sha256sum>
-            </artifact>
-          </verification>
-          <exclude>
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-            <dependency maven-id="org.jetbrains:annotations" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.kotlinx:atomicfu-jvm" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm" />
-            <dependency maven-id="org.slf4j:slf4j-api" />
-            <dependency maven-id="it.unimi.dsi:fastutil-core" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-ki-jvm/0.3.132/utils-ki-jvm-0.3.132.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.23-kotlin18/ndarray-core-jvm-0.2.23-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.26-kotlin18/primitives-annotations-jvm-0.1.26-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-math4-core/4.0-beta1/commons-math4-core-4.0-beta1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-numbers-core/1.1/commons-numbers-core-1.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.3.132/utils-common-jvm-0.3.132.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.23-kotlin18/ndarray-api-jvm-0.2.23-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-common-jvm/0.2.23-kotlin18/utils-common-jvm-0.2.23-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.23-kotlin18/inference-api-jvm-0.2.23-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.4.0/okio-jvm-3.4.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-ki-jvm/0.3.132/utils-ki-jvm-0.3.132-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.23-kotlin18/ndarray-core-jvm-0.2.23-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.26-kotlin18/primitives-annotations-jvm-0.1.26-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-math4-core/4.0-beta1/commons-math4-core-4.0-beta1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-numbers-core/1.1/commons-numbers-core-1.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.3.132/utils-common-jvm-0.3.132-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.23-kotlin18/ndarray-api-jvm-0.2.23-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-common-jvm/0.2.23-kotlin18/utils-common-jvm-0.2.23-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.23-kotlin18/inference-api-jvm-0.2.23-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.4.0/okio-jvm-3.4.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="ai.grazie.emb" type="repository">
         <properties maven-id="ai.grazie.model:model-emb-jvm:0.3.132">
@@ -207,19 +131,19 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="kinference.core" type="repository">
-        <properties maven-id="io.kinference:inference-core-jvm:0.2.22-kotlin18">
+        <properties maven-id="io.kinference:inference-core-jvm:0.2.23">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/inference-core-jvm/0.2.22-kotlin18/inference-core-jvm-0.2.22-kotlin18.jar">
-              <sha256sum>74f2aaaa1213de2a062c24334e614f39dda556b1d83f58829ff54bb32b2661ff</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/inference-core-jvm/0.2.23/inference-core-jvm-0.2.23.jar">
+              <sha256sum>f662aedc59f3a08be4668c6fbb916b533328b17108b00cf6cf37184222456cfa</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.22-kotlin18/ndarray-api-jvm-0.2.22-kotlin18.jar">
-              <sha256sum>60d9982d5527d52d2c41d9fc436aae064d7ccdeee42b30a2272217072b62a082</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.23/ndarray-api-jvm-0.2.23.jar">
+              <sha256sum>bdf18428bde27c14fa2bd3e45ea4be02a074ee67c7afc5f993fe5c381fa5400c</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.26-kotlin18/primitives-annotations-jvm-0.1.26-kotlin18.jar">
-              <sha256sum>9c6c0096105fbc6d87b0dda7d27e4042a99b0132427370ae8d4be66b1ef14b13</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/2.0.0/primitives-annotations-jvm-2.0.0.jar">
+              <sha256sum>9c74ff388d69eb821e1eaf7608bf27fd12d7ffe529b308dafbc4cb72eabe950e</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.22-kotlin18/ndarray-core-jvm-0.2.22-kotlin18.jar">
-              <sha256sum>6f234a41fee77e9c850cabb3e6933614b0c2ca094de3d2910fc7a8520d14e370</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.23/ndarray-core-jvm-0.2.23.jar">
+              <sha256sum>cb09d8532f25568dcc7381373404f54bc850f70710564d256738623a6662681a</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-math4-core/4.0-beta1/commons-math4-core-4.0-beta1.jar">
               <sha256sum>0a694f3203cd94b0ea2804e0fd927c651a5120ceb8504d128cfb9e199783c188</sha256sum>
@@ -227,87 +151,91 @@
             <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-numbers-core/1.1/commons-numbers-core-1.1.jar">
               <sha256sum>966896d9bb1e77cdd13830738acbcda22daeba57b4b093f7f4167828add95b58</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.22-kotlin18/inference-api-jvm-0.2.22-kotlin18.jar">
-              <sha256sum>888f3673d378b68bc25e218cb57787e1a0b87d56ea87b6c501483f2347463521</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/it/unimi/dsi/fastutil-core/8.5.14/fastutil-core-8.5.14.jar">
+              <sha256sum>8fb6fe5989a32a74df3158fd8d6b91a4dfc44348772a8654c47dcadd1090a4d8</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/inference-ir-jvm/0.2.22-kotlin18/inference-ir-jvm-0.2.22-kotlin18.jar">
-              <sha256sum>f030cfe5715be807d7a6fc30603aa95492ac59108e34c3c57f15b0b8fc2d0f9b</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.23/inference-api-jvm-0.2.23.jar">
+              <sha256sum>56ea786a8e0bc529fbcdde8105e547c3b926237d23a65bb82e9f7a87e70b67f8</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.22-kotlin18/serializer-protobuf-jvm-0.2.22-kotlin18.jar">
-              <sha256sum>84ecc009a3dcf1b205c4825144021d2b1b141b348769a1d0515a70030c601826</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/inference-ir-jvm/0.2.23/inference-ir-jvm-0.2.23.jar">
+              <sha256sum>30838a2c8f7d5ab7b9a61c6abbcac21799e612ddc87a7f3cb140a4ab1400b275</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/inference-ir-trees-jvm/0.2.22-kotlin18/inference-ir-trees-jvm-0.2.22-kotlin18.jar">
-              <sha256sum>b9b6b5b985d0abbfd1fdf67c7a6de3eaa2b8323da6751fbe07d7ec9d77dd37db</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.23/serializer-protobuf-jvm-0.2.23.jar">
+              <sha256sum>65d7883803779a2327462591800def3f07e6c605977726f92ec47f9ecbaf5514</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/utils-logger-jvm/0.2.22-kotlin18/utils-logger-jvm-0.2.22-kotlin18.jar">
-              <sha256sum>032475adfed32898c98ea042e05ce4fd09ad656f26c851d8bb138759a185c909</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/inference-ir-trees-jvm/0.2.23/inference-ir-trees-jvm-0.2.23.jar">
+              <sha256sum>b82ad42a83e0b4ec994272479046f0427b0e2e5dd1c8a59623ba49331a16a332</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/utils-profiling-jvm/0.2.22-kotlin18/utils-profiling-jvm-0.2.22-kotlin18.jar">
-              <sha256sum>6169aa05b6f09abda3851b78cf1b0ecee60fd1a8d88e7db4626221edcf7b58ec</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/utils-logger-jvm/0.2.23/utils-logger-jvm-0.2.23.jar">
+              <sha256sum>f23b65fae9d703ae0b8bd34cf5744cd0ed37c9b44dc2e258629e04957b3069e6</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/utils-common-jvm/0.2.22-kotlin18/utils-common-jvm-0.2.22-kotlin18.jar">
-              <sha256sum>6065a10389115ff911ced492dac53c6e1995b7fab417e24b70a990a217f0e659</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/utils-profiling-jvm/0.2.23/utils-profiling-jvm-0.2.23.jar">
+              <sha256sum>6779a4c14089914756d466b1cc4a2bc001ef7926f591e99b6fc745c235f8fedd</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.22-kotlin18/serializer-tiled-jvm-0.2.22-kotlin18.jar">
-              <sha256sum>dcc3f904524e5962371b9e96c59ff3eeac77fa4743a856cd5cc9968ee949e2d1</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/utils-common-jvm/0.2.23/utils-common-jvm-0.2.23.jar">
+              <sha256sum>8a472fceef7bd7b8e65f0b51184c909922adefc61a4df6652a982b79346d10c5</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.8.1/wire-runtime-jvm-4.8.1.jar">
-              <sha256sum>baa47e3c331eca597734a1148e51ae032c1154421e89fd5bc42cbbc879ebb180</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.23/serializer-tiled-jvm-0.2.23.jar">
+              <sha256sum>e089932450618c533d0b33dbedf4ee6d98110df0f96114f94fdad59d68ad0811</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.9.3/wire-runtime-jvm-4.9.3.jar">
+              <sha256sum>2a7076031d9fd43a44cdff8a80cdc4d02ff6c97b1a8125c265f2ce989e36bc6e</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.23.2/atomicfu-jvm-0.23.2.jar">
               <sha256sum>101ff43ff563fca167af5ade98c3b69bf569010eab745013b84d8955034d3b3c</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.4.0/okio-jvm-3.4.0.jar">
-              <sha256sum>0139ec7a506dbbd54cad62291b019cb850534be097c8c66c1000d5fbe8edef3e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.6.0/okio-jvm-3.6.0.jar">
+              <sha256sum>67543f0736fc422ae927ed0e504b98bc5e269fda0d3500579337cb713da28412</sha256sum>
             </artifact>
           </verification>
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-            <dependency maven-id="org.jetbrains:annotations" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.slf4j:slf4j-api" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-core-jvm/0.2.22-kotlin18/inference-core-jvm-0.2.22-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.22-kotlin18/ndarray-api-jvm-0.2.22-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.26-kotlin18/primitives-annotations-jvm-0.1.26-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.22-kotlin18/ndarray-core-jvm-0.2.22-kotlin18.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-core-jvm/0.2.23/inference-core-jvm-0.2.23.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.23/ndarray-api-jvm-0.2.23.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/2.0.0/primitives-annotations-jvm-2.0.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.23/ndarray-core-jvm-0.2.23.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-math4-core/4.0-beta1/commons-math4-core-4.0-beta1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-numbers-core/1.1/commons-numbers-core-1.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.22-kotlin18/inference-api-jvm-0.2.22-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-jvm/0.2.22-kotlin18/inference-ir-jvm-0.2.22-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.22-kotlin18/serializer-protobuf-jvm-0.2.22-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-trees-jvm/0.2.22-kotlin18/inference-ir-trees-jvm-0.2.22-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-logger-jvm/0.2.22-kotlin18/utils-logger-jvm-0.2.22-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-profiling-jvm/0.2.22-kotlin18/utils-profiling-jvm-0.2.22-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-common-jvm/0.2.22-kotlin18/utils-common-jvm-0.2.22-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.22-kotlin18/serializer-tiled-jvm-0.2.22-kotlin18.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.8.1/wire-runtime-jvm-4.8.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/it/unimi/dsi/fastutil-core/8.5.14/fastutil-core-8.5.14.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.23/inference-api-jvm-0.2.23.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-jvm/0.2.23/inference-ir-jvm-0.2.23.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.23/serializer-protobuf-jvm-0.2.23.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-trees-jvm/0.2.23/inference-ir-trees-jvm-0.2.23.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-logger-jvm/0.2.23/utils-logger-jvm-0.2.23.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-profiling-jvm/0.2.23/utils-profiling-jvm-0.2.23.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-common-jvm/0.2.23/utils-common-jvm-0.2.23.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.23/serializer-tiled-jvm-0.2.23.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.9.3/wire-runtime-jvm-4.9.3.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.23.2/atomicfu-jvm-0.23.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.4.0/okio-jvm-3.4.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.6.0/okio-jvm-3.6.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-core-jvm/0.2.22-kotlin18/inference-core-jvm-0.2.22-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.22-kotlin18/ndarray-api-jvm-0.2.22-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.26-kotlin18/primitives-annotations-jvm-0.1.26-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.22-kotlin18/ndarray-core-jvm-0.2.22-kotlin18-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-core-jvm/0.2.23/inference-core-jvm-0.2.23-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.23/ndarray-api-jvm-0.2.23-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/2.0.0/primitives-annotations-jvm-2.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.23/ndarray-core-jvm-0.2.23-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-math4-core/4.0-beta1/commons-math4-core-4.0-beta1-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-numbers-core/1.1/commons-numbers-core-1.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.22-kotlin18/inference-api-jvm-0.2.22-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-jvm/0.2.22-kotlin18/inference-ir-jvm-0.2.22-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.22-kotlin18/serializer-protobuf-jvm-0.2.22-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-trees-jvm/0.2.22-kotlin18/inference-ir-trees-jvm-0.2.22-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-logger-jvm/0.2.22-kotlin18/utils-logger-jvm-0.2.22-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-profiling-jvm/0.2.22-kotlin18/utils-profiling-jvm-0.2.22-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-common-jvm/0.2.22-kotlin18/utils-common-jvm-0.2.22-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.22-kotlin18/serializer-tiled-jvm-0.2.22-kotlin18-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.8.1/wire-runtime-jvm-4.8.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/it/unimi/dsi/fastutil-core/8.5.14/fastutil-core-8.5.14-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.23/inference-api-jvm-0.2.23-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-jvm/0.2.23/inference-ir-jvm-0.2.23-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.23/serializer-protobuf-jvm-0.2.23-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-trees-jvm/0.2.23/inference-ir-trees-jvm-0.2.23-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-logger-jvm/0.2.23/utils-logger-jvm-0.2.23-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-profiling-jvm/0.2.23/utils-profiling-jvm-0.2.23-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-common-jvm/0.2.23/utils-common-jvm-0.2.23-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.23/serializer-tiled-jvm-0.2.23-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.9.3/wire-runtime-jvm-4.9.3-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.23.2/atomicfu-jvm-0.23.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.4.0/okio-jvm-3.4.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.6.0/okio-jvm-3.6.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
