@@ -30,6 +30,7 @@ abstract class PhasedLogs(val phase: Phase) {
 /**
  * Wrapper around the [EventField] with an additional property
  */
+@ApiStatus.Internal
 data class EventFieldExt<T>(
   val field: EventField<T>,
   val isBasic: Boolean = false,
