@@ -18,7 +18,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 33)
+  private val GROUP = EventLogGroup("inline.completion", 34)
 
   const val INVOKED_EVENT_ID = "invoked"
   const val SHOWN_EVENT_ID = "shown"
@@ -30,7 +30,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val EVENT = EventFields.Class("event", "Event which triggered completion")
     val PROVIDER = EventFields.Class("provider", "Completion provider class")
     val TIME_TO_COMPUTE = EventFields.Long("time_to_compute", "Time of provider execution (ms)")
-    val OUTCOME = EventFields.NullableEnum<Outcome>("outcome", "Invocation outcome (show, no_suggestions, etc.)")
+    val OUTCOME = EventFields.NullableEnum<Outcome>("outcome", description = "Invocation outcome (show, no_suggestions, etc.)")
 
     enum class Outcome {
       EXCEPTION,
