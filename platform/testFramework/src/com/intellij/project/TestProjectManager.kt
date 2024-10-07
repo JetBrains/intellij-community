@@ -278,6 +278,7 @@ private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
   val dumpPath = publishHeapDump(LEAKED_PROJECTS)
   LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl::class.java,
                           { hashCodes.contains(System.identityHashCode(it)) },
+                          null,
                           { leaked, backLink ->
                             val hashCode = System.identityHashCode(leaked)
                             message += LeakHunter.getLeakedObjectDetails(leaked, backLink, false)

@@ -66,6 +66,7 @@ import com.intellij.util.WalkingState
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.ref.IgnoredTraverseEntry
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.jetbrains.JBR
@@ -325,8 +326,14 @@ fun Application.cleanupApplicationCaches() {
 @TestOnly
 @Internal
 fun assertNonDefaultProjectsAreNotLeaked() {
+  assertNonDefaultProjectsAreNotLeaked(emptyList())
+}
+
+@TestOnly
+@Internal
+fun assertNonDefaultProjectsAreNotLeaked(ignoredTraverseEntries : List<IgnoredTraverseEntry>) {
   try {
-    LeakHunter.checkNonDefaultProjectLeak()
+    LeakHunter.checkNonDefaultProjectLeakWithIgnoredEntries(ignoredTraverseEntries)
   }
   catch (e: AssertionError) {
     publishHeapDump(LEAKED_PROJECTS)
