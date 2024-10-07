@@ -23,8 +23,6 @@ fun IdeaFrameUI.commitToolWindow(action: UiComponent.() -> Unit = {}): UiCompone
 
 fun IdeaFrameUI.databaseToolWindow(action: UiComponent.() -> Unit = {}): UiComponent = toolWindow("Database", action)
 
-fun IdeaFrameUI.servicesToolWindow(action: UiComponent.() -> Unit = {}): UiComponent = toolWindow("Services", action)
-
 fun IdeaFrameUI.mesonToolWindow(action: UiComponent.() -> Unit = {}): UiComponent = x { byClass("MesonToolWindowPanel") }.apply(action)
 
 fun IdeaFrameUI.messagesToolWindow(action: UiComponent.() -> Unit = {}): UiComponent = toolWindow("Build", action)
