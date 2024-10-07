@@ -24,7 +24,7 @@ import com.jetbrains.python.PythonPluginDisposable
 @Service
 private class EventLogGroupHolder {
   val group by lazy {
-    EventLogGroup("pycharm.quickfix.imports", 2, ML_RECORDER_ID).also {
+    EventLogGroup("pycharm.quickfix.imports", 3, ML_RECORDER_ID).also {
       it.registerMLTaskLogging(service<MLTaskPyCharmImportStatementsRanking>().task,
                                parentDisposable = service<PythonPluginDisposable>())
     }

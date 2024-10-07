@@ -34,7 +34,7 @@ enum class FileExtensionType {
 class BaseProjectFeatures : FeatureProvider(MLUnitImportCandidatesList) {
   object Features {
     val NUM_PYTHON_FILES_IN_PROJECT = FeatureDeclaration.int("num_python_files_in_project") {
-      "The amount of files in the project"
+      "The estimated amount of files in the project (by a power of 2)"
     }.nullable()
     val PSI_PARENT_OF_ORIG = (1..5).map { i -> FeatureDeclaration.aClass("psi_parent_of_orig_$i") { "PSI parent of original element #$i" }.nullable() }
     val FILE_EXTENSION_TYPE = FeatureDeclaration.enum<FileExtensionType>("file_extension_type") { "extension of the original python file" }.nullable()
@@ -52,7 +52,7 @@ class BaseProjectFeatures : FeatureProvider(MLUnitImportCandidatesList) {
     val scopeSize = readAction {
       FileTypeIndex.getFiles(PythonFileType.INSTANCE, GlobalSearchScope.projectScope(project)).size
     }
-    add(Features.NUM_PYTHON_FILES_IN_PROJECT with scopeSize)
+    add(Features.NUM_PYTHON_FILES_IN_PROJECT with Integer.highestOneBit(scopeSize))
 
     val editor = readAction { FileEditorManager.getInstance(project).selectedEditor as? TextEditor } ?: return@buildList
     val psiFile = readAction { PsiManager.getInstance(project).findFile(editor.file) } ?: return@buildList
