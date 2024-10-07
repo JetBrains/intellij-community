@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.logging;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -12,7 +12,11 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
   public void setUp() throws Exception {
     super.setUp();
     myDefaultHint = InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix");
-    myFixture.addClass("package org.slf4j; public interface Logger { void info(String format); }");
+    myFixture.addClass("""
+                         package org.slf4j; public interface Logger {
+                           void info(String format);
+                           void info(String format, Exception e);
+                         }""");
     myFixture.addClass("package org.slf4j; public final class LoggerFactory { public static Logger getLogger(Class clazz) { return null; }}");
     myFixture.addClass("package org.apache.logging.log4j; public interface LogBuilder { void log(String format); LogBuilder withLocation(); }");
     myFixture.addClass("package org.apache.logging.log4j; public interface Logger { LogBuilder atInfo(); void info(String format, Object... arguments); LogBuilder withLocation(); }");
@@ -56,6 +60,7 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
   public void testMessageFormatFormatter() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.message.format.call.quickfix")); }
   public void testSimpleConcatenationInsideMethod() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix")); }
   public void testConcatenationMessageFormat() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.message.format.call.quickfix")); }
+  public void testSimpleMessageFormatWithException() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.message.format.call.quickfix")); }
 
   public void testSimpleStringFormat() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
   public void testStringFormatWithWidth() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
@@ -65,6 +70,7 @@ public class StringConcatenationArgumentToLogCallFixTest extends IGQuickFixesTes
   public void testMoreArgumentsStringFormat() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
   public void testPreviousArgumentStringFormat() { assertQuickfixNotAvailable(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
   public void testConcatenationStringFormat() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
+  public void testSimpleStringFormatWithException() { doTest(InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix")); }
 
 
   @Override
