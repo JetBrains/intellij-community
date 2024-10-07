@@ -55,6 +55,7 @@ sealed interface TypingEvent {
 /**
  * Be aware that creating your own event is unsafe for a while and might face compatibility issues
  */
+@ApiStatus.NonExtendable
 interface InlineCompletionEvent {
 
   fun toRequest(): InlineCompletionRequest?
