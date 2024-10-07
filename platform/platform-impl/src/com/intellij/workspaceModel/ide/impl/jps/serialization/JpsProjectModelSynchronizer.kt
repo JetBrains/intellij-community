@@ -8,7 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -217,7 +217,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       for (i in 1..retryCount) {
         LOG.info("Attempt $i: $description")
         val calculationResult = calculateChanges()
-        val isSuccessful = writeAction { applyLoadedChanges(calculationResult) }
+        val isSuccessful = backgroundWriteAction { applyLoadedChanges(calculationResult) }
         if (isSuccessful) {
           LOG.info("Attempt $i: Changes were successfully applied")
           return true
@@ -227,10 +227,12 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
 
     val isSuccessful = applyChangesWithRetry(2)
-    if (isSuccessful) return
+    if (isSuccessful) {
+      return
+    }
 
     // Fallback strategy after the two unsuccessful attempts to apply the changes
-    writeAction {
+    backgroundWriteAction {
       LOG.info("Fallback strategy after the unsuccessful attempts to apply the changes from BGT")
       val calculationResult = calculateChanges()
       applyLoadedChanges(calculationResult)

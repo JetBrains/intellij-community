@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.OrderRootType
@@ -11,16 +13,22 @@ import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.JpsGlobalModelLoadedListener
+import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalEntityBridgeAndEventHandler
 import io.opentelemetry.api.metrics.Meter
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -151,7 +159,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
 
       // We don't need to initialize bridges one more time at delay loading. Otherwise, we will get the new instance of bridge in the mappings
       loadGlobalEntitiesToEmptyStorage(mutableStorage, globalWorkspaceModel.entityStorage, initializeBridges = false)
-      writeAction {
+      backgroundWriteAction {
         globalWorkspaceModel.updateModel("Sync global entities with state") { builder ->
           builder.replaceBySource({ it is JpsGlobalFileEntitySource }, mutableStorage)
         }

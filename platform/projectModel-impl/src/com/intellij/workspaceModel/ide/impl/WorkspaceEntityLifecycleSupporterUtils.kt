@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.backend.workspace.WorkspaceEntityLifecycleSupporter
@@ -33,7 +33,7 @@ object WorkspaceEntityLifecycleSupporterUtils {
     WorkspaceEntityLifecycleSupporter.EP_NAME.forEachExtensionSafe { provider ->
       ensureInitialized(project, provider, snapshot, builderRef)
     }
-    builderRef.get()?.also { builder -> writeAction { writeBuilder(workspaceModel, builder) } }
+    builderRef.get()?.also { builder -> backgroundWriteAction { writeBuilder(workspaceModel, builder) } }
   }
 
 

@@ -374,7 +374,7 @@ open class ProjectRootManagerImpl(val project: Project,
 
     LOG.debug("Run write action for extension.projectSdkChanged(sdk)")
     val extensions = EP_NAME.getExtensions(project)
-    writeAction {
+    backgroundWriteAction {
       for (extension in extensions) {
         extension.projectSdkChanged(sdk)
       }
