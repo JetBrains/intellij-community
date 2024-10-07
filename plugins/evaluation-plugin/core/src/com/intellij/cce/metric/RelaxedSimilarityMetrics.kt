@@ -62,7 +62,7 @@ object RelaxedSimilarityUtils {
     }
   }
 
-  class RelaxedEditDistance(private val threshold: Double = 0.5) : RelaxedMetric {
+  class RelaxedEditDistance(private val threshold: Double) : RelaxedMetric {
     private fun normalizedEditDistance(left: String, right: String): Double {
       val norm = listOf(left, right).maxOf { it.length }
       val result = LevenshteinDistance(norm).apply(left, right).toDouble() / norm
@@ -99,9 +99,14 @@ class RelaxedExactMatchOnlyAlphanum(showByDefault: Boolean = false) : BaseRelaxe
 }
 
 /**
- * Note that the default threshold value is picked experimenatlly.
+ * Note that the default threshold value is picked experimentally.
  */
-class RelaxedEditDistanceOnlyAlphanum(showByDefault: Boolean = false, threshold: Double = 0.767) : BaseRelaxedMetric(showByDefault) {
+private const val BEST_EDIT_ALPHANUM_THRESHOLD = 0.767
+
+class RelaxedEditDistanceOnlyAlphanum(
+  showByDefault: Boolean = false,
+  threshold: Double = BEST_EDIT_ALPHANUM_THRESHOLD,
+) : BaseRelaxedMetric(showByDefault) {
   override val name: String = "Relaxed alphanumeric-only edit distance"
   override val description: String =
     "Checks that for any the suggested lines of the completion, there is a line from middle that has a normalized edit distance less than $threshold."
