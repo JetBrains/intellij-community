@@ -521,22 +521,24 @@
     <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtil$Companion$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtilKt"/>
     <stacktrace.fold substring="at com.intellij.util.RunnableCallable.call("/>
+    <stacktrace.fold substring="at com.intellij.util.concurrency"/>
     <stacktrace.fold substring="at com.intellij.util.messages.impl.MessageBus"/>
 
-    <stacktrace.fold substring="at com.intellij.testFramework.UsefulTestCase"/>
-    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.collectAndCheckHighlighting("/>
-    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResult"/>
-    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.access$"/>
-    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.lambda$"/>
-    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl$"/>
-    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.CodeInsightTestFixture$"/>
-    <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
-    <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
-    <stacktrace.fold substring="at com.intellij.testFramework.HeavyPlatformTestCase"/>
-    <!--suppress DeprecatedClassUsageInspection -->
-    <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.EditorActionTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.ExpectedHighlightingData"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.HeavyPlatformTestCase"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
+    <!--suppress DeprecatedClassUsageInspection -->
+    <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.TestLoggerKt"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.UsefulTestCase"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.CodeInsightTestFixture$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.access$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResult"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.collectAndCheckHighlighting("/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.lambda$"/>
 
     <stacktrace.fold substring="at org.jetbrains.jetCheck."/>
     <stacktrace.fold substring="at com.intellij.testFramework.propertyBased."/>
