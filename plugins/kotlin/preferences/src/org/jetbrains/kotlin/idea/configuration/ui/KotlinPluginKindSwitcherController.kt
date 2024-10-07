@@ -96,7 +96,6 @@ class KotlinPluginKindSwitcherController {
                 }.onChanged {
                     chosenKind = KotlinPluginMode.of(it.isSelected)
                 }.gap(RightGap.SMALL)
-                icon(AllIcons.General.Beta).align(AlignY.BOTTOM)
                 updateCheckBoxToChosenKind()
                 if (canSwitchKotlinPluginModeViaUI()) {
                     comment(KotlinPreferencesBundle.message("kotlin.plugin.type.restart.required.comment"))
