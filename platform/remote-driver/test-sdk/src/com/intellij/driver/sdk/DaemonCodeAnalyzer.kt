@@ -22,6 +22,7 @@ interface DaemonCodeAnalyzer {
 interface HighlightInfo {
   fun getDescription(): String
   fun getSeverity(): HighlightSeverity
+  fun getText(): String
 }
 
 @Remote("com.intellij.lang.annotation.HighlightSeverity")
