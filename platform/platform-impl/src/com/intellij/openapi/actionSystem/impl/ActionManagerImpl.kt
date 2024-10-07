@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog", "OVERRIDE_DEPRECATION")
 
 package com.intellij.openapi.actionSystem.impl
 
@@ -7,7 +7,6 @@ import com.intellij.AbstractBundle
 import com.intellij.BundleBase
 import com.intellij.DynamicBundle
 import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.concurrency.installThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
@@ -135,10 +134,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                       actionRegistrar = actionPreInitRegistrar)
 
     coroutineScope.launch {
-      val schema = CustomActionsSchema.getInstanceAsync()
-      for (url in schema.getActions()) {
-        schema.incrementModificationStamp()
-      }
+      CustomActionsSchema.getInstanceAsync().incrementModificationStamp()
     }
 
     this.keymapToOperations = keymapToOperations
@@ -240,6 +236,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   internal fun getKeymapPendingOperations(keymapName: String): List<KeymapShortcutOperation> {
+    @Suppress("RemoveRedundantQualifierName")
     return keymapToOperations.get(keymapName) ?: java.util.List.of()
   }
 
@@ -249,7 +246,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
 
     if (timer == null) {
-      timer = MyTimer(coroutineScope.childScope())
+      timer = MyTimer(coroutineScope.childScope(toString() + " timer"))
     }
 
     val wrappedListener = if (AppExecutorUtil.propagateContext() && listener !is CapturingListener) {
@@ -1463,7 +1460,7 @@ private fun <T> instantiate(stubClassName: String,
   catch (e: ProcessCanceledException) {
     throw e
   }
-  catch (e: ExtensionNotApplicableException) {
+  catch (_: ExtensionNotApplicableException) {
     return null
   }
   catch (e: Throwable) {
