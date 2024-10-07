@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -59,94 +60,94 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
     ): KtVisitorVoid {
         return object : KtVisitorVoid() {
             override fun visitReferenceExpression(expression: KtReferenceExpression) {
-                if (expression.text.equals("kotlinOptions")) {
-
-                    if (isDescendantOfDslInWhichReplacementIsNotNeeded(expression)) return
-
-                    val expressionParent = expression.parent
-
-                    if (!isUnitTestMode()) { // ATM, we don't have proper dependencies for tests on Gradle build scripts
-                        analyze(expression) {
-                            val jvmClassForKotlinCompileTask = (expression.resolveToCall()
-                                ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.signature?.symbol
-                                ?.containingDeclaration as? KaClassLikeSymbol)?.importableFqName?.toString()
-
-                                ?: expression.resolveExpression()?.containingSymbol?.importableFqName?.toString() ?: return
-                            if (!kotlinCompileTasksNames.contains(jvmClassForKotlinCompileTask)) {
-                                return
-                            }
-                        }
-                    }
-                    when (expressionParent) {
-                        is KtDotQualifiedExpression -> { // like `kotlinOptions.sourceMapEmbedSources` OR kotlinOptions.options
-                            val parentOfExpressionParent = expressionParent.parent
-                            if (elementContainsOperationForbiddenToReplaceOrCantBeProcessed(parentOfExpressionParent)) return
-                        }
-
-                        is KtCallExpression -> {
-                            /*
-                        Like the following. Raise a problem for this.
-                        compileKotlin.kotlinOptions {
-                            jvmTarget = "1.8"
-                            freeCompilerArgs += listOf("-module-name", "TheName")
-                            apiVersion = "1.9"
-                        }
-                         */
-                            val lambdaStatements = expressionParent.lambdaArguments.getOrNull(0)
-                                ?.getLambdaExpression()?.bodyExpression?.statements?.requireNoNulls()
-
-                            if (lambdaStatements?.isNotEmpty() == true) { // compileKotlin.kotlinOptions { .. }
-                                lambdaStatements.forEach {
-                                    if (expressionsContainForbiddenOperations(it)) return
-                                }
-                            }
-                        }
-
-                        else -> return
-                    }
-
-                    holder.problem(
-                        expression,
-                        KotlinBundle.message("inspection.kotlin.options.to.compiler.options.display.name")
-                    )
-                        .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-                        .fix(
-                            ReplaceKotlinOptionsWithCompilerOptionsFix()
-                        ).register()
+                val referencedName = (expression as? KtNameReferenceExpression)?.getReferencedName() ?: return
+                // ATM, we don't have proper dependencies for tests to perform `analyze` in Gradle build scripts
+                if (referencedName == "android" && !isUnitTestMode()) {
+                    if (elementIsAndroidDsl(expression)) return
                 }
+                if (referencedName != "kotlinOptions") return
+
+                val expressionParent = expression.parent
+
+                if (!isUnitTestMode()) { // ATM, we don't have proper dependencies for tests to perform `analyze` in Gradle build scripts
+                    val jvmClassForKotlinCompileTask = analyze(expression) {
+                        val symbol = expression.resolveToCall()
+                            ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.signature?.symbol
+                        val containingDeclarationOrSymbol =
+                            (symbol?.containingDeclaration as? KaClassLikeSymbol) ?: expression.resolveExpression()?.containingSymbol
+                        containingDeclarationOrSymbol?.importableFqName?.toString()
+                    }
+                    if (jvmClassForKotlinCompileTask !in kotlinCompileTasksNames) {
+                        return
+                    }
+                }
+                when (expressionParent) {
+                    is KtDotQualifiedExpression -> { // like `kotlinOptions.sourceMapEmbedSources` OR kotlinOptions.options
+                        val parentOfExpressionParent = expressionParent.parent
+                        if (elementContainsOperationForbiddenToReplaceOrCantBeProcessed(parentOfExpressionParent)) return
+                    }
+
+                    is KtCallExpression -> {
+                        /*
+                    Like the following. Raise a problem for this.
+                    compileKotlin.kotlinOptions {
+                        jvmTarget = "1.8"
+                        freeCompilerArgs += listOf("-module-name", "TheName")
+                        apiVersion = "1.9"
+                    }
+                     */
+                        val lambdaStatements = expressionParent.lambdaArguments.firstOrNull()
+                            ?.getLambdaExpression()?.bodyExpression?.statements?.requireNoNulls()
+
+                        // compileKotlin.kotlinOptions { .. }
+                        lambdaStatements?.forEach {
+                            if (expressionsContainForbiddenOperations(it)) return
+                        }
+                    }
+
+                    else -> return
+                }
+
+                holder.problem(
+                    expression,
+                    KotlinBundle.message("inspection.kotlin.options.to.compiler.options.display.name")
+                )
+                    .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+                    .fix(
+                        ReplaceKotlinOptionsWithCompilerOptionsFix()
+                    ).register()
             }
         }
     }
 
     private fun elementContainsOperationForbiddenToReplaceOrCantBeProcessed(psiElement: PsiElement): Boolean {
-        when (psiElement) {
+        return when (psiElement) {
             is KtBinaryExpression -> {
-                return expressionContainsOperationForbiddenToReplace(psiElement)
+                expressionContainsOperationForbiddenToReplace(psiElement)
             }
 
             is KtDotQualifiedExpression -> {
                 val psiElementParent = psiElement.parent
-                return if (psiElementParent is KtBinaryExpression) {
+                if (psiElementParent is KtBinaryExpression) {
                     expressionContainsOperationForbiddenToReplace(psiElementParent)
                 } else { // Can't be processed
                     true
                 }
             }
 
-            else -> return true
+            else -> true
         }
     }
 
-    private fun isDescendantOfDslInWhichReplacementIsNotNeeded(ktExpression: KtExpression): Boolean {
-        val scriptText = ktExpression.containingFile.text
-        return if (scriptText.contains("android")) {
-            val parents = generateSequence<PsiElement>(ktExpression) { it.parent }.toList()
-            parents.any {
-                it is KtCallExpression && it.text.startsWith("android")
-            }
-        } else {
-            false
+    private fun elementIsAndroidDsl(expression: KtExpression): Boolean {
+        val importableFqName = analyze(expression) {
+            val symbol = expression.resolveToCall()
+                ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.signature?.symbol
+            val kaSymbol =
+                (symbol?.containingDeclaration as? KaClassLikeSymbol) ?: expression.resolveExpression()
+            kaSymbol?.importableFqName?.toString()
         }
+        return importableFqName.equals("org.gradle.kotlin.dsl.android")
     }
 
     private fun expressionsContainForbiddenOperations(element: PsiElement): Boolean {
@@ -211,22 +212,22 @@ private class ReplaceKotlinOptionsWithCompilerOptionsFix() : KotlinModCommandQui
                  * Test case:
                  * K2LocalInspectionTestGenerated.InspectionsLocal.KotlinOptionsToCompilerOptions#testLambdaWithSeveralStatements_gradle())
                  */
-                if (lambdaStatements?.isNotEmpty() == true) { // compileKotlin.kotlinOptions { .. }
-                    lambdaStatements.forEach {
-                        addExpressionsToFixIfNeeded(it, expressionsToFix)
-                    }
+                // compileKotlin.kotlinOptions { .. }
+                lambdaStatements?.forEach {
+                    addExpressionsToFixIfNeeded(it, expressionsToFix)
                 }
             }
         }
 
+        val file = element.containingFile as? KtFile
+        val ktPsiFactory = KtPsiFactory(project)
         expressionsToFix.forEach {
-            val newExpression = KtPsiFactory(project).createExpression(it.replacement)
-
-            val replacedElement = it.expressionToReplace.replaced(newExpression)
+            val newExpression = ktPsiFactory.createExpression(it.replacement)
+            it.expressionToReplace.replaced(newExpression)
 
             val classToImport = it.classToImport
             if (classToImport != null) {
-                (replacedElement.containingFile as? KtFile)?.addImport(classToImport)
+                file?.addImport(classToImport)
             }
         }
     }
