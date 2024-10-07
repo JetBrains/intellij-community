@@ -1,4 +1,4 @@
-// ERROR: The feature "context receivers" is experimental and should be enabled explicitly
+// ERROR: The feature "context receivers" is experimental and should be enabled explicitly. This can be done by supplying the compiler argument '-Xcontext-receivers', but note that no stability guarantees are provided.
 class A
 
 context(A)
