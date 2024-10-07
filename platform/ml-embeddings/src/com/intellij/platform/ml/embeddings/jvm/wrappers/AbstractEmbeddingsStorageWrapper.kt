@@ -58,7 +58,7 @@ abstract class AbstractEmbeddingsStorageWrapper(
     accessTime.set(System.nanoTime())
     if (isEnabled()) {
       indexLoadingMutex.withLock {
-        if (EmbeddingIndexMemoryManager.getInstance().checkCanAddEntry()) return@withLock
+        if (!EmbeddingIndexMemoryManager.getInstance().checkCanAddEntry()) return@withLock
         load()
         index.addEntries(values)
       }
@@ -162,10 +162,6 @@ abstract class AbstractEmbeddingsStorageWrapper(
   }
 
   private fun getIndexPersistedEventsCounter(project: Project) = IndexPersistedEventsCounter.EP_NAME.getExtensions(project).firstOrNull()
-
-  fun registerInMemoryManager() {
-    EmbeddingIndexMemoryManager.getInstance().registerIndex(index)
-  }
 
   companion object {
     private val OFFLOAD_TIMEOUT = 10.seconds
