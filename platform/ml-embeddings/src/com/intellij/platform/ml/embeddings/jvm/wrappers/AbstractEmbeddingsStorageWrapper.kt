@@ -89,6 +89,12 @@ abstract class AbstractEmbeddingsStorageWrapper(
     accessTime.set(System.nanoTime())
     if (isEnabled()) {
       index.onIndexingFinish()
+      indexLoadingMutex.withLock {
+        if (isIndexLoaded) {
+          index.saveToDisk()
+          isIndexLoaded = false
+        }
+      }
     }
   }
 
