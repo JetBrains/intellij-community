@@ -85,6 +85,7 @@ a:com.intellij.ui.jcef.JBCefBrowserBase
 - p:<init>(com.intellij.ui.jcef.JBCefBrowserBuilder):V
 - p:createDefaultContextMenuHandler():com.intellij.ui.jcef.JBCefBrowserBase$DefaultCefContextMenuHandler
 - createImmediately():V
+- disableNavigation():V
 - dispose():V
 - p:dispose(java.lang.Runnable):V
 - getBrowserComponent():java.awt.Component

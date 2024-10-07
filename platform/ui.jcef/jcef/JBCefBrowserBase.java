@@ -508,6 +508,33 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   /**
+   * Disables navigation in the browser, initiated by user actions (clicks/gestures).
+   * Equivalent to the following code, but also works in remote development environments:
+   * <pre>{@code
+   *  browser.getJBCefClient().addRequestHandler(new CefRequestHandlerAdapter() {
+   *      @Override
+   *      public boolean onBeforeBrowse(CefBrowser browser, CefFrame frame, CefRequest request, boolean user_gesture, boolean is_redirect) {
+   *        return user_gesture;
+   *      }
+   *    }, browser.getCefBrowser());
+   * }</pre>
+   */
+  public void disableNavigation() {
+    CefDelegate delegate = getCefDelegate();
+    if (delegate != null) {
+      delegate.disableNavigation(myCefBrowser);
+    }
+    else {
+      myCefClient.addRequestHandler(new CefRequestHandlerAdapter() {
+        @Override
+        public boolean onBeforeBrowse(CefBrowser browser, CefFrame frame, CefRequest request, boolean user_gesture, boolean is_redirect) {
+          return user_gesture;
+        }
+      }, myCefBrowser);
+    }
+  }
+
+  /**
    * Returns the root browser component to be inserted into the UI.
    * This component adapts the internal JCEF component to IJ.
    */
