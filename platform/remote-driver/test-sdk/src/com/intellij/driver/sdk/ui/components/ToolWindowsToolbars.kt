@@ -81,4 +81,4 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
 }
 
 private fun Finder.stripeButton(locator: String) = x(locator, StripeButtonUi::class.java)
-private fun Finder.stripeButton(locator: QueryBuilder.() -> String) = x(StripeButtonUi::class.java) { locator() }
+fun Finder.stripeButton(locator: QueryBuilder.() -> String) = x(StripeButtonUi::class.java) { locator() }
