@@ -16,6 +16,7 @@ internal class ApiDumpFileIconProvider : FileIconProvider {
     when {
       ApiDumpUtil.isApiDumpFile(file) -> return AllIcons.Ide.HectorOn
       ApiDumpUtil.isApiDumpUnreviewedFile(file) -> return AllIcons.Ide.HectorOff
+      ApiDumpUtil.isApiDumpExperimentalFile(file) -> return AllIcons.Ide.HectorOff
       ApiDumpUtil.isExposedThirdPartyFile(file) -> return AllIcons.Ide.HectorSyntax
       ApiDumpUtil.isExposedPrivateApiFile(file) -> return AllIcons.Ide.HectorSyntax
       else -> return null

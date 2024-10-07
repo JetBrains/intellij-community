@@ -9,15 +9,19 @@ internal object ApiDumpUtil {
     return virtualFile.name == ApiDumpConstants.API_DUMP_FILENAME
   }
 
+  fun isApiDumpExperimentalFile(virtualFile: VirtualFile): Boolean {
+    return virtualFile.name == ApiDumpConstants.API_DUMP_EXPERIMENTAL
+  }
+
   fun isApiDumpUnreviewedFile(virtualFile: VirtualFile): Boolean {
     return virtualFile.name == ApiDumpConstants.API_DUMP_UNREVIEWED_FILENAME
   }
 
-  fun isExposedThirdPartyFile(virtualFile: VirtualFile) : Boolean {
+  fun isExposedThirdPartyFile(virtualFile: VirtualFile): Boolean {
     return virtualFile.name == ApiDumpConstants.EXPOSED_THIRD_PARTY_API_FILENAME
   }
 
-  fun isExposedPrivateApiFile(virtualFile: VirtualFile) : Boolean {
+  fun isExposedPrivateApiFile(virtualFile: VirtualFile): Boolean {
     return virtualFile.name == ApiDumpConstants.EXPOSED_PRIVATE_API_FILENAME
   }
 
