@@ -22,7 +22,7 @@ object RelaxedSimilarityUtils {
       .filter { it.isNotBlank() }
   }
 
-  enum class RelaxedResult(val weight: Double) { NO(0.0), ANY(1.0), MULTI(2.0) }
+  enum class RelaxedResult(val weight: Double) { NO(0.0), SINGLE(1.0), MULTI(2.0) }
 
   fun computeRelaxedSimilarity(
     middle: String,
@@ -37,15 +37,15 @@ object RelaxedSimilarityUtils {
     val missingCode = middle + suffix
     val completionLines = preProcessLines(completion, prefix, suffix, stripChars)
     val middleLines = preProcessLines(middle, prefix, suffix, stripChars).toSet()
-    val prefixMatch = missingCode.startsWith(completion.trim())
+    val prefixMatch = missingCode.trim().startsWith(completion.trim())
 
-    val matchingLines = completionLines.count { predicate(it, middleLines) }
-    val hasMatchingLine = matchingLines > 0
-    val multilineMatch = matchingLines == completionLines.size
+    val matchingLines = completionLines.map { predicate(it, middleLines) }
+    val hasFirstLineMatching = matchingLines[0] == true
+    val multilineMatch = matchingLines.all { it == true }
 
     return when {
       multilineMatch -> RelaxedResult.MULTI
-      hasMatchingLine || prefixMatch -> RelaxedResult.ANY
+      hasFirstLineMatching || prefixMatch -> RelaxedResult.SINGLE
       else -> RelaxedResult.NO
     }
   }
@@ -62,7 +62,7 @@ object RelaxedSimilarityUtils {
     }
   }
 
-  class RelaxedEditDistance(private val threshold: Double) : RelaxedMetric {
+  class RelaxedEditDistance(private val threshold: Double = 0.7) : RelaxedMetric {
     private fun normalizedEditDistance(left: String, right: String): Double {
       val norm = listOf(left, right).maxOf { it.length }
       val result = LevenshteinDistance(norm).apply(left, right).toDouble() / norm

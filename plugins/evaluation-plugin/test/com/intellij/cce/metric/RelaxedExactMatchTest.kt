@@ -101,8 +101,8 @@ class RelaxedExactMatchTest {
     middle = "hello\nworld",
     completion = "world\nbye",
     expected = mapOf(
-      RelaxedSimilarityUtils.RelaxedExactMatch() to RelaxedSimilarityUtils.RelaxedResult.ANY,
-      RelaxedSimilarityUtils.RelaxedEditDistance() to RelaxedSimilarityUtils.RelaxedResult.ANY,
+      RelaxedSimilarityUtils.RelaxedExactMatch() to RelaxedSimilarityUtils.RelaxedResult.SINGLE,
+      RelaxedSimilarityUtils.RelaxedEditDistance() to RelaxedSimilarityUtils.RelaxedResult.SINGLE,
     ),
   )
 
