@@ -30,6 +30,11 @@ public class FirLiteralTextToKotlinCopyPasteTestGenerated extends AbstractFirLit
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("AlreadyPrefixed.txt")
+    public void testAlreadyPrefixed() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/AlreadyPrefixed.txt");
+    }
+
     @TestMetadata("BrokenEntries.txt")
     public void testBrokenEntries() throws Exception {
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/BrokenEntries.txt");
@@ -38,6 +43,11 @@ public class FirLiteralTextToKotlinCopyPasteTestGenerated extends AbstractFirLit
     @TestMetadata("CustomTrimIndent.txt")
     public void testCustomTrimIndent() throws Exception {
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/CustomTrimIndent.txt");
+    }
+
+    @TestMetadata("IsolatedDollarsToPrefixedString.txt")
+    public void testIsolatedDollarsToPrefixedString() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/IsolatedDollarsToPrefixedString.txt");
     }
 
     @TestMetadata("MultiLine.txt")

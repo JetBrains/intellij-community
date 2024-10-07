@@ -7,14 +7,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RawText
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.text.LineTokenizer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
-import org.jetbrains.kotlin.lexer.KotlinLexer
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
@@ -105,6 +103,11 @@ class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
         return if (changed) buffer.toString() else null
     }
 
+    /**
+     * Paste processing for `$`-prefixed strings consists of two parts:
+     * * Paste preprocessing with full escaping — files copied from the outside should still be reasonably handled.
+     * * Paste postprocessing for handling Kotlin to Kotlin cases, where interpolation info can be transferred.
+     */
     override fun preprocessOnPaste(project: Project, file: PsiFile, editor: Editor, text: String, rawText: RawText?): String {
         if (file !is KtFile) {
             return text
@@ -117,185 +120,86 @@ class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
         if (beginTp.isSingleQuoted() != endTp.isSingleQuoted()) {
             return text
         }
-
-        val templateTokenSequence = TemplateTokenSequence(text)
+        val interpolationPrefix = beginTp.interpolationPrefix
+        if (interpolationPrefix != endTp.interpolationPrefix) return text
+        val prefixLength = interpolationPrefix?.textLength ?: 0
 
         return if (beginTp.isSingleQuoted()) {
-            val res = StringBuilder()
-            val lineBreak = "\\n\"+\n \""
-            var endsInLineBreak = false
-            templateTokenSequence.forEach {
-                when (it) {
-                    is LiteralChunk -> StringUtil.escapeStringCharacters(it.text.length, it.text, "\$\"", res)
-                    is EntryChunk -> res.append(it.text)
-                    is NewLineChunk -> res.append(lineBreak)
-                }
-                endsInLineBreak = it is NewLineChunk
-            }
-            return if (endsInLineBreak) {
-                res.removeSuffix(lineBreak).toString() + "\\n"
-            } else {
-                res.toString()
-            }
+            singleQuotedPaste(text, prefixLength)
         } else {
-            fun TemplateChunk?.indent() = when (this) {
-                is LiteralChunk -> this.text
-                is EntryChunk -> this.text
-                else -> ""
-            }.takeWhile { it.isWhitespace() }
+            tripleQuotedPaste(text, prefixLength, begin, beginTp)
+        }
+    }
 
-            val indent =
-                if (beginTp.firstChild?.text == "\"\"\"" &&
-                    (beginTp.getQualifiedExpressionForReceiver()?.selectorExpression as? KtCallExpression)?.calleeExpression?.text == "trimIndent" &&
-                    templateTokenSequence.firstOrNull()?.indent() == templateTokenSequence.lastOrNull()?.indent()
-                ) {
-                    begin.parent?.prevSibling?.text?.takeIf { it.all { c -> c == ' ' || c == '\t' } }
-                } else {
-                    null
-                } ?: ""
+    private fun singleQuotedPaste(text: String, interpolationPrefixLength: Int): String {
+        val res = StringBuilder()
+        val interpolationPrefix = "$".repeat(interpolationPrefixLength)
+        val lineBreak = "\\n\"+\n $interpolationPrefix\""
+        val additionalEscapedChars = if (interpolationPrefixLength > 1) "\"" else "\$\""
+        var endsInLineBreak = false
+        TemplateTokenSequence(text, interpolationPrefixLength).forEach {
+            when (it) {
+                is LiteralChunk -> StringUtil.escapeStringCharacters(it.text.length, it.text, additionalEscapedChars, res)
+                is EntryChunk -> res.append(it.text)
+                is NewLineChunk -> res.append(lineBreak)
+            }
+            endsInLineBreak = it is NewLineChunk
+        }
+        return if (endsInLineBreak) {
+            res.removeSuffix(lineBreak).toString() + "\\n"
+        } else {
+            res.toString()
+        }
+    }
 
-            buildString {
-                val tripleQuoteRe = Regex("[\"]{3,}")
-                var indentToAdd = ""
-                for (chunk in templateTokenSequence) {
-                    when (chunk) {
-                        is LiteralChunk -> {
-                            val replaced = chunk.text.replace("\$", "\${'$'}").let { escapedDollar ->
-                                tripleQuoteRe.replace(escapedDollar) { "\"\"" + "\${'\"'}".repeat(it.value.count() - 2) }
-                            }
-                            append(indentToAdd)
-                            append(replaced)
-                            indentToAdd = ""
+    private fun tripleQuotedPaste(
+        text: String,
+        interpolationPrefixLength: Int,
+        begin: PsiElement,
+        beginTp: KtStringTemplateExpression,
+    ): String {
+        val templateTokenSequence = TemplateTokenSequence(text, interpolationPrefixLength)
+
+        fun TemplateChunk?.indent() = when (this) {
+            is LiteralChunk -> this.text
+            is EntryChunk -> this.text
+            else -> ""
+        }.takeWhile { it.isWhitespace() }
+
+        val indent =
+            if (beginTp.firstChild?.text == "\"\"\"" &&
+                (beginTp.getQualifiedExpressionForReceiver()?.selectorExpression as? KtCallExpression)?.calleeExpression?.text == "trimIndent" &&
+                templateTokenSequence.firstOrNull()?.indent() == templateTokenSequence.lastOrNull()?.indent()
+            ) {
+                begin.parent?.prevSibling?.text?.takeIf { it.all { c -> c == ' ' || c == '\t' } }
+            } else {
+                null
+            } ?: ""
+
+        return buildString {
+            val tripleQuoteRe = Regex("[\"]{3,}")
+            var indentToAdd = ""
+            for (chunk in templateTokenSequence) {
+                when (chunk) {
+                    is LiteralChunk -> {
+                        val replaced = chunk.text.replace("\$", "\${'$'}").let { escapedDollar ->
+                            tripleQuoteRe.replace(escapedDollar) { "\"\"" + "\${'\"'}".repeat(it.value.count() - 2) }
                         }
-                        is EntryChunk -> {
-                            append(indentToAdd)
-                            append(chunk.text)
-                            indentToAdd = ""
-                        }
-                        is NewLineChunk -> {
-                            appendLine()
-                            indentToAdd = indent
-                        }
+                        append(indentToAdd)
+                        append(replaced)
+                        indentToAdd = ""
+                    }
+                    is EntryChunk -> {
+                        append(indentToAdd)
+                        append(chunk.text)
+                        indentToAdd = ""
+                    }
+                    is NewLineChunk -> {
+                        appendLine()
+                        indentToAdd = indent
                     }
                 }
             }
         }
     }
 }
-
-private sealed class TemplateChunk
-private data class LiteralChunk(val text: String) : TemplateChunk()
-private data class EntryChunk(val text: String) : TemplateChunk()
-private object NewLineChunk : TemplateChunk()
-
-private class TemplateTokenSequence(private val inputString: String) : Sequence<TemplateChunk> {
-    private fun String.guessIsTemplateEntryStart(): Boolean = if (this.startsWith("\${")) {
-        true
-    } else if (this.length > 1 && this[0] == '$') {
-        val guessedIdentifier = substring(1)
-        val tokenType = KotlinLexer().apply { start(guessedIdentifier) }.tokenType
-        tokenType == KtTokens.IDENTIFIER || tokenType == KtTokens.THIS_KEYWORD
-    } else {
-        false
-    }
-
-    private fun findTemplateEntryEnd(input: String, from: Int): Int {
-        val wrapped = '"' + input.substring(from) + '"'
-        val lexer = KotlinLexer().apply { start(wrapped) }.apply { advance() }
-
-        when (lexer.tokenType) {
-            KtTokens.SHORT_TEMPLATE_ENTRY_START -> {
-                lexer.advance()
-                val tokenType = lexer.tokenType
-                return if (tokenType == KtTokens.IDENTIFIER || tokenType == KtTokens.THIS_KEYWORD) {
-                    from + lexer.tokenEnd - 1
-                } else {
-                    -1
-                }
-            }
-            KtTokens.LONG_TEMPLATE_ENTRY_START -> {
-                var depth = 0
-                while (lexer.tokenType != null) {
-                    if (lexer.tokenType == KtTokens.LONG_TEMPLATE_ENTRY_START) {
-                        depth++
-                    } else if (lexer.tokenType == KtTokens.LONG_TEMPLATE_ENTRY_END) {
-                        depth--
-                        if (depth == 0) {
-                            return from + lexer.currentPosition.offset
-                        }
-                    }
-                    lexer.advance()
-                }
-                return -1
-            }
-            else -> return -1
-        }
-    }
-
-    private suspend fun SequenceScope<TemplateChunk>.yieldLiteral(chunk: String) {
-        val splitLines = LineTokenizer.tokenize(chunk, false, false)
-        for (i in splitLines.indices) {
-            if (i != 0) {
-                yield(NewLineChunk)
-            }
-            splitLines[i].takeIf { it.isNotEmpty() }?.let { yield(LiteralChunk(it)) }
-        }
-    }
-
-    private fun templateChunkIterator(): Iterator<TemplateChunk> {
-        return if (inputString.isEmpty()) emptySequence<TemplateChunk>().iterator()
-        else
-            iterator {
-                val likeStackTrace = isAStackTrace(inputString)
-                var from = 0
-                var to = 0
-                while (to < inputString.length) {
-                    val c = inputString[to]
-                    if (c == '\\') {
-                        to += 1.toInt()
-                        if (to < inputString.length) to += 1.toInt()
-                        continue
-                    } else if (c == '$') {
-                        val substring = inputString.substring(to)
-                        val guessIsTemplateEntryStart = !likeStackTrace && substring.guessIsTemplateEntryStart()
-                        if (guessIsTemplateEntryStart) {
-                            if (from < to) yieldLiteral(inputString.substring(from until to))
-                            from = to
-                            to = findTemplateEntryEnd(inputString, from)
-                            if (to != -1) {
-                                yield(EntryChunk(inputString.substring(from until to)))
-                            } else {
-                                to = inputString.length
-                                yieldLiteral(inputString.substring(from until to))
-                            }
-                            from = to
-                            continue
-                        }
-                    }
-                    to++
-                }
-                if (from < to) {
-                    yieldLiteral(inputString.substring(from until to))
-                }
-            }
-    }
-
-    override fun iterator(): Iterator<TemplateChunk> = templateChunkIterator()
-
-    private fun isAStackTrace(string: String): Boolean =
-        stacktracePlaceRegex.containsMatchIn(string)
-
-    private val stacktracePlaceRegex = Regex("\\(\\w+\\.\\w+:\\d+\\)")
-}
-
-@TestOnly
-fun createTemplateSequenceTokenString(input: String): String {
-    return TemplateTokenSequence(input).map {
-        when (it) {
-            is LiteralChunk -> "LITERAL_CHUNK(${it.text})"
-            is EntryChunk -> "ENTRY_CHUNK(${it.text})"
-            is NewLineChunk -> "NEW_LINE()"
-        }
-    }.joinToString(separator = "")
-}
-

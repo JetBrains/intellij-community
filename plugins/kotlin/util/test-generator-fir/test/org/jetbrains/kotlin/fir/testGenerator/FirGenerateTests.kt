@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.fir.completion.kmpBasic.AbstractKotlinKmpComple
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.*
 import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralKotlinToKotlinCopyPasteTest
+import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirKotlinToKotlinMultiDollarStringsCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralTextToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocMultiplatformTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
@@ -181,6 +182,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
 
         testClass<AbstractFirLiteralKotlinToKotlinCopyPasteTest> {
             model("copyPaste/literal", pattern = Patterns.forRegex("""^([^.]+)\.kt$"""))
+        }
+
+        testClass<AbstractFirKotlinToKotlinMultiDollarStringsCopyPasteTest> {
+            model("copyPaste/multiDollar", pattern = Patterns.forRegex("""^([^.]+)\.kt$"""))
         }
 
         testClass<AbstractFirShortenRefsTest> {

@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions.multiDollarStrings
 
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeConsideredIdentifierOrBlock
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.changePrefixLength
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.dollarLiteralExpressions
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 import org.jetbrains.kotlin.psi.psiUtil.plainContent
@@ -10,9 +13,6 @@ private const val DEFAULT_INTERPOLATION_PREFIX_LENGTH: Int = 2
 private const val INTERPOLATION_PREFIX_LENGTH_THRESHOLD: Int = 5
 
 private const val DOLLAR: String = "$"
-private val dollarLiteralExpressions: Array<String> = arrayOf(
-    "'$'", "\"$\""
-)
 
 /**
  * Convert a string to a multi-dollar string, choosing an appropriate prefix length based on the string's content.
@@ -22,16 +22,14 @@ private val dollarLiteralExpressions: Array<String> = arrayOf(
 internal fun convertToMultiDollarString(element: KtStringTemplateExpression): KtStringTemplateExpression {
     require(element.interpolationPrefix == null) { "Can't convert the string which already has a prefix to multi-dollar string" }
 
-    val ktPsiFactory = KtPsiFactory(element.project)
-
     val longestUnsafeDollarSequence = longestUnsafeDollarSequenceLength(element, threshold = INTERPOLATION_PREFIX_LENGTH_THRESHOLD)
     val prefixLength = if (longestUnsafeDollarSequence in DEFAULT_INTERPOLATION_PREFIX_LENGTH..< INTERPOLATION_PREFIX_LENGTH_THRESHOLD)
         longestUnsafeDollarSequence + 1 else DEFAULT_INTERPOLATION_PREFIX_LENGTH
 
-    replaceExpressionEntries(element, prefixLength, ktPsiFactory)
+    replaceExpressionEntries(element, prefixLength)
 
     val replaced = element.replace(
-        ktPsiFactory.createMultiDollarStringTemplate(
+        KtPsiFactory(element.project).createMultiDollarStringTemplate(
             content = element.plainContent,
             prefixLength = prefixLength,
             forceMultiQuoted = !element.isSingleQuoted(),
@@ -127,39 +125,12 @@ private fun KtBlockStringTemplateEntry.isSimplifiableInterpolatedDollar(): Boole
     return this.expression?.text in dollarLiteralExpressions
 }
 
-private fun replaceExpressionEntries(stringTemplate: KtStringTemplateExpression, prefixLength: Int, ktPsiFactory: KtPsiFactory) {
+private fun replaceExpressionEntries(stringTemplate: KtStringTemplateExpression, prefixLength: Int) {
     for (entry in stringTemplate.entries) {
-        when (entry) {
-            is KtSimpleNameStringTemplateEntry -> replaceSimpleNameEntry(entry, prefixLength, ktPsiFactory)
-            is KtBlockStringTemplateEntry -> replaceBlockEntry(entry, prefixLength, ktPsiFactory)
+        if (entry is KtStringTemplateEntryWithExpression) {
+            entry.replace(entry.changePrefixLength(prefixLength))
         }
     }
-}
-
-private fun replaceSimpleNameEntry(simpleNameEntry: KtSimpleNameStringTemplateEntry, prefixLength: Int, ktPsiFactory: KtPsiFactory) {
-    simpleNameEntry.replace(
-        ktPsiFactory.createMultiDollarSimpleNameStringTemplateEntry(
-            simpleNameEntry.expression?.text.orEmpty(),
-            prefixLength = prefixLength,
-        )
-    )
-}
-
-private fun replaceBlockEntry(blockEntry: KtBlockStringTemplateEntry, prefixLength: Int, ktPsiFactory: KtPsiFactory) {
-    val blockExpression = blockEntry.expression
-    val replacement = if (blockExpression != null) {
-        ktPsiFactory.createMultiDollarBlockStringTemplateEntry(
-            blockExpression,
-            prefixLength = prefixLength,
-        )
-    } else {
-        // In case of incomplete code with no KtExpression inside the block, create a replacement from scratch
-        val prefix = DOLLAR.repeat(prefixLength)
-        val incompleteExpression = ktPsiFactory.createExpression("$prefix\"$prefix{}\"")
-        (incompleteExpression as KtStringTemplateExpression).entries.single()
-    }
-
-    blockEntry.replace(replacement)
 }
 
 private fun KtEscapeStringTemplateEntry.isEscapedDollar(): Boolean = unescapedValue == DOLLAR
@@ -174,25 +145,4 @@ private fun KtStringTemplateEntry.isSafeToReplaceWithDollar(prefixLength: Int): 
     if (!nextSiblingStringLiteral.canBeConsideredIdentifierOrBlock()) return true
     val trailingDollarsLength = prevSibling.text.takeLastWhile { it.toString() == DOLLAR }.length
     return trailingDollarsLength + 1 < prefixLength
-}
-
-/**
- * ```
- * Identifier
- *   : (Letter | '_') (Letter | '_' | UnicodeDigit)*
- *   | '`' ~([\r\n] | '`')+ '`'
- *   ;
- * ```
- *
- * The function can give false positives in corner cases when a backtick after `$` has no matching closing backtick.
- * This tradeoff allows avoiding potentially complicated and error-prone text searches in the file.
- * The closing backtick is not limited by the same string template and can come from various places of the PSI tree.
- * E.g., in the following case there are two backticks in different expressions that would be part of one string without escaping.
- * ```
- * println("\$`"); println("`")
- * ```
- */
-private fun KtLiteralStringTemplateEntry.canBeConsideredIdentifierOrBlock(): Boolean {
-    val firstChar = text.firstOrNull() ?: return false
-    return firstChar.isLetter() || firstChar == '_' || firstChar == '{' || firstChar == '`'
 }
