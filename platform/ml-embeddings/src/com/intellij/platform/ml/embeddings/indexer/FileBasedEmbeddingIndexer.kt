@@ -126,7 +126,7 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
 
     internal const val INDEXING_VERSION = "0.0.1"
 
-    val FILE_BASED_INDICES = arrayOf(IndexId.FILES, IndexId.CLASSES, IndexId.SYMBOLS)
+    val FILE_BASED_INDICES: Array<IndexId> = arrayOf(IndexId.FILES, IndexId.CLASSES, IndexId.SYMBOLS)
 
     private val logger = Logger.getInstance(FileBasedEmbeddingIndexer::class.java)
 
