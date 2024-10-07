@@ -19,10 +19,21 @@ abstract class PhasedLogs(val phase: Phase) {
     get() = fields
 
   /**
-   * Associate the given [field] with the [phase]
+   * Associate the given [field] with the [phase].
+   * Such a log will be sent only for a fraction of requests in the release build.
    */
-  protected fun<T> register(field: EventField<T>, basic: Boolean = false): EventField<T> {
-    fields.add(EventFieldExt(field, basic))
+  protected fun<T> register(field: EventField<T>): EventField<T> {
+    fields.add(EventFieldExt(field, false))
+    return field
+  }
+
+  /**
+   * Associate the given [field] with the [phase].
+   * Such a log will always be sent;
+   * Important: try to keep the number of basic fields as small as possible
+   */
+  protected fun<T> registerBasic(field: EventField<T>): EventField<T> {
+    fields.add(EventFieldExt(field, true))
     return field
   }
 }
