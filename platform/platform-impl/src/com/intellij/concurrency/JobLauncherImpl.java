@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
@@ -11,7 +10,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
-import com.intellij.util.*;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import kotlin.coroutines.CoroutineContext;
@@ -20,7 +21,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -70,7 +74,6 @@ public final class JobLauncherImpl extends JobLauncher {
                                      ? t -> pm.computePrioritized(() -> thingProcessor.process(t))
                                      : thingProcessor;
     processor = FileBasedIndex.getInstance().inheritCurrentDumbAccessType(processor);
-    processor = ClientId.decorateProcessor(processor);
 
     List<ApplierCompleter<T>> failedSubTasks = Collections.synchronizedList(new ArrayList<>());
 
@@ -214,7 +217,6 @@ public final class JobLauncherImpl extends JobLauncher {
       ) {
       AtomicBoolean result = new AtomicBoolean(true);
       Runnable runnable = () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-        //noinspection ForLoopReplaceableByForEach
         for (int i = 0; i < things.size(); i++) {
           T thing = things.get(i);
           if (!thingProcessor.process(thing)) {
@@ -454,11 +456,6 @@ public final class JobLauncherImpl extends JobLauncher {
       ExceptionUtil.rethrow(exception);
     }
     return result;
-  }
-  private static final Object TOMBSTONE = ObjectUtils.sentinel("TOMBSTONE");
-  private static <T> T TOMBSTONE() {
-    //noinspection unchecked
-    return (T)TOMBSTONE;
   }
 
   @Override

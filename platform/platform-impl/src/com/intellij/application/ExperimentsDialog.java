@@ -58,7 +58,7 @@ public final class ExperimentsDialog extends DialogWrapper {
   }
 
   @Override
-  protected @Nullable String getDimensionServiceKey() {
+  protected @NotNull String getDimensionServiceKey() {
     return "ExperimentsDialog";
   }
 
