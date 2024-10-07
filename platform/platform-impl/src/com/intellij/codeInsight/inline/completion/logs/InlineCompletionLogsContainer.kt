@@ -18,15 +18,15 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.absoluteValue
 
 @ApiStatus.Internal
-class InlineCompletionLogsContainer(private val requestId: Long = 0) {
+class InlineCompletionLogsContainer(requestId: Long) {
 
   // ratio of requests that should be fully logged (otherwise, only basic fields)
   private val fullLogsShare = 0.01f
+  private val sendFullLogs = ApplicationManager.getApplication().isEAP || requestId.absoluteValue % 100 < fullLogsShare * 100
 
   // indicates that the filter model decision was [RANDOM_PASS]
-  var randomPass = AtomicBoolean(false)
-
-  /**
+  val randomPass: AtomicBoolean = AtomicBoolean(false)
+                     /**
    * Describes phase of the Inline completion session.
    * Each phase can have multiple features (logs)
    */
@@ -92,16 +92,15 @@ class InlineCompletionLogsContainer(private val requestId: Long = 0) {
 
     // for release, log only basic fields for most of the requests and very rarely log everything.
     // since we skip filtering in the random pass scenario, we want the full logs in such cases too.
-    val sendFullLogs = ApplicationManager.getApplication().isEAP || randomPass.get() || requestId.absoluteValue % 100 < fullLogsShare * 100
 
     InlineCompletionLogs.Session.SESSION_EVENT.log( // log function is asynchronous, so it's ok to launch it even on EDT
-      logs.filter { it.value.isNotEmpty() }
-        .map { (phase, logs) ->
+      logs.filter { it.value.isNotEmpty() }.map { (phase, logs) ->
 
-          val filteredEvents = if (sendFullLogs)
+          val filteredEvents = if (randomPass.get() || sendFullLogs) {
             logs
-          else
+          } else {
             logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
+          }
 
           InlineCompletionLogs.Session.phases[phase]!!.with(ObjectEventData(filteredEvents.toList()))
         }
@@ -123,7 +122,7 @@ class InlineCompletionLogsContainer(private val requestId: Long = 0) {
     /**
      * Create, store in editor and get log container
      */
-    fun create(editor: Editor, requestId: Long = 0): InlineCompletionLogsContainer {
+    fun create(editor: Editor, requestId: Long): InlineCompletionLogsContainer {
       val container = InlineCompletionLogsContainer(requestId)
       editor.putUserData(KEY, container)
       return container
