@@ -417,7 +417,7 @@ private fun pumpWaiting(jobQueue: MessageQueue) {
   var job = jobQueue.current
   if (job != null) {
     if (job.bus.isDisposed) {
-      MessageBusImpl.LOG.error("Accessing disposed message bus ${job.bus}")
+      MessageBusImpl.LOG.error("Accessing disposed message bus ${job.bus} (job=$job)")
     }
     else {
       error = deliverMessage(job = job, jobQueue = jobQueue, prevError = null)
@@ -427,7 +427,7 @@ private fun pumpWaiting(jobQueue: MessageQueue) {
   while (true) {
     job = jobQueue.queue.pollFirst() ?: break
     if (job.bus.isDisposed) {
-      MessageBusImpl.LOG.error("Accessing disposed message bus ${job.bus}")
+      MessageBusImpl.LOG.error("Accessing disposed message bus ${job.bus} (job=$job)")
     }
     else {
       error = deliverMessage(job = job, jobQueue = jobQueue, prevError = error)
