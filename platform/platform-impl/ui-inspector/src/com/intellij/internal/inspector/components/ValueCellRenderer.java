@@ -2,7 +2,6 @@
 package com.intellij.internal.inspector.components;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.internal.inspector.UiInspectorAction;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
@@ -308,7 +307,7 @@ final class ValueCellRenderer implements TableCellRenderer {
       Map<Object, Object> properties = parseClientProperties(value);
       if (properties != null) {
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-          if (entry.getKey().equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
+          if (entry.getKey().equals(UiInspectorUtil.ADDED_AT_STACKTRACE)) continue;
           if (!sb.isEmpty()) sb.append(",");
           sb.append('[').append(entry.getKey()).append("->").append(entry.getValue()).append(']');
         }
@@ -341,7 +340,7 @@ final class ValueCellRenderer implements TableCellRenderer {
     if (table instanceof Object[] arr) {
       Map<Object, Object> properties = new HashMap<>();
       for (int i = 0; i < arr.length; i += 2) {
-        if (arr[i].equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
+        if (arr[i].equals(UiInspectorUtil.ADDED_AT_STACKTRACE)) continue;
         properties.put(arr[i], arr[i + 1]);
       }
       return properties;

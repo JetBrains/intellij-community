@@ -93,6 +93,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-assertions-core-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ijent" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.ui.inspector" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.progress.tests" scope="TEST" />
     <orderEntry type="library" name="jsvg" level="project" />
     <orderEntry type="library" scope="TEST" name="hash4j" level="project" />

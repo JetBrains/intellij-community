@@ -10,14 +10,14 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-open class ToolbarAddQuickActionInfo(val actionIDs: List<String>,
-                                     @NlsActions.ActionText val name: String,
-                                     val icon: Icon,
-                                     val insertStrategy: ToolbarQuickActionInsertStrategy)
+open class ToolbarAddQuickActionInfo(
+  val actionIDs: List<String>,
+  @NlsActions.ActionText val name: String,
+  val icon: Icon,
+  val insertStrategy: ToolbarQuickActionInsertStrategy,
+)
 
-@ApiStatus.Internal
-class ToolbarAddQuickActionInfoBean: BaseKeyedLazyInstance<ToolbarAddQuickActionInfo>() {
-
+internal class ToolbarAddQuickActionInfoBean: BaseKeyedLazyInstance<ToolbarAddQuickActionInfo>() {
   @Attribute("implementationClass")
   lateinit var implementationClass: String
 
@@ -27,4 +27,4 @@ class ToolbarAddQuickActionInfoBean: BaseKeyedLazyInstance<ToolbarAddQuickAction
   override fun getImplementationClassName(): String = implementationClass
 }
 
-val QUICK_ACTION_EP_NAME = ExtensionPointName.create<ToolbarAddQuickActionInfoBean>("com.intellij.toolbarQuickAction")
+internal val QUICK_ACTION_EP_NAME = ExtensionPointName<ToolbarAddQuickActionInfoBean>("com.intellij.toolbarQuickAction")

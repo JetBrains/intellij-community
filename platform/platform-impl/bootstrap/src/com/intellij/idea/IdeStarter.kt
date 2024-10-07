@@ -11,7 +11,7 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.ui.IconDbMaintainer
-import com.intellij.internal.inspector.UiInspectorAction
+import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -68,7 +68,7 @@ open class IdeStarter : ModernApplicationStarter() {
         launch {
           if (serviceAsync<RegistryManager>().`is`("ui.inspector.save.stacktraces")) {
             withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-              UiInspectorAction.initStacktracesSaving()
+              UiInspectorUtil.initStacktraceSaving()
             }
           }
         }

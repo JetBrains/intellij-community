@@ -95,6 +95,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   // todo not used by platform - move to plugin
   "intellij.platform.ide.designer",
   "intellij.platform.ide.remote",
+  "intellij.platform.ide.ui.inspector",
 )
 
 @Suppress("RemoveRedundantQualifierName")

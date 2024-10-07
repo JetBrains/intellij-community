@@ -56,13 +56,14 @@ import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 
 @Suppress("RedundantConstructorKeyword")
-class ActionMenu constructor(private val context: DataContext?,
-                             private val place: String,
-                             group: ActionGroup,
-                             private val presentationFactory: PresentationFactory,
-                             private var isMnemonicEnabled: Boolean,
-                             private val useDarkIcons: Boolean,
-                             val isHeaderMenuItem: Boolean = false
+class ActionMenu constructor(
+  private val context: DataContext?,
+  private val place: String,
+  group: ActionGroup,
+  private val presentationFactory: PresentationFactory,
+  private var isMnemonicEnabled: Boolean,
+  private val useDarkIcons: Boolean,
+  @JvmField internal val isHeaderMenuItem: Boolean = false,
 ) : JBMenu() {
   private val group = createActionRef(group)
   private val presentation = presentationFactory.getPresentation(group)

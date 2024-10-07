@@ -71,7 +71,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
     }
     while (parent != null) {
       c = parent;
-      //Find root window
+      // find a root window
       if (accessibleModel && (c instanceof Accessible)) {
         Accessible axComponent = c.getAccessibleContext().getAccessibleParent();
         if (axComponent instanceof Component) {

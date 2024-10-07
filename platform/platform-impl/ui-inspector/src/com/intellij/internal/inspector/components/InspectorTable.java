@@ -424,7 +424,7 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
         if (value == null) {
           printToPreview("Stacktrace is not available. There are two options:\n1. ", NORMAL_OUTPUT);
           printHyperlinkToPreview("Click", project -> {
-            UiInspectorAction.enableStacktracesSaving();
+            UiInspectorUtil.INSTANCE.enableStacktraceSaving();
             showHintInPreview("Enabled, please reopen the UI needed to inspect");
           });
           printToPreview(" to enable stacktraces saving until IDE restart.\n2. ", NORMAL_OUTPUT);
@@ -465,7 +465,7 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
         Map<Object, Object> properties = ValueCellRenderer.parseClientProperties(value);
         if (properties != null) {
           for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-            if (entry.getKey().equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
+            if (entry.getKey().equals(UiInspectorUtil.ADDED_AT_STACKTRACE)) continue;
             printToPreview(entry.getKey() + " -> ", NORMAL_OUTPUT);
             printClassName(String.valueOf(entry.getValue()));
             printToPreview("\n", NORMAL_OUTPUT);

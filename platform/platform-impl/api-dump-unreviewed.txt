@@ -533,7 +533,6 @@ c:com.intellij.codeInsight.daemon.impl.HintRenderer
 - sf:calcWidthInPixels(com.intellij.openapi.editor.Editor,java.lang.String,com.intellij.codeInsight.hints.HintWidthAdjustment):I
 - sf:calcWidthInPixels(com.intellij.openapi.editor.Editor,java.lang.String,com.intellij.codeInsight.hints.HintWidthAdjustment,Z):I
 - calcWidthInPixels(com.intellij.openapi.editor.Inlay):I
-- pf:doCalcWidth(java.lang.String,java.awt.FontMetrics):I
 - psf:getFontMetrics(com.intellij.openapi.editor.Editor,Z):com.intellij.codeInsight.daemon.impl.HintRenderer$Companion$MyFontMetrics
 - bpf:getFontMetrics$(com.intellij.openapi.editor.Editor,Z):com.intellij.codeInsight.daemon.impl.HintRenderer$Companion$MyFontMetrics
 - f:getText():java.lang.String
@@ -545,7 +544,6 @@ c:com.intellij.codeInsight.daemon.impl.HintRenderer
 - f:setText(java.lang.String):V
 - f:setWidthAdjustment(com.intellij.codeInsight.hints.HintWidthAdjustment):V
 - p:useEditorFont():Z
-- sf:useEditorFontFromSettings():Z
 f:com.intellij.codeInsight.daemon.impl.HintRenderer$Companion
 - f:calcWidthInPixels(com.intellij.openapi.editor.Editor,java.lang.String,com.intellij.codeInsight.hints.HintWidthAdjustment):I
 - f:calcWidthInPixels(com.intellij.openapi.editor.Editor,java.lang.String,com.intellij.codeInsight.hints.HintWidthAdjustment,Z):I
@@ -6560,7 +6558,6 @@ f:com.intellij.openapi.actionSystem.impl.ActionMenu
 - getPopupMenu():javax.swing.JPopupMenu
 - sf:isAligned():Z
 - sf:isAlignedInGroup():Z
-- f:isHeaderMenuItem():Z
 - f:isMainMenuPlace():Z
 - sf:isShowNoIcons():Z
 - sf:isShowNoIcons(com.intellij.openapi.actionSystem.AnAction):Z

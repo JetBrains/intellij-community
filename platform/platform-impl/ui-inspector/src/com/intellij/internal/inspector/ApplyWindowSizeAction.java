@@ -34,23 +34,25 @@ final class ApplyWindowSizeAction extends DumbAwareAction {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     Project project = e.getProject();
     Window window = null;
-    if (owner != null) {
-      if (editor != null && project != null) {
-        LookupEx lookup = LookupManager.getInstance(project).getActiveLookup();
-        if (lookup != null) {
-          window = ComponentUtil.getParentOfType((Class<? extends Window>)Window.class, lookup.getComponent());
-        }
-      }
+    if (owner == null) {
+      return;
+    }
 
-      if (window == null) {
-        window = ComponentUtil.getParentOfType((Class<? extends Window>)Window.class, owner);
+    if (editor != null && project != null) {
+      LookupEx lookup = LookupManager.getInstance(project).getActiveLookup();
+      if (lookup != null) {
+        window = ComponentUtil.getParentOfType((Class<? extends Window>)Window.class, lookup.getComponent());
       }
-      if (window != null) {
-        int w = ConfigureCustomSizeAction.CustomSizeModel.INSTANCE.getWidth();
-        int h = ConfigureCustomSizeAction.CustomSizeModel.INSTANCE.getHeight();
-        window.setMinimumSize(new Dimension(w, h));
-        window.setSize(w, h);
-      }
+    }
+
+    if (window == null) {
+      window = ComponentUtil.getParentOfType((Class<? extends Window>)Window.class, owner);
+    }
+    if (window != null) {
+      int w = ConfigureCustomSizeAction.CustomSizeModel.INSTANCE.getWidth();
+      int h = ConfigureCustomSizeAction.CustomSizeModel.INSTANCE.getHeight();
+      window.setMinimumSize(new Dimension(w, h));
+      window.setSize(w, h);
     }
   }
 }

@@ -15,9 +15,10 @@ import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ClientProperty;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ExpandedItemListCellRendererWrapper;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
@@ -36,41 +37,18 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.AWTEventListener;
-import java.awt.event.ContainerEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Internal
-@IntellijInternalApi
 public final class UiInspectorAction extends UiMouseAction implements LightEditCompatible, ActionPromoter {
   private static final String ACTION_ID = "UiInspector";
   public static final String RENDERER_BOUNDS = "clicked renderer";
 
   public static final Key<DefaultMutableTreeNode> CLICK_INFO = Key.create("CLICK_INFO");
   public static final Key<Point> CLICK_INFO_POINT = Key.create("CLICK_INFO_POINT");
-  public static final Key<Throwable> ADDED_AT_STACKTRACE = Key.create("uiInspector.addedAt");
-
-  private static boolean ourStacktracesSavingInitialized = false;
-  private static boolean shouldSaveStacktraces = false;
-
-  public static synchronized void initStacktracesSaving() {
-    if (!ourStacktracesSavingInitialized && isSaveStacktraces()) {
-      ourStacktracesSavingInitialized = true;
-      AddedAtStacktracesCollector.init();
-    }
-  }
-
-  public static void enableStacktracesSaving() {
-    shouldSaveStacktraces = true;
-    initStacktracesSaving();
-  }
-
-  public static boolean isSaveStacktraces() {
-    return shouldSaveStacktraces || Registry.is("ui.inspector.save.stacktraces", false);
-  }
 
   public UiInspectorAction() {
     super(ACTION_ID);
@@ -287,7 +265,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
     private static List<PropertyBean> findActionsFor(Object object) {
       if (object instanceof PopupFactoryImpl.ActionItem item) {
         AnAction action = item.getAction();
-        return UiInspectorActionUtil.collectAnActionInfo(action);
+        return UiInspectorActionUtil.INSTANCE.collectAnActionInfo(action);
       }
       if (object instanceof IntentionActionDelegate actionDelegate) {
         IntentionAction delegate = IntentionActionDelegate.unwrap(actionDelegate.getDelegate());
@@ -307,24 +285,6 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
       }
 
       return Collections.emptyList();
-    }
-  }
-
-  private static final class AddedAtStacktracesCollector implements AWTEventListener {
-    private AddedAtStacktracesCollector() { }
-
-    public static void init() {
-      Toolkit.getDefaultToolkit().addAWTEventListener(new AddedAtStacktracesCollector(), AWTEvent.CONTAINER_EVENT_MASK);
-    }
-
-    @Override
-    public void eventDispatched(AWTEvent event) {
-      if (event instanceof ContainerEvent containerEvent) {
-        Component child = event.getID() == ContainerEvent.COMPONENT_ADDED ? containerEvent.getChild() : null;
-        if (child instanceof JComponent jComponent && !(event.getSource() instanceof CellRendererPane)) {
-          ClientProperty.put(jComponent, ADDED_AT_STACKTRACE, new Throwable());
-        }
-      }
     }
   }
 }

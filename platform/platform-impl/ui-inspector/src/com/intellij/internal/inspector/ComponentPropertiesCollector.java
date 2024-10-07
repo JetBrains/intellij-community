@@ -281,7 +281,7 @@ public final class ComponentPropertiesCollector {
     }
 
     if (action != null) {
-      myProperties.addAll(UiInspectorActionUtil.collectAnActionInfo(action));
+      myProperties.addAll(UiInspectorActionUtil.INSTANCE.collectAnActionInfo(action));
     }
   }
 
@@ -372,7 +372,6 @@ public final class ComponentPropertiesCollector {
       }
     }
     else if (layout instanceof MigLayout migLayout) {
-
       Object constraints = migLayout.getLayoutConstraints();
       if (constraints instanceof LC) {
         addMigLayoutLayoutConstraints((LC)constraints);
@@ -402,7 +401,6 @@ public final class ComponentPropertiesCollector {
       }
     }
     else if (layout instanceof com.intellij.ui.layout.migLayout.patched.MigLayout migLayout) {
-
       addMigLayoutLayoutConstraints(migLayout.getLayoutConstraints());
       addMigLayoutAxisConstraints("MigLayout column constraints", migLayout.getColumnConstraints());
       addMigLayoutAxisConstraints("MigLayout row constraints", migLayout.getRowConstraints());
@@ -679,7 +677,7 @@ public final class ComponentPropertiesCollector {
     }
 
     if (throwable == null) {
-      throwable = ClientProperty.get(component, UiInspectorAction.ADDED_AT_STACKTRACE);
+      throwable = ClientProperty.get(component, UiInspectorUtil.ADDED_AT_STACKTRACE);
       if (throwable == null) {
         return new Pair<>(propertyName, null);
       }
