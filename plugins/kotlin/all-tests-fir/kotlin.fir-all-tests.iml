@@ -60,5 +60,6 @@
     <orderEntry type="module" module-name="intellij.jvm.analysis.kotlin.tests.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.analysis.analysis-api.k2.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.k2.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.features-trainer.tests" scope="RUNTIME" />
   </component>
 </module>
