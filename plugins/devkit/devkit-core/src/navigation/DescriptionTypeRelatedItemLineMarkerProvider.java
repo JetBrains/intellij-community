@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -9,7 +9,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
@@ -64,7 +63,7 @@ final class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedCl
     if (module == null) return;
 
     for (DescriptionType type : DescriptionType.values()) {
-      if (!InheritanceUtil.isInheritor(psiClass, type.getClassName())) {
+      if (!type.matches(psiClass)) {
         continue;
       }
 

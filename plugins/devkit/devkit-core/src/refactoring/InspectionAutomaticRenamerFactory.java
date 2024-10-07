@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.refactoring;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -12,7 +12,6 @@ import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
@@ -49,7 +48,7 @@ final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory
     String inspectionClassName = inspectionClass.getName();
     return inspectionClassName != null &&
            inspectionClassName.endsWith(INSPECTION_CLASS_SUFFIX) &&
-           InheritanceUtil.isInheritor(inspectionClass, DescriptionType.INSPECTION.getClassName()) &&
+           DescriptionType.INSPECTION.matches(inspectionClass) &&
            !isGetShortNameMethodOverridden(inspectionClass);
   }
 
