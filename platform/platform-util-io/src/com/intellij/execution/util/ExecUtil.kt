@@ -86,20 +86,20 @@ object ExecUtil {
 
   @JvmStatic
   @Throws(ExecutionException::class)
-  @RequiresBackgroundThread(generateAssertion = true)
+  @RequiresBackgroundThread(generateAssertion = false)
   fun execAndGetOutput(commandLine: GeneralCommandLine): ProcessOutput {
     return CapturingProcessHandler(commandLine).runProcess()
   }
 
   @JvmStatic
   @Throws(ExecutionException::class)
-  @RequiresBackgroundThread(generateAssertion = true)
+  @RequiresBackgroundThread(generateAssertion = false)
   fun execAndGetOutput(commandLine: GeneralCommandLine, timeoutInMilliseconds: Int): ProcessOutput {
     return CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds)
   }
 
   @JvmStatic
-  @RequiresBackgroundThread(generateAssertion = true)
+  @RequiresBackgroundThread(generateAssertion = false)
   fun execAndGetOutput(commandLine: GeneralCommandLine, stdin: String): String {
     return CapturingProcessHandler(commandLine).also { processHandler ->
       processHandler.addProcessListener(object : ProcessAdapter() {
@@ -113,7 +113,7 @@ object ExecUtil {
   }
 
   @JvmStatic
-  @RequiresBackgroundThread(generateAssertion = true)
+  @RequiresBackgroundThread(generateAssertion = false)
   fun execAndReadLine(commandLine: GeneralCommandLine): String? {
     return try {
       readFirstLine(commandLine.createProcess().inputStream, commandLine.charset)
@@ -125,7 +125,7 @@ object ExecUtil {
   }
 
   @ApiStatus.Internal
-  @RequiresBackgroundThread(generateAssertion = true)
+  @RequiresBackgroundThread(generateAssertion = false)
   @JvmStatic
   fun readFirstLine(stream: InputStream, cs: Charset?): String? {
     return try {
