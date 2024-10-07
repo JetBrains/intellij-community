@@ -45,8 +45,9 @@ internal object TerminalUi {
   const val searchComponentWidth = 500
 
   fun defaultBackground(editor: Editor? = null): JBColor {
-    return createColorBoundToColorKey(BlockTerminalColors.DEFAULT_BACKGROUND, editor) {
-      it.defaultBackground
+    return JBColor.lazy {
+      val colorsScheme = editor?.colorsScheme ?: EditorColorsManager.getInstance().globalScheme
+      colorsScheme.defaultBackground
     }
   }
 

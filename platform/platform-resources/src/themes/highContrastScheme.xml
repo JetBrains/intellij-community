@@ -93,6 +93,9 @@
     <option name="ActionButton.iconTextForeground" value="FFFFFF"/>
     <option name="INLINE_REFACTORING_SETTINGS_FOCUSED" value="CCCCCC8c"/>
     <option name="INLINE_REFACTORING_SETTINGS_HOVERED" value="CCCCCC8c"/>
+    <option name="BLOCK_TERMINAL_SELECTED_BLOCK_BACKGROUND" value="000062"/>
+    <option name="BLOCK_TERMINAL_HOVERED_BLOCK_BACKGROUND_START" value="FFFFFF19"/>
+    <option name="BLOCK_TERMINAL_HOVERED_BLOCK_BACKGROUND_END" value="FFFFFF12"/>
   </colors>
   <attributes>
     <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">

@@ -293,7 +293,7 @@ internal class TerminalBlocksDecorator(
       val width = JBUI.scale(TerminalUi.cornerToBlockInset)
       val oldColor = g.color
       try {
-        g.color = editor.colorsScheme.getColor(BlockTerminalColors.DEFAULT_BACKGROUND)
+        g.color = TerminalUi.defaultBackground(editor)
         g.fillRect(visibleArea.width - width, visibleArea.y, width, visibleArea.height)
       }
       finally {
