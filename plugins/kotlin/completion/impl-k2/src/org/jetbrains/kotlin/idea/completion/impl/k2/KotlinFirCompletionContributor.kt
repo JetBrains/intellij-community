@@ -74,11 +74,6 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParametersProvider.provide(parameters)
 
-        if (!Registry.`is`("kotlin.k2.scripting.enabled")) {
-            val ktFile = parameters.ijParameters.originalFile as? KtFile
-            if (ktFile?.isScript() == true) return
-        }
-
         if (shouldSuppressCompletion(parameters.ijParameters, result.prefixMatcher)) return
         val positionContext = KotlinPositionContextDetector.detect(parameters.ijParameters.position)
         val (resultController, resultSet) = createResultSet(parameters, positionContext, result)

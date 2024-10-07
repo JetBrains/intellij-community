@@ -38,9 +38,6 @@
   </xi:include>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-
-    <supportAvailability implementation="org.jetbrains.kotlin.idea.highlighter.ScriptingSupportAvailability"/>
-
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.ModuleScriptAdditionalIdeaDependenciesProvider"/>
 
     <bundledFirCompilerPluginProvider implementation="org.jetbrains.kotlin.idea.fir.extensions.DefaultBundledFirCompilerPluginProvider"
@@ -84,11 +81,6 @@
                  description="Whether to convert `KtStringTemplateExpression` to `KotlinStringTemplateUPolyadicExpression` in all cases"
                  defaultValue="true"
                  restartRequired="false"/>
-
-    <registryKey key="kotlin.k2.scripting.enabled"
-                 description="Enable scripting support in the K2 mode"
-                 defaultValue="true"
-                 restartRequired="true"/>
 
     <registryKey key="kotlin.k2.only.bundled.compiler.plugins.enabled"
                  description="Allow only bundled K2 compiler plugins to be used"
