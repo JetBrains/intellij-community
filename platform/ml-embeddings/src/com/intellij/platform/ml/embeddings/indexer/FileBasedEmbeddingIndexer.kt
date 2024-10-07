@@ -44,6 +44,9 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
     IndexBasedEmbeddingEntitiesIndexer(indexerScope)
   else VFSBasedEmbeddingEntitiesIndexer(indexerScope)
 
+  private val triggerIndexingOnSearch
+    get() = Registry.`is`("intellij.platform.ml.embeddings.trigger.indexing.on.search")
+
   init {
     Disposer.register(this, entitiesIndexer)
   }
@@ -73,6 +76,7 @@ class FileBasedEmbeddingIndexer(private val cs: CoroutineScope) : Disposable {
   }
 
   suspend fun triggerIndexing(project: Project) {
+    if (!triggerIndexingOnSearch) return
     var shouldIndex = false
     jobsMutex.withLock {
       if (project !in indexedProjects) {
