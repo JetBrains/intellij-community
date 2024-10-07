@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
+import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 import com.intellij.codeInsight.inline.completion.InlineCompletionTestCase
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
@@ -75,8 +76,30 @@ internal class InlineCompletionSessionLogsTest : InlineCompletionTestCase() {
       singleSessionLog.assertSomeContextLogsPresent()
       singleSessionLog.assertWasShown(false)
       singleSessionLog.assertFinishType(FinishType.INVALIDATED)
-      // TODO uncomment after ML-4027
-      //singleSessionLog.assertInvalidationEvent(InlineCompletionEvent.DocumentChange::class.java)
+      singleSessionLog.assertInvalidationEvent(InlineCompletionEvent.DocumentChange::class.java)
+    }
+  }
+
+  @Test
+  fun testCancelledByTypingWhenShown() {
+    myFixture.testInlineCompletion {
+      init(PlainTextFileType.INSTANCE)
+      registerSuggestion {
+        variant {
+          emit(InlineCompletionGrayTextElement("hello world!"))
+        }
+      }
+      val singleSessionLog = singleSessionLog {
+        callInlineCompletion()
+        provider.computeNextElement()
+        delay()
+        typeChar('a')
+      }
+      singleSessionLog.assertRequestIdPresent()
+      singleSessionLog.assertSomeContextLogsPresent()
+      singleSessionLog.assertWasShown(true)
+      singleSessionLog.assertFinishType(FinishType.INVALIDATED)
+      singleSessionLog.assertInvalidationEvent(InlineCompletionEvent.DocumentChange::class.java)
     }
   }
 }

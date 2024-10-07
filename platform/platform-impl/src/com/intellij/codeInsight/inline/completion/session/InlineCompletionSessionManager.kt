@@ -20,7 +20,7 @@ internal abstract class InlineCompletionSessionManager {
    * @see updateSession
    */
   @RequiresEdt
-  protected abstract fun onUpdate(session: InlineCompletionSession, event: InlineCompletionEvent?, result: UpdateSessionResult)
+  protected abstract fun onUpdate(session: InlineCompletionSession, result: UpdateSessionResult)
 
   @RequiresEdt
   fun sessionCreated(newSession: InlineCompletionSession) {
@@ -38,8 +38,8 @@ internal abstract class InlineCompletionSessionManager {
    * Calls [onUpdate] with passed [UpdateSessionResult.Invalidated], if session exists.
    */
   @RequiresEdt
-  fun invalidate() {
-    currentSession?.let { session -> onUpdate(session, event = null, UpdateSessionResult.Invalidated) }
+  fun invalidate(reason: UpdateSessionResult.Invalidated.Reason) {
+    currentSession?.let { session -> onUpdate(session, UpdateSessionResult.Invalidated(reason)) }
   }
 
   /**
@@ -66,12 +66,12 @@ internal abstract class InlineCompletionSessionManager {
     }
 
     val result = updateSession(session, request)
-    onUpdate(session, request.event, result)
-    return result != UpdateSessionResult.Invalidated
+    onUpdate(session, result)
+    return result !is UpdateSessionResult.Invalidated
   }
 
   private fun invalidate(session: InlineCompletionSession, event: InlineCompletionEvent) {
-    onUpdate(session, event, UpdateSessionResult.Invalidated)
+    onUpdate(session, UpdateSessionResult.Invalidated(UpdateSessionResult.Invalidated.Reason.Event(event)))
   }
 
   private fun updateSession(session: InlineCompletionSession, request: InlineCompletionRequest): UpdateSessionResult {
@@ -96,13 +96,13 @@ internal abstract class InlineCompletionSessionManager {
     if (!session.isActive()) { // variants are not provided yet
       return when (suggestionUpdateManager.updateWhileNoVariants(event)) {
         true -> UpdateSessionResult.Succeeded
-        false -> UpdateSessionResult.Invalidated
+        false -> UpdateSessionResult.Invalidated(UpdateSessionResult.Invalidated.Reason.Event(event))
       }
     }
 
     val success = session.update(event) { variant -> suggestionUpdateManager.update(event, variant) }
     if (!success) {
-      return UpdateSessionResult.Invalidated
+      return UpdateSessionResult.Invalidated(UpdateSessionResult.Invalidated.Reason.Event(event))
     }
 
     check(!session.context.isDisposed)
@@ -128,9 +128,17 @@ internal abstract class InlineCompletionSessionManager {
     return this !is InlineCompletionEvent.InlineLookupEvent
   }
 
-  protected enum class UpdateSessionResult {
-    Succeeded,
-    Invalidated,
-    Emptied
+  internal sealed interface UpdateSessionResult {
+    data object Succeeded : UpdateSessionResult
+
+    data object Emptied : UpdateSessionResult
+
+    data class Invalidated(val reason: Reason) : UpdateSessionResult {
+      sealed interface Reason {
+        class Event(val event: InlineCompletionEvent) : Reason
+
+        data object UnclassifiedDocumentChange : Reason
+      }
+    }
   }
 }

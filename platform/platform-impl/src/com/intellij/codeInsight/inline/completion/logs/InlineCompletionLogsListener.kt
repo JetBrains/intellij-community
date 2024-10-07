@@ -24,11 +24,13 @@ import com.intellij.codeInsight.inline.completion.logs.StartingLogs.INLINE_API_P
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.REQUEST_EVENT
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.REQUEST_ID
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionInvalidationListener
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 
-internal class InlineCompletionLogsListener(private val editor: Editor) : InlineCompletionEventAdapter {
+internal class InlineCompletionLogsListener(private val editor: Editor) : InlineCompletionEventAdapter,
+                                                                          InlineCompletionInvalidationListener {
   /**
    * This field is not thread-safe, please access it only on EDT.
    */
@@ -71,8 +73,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     if (holder.potentiallySelectedIndex == null) {
       holder.potentiallySelectedIndex = event.variantIndex // It's the first variant that will be shown to a user
     }
-    holder.variantStates.putIfAbsent(event.variantIndex, VariantState())
-    val state = holder.variantStates[event.variantIndex]!!
+    val state = holder.variantStates.computeIfAbsent(event.variantIndex) { VariantState() }
     state.initialSuggestion += event.element.text
     state.finalSuggestion += event.element.text
   }
@@ -112,9 +113,17 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     state.finalSuggestion = event.elements.joinToString("") { it.text }
   }
 
-  override fun onInvalidated(event: InlineCompletionEventType.Invalidated) {
+  private fun onInvalidatedByEvent(eventClass: Class<out InlineCompletionEvent>) {
     val container = InlineCompletionLogsContainer.get(editor) ?: return
-    container.add(INVALIDATION_EVENT.with(event.event.javaClass))
+    container.add(INVALIDATION_EVENT.with(eventClass))
+  }
+
+  override fun onInvalidatedByEvent(event: InlineCompletionEvent) {
+    onInvalidatedByEvent(event.javaClass)
+  }
+
+  override fun onInvalidatedByUnclassifiedDocumentChange() {
+    onInvalidatedByEvent(InlineCompletionEvent.DocumentChange::class.java)
   }
 
   override fun onHide(event: InlineCompletionEventType.Hide) {

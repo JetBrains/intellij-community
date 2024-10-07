@@ -20,7 +20,7 @@ fun SingleSessionLog.assertFinishType(expected: FinishType) {
 
 @ApiStatus.Internal
 fun SingleSessionLog.assertInvalidationEvent(invalidationEvent: Class<out InlineCompletionEvent>) {
-  assert("invalidation_event", invalidationEvent)
+  assert("invalidation_event", invalidationEvent.name)
 }
 
 @ApiStatus.Internal
