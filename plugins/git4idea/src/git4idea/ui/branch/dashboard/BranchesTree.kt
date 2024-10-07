@@ -358,7 +358,7 @@ internal class FilteringBranchesTree(
 private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
   override fun createTransferable(tree: JComponent): Transferable? {
     if (tree is BranchesTreeComponent) {
-      val branches = tree.getSelection().getSelectedBranches()
+      val branches = tree.getSelection().selectedBranches
       if (branches.isEmpty()) return null
 
       return object : TransferableList<BranchInfo>(branches.toList()) {

@@ -97,7 +97,7 @@ internal class BranchesDashboardController(
   }
 
   fun getSelectedRemotes(): Map<GitRepository, Set<GitRemote>> {
-    val selectedRemotes = ui.getSelection().getSelectedRemotes()
+    val selectedRemotes = ui.getSelection().selectedRemotes
     if (selectedRemotes.isEmpty()) return emptyMap()
 
     val result = hashMapOf<GitRepository, MutableSet<GitRemote>>()

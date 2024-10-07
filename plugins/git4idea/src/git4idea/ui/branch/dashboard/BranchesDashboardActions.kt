@@ -92,15 +92,15 @@ internal object BranchesDashboardActions {
     fun build(e: AnActionEvent?): ActionGroup? {
       val selection = e?.getData(GIT_BRANCHES_TREE_SELECTION) ?: return null
 
-      val selectedRefs = selection.getSelectedRefs()
-      val headSelected = selection.isHeadSelected()
-      val selectedRemotes = selection.getSelectedRemotes()
-      val selectedNodes = selection.getSelectedNodeDescriptors().toList()
+      val selectedRefs = selection.selectedRefs
+      val headSelected = selection.headSelected
+      val selectedRemotes = selection.selectedRemotes
+      val selectedNodes = selection.selectedNodeDescriptors
 
       return when {
         selectedNodes.size == 1 && (selectedRefs.size == 1 || headSelected) ->
           ActionManager.getInstance().getAction(GIT_SINGLE_REF_ACTION_GROUP) as? ActionGroup
-        selectedNodes.size == 2 && selectedRefs.size == 1 && headSelected  -> HeadAndBranchActions()
+        selectedNodes.size == 2 && selectedRefs.size == 1 && headSelected -> HeadAndBranchActions()
         selectedNodes.size == selectedRefs.size && selectedRefs.size > 1 -> MultipleLocalBranchActions()
         selectedNodes.isNotEmpty() && selectedRemotes.size == selectedNodes.size ->
           if (selectedRemotes.size == 1) GroupActions() else MultipleGroupActions()
@@ -116,7 +116,7 @@ internal object BranchesDashboardActions {
                                              com.intellij.dvcs.ui.NewBranchAction.icon) {
 
     override fun update(e: AnActionEvent) {
-      val headSelected = e.getData(GIT_BRANCHES_TREE_SELECTION)?.isHeadSelected()
+      val headSelected = e.getData(GIT_BRANCHES_TREE_SELECTION)?.headSelected
       if (headSelected == true) {
         e.presentation.isEnabled = true
       }
@@ -132,7 +132,7 @@ internal object BranchesDashboardActions {
         return
       }
 
-      val repositories = selection.getRepositoriesForSelectedBranches()
+      val repositories = selection.repositoriesOfSelectedBranches
       disableActionIfAnyRepositoryIsFresh(e, repositories, DvcsBundle.message("action.not.possible.in.fresh.repo.new.branch"))
     }
 
@@ -140,13 +140,13 @@ internal object BranchesDashboardActions {
       val project = e.project ?: return
       val selection = e.getData(GIT_BRANCHES_TREE_SELECTION) ?: return
 
-      if (selection.isHeadSelected()) {
+      if (selection.headSelected) {
         val repositories = GitRepositoryManager.getInstance(project).repositories
         createOrCheckoutNewBranch(project, repositories, HEAD, initialName = repositories.getCommonCurrentBranch())
       }
       else {
-        val branches = selection.getSelectedBranches()
-        val repositories = selection.getRepositoriesForSelectedBranches()
+        val branches = selection.selectedBranches
+        val repositories = selection.repositoriesOfSelectedBranches
         val branchInfo = branches.first()
         val branchName = branchInfo.branchName
 
@@ -180,7 +180,7 @@ internal object BranchesDashboardActions {
         return
       }
 
-      val selectedRepositories = selection.getRepositoriesForSelectedBranches()
+      val selectedRepositories = selection.repositoriesOfSelectedBranches
 
       val branchNames = branches.map(BranchInfo::branchName)
       val updateMethodName = GitVcsSettings.getInstance(project).updateMethod.name.toLowerCase()
@@ -196,8 +196,8 @@ internal object BranchesDashboardActions {
       val project = e.project ?: return
       val selection = e.getData(GIT_BRANCHES_TREE_SELECTION) ?: return
 
-      val branches = selection.getSelectedBranches()
-      val repositories = selection.getRepositoriesForSelectedBranches()
+      val branches = selection.selectedBranches
+      val repositories = selection.repositoriesOfSelectedBranches
       val branchNames = branches.map(BranchInfo::branchName)
 
       updateBranches(project, repositories, branchNames)
@@ -239,7 +239,7 @@ internal object BranchesDashboardActions {
         val deleteRemoteBranches = {
           val remoteBranchesNames = mutableSetOf<String>()
           val remoteBranchesRepos = mutableSetOf<GitRepository>()
-          selection.getSelectedBranchesWithRepositories().forEach { (branch, repos) ->
+          selection.selectedBranchesToRepositories.forEach { (branch, repos) ->
             if (!branch.isLocalBranch) {
               remoteBranchesNames.add(branch.branchName)
               remoteBranchesRepos.addAll(repos)
@@ -248,9 +248,9 @@ internal object BranchesDashboardActions {
           gitBrancher.deleteRemoteBranches(remoteBranchesNames.toList(), remoteBranchesRepos.toList())
         }
 
-        val localBranches = selection.getSelectedBranchesWithRepositories()
-          .filter { (branch, _) -> branch.isLocalBranch }
-          .associate { (branch, repos) -> branch.branchName to repos }
+      val localBranches = selection.selectedBranchesToRepositories
+        .filter { (branch, _) -> branch.isLocalBranch }
+        .associate { (branch, repos) -> branch.branchName to repos }
 
         if (localBranches.isNotEmpty()) { //delete local (possible tracked) branches first if any
           gitBrancher.deleteBranches(localBranches, deleteRemoteBranches)
@@ -279,7 +279,7 @@ internal object BranchesDashboardActions {
       val selection = e.getData(GIT_BRANCHES_TREE_SELECTION) ?: return
       val gitBrancher = GitBrancher.getInstance(project)
 
-      selection.getSelectedBranchesWithRepositories().forEach { (branch, repositories) ->
+      selection.selectedBranchesToRepositories.forEach { (branch, repositories) ->
         if (!branch.isCurrent) {
           gitBrancher.compare(branch.branchName, repositories)
         }
@@ -317,9 +317,9 @@ internal object BranchesDashboardActions {
     }
 
     private fun getBranchPair(selection: BranchesTreeSelection, project: Project, e: AnActionEvent): Pair<BranchInfo, BranchInfo>? {
-      val branches = selection.getSelectedBranches()
+      val branches = selection.selectedBranches
       return when {
-        branches.size == 1 && selection.isHeadSelected() -> {
+        branches.size == 1 && selection.headSelected -> {
           val guessRepo = GitBranchUtil.guessWidgetRepository(project, e.dataContext)
                           ?: branches.single().repositories.singleOrNull()
                           ?: return null
@@ -444,7 +444,7 @@ internal object BranchesDashboardActions {
       val selection = e.getData(GIT_BRANCHES_TREE_SELECTION) ?: return
 
       val gitBranchManager = project.service<GitBranchManager>()
-      selection.getSelectedBranchesWithRepositories().forEach { (branch, repositories) ->
+      selection.selectedBranchesToRepositories.forEach { (branch, repositories) ->
         val type = if (branch.isLocalBranch) GitBranchType.LOCAL else GitBranchType.REMOTE
         for (repository in repositories) {
           gitBranchManager.setFavorite(type, repository, branch.branchName, !branch.isFavorite)
@@ -605,7 +605,7 @@ internal object BranchesDashboardActions {
 
     override fun update(e: AnActionEvent) {
       val selection = e.getData(GIT_BRANCHES_TREE_SELECTION)
-      val branches = selection?.getSelectedBranches()
+      val branches = selection?.selectedBranches
       val project = e.project
       val enabled = project != null && !branches.isNullOrEmpty()
       e.presentation.isEnabled = enabled
@@ -625,7 +625,7 @@ internal object BranchesDashboardActions {
     override fun update(e: AnActionEvent) {
       val enabled = e.project != null
                     && e.getData(BRANCHES_UI_CONTROLLER) != null
-                    && !e.getData(GIT_BRANCHES_TREE_SELECTION)?.getSelectedBranchFilters().isNullOrEmpty()
+                    && !e.getData(GIT_BRANCHES_TREE_SELECTION)?.selectedBranchFilters.isNullOrEmpty()
                     && e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) is BranchesTreeComponent
 
       e.presentation.isEnabled = enabled
@@ -651,7 +651,7 @@ internal object BranchesDashboardActions {
         return
       }
 
-      val selectedFilters = e.getData(GIT_BRANCHES_TREE_SELECTION)?.getSelectedBranchFilters()
+      val selectedFilters = e.getData(GIT_BRANCHES_TREE_SELECTION)?.selectedBranchFilters
       e.presentation.isEnabled = selectedFilters?.size == 1
       e.presentation.isVisible = true
     }

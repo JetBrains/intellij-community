@@ -115,7 +115,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   internal fun updateLogBranchFilter() {
     val ui = logUi
-    val selectedFilters = getSelection().getSelectedBranchFilters()
+    val selectedFilters = getSelection().selectedBranchFilters
     val oldFilters = ui.filterUi.filters
     val newFilters = if (selectedFilters.isNotEmpty()) {
       oldFilters.without(VcsLogBranchLikeFilter::class.java).with(VcsLogFilterObject.fromBranches(selectedFilters))
@@ -127,7 +127,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   }
 
   internal fun navigateToSelectedBranch(focus: Boolean) {
-    val selectedReference = getSelection().getSelectedBranchFilters().singleOrNull() ?: return
+    val selectedReference = getSelection().selectedBranchFilters.singleOrNull() ?: return
 
     logUi.jumpToBranch(selectedReference, false, focus)
   }
@@ -342,9 +342,9 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
       sink[GIT_BRANCHES_TREE_SELECTION] = selection
       sink[SELECTED_ITEMS] = selectionPaths
 
-      val selectedNode = selection.getSelectedNodes().singleOrNull() ?: return
+      val selectedNode = selection.selectedNodes.singleOrNull() ?: return
       val selectedDescriptor = selectedNode.getNodeDescriptor()
-      if (selection.isHeadSelected()) {
+      if (selection.headSelected) {
         sink[GitBranchActionsDataKeys.USE_CURRENT_BRANCH] = true
       }
 

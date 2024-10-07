@@ -5,68 +5,60 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.repo.GitRepository
 import javax.swing.tree.TreePath
 
-internal class BranchesTreeSelection(val selectionPaths: Array<TreePath>?) {
-  fun getSelectedBranches(): List<BranchInfo> =
-    getSelectedNodeDescriptors()
-      .filterIsInstance<BranchNodeDescriptor.Branch>()
-      .map { it.branchInfo }
-      .toList()
+internal class BranchesTreeSelection(selectionPaths: Array<TreePath>?) {
+  val selectedNodes: List<BranchTreeNode> =
+    selectionPaths?.mapNotNull { it.lastPathComponent as? BranchTreeNode } ?: emptyList()
 
-  fun getSelectedRefs(): List<RefInfo> =
-    getSelectedNodeDescriptors()
-      .filterIsInstance<BranchNodeDescriptor.Ref>()
-      .map { it.refInfo }
-      .toList()
+  val selectedNodeDescriptors: List<BranchNodeDescriptor> =
+    selectedNodes.map { it.getNodeDescriptor() }
 
-  fun getSelectedBranchesWithRepositories(): List<Pair<BranchInfo, List<GitRepository>>> =
-    getSelectedNodes().mapNotNull { node ->
-      val nodeDescriptor = node.getNodeDescriptor()
-      if (nodeDescriptor is BranchNodeDescriptor.Branch) {
-        nodeDescriptor.branchInfo to getSelectedRepositories(node)
-      }
-      else null
-    }.toList()
+  val selectedBranches: List<BranchInfo>
+    get() = selectedNodeDescriptors.mapNotNull { (it as? BranchNodeDescriptor.Branch)?.branchInfo }
 
-  fun getSelectedRemotes(): Set<RemoteInfo> =
-    getSelectedNodes().mapNotNull {
+  val selectedRefs: List<RefInfo>
+    get() = selectedNodeDescriptors.mapNotNull { (it as? BranchNodeDescriptor.Ref)?.refInfo }
+
+  val headSelected: Boolean
+    get() = selectedNodeDescriptors.any { it == BranchNodeDescriptor.Head }
+
+  val selectedRemotes: Set<RemoteInfo>
+    get() = selectedNodes.mapNotNullTo(mutableSetOf()) {
       val descriptor = it.getNodeDescriptor()
       val parentDescriptor = it.parent?.getNodeDescriptor()
       if (descriptor is BranchNodeDescriptor.RemoteGroup) {
         RemoteInfo(descriptor.remote.name, (parentDescriptor as? BranchNodeDescriptor.Repository)?.repository)
       }
       else null
-    }.toSet()
+    }
 
-  fun getRepositoriesForSelectedBranches() = getSelectedNodes().flatMap { getSelectedRepositories(it) }.toSet()
-
-  fun getSelectedRepositories(branchInfo: BranchInfo): List<GitRepository> {
-    val branchNode = getSelectedNodes().find { node ->
-      val nodeDescriptor = node.getNodeDescriptor()
-      nodeDescriptor is BranchNodeDescriptor.Branch && nodeDescriptor.branchInfo == branchInfo
-    } ?: return emptyList()
-
-    return getSelectedRepositories(branchNode)
-  }
-
-  fun getSelectedBranchFilters(): List<String> =
-    getSelectedNodeDescriptors().mapNotNull {
+  val selectedBranchFilters: List<String>
+    get() = selectedNodeDescriptors.mapNotNull {
       when (it) {
         is BranchNodeDescriptor.Branch -> it.branchInfo.branchName
         BranchNodeDescriptor.Head -> VcsLogUtil.HEAD
         else -> null
       }
-    }.toList()
+    }
 
-  fun isHeadSelected(): Boolean = getSelectedNodeDescriptors().any { it == BranchNodeDescriptor.Head  }
+  val repositoriesOfSelectedBranches: Set<GitRepository>
+    get() = selectedBranches.flatMapTo(mutableSetOf()) { getSelectedRepositories(it) }
 
-  fun getSelectedNodeDescriptors(): Sequence<BranchNodeDescriptor> =
-    getSelectedNodes().map { it.getNodeDescriptor() }
+  val selectedBranchesToRepositories: List<Pair<BranchInfo, List<GitRepository>>>
+    get() = selectedNodes.mapNotNull { node ->
+      val nodeDescriptor = node.getNodeDescriptor()
+      if (nodeDescriptor is BranchNodeDescriptor.Branch) {
+        nodeDescriptor.branchInfo to getSelectedRepositories(node)
+      }
+      else null
+    }
 
-  fun getSelectedNodes(): Sequence<BranchTreeNode> {
-    val paths = selectionPaths ?: return emptySequence()
-    return paths.asSequence()
-      .map(TreePath::getLastPathComponent)
-      .filterIsInstance<BranchTreeNode>()
+  fun getSelectedRepositories(branchInfo: BranchInfo): List<GitRepository> {
+    val branchNode = selectedNodes.find { node ->
+      val nodeDescriptor = node.getNodeDescriptor()
+      nodeDescriptor is BranchNodeDescriptor.Branch && nodeDescriptor.branchInfo == branchInfo
+    } ?: return emptyList()
+
+    return getSelectedRepositories(branchNode)
   }
 
   companion object {
