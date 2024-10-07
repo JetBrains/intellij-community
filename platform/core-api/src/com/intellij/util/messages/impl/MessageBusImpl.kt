@@ -4,7 +4,6 @@
 package com.intellij.util.messages.impl
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.isMessageBusErrorPropagationEnabled
@@ -410,7 +409,7 @@ private val NA: Any = Any()
 private sealed class BusState {
   data object Alive : BusState()
   data object Disposing : BusState()
-  class Disposed(val where: Throwable) : BusState()
+  class Disposed(@JvmField val where: Throwable) : BusState()
 }
 
 private fun pumpWaiting(jobQueue: MessageQueue) {
@@ -452,13 +451,15 @@ private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevError: Thro
       job.currentHandlerIndex++
       val handler = handlers[index]
       if (handler != null) {
-        error = invokeListener(methodHandle = job.method,
-                               methodName = job.methodName,
-                               args = job.args,
-                               topic = job.topic,
-                               handler = handler,
-                               messageDeliveryListeners = job.bus.messageDeliveryListeners,
-                               prevError = error)
+        error = invokeListener(
+          methodHandle = job.method,
+          methodName = job.methodName,
+          args = job.args,
+          topic = job.topic,
+          handler = handler,
+          messageDeliveryListeners = job.bus.messageDeliveryListeners,
+          prevError = error,
+        )
       }
       if (++index != job.currentHandlerIndex) {
         // handler published some events, and message queue including a current job was processed as a result, so, stop processing
@@ -503,7 +504,15 @@ internal open class MessagePublisher<L>(
       return false
     }
 
-    executeOrAddToQueue(topic, method, args, handlers, queue, null, bus)?.let(::throwError)
+    executeOrAddToQueue(
+      topic = topic,
+      method = method,
+      args = args,
+      handlers = handlers,
+      jobQueue = queue,
+      prevError = null,
+      bus = bus,
+    )?.let(::throwError)
     return true
   }
 
@@ -511,7 +520,6 @@ internal open class MessagePublisher<L>(
   }
 }
 
-@Internal
 internal fun executeOrAddToQueue(
   topic: Topic<*>,
   method: Method,
@@ -525,28 +533,31 @@ internal fun executeOrAddToQueue(
   if (jobQueue == null) {
     var error = prevError
     for (handler in handlers) {
-      error = invokeListener(methodHandle = methodHandle,
-                             methodName = method.name,
-                             args = args,
-                             topic = topic,
-                             handler = handler ?: continue,
-                             messageDeliveryListeners = bus.messageDeliveryListeners,
-                             prevError = error)
+      error = invokeListener(
+        methodHandle = methodHandle,
+        methodName = method.name,
+        args = args,
+        topic = topic,
+        handler = handler ?: continue,
+        messageDeliveryListeners = bus.messageDeliveryListeners,
+        prevError = error,
+      )
     }
     return error
   }
   else {
-    jobQueue.queue.offerLast(Message(topic = topic,
-                                     method = methodHandle,
-                                     methodName = method.name,
-                                     args = args,
-                                     handlers = handlers,
-                                     bus = bus))
+    jobQueue.queue.offerLast(Message(
+      topic = topic,
+      method = methodHandle,
+      methodName = method.name,
+      args = args,
+      handlers = handlers,
+      bus = bus,
+    ))
     return prevError
   }
 }
 
-@Internal
 internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl) : MessagePublisher<L>(topic, bus), InvocationHandler {
   override fun preload() {
     // expected the only parent (project -> app)
@@ -564,13 +575,15 @@ internal class ToParentMessagePublisher<L>(topic: Topic<L>, bus: MessageBusImpl)
       val handlers = getOrComputeHandlers(parentBus)
       if (handlers.isNotEmpty()) {
         hasHandlers = true
-        error = executeOrAddToQueue(topic = topic,
-                                    method = method,
-                                    args = args,
-                                    handlers = handlers,
-                                    jobQueue = queue,
-                                    prevError = error,
-                                    bus = bus)
+        error = executeOrAddToQueue(
+          topic = topic,
+          method = method,
+          args = args,
+          handlers = handlers,
+          jobQueue = queue,
+          prevError = error,
+          bus = bus,
+        )
       }
       parentBus = parentBus.parentBus ?: break
     }
@@ -700,7 +713,9 @@ private fun invokeListener(
     else {
       val startTime = System.nanoTime()
       invokeMethod(handler, args, methodHandle)
-      messageDeliveryListeners.forEach { it.messageDelivered(topic, methodName, handler, System.nanoTime() - startTime) }
+      for (listener in messageDeliveryListeners) {
+        listener.messageDelivered(topic, methodName, handler, System.nanoTime() - startTime)
+      }
     }
     return prevError
   }

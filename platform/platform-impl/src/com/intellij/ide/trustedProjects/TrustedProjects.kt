@@ -33,8 +33,8 @@ object TrustedProjects {
     val oldState = trustedPaths.getProjectTrustedState(locatedProject)
     trustedPaths.setProjectTrustedState(locatedProject, isTrusted)
     val newState = trustedPaths.getProjectTrustedState(locatedProject)
-    val syncPublisher = ApplicationManager.getApplication().messageBus.syncPublisher(TrustedProjectsListener.TOPIC)
     if (oldState != newState) {
+      val syncPublisher = ApplicationManager.getApplication().messageBus.syncPublisher(TrustedProjectsListener.TOPIC)
       when (isTrusted) {
         true -> syncPublisher.onProjectTrusted(locatedProject)
         else -> syncPublisher.onProjectUntrusted(locatedProject)
