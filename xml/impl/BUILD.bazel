@@ -27,6 +27,7 @@ kt_jvm_library(
     "@community//xml/xml-structure-view-impl:xml-structureView-impl",
     "@community//platform/xdebugger-api:debugger",
     "@community//platform/built-in-server-api:builtInServer",
+    "@community//platform/editor-ui-ex:editor-ex",
     "@libraries//:intellij-deps-fastutil",
     "@community//platform/core-ui",
     "@community//spellchecker",

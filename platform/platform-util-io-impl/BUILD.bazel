@@ -19,6 +19,7 @@ kt_jvm_library(
     "@libraries//:jna-platform",
     "@libraries//:jackson-core",
   ],
-  exports = ["@community//platform/platform-util-io:ide-util-io"]
+  exports = ["@community//platform/platform-util-io:ide-util-io"],
+  runtime_deps = ["@libraries//:rhino-runtime"]
 )
 ### auto-generated section `build` end

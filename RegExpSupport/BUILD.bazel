@@ -16,6 +16,9 @@ kt_jvm_library(
   kotlinc_opts = "//:k17",
   deps = [
     "@community//platform/lang-api:lang",
+    "@community//platform/analysis-impl",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/platform-impl:ide-impl",
     "@community//platform/lang-impl",
     "@community//xml/xml-psi-api:xml-psi",
     "@libraries//:intellij-deps-fastutil",

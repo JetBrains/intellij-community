@@ -864,6 +864,12 @@ java_library(
 )
 
 java_library(
+  name = "rhino-runtime",
+  exports = ["@maven//:org_mozilla_rhino_runtime"],
+  visibility = ["//visibility:public"]
+)
+
+java_library(
   name = "rhizomedb-compiler-plugin.provided",
   exports = ["@maven//:jetbrains_fleet_rhizomedb_compiler_plugin"],
   neverlink = True,

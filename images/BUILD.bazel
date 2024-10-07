@@ -17,7 +17,9 @@ kt_jvm_library(
   plugins = ["@libraries//:serialization_plugin"],
   deps = [
     "@community//platform/lang-api:lang",
+    "@community//platform/util/ui:util-ui",
     "@community//platform/lang-impl",
+    "@community//platform/platform-impl:ide-impl",
     "@libraries//:commons-imaging",
     "@community//platform/core-ui",
     "@community//platform/platform-util-io:ide-util-io",
@@ -27,6 +29,7 @@ kt_jvm_library(
     "@libraries//:kotlinx-serialization-json-jvm",
     "@community//xml/xml-frontback",
     "@community//platform/ui.jcef:ui-jcef",
+    "@libraries//:kotlin-stdlib",
   ],
   runtime_deps = [":resources"]
 )

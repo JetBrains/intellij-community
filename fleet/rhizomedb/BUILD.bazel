@@ -21,6 +21,7 @@ kt_jvm_library(
     "@libraries//:kotlin-reflect",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:kotlinx-collections-immutable-jvm",
+    "@libraries//:annotations",
   ]
 )
 ### auto-generated section `build` end

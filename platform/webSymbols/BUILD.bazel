@@ -17,9 +17,12 @@ kt_jvm_library(
   deps = [
     "@community//platform/analysis-api:analysis",
     "@community//platform/lang-impl",
+    "@community//platform/platform-impl:ide-impl",
     "@community//platform/core-ui",
+    "@community//platform/editor-ui-ex:editor-ex",
     "@community//platform/core-api:core",
     "@libraries//:jackson-databind",
+    "@community//platform/analysis-impl",
     "@libraries//:jackson-core",
     "@libraries//:jackson-module-kotlin",
     "@libraries//:intellij-deps-fastutil",

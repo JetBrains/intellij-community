@@ -62,6 +62,7 @@ kt_jvm_library(
     "@libraries//:xz",
     "@libraries//:streamex",
     "@community//platform/statistics",
+    "@community//platform/ide-core-impl",
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:pty4j",
@@ -88,6 +89,7 @@ kt_jvm_library(
     "@community//platform/backend/workspace:backend-workspace",
     "@community//platform/diagnostic",
     "@libraries//:hash4j",
+    "@community//platform/editor-ui-ex:editor-ex",
     "@libraries//:kotlinx-serialization-protobuf-jvm",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
@@ -98,6 +100,7 @@ kt_jvm_library(
     "@community//platform/backend/observation:backend-observation",
     "@libraries//:kotlinx-collections-immutable-jvm",
     "@community//platform/util/storages:util-io-storages",
+    "@community//platform/platform-impl/internal:ide-internal",
     "@community//platform/util/concurrency",
   ],
   exports = [
@@ -109,6 +112,7 @@ kt_jvm_library(
     "@community//platform/projectModel-impl",
     "@community//platform/analysis-impl",
     "@community//platform/structure-view-impl:structureView-impl",
+    "@community//platform/ide-core-impl",
   ],
   runtime_deps = [":resources"]
 )

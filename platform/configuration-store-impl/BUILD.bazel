@@ -26,6 +26,7 @@ kt_jvm_library(
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@community//platform/object-serializer:objectSerializer",
     "@community//platform/service-container:serviceContainer",
+    "@community//platform/ide-core-impl",
     "@libraries//:snakeyaml-engine",
     "@community//platform/statistics",
     "@libraries//:intellij-deps-fastutil",

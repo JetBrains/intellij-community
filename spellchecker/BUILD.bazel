@@ -21,9 +21,11 @@ kt_jvm_library(
   kotlinc_opts = "//:k17",
   deps = [
     "@community//platform/lang-api:lang",
+    "@community//platform/analysis-impl",
     "@community//platform/lang-impl",
     "@community//platform/platform-api:ide",
     "@community//platform/platform-impl:ide-impl",
+    "@community//platform/editor-ui-ex:editor-ex",
     "@community//xml/openapi:xml",
     "@community//xml/dom-openapi:xml-dom",
     "@libraries//:guava",

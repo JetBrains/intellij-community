@@ -20,6 +20,7 @@ kt_jvm_library(
     "@community//platform/editor-ui-api:editor",
     "@community//platform/lang-api:lang",
     "@community//platform/core-impl",
+    "@community//platform/ide-core-impl",
     "@libraries//:kotlinx-serialization-core-jvm",
     "@libraries//:kotlinx-serialization-json-jvm",
     "@community//platform/platform-impl:ide-impl",
