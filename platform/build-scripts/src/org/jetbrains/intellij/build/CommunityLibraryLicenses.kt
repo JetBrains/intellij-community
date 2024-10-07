@@ -1257,7 +1257,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("ai.grazie.nlp.langs"),
     jetbrainsLibrary("ai.grazie.spell.gec.engine.local"),
     jetbrainsLibrary("ai.grazie.spell.hunspell.en"),
-    jetbrainsLibrary("ai.grazie.utils.ki"),
     jetbrainsLibrary("ai.grazie.utils.lucene.lt.compatibility"),
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("cloud-config-client"),
