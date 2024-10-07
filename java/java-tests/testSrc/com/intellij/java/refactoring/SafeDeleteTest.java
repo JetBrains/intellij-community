@@ -458,6 +458,23 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testRecordComponent() {
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_16, getTestRootDisposable());
+    doSingleFileTest();
+  }
+
+  public void testRecordComponentConflict() {
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_16, getTestRootDisposable());
+    try {
+      doSingleFileTest();
+      fail();
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Method Point(int, int) is already defined in the record <b><code>Point</code></b>\n" +
+                   "Record component <b><code>z</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+    }
+  }
+
   public void testNonAccessibleGrandParent() {
     try {
       doTest("foo.Parent");
