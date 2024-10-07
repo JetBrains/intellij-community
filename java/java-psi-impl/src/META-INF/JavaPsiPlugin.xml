@@ -110,6 +110,8 @@
                               implementationClass="com.intellij.psi.presentation.java.VariablePresentationProvider"/>
     <itemPresentationProvider forClass="com.intellij.psi.PsiField"
                               implementationClass="com.intellij.psi.presentation.java.FieldPresentationProvider"/>
+    <itemPresentationProvider forClass="com.intellij.psi.PsiRecordComponent"
+                              implementationClass="com.intellij.psi.presentation.java.RecordComponentPresentationProvider"/>
     <itemPresentationProvider forClass="com.intellij.psi.PsiMethod"
                               implementationClass="com.intellij.psi.presentation.java.MethodPresentationProvider"/>
     <itemPresentationProvider forClass="com.intellij.psi.PsiClass"

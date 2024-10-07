@@ -1,7 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -157,6 +159,11 @@ public final class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordCo
   protected @NotNull Icon getElementIcon(int flags) {
     return IconManager.getInstance()
       .createLayeredIcon(this, IconManager.getInstance().getPlatformIcon(PlatformIcons.Field), ElementPresentationUtil.getFlags(this, false));
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 
   @Override
