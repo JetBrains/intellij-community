@@ -73,7 +73,7 @@ public class JetBrainsNotNullByDefault {
 
     @Override
     public String get() {
-      return null;
+      return <warning descr="'null' is returned by the method declared as @NotNullByDefault">null</warning>;
     }
   }
 }

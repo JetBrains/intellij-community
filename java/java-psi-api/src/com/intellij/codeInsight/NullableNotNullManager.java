@@ -132,7 +132,7 @@ public abstract class NullableNotNullManager {
    * @return the annotation info or null if no explicit annotation found
    */
   public @Nullable NullabilityAnnotationInfo findExplicitNullability(PsiModifierListOwner owner) {
-    NullabilityAnnotationInfo result = findPlainAnnotation(owner, false, true, getAllNullabilityAnnotationsWithNickNames());
+    NullabilityAnnotationInfo result = findPlainAnnotation(owner, true, getAllNullabilityAnnotationsWithNickNames());
     if (result != null) {
       return result;
     }
@@ -148,7 +148,8 @@ public abstract class NullableNotNullManager {
   public abstract @Nullable NullabilityAnnotationInfo findEffectiveNullabilityInfo(@NotNull PsiModifierListOwner owner);
 
   protected final @Nullable NullabilityAnnotationInfo doFindEffectiveNullabilityAnnotation(@NotNull PsiModifierListOwner owner) {
-    @Nullable NullabilityAnnotationInfo result = findPlainAnnotation(owner, true, false, getAllNullabilityAnnotationsWithNickNames());
+    NullabilityAnnotationDataHolder annotations = getAllNullabilityAnnotationsWithNickNames();
+    NullabilityAnnotationInfo result = findPlainAnnotation(owner, false, annotations);
     if (result != null) {
       return result;
     }
@@ -162,11 +163,22 @@ public abstract class NullableNotNullManager {
       if (defaultInfo != null) return defaultInfo;
     }
 
+    if (owner instanceof PsiMethod) {
+      AnnotationAndOwner inHierarchy =
+        findAnnotationAndOwnerInHierarchy(owner, annotations.qualifiedNames(), false);
+      if (inHierarchy != null) {
+        Nullability nullability = annotations.getNullability(inHierarchy.annotation.getQualifiedName());
+        if (nullability != null) {
+          return new NullabilityAnnotationInfo(inHierarchy.annotation, nullability, inHierarchy.owner, false);
+        }
+      }
+    }
+
     if (owner instanceof PsiParameter) {
       List<PsiParameter> superParameters = getSuperAnnotationOwners((PsiParameter)owner);
       if (!superParameters.isEmpty()) {
         for (PsiParameter parameter: superParameters) {
-          NullabilityAnnotationInfo plain = findPlainAnnotation(parameter, false, false, getAllNullabilityAnnotationsWithNickNames());
+          NullabilityAnnotationInfo plain = findPlainAnnotation(parameter, false, annotations);
           // Plain not null annotation is not inherited
           if (plain != null) return null;
           NullabilityAnnotationInfo defaultInfo = findContainerAnnotation(parameter);
@@ -213,20 +225,14 @@ public abstract class NullableNotNullManager {
         return nullabilities.contains(origNullability) ? origNullability : null;
       }
     };
-    NullabilityAnnotationInfo result = findPlainAnnotation(owner, false, false, filtered);
+    NullabilityAnnotationInfo result = findPlainAnnotation(owner, false, filtered);
     return result == null || !nullabilities.contains(result.getNullability()) ? null : result.getAnnotation();
   }
 
   private @Nullable NullabilityAnnotationInfo findPlainAnnotation(
-    @NotNull PsiModifierListOwner owner, boolean checkBases, boolean skipExternal, NullabilityAnnotationDataHolder annotations) {
-    AnnotationAndOwner memberAnno;
-    if (checkBases && owner instanceof PsiMethod) {
-      memberAnno = findAnnotationAndOwnerInHierarchy(owner, annotations.qualifiedNames(), skipExternal);
-    }
-    else {
-      PsiAnnotation annotation = findAnnotation(owner, annotations.qualifiedNames(), skipExternal);
-      memberAnno = annotation == null ? null : new AnnotationAndOwner(owner, annotation);
-    }
+    @NotNull PsiModifierListOwner owner, boolean skipExternal, NullabilityAnnotationDataHolder annotations) {
+    PsiAnnotation annotation = findAnnotation(owner, annotations.qualifiedNames(), skipExternal);
+    AnnotationAndOwner memberAnno = annotation == null ? null : new AnnotationAndOwner(owner, annotation);
     PsiType type = PsiUtil.getTypeByPsiElement(owner);
     if (memberAnno != null && type instanceof PsiArrayType && !isInferredAnnotation(memberAnno.annotation) &&
         !isExternalAnnotation(memberAnno.annotation) && AnnotationTargetUtil.isTypeAnnotation(memberAnno.annotation)) {
@@ -302,7 +308,7 @@ public abstract class NullableNotNullManager {
    * Looks for applicable container annotation, ignoring explicit, inferred, external, or inherited annotations.
    * Usually, should not be used directly, as {@link #findEffectiveNullabilityInfo(PsiModifierListOwner)} will
    * return container annotation if it's applicable.
-   * 
+   *
    * @param owner member to find annotation for
    * @return container annotation applicable to the owner location
    */
