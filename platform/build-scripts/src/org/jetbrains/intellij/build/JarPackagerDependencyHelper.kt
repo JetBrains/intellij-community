@@ -20,7 +20,7 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
-internal val useTestSourceEnabled: Boolean = System.getProperty("idea.build.pack.test.source.enabled", "false").toBoolean()
+internal val useTestSourceEnabled: Boolean = System.getProperty("idea.build.pack.test.source.enabled", "true").toBoolean()
 
 // production-only - JpsJavaClasspathKind.PRODUCTION_RUNTIME
 internal class JarPackagerDependencyHelper(private val context: BuildContext) {
@@ -38,15 +38,24 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
            getLibraryDependencies(module = module, withTests = false).any { it.libraryReference.parentReference is JpsModuleReference }
   }
 
-  fun isTestPluginModule(moduleName: String): Boolean {
+  fun isTestPluginModule(module: JpsModule): Boolean {
     if (!useTestSourceEnabled) {
       return false
     }
 
+    val moduleName = module.name
+    // todo use some marker
+    if (moduleName == "intellij.rdct.testFramework" || moduleName == "intellij.rdct.tests.distributed") {
+      return true
+    }
+
     if (moduleName.contains(".test.")) {
+      if (module.sourceRoots.none { it.rootType.isForTests }) {
+        return false
+      }
+
       return moduleName != "intellij.rider.test.framework" &&
              moduleName != "intellij.rider.test.api" &&
-             moduleName != "intellij.clion.test.google" &&
              moduleName != "intellij.rider.test.api.teamcity"
     }
     return moduleName.endsWith("._test")

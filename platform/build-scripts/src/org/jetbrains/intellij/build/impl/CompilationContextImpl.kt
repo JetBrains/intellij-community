@@ -546,10 +546,6 @@ internal fun findFileInModuleSources(module: JpsModule, relativePath: String, on
       if (relativePath.startsWith(prefix)) {
         val result = Path.of(JpsPathUtil.urlToPath(root.url), relativePath.substring(prefix.length))
         if (Files.exists(result)) {
-          if (root.rootType == JavaSourceRootType.TEST_SOURCE) {
-            continue
-          }
-
           return result
         }
       }
