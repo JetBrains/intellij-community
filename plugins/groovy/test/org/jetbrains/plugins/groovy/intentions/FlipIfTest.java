@@ -13,56 +13,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions
+package org.jetbrains.plugins.groovy.intentions;
 
 /**
  * @author Max Medvedev
  */
-class FlipIfTest extends GrIntentionTestCase {
-  FlipIfTest() {
-    super(GroovyIntentionsBundle.message('flip.if.intention.name'))
+public class FlipIfTest extends GrIntentionTestCase {
+  public FlipIfTest() {
+    super(GroovyIntentionsBundle.message("flip.if.intention.name"));
   }
 
-  void test0() {
-    doTextTest('''\
-i<caret>f (abc) {
-  print 1
-}
-else if (cde) {
-  print 2
-}
-''', '''\
-i<caret>f (cde) {
-  print 2
-}
-else if (abc) {
-  print 1
-}
-''')
+  public void test0() {
+    doTextTest("""
+                 i<caret>f (abc) {
+                   print 1
+                 }
+                 else if (cde) {
+                   print 2
+                 }
+                 """, """
+                 i<caret>f (cde) {
+                   print 2
+                 }
+                 else if (abc) {
+                   print 1
+                 }
+                 """);
   }
 
-  void test1() {
-    doTextTest('''\
-if (abc) {
-  print 1
-}
-else i<caret>f (cde) {
-  print 2
-}
-else if (xyz) {
-  print 3
-}
-''', '''\
-if (abc) {
-  print 1
-}
-else i<caret>f (xyz) {
-  print 3
-}
-else if (cde) {
-  print 2
-}
-''')
+  public void test1() {
+    doTextTest("""
+                 if (abc) {
+                   print 1
+                 }
+                 else i<caret>f (cde) {
+                   print 2
+                 }
+                 else if (xyz) {
+                   print 3
+                 }
+                 """, """
+                 if (abc) {
+                   print 1
+                 }
+                 else i<caret>f (xyz) {
+                   print 3
+                 }
+                 else if (cde) {
+                   print 2
+                 }
+                 """);
   }
-
 }

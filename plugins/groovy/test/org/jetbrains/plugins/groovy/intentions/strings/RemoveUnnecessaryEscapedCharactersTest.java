@@ -13,43 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions.strings
+package org.jetbrains.plugins.groovy.intentions.strings;
 
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase
-import org.jetbrains.plugins.groovy.intentions.conversions.strings.RemoveUnnecessaryEscapeCharactersIntention
+import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+import org.jetbrains.plugins.groovy.intentions.conversions.strings.RemoveUnnecessaryEscapeCharactersIntention;
 
 /**
  * @author Max Medvedev
  */
-class RemoveUnnecessaryEscapedCharactersTest extends GrIntentionTestCase {
-  RemoveUnnecessaryEscapedCharactersTest() {
-    super(RemoveUnnecessaryEscapeCharactersIntention.HINT)
+public class RemoveUnnecessaryEscapedCharactersTest extends GrIntentionTestCase {
+  public RemoveUnnecessaryEscapedCharactersTest() {
+    super(RemoveUnnecessaryEscapeCharactersIntention.HINT);
   }
 
-  void testSimple() {
-    doTextTest('''
-print 'a<caret>b\\"c'
-''', '''
-print 'a<caret>b"c'
-''')
+  public void testSimple() {
+    doTextTest("""
+                 print 'a<caret>b\\"c'
+                 """, """
+                 print 'a<caret>b"c'
+                 """);
   }
 
-  void testAntiSimple() {
-    doAntiTest(''' print 'a<caret>b\\'c' ''')
+  public void testAntiSimple() {
+    doAntiTest("""
+                  print 'a<caret>b\\'c'""");
   }
 
-  void testGString() {
-    doTextTest('''
-html """
-<p>D\\na<caret>ta: ${new Date().format("dd-MM-yyyy hh:mm")}<br/>
-Totem: $kiosk.name
- """
-''', '''
-html """
-<p>D
-ata: ${new Date().format("dd-MM-yyyy hh:mm")}<br/>
-Totem: $kiosk.name
- """
-''')
+  public void testGString() {
+    doTextTest("""
+                 html ""\"
+                 <p>D\\na<caret>ta: ${new Date().format("dd-MM-yyyy hh:mm")}<br/>
+                 Totem: $kiosk.name
+                  ""\"
+                 """, """
+                 html ""\"
+                 <p>D
+                 ata: ${new Date().format("dd-MM-yyyy hh:mm")}<br/>
+                 Totem: $kiosk.name
+                  ""\"
+                 """);
   }
 }

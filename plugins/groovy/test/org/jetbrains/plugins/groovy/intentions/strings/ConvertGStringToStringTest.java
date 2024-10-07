@@ -13,37 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.intentions.strings;
 
-package org.jetbrains.plugins.groovy.intentions.strings
+import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase
-import org.jetbrains.plugins.groovy.util.TestUtils
+import static org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertGStringToStringIntention.INTENTION_NAME;
 
-import static org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertGStringToStringIntention.INTENTION_NAME
 /**
  * @author Maxim.Medvedev
  */
-class ConvertGStringToStringTest extends GrIntentionTestCase {
-
-  final String basePath = TestUtils.testDataPath + "intentions/convertGStringToString/"
-
-  void testSimpleCase() {
-    doTest(INTENTION_NAME, true)
+public class ConvertGStringToStringTest extends GrIntentionTestCase {
+  public void testSimpleCase() {
+    doTest(INTENTION_NAME, true);
   }
 
-  void testComplicatedCase() {
-    doTest(INTENTION_NAME, true)
+  public void testComplicatedCase() {
+    doTest(INTENTION_NAME, true);
   }
 
-  void testEscaping() {
-    doTest(INTENTION_NAME, true)
+  public void testEscaping() {
+    doTest(INTENTION_NAME, true);
   }
 
-  void testSlashBeforeNewLine() {
-    doTest(INTENTION_NAME, true)
+  public void testSlashBeforeNewLine() {
+    doTest(INTENTION_NAME, true);
   }
 
-  void testGStringWithComplicatedInjection() {
-    doTest(INTENTION_NAME, false)
+  public void testGStringWithComplicatedInjection() {
+    doTest(INTENTION_NAME, false);
+  }
+
+  @Override
+  public final String getBasePath() {
+    return TestUtils.getTestDataPath() + "intentions/convertGStringToString/";
   }
 }

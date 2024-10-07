@@ -47,35 +47,15 @@ new Gr().fo<caret>o()
   }
 
   void 'test link with label'() {
-    doTest '''\
-/**
- * check this out {@link java.lang.CharSequence character sequences}
- */
-def docs() {}
-
-<caret>docs()
-''', '''<div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://_"><code><span style="color:#000000;">_</span></code></a></div><div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#000000;">Object</span></code></a>&nbsp;<span style="color:#000000;">docs</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
+    doTest '\
+/**\n * check this out {@link java.lang.CharSequence character sequences}\n */\ndef docs() {}\n\n<caret>docs()\n', '''<div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://_"><code><span style="color:#000000;">_</span></code></a></div><div class='definition'><pre><a href="psi_element://java.lang.Object"><code><span style="color:#000000;">Object</span></code></a>&nbsp;<span style="color:#000000;">docs</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
    check this out <a href="psi_element://java.lang.CharSequence"><code><span style="color:#0000ff;">character sequences</span></code></a>
  </div><table class='sections'></table>'''
   }
 
   void 'test link to method'() {
-    doTest '''\
-class Main {
-  /**
-   * Link 1: {@link #foo(String[])} 
-   * <p>
-   * Link 2: {@link #bar(String[])}
-   * <p>
-   * Link 3: {@link #bar(String[], Integer)}
-   */
-  static void docs() {}
-  void foo(String[] args) {}
-  void bar(String[] args) {}
-  void bar(String[] args, Integer i) {}
-}
-Main.<caret>docs()
-''', '''\
+    doTest '\
+class Main {\n  /**\n   * Link 1: {@link #foo(String[])} \n   * <p>\n   * Link 2: {@link #bar(String[])}\n   * <p>\n   * Link 3: {@link #bar(String[], Integer)}\n   */\n  static void docs() {}\n  void foo(String[] args) {}\n  void bar(String[] args) {}\n  void bar(String[] args, Integer i) {}\n}\nMain.<caret>docs()\n', '''\
 <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://Main"><code><span style="color:#000000;">Main</span></code></a></div><div class='definition'><pre><span style="color:#000043;font-weight:bold;">static</span>&nbsp;<span style="color:#000043;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">docs</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
      Link 1: <a href="psi_element://Main#foo(java.lang.String[])"><code><span style="color:#0000ff;">foo</span><span style="">(String[])</span></code></a> 
      <p>

@@ -13,47 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions
+package org.jetbrains.plugins.groovy.intentions;
 
-import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author Max Medvedev
  */
-class GrCreateMissingSwitchBranchesTest extends GrIntentionTestCase {
-  final String basePath = "${TestUtils.testDataPath}intentions/constructorMatchingSuper/"
-
-  void testSimple() {
-    doTextTest('''\
-enum E {
-    a, b, c
-}
-
-E e = E.a
-
-switch (e) {
-<caret>
-}
-''', getHINT(), '''\
-enum E {
-    a, b, c
-}
-
-E e = E.a
-
-switch (e) {
-<caret>
-    case E.a:
-        break
-    case E.b:
-        break
-    case E.c:
-        break
-}
-''')
+public class GrCreateMissingSwitchBranchesTest extends GrIntentionTestCase {
+  public void testSimple() {
+    doTextTest("""
+                 enum E {
+                     a, b, c
+                 }
+                 
+                 E e = E.a
+                 
+                 switch (e) {
+                 <caret>
+                 }
+                 """, getHINT(), """
+                 enum E {
+                     a, b, c
+                 }
+                 
+                 E e = E.a
+                 
+                 switch (e) {
+                 <caret>
+                     case E.a:
+                         break
+                     case E.b:
+                         break
+                     case E.c:
+                         break
+                 }
+                 """);
   }
 
   private static String getHINT() {
-    return GroovyIntentionsBundle.message("gr.create.missing.switch.branches.intention.name")
+    return GroovyIntentionsBundle.message("gr.create.missing.switch.branches.intention.name");
+  }
+
+  @Override
+  public final String getBasePath() {
+    return TestUtils.getTestDataPath() + "intentions/constructorMatchingSuper/";
   }
 }

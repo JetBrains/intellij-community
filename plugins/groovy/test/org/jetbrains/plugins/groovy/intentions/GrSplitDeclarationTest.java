@@ -13,56 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions
+package org.jetbrains.plugins.groovy.intentions;
 
 /**
  * @author Max Medvedev
  */
-class GrSplitDeclarationTest extends GrIntentionTestCase {
-
-  void testSingleVar() {
-    doTextTest('''\
-def abc = 5
-''', GroovyIntentionsBundle.message('split.into.declaration.and.assignment'), '''\
-def abc
-abc = 5
-''')
+public class GrSplitDeclarationTest extends GrIntentionTestCase {
+  public void testSingleVar() {
+    doTextTest("""
+                 def abc = 5
+                 """, GroovyIntentionsBundle.message("split.into.declaration.and.assignment"), """
+                 def abc
+                 abc = 5
+                 """);
   }
 
-  void testMultiVar() {
-    doTextTest('''\
-def abc = 5, cde = 7
-''', GroovyIntentionsBundle.message('split.into.separate.declaration'), '''\
-def abc = 5
-def cde = 7
-''')
+  public void testMultiVar() {
+    doTextTest("""
+                 def abc = 5, cde = 7
+                 """, GroovyIntentionsBundle.message("split.into.separate.declaration"), """
+                 def abc = 5
+                 def cde = 7
+                 """);
   }
 
-  void testTupleAssignment() {
-    doTextTest('''\
-def (abc, cde) = foo()
-''', GroovyIntentionsBundle.message('split.into.declaration.and.assignment'), '''\
-def (abc, cde)
-(abc, cde) = foo()
-''')
+  public void testTupleAssignment() {
+    doTextTest("""
+                 def (abc, cde) = foo()
+                 """, GroovyIntentionsBundle.message("split.into.declaration.and.assignment"), """
+                 def (abc, cde)
+                 (abc, cde) = foo()
+                 """);
   }
 
-  void testSimpleTupleAssignment() {
-    doTextTest('''\
-def (abc, cde) = [1, 2]
-''', GroovyIntentionsBundle.message('split.into.separate.declaration'), '''\
-def abc = 1
-def cde = 2
-''')
+  public void testSimpleTupleAssignment() {
+    doTextTest("""
+                 def (abc, cde) = [1, 2]
+                 """, GroovyIntentionsBundle.message("split.into.separate.declaration"), """
+                 def abc = 1
+                 def cde = 2
+                 """);
   }
 
-  void testSimpleTupleAssignmentWithExplicitTypes() {
-    doTextTest('''\
-def (int abc, int cde) = [1, 2]
-''', GroovyIntentionsBundle.message('split.into.separate.declaration'), '''\
-int abc = 1
-int cde = 2
-''')
+  public void testSimpleTupleAssignmentWithExplicitTypes() {
+    doTextTest("""
+                 def (int abc, int cde) = [1, 2]
+                 """, GroovyIntentionsBundle.message("split.into.separate.declaration"), """
+                 int abc = 1
+                 int cde = 2
+                 """);
   }
-
 }

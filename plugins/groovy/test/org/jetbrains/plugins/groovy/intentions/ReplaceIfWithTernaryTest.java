@@ -13,60 +13,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions
+package org.jetbrains.plugins.groovy.intentions;
 
 /**
  * @author Max Medvedev
  */
-class ReplaceIfWithTernaryTest extends GrIntentionTestCase {
-  ReplaceIfWithTernaryTest() {
-    super('Replace with ?:')
+public class ReplaceIfWithTernaryTest extends GrIntentionTestCase {
+  public ReplaceIfWithTernaryTest() {
+    super("Replace with ?:");
   }
 
-  void testReturn() throws Exception {
-    doTextTest('''\
-def foo() {
-    i<caret>f (cond()) {
-        return 'a'
-    }
-    else return 'b'
-}
-''', '''\
-def foo() {
-    return cond() ? 'a' : 'b'
-}
-''')
+  public void testReturn() throws Exception {
+    doTextTest("""
+                 def foo() {
+                     i<caret>f (cond()) {
+                         return 'a'
+                     }
+                     else return 'b'
+                 }
+                 """, """
+                 def foo() {
+                     return cond() ? 'a' : 'b'
+                 }
+                 """);
   }
 
-  void testAssign() throws Exception {
-    doTextTest('''\
-def a
-
-i<caret>f (cond()) {
-    a = 'a'
-}
-else {
-    a = 'b'
-}
-''', '''\
-def a
-
-a = cond() ? 'a' : 'b'
-''')
+  public void testAssign() {
+    doTextTest("""
+                 def a
+                 
+                 i<caret>f (cond()) {
+                     a = 'a'
+                 }
+                 else {
+                     a = 'b'
+                 }
+                 """, """
+                 def a
+                 
+                 a = cond() ? 'a' : 'b'
+                 """);
   }
 
-  void testAntiAssign() throws Exception {
-    doAntiTest('''\
-def a
-def b
-
-i<caret>f (cond) {
-    a = 'a'
-}
-else {
-    b = 'b'
-}
-''')
+  public void testAntiAssign() {
+    doAntiTest("""
+                 def a
+                 def b
+                 
+                 i<caret>f (cond) {
+                     a = 'a'
+                 }
+                 else {
+                     b = 'b'
+                 }
+                 """);
   }
-
 }

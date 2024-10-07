@@ -13,56 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions
+package org.jetbrains.plugins.groovy.intentions;
 
 /**
  * @author Niels Harremoes
  * @author Oscar Toernroth
  */
-class SimplifyTernaryOperatorTest extends GrIntentionTestCase {
-
-  String intentionName = GroovyIntentionsBundle.message("simplify.ternary.operator.intention.name")
+public class SimplifyTernaryOperatorTest extends GrIntentionTestCase {
+  private static final String INTENTION_NAME = GroovyIntentionsBundle.message("simplify.ternary.operator.intention.name");
 
   private void doTest(String before, String after) {
 
-    doTextTest before, intentionName, after
+    doTextTest(before, INTENTION_NAME, after);
   }
 
-  void testDoNotTriggerOnNormalConditional() throws Exception {
-    doAntiTest 'aaa ?<caret> bbb : ccc', intentionName
-    doAntiTest 'aaa ?<caret> false : ccc', intentionName
-    doAntiTest 'aaa ?<caret> bbb : true', intentionName
+  public void testDoNotTriggerOnNormalConditional() {
+    doAntiTest("aaa ?<caret> bbb : ccc", INTENTION_NAME);
+    doAntiTest("aaa ?<caret> false : ccc", INTENTION_NAME);
+    doAntiTest("aaa ?<caret> bbb : true", INTENTION_NAME);
   }
 
-  void "test don't trigger for non-boolean conditions"() throws Exception {
-    doAntiTest 'def a = 0\n' +
-               'def b = 2\n' +
-               'println a <caret>? true : b', intentionName
+  public void test_don_t_trigger_for_non_boolean_conditions() {
+    doAntiTest("""
+                 def a = 0
+                 def b = 2
+                 println a <caret>? true : b""", INTENTION_NAME);
   }
 
-
-  void testSimplifyWhenThenIsTrue() throws Exception {
-    doTest 'aaa ?<caret> true: bbb', 'aaa ||<caret> bbb'
+  public void testSimplifyWhenThenIsTrue() {
+    doTest("aaa ?<caret> true: bbb", "aaa ||<caret> bbb");
   }
 
-
-  void testSimplifyWhenThenIsTrueComplexArguments() throws Exception {
-    doTest 'aaa ?<caret> true : bbb ? ccc : ddd', 'aaa || (bbb ? ccc : ddd)'
+  public void testSimplifyWhenThenIsTrueComplexArguments() {
+    doTest("aaa ?<caret> true : bbb ? ccc : ddd", "aaa || (bbb ? ccc : ddd)");
   }
 
-  void testSimplifyWhenElseIsFalseComplexArguments() throws Exception {
-    doTest 'aaa || bbb ? ccc || ddd : false', '(aaa || bbb) && (ccc || ddd)'
+  public void testSimplifyWhenElseIsFalseComplexArguments() {
+    doTest("aaa || bbb ? ccc || ddd : false", "(aaa || bbb) && (ccc || ddd)");
   }
 
-  void testSimplifyWhenElseIsFalse() throws Exception {
-    doTest 'aaa ?<caret> bbb : false', 'aaa &&<caret> bbb'
+  public void testSimplifyWhenElseIsFalse() {
+    doTest("aaa ?<caret> bbb : false", "aaa &&<caret> bbb");
   }
 
-  // aaa ? false : bbb -> (!aaa) && bbb
-
-  void testResultisWrappedInParenthesesWhenNeeded() throws Exception {
-    doTest 'a ?<caret> b ? true : d : false', 'a &&<caret> (b ? true : d)'
+  public void testResultIsWrappedInParenthesesWhenNeeded() {
+    doTest("a ?<caret> b ? true : d : false", "a &&<caret> (b ? true : d)");
   }
-
-
 }

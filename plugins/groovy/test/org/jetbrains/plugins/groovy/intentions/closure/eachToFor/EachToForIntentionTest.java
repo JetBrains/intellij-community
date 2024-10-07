@@ -13,37 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.intentions.closure.eachToFor;
 
-package org.jetbrains.plugins.groovy.intentions.closure.eachToFor
+import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase
-import org.jetbrains.plugins.groovy.util.TestUtils
-
-import static org.jetbrains.plugins.groovy.intentions.closure.EachToForIntention.HINT
+import static org.jetbrains.plugins.groovy.intentions.closure.EachToForIntention.HINT;
 
 /**
  * @author Maxim.Medvedev
  */
-class EachToForIntentionTest extends GrIntentionTestCase {
-  EachToForIntentionTest() {
-    super(HINT)
+public class EachToForIntentionTest extends GrIntentionTestCase {
+  public EachToForIntentionTest() {
+    super(HINT);
   }
 
   @Override
   protected String getBasePath() {
-    return TestUtils.testDataPath + "intentions/EachToFor/"
+    return TestUtils.getTestDataPath() + "intentions/EachToFor/";
   }
 
-  void testEachToFor() { doTest(true) }
+  public void testEachToFor() { doTest(true); }
 
-  void testEachToForWithFinal() { doTest(true) }
+  public void testEachToForWithFinal() { doTest(true); }
 
-  void testEachToForWithDefaultVariable() { doTest(true) }
+  public void testEachToForWithDefaultVariable() { doTest(true); }
 
-  void testEachForInWithNoQualifier() { doTest(true) }
+  public void testEachForInWithNoQualifier() { doTest(true); }
 
-  void testWithClosureInBody() { doTest(true) }
+  public void testWithClosureInBody() { doTest(true); }
 
-  void testUpdateReturn() { doTest(true) }
-  void testUpdateReturn2() { doTest(true) }
+  public void testUpdateReturn() { doTest(true); }
+
+  public void testUpdateReturn2() { doTest(true); }
 }

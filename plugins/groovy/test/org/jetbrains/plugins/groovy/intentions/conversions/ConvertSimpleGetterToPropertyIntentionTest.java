@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions.conversions
+package org.jetbrains.plugins.groovy.intentions.conversions;
 
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase
-import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-@CompileStatic
-class ConvertSimpleGetterToPropertyIntentionTest extends GrIntentionTestCase {
-
-  final String basePath = TestUtils.testDataPath + "intentions/convert/getterToProperty/"
-
-  ConvertSimpleGetterToPropertyIntentionTest() {
-    super("Convert to property")
+public class ConvertSimpleGetterToPropertyIntentionTest extends GrIntentionTestCase {
+  public ConvertSimpleGetterToPropertyIntentionTest() {
+    super("Convert to property");
   }
 
-  void testTyped() { doTest(true) }
+  public void testTyped() { doTest(true); }
 
-  void testUntyped() { doTest(true) }
+  public void testUntyped() { doTest(true); }
 
-  void testVoid() { doTest(false) }
+  public void testVoid() { doTest(false); }
 
-  void testPrivate() { doTest(true) }
+  public void testPrivate() { doTest(true); }
 
-  void testStatic() { doTest(true) }
+  public void testStatic() { doTest(true); }
+
+  @Override
+  public final String getBasePath() {
+    return TestUtils.getTestDataPath() + "intentions/convert/getterToProperty/";
+  }
 }

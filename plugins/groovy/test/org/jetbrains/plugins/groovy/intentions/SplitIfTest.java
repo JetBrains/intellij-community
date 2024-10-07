@@ -13,35 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions
+package org.jetbrains.plugins.groovy.intentions;
 
 /**
  * @author Brice Dutheil
  * @author Hamlet D'Arcy
  */
-class SplitIfTest extends GrIntentionTestCase {
-  void test_that_two_binary_operand_are_split_into_2_if_statements() throws Exception {
-    doTextTest '''if(a <caret>&& b) {
-  c();
-}
-''',
-'Split into 2 \'if\' statements',
-'''if (a) {
-    if (b) {
-        c();
-    }
-}
-'''
+public class SplitIfTest extends GrIntentionTestCase {
+  public void test_that_two_binary_operand_are_split_into_2_if_statements() {
+    doTextTest("""
+                 if(a <caret>&& b) {
+                   c();
+                 }
+                 """, "Split into 2 'if' statements", """
+                 if (a) {
+                     if (b) {
+                         c();
+                     }
+                 }
+                 """);
   }
 
-
-  void test_that_two_binary_operand_are_not_split_when_if_statements_has_else_branch() throws Exception {
-    doAntiTest '''if(a <caret>&& b) {
-  c();
-} else {
-  d();
-}
-''',
-'Split into 2 \'if\' statements'
+  public void test_that_two_binary_operand_are_not_split_when_if_statements_has_else_branch() {
+    doAntiTest("""
+                 if(a <caret>&& b) {
+                   c();
+                 } else {
+                   d();
+                 }
+                 """, "Split into 2 'if' statements");
   }
 }

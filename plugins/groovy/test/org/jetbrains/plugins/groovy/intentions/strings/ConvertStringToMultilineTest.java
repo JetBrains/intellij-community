@@ -13,84 +13,88 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions.strings
+package org.jetbrains.plugins.groovy.intentions.strings;
 
-import com.intellij.codeInsight.intention.IntentionAction
-import org.jetbrains.plugins.groovy.GroovyFileType
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase
-import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertStringToMultilineIntention
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.intention.IntentionAction;
+import junit.framework.TestCase;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertStringToMultilineIntention;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author Max Medvedev
  */
-class ConvertStringToMultilineTest extends GrIntentionTestCase {
-  ConvertStringToMultilineTest() {
-    super(ConvertStringToMultilineIntention.getHint())
+public class ConvertStringToMultilineTest extends GrIntentionTestCase {
+  public ConvertStringToMultilineTest() {
+    super(ConvertStringToMultilineIntention.getHint());
   }
 
-  final String basePath = TestUtils.testDataPath + "intentions/convertToMultiline/"
-
-  void testPlainString() {
-    doTextTest("print 'ab<caret>c'", "print '''abc'''")
+  public void testPlainString() {
+    doTextTest("print 'ab<caret>c'", "print '''abc'''");
   }
 
-  void testGString() {
-    doTextTest('print "ab<caret>c"', 'print """abc"""')
+  public void testGString() {
+    doTextTest("print \"ab<caret>c\"", "print \"\"\"abc\"\"\"");
   }
 
-  void testPlainString2() {
-    doTextTest("print 'a\\nb<caret>c'", "print '''a\nbc'''")
+  public void testPlainString2() {
+    doTextTest("print 'a\\nb<caret>c'", "print '''a\nbc'''");
   }
 
-  void testGString2() {
-    doTextTest('print "a\\nb<caret>c"', 'print """a\nbc"""')
+  public void testGString2() {
+    doTextTest("print \"a\\nb<caret>c\"", "print \"\"\"a\nbc\"\"\"");
   }
 
-  void testGString3() {
-    doTextTest('print "a\\nb${a<caret>}c"', 'print """a\nb${a}c"""')
+  public void testGString3() {
+    doTextTest("print \"a\\nb${a<caret>}c\"", "print \"\"\"a\nb${a}c\"\"\"");
   }
 
-  void testAlreadyMultiline() {
-    doAntiTest('print """a<caret>bc"""')
+  public void testAlreadyMultiline() {
+    doAntiTest("print \"\"\"a<caret>bc\"\"\"");
   }
 
-  void testGString4() {
-    doTextTest('''\
-print "ab<caret>c\\$ $x"
-''', '''\
-print """abc\\$ $x"""
-''')
+  public void testGString4() {
+    doTextTest("""
+                 print "ab<caret>c\\$ $x"
+                 """, """
+                 print ""\"abc\\$ $x""\"
+                 """);
   }
 
-  void doSelectionTest(String before, String after) {
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before)
+  public void doSelectionTest(String before, String after) {
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before);
 
-    assertTrue myFixture.editor.selectionModel.hasSelection()
-    final IntentionAction intention = new ConvertStringToMultilineIntention()
-    assertTrue intention.isAvailable(myFixture.project, myFixture.editor, myFixture.file)
-    intention.invoke(myFixture.project, myFixture.editor, myFixture.file)
+    TestCase.assertTrue(myFixture.getEditor().getSelectionModel().hasSelection());
+    final IntentionAction intention = new ConvertStringToMultilineIntention();
+    TestCase.assertTrue(intention.isAvailable(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile()));
+    intention.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
 
-    myFixture.checkResult(after)
+    myFixture.checkResult(after);
   }
 
-  void testSimpleConcatenation() {
+  public void testSimpleConcatenation() {
     doSelectionTest("""
-print <selection>'foo\\n' +
-      'bar'</selection>
-""", """
-print <selection>'''foo
-bar'''</selection>
-""")
+                      print <selection>'foo\\n' +
+                            'bar'</selection>
+                      """, """
+                      print <selection>'''foo
+                      bar'''</selection>
+                      """);
   }
 
-  void testGStringConcatenation() {
-    doSelectionTest('''
-print <selection>"foo${x}\\n" +
-      "bar"</selection>
-''', '''
-print <selection>"""foo${x}
-bar"""</selection>
-''')
+  public void testGStringConcatenation() {
+    doSelectionTest("""
+                      print <selection>"foo${x}\\n" +
+                            "bar"</selection>
+                      """, """
+                      print <selection>""\"foo${x}
+                      bar""\"</selection>
+                      """);
+  }
+
+  @Override
+  public final String getBasePath() {
+    return TestUtils.getTestDataPath() + "intentions/convertToMultiline/";
   }
 }

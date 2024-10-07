@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions
+package org.jetbrains.plugins.groovy.intentions;
 
-import org.jetbrains.plugins.groovy.intentions.declaration.GrRemoveExplicitTypeDeclarationIntention
-import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * Created by Max Medvedev on 27/12/13
  */
-class RemoveExplicitTypeDeclarationTest extends GrIntentionTestCase {
-  RemoveExplicitTypeDeclarationTest() {
-    super("Remove explicit type")
+public class RemoveExplicitTypeDeclarationTest extends GrIntentionTestCase {
+  public RemoveExplicitTypeDeclarationTest() {
+    super("Remove explicit type");
+  }
+  @Override
+  public final String getBasePath() {
+    return TestUtils.getTestDataPath() + "intentions/removeExplicitTypeDeclaration/";
   }
 
-  final String basePath = TestUtils.testDataPath + 'intentions/removeExplicitTypeDeclaration/'
-
-  void testMethod1() { doTest(true) }
-  void testMethod2() { doTest(true) }
-  void testMethod3() { doTest(true) }
-  void testMethod4() { doTest(true) }
-  void testMethod5() { doTest(true) }
-
+  public void testMethod1() { doTest(true); }
+  public void testMethod2() { doTest(true); }
+  public void testMethod3() { doTest(true); }
+  public void testMethod4() { doTest(true); }
+  public void testMethod5() { doTest(true); }
 
 }

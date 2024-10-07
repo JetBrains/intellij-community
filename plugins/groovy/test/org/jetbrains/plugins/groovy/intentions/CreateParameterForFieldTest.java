@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions
+package org.jetbrains.plugins.groovy.intentions;
 
-import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author Maxim.Medvedev
  */
-class CreateParameterForFieldTest extends GrIntentionTestCase {
+public class CreateParameterForFieldTest extends GrIntentionTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "intentions/createParameterForField/"
+    return TestUtils.getTestDataPath() + "intentions/createParameterForField/";
   }
 
-  void testFromConstructor() { doTest() }
+  public void testFromConstructor() { doTest(); }
 
-  void testFromField() { doTest() }
+  public void testFromField() { doTest(); }
 
   protected void doTest() {
-    doTest("Add constructor parameter for field", true)
+    doTest("Add constructor parameter for field", true);
   }
 }

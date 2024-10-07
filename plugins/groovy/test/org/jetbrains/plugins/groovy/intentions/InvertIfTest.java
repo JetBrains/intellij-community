@@ -13,152 +13,157 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions
+package org.jetbrains.plugins.groovy.intentions;
 
 /**
  * @author Niels Harremoes
  */
-class InvertIfTest extends GrIntentionTestCase {
-
-  InvertIfTest() {
-    super(GroovyIntentionsBundle.message("invert.if.intention.name"))
+public class InvertIfTest extends GrIntentionTestCase {
+  public InvertIfTest() {
+    super(GroovyIntentionsBundle.message("invert.if.intention.name"));
   }
 
-  void testDoNotTriggerOnIncompleteIf() {
-    doAntiTest '''
-i<caret>f () {
-  succes
-} else {
-  no_succes
-}
-'''
-
+  public void testDoNotTriggerOnIncompleteIf() {
+    doAntiTest("""
+                 i<caret>f () {
+                   succes
+                 } else {
+                   no_succes
+                 }
+                 """);
   }
 
-  void testSimpleCondition() {
-    doTextTest '''
-i<caret>f (a) {
-    succes
-} else {
-    no_succes
-}
-''', '''i<caret>f (!a) {
-    no_succes
-} else {
-    succes
-}
-'''
+  public void testSimpleCondition() {
+    doTextTest("""
+                 i<caret>f (a) {
+                     succes
+                 } else {
+                     no_succes
+                 }
+                 """, """
+                 i<caret>f (!a) {
+                     no_succes
+                 } else {
+                     succes
+                 }
+                 """);
   }
 
-  void testCallCondition() {
+  public void testCallCondition() {
 
-    doTextTest '''
-i<caret>f (func()) {
-    succes
-} else {
-    no_succes
-}
-''', '''i<caret>f (!func()) {
-    no_succes
-} else {
-    succes
-}
-'''
+    doTextTest("""
+                 i<caret>f (func()) {
+                     succes
+                 } else {
+                     no_succes
+                 }
+                 """, """
+                 i<caret>f (!func()) {
+                     no_succes
+                 } else {
+                     succes
+                 }
+                 """);
   }
 
-  void testComplexCondition() {
-    doTextTest '''
-i<caret>f (a && b) {
-    succes
-} else {
-    no_succes
-}
-''', '''i<caret>f (!(a && b)) {
-    no_succes
-} else {
-    succes
-}
-'''
+  public void testComplexCondition() {
+    doTextTest("""
+                 i<caret>f (a && b) {
+                     succes
+                 } else {
+                     no_succes
+                 }
+                 """, """
+                 i<caret>f (!(a && b)) {
+                     no_succes
+                 } else {
+                     succes
+                 }
+                 """);
   }
 
-  void testNegatedComplexCondition() {
-    doTextTest '''
-i<caret>f (!(a && b)) {
-    succes
-} else {
-    no_succes
-}
-''', '''i<caret>f (a && b) {
-    no_succes
-} else {
-    succes
-}
-'''
+  public void testNegatedComplexCondition() {
+    doTextTest("""
+                 i<caret>f (!(a && b)) {
+                     succes
+                 } else {
+                     no_succes
+                 }
+                 """, """
+                 i<caret>f (a && b) {
+                     no_succes
+                 } else {
+                     succes
+                 }
+                 """);
   }
 
-  void testNegatedSimpleCondition() {
-    doTextTest '''
-i<caret>f (!a) {
-    succes
-} else {
-    no_succes
-}
-''', '''i<caret>f (a) {
-    no_succes
-} else {
-    succes
-}
-'''
+  public void testNegatedSimpleCondition() {
+    doTextTest("""
+                 i<caret>f (!a) {
+                     succes
+                 } else {
+                     no_succes
+                 }
+                 """, """
+                 i<caret>f (a) {
+                     no_succes
+                 } else {
+                     succes
+                 }
+                 """);
   }
 
-  void testNoElseBlock() {
-    doTextTest '''
-i<caret>f (a) {
-    succes
-}
-nosuccess
-''', '''i<caret>f (!a) {
-} else {
-    succes
-}
-nosuccess
-'''
+  public void testNoElseBlock() {
+    doTextTest("""
+                 i<caret>f (a) {
+                     succes
+                 }
+                 nosuccess
+                 """, """
+                 i<caret>f (!a) {
+                 } else {
+                     succes
+                 }
+                 nosuccess
+                 """);
   }
 
-  void testEmptyThenBlockIsRemoved() {
-    doTextTest '''
-i<caret>f (a) {
-} else {
-    no_succes
-}
-''', '''i<caret>f (!a) {
-    no_succes
-}
-'''
+  public void testEmptyThenBlockIsRemoved() {
+    doTextTest("""
+                 i<caret>f (a) {
+                 } else {
+                     no_succes
+                 }
+                 """, """
+                 i<caret>f (!a) {
+                     no_succes
+                 }
+                 """);
   }
 
-  void testContinue() {
-    doTextTest('''\
-for (i in []) {
-    i<caret>f (2) {
-        print 2
-        continue
-    }
-
-    print 3
-    print(3)
-}
-''', '''\
-for (i in []) {
-    if (!(2)) {
-
-        print 3
-        print(3)
-    } else {
-        print 2
-        continue
-    }
-}
-''')
+  public void testContinue() {
+    doTextTest("""
+                 for (i in []) {
+                     i<caret>f (2) {
+                         print 2
+                         continue
+                     }
+                 
+                     print 3
+                     print(3)
+                 }
+                 """, """
+                 for (i in []) {
+                     if (!(2)) {
+                 
+                         print 3
+                         print(3)
+                     } else {
+                         print 2
+                         continue
+                     }
+                 }
+                 """);
   }
 }

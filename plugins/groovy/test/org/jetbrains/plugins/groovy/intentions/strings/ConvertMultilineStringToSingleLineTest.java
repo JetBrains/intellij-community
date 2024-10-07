@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions.strings
+package org.jetbrains.plugins.groovy.intentions.strings;
 
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase
-import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertMultilineStringToSingleLineIntention
-import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertMultilineStringToSingleLineIntention;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author Max Medvedev
  */
-class ConvertMultilineStringToSingleLineTest extends GrIntentionTestCase {
-  final String basePath = TestUtils.testDataPath + "intentions/convertMultilineToSingleline/"
-
-  ConvertMultilineStringToSingleLineTest() {
-    super(ConvertMultilineStringToSingleLineIntention.getHint())
+public class ConvertMultilineStringToSingleLineTest extends GrIntentionTestCase {
+  public ConvertMultilineStringToSingleLineTest() {
+    super(ConvertMultilineStringToSingleLineIntention.getHint());
   }
 
-  void testSimple() { doTest(true) }
+  public void testSimple() { doTest(true); }
 
-  void testSlashN() { doTest(true) }
+  public void testSlashN() { doTest(true); }
 
-  void testQuote() { doTest(true) }
+  public void testQuote() { doTest(true); }
+
+  @Override
+  public final String getBasePath() {
+    return TestUtils.getTestDataPath() + "intentions/convertMultilineToSingleline/";
+  }
 }

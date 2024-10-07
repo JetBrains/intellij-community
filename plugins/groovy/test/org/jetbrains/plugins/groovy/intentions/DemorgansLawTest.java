@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions
+package org.jetbrains.plugins.groovy.intentions;
 
 /**
  * @author Max Medvedev
  */
-class DemorgansLawTest extends GrIntentionTestCase {
-  void testInstanceof() {
-    doTextTest('''\
-if (!(locationElement != null &<caret>& locationElement.getContainingFile() instanceof GherkinFile)) {
-    return null
-}
-''', "Replace '&&' with '||'", '''\
-if (locationElement == null || !(locationElement.getContainingFile() instanceof GherkinFile)) {
-    return null
-}
-''')
+public class DemorgansLawTest extends GrIntentionTestCase {
+  public void testInstanceof() {
+    doTextTest("""
+                 if (!(locationElement != null &<caret>& locationElement.getContainingFile() instanceof GherkinFile)) {
+                     return null
+                 }
+                 """, "Replace '&&' with '||'", """
+                 if (locationElement == null || !(locationElement.getContainingFile() instanceof GherkinFile)) {
+                     return null
+                 }
+                 """);
   }
 }

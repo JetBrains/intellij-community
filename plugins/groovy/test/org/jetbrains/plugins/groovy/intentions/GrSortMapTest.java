@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions
+package org.jetbrains.plugins.groovy.intentions;
 
-import org.jetbrains.plugins.groovy.intentions.other.GrSortMapKeysIntention
-import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * Created by Max Medvedev on 11/01/14
  */
-class GrSortMapTest extends GrIntentionTestCase {
-  GrSortMapTest() {
-    super("Sort alphabetically")
+public class GrSortMapTest extends GrIntentionTestCase {
+  public GrSortMapTest() {
+    super("Sort alphabetically");
   }
 
   @Override
   protected String getBasePath() {
-    TestUtils.testDataPath + 'intentions/sortMap/'
+    return TestUtils.getTestDataPath() + "intentions/sortMap/";
   }
 
-  void testBasicMapSort() throws Exception {
-    doTest(true)
+  public void testBasicMapSort() {
+    doTest(true);
   }
 }

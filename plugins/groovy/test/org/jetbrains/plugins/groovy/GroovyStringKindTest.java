@@ -1,151 +1,133 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy;
 
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.lang.psi.util.StringKind
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest
-import org.jetbrains.plugins.groovy.util.TestUtils
-import org.junit.Test
+import org.jetbrains.plugins.groovy.lang.psi.util.StringKind;
+import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.Test;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.*
-import static org.junit.Assert.assertEquals
+import java.util.Map;
 
-@CompileStatic
-class GroovyStringKindTest extends GroovyLatestTest {
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.*;
+import static org.junit.Assert.assertEquals;
+
+public class GroovyStringKindTest extends GroovyLatestTest {
 
   private static void doEscapeTests(StringKind kind, Map<String, String> data) {
-    TestUtils.runAll(data) { unescaped, expectedEscaped ->
-      assertEquals(expectedEscaped, kind.escape(unescaped))
-    }
+    TestUtils.runAll(data.entrySet(), entry -> {
+      String unescaped = entry.getKey();
+      String expectedEscaped = entry.getValue();
+      assertEquals(expectedEscaped, kind.escape(unescaped));
+    });
   }
 
   @Test
-  void 'escape single quoted'() {
-    doEscapeTests SINGLE_QUOTED, [
-      '\n'  : /\n/,
-      '\r'  : /\r/,
-      '\b'  : /\b/,
-      '\t'  : /\t/,
-      '\f'  : /\f/,
-      'a\\b': /a\\b/,
-      '5/6' : '5/6',
-      '$'   : '$',
-      '\''  : /\'/,
-      '"'   : '"',
-    ]
+  public void escapeSingleQuoted() {
+    doEscapeTests(SINGLE_QUOTED, Map.ofEntries(
+      Map.entry("\n", "\\n"),
+      Map.entry("\r", "\\r"),
+      Map.entry("\b", "\\b"),
+      Map.entry("\t", "\\t"),
+      Map.entry("\f", "\\f"),
+      Map.entry("a\\b", "a\\\\b"),
+      Map.entry("5/6", "5/6"),
+      Map.entry("$", "$"),
+      Map.entry("'", "\\'"),
+      Map.entry("\"", "\"")
+    ));
   }
 
   @Test
-  void 'escape triple single quoted'() {
-    doEscapeTests TRIPLE_SINGLE_QUOTED, [
-      '\n'     : '\n',
-//      '\r'     : /\r/,
-      '\b'     : /\b/,
-      '\t'     : /\t/,
-      '\f'     : /\f/,
-      'a\\b'   : /a\\b/,
-      '5/6'    : '5/6',
-      '$'      : '$',
-      '"'      : '"',
-      '""'     : '""',
-      '"""'    : '"""',
-      '""""'   : '""""',
-      "'"      : /\'/,
-//      "''"     : /'\'/,
-//      "'''"    : /''\'/,
-//      "''''"   : /''\'\'/,
-//      "'''''"  : /''\''\'/,
-//      "''''''" : /''\'''\'/,
-      "'a"     : /'a/,
-      "''a"    : /''a/,
-//      "'''a"   : /''\'a/,
-//      "''''a"  : /''\''a/,
-//      "'''''a" : /''\'''a/,
-//      "''''''a": /''\'''\'a/,
-    ]
+  public void escapeTripleSingleQuoted() {
+    doEscapeTests(TRIPLE_SINGLE_QUOTED, Map.ofEntries(
+      Map.entry("\n", "\n"),
+      Map.entry("\b", "\\b"),
+      Map.entry("\t", "\\t"),
+      Map.entry("\f", "\\f"),
+      Map.entry("a\\b", "a\\\\b"),
+      Map.entry("5/6", "5/6"),
+      Map.entry("$", "$"),
+      Map.entry("\"", "\""),
+      Map.entry("\"\"", "\"\""),
+      Map.entry("\"\"\"", "\"\"\""),
+      Map.entry("\"\"\"\"", "\"\"\"\""),
+      Map.entry("'", "\\'"),
+      Map.entry("'a", "'a"),
+      Map.entry("''a", "''a")
+    ));
   }
 
   @Test
-  void 'escape double quoted'() {
-    doEscapeTests DOUBLE_QUOTED, [
-      "\n"  : /\n/,
-      "\r"  : /\r/,
-      "\b"  : /\b/,
-      "\t"  : /\t/,
-      "\f"  : /\f/,
-      "a\\b": /a\\b/,
-      "5/6" : "5/6",
-      "\$"  : /\$/,
-      "'"   : "'",
-      "\""  : /\"/,
-    ]
+  public void escapeDoubleQuoted() {
+    doEscapeTests(DOUBLE_QUOTED, Map.ofEntries(
+      Map.entry("\n", "\\n"),
+      Map.entry("\r", "\\r"),
+      Map.entry("\b", "\\b"),
+      Map.entry("\t", "\\t"),
+      Map.entry("\f", "\\f"),
+      Map.entry("a\\b", "a\\\\b"),
+      Map.entry("5/6", "5/6"),
+      Map.entry("$", "\\$"),
+      Map.entry("\\$", "\\\\\\$"),
+      Map.entry("'", "'"),
+      Map.entry("\"", "\\\"")
+    ));
   }
 
   @Test
-  void 'escape triple double quoted'() {
-    doEscapeTests TRIPLE_DOUBLE_QUOTED, [
-      "\n"     : "\n",
-//      "\r"     : /\r/,
-      "\b"     : /\b/,
-      "\t"     : /\t/,
-      "\f"     : /\f/,
-      "a\\b"   : /a\\b/,
-      "5/6"    : "5/6",
-      "\$"     : /\$/,
-      "'"      : "'",
-      "''"     : "''",
-      "'''"    : "'''",
-      "''''"   : "''''",
-//      '"'      : /\"/,
-//      '""'     : /"\"/,
-//      '"""'    : /""\"/,
-//      '""""'   : /""\"\"/,
-//      '"""""'  : /""\""\"/,
-//      '""""""' : /""\"""\"/,
-      '"a'     : /"a/,
-      '""a'    : /""a/,
-//      '"""a'   : /""\"a/,
-//      '""""a'  : /""\""a/,
-//      '"""""a' : /""\"""a/,
-//      '""""""a': /""\"""\"a/,
-    ]
+  public void escapeTripleDoubleQuoted() {
+    doEscapeTests(TRIPLE_DOUBLE_QUOTED, Map.ofEntries(
+      Map.entry("\n", "\n"),
+      Map.entry("\b", "\\b"),
+      Map.entry("\t", "\\t"),
+      Map.entry("\f", "\\f"),
+      Map.entry("a\\b", "a\\\\b"),
+      Map.entry("5/6", "5/6"),
+      Map.entry("$", "\\$"),
+      Map.entry("\\$", "\\\\\\$"),
+      Map.entry("'", "'"),
+      Map.entry("''", "''"),
+      Map.entry("'''", "'''"),
+      Map.entry("''''", "''''"),
+      Map.entry("\"a", "\"a"),
+      Map.entry("\"\"a", "\"\"a")
+    ));
   }
 
   @Test
-  void 'escape slashy'() {
-    doEscapeTests SLASHY, [
-      '\n'  : '\n',
-      '\r'  : '\\u000D',
-      '\b'  : '\\u0008',
-      '\t'  : '\\u0009',
-      '\f'  : '\\u000C',
-      /a\b/ : /a\b/,
-      /5\/6/: '5\\/6',
-      '$'   : '\\u0024',
-      /'/   : /'/,
-      /"/   : /"/,
-    ]
+  public void escapeSlashy() {
+    doEscapeTests(SLASHY, Map.ofEntries(
+      Map.entry("\n", "\n"),
+      Map.entry("\r", "\\u000D"),
+      Map.entry("\b", "\\u0008"),
+      Map.entry("\t", "\\u0009"),
+      Map.entry("\f", "\\u000C"),
+      Map.entry("a\\b", "a\\b"),
+      Map.entry("5\\/6", "5\\\\/6"),
+      Map.entry("$", "\\u0024"),
+      Map.entry("'", "'"),
+      Map.entry("\"", "\"")
+    ));
   }
 
   @Test
-  void 'escape dollar slashy'() {
-    doEscapeTests DOLLAR_SLASHY, [
-      '\n'            : '\n',
-      '\r'            : '\\u000D',
-      '\b'            : '\\u0008',
-      '\t'            : '\\u0009',
-      '\f'            : '\\u000C',
-      /a\b/           : /a\b/,
-      $/5/6/$         : $/5/6/$,
-      //$/$$/$          : /$$/, //caused compilation error in Groovy 3.0.9 because of Groovy bug (https://issues.apache.org/jira/projects/GROOVY/issues/GROOVY-10406)
-      $/'/$           : $/'/$,
-      $/"/$           : $/"/$,
-      '$_'           : '$$_',
-      'hello $ world' : 'hello $ world',
-      'hello / world' : 'hello / world',
-      'hello $/ world': 'hello $$/ world',
-      'hello $$ world': 'hello $$$ world',
-      'hello /$ world': 'hello $/$ world'
-    ]
+  public void escapeDollarSlashy() {
+    doEscapeTests(DOLLAR_SLASHY, Map.ofEntries(
+      Map.entry("\n", "\n"),
+      Map.entry("\r", "\\u000D"),
+      Map.entry("\b", "\\u0008"),
+      Map.entry("\t", "\\u0009"),
+      Map.entry("\f", "\\u000C"),
+      Map.entry("a\\b", "a\\b"),
+      Map.entry("/5/6/", "/5/6/"),
+      Map.entry("/'/", "/'/"),
+      Map.entry("/\"/", "/\"/"),
+      Map.entry("'$_'", "'$$_'"),
+      Map.entry("'hello $ world'", "'hello $ world'"),
+      Map.entry("'hello / world'", "'hello / world'"),
+      Map.entry("'hello $/ world'", "'hello $$/ world'"),
+      Map.entry("'hello $$ world'", "'hello $$$ world'"),
+      Map.entry("'hello /$ world'", "'hello $/$ world'")
+    ));
   }
 }
