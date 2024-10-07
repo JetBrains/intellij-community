@@ -2,6 +2,7 @@
 package org.intellij.images.util.imageio.svg
 
 import com.intellij.ui.svg.SvgImageDecoder
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import javax.imageio.ImageReader
 import javax.imageio.spi.ImageReaderSpi
@@ -12,6 +13,7 @@ import javax.imageio.stream.ImageInputStream
  *
  * @author Brice Dutheil
  */
+@Internal
 class SvgImageReaderSpi : ImageReaderSpi() {
   init {
     vendorName = "weisj/jsvg & JetBrains"

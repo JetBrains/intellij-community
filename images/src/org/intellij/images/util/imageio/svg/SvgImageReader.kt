@@ -9,7 +9,7 @@ import javax.imageio.ImageReader
 import javax.imageio.ImageTypeSpecifier
 import javax.imageio.stream.ImageInputStream
 
-class SvgImageReader(svgImageReaderSpi: SvgImageReaderSpi) : ImageReader(svgImageReaderSpi) {
+internal class SvgImageReader(svgImageReaderSpi: SvgImageReaderSpi) : ImageReader(svgImageReaderSpi) {
   private var _jSvgDocument: JSvgDocument? = null
 
   override fun setInput(input: Any?, seekForwardOnly: Boolean, ignoreMetadata: Boolean) {
