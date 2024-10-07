@@ -75,7 +75,9 @@ internal abstract class InlineCompletionSessionManager {
   }
 
   private fun updateSession(session: InlineCompletionSession, request: InlineCompletionRequest): UpdateSessionResult {
-    session.context.expectedStartOffset = request.endOffset
+    if (request.event.mayMutateCaretPosition()) {
+      session.context.expectedStartOffset = request.endOffset
+    }
 
     val provider = session.provider
     val overtyper = provider.overtyper
@@ -115,6 +117,15 @@ internal abstract class InlineCompletionSessionManager {
       InlineCompletionVariant.Snapshot.State.INVALIDATED -> error("Incorrect state: variant cannot be invalidated.")
       else -> UpdateSessionResult.Succeeded
     }
+  }
+
+  /**
+   * This method returns `true` for the events that may change the expected caret position. Others cannot.
+   *
+   * See [IJPL-160342](https://youtrack.jetbrains.com/issue/IJPL-160342/Inline-Completion-is-not-removed-after-selecting-previous-word)
+   */
+  private fun InlineCompletionEvent.mayMutateCaretPosition(): Boolean {
+    return this !is InlineCompletionEvent.InlineLookupEvent
   }
 
   protected enum class UpdateSessionResult {
