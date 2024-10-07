@@ -125,10 +125,10 @@ public class TableView<Item> extends BaseTableView implements SelectionProvider 
       }
       final String maxStringValue;
       final String preferredValue;
-      if (columnInfo.getWidth(this) > 0) {
+      int columnWidth = columnInfo.getWidth(this);
+      if (columnWidth > 0) {
         sizeMode[i] = 1;
-        int width = columnInfo.getWidth(this);
-        widths[i] = width;
+        widths[i] = columnWidth;
       }
       else if ((maxStringValue = columnInfo.getMaxStringValue()) != null) {
         sizeMode[i] = 2;
