@@ -5,16 +5,11 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.platform.ml.embeddings.indexer.IndexId
 import com.intellij.platform.ml.embeddings.indexer.configuration.EmbeddingsConfiguration
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableAction
@@ -33,15 +28,11 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
   private var isFirstIndexing = true
   private val isIndexingTriggered = AtomicBoolean(false)
 
-  fun prepareForSearch(project: Project? = null) = cs.launch {
-    val reportProject = project ?: blockingContext { ProjectManager.getInstance().openProjects.firstOrNull() }
+  fun prepareForSearch(): Job = cs.launch {
     isIndexingTriggered.compareAndSet(false, true)
     indexingScope.coroutineContext.cancelChildren()
     withContext(indexingScope.coroutineContext) {
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
-        reportProject?.waitForSmartMode()
-      }
-      indexActions(reportProject)
+      indexActions()
     }
   }
 
@@ -49,25 +40,14 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
     if (isIndexingTriggered.compareAndSet(false, true)) prepareForSearch()
   }
 
-  private suspend fun indexActions(project: Project?) {
+  private suspend fun indexActions() {
     LocalEmbeddingServiceProviderImpl.getInstance().indexingSession {
       try {
         if (isFirstIndexing) onFirstIndexingStart()
-
         val actionsIndexingStartTime = System.nanoTime()
-        val indexableActions = getIndexableActions()
-
-        // todo we are going to get rid of progresses here
-        /*project?.let {
-          withBackgroundProgress(it, EmbeddingsBundle.getMessage("ml.embeddings.indices.actions.generation.label")) {
-            reportProgress(indexableActions.size) {
-              indexAllActions(embeddingService, indexableActions)
-            }
-          }
-        } ?:*/ indexAllActions(indexableActions)
-
+        indexAllActions(getIndexableActions())
         val durationMs = TimeoutUtil.getDurationMillis(actionsIndexingStartTime)
-        EmbeddingSearchLogger.indexingFinished(project, forActions = true, durationMs)
+        EmbeddingSearchLogger.indexingFinished(null, forActions = true, durationMs)
       }
       catch (e: CancellationException) {
         LOG.debug("Actions embedding indexing was cancelled")

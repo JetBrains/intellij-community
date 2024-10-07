@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
   private val storageWrapper
@@ -24,17 +25,17 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
   fun `test basic semantics`() = runTest {
     setupTest("java/IndexProjectAction.java") // open file in the editor to make all actions indexable
 
-    var neighbours = storageWrapper.search(project, "delete all breakpoints", 10, 0.5f).map { it.id }.toSet()
+    var neighbours = storageWrapper.search(null, "delete all breakpoints", 10, 0.5f).map { it.id }.toSet()
     assertContainsElements(neighbours, "Debugger.RemoveAllBreakpoints", "Debugger.RemoveAllBreakpointsInFile")
 
-    neighbours = storageWrapper.search(project, "fix ide", 10, 0.5f).map { it.id }.toSet()
+    neighbours = storageWrapper.search(null, "fix ide", 10, 0.5f).map { it.id }.toSet()
     assertContainsElements(
       neighbours,
       "CallSaul", // 'Repair IDE' action (don't ask why)
       "ExportImportGroup" // 'Manage IDE Settings' action
     )
 
-    neighbours = storageWrapper.search(project, "web explorer", 10, 0.5f).map { it.id }.toSet()
+    neighbours = storageWrapper.search(null, "web explorer", 10, 0.5f).map { it.id }.toSet()
     assertContainsElements(neighbours, "WebBrowser", "BrowseWeb")
   }
 
@@ -57,7 +58,7 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
     assertContainsElements(items, "Remove All Breakpoints", "Remove All Breakpoints In The Current File")
   }
 
-  fun `test empty query`() = runTest {
+  fun `test empty query`() = runTest(timeout = 10.seconds) {
     val semanticActionContributor = readAction {
       SemanticActionSearchEverywhereContributor(
         ActionSearchEverywhereContributor.Factory().createContributor(createEvent()) as ActionSearchEverywhereContributor)
@@ -127,6 +128,7 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
   private suspend fun setupTest(vararg filePaths: String) {
     myFixture.configureByFiles(*filePaths)
     SearchEverywhereSemanticSettings.getInstance().enabledInActionsTab = true
-    ActionEmbeddingStorageManager.getInstance().prepareForSearch(project).join()
+    storageWrapper.clearStorage(null)
+    ActionEmbeddingStorageManager.getInstance().prepareForSearch().join()
   }
 }
