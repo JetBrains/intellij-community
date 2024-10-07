@@ -22,10 +22,10 @@ import java.util.function.Consumer;
 
 public abstract class GrIntroduceFieldHandlerBase<Settings extends GrIntroduceSettings> extends GrIntroduceHandlerBase<Settings, PsiClass> {
   @Override
-  protected PsiClass @NotNull [] findPossibleScopes(GrExpression expression,
-                                                    GrVariable variable,
-                                                    StringPartInfo partInfo,
-                                                    Editor editor) {
+  public PsiClass @NotNull [] findPossibleScopes(GrExpression expression,
+                                                 GrVariable variable,
+                                                 StringPartInfo partInfo,
+                                                 Editor editor) {
     PsiElement place = getCurrentPlace(expression, variable, partInfo);
     PsiClass aClass = PsiUtil.getContextClass(place);
     if (aClass instanceof GroovyScriptClass) {
