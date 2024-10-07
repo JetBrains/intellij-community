@@ -15,7 +15,8 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Didea.job.launcher.without.timeout=true",
   "-Dscanning.in.smart.mode=false",
   "-Deap.login.enabled=false",
-  "-Djdk.download.consent=true"
+  "-Djdk.download.consent=true",
+  "-Deslint.service.expiration.timeout.ms=5000"
   )
 
 private const val IS_EAP = false
