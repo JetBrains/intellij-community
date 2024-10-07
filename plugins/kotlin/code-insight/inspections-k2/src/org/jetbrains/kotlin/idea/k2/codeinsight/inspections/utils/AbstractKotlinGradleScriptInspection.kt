@@ -8,6 +8,7 @@ abstract class AbstractKotlinGradleScriptInspection : AbstractKotlinInspection()
 
     override fun isAvailableForFile(file: PsiFile): Boolean {
         return if (file.virtualFile.nameSequence.endsWith(".gradle.kts")) {
+            if (file.virtualFile.nameSequence == "settings.gradle.kts") return false
             super.isAvailableForFile(file)
         } else {
             false
