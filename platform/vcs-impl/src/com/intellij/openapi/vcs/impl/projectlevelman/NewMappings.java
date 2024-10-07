@@ -263,18 +263,16 @@ public final class NewMappings implements Disposable {
   private void updateMappedRoots(boolean fireMappingsChangedEvent) {
     myRootUpdateQueue.cancelAllUpdates();
 
-    if (!myActivated) return;
-    LOG.debug("updateMappedRoots");
-
-    List<VcsDirectoryMapping> mappings = myMappings;
-    Mappings newMappedRoots = collectMappedRoots(mappings, null);
-
-    setNewMappedRoots(mappings, newMappedRoots, fireMappingsChangedEvent);
+    updateMappedRootsImpl(fireMappingsChangedEvent, false);
   }
 
   private void updateMappedRootsFast(boolean fireMappingsChangedEvent) {
+    updateMappedRootsImpl(fireMappingsChangedEvent, true);
+  }
+
+  private void updateMappedRootsImpl(boolean fireMappingsChangedEvent, boolean onlyFastUpdate) {
     if (!myActivated) return;
-    LOG.debug("updateMappedRootsFast");
+    LOG.debug("updateMappedRoots: fastUpdate = " + onlyFastUpdate);
 
     List<VcsDirectoryMapping> mappings;
     List<MappedRoot> mappedRoots;
@@ -285,7 +283,7 @@ public final class NewMappings implements Disposable {
     if (mappedRoots.isEmpty()) {
       mappedRoots = getCachedMappedRootsIfNeeded(mappings);
     }
-    Mappings newMappedRoots = collectMappedRoots(mappings, mappedRoots);
+    Mappings newMappedRoots = collectMappedRoots(mappings, mappedRoots, onlyFastUpdate);
 
     setNewMappedRoots(mappings, newMappedRoots, fireMappingsChangedEvent);
   }
@@ -396,7 +394,8 @@ public final class NewMappings implements Disposable {
   }
 
   private @NotNull Mappings collectMappedRoots(@NotNull List<VcsDirectoryMapping> mappings,
-                                               @Nullable List<MappedRoot> reuseMappedRoots) {
+                                               @NotNull List<MappedRoot> reuseMappedRoots,
+                                               boolean onlyFastUpdate) {
     Map<VirtualFile, MappedRoot> mappedRoots = new HashMap<>();
     Disposable pointerDisposable = Disposer.newDisposable();
 
@@ -426,15 +425,21 @@ public final class NewMappings implements Disposable {
         }
 
         List<MappedRoot> defaultMappings;
-        if (reuseMappedRoots != null) {
+        if (onlyFastUpdate) {
           defaultMappings = reuseDefaultMappingsFrom(mapping, reuseMappedRoots, pointerDisposable);
         }
         else {
           Set<VirtualFile> directMappingDirs = ContainerUtil.map2Set(mappedRoots.values(), it -> it.root);
-          defaultMappings = findDefaultMappingsFor(mapping, directMappingDirs, pointerDisposable);
+          try {
+            defaultMappings = findDefaultMappingsFor(mapping, directMappingDirs, pointerDisposable);
 
-          VcsDirectoryMappingCache.getInstance(myProject).setMappings(mapping.getVcs(),
-                                                                      ContainerUtil.map(defaultMappings, it -> it.root.getPath()));
+            VcsDirectoryMappingCache.getInstance(myProject).setMappings(mapping.getVcs(),
+                                                                        ContainerUtil.map(defaultMappings, it -> it.root.getPath()));
+          }
+          catch (VcsException e) {
+            LOG.warn("Cannot find default mappings for " + mapping.getVcs(), e);
+            defaultMappings = reuseDefaultMappingsFrom(mapping, reuseMappedRoots, pointerDisposable);
+          }
         }
         for (MappedRoot mappedRoot : defaultMappings) {
           mappedRoots.putIfAbsent(mappedRoot.root, mappedRoot);
@@ -484,7 +489,7 @@ public final class NewMappings implements Disposable {
   @NotNull
   private List<MappedRoot> findDefaultMappingsFor(@NotNull VcsDirectoryMapping mapping,
                                                   @NotNull Set<VirtualFile> directMappingDirs,
-                                                  @NotNull Disposable pointerDisposable) {
+                                                  @NotNull Disposable pointerDisposable) throws VcsException {
     AbstractVcs vcs = getMappingsVcs(mapping);
     if (vcs == null) {
       return Collections.emptyList();
@@ -549,7 +554,7 @@ public final class NewMappings implements Disposable {
 
   private @NotNull Collection<VirtualFile> detectDefaultRootsFor(@NotNull AbstractVcs vcs,
                                                                  @NotNull Collection<VirtualFile> projectRoots,
-                                                                 @NotNull Set<VirtualFile> mappedDirs) {
+                                                                 @NotNull Set<VirtualFile> mappedDirs) throws VcsException {
     try {
       if (vcs.needsLegacyDefaultMappings()) return projectRoots;
 
@@ -560,7 +565,7 @@ public final class NewMappings implements Disposable {
 
       return VcsDefaultMappingUtils.detectProjectMappings(myProject, rootChecker, projectRoots, mappedDirs);
     }
-    catch (ProcessCanceledException e) {
+    catch (ProcessCanceledException | VcsException e) {
       throw e;
     }
     catch (Throwable e) {
