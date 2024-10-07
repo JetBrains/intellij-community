@@ -1,94 +1,106 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.codeInspection.bugs
+package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
-import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import com.intellij.testFramework.LightProjectDescriptor;
+import groovy.lang.Reference;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 
-class GrNamedVariantLabelsInspectionTest extends LightGroovyTestCase {
+public class GrNamedVariantLabelsInspectionTest extends LightGroovyTestCase {
+  @Override
+  @NotNull
+  public final LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_2_5;
+  }
 
-    final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_5
+  public static GrNamedVariantLabelsInspection getInspection() {
+    return new GrNamedVariantLabelsInspection();
+  }
 
-    final GrNamedVariantLabelsInspection inspection = new GrNamedVariantLabelsInspection()
+  public void testBasic() {
+    doTest("""
+             
+             @NamedVariant
+             def foo(String s, @NamedParam Integer p) {}
+             
+             foo("", <warning>s</warning> : "", p : 1)
+             """);
+  }
 
-    private void doTest(String before) {
-        fixture.with {
-            enableInspections inspection
-            if (before.contains("NamedVariant")) before = "import groovy.transform.NamedVariant\n" + before
-            if (before.contains("NamedParam")) before = "import groovy.transform.NamedParam\n" + before
-            if (before.contains("NamedDelegate")) before = "import groovy.transform.NamedDelegate\n" + before
-            if (before.contains("CompileStatic")) before = "import groovy.transform.CompileStatic\n" + before
-            configureByText '_.groovy', before
-            checkHighlighting()
-        }
-    }
+  public void testConstructor() {
+    doTest("""
+             
+             class Rr {
+                 @NamedVariant
+                 Rr(String s, @NamedParam Integer p) {}
+             }
+             
+             new Rr("", <warning>s</warning> : "", p : 1)
+             """);
+  }
 
-    void 'test basic'() {
-        doTest '''
-@NamedVariant
-def foo(String s, @NamedParam Integer p) {}
+  public void testNoinspection() {
+    doTest("""
+             
+             class Rr {
+                 @NamedVariant
+                 Rr(String s, Integer p) {}
+             }
+             
+             new Rr(s : "", p : 1)
+             """);
+  }
 
-foo("", <warning>s</warning> : "", p : 1)
-'''
-    }
+  public void testNoinspection2() {
+    doTest("""
+             
+             class Rr {
+                 Rr(Map s) {}
+             }
+             
+             new Rr(s : "", p : 1)
+             """);
+  }
 
-    void 'test constructor'() {
-        doTest '''
-class Rr {
-    @NamedVariant
-    Rr(String s, @NamedParam Integer p) {}
-}
+  public void testRawNamedParam() {
+    doTest("""
+             
+             class Rr {
+                 Rr(@NamedParam('s') Map s) {}
+             }
+             
+             new Rr(s : "", <warning>p</warning> : 1)
+             """);
+  }
 
-new Rr("", <warning>s</warning> : "", p : 1)
-'''
-    }
+  public void testNamedDelegateInStaticMethod() {
+    doTest("""
+             
+             class Foo {
+                 int aaa
+                 boolean bbb
+             }
+             
+             @NamedVariant
+             static def bar(@NamedDelegate Foo a) {}
+             
+             @CompileStatic
+             static def foo() {
+                 bar(aaa: 10, bbb: true)
+             }
+             """);
+  }
 
-    void 'test noinspection'() {
-        doTest '''
-class Rr {
-    @NamedVariant
-    Rr(String s, Integer p) {}
-}
+  private void doTest(String before) {
+    final Reference<String> s = new Reference<>(before);
 
-new Rr(s : "", p : 1)
-'''
-    }
-
-    void 'test noinspection 2'() {
-        doTest '''
-class Rr {
-    Rr(Map s) {}
-}
-
-new Rr(s : "", p : 1)
-'''
-    }
-
-
-    void 'test raw @NamedParam'() {
-        doTest '''
-class Rr {
-    Rr(@NamedParam('s') Map s) {}
-}
-
-new Rr(s : "", <warning>p</warning> : 1)
-'''
-    }
-
-    void 'test @NamedDelegate in static method'() {
-        doTest '''
-class Foo {
-    int aaa
-    boolean bbb
-}
-
-@NamedVariant
-static def bar(@NamedDelegate Foo a) {}
-
-@CompileStatic
-static def foo() {
-    bar(aaa: 10, bbb: true)
-}
-'''
-    }
+    myFixture.enableInspections(getInspection());
+    if (s.get().contains("NamedVariant")) s.set("import groovy.transform.NamedVariant\n" + s.get());
+    if (s.get().contains("NamedParam")) s.set("import groovy.transform.NamedParam\n" + s.get());
+    if (s.get().contains("NamedDelegate")) s.set("import groovy.transform.NamedDelegate\n" + s.get());
+    if (s.get().contains("CompileStatic")) s.set("import groovy.transform.CompileStatic\n" + s.get());
+    myFixture.configureByText("_.groovy", s.get());
+    myFixture.checkHighlighting();
+  }
 }
