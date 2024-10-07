@@ -9,8 +9,14 @@ import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 import kotlin.reflect.KProperty
 
+@OptIn(ExperimentalContracts::class)
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-inline fun <reified T : Any> Any?.asSafely(): @kotlin.internal.NoInfer T? = this as? T
+inline fun <reified T : Any> Any?.asSafely(): @kotlin.internal.NoInfer T? {
+  contract {
+    returnsNotNull() implies (this@asSafely is T)
+  }
+  return this as? T
+}
 
 inline fun <T> runIf(condition: Boolean, block: () -> T): T? = if (condition) block() else null
 
