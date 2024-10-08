@@ -276,11 +276,12 @@ private fun getReplacementOnlyOfKotlinOptionsIfNeeded(
     binaryExpression: KtBinaryExpression,
     textOfLeftPartOfBinaryExpression: String,
 ): Replacement? {
-    if (textOfLeftPartOfBinaryExpression.startsWith("kotlinOptions.")) {
+    return if (textOfLeftPartOfBinaryExpression.startsWith("kotlinOptions.")) {
         val replacement = binaryExpression.text.replace("kotlinOptions.", "compilerOptions.")
-        return Replacement(binaryExpression, replacement)
+        Replacement(binaryExpression, replacement)
+    } else {
+        null
     }
-    return null
 }
 
 private data class JsOptionValue(val optionValue: String, val className: String, val fqClassName: FqName)
@@ -311,8 +312,8 @@ private fun jvmTargetValueMappingRule(inputValue: String): String? {
 
     // parse JavaVersion.VERSION_N.toString()
     val version = javaVersionRegex.find(inputValue)?.value ?: return null
-    when (version) {
-        "1_8" -> return "1_8"
+    return when (version) {
+        "1_8" -> "1_8"
         else -> {
             val numericValue = version.removePrefix("1_").toIntOrNull() ?: return null
             return if (numericValue > 8) {

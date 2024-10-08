@@ -147,7 +147,7 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                 (symbol?.containingDeclaration as? KaClassLikeSymbol) ?: expression.resolveExpression()
             kaSymbol?.importableFqName?.toString()
         }
-        return importableFqName.equals("org.gradle.kotlin.dsl.android")
+        return importableFqName == "org.gradle.kotlin.dsl.android"
     }
 
     private fun expressionsContainForbiddenOperations(element: PsiElement): Boolean {
@@ -219,7 +219,7 @@ private class ReplaceKotlinOptionsWithCompilerOptionsFix() : KotlinModCommandQui
             }
         }
 
-        val file = element.containingFile as? KtFile
+        val file = element.containingFile as? KtFile ?: return
         val ktPsiFactory = KtPsiFactory(project)
         expressionsToFix.forEach {
             val newExpression = ktPsiFactory.createExpression(it.replacement)
@@ -227,7 +227,7 @@ private class ReplaceKotlinOptionsWithCompilerOptionsFix() : KotlinModCommandQui
 
             val classToImport = it.classToImport
             if (classToImport != null) {
-                file?.addImport(classToImport)
+                file.addImport(classToImport)
             }
         }
     }
