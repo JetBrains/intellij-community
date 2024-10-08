@@ -3,13 +3,19 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.createSmartPointer
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtil
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -19,9 +25,7 @@ import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.*
 
 class K2ElementActionsFactory : JvmElementActionsFactory() {
     override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
@@ -114,9 +118,189 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
         }
         return actions
     }
+
+    override fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
+                                                        attributeIndex: Int,
+                                                        request: AnnotationAttributeRequest,
+                                                        @IntentionName text: String,
+                                                        @IntentionFamilyName familyName: String): List<IntentionAction> {
+        val annotationEntry = ((annotation as? KtLightElement<*, *>)?.kotlinOrigin as? KtAnnotationEntry)?.takeIf {
+            it.language == KotlinLanguage.INSTANCE
+        } ?: return emptyList()
+
+        return listOf(ChangeAnnotationAction(annotationEntry, attributeIndex, request, text, familyName))
+    }
+
+    //TODO: this is copy paste from KotlinElementActionsFactory, maybe we should extract it to common place?
+    // or implement this for K1 and K2?
+
+    private class ChangeAnnotationAction(
+        annotationEntry: KtAnnotationEntry,
+        private val attributeIndex: Int,
+        private val request: AnnotationAttributeRequest,
+        @IntentionName private val text: String,
+        @IntentionFamilyName private val familyName: String
+    ) : IntentionAction {
+
+        private val pointer: SmartPsiElementPointer<KtAnnotationEntry> = annotationEntry.createSmartPointer()
+        private val qualifiedName: String = annotationEntry.toLightAnnotation()?.qualifiedName ?: throw IllegalStateException("r")
+
+        override fun startInWriteAction(): Boolean = true
+
+        override fun getFamilyName(): String = familyName
+
+        override fun getText(): String = text
+
+        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = pointer.element != null
+
+        override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+            invokeImpl(PsiTreeUtil.findSameElementInCopy(pointer.element, file), project)
+            return IntentionPreviewInfo.DIFF
+        }
+
+        override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
+            val annotationEntry = pointer.element ?: return
+            invokeImpl(annotationEntry, project)
+        }
+
+        private fun invokeImpl(annotationEntry: KtAnnotationEntry, project: Project) {
+            val facade = JavaPsiFacade.getInstance(annotationEntry.project)
+            val language = facade.findClass(qualifiedName, annotationEntry.resolveScope)?.language
+            val dummyAnnotationRequest = annotationRequest(qualifiedName, request)
+            val psiFactory = KtPsiFactory(project)
+            val dummyAnnotationText = '@' + renderAnnotation(dummyAnnotationRequest, psiFactory) { language == KotlinLanguage.INSTANCE }
+            val dummyArgumentList = psiFactory.createAnnotationEntry(dummyAnnotationText).valueArgumentList!!
+            val argumentList = annotationEntry.valueArgumentList
+
+            if (argumentList == null) {
+                annotationEntry.add(dummyArgumentList)
+                //ShortenReferences.DEFAULT.process(annotationEntry)
+                return
+            }
+
+            when (language) {
+                JavaLanguage.INSTANCE -> changeJava(annotationEntry, argumentList, dummyArgumentList)
+                KotlinLanguage.INSTANCE -> changeKotlin(annotationEntry, argumentList, dummyArgumentList)
+                else -> changeKotlin(annotationEntry, argumentList, dummyArgumentList)
+            }
+            //ShortenReferences.DEFAULT.process(annotationEntry)
+        }
+
+        private fun changeKotlin(annotationEntry: KtAnnotationEntry, argumentList: KtValueArgumentList, dummyArgumentList: KtValueArgumentList) {
+            val dummyArgument = dummyArgumentList.arguments[0]
+            val oldAttribute = findAttribute(annotationEntry, request.name, attributeIndex)
+            if (oldAttribute == null) {
+                argumentList.addArgument(dummyArgument)
+                return
+            }
+
+            argumentList.addArgumentBefore(dummyArgument, oldAttribute.value)
+
+            if (isAttributeDuplicated(oldAttribute)) {
+                argumentList.removeArgument(oldAttribute.value)
+            }
+        }
+
+        private fun changeJava(annotationEntry: KtAnnotationEntry, argumentList: KtValueArgumentList, dummyArgumentList: KtValueArgumentList) {
+            if (request.name == "value") {
+                val anchorAfterVarargs: KtValueArgument? = removeVarargsAttribute(argumentList)
+
+                for (renderedArgument in dummyArgumentList.arguments) {
+                    argumentList.addArgumentBefore(renderedArgument, anchorAfterVarargs)
+                }
+
+                return
+            }
+
+            val oldAttribute = findAttribute(annotationEntry, request.name, attributeIndex)
+            if (oldAttribute != null) {
+                for (dummyArgument in dummyArgumentList.arguments) {
+                    argumentList.addArgumentBefore(dummyArgument, oldAttribute.value)
+                }
+
+                if (isAttributeDuplicated(oldAttribute)) {
+                    argumentList.removeArgument(oldAttribute.value)
+                }
+                return
+            }
+
+            for (dummyArgument in dummyArgumentList.arguments) {
+                argumentList.addArgument(dummyArgument)
+            }
+        }
+
+        private fun removeVarargsAttribute(argumentList: KtValueArgumentList): KtValueArgument? {
+            for (attribute in argumentList.arguments) {
+                val attributeName = attribute.getArgumentName()?.asName?.identifier
+
+                if (attributeName == null || attributeName == "value") {
+                    argumentList.removeArgument(attribute)
+                    continue
+                }
+
+                return attribute
+            }
+
+            return null
+        }
+
+        private fun isAttributeDuplicated(attribute: IndexedValue<KtValueArgument>): Boolean {
+            val name = attribute.value.getArgumentName()?.asName?.identifier ?: return true
+            return name == request.name
+        }
+
+        private fun findAttribute(annotationEntry: KtAnnotationEntry, name: String, index: Int): IndexedValue<KtValueArgument>? {
+            val arguments = annotationEntry.valueArgumentList?.arguments ?: return null
+            arguments.withIndex().find { (_, argument) ->
+                argument.getArgumentName()?.asName?.identifier == name
+            }?.let {
+                return it
+            }
+            val valueArgument = arguments.getOrNull(index) ?: return null
+            return IndexedValue(index, valueArgument)
+        }
+    }
+
 }
 
 private fun KtElement.isAbstractClass(): Boolean {
     val thisClass = this as? KtClassOrObject ?: return false
     return thisClass.isAbstract()
 }
+
+private fun renderAnnotation(
+    request: AnnotationRequest,
+    psiFactory: KtPsiFactory,
+    isKotlinAnnotation: (AnnotationRequest) -> Boolean
+): String {
+    return "${request.qualifiedName}${
+        request.attributes.takeIf { it.isNotEmpty() }?.mapIndexed { i, p ->
+            if (!isKotlinAnnotation(request) && i == 0 && p.name == "value")
+                renderAttributeValue(p.value, psiFactory, isKotlinAnnotation, isVararg = true)
+            else
+                "${p.name} = ${renderAttributeValue(p.value, psiFactory, isKotlinAnnotation)}"
+        }?.joinToString(", ", "(", ")") ?: ""
+    }"
+}
+
+private fun renderAttributeValue(
+    annotationAttributeRequest: AnnotationAttributeValueRequest,
+    psiFactory: KtPsiFactory,
+    isKotlinAnnotation: (AnnotationRequest) -> Boolean,
+    isVararg: Boolean = false,
+): String =
+    when (annotationAttributeRequest) {
+        is AnnotationAttributeValueRequest.PrimitiveValue -> annotationAttributeRequest.value.toString()
+        is AnnotationAttributeValueRequest.StringValue -> "\"" + annotationAttributeRequest.value + "\""
+        is AnnotationAttributeValueRequest.ClassValue -> annotationAttributeRequest.classFqn + "::class"
+        is AnnotationAttributeValueRequest.ConstantValue -> annotationAttributeRequest.text
+        is AnnotationAttributeValueRequest.NestedAnnotation ->
+            renderAnnotation(annotationAttributeRequest.annotationRequest, psiFactory, isKotlinAnnotation)
+
+        is AnnotationAttributeValueRequest.ArrayValue -> {
+            val (prefix, suffix) = if (isVararg) "" to "" else "[" to "]"
+            annotationAttributeRequest.members.joinToString(", ", prefix, suffix) { memberRequest ->
+                renderAttributeValue(memberRequest, psiFactory, isKotlinAnnotation)
+            }
+        }
+    }
