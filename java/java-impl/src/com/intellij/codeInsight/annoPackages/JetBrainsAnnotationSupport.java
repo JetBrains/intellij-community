@@ -4,9 +4,8 @@ package com.intellij.codeInsight.annoPackages;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +22,10 @@ final class JetBrainsAnnotationSupport implements AnnotationPackageSupport {
     if (superPackage) return null;
     if (ArrayUtil.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE, types)) return null;
     if (!anno.hasQualifiedName(AnnotationUtil.NOT_NULL_BY_DEFAULT)) return null;
+    PsiExpression parentExpression = PsiTreeUtil.getParentOfType(context, PsiExpression.class);
+    if (parentExpression instanceof PsiTypeCastExpression cast && PsiTreeUtil.isAncestor(cast.getCastType(), context, false)) {
+      return null;
+    }
     if (ArrayUtil.contains(PsiAnnotation.TargetType.TYPE_PARAMETER, types)) {
       if (context instanceof PsiTypeParameter typeParameter && typeParameter.getExtendsListTypes().length == 0) {
         // Declared type parameter without a bound like <T> is equal to <T extends Object>, and the Object is implicitly annotated as NotNull
