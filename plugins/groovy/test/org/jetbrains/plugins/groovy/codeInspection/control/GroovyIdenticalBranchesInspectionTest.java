@@ -1,38 +1,49 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.groovy.codeInspection.control
+package org.jetbrains.plugins.groovy.codeInspection.control;
 
-import com.intellij.testFramework.LightProjectDescriptor
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.UsefulTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-@CompileStatic
-class GroovyIdenticalBranchesInspectionTest extends GrHighlightingTestBase {
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
-  LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
-  String basePath = TestUtils.testDataPath + "inspections/identicalBranches/"
-
+public class GroovyIdenticalBranchesInspectionTest extends GrHighlightingTestBase {
   @Override
-  void setUp() throws Exception {
-    super.setUp()
-    fixture.enableInspections(GroovyConditionalWithIdenticalBranchesInspection, GroovyIfStatementWithIdenticalBranchesInspection)
+  public @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_LATEST;
   }
 
-  void 'test two new expressions'() { doTest() }
+  @Override
+  public String getBasePath() {
+    return TestUtils.getTestDataPath() + "inspections/identicalBranches/";
+  }
 
-  void 'test empty list and map'() { doTest() }
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    getFixture().enableInspections(GroovyConditionalWithIdenticalBranchesInspection.class,
+                                   GroovyIfStatementWithIdenticalBranchesInspection.class);
+  }
 
-  void 'test identical arrays'() { doTest() }
+  public void testTwoNewExpressions() { doTest(); }
+
+  public void testEmptyListAndMap() { doTest(); }
+
+  public void testIdenticalArrays() { doTest(); }
 
   @NotNull
   @Override
   protected String getTestName(boolean lowercaseFirstLetter) {
-    def name = getName()
+    String name = getName();
     if (name.contains(" ")) {
-      name = name.split(" ").collect { String it -> it == "test" ? it : it.capitalize() }.join('')
+      name = Arrays.stream(name.split(" ")).map(it -> it.equals("test") ? it : StringUtil.capitalize(it)).collect(Collectors.joining(""));
     }
-    return getTestName(name, lowercaseFirstLetter)
+
+    return UsefulTestCase.getTestName(name, lowercaseFirstLetter);
   }
 }
