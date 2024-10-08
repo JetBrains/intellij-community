@@ -41,6 +41,13 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.streams.asStream
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+
+private val MERGING_TIME_SPAN = 300.milliseconds
+private val MERGING_TIME_SPAN_MS = MERGING_TIME_SPAN.inWholeMilliseconds
+
+private val DEFAULT_SMART_PROJECT_RELOAD_DELAY = 3.seconds
 
 @ApiStatus.Internal
 @State(name = "ExternalSystemProjectTracker", storages = [Storage(CACHE_FILE)])
@@ -60,7 +67,7 @@ class AutoImportProjectTracker(
   private val projectChangeOperation = AtomicOperationTrace(name = "Project change operation")
   private val projectReloadOperation = AtomicOperationTrace(name = "Project reload operation")
   private val isProjectLookupActivateProperty = AtomicBooleanProperty(false)
-  private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", 300, true, null, serviceDisposable)
+  private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", MERGING_TIME_SPAN_MS.toInt(), true, null, serviceDisposable)
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
 
   private fun createProjectChangesListener() =
@@ -103,17 +110,20 @@ class AutoImportProjectTracker(
     schedule(priority = 1, dispatchIterations = 1) { processChanges() }
   }
 
-  /**
-   * ```
-   * dispatcher.mergingTimeSpan = 300 ms
-   * dispatchIterations = 9
-   * We already dispatched processChanges
-   * So delay is equal to (1 + 9) * 300 ms = 3000 ms = 3 s
-   * ```
-   */
   private fun scheduleDelayedSmartProjectReload() {
     LOG.debug("Schedule delayed project reload")
-    schedule(priority = 2, dispatchIterations = 9) { reloadProject(explicitReload = false) }
+
+    // See AutoImportProjectTracker.scheduleChangeProcessing for details
+    val smartProjectReloadDelay = projectDataMap.values.maxOfOrNull {
+      it.projectAware.smartProjectReloadDelay ?: DEFAULT_SMART_PROJECT_RELOAD_DELAY
+    } ?: DEFAULT_SMART_PROJECT_RELOAD_DELAY
+    // We already dispatched processChanges with the MERGING_TIME_SPAN delay
+    // See AutoImportProjectTracker.scheduleChangeProcessing for details
+    val smartProjectReloadDispatcherIterations = ((smartProjectReloadDelay - MERGING_TIME_SPAN) / MERGING_TIME_SPAN).toInt()
+    // smartProjectReloadDispatcherIterations can be negative if smartProjectReloadDelay is less than MERGING_TIME_SPAN
+    val dispatchIterations = maxOf(smartProjectReloadDispatcherIterations, 1)
+
+    schedule(priority = 2, dispatchIterations = dispatchIterations) { reloadProject(explicitReload = false) }
   }
 
   private val currentActivity = AtomicReference<ProjectInitializationDiagnosticService.ActivityTracker?>()

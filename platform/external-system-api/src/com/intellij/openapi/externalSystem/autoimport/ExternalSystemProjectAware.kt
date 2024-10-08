@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus
 import org.jetbrains.annotations.ApiStatus
+import kotlin.time.Duration
 
 interface ExternalSystemProjectAware {
 
@@ -20,6 +21,21 @@ interface ExternalSystemProjectAware {
   fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable)
 
   fun reloadProject(context: ExternalSystemProjectReloadContext)
+
+  /**
+   * Internal. Please see implementation limitations.
+   *
+   * This property defines a delay for the "smart" project sync request.
+   * Usually, the "smart" sync is requested after changes in the [settingsFiles].
+   *
+   * Note: All external systems sync events are dispatched and merged by the same [com.intellij.util.ui.update.MergingUpdateQueue].
+   * Therefore, this value can be overridden by the greater [smartProjectReloadDelay].
+   * For example, between default (3 seconds) and zero delays will be chosen the default delay.
+   *
+   * A null value means default [smartProjectReloadDelay] that is equals to 3 seconds.
+   */
+  @get:ApiStatus.Internal
+  val smartProjectReloadDelay: Duration? get() = null
 
   /**
    * Experimental. Please see implementation limitations.
