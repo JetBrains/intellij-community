@@ -47,7 +47,6 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
@@ -219,6 +218,10 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     if (myProjectDom != null) {
       PsiElement result = MavenDomProjectProcessorUtils.searchProperty(myText, myProjectDom, myProject);
       if (result != null) return result;
+    }
+
+    if ("maven.home".equals(myText)) {
+      return myElement;
     }
 
     if ("java.home".equals(myText)) {
