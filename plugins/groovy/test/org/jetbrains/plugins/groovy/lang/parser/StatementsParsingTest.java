@@ -1,606 +1,609 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.parser
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.parser;
 
-class StatementsParsingTest extends GroovyParsingTestCase {
-  final String basePath = super.basePath + "statements"
+public class StatementsParsingTest extends GroovyParsingTestCase {
+  public void testBlocks$clos1() { doTest(); }
 
-  void testBlocks$clos1() throws Throwable { doTest() }
+  public void testBlocks$clos2() { doTest(); }
 
-  void testBlocks$clos2() throws Throwable { doTest() }
+  public void testBlocks$clos3() { doTest(); }
 
-  void testBlocks$clos3() throws Throwable { doTest() }
+  public void testBlocks$clos4() { doTest(); }
 
-  void testBlocks$clos4() throws Throwable { doTest() }
+  public void testBlocks$clos5() { doTest(); }
 
-  void testBlocks$clos5() throws Throwable { doTest() }
+  public void testBlocks$clos6() { doTest(); }
 
-  void testBlocks$clos6() throws Throwable { doTest() }
+  public void testBlocks$nested1() { doTest(); }
 
-  void testBlocks$nested1() throws Throwable { doTest() }
+  public void testBlocks$nested2() { doTest(); }
 
-  void testBlocks$nested2() throws Throwable { doTest() }
+  public void testBlocks$nested3() { doTest(); }
 
-  void testBlocks$nested3() throws Throwable { doTest() }
+  public void testBlocks$nested4() { doTest(); }
 
-  void testBlocks$nested4() throws Throwable { doTest() }
+  public void testBlocks$nested5() { doTest(); }
 
-  void testBlocks$nested5() throws Throwable { doTest() }
+  public void testBlocks$nested6() { doTest(); }
 
-  void testBlocks$nested6() throws Throwable { doTest() }
+  public void testBlocks$nested7() { doTest(); }
 
-  void testBlocks$nested7() throws Throwable { doTest() }
+  public void testBlocks$nested8() { doTest(); }
 
-  void testBlocks$nested8() throws Throwable { doTest() }
+  public void testBlocks$nested9() { doTest(); }
 
-  void testBlocks$nested9() throws Throwable { doTest() }
+  public void testBlocks$nested10() { doTest(); }
 
-  void testBlocks$nested10() throws Throwable { doTest() }
+  public void testBlocks$nested11() { doTest(); }
 
-  void testBlocks$nested11() throws Throwable { doTest() }
+  public void testBlocks$nested12() { doTest(); }
 
-  void testBlocks$nested12() throws Throwable { doTest() }
+  public void testBlocks$nested13() { doTest(); }
 
-  void testBlocks$nested13() throws Throwable { doTest() }
+  public void testBlocks$nested14() { doTest(); }
 
-  void testBlocks$nested14() throws Throwable { doTest() }
+  public void testBlocks$nested15() { doTest(); }
 
-  void testBlocks$nested15() throws Throwable { doTest() }
+  public void testBlocks$nested16() { doTest(); }
 
-  void testBlocks$nested16() throws Throwable { doTest() }
+  public void testBlocks$nested17() { doTest(); }
 
-  void testBlocks$nested17() throws Throwable { doTest() }
+  public void testBlocks$nested18() { doTest(); }
 
-  void testBlocks$nested18() throws Throwable { doTest() }
+  public void _testBlocks$nested19() { doTest(); }
 
-  //IDEA-209352
-  void _testBlocks$nested19() throws Throwable { doTest() }
+  public void testBlocks$nested20() { doTest(); }
 
-  void testBlocks$nested20() throws Throwable { doTest() }
+  public void _testBlocks$nested21() { doTest(); }
 
-  //IDEA-209353
-  void _testBlocks$nested21() throws Throwable { doTest() }
+  public void testBlocks$nested22() { doTest(); }
 
-  void testBlocks$nested22() throws Throwable { doTest() }
+  public void testBlocks$nested23() { doTest(); }
 
-  void testBlocks$nested23() throws Throwable { doTest() }
+  public void testBlocks$nested24() { doTest(); }
 
-  void testBlocks$nested24() throws Throwable { doTest() }
+  public void testBlocks$closureWithCall() { doTest(); }
 
-  void testBlocks$closureWithCall() throws Throwable { doTest() }
+  public void testBlocks$form() { doTest(); }
 
-  void testBlocks$form() throws Throwable { doTest() }
+  public void testBlocks$labeledClosure() { doTest(); }
 
-  void testBlocks$labeledClosure() throws Throwable { doTest() }
+  public void testBranch$assert1() { doTest(); }
 
-  void testBranch$assert1() throws Throwable { doTest() }
+  public void testBranch$assert2() { doTest(); }
 
-  void testBranch$assert2() throws Throwable { doTest() }
+  public void testBranch$assert3() { doTest(); }
 
-  void testBranch$assert3() throws Throwable { doTest() }
+  public void testBranch$assert4() { doTest(); }
 
-  void testBranch$assert4() throws Throwable { doTest() }
+  public void testBranch$break1() { doTest(); }
 
-  void testBranch$break1() throws Throwable { doTest() }
+  public void testBranch$break2() { doTest(); }
 
-  void testBranch$break2() throws Throwable { doTest() }
+  public void testBranch$ret1() { doTest(); }
 
-  void testBranch$ret1() throws Throwable { doTest() }
+  public void testBranch$ret2() { doTest(); }
 
-  void testBranch$ret2() throws Throwable { doTest() }
+  public void testBranch$ret3() { doTest(); }
 
-  void testBranch$ret3() throws Throwable { doTest() }
+  public void testBranch$thr1() { doTest(); }
 
-  void testBranch$thr1() throws Throwable { doTest() }
+  public void testBranch$thr2() { doTest(); }
 
-  void testBranch$thr2() throws Throwable { doTest() }
+  public void testClass_initializers$class_init1() { doTest(); }
 
-  void testClass_initializers$class_init1() throws Throwable { doTest() }
+  public void testClass_initializers$stat_block() { doTest(); }
 
-  void testClass_initializers$stat_block() throws Throwable { doTest() }
+  public void testDeclaration$decl1() { doTest(); }
 
-  void testDeclaration$decl1() throws Throwable { doTest() }
+  public void testDeclaration$decl10() { doTest(); }
 
-  void testDeclaration$decl10() throws Throwable { doTest() }
+  public void testDeclaration$decl11() { doTest(); }
 
-  void testDeclaration$decl11() throws Throwable { doTest() }
+  public void testDeclaration$decl2() { doTest(); }
 
-  void testDeclaration$decl2() throws Throwable { doTest() }
+  public void testDeclaration$decl3() { doTest(); }
 
-  void testDeclaration$decl3() throws Throwable { doTest() }
+  public void testDeclaration$decl4() { doTest(); }
 
-  void testDeclaration$decl4() throws Throwable { doTest() }
+  public void testDeclaration$decl5() { doTest(); }
 
-  void testDeclaration$decl5() throws Throwable { doTest() }
+  public void testDeclaration$decl6() { doTest(); }
 
-  void testDeclaration$decl6() throws Throwable { doTest() }
+  public void testDeclaration$decl7() { doTest(); }
 
-  void testDeclaration$decl7() throws Throwable { doTest() }
+  public void testDeclaration$decl8() { doTest(); }
 
-  void testDeclaration$decl8() throws Throwable { doTest() }
+  public void testDeclaration$decl9() { doTest(); }
 
-  void testDeclaration$decl9() throws Throwable { doTest() }
+  public void testDeclaration$decl12() { doTest(); }
 
-  void testDeclaration$decl12() throws Throwable { doTest() }
+  public void testDeclaration$decl13() { doTest(); }
 
-  void testDeclaration$decl13() throws Throwable { doTest() }
+  public void testDeclaration$exprStatement() { doTest(); }
 
-  void testDeclaration$exprStatement() throws Throwable { doTest() }
+  public void testDeclaration$conditional1() { doTest(); }
 
-  void testDeclaration$conditional1() throws Throwable { doTest() }
+  public void testDeclaration$conditional2() { doTest(); }
 
-  void testDeclaration$conditional2() throws Throwable { doTest() }
+  public void testDeclaration$conditional3() { doTest(); }
 
-  void testDeclaration$conditional3() throws Throwable { doTest() }
+  public void testDeclaration$dollar() { doTest(); }
 
-  void testDeclaration$dollar() throws Throwable { doTest() }
+  public void testDeclaration$groovyMain() { doTest(); }
 
-  void testDeclaration$groovyMain() throws Throwable { doTest() }
+  public void testDeclaration$GRVY1451() { doTest("declaration/GRVY-1451.test"); }
 
-  void testDeclaration$GRVY1451() throws Throwable { doTest("declaration/GRVY-1451.test") }
+  public void testDeclaration$methodCallAsMultiDecl() { doTest(); }
 
-  void testDeclaration$methodCallAsMultiDecl() throws Throwable { doTest() }
+  public void testDeclaration$meth_err13() { doTest(); }
 
-  void testDeclaration$meth_err13() throws Throwable { doTest() }
+  public void testDeclaration$meth_err14() { doTest(); }
 
-  void testDeclaration$meth_err14() throws Throwable { doTest() }
+  public void testDeclaration$nl_trows() { doTest(); }
 
-  void testDeclaration$nl_trows() throws Throwable { doTest() }
+  public void testDeclaration$var1() { doTest(); }
 
-  void testDeclaration$var1() throws Throwable { doTest() }
+  public void testDeclaration$var2() { doTest(); }
 
-  void testDeclaration$var2() throws Throwable { doTest() }
+  public void testDeclaration$var3() { doTest(); }
 
-  void testDeclaration$var3() throws Throwable { doTest() }
+  public void testDeclaration$var4() { doTest(); }
 
-  void testDeclaration$var4() throws Throwable { doTest() }
+  public void testDeclaration$var5() { doTest(); }
 
-  void testDeclaration$var5() throws Throwable { doTest() }
+  public void testDeclaration$var6() { doTest(); }
 
-  void testDeclaration$var6() throws Throwable { doTest() }
+  public void testDeclaration$var7() { doTest(); }
 
-  void testDeclaration$var7() throws Throwable { doTest() }
+  public void testDeclaration$var8() { doTest(); }
 
-  void testDeclaration$var8() throws Throwable { doTest() }
+  public void testDeclaration$var9() { doTest(); }
 
-  void testDeclaration$var9() throws Throwable { doTest() }
+  public void testDeclaration$var10() { doTest(); }
 
-  void testDeclaration$var10() throws Throwable { doTest() }
+  public void testDeclaration$multilineTuple() { doTest(); }
 
-  void testDeclaration$multilineTuple() { doTest() }
+  public void testFor$for1() { doTest(); }
 
-  void testFor$for1() throws Throwable { doTest() }
+  public void testFor$for11() { doTest(); }
 
-  void testFor$for11() throws Throwable { doTest() }
+  public void testFor$for12() { doTest(); }
 
-  void testFor$for12() throws Throwable { doTest() }
+  public void testFor$for13() { doTest(); }
 
-  void testFor$for13() throws Throwable { doTest() }
+  public void testFor$for2() { doTest(); }
 
-  void testFor$for2() throws Throwable { doTest() }
+  public void testFor$for3() { doTest(); }
 
-  void testFor$for3() throws Throwable { doTest() }
+  public void testFor$for4() { doTest(); }
 
-  void testFor$for4() throws Throwable { doTest() }
+  public void testFor$for5() { doTest(); }
 
-  void testFor$for5() throws Throwable { doTest() }
+  public void testFor$for6() { doTest(); }
 
-  void testFor$for6() throws Throwable { doTest() }
+  public void testFor$for7() { doTest(); }
 
-  void testFor$for7() throws Throwable { doTest() }
+  public void testFor$for8() { doTest(); }
 
-  void testFor$for8() throws Throwable { doTest() }
+  public void testFor$for9() { doTest(); }
 
-  void testFor$for9() throws Throwable { doTest() }
+  public void testFor$for14() { doTest(); }
 
-  void testFor$for14() throws Throwable { doTest() }
+  public void testFor$idenfierAfterLParen() { doTest(); }
 
-  void testFor$idenfierAfterLParen() { doTest() }
+  public void testFor$keywordOnly() { doTest(); }
 
-  void testFor$keywordOnly() { doTest() }
+  public void testFor$lParen() { doTest(); }
 
-  void testFor$lParen() { doTest() }
+  public void testFor$identifierAfterParameter() { doTest(); }
 
-  void testFor$identifierAfterParameter() { doTest() }
+  public void testFor$multiDeclaration() { doTest(); }
 
-  void testFor$multiDeclaration() { doTest() }
+  public void testFor$multiDeclaration2() { doTest(); }
 
-  void testFor$multiDeclaration2() { doTest() }
+  public void testFor$multiDeclaration3() { doTest(); }
 
-  void testFor$multiDeclaration3() { doTest() }
+  public void testFor$multiDeclaration4() { doTest(); }
 
-  void testFor$multiDeclaration4() { doTest() }
+  public void testFor$tupleDeclaration() { doTest(); }
 
-  void testFor$tupleDeclaration() { doTest() }
+  public void testFor$tupleDeclarationCommaAfterVar() { doTest(); }
 
-  void testFor$tupleDeclarationCommaAfterVar() { doTest() }
+  public void testFor$tupleDeclarationNoInitializer() { doTest(); }
 
-  void testFor$tupleDeclarationNoInitializer() { doTest() }
+  public void testFor$tupleDeclarationNoInitializerValue() { doTest(); }
 
-  void testFor$tupleDeclarationNoInitializerValue() { doTest() }
+  public void testFor$tupleDeclarationSingleVariable() { doTest(); }
 
-  void testFor$tupleDeclarationSingleVariable() { doTest() }
+  public void testFor$multilineClause() { doTest(); }
 
-  void testFor$multilineClause() { doTest() }
-  
-  void testIfstmt$if1() throws Throwable { doTest() }
+  public void testIfstmt$if1() { doTest(); }
 
-  void testIfstmt$if2() throws Throwable { doTest() }
+  public void testIfstmt$if2() { doTest(); }
 
-  void testIfstmt$if3() throws Throwable { doTest() }
+  public void testIfstmt$if3() { doTest(); }
 
-  void testIfstmt$if4() throws Throwable { doTest() }
+  public void testIfstmt$if4() { doTest(); }
 
-  void testIfstmt$if5() throws Throwable { doTest() }
+  public void testIfstmt$if5() { doTest(); }
 
-  void testIfstmt$if6() throws Throwable { doTest() }
+  public void testIfstmt$if6() { doTest(); }
 
-  void testIfstmt$applicaitonCondition() { doTest() }
+  public void testIfstmt$applicaitonCondition() { doTest(); }
 
-  void testIfstmt$keywordOnly() { doTest() }
+  public void testIfstmt$keywordOnly() { doTest(); }
 
-  void testIfstmt$keywordLParen() { doTest() }
+  public void testIfstmt$keywordLParen() { doTest(); }
 
-  void testIfstmt$noCondition() { doTest() }
+  public void testIfstmt$noCondition() { doTest(); }
 
-  void testIfstmt$noRParen() { doTest() }
+  public void testIfstmt$noRParen() { doTest(); }
 
-  void testIfstmt$noThen() { doTest() }
+  public void testIfstmt$noThen() { doTest(); }
 
-  void testIfstmt$noThenNL() { doTest() }
+  public void testIfstmt$noThenNL() { doTest(); }
 
-  void testIfstmt$noElse() { doTest() }
+  public void testIfstmt$noElse() { doTest(); }
 
-  void testIfstmt$noThenWithElse() { doTest() }
+  public void testIfstmt$noThenWithElse() { doTest(); }
 
-  void testIfstmt$nls() { doTest() }
+  public void testIfstmt$nls() { doTest(); }
 
-  void testIfstmt$separatorsBeforeElse() { doTest() }
+  public void testIfstmt$separatorsBeforeElse() { doTest(); }
 
-  void testImports$imp0() throws Throwable { doTest() }
+  public void testImports$imp0() { doTest(); }
 
-  void testImports$imp1() throws Throwable { doTest() }
+  public void testImports$imp1() { doTest(); }
 
-  void testImports$imp2() throws Throwable { doTest() }
+  public void testImports$imp2() { doTest(); }
 
-  void testImports$imp3() throws Throwable { doTest() }
+  public void testImports$imp3() { doTest(); }
 
-  void testImports$imp4() throws Throwable { doTest() }
+  public void testImports$imp4() { doTest(); }
 
-  void testImports$imp5() throws Throwable { doTest() }
+  public void testImports$imp5() { doTest(); }
 
-  void testImports$imp6() throws Throwable { doTest() }
+  public void testImports$imp6() { doTest(); }
 
-  void testImports$imp7() throws Throwable { doTest() }
+  public void testImports$imp7() { doTest(); }
 
-  void testImports$imp8() throws Throwable { doTest() }
+  public void testImports$imp8() { doTest(); }
 
-  void testImports$typeArguments() { doTest() }
+  public void testImports$typeArguments() { doTest(); }
 
-  void testKing_regex$king1() throws Throwable { doTest() }
+  public void testKing_regex$king1() { doTest(); }
 
-  void testKing_regex$king2() throws Throwable { doTest() }
+  public void testKing_regex$king2() { doTest(); }
 
-  void testKing_regex$king3() throws Throwable { doTest() }
+  public void testKing_regex$king3() { doTest(); }
 
-  void testKing_regex$king4() throws Throwable { doTest() }
+  public void testKing_regex$king4() { doTest(); }
 
-  void testLabeled$label1() throws Throwable { doTest() }
+  public void testLabeled$label1() { doTest(); }
 
-  void testLabeled$label2() throws Throwable { doTest() }
+  public void testLabeled$label2() { doTest(); }
 
-  void testLabeled$label3() throws Throwable { doTest() }
+  public void testLabeled$label3() { doTest(); }
 
-  void testLoop$while1() throws Throwable { doTest() }
+  public void testLoop$while1() { doTest(); }
 
-  void testLoop$while2() throws Throwable { doTest() }
+  public void testLoop$while2() { doTest(); }
 
-  void testLoop$while3() throws Throwable { doTest() }
+  public void testLoop$while3() { doTest(); }
 
-  void testLoop$while4() throws Throwable { doTest() }
+  public void testLoop$while4() { doTest(); }
 
-  void testLoop$while6() throws Throwable { doTest() }
+  public void testLoop$while6() { doTest(); }
 
-  void testLoop$while7() throws Throwable { doTest() }
+  public void testLoop$while7() { doTest(); }
 
-  void testLoop$whileEmptyBody() { doTest() }
+  public void testLoop$whileEmptyBody() { doTest(); }
 
-  void testLoop$dowhile0() { doTest() }
+  public void testLoop$dowhile0() { doTest(); }
 
-  void testLoop$dowhile1() { doTest() }
+  public void testLoop$dowhile1() { doTest(); }
 
-  void testLoop$dowhile2() { doTest() }
+  public void testLoop$dowhile2() { doTest(); }
 
-  void testLoop$dowhile3() { doTest() }
+  public void testLoop$dowhile3() { doTest(); }
 
-  void testLoop$dowhile4() { doTest() }
+  public void testLoop$dowhile4() { doTest(); }
 
-  void testLoop$dowhile5() { doTest() }
+  public void testLoop$dowhile5() { doTest(); }
 
-  void testLoop$dowhile6() { doTest() }
+  public void testLoop$dowhile6() { doTest(); }
 
-  void testMethods$method1() throws Throwable { doTest() }
+  public void testMethods$method1() { doTest(); }
 
-  void testMethods$method2() throws Throwable { doTest() }
+  public void testMethods$method2() { doTest(); }
 
-  void testMethods$method3() throws Throwable { doTest() }
+  public void testMethods$method3() { doTest(); }
 
-  void testMethods$method4() throws Throwable { doTest() }
+  public void testMethods$method4() { doTest(); }
 
-  void testMethods$method5() throws Throwable { doTest() }
+  public void testMethods$method5() { doTest(); }
 
-  void testMethods$method6() throws Throwable { doTest() }
+  public void testMethods$method6() { doTest(); }
 
-  void testMethods$vararg() throws Throwable { doTest() }
+  public void testMethods$vararg() { doTest(); }
 
-  void testMultiple_assign$grvy2086() throws Throwable { doTest("multiple_assign/grvy-2086.test") }
+  public void testMultiple_assign$grvy2086() { doTest("multiple_assign/grvy-2086.test"); }
 
-  void testMultiple_assign$mult_assign() throws Throwable { doTest() }
+  public void testMultiple_assign$mult_assign() { doTest(); }
 
-  void testMultiple_assign$mult_def() throws Throwable { doTest() }
+  public void testMultiple_assign$mult_def() { doTest(); }
 
-  void testMultiple_assign$without_assign() throws Throwable { doTest() }
+  public void testMultiple_assign$without_assign() { doTest(); }
 
-  void testMultiple_assign$lineBreakAfterLeftParen() { doTest() }
+  public void testMultiple_assign$lineBreakAfterLeftParen() { doTest(); }
 
-  void testMultiple_assign$lineBreakBeforeComma() { doTest() }
+  public void testMultiple_assign$lineBreakBeforeComma() { doTest(); }
 
-  void testMultiple_assign$lineBreakAfterComma() { doTest() }
+  public void testMultiple_assign$lineBreakAfterComma() { doTest(); }
 
-  void testMultiple_assign$lineBreakBeforeRightParen() { doTest() }
+  public void testMultiple_assign$lineBreakBeforeRightParen() { doTest(); }
 
-  void testMultiple_assign$lineBreakBeforeAssignment() { doTest() }
+  public void testMultiple_assign$lineBreakBeforeAssignment() { doTest(); }
 
-  void testMultiple_assign$lineBreakAfterAssignment() { doTest() }
+  public void testMultiple_assign$lineBreakAfterAssignment() { doTest(); }
 
-  void testSwitch$laforge1() throws Throwable { doTest() }
+  public void testSwitch$laforge1() { doTest(); }
 
-  void testSwitch$swit1() throws Throwable { doTest() }
+  public void testSwitch$swit1() { doTest(); }
 
-  void testSwitch$swit2() throws Throwable { doTest() }
+  public void testSwitch$swit2() { doTest(); }
 
-  void testSwitch$swit3() throws Throwable { doTest() }
+  public void testSwitch$swit3() { doTest(); }
 
-  void testSwitch$swit4() throws Throwable { doTest() }
+  public void testSwitch$swit4() { doTest(); }
 
-  void testSwitch$swit5() throws Throwable { doTest() }
+  public void testSwitch$swit5() { doTest(); }
 
-  void testSwitch$swit6() throws Throwable { doTest() }
+  public void testSwitch$swit6() { doTest(); }
 
-  void testSwitch$swit7() throws Throwable { doTest() }
+  public void testSwitch$swit7() { doTest(); }
 
-  void testSwitch$swit8() throws Throwable { doTest() }
+  public void testSwitch$swit8() { doTest(); }
 
-  void testSwitch$identifierWithin() { doTest() }
+  public void testSwitch$identifierWithin() { doTest(); }
 
-  void testSyn$syn1() throws Throwable { doTest() }
+  public void testSyn$syn1() { doTest(); }
 
-  void testSyn$newLineBeforeBlock() { doTest() }
+  public void testSyn$newLineBeforeBlock() { doTest(); }
 
-  void testTop_methods$method1() throws Throwable { doTest() }
+  public void testTop_methods$method1() { doTest(); }
 
-  void testTop_methods$method2() throws Throwable { doTest() }
+  public void testTop_methods$method2() { doTest(); }
 
-  void testTop_methods$method3() throws Throwable { doTest() }
+  public void testTop_methods$method3() { doTest(); }
 
-  void testTop_methods$method4() throws Throwable { doTest() }
+  public void testTop_methods$method4() { doTest(); }
 
-  void testTry_catch$try1() throws Throwable { doTest() }
+  public void testTry_catch$try1() { doTest(); }
 
-  void testTry_catch$try2() throws Throwable { doTest() }
+  public void testTry_catch$try2() { doTest(); }
 
-  void testTry_catch$try3() throws Throwable { doTest() }
+  public void testTry_catch$try3() { doTest(); }
 
-  void testTry_catch$try4() throws Throwable { doTest() }
+  public void testTry_catch$try4() { doTest(); }
 
-  void testTry_catch$try5() throws Throwable { doTest() }
+  public void testTry_catch$try5() { doTest(); }
 
-  void testTry_catch$try6() throws Throwable { doTest() }
+  public void testTry_catch$try6() { doTest(); }
 
-  void testTry_catch$try7() throws Throwable { doTest() }
+  public void testTry_catch$try7() { doTest(); }
 
-  void testTry_catch$newLineBeforeCatchBlock() throws Throwable { doTest() }
+  public void testTry_catch$newLineBeforeCatchBlock() { doTest(); }
 
-  void testTry_catch$newLineBeforeFinallyBlock() { doTest() }
+  public void testTry_catch$newLineBeforeFinallyBlock() { doTest(); }
 
-  void testTry_catch$tryResources() { doTest() }
+  public void testTry_catch$tryResources() { doTest(); }
 
-  void testTry_catch$tryResourcesEmpty() { doTest() }
+  public void testTry_catch$tryResourcesEmpty() { doTest(); }
 
-  void testTry_catch$tryResourcesNoRparen() { doTest() }
+  public void testTry_catch$tryResourcesNoRparen() { doTest(); }
 
-  void testTry_catch$tryResourcesNoRparenAfterResource() { doTest() }
+  public void testTry_catch$tryResourcesNoRparenAfterResource() { doTest(); }
 
-  void testTry_catch$tryResourcesNLAfterResource() { doTest() }
+  public void testTry_catch$tryResourcesNLAfterResource() { doTest(); }
 
-  void testTry_catch$tryResourcesSeparators() { doTest() }
+  public void testTry_catch$tryResourcesSeparators() { doTest(); }
 
-  void testTry_catch$tryResourcesTyped() { doTest() }
+  public void testTry_catch$tryResourcesTyped() { doTest(); }
 
-  void testTry_catch$tryResourcesMultiline() { doTest() }
+  public void testTry_catch$tryResourcesMultiline() { doTest(); }
 
-  void testTuples$doubleParens() throws Throwable { doTest() }
+  public void testTuples$doubleParens() { doTest(); }
 
-  void testTuples$methCallNotTuple() throws Throwable { doTest() }
+  public void testTuples$methCallNotTuple() { doTest(); }
 
-  void testTuples$nestedTupleUnsupp() throws Throwable { doTest() }
+  public void testTuples$nestedTupleUnsupp() { doTest(); }
 
-  void testTuples$tupleInClass() throws Throwable { doTest() }
+  public void testTuples$tupleInClass() { doTest(); }
 
-  void testTuples$tupleInScript() throws Throwable { doTest() }
+  public void testTuples$tupleInScript() { doTest(); }
 
-  void testTuples$tupleNotInit() throws Throwable { doTest() }
+  public void testTuples$tupleNotInit() { doTest(); }
 
-  void testTuples$tupleNotInit2() { doTest() }
+  public void testTuples$tupleNotInit2() { doTest(); }
 
-  void testTuples$tupleOneVarInLine() throws Throwable { doTest() }
+  public void testTuples$tupleOneVarInLine() { doTest(); }
 
-  void testTuples$tupleTypeErr() throws Throwable { doTest() }
+  public void testTuples$tupleTypeErr() { doTest(); }
 
-  void testTuples$tupleWithoutDef() throws Throwable { doTest() }
+  public void testTuples$tupleWithoutDef() { doTest(); }
 
-  void testTuples$tupleWithoutVariables() { doTest() }
+  public void testTuples$tupleWithoutVariables() { doTest(); }
 
-  void testTuples$differentModifiers() { doTest() }
+  public void testTuples$differentModifiers() { doTest(); }
 
-  void testTypedef$classes$abstr() throws Throwable { doTest() }
+  public void testTypedef$classes$abstr() { doTest(); }
 
-  void testTypedef$classes$class1() throws Throwable { doTest() }
+  public void testTypedef$classes$class1() { doTest(); }
 
-  void testTypedef$classes$class10() throws Throwable { doTest() }
+  public void testTypedef$classes$class10() { doTest(); }
 
-  void testTypedef$classes$class11() throws Throwable { doTest() }
+  public void testTypedef$classes$class11() { doTest(); }
 
-  void testTypedef$classes$class2() throws Throwable { doTest() }
+  public void testTypedef$classes$class2() { doTest(); }
 
-  void testTypedef$classes$class3() throws Throwable { doTest() }
+  public void testTypedef$classes$class3() { doTest(); }
 
-  void testTypedef$classes$class4() throws Throwable { doTest() }
+  public void testTypedef$classes$class4() { doTest(); }
 
-  void testTypedef$classes$class5() throws Throwable { doTest() }
+  public void testTypedef$classes$class5() { doTest(); }
 
-  void testTypedef$classes$class6() throws Throwable { doTest() }
+  public void testTypedef$classes$class6() { doTest(); }
 
-  void testTypedef$classes$class7() throws Throwable { doTest() }
+  public void testTypedef$classes$class7() { doTest(); }
 
-  void testTypedef$classes$class8() throws Throwable { doTest() }
+  public void testTypedef$classes$class8() { doTest(); }
 
-  void testTypedef$classes$class9() throws Throwable { doTest() }
+  public void testTypedef$classes$class9() { doTest(); }
 
-  void testTypedef$classes$errors$classerr1() throws Throwable { doTest() }
+  public void testTypedef$classes$errors$classerr1() { doTest(); }
 
-  void testTypedef$classes$errors$classerr2() throws Throwable { doTest() }
+  public void testTypedef$classes$errors$classerr2() { doTest(); }
 
-  void testTypedef$classes$errors$classerr3() throws Throwable { doTest() }
+  public void testTypedef$classes$errors$classerr3() { doTest(); }
 
-  void testTypedef$classes$errors$class_error() throws Throwable { doTest() }
+  public void testTypedef$classes$errors$class_error() { doTest(); }
 
-  void testTypedef$constructors$construct12() throws Throwable { doTest() }
+  public void testTypedef$constructors$construct12() { doTest(); }
 
-  void testTypedef$constructors$constructor1() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor1() { doTest(); }
 
-  void testTypedef$constructors$constructor10() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor10() { doTest(); }
 
-  void testTypedef$constructors$constructor11() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor11() { doTest(); }
 
-  void testTypedef$constructors$constructor13() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor13() { doTest(); }
 
-  void testTypedef$constructors$constructor14() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor14() { doTest(); }
 
-  void testTypedef$constructors$constructor15() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor15() { doTest(); }
 
-  void testTypedef$constructors$constructor2() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor2() { doTest(); }
 
-  void testTypedef$constructors$constructor3() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor3() { doTest(); }
 
-  void testTypedef$constructors$constructor4() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor4() { doTest(); }
 
-  void testTypedef$constructors$constructor5() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor5() { doTest(); }
 
-  void testTypedef$constructors$constructor6() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor6() { doTest(); }
 
-  void testTypedef$constructors$constructor7() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor7() { doTest(); }
 
-  void testTypedef$constructors$constructor8() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor8() { doTest(); }
 
-  void testTypedef$constructors$constructor9() throws Throwable { doTest() }
+  public void testTypedef$constructors$constructor9() { doTest(); }
 
-  void testTypedef$enums$enum1() throws Throwable { doTest() }
+  public void testTypedef$enums$enum1() { doTest(); }
 
-  void testTypedef$enums$enum10() throws Throwable { doTest() }
+  public void testTypedef$enums$enum10() { doTest(); }
 
-  void testTypedef$enums$enum11() throws Throwable { doTest() }
+  public void testTypedef$enums$enum11() { doTest(); }
 
-  void testTypedef$enums$enum12() throws Throwable { doTest() }
+  public void testTypedef$enums$enum12() { doTest(); }
 
-  void testTypedef$enums$enum13() throws Throwable { doTest() }
+  public void testTypedef$enums$enum13() { doTest(); }
 
-  void testTypedef$enums$enum2() throws Throwable { doTest() }
+  public void testTypedef$enums$enum2() { doTest(); }
 
-  void testTypedef$enums$enum3() throws Throwable { doTest() }
+  public void testTypedef$enums$enum3() { doTest(); }
 
-  void testTypedef$enums$enum4() throws Throwable { doTest() }
+  public void testTypedef$enums$enum4() { doTest(); }
 
-  void testTypedef$enums$enum5() throws Throwable { doTest() }
+  public void testTypedef$enums$enum5() { doTest(); }
 
-  void testTypedef$enums$enum6() throws Throwable { doTest() }
+  public void testTypedef$enums$enum6() { doTest(); }
 
-  void testTypedef$enums$enum7() throws Throwable { doTest() }
+  public void testTypedef$enums$enum7() { doTest(); }
 
-  void testTypedef$enums$enum8() throws Throwable { doTest() }
+  public void testTypedef$enums$enum8() { doTest(); }
 
-  void testTypedef$enums$enum9() throws Throwable { doTest() }
+  public void testTypedef$enums$enum9() { doTest(); }
 
-  void testTypedef$interfaces$errors$interfaceerr1() throws Throwable { doTest() }
+  public void testTypedef$interfaces$errors$interfaceerr1() { doTest(); }
 
-  void testTypedef$interfaces$errors$interfaceerr2() throws Throwable { doTest() }
+  public void testTypedef$interfaces$errors$interfaceerr2() { doTest(); }
 
-  void testTypedef$interfaces$errors$interfaceerr3() throws Throwable { doTest() }
+  public void testTypedef$interfaces$errors$interfaceerr3() { doTest(); }
 
-  void testTypedef$interfaces$interface1() throws Throwable { doTest() }
+  public void testTypedef$interfaces$interface1() { doTest(); }
 
-  void testTypedef$interfaces$interface2() throws Throwable { doTest() }
+  public void testTypedef$interfaces$interface2() { doTest(); }
 
-  void testTypedef$interfaces$interface3() throws Throwable { doTest() }
+  public void testTypedef$interfaces$interface3() { doTest(); }
 
-  void testTypedef$interfaces$interface4() throws Throwable { doTest() }
+  public void testTypedef$interfaces$interface4() { doTest(); }
 
-  void testTypedef$interfaces$interface5() throws Throwable { doTest() }
+  public void testTypedef$interfaces$interface5() { doTest(); }
 
-  void testTypedef$interfaces$member3() throws Throwable { doTest() }
+  public void testTypedef$interfaces$member3() { doTest(); }
 
-  void testTypedef$interfaces$members$member1() throws Throwable { doTest() }
+  public void testTypedef$interfaces$members$member1() { doTest(); }
 
-  void testTypedef$interfaces$members$member2() throws Throwable { doTest() }
+  public void testTypedef$interfaces$members$member2() { doTest(); }
 
-  void testTypedef$interfaces$members$member3() throws Throwable { doTest() }
+  public void testTypedef$interfaces$members$member3() { doTest(); }
 
-  void testTypedef$interfaces$members$member4() throws Throwable { doTest() }
+  public void testTypedef$interfaces$members$member4() { doTest(); }
 
-  void testTypedef$interfaces$members$member5() throws Throwable { doTest() }
+  public void testTypedef$interfaces$members$member5() { doTest(); }
 
-  void testTypedef$interfaces$members$member6() throws Throwable { doTest() }
+  public void testTypedef$interfaces$members$member6() { doTest(); }
 
-  void testTypedef$interfaces$members$memeber7() throws Throwable { doTest() }
+  public void testTypedef$interfaces$members$memeber7() { doTest(); }
 
-  void testTypedef$traits$trait1() { doTest() }
+  public void testTypedef$traits$trait1() { doTest(); }
 
-  void testTypedef$methods$method2() throws Throwable { doTest() }
+  public void testTypedef$methods$method2() { doTest(); }
 
-  void testTypedef$methods$method3() throws Throwable { doTest() }
+  public void testTypedef$methods$method3() { doTest(); }
 
-  void testTypedef$methods$method4() throws Throwable { doTest() }
+  public void testTypedef$methods$method4() { doTest(); }
 
-  void testUse$use1() throws Throwable { doTest() }
+  public void testUse$use1() { doTest(); }
 
-  void testVardef$vardef1() throws Throwable { doTest() }
+  public void testVardef$vardef1() { doTest(); }
 
-  void testVardef$vardef2() throws Throwable { doTest() }
+  public void testVardef$vardef2() { doTest(); }
 
-  void testVardef$vardef3() throws Throwable { doTest() }
+  public void testVardef$vardef3() { doTest(); }
 
-  void testVardef$vardef4() throws Throwable { doTest() }
+  public void testVardef$vardef4() { doTest(); }
 
-  void testVardef$vardeferr() throws Throwable { doTest() }
+  public void testVardef$vardeferr() { doTest(); }
 
-  void testVardef$vardeferrsingle4() throws Throwable { doTest() }
+  public void testVardef$vardeferrsingle4() { doTest(); }
 
-  void testVardef$newlineAfterModifiers() { doTest() }
+  public void testVardef$newlineAfterModifiers() { doTest(); }
 
-  void testWith$with1() throws Throwable { doTest() }
+  public void testWith$with1() { doTest(); }
 
-  void testWith$with2() throws Throwable { doTest() }
+  public void testWith$with2() { doTest(); }
 
-  void testAfterAs() throws Throwable { doTest() }
+  public void testAfterAs() { doTest(); }
 
-  void testUnnamedField() throws Throwable { doTest() }
+  public void testUnnamedField() { doTest(); }
 
-  void testIfRecovery() throws Throwable { doTest() }
+  public void testIfRecovery() { doTest(); }
 
-  void testSemicolonsOnDifferentLines() throws Throwable { doTest() }
+  public void testSemicolonsOnDifferentLines() { doTest(); }
 
-  void testRecoverySameLine() { doTest() }
+  public void testRecoverySameLine() { doTest(); }
 
-  void testRecoveryNewLine() { doTest() }
+  public void testRecoveryNewLine() { doTest(); }
 
-  void testRecoveryMissingSeparator() { doTest() }
+  public void testRecoveryMissingSeparator() { doTest(); }
+
+  @Override
+  public final String getBasePath() {
+    return basePath;
+  }
+
+  private final String basePath = super.getBasePath() + "statements";
 }

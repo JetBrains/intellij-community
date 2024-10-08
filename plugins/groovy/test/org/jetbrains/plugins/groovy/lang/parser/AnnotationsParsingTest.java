@@ -1,44 +1,47 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.parser
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.parser;
 
-class AnnotationsParsingTest extends GroovyParsingTestCase {
-  final String basePath = super.basePath + "annotations"
+public class AnnotationsParsingTest extends GroovyParsingTestCase {
+  public void testAnn1() { doTest(); }
 
-  void testAnn1() { doTest() }
+  public void testAnn2() { doTest(); }
 
-  void testAnn2() { doTest() }
+  public void testAnn3() { doTest(); }
 
-  void testAnn3() { doTest() }
+  public void testAnn4() { doTest(); }
 
-  void testAnn4() { doTest() }
+  public void testAnn5() { doTest(); }
 
-  void testAnn5() { doTest() }
+  public void testAnn6() { doTest(); }
 
-  void testAnn6() { doTest() }
+  public void testAnn7() { doTest(); }
 
-  void testAnn7() { doTest() }
+  public void testClassLiteral() { doTest(); }
 
-  void testClassLiteral() { doTest() }
+  public void testImportAnn() { doTest(); }
 
-  void testImportAnn() { doTest() }
+  public void testPackageAnn() { doTest(); }
 
-  void testPackageAnn() { doTest() }
+  public void testDefAttribute() { doTest(); }
 
-  void testDefAttribute() { doTest() }
+  public void testLineFeedAfterRef() { doTest(); }
 
-  void testLineFeedAfterRef() { doTest() }
+  public void testKeywordsAttributes() { doTest(); }
 
-  void testKeywordsAttributes() { doTest() }
+  public void testMess() { doTest(); }
 
-  void testMess() { doTest() }
+  public void testTypeParameters() { doTest(); }
 
-  void testTypeParameters() { doTest() }
+  public void testUnfinishedReference() { doTest(); }
 
-  void testUnfinishedReference() { doTest() }
+  public void testEmptyArrayValue() { doTest(); }
 
-  void testEmptyArrayValue() { doTest() }
+  public void testTrailingCommaInArrayValue() { doTest(); }
 
-  void testTrailingCommaInArrayValue() { doTest() }
+  public void testMethodParameters() { doTest(); }
 
-  void testMethodParameters() { doTest() }
+  @Override
+  public final String getBasePath() {
+    return super.getBasePath() + "annotations";
+  }
 }

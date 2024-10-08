@@ -1,92 +1,84 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.groovy.lang.parser
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.parser;
 
-import com.intellij.lexer.Lexer
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.LexerTestCase
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.lexer.Lexer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LexerTestCase;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-@CompileStatic
-class GroovyLexerTest extends LexerTestCase {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
+public class GroovyLexerTest extends LexerTestCase {
   @NotNull
   @Override
   protected Lexer createLexer() {
-    new GroovyLexer()
+    return new GroovyLexer();
   }
 
   @NotNull
   @Override
   protected String getDirPath() {
-    TestUtils.testDataPath + "lexer"
-  }
-
-  @NotNull
-  @Override
-  protected String getTestName(boolean lowercaseFirstLetter) {
-    def name = super.getTestName(lowercaseFirstLetter)
-      .trim()
-      .split(" ")
-      .collect { it.capitalize() }
-      .join("")
-    return lowercaseFirstLetter ? name.uncapitalize() : name
+    return TestUtils.getTestDataPath() + "lexer";
   }
 
   @Override
   protected void doTest(@NotNull @NonNls String text) {
-    super.doTest(text)
-    checkCorrectRestart(text)
+    super.doTest(text);
+    checkCorrectRestart(text);
   }
 
   @Override
-  protected String printTokens(@NotNull Lexer lexer, @NotNull CharSequence text, int start) {
-    lexer.start(text, start, text.length())
-    def tokens = [["offset", "state", "text", "type"]]
-    def tokenType
+  protected String printTokens(@NotNull final Lexer lexer, @NotNull CharSequence text, int start) {
+    lexer.start(text, start, text.length());
+    List<List<String>> tokens = new ArrayList<>(Arrays.asList(new ArrayList<>(Arrays.asList("offset", "state", "text", "type"))));
+    Object tokenType;
     while ((tokenType = lexer.getTokenType()) != null) {
-      tokens << [
-        lexer.tokenStart.toString(),
-        lexer.state.toString(),
-        "'${StringUtil.escapeLineBreak(lexer.tokenText)}'".toString(),
-        tokenType.toString()
-      ]
-      lexer.advance()
+      tokens.add(List.of(String.valueOf(lexer.getTokenStart()), String.valueOf(lexer.getState()),
+                         "'" + StringUtil.escapeLineBreak(lexer.getTokenText()) + "'", tokenType.toString()));
+      lexer.advance();
     }
-    return formatTable(tokens)
+
+    return formatTable(tokens);
   }
 
   private static String formatTable(List<List<String>> tokens) {
-    def max = new int[tokens.first().size()]
-    for (token in tokens) {
-      token.eachWithIndex { column, i ->
-        max[i] = Math.max(column.length(), max[i])
+    int[] max = new int[tokens.get(0).size()];
+    for (List<String> token : tokens) {
+      for (int i = 0; i < token.size(); i++) {
+        String column = token.get(i);
+        max[i] = Math.max(column.length(), max[i]);
       }
     }
-    def result = new StringBuilder()
-    for (token in tokens) {
-      token.eachWithIndex { column, i ->
-        result.append(column.padRight(max[i] + 1))
+
+    StringBuilder result = new StringBuilder();
+    for (List<String> token : tokens) {
+      for (int i = 0; i < token.size(); i++) {
+        String column = token.get(i);
+        int padding = Math.max(column.length(), max[i]) - column.length() + 1;
+        result.append(column).append(" ".repeat(padding));
       }
-      result.append('\n')
+      result.append("\n");
     }
-    return result.toString()
+
+    return result.toString();
   }
 
-  void 'test comments'() {
-    doTest '''\
-/**/
-/***/
-//
-//
-
-//
-
-
-//
-'''
+  public void testComments() {
+    doTest("""
+             /**/
+             /***/
+             //
+             //
+             
+             //
+             
+             
+             //
+             """);
   }
 }

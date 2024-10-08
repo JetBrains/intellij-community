@@ -1,29 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.parser
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.parser;
 
-class SealedParsingTest extends GroovyParsingTestCase {
+public class SealedParsingTest extends GroovyParsingTestCase {
   @Override
-  String getBasePath() {
-    return super.basePath + "types/sealed"
+  public String getBasePath() {
+    return super.getBasePath() + "types/sealed";
   }
 
-  void testBasicNonsealed() { doTest() }
+  public void testBasicNonsealed() { doTest(); }
 
-  void testBasicSealed() { doTest() }
+  public void testBasicSealed() { doTest(); }
 
-  void testEnum() { doTest() }
+  public void testEnum() { doTest(); }
 
-  void testExplicitSubclasses() { doTest() }
+  public void testExplicitSubclasses() { doTest(); }
 
-  void testInterface() { doTest() }
+  public void testInterface() { doTest(); }
 
-  void testPermitsAfterExtends() { doTest() }
+  public void testPermitsAfterExtends() { doTest(); }
 
-  void testPermitsAfterImplements() { doTest() }
+  public void testPermitsAfterImplements() { doTest(); }
 
-  void testPermitsBeforeExtends() { doTest() }
+  public void testPermitsBeforeExtends() { doTest(); }
 
-  void testPermitsBeforeImplements() { doTest() }
+  public void testPermitsBeforeImplements() { doTest(); }
 
-  void testTrait() { doTest() }
+  public void testTrait() { doTest(); }
 }

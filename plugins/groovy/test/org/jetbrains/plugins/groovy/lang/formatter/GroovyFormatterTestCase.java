@@ -1,165 +1,172 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.jetbrains.plugins.groovy.lang.formatter
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.formatter;
 
-import com.intellij.application.options.CodeStyle
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.IncorrectOperationException
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.groovy.GroovyFileType
-import org.jetbrains.plugins.groovy.GroovyLanguage
-import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import junit.framework.TestCase;
+import org.codehaus.groovy.runtime.StringGroovyMethods;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.lang.reflect.Field
-import java.util.regex.Matcher
-import java.util.regex.Pattern
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-abstract class GroovyFormatterTestCase extends LightJavaCodeInsightFixtureTestCase {
-  private static final Logger LOG = Logger.getInstance(GroovyFormatterTestCase.class)
-  private static final String OPTION_START = "<option>"
-  private static final String OPTION_END = "</option>"
-  private static final Pattern PATTERN = ~"$OPTION_START(\\w+=(true|false+|\\d|\\w+))$OPTION_END\n"
-  protected CodeStyleSettings myTempSettings
-
+public abstract class GroovyFormatterTestCase extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
-    super.setUp()
-    setSettings(getProject())
+    super.setUp();
+    setSettings(getProject());
 
-    groovySettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    groovySettings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
-    groovySettings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    getGroovySettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    getGroovySettings().METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    getGroovySettings().BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
   }
 
   protected CommonCodeStyleSettings getGroovySettings() {
-    return myTempSettings.getCommonSettings(GroovyLanguage.INSTANCE)
+    return myTempSettings.getCommonSettings(GroovyLanguage.INSTANCE);
   }
 
   protected GroovyCodeStyleSettings getGroovyCustomSettings() {
-    return myTempSettings.getCustomSettings(GroovyCodeStyleSettings)
+    return myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
   }
 
   protected void setSettings(Project project) {
-    assertNull(myTempSettings)
-    CodeStyleSettings settings = CodeStyle.getSettings(project)
-    myTempSettings = settings
+    TestCase.assertNull(myTempSettings);
+    CodeStyleSettings settings = CodeStyle.getSettings(project);
+    myTempSettings = settings;
 
-    CommonCodeStyleSettings.IndentOptions gr = myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE)
-    assertNotSame(gr, settings.OTHER_INDENT_OPTIONS)
-    gr.INDENT_SIZE = 2
-    gr.CONTINUATION_INDENT_SIZE = 4
-    gr.TAB_SIZE = 2
-    myTempSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3
+    CommonCodeStyleSettings.IndentOptions gr = myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE);
+    TestCase.assertNotSame(gr, settings.OTHER_INDENT_OPTIONS);
+    gr.INDENT_SIZE = 2;
+    gr.CONTINUATION_INDENT_SIZE = 4;
+    gr.TAB_SIZE = 2;
+    myTempSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
   }
 
   protected void checkFormatting(String fileText, String expected) {
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText)
-    checkFormatting(expected)
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
+    checkFormatting(expected);
   }
 
   protected void doFormat(final PsiFile file) {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          void run() {
-            try {
-              TextRange myTextRange = file.getTextRange()
-              CodeStyleManager.getInstance(file.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset())
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e)
-            }
-          }
-        })
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        TextRange myTextRange = file.getTextRange();
+        CodeStyleManager.getInstance(file.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
       }
-    }, null, null)
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }), null, null);
   }
 
   protected void checkFormatting(String expected) {
-    doFormat(myFixture.getFile())
-    myFixture.checkResult(expected)
+    doFormat(myFixture.getFile());
+    myFixture.checkResult(expected);
   }
 
-  void doTest(String fileName) throws Throwable {
-    final List<String> data = TestUtils.readInput(testDataPath + fileName)
-    String inputWithOptions = data[0]
-    String input = inputWithOptions
+  public void doTest(String fileName) throws Throwable {
+    final List<String> data = TestUtils.readInput(getTestDataPath() + fileName);
+    String inputWithOptions = data.get(0);
+    String input = inputWithOptions;
     while (true) {
-      def (String name, String value, Integer matcherEnd) = parseOption(input)
-      if (!name || !value) break
+      final Iterator<Serializable> iterator = parseOption(input).iterator();
+      String name = ((String)(iterator.hasNext() ? iterator.next() : null));
+      String value = ((String)(iterator.hasNext() ? iterator.next() : null));
+      Integer matcherEnd = ((Integer)(iterator.hasNext() ? iterator.next() : null));
 
-      def (Field field, Object settingObj) = findSettings(name)
-      field.set(settingObj, evaluateValue(value))
-      input = input.substring(matcherEnd)
+      if (!StringGroovyMethods.asBoolean(name) || !StringGroovyMethods.asBoolean(value)) break;
+
+      final Iterator<Object> iterator1 = findSettings(name).iterator();
+      Field field = ((Field)(iterator1.hasNext() ? iterator1.next() : null));
+      Object settingObj = iterator1.hasNext() ? iterator1.next() : null;
+
+      field.set(settingObj, evaluateValue(value));
+      input = input.substring(matcherEnd);
     }
 
-    checkFormattingByFile(input, inputWithOptions, fileName)
+
+    checkFormattingByFile(input, inputWithOptions, fileName);
   }
 
   protected void checkFormattingByFile(String input, String inputWithOptions, String path) {
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, input)
-    doFormat(myFixture.getFile())
-    final String prefix = inputWithOptions + '\n-----\n'
-    myFixture.configureByText('test.txt', prefix + myFixture.getFile().getText())
-    myFixture.checkResultByFile(path, false)
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, input);
+    doFormat(myFixture.getFile());
+    final String prefix = inputWithOptions + "\n-----\n";
+    myFixture.configureByText("test.txt", prefix + myFixture.getFile().getText());
+    myFixture.checkResultByFile(path, false);
   }
 
   @NotNull
-  static List parseOption(String input) {
-    final Matcher matcher = PATTERN.matcher(input)
-    if (!matcher.find()) return [null, null, null]
-    final String[] strings = matcher.group(1).split("=")
-    return [strings[0], strings[1], matcher.end()]
+  public static List<Serializable> parseOption(String input) {
+    final Matcher matcher = PATTERN.matcher(input);
+    if (!matcher.find()) return Arrays.asList(null, null, null);
+    final String[] strings = matcher.group(1).split("=");
+    return new ArrayList<>(Arrays.asList(strings[0], strings[1], matcher.end()));
   }
 
-  private List findSettings(String name) {
-    return findField(CommonCodeStyleSettings, name)?.with { [it, getGroovySettings()] }
-      ?: findField(GroovyCodeStyleSettings, name)?.with { [it, getGroovyCustomSettings()] }
-             ?: findField(CommonCodeStyleSettings.IndentOptions, name)?.with { [it, getGroovySettings().getIndentOptions()] }
+  private List<Object> findSettings(String name) {
+    Field commonCodeStyleSettings = findField(CommonCodeStyleSettings.class, name);
+    if (commonCodeStyleSettings != null) {
+      return Arrays.asList(commonCodeStyleSettings, getGroovySettings());
+    }
+    Field groovyCodeStyleSettings = findField(GroovyCodeStyleSettings.class, name);
+    if (groovyCodeStyleSettings != null) {
+      return Arrays.asList(groovyCodeStyleSettings, getGroovyCustomSettings());
+    }
+    Field indentOptions = findField(CommonCodeStyleSettings.IndentOptions.class, name);
+    return indentOptions != null ? Arrays.asList(indentOptions, getGroovySettings().getIndentOptions()) : null;
   }
 
-  private static Field findField(Class<?> clazz, String name) {
-    return clazz.fields.find { it.name == name }
+  private static @Nullable Field findField(Class<?> clazz, final String name) {
+    return ContainerUtil.find(clazz.getFields(), f -> f.getName().equals(name));
   }
 
   @Nullable
   private static Object evaluateValue(String value) {
-    if (value == "true" || value == "false") {
-      return Boolean.parseBoolean(value)
+    if (value.equals("true") || value.equals("false")) {
+      return Boolean.parseBoolean(value);
     }
     else {
       try {
-        return Integer.parseInt(value)
+        return Integer.parseInt(value);
       }
       catch (NumberFormatException ignored) {
-        return CommonCodeStyleSettings.getField(value).get(value)
+        try {
+          return CommonCodeStyleSettings.class.getField(value).get(value);
+        }
+        catch (IllegalAccessException | NoSuchFieldException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
   }
+
+  private static final Logger LOG = Logger.getInstance(GroovyFormatterTestCase.class);
+  private static final String OPTION_START = "<option>";
+  private static final String OPTION_END = "</option>";
+  private static final Pattern PATTERN =
+    StringGroovyMethods.bitwiseNegate(OPTION_START + "(\\w+=(true|false+|\\d|\\w+))" + OPTION_END + "\n");
+  protected CodeStyleSettings myTempSettings;
 }

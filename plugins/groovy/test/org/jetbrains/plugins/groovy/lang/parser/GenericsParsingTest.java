@@ -1,55 +1,59 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.groovy.lang.parser
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.parser;
 
-class GenericsParsingTest extends GroovyParsingTestCase {
+public class GenericsParsingTest extends GroovyParsingTestCase {
+  public void testErr1() { doTest(); }
 
-  final String basePath = super.basePath + "generics"
+  public void testErr2() { doTest(); }
 
-  void testErr1() throws Throwable { doTest() }
+  public void testErr3() { doTest(); }
 
-  void testErr2() throws Throwable { doTest() }
+  public void testErr4() { doTest(); }
 
-  void testErr3() throws Throwable { doTest() }
+  public void testGenmethod1() { doTest(); }
 
-  void testErr4() { doTest() }
+  public void testGenmethod2() { doTest(); }
 
-  void testGenmethod1() throws Throwable { doTest() }
+  public void testGenmethod3() { doTest(); }
 
-  void testGenmethod2() throws Throwable { doTest() }
+  public void testGenmethod4() { doTest(); }
 
-  void testGenmethod3() throws Throwable { doTest() }
+  public void testGenmethod5() { doTest(); }
 
-  void testGenmethod4() throws Throwable { doTest() }
+  public void testTypeargs1() { doTest(); }
 
-  void testGenmethod5() { doTest() }
+  public void testTypeparam1() { doTest(); }
 
-  void testTypeargs1() throws Throwable { doTest() }
+  public void testTypeparam2() { doTest(); }
 
-  void testTypeparam1() throws Throwable { doTest() }
+  public void testTypeparam3() { doTest(); }
 
-  void testTypeparam2() throws Throwable { doTest() }
+  public void testNewLineAfterAngle() { doTest(); }
 
-  void testTypeparam3() throws Throwable { doTest() }
+  public void testNewLineAfterComma() { doTest(); }
 
-  void testNewLineAfterAngle() { doTest() }
+  public void testNewLineBeforeAngle() { doTest(); }
 
-  void testNewLineAfterComma() { doTest() }
+  public void testNewLineBeforeComma() { doTest(); }
 
-  void testNewLineBeforeAngle() { doTest() }
+  public void testNewLineBeforeExtendsInTypeParameterBounds() { doTest(); }
 
-  void testNewLineBeforeComma() { doTest() }
+  public void testNewLineAfterExtendsInTypeParameterBounds() { doTest(); }
 
-  void testNewLineBeforeExtendsInTypeParameterBounds() { doTest() }
+  public void testNewLineBeforeAmpInTypeParameterBounds() { doTest(); }
 
-  void testNewLineAfterExtendsInTypeParameterBounds() { doTest() }
+  public void testNewLineAfterAmpInTypeParameterBounds() { doTest(); }
 
-  void testNewLineBeforeAmpInTypeParameterBounds() { doTest() }
+  public void testTopLevelMethodWithoutModifiers() { doTest(); }
 
-  void testNewLineAfterAmpInTypeParameterBounds() { doTest() }
+  public void testClassLevelMethodWithoutModifiers() { doTest(); }
 
-  void testTopLevelMethodWithoutModifiers() { doTest() }
+  public void testClassLevelMethodWithoutModifiers2() { doTest(); }
 
-  void testClassLevelMethodWithoutModifiers() { doTest() }
+  @Override
+  public final String getBasePath() {
+    return basePath;
+  }
 
-  void testClassLevelMethodWithoutModifiers2() { doTest() }
+  private final String basePath = super.getBasePath() + "generics";
 }

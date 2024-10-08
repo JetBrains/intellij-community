@@ -1,43 +1,44 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.psi
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.psi;
 
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest
-import org.jetbrains.plugins.groovy.util.TestUtils
-import org.junit.Test
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
+import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.Test;
 
-@CompileStatic
-class GroovyPsiUtilTest extends GroovyLatestTest {
+import java.util.LinkedHashMap;
 
+import static junit.framework.TestCase.assertEquals;
+
+public class GroovyPsiUtilTest extends GroovyLatestTest {
   @Test
-  void 'application expression'() {
-    def expressions = [
-      "foo"             : false,
-      "foo.ref"         : false,
-      "foo(a)"          : false,
-      "foo[a]"          : false,
-      "foo a"           : true,
-      "foo(a) ref"      : true,
-      "foo(a).ref"      : false,
-      "foo a ref c"     : true,
-      "foo a ref(c)"    : true,
-      "foo(a) ref(c)"   : true,
-      "foo(a).ref(c)"   : false,
-      "foo a ref[c]"    : true,
-      "foo(a) ref[c]"   : true,
-      "foo(a).ref[c]"   : false,
-      "foo a ref[c] ref": true,
-      "foo a ref[c] (a)": true,
-      "foo a ref[c] {}" : true,
-      "foo a ref(c) ref": true,
-      "foo a ref(c)(c)" : true,
-      "foo a ref(c)[c]" : true,
-    ]
-    def factory = GroovyPsiElementFactory.getInstance(fixture.project)
-    TestUtils.runAll(expressions) { expressionText, isApplication ->
-      def expression = factory.createExpressionFromText(expressionText)
-      assert PsiUtilKt.isApplicationExpression(expression) == isApplication: expressionText
-    }
+  public void application_expression() {
+    LinkedHashMap<String, Boolean> map = new LinkedHashMap<>(20);
+    map.put("foo", false);
+    map.put("foo.ref", false);
+    map.put("foo(a)", false);
+    map.put("foo[a]", false);
+    map.put("foo a", true);
+    map.put("foo(a) ref", true);
+    map.put("foo(a).ref", false);
+    map.put("foo a ref c", true);
+    map.put("foo a ref(c)", true);
+    map.put("foo(a) ref(c)", true);
+    map.put("foo(a).ref(c)", false);
+    map.put("foo a ref[c]", true);
+    map.put("foo(a) ref[c]", true);
+    map.put("foo(a).ref[c]", false);
+    map.put("foo a ref[c] ref", true);
+    map.put("foo a ref[c] (a)", true);
+    map.put("foo a ref[c] {}", true);
+    map.put("foo a ref(c) ref", true);
+    map.put("foo a ref(c)(c)", true);
+    map.put("foo a ref(c)[c]", true);
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getFixture().getProject());
+    TestUtils.runAll(map, (expressionText, isApplication) -> {
+      GrExpression expression = factory.createExpressionFromText(expressionText);
+      assertEquals(PsiUtilKt.isApplicationExpression(expression), (boolean)isApplication);
+    });
   }
 }

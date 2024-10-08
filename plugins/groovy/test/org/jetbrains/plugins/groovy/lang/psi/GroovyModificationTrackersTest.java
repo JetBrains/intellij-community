@@ -1,91 +1,104 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.psi
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.psi;
 
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.util.PsiModificationTracker
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest
-import org.junit.Ignore
-import org.junit.Test
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Ignore
-@CompileStatic
-class GroovyModificationTrackersTest extends GroovyLatestTest {
-
+public class GroovyModificationTrackersTest extends GroovyLatestTest {
   @Test
-  void 'test class method'() {
-    doTest '''\
-class A {
-  def foo() { <caret> } 
-}
-''', false
+  public void test_class_method() {
+    doTest("""
+             class A {
+               def foo() { <caret> }
+             }
+             """, false, false);
   }
 
   @Test
-  void 'test class initializer'() {
-    doTest '''\
-class A {
- {
-   <caret>
- }
-}
-''', false
+  public void test_class_initializer() {
+    doTest("""
+             class A {
+              {
+                <caret>
+              }
+             }
+             """, false, false);
   }
 
   @Test
-  void 'test class body'() {
-    doTest '''\
-class A {
-  <caret>
-}
-''', false, true
+  public void test_class_body() {
+    doTest("""
+             class A {
+               <caret>
+             }
+             """, false, true);
   }
 
   @Test
-  void 'test script body'() {
-    doTest '<caret>', false
+  public void test_script_body() {
+    doTest("<caret>", false, false);
   }
 
   @Test
-  void 'test script variable'() {
-    doTest 'def a<caret>= 1', false, true
+  public void test_script_variable() {
+    doTest("def a<caret>= 1", false, true);
   }
 
-  void doTest(String text, boolean structureShouldChange, boolean oocbShouldChange = structureShouldChange) {
-    fixture.configureByText '_.groovy', text
-    def (long beforeStructure, long beforeOutOfCodeBlock) = [javaStructureCount, outOfCodeBlockCount]
-    List<Throwable> changeTraces = []
+  public void doTest(String text, boolean structureShouldChange, boolean oocbShouldChange) {
+    getFixture().configureByText("_.groovy", text);
+    long beforeStructure = getJavaStructureCount();
+    long beforeOutOfCodeBlock = getOutOfCodeBlockCount();
+
+    List<Throwable> changeTraces = new ArrayList<>();
     if (!structureShouldChange && !oocbShouldChange) {
-      PsiModificationTracker.Listener listener = {
-        def message = "java structure: $javaStructureCount, out of code block: $outOfCodeBlockCount"
-        changeTraces << new Throwable(message)
-      }
-      fixture.project.messageBus.connect fixture.testRootDisposable subscribe PsiModificationTracker.TOPIC, listener
+      PsiModificationTracker.Listener listener = () -> {
+        String message = "java structure: " + getJavaStructureCount() + ", out of code block: " + getOutOfCodeBlockCount();
+        changeTraces.add(new Throwable(message));
+      };
+      getFixture().getProject().getMessageBus().connect(getFixture().getTestRootDisposable())
+        .subscribe(PsiModificationTracker.TOPIC, listener);
     }
-    fixture.type " "
-    PsiDocumentManager.getInstance(fixture.project).commitDocument(fixture.editor.document)
-    def (long afterStructure, long afterOutOfCodeBlock) = [javaStructureCount, outOfCodeBlockCount]
+
+    getFixture().type(" ");
+    PsiDocumentManager.getInstance(getFixture().getProject()).commitDocument(getFixture().getEditor().getDocument());
+    long afterStructure = getJavaStructureCount();
+    long afterOutOfCodeBlock = getOutOfCodeBlockCount();
+
     try {
       if (structureShouldChange) {
-        assert beforeStructure < afterStructure
+        assert beforeStructure < afterStructure;
       }
       else {
-        assert beforeStructure == afterStructure
+        assert beforeStructure == afterStructure;
       }
+
       if (oocbShouldChange) {
-        assert beforeOutOfCodeBlock < afterOutOfCodeBlock
+        assert beforeOutOfCodeBlock < afterOutOfCodeBlock;
       }
       else {
-        assert beforeOutOfCodeBlock == afterOutOfCodeBlock
+        assert beforeOutOfCodeBlock == afterOutOfCodeBlock;
       }
     }
     catch (Throwable e) {
-      changeTraces*.printStackTrace()
-      throw e
+      for (Throwable trace : changeTraces) {
+        trace.printStackTrace();
+      }
+      throw e;
     }
   }
 
-  private long getJavaStructureCount() { fixture.psiManager.modificationTracker.modificationCount }
+  public void doTest(String text, boolean structureShouldChange) {
+    doTest(text, structureShouldChange, structureShouldChange);
+  }
 
-  private long getOutOfCodeBlockCount() { fixture.psiManager.modificationTracker.modificationCount }
+  private long getJavaStructureCount() { return getFixture().getPsiManager().getModificationTracker().getModificationCount(); }
+
+  private long getOutOfCodeBlockCount() { return getFixture().getPsiManager().getModificationTracker().getModificationCount(); }
 }

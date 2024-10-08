@@ -1,97 +1,99 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.formatter
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.formatter;
 
-import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-class LambdaFormatterTest extends GroovyFormatterTestCase {
+public class LambdaFormatterTest extends GroovyFormatterTestCase {
+  @Override
+  public final String getBasePath() {
+    return TestUtils.getTestDataPath() + "groovy/formatter/lambda/";
+  }
 
-  final String basePath = TestUtils.testDataPath + "groovy/formatter/lambda/"
+  public void testBraceStyle1() throws Throwable { doTest(); }
 
-  void testBraceStyle1() { doTest() }
+  public void testBraceStyle2() throws Throwable { doTest(); }
 
-  void testBraceStyle2() { doTest() }
+  public void testBraceStyle3() throws Throwable { doTest(); }
 
-  void testBraceStyle3() { doTest() }
+  public void testBraceStyle4() throws Throwable { doTest(); }
 
-  void testBraceStyle4() { doTest() }
+  public void testBraceStyle5() throws Throwable { doTest(); }
 
-  void testBraceStyle5() { doTest() }
+  public void testBraceStyle6() throws Throwable { doTest(); }
 
-  void testBraceStyle6() { doTest() }
+  public void testBraceStyle7() throws Throwable { doTest(); }
 
-  void testBraceStyle7() { doTest() }
+  public void testBraceStyle8() throws Throwable { doTest(); }
 
-  void testBraceStyle8() { doTest() }
+  public void testOneLineLambda1() throws Throwable { doTest(); }
 
-  void testOneLineLambda1() { doTest() }
+  public void testOneLineLambda2() throws Throwable { doTest(); }
 
-  void testOneLineLambda2() { doTest() }
+  public void testOneLineLambda3() throws Throwable { doTest(); }
 
-  void testOneLineLambda3() { doTest() }
+  public void testOneLineLambda4() throws Throwable { doTest(); }
 
-  void testOneLineLambda4() { doTest() }
+  public void testOneLineLambda5() throws Throwable { doTest(); }
 
-  void testOneLineLambda5() { doTest() }
+  public void testOneLineLambda6() throws Throwable { doTest(); }
 
-  void testOneLineLambda6() { doTest() }
+  public void testOneLineLambda7() throws Throwable { doTest(); }
 
-  void testOneLineLambda7() { doTest() }
+  public void testParams() throws Throwable { doTest(); }
 
-  void testParams() { doTest() }
+  public void testLambdaParametersAligned() throws Throwable { doTest(); }
 
-  void testLambdaParametersAligned() { doTest() }
+  public void testAlignLambdaBraceWithCall() throws Throwable { doTest(); }
 
-  void testAlignLambdaBraceWithCall() { doTest() }
+  public void testChainCall1() throws Throwable { doTest(); }
 
-  void testChainCall1() { doTest() }
+  public void testChainCall2() throws Throwable { doTest(); }
 
-  void testChainCall2() { doTest() }
+  public void testChainCall3() throws Throwable { doTest(); }
 
-  void testChainCall3() { doTest() }
+  public void testChainCall4() throws Throwable { doTest(); }
 
-  void testChainCall4() { doTest() }
+  public void testChainCall5() throws Throwable { doTest(); }
 
-  void testChainCall5() { doTest() }
+  public void testChainCall6() throws Throwable { doTest(); }
 
-  void testChainCall6() { doTest() }
+  public void testChainCall7() throws Throwable { doTest(); }
 
-  void testChainCall7() { doTest() }
+  public void testChainCall8() throws Throwable { doTest(); }
 
-  void testChainCall8() { doTest() }
+  public void testChainCall9() throws Throwable { doTest(); }
 
-  void testChainCall9() { doTest() }
+  public void testChainCall10() throws Throwable { doTest(); }
 
-  void testChainCall10() { doTest() }
+  public void testChainCallWithSingleExpressionLambda1() throws Throwable { doTest(); }
 
-  void testChainCallWithSingleExpressionLambda1() { doTest() }
+  public void testChainCallWithSingleExpressionLambda2() throws Throwable { doTest(); }
 
-  void testChainCallWithSingleExpressionLambda2() { doTest() }
+  public void testNoFlyingGeese() throws Throwable { doTest(); }
 
-  void testNoFlyingGeese() { doTest() }
+  public void testNoFlyingGeese2() throws Throwable { doTest(); }
 
-  void testNoFlyingGeese2() { doTest() }
+  public void testSpacesAroundArrow1() throws Throwable { doTest(); }
 
-  void testSpacesAroundArrow1() { doTest() }
+  public void testSpacesAroundArrow2() throws Throwable { doTest(); }
 
-  void testSpacesAroundArrow2() { doTest() }
+  public void testSpacesAroundArrow3() throws Throwable { doTest(); }
 
-  void testSpacesAroundArrow3() { doTest() }
+  public void testSpacesAroundArrow4() throws Throwable { doTest(); }
 
-  void testSpacesAroundArrow4() { doTest() }
+  public void testSpacesAroundArrow5() throws Throwable { doTest(); }
 
-  void testSpacesAroundArrow5() { doTest() }
+  public void testSpacesAroundArrow6() throws Throwable { doTest(); }
 
-  void testSpacesAroundArrow6() { doTest() }
+  public void testSpacesAroundArrow7() throws Throwable { doTest(); }
 
-  void testSpacesAroundArrow7() { doTest() }
+  public void testSpacesAroundArrow8() throws Throwable { doTest(); }
 
-  void testSpacesAroundArrow8() { doTest() }
+  public void testSpacesAroundArrow9() throws Throwable { doTest(); }
 
-  void testSpacesAroundArrow9() { doTest() }
+  public void testSpacesAroundArrow10() throws Throwable { doTest(); }
 
-  void testSpacesAroundArrow10() { doTest() }
-
-  private doTest() {
-    doTest(getTestName(true) + ".test")
+  private void doTest() throws Throwable {
+    doTest(getTestName(true) + ".test");
   }
 }

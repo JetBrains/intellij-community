@@ -1,381 +1,390 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.psi
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.psi;
 
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.psi.*
-import com.intellij.psi.impl.PsiManagerEx
-import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StubIndex
-import com.intellij.psi.util.InheritanceUtil
-import com.intellij.testFramework.BombedProgressIndicator
-import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
-import com.intellij.util.ref.GCUtil
-import com.intellij.util.ref.GCWatcher
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrAnonymousClassDefinitionImpl
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex
-/**
- * Created by Max Medvedev on 12/4/13
- */
-@CompileStatic
-class GrStubAstSwitchTest extends LightGroovyTestCase {
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.testFramework.BombedProgressIndicator;
+import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ref.GCWatcher;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import org.codehaus.groovy.runtime.StringGroovyMethods;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrAnonymousClassDefinitionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex;
 
-  void testDontLoadContentWhenProcessingImports() {
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
+
+public class GrStubAstSwitchTest extends LightGroovyTestCase {
+  public void testDontLoadContentWhenProcessingImports() {
     GroovyFileImpl file = (GroovyFileImpl)myFixture.addFileToProject("A.groovy", """
-import java.util.concurrent.ConcurrentHashMap
-
-class MyMap extends ConcurrentHashMap {}
-class B extends ConcurrentHashMap {
-  void foo() {
-    print 4
-  }
-}
-""")
-    assert !file.contentsLoaded
-    PsiClass bClass = file.classes[1]
-    assert !file.contentsLoaded
-
-    def fooMethod = bClass.methods[0]
-    assert !file.contentsLoaded
-
-    fooMethod.findDeepestSuperMethods()
-    assert !file.contentsLoaded
-  }
-
-  void testDontLoadAstForAnnotation() {
-    GroovyFileImpl file = myFixture.addFileToProject('a.groovy', '''\
-class A {
-  def foo(){}
-}
-
-class B {
-  @Delegate
-  A a = new A()
-}
-''') as GroovyFileImpl
-
-    assert !file.contentsLoaded
-    PsiClass clazzB = file.classes[1]
-    assert !file.contentsLoaded
-
-    PsiField field = clazzB.fields[0]
-    assert !file.contentsLoaded
-
-
-    PsiModifierList modifierList = field.modifierList
-    assert !file.contentsLoaded
-
-    PsiAnnotation[] annotations = modifierList.annotations
-    PsiAnnotation annotation = annotations[0]
-    assert !file.contentsLoaded
-
-    assert annotation.qualifiedName == 'groovy.lang.Delegate'
-    assert !file.contentsLoaded
-  }
-
-  void testDontLoadAstForAnnotation2() {
-    GroovyFileImpl file = myFixture.addFileToProject('a.groovy', '''\
-class A {
-  def foo(){}
-}
-
-class B extends A {
-  @Override
-  def foo() {}
-}
-''') as GroovyFileImpl
-
-    assert !file.contentsLoaded
-    PsiClass clazzB = file.classes[1]
-    assert !file.contentsLoaded
-
-    PsiMethod method = clazzB.methods[0]
-    assert !file.contentsLoaded
-
-
-    PsiModifierList modifierList = method.modifierList
-    assert !file.contentsLoaded
-
-    PsiAnnotation[] annotations = modifierList.annotations
-    PsiAnnotation annotation = annotations[0]
-    assert !file.contentsLoaded
-
-    assert annotation.qualifiedName == "java.lang.Override"
-    assert !file.contentsLoaded
-  }
-
-
-  void testDelegateExists() {
-    GroovyFileImpl file = myFixture.addFileToProject('a.groovy', '''\
-class A {
-  def foo(){}
-}
-
-class B {
-  @Delegate
-  A a = new A()
-}
-''') as GroovyFileImpl
-
-    assert !file.contentsLoaded
-    PsiClass clazzB = file.classes[1]
-    assert !file.contentsLoaded
-
-    assert clazzB.methods.find { it.name == 'foo' }
-    assert !file.contentsLoaded
-  }
-
-  void testDefaultValueForAnnotation() {
-    myFixture.addFileToProject('pack/Ann.groovy', '''\
-package pack
-
-@interface Ann {
-    String foo() default 'def'
-}
-''')
-
-    GroovyFileImpl file = myFixture.addFileToProject('usage.groovy', '''\
-import pack.Ann
-
-class X {
-  @Ann()
-  String bar() {}
-}
-''') as GroovyFileImpl
-
-    assert !file.contentsLoaded
-    PsiClass clazz = file.classes[0]
-    assert !file.contentsLoaded
-    PsiMethod method = clazz.methods[0]
-    assert !file.contentsLoaded
-    PsiAnnotation annotation = method.modifierList.findAnnotation('pack.Ann')
-    assert !file.contentsLoaded
-    assert annotation.findAttributeValue('foo') != null
-    assert !file.contentsLoaded
-  }
-
-  void testDefaultValueForAnnotationWithAliases() {
-    myFixture.addFileToProject('pack/Ann.groovy', '''\
-package pack
-
-@interface Ann {
-    String foo() default 'def'
-}
-''')
-
-    GroovyFileImpl file = myFixture.addFileToProject('usage.groovy', '''\
-import pack.Ann as A
-
-class X {
-  @A()
-  String bar() {}
-}
-''') as GroovyFileImpl
-
-    assert !file.contentsLoaded
-    PsiClass clazz = file.classes[0]
-    assert !file.contentsLoaded
-    PsiMethod method = clazz.methods[0]
-    assert !file.contentsLoaded
-    PsiAnnotation annotation = method.modifierList.findAnnotation('pack.Ann')
-    assert !file.contentsLoaded
-    assert annotation.findAttributeValue('foo') != null
-    assert !file.contentsLoaded
-  }
-
-  void testValueForAnnotationWithAliases() {
-    myFixture.addFileToProject('pack/Ann.groovy', '''\
-package pack
-
-@interface Ann {
-    String foo() default 'def'
-}
-''')
-
-    GroovyFileImpl file = myFixture.addFileToProject('usage.groovy', '''\
-import pack.Ann as A
-
-class X {
-  @A(foo='non_def')
-  String bar() {}
-}
-''') as GroovyFileImpl
-
-    assert !file.contentsLoaded
-    PsiClass clazz = file.classes[0]
-    assert !file.contentsLoaded
-    PsiMethod method = clazz.methods[0]
-    assert !file.contentsLoaded
-    PsiAnnotation annotation = method.modifierList.findAnnotation('pack.Ann')
-    assert !file.contentsLoaded
-    assert annotation.findAttributeValue('foo') != null
-    assert file.contentsLoaded
-  }
-
-  void 'test do not load ast for annotation reference value'() {
-    def file = myFixture.addFileToProject('Pogo.groovy', '''\
-@groovy.transform.AutoClone(style=groovy.transform.AutoCloneStyle.SIMPLE)
-class Pogo {} 
-''') as GroovyFileImpl
-    assert !file.contentsLoaded
-    def clazz = file.classes[0]
-    assert !file.contentsLoaded
-    def method = clazz.methods.find { it.name == 'cloneOrCopyMembers' }
-    assert !file.contentsLoaded
-    assert method?.hasModifierProperty(PsiModifier.PROTECTED)
-    assert !file.contentsLoaded
-  }
-
-  void "test do not load content for findMethodsByName"() {
-    GroovyFileImpl file = myFixture.addFileToProject('usage.groovy', '''\
-class X {
-  void foo(int a, int b = 2) {}
-}
-''') as GroovyFileImpl
-    assert !file.contentsLoaded
-    PsiClass clazz = file.classes[0]
-    assert !file.contentsLoaded
-
-    assert clazz.findMethodsByName('foo', false).size() == 2
-    assert !file.contentsLoaded
-  }
-
-  void "test do not load content for anonymous class' baseClassType"() {
-    def file = myFixture.tempDirFixture.createFile('A.groovy', '''\
-class A {
-  def field = new Runnable() {
-    void run() {}
-  }
-}
-''')
-    def psiFile = PsiManager.getInstance(getProject()).findFile(file) as PsiFileImpl
-    assert psiFile.stub
-    assert !psiFile.contentsLoaded
-
-    final Collection<GrAnonymousClassDefinition> classes = StubIndex.getElements(
-      GrAnonymousClassIndex.KEY, "Runnable", getProject(), GlobalSearchScope.allScope(project), GrAnonymousClassDefinition
-    )
-    assert classes.size() == 1
-
-    def definition = classes.first()
-    assert (definition as GrAnonymousClassDefinitionImpl).stub
-    assert psiFile.stub
-    assert !psiFile.contentsLoaded
-
-    definition.baseClassType
-    assert psiFile.stub
-    assert !psiFile.contentsLoaded
-
-    assert InheritanceUtil.isInheritor(definition, Runnable.name)
-    assert psiFile.stub
-    assert !psiFile.contentsLoaded
-  }
-
-  void 'test do not load contents in highlighting'() {
-    def file = fixture.tempDirFixture.createFile('classes.groovy', '''\
-class C {
-  static void staticVoidMethod(a, b = 1) {}
-}
-''')
-    ((JavaCodeInsightTestFixtureImpl)fixture).virtualFileFilter = { it == file }
-    fixture.configureByText '_.groovy', 'C.staticVoidMethod(1)'
-    fixture.checkHighlighting()
-  }
-
-  void 'test do not load AST when method has no comment'() {
-    def file = fixture.tempDirFixture.createFile('classes.groovy', '''\
-class C {
-  static void someMethod() {}
-  /**
-  *
-  */
-  static void someMethodWithDocs() {}
-}
-''')
-    def psiFile = psiManager.findFile(file) as GroovyFileImpl
-    assert !psiFile.contentsLoaded
-
-    def typeDefinition = psiFile.typeDefinitions.first()
-    assert !psiFile.contentsLoaded
-
-    def method = typeDefinition.findMethodsByName('someMethod', false).first()
-    assert !psiFile.contentsLoaded
-
-    assert method.docComment == null
-    assert !psiFile.contentsLoaded
-
-    def methodWithDocs = typeDefinition.findMethodsByName('someMethodWithDocs', false).first()
-    assert !psiFile.contentsLoaded
-
-    assert methodWithDocs.docComment != null
-    assert psiFile.contentsLoaded
-  }
-
-  void 'test type parameters bounds'() {
-    def file = fixture.addFileToProject('classes.groovy', 'class C<T extends Runnable> {}') as GroovyFileImpl
-    ((PsiManagerEx)psiManager).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, testRootDisposable)
-    def clazz = file.typeDefinitions.first()
-    def typeParameter = clazz.typeParameters.first()
-    assert typeParameter.extendsList.referencedTypes.size() == 1
-  }
-
-  void 'test PCE during retrieving stub index of an AST-based PSI does not break everything later'() {
-    def random = new Random()
-    def file = fixture.addFileToProject('a.groovy', '@Anno int var; ' * 3) as GroovyFileImpl
-    for (i in 1..5) {
-      def cancelAt = random.nextInt(100)
-
-      assert file.node
-      List<GrVariableDeclaration> decls = SyntaxTraverser.psiTraverser(file).filter(GrVariableDeclaration).toList().reverse()
-
-      new BombedProgressIndicator(cancelAt).runBombed {
-        assert PsiAnchor.create(decls[0]) instanceof PsiAnchor.StubIndexReference
+      import java.util.concurrent.ConcurrentHashMap
+      
+      class MyMap extends ConcurrentHashMap {}
+      class B extends ConcurrentHashMap {
+        void foo() {
+          print 4
+        }
       }
+      """);
+    assertFalse(file.isContentsLoaded());
+    PsiClass bClass = file.getClasses()[1];
+    assertFalse(file.isContentsLoaded());
 
-      GCUtil.tryGcSoftlyReachableObjects()
+    PsiMethod fooMethod = bClass.getMethods()[0];
+    assertFalse(file.isContentsLoaded());
+
+    fooMethod.findDeepestSuperMethods();
+    assertFalse(file.isContentsLoaded());
+  }
+
+  public void testDontLoadAstForAnnotation() {
+    GroovyFileImpl file = DefaultGroovyMethods.asType(myFixture.addFileToProject("a.groovy", """
+      class A {
+        def foo(){}
+      }
+      
+      class B {
+        @Delegate
+        A a = new A()
+      }
+      """), GroovyFileImpl.class);
+
+    assertFalse(file.isContentsLoaded());
+    PsiClass clazzB = file.getClasses()[1];
+    assertFalse(file.isContentsLoaded());
+
+    PsiField field = clazzB.getFields()[0];
+    assertFalse(file.isContentsLoaded());
+
+
+    PsiModifierList modifierList = field.getModifierList();
+    assertFalse(file.isContentsLoaded());
+
+    PsiAnnotation[] annotations = modifierList.getAnnotations();
+    PsiAnnotation annotation = annotations[0];
+    assertFalse(file.isContentsLoaded());
+
+    assertEquals("groovy.lang.Delegate", annotation.getQualifiedName());
+    assertFalse(file.isContentsLoaded());
+  }
+
+  public void testDontLoadAstForAnnotation2() {
+    GroovyFileImpl file = DefaultGroovyMethods.asType(myFixture.addFileToProject("a.groovy", """
+      class A {
+        def foo(){}
+      }
+      
+      class B extends A {
+        @Override
+        def foo() {}
+      }
+      """), GroovyFileImpl.class);
+
+    assertFalse(file.isContentsLoaded());
+    PsiClass clazzB = file.getClasses()[1];
+    assertFalse(file.isContentsLoaded());
+
+    PsiMethod method = clazzB.getMethods()[0];
+    assertFalse(file.isContentsLoaded());
+
+
+    PsiModifierList modifierList = method.getModifierList();
+    assertFalse(file.isContentsLoaded());
+
+    PsiAnnotation[] annotations = modifierList.getAnnotations();
+    PsiAnnotation annotation = annotations[0];
+    assertFalse(file.isContentsLoaded());
+
+    assertEquals("java.lang.Override", annotation.getQualifiedName());
+    assertFalse(file.isContentsLoaded());
+  }
+
+  public void testDelegateExists() {
+    GroovyFileImpl file = DefaultGroovyMethods.asType(myFixture.addFileToProject("a.groovy", """
+      class A {
+        def foo(){}
+      }
+      
+      class B {
+        @Delegate
+        A a = new A()
+      }
+      """), GroovyFileImpl.class);
+
+    assertFalse(file.isContentsLoaded());
+    PsiClass clazzB = file.getClasses()[1];
+    assertFalse(file.isContentsLoaded());
+    assertTrue(ContainerUtil.exists(clazzB.getMethods(), method -> method.getName().equals("foo")));
+    assertFalse(file.isContentsLoaded());
+  }
+
+  public void testDefaultValueForAnnotation() {
+    myFixture.addFileToProject("pack/Ann.groovy", """
+      package pack
+      
+      @interface Ann {
+          String foo() default 'def'
+      }
+      """);
+
+    GroovyFileImpl file = DefaultGroovyMethods.asType(myFixture.addFileToProject("usage.groovy", """
+      import pack.Ann
+      
+      class X {
+        @Ann()
+        String bar() {}
+      }
+      """), GroovyFileImpl.class);
+
+    assertFalse(file.isContentsLoaded());
+    PsiClass clazz = file.getClasses()[0];
+    assertFalse(file.isContentsLoaded());
+    PsiMethod method = clazz.getMethods()[0];
+    assertFalse(file.isContentsLoaded());
+    PsiAnnotation annotation = method.getModifierList().findAnnotation("pack.Ann");
+    assertFalse(file.isContentsLoaded());
+    assertNotNull(annotation.findAttributeValue("foo"));
+    assertFalse(file.isContentsLoaded());
+  }
+
+  public void testDefaultValueForAnnotationWithAliases() {
+    myFixture.addFileToProject("pack/Ann.groovy", """
+      package pack
+      
+      @interface Ann {
+          String foo() default 'def'
+      }
+      """);
+
+    GroovyFileImpl file = DefaultGroovyMethods.asType(myFixture.addFileToProject("usage.groovy", """
+      import pack.Ann as A
+      
+      class X {
+        @A()
+        String bar() {}
+      }
+      """), GroovyFileImpl.class);
+
+    assertFalse(file.isContentsLoaded());
+    PsiClass clazz = file.getClasses()[0];
+    assertFalse(file.isContentsLoaded());
+    PsiMethod method = clazz.getMethods()[0];
+    assertFalse(file.isContentsLoaded());
+    PsiAnnotation annotation = method.getModifierList().findAnnotation("pack.Ann");
+    assertFalse(file.isContentsLoaded());
+    assertNotNull(annotation.findAttributeValue("foo"));
+    assertFalse(file.isContentsLoaded());
+  }
+
+  public void testValueForAnnotationWithAliases() {
+    myFixture.addFileToProject("pack/Ann.groovy", """
+      package pack
+      
+      @interface Ann {
+          String foo() default 'def'
+      }
+      """);
+
+    GroovyFileImpl file = DefaultGroovyMethods.asType(myFixture.addFileToProject("usage.groovy", """
+      import pack.Ann as A
+      
+      class X {
+        @A(foo='non_def')
+        String bar() {}
+      }
+      """), GroovyFileImpl.class);
+
+    assertFalse(file.isContentsLoaded());
+    PsiClass clazz = file.getClasses()[0];
+    assertFalse(file.isContentsLoaded());
+    PsiMethod method = clazz.getMethods()[0];
+    assertFalse(file.isContentsLoaded());
+    PsiAnnotation annotation = method.getModifierList().findAnnotation("pack.Ann");
+    assertFalse(file.isContentsLoaded());
+    assertNotNull(annotation.findAttributeValue("foo"));
+    assertTrue(file.isContentsLoaded());
+  }
+
+  public void test_do_not_load_ast_for_annotation_reference_value() {
+    GroovyFileImpl file = DefaultGroovyMethods.asType(myFixture.addFileToProject("Pogo.groovy", """
+      @groovy.transform.AutoClone(style=groovy.transform.AutoCloneStyle.SIMPLE)
+      class Pogo {}\s
+      """), GroovyFileImpl.class);
+    assertFalse(file.isContentsLoaded());
+    PsiClass clazz = file.getClasses()[0];
+    assertFalse(file.isContentsLoaded());
+    PsiMethod method = ContainerUtil.find(clazz.getMethods(), m -> m.getName().equals("cloneOrCopyMembers"));
+    assertNotNull(method);
+    assertFalse(file.isContentsLoaded());
+    assertTrue(method.hasModifierProperty(PsiModifier.PROTECTED));
+    assertFalse(file.isContentsLoaded());
+  }
+
+  public void test_do_not_load_content_for_findMethodsByName() {
+    GroovyFileImpl file = DefaultGroovyMethods.asType(myFixture.addFileToProject("usage.groovy", """
+      class X {
+        void foo(int a, int b = 2) {}
+      }
+      """), GroovyFileImpl.class);
+    assertFalse(file.isContentsLoaded());
+    PsiClass clazz = file.getClasses()[0];
+    assertFalse(file.isContentsLoaded());
+
+    assertEquals(2, DefaultGroovyMethods.size(clazz.findMethodsByName("foo", false)));
+    assertFalse(file.isContentsLoaded());
+  }
+
+  public void test_do_not_load_content_for_anonymous_class__baseClassType() throws IOException {
+    VirtualFile file = myFixture.getTempDirFixture().createFile("A.groovy", """
+      class A {
+        def field = new Runnable() {
+          void run() {}
+        }
+      }
+      """);
+    PsiFileImpl psiFile = DefaultGroovyMethods.asType(PsiManager.getInstance(getProject()).findFile(file), PsiFileImpl.class);
+    assertNotNull(psiFile.getStub());
+    assertFalse(psiFile.isContentsLoaded());
+
+    final Collection<GrAnonymousClassDefinition> classes =
+      StubIndex.getElements(GrAnonymousClassIndex.KEY, "Runnable", getProject(), GlobalSearchScope.allScope(getProject()),
+                            GrAnonymousClassDefinition.class);
+    assertEquals(1, classes.size());
+
+    GrAnonymousClassDefinition definition = DefaultGroovyMethods.first(classes);
+    assertNotNull(((GrAnonymousClassDefinitionImpl)definition).getStub());
+    assertNotNull(psiFile.getStub());
+    assertFalse(psiFile.isContentsLoaded());
+
+    definition.getBaseClassType();
+    assertNotNull(psiFile.getStub());
+    assertFalse(psiFile.isContentsLoaded());
+
+    assertTrue(InheritanceUtil.isInheritor(definition, Runnable.class.getName()));
+    assertNotNull(psiFile.getStub());
+    assertFalse(psiFile.isContentsLoaded());
+  }
+
+  public void test_do_not_load_contents_in_highlighting() throws IOException {
+    final VirtualFile file = getFixture().getTempDirFixture().createFile("classes.groovy", """
+      class C {
+        static void staticVoidMethod(a, b = 1) {}
+      }
+      """);
+    ((JavaCodeInsightTestFixtureImpl)getFixture()).setVirtualFileFilter(f -> f.equals(file));
+    getFixture().configureByText("_.groovy", "C.staticVoidMethod(1)");
+    getFixture().checkHighlighting();
+  }
+
+  public void test_do_not_load_AST_when_method_has_no_comment() throws IOException {
+    VirtualFile file = getFixture().getTempDirFixture().createFile("classes.groovy", """
+      class C {
+        static void someMethod() {}
+        /**
+        *
+        */
+        static void someMethodWithDocs() {}
+      }
+      """);
+    GroovyFileImpl psiFile = DefaultGroovyMethods.asType(getPsiManager().findFile(file), GroovyFileImpl.class);
+    assertFalse(psiFile.isContentsLoaded());
+
+    GrTypeDefinition typeDefinition = DefaultGroovyMethods.first(psiFile.getTypeDefinitions());
+    assertFalse(psiFile.isContentsLoaded());
+
+    PsiMethod method = DefaultGroovyMethods.first(typeDefinition.findMethodsByName("someMethod", false));
+    assertFalse(psiFile.isContentsLoaded());
+
+    assertNull(method.getDocComment());
+    assertFalse(psiFile.isContentsLoaded());
+
+    PsiMethod methodWithDocs = DefaultGroovyMethods.first(typeDefinition.findMethodsByName("someMethodWithDocs", false));
+    assertFalse(psiFile.isContentsLoaded());
+
+    assertNotNull(methodWithDocs.getDocComment());
+    assertTrue(psiFile.isContentsLoaded());
+  }
+
+  public void test_type_parameters_bounds() {
+    GroovyFileImpl file = (GroovyFileImpl) getFixture().addFileToProject("classes.groovy", "class C<T extends Runnable> {}");
+    ((PsiManagerEx)getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, getTestRootDisposable());
+    GrTypeDefinition clazz = file.getTypeDefinitions()[0];
+    PsiTypeParameter typeParameter = clazz.getTypeParameters()[0];
+    assertEquals(1, typeParameter.getExtendsList().getReferencedTypes().length);
+  }
+
+  public void test_PCE_during_retrieving_stub_index_of_an_AST_based_PSI_does_not_break_everything_later() {
+    Random random = new Random();
+    final GroovyFileImpl file = (GroovyFileImpl) getFixture().addFileToProject(
+      "a.groovy",
+      StringGroovyMethods.multiply("@Anno int var; ", 3)
+    );
+
+    for (int i = 0; i < 5; i++) {
+      int cancelAt = random.nextInt(100);
+
+      assertNotNull(file.getNode());
+      final List<GrVariableDeclaration> decls = ContainerUtil.reverse(
+        SyntaxTraverser.psiTraverser(file).filter(GrVariableDeclaration.class).toList()
+      );
+
+      new BombedProgressIndicator(cancelAt)
+        .runBombed(() -> assertInstanceOf(PsiAnchor.create(decls.get(0)), PsiAnchor.StubIndexReference.class));
+
+      GCUtil.tryGcSoftlyReachableObjects();
 
       try {
-        WriteCommandAction.runWriteCommandAction(project) {
-          file.viewProvider.document.insertString(0, ' ')
-          PsiDocumentManager.getInstance(project).commitAllDocuments()
-        }
+        WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+          file.getViewProvider().getDocument().insertString(0, " ");
+          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        });
 
-        for (decl in decls) {
-          assert decl.node
-          assert decl.valid
+        for (GrVariableDeclaration decl : decls) {
+          assertNotNull(decl.getNode());
+          assertTrue(decl.isValid());
         }
       }
       catch (Throwable e) {
-        throw new RuntimeException("Failed with cancelAt=$cancelAt", e)
+        throw new RuntimeException("Failed with cancelAt=" + cancelAt, e);
       }
     }
-
   }
 
-  void 'test no SOE when AST spine building queries file stub'() {
-    def file = fixture.addFileToProject('a.groovy', '@Anno int var') as GroovyFileImpl
+  public void test_no_SOE_when_AST_spine_building_queries_file_stub() {
+    final GroovyFileImpl file =
+      DefaultGroovyMethods.asType(getFixture().addFileToProject("a.groovy", "@Anno int var"), GroovyFileImpl.class);
 
-    assert file.node
-    GrVariableDeclaration decl = SyntaxTraverser.psiTraverser(file).filter(GrVariableDeclaration).first()
-    assert decl
-    
-    for (i in 1..2) {
-      assert PsiAnchor.create(decl) instanceof PsiAnchor.StubIndexReference
+    assertNotNull(file.getNode());
+    GrVariableDeclaration decl = SyntaxTraverser.psiTraverser(file).filter(GrVariableDeclaration.class).first();
+    assertNotNull(decl);
 
-      GCWatcher.tracking(file.node).ensureCollected()
+    for (int i = 0; i < 2; i++) {
+      assertInstanceOf(PsiAnchor.create(decl), PsiAnchor.StubIndexReference.class);
 
-      WriteCommandAction.runWriteCommandAction(project) {
-        file.viewProvider.document.insertString(0, ' ')
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
-      }
-      assert decl.node
-      assert decl.valid
+      GCWatcher.tracking(file.getNode()).ensureCollected();
+
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        file.getViewProvider().getDocument().insertString(0, " ");
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      });
+      assertNotNull(decl.getNode());
+      assertTrue(decl.isValid());
     }
   }
 }
