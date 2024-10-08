@@ -134,6 +134,10 @@ class RadioButtonGroupBlock(
         appendLine(" ${itemData.label} - ${itemData.property}")
       }
       appendLine()
+      if (myIncludeOtherTextField && otherRadioButton?.isSelected == true && otherTextField?.text?.isBlank() == false) {
+        appendLine(" Other: ${otherProperty}")
+      }
+      appendLine()
     }
   }
 
