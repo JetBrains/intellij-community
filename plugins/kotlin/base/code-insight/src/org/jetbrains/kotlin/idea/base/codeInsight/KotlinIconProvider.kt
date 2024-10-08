@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
+import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiElement
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
+import com.intellij.ui.RowIcon
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -14,13 +16,28 @@ import javax.swing.Icon
 @ApiStatus.Internal
 object KotlinIconProvider {
     context(KaSession)
-    fun getIconFor(symbol: KaSymbol): Icon? {
+    fun getIconFor(symbol: KaSymbol, @Iconable.IconFlags flags: Int = 0): Icon? {
         symbol.psi?.let { referencedPsi ->
             if (referencedPsi !is KtElement) {
-                return getIconForJavaDeclaration(referencedPsi)
+                return getIconForJavaDeclaration(referencedPsi, flags)
             }
         }
 
+        val baseIcon = getBaseIcon(symbol)
+        if ((flags and Iconable.ICON_FLAG_VISIBILITY) != 0) {
+            val visibilityIcon = getVisibilityIcon(symbol)
+            if (visibilityIcon != null) {
+                val rowIcon = RowIcon(2)
+                rowIcon.setIcon(baseIcon, 0)
+                rowIcon.setIcon(visibilityIcon, 1)
+                return rowIcon
+            }
+        }
+        return baseIcon
+    }
+
+    context(KaSession)
+    private fun getBaseIcon(symbol: KaSymbol): Icon? {
         if (symbol is KaNamedFunctionSymbol) {
             val isAbstract = symbol.modality == KaSymbolModality.ABSTRACT
 
@@ -58,11 +75,21 @@ object KotlinIconProvider {
             is KaConstructorSymbol -> symbol.containingDeclaration?.let { getIconFor(it) }
             else -> null
         }
-
     }
 
-    private fun getIconForJavaDeclaration(declaration: PsiElement): Icon? {
-        val defaultIconFlags = 0
-        return declaration.getIcon(defaultIconFlags)
+    private fun getVisibilityIcon(symbol: KaSymbol): Icon? {
+        val visibility = (symbol as? KaDeclarationSymbol)?.visibility ?: return null
+        val id = when (visibility) {
+            KaSymbolVisibility.PUBLIC -> PlatformIcons.Public
+            KaSymbolVisibility.PROTECTED -> PlatformIcons.Protected
+            KaSymbolVisibility.PRIVATE -> PlatformIcons.Private
+            KaSymbolVisibility.INTERNAL -> PlatformIcons.Private
+            else -> return null
+        }
+        return IconManager.getInstance().getPlatformIcon(id)
+    }
+
+    private fun getIconForJavaDeclaration(declaration: PsiElement, @Iconable.IconFlags flags: Int = 0): Icon? {
+        return declaration.getIcon(flags)
     }
 }
