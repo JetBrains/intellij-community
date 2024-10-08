@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
-import com.intellij.lang.jvm.DefaultJvmElementVisitor
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmElementVisitor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
@@ -12,20 +9,9 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex
 import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils
 
-internal class ListenerImplementationMustNotBeDisposableInspection : DevKitJvmInspection() {
+internal class ListenerImplementationMustNotBeDisposableInspection : DevKitJvmInspection.ForClass() {
 
-  override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): JvmElementVisitor<Boolean?>? {
-    return object : DefaultJvmElementVisitor<Boolean> {
-      override fun visitClass(clazz: JvmClass): Boolean {
-        val sourceElement = clazz.sourceElement
-        if (sourceElement !is PsiClass) return true
-        checkClass(project, sourceElement, sink)
-        return true
-      }
-    }
-  }
-
-  private fun checkClass(project: Project, psiClass: PsiClass, sink: HighlightSink) {
+  override fun checkClass(project: Project, psiClass: PsiClass, sink: HighlightSink) {
     if (!ExtensionUtil.isExtensionPointImplementationCandidate(psiClass)) return
 
     if (!InheritanceUtil.isInheritor(psiClass, Disposable::class.java.canonicalName)) return

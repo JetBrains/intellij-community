@@ -2,9 +2,7 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
-import com.intellij.lang.jvm.DefaultJvmElementVisitor
 import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmElementVisitor
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.lang.jvm.actions.modifierRequest
@@ -25,45 +23,40 @@ private inline val visibleForTestingAnnotations
     "org.jetbrains.annotations.VisibleForTesting"
   )
 
-internal class ExtensionClassShouldBeFinalAndNonPublicInspection : DevKitJvmInspection() {
+internal class ExtensionClassShouldBeFinalAndNonPublicInspection : DevKitJvmInspection.ForClass() {
 
-  override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): JvmElementVisitor<Boolean> {
-    return object : DefaultJvmElementVisitor<Boolean> {
-      override fun visitClass(clazz: JvmClass): Boolean {
-        if (clazz !is PsiClass) return true
-        if (!ExtensionUtil.isExtensionPointImplementationCandidate(clazz)) {
-          return true
-        }
-        val sourceElement = clazz.sourceElement
-        val language = sourceElement?.language ?: return true
-        val file = clazz.containingFile ?: return true
+  override fun checkClass(project: Project, psiClass: PsiClass, sink: HighlightSink) {
+    if (!ExtensionUtil.isExtensionPointImplementationCandidate(psiClass)) {
+      return
+    }
+    val sourceElement = psiClass.sourceElement
+    val language = sourceElement?.language ?: return
+    val file = psiClass.containingFile ?: return
 
-        val isFinal = clazz.hasModifier(JvmModifier.FINAL)
-        val extensionClassShouldNotBePublicProvider = getProvider(ExtensionClassShouldNotBePublicProviders, language) ?: return true
-        val isPublic = extensionClassShouldNotBePublicProvider.isPublic(clazz)
-        if (isFinal && !isPublic) return true
+    val isFinal = psiClass.hasModifier(JvmModifier.FINAL)
+    val extensionClassShouldNotBePublicProvider = getProvider(ExtensionClassShouldNotBePublicProviders, language) ?: return
+    val isPublic = extensionClassShouldNotBePublicProvider.isPublic(psiClass)
+    if (isFinal && !isPublic) return
 
-        if (!ExtensionUtil.isInstantiatedExtension(clazz) { false }) return true
+    if (!ExtensionUtil.isInstantiatedExtension(psiClass) { false }) return
 
-        if (!isFinal && !hasInheritors(clazz)) {
-          val actions = createModifierActions(clazz, modifierRequest(JvmModifier.FINAL, true))
-          val errorMessageProvider = getProvider(ExtensionClassShouldBeFinalErrorMessageProviders, language) ?: return true
-          val message = errorMessageProvider.provideErrorMessage()
-          val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
-          sink.highlight(message, *fixes)
-        }
-        if (isPublic && !isAnnotatedAsVisibleForTesting(clazz)) {
-          val message = when {
-            isServiceImplementationRegisteredInPluginXml(clazz) -> DevKitBundle.message("inspection.extension.class.should.not.be.public.service")
-            else -> DevKitBundle.message("inspection.extension.class.should.not.be.public.text")
-          }
-          val fixes = extensionClassShouldNotBePublicProvider.provideQuickFix(clazz, file)
-          sink.highlight(message, *fixes)
-        }
-        return true
+    if (!isFinal && !hasInheritors(psiClass)) {
+      val actions = createModifierActions(psiClass, modifierRequest(JvmModifier.FINAL, true))
+      val errorMessageProvider = getProvider(ExtensionClassShouldBeFinalErrorMessageProviders, language) ?: return
+      val message = errorMessageProvider.provideErrorMessage()
+      val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
+      sink.highlight(message, *fixes)
+    }
+    if (isPublic && !isAnnotatedAsVisibleForTesting(psiClass)) {
+      val message = when {
+        isServiceImplementationRegisteredInPluginXml(psiClass) -> DevKitBundle.message("inspection.extension.class.should.not.be.public.service")
+        else -> DevKitBundle.message("inspection.extension.class.should.not.be.public.text")
       }
+      val fixes = extensionClassShouldNotBePublicProvider.provideQuickFix(psiClass, file)
+      sink.highlight(message, *fixes)
     }
   }
+
 }
 
 private fun isServiceImplementationRegisteredInPluginXml(aClass: PsiClass): Boolean {
@@ -84,6 +77,6 @@ private fun hasInheritors(aClass: PsiClass): Boolean {
   return DirectClassInheritorsSearch.search(aClass).findFirst() != null
 }
 
-private fun isAnnotatedAsVisibleForTesting(clazz: JvmClass): Boolean {
-  return clazz.annotations.any { visibleForTestingAnnotations.contains(it.qualifiedName) }
+private fun isAnnotatedAsVisibleForTesting(psiClass: JvmClass): Boolean {
+  return psiClass.annotations.any { visibleForTestingAnnotations.contains(it.qualifiedName) }
 }

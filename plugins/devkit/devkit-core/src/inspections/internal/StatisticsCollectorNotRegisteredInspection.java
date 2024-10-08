@@ -1,22 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
-import com.intellij.lang.jvm.DefaultJvmElementVisitor;
-import com.intellij.lang.jvm.JvmClass;
-import com.intellij.lang.jvm.JvmElementVisitor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -34,25 +26,11 @@ import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.processExtension
 
 @VisibleForTesting
 @ApiStatus.Internal
-public final class StatisticsCollectorNotRegisteredInspection extends DevKitJvmInspection {
+public final class StatisticsCollectorNotRegisteredInspection extends DevKitJvmInspection.ForClass {
   private static final String FEATURE_USAGES_COLLECTOR = "com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector";
 
   @Override
-  protected JvmElementVisitor<Boolean> buildVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly) {
-    return new DefaultJvmElementVisitor<>() {
-      @Override
-      public Boolean visitClass(@NotNull JvmClass clazz) {
-        PsiElement sourceElement = clazz.getSourceElement();
-        if (!(sourceElement instanceof PsiClass)) {
-          return null;
-        }
-        checkClass(project, (PsiClass)sourceElement, sink);
-        return false;
-      }
-    };
-  }
-
-  private static void checkClass(@NotNull Project project, @NotNull PsiClass checkedClass, @NotNull HighlightSink sink) {
+  protected void checkClass(@NotNull Project project, @NotNull PsiClass checkedClass, @NotNull HighlightSink sink) {
     if (!ExtensionUtil.isExtensionPointImplementationCandidate(checkedClass)) {
       return;
     }

@@ -2,9 +2,6 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.lang.jvm.DefaultJvmElementVisitor;
-import com.intellij.lang.jvm.JvmClass;
-import com.intellij.lang.jvm.JvmElementVisitor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -12,13 +9,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
 
-abstract class DescriptionNotFoundInspectionBase extends DevKitJvmInspection {
+abstract class DescriptionNotFoundInspectionBase extends DevKitJvmInspection.ForClass {
 
   private final DescriptionType myDescriptionType;
 
@@ -26,21 +22,8 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitJvmInspection {
     myDescriptionType = descriptionType;
   }
 
-  protected JvmElementVisitor<Boolean> buildVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly) {
-    return new DefaultJvmElementVisitor<>() {
-      @Override
-      public Boolean visitClass(@NotNull JvmClass clazz) {
-        PsiElement sourceElement = clazz.getSourceElement();
-        if (!(sourceElement instanceof PsiClass)) {
-          return null;
-        }
-        checkClass((PsiClass)sourceElement, sink);
-        return false;
-      }
-    };
-  }
-
-  private void checkClass(@NotNull PsiClass psiClass, @NotNull HighlightSink sink) {
+  @Override
+  protected void checkClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull HighlightSink sink) {
     if (!ExtensionUtil.isExtensionPointImplementationCandidate(psiClass)) return;
     if (!myDescriptionType.matches(psiClass)) return;
 
