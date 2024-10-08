@@ -452,7 +452,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StaticInitializationInExtensionsInspection"/>
 
-    <localInspection language="UAST" groupPathKey="inspections.group.path"
+    <localInspection language="JVM" groupPathKey="inspections.group.path"
                      projectType="INTELLIJ_PLUGIN"
                      key="inspections.listener.implementation.must.not.be.disposable.name" groupKey="inspections.group.code"
                      enabledByDefault="true" level="ERROR"
