@@ -137,6 +137,7 @@ fun toLevel(name: String): Service.Level? {
 }
 
 internal fun isService(uClass: UClass): Boolean {
+  if (!ExtensionUtil.isExtensionPointImplementationCandidate(uClass.javaPsi)) return false
   return isLightService(uClass.javaPsi) || isServiceRegisteredInXml(uClass)
 }
 
