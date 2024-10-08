@@ -6,6 +6,11 @@
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 *f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextWord
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+*f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$SuggestionInserted
+- com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+- f:getEditor():com.intellij.openapi.editor.Editor
+- getProviderId-S2YkoFA():java.lang.String
+- toRequest():com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 *f:com.intellij.codeInsight.inline.completion.InlineCompletionEventType$AfterInsert
 - com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 - sf:INSTANCE:com.intellij.codeInsight.inline.completion.InlineCompletionEventType$AfterInsert
@@ -55,11 +60,13 @@ com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 - *:onBackspace(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$Backspace,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 - *:onInsertNextLine(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextLine,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 - *:onInsertNextWord(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextWord,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
+- *:onSuggestionInserted(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$SuggestionInserted,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 c:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$Default
 - com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$Adapter
 - *F:onBackspace(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$Backspace,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 - *:onInsertNextLine(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextLine,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 - *:onInsertNextWord(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextWord,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
+- *f:onSuggestionInserted(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$SuggestionInserted,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 f:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot
 - *f:isEmpty():Z
 *:com.intellij.execution.impl.InlayProvider
