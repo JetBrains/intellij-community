@@ -14,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.idea.base.analysis.LibraryDependenciesCacheImpl.Companion.isSpecialKotlinCoreLibrary
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
@@ -23,7 +24,6 @@ import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.idea.base.analysis.LibraryDependenciesCacheImpl.Companion.isSpecialKotlinCoreLibrary
 
 @State(name = "KotlinIdeAnchorService", storages = [Storage("anchors.xml")])
 class ResolutionAnchorCacheServiceImpl(
@@ -53,21 +53,30 @@ class ResolutionAnchorCacheServiceImpl(
         val librariesByAnchor: Map<ModuleSourceInfo, List<LibraryInfo>>,
     )
 
+    private val anchorMappingCachedValue = CachedValuesManager.getManager(project).createCachedValue(
+        project,
+        {
+            CachedValueProvider.Result.create(
+                createResolutionAnchorMapping(),
+                ModuleModificationTracker.getInstance(project),
+                JavaLibraryModificationTracker.getInstance(project),
+            )
+        },
+        /* trackValue = */ false
+    )
+
+
     private val anchorMapping: AnchorMapping
-        get() =
-            CachedValuesManager.getManager(project).getCachedValue(project) {
-                CachedValueProvider.Result.create(
-                    createResolutionAnchorMapping(),
-                    ModuleModificationTracker.getInstance(project),
-                    JavaLibraryModificationTracker.getInstance(project)
-                )
-            }
+        get() = anchorMappingCachedValue.value
 
     override val resolutionAnchorsForLibraries: Map<LibraryInfo, ModuleSourceInfo>
         get() = anchorMapping.anchorByLibrary
 
     override val librariesForResolutionAnchors: Map<ModuleSourceInfo, List<LibraryInfo>>
         get() = anchorMapping.librariesByAnchor
+
+    override val librariesForResolutionAnchorsIfComputed: Map<ModuleSourceInfo, List<LibraryInfo>>?
+        get() = anchorMappingCachedValue.upToDateOrNull?.get()?.librariesByAnchor
 
     private val resolutionAnchorDependenciesCache: MutableMap<LibraryInfo, Set<ModuleSourceInfo>>
         get() =

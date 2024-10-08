@@ -54,5 +54,6 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api-impl-base" level="project" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

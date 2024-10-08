@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.facet.stableName
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.ModuleSourcesScope
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -30,7 +31,10 @@ data class ModuleTestSourceInfo internal constructor(
     override val stableName: Name by lazy { module.stableName }
 
     override val contentScope: GlobalSearchScope
-        get() = KotlinResolveScopeEnlarger.enlargeScope(module.moduleTestSourceScope, module, isTestScope = true)
+        get() = KotlinResolveScopeEnlarger.enlargeScope(module.kotlinTestSourceScope, module, isTestScope = true)
+
+    private val Module.kotlinTestSourceScope: GlobalSearchScope
+        get() = ModuleSourcesScope.tests(module)
 
     override fun modulesWhoseInternalsAreVisible(): Collection<ModuleInfo> =
         module.cacheByClassInvalidatingOnRootModifications(KeyForModulesWhoseInternalsAreVisible::class.java) {
