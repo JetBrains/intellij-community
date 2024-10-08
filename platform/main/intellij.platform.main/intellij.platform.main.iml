@@ -10,5 +10,6 @@
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.serviceView" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.kernel" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide.ui.inspector" scope="RUNTIME" />
   </component>
 </module>
