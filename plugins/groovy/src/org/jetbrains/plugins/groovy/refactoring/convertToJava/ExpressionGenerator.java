@@ -1040,7 +1040,7 @@ public class ExpressionGenerator extends Generator {
             ((GrExpression)nameElement).accept(this);
           }
           else if (nameElement != null) {
-            builder.append(nameElement.toString());
+            builder.append(nameElement);
           }
         }
       }
@@ -1472,7 +1472,7 @@ public class ExpressionGenerator extends Generator {
       insertion.append(varName).append(".put(");
       final String stringKey = arg.getLabelName();
       if (stringKey != null) {
-        insertion.append('"').append(stringKey).append('"');
+        insertion.append('"').append(StringUtil.escapeStringCharacters(stringKey)).append('"');
       }
       else {
         final GrArgumentLabel label = arg.getLabel();
