@@ -42,7 +42,8 @@ class CollectionVisualizerEvaluator(private val visualizer: CollectionVisualizer
           project,
           dimensionKey = "debugger-collection-visualizer",
           isDialog = false,
-          title = JavaDebuggerBundle.message("debugger.collection.visualizer.title"),
+          title = valueDescriptor.name?.let { JavaDebuggerBundle.message("debugger.collection.visualizer.title.0", it) }
+                  ?: JavaDebuggerBundle.message("debugger.collection.visualizer.title"),
           component,
           // don't cancel the whole scope when the window is closed -- otherwise it wouldn't be possible to reopen
           scope.childScope("$mainScopeName (limited to a window)"),
