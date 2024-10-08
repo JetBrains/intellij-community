@@ -43,7 +43,6 @@ public interface HighlightInfoType {
   HighlightInfoType TEXT_ATTRIBUTES = new HighlightInfoTypeImpl(HighlightSeverity.TEXT_ATTRIBUTES, CodeInsightColors.CONSIDERATION_ATTRIBUTES);
 
   HighlightInfoType WRONG_REF = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
-  HighlightInfoType INCOMPLETE_MODE_ERROR = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INFORMATION_ATTRIBUTES);
 
   HighlightInfoType GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER = new HighlightInfoTypeImpl(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING, CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING);
 
