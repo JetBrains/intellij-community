@@ -145,7 +145,7 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.StatisticsCollectorNotRegisteredInspection"
                      isInternal="true"/>
-    <localInspection language="UAST" shortName="InspectionDescriptionNotFoundInspection"
+    <localInspection language="JVM" shortName="InspectionDescriptionNotFoundInspection"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
                      enabledByDefault="true" level="WARNING"
@@ -163,13 +163,13 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UnspecifiedActionsPlaceInspection"
                      key="inspection.inspection.unspecified.actions.place.display.name"/>
-    <localInspection language="UAST" shortName="IntentionDescriptionNotFoundInspection"
+    <localInspection language="JVM" shortName="IntentionDescriptionNotFoundInspection"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection"
                      key="inspection.intention.description.not.found.inspection.display.name"/>
-    <localInspection language="UAST"
+    <localInspection language="JVM"
                      projectType="INTELLIJ_PLUGIN"
                      key="inspections.component.postfix.template.not.found.description.name"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"

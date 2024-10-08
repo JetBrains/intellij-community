@@ -2,10 +2,8 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.IntellijInternalApi;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.*;
@@ -26,7 +24,7 @@ public final class InspectionDescriptionNotFoundInspection extends DescriptionNo
   }
 
   @Override
-  protected boolean checkDynamicDescription(ProblemsHolder holder,
+  protected boolean checkDynamicDescription(HighlightSink sink,
                                             Module module,
                                             PsiClass psiClass) {
     final InspectionDescriptionInfo info = InspectionDescriptionInfo.create(module, psiClass);
