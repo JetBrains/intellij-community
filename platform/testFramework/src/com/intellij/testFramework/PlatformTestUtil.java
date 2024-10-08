@@ -70,6 +70,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.JavaVersion;
@@ -1187,6 +1188,22 @@ public final class PlatformTestUtil {
     waitWithEventsDispatching("Process failed to start in 60 seconds", () -> !refRunContentDescriptor.isNull() || failure[0], 60);
     assertFalse("Process could not start for configuration: " + runConfiguration, failure[0]);
     return Pair.create(executionEnvironment, refRunContentDescriptor.get());
+  }
+
+  /**
+   * Invokes {@code action} on bgt, waiting it to complete for {@code timeoutSeconds seconds} and return a result. Dispatches events while
+   * waiting bgt to finish, so it is safe to invoke edt stuff if necessary. Be careful using from under lock, because it may cause a deadlock.
+   */
+  @RequiresEdt
+  public static @Nullable <T> T callOnBgtSynchronously(@NotNull Callable<T> action, int timeoutSeconds) {
+    var future = ApplicationManager.getApplication().executeOnPooledThread(action);
+    waitWithEventsDispatching("Could not finish the call in " + timeoutSeconds + " seconds", future::isDone, timeoutSeconds);
+    try {
+      return future.get();
+    }
+    catch (InterruptedException | java.util.concurrent.ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void waitWithEventsDispatching(@NotNull String errorMessage, @NotNull BooleanSupplier condition, int timeoutInSeconds) {
