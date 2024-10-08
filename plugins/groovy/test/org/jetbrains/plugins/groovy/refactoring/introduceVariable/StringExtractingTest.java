@@ -1,66 +1,52 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.jetbrains.plugins.groovy.refactoring.introduceVariable
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.util.TextRange
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
-import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.util.TextRange;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * Created by Max Medvedev on 04/02/14
  */
-class StringExtractingTest extends LightGroovyTestCase {
-
+public class StringExtractingTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.testDataPath + "refactoring/stringExtracting/"
+    return TestUtils.getTestDataPath() + "refactoring/stringExtracting/";
   }
 
-  void testStringExtractingFromQuote() { doTest() }
+  public void testStringExtractingFromQuote() { doTest(); }
 
-  void testStringExtractingFromDoubleQuotes() { doTest() }
+  public void testStringExtractingFromDoubleQuotes() { doTest(); }
 
-  void testStringExtractingFromSlashyString() { doTest() }
+  public void testStringExtractingFromSlashyString() { doTest(); }
 
-  void testStringExtractingFromDollarSlashyString() { doTest() }
+  public void testStringExtractingFromDollarSlashyString() { doTest(); }
 
-  void testSlashyWithSlash() { doTest() }
+  public void testSlashyWithSlash() { doTest(); }
 
-  void testDollarSlashyWithDollar() { doTest() }
+  public void testDollarSlashyWithDollar() { doTest(); }
 
-  void testSlashyWithSlashInsideExtractedPart() { doTest() }
+  public void testSlashyWithSlashInsideExtractedPart() { doTest(); }
 
   private void doTest() {
-    GroovyFile file = myFixture.configureByFile(getTestName(true) + '.groovy') as GroovyFile
+    final GroovyFile file = (GroovyFile)myFixture.configureByFile(getTestName(true) + ".groovy");
+    final SelectionModel model = myFixture.getEditor().getSelectionModel();
+    final TextRange range = new TextRange(model.getSelectionStart(), model.getSelectionEnd());
 
-    TextRange range = new TextRange(*myFixture.editor.selectionModel.with { [selectionStart, selectionEnd] })
+    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        new StringPartInfo((GrLiteral)PsiUtil.skipParentheses(file.getStatements()[0], false), range).replaceLiteralWithConcatenation(null);
+        model.removeSelection();
+      });
+    }, null, null);
 
-    CommandProcessor.instance.executeCommand(myFixture.project, {
-      ApplicationManager.application.runWriteAction {
-        new StringPartInfo(PsiUtil.skipParentheses(file.statements[0], false) as GrLiteral, range).replaceLiteralWithConcatenation(null)
-        myFixture.editor.selectionModel.removeSelection()
-      }
-    }, null, null)
-
-    myFixture.checkResultByFile(getTestName(true) + '_after.groovy')
+    myFixture.checkResultByFile(getTestName(true) + "_after.groovy");
   }
 }
