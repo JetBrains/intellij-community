@@ -4,6 +4,7 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.kernel.withKernel
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
 import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XValue
@@ -12,6 +13,7 @@ import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.LocalXDebuggerSessionEvaluatorEntity
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
+import com.intellij.xdebugger.impl.rpc.XEvaluationResult
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.XValuePresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil.XValuePresentationTextExtractor
@@ -26,28 +28,33 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
-  override suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String): Deferred<XValueId>? = withKernel {
-    val evaluatorEntity = entity(evaluatorId.eid) as? LocalXDebuggerSessionEvaluatorEntity ?: return@withKernel null
+  override suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String): Deferred<XEvaluationResult> = withKernel {
+    val evaluatorEntity = entity(evaluatorId.eid) as? LocalXDebuggerSessionEvaluatorEntity
+                          ?: return@withKernel CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
     val evaluator = evaluatorEntity.evaluator
     val evaluationResult = CompletableDeferred<XValue>()
 
     withContext(Dispatchers.EDT) {
-      // TODO: pass SourcePosition
+      // TODO: pass XSourcePosition
       evaluator.evaluate(expression, object : XEvaluationCallback {
         override fun evaluated(result: XValue) {
           evaluationResult.complete(result)
         }
 
         override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-          // TODO: shouldn't be exception
-          evaluationResult.completeExceptionally(RuntimeException(errorMessage))
+          evaluationResult.completeExceptionally(EvaluationException(errorMessage))
         }
       }, null)
     }
 
     // TODO: don't use GlobalScope
     GlobalScope.async(Dispatchers.EDT) {
-      val xValue = evaluationResult.await()
+      val xValue = try {
+        evaluationResult.await()
+      }
+      catch (e: EvaluationException) {
+        return@async XEvaluationResult.EvaluationError(e.errorMessage)
+      }
       val xValueEntity = withKernel {
         change {
           // TODO: leaked XValue entity, it is never disposed
@@ -57,9 +64,11 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
           }
         }
       }
-      XValueId(xValueEntity.eid)
+      XEvaluationResult.Evaluated(XValueId(xValueEntity.eid))
     }
   }
+
+  private class EvaluationException(val errorMessage: @NlsContexts.DialogMessage String) : Exception(errorMessage)
 
   override suspend fun computePresentation(xValueId: XValueId): Flow<XValuePresentation>? = withKernel {
     val hintEntity = entity(xValueId.eid) as? LocalHintXValueEntity ?: return@withKernel null

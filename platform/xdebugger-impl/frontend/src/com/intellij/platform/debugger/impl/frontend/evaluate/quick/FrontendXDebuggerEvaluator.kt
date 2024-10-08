@@ -3,31 +3,35 @@ package com.intellij.platform.debugger.impl.frontend.evaluate.quick
 
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.kernel.withKernel
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
+import com.intellij.xdebugger.impl.rpc.XEvaluationResult
+import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+private val LOG = logger<FrontendXDebuggerEvaluator>()
 
 // TODO: support XDebuggerPsiEvaluator
 internal class FrontendXDebuggerEvaluator(private val scope: CoroutineScope, private val evaluatorId: XDebuggerEvaluatorId) : XDebuggerEvaluator() {
   override fun evaluate(expression: String, callback: XEvaluationCallback, expressionPosition: XSourcePosition?) {
     scope.launch(Dispatchers.EDT) {
       withKernel {
-        val xValue = try {
-          // TODO: write proper error message, don't throw error here
-          val xValueId = XDebuggerEvaluatorApi.getInstance().evaluate(evaluatorId, expression) ?: error("Cannot evaluate")
-          // TODO: what scope to provide for the XValue?
-          FrontendXValue(xValueId.await())
+        try {
+          val evaluation = XDebuggerEvaluatorApi.getInstance().evaluate(evaluatorId, expression).await()
+          when (evaluation) {
+            is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue(evaluation.valueId))
+            is XEvaluationResult.EvaluationError -> callback.errorOccurred(evaluation.errorMessage)
+          }
         }
         catch (e: Exception) {
-          // TODO: write proper error message
-          callback.errorOccurred(e.message ?: "Error occurred during evaluation")
-          return@withKernel
+          callback.errorOccurred(e.message ?: XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"))
+          LOG.error(e)
         }
-        callback.evaluated(xValue)
       }
     }
   }

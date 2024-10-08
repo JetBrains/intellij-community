@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.jetbrains.rhizomedb.EID
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
-  suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String): Deferred<XValueId>?
+  suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String): Deferred<XEvaluationResult>
 
   suspend fun computePresentation(xValueId: XValueId): Flow<XValuePresentation>?
 
@@ -27,6 +28,16 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
       }
     }
   }
+}
+
+@ApiStatus.Internal
+@Serializable
+sealed interface XEvaluationResult {
+  @Serializable
+  data class Evaluated(val valueId: XValueId) : XEvaluationResult
+
+  @Serializable
+  data class EvaluationError(val errorMessage: @NlsContexts.DialogMessage String) : XEvaluationResult
 }
 
 @ApiStatus.Internal
