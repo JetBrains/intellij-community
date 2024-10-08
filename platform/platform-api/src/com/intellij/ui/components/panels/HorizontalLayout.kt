@@ -29,6 +29,9 @@ class HorizontalLayout private constructor(private val gap: JBValue,
     LEFT, CENTER, RIGHT
   }
 
+  @Internal
+  var preferredSizeFunction: (Component) -> Dimension = { LayoutUtil.getPreferredSize(it) }
+
   private val leftGroup = ArrayList<Component>()
   private val centerGroup = ArrayList<Component>()
   private val rightGroup = ArrayList<Component>()
@@ -164,7 +167,7 @@ class HorizontalLayout private constructor(private val gap: JBValue,
         continue
       }
 
-      val size = LayoutUtil.getPreferredSize(component)
+      val size = preferredSizeFunction(component)
       var y = 0
       if (verticalAlignment == FILL) {
         size.height = height
@@ -188,7 +191,7 @@ class HorizontalLayout private constructor(private val gap: JBValue,
     var result: Dimension? = null
     for (component in list) {
       if (component.isVisible) {
-        result = joinDimension(result, gap, LayoutUtil.getPreferredSize(component))
+        result = joinDimension(result, gap, preferredSizeFunction(component))
       }
     }
     return result

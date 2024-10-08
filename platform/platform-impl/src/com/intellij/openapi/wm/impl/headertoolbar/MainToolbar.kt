@@ -120,6 +120,17 @@ class MainToolbar(
         updateToolbarActions()
       })
     }
+    (layout as HorizontalLayout).apply {
+      preferredSizeFunction = { component ->
+        if (component is ActionToolbar) {
+          val availableSize = Dimension(this@MainToolbar.width - 4 * JBUI.scale(layoutGap), this@MainToolbar.height)
+          CompressingLayoutStrategy.distributeSize(availableSize, components.filterIsInstance<ActionToolbar>()).getValue(component)
+        }
+        else {
+          component.preferredSize
+        }
+      }
+    }
   }
 
   private fun updateToolbarActions() {
@@ -311,11 +322,7 @@ private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?
 
   toolbar.setMinimumButtonSize { ActionToolbar.experimentalToolbarMinimumButtonSize() }
   toolbar.targetComponent = null
-  toolbar.layoutStrategy = object : CompressingLayoutStrategy() {
-    override fun getNonCompressibleWidth(mainToolbar: Container): Int {
-      return super.getNonCompressibleWidth(mainToolbar) + layoutGap * 4
-    }
-  }
+  toolbar.layoutStrategy = ToolbarLayoutStrategy.COMPRESSING_STRATEGY
   val component = toolbar.component
   component.border = JBUI.Borders.empty()
   component.isOpaque = false

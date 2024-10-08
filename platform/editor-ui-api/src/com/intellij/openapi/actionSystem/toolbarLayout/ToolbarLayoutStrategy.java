@@ -18,7 +18,7 @@ public interface ToolbarLayoutStrategy {
    * Preferentially, the largest components are compressed first to optimize the use of available space.
    * Note: for correct work, it's necessary to have a parent component for row with toolbar.
    */
-  ToolbarLayoutStrategy COMPRESSING_STRATEGY = new CompressingLayoutStrategy();
+  ToolbarLayoutStrategy COMPRESSING_STRATEGY = CompressingLayoutStrategy.INSTANCE;
 
   List<Rectangle> calculateBounds(@NotNull ActionToolbar toolbar);
 
