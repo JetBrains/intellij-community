@@ -93,7 +93,7 @@ private fun extractMethodCallExpressionsFromMethods(
     override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
       if (!filter(expression)) return
       result.add(expression)
-      super.visitCallExpression(expression)
+      super.visitMethodCallExpression(expression)
     }
   }
   psiElement.accept(visitor)
