@@ -18,6 +18,11 @@
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinHighlightExitPointsHandlerFactory"/>
 
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.highlighting.SupportAvailabilityNotificationProvider"/>
+
+    <registryKey key="kotlin.highlighting.warmup"
+                 description="Enables Kotlin highlighting warmup – triggers resolution in parallel to prefill caches"
+                 defaultValue="true"
+    />
   </extensions>
 
 </idea-plugin>
