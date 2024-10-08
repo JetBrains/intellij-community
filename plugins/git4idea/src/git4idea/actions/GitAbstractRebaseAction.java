@@ -38,14 +38,13 @@ public abstract class GitAbstractRebaseAction extends GitOperationActionBase {
   }
 
   @Override
-  public boolean performInBackground(@NotNull GitRepository repositoryToOperate) {
+  public void performInBackground(@NotNull GitRepository repositoryToOperate) {
     ProgressManager.getInstance().run(new Task.Backgroundable(repositoryToOperate.getProject(), getProgressTitle()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         performActionForRepository(repositoryToOperate.getProject(), repositoryToOperate, indicator);
       }
     });
-    return true;
   }
 
   @Override

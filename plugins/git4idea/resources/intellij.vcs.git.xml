@@ -174,7 +174,6 @@
     <action id="git.update.force.pushed.branch" class="git4idea.actions.branch.GitForcePushedBranchUpdateAction" internal="true"/>
 
     <group id="Git.Ongoing.Rebase.Actions" popup="false">
-      <!-- See GitOngoingOperationAction -->
       <reference id="Git.Rebase.Abort"/>
       <reference id="Git.Merge.Abort"/>
       <reference id="Git.CherryPick.Abort"/>

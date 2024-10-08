@@ -62,8 +62,8 @@ internal abstract class GitAbortOperationAction(
 
   final override fun getMainToolbarIcon(): Icon = AllIcons.Vcs.Abort
 
-  override fun performInBackground(repository: GitRepository): Boolean {
-    if (!confirmAbort(repository)) return false
+  override fun performInBackground(repository: GitRepository) {
+    if (!confirmAbort(repository)) return
 
     runBackgroundableTask(GitBundle.message("abort.operation.progress.title", operationNameCapitalised), repository.project) { indicator ->
       doAbort(repository, indicator)
@@ -71,7 +71,6 @@ internal abstract class GitAbortOperationAction(
 
     GitApplyChangesNotification.expireAll<GitApplyChangesNotification.ExpireAfterAbort>(repository.project)
 
-    return true
   }
 
   private fun confirmAbort(repository: GitRepository): Boolean {
