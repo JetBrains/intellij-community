@@ -6,6 +6,10 @@ rust-version = "1.70"
 publish = false
 build = "build.rs"
 
+[features]
+default = ["cef"]
+cef = []
+
 [profile.release]
 strip = "debuginfo"
 opt-level = "z"
