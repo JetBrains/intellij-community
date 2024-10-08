@@ -8,8 +8,6 @@ import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.ApiStatus;
-import com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler;
-import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import org.jetbrains.annotations.NotNull;
 
 public class XDebuggerSupport extends DebuggerSupport {

@@ -37,6 +37,13 @@
       <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction"/>
       <action id="Debugger.RemoveAllBreakpoints" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsAction"/>
       <action id="Debugger.RemoveAllBreakpointsInFile" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsInFileAction"/>
+      <action id="Debugger.FreezeActiveThreadAction" class="com.intellij.xdebugger.impl.actions.FreezeActiveThreadAction" icon="AllIcons.Debugger.Freeze"/>
+      <action id="Debugger.ThawActiveThreadAction" class="com.intellij.xdebugger.impl.actions.ThawActiveThreadAction" icon="AllIcons.Debugger.Thaw"/>
+      <action id="Debugger.FreezeInactiveThreadsAction" class="com.intellij.xdebugger.impl.actions.FreezeInactiveThreadsAction" icon="AllIcons.Debugger.FreezeAll"/>
+      <action id="Debugger.ThawAllThreadsAction" class="com.intellij.xdebugger.impl.actions.ThawAllThreadsAction" icon="AllIcons.Debugger.ThawAll"/>
+      <action id="Debugger.FreezeInactiveThreadsAmongSelected" class="com.intellij.xdebugger.impl.actions.FreezeInactiveThreadsAmongSelectedAction" icon="AllIcons.Debugger.FreezeAll" />
+      <action id="Debugger.FreezeSelectedThreads" class="com.intellij.xdebugger.impl.actions.FreezeSelectedThreadsAction" icon="AllIcons.Debugger.Freeze"/>
+      <action id="Debugger.ThawSelectedThreads" class="com.intellij.xdebugger.impl.actions.ThawSelectedThreadsAction" icon="AllIcons.Debugger.Thaw"/>
     </group>
 
     <group id="XDebugger.ToolWindow.TopToolbar">
@@ -124,6 +131,20 @@
     </group>
 
     <group id="XDebugger.Variables.Tree.Toolbar">
+    </group>
+
+    <group id="XDebugger.ParallelStacks.Popup.FreezeThreadGroup">
+      <separator/>
+      <reference id="Debugger.FreezeInactiveThreadsAmongSelected" />
+      <reference id="Debugger.ThawAllThreadsAction"/>
+      <reference id="Debugger.FreezeSelectedThreads"/>
+      <reference id="Debugger.ThawSelectedThreads"/>
+    </group>
+
+    <group id="XDebugger.ParallelStacks.Popup.Extra">
+    </group>
+
+    <group id="XDebugger.ParallelStacks.ToolBar.Extra">
     </group>
 
     <group id="XDebugger.Watches.Tree.Popup">

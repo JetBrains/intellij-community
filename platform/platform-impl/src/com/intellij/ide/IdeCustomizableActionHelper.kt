@@ -4,29 +4,17 @@ package com.intellij.ide
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.ui.IdeUICustomization
-import java.util.concurrent.atomic.AtomicBoolean
 
 class IdeCustomizableActionHelper(private val action: AnAction) {
   private val id by lazy { ActionManager.getInstance().getId(action)!! }
-  private val templatePresentationInitialized = AtomicBoolean()
 
   fun update(e: AnActionEvent) {
-    fun initializePresentation(p: Presentation) {
-      val customization = IdeUICustomization.getInstance()
-      customization.getActionText(id)?.let {
-        p.text = it
-      }
-      customization.getActionDescription(id)?.let {
-        p.description = it
-      }
+    IdeUICustomization.getInstance().getActionText(id)?.let {
+      e.presentation.text = it
     }
-
-    if (!templatePresentationInitialized.getAndSet(true)) { // one-time init
-      initializePresentation(action.templatePresentation)
+    IdeUICustomization.getInstance().getActionDescription(id)?.let {
+      e.presentation.description = it
     }
-
-    initializePresentation(e.presentation)
   }
 }

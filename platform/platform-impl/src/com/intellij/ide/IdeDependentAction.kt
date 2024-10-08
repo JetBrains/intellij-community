@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 abstract class IdeDependentAction : DumbAwareAction() {
