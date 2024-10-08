@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.*
@@ -26,7 +26,7 @@ internal class LightServiceMigrationCodeInspection : DevKitUastInspectionBase(UC
       return ProblemDescriptor.EMPTY_ARRAY
     }
     if (isVersion193OrHigher(psiClass) || ApplicationManager.getApplication().isUnitTestMode) {
-      if (isLightService(aClass)) return ProblemDescriptor.EMPTY_ARRAY
+      if (isLightService(psiClass)) return ProblemDescriptor.EMPTY_ARRAY
       val candidate = locateExtensionsByPsiClass(psiClass).singleOrNull() ?: return ProblemDescriptor.EMPTY_ARRAY
       val extension = DomUtil.findDomElement(candidate.pointer.element, Extension::class.java, false)
                       ?: return ProblemDescriptor.EMPTY_ARRAY

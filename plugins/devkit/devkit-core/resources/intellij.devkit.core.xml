@@ -402,7 +402,7 @@
                      key="inspections.jcomponent.data.provider.display.name" groupKey="inspections.group.code" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.JComponentDataProviderInspection"/>
 
-    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="ExtensionRegisteredAsServiceOrComponent"
+    <localInspection language="JVM" enabledByDefault="true" level="ERROR" shortName="ExtensionRegisteredAsServiceOrComponent"
                      projectType="INTELLIJ_PLUGIN"
                      key="inspection.extension.registered.as.service.or.component.display.name"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"

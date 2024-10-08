@@ -50,7 +50,7 @@ internal class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass
     // hack, allow Project-level @Service
     var isServiceAnnotation = false
     var extensionPoint: ExtensionPoint? = null
-    if (isLightService(aClass)) {
+    if (isLightService(javaPsi)) {
       area = null
       isService = true
       isServiceAnnotation = true
