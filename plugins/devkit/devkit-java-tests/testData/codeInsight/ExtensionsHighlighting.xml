@@ -17,6 +17,9 @@
         <extensionPoint qualifiedName="com.intellij.dom.fileDescription" interface="java.lang.Runnable"/>
 
         <extensionPoint qualifiedName="com.intellij.exportable" interface="java.lang.Runnable"/>
+        <extensionPoint qualifiedName="com.intellij.completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP" dynamic="true">
+          <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionContributor"/>
+        </extensionPoint>
 
         <extensionPoint name="experimentalApiEP" interface="foo.MyExperimentalEP"
                         dynamic="true"/>
