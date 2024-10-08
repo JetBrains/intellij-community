@@ -23,11 +23,12 @@ class GitCheckoutAction
   }
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, reference: GitReference) {
+    val refToCheckout = if (reference is GitBranch) reference.name else reference.fullName
     if (reference is GitRemoteBranch) {
-      GitRemoteBranchesUtil.checkoutRemoteBranch(project, repositories, reference.name)
+      GitRemoteBranchesUtil.checkoutRemoteBranch(project, repositories, refToCheckout)
     }
     else {
-      GitBrancher.getInstance(project).checkout(reference.fullName, false, repositories, null)
+      GitBrancher.getInstance(project).checkout(refToCheckout, false, repositories, null)
     }
   }
 }
