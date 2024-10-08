@@ -194,7 +194,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
       PsiManager manager = reference.getManager();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
       PsiSubstitutor rawSubstitutor = factory.createRawSubstitutor(aClass);
-      return new PsiImmediateClassType(aClass, rawSubstitutor, getLanguageLevel(), getAnnotationProvider());
+      return new PsiImmediateClassType(aClass, rawSubstitutor, getLanguageLevel(), getAnnotationProvider(), null);
     }
     String qualifiedName = reference.getQualifiedName();
     String name = reference.getReferenceName();

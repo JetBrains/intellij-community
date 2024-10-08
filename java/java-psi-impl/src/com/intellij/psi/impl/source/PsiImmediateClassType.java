@@ -29,6 +29,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   private final PsiClass myClass;
   private final PsiSubstitutor mySubstitutor;
   private final PsiManager myManager;
+  private final @Nullable PsiElement myPsiContext;
   private String myCanonicalText;
   private String myCanonicalTextAnnotated;
   private String myPresentableText;
@@ -37,7 +38,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
 
   private final ClassResolveResult myClassResolveResult = new ClassResolveResult() {
     private ClassResolveResult myCapturedResult = null;
-    
+
     @Override
     public PsiClass getElement() {
       return myClass;
@@ -52,7 +53,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     public ClassResolveResult resolveWithCapturedTopLevelWildcards() {
       ClassResolveResult result = myCapturedResult;
       if (result == null) {
-        myCapturedResult = result = ClassResolveResult.super.resolveWithCapturedTopLevelWildcards(); 
+        myCapturedResult = result = ClassResolveResult.super.resolveWithCapturedTopLevelWildcards();
       }
       return result;
     }
@@ -95,21 +96,26 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
                                @NotNull PsiSubstitutor substitutor,
                                @Nullable LanguageLevel level,
                                PsiAnnotation @NotNull ... annotations) {
-    super(level, annotations);
-    myClass = aClass;
-    myManager = aClass.getManager();
-    mySubstitutor = substitutor;
-    assert substitutor.isValid();
+    this(aClass, substitutor, level, TypeAnnotationProvider.Static.create(annotations));
   }
 
   public PsiImmediateClassType(@NotNull PsiClass aClass,
                                @NotNull PsiSubstitutor substitutor,
                                @Nullable LanguageLevel level,
                                @NotNull TypeAnnotationProvider provider) {
+    this(aClass, substitutor, level, provider, null);
+  }
+
+  public PsiImmediateClassType(@NotNull PsiClass aClass,
+                               @NotNull PsiSubstitutor substitutor,
+                               @Nullable LanguageLevel level,
+                               @NotNull TypeAnnotationProvider provider,
+                               @Nullable PsiElement context) {
     super(level, provider);
     myClass = aClass;
     myManager = aClass.getManager();
     mySubstitutor = substitutor;
+    myPsiContext = context;
     substitutor.ensureValid();
   }
 
@@ -121,6 +127,11 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   @Override
   public String getClassName() {
     return myClass.getName();
+  }
+
+  @Override
+  public @Nullable PsiElement getPsiContext() {
+    return myPsiContext;
   }
 
   @Override
@@ -338,6 +349,6 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
 
   @Override
   public @NotNull PsiClassType setLanguageLevel(@NotNull LanguageLevel level) {
-    return level.equals(myLanguageLevel) ? this : new PsiImmediateClassType(myClass, mySubstitutor, level, getAnnotationProvider());
+    return level.equals(myLanguageLevel) ? this : new PsiImmediateClassType(myClass, mySubstitutor, level, getAnnotationProvider(), null);
   }
 }

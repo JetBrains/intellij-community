@@ -1,5 +1,46 @@
 import org.jetbrains.annotations.*;
 import java.util.List;
+import java.util.Random;
+
+@NotNullByDefault
+class FromDemo {
+  native <T extends Number> T get();
+
+  public void test() {
+    Object o = new FromDemo().get();
+    if (<warning descr="Condition 'o == null' is always 'false'">o == null</warning>) {
+      System.out.println("1");
+    }
+  }
+
+  native <T extends Number> T get2();
+
+  public void test2() {
+    Object o = new FromDemo().get2();
+    if (<warning descr="Condition 'o == null' is always 'false'">o == null</warning>) {
+      System.out.println("1");
+    }
+  }
+
+  <T extends @Nullable Object> T oneOfTwo(T t1, T t2) {
+    return new Random().nextBoolean() ? t1 : t2;
+  }
+
+  public void test(@Nullable Integer t1, @Nullable Integer t2) {
+    Integer o = new FromDemo().oneOfTwo(t1, t2);
+    // TODO: should not warn
+    if (<warning descr="Condition 'o == null' is always 'false'">o == null</warning>) {
+      System.out.println("1");
+    }
+  }
+
+  public void test2(Object t1, Object t2) {
+    Object o = new FromDemo().oneOfTwo(t1, t2);
+    if (<warning descr="Condition 'o == null' is always 'false'">o == null</warning>) {
+      System.out.println("1");
+    }
+  }
+}
 
 @NotNullByDefault
 public class JetBrainsNotNullByDefault {
