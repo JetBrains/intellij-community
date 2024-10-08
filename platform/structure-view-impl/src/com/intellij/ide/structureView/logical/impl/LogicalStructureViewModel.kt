@@ -13,6 +13,7 @@ import com.intellij.ide.structureView.logical.LogicalStructureTreeElementProvide
 import com.intellij.ide.structureView.logical.PropertyElementProvider
 import com.intellij.ide.structureView.logical.model.LogicalContainerPresentationProvider
 import com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider
+import com.intellij.ide.structureView.logical.model.ExtendedLogicalObject
 import com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
@@ -33,7 +34,7 @@ internal class LogicalStructureViewModel private constructor(psiFile: PsiFile, e
 
 
   override fun isAlwaysShowsPlus(element: StructureViewTreeElement?): Boolean {
-    return element is ElementsBuilder.LogicalGroupStructureElement
+    return element is ElementsBuilder.LogicalGroupStructureElement<*>
   }
 
   override fun isAlwaysLeaf(element: StructureViewTreeElement?): Boolean {
@@ -54,8 +55,8 @@ internal class LogicalStructureViewModel private constructor(psiFile: PsiFile, e
 
   private fun getModel(element: StructureViewTreeElement): Any? {
     return when (element) {
+      is ElementsBuilder.LogicalGroupStructureElement<*> -> element.grouper
       is LogicalStructureViewTreeElement<*> -> element.getLogicalAssembledModel().model
-      is ElementsBuilder.LogicalGroupStructureElement -> element.grouper
       else -> null
     }
   }
@@ -71,7 +72,7 @@ interface LogicalStructureViewTreeElement<T> : StructureViewTreeElement {
 private class ElementsBuilder {
 
   private val typePresentationService = TypePresentationService.getService()
-  private val groupElements: MutableMap<LogicalStructureAssembledModel<*>, MutableMap<ExternalElementsProvider<*, *>, LogicalGroupStructureElement>> = ConcurrentHashMap()
+  private val groupElements: MutableMap<LogicalStructureAssembledModel<*>, MutableMap<ExternalElementsProvider<*, *>, LogicalGroupStructureElement<*>>> = ConcurrentHashMap()
 
   fun <T> createViewTreeElement(assembledModel: LogicalStructureAssembledModel<T>): StructureViewTreeElement {
     val model = assembledModel.model
@@ -172,10 +173,9 @@ private class ElementsBuilder {
     while (parentTmp != null) {
       val first = parentTmp.model
       val second = assembledModel.model
-      if (first == second) return true
-      if (first is PsiTarget && second is PsiTarget) {
-        if (first.isValid && second.isValid && first.navigationElement == second.navigationElement) return true
-      }
+      if (first is ExtendedLogicalObject && first.logicalEquals(second)
+          || second is ExtendedLogicalObject && second.logicalEquals(first)
+          || first == second) return true
       parentTmp = parentTmp.parent
     }
     return false
@@ -234,11 +234,11 @@ private class ElementsBuilder {
     }
   }
 
-  inner class LogicalGroupStructureElement(
-    val parentAssembledModel: LogicalStructureAssembledModel<*>,
+  inner class LogicalGroupStructureElement<T>(
+    val parentAssembledModel: LogicalStructureAssembledModel<T>,
     val grouper: Any,
     private val childrenModelsProvider: () -> List<LogicalStructureAssembledModel<*>>,
-  ) : StructureViewTreeElement {
+  ) : LogicalStructureViewTreeElement<T> {
 
     private val cashedChildren: Array<TreeElement> by lazy {
       calculateChildren()
@@ -273,8 +273,10 @@ private class ElementsBuilder {
       return childrenModelsProvider().map { createViewTreeElement(it) }.toTypedArray()
     }
 
+    override fun getLogicalAssembledModel(): LogicalStructureAssembledModel<T> = parentAssembledModel
+
     override fun equals(other: Any?): Boolean {
-      if (other !is LogicalGroupStructureElement) return false
+      if (other !is LogicalGroupStructureElement<*>) return false
       return parentAssembledModel == other.parentAssembledModel && grouper == other.grouper
     }
 
