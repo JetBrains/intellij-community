@@ -34,9 +34,17 @@ import javax.swing.text.BadLocationException
 import javax.swing.text.JTextComponent
 import javax.swing.text.Segment
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use correspondent constructors JLabel/JBLabel/MultiLineLabel, depends on situation")
 fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false): JLabel =
   Label(text, style, fontColor, bold, null)
 
+/**
+ * Always calls [BundleBase.replaceMnemonicAmpersand] inside and therefore can log the text in case of several mnemonics.
+ * That's unexpected behavior
+ */
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use correspondent constructors JLabel/JBLabel/MultiLineLabel, depends on situation")
 fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false, font: Font? = null): JLabel {
   val finalText = BundleBase.replaceMnemonicAmpersand(text)!!
   val label: JLabel
