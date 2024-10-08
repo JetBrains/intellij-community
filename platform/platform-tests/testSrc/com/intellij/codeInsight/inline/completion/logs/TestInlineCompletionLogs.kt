@@ -10,6 +10,7 @@ import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import io.kotest.common.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -42,6 +43,20 @@ object TestInlineCompletionLogs {
    * Also see [noSessionLogs].
    */
   fun InlineCompletionLifecycleTestDSL.singleSessionLog(block: suspend InlineCompletionLifecycleTestDSL.() -> Unit): SingleSessionLog {
+    val sessionsLogs = sessionsLog(block)
+    assertEquals(1, sessionsLogs.size, "There should be exactly session log, but found: $sessionsLogs")
+    return sessionsLogs.single()
+  }
+
+  fun InlineCompletionLifecycleTestDSL.firstSessionLog(block: suspend InlineCompletionLifecycleTestDSL.() -> Unit): SingleSessionLog {
+    val sessionLog = sessionsLog(block).firstOrNull()
+    assertNotNull(sessionLog, "There should be at least one session log, but found nothing.")
+    return sessionLog
+  }
+
+  private fun InlineCompletionLifecycleTestDSL.sessionsLog(
+    block: suspend InlineCompletionLifecycleTestDSL.() -> Unit
+  ): List<SingleSessionLog> {
     val disposable = Disposer.newDisposable()
     val events = try {
       FUCollectorTestCase.collectLogEvents("ML", disposable) {
@@ -53,9 +68,7 @@ object TestInlineCompletionLogs {
     finally {
       Disposer.dispose(disposable)
     }
-    val sessionLogs = getSessionLogs(events)
-    assertEquals(1, sessionLogs.size, "There should be exactly session log, but found: $sessionLogs")
-    return SingleSessionLog(sessionLogs.single())
+    return getSessionLogs(events).map { SingleSessionLog(it) }
   }
 
   class SingleSessionLog internal constructor(private val logEvent: LogEvent) {

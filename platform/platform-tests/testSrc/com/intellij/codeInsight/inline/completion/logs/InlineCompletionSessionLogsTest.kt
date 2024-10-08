@@ -71,6 +71,7 @@ internal class InlineCompletionSessionLogsTest : InlineCompletionTestCase() {
         callInlineCompletion()
         // now cancel it
         typeChar('a')
+        // it doesn't create the second session log because it hangs infinitely
       }
       singleSessionLog.assertRequestIdPresent()
       singleSessionLog.assertSomeContextLogsPresent()
@@ -94,6 +95,7 @@ internal class InlineCompletionSessionLogsTest : InlineCompletionTestCase() {
         provider.computeNextElement()
         delay()
         typeChar('a')
+        // it doesn't create the second session log because it hangs infinitely
       }
       singleSessionLog.assertRequestIdPresent()
       singleSessionLog.assertSomeContextLogsPresent()
