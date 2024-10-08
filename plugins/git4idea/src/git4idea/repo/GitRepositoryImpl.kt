@@ -26,6 +26,10 @@ import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
+/**
+ * @param rootDir Root of the repository (parent directory of '.git' file/directory).
+ * @param gitDir  '.git' directory location. For worktrees - location of the 'main_repo/.git/worktrees/worktree_name/'.
+ */
 class GitRepositoryImpl private constructor(
   project: Project,
   rootDir: VirtualFile,
@@ -43,7 +47,7 @@ class GitRepositoryImpl private constructor(
   private val tagHolder: GitTagHolder
 
   @Volatile
-  private var repoInfo: GitRepoInfo
+  private lateinit var repoInfo: GitRepoInfo
 
   @Volatile
   private var recentCheckoutBranches = emptyList<GitLocalBranch>()
@@ -51,8 +55,8 @@ class GitRepositoryImpl private constructor(
   private val coroutineScope = GitDisposable.getInstance(project).coroutineScope.childScope("GitRepositoryImpl")
 
   /**
-   * @param rootDir Root of the repository (parent directory of '.git' file/directory).
-   * @param gitDir  '.git' directory location. For worktrees - location of the 'main_repo/.git/worktrees/worktree_name/'.
+   * @see [git4idea.repo.GitRepositoryImpl.createInstance]
+   * @see [git4idea.repo.GitRepositoryImpl.installListeners]
    */
   init {
     stagingAreaHolder = GitStagingAreaHolder(this)
@@ -60,8 +64,9 @@ class GitRepositoryImpl private constructor(
     untrackedFilesHolder = GitUntrackedFilesHolder(this)
     Disposer.register(this, untrackedFilesHolder)
 
-    repoInfo = readRepoInfo()
     tagHolder = GitTagHolder(this)
+
+    installListeners()
   }
 
   @Deprecated("Deprecated in Java")
@@ -252,14 +257,14 @@ class GitRepositoryImpl private constructor(
       parentDisposable: Disposable,
     ): GitRepository {
       ProgressManager.checkCanceled()
+      return GitRepositoryImpl(project, root, gitDir, parentDisposable).apply { installListeners() }
+    }
 
-      val repository = GitRepositoryImpl(project, root, gitDir, parentDisposable)
-
-      val updater = GitRepositoryUpdater(repository, repository.repositoryFiles)
-      Disposer.register(repository, updater)
-
-      GitRepositoryManager.getInstance(project).notifyListenersAsync(repository)
-      return repository
+    private fun GitRepositoryImpl.installListeners() {
+      val updater = GitRepositoryUpdater(this, repositoryFiles)
+      updater.installListeners(this)
+      update()
+      untrackedFilesHolder.invalidate()
     }
 
     private fun notifyIfRepoChanged(

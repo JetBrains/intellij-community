@@ -4,6 +4,7 @@ package git4idea.repo
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest
@@ -39,7 +40,10 @@ internal class GitRepositoryUpdater(
     remotesDir = VcsUtil.getVirtualFile(repositoryFiles.refsRemotesFile)
     tagsDir = VcsUtil.getVirtualFile(repositoryFiles.refsTagsFile)
     reftableDir = VcsUtil.getVirtualFile(repositoryFiles.reftableFile)
+  }
 
+  fun installListeners(parentDisposable: Disposable) {
+    Disposer.register(parentDisposable, this)
     AsyncVfsEventsPostProcessor.getInstance().addListener(this, repository.coroutineScope)
   }
 

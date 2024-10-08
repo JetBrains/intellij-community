@@ -366,7 +366,6 @@ public class GitUntrackedFilesHolder implements Disposable {
         }
       }
       ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
-      scheduleUpdate();
     }
 
     private void clear() {
