@@ -18,11 +18,7 @@ internal class LightServiceMigrationCodeInspection : DevKitUastInspectionBase(UC
 
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
     val psiClass = aClass.javaPsi
-    if (psiClass.isEnum ||
-        psiClass.hasModifier(JvmModifier.ABSTRACT) ||
-        aClass.isInterface ||
-        !aClass.isFinal ||
-        aClass.isAnonymousOrLocal()) {
+    if (!aClass.isFinal || !ExtensionUtil.isExtensionPointImplementationCandidate(psiClass)) {
       return ProblemDescriptor.EMPTY_ARRAY
     }
     if (isVersion193OrHigher(psiClass) || ApplicationManager.getApplication().isUnitTestMode) {
@@ -47,9 +43,8 @@ internal class LightServiceMigrationCodeInspection : DevKitUastInspectionBase(UC
                               manager: InspectionManager,
                               isOnTheFly: Boolean,
                               fixes: Array<LocalQuickFix>): Array<ProblemDescriptor> {
-    val message = DevKitBundle.message("inspection.light.service.migration.message")
     val holder = createProblemsHolder(aClass, manager, isOnTheFly)
-    holder.registerUProblem(aClass, message, *fixes)
+    holder.registerUProblem(aClass, DevKitBundle.message("inspection.light.service.migration.message"), *fixes)
     return holder.resultsArray
   }
 }
