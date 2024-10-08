@@ -194,8 +194,6 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
 
     public void clearAccessibilityTestsResult() { accessibilityAudit.clearAccessibilityTestsResult(); }
 
-    public AccessibilityTestResult getAccessibilityTestResult() { return accessibilityAudit.getAccessibilityTestResult(); }
-
     private ComponentNode(@Nullable Component component,
                           @Nullable Accessible accessible,
                           @NotNull String name,
@@ -373,20 +371,43 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
           append(componentNode.myName);
         }
 
-        AccessibilityTestResult accessibilityResult = componentNode.getAccessibilityTestResult();
         AccessibilityAuditManager accessibilityAudit = componentNode.accessibilityAudit;
+        List<UiInspectorAccessibilityInspection> accessibilityResult = accessibilityAudit.getFailedInspections();
 
         if (accessibilityAudit.isRunning()) {
           int fontHeight = getFontMetrics(getFont()).getHeight();
 
-          if (AccessibilityTestResult.FAIL.equals(accessibilityResult)) {
-            accessibilityAuditIcons.add(new IconWithErrorCount(
-              IconUtil.scale(AllIcons.General.Warning, this, fontHeight / (float) AllIcons.General.Warning.getIconHeight()
-              ), 1));
+          if (!accessibilityResult.isEmpty()) {
+
+            int warningCount = 0;
+            int recommendationCount = 0;
+
+            for (UiInspectorAccessibilityInspection inspection : accessibilityResult) {
+                if (inspection.getSeverity() == Severity.WARNING) {
+                  warningCount++;
+                } else if (inspection.getSeverity() == Severity.RECOMMENDATION) {
+                  recommendationCount++;
+                }
+            }
+
+            if (warningCount > 0) {
+              accessibilityAuditIcons.add(new IconWithErrorCount(
+                IconUtil.scale(AllIcons.General.Warning, this, fontHeight / (float) AllIcons.General.Warning.getIconHeight()),
+                warningCount
+              ));
+            }
+
+            if (recommendationCount > 0) {
+              accessibilityAuditIcons.add(new IconWithErrorCount(
+                IconUtil.scale(AllIcons.General.Information, this, fontHeight / (float) AllIcons.General.Information.getIconHeight()),
+                recommendationCount
+              ));
+            }
           } else {
             accessibilityAuditIcons.add(new IconWithErrorCount(
               IconUtil.scale(AllIcons.General.GreenCheckmark, this, fontHeight / (float) AllIcons.General.GreenCheckmark.getIconHeight()),
-              0));
+              0
+            ));
           }
         }
       }

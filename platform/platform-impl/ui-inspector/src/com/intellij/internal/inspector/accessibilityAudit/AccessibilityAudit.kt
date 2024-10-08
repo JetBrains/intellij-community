@@ -6,16 +6,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-enum class AccessibilityTestResult(val result: String) {
-  PASS("pass"),
-  FAIL("fail"),
-  NOT_RUNNING(""),
-}
-
-@ApiStatus.Internal
-@ApiStatus.Experimental
 interface AccessibilityAudit {
+  val failedInspections: MutableList<UiInspectorAccessibilityInspection>
   fun runAccessibilityTests(ac: AccessibleContext)
   fun clearAccessibilityTestsResult()
-  fun getAccessibilityTestResult(): AccessibilityTestResult?
 }

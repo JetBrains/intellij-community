@@ -6,46 +6,35 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-class AccessibilityAuditManager: AccessibilityAudit {
-  private var accessibilityTestResult: AccessibilityTestResult = AccessibilityTestResult.NOT_RUNNING
+class AccessibilityAuditManager : AccessibilityAudit {
+  override val failedInspections = mutableListOf<UiInspectorAccessibilityInspection>()
   var isRunning = false
     private set
 
   override fun runAccessibilityTests(ac: AccessibleContext) {
     isRunning = true
-    accessibilityTestResult = AccessibilityTestResult.PASS
+    failedInspections.clear()
 
-    if (!AccessibleNameAndDescriptionNotEqualInspection().passesInspection(ac)) {
-      accessibilityTestResult = AccessibilityTestResult.FAIL
-    }
+    val inspections = listOf(
+      AccessibleActionNotNullInspection(),
+      AccessibleEditableTextNotNullInspection(),
+      AccessibleNameAndDescriptionNotEqualInspection(),
+      AccessibleNameNotEmptyForFocusableComponentsInspection(),
+      AccessibleNameNotEmptyForIcon(),
+      AccessibleStateSetContainsFocusableInspection(),
+      AccessibleTextNotNullInspection(),
+      AccessibleValueNotNullInspection()
+    )
 
-    if (!AccessibleNameNotEmptyForFocusableComponentsInspection().passesInspection(ac)) {
-      accessibilityTestResult = AccessibilityTestResult.FAIL
-    }
-
-    if (!AccessibleActionNotNullInspection().passesInspection(ac)) {
-      accessibilityTestResult = AccessibilityTestResult.FAIL
-    }
-
-    if (!AccessibleTextNotNullInspection().passesInspection(ac)) {
-      accessibilityTestResult = AccessibilityTestResult.FAIL
-    }
-
-    if (!AccessibleEditableTextNotNullInspection().passesInspection(ac)) {
-      accessibilityTestResult = AccessibilityTestResult.FAIL
-    }
-
-    if (!AccessibleValueNotNullInspection().passesInspection(ac)) {
-      accessibilityTestResult = AccessibilityTestResult.FAIL
+    for (inspection in inspections) {
+      if (!inspection.passesInspection(ac)) {
+        failedInspections.add(inspection)
+      }
     }
   }
 
   override fun clearAccessibilityTestsResult() {
     isRunning = false
-    accessibilityTestResult = AccessibilityTestResult.NOT_RUNNING
-  }
-
-  override fun getAccessibilityTestResult(): AccessibilityTestResult {
-    return accessibilityTestResult
+    failedInspections.clear()
   }
 }
