@@ -32,13 +32,13 @@ class FileObjectRenderer : CompoundRendererProvider() {
       override fun getFullValueEvaluator(evaluationContext: EvaluationContextImpl, valueDescriptor: ValueDescriptorImpl): XFullValueEvaluator? {
         val value = valueDescriptor.value as? ObjectReference ?: return null
         try {
-          val isFile = DebuggerUtilsImpl.invokeObjectMethod(evaluationContext, value, "isFile", "()Z")
+          val isFile = DebuggerUtilsImpl.invokeObjectMethod(evaluationContext, value, "isFile", "()Z", emptyList())
           if ((isFile as? BooleanValue)?.value() == true) {
             return object : JavaValue.JavaFullValueEvaluator(message("message.node.open"), evaluationContext) {
               override fun isShowValuePopup(): Boolean = false
 
               override fun evaluate(callback: XFullValueEvaluationCallback) {
-                val path = DebuggerUtilsImpl.invokeObjectMethod(evaluationContext, value, "getAbsolutePath", "()Ljava/lang/String;")
+                val path = DebuggerUtilsImpl.invokeObjectMethod(evaluationContext, value, "getAbsolutePath", "()Ljava/lang/String;", emptyList())
                 if (path is StringReference) {
                   callback.evaluated("")
                   val vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.value()) ?: return

@@ -559,13 +559,6 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   public static @Nullable Value invokeObjectMethod(@NotNull EvaluationContextImpl evaluationContext,
                                                    @NotNull ObjectReference value,
                                                    @NotNull String methodName,
-                                                   @Nullable String signature) throws EvaluateException {
-    return invokeObjectMethod(evaluationContext, value, methodName, signature, Collections.emptyList());
-  }
-
-  public static @Nullable Value invokeObjectMethod(@NotNull EvaluationContextImpl evaluationContext,
-                                                   @NotNull ObjectReference value,
-                                                   @NotNull String methodName,
                                                    @Nullable String signature,
                                                    @NotNull List<Value> arguments) throws EvaluateException {
     ReferenceType type = value.referenceType();
