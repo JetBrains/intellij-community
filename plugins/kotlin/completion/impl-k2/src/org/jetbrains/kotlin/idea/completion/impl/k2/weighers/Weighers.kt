@@ -17,8 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.getDefaultImportPaths
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
@@ -104,7 +103,7 @@ internal class WeighingContext private constructor(
             symbolsToSkip: Set<KaSymbol> = emptySet(),
         ): WeighingContext {
             val fakeCompletionFile = positionInFakeCompletionFile.containingFile as KtFile
-            val defaultImportPaths = fakeCompletionFile.getDefaultImportPaths()
+            val defaultImportPaths = fakeCompletionFile.getDefaultImportPaths(useSiteModule = basicContext.useSiteModule).toSet()
             val languageVersionSettings = fakeCompletionFile.languageVersionSettings
             return WeighingContext(
                 token,
@@ -130,11 +129,6 @@ internal class WeighingContext private constructor(
             implicitReceivers = emptyList(),
             positionInFakeCompletionFile
         )
-
-        private fun KtFile.getDefaultImportPaths(): Set<ImportPath> {
-            return this.platform.findAnalyzerServices(project)
-                .getDefaultImports(languageVersionSettings, true).toSet()
-        }
 
         private fun Set<ImportPath>.hasImport(name: FqName): Boolean {
             return ImportPath(name, false) in this || ImportPath(name.parent(), true) in this
