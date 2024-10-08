@@ -1,0 +1,20 @@
+PsiJetFileStubImpl[package=]
+  PACKAGE_DIRECTIVE
+  IMPORT_LIST
+  SCRIPT[fqName=ScriptObjectLiteral, fqName=ScriptObjectLiteral, name=ScriptObjectLiteral]
+    FUN[fqName=ScriptObjectLiteral.execute, hasBlockBody=true, hasBody=true, hasTypeParameterListBeforeFunctionName=false, isExtension=false, isTopLevel=false, mayHaveContract=false, name=execute]
+      VALUE_PARAMETER_LIST
+        VALUE_PARAMETER[fqName=null, hasDefaultValue=false, hasValOrVar=false, isMutable=false, name=block]
+          TYPE_REFERENCE
+            USER_TYPE
+              REFERENCE_EXPRESSION[referencedName=Runnable]
+    OBJECT_DECLARATION[classId=null, fqName=null, isCompanion=false, isLocal=true, isObjectLiteral=true, isTopLevel=false, name=null, superNames=[Runnable]]
+      SUPER_TYPE_LIST
+        SUPER_TYPE_ENTRY
+          TYPE_REFERENCE
+            USER_TYPE
+              REFERENCE_EXPRESSION[referencedName=Runnable]
+      CLASS_BODY
+        FUN[fqName=null, hasBlockBody=true, hasBody=true, hasTypeParameterListBeforeFunctionName=false, isExtension=false, isTopLevel=false, mayHaveContract=false, name=run]
+          MODIFIER_LIST[override]
+          VALUE_PARAMETER_LIST
