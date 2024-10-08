@@ -8,11 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.GitApplyChangesNotification
 import git4idea.GitDisposable
+import git4idea.i18n.GitBundle
+import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryChangeListener
+import git4idea.repo.GitRepositoryStateChangeListener
 import git4idea.stash.GitChangesSaver
 import org.jetbrains.annotations.Nls
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -21,40 +22,41 @@ import java.util.concurrent.atomic.AtomicReference
  */
 @Service(Service.Level.PROJECT)
 internal class GitApplyChangesNotificationsHandler(private val project: Project) {
-  private var shouldHideNotifications = AtomicBoolean()
-  private var changesSaverAndOperation = AtomicReference<Pair<GitChangesSaver, @Nls String>?>()
+  private var changesSaverAndOperation = AtomicReference<GitChangesSaver?>()
 
   init {
     project.messageBus.connect(GitDisposable.Companion.getInstance(project))
-      .subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-        if (!isCherryPickingOrReverting(it)) {
-          if (shouldHideNotifications.compareAndSet(true, false)) {
+      .subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
+        override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
+          if (wasCherryPickingOrReverting(previousInfo, info)) {
             LOG.debug("Hiding notifications")
             GitApplyChangesNotification.Companion.expireAll<GitApplyChangesNotification.ExpireAfterRepoStateChanged>(project)
-          }
 
-          changesSaverAndOperation.getAndSet(null)?.let { (changesSaver, operation) ->
-            LOG.debug("Suggesting to restore saved changes after $operation")
-            showRestoreChangesNotification(changesSaver, operation)
+            changesSaverAndOperation.getAndSet(null)?.let { changesSaver ->
+              val operation = when (previousInfo.state) {
+                Repository.State.GRAFTING -> GitBundle.message("cherry.pick.name")
+                Repository.State.REVERTING -> GitBundle.message("revert.operation.name")
+                else -> error("Unexpected state: ${previousInfo.state}")
+              }
+              LOG.debug("Suggesting to restore saved changes after $operation")
+              showRestoreChangesNotification(changesSaver, operation)
+            }
           }
         }
+
+        private fun wasCherryPickingOrReverting(previousInfo: GitRepoInfo, info: GitRepoInfo): Boolean =
+          isCherryPickingOrReverting(previousInfo.state) && !isCherryPickingOrReverting(info.state)
       })
   }
 
   fun beforeApply() {
-    shouldHideNotifications.set(false)
     changesSaverAndOperation.set(null)
   }
 
   fun operationFailed(operationName: @Nls String, repository: GitRepository, changesSaver: GitChangesSaver?) {
-    val cherryPickingOrReverting = isCherryPickingOrReverting(repository)
-    if (cherryPickingOrReverting) {
-      shouldHideNotifications.set(true)
-    }
-
     if (changesSaver != null) {
-      if (cherryPickingOrReverting) {
-        changesSaverAndOperation.set(changesSaver to operationName)
+      if (isCherryPickingOrReverting(repository.info.state)) {
+        changesSaverAndOperation.set(changesSaver)
       }
       else {
         showRestoreChangesNotification(changesSaver, operationName)
@@ -68,8 +70,8 @@ internal class GitApplyChangesNotificationsHandler(private val project: Project)
     )
   }
 
-  private fun isCherryPickingOrReverting(repository: GitRepository): Boolean =
-    repository.state == Repository.State.GRAFTING || repository.state == Repository.State.REVERTING
+  private fun isCherryPickingOrReverting(state: Repository.State): Boolean =
+    state == Repository.State.GRAFTING || state == Repository.State.REVERTING
 
   internal companion object {
     private val LOG = thisLogger()
