@@ -6,16 +6,17 @@ import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.testFramework.fixtures.BasePlatformTestCase.*
+import com.intellij.testFramework.fixtures.BasePlatformTestCase.assertNotNull
+import com.intellij.testFramework.fixtures.BasePlatformTestCase.assertTrue
 import com.intellij.util.Alarm
 import com.intellij.util.Processor
-import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.ListCellRenderer
+import kotlin.Throws
 
 private const val MORE_ITEM = "...MORE"
 private const val MIXED_RESULTS_FEATURE = "search.everywhere.mixed.results"
@@ -44,7 +45,7 @@ class MixingMultiThreadSearchTest : BasePlatformTestCase() {
     val collector = SearchResultsCollector()
     val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, testRootDisposable)
     val searcher = MixedResultsSearcher(collector,
-                                        Executor { command -> DefaultGroovyMethods.invokeMethod(alarm, "addRequest", arrayOf(command, 0)) },
+                                        Executor { command -> alarm.addRequest(command, 0) },
                                         setOf(TrivialElementsEqualityProvider()))
     val indicator = searcher.search(scenario.contributorsAndLimits, "tst")
 
