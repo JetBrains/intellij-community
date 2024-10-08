@@ -19392,7 +19392,6 @@ a:com.intellij.util.ui.tree.PerFileConfigurableBase
 - p:createActionPanel(com.intellij.openapi.actionSystem.AnAction):javax.swing.JPanel
 - p:createActionPanel(java.lang.Object,com.intellij.util.ui.tree.PerFileConfigurableBase$Value):javax.swing.JPanel
 - createComponent():javax.swing.JComponent
-- p:createDefaultMappingComponent():javax.swing.JComponent
 - pf:createValueAction(java.lang.Object,com.intellij.util.ui.tree.PerFileConfigurableBase$Value):com.intellij.openapi.actionSystem.AnAction
 - pf:createValueEditorActionListPopup(java.lang.Object,java.lang.Runnable,com.intellij.openapi.actionSystem.DataContext,com.intellij.util.Consumer):com.intellij.openapi.ui.popup.JBPopup
 - p:createValueEditorPopup(java.lang.Object,java.lang.Object,java.lang.Runnable,com.intellij.openapi.actionSystem.DataContext,com.intellij.util.Consumer,java.lang.Runnable):com.intellij.openapi.ui.popup.JBPopup

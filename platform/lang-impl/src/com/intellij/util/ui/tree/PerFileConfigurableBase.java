@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
@@ -44,8 +43,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -64,7 +61,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.ui.IdeBorderFactory.*;
 
 public abstract class PerFileConfigurableBase<T> implements SearchableConfigurable, Configurable.NoScroll {
   public record Mapping<T>(@Nls String name, @NotNull Supplier<? extends T> getter, @NotNull Consumer<? super T> setter) {
@@ -145,7 +141,6 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   public @NotNull JComponent createComponent() {
     ThreadingAssertions.assertEventDispatchThread();
     //todo multi-editing, separate project/ide combos _if_ needed by specific configurable (SQL, no Web)
-    myPanel = new JPanel(new BorderLayout());
     myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE));
     myTable = new JBTable(myModel) {
       @SuppressWarnings("unchecked")
@@ -171,68 +166,36 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       .createPanel();
     myTable.getEmptyText().setText(param(EMPTY_TEXT).replace(
       "$addShortcut", KeymapUtil.getFirstKeyboardShortcutText(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD))));
-    JBLabel label = new JBLabel(param(DESCRIPTION));
-    label.setBorder(BorderFactory.createEmptyBorder(TITLED_BORDER_TOP_INSET, TITLED_BORDER_INDENT, TITLED_BORDER_BOTTOM_INSET, 0));
-    label.setComponentStyle(UIUtil.ComponentStyle.SMALL);
 
-    JComponent north = createDefaultMappingComponent();
-    if (north != null) {
-      myPanel.add(north, BorderLayout.NORTH);
+    myDefaultProps.addAll(getDefaultMappings());
+    if (myMappings instanceof LanguagePerFileMappings && param(ADD_PROJECT_MAPPING)) {
+      myDefaultProps.add(myProjectMapping);
     }
-    myPanel.add(label, BorderLayout.SOUTH);
-    myPanel.add(tablePanel, BorderLayout.CENTER);
+    for (Mapping<T> prop : myDefaultProps) {
+      myDefaultVals.put(prop.name, prop.getter.get());
+    }
 
+    myPanel = new PerFileConfigurableBaseUi<T>().getPanel(tablePanel, param(DESCRIPTION), myDefaultProps, (Mapping<T> prop) -> createActionPanel(null, new Value<>() {
+      @Override
+      public void commit() {
+        myModel.fireTableDataChanged();
+      }
+
+      @Override
+      public T get() {
+        return myDefaultVals.get(prop.name);
+      }
+
+      @Override
+      public void set(T value) {
+        myDefaultVals.put(prop.name, adjustChosenValue(null, value));
+      }
+    }));
     return myPanel;
   }
 
   protected @NlsContexts.Tooltip @Nullable String getToolTipFor(@Nullable T value) {
     return null;
-  }
-
-  protected @Nullable JComponent createDefaultMappingComponent() {
-    myDefaultProps.addAll(getDefaultMappings());
-    if (myMappings instanceof LanguagePerFileMappings && param(ADD_PROJECT_MAPPING)) {
-     myDefaultProps.add(myProjectMapping);
-    }
-    if (myDefaultProps.size() == 0) return null;
-    JPanel panel = new JPanel(new GridBagLayout());
-
-    GridBagConstraints cons1 = new GridBagConstraints();
-    cons1.fill = GridBagConstraints.HORIZONTAL;
-    cons1.weightx = 0;
-    cons1.gridx = 0;
-    cons1.insets = JBUI.insets(0, 0, 5, UIUtil.DEFAULT_HGAP);
-    GridBagConstraints cons2 = new GridBagConstraints();
-    cons2.fill = GridBagConstraints.NONE;
-    cons2.anchor = GridBagConstraints.WEST;
-    cons2.weightx = 0;
-    cons2.gridx = 1;
-    cons2.insets = cons1.insets;
-    panel.add(Box.createGlue(), new GridBagConstraints(2, 0, 1, 1, 1., 1., GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                       JBInsets.emptyInsets(), 0, 0));
-
-    for (Mapping<T> prop : myDefaultProps) {
-      myDefaultVals.put(prop.name, prop.getter.get());
-      JPanel p = createActionPanel(null, new Value<>() {
-        @Override
-        public void commit() {
-          myModel.fireTableDataChanged();
-        }
-
-        @Override
-        public T get() {
-          return myDefaultVals.get(prop.name);
-        }
-
-        @Override
-        public void set(T value) {
-          myDefaultVals.put(prop.name, adjustChosenValue(null, value));
-        }
-      });
-      panel.add(new JBLabel(prop.name + ":"), cons1);
-      panel.add(p, cons2);
-    }
-    return panel;
   }
 
   private void doAddAction() {
