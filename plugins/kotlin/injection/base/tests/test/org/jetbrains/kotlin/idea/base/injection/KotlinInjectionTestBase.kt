@@ -330,7 +330,7 @@ abstract class KotlinInjectionTestBase : AbstractInjectionTest() {
         languageId = HTMLLanguage.INSTANCE.id, unInjectShouldBePresent = false
     )
 
-    fun testInjectionOffVarargParameterWithAnnotation() = doInjectionPresentTest(
+    fun testInjectionOfVarargParameterWithAnnotation() = doInjectionPresentTest(
         """
         import org.intellij.lang.annotations.Language
 
@@ -343,7 +343,7 @@ abstract class KotlinInjectionTestBase : AbstractInjectionTest() {
         languageId = HTMLLanguage.INSTANCE.id, unInjectShouldBePresent = false
     )
 
-    fun testInjectionOffVarargParameterWithOutAnnotation() = doInjectionPresentTest(
+    fun testNoFalseInjectionOfVarargParameter() = doInjectionPresentTest(
         """
         import org.intellij.lang.annotations.Language
 
