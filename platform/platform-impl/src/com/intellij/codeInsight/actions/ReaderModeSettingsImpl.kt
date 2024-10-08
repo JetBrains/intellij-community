@@ -7,9 +7,11 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
 class ReaderModeDefaultsOverrideImpl : ReaderModeDefaultsOverride {
   override val showWarningsDefault = false
+  @ApiStatus.Internal
   override fun getEnableVirtualFormattingDefault() = true
 }
 
