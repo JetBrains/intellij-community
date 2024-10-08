@@ -122,6 +122,15 @@ f:com.intellij.ide.dnd.SmoothAutoScroller
 *:com.intellij.ide.environment.EnvironmentService
 - a:getEnvironmentValue(com.intellij.ide.environment.EnvironmentKey,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - a:getEnvironmentValue(com.intellij.ide.environment.EnvironmentKey,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.ide.ui.LafFlowService
+- *sf:Companion:com.intellij.ide.ui.LafFlowService$Companion
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- f:customLafFlowState(java.lang.Object,kotlinx.coroutines.flow.SharingStarted,kotlin.jvm.functions.Function1):kotlinx.coroutines.flow.StateFlow
+- bs:customLafFlowState$default(com.intellij.ide.ui.LafFlowService,java.lang.Object,kotlinx.coroutines.flow.SharingStarted,kotlin.jvm.functions.Function1,I,java.lang.Object):kotlinx.coroutines.flow.StateFlow
+- sf:getInstance():com.intellij.ide.ui.LafFlowService
+- f:getLafChangedFlow():kotlinx.coroutines.flow.SharedFlow
+*f:com.intellij.ide.ui.LafFlowService$Companion
+- f:getInstance():com.intellij.ide.ui.LafFlowService
 a:com.intellij.ide.ui.LafManager
 - *a:getInstalledThemes():kotlin.sequences.Sequence
 *:com.intellij.ide.ui.PopupLocator
