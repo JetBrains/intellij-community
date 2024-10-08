@@ -9,5 +9,6 @@ this is "good"\
     def data = [
       "\"\\\\\""        : "\"\\\\\""
     ]
+    def dollarSlashy = $/'\\'/$
   }
 }

@@ -868,36 +868,33 @@ public class ExpressionGenerator extends Generator {
     }
 
     final String text = literal.getText();
-    final String value = GrStringUtil.unescapeString(GrStringUtil.removeQuotes(text));
-    if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
-      if (com.intellij.psi.util.PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, literal)) {
-        String content = PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.escapeStringCharacters(value));
-        if (!content.endsWith("\n") && PsiLiteralUtil.getTextBlockIndent(content.split("\n", -1)) > 0) {
-          builder.append("\"\"\"\n").append(content).append("\\\n").append("\"\"\"");
+    Object value = literal.getValue();
+    if (value instanceof String str) {
+      if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
+        if (com.intellij.psi.util.PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, literal)) {
+          String content = PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.escapeStringCharacters(str));
+          if (!content.endsWith("\n") && PsiLiteralUtil.getTextBlockIndent(content.split("\n", -1)) > 0) {
+            builder.append("\"\"\"\n").append(content).append("\\\n").append("\"\"\"");
+          }
+          else {
+            builder.append("\"\"\"\n").append(content).append("\"\"\"");
+          }
         }
         else {
-          builder.append("\"\"\"\n").append(content).append("\"\"\"");
+          String content = StringUtil.escapeStringCharacters(str).replaceAll("\\\\n([^\"])", "\\\\n\" +\n \"$1");
+          builder.append('"').append(content).append('"');
+        }
+      }
+      else if (text.startsWith("\"") || text.startsWith("'")) {
+        if (isChar) {
+          builder.append('\'').append(StringUtil.escapeCharCharacters(str)).append('\'');
+        }
+        else {
+          builder.append('"').append(StringUtil.escapeStringCharacters(str)).append('"');
         }
       }
       else {
-        String content = StringUtil.escapeStringCharacters(value).replaceAll("\\\\n([^\"])", "\\\\n\" +\n \"$1");
-        builder.append('"').append(content).append('"');
-      }
-    }
-    else if (text.startsWith("'")) {
-      if (isChar) {
-        builder.append(text);
-      }
-      else {
-        builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
-      }
-    }
-    else if (text.startsWith("\"")) {
-      if (isChar) {
-        builder.append('\'').append(StringUtil.escapeCharCharacters(value)).append('\'');
-      }
-      else {
-        builder.append('"').append(StringUtil.escapeStringCharacters(value)).append('"');
+        builder.append('"').append(StringUtil.escapeStringCharacters(str)).append('"');
       }
     }
     else {
