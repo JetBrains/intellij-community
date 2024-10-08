@@ -538,16 +538,16 @@ public final class FormSourceCodeGenerator {
 
     String methodText =
       "private String " + methodName + "(String path, String key) {\n" +
-      " ResourceBundle bundle;\n" +
+      " java.util.ResourceBundle bundle;\n" +
       "try {\n" +
       "    Class<?> thisClass = this.getClass();\n" +
       "    if (" + fieldName + " == null) {\n" +
       "        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass(\"" + dynamicBundleClassName + "\");\n" +
       "        " + fieldName + " = dynamicBundleClass.getMethod(\"getBundle\", String.class, Class.class);\n" +
       "    }\n" +
-      "    bundle = (ResourceBundle)" + fieldName + ".invoke(null, path, thisClass);\n" +
+      "    bundle = (java.util.ResourceBundle)" + fieldName + ".invoke(null, path, thisClass);\n" +
       "} catch (Exception e) {\n" +
-      "    bundle = ResourceBundle.getBundle(path);\n" +
+      "    bundle = java.util.ResourceBundle.getBundle(path);\n" +
       "}\n" +
       "return bundle.getString(key);\n" +
       "}";
