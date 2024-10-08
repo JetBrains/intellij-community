@@ -85,7 +85,9 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
-    javaParameters.setMainClass("com.intellij.rt.testng.RemoteTestNGStarter");
+    if (javaParameters.getMainClass() == null) { // for custom main class, e.g. overridden by JUnitDevKitUnitTestingSettings.Companion#apply
+      javaParameters.setMainClass("com.intellij.rt.testng.RemoteTestNGStarter");
+    }
 
     try {
       port = NetUtils.findAvailableSocketPort();
