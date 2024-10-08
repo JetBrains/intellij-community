@@ -118,19 +118,12 @@ public final class Standalone {
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, false, initializer);
     Set<String> modulesSet = Set.of(modules);
     List<String> artifactsList = Arrays.asList(artifacts);
-    File dataStorageRoot;
-    if (cacheDirPath != null) {
-      dataStorageRoot = new File(cacheDirPath);
-    }
-    else {
-      dataStorageRoot = Utils.getDataStorageRoot(projectPath);
-    }
+    File dataStorageRoot = cacheDirPath == null ? Utils.getDataStorageRoot(projectPath) : new File(cacheDirPath);
 
     ConsoleMessageHandler consoleMessageHandler = new ConsoleMessageHandler();
     long start = System.nanoTime();
     try {
-      runBuild(loader, dataStorageRoot, !incremental, modulesSet, allModules, artifactsList, allArtifacts, true,
-               consoleMessageHandler);
+      runBuild(loader, dataStorageRoot, !incremental, modulesSet, allModules, artifactsList, allArtifacts, true, consoleMessageHandler);
     }
     catch (Throwable t) {
       System.err.println("Internal error: " + t.getMessage());
