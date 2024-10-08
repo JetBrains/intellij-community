@@ -19,9 +19,9 @@ object ExtensionUtil {
   @JvmStatic
   fun isExtensionPointImplementationCandidate(psiClass: PsiClass): Boolean {
     return psiClass.classKind == JvmClassKind.CLASS &&
+           !PsiUtil.isAbstractClass(psiClass) &&
            !PsiUtil.isInnerClass(psiClass) &&
-           !PsiUtil.isLocalOrAnonymousClass(psiClass) &&
-           !PsiUtil.isAbstractClass(psiClass)
+           !PsiUtil.isLocalOrAnonymousClass(psiClass)
   }
 
   /**
