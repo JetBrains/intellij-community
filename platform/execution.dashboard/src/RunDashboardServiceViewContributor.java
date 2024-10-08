@@ -34,6 +34,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.platform.execution.dashboard.actions.RunDashboardDoubleClickRunAction;
 import com.intellij.platform.execution.dashboard.tree.FolderDashboardGroupingRule.FolderDashboardGroup;
 import com.intellij.platform.execution.dashboard.tree.GroupingNode;
 import com.intellij.platform.execution.dashboard.tree.RunConfigurationNode;
@@ -416,6 +417,10 @@ public final class RunDashboardServiceViewContributor
 
     @Override
     public boolean handleDoubleClick(@NotNull MouseEvent event) {
+      if (!RunDashboardDoubleClickRunAction.Companion.isDoubleClickRunEnabled$intellij_platform_execution_dashboard()) {
+        return ServiceViewDescriptor.super.handleDoubleClick(event);
+      }
+
       Executor executor = getExecutor();
       if (executor == null) return true;
 

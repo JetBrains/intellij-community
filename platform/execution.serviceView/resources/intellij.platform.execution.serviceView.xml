@@ -49,10 +49,12 @@
       <action id="ServiceView.JumpToServices" use-shortcut-of="ShowNavBar"
               class="com.intellij.platform.execution.serviceView.JumpToServicesAction"/>
     </group>
-    <action id="ServiceView.SelectActiveService" class="com.intellij.platform.execution.serviceView.SelectActiveServiceAction"/>
-    <action id="ServiceView.ShowServices" icon="AllIcons.Actions.ShowAsTree"
-            class="com.intellij.platform.execution.serviceView.ShowServicesAction"/>
-    <action id="ServiceView.ConfigureServices" icon="AllIcons.General.GearPlain"
-            class="com.intellij.platform.execution.serviceView.ConfigureServicesAction"/>
+    <group id="ServiceView.Gear">
+      <action id="ServiceView.SelectActiveService" class="com.intellij.platform.execution.serviceView.SelectActiveServiceAction"/>
+      <action id="ServiceView.ShowServices" icon="AllIcons.Actions.ShowAsTree"
+              class="com.intellij.platform.execution.serviceView.ShowServicesAction"/>
+      <action id="ServiceView.ConfigureServices" icon="AllIcons.General.GearPlain"
+              class="com.intellij.platform.execution.serviceView.ConfigureServicesAction"/>
+    </group>
   </actions>
 </idea-plugin>

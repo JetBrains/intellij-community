@@ -93,7 +93,11 @@
       <add-to-group group-id="ServiceView.AddService"/>
     </action>
     <reference id="RunDashboard.RestoreHiddenConfigurations">
-      <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddType"/>
+      <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddConfiguration"/>
     </reference>
+    <action id="RunDashboard.DoubleClickRun"
+            class="com.intellij.platform.execution.dashboard.actions.RunDashboardDoubleClickRunAction">
+      <add-to-group group-id="ServiceView.Gear"/>
+    </action>
   </actions>
 </idea-plugin>
