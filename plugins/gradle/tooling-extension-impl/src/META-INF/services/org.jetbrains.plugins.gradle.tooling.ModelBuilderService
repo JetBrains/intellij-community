@@ -2,7 +2,7 @@
 com.intellij.gradle.toolingExtension.impl.model.utilDummyModel.DummyModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.utilTurnOffDefaultTasksModel.TurnOffDefaultTasksModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExternalProjectModelBuilder
-com.intellij.gradle.toolingExtension.impl.model.taskIndex.GradleTaskIndexBuilder
+com.intellij.gradle.toolingExtension.impl.model.warmUp.GradleTaskWarmUpService
 com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.sourceSetArtifactIndex.GradleSourceSetArtifactIndexBuilder
