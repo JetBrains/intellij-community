@@ -8855,7 +8855,6 @@ f:com.intellij.ui.dsl.gridLayout.VerticalGaps
 - hashCode():I
 f:com.intellij.ui.dsl.gridLayout.VerticalGaps$Companion
 f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
-- sf:groupedTextListCellRenderer(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - sf:listCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - sf:textListCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 f:com.intellij.ui.dsl.listCellRenderer.LcrUtilsKt
