@@ -158,7 +158,7 @@ class GitRepositoryImpl private constructor(
 
   override fun update() {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    val previousInfo = repoInfo
+    val previousInfo = if (::repoInfo.isInitialized) repoInfo else null
     repoInfo = readRepoInfo()
     notifyIfRepoChanged(this, previousInfo, repoInfo)
   }
@@ -207,7 +207,6 @@ class GitRepositoryImpl private constructor(
 
   companion object {
     private val LOG = Logger.getInstance(GitRepositoryImpl::class.java)
-
 
     @JvmStatic
     @Deprecated("Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.")
@@ -267,14 +266,11 @@ class GitRepositoryImpl private constructor(
       untrackedFilesHolder.invalidate()
     }
 
-    private fun notifyIfRepoChanged(
-      repository: GitRepository,
-      previousInfo: GitRepoInfo,
-      info: GitRepoInfo,
-    ) {
+    private fun notifyIfRepoChanged(repository: GitRepository, previousInfo: GitRepoInfo?, info: GitRepoInfo) {
       val project = repository.project
       if (!project.isDisposed && info != previousInfo) {
-        GitRepositoryManager.getInstance(project).notifyListenersAsync(repository)
+        GitRepositoryManager.getInstance(project).notifyListenersAsync(repository, previousInfo, info)
+        LOG.debug("Repository $repository changed")
       }
     }
   }

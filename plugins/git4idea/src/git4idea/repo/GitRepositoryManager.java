@@ -79,10 +79,19 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
     myOngoingRebaseSpec = ongoingRebaseSpec != null && ongoingRebaseSpec.isValid() ? ongoingRebaseSpec : null;
   }
 
-  void notifyListenersAsync(@NotNull GitRepository repository) {
+  void notifyListenersAsync(@NotNull GitRepository repository,
+                            @Nullable GitRepoInfo previousInfo,
+                            @NotNull GitRepoInfo info) {
     myUpdateExecutor.execute(() -> {
       if (!Disposer.isDisposed(repository)) {
         syncPublisher(repository.getProject(), GitRepository.GIT_REPO_CHANGE).repositoryChanged(repository);
+
+        if (previousInfo != null) {
+          syncPublisher(repository.getProject(), GitRepository.GIT_REPO_STATE_CHANGE).repositoryChanged(repository, previousInfo, info);
+        }
+        else {
+          syncPublisher(repository.getProject(), GitRepository.GIT_REPO_STATE_CHANGE).repositoryCreated(repository, info);
+        }
       }
     });
   }

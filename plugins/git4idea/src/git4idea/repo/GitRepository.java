@@ -52,7 +52,10 @@ import java.util.Collection;
 @ApiStatus.NonExtendable
 public interface GitRepository extends Repository {
 
-  Topic<GitRepositoryChangeListener> GIT_REPO_CHANGE = Topic.create("GitRepository change", GitRepositoryChangeListener.class);
+  Topic<GitRepositoryChangeListener> GIT_REPO_CHANGE = Topic.create("GitRepository change",
+                                                                    GitRepositoryChangeListener.class);
+  Topic<GitRepositoryStateChangeListener> GIT_REPO_STATE_CHANGE = Topic.create("GitRepository state change",
+                                                                               GitRepositoryStateChangeListener.class);
 
   /**
    * @deprecated Use #getRepositoryFiles(), since there will be two administrative directories if user uses git worktrees.
