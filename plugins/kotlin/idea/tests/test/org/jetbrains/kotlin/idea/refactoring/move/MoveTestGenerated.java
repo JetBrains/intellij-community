@@ -633,6 +633,21 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveReferenceToImportedJavaStatic/moveReferenceToImportedJavaStatic.test");
         }
 
+        @TestMetadata("kotlin/moveSealedClassInheritorToSamePackage/moveSealedClassInheritorToSamePackage.test")
+        public void testKotlin_moveSealedClassInheritorToSamePackage_MoveSealedClassInheritorToSamePackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveSealedClassInheritorToSamePackage/moveSealedClassInheritorToSamePackage.test");
+        }
+
+        @TestMetadata("kotlin/moveSealedClassInheritor/moveSealedClassInheritor.test")
+        public void testKotlin_moveSealedClassInheritor_MoveSealedClassInheritor() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveSealedClassInheritor/moveSealedClassInheritor.test");
+        }
+
+        @TestMetadata("kotlin/moveSealedClassToSamePackage/moveSealedClassToSamePackage.test")
+        public void testKotlin_moveSealedClassToSamePackage_MoveSealedClassToSamePackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveSealedClassToSamePackage/moveSealedClassToSamePackage.test");
+        }
+
         @TestMetadata("kotlin/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test")
         public void testKotlin_moveSealedClassWithImplsToAnotherPackage_MoveSealedClassWithImplsToAnotherPackage() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test");
@@ -643,9 +658,19 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test");
         }
 
+        @TestMetadata("kotlin/moveSealedClassWithNestedImplsToAnotherPackageConflict/moveSealedClassWithNestedImplsToAnotherPackageConflict.test")
+        public void testKotlin_moveSealedClassWithNestedImplsToAnotherPackageConflict_MoveSealedClassWithNestedImplsToAnotherPackageConflict() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveSealedClassWithNestedImplsToAnotherPackageConflict/moveSealedClassWithNestedImplsToAnotherPackageConflict.test");
+        }
+
         @TestMetadata("kotlin/moveSealedClassWithNestedImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test")
         public void testKotlin_moveSealedClassWithNestedImplsToAnotherPackage_MoveSealedClassWithNestedImplsToAnotherPackage() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/moveSealedClassWithNestedImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test");
+        }
+
+        @TestMetadata("kotlin/moveSealedClass/moveSealedClass.test")
+        public void testKotlin_moveSealedClass_MoveSealedClass() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveSealedClass/moveSealedClass.test");
         }
 
         @TestMetadata("kotlin/moveTypealiasToFile/moveTypealiasToFile.test")

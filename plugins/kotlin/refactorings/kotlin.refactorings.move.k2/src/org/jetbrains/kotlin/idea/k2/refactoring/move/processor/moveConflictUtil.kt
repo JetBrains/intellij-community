@@ -68,14 +68,16 @@ internal fun findAllMoveConflicts(
     targetPkg: FqName,
     usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> {
-    val targetModule = targetDir.module?.productionOrTestSourceModuleInfo?.toKaModule() ?: return MultiMap.empty()
+    val targetIdeaModule = targetDir.module ?: return MultiMap.empty()
+    val targetKaModule = targetIdeaModule.productionOrTestSourceModuleInfo?.toKaModule() ?: return MultiMap.empty()
     return MultiMap<PsiElement, String>().apply {
-        putAllValues(checkMoveExpectedDeclarationIntoPlatformCode(topLevelDeclarationsToMove, targetModule))
-        putAllValues(checkMoveActualDeclarationIntoCommonModule(topLevelDeclarationsToMove, targetModule))
+        putAllValues(checkMoveExpectedDeclarationIntoPlatformCode(topLevelDeclarationsToMove, targetKaModule))
+        putAllValues(checkMoveActualDeclarationIntoCommonModule(topLevelDeclarationsToMove, targetKaModule))
         putAllValues(checkVisibilityConflictsForInternalUsages(topLevelDeclarationsToMove, allDeclarationsToMove, targetPkg, targetDir))
         putAllValues(checkVisibilityConflictForNonMovedUsages(allDeclarationsToMove, usages, targetDir))
         putAllValues(checkModuleDependencyConflictsForInternalUsages(topLevelDeclarationsToMove, allDeclarationsToMove, targetDir))
         putAllValues(checkModuleDependencyConflictsForNonMovedUsages(allDeclarationsToMove, usages, targetDir))
+        putAllValues(checkSealedClassesConflict(allDeclarationsToMove, targetPkg, targetKaModule, targetIdeaModule))
     }
 }
 
