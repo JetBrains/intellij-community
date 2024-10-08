@@ -84,15 +84,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
                rootExcludeCondition: ((Path) -> Boolean)?) {
     if (TeamCityHelper.isUnderTeamCity) {
       val outputFile = Files.createTempFile("testBuildOutput", ".txt").apply { Files.delete(this) }.toFile()
+      context.messages.startWritingFileToBuildLog(outputFile.absolutePath)
       val outputStream = System.out
       PrintStream(FileOutputStream(outputFile)).use {
         System.setOut(it)
-        context.messages.startWritingFileToBuildLog(outputFile.absolutePath)
         try {
           runTestsImpl(additionalJvmOptions, additionalSystemProperties, defaultMainModule, rootExcludeCondition)
         }
         finally {
           System.setOut(outputStream)
+          context.messages.artifactBuilt(outputFile.absolutePath)
         }
       }
     }
