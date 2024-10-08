@@ -69,10 +69,7 @@ interface InlineCompletionEvent {
     val context: DataContext? = null,
   ) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
-      val offset = runReadAction { caret.offset }
-      val project = editor.project ?: return null
-      val file = getPsiFile(caret, project) ?: return null
-      return InlineCompletionRequest(this, file, editor, editor.document, offset, offset)
+      return getRequest(event = this, editor = editor, specificCaret = caret)
     }
   }
 
@@ -83,12 +80,12 @@ interface InlineCompletionEvent {
    */
   class DocumentChange @ApiStatus.Internal constructor(val typing: TypingEvent, val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
-      val project = editor.project ?: return null
-      val caretModel = editor.caretModel
-      if (caretModel.caretCount != 1) return null
-
-      val file = getPsiFile(caretModel.currentCaret, project) ?: return null
-      return InlineCompletionRequest(this, file, editor, editor.document, typing.range.startOffset, typing.range.endOffset)
+      return getRequest(
+        event = this,
+        editor = editor,
+        specificStartOffset = typing.range.startOffset,
+        specificEndOffset = typing.range.endOffset
+      )
     }
   }
 
@@ -107,13 +104,8 @@ interface InlineCompletionEvent {
   @ApiStatus.Experimental
   class Backspace internal constructor(val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
-      val project = editor.project ?: return null
-      val caretModel = editor.caretModel
-      if (caretModel.caretCount != 1) return null
-
-      val file = getPsiFile(caretModel.currentCaret, project) ?: return null
-      // TODO offset
-      return InlineCompletionRequest(this, file, editor, editor.document, caretModel.offset, caretModel.offset)
+      // TODO offset?
+      return getRequest(event = this, editor = editor)
     }
   }
 
@@ -139,20 +131,16 @@ interface InlineCompletionEvent {
   class LookupCancelled(override val event: LookupEvent) : InlineLookupEvent
 
   sealed interface InlineLookupEvent : InlineCompletionEvent {
+
     val event: LookupEvent
+
     override fun toRequest(): InlineCompletionRequest? {
       val editor = runReadAction { event.lookup?.editor } ?: return null
-      val caretModel = editor.caretModel
-      if (caretModel.caretCount != 1) return null
-
-      val project = editor.project ?: return null
-
-      val (file, offset) = runReadAction {
-        getPsiFile(caretModel.currentCaret, project) to caretModel.offset
-      }
-      if (file == null) return null
-
-      return InlineCompletionRequest(this, file, editor, editor.document, offset, offset, event.item)
+      return getRequest(
+        event = this,
+        editor = editor,
+        getLookupElement = { event.item }
+      )
     }
   }
 
@@ -160,18 +148,9 @@ interface InlineCompletionEvent {
   @ApiStatus.Experimental
   sealed class PartialAccept @ApiStatus.Internal constructor(val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
-      val caretModel = editor.caretModel
-      if (caretModel.caretCount != 1) return null
       val session = InlineCompletionSession.getOrNull(editor) ?: return null
-      return InlineCompletionRequest(
-        this,
-        session.request.file,
-        editor,
-        editor.document,
-        caretModel.offset,
-        caretModel.offset, // It depends on specific insertion implementation, so no way to guess it here
-        lookupElement = null
-      )
+      // Offset depends on specific insertion implementation, so no way to guess it here
+      return getRequest(event = this, editor = editor, specificFile = session.request.file)
     }
   }
 
@@ -213,4 +192,33 @@ private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
 
 private fun PsiFile.isLoadedInMemory(): Boolean {
   return (this as? PsiFileImpl)?.treeElement != null
+}
+
+private inline fun getRequest(
+  event: InlineCompletionEvent,
+  editor: Editor,
+  specificFile: PsiFile? = null,
+  specificCaret: Caret? = null,
+  specificStartOffset: Int? = null,
+  specificEndOffset: Int? = null,
+  crossinline getLookupElement: () -> LookupElement? = { null },
+): InlineCompletionRequest? {
+  return runReadAction {
+    if (editor.caretModel.caretCount != 1) {
+      return@runReadAction null
+    }
+    val caret = specificCaret ?: editor.caretModel.currentCaret
+    val project = editor.project ?: return@runReadAction null
+    val file = specificFile ?: getPsiFile(caret, project) ?: return@runReadAction null
+    val offset = caret.offset
+    InlineCompletionRequest(
+      event = event,
+      file = file,
+      editor = editor,
+      document = editor.document,
+      startOffset = specificStartOffset ?: offset,
+      endOffset = specificEndOffset ?: offset,
+      lookupElement = getLookupElement()
+    )
+  }
 }
