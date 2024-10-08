@@ -81,22 +81,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
           .map(vf -> {
             PsiFile f = psiManager.findFile(vf);
             String name = vf.getName();
-            return f == null ? null : new FoundItemDescriptor<Object>(new PsiElementNavigationItem() {
-              @Override
-              public PsiElement getTargetElement() { return f; }
-
-              @Override
-              public String getName() { return f.getName(); }
-              @Override
-              public @Nullable ItemPresentation getPresentation() { return f.getPresentation(); }
-
-              @Override
-              public void navigate(boolean requestFocus) { f.navigate(requestFocus); }
-              @Override
-              public boolean canNavigate() { return f.canNavigate(); }
-              @Override
-              public boolean canNavigateToSource() { return f.canNavigateToSource(); }
-            }, matcher.matchingDegree(name));
+            return f == null ? null : new FoundItemDescriptor<Object>(f, matcher.matchingDegree(name));
           })
           .nonNull()
           .sorted(comparator.reversed())
