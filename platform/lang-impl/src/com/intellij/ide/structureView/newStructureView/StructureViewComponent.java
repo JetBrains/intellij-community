@@ -9,6 +9,7 @@ import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.logical.LogicalStructureDataKeys;
+import com.intellij.ide.structureView.logical.impl.LogicalStructureViewTreeElement;
 import com.intellij.ide.structureView.symbol.DelegatingPsiElementWithSymbolPointer;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomizationUtil;
@@ -855,7 +856,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     public FileStatus getFileStatus() {
       if (myTreeModel instanceof StructureViewModel model &&
-          getValue() instanceof StructureViewTreeElement value) {
+          getValue() instanceof StructureViewTreeElement value &&
+          !(value instanceof LogicalStructureViewTreeElement)) {
         return model.getElementStatus(value.getValue());
       }
       return FileStatus.NOT_CHANGED;
