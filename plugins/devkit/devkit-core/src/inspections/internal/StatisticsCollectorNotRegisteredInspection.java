@@ -21,6 +21,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.inspections.DevKitJvmInspection;
+import org.jetbrains.idea.devkit.inspections.ExtensionUtil;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFix;
 import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionPointLocator;
@@ -34,9 +35,8 @@ import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.processExtension
 @VisibleForTesting
 @ApiStatus.Internal
 public final class StatisticsCollectorNotRegisteredInspection extends DevKitJvmInspection {
-  public static final String FEATURE_USAGES_COLLECTOR = "com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector";
+  private static final String FEATURE_USAGES_COLLECTOR = "com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector";
 
-  @Nullable
   @Override
   protected JvmElementVisitor<Boolean> buildVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly) {
     return new DefaultJvmElementVisitor<>() {
@@ -53,16 +53,11 @@ public final class StatisticsCollectorNotRegisteredInspection extends DevKitJvmI
   }
 
   private static void checkClass(@NotNull Project project, @NotNull PsiClass checkedClass, @NotNull HighlightSink sink) {
-    if (checkedClass.getQualifiedName() == null ||
-        checkedClass.getContainingFile().getVirtualFile() == null ||
-        checkedClass.hasModifierProperty(PsiModifier.ABSTRACT) ||
-        checkedClass.isEnum()) {
+    if (!ExtensionUtil.isExtensionPointImplementationCandidate(checkedClass)) {
       return;
     }
 
-    GlobalSearchScope scope = checkedClass.getResolveScope();
-    PsiClass featureUsageCollectorClass = JavaPsiFacade.getInstance(project).findClass(FEATURE_USAGES_COLLECTOR, scope);
-    if (featureUsageCollectorClass != null && checkedClass.isInheritor(featureUsageCollectorClass, true)) {
+    if (InheritanceUtil.isInheritor(checkedClass, FEATURE_USAGES_COLLECTOR)) {
       for (StatisticsCollectorType collectorType : StatisticsCollectorType.values()) {
         if (InheritanceUtil.isInheritor(checkedClass, collectorType.getClassName())) {
           checkCollectorRegistration(project, checkedClass, sink, collectorType);
