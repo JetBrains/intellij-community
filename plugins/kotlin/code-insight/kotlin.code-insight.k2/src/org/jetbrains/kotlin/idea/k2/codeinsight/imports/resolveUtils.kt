@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaSymbolRelationProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
@@ -34,6 +35,7 @@ internal fun KaSession.containingDeclarationPatched(symbol: KaSymbol): KaDeclara
  *
  * A workaround for the KT-70301.
  */
+@Deprecated("The workaround is not needed anymore. Use `org.jetbrains.kotlin.analysis.api.components.KaSymbolRelationProvider.getConstructedClass` instead")
 internal fun KaSession.findSamClassFor(samConstructorSymbol: KaSamConstructorSymbol): KaClassLikeSymbol? {
     val samCallableId = samConstructorSymbol.callableId ?: return null
     if (samCallableId.isLocal) return null
