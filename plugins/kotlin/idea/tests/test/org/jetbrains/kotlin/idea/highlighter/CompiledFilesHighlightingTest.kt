@@ -58,7 +58,7 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-    @TestMetadata("kotlin/annotations/OptIn.kt")
+    @TestMetadata("commonMain/kotlin/annotations/OptIn.kt")
     fun testDecompiledCodeKotlinAnnotationsOptInKt() {
         withLibrary(TestKotlinArtifacts.kotlinStdlib) {
             doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibCommonSources, FileHighlightingSetting.SKIP_HIGHLIGHTING) {

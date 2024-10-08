@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinAnchorModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
@@ -22,4 +23,12 @@ class IdeKotlinAnchorModuleProvider(val project: Project) : KotlinAnchorModulePr
         ResolutionAnchorCacheService.getInstance(project)
             .librariesForResolutionAnchors.keys
             .mapNotNull { it.toKaModule() as? KaSourceModule }
+
+    override fun getAllAnchorModulesIfComputed(): Collection<KaSourceModule>? {
+        ThreadingAssertions.assertWriteAccess()
+        val librariesForResolutionAnchorsIfComputed =
+            ResolutionAnchorCacheService.getInstance(project).librariesForResolutionAnchorsIfComputed ?: return null
+        return librariesForResolutionAnchorsIfComputed.keys
+            .mapNotNull { it.toKaModule() as? KaSourceModule }
+    }
 }

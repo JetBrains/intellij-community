@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
+import it.unimi.dsi.fastutil.objects.Object2IntMap
 import org.jetbrains.kotlin.analyzer.LibraryModuleInfo
 import org.jetbrains.kotlin.analyzer.TrackableModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
@@ -21,6 +22,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinableSourceAndClassRootsScope
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinedSourceAndClassRootsScope
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.PoweredLibraryScopeBase
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.calculateEntriesVirtualFileSystems
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.calculateTopPackageNames
@@ -154,8 +157,19 @@ private class LibraryWithoutSourceScope(
     VirtualFile.EMPTY_ARRAY,
     topPackageNames,
     entriesVirtualFileSystems
-) {
+), CombinableSourceAndClassRootsScope {
+
     override fun getFileRoot(file: VirtualFile): VirtualFile? = myIndex.getClassRootForFile(file)
+
+    /**
+     * [LibraryWithoutSourceScope] exposes its roots so that they can be integrated into a [CombinedSourceAndClassRootsScope].
+     */
+    override val roots: Object2IntMap<VirtualFile> get() = entries
+
+    override val modules: Set<Module> get() = emptySet()
+
+    override val includesLibraryRoots: Boolean get() = true
+
     override fun equals(other: Any?): Boolean = other is LibraryWithoutSourceScope && library == other.library
     override fun calcHashCode(): Int = library.hashCode()
     override fun toString(): String = "LibraryWithoutSourceScope($library)"

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.base.util.minus
 
-internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScopeProvider {
+internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Project) : KotlinResolutionScopeProvider {
     override fun getResolutionScope(module: KaModule): GlobalSearchScope {
         val scope = when (module) {
             is KaSourceModule -> {
@@ -44,7 +45,7 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
                     }
                     addAll(module.allDirectDependencies())
                 }
-                GlobalSearchScope.union(allModules.map { it.contentScope })
+                KotlinGlobalSearchScopeMerger.getInstance(project).union(allModules.map { it.contentScope })
             }
         }
         return if (module is KtSourceModuleByModuleInfo) {
@@ -91,6 +92,6 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
 
         val searchScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module.ideaModule, includeTests)
         if (ignored.isEmpty()) return searchScope
-        return (searchScope - GlobalSearchScope.union(ignored)) as GlobalSearchScope
+        return (searchScope - KotlinGlobalSearchScopeMerger.getInstance(project).union(ignored)) as GlobalSearchScope
     }
 }

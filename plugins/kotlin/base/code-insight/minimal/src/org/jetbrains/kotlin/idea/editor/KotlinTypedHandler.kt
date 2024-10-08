@@ -331,7 +331,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
             }
 
             c == '(' -> {
-                if (KotlinTypedHandlerHelper.autoIndentCase(editor, project, file, KtPropertyAccessor::class.java, forFirstElement = false)) return Result.STOP
+                if (KotlinTypedHandlerHelper.autoIndentCase(editor, project, file, KtParameterList::class.java, forFirstElement = false)) return Result.STOP
             }
         }
 

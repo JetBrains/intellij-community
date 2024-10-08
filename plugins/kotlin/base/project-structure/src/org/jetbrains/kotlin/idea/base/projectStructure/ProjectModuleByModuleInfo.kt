@@ -186,11 +186,7 @@ open class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) 
         moduleInfo.collectDependencies(ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED)
 
     override val contentScope: GlobalSearchScope
-        get() = if (moduleInfo is ModuleTestSourceInfo) {
-            val testOnlyScope = GlobalSearchScopes.projectTestScope(project).intersectWith(ideaModule.moduleTestSourceScope)
-            KotlinResolveScopeEnlarger.enlargeScope(testOnlyScope, ideaModule, isTestScope = true)
-        } else
-            moduleInfo.contentScope
+        get() = moduleInfo.contentScope
 
     override val languageVersionSettings: LanguageVersionSettings get() = moduleInfo.module.languageVersionSettings
 
