@@ -1,104 +1,124 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.codeInspection.style
+package org.jetbrains.plugins.groovy.codeInspection.style;
 
-import com.intellij.testFramework.LightProjectDescriptor
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection
-import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection;
+import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind;
 
-import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.*
+import java.util.List;
+import java.util.Map;
 
-@CompileStatic
-class GrStringStyleViolationInspectionTest extends LightGroovyTestCase {
+import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.*;
 
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
-  final GrStringStyleViolationInspection inspection = new GrStringStyleViolationInspection()
 
-  void 'test plain string correction'() {
-    doTest '"abc"', "'abc'", plain: SINGLE_QUOTED
+public class GrStringStyleViolationInspectionTest extends LightGroovyTestCase {
+  private static final String PLAIN_KEY = "plain";
+  private static final String ESCAPE_KEY = "escape";
+  private static final String INTERPOLATION_KEY = "interpolation";
+  private static final String MULTILINE_KEY = "multiline";
+
+  @Override
+  public @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_LATEST;
   }
 
-  void 'test no complaint on correct kind'() {
-    doTest "'abc'", plain: SINGLE_QUOTED
+  private final GrStringStyleViolationInspection inspection = new GrStringStyleViolationInspection();
+
+  public void testPlainStringCorrection() {
+    doTest("\"abc\"", "'abc'", Map.of(PLAIN_KEY, SINGLE_QUOTED));
   }
 
-  void 'test correction to slashy string'() {
-    doTest "'''abc'''", "/abc/", plain: SLASHY
+  public void testNoComplaintForCorrectKind() {
+    doTest("'abc'", Map.of(PLAIN_KEY, SINGLE_QUOTED));
   }
 
-  void 'test multiline'() {
-    doTest """'''abc
-cde'''""", """/abc
-cde/""", multiline: SLASHY
+  public void testCorrectionSlashyString() {
+    doTest("'''abc'''", "/abc/", Map.of(PLAIN_KEY, SLASHY));
   }
 
-
-  void "test don't complain to multiline string if settings are disabled"() {
-    doTest """
-'''abc
-cde'''
-""", multiline: UNDEFINED
+  public void testMultilineString() {
+    doTest("""
+                  '''abc
+                  cde'''""",
+           """
+                  /abc
+                  cde/""", Map.of(MULTILINE_KEY, SLASHY));
   }
 
-  void "test don't complain to multiline string if its kind coincides with settings"() {
-    doTest '''
-"""abc
-cde"""
-''', multiline: TRIPLE_DOUBLE_QUOTED
+  public void testNoComplaintOnMultilineStringWithDisabledSettings() {
+    doTest("""
+                  '''abc
+                  cde'''
+                  """, Map.of(MULTILINE_KEY, UNDEFINED));
   }
 
-  void "test interpolated string"() {
-    doTest '"abc${1}de"', '/abc${1}de/', interpolation: SLASHY
+  public void testNoComplaintOnMultilineStringWithMatchingSettings() {
+    doTest("\n\"\"\"abc\ncde\"\"\"", Map.of(MULTILINE_KEY, TRIPLE_DOUBLE_QUOTED));
   }
 
-  void "test don't complain to interpolated string if settings are disabled"() {
-    doTest '"${1}"', interpolation: UNDEFINED
+  public void testInterpolatedString() {
+    doTest("\"abc${1}de\"", "/abc${1}de/", Map.of(INTERPOLATION_KEY, SLASHY));
   }
 
-  void "test don't complain to interpolated string if its kind coincides with settings"() {
-    doTest '"""${1}"""', interpolation: TRIPLE_DOUBLE_QUOTED
+  public void testNoComplaintOnInterpolatedStringWithDisabledSettings() {
+    doTest("\"${1}\"", Map.of(INTERPOLATION_KEY, UNDEFINED));
   }
 
-  void "test escaping minimization"() {
-    doTest '"ab\\"c"', /'ab"c'/, plain: DOUBLE_QUOTED, escape: SINGLE_QUOTED
+  public void testNoComplaintOnInterpolatedStringWithMatchingSettings() {
+    doTest("\"\"\"${1}\"\"\"", Map.of(INTERPOLATION_KEY, TRIPLE_DOUBLE_QUOTED));
   }
 
-  void "test escaping minimization 2"() {
-    doTest(/"ab\"'c"/, '''$/ab"'c/$''', plain: DOUBLE_QUOTED, escape: SINGLE_QUOTED)
+  public void testEscapingMinimization() {
+    doTest("\"ab\\\"c\"", "'ab\"c'", Map.of(PLAIN_KEY, DOUBLE_QUOTED, ESCAPE_KEY, SINGLE_QUOTED));
   }
 
-  void "test consider slashes for slashy strings"() {
-    doTest($/"ab//\"c"/$, '''$/ab//"c/$''', plain: DOUBLE_QUOTED, escape: SLASHY)
+  public void testEscapingMinimization2() {
+    doTest("\"ab\\\"'c\"", "$/ab\"'c/$", Map.of(PLAIN_KEY, DOUBLE_QUOTED,
+                                       ESCAPE_KEY, SINGLE_QUOTED));
   }
 
-  void "test complex minimization"() {
-    doTest("""'\$ /\$ \$\$\$ //\\n'""", plain: DOUBLE_QUOTED, escape: SLASHY)
+  public void testConsiderSlashesForSlashyStrings() {
+    doTest("\"ab//\\\"c\"",
+           "$/ab//\"c/$", Map.of(PLAIN_KEY, DOUBLE_QUOTED,
+                                        ESCAPE_KEY, SLASHY));
   }
 
-  void "test conversion to dollar-slashy string"() {
-    doTest '\'abc$de\'', '$/abc$$de/$', plain: DOLLAR_SLASHY_QUOTED, escape: UNDEFINED
+  public void testComplexMinimization() {
+    doTest("'$ /$ $$$ //\\n'", Map.of(PLAIN_KEY, DOUBLE_QUOTED,
+                                      ESCAPE_KEY, SLASHY));
   }
 
-  private void doTest(Map<String, InspectionStringQuotationKind> map = [:], String before, String after = null) {
-    inspection.with {
-      plainStringQuotation$intellij_groovy_psi = map.plain ?: SINGLE_QUOTED
-      escapedStringQuotation$intellij_groovy_psi = map.escape ?: UNDEFINED
-      interpolatedStringQuotation$intellij_groovy_psi = map.interpolation ?: UNDEFINED
-      multilineStringQuotation$intellij_groovy_psi = map.multiline ?: TRIPLE_QUOTED
+  public void testConversionToDollarSlashyString() {
+    doTest("'abc$de'", "$/abc$$de/$", Map.of(PLAIN_KEY, DOLLAR_SLASHY_QUOTED,
+                                             ESCAPE_KEY, UNDEFINED));
+  }
+
+  private void doTest(@NotNull String before, Map<String, InspectionStringQuotationKind> map) {
+    doTest(before, null, map);
+  }
+
+  private void doTest(@NotNull String before, @Nullable String after, Map<String, InspectionStringQuotationKind> map) {
+    inspection.setPlainStringQuotation$intellij_groovy_psi(map.getOrDefault(PLAIN_KEY, SINGLE_QUOTED));
+    inspection.setEscapedStringQuotation$intellij_groovy_psi(map.getOrDefault(ESCAPE_KEY, UNDEFINED));
+    inspection.setInterpolatedStringQuotation$intellij_groovy_psi(map.getOrDefault(INTERPOLATION_KEY, UNDEFINED));
+    inspection.setMultilineStringQuotation$intellij_groovy_psi(map.getOrDefault(MULTILINE_KEY, TRIPLE_QUOTED));
+
+    myFixture.enableInspections(inspection);
+    myFixture.configureByText("_.groovy", before);
+    if (after == null) {
+      myFixture.checkHighlighting(true, false, true);
     }
-    fixture.with {
-      enableInspections inspection
-      configureByText '_.groovy', before
-      if (after == null) {
-        checkHighlighting(true, false, true)
-      } else {
-        def intention = availableIntentions.find { it.familyName.startsWith("Convert to") || it.familyName.contains("Change quotes") }
-        launchAction intention
-        checkResult after
-      }
-      null
+    else {
+      List<IntentionAction> availableIntentionList = myFixture.getAvailableIntentions();
+      IntentionAction action = ContainerUtil.find(availableIntentionList, it -> it.getFamilyName().startsWith("Convert to") || it.getFamilyName().contains("Change quotes"));
+      myFixture.launchAction(action);
+      myFixture.checkResult(after);
     }
   }
 }
