@@ -1,221 +1,215 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 
-package org.jetbrains.plugins.groovy.refactoring.introduceVariable
+import com.intellij.psi.PsiType;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import com.intellij.psi.PsiType
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.GroovyFileType
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
-import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler
-import org.jetbrains.plugins.groovy.util.TestUtils
-class IntroduceVariableTest extends LightJavaCodeInsightFixtureTestCase {
+import java.util.Iterator;
 
+public class IntroduceVariableTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.testDataPath + "groovy/refactoring/introduceVariable/"
+    return TestUtils.getTestDataPath() + "groovy/refactoring/introduceVariable/";
   }
 
-  void testAbs() { doTest() }
+  public void testAbs() { doTest(); }
 
-  void testCall1() { doTest() }
+  public void testCall1() { doTest(); }
 
-  void testCall2() { doTest() }
+  public void testCall2() { doTest(); }
 
-  void testCall3() { doTest() }
+  public void testCall3() { doTest(); }
 
-  void testClos1() { doTest() }
+  public void testClos1() { doTest(); }
 
-  void testClos2() { doTest() }
+  public void testClos2() { doTest(); }
 
-  void testClos3() { doTest() }
+  public void testClos3() { doTest(); }
 
-  void testClos4() { doTest() }
+  public void testClos4() { doTest(); }
 
-  void testF2() { doTest() }
+  public void testF2() { doTest(); }
 
-  void testField1() { doTest() }
+  public void testField1() { doTest(); }
 
-  void testFirst() { doTest() }
+  public void testFirst() { doTest(); }
 
-  void testIf1() { doTest() }
+  public void testIf1() { doTest(); }
 
-  void testIf2() { doTest() }
+  public void testIf2() { doTest(); }
 
-  void testLocal1() { doTest() }
+  public void testLocal1() { doTest(); }
 
-  void testLoop1() { doTest() }
+  public void testLoop1() { doTest(); }
 
-  void testLoop2() { doTest() }
+  public void testLoop2() { doTest(); }
 
-  void testLoop3() { doTest() }
+  public void testLoop3() { doTest(); }
 
-  void testLoop4() { doTest() }
+  public void testLoop4() { doTest(); }
 
-  void testLoop5() { doTest() }
+  public void testLoop5() { doTest(); }
 
-  void testLoop6() { doTest() }
+  public void testLoop6() { doTest(); }
 
-  void testLoop7() { doTest() }
+  public void testLoop7() { doTest(); }
 
-  void testLoop8() { doTest() }
+  public void testLoop8() { doTest(); }
 
-  void testInCase() { doTest() }
+  public void testInCase() { doTest(); }
 
-  void testCaseLabel() { doTest() }
+  public void testCaseLabel() { doTest(); }
 
-  void testLabel1() { doTest() }
+  public void testLabel1() { doTest(); }
 
-  void testLabel2() { doTest() }
+  public void testLabel2() { doTest(); }
 
-  void testLabel3() { doTest() }
+  public void testLabel3() { doTest(); }
 
-  void testDuplicatesInsideIf() { doTest() }
+  public void testDuplicatesInsideIf() { doTest(); }
 
-  void testFromGString() { doTest() }
+  public void testFromGString() { doTest(); }
 
-  void testCharArray() { doTest(true) }
+  public void testCharArray() { doTest(true); }
 
-  void testCallableProperty() { doTest() }
+  public void testCallableProperty() { doTest(); }
 
-  void testFqn() {
-    myFixture.addClass('''\
-package p;
-public class Foo {
-    public static int foo() {
-        return 1;
-    }
-}
-''')
-    doTest()
+  public void testFqn() {
+    myFixture.addClass("""
+                         package p;
+                         public class Foo {
+                             public static int foo() {
+                                 return 1;
+                             }
+                         }
+                         """);
+    doTest();
   }
 
-  void testStringPart1() {
-    doTest('''\
-print 'a<begin>b<end>c'
-''', '''\
-def preved = 'b'
-print 'a' + preved<caret> + 'c'
-''')
+  public void testStringPart1() {
+    doTest("""
+             print 'a<begin>b<end>c'
+             """, """
+             def preved = 'b'
+             print 'a' + preved<caret> + 'c'
+             """);
   }
 
-  void testStringPart2() {
-    doTest('''\
-print "a<begin>b<end>c"
-''', '''\
-def preved = "b"
-print "a" + preved<caret> + "c"
-''')
+  public void testStringPart2() {
+    doTest("""
+             print "a<begin>b<end>c"
+             """, """
+             def preved = "b"
+             print "a" + preved<caret> + "c"
+             """);
   }
 
-  void testAllUsages() {
-    doTest('''\
-def foo() {
-    println(123);        // (1)
-    println(123);        // (2)
-    if (true) {
-        println(<all>123<end>);    // (3)
-        println(123);    // (4)
-    }
-}
-''', '''\
-def foo() {
-    def preved = 123
-    println(preved);        // (1)
-    println(preved);        // (2)
-    if (true) {
-        println(preved<caret>);    // (3)
-        println(preved);    // (4)
-    }
-}
-''')
+  public void testAllUsages() {
+    doTest("""
+             def foo() {
+                 println(123);        // (1)
+                 println(123);        // (2)
+                 if (true) {
+                     println(<all>123<end>);    // (3)
+                     println(123);    // (4)
+                 }
+             }
+             """, """
+             def foo() {
+                 def preved = 123
+                 println(preved);        // (1)
+                 println(preved);        // (2)
+                 if (true) {
+                     println(preved<caret>);    // (3)
+                     println(preved);    // (4)
+                 }
+             }
+             """);
   }
 
-  void testDollarSlashyString() {
-    doTest('''\
-print($/a<begin>b<end>c/$)
-''', '''\
-def preved = $/b/$
-print($/a/$ + preved + $/c/$)
-''')
+  public void testDollarSlashyString() {
+    doTest("""
+             print($/a<begin>b<end>c/$)
+             """, """
+             def preved = $/b/$
+             print($/a/$ + preved + $/c/$)
+             """);
   }
 
-  protected static final String ALL_MARKER = "<all>"
+  protected static final String ALL_MARKER = "<all>";
 
   private void processFile(String fileText, boolean explicitType) {
-    boolean replaceAllOccurrences = prepareText(fileText)
+    boolean replaceAllOccurrences = prepareText(fileText);
 
-    PsiType type = inferType(explicitType)
+    PsiType type = inferType(explicitType);
 
-    final MockSettings settings = new MockSettings(false, "preved", type, replaceAllOccurrences)
-    final GrIntroduceVariableHandler introduceVariableHandler = new MockGrIntroduceVariableHandler(settings)
+    final MockSettings settings = new MockSettings(false, "preved", type, replaceAllOccurrences);
+    final GrIntroduceVariableHandler introduceVariableHandler = new MockGrIntroduceVariableHandler(settings);
 
-    introduceVariableHandler.invoke(myFixture.project, myFixture.editor, myFixture.file, null)
+    introduceVariableHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), null);
   }
 
   private boolean prepareText(@NotNull String fileText) {
-    int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER)
+    int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
 
-    boolean replaceAllOccurrences
+    boolean replaceAllOccurrences;
     if (startOffset < 0) {
-      startOffset = fileText.indexOf(ALL_MARKER)
-      replaceAllOccurrences = true
-      fileText = removeAllMarker(fileText)
+      startOffset = fileText.indexOf(ALL_MARKER);
+      replaceAllOccurrences = true;
+      fileText = removeAllMarker(fileText);
     }
     else {
-      replaceAllOccurrences = false
-      fileText = TestUtils.removeBeginMarker(fileText)
+      replaceAllOccurrences = false;
+      fileText = TestUtils.removeBeginMarker(fileText);
     }
 
-    int endOffset = fileText.indexOf(TestUtils.END_MARKER)
-    fileText = TestUtils.removeEndMarker(fileText)
+    int endOffset = fileText.indexOf(TestUtils.END_MARKER);
+    fileText = TestUtils.removeEndMarker(fileText);
 
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText)
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
 
-    myFixture.editor.selectionModel.setSelection(startOffset, endOffset)
-    replaceAllOccurrences
+    myFixture.getEditor().getSelectionModel().setSelection(startOffset, endOffset);
+    return replaceAllOccurrences;
   }
 
   private PsiType inferType(boolean explicitType) {
     if (explicitType) {
-      final int start = myFixture.editor.selectionModel.selectionStart
-      final int end = myFixture.editor.selectionModel.selectionEnd
-      final GrExpression expression = GrIntroduceHandlerBase.findExpression(myFixture.file, start, end)
+      final int start = myFixture.getEditor().getSelectionModel().getSelectionStart();
+      final int end = myFixture.getEditor().getSelectionModel().getSelectionEnd();
+      final GrExpression expression = GrIntroduceHandlerBase.findExpression(myFixture.getFile(), start, end);
       if (expression != null) {
-        return expression.type
+        return expression.getType();
       }
     }
-    return null
+    return null;
   }
 
-  void doTest(boolean explicitType = false) {
-    def (String before, String after) = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test")
-    doTest(before, after, explicitType)
+  public void doTest(boolean explicitType) {
+    final Iterator<String> iterator = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test").iterator();
+    doTest(iterator.next(), iterator.next(), explicitType);
   }
 
-  void doTest(String before, String after, boolean explicitType = false) {
-    processFile(before, explicitType)
-    myFixture.checkResult(after, true)
+  public void doTest() {
+    doTest(false);
+  }
+
+  public void doTest(String before, String after, boolean explicitType) {
+    processFile(before, explicitType);
+    myFixture.checkResult(after, true);
+  }
+
+  public void doTest(String before, String after) {
+    doTest(before, after, false);
   }
 
   protected static String removeAllMarker(String text) {
-    int index = text.indexOf(ALL_MARKER)
-    return text.substring(0, index) + text.substring(index + ALL_MARKER.length())
+    int index = text.indexOf(ALL_MARKER);
+    return text.substring(0, index) + text.substring(index + ALL_MARKER.length());
   }
-
 }
