@@ -1,10 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.ChronoUtil;
@@ -14,6 +13,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -341,6 +341,7 @@ public class RedundantJavaTimeOperationsInspection extends AbstractBaseJavaLocal
         if (JAVA_TIME_LOCAL_TIME.equals(variableClass.getQualifiedName())) {
           holder.registerProblem(referenceNameElement,
                                  InspectionGadgetsBundle.message("inspection.redundant.java.time.operation.creation.java.time.error.message", "LocalTime"),
+                                 getHighlightTypeWithUnused(call),
                                  RedundantCreationFix.create(identifier.getText(), RedundantCreationFix.FixType.REMOVE,
                                                              InspectionGadgetsBundle.message(
                                                                "inspection.redundant.java.time.operation.creation.java.time.error.remove.fix.message",
@@ -394,6 +395,7 @@ public class RedundantJavaTimeOperationsInspection extends AbstractBaseJavaLocal
         if (JAVA_TIME_LOCAL_DATE.equals(variableClass.getQualifiedName())) {
           holder.registerProblem(referenceNameElement,
                                  InspectionGadgetsBundle.message("inspection.redundant.java.time.operation.creation.java.time.error.message", "LocalDate"),
+                                 getHighlightTypeWithUnused(call),
                                  RedundantCreationFix.create(identifier.getText(),
                                                              RedundantCreationFix.FixType.REMOVE,
                                                              InspectionGadgetsBundle.message(
@@ -459,13 +461,26 @@ public class RedundantJavaTimeOperationsInspection extends AbstractBaseJavaLocal
         holder.registerProblem(identifier,
                                InspectionGadgetsBundle.message("inspection.redundant.java.time.operation.creation.java.time.redundant.call.message",
                                                                className + ".from()"),
+                               getHighlightTypeWithUnused(call),
                                RedundantCreationFix.create(newText, RedundantCreationFix.FixType.REMOVE,
                                                            InspectionGadgetsBundle.message(
                                                              "inspection.redundant.java.time.operation.creation.java.time.error.remove.fix.message",
                                                              className + ".from()")));
         return true;
       }
+
     };
+  }
+
+  private @NotNull ProblemHighlightType getHighlightTypeWithUnused(@NotNull PsiElement psiElement) {
+    boolean result = false;
+    HighlightDisplayKey key = HighlightDisplayKey.find(getShortName());
+    if (key != null) {
+      HighlightDisplayLevel errorLevel =
+        InspectionProjectProfileManager.getInstance(psiElement.getProject()).getCurrentProfile().getErrorLevel(key, psiElement);
+      result = HighlightDisplayLevel.WARNING.equals(errorLevel);
+    }
+    return result ? ProblemHighlightType.LIKE_UNUSED_SYMBOL : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
   }
 
   private static class InlineChronoEnumCallFix extends PsiUpdateModCommandQuickFix {
