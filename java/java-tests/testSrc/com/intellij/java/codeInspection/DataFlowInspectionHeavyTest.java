@@ -39,7 +39,7 @@ public class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase 
        }""");
 
     myFixture.addFileToProject("annos/annos.java", annotationsText("ElementType.TYPE_USE"));
-    DataFlowInspection8Test.setCustomAnnotations(getProject(), myFixture.getTestRootDisposable(), "annos.NotNull", "annos.Nullable");
+    DataFlowInspectionTestCase.setCustomAnnotations(getProject(), myFixture.getTestRootDisposable(), "annos.NotNull", "annos.Nullable");
 
     PsiFile testFile = myFixture.addFileToProject("test.java", """
        class Zoo {

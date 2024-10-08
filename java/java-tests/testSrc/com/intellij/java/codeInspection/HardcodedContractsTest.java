@@ -125,7 +125,7 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
   }
 
   public void testAssertJAssert() {
-    DataFlowInspection9Test.addJSpecifyNullMarked(myFixture);
+    addJSpecifyNullMarked(myFixture);
     checkHighlighting();
   }
 

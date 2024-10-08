@@ -81,7 +81,7 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testSkipSwitchExpressionWithThrow() { doTest(); }
 
   public void testStringTemplates() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
 
@@ -137,13 +137,7 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testNullabilityInEnumSwitch() { doTest(); }
 
   public void testJetBrainsNotNullByDefault() {
-    myFixture.addClass("""
-                         package org.jetbrains.annotations;
-                         
-                         import java.lang.annotation.*;
-                         
-                         @Target({ElementType.TYPE, ElementType.PACKAGE})\s
-                         public @interface NotNullByDefault {}""");
+    addJetBrainsNotNullByDefault(myFixture);
     doTest();
   }
 }

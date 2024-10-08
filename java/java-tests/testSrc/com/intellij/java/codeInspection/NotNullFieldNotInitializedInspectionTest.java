@@ -19,7 +19,7 @@ public class NotNullFieldNotInitializedInspectionTest extends LightJavaCodeInsig
   public void testNotNullFieldInitializedInLambda() { doTest(); }
   public void testNotNullFieldNotInitializedInOneConstructor() { doTest(); }
   public void testTypeUseNotNullField() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    DataFlowInspectionTestCase.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
   public void testNotNullByDefaultFieldNotInitialized() {
