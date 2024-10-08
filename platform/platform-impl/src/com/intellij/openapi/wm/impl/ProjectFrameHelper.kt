@@ -545,7 +545,7 @@ private fun installLinuxResizeHandler(cs: CoroutineScope, frame: JFrame, glassPa
     // with WindowResizeListenerEx
     val toolkitCannotResizeUndecorated = !StartupUiUtil.isWaylandToolkit()
     if (toolkitCannotResizeUndecorated) {
-      val windowResizeListener = WindowResizeListenerEx(glassPane, content = frame, border = JBUI.insets(4), corner = null)
+      val windowResizeListener = WindowResizeListenerEx(glassPane, content = frame, true)
       windowResizeListener.install(cs)
       windowResizeListener.setLeftMouseButtonOnly(true)
     }

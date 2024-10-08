@@ -2,8 +2,11 @@
 package com.intellij.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
@@ -15,6 +18,9 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 class WindowResizeListenerEx(private val glassPane: IdeGlassPane, content: Component, border: Insets, corner: Icon?) :
   WindowResizeListener(content, border, corner) {
+
+  constructor(glassPane: IdeGlassPane, content: Component, movable: Boolean) : this(glassPane, content, defaultBorder(movable), null)
+
   private val resizeListeners = mutableListOf<Runnable>()
 
   private var cursor: Cursor? = null
@@ -57,3 +63,15 @@ class WindowResizeListenerEx(private val glassPane: IdeGlassPane, content: Compo
     resizeListeners.remove(listener)
   }
 }
+
+private fun defaultBorder(movable: Boolean): Insets {
+  val zone = defaultZone()
+  return if (movable) {
+    JBUI.insets(zone)
+  }
+  else {
+    JBUI.insets(0, 0, zone, zone)
+  }
+}
+
+private fun defaultZone(): Int = if (SystemInfo.isMac) Registry.intValue("popup.resize.zone.macos", 8) else 4
