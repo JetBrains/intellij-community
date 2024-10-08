@@ -9,15 +9,13 @@ import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.RemoteValueHint
-import com.intellij.platform.debugger.impl.frontend.withCurrentDb
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
+import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerManager
 import com.intellij.platform.kernel.withKernel
-import com.intellij.platform.project.asEntity
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
-import com.intellij.xdebugger.impl.XDebuggerActiveSessionEntity
 import com.intellij.xdebugger.impl.evaluate.childCoroutineScope
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
@@ -38,11 +36,8 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
     if (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported) {
       return false
     }
-    val hasActiveSession = withCurrentDb {
-      val projectEntity = project.asEntity()
-      XDebuggerActiveSessionEntity.all().any { it.projectEntity == projectEntity }
-    }
-    return hasActiveSession
+    val currentSession = FrontendXDebuggerManager.getInstance(project).currentSession.value
+    return currentSession != null && currentSession.evaluator.value != null
   }
 
   override fun createValueHint(project: Project, editor: Editor, point: Point, type: ValueHintType?): AbstractValueHint? {
@@ -74,12 +69,7 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
         return@async null
       }
       if (Registry.`is`("debugger.valueLookupFrontendBackend")) {
-        // TODO: use proper coroutine scope
-        val evaluatorScope = editor.childCoroutineScope("XQuickEvaluateHandler#evaluator")
-        val evaluatorId = withKernel {
-          XDebuggerValueLookupHintsRemoteApi.getInstance().createHintEvaluator(projectId)
-        } ?: return@async null
-        val frontendEvaluator = FrontendXDebuggerEvaluator(evaluatorScope, evaluatorId)
+        val frontendEvaluator = FrontendXDebuggerManager.getInstance(project).currentSession.value?.evaluator?.value ?: return@async null
         // TODO: provider proper editorsProvider
         val editorsProvider = object : XDebuggerEditorsProvider() {
           override fun getFileType(): FileType {

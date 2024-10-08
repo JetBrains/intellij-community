@@ -131,19 +131,6 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
     }
   }
 
-  override suspend fun createHintEvaluator(projectId: ProjectId): XDebuggerEvaluatorId? = withKernel {
-    // TODO: leaking evaluator, it is created every time and is not disposed
-    val project = projectId.findProject()
-    val evaluator = XDebuggerManager.getInstance(project).currentSession!!.debugProcess.evaluator!!
-    val evaluatorEntity = change {
-      LocalHintXDebuggerEvaluatorEntity.new {
-        it[XDebuggerEvaluatorEntity.Project] = project.asEntity()
-        it[XDebuggerEvaluatorEntity.Evaluator] = evaluator
-      }
-    }
-    XDebuggerEvaluatorId(evaluatorEntity.eid)
-  }
-
   private suspend fun getValueHintFromDebuggerPlugins(
     project: Project,
     editor: Editor,

@@ -17,7 +17,7 @@ internal class FrontendXDebuggerEvaluator(private val scope: CoroutineScope, pri
     scope.launch(Dispatchers.EDT) {
       withKernel {
         val xValue = try {
-          // TODO: write proper error message
+          // TODO: write proper error message, don't throw error here
           val xValueId = XDebuggerEvaluatorApi.getInstance().evaluate(evaluatorId, expression) ?: error("Cannot evaluate")
           // TODO: what scope to provide for the XValue?
           FrontendXValue(scope, xValueId.await())

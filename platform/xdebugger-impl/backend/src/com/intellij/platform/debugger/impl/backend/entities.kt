@@ -12,7 +12,6 @@ private class BackendXDebuggerEntityTypesProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> {
     return listOf(
       LocalValueHintEntity,
-      LocalHintXDebuggerEvaluatorEntity,
       LocalHintXValueEntity
     )
   }
@@ -29,28 +28,6 @@ internal data class LocalValueHintEntity(override val eid: EID) : Entity {
   ) {
     val Project = requiredRef<ProjectEntity>("project")
     val Hint = requiredTransient<AbstractValueHint>("hint")
-  }
-}
-
-internal data class LocalHintXDebuggerEvaluatorEntity(override val eid: EID) : XDebuggerEvaluatorEntity {
-  companion object : EntityType<LocalHintXDebuggerEvaluatorEntity>(
-    LocalHintXDebuggerEvaluatorEntity::class.java.name,
-    "com.intellij",
-    ::LocalHintXDebuggerEvaluatorEntity,
-    XDebuggerEvaluatorEntity
-  )
-}
-
-internal interface XDebuggerEvaluatorEntity : Entity {
-  val projectEntity: ProjectEntity
-    get() = this[Project]
-
-  val evaluator: XDebuggerEvaluator
-    get() = this[Evaluator]
-
-  companion object : Mixin<XDebuggerEvaluatorEntity>(XDebuggerEvaluatorEntity::class) {
-    val Project = requiredRef<ProjectEntity>("project")
-    val Evaluator = requiredTransient<XDebuggerEvaluator>("evaluator")
   }
 }
 

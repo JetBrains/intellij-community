@@ -9,6 +9,7 @@ import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueNode
 import com.intellij.xdebugger.frame.XValuePlace
+import com.intellij.xdebugger.impl.LocalXDebuggerSessionEvaluatorEntity
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
 import com.intellij.xdebugger.impl.rpc.XValueId
@@ -26,7 +27,7 @@ import javax.swing.Icon
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   override suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String): Deferred<XValueId>? = withKernel {
-    val evaluatorEntity = entity(evaluatorId.eid) as? XDebuggerEvaluatorEntity ?: return@withKernel null
+    val evaluatorEntity = entity(evaluatorId.eid) as? LocalXDebuggerSessionEvaluatorEntity ?: return@withKernel null
     val evaluator = evaluatorEntity.evaluator
     val evaluationResult = CompletableDeferred<XValue>()
 
@@ -51,7 +52,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         change {
           // TODO: leaked XValue entity, it is never disposed
           LocalHintXValueEntity.new {
-            it[LocalHintXValueEntity.Project] = evaluatorEntity.projectEntity
+            it[LocalHintXValueEntity.Project] = evaluatorEntity.sessionEntity.projectEntity
             it[LocalHintXValueEntity.XValue] = xValue
           }
         }

@@ -57,6 +57,7 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.FlowKt;
+import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.StateFlow;
 import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -70,6 +71,8 @@ import javax.swing.event.HyperlinkListener;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
 
 @ApiStatus.Internal
 public final class XDebugSessionImpl implements XDebugSession {
@@ -88,7 +91,6 @@ public final class XDebugSessionImpl implements XDebugSession {
   private Disposable myBreakpointListenerDisposable;
   private XSuspendContext mySuspendContext;
   private XExecutionStack myCurrentExecutionStack;
-  private XStackFrame myCurrentStackFrame;
   private @Nullable XAlternativeSourceHandler myAlternativeSourceHandler;
   private boolean myIsTopFrame;
   private volatile XStackFrame myTopStackFrame;
@@ -111,6 +113,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private final List<AnAction> myExtraActions = new SmartList<>();
   private ConsoleView myConsoleView;
   private final Icon myIcon;
+  private final MutableStateFlow<@Nullable XStackFrame> myCurrentStackFrame = createMutableStateFlow(null);
 
   private volatile boolean breakpointsInitialized;
   private long myUserRequestStart;
@@ -266,9 +269,14 @@ public final class XDebugSessionImpl implements XDebugSession {
     return myPaused.get();
   }
 
+  @ApiStatus.Internal
+  public StateFlow<XStackFrame> getCurrentStackFrameFlow() {
+    return myCurrentStackFrame;
+  }
+
   @Override
   public @Nullable XStackFrame getCurrentStackFrame() {
-    return myCurrentStackFrame;
+    return myCurrentStackFrame.getValue();
   }
 
   public @Nullable XExecutionStack getCurrentExecutionStack() {
@@ -282,7 +290,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public @Nullable XSourcePosition getCurrentPosition() {
-    return getFrameSourcePosition(myCurrentStackFrame);
+    return getFrameSourcePosition(myCurrentStackFrame.getValue());
   }
 
   @Override
@@ -664,7 +672,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private void clearPausedData() {
     mySuspendContext = null;
     myCurrentExecutionStack = null;
-    myCurrentStackFrame = null;
+    myCurrentStackFrame.setValue(null);
     myTopStackFrame = null;
     clearActiveNonLineBreakpoint();
     updateExecutionPosition();
@@ -679,8 +687,8 @@ public final class XDebugSessionImpl implements XDebugSession {
     // allowed only for the active session
     if (myDebuggerManager.getCurrentSession() == this) {
       boolean isTopFrame = isTopFrameSelected();
-      XSourcePosition mainSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.MAIN);
-      XSourcePosition alternativeSourcePosition = getFrameSourcePosition(myCurrentStackFrame, XSourceKind.ALTERNATIVE);
+      XSourcePosition mainSourcePosition = getFrameSourcePosition(myCurrentStackFrame.getValue(), XSourceKind.MAIN);
+      XSourcePosition alternativeSourcePosition = getFrameSourcePosition(myCurrentStackFrame.getValue(), XSourceKind.ALTERNATIVE);
       myExecutionPointManager.setExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame, navigationSourceKind);
       updateExecutionPointGutterIconRenderer();
     }
@@ -709,9 +717,9 @@ public final class XDebugSessionImpl implements XDebugSession {
   public void setCurrentStackFrame(@NotNull XExecutionStack executionStack, @NotNull XStackFrame frame, boolean isTopFrame) {
     if (mySuspendContext == null) return;
 
-    boolean frameChanged = myCurrentStackFrame != frame;
+    boolean frameChanged = myCurrentStackFrame.getValue() != frame;
     myCurrentExecutionStack = executionStack;
-    myCurrentStackFrame = frame;
+    myCurrentStackFrame.setValue(frame);
     myIsTopFrame = isTopFrame;
 
     if (frameChanged) {
@@ -933,9 +941,10 @@ public final class XDebugSessionImpl implements XDebugSession {
     setBreakpointsDisabledTemporarily(false);
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
-    myCurrentStackFrame = myCurrentExecutionStack != null ? myCurrentExecutionStack.getTopFrame() : null;
+    XStackFrame newCurrentStackFrame = myCurrentExecutionStack != null ? myCurrentExecutionStack.getTopFrame() : null;
+    myCurrentStackFrame.setValue(newCurrentStackFrame);
     myIsTopFrame = true;
-    myTopStackFrame = myCurrentStackFrame;
+    myTopStackFrame = newCurrentStackFrame;
     XSourcePosition topFramePosition = getTopFramePosition();
 
     myPaused.set(true);

@@ -24,8 +24,6 @@ interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
 
   suspend fun createHint(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType, fromPlugins: Boolean): RemoteValueHintId?
 
-  suspend fun createHintEvaluator(projectId: ProjectId): XDebuggerEvaluatorId?
-
   suspend fun showHint(hintId: RemoteValueHintId): Flow<Unit>
 
   suspend fun removeHint(hintId: RemoteValueHintId, force: Boolean)
