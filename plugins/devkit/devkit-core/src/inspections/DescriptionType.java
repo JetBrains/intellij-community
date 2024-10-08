@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +32,9 @@ public enum DescriptionType {
   }
 
   public boolean matches(PsiClass psiClass) {
-    if (InheritanceUtil.isInheritor(psiClass, myClassName)) {
-      return true;
+    PsiClass baseClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(myClassName, psiClass.getResolveScope());
+    if (baseClass != null) {
+      return psiClass.isInheritor(baseClass, true);
     }
 
     return myFallbackClassName != null && InheritanceUtil.isInheritor(psiClass, myFallbackClassName);
