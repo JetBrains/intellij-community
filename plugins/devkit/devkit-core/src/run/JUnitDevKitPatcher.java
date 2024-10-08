@@ -82,6 +82,10 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
       }
 
       appendAddOpensWhenNeeded(project, jdk, vm);
+
+      if (!Boolean.parseBoolean(vm.getPropertyValue("intellij.devkit.junit.skip.settings.from.intellij.yaml"))) {
+        JUnitDevKitUnitTestingSettings.getInstance(project).apply(module, javaParameters);
+      }
     }
 
     jdk = IdeaJdk.findIdeaJdk(jdk);
