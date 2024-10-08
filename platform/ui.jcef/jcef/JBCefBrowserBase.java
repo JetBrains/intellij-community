@@ -101,7 +101,8 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private final @NotNull DisposeHelper myDisposeHelper = new DisposeHelper();
   private volatile @Nullable LoadDeferrer myLoadDeferrer;
   private @NotNull String myLastRequestedUrl = "";
-  private final @NotNull Object myLastRequestedUrlLock = new Object();
+  private @Nullable String myLoadingUrl = "";
+  private final @NotNull Object myUrlLock = new Object();
   private volatile @Nullable ErrorPage myErrorPage;
   private final @NotNull PropertiesHelper myPropertiesHelper = new PropertiesHelper();
   private final @NotNull AtomicBoolean myIsCreateStarted = new AtomicBoolean(false);
@@ -681,24 +682,29 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   private void loadUrlImpl(@NotNull String url) {
-    setLastRequestedUrl(""); // will be set to a correct value in onBeforeBrowse()
+    synchronized (myUrlLock) {
+      if (Objects.equals(myLoadingUrl, url))
+        return;
+      myLoadingUrl = url;
+      setLastRequestedUrl(""); // will be set to a correct value in onBeforeBrowse()
+    }
     getCefBrowser().loadURL(url);
   }
 
   private String getLastRequestedUrl() {
-    synchronized (myLastRequestedUrlLock) {
+    synchronized (myUrlLock) {
       return myLastRequestedUrl;
     }
   }
 
   private void setLastRequestedUrl(@NotNull String url) {
-    synchronized (myLastRequestedUrlLock) {
+    synchronized (myUrlLock) {
       myLastRequestedUrl = url;
     }
   }
 
   private void compareLastRequestedUrlAndPerform(@NotNull String url, @NotNull Runnable action) {
-    synchronized (myLastRequestedUrlLock) {
+    synchronized (myUrlLock) {
       if (myLastRequestedUrl.equals(url)) action.run();
     }
   }
@@ -871,6 +877,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myDevtoolsFrame.setBounds(bounds.width / 4 + 100, bounds.height / 4 + 100, bounds.width / 2, bounds.height / 2);
     myDevtoolsFrame.setLayout(new BorderLayout());
     JBCefBrowser devTools = JBCefBrowser.createBuilder().setCefBrowser(myCefBrowser.getDevTools()).setClient(myCefClient).build();
+    final Component devToolsBrowserComponent = devTools.getCefBrowser().getUIComponent();
+    if (devToolsBrowserComponent instanceof JBCefOsrComponent)
+      ((JBCefOsrComponent)devToolsBrowserComponent).setBrowser(devTools.getCefBrowser());
+
     myDevtoolsFrame.add(devTools.getComponent(), BorderLayout.CENTER);
 
     Disposer.register(this, devTools);

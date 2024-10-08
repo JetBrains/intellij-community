@@ -14,8 +14,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.Method;
+import java.util.function.Supplier;
 
 public class CefBrowserFactoryImpl implements CefOsrBrowserFactory {
+  private static CefRendering.CefRenderingWithHandler createCefRenderingWithHandler(@NotNull JBCefOSRHandlerFactory osrHandlerFactory, boolean isMouseWheelEventEnabled) {
+    JComponent component = osrHandlerFactory.createComponent(isMouseWheelEventEnabled);
+    CefRenderHandler handler = osrHandlerFactory.createCefRenderHandler(component);
+    return new CefRendering.CefRenderingWithHandler(handler, component);
+  }
+
   @Override
   public @NotNull CefBrowser createOsrBrowser(@NotNull JBCefOSRHandlerFactory osrHandlerFactory,
                                               @NotNull CefClient client,
@@ -25,24 +33,34 @@ public class CefBrowserFactoryImpl implements CefOsrBrowserFactory {
                                               @Nullable Point inspectAt,
                                               boolean isMouseWheelEventEnabled,
                                               CefBrowserSettings settings) {
-    JComponent comp = osrHandlerFactory.createComponent(isMouseWheelEventEnabled);
-    CefRenderHandler handler = osrHandlerFactory.createCefRenderHandler(comp);
     if (JBCefApp.isRemoteEnabled()) {
-      CefBrowser browser = client.createBrowser(
-        ObjectUtils.notNull(url, ""),
-        new CefRendering.CefRenderingWithHandler(handler, comp),
-        true /* isTransparent - unused*/,
-        context);
+      CefBrowser browser = null;
+      try {
+        // Use latest API via reflection to avoid jcef-version increment
+        // TODO: remove reflection
+        Supplier<CefRendering> renderingSupplier = () -> createCefRenderingWithHandler(osrHandlerFactory, isMouseWheelEventEnabled);
+        Method m = CefClient.class.getMethod("createBrowser", String.class, Supplier.class, boolean.class, CefRequestContext.class, CefBrowserSettings.class);
+        browser = (CefBrowser)m.invoke(client, url, renderingSupplier, true, context, settings);
+      } catch (Throwable e) {}
 
-      if (comp instanceof JBCefOsrComponent) {
-        ((JBCefOsrComponent)comp).setBrowser(browser);
+      if (browser == null) {
+        final CefRendering.CefRenderingWithHandler rendering = createCefRenderingWithHandler(osrHandlerFactory, isMouseWheelEventEnabled);
+        browser = client.createBrowser(
+          ObjectUtils.notNull(url, ""),
+          rendering,
+          true /* isTransparent - unused*/,
+          context);
       }
+
+      if (browser.getUIComponent() instanceof JBCefOsrComponent)
+        ((JBCefOsrComponent)browser.getUIComponent()).setBrowser(browser);
 
       return browser;
     }
 
+    final CefRendering.CefRenderingWithHandler rendering = createCefRenderingWithHandler(osrHandlerFactory, isMouseWheelEventEnabled);
     CefBrowserOsrWithHandler browser =
-      new CefBrowserOsrWithHandler(client, ObjectUtils.notNull(url, ""), context, handler, comp, parentBrowser, inspectAt, settings) {
+      new CefBrowserOsrWithHandler(client, ObjectUtils.notNull(url, ""), context, rendering.getRenderHandler(), rendering.getComponent(), parentBrowser, inspectAt, settings) {
         @Override
         protected CefBrowser createDevToolsBrowser(CefClient client,
                                                    String url,
@@ -54,7 +72,8 @@ public class CefBrowserFactoryImpl implements CefOsrBrowserFactory {
         }
       };
 
-    if (comp instanceof JBCefOsrComponent) ((JBCefOsrComponent)comp).setBrowser(browser);
+    if (rendering.getComponent() instanceof JBCefOsrComponent)
+      ((JBCefOsrComponent)rendering.getComponent()).setBrowser(browser);
     return browser;
   }
 }
