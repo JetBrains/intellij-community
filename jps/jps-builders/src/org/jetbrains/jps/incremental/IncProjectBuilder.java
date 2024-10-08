@@ -76,6 +76,7 @@ import static org.jetbrains.jps.builders.java.JavaBuilderUtil.isDepGraphEnabled;
 @ApiStatus.Internal
 public final class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance(IncProjectBuilder.class);
+  private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
   private static final String CLASSPATH_INDEX_FILE_NAME = "classpath.index";
   // CLASSPATH_INDEX_FILE_NAME cannot be used because IDEA on run creates CLASSPATH_INDEX_FILE_NAME only if some module class is loaded,
@@ -1333,7 +1334,7 @@ public final class IncProjectBuilder {
             }
           }
         }
-        final MethodHandle mh = MethodHandles.lookup().unreflect(method);
+        final MethodHandle mh = lookup.unreflect(method);
         return args == null? mh.invoke(context) : mh.bindTo(context).asSpreader(Object[].class, args.length).invoke(args);
       }
     });
@@ -1551,7 +1552,7 @@ public final class IncProjectBuilder {
   }
 
   private void buildTargetsChunk(CompileContext context, BuildTargetChunk chunk, BuildProgress buildProgress) throws ProjectBuildException {
-    Tracer.DelayedSpan buildSpan = Tracer.start(() ->"Building " + chunk.getPresentableName());
+    Tracer.DelayedSpan buildSpan = Tracer.start(() -> "Building " + chunk.getPresentableName());
     final BuildFSState fsState = myProjectDescriptor.fsState;
     boolean doneSomething;
     try {
@@ -1731,41 +1732,41 @@ public final class IncProjectBuilder {
     return (CompileContext)Proxy.newProxyInstance(delegate.getClass().getClassLoader(), new Class[]{CompileContext.class}, new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if (args != null) {
-          final Class<?> declaringClass = method.getDeclaringClass();
-          if (dataHolderInterface.equals(declaringClass)) {
-            final Object firstArgument = args[0];
-            if (!(firstArgument instanceof GlobalContextKey)) {
-              final boolean isWriteOperation = args.length == 2 /*&& void.class.equals(method.getReturnType())*/;
-              if (isWriteOperation) {
-                if (args[1] == null) {
-                  deletedKeysSet.add(firstArgument);
-                }
-                else {
-                  deletedKeysSet.remove(firstArgument);
-                }
-              }
-              else {
-                if (deletedKeysSet.contains(firstArgument)) {
-                  return null;
-                }
-              }
-              final Object result = method.invoke(localDataHolder, args);
-              if (isWriteOperation || result != null) {
-                return result;
-              }
-            }
-          }
-          else if (messageHandlerInterface.equals(declaringClass)) {
-            final BuildMessage msg = (BuildMessage)args[0];
-            if (msg.getKind() == BuildMessage.Kind.ERROR) {
-              Utils.ERRORS_DETECTED_KEY.set(localDataHolder, Boolean.TRUE);
-            }
-          }
-          return MethodHandles.lookup().unreflect(method).bindTo(delegate).asSpreader(Object[].class, args.length).invoke(args);
+        if (args == null) {
+          return lookup.unreflect(method).invoke(delegate);
         }
 
-        return MethodHandles.lookup().unreflect(method).invoke(delegate);
+        final Class<?> declaringClass = method.getDeclaringClass();
+        if (dataHolderInterface.equals(declaringClass)) {
+          final Object firstArgument = args[0];
+          if (!(firstArgument instanceof GlobalContextKey)) {
+            final boolean isWriteOperation = args.length == 2 /*&& void.class.equals(method.getReturnType())*/;
+            if (isWriteOperation) {
+              if (args[1] == null) {
+                deletedKeysSet.add(firstArgument);
+              }
+              else {
+                deletedKeysSet.remove(firstArgument);
+              }
+            }
+            else {
+              if (deletedKeysSet.contains(firstArgument)) {
+                return null;
+              }
+            }
+            final Object result = method.invoke(localDataHolder, args);
+            if (isWriteOperation || result != null) {
+              return result;
+            }
+          }
+        }
+        else if (messageHandlerInterface.equals(declaringClass)) {
+          final BuildMessage msg = (BuildMessage)args[0];
+          if (msg.getKind() == BuildMessage.Kind.ERROR) {
+            Utils.ERRORS_DETECTED_KEY.set(localDataHolder, Boolean.TRUE);
+          }
+        }
+        return lookup.unreflect(method).bindTo(delegate).asSpreader(Object[].class, args.length).invoke(args);
       }
     });
   }
