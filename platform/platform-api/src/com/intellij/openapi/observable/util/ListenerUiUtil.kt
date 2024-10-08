@@ -229,6 +229,7 @@ fun <T> JComboBox<T>.whenItemSelectedFromUi(parentDisposable: Disposable? = null
 @Experimental
 fun TextFieldWithBrowseButton.whenTextChangedFromUi(parentDisposable: Disposable? = null, listener: (String) -> Unit) {
   textField.whenTextChangedFromUi(parentDisposable, listener)
+  addActionListener(parentDisposable) { listener(text) }
 }
 
 @Experimental

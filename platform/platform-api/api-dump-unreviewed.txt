@@ -2907,6 +2907,8 @@ f:com.intellij.openapi.observable.util.PropertyUiUtilKt
 - sf:getSizeProperty(javax.swing.JComponent):com.intellij.openapi.observable.properties.ObservableProperty
 - sf:getWidthProperty(javax.swing.JComponent):com.intellij.openapi.observable.properties.ObservableProperty
 f:com.intellij.openapi.observable.util.RevertOnDisposeUtilKt
+- sf:addActionListener(com.intellij.openapi.ui.ComponentWithBrowseButton,com.intellij.openapi.Disposable,java.awt.event.ActionListener):V
+- bs:addActionListener$default(com.intellij.openapi.ui.ComponentWithBrowseButton,com.intellij.openapi.Disposable,java.awt.event.ActionListener,I,java.lang.Object):V
 - sf:addCaretListener(javax.swing.text.JTextComponent,com.intellij.openapi.Disposable,javax.swing.event.CaretListener):V
 - bs:addCaretListener$default(javax.swing.text.JTextComponent,com.intellij.openapi.Disposable,javax.swing.event.CaretListener,I,java.lang.Object):V
 - sf:addComponent(java.awt.Container,java.awt.Component,com.intellij.openapi.Disposable):V
@@ -2932,6 +2934,7 @@ f:com.intellij.openapi.observable.util.RevertOnDisposeUtilKt
 - sf:addPopupMenuListener(javax.swing.JComboBox,com.intellij.openapi.Disposable,javax.swing.event.PopupMenuListener):V
 - bs:addPopupMenuListener$default(javax.swing.JComboBox,com.intellij.openapi.Disposable,javax.swing.event.PopupMenuListener,I,java.lang.Object):V
 - sf:addPropertyChangeListener(java.awt.Component,java.lang.String,com.intellij.openapi.Disposable,java.beans.PropertyChangeListener):V
+- bs:addPropertyChangeListener$default(java.awt.Component,java.lang.String,com.intellij.openapi.Disposable,java.beans.PropertyChangeListener,I,java.lang.Object):V
 - sf:addTableModelListener(com.intellij.util.ui.TableViewModel,com.intellij.openapi.Disposable,javax.swing.event.TableModelListener):V
 - bs:addTableModelListener$default(com.intellij.util.ui.TableViewModel,com.intellij.openapi.Disposable,javax.swing.event.TableModelListener,I,java.lang.Object):V
 - sf:addTreeModelListener(javax.swing.tree.TreeModel,com.intellij.openapi.Disposable,javax.swing.event.TreeModelListener):V
