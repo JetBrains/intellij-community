@@ -585,6 +585,9 @@
 
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
 
+    <projectService serviceImplementation="org.jetbrains.idea.devkit.run.JUnitDevKitUnitTestingSettings"
+                    configurationSchemaKey="unitTesting"/>
+
     <notificationGroup id="Plugin DevKit Deployment" displayType="BALLOON" bundle="messages.DevKitBundle"
                        key="notification.group.devkit.deployment"/>
     <notificationGroup id="DevKit Errors" displayType="BALLOON" hideFromSettings="true"/>
