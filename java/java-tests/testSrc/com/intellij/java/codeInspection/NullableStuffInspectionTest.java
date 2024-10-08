@@ -421,4 +421,9 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     DataFlowInspectionTestCase.setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
+
+  public void testParameterUnderDefaultNotNull() {
+    DataFlowInspectionTestCase.addJetBrainsNotNullByDefault(myFixture);
+    doTest();
+  }
 }

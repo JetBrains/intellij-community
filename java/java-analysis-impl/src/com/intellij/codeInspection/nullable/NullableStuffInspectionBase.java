@@ -963,13 +963,17 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         elementToHighlight = physical ? notNullAnnotation : owner.getNameIdentifier();
       }
     }
-    else if (DfaPsiUtil.getTypeNullability(owner.getType()) == Nullability.NOT_NULL) {
-      elementToHighlight = owner.getNameIdentifier();
+    else {
+      info = DfaPsiUtil.getTypeNullabilityInfo(owner.getType());
+      if (info != null && info.getNullability() == Nullability.NOT_NULL) {
+        elementToHighlight = owner.getNameIdentifier();
+      }
     }
     if (elementToHighlight == null || !JavaNullMethodArgumentUtil.hasNullArgument(method, parameterIdx)) return;
 
     reportProblem(holder, elementToHighlight, createNavigateToNullParameterUsagesFix(parameter),
-                  "inspection.nullable.problems.NotNull.parameter.receives.null.literal", getPresentableAnnoName(parameter));
+                  "inspection.nullable.problems.NotNull.parameter.receives.null.literal",
+                  StringUtil.getShortName(Objects.requireNonNull(info.getAnnotation().getQualifiedName())));
   }
 
   private void checkOverriders(@NotNull PsiMethod method,
