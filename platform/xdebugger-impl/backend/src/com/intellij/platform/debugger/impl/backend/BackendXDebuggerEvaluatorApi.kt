@@ -66,8 +66,13 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     val presentations = MutableSharedFlow<XValuePresentation>(replay = 1)
     val xValue = hintEntity.xValue
     channelFlow {
-      // TODO: mark as Obsolescent when needed
+      var isObsolete = false
+
       val valueNode = object : XValueNode {
+        override fun isObsolete(): Boolean {
+          return isObsolete
+        }
+
         override fun setPresentation(icon: Icon?, type: @NonNls String?, value: @NonNls String, hasChildren: Boolean) {
           // TODO: pass icon, type and hasChildren too
           presentations.tryEmit(XValuePresentation(value))
@@ -84,7 +89,17 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
           // TODO: implement setFullValueEvaluator
         }
       }
+      // TODO: pass XValuePlace
       xValue.computePresentation(valueNode, XValuePlace.TOOLTIP)
+
+      launch {
+        try {
+          awaitCancellation()
+        }
+        finally {
+          isObsolete = true
+        }
+      }
 
       presentations.collectLatest {
         send(it)
