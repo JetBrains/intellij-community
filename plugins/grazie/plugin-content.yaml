@@ -59,7 +59,7 @@
       org.json:json:
       - name: $MAVEN_REPOSITORY$/org/json/json/20240205/json-20240205.jar
       ai.grazie.utils.lucene.lt.compatibility:
-      - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-lucene-lt-compatibility-jvm/0/utils-lucene-lt-compatibility-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-lucene-lt-compatibility/0/utils-lucene-lt-compatibility-0.jar
       ai.grazie.nlp.langs:
       - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0/nlp-langs-jvm-0.jar
       ai.grazie.nlp.detect:

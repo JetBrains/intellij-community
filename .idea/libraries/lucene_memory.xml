@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="lucene-memory" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-memory:9.10.0">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-memory:9.12.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/9.10.0/lucene-memory-9.10.0.jar">
-          <sha256sum>38a3ecb1b0109d61ce7adf4c169dd36485e1a993ffd9b31788f8c6f704d941b9</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/9.12.0/lucene-memory-9.12.0.jar">
+          <sha256sum>fdbb9c9b3270ce06370d094f1a80dbbbf81b2638b55fa14cc817469092899f01</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/9.10.0/lucene-memory-9.10.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/9.12.0/lucene-memory-9.12.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/9.10.0/lucene-memory-9.10.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/9.12.0/lucene-memory-9.12.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/9.10.0/lucene-memory-9.10.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/9.12.0/lucene-memory-9.12.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

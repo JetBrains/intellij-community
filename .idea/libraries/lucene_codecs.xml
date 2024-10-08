@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="lucene-codecs" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-codecs:9.10.0">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-codecs:9.12.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-codecs/9.10.0/lucene-codecs-9.10.0.jar">
-          <sha256sum>acb542ac11e187140ccf60a7413139639b8d168b1a14cf22515f03a5c1f465c4</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-codecs/9.12.0/lucene-codecs-9.12.0.jar">
+          <sha256sum>8173a45b87df23a6dd279916cf16b361c0dcfeff5927121b014d210b19f17555</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-codecs/9.10.0/lucene-codecs-9.10.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-codecs/9.12.0/lucene-codecs-9.12.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-codecs/9.10.0/lucene-codecs-9.10.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-codecs/9.12.0/lucene-codecs-9.12.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-codecs/9.10.0/lucene-codecs-9.10.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-codecs/9.12.0/lucene-codecs-9.12.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
