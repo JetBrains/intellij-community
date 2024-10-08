@@ -76,8 +76,8 @@
     </projectConfigurable>
 
 
-    <generalOptionsProvider key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
-                            bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
+    <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Internal. Such API should not be used outside of IntelliJ IDEA project."><generalOptionsProvider key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                            bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/></warning>
 
     <groupConfigurable id="myGroup" descriptionKey="my.key" displayNameKey="my.key" />
     <groupConfigurable id="myGroup2" bundle="AnotherBundle" descriptionKey="another.key" displayNameKey="another.key" />
