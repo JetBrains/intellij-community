@@ -426,8 +426,13 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
     @Suppress("OVERRIDE_DEPRECATION")
     val provider = object : InlineCompletionProvider {
       override val id: InlineCompletionProviderID = InlineCompletionProviderID("TEST")
+
       override val overtyper = overtyper
-      override fun isEnabled(event: InlineCompletionEvent): Boolean = true
+
+      override fun isEnabled(event: InlineCompletionEvent): Boolean {
+        return event is InlineCompletionEvent.DirectCall || event is InlineCompletionEvent.DocumentChange
+      }
+
       override suspend fun getSuggestion(request: InlineCompletionRequest) = InlineCompletionSuggestion {
         variant {
           emit(InlineCompletionGrayTextElement("ab"))
@@ -513,8 +518,13 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
     }
     val provider = object : InlineCompletionProvider {
       override val id: InlineCompletionProviderID = InlineCompletionProviderID("TEST")
+
       override val suggestionUpdateManager = updateManager
-      override fun isEnabled(event: InlineCompletionEvent): Boolean = true
+
+      override fun isEnabled(event: InlineCompletionEvent): Boolean {
+        return event is InlineCompletionEvent.DirectCall || event is InlineCompletionEvent.DocumentChange
+      }
+
       override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
         return InlineCompletionSuggestion {
           variant {

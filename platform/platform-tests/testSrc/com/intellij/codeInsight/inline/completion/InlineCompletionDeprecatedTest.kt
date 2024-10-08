@@ -22,8 +22,13 @@ internal class InlineCompletionDeprecatedTest : InlineCompletionTestCase() {
     val overtyper = object : DefaultInlineCompletionOvertyper() {}
     val provider = object : InlineCompletionProvider {
       override val id: InlineCompletionProviderID = InlineCompletionProviderID("TEST")
+
       override val overtyper = overtyper
-      override fun isEnabled(event: InlineCompletionEvent): Boolean = true
+
+      override fun isEnabled(event: InlineCompletionEvent): Boolean {
+        return event is InlineCompletionEvent.DirectCall || event is InlineCompletionEvent.DocumentChange
+      }
+
       override suspend fun getSuggestion(request: InlineCompletionRequest) = InlineCompletionSuggestion {
         variant {
           emit(InlineCompletionGrayTextElement("abcd"))
@@ -60,7 +65,11 @@ internal class InlineCompletionDeprecatedTest : InlineCompletionTestCase() {
     val key = Key.create<Int>("inline.completion.test.key")
     val provider = object : InlineCompletionProvider {
       override val id: InlineCompletionProviderID = InlineCompletionProviderID("TEST")
-      override fun isEnabled(event: InlineCompletionEvent): Boolean = true
+
+      override fun isEnabled(event: InlineCompletionEvent): Boolean {
+        return event is InlineCompletionEvent.DirectCall || event is InlineCompletionEvent.DocumentChange
+      }
+
       override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
         return object : com.intellij.codeInsight.inline.completion.InlineCompletionSuggestion() {
           override val suggestionFlow: Flow<InlineCompletionElement> = flow {

@@ -61,6 +61,16 @@ interface InlineCompletionEvent {
   fun toRequest(): InlineCompletionRequest?
 
   /**
+   * Indicates that this event can trigger only a provider with [providerId].
+   * Other providers will not be asked for this event.
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  interface WithSpecificProvider {
+    val providerId: InlineCompletionProviderID
+  }
+
+  /**
    * A class representing a direct call in the code editor by [InsertInlineCompletionAction].
    */
   class DirectCall(
@@ -141,6 +151,28 @@ interface InlineCompletionEvent {
         editor = editor,
         getLookupElement = { event.item }
       )
+    }
+  }
+
+  /**
+   * Indicates that another Inline Completion suggestion is inserted.
+   *
+   * Cannot be used as an 'update event' in
+   * [com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager],
+   * because this event means that a session is finished.
+   *
+   * For now, only [providerId] can start a session with this event **by design**. This decision may be changed later.
+   *
+   * @param providerId the provider whose completion is inserted.
+   */
+  @ApiStatus.Experimental
+  class SuggestionInserted internal constructor(
+    val editor: Editor,
+    override val providerId: InlineCompletionProviderID,
+  ) : InlineCompletionEvent, WithSpecificProvider {
+
+    override fun toRequest(): InlineCompletionRequest? {
+      return getRequest(event = this, editor = editor)
     }
   }
 

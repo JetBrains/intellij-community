@@ -39,8 +39,13 @@ internal class InlineCompletionNestedEventInvocationTest : InlineCompletionTestC
 
     class CustomProvider(onSuccessUpdate: () -> Unit) : InlineCompletionProvider {
       override val id: InlineCompletionProviderID = InlineCompletionProviderID("CustomProvider")
+
       override val suggestionUpdateManager = CustomSessionUpdater(onSuccessUpdate)
-      override fun isEnabled(event: InlineCompletionEvent): Boolean = true
+
+      override fun isEnabled(event: InlineCompletionEvent): Boolean {
+        return event is InlineCompletionEvent.DirectCall || event is InlineCompletionEvent.DocumentChange
+      }
+
       override suspend fun getSuggestion(request: InlineCompletionRequest) = InlineCompletionSingleSuggestion.build {
         emit(InlineCompletionGrayTextElement("Test"))
       }
