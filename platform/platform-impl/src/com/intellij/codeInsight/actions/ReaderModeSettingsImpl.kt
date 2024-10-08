@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class ReaderModeDefaultsOverrideImpl : ReaderModeDefaultsOverride {
   override val showWarningsDefault = false
+  @ApiStatus.Internal
   override fun getEnableVirtualFormattingDefault() = true
 }
 
