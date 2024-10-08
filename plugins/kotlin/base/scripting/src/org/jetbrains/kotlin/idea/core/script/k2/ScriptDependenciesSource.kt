@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTrack
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.script.experimental.api.ResultWithDiagnostics
 
 open class BaseScriptModel(
     open val virtualFile: VirtualFile
@@ -26,14 +27,18 @@ abstract class ScriptDependenciesSource<T : BaseScriptModel>(open val project: P
     val currentConfigurationsData = AtomicReference(ScriptDependenciesData())
 
     protected abstract fun resolveDependencies(scripts: Iterable<T>): ScriptDependenciesData
+
     protected abstract suspend fun updateModules(dependencies: ScriptDependenciesData, storage: MutableEntityStorage? = null)
 
     suspend fun updateDependenciesAndCreateModules(scripts: Iterable<T>, storage: MutableEntityStorage? = null) {
         project.waitForSmartMode()
-        val dependencies = resolveDependencies(scripts)
+        val configurationData = resolveDependencies(scripts)
 
-        updateModules(dependencies, storage)
-        currentConfigurationsData.set(dependencies)
+        if (configurationData.configurations.all { it.value is ResultWithDiagnostics.Success }) {
+            updateModules(configurationData, storage)
+        }
+
+        currentConfigurationsData.set(configurationData)
 
         ScriptConfigurationsProviderImpl.getInstance(project).notifySourceUpdated()
 

@@ -19,6 +19,11 @@
             dynamic="true"/>
 
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptDiagnosticFixProvider"
+            interface="org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider"
+            dynamic="true"/>
+
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scripting.definitions.scriptDefinitionProvider"
             interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
             area="IDEA_PROJECT"/>
@@ -87,7 +92,7 @@
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsProviderImpl"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink"/>
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptingReportsSink"/>
 
     <cachesInvalidator implementation="org.jetbrains.kotlin.idea.core.script.ucache.ScriptCacheDependenciesFileInvalidator"/>
 

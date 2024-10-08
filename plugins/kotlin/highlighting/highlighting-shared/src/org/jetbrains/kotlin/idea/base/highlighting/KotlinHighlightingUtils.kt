@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
+import org.jetbrains.kotlin.idea.core.script.getScriptReports
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
@@ -80,10 +80,10 @@ private fun KtFile.calculateShouldHighlightScript(): Boolean {
     if (shouldDefinitelyHighlight()) return true
 
     return (!KotlinPlatformUtils.isCidr // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
-            && !IdeScriptReportSink.getReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }
+            && !getScriptReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }
             && isConfigurationLoaded()
             && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this))
 }
 
 private fun KtFile.isConfigurationLoaded(): Boolean =
-    ScriptConfigurationsProvider.getInstance(project)?.getScriptConfiguration(this) != null
+    ScriptConfigurationsProvider.getInstance(project)?.getScriptConfigurationResult(this) != null

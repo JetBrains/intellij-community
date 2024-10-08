@@ -18,11 +18,7 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LanguageSettingsOwner
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.scripting.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.scripting.getPlatform
@@ -87,20 +83,15 @@ data class ScriptModuleInfo(
                 addAll(libraryInfoCache[it])
             }
 
-            if (KotlinPluginModeProvider.isK1Mode()) {
-                val scriptDependentModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
-                scriptDependentModules.forEach {
-                    addAll(it.sourceModuleInfos)
-                }
+            val scriptDependentModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
+            scriptDependentModules.forEach {
+                addAll(it.sourceModuleInfos)
+            }
 
+            if (KotlinPluginModeProvider.isK1Mode()) {
                 val dependenciesInfo = ScriptDependenciesInfo.ForFile(project, scriptFile, scriptDefinition)
                 add(dependenciesInfo)
             } else {
-                val scriptDependentModules = ScriptAdditionalIdeaDependenciesProvider.getRelatedModules(scriptFile, project)
-                scriptDependentModules.forEach {
-                    addAll(it.sourceModuleInfos)
-                }
-
                 scriptFile.scriptLibraryDependencies(project).forEach(::add)
             }
 

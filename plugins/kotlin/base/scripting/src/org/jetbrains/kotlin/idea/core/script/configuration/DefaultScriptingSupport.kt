@@ -315,7 +315,7 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
         file: VirtualFile,
         newReports: List<ScriptDiagnostic>
     ) {
-        val oldReports = IdeScriptReportSink.getReports(file)
+        val oldReports = getScriptReports(file)
         if (oldReports != newReports) {
             scriptingDebugLog(file) { "new script reports = $newReports" }
 

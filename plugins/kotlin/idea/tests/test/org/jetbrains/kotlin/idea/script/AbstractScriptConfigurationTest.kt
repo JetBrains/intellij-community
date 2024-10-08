@@ -22,10 +22,10 @@ import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.completion.test.KotlinCompletionTestCase
-import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
+import org.jetbrains.kotlin.idea.core.script.getScriptReports
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationTest.Companion.useDefaultTemplate
 import org.jetbrains.kotlin.idea.test.*
@@ -325,7 +325,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
     }
 
     protected fun checkHighlighting(file: KtFile = myFile as KtFile) {
-        val reports = IdeScriptReportSink.getReports(file)
+        val reports = getScriptReports(file)
         val isFatalErrorPresent = reports.any { it.severity == ScriptDiagnostic.Severity.FATAL }
         assert(isFatalErrorPresent || file.shouldHighlightFile()) {
             "Highlighting is switched off for ${file.virtualFile.path}\n" +

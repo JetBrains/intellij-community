@@ -29,7 +29,7 @@ internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContr
             val status = super.getDaemonCodeAnalyzerStatus(severityRegistrar)
 
             if (KotlinPluginModeProvider.isK2Mode()) {
-                if (ScriptConfigurationsProviderImpl.getInstanceIfCreated(project)?.getScriptConfiguration(file) == null) {
+                if (ScriptConfigurationsProviderImpl.getInstanceIfCreated(project)?.getScriptConfigurationResult(file) == null) {
                     status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
                     status.errorAnalyzingFinished = false
                 }

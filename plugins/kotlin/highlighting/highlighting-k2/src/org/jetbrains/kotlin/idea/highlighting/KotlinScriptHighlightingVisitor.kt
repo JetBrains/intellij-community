@@ -1,44 +1,74 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.highlighter
+package org.jetbrains.kotlin.idea.highlighting
 
-import com.intellij.codeHighlighting.*
-import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HighlightVisitor
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.HighlightSeverity.*
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.core.script.getScriptReports
+import org.jetbrains.kotlin.idea.core.script.drainScriptReports
 import org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 
-class ScriptExternalHighlightingPass(
-    private val file: KtFile,
-    document: Document
-) : TextEditorHighlightingPass(file.project, document), DumbAware {
-    override fun doCollectInformation(progress: ProgressIndicator) {
-        val document = document
+class KotlinScriptHighlightingVisitor : HighlightVisitor {
+    private lateinit var diagnosticRanges: MutableMap<TextRange, MutableList<HighlightInfo.Builder>>
+    private var holder: HighlightInfoHolder? = null
 
-        if (!file.isScript()) return
-        val reports = getScriptReports(file)
+    override fun suitableForFile(file: PsiFile): Boolean {
+        return file is KtFile && file.isScript()
+    }
 
-        val infos = reports.mapNotNull { scriptDiagnostic ->
-            val (startOffset, endOffset) = scriptDiagnostic.location?.let { computeOffsets(document, it) } ?: (0 to 0)
+    override fun visit(element: PsiElement) {
+        val elementRange = element.textRange
+        // show diagnostics with textRanges under this element range
+        // assumption: highlight visitors call visit() method in the post-order (children first)
+        // note that after this visitor finished, `diagnosticRanges` will be empty, because all diagnostics are inside the file range, by definition
+        val iterator = diagnosticRanges.iterator()
+        for (entry in iterator) {
+            if (entry.key in elementRange) {
+                val diagnostics = entry.value
+                for (builder in diagnostics) {
+                    holder!!.add(builder.create())
+                }
+                iterator.remove()
+            }
+        }
+    }
+
+    override fun analyze(
+        file: PsiFile,
+        updateWholeFile: Boolean,
+        holder: HighlightInfoHolder,
+        action: Runnable
+    ): Boolean {
+        this.holder = holder
+        val ktFile = file as KtFile
+        val reports = drainScriptReports(file)
+
+        diagnosticRanges = reports.mapNotNull { scriptDiagnostic ->
+            val (startOffset, endOffset) = scriptDiagnostic.location?.let<SourceCode.Location, Pair<Int, Int>> {
+                computeOffsets(
+                    ktFile.fileDocument,
+                    it
+                )
+            } ?: (0 to 0)
             val exception = scriptDiagnostic.exception
             val exceptionMessage = if (exception != null) " ($exception)" else ""
+
             @Suppress("HardCodedStringLiteral")
             val message = scriptDiagnostic.message + exceptionMessage
             val severity = scriptDiagnostic.severity.convertSeverity() ?: return@mapNotNull null
             val annotation = HighlightInfo.newHighlightInfo(HighlightInfo.convertSeverity(severity))
-                .range(startOffset,endOffset)
+                .range(startOffset, endOffset)
                 .descriptionAndTooltip(message)
             if (startOffset == endOffset) {
                 // if range is empty, show notification panel in editor
@@ -51,15 +81,23 @@ class ScriptExternalHighlightingPass(
                 }
             }
 
-            annotation.create()
+            TextRange(startOffset, endOffset) to mutableListOf(annotation)
+        }.toMap().toMutableMap()
+        try {
+            action.run()
+        } catch (e: Throwable) {
+            if (e is ControlFlowException) throw e
+            // TODO: Port KotlinHighlightingSuspender to K2 to avoid the issue with infinite highlighting loop restart
+            throw e
+        } finally {
+            // do not leak Editor, since KotlinDiagnosticHighlightVisitor is an app-level extension
+            this.holder = null
+            diagnosticRanges.clear()
         }
-
-        BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, file, myDocument, 0, file.textLength, infos, id)
+        return true
     }
 
-    override fun doApplyInformationToEditor() {
-
-    }
+    override fun clone(): HighlightVisitor = KotlinScriptHighlightingVisitor()
 
     private fun computeOffsets(document: Document, position: SourceCode.Location): Pair<Int, Int> {
         val startOffset = position.start.absolutePos
@@ -92,25 +130,5 @@ class ScriptExternalHighlightingPass(
         ScriptDiagnostic.Severity.WARNING -> WARNING
         ScriptDiagnostic.Severity.INFO -> INFORMATION
         ScriptDiagnostic.Severity.DEBUG -> if (isApplicationInternalMode()) INFORMATION else null
-    }
-
-
-    class Registrar : TextEditorHighlightingPassFactoryRegistrar {
-        override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
-            registrar.registerTextEditorHighlightingPass(
-                Factory(),
-                TextEditorHighlightingPassRegistrar.Anchor.BEFORE,
-                Pass.UPDATE_FOLDING,
-                false,
-                false
-            )
-        }
-    }
-
-    class Factory : TextEditorHighlightingPassFactory {
-        override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
-            if (file !is KtFile) return null
-            return ScriptExternalHighlightingPass(file, editor.document)
-        }
     }
 }
