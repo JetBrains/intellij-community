@@ -34,7 +34,7 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
       .map { token ->
         sessionCoroutineScope?.cancel()
         if (token.added) {
-          // TODO: Service coroutine scope should contain Rete by default
+          // TODO[IJPL-160146]: Service coroutine scope should contain Rete by default
           val newSessionCoroutineScope = cs.childScope("FrontendXDebuggerSession") + KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext.kernelCoroutineContext()
           sessionCoroutineScope = newSessionCoroutineScope
           FrontendXDebuggerSession(newSessionCoroutineScope, token.value)
@@ -44,7 +44,7 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
           null
         }
       }
-      // TODO: Service coroutine scope should contain Rete by default
+      // TODO[IJPL-160146]: Service coroutine scope should contain Rete by default
       .stateIn(cs + KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext.kernelCoroutineContext(), SharingStarted.Eagerly, null)
 
   companion object {

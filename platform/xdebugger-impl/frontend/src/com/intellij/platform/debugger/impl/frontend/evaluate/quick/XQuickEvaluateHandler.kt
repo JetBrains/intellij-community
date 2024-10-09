@@ -70,13 +70,13 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
       }
       if (Registry.`is`("debugger.valueLookupFrontendBackend")) {
         val frontendEvaluator = FrontendXDebuggerManager.getInstance(project).currentSession.value?.evaluator?.value ?: return@async null
-        // TODO: provider proper editorsProvider
+        // TODO[IJPL-160146]: provide proper editorsProvider
         val editorsProvider = object : XDebuggerEditorsProvider() {
           override fun getFileType(): FileType {
             return FileTypes.PLAIN_TEXT
           }
         }
-        // TODO: support passing session: basically valueMarkers and currentPosition
+        // TODO[IJPL-160146]: support passing session: basically valueMarkers and currentPosition
         XValueHint(project, editorsProvider, editor, point, type, expressionInfo, frontendEvaluator, false)
       }
       else if (FrontendApplicationInfo.getFrontendType() is FrontendType.RemoteDev) {

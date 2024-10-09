@@ -32,7 +32,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     val evaluationResult = CompletableDeferred<XValue>()
 
     withContext(Dispatchers.EDT) {
-      // TODO: pass XSourcePosition
+      // TODO[IJPL-160146]: pass XSourcePosition
       evaluator.evaluate(expression, object : XEvaluationCallback {
         override fun evaluated(result: XValue) {
           evaluationResult.complete(result)
@@ -55,7 +55,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
       }
       val xValueEntity = withKernel {
         change {
-          // TODO: leaked XValue entity, it is never disposed
+          // TODO[IJPL-160146]: leaked XValue entity, it is never disposed
           LocalHintXValueEntity.new {
             it[LocalHintXValueEntity.Project] = evaluatorEntity.sessionEntity.projectEntity
             it[LocalHintXValueEntity.XValue] = xValue
@@ -81,22 +81,22 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         }
 
         override fun setPresentation(icon: Icon?, type: @NonNls String?, value: @NonNls String, hasChildren: Boolean) {
-          // TODO: pass icon, type and hasChildren too
+          // TODO[IJPL-160146]: pass icon, type and hasChildren too
           presentations.trySend(XValuePresentation(value, hasChildren))
         }
 
         override fun setPresentation(icon: Icon?, presentation: com.intellij.xdebugger.frame.presentation.XValuePresentation, hasChildren: Boolean) {
-          // TODO: handle XValuePresentation fully
+          // TODO[IJPL-160146]: handle XValuePresentation fully
           val textExtractor = XValuePresentationTextExtractor()
           presentation.renderValue(textExtractor)
           setPresentation(icon, presentation.type, textExtractor.text, hasChildren)
         }
 
         override fun setFullValueEvaluator(fullValueEvaluator: XFullValueEvaluator) {
-          // TODO: implement setFullValueEvaluator
+          // TODO[IJPL-160146]: implement setFullValueEvaluator
         }
       }
-      // TODO: pass XValuePlace
+      // TODO[IJPL-160146]: pass XValuePlace
       xValue.computePresentation(valueNode, XValuePlace.TOOLTIP)
 
       launch {
@@ -148,23 +148,23 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         }
 
         override fun tooManyChildren(remaining: Int) {
-          // TODO: implement tooManyChildren
+          // TODO[IJPL-160146]: implement tooManyChildren
         }
 
         override fun setAlreadySorted(alreadySorted: Boolean) {
-          // TODO: implement setAlreadySorted
+          // TODO[IJPL-160146]: implement setAlreadySorted
         }
 
         override fun setErrorMessage(errorMessage: String) {
-          // TODO: implement setErrorMessage
+          // TODO[IJPL-160146]: implement setErrorMessage
         }
 
         override fun setErrorMessage(errorMessage: String, link: XDebuggerTreeNodeHyperlink?) {
-          // TODO: implement setErrorMessage
+          // TODO[IJPL-160146]: implement setErrorMessage
         }
 
         override fun setMessage(message: String, icon: Icon?, attributes: SimpleTextAttributes, link: XDebuggerTreeNodeHyperlink?) {
-          // TODO: implement setMessage
+          // TODO[IJPL-160146]: implement setMessage
         }
       }
 

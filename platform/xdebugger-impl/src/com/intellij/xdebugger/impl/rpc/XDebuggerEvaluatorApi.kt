@@ -32,11 +32,11 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
   }
 }
 
-// TODO: support other events see [com.intellij.xdebugger.frame.XCompositeNode]
+// TODO[IJPL-160146]: support other events see [com.intellij.xdebugger.frame.XCompositeNode]
 @ApiStatus.Internal
 @Serializable
 sealed interface XValueComputeChildrenEvent {
-  // TODO: support [XValueGroup]
+  // TODO[IJPL-160146]: support [XValueGroup]
   @Serializable
   data class AddChildren(val names: List<String>, val children: List<XValueId>, val isLast: Boolean) : XValueComputeChildrenEvent
 }

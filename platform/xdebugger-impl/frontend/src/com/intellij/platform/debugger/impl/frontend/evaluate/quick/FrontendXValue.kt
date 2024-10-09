@@ -19,7 +19,7 @@ internal class FrontendXValue(private val xValueId: XValueId) : XValue() {
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
     node.childCoroutineScope("FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
       XDebuggerEvaluatorApi.getInstance().computePresentation(xValueId)?.collect { presentation ->
-        // TODO: pass proper params
+        // TODO[IJPL-160146]: pass proper params
         node.setPresentation(null, null, presentation.value, presentation.hasChildren)
       }
     }

@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 private val LOG = logger<FrontendXDebuggerEvaluator>()
 
-// TODO: support XDebuggerPsiEvaluator
+// TODO[IJPL-160146]: support XDebuggerPsiEvaluator
 internal class FrontendXDebuggerEvaluator(private val scope: CoroutineScope, private val evaluatorId: XDebuggerEvaluatorId) : XDebuggerEvaluator() {
   override fun evaluate(expression: String, callback: XEvaluationCallback, expressionPosition: XSourcePosition?) {
     scope.launch(Dispatchers.EDT) {
