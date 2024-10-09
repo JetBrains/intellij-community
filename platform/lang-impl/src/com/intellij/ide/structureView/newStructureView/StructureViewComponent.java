@@ -9,6 +9,7 @@ import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.logical.LogicalStructureDataKeys;
+import com.intellij.ide.structureView.logical.impl.LogicalStructureViewModel;
 import com.intellij.ide.structureView.logical.impl.LogicalStructureViewTreeElement;
 import com.intellij.ide.structureView.symbol.DelegatingPsiElementWithSymbolPointer;
 import com.intellij.ide.ui.UISettingsListener;
@@ -24,7 +25,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.toolbar.floating.FloatingToolbar;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -79,8 +79,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
@@ -124,7 +122,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   // written from EDT only
   private volatile @Nullable CancellablePromise<?> myLastAutoscrollPromise;
 
-  private final FloatingToolbar floatingToolbar;
+  private StructureViewFloatingToolbar floatingToolbar;
 
 
   public StructureViewComponent(@Nullable FileEditor editor,
@@ -183,22 +181,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     });
 
     JScrollPane content = ScrollPaneFactory.createScrollPane(myTree);
-    MyLayeredPane layeredPane = new MyLayeredPane(content);
-    floatingToolbar = new FloatingToolbar(
-      layeredPane,
-      (ActionGroup) ActionManager.getInstance().getAction(ActionPlaces.STRUCTURE_VIEW_FLOATING_TOOLBAR),
-      this
-    );
-    layeredPane.add(content, JLayeredPane.DEFAULT_LAYER);
-    layeredPane.add(floatingToolbar, JLayeredPane.POPUP_LAYER);
-    setContent(layeredPane);
-    content.getVerticalScrollBar().addAdjustmentListener(event -> floatingToolbar.setScrollingDy(event.getValue()));
-    addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        floatingToolbar.setX(getBounds().width - 50);
-      }
-    });
+    setContent(new MyLayeredPane(content, structureViewModel instanceof LogicalStructureViewModel));
 
     myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
@@ -1012,21 +995,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (event.getClickCount() != 1 || event.getID() != MouseEvent.MOUSE_PRESSED) return;
       Optional.ofNullable(getClosestPathForLocation(event.getX(), event.getY()))
         .map(path -> getPathBounds(path))
-        .filter(bounds -> event.getX() >= bounds.x)
+        .filter(bounds -> event.getX() >= bounds.x && event.getY() < bounds.y + bounds.height)
         .ifPresent(pathBounds -> {
           int scrollDy = 0;
           if (getParent().getParent() instanceof JBScrollPane scrollParent) {
             scrollDy = scrollParent.getVerticalScrollBar().getValue();
           }
-          floatingToolbar.hideImmediately();
-          floatingToolbar.setBoundsWithScrollingDy(
-            getParent().getBounds().width - 50,
-            pathBounds.y - 5,
-            40,
-            pathBounds.height + 5,
-            scrollDy
-          );
-          floatingToolbar.scheduleShow();
+          floatingToolbar.repaintOnYWithDy(pathBounds.y, scrollDy);
         });
     }
 
@@ -1218,12 +1193,19 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
   }
 
-  private static class MyLayeredPane extends JBLayeredPane {
+  private class MyLayeredPane extends JBLayeredPane {
 
     private final JComponent mainComponent;
+    private final boolean isLogical;
 
-    MyLayeredPane(JComponent mainComponent) {
+    MyLayeredPane(JScrollPane mainComponent, boolean isLogical) {
       this.mainComponent = mainComponent;
+      this.isLogical = isLogical;
+
+      floatingToolbar = new StructureViewFloatingToolbar(this, StructureViewComponent.this);
+      add(mainComponent, DEFAULT_LAYER);
+      add(floatingToolbar, POPUP_LAYER);
+      mainComponent.getVerticalScrollBar().addAdjustmentListener(event -> floatingToolbar.setScrollingDy(event.getValue()));
     }
 
     @Override
@@ -1231,7 +1213,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       Rectangle bounds = getBounds();
       for (Component component : getComponents()) {
         if (component == mainComponent) {
-          component.setBounds(0, 0, bounds.width, bounds.height);
+          component.setBounds(isLogical ? 12 : 0, 0, bounds.width, bounds.height);
         }
       }
     }

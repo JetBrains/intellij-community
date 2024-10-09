@@ -22,10 +22,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTarget
 import com.intellij.ui.SimpleTextAttributes
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
-internal class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>, elementBuilder: ElementsBuilder)
+@ApiStatus.Internal
+class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Editor?, assembledModel: LogicalStructureAssembledModel<*>, elementBuilder: ElementsBuilder)
   : StructureViewModelBase(psiFile, editor, elementBuilder.createViewTreeElement(assembledModel)),
     StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider, StructureViewModel.ActionHandler {
 
@@ -66,6 +68,12 @@ internal class LogicalStructureViewModel private constructor(psiFile: PsiFile, e
 interface LogicalStructureViewTreeElement<T> : StructureViewTreeElement {
 
   fun getLogicalAssembledModel(): LogicalStructureAssembledModel<T>
+
+  /**
+   * Means that the element is not the node for logical object itself but it's a child which has no own logical object
+   */
+  @ApiStatus.Internal
+  fun isHasNoOwnLogicalModel(): Boolean = false
 
 }
 
@@ -274,6 +282,8 @@ private class ElementsBuilder {
     }
 
     override fun getLogicalAssembledModel(): LogicalStructureAssembledModel<T> = parentAssembledModel
+
+    override fun isHasNoOwnLogicalModel(): Boolean = true
 
     override fun equals(other: Any?): Boolean {
       if (other !is LogicalGroupStructureElement<*>) return false
