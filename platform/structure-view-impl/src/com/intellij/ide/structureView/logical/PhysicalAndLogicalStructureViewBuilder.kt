@@ -2,6 +2,7 @@
 package com.intellij.ide.structureView.logical
 
 import com.intellij.ide.structureView.StructureView
+import com.intellij.ide.structureView.StructureViewBundle
 import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder
 import com.intellij.ide.structureView.impl.StructureViewComposite
@@ -21,8 +22,16 @@ class PhysicalAndLogicalStructureViewBuilder(
     if (logicalBuilder == null) return createPhysicalStructureView(fileEditor, project)
 
     return StructureViewComposite(
-      StructureViewComposite.StructureViewDescriptor("Logical", logicalBuilder.createStructureView(fileEditor, project), null),
-      StructureViewComposite.StructureViewDescriptor("Physical", physicalBuilder.createStructureView(fileEditor, project), null)
+      StructureViewComposite.StructureViewDescriptor(
+        StructureViewBundle.message("structureview.tab.logical"),
+        logicalBuilder.createStructureView(fileEditor, project),
+        null
+      ),
+      StructureViewComposite.StructureViewDescriptor(
+        StructureViewBundle.message("structureview.tab.physical"),
+        physicalBuilder.createStructureView(fileEditor, project),
+        null
+      )
     )
   }
 
