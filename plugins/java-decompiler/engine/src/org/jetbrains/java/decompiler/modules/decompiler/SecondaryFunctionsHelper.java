@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -89,7 +89,7 @@ public final class SecondaryFunctionsHelper {
       List<? extends IMatchable> lstObjects = new ArrayList<>(stat.getExprentsOrSequentialObjects());
 
       for (int i = 0; i < lstObjects.size(); i++) {
-        Object obj = lstObjects.get(i);
+        IMatchable obj = lstObjects.get(i);
 
         if (obj instanceof Statement) {
           if (identifySecondaryFunctions((Statement)obj, varProc)) {
@@ -423,7 +423,7 @@ public final class SecondaryFunctionsHelper {
   public static void updateAssignments(Statement stat) {
     List<? extends IMatchable> objects = new ArrayList<>(stat.getExprentsOrSequentialObjects());
 
-    for (Object obj : objects) {
+    for (IMatchable obj : objects) {
       if (obj instanceof Statement) {
         updateAssignments((Statement) obj);
       } else if (obj instanceof Exprent) {

@@ -14,6 +14,14 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Helper to work with `++` and `--` functions
+ *
+ * @see FunctionExprent#FUNCTION_IPP
+ * @see FunctionExprent#FUNCTION_PPI
+ * @see FunctionExprent#FUNCTION_IMM
+ * @see FunctionExprent#FUNCTION_MMI
+ */
 public class PPandMMHelper {
 
   private boolean exprentReplaced;
