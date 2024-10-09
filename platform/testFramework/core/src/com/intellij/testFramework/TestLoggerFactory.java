@@ -428,7 +428,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     @Override
     public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
       Set<LoggedErrorProcessor.Action>
-        actions = LoggedErrorProcessor.getInstance().processError(myLogger.getName(), requireNonNullElse(message, ""), details, t);
+        actions = LoggedErrorProcessor.getInstance().processError(getLoggerName(), requireNonNullElse(message, ""), details, t);
 
       ErrorLog errorLog = TestLoggerKt.getErrorLog();
       if (actions.contains(LoggedErrorProcessor.Action.RETHROW) && errorLog != null) {
@@ -444,7 +444,7 @@ public final class TestLoggerFactory implements Logger.Factory {
         t = ensureNotControlFlow(t);
 
         if (myFactory.mySplitTestLogs) {
-          myFactory.buffer(LogLevel.ERROR, myLogger.getName(), message, t);
+          myFactory.buffer(LogLevel.ERROR, getLoggerName(), message, t);
         }
 
         super.info(message, t);
@@ -463,12 +463,12 @@ public final class TestLoggerFactory implements Logger.Factory {
 
     @Override
     public void warn(String message, @Nullable Throwable t) {
-      if (LoggedErrorProcessor.getInstance().processWarn(myLogger.getName(), requireNonNullElse(message, ""), t)) {
+      if (LoggedErrorProcessor.getInstance().processWarn(getLoggerName(), requireNonNullElse(message, ""), t)) {
         message += DefaultLogger.attachmentsToString(t);
         t = ensureNotControlFlow(t);
 
         if (myFactory.mySplitTestLogs) {
-          myFactory.buffer(LogLevel.WARNING, myLogger.getName(), message, t);
+          myFactory.buffer(LogLevel.WARNING, getLoggerName(), message, t);
         }
 
         super.warn(message, t);
@@ -478,14 +478,14 @@ public final class TestLoggerFactory implements Logger.Factory {
     @Override
     public void info(String message, @Nullable Throwable t) {
       super.info(message, t);
-      myFactory.buffer(LogLevel.INFO, myLogger.getName(), message, t);
+      myFactory.buffer(LogLevel.INFO, getLoggerName(), message, t);
     }
 
     @Override
     public void debug(String message, @Nullable Throwable t) {
       if (isDebugEnabled()) {
         super.debug(message, t);
-        myFactory.buffer(LogLevel.DEBUG, myLogger.getName(), message, t);
+        myFactory.buffer(LogLevel.DEBUG, getLoggerName(), message, t);
       }
     }
 
@@ -493,7 +493,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     public void trace(String message) {
       if (isTraceEnabled()) {
         super.trace(message);
-        myFactory.buffer(LogLevel.TRACE, myLogger.getName(), message, null);
+        myFactory.buffer(LogLevel.TRACE, getLoggerName(), message, null);
       }
     }
 
@@ -501,7 +501,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     public void trace(@Nullable Throwable t) {
       if (isTraceEnabled()) {
         super.trace(t);
-        myFactory.buffer(LogLevel.TRACE, myLogger.getName(), null, t);
+        myFactory.buffer(LogLevel.TRACE, getLoggerName(), null, t);
       }
     }
 

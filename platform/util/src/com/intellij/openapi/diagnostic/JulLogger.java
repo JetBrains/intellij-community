@@ -36,6 +36,10 @@ public class JulLogger extends Logger {
     myLogger = delegate;
   }
 
+  protected final @NotNull String getLoggerName() {
+    return myLogger.getName();
+  }
+
   @Override
   public boolean isTraceEnabled() {
     return myLogger.isLoggable(Level.FINER);
