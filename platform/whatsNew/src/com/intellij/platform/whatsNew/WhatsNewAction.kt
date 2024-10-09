@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.whatsNew.reaction.FUSReactionChecker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.await
 
@@ -36,12 +35,6 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
     }
   }
 
-  private val contentAsync by lazy {
-    appScope.async {
-      WhatsNewContent.getWhatsNewContent()
-    }
-  }
-
   suspend fun openWhatsNew(project: Project) {
     LOG.info("Open What's New page requested.")
     val dataContext = LOG.runAndLogException { DataManager.getInstance().dataContextFromFocusAsync.await() }
@@ -49,7 +42,7 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
   }
 
   private suspend fun openWhatsNewPage(project: Project, dataContext: DataContext?, triggeredByUser: Boolean = false) {
-    val content = contentAsync.await()
+    val content = WhatsNewContent.getWhatsNewContent()
     if (content != null && content.isAvailable()) {
       content.show(project, dataContext, triggeredByUser, reactionChecker)
     }
@@ -64,9 +57,11 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = if (contentAsync.isCompleted) contentAsync.getCompleted() != null else false
-      e.presentation.setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().fullProductName))
-      e.presentation.setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().fullProductName))
+    appScope.launch {
+      e.presentation.isEnabledAndVisible = WhatsNewContent.hasWhatsNewContent()
+    }
+    e.presentation.setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().fullProductName))
+    e.presentation.setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().fullProductName))
   }
 
   override fun actionPerformed(e: AnActionEvent) {
