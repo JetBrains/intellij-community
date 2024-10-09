@@ -13,21 +13,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.MouseDragHelper
+import com.intellij.ui.PopupBorder
+import com.intellij.ui.WindowRoundedCornersManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
+import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.nio.file.Path
-import javax.swing.AbstractAction
-import javax.swing.Action
-import javax.swing.JComponent
+import javax.swing.*
+import javax.swing.border.Border
 import javax.swing.text.View
 import kotlin.io.path.Path
 import kotlin.io.path.name
@@ -35,7 +39,7 @@ import kotlin.io.path.pathString
 
 internal class TrustedProjectStartupDialog(
   private val project: Project?, @NonNls private val projectPath: Path, val isWinDefenderEnabled: Boolean = true,
-  @NlsContexts.DialogTitle private val title: String = IdeBundle.message("untrusted.project.general.dialog.title"),
+  @NlsContexts.DialogTitle private val myTitle: String = IdeBundle.message("untrusted.project.general.dialog.title"),
   @NlsContexts.DialogMessage private val message: String = IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfo.getInstance().fullApplicationName),
   @NlsContexts.Button private val trustButtonText: String = IdeBundle.message("untrusted.project.dialog.trust.button"),
   @NlsContexts.Button private val distrustButtonText: String = IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
@@ -48,9 +52,70 @@ internal class TrustedProjectStartupDialog(
   private val trustAll = propGraph.property(false)
   private var windowsDefenderCheckBox: Cell<JBCheckBox>? = null
   private var userChoice: OpenUntrustedProjectChoice = OpenUntrustedProjectChoice.CANCEL
-  
+  private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
+
   init {
+    if (SystemInfoRt.isMac) {
+      setInitialLocationCallback {
+        val rootPane: JRootPane? = SwingUtilities.getRootPane(window.parent) ?: SwingUtilities.getRootPane(window.owner)
+        if (rootPane == null || !rootPane.isShowing) {
+          return@setInitialLocationCallback null
+        }
+        val location = rootPane.locationOnScreen
+        Point(location.x + (rootPane.width - window.width) / 2, (location.y + rootPane.height * 0.25).toInt())
+      }
+    }
     init()
+    if (myIsTitleComponent) {
+      setUndecorated(true)
+      rootPane.windowDecorationStyle = JRootPane.NONE
+      rootPane.border = PopupBorder.Factory.create(true, true)
+
+      object : MouseDragHelper<JComponent>(myDisposable, contentPane as JComponent) {
+        var myLocation: Point? = null
+
+        override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
+          val target = dragComponent.findComponentAt(dragComponentPoint)
+          return target == null || target == dragComponent || target is JPanel
+        }
+
+        override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
+          if (myLocation == null) {
+            myLocation = window.location
+          }
+          window.location = Point(myLocation!!.x + dragToScreenPoint.x - startScreenPoint.x,
+                                  myLocation!!.y + dragToScreenPoint.y - startScreenPoint.y)
+        }
+
+        override fun processDragCancel() {
+          myLocation = null
+        }
+
+        override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
+          myLocation = null
+        }
+
+        override fun processDragOutFinish(event: MouseEvent) {
+          myLocation = null
+        }
+
+        override fun processDragOutCancel() {
+          myLocation = null
+        }
+
+        override fun processDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point, justStarted: Boolean) {
+          super.processDragOut(event, dragToScreenPoint, startScreenPoint, justStarted)
+          myLocation = null
+        }
+      }.start()
+    }
+
+    WindowRoundedCornersManager.configure(this)
+  }
+
+  override fun createContentPaneBorder(): Border {
+    val insets = JButton().insets
+    return JBUI.Borders.empty(if (myIsTitleComponent) 20 else 14, 20, 20 - insets.bottom, 20 - insets.right)
   }
 
   override fun createCenterPanel(): JComponent? {
@@ -58,7 +123,7 @@ internal class TrustedProjectStartupDialog(
       row {
         icon(AllIcons.General.WarningDialog).align(AlignY.TOP)
         panel {
-          val trimmedTitle = StringUtil.trimLog(title, 100)
+          val trimmedTitle = StringUtil.shortenTextWithEllipsis(myTitle, 65, 2, true)
           row {
             text(trimmedTitle).apply {
               component.font = JBFont.h4()
@@ -72,38 +137,37 @@ internal class TrustedProjectStartupDialog(
               .bindSelected(trustAll)
               .apply {
                 component.toolTipText = null
-                component.addMouseMotionListener(TooltipMouseAdapter(listOf(getParentFolder().pathString)))
+                component.addMouseMotionListener(TooltipMouseAdapter { listOf(getParentFolder().pathString) })
               }
               .onChanged {
                 if (it.isSelected) {
                   windowsDefender.set(false)
                 }
-                windowsDefenderCheckBox?.component?.text = IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", getTrustFolder().name)
+                windowsDefenderCheckBox?.component?.text = IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", getTrustFolder(it.isSelected).name)
               }
           }
-          if (project != null) {
-            row {
-              windowsDefenderCheckBox = checkBox(IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", project.name)).customize(UnscaledGaps(right = JBUI.getInt("CheckBox.textIconGap", 5)))
-                .bindSelected(windowsDefender)
-                .apply {
-                  component.toolTipText = null
-                  component.addMouseMotionListener(TooltipMouseAdapter(listOf(getIdePath(), getTrustFolder().pathString)))
-                  comment(IdeBundle.message("untrusted.project.location.comment"))
-                  visible(isWinDefenderEnabled)
-                }
-            }
+          row {
+            val trimmedProjectName = StringUtil.shortenTextWithEllipsis(project?.name ?: projectPath.name, 18, 0, true)
+            windowsDefenderCheckBox = checkBox(IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedProjectName))
+              .bindSelected(windowsDefender)
+              .apply {
+                component.toolTipText = null
+                component.addMouseMotionListener(TooltipMouseAdapter { listOf(getIdePath(), getTrustFolder(trustAll.get()).pathString) })
+                visible(isWinDefenderEnabled)
+              }
+              .comment(IdeBundle.message("untrusted.project.location.comment"))
           }
-        }.align(AlignX.FILL)
+        }.align(AlignX.FILL + AlignY.FILL)
       }
     }.withMinimumWidth(600).withPreferredWidth(600)
   }
 
-  private inner class TooltipMouseAdapter(val orderedPaths: List<String>) : MouseAdapter() {
+  private inner class TooltipMouseAdapter(val orderedPaths: () -> List<String>) : MouseAdapter() {
     override fun mouseMoved(e: MouseEvent) {
       val checkBox = e.source as? JBCheckBox ?: return
       val position = e.point
       val htmlDocument = (checkBox.getClientProperty("html") as? View)?.document
-        
+
       val text = htmlDocument?.getText(0, htmlDocument.length)?.replace("\n", "") ?: checkBox.text
       val fontMetrics = checkBox.getFontMetrics(checkBox.font)
       val bounds = fontMetrics.getStringBounds(text, checkBox.graphics)
@@ -118,12 +182,13 @@ internal class TrustedProjectStartupDialog(
       // Estimate the character position based on mouse x-coordinate relative to bounds
       val positionX = (mousePosition / (bounds.width / text.length)).toInt().coerceIn(0, text.length - 1)
 
-      for (pathInd in orderedPaths.indices) {
+      val paths = orderedPaths()
+      for (pathInd in paths.indices) {
         val firstQuotesInd = pathInd * 2
         val secondQuotesInd = pathInd * 2 + 1
         if (quotePositions[firstQuotesInd] <= positionX && positionX <= quotePositions[secondQuotesInd]) {
           @Suppress("HardCodedStringLiteral")
-          checkBox.toolTipText = orderedPaths.getOrNull(pathInd)
+          checkBox.toolTipText = paths.getOrNull(pathInd)
           return
         }
       }
@@ -132,7 +197,7 @@ internal class TrustedProjectStartupDialog(
   }
 
   @NlsSafe
-  private fun getTrustFolder(): Path = if (trustAll.get()) getParentFolder() else projectPath
+  private fun getTrustFolder(isTrustAll: Boolean): Path = if (isTrustAll) getParentFolder() else projectPath
 
   private fun getParentFolder(): Path = projectPath.parent
 
@@ -186,10 +251,10 @@ internal class TrustedProjectStartupDialog(
   }
 
   fun getWidowsDefenderPathsToExclude(): List<Path> {
-    return if (windowsDefender.get()) listOf(Path(getIdePath()), getTrustFolder()) else emptyList()
+    return if (windowsDefender.get()) listOf(Path(getIdePath()), getTrustFolder(trustAll.get())) else emptyList()
   }
 
   fun getOpenChoice(): OpenUntrustedProjectChoice = userChoice
-  
+
   fun isTrustAll(): Boolean = trustAll.get()
 }

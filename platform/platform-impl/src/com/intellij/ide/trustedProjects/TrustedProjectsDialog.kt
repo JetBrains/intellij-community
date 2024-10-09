@@ -82,9 +82,9 @@ object TrustedProjectsDialog {
 
 
   private fun isWinDefenderEnabled(project: Project?, projectPath: Path): Boolean {
-    if (!SystemInfo.isWindows || project == null || Path(System.getProperty("user.home")).resolve("Downloads").equals(projectPath.parent)) return false
+    if (!SystemInfo.isWindows || Path(System.getProperty("user.home")).resolve("Downloads").equals(projectPath.parent)) return false
     val defenderChecker = WindowsDefenderChecker.getInstance()
-    return !defenderChecker.isStatusCheckIgnored(project) && defenderChecker.isRealTimeProtectionEnabled == true
+    return project?.let { defenderChecker.isStatusCheckIgnored(it) } != false && defenderChecker.isRealTimeProtectionEnabled == true
   }
   
   suspend fun confirmLoadingUntrustedProjectAsync(
