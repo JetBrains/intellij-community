@@ -3322,7 +3322,7 @@ open class JBTabsImpl internal constructor(
       })
     }
 
-    override fun getAccessibleName(): String {
+    override fun getAccessibleName(): String? {
       var name = accessibleName ?: getClientProperty(ACCESSIBLE_NAME_PROPERTY) as String?
       if (name == null) {
         // Similar to JTabbedPane, we return the name of our selected tab as our own name.
