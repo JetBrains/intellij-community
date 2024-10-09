@@ -2,12 +2,15 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.StatusBar
@@ -23,11 +26,7 @@ import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.AWTEvent
-import java.awt.Graphics
-import java.awt.Insets
-import java.awt.Rectangle
-import java.awt.Window
+import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseEvent
@@ -35,8 +34,6 @@ import java.awt.event.WindowEvent
 import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
 import javax.swing.JFrame
-import javax.swing.JFrame.NORMAL
-import javax.swing.JFrame.getFrames
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
@@ -48,10 +45,20 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
       get() = getFrames().firstOrNull { it.isActive }
   }
 
+  private val mouseActivationWatcher = object : IdeEventQueue.EventDispatcher, Disposable {
+    override fun dispatch(e: AWTEvent): Boolean {
+      detectWindowActivationByMousePressed(e)
+      return false
+    }
+
+    override fun dispose() { }
+  }
+
   init {
     if (IDE_FRAME_EVENT_LOG.isDebugEnabled) {
       addComponentListener(EventLogger(frame = this, log = IDE_FRAME_EVENT_LOG))
     }
+    IdeEventQueue.getInstance().addDispatcher(mouseActivationWatcher, mouseActivationWatcher)
   }
 
   var frameHelper: FrameHelper? = null
@@ -159,6 +166,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
 
   fun doDispose() {
     EdtInvocationManager.invokeLaterIfNeeded {
+      Disposer.dispose(mouseActivationWatcher)
       // must be called in addition to the `dispose`, otherwise not removed from `Window.allWindows` list.
       isVisible = false
       super.dispose()
@@ -218,7 +226,8 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
    * and then clicks the mouse without moving it by a single pixel.
    * But it's a highly unlikely sequence of events and, we're willing to accept false positives in such cases.
    */
-  internal fun detectWindowActivationByMousePressed(e: AWTEvent) {
+  private fun detectWindowActivationByMousePressed(e: AWTEvent) {
+    if (e.source != this) return
     when (e.id) {
       MouseEvent.MOUSE_MOVED -> {
         e as MouseEvent
