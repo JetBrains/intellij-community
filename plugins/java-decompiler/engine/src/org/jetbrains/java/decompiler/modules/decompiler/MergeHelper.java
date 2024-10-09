@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
@@ -9,6 +11,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -448,6 +451,9 @@ public final class MergeHelper {
 
   private static boolean matchForEach(DoStatement stat) {
     AssignmentExprent firstDoExprent = null;
+    //[0]: var4 = 0 - index
+    //[1]: var3 = var1.length - max value
+    //[2]: var2 = var1 - what is iterated
     AssignmentExprent[] initExprents = new AssignmentExprent[3];
     Statement firstData, preData = null, lastData;
     Exprent lastExprent = null;
@@ -465,16 +471,14 @@ public final class MergeHelper {
           current = parent;
         }
         else {
-          preData = current.getNeighbours(StatEdge.EdgeType.REGULAR, StatEdge.EdgeDirection.BACKWARD).get(0);
+          preData = current.getNeighbours(StatEdge.EdgeType.REGULAR, EdgeDirection.BACKWARD).get(0);
           preData = getLastDirectData(preData);
           if (preData != null && preData.getExprents() != null && !preData.getExprents().isEmpty()) {
             int size = preData.getExprents().size();
-            for (int x = 0; x < initExprents.length; x++) {
-              if (size > x) {
-                 Exprent exprent = preData.getExprents().get(size - 1 - x);
-                 if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-                   initExprents[x] = (AssignmentExprent)exprent;
-                 }
+            for (int x = 0; x<size && x < initExprents.length; x++) {
+              Exprent exprent = preData.getExprents().get(size - 1 - x);
+              if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+                initExprents[x] = (AssignmentExprent)exprent;
               }
             }
           }
@@ -496,144 +500,161 @@ public final class MergeHelper {
     }
 
     if (stat.getLoopType() == DoStatement.LoopType.WHILE && initExprents[0] != null && firstDoExprent != null) {
-      if (isIteratorCall(initExprents[0].getRight())) {
-
-        //Streams mimic Iterable but arnt.. so explicitly disallow their enhancements
-        //TODO: Check inheritance for Iterable instead of just names?
-        InvocationExprent invc = (InvocationExprent)getUncast((initExprents[0]).getRight());
-        if (invc.getClassName().contains("java/util/stream")) {
-          return false;
-        }
-
-        if (stat.getConditionExprent() != null && !isHasNextCall(drillNots(stat.getConditionExprent())) ||
-            firstDoExprent.type != Exprent.EXPRENT_ASSIGNMENT) {
-          return false;
-        }
-
-        if ((!isNextCall(firstDoExprent.getRight()) && !isNextUnboxing(firstDoExprent.getRight())) || firstDoExprent.getLeft().type != Exprent.EXPRENT_VAR) {
-          return false;
-        }
-
-        InvocationExprent next = (InvocationExprent)getUncast(firstDoExprent.getRight());
-        if (isNextUnboxing(next)){ next = (InvocationExprent)getUncast(next.getInstance());}
-        if (stat.getConditionExprent() == null) return false;
-        InvocationExprent hnext = (InvocationExprent)getUncast(drillNots(stat.getConditionExprent()));
-        if (next.getInstance().type != Exprent.EXPRENT_VAR ||
-            hnext.getInstance().type != Exprent.EXPRENT_VAR ||
-          ((VarExprent)initExprents[0].getLeft()).isVarReferenced(stat, (VarExprent)next.getInstance(), (VarExprent)hnext.getInstance())) {
-          return false;
-        }
-
-        InvocationExprent holder = (InvocationExprent)(initExprents[0]).getRight();
-
-        initExprents[0].fillBytecodeRange(holder.getInstance().bytecode);
-        holder.fillBytecodeRange(holder.getInstance().bytecode);
-        firstDoExprent.fillBytecodeRange(firstDoExprent.getLeft().bytecode);
-        firstDoExprent.getRight().fillBytecodeRange(firstDoExprent.getLeft().bytecode);
-        if (stat.getIncExprent() != null) {
-          stat.getIncExprent().fillBytecodeRange(holder.getInstance().bytecode);
-        }
-        if (stat.getInitExprent() != null) {
-          stat.getInitExprent().fillBytecodeRange(firstDoExprent.getLeft().bytecode);
-        }
-
-        stat.setLoopType(DoStatement.LoopType.FOREACH);
-        stat.setInitExprent(firstDoExprent.getLeft());
-        stat.setIncExprent(holder.getInstance());
-        if (preData == null || preData.getExprents() == null) return false;
-        preData.getExprents().remove(initExprents[0]);
-        firstData.getExprents().remove(firstDoExprent);
-
-        if (initExprents[1] != null && initExprents[1].getLeft().type == Exprent.EXPRENT_VAR &&
-            holder.getInstance().type == Exprent.EXPRENT_VAR) {
-          VarExprent copy = (VarExprent)initExprents[1].getLeft();
-          VarExprent inc = (VarExprent)holder.getInstance();
-          if (copy.getIndex() == inc.getIndex() && copy.getVersion() == inc.getVersion() &&
-              !inc.isVarReferenced(stat.getTopParent(), copy) && !isNextCall(initExprents[1].getRight())) {
-            preData.getExprents().remove(initExprents[1]);
-            initExprents[1].fillBytecodeRange(initExprents[1].getRight().bytecode);
-            if (stat.getIncExprent() == null) return false;
-            stat.getIncExprent().fillBytecodeRange(initExprents[1].getRight().bytecode);
-            stat.setIncExprent(initExprents[1].getRight());
-          }
-        }
-
-        return true;
-      }
-      else if (initExprents[1] != null) {
-        if (firstDoExprent.getRight().type != Exprent.EXPRENT_ARRAY || firstDoExprent.getLeft().type != Exprent.EXPRENT_VAR) {
-          return false;
-        }
-
-        if (lastExprent == null || lastExprent.type != Exprent.EXPRENT_FUNCTION) {
-          return false;
-        }
-
-        if (initExprents[0].getRight().type != Exprent.EXPRENT_CONST ||
-            initExprents[1].getRight().type != Exprent.EXPRENT_FUNCTION ||
-            stat.getConditionExprent() != null && stat.getConditionExprent().type != Exprent.EXPRENT_FUNCTION) {
-          return false;
-        }
-
-        //FunctionExprent funcCond  = (FunctionExprent)drillNots(stat.getConditionExprent()); //TODO: Verify this is counter < copy.length
-        FunctionExprent funcRight = (FunctionExprent)initExprents[1].getRight();
-        FunctionExprent funcInc   = (FunctionExprent)lastExprent;
-        ArrayExprent    arr       = (ArrayExprent)firstDoExprent.getRight();
-        int incType = funcInc.getFuncType();
-
-        if (funcRight.getFuncType() != FunctionExprent.FUNCTION_ARRAY_LENGTH ||
-            (incType != FunctionExprent.FUNCTION_PPI && incType != FunctionExprent.FUNCTION_IPP) ||
-            arr.getIndex().type != Exprent.EXPRENT_VAR ||
-            arr.getArray().type != Exprent.EXPRENT_VAR) {
-            return false;
-        }
-
-        VarExprent index = (VarExprent)arr.getIndex();
-        VarExprent array = (VarExprent)arr.getArray();
-        VarExprent counter = (VarExprent)funcInc.getLstOperands().get(0);
-
-        if (counter.getIndex() != index.getIndex() ||
-            counter.getVersion() != index.getVersion()) {
-          return false;
-        }
-
-        if (counter.isVarReferenced(stat.getFirst(), index)) {
-          return false;
-        }
-
-        funcRight.getLstOperands().get(0).addBytecodeOffsets(initExprents[0].bytecode);
-        funcRight.getLstOperands().get(0).addBytecodeOffsets(initExprents[1].bytecode);
-        funcRight.getLstOperands().get(0).addBytecodeOffsets(lastExprent.bytecode);
-        firstDoExprent.getLeft().addBytecodeOffsets(firstDoExprent.bytecode);
-        firstDoExprent.getLeft().addBytecodeOffsets(initExprents[0].bytecode);
-
-        stat.setLoopType(DoStatement.LoopType.FOREACH);
-        stat.setInitExprent(firstDoExprent.getLeft());
-        stat.setIncExprent(funcRight.getLstOperands().get(0));
-        if (preData == null || preData.getExprents() == null) return false;
-        preData.getExprents().remove(initExprents[0]);
-        preData.getExprents().remove(initExprents[1]);
-        firstData.getExprents().remove(firstDoExprent);
-        lastData.getExprents().remove(lastExprent);
-
-        if (initExprents[2] != null && initExprents[2].getLeft().type == Exprent.EXPRENT_VAR) {
-          VarExprent copy = (VarExprent)initExprents[2].getLeft();
-          if (copy.getIndex() == array.getIndex() && copy.getVersion() == array.getVersion()) {
-            preData.getExprents().remove(initExprents[2]);
-            initExprents[2].getRight().addBytecodeOffsets(initExprents[2].bytecode);
-            Exprent exprent = stat.getIncExprent();
-            if (exprent == null) return false;
-            initExprents[2].getRight().addBytecodeOffsets(exprent.bytecode);
-            stat.setIncExprent(initExprents[2].getRight());
-          }
-        }
-
+      if (tryConvertForEach(initExprents, stat, firstDoExprent, preData, firstData, lastData, lastExprent) ) {
         return true;
       }
     }
 
     //cleanEmptyStatements(stat, firstData); //TODO: Look into this and see what it does...
 
+    return false;
+  }
+
+  private static boolean tryConvertForEach(@Nullable AssignmentExprent @NotNull [] initExprents,
+                                           @NotNull DoStatement stat,
+                                           @NotNull AssignmentExprent firstDoExprent,
+                                           @Nullable Statement preData,
+                                           @Nullable Statement firstData,
+                                           @Nullable Statement lastData,
+                                           @Nullable Exprent lastExprent) {
+    if (initExprents[0]!=null && isIteratorCall(initExprents[0].getRight())) {
+
+      //Streams mimic Iterable but arnt.. so explicitly disallow their enhancements
+      //TODO: Check inheritance for Iterable instead of just names?
+      InvocationExprent invc = (InvocationExprent)getUncast((initExprents[0]).getRight());
+      if (invc.getClassName().startsWith("java/util/stream")) {
+        return false;
+      }
+
+      if (stat.getConditionExprent() != null && !isHasNextCall(drillNots(stat.getConditionExprent())) ||
+          firstDoExprent.type != Exprent.EXPRENT_ASSIGNMENT) {
+        return false;
+      }
+
+      if ((!isNextCall(firstDoExprent.getRight()) && !isNextUnboxing(firstDoExprent.getRight())) || firstDoExprent.getLeft().type != Exprent.EXPRENT_VAR) {
+        return false;
+      }
+
+      InvocationExprent next = (InvocationExprent)getUncast(firstDoExprent.getRight());
+      if (isNextUnboxing(next)){ next = (InvocationExprent)getUncast(next.getInstance());}
+      if (stat.getConditionExprent() == null) return false;
+      InvocationExprent hnext = (InvocationExprent)getUncast(drillNots(stat.getConditionExprent()));
+      if (next.getInstance().type != Exprent.EXPRENT_VAR ||
+          hnext.getInstance().type != Exprent.EXPRENT_VAR ||
+          ((VarExprent)initExprents[0].getLeft()).isVarReferenced(stat, (VarExprent)next.getInstance(), (VarExprent)hnext.getInstance())) {
+        return false;
+      }
+
+      InvocationExprent holder = (InvocationExprent)(initExprents[0]).getRight();
+
+      initExprents[0].fillBytecodeRange(holder.getInstance().bytecode);
+      holder.fillBytecodeRange(holder.getInstance().bytecode);
+      firstDoExprent.fillBytecodeRange(firstDoExprent.getLeft().bytecode);
+      firstDoExprent.getRight().fillBytecodeRange(firstDoExprent.getLeft().bytecode);
+      if (stat.getIncExprent() != null) {
+        stat.getIncExprent().fillBytecodeRange(holder.getInstance().bytecode);
+      }
+      if (stat.getInitExprent() != null) {
+        stat.getInitExprent().fillBytecodeRange(firstDoExprent.getLeft().bytecode);
+      }
+
+      stat.setLoopType(DoStatement.LoopType.FOREACH);
+      stat.setInitExprent(firstDoExprent.getLeft());
+      stat.setIncExprent(holder.getInstance());
+      if (preData == null || preData.getExprents() == null || firstData == null || firstData.getExprents() == null) return false;
+      preData.getExprents().remove(initExprents[0]);
+      firstData.getExprents().remove(firstDoExprent);
+
+      if (initExprents[1] != null && initExprents[1].getLeft().type == Exprent.EXPRENT_VAR &&
+          holder.getInstance().type == Exprent.EXPRENT_VAR) {
+        VarExprent copy = (VarExprent)initExprents[1].getLeft();
+        VarExprent inc = (VarExprent)holder.getInstance();
+        if (copy.getIndex() == inc.getIndex() && copy.getVersion() == inc.getVersion() &&
+            !inc.isVarReferenced(stat.getTopParent(), copy) && !isNextCall(initExprents[1].getRight())) {
+          preData.getExprents().remove(initExprents[1]);
+          initExprents[1].fillBytecodeRange(initExprents[1].getRight().bytecode);
+          if (stat.getIncExprent() == null) return false;
+          stat.getIncExprent().fillBytecodeRange(initExprents[1].getRight().bytecode);
+          stat.setIncExprent(initExprents[1].getRight());
+        }
+      }
+
+      return true;
+    }
+    else if (initExprents[1] != null) {
+      if (firstDoExprent.getRight().type != Exprent.EXPRENT_ARRAY || firstDoExprent.getLeft().type != Exprent.EXPRENT_VAR) {
+        return false;
+      }
+
+      if (lastExprent == null || lastExprent.type != Exprent.EXPRENT_FUNCTION) {
+        return false;
+      }
+
+      if (initExprents[0] != null && initExprents[0].getRight().type != Exprent.EXPRENT_CONST ||
+          initExprents[1].getRight().type != Exprent.EXPRENT_FUNCTION ||
+          stat.getConditionExprent() != null && stat.getConditionExprent().type != Exprent.EXPRENT_FUNCTION) {
+        return false;
+      }
+
+      //FunctionExprent funcCond  = (FunctionExprent)drillNots(stat.getConditionExprent()); //TODO: Verify this is counter < copy.length
+      FunctionExprent funcRight = (FunctionExprent)initExprents[1].getRight();
+      FunctionExprent funcInc   = (FunctionExprent)lastExprent;
+      ArrayExprent    arr       = (ArrayExprent)firstDoExprent.getRight();
+      int incType = funcInc.getFuncType();
+
+      if (funcRight.getFuncType() != FunctionExprent.FUNCTION_ARRAY_LENGTH ||
+          (incType != FunctionExprent.FUNCTION_PPI && incType != FunctionExprent.FUNCTION_IPP) ||
+          arr.getIndex().type != Exprent.EXPRENT_VAR ||
+          arr.getArray().type != Exprent.EXPRENT_VAR) {
+        return false;
+      }
+
+      VarExprent index = (VarExprent)arr.getIndex();
+      VarExprent array = (VarExprent)arr.getArray();
+      VarExprent counter = (VarExprent)funcInc.getLstOperands().get(0);
+
+      if (counter.getIndex() != index.getIndex() ||
+          counter.getVersion() != index.getVersion()) {
+        return false;
+      }
+
+      if (counter.isVarReferenced(stat.getFirst(), index)) {
+        return false;
+      }
+
+      funcRight.getLstOperands().get(0).addBytecodeOffsets(initExprents[0].bytecode);
+      funcRight.getLstOperands().get(0).addBytecodeOffsets(initExprents[1].bytecode);
+      funcRight.getLstOperands().get(0).addBytecodeOffsets(lastExprent.bytecode);
+      firstDoExprent.getLeft().addBytecodeOffsets(firstDoExprent.bytecode);
+      firstDoExprent.getLeft().addBytecodeOffsets(initExprents[0].bytecode);
+
+      stat.setLoopType(DoStatement.LoopType.FOREACH);
+      stat.setInitExprent(firstDoExprent.getLeft());
+      stat.setIncExprent(funcRight.getLstOperands().get(0));
+      if (preData == null || preData.getExprents() == null ||
+          firstData == null || firstData.getExprents() == null ||
+          lastData == null || lastData.getExprents() == null) {
+        return false;
+      }
+      preData.getExprents().remove(initExprents[0]);
+      preData.getExprents().remove(initExprents[1]);
+      firstData.getExprents().remove(firstDoExprent);
+      lastData.getExprents().remove(lastExprent);
+
+      if (initExprents[2] != null && initExprents[2].getLeft().type == Exprent.EXPRENT_VAR) {
+        VarExprent copy = (VarExprent)initExprents[2].getLeft();
+        if (copy.getIndex() == array.getIndex() && copy.getVersion() == array.getVersion()) {
+          preData.getExprents().remove(initExprents[2]);
+          initExprents[2].getRight().addBytecodeOffsets(initExprents[2].bytecode);
+          Exprent exprent = stat.getIncExprent();
+          if (exprent == null) return false;
+          initExprents[2].getRight().addBytecodeOffsets(exprent.bytecode);
+          stat.setIncExprent(initExprents[2].getRight());
+        }
+      }
+
+      return true;
+    }
     return false;
   }
 
@@ -695,13 +716,17 @@ public final class MergeHelper {
     if (iexp == null) {
       return false;
     }
-    final org.jetbrains.java.decompiler.struct.gen.MethodDescriptor descriptor = iexp.getDescriptor();
+
+    final MethodDescriptor descriptor = iexp.getDescriptor();
+    final String name = iexp.getName();
+    if (!(("iterator".equals(name) || "listIterator".equals(name)) &&
+          descriptor.params.length == 0)) {
+      return false;
+    }
     if (!DecompilerContext.getStructContext().instanceOf(descriptor.ret.getValue(), "java/util/Iterator")) {
       return false;
     }
-    final String name = iexp.getName();
-    return "iterator".equals(name) ||
-           "listIterator".equals(name);
+    return true;
   }
 
   private static boolean isHasNextCall(Exprent exp) {
@@ -709,10 +734,13 @@ public final class MergeHelper {
     if (iexp == null) {
       return false;
     }
-    if (!DecompilerContext.getStructContext().instanceOf(iexp.getClassName(), "java/util/Iterator")) {
+    if (!"java/util/Iterator".equals(iexp.getClassName())) {
       return false;
     }
-    return "hasNext".equals(iexp.getName()) && "()Z".equals(iexp.getStringDescriptor());
+    if (!("hasNext".equals(iexp.getName()) && "()Z".equals(iexp.getStringDescriptor()))) {
+      return false;
+    }
+    return true;
   }
 
   private static boolean isNextCall(Exprent exp) {
@@ -720,10 +748,13 @@ public final class MergeHelper {
     if (iexp == null) {
       return false;
     }
-    if (!DecompilerContext.getStructContext().instanceOf(iexp.getClassName(), "java/util/Iterator")) {
+    if (!"java/util/Iterator".equals(iexp.getClassName())) {
       return false;
     }
-    return "next".equals(iexp.getName()) && "()Ljava/lang/Object;".equals(iexp.getStringDescriptor());
+    if(!("next".equals(iexp.getName()) && "()Ljava/lang/Object;".equals(iexp.getStringDescriptor()))) {
+      return false;
+    }
+    return true;
   }
 
   private static boolean isNextUnboxing(Exprent exprent) {
@@ -796,7 +827,7 @@ public final class MergeHelper {
           stat.addSuccessor(new StatEdge(StatEdge.EdgeType.CONTINUE, stat, ifedge.getDestination(), outer));
           return true;
         }
-        else if (MergeHelper.isDirectPath(outer, ifedge.getDestination())) {
+        else if (isDirectPath(outer, ifedge.getDestination())) {
           stat.addSuccessor(new StatEdge(StatEdge.EdgeType.BREAK, stat, ifedge.getDestination(), outer));
           return true;
         }
