@@ -1,129 +1,128 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.ext.logback
+package org.jetbrains.plugins.groovy.ext.logback;
 
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
-import com.intellij.openapi.roots.DependencyScope
-import com.intellij.pom.PomTargetPsiElement
-import com.intellij.testFramework.LightProjectDescriptor
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.RepositoryTestLibrary
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.pom.PomTargetPsiElement;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.util.containers.ContainerUtil;
+import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.RepositoryTestLibrary;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
+import org.junit.Assert;
 
-import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.LIB_GROOVY_LATEST
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-@CompileStatic
-class LogbackTest extends LightGroovyTestCase {
+import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.LIB_GROOVY_LATEST;
 
-  private static final RepositoryTestLibrary LIB_LOGBACK = new RepositoryTestLibrary(
-    "ch.qos.logback:logback-classic:1.2.3",
-    DependencyScope.RUNTIME
-  )
-  private static final LightProjectDescriptor LOGBACK = new LibraryLightProjectDescriptor(LIB_GROOVY_LATEST + LIB_LOGBACK) {
-    @NotNull
-    final JpsModuleSourceRootType sourceRootType = JavaResourceRootType.RESOURCE
+public class LogbackTest extends LightGroovyTestCase {
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return LOGBACK;
   }
 
-  final LightProjectDescriptor projectDescriptor = LOGBACK
-
-  void 'test highlighting'() {
-    fixture.with {
-      configureByText 'logback.groovy', '''\
-appender("FULL_STACKTRACE", FileAppender) {
-    file = "./stacktrace.log"
-    append = true
-    <warning descr="Cannot resolve symbol 'setAppend'">setAppend</warning>(true)
-    encoder(PatternLayoutEncoder) {
-        pattern = "%level %logger - %msg%n"
+  private static final RepositoryTestLibrary LIB_LOGBACK =
+    new RepositoryTestLibrary("ch.qos.logback:logback-classic:1.2.3", DependencyScope.RUNTIME);
+  private static final LightProjectDescriptor LOGBACK = new LibraryLightProjectDescriptor(LIB_GROOVY_LATEST.plus(LIB_LOGBACK)) {
+    @Override
+    public @NotNull JavaResourceRootType getSourceRootType() {
+      return JavaResourceRootType.RESOURCE;
     }
-    <warning descr="Cannot resolve symbol 'encoder'">encoder</warning>
-    <warning descr="Cannot resolve symbol 'setEncoder'">setEncoder</warning>(new EchoEncoder())
-}
+  };
 
-logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
-root(warn, [''])
-'''
-      enableInspections(GrUnresolvedAccessInspection)
-      checkHighlighting()
-    }
-  }
-
-  void 'test component delegate completion'() {
-    fixture.with {
-      configureByText 'logback.groovy', '''\
-appender("FULL_STACKTRACE", FileAppender) {
-    <caret>
-}
-
-logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
-'''
-      completeBasic()
-      def lookupStrings = lookupElementStrings.toSet()
-      ['file', 'append', 'encoder'].each {
-        assert it in lookupStrings
+  public void testHighlighting() {
+    myFixture.configureByText("logback.groovy", """
+      appender("FULL_STACKTRACE", FileAppender) {
+          file = "./stacktrace.log"
+          append = true
+          <warning descr="Cannot resolve symbol 'setAppend'">setAppend</warning>(true)
+          encoder(PatternLayoutEncoder) {
+              pattern = "%level %logger - %msg%n"
+          }
+          <warning descr="Cannot resolve symbol 'encoder'">encoder</warning>
+          <warning descr="Cannot resolve symbol 'setEncoder'">setEncoder</warning>(new EchoEncoder())
       }
-    }
+      
+      logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
+      root(warn, [''])
+      """);
+    myFixture.enableInspections(GrUnresolvedAccessInspection.class);
+    myFixture.checkHighlighting();
   }
 
-  void 'test target completion'() {
-    fixture.configureByText 'logback.groovy', '''\
-appender('FOO_APP', ConsoleAppender)
-appender("BAR_APP", FileAppender) {}
-logger("", ERROR, ['<caret>'])
-'''
-    fixture.completeBasic()
-    assert ['FOO_APP', 'BAR_APP'].toSet() == fixture.lookupElementStrings.toSet()
+  public void testComponentDelegateCompletion() {
+    JavaCodeInsightTestFixture fixture = getFixture();
+    myFixture.configureByText("logback.groovy", """
+      appender("FULL_STACKTRACE", FileAppender) {
+          <caret>
+      }
+      
+      logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
+      """);
+    myFixture.completeBasic();
+    List<String> lookupElementStrings = fixture.getLookupElementStrings();
+    Assert.assertTrue(ContainerUtil.all(List.of("file", "append", "encoder"), it -> lookupElementStrings.contains(it)));
   }
 
-  void 'test target navigation'() {
-    fixture.with {
-      configureByText 'logback.groovy', '''\
-appender('FOO_APP', ConsoleAppender)
-appender("BAR_APP", FileAppender) {}
-logger("", ERROR, ['FOO<caret>_APP'])
-'''
-      performEditorAction 'GotoDeclaration'
-      checkResult '''\
-appender('<caret>FOO_APP', ConsoleAppender)
-appender("BAR_APP", FileAppender) {}
-logger("", ERROR, ['FOO_APP'])
-'''
-    }
+  public void testTargetCompletion() {
+    myFixture.configureByText("logback.groovy", """
+      appender('FOO_APP', ConsoleAppender)
+      appender("BAR_APP", FileAppender) {}
+      logger("", ERROR, ['<caret>'])
+      """);
+    myFixture.completeBasic();
+    assert DefaultGroovyMethods.equals(DefaultGroovyMethods.toSet(new ArrayList<>(Arrays.asList("FOO_APP", "BAR_APP"))),
+                                       DefaultGroovyMethods.toSet(getFixture().getLookupElementStrings()));
   }
 
-  void 'test element to find usages of exists'() {
-    fixture.with {
-      configureByText 'logback.groovy', '''\
-appender('FOO_<caret>APP', ConsoleAppender)
-'''
-      def targetElement = GotoDeclarationAction.findElementToShowUsagesOf(editor, caretOffset) as PomTargetPsiElement
-      assert targetElement
-      assert targetElement.target instanceof AppenderTarget
-    }
+  public void testTargetNavigation() {
+    myFixture.configureByText("logback.groovy", """
+      appender('FOO_APP', ConsoleAppender)
+      appender("BAR_APP", FileAppender) {}
+      logger("", ERROR, ['FOO<caret>_APP'])
+      """);
+    myFixture.performEditorAction("GotoDeclaration");
+    myFixture.checkResult("""
+                  appender('<caret>FOO_APP', ConsoleAppender)
+                  appender("BAR_APP", FileAppender) {}
+                  logger("", ERROR, ['FOO_APP'])
+                  """);
   }
 
-  void 'test no error when class with same name exists'() {
-    fixture.with {
-      addClass '''\
-package pckg1;
-public class SomeClass {}
-'''
-      addClass '''
-package pckg2;
-public class SomeConfigurableClass {
-  public void setSomeClass(pckg1.SomeClass someClass) {}
-}'''
-      configureByText 'logback.groovy', '''\
-appender('foo', pckg2.SomeConfigurableClass) {
-  someClass = SomeClass.<caret>
-}
-'''
-      enableInspections GrUnresolvedAccessInspection
-      completeBasic()
-    }
+  public void testElementToFindUsagesOfExists() {
+    myFixture.configureByText("logback.groovy", """
+      appender('FOO_<caret>APP', ConsoleAppender)
+      """);
+    PomTargetPsiElement targetElement = (PomTargetPsiElement) GotoDeclarationAction.findElementToShowUsagesOf(getEditor(), myFixture.getCaretOffset());
+
+    Assert.assertNotNull(targetElement);
+    Assert.assertTrue(targetElement.getTarget() instanceof AppenderTarget);
   }
+
+  public void testNoErrorWhenClassWithSameNameExists() {
+    myFixture.addClass("""
+               package pckg1;
+               public class SomeClass {}
+               """);
+    myFixture.addClass("""
+               
+               package pckg2;
+               public class SomeConfigurableClass {
+                 public void setSomeClass(pckg1.SomeClass someClass) {}
+               }""");
+    myFixture.configureByText("logback.groovy", """
+      appender('foo', pckg2.SomeConfigurableClass) {
+        someClass = SomeClass.<caret>
+      }
+      """);
+    myFixture.enableInspections(GrUnresolvedAccessInspection.class);
+    myFixture.completeBasic();
+    }
 }
