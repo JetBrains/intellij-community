@@ -94,6 +94,9 @@ interface InlineCompletionSuggestionUpdateManager {
         is InlineCompletionEvent.SuggestionInserted -> {
           onSuggestionInserted(event, variant)
         }
+        is InlineCompletionEvent.ManualCall -> {
+          onManualCall(event, variant)
+        }
         else -> onCustomEvent(event, variant)
       }
     }
@@ -125,7 +128,12 @@ interface InlineCompletionSuggestionUpdateManager {
       error("A session cannot be updated on the ${event::class.simpleName}, because this event destroyed the session.")
     }
 
+    @ApiStatus.Experimental
     @RequiresEdt
+    fun onManualCall(event: InlineCompletionEvent.ManualCall, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
+
+    @RequiresEdt
+    @Deprecated("Do not extend `InlineCompletionEvent`. Use `ManualCall` instead.")
     fun onCustomEvent(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
 
     private fun ignoreDocumentAndCaretChanges(editor: Editor, block: () -> UpdateResult): UpdateResult {

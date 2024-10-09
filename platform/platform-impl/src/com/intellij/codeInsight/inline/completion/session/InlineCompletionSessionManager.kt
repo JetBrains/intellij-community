@@ -93,6 +93,10 @@ internal abstract class InlineCompletionSessionManager {
   ): UpdateSessionResult {
     val event = request.event
 
+    if (event is InlineCompletionEvent.WithSpecificProvider && session.provider.id != event.providerId) {
+      return UpdateSessionResult.Succeeded
+    }
+
     if (!session.isActive()) { // variants are not provided yet
       return when (suggestionUpdateManager.updateWhileNoVariants(event)) {
         true -> UpdateSessionResult.Succeeded

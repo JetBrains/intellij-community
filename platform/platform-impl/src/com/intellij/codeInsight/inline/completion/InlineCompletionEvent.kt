@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -11,6 +12,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -53,7 +55,16 @@ sealed interface TypingEvent {
 }
 
 /**
- * Be aware that creating your own event is unsafe for a while and might face compatibility issues
+ * Represents an event that occurs in the editor and directly affects inline completion.
+ *
+ * The `InlineCompletionEvent` interface serves two primary purposes:
+ * 1. To invoke inline completion and create a new session. See [InlineCompletionProvider.isEnabled].
+ * 2. To update the currently rendered inline completion. See [InlineCompletionSuggestionUpdateManager].
+ *
+ * Some events may have restrictions (either natural or technical) and might not be usable for both purposes.
+ *
+ * **Note:** Please do not extend this interface outside the IntelliJ platform. If custom functionality is needed,
+ * use [ManualCall] instead. At some point, this interface might become `sealed`.
  */
 @ApiStatus.NonExtendable
 interface InlineCompletionEvent {
@@ -66,14 +77,22 @@ interface InlineCompletionEvent {
    */
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  interface WithSpecificProvider {
+  sealed interface WithSpecificProvider {
+    // Inheritors should not leak this to the public API as the way we 'filter' providers may change in the future.
+    @get:ApiStatus.Internal
     val providerId: InlineCompletionProviderID
   }
 
   /**
    * A class representing a direct call in the code editor by [InsertInlineCompletionAction].
+   *
+   * Please do not invoke it directly as it has some additional semantics.
+   * Like the 'no suggestions' tooltip if providers have nothing to propose.
+   * It should be used only when a user explicitly invokes the inline completion.
+   *
+   * Use [ManualCall] instead as it guarantees that exactly your provider is going to be called.
    */
-  class DirectCall(
+  class DirectCall @ApiStatus.Internal constructor(
     val editor: Editor,
     val caret: Caret,
     val context: DataContext? = null,
@@ -81,6 +100,41 @@ interface InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       return getRequest(event = this, editor = editor, specificCaret = caret)
     }
+  }
+
+  /**
+   * Event for manually calling a specific provider.
+   *
+   * This event should be the sole event called manually. [additionalData] (not stable) can be used to differentiate
+   * various purposes for manual calls.
+   *
+   * Only the provider with [providerId] will be asked, no other providers.
+   *
+   * Remote Development policy: TBD.
+   *
+   * Implementation notes: you still need to support this event in [InlineCompletionProvider.isEnabled].
+   *
+   * @param editor The editor instance.
+   * @param providerId The ID of the specific provider to be triggered.
+   * @param additionalData The data context for the call (not stable).
+   */
+  @ApiStatus.Experimental
+  class ManualCall(
+    val editor: Editor,
+
+    @ApiStatus.Internal
+    override val providerId: InlineCompletionProviderID,
+
+    @ApiStatus.Experimental
+    val additionalData: UserDataHolder,
+  ) : InlineCompletionEvent, WithSpecificProvider {
+
+    override fun toRequest(): InlineCompletionRequest? {
+      return getRequest(event = this, editor = editor)
+    }
+
+    @ApiStatus.Internal
+    companion object
   }
 
   /**
@@ -127,7 +181,7 @@ interface InlineCompletionEvent {
    *
    * @param event The lookup event.
    */
-  class LookupChange(override val event: LookupEvent) : InlineLookupEvent {
+  class LookupChange @ApiStatus.Internal constructor(override val event: LookupEvent) : InlineLookupEvent {
     override fun toRequest(): InlineCompletionRequest? {
       return super.toRequest()?.takeIf { it.lookupElement != null }
     }
@@ -138,7 +192,7 @@ interface InlineCompletionEvent {
    *
    * @param event The lookup event associated with the cancellation.
    */
-  class LookupCancelled(override val event: LookupEvent) : InlineLookupEvent
+  class LookupCancelled @ApiStatus.Internal constructor(override val event: LookupEvent) : InlineLookupEvent
 
   sealed interface InlineLookupEvent : InlineCompletionEvent {
 
@@ -168,6 +222,8 @@ interface InlineCompletionEvent {
   @ApiStatus.Experimental
   class SuggestionInserted internal constructor(
     val editor: Editor,
+
+    @ApiStatus.Internal
     override val providerId: InlineCompletionProviderID,
   ) : InlineCompletionEvent, WithSpecificProvider {
 
