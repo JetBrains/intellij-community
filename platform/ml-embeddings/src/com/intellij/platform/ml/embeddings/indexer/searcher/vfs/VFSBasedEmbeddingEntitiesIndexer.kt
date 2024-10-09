@@ -5,6 +5,7 @@ import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -56,7 +57,7 @@ internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) 
 
   override suspend fun index(project: Project, settings: EmbeddingIndexSettings) {
     if (isFileListenerAdded.compareAndSet(false, true)) addFileListener()
-
+    project.waitForSmartMode()
     indexingScope.launch {
       val files = scanFiles(project).sortedByDescending { it.name.length }
       extractAndAddEntities(project) { filesChannel, classesChannel, symbolsChannel ->
@@ -73,7 +74,7 @@ internal class VFSBasedEmbeddingEntitiesIndexer(private val cs: CoroutineScope) 
   suspend fun index(project: Project, files: List<VirtualFile>) {
     val settings = EmbeddingIndexSettingsImpl.getInstance()
     if (!settings.shouldIndexAnythingFileBased) return
-
+    project.waitForSmartMode()
     indexingScope.launch {
       extractAndAddEntities(project) { filesChannel, classesChannel, symbolsChannel ->
         search(project, files, filesChannel, classesChannel, symbolsChannel)
