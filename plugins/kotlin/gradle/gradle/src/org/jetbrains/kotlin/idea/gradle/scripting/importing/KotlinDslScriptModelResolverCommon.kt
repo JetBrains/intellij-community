@@ -8,6 +8,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Pair
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters.*
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 
@@ -26,5 +27,18 @@ abstract class KotlinDslScriptModelResolverCommon : AbstractProjectResolverExten
 
     override fun getExtraCommandLineArgs(): List<String> {
         return listOf("-P$CORRELATION_ID_GRADLE_PROPERTY_NAME=${System.nanoTime()}")
+    }
+
+    override fun getExtraJvmArgs(): List<Pair<String, String>> {
+        return if (GradleVersion.current() >= GradleVersion.version("7.6")) {
+            listOf(
+                Pair(
+                    PROVIDER_MODE_SYSTEM_PROPERTY_NAME,
+                    CLASSPATH_MODE_SYSTEM_PROPERTY_VALUE
+                )
+            )
+        } else {
+            super.extraJvmArgs
+        }
     }
 }
