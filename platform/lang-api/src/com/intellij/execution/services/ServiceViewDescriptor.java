@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.OpenSourceUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,8 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+/// Subclasses could also implement the [UiDataProvider] to provide the [DataContext]
+/// for the actions returned by [#getToolbarActions()] and [#getPopupActions()]
 public interface ServiceViewDescriptor {
   Key<Boolean> ACTION_HOLDER_KEY = Key.create("ServiceViewActionHolderContentComponent");
 
@@ -48,6 +51,8 @@ public interface ServiceViewDescriptor {
     return getToolbarActions();
   }
 
+  /// Obsolete, implement [UiDataProvider] instead
+  @ApiStatus.Obsolete
   default @Nullable DataProvider getDataProvider() {
     return null;
   }
