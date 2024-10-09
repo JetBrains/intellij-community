@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
@@ -384,12 +385,16 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
 
     private final @NotNull Map<TextRange, Integer> myTextMapping;
 
-    private final @NotNull String format;
+    private final @NotNull String myFormat;
+
+    private final @NotNull Function<String, String> myTransformer;
 
     private FormatArgumentToLogCallFix(@NotNull Map<TextRange, Integer> textMapping,
-                                       @NotNull String format) {
+                                       @NotNull String format,
+                                       @NotNull Function<String, String> transformer) {
       myTextMapping = textMapping;
-      this.format = format;
+      myFormat = format;
+      myTransformer = transformer;
     }
 
     @Override
@@ -436,7 +441,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
           .stream()
           .sorted(Comparator.<Map.Entry<TextRange, Integer>>comparingInt(t -> t.getKey().getStartOffset()).reversed())
           .toList();
-      String formatWithPlaceholders = format;
+      String formatWithPlaceholders = myFormat;
       PsiExpression[] expressions = formatCallExpression.getArgumentList().getExpressions();
       for (Map.Entry<TextRange, Integer> placeholder : placeholders) {
         formatWithPlaceholders = formatWithPlaceholders.substring(0, placeholder.getKey().getStartOffset()) + "{}" +
@@ -444,7 +449,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
 
         arguments.add(tracker.text(expressions[placeholder.getValue()]));
       }
-      arguments.add(formatWithPlaceholders);
+      arguments.add(myTransformer.apply(formatWithPlaceholders));
       Collections.reverse(arguments);
       if (allArguments.length > 1) {
         for (int i = 1; i < allArguments.length; i++) {
@@ -459,7 +464,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
 
     private MessageFormatArgumentToLogCallFix(@NotNull Map<TextRange, Integer> result,
                                               @NotNull String format) {
-      super(result, format);
+      super(result, format, (s)->s);
     }
 
     @Override
@@ -547,8 +552,9 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     }
 
     private StringFormatArgumentToLogCallFix(@NotNull Map<TextRange, Integer> result,
-                                             @NotNull String format) {
-      super(result, format);
+                                             @NotNull String format,
+                                             @NotNull Function<String, String> transformer) {
+      super(result, format, transformer);
     }
 
     static @Nullable PsiUpdateModCommandQuickFix create(@NotNull PsiExpression originalExpression) {
@@ -626,7 +632,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
         text = StringUtil.replaceSubstring(text, range, "\\n");
         start++;
       }
-      return new StringFormatArgumentToLogCallFix(result, text);
+      return new StringFormatArgumentToLogCallFix(result, text, s -> s.replaceAll("%%", "%"));
     }
 
     private static boolean possibleToConvert(@NotNull FormatDecode.Validator validator, PsiExpression argument) {

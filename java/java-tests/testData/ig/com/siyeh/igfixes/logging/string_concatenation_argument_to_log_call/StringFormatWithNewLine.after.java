@@ -7,8 +7,8 @@ class SimpleStringFormat {
 
   void f() {
     LOG.in<caret>fo("foo \n{}", "bar");
-    LOG.info("foo %%n{}", "bar");
-    LOG.info("foo %%\n{}", "bar");
+    LOG.info("foo %n{}", "bar");
+    LOG.info("foo %\n{}", "bar");
   }
 
 }
