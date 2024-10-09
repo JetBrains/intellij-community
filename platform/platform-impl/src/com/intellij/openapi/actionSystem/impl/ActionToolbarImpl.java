@@ -1661,16 +1661,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public AccessibleContext getAccessibleContext() {
-    if (accessibleContext == null) accessibleContext = new AccessibleActionToolbar();
-
-    // We don't need additional grouping for ActionToolbar in the new frame header or if it's empty
-    if (!myVisibleActions.isEmpty() &&
-        !(ExperimentalUI.isNewUI() && getPlace().equals(ActionPlaces.MAIN_TOOLBAR))
-        && !getPlace().equals(ActionPlaces.NEW_UI_RUN_TOOLBAR)) {
-      accessibleContext.setAccessibleName(UIBundle.message("action.toolbar.accessible.group.name"));
-    }
-    else {
-      accessibleContext.setAccessibleName("");
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleActionToolbar();
+      // We don't need additional grouping for ActionToolbar in the new frame header or if it's empty
+      if (!myVisibleActions.isEmpty() &&
+          !(ExperimentalUI.isNewUI() && getPlace().equals(ActionPlaces.MAIN_TOOLBAR))
+          && !getPlace().equals(ActionPlaces.NEW_UI_RUN_TOOLBAR)) {
+        accessibleContext.setAccessibleName(UIBundle.message("action.toolbar.accessible.group.name"));
+      }
+      else {
+        accessibleContext.setAccessibleName("");
+      }
     }
 
     return accessibleContext;
