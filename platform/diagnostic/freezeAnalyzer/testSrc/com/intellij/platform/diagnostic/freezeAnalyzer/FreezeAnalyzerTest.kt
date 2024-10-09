@@ -14,7 +14,7 @@ class FreezeAnalyzerTest {
   fun testAWTFreeze1() {
     val threadDump = File(this::class.java.classLoader.getResource("freezes/awtFreeze/IDEA-344485.txt")!!.path).toPath().readText()
     FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("EDT is busy with com.intellij.vcs.log.data.VcsLogUserResolverBase.resolveCurrentUser")
-    FreezeAnalyzer.analyzeFreeze(threadDump)?.stackTrace?.lineSequence()?.first().shouldBe("\"AWT-EventQueue-0\" prio=0 tid=0x0 nid=0x0 runnable")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.first()?.stackTrace?.lineSequence()?.first().shouldBe("\"AWT-EventQueue-0\" prio=0 tid=0x0 nid=0x0 runnable")
   }
 
   @Test
@@ -51,7 +51,7 @@ class FreezeAnalyzerTest {
   fun testLockFreeze1() {
     val threadDump = File(this::class.java.classLoader.getResource("freezes/readWriteLock/ML-2562.txt")!!.path).toPath().readText()
     FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in org.jetbrains.completion.full.line.local.generation.SimilarContextRetriever.getSimilarity")
-    FreezeAnalyzer.analyzeFreeze(threadDump)?.stackTrace?.shouldContain("\"DefaultDispatcher-worker-27\" prio=0 tid=0x0 nid=0x0 runnable")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.joinToString { it -> it.stackTrace }.shouldContain("\"DefaultDispatcher-worker-27\" prio=0 tid=0x0 nid=0x0 runnable")
   }
 
   @Test
@@ -82,14 +82,14 @@ class FreezeAnalyzerTest {
   fun testGeneralLockFreeze() {
     val threadDump = File(this::class.java.classLoader.getResource("freezes/generalLock/generalLock.txt")!!.path).toPath().readText()
     FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("EDT is blocked on com.intellij.codeInsight.completion.CompletionProgressIndicator.blockingWaitForFinish")
-    FreezeAnalyzer.analyzeFreeze(threadDump)?.stackTrace?.shouldStartWith("Possibly locked by com.intellij.codeInsight.completion.JavaMethodCallElement.<init> in DefaultDispatcher-worker-55")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.joinToString { it -> it.stackTrace }.shouldStartWith("Possibly locked by com.intellij.codeInsight.completion.JavaMethodCallElement.<init> in DefaultDispatcher-worker-55")
   }
 
   @Test
   fun testGeneralLock2Freeze() {
     val threadDump = File(this::class.java.classLoader.getResource("freezes/generalLock/generalLock2.txt")!!.path).toPath().readText()
     FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("EDT is blocked on org.jetbrains.kotlin.idea.base.projectStructure.KotlinProjectStructureUtils\$hasKotlinJvmRuntime\$1.invoke")
-    FreezeAnalyzer.analyzeFreeze(threadDump)?.stackTrace?.shouldStartWith("Possibly locked by com.intellij.lang.javascript.psi.stubs.JSUsedRemoteModulesIndex.getUsedModules in ApplicationImpl pooled thread 10")
+    FreezeAnalyzer.analyzeFreeze(threadDump)?.additionalMessage.shouldBe("Possibly locked by com.intellij.lang.javascript.psi.stubs.JSUsedRemoteModulesIndex.getUsedModules in ApplicationImpl pooled thread 10")
   }
 
   @Test
@@ -110,7 +110,7 @@ class FreezeAnalyzerTest {
     withClue("") {
       assertSoftly {
         FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl\$PackageInfo.lambda\$new\$0")
-        FreezeAnalyzer.analyzeFreeze(threadDump)?.stackTrace.shouldStartWith("\"DefaultDispatcher-worker-22\" prio=0 tid=0x0 nid=0x0 waiting on condition")
+        FreezeAnalyzer.analyzeFreeze(threadDump)?.threads?.joinToString { it -> it.stackTrace }.shouldStartWith("\"DefaultDispatcher-worker-22\" prio=0 tid=0x0 nid=0x0 waiting on condition")
       }
     }
   }

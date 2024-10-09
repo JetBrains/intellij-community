@@ -1,0 +1,13 @@
+f:com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalysisResult
+- <init>(java.lang.String,java.util.List,java.lang.String):V
+- b:<init>(java.lang.String,java.util.List,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():java.util.List
+- f:component3():java.lang.String
+- f:copy(java.lang.String,java.util.List,java.lang.String):com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalysisResult
+- bs:copy$default(com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalysisResult,java.lang.String,java.util.List,java.lang.String,I,java.lang.Object):com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalysisResult
+- equals(java.lang.Object):Z
+- f:getAdditionalMessage():java.lang.String
+- f:getMessage():java.lang.String
+- f:getThreads():java.util.List
+- hashCode():I

@@ -1,13 +1,17 @@
 package com.intellij.platform.diagnostic.freezeAnalyzer
 
+import com.intellij.diagnostic.ThreadDump
 import com.intellij.threadDumpParser.ThreadDumpParser
 import com.intellij.threadDumpParser.ThreadState
 import org.jetbrains.annotations.ApiStatus
-import kotlin.text.contains
-import kotlin.text.lineSequence
 
 @ApiStatus.Experimental
 object FreezeAnalyzer {
+
+  fun getRelevantThreads(threadDump: ThreadDump): List<ThreadState> {
+    return analyzeFreeze(threadDump.rawDump, null)?.threads ?: emptyList()
+  }
+
   /**
    * Analyze freeze based on the IJ Platform knowledge and try to infer the relevant message.
    * If analysis fails, it returns `null`.
@@ -20,9 +24,9 @@ object FreezeAnalyzer {
 
   private fun analyzeEDThread(edt: ThreadState, threadDumpParsed: List<ThreadState>, testName: String?): FreezeAnalysisResult? =
     when {
-      !edt.isWaiting && !edt.isSleeping -> findFirstRelevantMethod(edt.stackTrace)?.let { FreezeAnalysisResult("EDT is busy with $it", edt.stackTrace) }
-      edt.isWaiting && isWriteLockWait(edt) -> findThreadThatTookReadWriteLock(threadDumpParsed)?.let { FreezeAnalysisResult(it.message, it.stackTrace + "\n\n" + edt.stackTrace) }
-      edt.isWaiting && !isEDTFreezed(edt) -> FreezeAnalysisResult("${testName ?: ""}: EDT is not blocked/busy (freeze can be the result of extensive GC)", edt.stackTrace)
+      !edt.isWaiting && !edt.isSleeping -> findFirstRelevantMethod(edt.stackTrace)?.let { FreezeAnalysisResult("EDT is busy with $it", listOf(edt)) }
+      edt.isWaiting && isWriteLockWait(edt) -> findThreadThatTookReadWriteLock(threadDumpParsed)?.let { FreezeAnalysisResult(it.message, it.threads + listOf(edt), it.additionalMessage) }
+      edt.isWaiting && !isEDTFreezed(edt) -> FreezeAnalysisResult("${testName ?: ""}: EDT is not blocked/busy (freeze can be the result of extensive GC)", listOf(edt))
       edt.isWaiting -> analyzeLock(edt, threadDumpParsed)
       else -> null
     }
@@ -47,7 +51,7 @@ object FreezeAnalyzer {
     if (possibleThreadWithLock == null) return null
     val methodFromThreadWithLock = findFirstRelevantMethod(possibleThreadWithLock.stackTrace)
     if (methodFromThreadWithLock != null) {
-      return FreezeAnalysisResult("EDT is blocked on $relevantMethodFromEdt", "Possibly locked by $methodFromThreadWithLock in ${possibleThreadWithLock.name} \n\n" + edt.stackTrace + "\n\n" + possibleThreadWithLock.stackTrace)
+      return FreezeAnalysisResult("EDT is blocked on $relevantMethodFromEdt", listOf(edt, possibleThreadWithLock), additionalMessage = "Possibly locked by $methodFromThreadWithLock in ${possibleThreadWithLock.name}")
     }
     return null
   }
@@ -75,17 +79,13 @@ object FreezeAnalyzer {
         threadDumpParsed.firstOrNull { it.isAwaitedBy(threadState) }?.let {
           if (isWaitingOnReadWriteLock(it)) {
             FreezeAnalysisResult("Possible deadlock. Read lock is taken by ${findFirstRelevantMethod(threadState.stackTrace)}, but the thread is blocked by ${findFirstRelevantMethod(it.stackTrace)} which is waiting on RWLock",
-                                 "${threadState.name} took RWLock but it's blocked by ${it.name} which waits on RWLock" +
-                                 "\n\n" +
-                                 threadState.stackTrace + "\n\n" + it.stackTrace)
+                                 listOf(threadState, it), additionalMessage = "${threadState.name} took RWLock but it's blocked by ${it.name} which waits on RWLock")
           }
           else {
             FreezeAnalysisResult("Read lock is taken by ${findFirstRelevantMethod(threadState.stackTrace)}, but this thread is blocked by ${findFirstRelevantMethod(it.stackTrace)}",
-                                 "${threadState.name} took RWLock but it's blocked by ${it.name}" +
-                                 "\n\n" +
-                                 threadState.stackTrace + "\n\n" + it.stackTrace)
+                                 listOf(threadState, it), additionalMessage = "${threadState.name} took RWLock but it's blocked by ${it.name}")
           }
-        } ?: FreezeAnalysisResult("Long read action in ${findFirstRelevantMethod(threadState.stackTrace)}", threadState.stackTrace)
+        } ?: FreezeAnalysisResult("Long read action in ${findFirstRelevantMethod(threadState.stackTrace)}", listOf(threadState))
       }
 
   private fun isWaitingOnReadWriteLock(threadState: ThreadState): Boolean =
@@ -165,4 +165,4 @@ object FreezeAnalyzer {
   }
 }
 
-data class FreezeAnalysisResult(val message: String, val stackTrace: String)
+data class FreezeAnalysisResult(val message: String, val threads: List<ThreadState>, val additionalMessage: String? = null)
