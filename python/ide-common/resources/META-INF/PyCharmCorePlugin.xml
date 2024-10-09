@@ -7,6 +7,7 @@
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.platform.ml.embeddings"/>
     <module name="intellij.ide.startup.importSettings"/>
+    <module name="intellij.platform.tips"/>
   </content>
   <xi:include href="/META-INF/common-ide-modules.xml"/>
 

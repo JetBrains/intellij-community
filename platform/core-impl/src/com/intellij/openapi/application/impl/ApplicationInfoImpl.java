@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -54,9 +54,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myCopyrightStart = "2000";
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
-  private String mySplashImageUrl;
-  private String myEapSplashImageUrl;
-  private String mySvgIconUrl;
+  private @Nullable String splashImageUrl;
+  private @Nullable String eapSplashImageUrl;
+  private String svgIconUrl;
   private String mySvgEapIconUrl;
   private String mySmallSvgIconUrl;
   private String mySmallSvgEapIconUrl;
@@ -79,7 +79,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myShowWhatsNewOnUpdate;
   private String myWinKeymapUrl;
   private String myMacKeymapUrl;
-  private boolean myEAP;
+  private boolean isEap;
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
@@ -114,8 +114,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
           myPatchVersion = child.getAttributeValue("patch");
           myFullVersionFormat = child.getAttributeValue("full");
           myCodeName = child.getAttributeValue("codename");
-          myEAP = Boolean.parseBoolean(child.getAttributeValue("eap"));
-          myVersionSuffix = child.getAttributeValue("suffix", myEAP ? "EAP" : null);
+          isEap = Boolean.parseBoolean(child.getAttributeValue("eap"));
+          myVersionSuffix = child.getAttributeValue("suffix", isEap ? "EAP" : null);
         }
         break;
 
@@ -133,17 +133,17 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         break;
 
         case "logo": {
-          mySplashImageUrl = getAttributeValue(child, "url");
+          splashImageUrl = getAttributeValue(child, "url");
         }
         break;
 
         case "logo-eap": {
-          myEapSplashImageUrl = getAttributeValue(child, "url");
+          eapSplashImageUrl = getAttributeValue(child, "url");
         }
         break;
 
         case "icon": {
-          mySvgIconUrl = child.getAttributeValue("svg");
+          svgIconUrl = child.getAttributeValue("svg");
           mySmallSvgIconUrl = child.getAttributeValue("svg-small");
         }
         break;
@@ -271,7 +271,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       readPluginInfo(null);
     }
     
-    Objects.requireNonNull(mySvgIconUrl, "Missing attribute: //icon@svg");
+    Objects.requireNonNull(svgIconUrl, "Missing attribute: //icon@svg");
     Objects.requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
 
     overrideFromProperties();
@@ -408,7 +408,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getVersionName() {
     String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
-    if (myEAP && myCodeName != null && !myCodeName.isEmpty()) {
+    if (isEap && myCodeName != null && !myCodeName.isEmpty()) {
       fullName += " (" + myCodeName + ")";
     }
     return fullName;
@@ -430,8 +430,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getSplashImageUrl() {
-    return isEAP() && myEapSplashImageUrl != null ? myEapSplashImageUrl : mySplashImageUrl;
+  public @Nullable String getSplashImageUrl() {
+    return isEap && eapSplashImageUrl != null ? eapSplashImageUrl : splashImageUrl;
   }
 
   @Override
@@ -441,7 +441,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @ApiStatus.Internal
   public @NotNull String getApplicationSvgIconUrl(boolean isEap) {
-    return isEap && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
+    return isEap && mySvgEapIconUrl != null ? mySvgEapIconUrl : svgIconUrl;
   }
 
   @Override
@@ -461,17 +461,17 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public boolean isEAP() {
-    return myEAP;
+    return isEap;
   }
 
   @Override
   public boolean isMajorEAP() {
-    return myEAP && (myMinorVersion == null || myMinorVersion.indexOf('.') < 0);
+    return isEap && (myMinorVersion == null || myMinorVersion.indexOf('.') < 0);
   }
 
   @Override
   public boolean isPreview() {
-    return !myEAP && myVersionSuffix != null && ("Preview".equalsIgnoreCase(myVersionSuffix) || myVersionSuffix.startsWith("RC"));
+    return !isEap && myVersionSuffix != null && ("Preview".equalsIgnoreCase(myVersionSuffix) || myVersionSuffix.startsWith("RC"));
   }
 
   @Override

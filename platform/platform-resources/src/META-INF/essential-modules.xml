@@ -22,7 +22,5 @@
     <module name="intellij.platform.debugger.impl.backend"/>
 
     <module name="intellij.platform.frontend"/>
-
-    <module name="intellij.platform.tips"/>
   </content>
 </idea-plugin>

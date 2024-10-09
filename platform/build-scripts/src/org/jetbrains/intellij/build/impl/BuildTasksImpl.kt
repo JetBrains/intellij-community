@@ -531,7 +531,6 @@ private suspend fun checkProductProperties(context: BuildContext) {
   checkPaths2(properties.brandingResourcePaths, "productProperties.brandingResourcePaths")
   checkPaths2(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
   checkPaths2(properties.additionalDirectoriesWithLicenses, "productProperties.additionalDirectoriesWithLicenses")
-  checkModules(properties.additionalModulesToCompile, "productProperties.additionalModulesToCompile", context)
   checkModule(properties.applicationInfoModule, "productProperties.applicationInfoModule", context)
   properties.embeddedJetBrainsClientMainModule?.let { embeddedJetBrainsClientMainModule ->
     checkModule(embeddedJetBrainsClientMainModule, "productProperties.embeddedJetBrainsClientMainModule", context)

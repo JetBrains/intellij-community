@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.jps.model.module.JpsModule
@@ -39,31 +40,38 @@ abstract class JetBrainsProductProperties : ProductProperties() {
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
   }
 
-  override fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
-    return buildList {
-      val problems = super.validatePlugin(pluginId, result, context).filterNot {
-        (
-          // FIXME IDEA-356970
-          pluginId == "com.intellij.plugins.projectFragments" ||
-          // FIXME IJPL-159498
-          pluginId == "org.jetbrains.plugins.docker.gateway"
-        ) && it.message.contains("Service preloading is deprecated") ||
-        (
-          // FIXME PY-74322
-          pluginId == "com.intellij.python.frontend" ||
-          // FIXME AE-121
-          pluginId == "com.jetbrains.personalization"
-        ) && it.message.contains("Plugin has no dependencies")
-      }
-      addAll(problems)
-      if (result is PluginCreationSuccess && result.plugin.vendor?.contains("JetBrains") != true) {
-        add(object : InvalidDescriptorProblem(
-          descriptorPath = "",
-          detailedMessage = "${result.plugin.pluginId} is published not by JetBrains: ${result.plugin.vendor}"
-        ) {
-          override val level = Level.ERROR
-        })
+  final override fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
+    val problems = super.validatePlugin(pluginId, result, context).filterNot {
+      (
+        // FIXME IDEA-356970
+        pluginId == "com.intellij.plugins.projectFragments" ||
+        // FIXME IJPL-159498
+        pluginId == "org.jetbrains.plugins.docker.gateway" || pluginId == "com.intellij.java" || pluginId == "com.intellij.java.ide"
+      ) && it.message.contains("Service preloading is deprecated") ||
+      (
+        // FIXME PY-74322
+        pluginId == "com.intellij.python.frontend" ||
+        // FIXME AE-121
+        pluginId == "com.jetbrains.personalization"
+      ) && it.message.contains("Plugin has no dependencies")
+    }
+    if (result is PluginCreationSuccess && result.plugin.vendor?.contains("JetBrains") != true) {
+      return problems + object : InvalidDescriptorProblem(
+        descriptorPath = "",
+        detailedMessage = "${result.plugin.pluginId} is published not by JetBrains: ${result.plugin.vendor}"
+      ) {
+        override val level = Level.ERROR
       }
     }
+    return problems
+  }
+
+  /**
+   * 🌲
+   * see KTIJ-30761
+   * @see org.jetbrains.intellij.build.sharedIndexes.PreSharedIndexesGenerator
+   */
+  protected fun enableKotlinPluginK2ByDefault() {
+    additionalVmOptions += "-Didea.kotlin.plugin.use.k2=true"
   }
 }

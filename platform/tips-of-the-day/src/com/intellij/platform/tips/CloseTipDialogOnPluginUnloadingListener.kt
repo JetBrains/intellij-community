@@ -4,9 +4,10 @@ package com.intellij.platform.tips
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.util.TipAndTrickManager
+import com.intellij.openapi.components.serviceIfCreated
 
-internal class CloseTipDialogOnPluginUnloadingListener : DynamicPluginListener {
+private class CloseTipDialogOnPluginUnloadingListener : DynamicPluginListener {
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-    TipAndTrickManager.getInstance().closeTipDialog()
+    serviceIfCreated<TipAndTrickManager>()?.closeTipDialog()
   }
 }

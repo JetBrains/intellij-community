@@ -94,7 +94,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
   val classifier = computeAdditionalModulesFingerprint(request.additionalModules)
   val productDirNameWithoutClassifier = if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix
-  val productDirName = (productDirNameWithoutClassifier + classifier).takeLast(255)
+  val productDirName = (productDirNameWithoutClassifier + (if (System.getProperty("intellij.build.minimal").toBoolean()) "-ij-void" else "") + classifier).takeLast(255)
 
   val buildDir = withContext(Dispatchers.IO.limitedParallelism(4)) {
     val buildDir = rootDir.resolve(productDirName)
@@ -302,7 +302,6 @@ private suspend fun collectModulesToCompileForDistribution(context: BuildContext
   if (context.isEmbeddedJetBrainsClientEnabled) {
     result.add(context.productProperties.embeddedJetBrainsClientMainModule!!)
   }
-  result.addAll(context.productProperties.additionalModulesToCompile)
   result.add("intellij.idea.community.build.tasks")
   result.add("intellij.platform.images.build")
   result.removeAll(productLayout.excludedModuleNames)
@@ -548,7 +547,13 @@ internal suspend fun createProductProperties(productConfiguration: ProductConfig
 
   return spanBuilder("create product properties").use {
     val productPropertiesClass = try {
-      classLoader.loadClass(productConfiguration.className)
+      val className = if (System.getProperty("intellij.build.minimal").toBoolean()) {
+        "org.jetbrains.intellij.build.IjVoidProperties"
+      }
+      else {
+        productConfiguration.className
+      }
+      classLoader.loadClass(className)
     }
     catch (_: ClassNotFoundException) {
       val classPathString = classPathFiles.joinToString(separator = "\n") { file ->

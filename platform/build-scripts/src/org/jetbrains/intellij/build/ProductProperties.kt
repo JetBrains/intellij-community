@@ -301,12 +301,6 @@ abstract class ProductProperties {
   val mavenArtifacts: MavenArtifactsProperties = MavenArtifactsProperties()
 
   /**
-   * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
-   * todo get rid of this
-   */
-  var additionalModulesToCompile: PersistentList<String> = persistentListOf()
-
-  /**
    * Specified modules which tests need to be compiled when product is built.
    * todo get rid of this
    */

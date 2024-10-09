@@ -14,4 +14,5 @@
   </content>
 
   <xi:include href="/META-INF/vcs-modules.xml"/>
+
 </idea-plugin>

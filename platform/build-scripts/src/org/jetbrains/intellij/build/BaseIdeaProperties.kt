@@ -176,16 +176,6 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
     productLayout.compatiblePluginsToIgnore = persistentListOf(
       JavaPluginLayout.MAIN_MODULE_NAME,
     )
-    additionalModulesToCompile = persistentListOf("intellij.tools.jps.build.standalone")
     modulesToCompileTests = persistentListOf("intellij.platform.jps.build.tests")
-  }
-
-  /**
-   * 🌲
-   * see KTIJ-30761
-   * @see org.jetbrains.intellij.build.sharedIndexes.PreSharedIndexesGenerator
-   */
-  protected fun enableKotlinPluginK2ByDefault() {
-    additionalVmOptions += "-Didea.kotlin.plugin.use.k2=true"
   }
 }

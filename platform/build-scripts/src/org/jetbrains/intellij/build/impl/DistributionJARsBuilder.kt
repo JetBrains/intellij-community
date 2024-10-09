@@ -478,28 +478,28 @@ private suspend fun validatePlugins(context: BuildContext, pluginSpecs: Collecti
         continue
       }
       launch {
-        validatePlugin(path = path, context = context, span = span)
+        validatePlugin(file = path, context = context, span = span)
       }
     }
   }
 }
 
-private fun validatePlugin(path: Path, context: BuildContext, span: Span) {
+private fun validatePlugin(file: Path, context: BuildContext, span: Span) {
   val pluginManager = IdePluginManager.createManager()
-  val result = pluginManager.createPlugin(path, validateDescriptor = true)
+  val result = pluginManager.createPlugin(pluginFile = file, validateDescriptor = true)
   // todo fix AddStatisticsEventLogListenerTemporary
   val id = when (result) {
     is PluginCreationSuccess -> result.plugin.pluginId
-    is PluginCreationFail -> (pluginManager.createPlugin(path, validateDescriptor = false) as? PluginCreationSuccess)?.plugin?.pluginId
+    is PluginCreationFail -> (pluginManager.createPlugin(pluginFile = file, validateDescriptor = false) as? PluginCreationSuccess)?.plugin?.pluginId
   }
   val problems = context.productProperties.validatePlugin(id, result, context)
   if (problems.isNotEmpty()) {
-    span.addEvent("failed", Attributes.of(AttributeKey.stringKey("path"), "$path"))
+    span.addEvent("failed", Attributes.of(AttributeKey.stringKey("path"), "$file"))
     context.messages.reportBuildProblem(
       problems.joinToString(
-        prefix = "${id ?: path}: ",
+        prefix = "${id ?: file}: ",
         separator = ". ",
-      ), identity = "${id ?: path}"
+      ), identity = "${id ?: file}"
     )
   }
 }

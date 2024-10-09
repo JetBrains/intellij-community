@@ -18,6 +18,7 @@
     <module name="intellij.kotlin.onboarding-promoter"/>
     <module name="intellij.platform.experiment"/>
     <module name="intellij.idea.customization.base"/>
+    <module name="intellij.platform.tips"/>
   </content>
   <xi:include href="/META-INF/common-ide-modules.xml"/>
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester
 
 import com.intellij.openapi.Disposable
@@ -13,7 +13,7 @@ abstract class FeatureSuggesterTest : BasePlatformTestCase() {
   protected abstract val testingSuggesterId: String
 
   lateinit var expectedSuggestion: Suggestion
-  private lateinit var disposable: Disposable
+  private var disposable: Disposable? = null
 
   override fun setUp() {
     super.setUp()
@@ -23,12 +23,12 @@ abstract class FeatureSuggesterTest : BasePlatformTestCase() {
     FeatureSuggester.suggesters.forEach { settings.setEnabled(it.id, true) }
     expectedSuggestion = NoSuggestion
     disposable = Disposer.newDisposable()
-    FeatureSuggesterTestUtils.subscribeToSuggestions(myFixture.project, disposable) { suggestion -> expectedSuggestion = suggestion }
+    FeatureSuggesterTestUtils.subscribeToSuggestions(myFixture.project, disposable!!) { suggestion -> expectedSuggestion = suggestion }
   }
 
   override fun tearDown() {
     try {
-      Disposer.dispose(disposable)
+      disposable?.let { Disposer.dispose(it) }
     }
     catch (e: Throwable) {
       addSuppressedException(e)
