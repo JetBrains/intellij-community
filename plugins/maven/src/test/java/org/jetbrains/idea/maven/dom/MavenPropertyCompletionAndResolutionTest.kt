@@ -891,6 +891,19 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
   }
 
   @Test
+  fun testMavenHome() = runBlocking {
+    updateProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <name>${'$'}{<caret>maven.home}</name>
+                       """.trimIndent())
+    val ref = getReferenceAtCaret(projectPom)!!
+    // the reference for maven.home property resolves to its PsiElement
+    assertResolved(projectPom, ref.element)
+  }
+
+  @Test
   fun testNotUpperCaseEnvPropertiesOnWindows() = runBlocking {
     if (!SystemInfo.isWindows) return@runBlocking
 
