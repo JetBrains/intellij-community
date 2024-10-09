@@ -18,8 +18,6 @@ abstract class StandaloneFeature<T : EvaluationStrategy>(
 
   abstract fun getDataset(config: Config): EvaluationDataset
 
-  abstract fun getFeatureInvoker(strategy: T): FeatureInvoker
-
   override fun getPreliminaryEvaluationSteps(): List<EvaluationStep> = emptyList()
 
   override fun getEvaluationSteps(config: Config): List<EvaluationStep> = emptyList()
@@ -34,8 +32,7 @@ abstract class StandaloneFeature<T : EvaluationStrategy>(
 
   override fun prepareEnvironment(config: Config): EvaluationEnvironment {
     return StandaloneEnvironment(
-      getDataset(config),
-      getFeatureInvoker(config.strategy())
+      getDataset(config)
     )
   }
 }

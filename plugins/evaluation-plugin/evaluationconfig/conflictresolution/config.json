@@ -1,9 +1,8 @@
 {
-  "outputDir": "ml-eval-standalone-example-output",
+  "outputDir": "ml-eval-conflict-resolution-output",
   "strategy": {},
-  "csvDataset": {
-    "url": "./latin_letters.csv",
-    "chunkSize": 10
+  "conflictDataset": {
+    "url": "existing:conflicts"
   },
   "interpret": {
     "saveLogs": false,
@@ -11,7 +10,7 @@
     "sessionProbability": 1.0,
     "sessionSeed": null,
     "sessionsLimit": 30,
-    "filesLimit": 2,
+    "filesLimit": 3,
     "order": "LINEAR",
     "trainTestSplit": 70
   },

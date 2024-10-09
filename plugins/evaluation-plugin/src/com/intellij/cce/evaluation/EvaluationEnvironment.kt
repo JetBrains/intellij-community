@@ -12,7 +12,6 @@ import com.intellij.cce.workspace.EvaluationWorkspace
  */
 interface EvaluationEnvironment : AutoCloseable {
   val dataset: EvaluationDataset
-  val featureInvoker: FeatureInvoker
 
   fun execute(step: EvaluationStep, workspace: EvaluationWorkspace): EvaluationWorkspace?
 }
@@ -22,7 +21,6 @@ interface EvaluationEnvironment : AutoCloseable {
  */
 class StandaloneEnvironment(
   override val dataset: EvaluationDataset,
-  override val featureInvoker: FeatureInvoker
 ) : EvaluationEnvironment {
   override fun execute(step: EvaluationStep, workspace: EvaluationWorkspace): EvaluationWorkspace? =
     step.runInIntellij(null, workspace)

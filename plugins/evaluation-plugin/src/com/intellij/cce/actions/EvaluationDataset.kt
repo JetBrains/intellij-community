@@ -11,7 +11,7 @@ import com.intellij.cce.util.Progress
 /**
  * Represents data which will be used for evaluation.
  */
-interface EvaluationDataset {
+interface EvaluationDataset { // FIXME with implicit invoker inside it may make sense to merge this interface into EvaluationEnvironment
   val setupSdk: EvaluationStep?
   val checkSdk: EvaluationStep?
 
@@ -32,7 +32,6 @@ interface EvaluationDatasetChunk {
   val presentationText: String
 
   fun evaluate(
-    featureInvoker: FeatureInvoker,
     handler: InterpretationHandler,
     filter: InterpretFilter,
     order: InterpretationOrder,

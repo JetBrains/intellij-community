@@ -55,6 +55,7 @@
     <evaluableFeature implementation="com.intellij.cce.evaluable.completion.TokenCompletionFeature"/>
     <evaluableFeature implementation="com.intellij.cce.actions.ContextCollectionFeature"/>
     <evaluableFeature implementation="com.intellij.cce.evaluable.standaloneExample.StandaloneExampleFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.conflictResolution.ConflictResolutionFeature"/>
     <suggestionsProvider implementation="com.intellij.cce.evaluable.completion.DefaultCompletionProvider"/>
   </extensions>
 

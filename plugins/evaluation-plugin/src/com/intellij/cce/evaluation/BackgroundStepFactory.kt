@@ -20,14 +20,14 @@ class BackgroundStepFactory(
   override fun generateActionsStep(): EvaluationStep = DatasetPreparationStep(environment.dataset, datasetContext)
 
   override fun interpretActionsStep(): EvaluationStep =
-    ActionsInterpretationStep(config, environment.dataset, datasetContext, environment.featureInvoker, newWorkspace = false)
+    ActionsInterpretationStep(config, environment.dataset, datasetContext, newWorkspace = false)
 
   override fun generateReportStep(): EvaluationStep =
     ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it, SetupStatsCollectorStep.statsCollectorLogsDirectory) },
                          config.reports.sessionsFilters, config.reports.comparisonFilters, feature)
 
   override fun interpretActionsOnNewWorkspaceStep(): EvaluationStep =
-    ActionsInterpretationStep(config, environment.dataset, datasetContext, environment.featureInvoker, newWorkspace = true)
+    ActionsInterpretationStep(config, environment.dataset, datasetContext, newWorkspace = true)
 
   override fun reorderElements(): EvaluationStep =
     ReorderElementsStep(config)

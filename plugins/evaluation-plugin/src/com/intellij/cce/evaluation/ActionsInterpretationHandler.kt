@@ -23,8 +23,7 @@ import kotlin.system.measureTimeMillis
 
 class ActionsInterpretationHandler(
   private val config: Config,
-  private val datasetContext: DatasetContext,
-  private val featureInvoker: FeatureInvoker,
+  private val datasetContext: DatasetContext
 ) {
 
   companion object {
@@ -64,7 +63,7 @@ class ActionsInterpretationHandler(
       workspace.fullLineLogsStorage.enableLogging(chunk.name)
       try {
         val sessions = logsSaver.invokeRememberingLogs {
-          chunk.evaluate(featureInvoker, handler, filter, interpretationConfig.order) { session ->
+          chunk.evaluate(handler, filter, interpretationConfig.order) { session ->
             featuresStorage.saveSession(session, chunk.name)
           }
         }

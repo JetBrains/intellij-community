@@ -36,6 +36,7 @@ open class ProjectActionsDataset(
   val project: Project,
   val processor: GenerateActionsProcessor,
   private val featureName: String,
+  val featureInvoker: FeatureInvoker,
 ) : EvaluationDataset {
   private val datasetRef = config.sourceFile.run {
     val sf = this ?: ""
@@ -237,7 +238,6 @@ open class ProjectActionsDataset(
     override val sessionCount: Int = fileActions.sessionsCount
 
     override fun evaluate(
-      featureInvoker: FeatureInvoker,
       handler: InterpretationHandler,
       filter: InterpretFilter,
       order: InterpretationOrder,

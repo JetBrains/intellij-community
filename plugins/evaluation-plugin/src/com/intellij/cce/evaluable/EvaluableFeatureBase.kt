@@ -54,9 +54,9 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
           EvaluationRootInfo(true),
           project,
           getGenerateActionsProcessor(strategy, project),
-          name
-        ),
-        featureInvoker = getFeatureInvoker(project, Language.resolve(actions.language), strategy)
+          name,
+          featureInvoker = getFeatureInvoker(project, Language.resolve(actions.language), strategy)
+        )
       )
     }
   }

@@ -16,7 +16,8 @@ import java.nio.file.Paths
  * @property outputDir The output directory for the evaluation results.
  * @property strategy The evaluation strategy used.
  * @property actions The configuration for actions generation step.
- * @property fileDataset Dataset configuration for standalone setups
+ * @property csvDataset Dataset configuration for CSV file.
+ * @property conflictDataset Dataset configuration for conflict resolution evaluations.
  * @property interpret The configuration for actions interpretation step.
  * @property reorder The configuration for element reordering step.
  * @property reports The configuration for report generation step.
@@ -25,7 +26,8 @@ data class Config private constructor(
   val outputDir: String,
   val strategy: EvaluationStrategy,
   val actions: ActionsGeneration?,
-  val fileDataset: FileDataset?,
+  val csvDataset: FileDataset?,
+  val conflictDataset: ConflictDataset?,
   val interpret: ActionsInterpretation,
   val reorder: ReorderElements,
   val reports: ReportGeneration
@@ -74,6 +76,10 @@ data class Config private constructor(
   data class FileDataset internal constructor(
     val url: String,
     val chunkSize: Int,
+  )
+
+  data class ConflictDataset internal constructor(
+    val url: String
   )
 
   /**
@@ -135,6 +141,7 @@ data class Config private constructor(
   class Builder internal constructor() {
     var actions: ActionsGeneration? = null
     var fileDataset: FileDataset? = null
+    var conflictDataset: ConflictDataset? = null
 
     var outputDir: String? = null
     var strategy: EvaluationStrategy = EvaluationStrategy.defaultStrategy
@@ -161,7 +168,8 @@ data class Config private constructor(
 
     constructor(config: Config) : this() {
       actions = config.actions
-      fileDataset = config.fileDataset
+      fileDataset = config.csvDataset
+      conflictDataset = config.conflictDataset
       outputDir = config.outputDir
       strategy = config.strategy
       saveLogs = config.interpret.saveLogs
@@ -206,6 +214,7 @@ data class Config private constructor(
       strategy,
       actions,
       fileDataset,
+      conflictDataset,
       ActionsInterpretation(
         experimentGroup,
         sessionsLimit,

@@ -14,7 +14,8 @@ import kotlin.io.path.readLines
 class CsvDataset(
   private val datasetRef: DatasetRef,
   private val chunkSize: Int,
-  private val targetField: String
+  private val targetField: String,
+  private val featureInvoker: FeatureInvoker,
 ) : EvaluationDataset {
   override val setupSdk: EvaluationStep? = null
   override val checkSdk: EvaluationStep? = null
@@ -70,7 +71,6 @@ class CsvDataset(
         override val presentationText: String = presentationText.toString()
 
         override fun evaluate(
-          featureInvoker: FeatureInvoker,
           handler: InterpretationHandler,
           filter: InterpretFilter,
           order: InterpretationOrder,

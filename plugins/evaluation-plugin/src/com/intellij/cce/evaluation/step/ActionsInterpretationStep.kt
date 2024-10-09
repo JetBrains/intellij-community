@@ -13,7 +13,6 @@ class ActionsInterpretationStep(
   private val config: Config,
   private val dataset: EvaluationDataset,
   private val datasetContext: DatasetContext,
-  private val featureInvoker: FeatureInvoker,
   private val newWorkspace: Boolean
 ) : BackgroundEvaluationStep {
   override val name: String = "Actions interpreting"
@@ -24,7 +23,7 @@ class ActionsInterpretationStep(
     val resultWorkspace =
       if (newWorkspace) EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
       else workspace
-    ActionsInterpretationHandler(config, datasetContext, featureInvoker).invoke(dataset, resultWorkspace, progress)
+    ActionsInterpretationHandler(config, datasetContext).invoke(dataset, resultWorkspace, progress)
     return resultWorkspace
   }
 }

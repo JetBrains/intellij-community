@@ -292,7 +292,8 @@ function addSuggestions(sessionDiv, popup, lookup) {
       p.setAttribute("style", "font-weight: bold;")
     }
     const presentationText = suggestions[i].presentationText.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    p.innerHTML = removeCommonIndentFromCodeSnippet(presentationText)
+    p.innerHTML = presentationText
+    // p.innerHTML = removeCommonIndentFromCodeSnippet(presentationText)  // FIXME doesn't work anyway?
     suggestionDiv.appendChild(p)
     popup.appendChild(suggestionDiv)
   }

@@ -69,6 +69,7 @@ button:focus {
 
 .session {
   position: relative;
+  display: block;
   font-weight: bold;
 }
 
@@ -126,7 +127,7 @@ button:focus {
   border-bottom: none;
   border-top: none;
   z-index: 99;
-  top: 1.5em;
+  top: 100%;
   left: 0;
 }
 

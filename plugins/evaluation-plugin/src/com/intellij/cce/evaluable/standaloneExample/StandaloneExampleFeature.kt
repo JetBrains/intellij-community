@@ -9,7 +9,6 @@ import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StandaloneFeature
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.filter.EvaluationFilter
-import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.metric.Metric
 import com.intellij.cce.metric.PrecisionMetric
 import com.intellij.cce.metric.SessionsCountMetric
@@ -24,15 +23,14 @@ class StandaloneExampleFeature : StandaloneFeature<DatasetStrategy>("standalone-
   }
 
   override fun getDataset(config: Config): EvaluationDataset {
-    val fileDataset = config.fileDataset ?: throw IllegalStateException("Required dataset config")
+    val fileDataset = config.csvDataset ?: throw IllegalStateException("Required dataset config")
     return CsvDataset(
       datasetRef = DatasetRef.parse(fileDataset.url),
       chunkSize = fileDataset.chunkSize,
-      targetField = "Type"
+      targetField = "Type",
+      featureInvoker = StandaloneExampleInvoker(),
     )
   }
-
-  override fun getFeatureInvoker(strategy: DatasetStrategy): FeatureInvoker = StandaloneExampleInvoker()
 
   override fun getMetrics(): List<Metric> = listOf(
     SessionsCountMetric(),

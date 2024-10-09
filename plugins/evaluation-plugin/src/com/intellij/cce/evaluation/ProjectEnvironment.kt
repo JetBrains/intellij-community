@@ -14,7 +14,6 @@ import java.nio.file.FileSystems
 class ProjectEnvironment(
   val project: Project,
   override val dataset: EvaluationDataset,
-  override val featureInvoker: FeatureInvoker,
 ) : EvaluationEnvironment {
 
   override fun execute(step: EvaluationStep, workspace: EvaluationWorkspace): EvaluationWorkspace? =
@@ -43,8 +42,7 @@ class ProjectEnvironment(
 
       return ProjectEnvironment(
         project,
-        environment.dataset,
-        environment.featureInvoker
+        environment.dataset
       )
     }
   }
