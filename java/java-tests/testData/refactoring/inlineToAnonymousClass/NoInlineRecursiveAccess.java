@@ -13,6 +13,10 @@ public class SelfParams {
 		this.myVar = sp.myVar;
 		this.myProp = sp.getProp();
 	}
+
+  public SelfParams clone() {
+    return new SelfParams();
+  }
 }
 
 class Usage {

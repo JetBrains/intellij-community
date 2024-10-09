@@ -12,11 +12,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.inline.InlineToAnonymousClassHandler;
 import com.intellij.refactoring.inline.InlineToAnonymousClassProcessor;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
+import java.util.Arrays;
 
 public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   @NotNull
@@ -377,8 +378,9 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   }
 
   public void testNoInlineRecursiveAccess() {
-    doTestConflict("Class cannot be inlined because a call to its member inside body", 
-                   "Class cannot be inlined because a call to its member inside body");
+    doTestConflict("Class cannot be inlined because it accesses its own members on another instance", 
+                   "Class cannot be inlined because it accesses its own members on another instance",
+                   "Class cannot be inlined because it calls its own constructor");
   }
 
   public void testConflictInaccessibleOuterField() {
@@ -393,12 +395,11 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   public void doTestConflict(final String... expected) {
     InlineToAnonymousClassProcessor processor = prepareProcessor();
     UsageInfo[] usages = processor.findUsages();
-    MultiMap<PsiElement,String> conflicts = processor.getConflicts(usages);
-    assertEquals(expected.length, conflicts.size());
-    final Iterator<? extends String> iterator = conflicts.values().iterator();
-    for (String s : expected) {
-      assertTrue(iterator.hasNext());
-      assertEquals(s, iterator.next());
+    String[] conflicts = ArrayUtil.toStringArray(processor.getConflicts(usages).values());
+    assertEquals(expected.length, conflicts.length);
+    Arrays.sort(conflicts); // get stable order
+    for (int i = 0; i < expected.length; i++) {
+      assertEquals(expected[i], conflicts[i]);
     }
   }
 
