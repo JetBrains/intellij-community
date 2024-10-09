@@ -11,6 +11,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper;
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue;
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValueType;
 import com.intellij.java.navigation.ChooseByNameTest;
+import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -332,6 +333,12 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       List<?> result = ChooseByNameTest.calcContributorElements(contributor, "UpdatedActionName");
       assertEquals(1, result.size());
     });
+  }
+
+  public void testSearchWorks() {
+    SearchEverywhereContributor<?> contributor = createActionContributor(getProject(), getTestRootDisposable());
+    List<?> list = contributor.search("sea", new MockProgressIndicator(), 10).getItems();
+    assertEquals(10, list.size());
   }
 
   private static boolean isNavigableOption(Object o) {
