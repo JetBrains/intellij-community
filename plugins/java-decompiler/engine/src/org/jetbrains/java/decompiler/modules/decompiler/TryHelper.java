@@ -1,8 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
+import org.jetbrains.java.decompiler.code.cfg.ExceptionRangeCFG;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -23,8 +27,8 @@ public final class TryHelper
   /**
    * Tries to convert `try` statement to `try-with-resource`
    */
-  public static boolean enhanceTryStats(RootStatement root, StructMethod mt) {
-    boolean ret = makeTryWithResourceRec(root, mt, root.getDummyExit(), new ArrayList<>());
+  public static boolean enhanceTryStats(RootStatement root, ControlFlowGraph graph, StructMethod mt) {
+    boolean ret = makeTryWithResourceRec(root, graph,mt, root.getDummyExit(), new ArrayList<>());
     if (ret) {
       SequenceHelper.condenseSequences(root);
       if (collapseTryRec(root, mt)) {
@@ -34,21 +38,21 @@ public final class TryHelper
     return ret;
   }
 
-  private static boolean makeTryWithResourceRec(Statement stat, StructMethod mt, DummyExitStatement exit, List<TryStatementJ11> stack) {
+  private static boolean makeTryWithResourceRec(Statement stat, ControlFlowGraph graph, StructMethod mt, DummyExitStatement exit, List<TryStatementJ11> stack) {
     boolean ret = false;
     if (stat.type == Statement.StatementType.CATCH_ALL && ((CatchAllStatement)stat).isFinally()) {
-      if (makeTryWithResource((CatchAllStatement)stat)) {
+      if (makeTryWithResource((CatchAllStatement)stat, graph)) {
         return true;
       }
     }
 
     if (mt.getBytecodeVersion() >= CodeConstants.BYTECODE_JAVA_11 && stat.type == Statement.StatementType.TRY_CATCH) {
-      ret |= addTryWithResourceJ11((CatchStatement) stat, stack);
+      ret |= addTryWithResourceJ11((CatchStatement) stat, graph, stack);
     }
 
     for (int i = 0; i < stat.getStats().size(); i++) {
       Statement st = stat.getStats().get(i);
-      ret |= makeTryWithResourceRec(st, mt, exit, stack);
+      ret |= makeTryWithResourceRec(st, graph, mt, exit, stack);
     }
 
     if (!stack.isEmpty() && stack.get(0).tryStatement() == stat) {
@@ -93,7 +97,36 @@ public final class TryHelper
     }
   }
 
-  private static boolean makeTryWithResource(CatchAllStatement finallyStat) {
+  /**
+   * Mostly use for java version less than 11.
+   * Try to find the next synthetic example and convert it to try-with-resource
+   * <pre>
+   * {@code
+   *         Some some = new Some();
+   *         Throwable var2 = null;
+   *         try {
+   *         } catch (Throwable var11) {
+   *             var2 = var11;
+   *             throw var11;
+   *         } finally {
+   *             if (some != null) {
+   *                 if (var2 != null) {
+   *                     try {
+   *                         some.close();
+   *                     } catch (Throwable var10) {
+   *                         var2.addSuppressed(var10);
+   *                     }
+   *                 } else {
+   *                     some.close();
+   *                 }
+   *             }
+   *
+   *         }
+   * }
+   * </pre>
+   * @return true if it is converted to try-with-resource
+   */
+  private static boolean makeTryWithResource(CatchAllStatement finallyStat, ControlFlowGraph graph) {
     Statement handler = finallyStat.getHandler();
 
     // The finally block has a specific statement structure we can check for
@@ -118,7 +151,7 @@ public final class TryHelper
     if (elseBlock.getExprents() != null && elseBlock.getExprents().size() == 1) {
       Exprent exp = elseBlock.getExprents().get(0);
 
-      if (isCloseable(exp)) {
+      if (isCloseCall(exp, elseBlock, graph)) {
         var = (VarExprent)((InvocationExprent)exp).getInstance();
       }
     }
@@ -175,9 +208,14 @@ public final class TryHelper
     return false;
   }
 
-  // Make try with resources with the new style bytecode (J11+)
-  // It doesn't use finally blocks, and is just a try catch
-  public static boolean addTryWithResourceJ11(CatchStatement tryStatement, List<TryStatementJ11> stack) {
+  /**
+   * Make try with resources with the new style bytecode (J11+)
+   * It doesn't use finally blocks, and is just a try catch
+   *
+   * @see TryHelper#makeTryWithResource(CatchAllStatement, ControlFlowGraph)
+   * @return true if it was converted
+   */
+  public static boolean addTryWithResourceJ11(CatchStatement tryStatement, ControlFlowGraph graph, List<TryStatementJ11> stack) {
     // Doesn't have a catch block, probably already processed
     if (tryStatement.getStats().size() < 2) {
       return false;
@@ -209,7 +247,7 @@ public final class TryHelper
         if (inTry instanceof BasicBlockStatement && inTry.getExprents()!=null && !inTry.getExprents().isEmpty()) {
           Exprent first = inTry.getExprents().get(0);
 
-          if (isCloseable(first)) {
+          if (isCloseCall(first, inTry, graph)) {
             closeable = (VarExprent) ((InvocationExprent)first).getInstance();
           }
         }
@@ -221,8 +259,8 @@ public final class TryHelper
 
         if (ifCase instanceof FunctionExprent) {
           // Will look like "if (!(!(var != null)))"
-          FunctionExprent func = unwrapNegations((FunctionExprent) ifCase);
-
+          FunctionExprent func = unwrapNegations((FunctionExprent)ifCase);
+          if (func == null) return false;
           Exprent check = func.getLstOperands().get(0);
 
           // If it's not a var, end processing early
@@ -248,7 +286,7 @@ public final class TryHelper
                 Exprent first = inTry.getExprents().get(0);
 
                 // Check for closable invocation
-                if (isCloseable(first)) {
+                if (isCloseCall(first, inTry, graph)) {
                   closeable = (VarExprent) ((InvocationExprent)first).getInstance();
                   nullable = true;
 
@@ -294,7 +332,7 @@ public final class TryHelper
       }
 
       for (Statement destination : destinations) {
-        if (!isValid(destination, closeable, nullable)) {
+        if (!isValid(destination, closeable, graph, nullable)) {
           return false;
         }
       }
@@ -344,7 +382,7 @@ public final class TryHelper
     tryStatements.remove(0);
   }
 
-  private static boolean isValid(Statement stat, VarExprent closeable, boolean nullable) {
+  private static boolean isValid(Statement stat, VarExprent closeable, ControlFlowGraph graph, boolean nullable) {
     if (nullable) {
       // Check for if statement that contains a null check and a close()
       if (stat instanceof IfStatement ifStat) {
@@ -353,7 +391,7 @@ public final class TryHelper
         if (condition instanceof FunctionExprent) {
           // This can sometimes be double inverted negative conditions too, handle that case
           FunctionExprent func = unwrapNegations((FunctionExprent) condition);
-
+          if (func == null) return false;
           // Ensure the exprent is the one we want to remove
           if (func.getFuncType() == FunctionExprent.FUNCTION_NE && func.getLstOperands().get(0) instanceof VarExprent && func.getLstOperands().get(1).getExprType().equals(VarType.VARTYPE_NULL)) {
             if (func.getLstOperands().get(0) instanceof VarExprent && ((VarExprent) func.getLstOperands().get(0)).getVarVersion().equals(closeable.getVarVersion())) {
@@ -371,7 +409,7 @@ public final class TryHelper
             Exprent inst = ((InvocationExprent) exprent).getInstance();
 
             // Ensure the var exprent we want to remove is the right one
-            if (inst instanceof VarExprent && inst.equals(closeable) && isCloseable(exprent)) {
+            if (inst instanceof VarExprent && inst.equals(closeable) && isCloseCall(exprent, stat, graph)) {
               return true;
             }
           }
@@ -514,18 +552,22 @@ public final class TryHelper
     }
   }
 
-  private static FunctionExprent unwrapNegations(FunctionExprent func) {
+  @Nullable
+  private static FunctionExprent unwrapNegations(@NotNull FunctionExprent func) {
+    int count = 0;
     while (func.getFuncType() == FunctionExprent.FUNCTION_BOOL_NOT) {
       Exprent expr = func.getLstOperands().get(0);
 
       if (expr instanceof FunctionExprent) {
-        func = (FunctionExprent) expr;
-      } else {
+        func = (FunctionExprent)expr;
+        count++;
+      }
+      else {
         break;
       }
     }
-
-    return func;
+    if (count % 2 == 0) return func;
+    return null;
   }
 
   private static boolean collapseTry(CatchStatement catchStat) {
@@ -636,11 +678,19 @@ public final class TryHelper
     return null;
   }
 
-  private static boolean isCloseable(Exprent exp) {
+  private static boolean isCloseCall(Exprent exp, Statement inTry, ControlFlowGraph graph) {
     if (exp.type == Exprent.EXPRENT_INVOCATION) {
       InvocationExprent invocExp = (InvocationExprent)exp;
       if (invocExp.getName().equals("close") && invocExp.getStringDescriptor().equals("()V")) {
         if (invocExp.getInstance() != null && invocExp.getInstance().type == Exprent.EXPRENT_VAR) {
+          if (inTry.type == Statement.StatementType.BASIC_BLOCK && inTry instanceof BasicBlockStatement basicBlockStatement) {
+            BasicBlock block = basicBlockStatement.getBlock();
+            for (ExceptionRangeCFG exception : graph.getExceptions()) {
+              if (exception.getProtectedRange().contains(block) && exception.getExceptionTypes() == null) {
+                return false;
+              }
+            }
+          }
           if (!DecompilerContext.getOption(IFernflowerPreferences.CHECK_CLOSABLE_INTERFACE)) return true;
           return DecompilerContext.getStructContext().instanceOf(invocExp.getClassName(), "java/lang/AutoCloseable");
         }
