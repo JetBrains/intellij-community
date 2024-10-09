@@ -20,7 +20,4 @@ object JavaTerminalBundle {
   fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): Supplier<@Nls String> {
     return INSTANCE.getLazyMessage(key = key, params = params)
   }
-
-  @JvmStatic
-  fun isMessageInBundle(key: String): Boolean = INSTANCE.containsKey(key)
 }
