@@ -57,6 +57,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.vcs.ShelveTitlePatch;
+import com.intellij.vcs.ShelveTitleProvider;
 import com.intellij.vcs.VcsActivity;
 import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsImplUtil;
@@ -390,6 +392,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         ShelvedChangeList changeList = new ShelvedChangeList(patchFile, commitMessage.replace('\n', ' '), binaryFiles,
                                                              createShelvedChangesFromFilePatches(myProject, patchFile, patches));
         changeList.markToDelete(markToBeDeleted);
+
+        suggestBetterName(new ShelveTitlePatch(Files.readString(patchFile), patches.size()), name -> renameChangeList(changeList, name));
+
         changeList.setName(schemePatchDir.getFileName().toString());
         ProgressManager.checkCanceled();
         schemeManager.addScheme(changeList, false);
@@ -401,6 +406,14 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     }
     catch (Exception e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private void suggestBetterName(@NotNull ShelveTitlePatch patch, @NotNull Consumer<String> rename) {
+    for (@NotNull ShelveTitleProvider provider : ShelveTitleProvider.Companion.getEP_NAME().getExtensionList()) {
+      if (provider.suggestTitle(myProject, patch, rename)) {
+        return;
+      }
     }
   }
 

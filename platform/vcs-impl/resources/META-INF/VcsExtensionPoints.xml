@@ -234,6 +234,10 @@
                     area="IDEA_PROJECT"
                     dynamic="false"/>
 
+    <extensionPoint name="vcs.shelve.name"
+                    interface="com.intellij.vcs.ShelveTitleProvider"
+                    dynamic="true"/>
+
     <extensionPoint name="vcs.codeVisionLanguageContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext"/>
     </extensionPoint>
