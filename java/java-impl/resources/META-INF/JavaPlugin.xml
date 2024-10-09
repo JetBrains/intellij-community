@@ -477,6 +477,17 @@
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl"
                         overrides="true"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
+                        serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"
+                        overrides="true"/>
+
+    <codeInsight.codeVision.settings.defaults implementation="com.intellij.ide.java.JavaCodeVisionSettingsDefaults"/>
+
+
+    <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
+                        serviceImplementation="com.intellij.ide.java.JavaIdeLanguageCustomization"
+                        overrides="true"/>
+
     <updateSettingsUIProvider implementation="com.intellij.openapi.projectRoots.impl.JdkUpdaterConfigurable"/>
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.ExistingJdkConfigurationActivity"/>
     <openapi.projectRoots.externalJavaConfigurationProvider implementation="com.intellij.openapi.projectRoots.impl.SdkmanrcConfigurationProvider"/>
@@ -2796,6 +2807,34 @@
     <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactWebServerRootsProvider"
                             order="before LastResortProvider"/>
   </extensions>
+
+  <actions>
+    <group id="Java.MarkRootGroup" searchable="false">
+      <group id="MarkSourceRootGroup" class="com.intellij.ide.projectView.actions.MarkSourceRootActionGroup"/>
+      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
+      <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>
+      <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
+      <add-to-group group-id="MarkRootGroup"/>
+    </group>
+
+    <group id="WelcomeScreen.QuickStart.IDEA">
+      <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"/>
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+    </group>
+
+    <group id="MarkGeneratedSourceRootGroup">
+      <action id="MarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.MarkGeneratedSourceRootAction"/>
+      <action id="UnmarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.UnmarkGeneratedSourceRootAction"/>
+      <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRootGroup"/>
+    </group>
+
+    <group id="Java.ProjectTemplate.Group" searchable="false">
+      <separator/>
+      <action id="SaveProjectAsTemplate" class="com.intellij.platform.templates.SaveProjectAsTemplateAction"/>
+      <action id="ManageProjectTemplates" class="com.intellij.platform.templates.ManageProjectTemplatesAction"/>
+      <add-to-group group-id="FileOtherSettingsGroup" anchor="last"/>
+    </group>
+  </actions>
 
   <actions resource-bundle="messages/JavaUiBundle">
     <group id="JarRepositoryLibraries" internal="true" popup="true" searchable="false">

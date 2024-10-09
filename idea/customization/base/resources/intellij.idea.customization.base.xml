@@ -3,5 +3,61 @@
     <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls"
                         serviceImplementation="com.intellij.idea.customization.base.IntelliJIdeaExternalResourceUrls"
                         overrides="true"/>
+    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
+    <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler$MyStartupActivity"/>
+
+    <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
+
+    <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
+
+    <!-- preload because in any case will be requested to reopen last projects -->
+    <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
+                        serviceImplementation="com.intellij.ide.RecentProjectsManagerBase"
+                        overrides="true" preload="notHeadless"/>
+
+    <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
+
+    <projectConfigurable groupId="language" instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable"
+                         id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle"
+                         nonDefaultProject="true"/>
+
+    <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider"/>
+
+    <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
+
+    <projectTemplatesFactory implementation="com.intellij.platform.templates.ArchivedTemplatesFactory"/>
+    <applicationService serviceImplementation="com.intellij.platform.templates.ProjectTemplateExportable"/>
+    <projectTemplateFileProcessor implementation="com.intellij.platform.templates.SystemFileProcessor"/>
+
+    <moduleRendererFactory implementation="com.intellij.ide.util.DefaultModuleRendererFactory" order="last,before platform"/>
+
+    <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
   </extensions>
+
+  <actions>
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
+
+    <group id="OpenProjectGroup">
+      <group id="NewElementInMenuGroup" class="com.intellij.ide.actions.NewActionGroup" popup="true" searchable="false"/>
+      <add-to-group group-id="FileOpenGroup" anchor="first"/>
+    </group>
+
+    <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen">
+      <add-to-group group-id="WelcomeScreen.QuickStart"/>
+    </action>
+
+    <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
+            icon="AllIcons.RunConfigurations.RerunFailedTests"/>
+
+    <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis">
+      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="$SearchWeb"/>
+    </action>
+
+    <action id="ExternalSystem.AttachProject"
+            class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction">
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.LeftPanel" anchor="after"
+                    relative-to-action="ExternalSystem.RefreshAllProjects"/>
+    </action>
+  </actions>
 </idea-plugin>
