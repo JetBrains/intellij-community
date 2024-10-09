@@ -99,7 +99,7 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
     // module name
     addToLeft(JPanel().apply {
       layout = BoxLayout(this, BoxLayout.LINE_AXIS)
-      border = JBUI.Borders.empty(2)
+      border = JBUI.Borders.empty(2, 10, 2, 2)
       add(JBLabel(CompilationChartsBundle.message("charts.module")))
       add(searchField)
       add(countLabel)
@@ -119,6 +119,7 @@ class ActionPanel(private val project: Project, private val vm: CompilationChart
 
     val toolbar = actionManager.createActionToolbar(Settings.Toolbar.ID, actionGroup, true).apply {
       targetComponent = this@ActionPanel
+      component.border = JBUI.Borders.empty()
     }
     addToRight(toolbar.component)
 
