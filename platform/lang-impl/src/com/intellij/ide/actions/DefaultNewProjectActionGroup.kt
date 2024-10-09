@@ -1,14 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
-import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
-import com.intellij.ide.util.projectWizard.EmptyWebProjectTemplate
-import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase
-import com.intellij.ide.util.projectWizard.WebProjectTemplate
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.ide.util.projectWizard.*
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.DirectoryProjectGenerator
 
@@ -35,12 +29,34 @@ private class DefaultNewProjectStep : AbstractNewProjectStep<Any>(DefaultNewProj
   }
 }
 
-private class DefaultNewProjectAction : DefaultActionGroup(), DumbAware {
+private fun getRealAction(): AnAction? {
+  return ActionManager.getInstance().getAction("WelcomeScreen.CreateNewProject")
+}
+
+private class DefaultNewProjectActionGroup : DefaultActionGroup(), DumbAware {
   private fun getActualAction(): AnAction {
-    return ActionManager.getInstance().getAction("WelcomeScreen.CreateNewProject") ?: DefaultNewProjectStep()
+    return getRealAction() ?: DefaultNewProjectStep()
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     return arrayOf(getActualAction())
+  }
+}
+
+private class DefaultNewProjectAction : AnAction(), DumbAware {
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = getRealAction() == null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    object : AbstractNewProjectDialog() {
+      override fun createNewProjectStep(): AbstractNewProjectStep<*> {
+        return DefaultNewProjectStep()
+      }
+    }.show()
   }
 }
