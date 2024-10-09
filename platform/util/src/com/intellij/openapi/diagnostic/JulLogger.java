@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 import static com.intellij.openapi.diagnostic.AsyncLogKt.log;
+import static com.intellij.openapi.diagnostic.AsyncLogKt.shutdownLogProcessing;
 
 @ApiStatus.Internal
 public class JulLogger extends Logger {
@@ -156,7 +157,11 @@ public class JulLogger extends Logger {
       for (Object o : hooks.keySet()) {
         if (o instanceof Thread && logManagerCleanerClass.isAssignableFrom(o.getClass())) {
           Thread logCloseThread = (Thread)o;
-          ShutDownTracker.getInstance().registerShutdownTask(logCloseThread);
+          ShutDownTracker.getInstance().registerShutdownTask(() -> {
+            shutdownLogProcessing();
+            //noinspection CallToThreadRun
+            logCloseThread.run();
+          });
           hooks.remove(o);
           return true;
         }
