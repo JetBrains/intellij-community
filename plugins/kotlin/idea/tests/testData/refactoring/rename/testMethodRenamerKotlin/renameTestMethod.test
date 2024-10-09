@@ -1,9 +1,9 @@
 {
   "type": "KOTLIN_FUNCTION",
-  "classId": "/A",
+  "classId": "/A1",
   "oldName": "foo",
   "libraries": ["JUnit4"],
   "newName": "bar",
-  "mainFile": "A.kt",
+  "mainFile": "A1.kt",
   "enabledInK2": "true"
 }

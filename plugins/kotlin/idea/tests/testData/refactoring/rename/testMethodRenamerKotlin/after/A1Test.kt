@@ -1,6 +1,6 @@
 import org.junit.Test
 
-class ATest  {
+class A1Test  {
     @Test
     fun testBar() {}
 }

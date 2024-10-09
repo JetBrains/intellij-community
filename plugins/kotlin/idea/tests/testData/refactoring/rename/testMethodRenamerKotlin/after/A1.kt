@@ -1,3 +1,3 @@
-class A {
+class A1 {
     fun bar() {}
 }

@@ -22,16 +22,14 @@ abstract class AutomaticTestMethodRenamerFactory : AutomaticRenamerFactory {
   protected class AutomaticTestMethodRenamer(oldMethodName: String?,
                                              className: String?,
                                              module: Module?,
-                                             newMethodName: String,
-                                             namesToSkip: Set<String> = emptySet()) : AutomaticRenamer() {
+                                             newMethodName: String) : AutomaticRenamer() {
     init {
-      findMethodsToReplace(oldMethodName, className, module, namesToSkip)
+      findMethodsToReplace(oldMethodName, className, module)
       suggestAllNames(oldMethodName, newMethodName)
     }
 
-    private fun findMethodsToReplace(oldMethodName: String?, className: String?, module: Module?, namesToSkip: Set<String>) {
+    private fun findMethodsToReplace(oldMethodName: String?, className: String?, module: Module?) {
       if (oldMethodName == null || className == null || module == null) return
-      if (namesToSkip.contains(className)) return
       val moduleScope = GlobalSearchScope.moduleWithDependentsScope(module)
 
       val cache = PsiShortNamesCache.getInstance(module.getProject())
@@ -39,8 +37,10 @@ abstract class AutomaticTestMethodRenamerFactory : AutomaticRenamerFactory {
       val classPattern = Pattern.compile(".*$className.*")
       val methodPattern = Pattern.compile(".*$oldMethodName.*", Pattern.CASE_INSENSITIVE)
 
+      var count = 0
       for (eachName in ContainerUtil.newHashSet(*cache.getAllClassNames())) {
         if (classPattern.matcher(eachName).matches()) {
+          if (count ++ > 1000) break
           for (eachClass in cache.getClassesByName(eachName, moduleScope)) {
             if (TestFrameworks.detectFramework(eachClass) != null) {
               eachClass.methods.forEach {
