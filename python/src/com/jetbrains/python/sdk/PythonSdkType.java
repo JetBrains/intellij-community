@@ -343,7 +343,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public void setupSdkPaths(@NotNull Sdk sdk) {
-    if (PlatformUtils.isFleetBackend()) return;
+    if (PlatformUtils.isFleetBackend() || PlatformUtils.isQodana()) return;
     final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
     final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
     AtomicReference<Project> projectRef = new AtomicReference<>();
