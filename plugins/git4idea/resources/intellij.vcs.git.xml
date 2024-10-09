@@ -4,6 +4,7 @@
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
     <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.platform.lvcs.impl"/>
   </dependencies>
 
   <actions resource-bundle="messages.GitBundle">
@@ -486,7 +487,7 @@
     </group>
 
     <group id="MainToolbarVCSGroup">
-      <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" />
+      <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction"/>
       <action id="main.toolbar.git.MergeRebase" class="git4idea.ui.toolbar.GitMergeRebaseWidget"/>
       <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
     </group>
