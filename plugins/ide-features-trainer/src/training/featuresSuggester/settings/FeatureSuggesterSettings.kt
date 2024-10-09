@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester.settings
 
 import com.intellij.openapi.application.ApplicationManager
@@ -19,7 +19,7 @@ import kotlin.math.min
   name = "FeatureSuggesterSettings",
   storages = [Storage("FeatureSuggester.xml", roamingType = RoamingType.DISABLED)]
 )
-class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettings> {
+internal class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettings> {
   var suggesters: MutableMap<String, Boolean> = run {
     val enabled = isSuggestersEnabledByDefault
     FeatureSuggester.suggesters.associate { internalId(it.id) to enabled }.toMutableMap()
@@ -28,7 +28,7 @@ class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettin
   // SuggesterId to the last time this suggestion was shown
   private var suggestionLastShownTime: MutableMap<String, Long> = mutableMapOf()
 
-  // List of timestamps (millis) of the first IDE session start for the last days
+  // the list of timestamps (millis) of the first IDE session start for the last days
   private var workingDays: MutableList<Long> = mutableListOf()
 
   val isAnySuggesterEnabled: Boolean

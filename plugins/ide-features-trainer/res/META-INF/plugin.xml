@@ -189,8 +189,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService
-      serviceImplementation="training.featuresSuggester.settings.FeatureSuggesterSettings"/>
+    <applicationService serviceImplementation="training.featuresSuggester.settings.FeatureSuggesterSettings"/>
     <applicationConfigurable parentId="tools"
                              instance="training.featuresSuggester.settings.FeatureSuggesterConfigurable"
                              id="org.intellij.featuresSuggester.FeatureSuggesterConfigurable"
