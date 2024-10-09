@@ -202,7 +202,7 @@ fun Entity.entityTypeIdent(): String {
   }
 }
 
-fun KClass<out Entity>.entityType(): EID? {
+fun KClass<out LegacyEntity>.entityType(): EID? {
   return DbContext.threadBound.impl.entityTypeForClass(this)
 }
 
