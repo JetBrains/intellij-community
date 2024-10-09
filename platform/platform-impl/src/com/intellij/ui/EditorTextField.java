@@ -229,11 +229,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   @Override
   public void setBackground(Color bg) {
     if (myIgnoreSetBgColor) {
-      super.setBackground(getBackground());
-      return;
+      bg = getBackground();
+      super.setBackground(bg);
+    } else {
+      super.setBackground(bg);
+      myEnforcedBgColor = bg;
     }
-    super.setBackground(bg);
-    myEnforcedBgColor = bg;
     EditorEx editor = getEditor(false);
     if (editor != null) {
       editor.setBackgroundColor(bg);
