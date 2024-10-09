@@ -1,6 +1,6 @@
 <!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <component xmlns="http://jetbrains.org/intellij/schema/application-info">
-  <version major="2024" minor="3" eap="true"/>
+  <version major="2024" minor="3.1" eap="true"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com" copyrightStart="2010"/>
   <build number="PC-__BUILD__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_core_logo.png"/>
