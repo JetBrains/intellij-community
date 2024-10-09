@@ -17,7 +17,7 @@ import java.util.logging.LogRecord;
 
 @ApiStatus.Internal
 public class JulLogger extends Logger {
-  @SuppressWarnings("NonConstantLogger") protected final java.util.logging.Logger myLogger;
+  @SuppressWarnings("NonConstantLogger") private final java.util.logging.Logger myLogger;
   private static final boolean CLEANER_DELAYED;
 
   static {
@@ -38,6 +38,19 @@ public class JulLogger extends Logger {
 
   protected final @NotNull String getLoggerName() {
     return myLogger.getName();
+  }
+
+  protected final void logSevere(@NotNull String msg) {
+    logSevere(msg, null);
+  }
+
+  protected final void logSevere(@Nullable String msg, @Nullable Object p) {
+    if (p == null) {
+      myLogger.log(Level.SEVERE, msg);
+    }
+    else {
+      myLogger.log(Level.SEVERE, msg, p);
+    }
   }
 
   @Override
