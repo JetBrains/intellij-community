@@ -605,33 +605,33 @@
       }
     },
     "CompilationCharts": {
-      "background":{
-        "odd": "#F7F8FA",
-        "even": "#EBECF0",
-        "default": "#F7F8FA"
+      "background": {
+        "odd": "#000000",
+        "even": "#1A1A1A",
+        "default": "#000000"
       },
       "test": {
-        "enabled": "#89C398",
-        "disabled": "#E3F7E7",
-        "border": "#369650",
-        "selected": "#55A76A"
+        "enabled": "#3E8E41",
+        "disabled": "#2B5931",
+        "stroke": "#6FAF6D",
+        "selected": "#5E9E57"
       },
       "production": {
-        "enabled": "#88ADF7",
-        "disabled": "#D4E2FF",
-        "border": "#3574F0",
-        "selected": "#4682FA"
+        "enabled": "#3F88C5",
+        "disabled": "#2D5D87",
+        "stroke": "#6EA7C9",
+        "selected": "#6EB8DF"
       },
       "memory": {
-        "background": "#C2D6FC",
-        "border": "#4682FA"
+        "background": "#3F88C5",
+        "stroke": "#6EB8DF"
       },
       "cpu": {
-        "background": "#C5E5CC",
-        "border": "#89C398"
+        "background": "#3E8E41",
+        "stroke": "#5E9E57"
       },
-      "lineColor": "#D3D5DB",
-      "textColor": "#27282E"
+      "lineColor": "#FFFFFF",
+      "textColor": "#FFFFFF"
     },
     "FlameGraph.Tooltip": {
       "scaleBackground": "#555454",

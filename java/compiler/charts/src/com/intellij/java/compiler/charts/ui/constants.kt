@@ -27,14 +27,14 @@ object Colors {
   object Test : Block {
     override val ENABLED: JBColor = exact("CompilationCharts.test.enabled")
     override val DISABLED: JBColor = exact("CompilationCharts.test.disabled")
-    override val BORDER: JBColor = exact("CompilationCharts.test.border")
+    override val BORDER: JBColor = exact("CompilationCharts.test.stroke")
     override val SELECTED: JBColor = exact("CompilationCharts.test.selected")
   }
 
   object Production : Block {
     override val ENABLED: JBColor = exact("CompilationCharts.production.enabled")
     override val DISABLED: JBColor = exact("CompilationCharts.production.disabled")
-    override val BORDER: JBColor = exact("CompilationCharts.production.border")
+    override val BORDER: JBColor = exact("CompilationCharts.production.stroke")
     override val SELECTED: JBColor = exact("CompilationCharts.production.selected")
   }
 
@@ -46,12 +46,12 @@ object Colors {
 
   object Memory: Usage {
     override val BACKGROUND: JBColor = exact("CompilationCharts.memory.background")
-    override val BORDER: JBColor = exact("CompilationCharts.memory.border")
+    override val BORDER: JBColor = exact("CompilationCharts.memory.stroke")
   }
 
   object Cpu: Usage {
     override val BACKGROUND: JBColor = exact("CompilationCharts.cpu.background")
-    override val BORDER: JBColor = exact("CompilationCharts.cpu.border")
+    override val BORDER: JBColor = exact("CompilationCharts.cpu.stroke")
   }
 
   val LINE: JBColor = exact("CompilationCharts.lineColor")

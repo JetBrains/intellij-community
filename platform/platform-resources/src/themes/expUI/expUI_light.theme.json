@@ -1074,24 +1074,24 @@
       "test": {
         "enabled": "Green7",
         "disabled": "Green10",
-        "border": "Green5",
+        "stroke": "Green5",
         "selected": "Green6"
       },
       "production": {
         "enabled": "Blue8",
         "disabled": "Blue11",
-        "border": "Blue4",
+        "stroke": "Blue4",
         "selected": "Blue5"
       },
       "memory": {
         "background": "Blue10",
-        "border": "Blue5"
+        "stroke": "Blue5"
       },
       "cpu": {
         "background": "Green9",
-        "border": "Green7"
+        "stroke": "Green7"
       },
-      "lineColor": "Gray10",
+      "lineColor": "Gray12",
       "textColor": "Gray2"
     },
     "FlameGraph.Tooltip": {

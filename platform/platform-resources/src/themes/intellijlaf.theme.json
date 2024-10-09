@@ -1295,24 +1295,24 @@
       "test": {
         "enabled": "#89C398",
         "disabled": "#E3F7E7",
-        "border": "#369650",
+        "stroke": "#369650",
         "selected": "#55A76A"
       },
       "production": {
         "enabled": "#88ADF7",
         "disabled": "#D4E2FF",
-        "border": "#3574F0",
+        "stroke": "#3574F0",
         "selected": "#4682FA"
       },
       "memory": {
         "background": "#C2D6FC",
-        "border": "#4682FA"
+        "stroke": "#4682FA"
       },
       "cpu": {
         "background": "#C5E5CC",
-        "border": "#89C398"
+        "stroke": "#89C398"
       },
-      "lineColor": "#D3D5DB",
+      "lineColor": "#EBECF0",
       "textColor": "#27282E"
     },
     "FlameGraph.Tooltip": {
