@@ -34,7 +34,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
   @Test
   fun testEapLogs() {
     withEap(true) {
-      val logsContainer = InlineCompletionLogsContainer(999)
+      val logsContainer = InlineCompletionLogsContainer(1f)
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
@@ -56,12 +56,12 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
   }
 
   /**
-   * Test for both basic and full logs are recorded (eap = false, small request id)
+   * Test for both basic and full logs are recorded (eap = false, pass random threshold)
    */
   @Test
   fun testFullLogsForRelease() {
     withEap(false) {
-      val logsContainer = InlineCompletionLogsContainer(0)
+      val logsContainer = InlineCompletionLogsContainer(0f)
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
@@ -83,13 +83,13 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
   }
 
   /**
-   * Test for both basic and full logs are recorded (eap = false, big request id, random pass)
+   * Test for both basic and full logs are recorded (eap = false, don't pass the random threshold, random pass)
    */
   @Test
   fun testFullLogsForReleaseRandomPass() {
     withEap(false) {
-      val logsContainer = InlineCompletionLogsContainer(999)
-      logsContainer.randomPass.set(true)
+      val logsContainer = InlineCompletionLogsContainer(1f)
+      logsContainer.forceFullLogs.set(true)
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
@@ -111,12 +111,12 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
   }
 
   /**
-   * Test that only basic fields are recorded for (eap = false, big request id, not random pass)
+   * Test that only basic fields are recorded for (eap = false, don't pass the random threshold, not random pass)
    */
   @Test
   fun testFullLogFiltered() {
     withEap(false) {
-      val logsContainer = InlineCompletionLogsContainer(999)
+      val logsContainer = InlineCompletionLogsContainer(1f)
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
@@ -141,7 +141,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
    */
   @Test
   fun testPhaseNotFoundForField() {
-    val logsContainer = InlineCompletionLogsContainer(0)
+    val logsContainer = InlineCompletionLogsContainer(1f)
     assertThrows(IllegalArgumentException::class.java) {
       logsContainer.add(EventFields.Boolean("incorrect_field").with(false))
     }
