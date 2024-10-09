@@ -5,6 +5,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
@@ -16,6 +17,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.absoluteValue
+
+private val logger by lazy { logger<InlineCompletionLogsContainer>()}
 
 @ApiStatus.Internal
 class InlineCompletionLogsContainer(requestId: Long) {
@@ -94,7 +97,7 @@ class InlineCompletionLogsContainer(requestId: Long) {
     // since we skip filtering in the random pass scenario, we want the full logs in such cases too.
 
     InlineCompletionLogs.Session.SESSION_EVENT.log( // log function is asynchronous, so it's ok to launch it even on EDT
-      logs.filter { it.value.isNotEmpty() }.map { (phase, logs) ->
+      logs.filter { it.value.isNotEmpty() }.mapNotNull() { (phase, logs) ->
 
           val filteredEvents = if (randomPass.get() || sendFullLogs) {
             logs
@@ -102,8 +105,14 @@ class InlineCompletionLogsContainer(requestId: Long) {
             logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
           }
 
-          InlineCompletionLogs.Session.phases[phase]!!.with(ObjectEventData(filteredEvents.toList()))
+        val logPhaseObject = InlineCompletionLogs.Session.phases[phase]
+        if (logPhaseObject != null) {
+          logPhaseObject.with(ObjectEventData(filteredEvents.toList()))
+        } else {
+          logger.error("ObjectEventField is not found for $phase, FUS event may be configured incorrectly!")
+          null
         }
+      }
     )
     logs.forEach { (_, events) -> events.clear() }
   }

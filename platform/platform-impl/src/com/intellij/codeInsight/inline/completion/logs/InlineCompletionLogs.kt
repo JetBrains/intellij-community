@@ -53,6 +53,7 @@ object InlineCompletionLogs : CounterUsagesCollector() {
       return requireNotNull(eventFieldProperties[eventPair.field.name]?.isBasic)
     }
 
+    // Each phase will have a separate ObjectEventField in the session event with the corresponding features.
     val SESSION_EVENT: VarargEventId = GROUP.registerVarargEvent(
       "session",
       description = "The whole inline completion session",
