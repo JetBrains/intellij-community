@@ -217,7 +217,6 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   @ApiStatus.Internal
-  @TestOnly
   public static boolean isEventProcessingInProgress() {
     var refreshQueue = (RefreshQueueImpl)getInstance();
     return !refreshQueue.myEventProcessingQueue.isEmpty();
