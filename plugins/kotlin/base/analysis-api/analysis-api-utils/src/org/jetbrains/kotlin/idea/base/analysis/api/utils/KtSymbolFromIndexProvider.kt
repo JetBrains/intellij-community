@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
@@ -97,13 +98,15 @@ class KtSymbolFromIndexProvider private constructor(
         psiFilter: (PsiClass) -> Boolean = { true }
     ): Sequence<KaNamedClassSymbol> {
         val names = buildSet {
-            forEachNonKotlinCache { cache ->
+            nonKotlinNamesCaches.forEach { cache ->
                 cache.processAllClassNames({ nameString ->
-                    if (!Name.isValidIdentifier(nameString)) return@processAllClassNames true
-                    val name = Name.identifier(nameString)
-                    if (nameFilter(name)) { add(name) }
-                    true
-                }, scope, null)
+                                               if (!Name.isValidIdentifier(nameString)) return@processAllClassNames true
+                                               val name = Name.identifier(nameString)
+                                               if (nameFilter(name)) {
+                                                   add(name)
+                                               }
+                                               true
+                                           }, scope, null)
             }
         }
 
@@ -122,12 +125,9 @@ class KtSymbolFromIndexProvider private constructor(
     ): Sequence<KaNamedClassSymbol> {
         val nameString = name.asString()
 
-        return sequence {
-            forEachNonKotlinCache { cache ->
-                yieldAll(cache.getClassesByName(nameString, scope).iterator())
-            }
-        }
-            .filter { psiFilter(it) && useSiteFilter(it) }
+        return nonKotlinNamesCaches.flatMap { cache ->
+            cache.getClassesByName(nameString, scope).asSequence()
+        }.filter { psiFilter(it) && useSiteFilter(it) }
             .mapNotNull { it.namedClassSymbol }
     }
 
@@ -162,15 +162,12 @@ class KtSymbolFromIndexProvider private constructor(
     ): Sequence<KaCallableSymbol> {
         val nameString = name.asString()
 
-        return sequence {
-            forEachNonKotlinCache { cache -> yieldAll(cache.getMethodsByName(nameString, scope).iterator()) }
-            forEachNonKotlinCache { cache -> yieldAll(cache.getFieldsByName(nameString, scope).iterator()) }
-        }
-            .filter { psiFilter(it) && useSiteFilter(it) }
+        return nonKotlinNamesCaches.flatMap { cache ->
+            cache.getMethodsByName(nameString, scope).asSequence() +
+                    cache.getFieldsByName(nameString, scope)
+        }.filter { psiFilter(it) && useSiteFilter(it) }
             .mapNotNull { it.callableSymbol }
-
     }
-
 
     /**
      *  Returns top-level callables, excluding extensions. To obtain extensions use [getExtensionCallableSymbolsByNameFilter].
@@ -276,12 +273,11 @@ class KtSymbolFromIndexProvider private constructor(
         }
     }
 
-    private inline fun forEachNonKotlinCache(action: (cache: PsiShortNamesCache) -> Unit) {
-        for (cache in PsiShortNamesCache.EP_NAME.getExtensions(project)) {
-            if (cache::class.java.name == "org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache") continue
-            action(cache)
-        }
-    }
+    private inline val nonKotlinNamesCaches: Sequence<PsiShortNamesCache>
+        get() = PsiShortNamesCache.EP_NAME // PsiShortNamesCache should have been a project-level EP
+            .getPoint(project) // could have been ::lazySequence in this case
+            .let { it as ExtensionPointImpl<PsiShortNamesCache> }
+            .filterNot { it::class.java.name == "org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache" }
 
     private fun getShortName(fqName: String) = Name.identifier(fqName.substringAfterLast('.'))
 
