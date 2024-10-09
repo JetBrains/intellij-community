@@ -510,6 +510,12 @@ public final class MergeHelper {
     return false;
   }
 
+  /**
+   * Attempts to convert a traditional for loop (and do while) into a foreach loop if the conditions are met.
+   * Tries to find `next` and `hasNext` method and check usual patterns
+   *
+   * @return true if the for loop is successfully converted into a foreach loop, false otherwise.
+   */
   private static boolean tryConvertForEach(@Nullable AssignmentExprent @NotNull [] initExprents,
                                            @NotNull DoStatement stat,
                                            @NotNull AssignmentExprent firstDoExprent,
