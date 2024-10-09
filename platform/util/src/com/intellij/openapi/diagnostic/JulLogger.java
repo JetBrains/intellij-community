@@ -17,7 +17,7 @@ import java.util.logging.LogRecord;
 
 @ApiStatus.Internal
 public class JulLogger extends Logger {
-  @SuppressWarnings("NonConstantLogger") private final java.util.logging.Logger myLogger;
+
   private static final boolean CLEANER_DELAYED;
 
   static {
@@ -31,6 +31,9 @@ public class JulLogger extends Logger {
     }
     CLEANER_DELAYED = delayed;
   }
+
+  @SuppressWarnings("NonConstantLogger")
+  private final java.util.logging.Logger myLogger;
 
   public JulLogger(java.util.logging.Logger delegate) {
     myLogger = delegate;
