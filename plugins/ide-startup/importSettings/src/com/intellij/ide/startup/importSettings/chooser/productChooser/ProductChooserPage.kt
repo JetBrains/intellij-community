@@ -74,12 +74,12 @@ internal class ProductChooserPage(val controller: ImportSettingsController, over
 
     val act = ActionManager.getInstance().createActionToolbar(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, false).apply {
       if (this is ActionToolbarImpl) {
-
         setMinimumButtonSize {
           JBUI.size(UiUtils.DEFAULT_BUTTON_WIDTH, UiUtils.DEFAULT_BUTTON_HEIGHT)
         }
         setMiniMode(false)
         layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
+        accessibleContext.accessibleName = ImportSettingsBundle.message("choose.product.action.toolbar.accessible.name")
       }
     }
     act.targetComponent = pane
