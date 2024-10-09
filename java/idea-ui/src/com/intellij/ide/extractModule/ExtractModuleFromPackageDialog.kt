@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.projectView.actions
+package com.intellij.ide.extractModule
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectView.impl.ModuleNameValidator

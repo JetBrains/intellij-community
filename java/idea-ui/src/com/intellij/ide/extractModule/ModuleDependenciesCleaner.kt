@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.projectView.actions
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.extractModule
 
 import com.intellij.analysis.AnalysisScope
 import com.intellij.ide.JavaUiBundle
@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
@@ -19,6 +20,7 @@ import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.packageDependencies.DependenciesToolWindow
 import com.intellij.packageDependencies.ForwardDependenciesBuilder
 import com.intellij.packageDependencies.ui.DependenciesPanel
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiFile
 import com.intellij.ui.content.ContentFactory
 import org.jetbrains.concurrency.AsyncPromise
