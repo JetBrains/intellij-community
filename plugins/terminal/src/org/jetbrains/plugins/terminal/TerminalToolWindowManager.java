@@ -41,14 +41,9 @@ import com.intellij.terminal.TerminalTitleListener;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TerminalWidgetKt;
 import com.intellij.toolWindow.InternalDecoratorImpl;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.docking.DockContainer;
-import com.intellij.ui.docking.DockManager;
-import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -67,7 +62,6 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.block.BlockTerminalPromotionService;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
-import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -88,7 +82,6 @@ public final class TerminalToolWindowManager implements Disposable {
   private ToolWindow myToolWindow;
   private final Project myProject;
   private final AbstractTerminalRunner<?> myTerminalRunner;
-  private TerminalDockContainer myDockContainer;
   private final Map<TerminalWidget, TerminalContainer> myContainerByWidgetMap = new HashMap<>();
 
   @NotNull
@@ -158,11 +151,6 @@ public final class TerminalToolWindowManager implements Disposable {
           }
         }
       });
-
-    if (myDockContainer == null) {
-      myDockContainer = new TerminalDockContainer();
-      DockManager.getInstance(myProject).register(myDockContainer, toolWindow.getDisposable());
-    }
   }
 
   void restoreTabs(@Nullable TerminalArrangementState arrangementState) {
@@ -185,7 +173,7 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner, @Nullable TerminalTabState tabState) {
-    createNewSession(terminalRunner, tabState, true);
+    createNewSession(terminalRunner, tabState, true, true);
   }
 
   public @NotNull TerminalWidget createNewSession() {
@@ -232,16 +220,10 @@ public final class TerminalToolWindowManager implements Disposable {
     return createNewSession(myTerminalRunner, tabState, requestFocus, deferSessionStartUntilUiShown);
   }
 
-  private void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,
-                                @Nullable TerminalTabState tabState,
-                                boolean requestFocus) {
-    createNewSession(terminalRunner, tabState, requestFocus, true);
-  }
-
   private @NotNull TerminalWidget createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,
-                                                     @Nullable TerminalTabState tabState,
-                                                     boolean requestFocus,
-                                                     boolean deferSessionStartUntilUiShown) {
+                                                   @Nullable TerminalTabState tabState,
+                                                   boolean requestFocus,
+                                                   boolean deferSessionStartUntilUiShown) {
     ToolWindow toolWindow = getOrInitToolWindow();
     Content content = createNewTab(null, terminalRunner, toolWindow, tabState, requestFocus, deferSessionStartUntilUiShown);
     return Objects.requireNonNull(content.getUserData(TERMINAL_WIDGET_KEY));
@@ -343,7 +325,7 @@ public final class TerminalToolWindowManager implements Disposable {
         else {
           state.setDefaultTitle(tabState.myTabName);
         }
-        return null;
+        return Unit.INSTANCE;
       });
     }
     updateTabTitle(widget.getTerminalTitle(), toolWindow, content);
@@ -492,7 +474,7 @@ public final class TerminalToolWindowManager implements Disposable {
     content.setDisplayName(generatedName);
     terminalTitle.change((state) -> {
       state.setDefaultTitle(generatedName);
-      return null;
+      return Unit.INSTANCE;
     });
   }
 
@@ -619,16 +601,6 @@ public final class TerminalToolWindowManager implements Disposable {
     return content.getUserData(RUNNER_KEY);
   }
 
-  public void detachWidgetAndRemoveContent(@NotNull Content content) {
-    ContentManager contentManager = myToolWindow.getContentManager();
-    LOG.assertTrue(contentManager.getIndexOfContent(content) >= 0, "Not a terminal content");
-    TerminalTabCloseListener.Companion.executeContentOperationSilently(content, () -> {
-      contentManager.removeContent(content, true);
-      return Unit.INSTANCE;
-    });
-    content.putUserData(TERMINAL_WIDGET_KEY, null);
-  }
-
   public static boolean isInTerminalToolWindow(@NotNull JBTerminalWidget widget) {
     DataContext dataContext = DataManager.getInstance().getDataContext(widget.getTerminalPanel());
     ToolWindow toolWindow = dataContext.getData(PlatformDataKeys.TOOL_WINDOW);
@@ -637,49 +609,6 @@ public final class TerminalToolWindowManager implements Disposable {
 
   public static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {
     return toolWindow != null && TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId());
-  }
-
-  private final class TerminalDockContainer implements DockContainer {
-    @NotNull
-    @Override
-    public RelativeRectangle getAcceptArea() {
-      return new RelativeRectangle(myToolWindow.getComponent());
-    }
-
-    @NotNull
-    @Override
-    public ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
-      return isTerminalSessionContent(content) ? ContentResponse.ACCEPT_MOVE : ContentResponse.DENY;
-    }
-
-    @Override
-    public @NotNull JComponent getContainerComponent() {
-      return myToolWindow.getComponent();
-    }
-
-    @Override
-    public void add(@NotNull DockableContent content, RelativePoint dropTarget) {
-      if (isTerminalSessionContent(content)) {
-        TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)content.getKey();
-        String name = terminalFile.getName();
-        Content newContent = newTab(myToolWindow, terminalFile.getTerminalWidget());
-        newContent.setDisplayName(name);
-      }
-    }
-
-    private static boolean isTerminalSessionContent(@NotNull DockableContent<?> content) {
-      return content.getKey() instanceof TerminalSessionVirtualFileImpl;
-    }
-
-    @Override
-    public boolean isEmpty() {
-      return false;
-    }
-
-    @Override
-    public boolean isDisposeWhenEmpty() {
-      return false;
-    }
   }
 }
 
