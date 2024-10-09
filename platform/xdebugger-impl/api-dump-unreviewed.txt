@@ -588,7 +588,6 @@ c:com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator
 c:com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 - com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,com.intellij.xdebugger.evaluation.ExpressionInfo,com.intellij.xdebugger.evaluation.XDebuggerEvaluator,com.intellij.xdebugger.XDebugSession,Z):V
-- p:<init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType,com.intellij.xdebugger.evaluation.ExpressionInfo,com.intellij.xdebugger.evaluation.XDebuggerEvaluator,Z):V
 - p:createHintComponent(javax.swing.Icon,com.intellij.ui.SimpleColoredText,com.intellij.xdebugger.frame.presentation.XValuePresentation,com.intellij.xdebugger.frame.XFullValueEvaluator):javax.swing.JComponent
 - p:evaluateAndShowHint():V
 - hideHint():V

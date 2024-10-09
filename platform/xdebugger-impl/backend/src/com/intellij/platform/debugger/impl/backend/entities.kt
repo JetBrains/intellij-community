@@ -7,6 +7,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.jetbrains.rhizomedb.*
+import org.jetbrains.annotations.ApiStatus
 
 private class BackendXDebuggerEntityTypesProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> {
@@ -21,6 +22,7 @@ internal data class LocalValueHintEntity(override val eid: EID) : Entity {
   val projectEntity by Project
   val hint by Hint
 
+  @ApiStatus.Internal
   companion object : EntityType<LocalValueHintEntity>(
     LocalValueHintEntity::class.java.name,
     "com.intellij",
@@ -35,6 +37,7 @@ internal data class LocalHintXValueEntity(override val eid: EID) : Entity {
   val projectEntity by Project
   val xValue by XValue
 
+  @ApiStatus.Internal
   companion object : EntityType<LocalHintXValueEntity>(
     LocalHintXValueEntity::class.java.name,
     "com.intellij",
