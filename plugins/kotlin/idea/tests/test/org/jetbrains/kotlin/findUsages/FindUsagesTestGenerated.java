@@ -672,6 +672,25 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/kotlin/findEnumEntryUsages")
+        public static class FindEnumEntryUsages extends AbstractFindUsagesTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumEntry.0.kt")
+            public void testEnumEntry() throws Exception {
+                runTest("testData/findUsages/kotlin/findEnumEntryUsages/enumEntry.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findFunctionUsages")
         public static class FindFunctionUsages extends AbstractFindUsagesTest {
             @java.lang.Override
