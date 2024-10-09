@@ -2807,9 +2807,9 @@ f:com.intellij.openapi.observable.util.ListenerUiUtil
 - bs:whenFocusGained$default(java.awt.Component,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - sf:whenFocusLost(java.awt.Component,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - bs:whenFocusLost$default(java.awt.Component,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
-- sf:whenItemSelected(com.intellij.ui.components.DropDownLink,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
-- sf:whenItemSelected(java.awt.ItemSelectable,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
-- sf:whenItemSelected(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- bsf:whenItemSelected(com.intellij.ui.components.DropDownLink,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- bsf:whenItemSelected(java.awt.ItemSelectable,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- bsf:whenItemSelected(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - bs:whenItemSelected$default(com.intellij.ui.components.DropDownLink,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - bs:whenItemSelected$default(java.awt.ItemSelectable,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - bs:whenItemSelected$default(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
@@ -2850,6 +2850,10 @@ f:com.intellij.openapi.observable.util.ListenerUiUtil
 - bs:whenTreeChanged$default(javax.swing.JTree,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - bs:whenTreeChanged$default(javax.swing.tree.TreeModel,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 f:com.intellij.openapi.observable.util.ListenerWithValueUiUtil
+- sf:whenItemSelected(com.intellij.ui.components.DropDownLink,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- sf:whenItemSelected(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- bs:whenItemSelected$default(com.intellij.ui.components.DropDownLink,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- bs:whenItemSelected$default(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - sf:whenTextChanged(com.intellij.openapi.ui.TextFieldWithBrowseButton,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - sf:whenTextChanged(com.intellij.ui.SearchTextField,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - sf:whenTextChanged(javax.swing.text.Document,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V

@@ -29,21 +29,19 @@ import javax.swing.tree.TreeModel
 import com.intellij.openapi.editor.event.DocumentEvent as EditorDocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener as EditorDocumentListener
 
+@Deprecated("Moved.", level = DeprecationLevel.HIDDEN)
 fun <T> JComboBox<T>.whenItemSelected(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
-  (this as ItemSelectable).whenItemSelected(parentDisposable, listener)
+  whenItemSelected(parentDisposable, listener)
 }
 
+@Deprecated("Moved.", level = DeprecationLevel.HIDDEN)
 fun <T> DropDownLink<T>.whenItemSelected(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
-  (this as ItemSelectable).whenItemSelected(parentDisposable, listener)
+  whenItemSelected(parentDisposable, listener)
 }
 
+@Deprecated("Moved.", level = DeprecationLevel.HIDDEN)
 fun <T> ItemSelectable.whenItemSelected(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
-  whenStateChanged(parentDisposable) { event ->
-    if (event.stateChange == ItemEvent.SELECTED) {
-      @Suppress("UNCHECKED_CAST")
-      listener(event.item as T)
-    }
-  }
+  whenItemSelected(parentDisposable, listener)
 }
 
 fun ItemSelectable.whenStateChanged(parentDisposable: Disposable? = null, listener: (ItemEvent) -> Unit) {
