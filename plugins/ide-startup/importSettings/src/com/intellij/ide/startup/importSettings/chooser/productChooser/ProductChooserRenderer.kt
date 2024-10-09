@@ -18,9 +18,11 @@ import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
+import javax.accessibility.AccessibleContext
 import javax.swing.*
 
 class ProductChooserRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
@@ -102,6 +104,7 @@ class ProductChooserRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
       path.isVisible = action.comment != null
 
       result.selectionColor = if (isSelected) ListPluginComponent.SELECTION_COLOR else null
+      result.accessibleContext.accessibleName = AccessibleContextUtil.combineAccessibleStrings(action.name, ", ", action.comment)
     }
 
     init {
@@ -152,7 +155,16 @@ class ProductChooserRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
       res.revalidate()
     }
 
-    private val withSeparator = NonOpaquePanel(BorderLayout()).apply {
+    private val withSeparator = object : NonOpaquePanel(BorderLayout()) {
+      override fun getAccessibleContext(): AccessibleContext {
+        if (accessibleContext == null) {
+          accessibleContext = object : AccessibleJPanel() {
+            override fun getAccessibleName(): String? = result.accessibleContext.accessibleName
+          }
+        }
+        return accessibleContext
+      }
+    }.apply {
       border = JBUI.Borders.empty()
       add(separator, BorderLayout.NORTH)
       add(result, BorderLayout.CENTER)
