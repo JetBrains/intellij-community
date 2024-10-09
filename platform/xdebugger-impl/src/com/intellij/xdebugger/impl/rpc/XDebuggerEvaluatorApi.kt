@@ -20,6 +20,8 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
 
   suspend fun computePresentation(xValueId: XValueId): Flow<XValuePresentation>?
 
+  suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>?
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerEvaluatorApi {
@@ -28,6 +30,15 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
       }
     }
   }
+}
+
+// TODO: support other events see [com.intellij.xdebugger.frame.XCompositeNode]
+@ApiStatus.Internal
+@Serializable
+sealed interface XValueComputeChildrenEvent {
+  // TODO: support [XValueGroup]
+  @Serializable
+  data class AddChildren(val names: List<String>, val children: List<XValueId>, val isLast: Boolean) : XValueComputeChildrenEvent
 }
 
 @ApiStatus.Internal
@@ -51,4 +62,4 @@ data class XDebuggerEvaluatorId(val eid: EID)
 
 @ApiStatus.Internal
 @Serializable
-data class XValuePresentation(val value: String)
+data class XValuePresentation(val value: String, val hasChildren: Boolean)

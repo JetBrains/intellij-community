@@ -8,26 +8,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asProject
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
-import com.intellij.xdebugger.frame.XFullValueEvaluator
-import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.frame.XValueNode
-import com.intellij.xdebugger.frame.XValuePlace
+import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.LocalXDebuggerSessionEvaluatorEntity
-import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
-import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
-import com.intellij.xdebugger.impl.rpc.XEvaluationResult
-import com.intellij.xdebugger.impl.rpc.XValueId
-import com.intellij.xdebugger.impl.rpc.XValuePresentation
+import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil.XValuePresentationTextExtractor
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.change
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -77,7 +70,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
 
   override suspend fun computePresentation(xValueId: XValueId): Flow<XValuePresentation>? = withKernel {
     val hintEntity = entity(xValueId.eid) as? LocalHintXValueEntity ?: return@withKernel null
-    val presentations = MutableSharedFlow<XValuePresentation>(replay = 1)
+    val presentations = Channel<XValuePresentation>(capacity = Int.MAX_VALUE)
     val xValue = hintEntity.xValue
     channelFlow {
       var isObsolete = false
@@ -89,7 +82,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
 
         override fun setPresentation(icon: Icon?, type: @NonNls String?, value: @NonNls String, hasChildren: Boolean) {
           // TODO: pass icon, type and hasChildren too
-          presentations.tryEmit(XValuePresentation(value))
+          presentations.trySend(XValuePresentation(value, hasChildren))
         }
 
         override fun setPresentation(icon: Icon?, presentation: com.intellij.xdebugger.frame.presentation.XValuePresentation, hasChildren: Boolean) {
@@ -115,8 +108,79 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         }
       }
 
-      presentations.collectLatest {
-        send(it)
+      for (presentation in presentations) {
+        send(presentation)
+      }
+    }
+  }
+
+  override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>? = withKernel {
+    val hintEntity = entity(xValueId.eid) as? LocalHintXValueEntity ?: return@withKernel null
+    val computeEvents = Channel<XValueComputeChildrenEvent>(capacity = Int.MAX_VALUE)
+    val xValue = hintEntity.xValue
+    channelFlow {
+      var isObsolete = false
+
+      val xCompositeNode = object : XCompositeNode {
+        override fun isObsolete(): Boolean {
+          return isObsolete
+        }
+
+        override fun addChildren(children: XValueChildrenList, last: Boolean) {
+          val names = (0 until children.size()).map { children.getName(it) }
+          val childrenXValues = (0 until children.size()).map { children.getValue(it) }
+          launch {
+            val xValueEntities = withKernel {
+              val projectEntity = hintEntity.projectEntity
+              childrenXValues.map { childXValue ->
+                change {
+                  // TODO: leaked XValue entity, it is never disposed
+                  LocalHintXValueEntity.new {
+                    it[LocalHintXValueEntity.Project] = projectEntity
+                    it[LocalHintXValueEntity.XValue] = childXValue
+                  }
+                }
+              }
+            }
+            val xValueIds = xValueEntities.map { XValueId(it.eid) }
+            computeEvents.trySend(XValueComputeChildrenEvent.AddChildren(names, xValueIds, last))
+          }
+        }
+
+        override fun tooManyChildren(remaining: Int) {
+          // TODO: implement tooManyChildren
+        }
+
+        override fun setAlreadySorted(alreadySorted: Boolean) {
+          // TODO: implement setAlreadySorted
+        }
+
+        override fun setErrorMessage(errorMessage: String) {
+          // TODO: implement setErrorMessage
+        }
+
+        override fun setErrorMessage(errorMessage: String, link: XDebuggerTreeNodeHyperlink?) {
+          // TODO: implement setErrorMessage
+        }
+
+        override fun setMessage(message: String, icon: Icon?, attributes: SimpleTextAttributes, link: XDebuggerTreeNodeHyperlink?) {
+          // TODO: implement setMessage
+        }
+      }
+
+      xValue.computeChildren(xCompositeNode)
+
+      launch {
+        try {
+          awaitCancellation()
+        }
+        finally {
+          isObsolete = true
+        }
+      }
+
+      for (event in computeEvents) {
+        send(event)
       }
     }
   }

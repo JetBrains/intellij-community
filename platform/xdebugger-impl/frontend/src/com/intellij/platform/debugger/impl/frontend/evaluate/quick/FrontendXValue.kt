@@ -5,10 +5,13 @@ import com.intellij.openapi.application.EDT
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.xdebugger.Obsolescent
+import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueNode
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
+import com.intellij.xdebugger.impl.rpc.XValueComputeChildrenEvent
 import com.intellij.xdebugger.impl.rpc.XValueId
 import kotlinx.coroutines.*
 
@@ -17,7 +20,23 @@ internal class FrontendXValue(private val xValueId: XValueId) : XValue() {
     node.childCoroutineScope("FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
       XDebuggerEvaluatorApi.getInstance().computePresentation(xValueId)?.collect { presentation ->
         // TODO: pass proper params
-        node.setPresentation(null, null, presentation.value, false)
+        node.setPresentation(null, null, presentation.value, presentation.hasChildren)
+      }
+    }
+  }
+
+  override fun computeChildren(node: XCompositeNode) {
+    node.childCoroutineScope("FrontendXValue#computeChildren").launch(Dispatchers.EDT) {
+      XDebuggerEvaluatorApi.getInstance().computeChildren(xValueId)?.collect { computeChildrenEvent ->
+        when (computeChildrenEvent) {
+          is XValueComputeChildrenEvent.AddChildren -> {
+            val childrenList = XValueChildrenList()
+            for (i in computeChildrenEvent.children.indices) {
+              childrenList.add(computeChildrenEvent.names[i], FrontendXValue(computeChildrenEvent.children[i]))
+            }
+            node.addChildren(childrenList, computeChildrenEvent.isLast)
+          }
+        }
       }
     }
   }
