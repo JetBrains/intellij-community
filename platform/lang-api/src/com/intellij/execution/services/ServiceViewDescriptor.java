@@ -15,8 +15,15 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+/// Implementation of this interface represents a node in the Service View.
+/// It provides information on how the node will be represented in the Service View Tree (by the [#getPresentation()]) method,
+/// how it should be shown in the detail panel (be the [#getContentComponent()])
+///  and available actions ([#getPopupActions()] and [#getToolbarActions()])
+///
 /// Subclasses could also implement the [UiDataProvider] to provide the [DataContext]
 /// for the actions returned by [#getToolbarActions()] and [#getPopupActions()]
+///
+/// @see ServiceViewContributor
 public interface ServiceViewDescriptor {
   Key<Boolean> ACTION_HOLDER_KEY = Key.create("ServiceViewActionHolderContentComponent");
 
