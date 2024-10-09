@@ -163,8 +163,14 @@ public final class TextWithMnemonic {
     String str = text.substring(pos + 1);
 
     Exception error = null;
-    if (str.isEmpty()) error = new IllegalArgumentException("unexpected mnemonic marker in " + text);
-    if (str.indexOf(UIUtil.MNEMONIC) >= 0) error = new IllegalArgumentException("several mnemonic markers in " + text);
+    // Don't write text in log to avoid possible sensitive information exposure
+    String errorDetails = reportInvalidMnemonics ? " in text: " + text : "";
+    if (str.isEmpty()) {
+      error = new IllegalArgumentException("unexpected mnemonic marker" + errorDetails);
+    }
+    if (str.indexOf(UIUtil.MNEMONIC) >= 0) {
+      error = new IllegalArgumentException("several mnemonic markers" + errorDetails);
+    }
 
     if (error != null) {
       if (reportInvalidMnemonics) {
