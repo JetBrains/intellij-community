@@ -360,9 +360,9 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
     return if (weight == null) MatchedValue(item, pattern, matchType) else MatchedValue(item, pattern, weight, matchType)
   }
 
-  private fun wrapAnAction(action: AnAction, presentation: Presentation, matchMode: MatchMode = MatchMode.NAME): ActionWrapper {
+  private suspend fun wrapAnAction(action: AnAction, presentation: Presentation, matchMode: MatchMode = MatchMode.NAME): ActionWrapper {
     val groupMapping = model.getGroupMapping(action)
-    groupMapping?.updateBeforeShow(model.updateSession)
+    groupMapping?.updateBeforeShowSuspend(model.updateSession)
     return ActionWrapper(action, groupMapping, matchMode, presentation)
   }
 
