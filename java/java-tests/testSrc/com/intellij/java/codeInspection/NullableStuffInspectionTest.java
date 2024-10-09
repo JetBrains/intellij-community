@@ -422,6 +422,10 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
 
+  public void testDisableOnClass() {
+    doTest();
+  }
+
   public void testParameterUnderDefaultNotNull() {
     DataFlowInspectionTestCase.addJetBrainsNotNullByDefault(myFixture);
     doTest();

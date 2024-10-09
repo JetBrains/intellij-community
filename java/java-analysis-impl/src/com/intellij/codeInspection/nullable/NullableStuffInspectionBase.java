@@ -215,6 +215,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         if (listOwner instanceof PsiMethod method && method.isConstructor()) {
           reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.constructor");
         }
+        if (listOwner instanceof PsiClass && AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE) == null) {
+          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.class");
+        }
         if (listOwner instanceof PsiEnumConstant) {
           reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.at.enum.constant");
         }
