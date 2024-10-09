@@ -2817,10 +2817,7 @@
       <add-to-group group-id="MarkRootGroup"/>
     </group>
 
-    <group id="WelcomeScreen.QuickStart.IDEA">
-      <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"/>
-      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
-    </group>
+    <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"/>
 
     <group id="MarkGeneratedSourceRootGroup">
       <action id="MarkGeneratedSourceRoot" class="com.intellij.ide.projectView.actions.MarkGeneratedSourceRootAction"/>

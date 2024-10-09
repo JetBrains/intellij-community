@@ -43,6 +43,10 @@
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
+    <group id="WelcomeScreen.DefaultNewProjectAction" class="com.intellij.ide.actions.DefaultNewProjectAction">
+      <add-to-group group-id="WelcomeScreen.QuickStart"/>
+    </group>
+
     <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen">
       <add-to-group group-id="WelcomeScreen.QuickStart"/>
     </action>
