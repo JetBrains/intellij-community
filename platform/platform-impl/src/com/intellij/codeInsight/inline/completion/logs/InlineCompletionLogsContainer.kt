@@ -14,22 +14,24 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.absoluteValue
+import kotlin.random.Random
 
 private val logger by lazy { logger<InlineCompletionLogsContainer>()}
 
 @ApiStatus.Internal
-class InlineCompletionLogsContainer(requestId: Long) {
+class InlineCompletionLogsContainer(@VisibleForTesting val random: Float = Random.nextFloat()) {
 
   // ratio of requests that should be fully logged (otherwise, only basic fields)
   private val fullLogsShare = 0.01f
-  private val sendFullLogs = ApplicationManager.getApplication().isEAP || requestId.absoluteValue % 100 < fullLogsShare * 100
 
-  // indicates that the filter model decision was [RANDOM_PASS]
-  val randomPass: AtomicBoolean = AtomicBoolean(false)
-                     /**
+  // for release, log only basic fields for most of the requests and very rarely log everything.
+  // since we skip filtering in the random pass scenario, we want the full logs in such cases too.
+  val forceFullLogs: AtomicBoolean = AtomicBoolean(ApplicationManager.getApplication().isEAP || random < fullLogsShare)
+
+  /**
    * Describes phase of the Inline completion session.
    * Each phase can have multiple features (logs)
    */
@@ -93,17 +95,15 @@ class InlineCompletionLogsContainer(requestId: Long) {
   fun logCurrent() {
     cancelAsyncAdds()
 
-    // for release, log only basic fields for most of the requests and very rarely log everything.
-    // since we skip filtering in the random pass scenario, we want the full logs in such cases too.
 
     InlineCompletionLogs.Session.SESSION_EVENT.log( // log function is asynchronous, so it's ok to launch it even on EDT
       logs.filter { it.value.isNotEmpty() }.mapNotNull() { (phase, logs) ->
 
-          val filteredEvents = if (randomPass.get() || sendFullLogs) {
-            logs
-          } else {
-            logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
-          }
+        val filteredEvents = if (forceFullLogs.get()) {
+          logs
+        } else {
+          logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
+        }
 
         val logPhaseObject = InlineCompletionLogs.Session.phases[phase]
         if (logPhaseObject != null) {
@@ -131,8 +131,8 @@ class InlineCompletionLogsContainer(requestId: Long) {
     /**
      * Create, store in editor and get log container
      */
-    fun create(editor: Editor, requestId: Long): InlineCompletionLogsContainer {
-      val container = InlineCompletionLogsContainer(requestId)
+    fun create(editor: Editor): InlineCompletionLogsContainer {
+      val container = InlineCompletionLogsContainer()
       editor.putUserData(KEY, container)
       return container
     }
