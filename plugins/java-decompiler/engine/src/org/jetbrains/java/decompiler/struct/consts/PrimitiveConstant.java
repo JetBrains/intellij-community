@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.consts;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -23,7 +23,8 @@ public class PrimitiveConstant extends PooledConstant {
   private void initConstant() {
     if (type == CodeConstants.CONSTANT_Class) {
       String className = getString();
-      isArray = (!className.isEmpty() && className.charAt(0) == '['); // empty string for a class name seems to be possible in some android files
+      isArray =
+        (!className.isEmpty() && className.charAt(0) == '['); // empty string for a class name seems to be possible in some android files
     }
   }
 
@@ -52,6 +53,6 @@ public class PrimitiveConstant extends PooledConstant {
 
   @Override
   public String toString() {
-	return value.toString();
+    return value.toString();
   }
 }

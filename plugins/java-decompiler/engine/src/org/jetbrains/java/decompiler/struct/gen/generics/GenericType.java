@@ -9,7 +9,6 @@ import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 public class GenericType extends VarType implements Type {
 
@@ -17,8 +16,6 @@ public class GenericType extends VarType implements Type {
   public static final int WILDCARD_SUPER = 2;
   public static final int WILDCARD_UNBOUND = 3;
   public static final int WILDCARD_NO = 4;
-
-  private static final Pattern DOT_SPLIT = Pattern.compile("\\.");
 
   private final VarType parent;
   private final List<VarType> arguments;
@@ -95,7 +92,7 @@ public class GenericType extends VarType implements Type {
               }
               else {
                 if (parent == null && params == null) {
-                  parent = GenericType.parse("L" + value + ";");
+                  parent = parse("L" + value + ";");
                 }
                 else {
                   parent = new GenericType(CodeConstants.TYPE_OBJECT, 0, value, parent, params, wildcard);
@@ -110,7 +107,7 @@ public class GenericType extends VarType implements Type {
 
         default:
           value = signature.substring(index, index + 1);
-          type = VarType.getType(value.charAt(0));
+          type = getType(value.charAt(0));
       }
 
       index++;
@@ -175,7 +172,7 @@ public class GenericType extends VarType implements Type {
         typeStr = typeStr.substring(1);
       }
 
-      args.add(typeStr.isEmpty() ? null : GenericType.parse(typeStr, wildcard));
+      args.add(typeStr.isEmpty() ? null : parse(typeStr, wildcard));
 
       value = value.substring(len);
     }
@@ -267,7 +264,8 @@ public class GenericType extends VarType implements Type {
       return appendTypeArguments(clsName, typeAnnWriteHelpers);
     }
     else {
-      List<String> nestedTypes = Arrays.asList(DOT_SPLIT.split(DecompilerContext.getImportCollector().getNestedName(getValue().replace('/', '.'))));
+      String stringTypes = DecompilerContext.getImportCollector().getNestedName(getValue().replace('/', '.'));
+      List<String> nestedTypes = Arrays.asList(stringTypes.split("\\."));
       typeAnnWriteHelpers = ExprProcessor.writeNestedClass(clsName, this, nestedTypes, typeAnnWriteHelpers);
       appendTypeArguments(clsName, typeAnnWriteHelpers);
       ExprProcessor.popNestedTypeAnnotation(typeAnnWriteHelpers);
@@ -295,10 +293,10 @@ public class GenericType extends VarType implements Type {
         else if (par.isGeneric()) {
           GenericType gen = (GenericType)par;
           switch (gen.getWildcard()) {
-            case GenericType.WILDCARD_EXTENDS:
+            case WILDCARD_EXTENDS:
               buffer.append("? extends ");
               break;
-            case GenericType.WILDCARD_SUPER:
+            case WILDCARD_SUPER:
               buffer.append("? super ");
               break;
           }
@@ -319,10 +317,10 @@ public class GenericType extends VarType implements Type {
   public String toString() {
     StringBuilder buf = new StringBuilder();
     switch(getWildcard()) {
-      case GenericType.WILDCARD_EXTENDS:
+      case WILDCARD_EXTENDS:
         buf.append("? extends ");
         break;
-      case GenericType.WILDCARD_SUPER:
+      case WILDCARD_SUPER:
         buf.append("? super ");
       break;
     }

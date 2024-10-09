@@ -13,7 +13,6 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
-import org.jetbrains.java.decompiler.util.StartEndPair;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
@@ -200,37 +199,10 @@ public class VarProcessor {
       .filter(v -> v.getVersion().var == exprent.getIndex() && v.getStart() == start).findFirst().ifPresent(exprent::setLVTEntry);
   }
 
-  public void copyVarInfo(VarVersion from, VarVersion to) {
-    setVarName(to, getVarName(from));
-    setVarFinal(to, getVarFinal(from));
-    setVarType(to, getVarType(from));
-    varVersions.getMapOriginalVarIndices().put(to.var, varVersions.getMapOriginalVarIndices().get(from.var));
-  }
-
   public boolean hasLVT() {
     return method.getLocalVariableAttr() != null;
   }
-  
 
-  public Map<Integer, LocalVariable> getLocalVariables(Statement stat) {
-    if (!hasLVT() || stat == null)
-      return new HashMap<>();
-
-    final StartEndPair sep = stat.getStartEndRange(); 
-    final Set<Integer> blacklist = new HashSet<>();
-    Map<Integer, LocalVariable> ret = method.getLocalVariableAttr().getVariables().filter(lv -> lv.getEnd() > sep.start && lv.getStart() <= sep.end)
-      .collect(Collectors.toMap(lv -> lv.getVersion().var, lv -> lv,
-        (lv1, lv2) -> 
-        {
-          //System.out.println("DUPLICATE INDEX FOR SCOPE: (" +sep +") " + lv1.toString() + " " + lv2.toString());
-          blacklist.add(lv1.getVersion().var);
-          return lv1;
-        }
-      ));
-
-    ret.keySet().removeAll(blacklist);
-    return ret;
-  }
 
   public VarVersionsProcessor getVarVersions() {
     return varVersions;

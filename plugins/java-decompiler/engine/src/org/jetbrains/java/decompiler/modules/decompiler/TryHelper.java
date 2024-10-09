@@ -98,28 +98,28 @@ public final class TryHelper
   }
 
   /**
-   * Mostly use for java version less than 11.
+   * Used for java version less than 11.
    * Try to find the next synthetic example and convert it to try-with-resource
    * <pre>
    * {@code
-   *         Some some = new Some();
-   *         Throwable var2 = null;
+   *         Some some = new Some();  //required
+   *         Throwable var2 = null;  //required
    *         try {
    *         } catch (Throwable var11) {
    *             var2 = var11;
    *             throw var11;
    *         } finally {
-   *             if (some != null) {
-   *                 if (var2 != null) {
+   *             if (some != null) { //required
+   *                 if (var2 != null) { //required
    *                     try {
-   *                         some.close();
+   *                         some.close(); //required
    *                     } catch (Throwable var10) {
    *                         var2.addSuppressed(var10);
    *                     }
-   *                 } else {
-   *                     some.close();
+   *                 } else {  //required
+   *                     some.close();  //required
    *                 }
-   *             }
+   *             } //required
    *
    *         }
    * }

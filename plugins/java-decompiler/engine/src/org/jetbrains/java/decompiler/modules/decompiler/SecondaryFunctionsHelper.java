@@ -426,8 +426,7 @@ public final class SecondaryFunctionsHelper {
     for (IMatchable obj : objects) {
       if (obj instanceof Statement) {
         updateAssignments((Statement) obj);
-      } else if (obj instanceof Exprent) {
-        Exprent exprent = (Exprent) obj;
+      } else if (obj instanceof Exprent exprent) {
 
         if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
           AssignmentExprent assignment = (AssignmentExprent) exprent;

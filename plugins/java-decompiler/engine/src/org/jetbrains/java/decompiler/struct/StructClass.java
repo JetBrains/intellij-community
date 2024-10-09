@@ -154,35 +154,6 @@ public class StructClass extends StructMember {
     return methods.getWithKey(InterpreterUtil.makeUniqueKey(name, descriptor));
   }
 
-  public StructMethod getMethodRecursive(String name, String descriptor) {
-    StructMethod ret = getMethod(name, descriptor);
-
-    if (ret != null) {
-      return ret;
-    }
-
-    if (superClass != null) {
-      StructClass cls = DecompilerContext.getStructContext().getClass((String)superClass.value);
-      if (cls != null) {
-        ret = cls.getMethodRecursive(name, descriptor);
-        if (ret != null) {
-          return ret;
-        }
-      }
-    }
-
-    for (String intf : getInterfaceNames()) {
-      StructClass cls = DecompilerContext.getStructContext().getClass(intf);
-      if (cls != null) {
-        ret = cls.getMethodRecursive(name, descriptor);
-        if (ret != null) {
-          return ret;
-        }
-      }
-    }
-    return null;
-  }
-
   public String getInterface(int i) {
     return interfaceNames[i];
   }
@@ -296,10 +267,6 @@ public class StructClass extends StructMember {
     return isVersion21();
   }
 
-  public boolean isVersion(int minVersion) {
-    return majorVersion >= minVersion;
-  }
-
   @Override
   public String toString() {
     return qualifiedName;
@@ -333,10 +300,10 @@ public class StructClass extends StructMember {
     return ret;
   }
 
-  private Map<String, Map<VarType, VarType>> genericHiarachy;
+  private Map<String, Map<VarType, VarType>> genericHierarchy;
   public Map<String, Map<VarType, VarType>> getAllGenerics() {
-    if (genericHiarachy != null) {
-      return genericHiarachy;
+    if (genericHierarchy != null) {
+      return genericHierarchy;
     }
 
     Map<String, Map<VarType, VarType>> ret = new HashMap<>();
@@ -408,7 +375,7 @@ public class StructClass extends StructMember {
       }
     }
 
-    this.genericHiarachy = ret.isEmpty() ? Collections.emptyMap() : ret;
-    return this.genericHiarachy;
+    this.genericHierarchy = ret.isEmpty() ? Collections.emptyMap() : ret;
+    return this.genericHierarchy;
   }
 }

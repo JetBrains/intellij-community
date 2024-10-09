@@ -65,12 +65,18 @@ public class JADNameProvider implements IVariableNameProvider {
     public final List<String> names = new ArrayList<>();
 
     private Holder(int t1, boolean skip_zero, String... names) {
+      if (names.length == 0) {
+        throw new IllegalArgumentException("names must not be empty");
+      }
       this.id = t1;
       this.skip_zero = skip_zero;
       Collections.addAll(this.names, names);
     }
 
     private Holder(int t1, boolean skip_zero, List<String> names) {
+      if (names.isEmpty()) {
+        throw new IllegalArgumentException("names must not be empty");
+      }
       this.id = t1;
       this.skip_zero = skip_zero;
       this.names.addAll(names);
@@ -99,7 +105,7 @@ public class JADNameProvider implements IVariableNameProvider {
     }
 
     List<VarVersion> keys = new ArrayList<>(entries.keySet());
-    Collections.sort(keys, (o1, o2) -> (o1.var != o2.var) ? o1.var - o2.var : o1.version - o2.version);
+    Collections.sort(keys);
 
     Map<VarVersion, String> result = new LinkedHashMap<>();
     for (VarVersion ver : keys) {
@@ -131,7 +137,7 @@ public class JADNameProvider implements IVariableNameProvider {
     String findtype = type;
 
     while (findtype.contains("[][]")) {
-      findtype = findtype.replaceAll("\\[]\\[]", "[]");
+      findtype = findtype.replace("[][]", "[]");
     }
     if (last.containsKey(findtype)) {
       index = findtype;
@@ -147,15 +153,15 @@ public class JADNameProvider implements IVariableNameProvider {
       type = type.replace("...", "[]");
 
       while (type.contains("[][]")) {
-        type = type.replaceAll("\\[]\\[]", "[]");
+        type = type.replace("[][]", "[]");
       }
 
       String name = type.toLowerCase(Locale.ENGLISH);
       // Strip single dots that might happen because of inner class references
       name = name.replace(".", "");
-      boolean skip_zero = true;
+      boolean skip_zero = false;
 
-      if (Pattern.compile("\\[").matcher(type).find()) {
+      if (type.contains("[")) {
         skip_zero = true;
         name = "a" + name.replace("[]", "").replace("...", "");
       }
@@ -172,15 +178,15 @@ public class JADNameProvider implements IVariableNameProvider {
     int id = holder.id;
     List<String> names = holder.names;
 
-    int ammount = names.size();
+    int amount = names.size();
 
     String name;
-    if (ammount == 1) {
+    if (amount == 1) {
       name = names.get(0) + (id == 0 && holder.skip_zero ? "" : id);
     }
     else {
-      int num = id / ammount;
-      name = names.get(id % ammount) + (id < ammount && holder.skip_zero ? "" : num);
+      int num = id / amount;
+      name = names.get(id % amount) + (id < amount && holder.skip_zero ? "" : num);
     }
 
     holder.id++;
