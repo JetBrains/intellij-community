@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,9 +23,18 @@ import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
 
 /**
  * A type of item with a distinct highlighting in an editor or in other views.
+ * <p>
  * Use one of {@link #createTextAttributesKey(String)} {@link #createTextAttributesKey(String, TextAttributesKey)}
  * to create a new key, fallbacks will help to find colors in all colors schemes.
- * Specifying different attributes for different color schemes is possible using additionalTextAttributes extension point.
+ * </p>
+ * <p>
+ * Specifying different attributes for different color schemes is possible
+ * using {@code com.intellij.additionalTextAttributes} extension point.
+ * </p>
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/syntax-highlighting-and-error-highlighting.html">Syntax and Error Highlighting (IntelliJ Platform Docs)</a>
+ * @see CodeInsightColors
+ * @see com.intellij.openapi.editor.DefaultLanguageHighlighterColors
  */
 public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   public static final TextAttributesKey[] EMPTY_ARRAY = new TextAttributesKey[0];
