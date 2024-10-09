@@ -259,6 +259,11 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     doTest(true, false);
   }
 
+  public void testStaticMembers() {
+    setLanguageLevel(LanguageLevel.JDK_16);
+    doTest(false, false);
+  }
+
   public void testSealedNoMembers() {
     setLanguageLevel(LanguageLevel.JDK_17);
     doTest(false, false);
