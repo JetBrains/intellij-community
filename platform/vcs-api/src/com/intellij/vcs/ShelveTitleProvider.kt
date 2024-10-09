@@ -3,6 +3,7 @@ package com.intellij.vcs
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import java.awt.Component
 import java.util.function.Consumer
 
 interface ShelveTitleProvider {
@@ -12,8 +13,18 @@ interface ShelveTitleProvider {
    */
   fun suggestTitle(project: Project, patch: ShelveTitlePatch, rename: Consumer<String>): Boolean
 
+  /**
+   * Show tooltip popup if applicable
+   */
+  fun showTooltipPopup(project: Project, component: Component): Boolean
+
   companion object {
     val EP_NAME: ExtensionPointName<ShelveTitleProvider> = ExtensionPointName<ShelveTitleProvider>("com.intellij.vcs.shelve.name")
+
+    @JvmStatic
+    fun showGotItTooltip(project: Project, component: Component) {
+      EP_NAME.extensionList.any { it.showTooltipPopup(project, component) }
+    }
   }
 }
 

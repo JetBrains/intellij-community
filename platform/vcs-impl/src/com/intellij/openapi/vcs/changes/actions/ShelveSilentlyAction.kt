@@ -3,8 +3,10 @@ package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
@@ -32,6 +34,11 @@ abstract class ShelveSilentlyActionBase(val rollbackChanges: Boolean) : DumbAwar
     val changes = e.getData(VcsDataKeys.CHANGES)!!
 
     FileDocumentManager.getInstance().saveAllDocuments()
-    ShelveChangesManager.getInstance(project).shelveSilentlyUnderProgress(changes.toList(), rollbackChanges)
+    val shelveChangesManager = ShelveChangesManager.getInstance(project)
+    shelveChangesManager.shelveSilentlyUnderProgress(changes.toList(), rollbackChanges)
+
+    if (Registry.`is`("llm.vcs.shelve.title.generation")) {
+      shelveChangesManager.showGotItTooltip(project, PlatformDataKeys.CONTEXT_COMPONENT.getData(e.dataContext))
+    }
   }
 }

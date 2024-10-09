@@ -68,11 +68,13 @@ import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.*;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -846,6 +848,12 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         }
       }
     }.queue();
+  }
+
+  public void showGotItTooltip(@NotNull Project project, @Nullable Component component) {
+    if (component != null) {
+      ShelveTitleProvider.showGotItTooltip(project, component);
+    }
   }
 
   private void rememberShelvingFiles(@NotNull Collection<? extends Change> changes) {
