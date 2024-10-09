@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
 
-private const val BUNDLE: String = "messages.VMOptionsBundle"
+internal const val BUNDLE: String = "messages.VMOptionsBundle"
 object VMOptionsBundle {
     private val INSTANCE = DynamicBundle(VMOptionsBundle::class.java, BUNDLE)
 
@@ -19,7 +19,4 @@ object VMOptionsBundle {
     fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): Supplier<@Nls String> {
       return INSTANCE.getLazyMessage(key = key, params = params)
     }
-
-    @JvmStatic
-    fun isMessageInBundle(key: String): Boolean = INSTANCE.containsKey(key)
 }

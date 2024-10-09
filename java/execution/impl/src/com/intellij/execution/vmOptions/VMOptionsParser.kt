@@ -2,6 +2,7 @@
 package com.intellij.execution.vmOptions
 
 import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.annotations.PropertyKey
 
 internal object VMOptionsParser {
   private val LOG = Logger.getInstance(VMOptionsParser::class.java)
@@ -87,16 +88,59 @@ internal object VMOptionsParser {
 
 
     fun build(): VMOption {
-      val key = getOptionBundleKey(name)
-      val description = if (VMOptionsBundle.isMessageInBundle(key)) { VMOptionsBundle.message(key) } else {
-        LOG.warn("Option $name is not localized. Output of java command will be used instead. Please, localize it with the key=$key in VMOptionsBundle")
+      val vmOptionMapKey = "${variant.prefix()}$name"
+      val key = VM_OPTION_DESCRIPTION_PROPERTY_KEY_MAP[vmOptionMapKey]
+      val description = if (key != null) {
+        VMOptionsBundle.message(key)
+      } else {
+        LOG.warn("Option $vmOptionMapKey is not localized. Output of java command will be used instead. Please, localize it in VMOptionsBundle")
         doc.joinToString(separator = " ")
       }
       return VMOption(name, type = null, defaultValue = null, kind = VMOptionKind.Product, doc = description, variant)
     }
-
-    private fun getOptionBundleKey(option: String): String = "vm.option.${getCanonicalOptionName(option)}.description"
-
-    private fun getCanonicalOptionName(option: String): String = option.replace(Regex("[:|\\-]"), ".").trim('=', '.')
   }
+
+  private val VM_OPTION_DESCRIPTION_PROPERTY_KEY_MAP: Map<String, @PropertyKey(resourceBundle = BUNDLE) String> = mapOf(
+    Pair("-Xbatch", "vm.option.batch.description"),
+    Pair("-Xbootclasspath:", "vm.option.bootclasspath.description"),
+    Pair("-Xbootclasspath/p:", "vm.option.bootclasspath.p.description"),
+    Pair("-Xbootclasspath/a:", "vm.option.bootclasspath.a.description"),
+    Pair("-Xdebug", "vm.option.debug.description"),
+    Pair("-Xcheck:jni", "vm.option.check.jni.description"),
+    Pair("-Xcomp", "vm.option.comp.description"),
+    Pair("-Xdiag", "vm.option.diag.description"),
+    Pair("-Xfuture", "vm.option.future.description"),
+    Pair("-Xinternalversion", "vm.option.internalversion.description"),
+    Pair("-Xlog:", "vm.option.log.description"),
+    Pair("-Xloggc:", "vm.option.loggc.description"),
+    Pair("-Xmixed", "vm.option.mixed.description"),
+    Pair("-Xmn", "vm.option.mn.description"),
+    Pair("-Xms", "vm.option.ms.description"),
+    Pair("-Xmx", "vm.option.mx.description"),
+    Pair("-Xrs", "vm.option.rs.description"),
+    Pair("-Xnoclassgc", "vm.option.noclassgc.description"),
+    Pair("-Xshare:auto", "vm.option.share.auto.description"),
+    Pair("-Xshare:off", "vm.option.share.off.description"),
+    Pair("-Xshare:on", "vm.option.share.on.description"),
+    Pair("-XshowSettings", "vm.option.showSettings.description"),
+    Pair("-XshowSettings:all", "vm.option.showSettings.all.description"),
+    Pair("-XshowSettings:locale", "vm.option.showSettings.locale.description"),
+    Pair("-XshowSettings:properties", "vm.option.showSettings.properties.description"),
+    Pair("-XshowSettings:vm", "vm.option.showSettings.vm.description"),
+    Pair("-XshowSettings:system", "vm.option.showSettings.system.description"),
+    Pair("-Xss", "vm.option.ss.description"),
+    Pair("-Xverify", "vm.option.verify.description"),
+    Pair("-Xincgc", "vm.option.incgc.description"),
+    Pair("-Xprof", "vm.option.prof.description"),
+    Pair("-Xint", "vm.option.int.description"),
+    Pair("--add-reads", "vm.option.add.reads.description"),
+    Pair("--add-opens", "vm.option.add.opens.description"),
+    Pair("--limit-modules", "vm.option.limit.modules.description"),
+    Pair("--patch-module", "vm.option.patch.module.description"),
+    Pair("--finalization=", "vm.option.finalization.description"),
+    Pair("--add-exports", "vm.option.add.exports.description"),
+    Pair("--source", "vm.option.source.description"),
+    Pair("--disable-@files", "vm.option.disable.files.description"),
+    Pair("--illegal-access=", "vm.option.illegal.access.description")
+  )
 }
