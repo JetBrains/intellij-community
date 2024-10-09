@@ -16,8 +16,10 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Experimental
 public class ThawAllThreadsAction extends XDebuggerIdeCustomizableAction {
   @Override
   @NotNull

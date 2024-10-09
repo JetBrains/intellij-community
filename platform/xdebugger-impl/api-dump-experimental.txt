@@ -1,5 +1,53 @@
 *:com.intellij.xdebugger.attach.XAttachRecentItemsMatcher
 - a:getMatchingAttachItems(com.intellij.xdebugger.impl.actions.AttachToProcessActionBase$RecentItem,java.util.List,Z,com.intellij.openapi.project.Project,com.intellij.openapi.util.UserDataHolder):java.util.List
+*:com.intellij.xdebugger.impl.ThreadsActionsProvider
+- getFreezeActiveThreadHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+- getFreezeInactiveThreadsAmongSelectedHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+- getFreezeInactiveThreadsHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+- getFreezeSelectedThreads():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+- getThawActiveThreadHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+- getThawAllThreadsHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+- getThawSelectedThreads():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+*c:com.intellij.xdebugger.impl.actions.DebuggerThreadActionHandler
+- com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+- sf:FreezeActiveThread:com.intellij.xdebugger.impl.actions.DebuggerThreadActionHandler
+- sf:FreezeInactiveThreads:com.intellij.xdebugger.impl.actions.DebuggerThreadActionHandler
+- sf:FreezeInactiveThreadsAmongSelected:com.intellij.xdebugger.impl.actions.DebuggerThreadActionHandler
+- sf:FreezeSelectedThreads:com.intellij.xdebugger.impl.actions.DebuggerThreadActionHandler
+- sf:ThawActiveThread:com.intellij.xdebugger.impl.actions.DebuggerThreadActionHandler
+- sf:ThawAllThreads:com.intellij.xdebugger.impl.actions.DebuggerThreadActionHandler
+- sf:ThawSelectedThreads:com.intellij.xdebugger.impl.actions.DebuggerThreadActionHandler
+- isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
+- isHidden(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
+- perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
+*c:com.intellij.xdebugger.impl.actions.FreezeActiveThreadAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+*c:com.intellij.xdebugger.impl.actions.FreezeInactiveThreadsAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+*c:com.intellij.xdebugger.impl.actions.FreezeInactiveThreadsAmongSelectedAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+*c:com.intellij.xdebugger.impl.actions.FreezeSelectedThreadsAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+*c:com.intellij.xdebugger.impl.actions.ThawActiveThreadAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+*c:com.intellij.xdebugger.impl.actions.ThawAllThreadsAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+*c:com.intellij.xdebugger.impl.actions.ThawSelectedThreadsAction
+- com.intellij.xdebugger.impl.actions.XDebuggerActionBase
+- <init>():V
+- p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 *e:com.intellij.xdebugger.impl.dfaassist.DfaHint
 - java.lang.Enum
 - sf:AIOOBE:com.intellij.xdebugger.impl.dfaassist.DfaHint

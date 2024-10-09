@@ -322,6 +322,8 @@ f:com.intellij.icons.AllIcons$Debugger
 - sf:ForceStepInto:javax.swing.Icon
 - sf:ForceStepOver:javax.swing.Icon
 - sf:Frame:javax.swing.Icon
+- sf:Freeze:javax.swing.Icon
+- sf:FreezeAll:javax.swing.Icon
 - sf:KillProcess:javax.swing.Icon
 - sf:LambdaBreakpoint:javax.swing.Icon
 - sf:MultipleBreakpoints:javax.swing.Icon
@@ -337,6 +339,8 @@ f:com.intellij.icons.AllIcons$Debugger
 - sf:Selfreference:javax.swing.Icon
 - sf:ShowCurrentFrame:javax.swing.Icon
 - sf:SmartStepInto:javax.swing.Icon
+- sf:Thaw:javax.swing.Icon
+- sf:ThawAll:javax.swing.Icon
 - sf:ThreadAtBreakpoint:javax.swing.Icon
 - sf:ThreadCurrent:javax.swing.Icon
 - sf:ThreadFrozen:javax.swing.Icon

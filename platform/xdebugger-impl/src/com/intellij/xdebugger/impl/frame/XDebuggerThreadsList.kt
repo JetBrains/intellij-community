@@ -16,6 +16,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStack.AdditionalDisplayInfo
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nullable
 import java.awt.Component
@@ -30,7 +31,13 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>
 ) : JBList<StackInfo>(CollectionListModel()), UiDataProvider {
     private var mySelectedFrame: StackInfo? = null
 
-    private var stackUnderMouse: StackInfo? = null
+    /**
+     * Deprecated.
+     * Use [com.intellij.xdebugger.frame.XExecutionStack.SELECTED_STACKS] data key to get a set of selected stacks from the data context.
+     */
+    @ApiStatus.Obsolete
+    public var stackUnderMouse: StackInfo? = null
+      private set
 
     val elementCount: Int
         get() = model.size

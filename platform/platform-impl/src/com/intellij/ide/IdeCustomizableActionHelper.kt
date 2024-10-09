@@ -5,7 +5,9 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.ui.IdeUICustomization
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class IdeCustomizableActionHelper(private val action: AnAction) {
   private val id by lazy { ActionManager.getInstance().getId(action)!! }
 

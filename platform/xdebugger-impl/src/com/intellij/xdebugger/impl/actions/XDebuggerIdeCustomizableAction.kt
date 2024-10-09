@@ -3,7 +3,9 @@ package com.intellij.xdebugger.impl.actions
 
 import com.intellij.ide.IdeCustomizableActionHelper
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class XDebuggerIdeCustomizableAction : XDebuggerActionBase() {
   private val customizableActionHelper by lazy { IdeCustomizableActionHelper(this) }
 

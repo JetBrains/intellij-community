@@ -19,6 +19,11 @@ import java.util.List;
  * 'Debug' tool window
  */
 public abstract class XExecutionStack {
+
+  /**
+   * Data constant which contains a set of selected stacks on a view. Used to support actions that work on a group of stacks/threads.
+   */
+  @ApiStatus.Experimental
   public static final DataKey<List<XExecutionStack>> SELECTED_STACKS = DataKey.create("XExecutionStacks");
 
   public static final XExecutionStack[] EMPTY_ARRAY = new XExecutionStack[0];

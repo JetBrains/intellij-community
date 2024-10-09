@@ -21,10 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.ThreadsActionsProvider;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
+@ApiStatus.Experimental
 public class DebuggerThreadActionHandler extends DebuggerActionHandler {
 
   public static final DebuggerThreadActionHandler FreezeActiveThread = new DebuggerThreadActionHandler(provider -> provider.getFreezeActiveThreadHandler());
