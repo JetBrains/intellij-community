@@ -3077,7 +3077,9 @@ a:com.intellij.openapi.options.ShowSettingsUtil
 f:com.intellij.openapi.options.SimpleConfigurable
 - com.intellij.openapi.options.ConfigurableBase
 - s:create(java.lang.String,java.lang.String,java.lang.Class,com.intellij.openapi.util.Getter):com.intellij.openapi.options.SimpleConfigurable
+- s:create(java.lang.String,java.lang.String,java.lang.Class,java.util.function.Supplier):com.intellij.openapi.options.SimpleConfigurable
 - s:create(java.lang.String,java.lang.String,java.lang.String,java.lang.Class,com.intellij.openapi.util.Getter):com.intellij.openapi.options.SimpleConfigurable
+- s:create(java.lang.String,java.lang.String,java.lang.String,java.lang.Class,java.util.function.Supplier):com.intellij.openapi.options.SimpleConfigurable
 - getOriginalClass():java.lang.Class
 a:com.intellij.openapi.options.colors.AbstractKeyDescriptor
 - p:<init>(java.util.function.Supplier,java.lang.Object):V

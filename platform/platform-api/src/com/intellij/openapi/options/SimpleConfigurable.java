@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.Getter;
@@ -24,6 +24,10 @@ public final class SimpleConfigurable<UI extends ConfigurableUi<S>, S> extends C
     this.settingsGetter = settingsGetter;
   }
 
+  /**
+   * @deprecated Replaced by create method using Supplier instead of deprecated Getter interface
+   */
+  @Deprecated(forRemoval = true)
   public static <UI extends ConfigurableUi<S>, S> SimpleConfigurable<UI, S> create(@NotNull String id,
                                                                                    @NotNull @NlsContexts.ConfigurableName String displayName,
                                                                                    @Nullable String helpTopic,
@@ -32,10 +36,29 @@ public final class SimpleConfigurable<UI extends ConfigurableUi<S>, S> extends C
     return new SimpleConfigurable<>(id, displayName, helpTopic, uiClass, settingsGetter);
   }
 
+  /**
+   * @deprecated Replaced by create method using Supplier instead of deprecated Getter interface
+   */
+  @Deprecated(forRemoval = true)
   public static <UI extends ConfigurableUi<S>, S> SimpleConfigurable<UI, S> create(@NotNull String id,
                                                                                    @NotNull @NlsContexts.ConfigurableName String displayName,
                                                                                    @NotNull Class<? extends UI> uiClass,
                                                                                    @NotNull Getter<? extends S> settingsGetter) {
+    return new SimpleConfigurable<>(id, displayName, id, uiClass, settingsGetter);
+  }
+
+  public static <UI extends ConfigurableUi<S>, S> SimpleConfigurable<UI, S> create(@NotNull String id,
+                                                                                   @NotNull @NlsContexts.ConfigurableName String displayName,
+                                                                                   @Nullable String helpTopic,
+                                                                                   @NotNull Class<? extends UI> uiClass,
+                                                                                   @NotNull Supplier<? extends S> settingsGetter) {
+    return new SimpleConfigurable<>(id, displayName, helpTopic, uiClass, settingsGetter);
+  }
+
+  public static <UI extends ConfigurableUi<S>, S> SimpleConfigurable<UI, S> create(@NotNull String id,
+                                                                                   @NotNull @NlsContexts.ConfigurableName String displayName,
+                                                                                   @NotNull Class<? extends UI> uiClass,
+                                                                                   @NotNull Supplier<? extends S> settingsGetter) {
     return new SimpleConfigurable<>(id, displayName, id, uiClass, settingsGetter);
   }
 
