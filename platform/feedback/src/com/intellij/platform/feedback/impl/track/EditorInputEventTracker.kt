@@ -41,7 +41,8 @@ class EditorInputEventTracker : TypedHandlerDelegate(), EditorMouseListener, Edi
   }
 
   private fun checkActivity(project: Project?) {
-    if (Duration.between(lastActivityTime, LocalDateTime.now()).toSeconds() >=
+    if (Registry.getInstance().isLoaded &&
+        Duration.between(lastActivityTime, LocalDateTime.now()).toSeconds() >=
         Registry.intValue("platform.feedback.time.to.show.notification", MIN_INACTIVE_TIME)) {
       IdleFeedbackResolver.getInstance().showFeedbackNotification(project)
     }
