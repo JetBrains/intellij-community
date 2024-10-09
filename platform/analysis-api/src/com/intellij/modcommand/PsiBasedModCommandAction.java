@@ -110,7 +110,7 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   }
 
   /**
-   * @param element element to test
+   * @param element physical element to test
    * @param context context
    * @return true if no parent elements should be checked for applicability. By default, returns false,
    * so we will search for the applicable element until {@link PsiFile} element is reached.
@@ -120,9 +120,9 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   }
 
   /**
-   * @param element element to test
+   * @param element physical element to test
    * @param context context
-   * @return true if the supplied element is the one we want to apply the action on. Used when
+   * @return true, if the supplied element is the one we want to apply the action on. Used when
    * searching for the appropriate element. By default, returns true always, meaning that the first found element
    * of type E is applicable.
    */
@@ -146,7 +146,7 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
 
   /**
    * @param context context where the action is executed
-   * @param element context element
+   * @param element context element (physical)
    * @return preview for this action. By default, {@link #perform(ActionContext, PsiElement)} is launched,
    * and preview is based on its result.
    */
@@ -160,14 +160,14 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
    * Called in a background read-action. Called after {@link #getPresentation(ActionContext)} returns non-null presentation.
    *
    * @param context context in which the action is executed
-   * @param element context element
+   * @param element context element (physical)
    * @return a {@link ModCommand} to be executed to actually apply the action
    */
   protected abstract @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull E element);
 
   /**
    * @param context context in which the action is executed
-   * @param element context element
+   * @param element context element (physical)
    * @return presentation if the action is available in the given context, and perform could be safely called;
    * null if the action is not available. By default, a simple presentation using the {@link #getFamilyName()}
    * is returned.

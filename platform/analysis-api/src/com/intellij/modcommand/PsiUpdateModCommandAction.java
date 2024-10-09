@@ -25,7 +25,7 @@ public abstract class PsiUpdateModCommandAction<E extends PsiElement> extends Ps
   }
 
   /**
-   * Constructs an instance, which will look for an element 
+   * Constructs an instance, which will look for an element
    * of a specified class at the caret offset.
    *
    * @param elementClass element class
@@ -50,10 +50,11 @@ public abstract class PsiUpdateModCommandAction<E extends PsiElement> extends Ps
   /**
    * Performs the action in background on the non-physical copy of the element, to record changes
    * and construct the appropriate {@link ModCommand}.
-   * 
+   *
    * @param context original context in which the action is executed (its file refers to the physical file)
-   * @param element starting element copy. It's allowed only to modify the file where this element is located
-   * @param updater updater to change caret position and selection if necessary
+   * @param element writable non-physical copy of the starting element. In case if it's necessary to modify
+   *                elements in other files, use {@code updater.getWritable()}
+   * @param updater updater to support advanced modification operations if necessary
    */
   protected abstract void invoke(@NotNull ActionContext context, @NotNull E element, @NotNull ModPsiUpdater updater);
 }
