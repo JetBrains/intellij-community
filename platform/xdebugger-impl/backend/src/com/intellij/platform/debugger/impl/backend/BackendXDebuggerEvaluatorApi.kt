@@ -2,8 +2,12 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.project.asProject
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
 import com.intellij.xdebugger.frame.XFullValueEvaluator
@@ -46,9 +50,10 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         }
       }, null)
     }
+    val project = evaluatorEntity.sessionEntity.projectEntity.asProject()
+    val evaluationCoroutineScope = EvaluationCoroutineScopeProvider.getInstance(project).cs
 
-    // TODO: don't use GlobalScope
-    GlobalScope.async(Dispatchers.EDT) {
+    evaluationCoroutineScope.async(Dispatchers.EDT) {
       val xValue = try {
         evaluationResult.await()
       }
@@ -114,5 +119,13 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         send(it)
       }
     }
+  }
+}
+
+@Service(Service.Level.PROJECT)
+private class EvaluationCoroutineScopeProvider(project: Project, val cs: CoroutineScope) {
+
+  companion object {
+    fun getInstance(project: Project): EvaluationCoroutineScopeProvider = project.service()
   }
 }
