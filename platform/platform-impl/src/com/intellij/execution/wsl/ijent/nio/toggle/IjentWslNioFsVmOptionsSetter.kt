@@ -124,7 +124,8 @@ object IjentWslNioFsVmOptionsSetter {
     val getEffectiveVmOptions =
       PluginManagerCore.isRunningFromSources() ||
       AppMode.isDevServer() ||
-      ApplicationManager.getApplication().isUnitTestMode
+      ApplicationManager.getApplication().isUnitTestMode ||
+      !VMOptions.canWriteOptions()  // It happens when the IDE is launched from `.\gradlew runIde` with intellij-platform-gradle-plugin.
 
     val changedOptions = ensureInVmOptionsImpl(isEnabled, false) { prefix ->
       VMOptions.readOption(prefix, getEffectiveVmOptions)
