@@ -904,6 +904,67 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
   }
 
   @Test
+  fun testParsedVersionResolving() = runBlocking {
+    updateProjectPom("""
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                        <name>${'$'}{<caret>parsedVersion.majorVersion}</name>
+                        <build>
+                          <plugins>
+                            <plugin>
+                              <groupId>org.codehaus.mojo</groupId>
+                              <artifactId>build-helper-maven-plugin</artifactId>
+                              <executions>
+                                <execution>
+                                  <goals>
+                                    <goal>parse-version</goal>
+                                  </goals>
+                                </execution>
+                              </executions>
+                            </plugin>
+                          </plugins>
+                        </build>
+                    """.trimIndent())
+    val ref = getReferenceAtCaret(projectPom)!!
+    // reimport to add build-helper-maven-plugin into the MavenProject. The property should be resolved if this plugin exists in pom.
+    runBlocking { importProjectAsync() }
+    assertResolved(projectPom, ref.element)
+  }
+
+  @Test
+  fun testParsedVersionResolvingCustomPrefix() = runBlocking {
+    updateProjectPom("""
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                        <name>${'$'}{<caret>parsedVersionCustom.majorVersion}</name>
+                        <build>
+                          <plugins>
+                            <plugin>
+                              <groupId>org.codehaus.mojo</groupId>
+                              <artifactId>build-helper-maven-plugin</artifactId>
+                              <executions>
+                                <execution>
+                                  <goals>
+                                    <goal>parse-version</goal>
+                                  </goals>
+                                </execution>
+                              </executions>
+                              <configuration>
+                                <propertyPrefix>parsedVersionCustom</propertyPrefix>
+                              </configuration>
+                            </plugin>
+                          </plugins>
+                        </build>
+                    """.trimIndent())
+    val ref = getReferenceAtCaret(projectPom)!!
+    // reimport to add build-helper-maven-plugin into the MavenProject. The property should be resolved if this plugin exists in pom.
+    runBlocking { importProjectAsync() }
+    assertResolved(projectPom, ref.element)
+  }
+
+  @Test
   fun testNotUpperCaseEnvPropertiesOnWindows() = runBlocking {
     if (!SystemInfo.isWindows) return@runBlocking
 
@@ -940,6 +1001,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        ${'$'}{pom.compileArtifacts.empty}
                        ${'$'}{modules.empty}
                        ${'$'}{projectDirectory}
+                       ${'$'}{parsedVersion.majorVersion}
                        </foo>
                        </properties>
                        """.trimIndent()
