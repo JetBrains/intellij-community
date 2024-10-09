@@ -157,7 +157,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/platformTypesInspection", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/primitiveCastToConversion", pattern = pattern)
             model("$idea/quickfix/properties", pattern = pattern)
-            model("$idea/quickfix/protectedInFinal", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/protectedInFinal", pattern = pattern)
             model("$idea/quickfix/redundantConst", pattern = pattern)
             model("$idea/quickfix/redundantFun", pattern = pattern)
             model("$idea/quickfix/redundantInline", pattern = pattern)
