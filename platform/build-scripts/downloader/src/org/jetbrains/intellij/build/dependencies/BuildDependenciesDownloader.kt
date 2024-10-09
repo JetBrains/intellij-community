@@ -25,13 +25,15 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.time.Instant
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
@@ -46,7 +48,7 @@ object BuildDependenciesDownloader {
   private val cleanupFlag = AtomicBoolean(false)
 
   // increment on semantic changes in extract code to invalidate all current caches
-  private const val EXTRACT_CODE_VERSION = 4
+  private const val EXTRACT_CODE_VERSION = 5
 
   // increment on semantic changes in download code to invalidate all current caches,
   // e.g., when some issues in extraction code were fixed
@@ -142,11 +144,21 @@ object BuildDependenciesDownloader {
   private fun getExpectedFlagFileContent(archiveFile: Path,
                                          targetDirectory: Path,
                                          options: Array<out BuildDependenciesExtractOptions>): ByteArray {
-    var numberOfTopLevelEntries: Long
-    Files.list(targetDirectory).use { stream -> numberOfTopLevelEntries = stream.count() }
+    var fileCount = 0L
+    var fileSizeSum = 0L
+
+    Files.walkFileTree(targetDirectory, object : SimpleFileVisitor<Path>() {
+      override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+        fileCount++
+        fileSizeSum += attrs.size()
+        return FileVisitResult.CONTINUE
+      }
+    })
+
     return """$EXTRACT_CODE_VERSION
 ${archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS)}
-topLevelEntries:$numberOfTopLevelEntries
+fileCount:$fileCount
+fileSizeSum:$fileSizeSum
 options:${getExtractOptionsShortString(options)}
 """.toByteArray(StandardCharsets.UTF_8)
   }
