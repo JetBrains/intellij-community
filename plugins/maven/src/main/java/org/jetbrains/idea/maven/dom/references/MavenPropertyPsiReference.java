@@ -273,8 +273,9 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
       return resolveSettingsModelProperty();
     }
 
-    if (couldBeResolvedByBuildHelper(myText)) {
-      return myElement;
+    PsiElement resolved = resolveAsParsedVersion(myText, mavenProject);
+    if (resolved != null) {
+      return resolved;
     }
 
     return null;
@@ -610,17 +611,36 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   }
 
   /**
-   * Some properties could be resolved by "build-helper-maven-plugin" (e.g., `${parsedVersion.majorVersion}` property)
+   * If "build-helper-maven-plugin" has `parse-version` goal, probably it could resolve properties starting with a defined prefix
+   * to something related to the version from the `version` tag (e.g., `${parsedVersion.majorVersion}`)
    * @see <a href="https://www.mojohaus.org/build-helper-maven-plugin/parse-version-mojo.html#propertyPrefix">mojohaus documentation</a>
    */
-  private boolean couldBeResolvedByBuildHelper(@NotNull String propertyText) {
+  @Nullable
+  private PsiElement resolveAsParsedVersion(@NotNull String propertyText, @NotNull MavenProject mavenProject) {
+    String prefix = getBuildHelperParseablePrefix();
+    if (prefix == null || !propertyText.startsWith(prefix + ".")) return null;
+
+    MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
+    if (domProjectModel == null) {
+      return myElement;
+    }
+    XmlTag versionTag = MavenDomUtil.findTag(domProjectModel, "project.version");
+    if (versionTag == null) {
+      return myElement;
+    }
+    else {
+      return versionTag;
+    }
+  }
+
+  private @Nullable String getBuildHelperParseablePrefix() {
     MavenPlugin buildHelperPlugin = myMavenProject.findPlugin("org.codehaus.mojo", "build-helper-maven-plugin");
-    if (buildHelperPlugin == null) return false;
+    if (buildHelperPlugin == null) return null;
 
     Optional<MavenPlugin.Execution> execution = buildHelperPlugin.getExecutions().stream()
       .filter(it -> it.getGoals().contains("parse-version"))
       .findFirst();
-    if (execution.isEmpty()) return false;
+    if (execution.isEmpty()) return null;
 
     String propertyPrefix = "parsedVersion"; // default value
     Element configuration = execution.get().getConfigurationElement();
@@ -630,6 +650,6 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
         propertyPrefix = customPrefix.getText();
       }
     }
-    return propertyText.startsWith(propertyPrefix + ".");
+    return propertyPrefix;
   }
 }

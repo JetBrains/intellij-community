@@ -6,7 +6,6 @@ import com.intellij.lang.properties.IProperty
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlTag
 import kotlinx.coroutines.runBlocking
@@ -926,10 +925,10 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                           </plugins>
                         </build>
                     """.trimIndent())
-    val ref = getReferenceAtCaret(projectPom)!!
-    // reimport to add build-helper-maven-plugin into the MavenProject. The property should be resolved if this plugin exists in pom.
+    fixture.configureFromExistingVirtualFile(projectPom)
+    // Resolving this property depends on the presence of the build-helper-maven-plugin in pom. Reimport to add the plugin in MavenProject.
     runBlocking { importProjectAsync() }
-    assertResolved(projectPom, ref.element)
+    assertResolved(projectPom, findTag(projectPom, "project.version"))
   }
 
   @Test
@@ -958,10 +957,10 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                           </plugins>
                         </build>
                     """.trimIndent())
-    val ref = getReferenceAtCaret(projectPom)!!
-    // reimport to add build-helper-maven-plugin into the MavenProject. The property should be resolved if this plugin exists in pom.
+    fixture.configureFromExistingVirtualFile(projectPom)
+    // Resolving this property depends on the presence of the build-helper-maven-plugin in pom. Reimport to add the plugin in MavenProject.
     runBlocking { importProjectAsync() }
-    assertResolved(projectPom, ref.element)
+    assertResolved(projectPom, findTag(projectPom, "project.version"))
   }
 
   @Test
