@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.application.impl
+package com.intellij.platform.util.coroutines.internal
 
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
@@ -8,7 +8,7 @@ import kotlin.coroutines.startCoroutine
 
 // Copied from kotlin.coroutines.jvm.internal.RunSuspend.kt
 
-internal fun <T> runSuspend(block: suspend () -> T): T {
+fun <T> runSuspend(block: suspend () -> T): T {
   val run = RunSuspend<T>()
   block.startCoroutine(run)
   return run.await()
