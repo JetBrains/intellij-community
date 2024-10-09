@@ -2,6 +2,7 @@
 package com.intellij.diagnostic
 
 import com.intellij.CommonBundle
+import com.intellij.diagnostic.IdeErrorsDialog.ReportAction.entries
 import com.intellij.diagnostic.MessagePool.TooManyErrorsException
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -28,8 +29,10 @@ import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.*
-import com.intellij.openapi.ui.DialogWrapper.DEFAULT_ACTION
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.LoadingDecorator
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
@@ -54,7 +57,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.GridBagConstraints.*
 import java.awt.event.ActionEvent
-import java.awt.event.ItemEvent
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitResult
@@ -71,15 +73,10 @@ open class IdeErrorsDialog internal constructor(
   private val myProject: Project?,
   defaultMessage: LogMessage?
 ) : DialogWrapper(myProject, true), MessagePoolListener, UiDataProvider {
-  @Suppress("KotlinConstantConditions")
-  private val myAssigneeVisible: Boolean =
-    false && // disabling the Assignee field for now (the corresponding endpoint is no longer available) todo [r.sh]
-    PluginManagerCore.isPluginInstalled(PluginId.getId(ITNProxy.EA_PLUGIN_ID))
   private val myAcceptedNotices: MutableSet<String>
   private val myMessageClusters: MutableList<MessageCluster> = ArrayList() // exceptions with the same stacktrace
   private var myIndex: Int
   private var myLastIndex = -1
-  private val myLoadingDeveloperListJob: Job?
   private var myUpdateControlsJob: Job = SupervisorJob()
 
   private lateinit var myCountLabel: JLabel
@@ -89,9 +86,7 @@ open class IdeErrorsDialog internal constructor(
   private lateinit var myCommentArea: JBTextArea
   private lateinit var myAttachmentList: AttachmentList
   private lateinit var myAttachmentArea: JTextArea
-  private lateinit var myAssigneePanel: JPanel
   private lateinit var myPrivacyNotice: PrivacyNotice
-  private lateinit var myAssigneeCombo: ComboBox<Developer>
   private lateinit var myCredentialLabel: JTextComponent
   private lateinit var myLoadingDecorator: LoadingDecorator
 
@@ -101,9 +96,6 @@ open class IdeErrorsDialog internal constructor(
     @Suppress("LeakingThis")
     init()
     setCancelButtonText(CommonBundle.message("close.action.name"))
-    myLoadingDeveloperListJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
-      service<ErrorReportConfigurable>().clear()
-    }
     val rawValue = PropertiesComponent.getInstance().getValue(ACCEPTED_NOTICES_KEY, "")
     myAcceptedNotices = Collections.synchronizedSet(LinkedHashSet(rawValue.split(ACCEPTED_NOTICES_SEPARATOR)))
     updateMessages()
@@ -253,20 +245,6 @@ open class IdeErrorsDialog internal constructor(
         }
       }
     })
-    if (myAssigneeVisible) {
-      myAssigneeCombo = ComboBox()
-      myAssigneeCombo.renderer = SimpleListCellRenderer.create(DiagnosticBundle.message("errors.dialog.assignee.none"), Developer::displayText)
-      myAssigneeCombo.prototypeDisplayValue = Developer(0, "-".repeat(30))
-      myAssigneeCombo.addItemListener { e: ItemEvent ->
-        if (e.stateChange == ItemEvent.SELECTED) {
-          selectedMessage().assigneeId = (e.item as? Developer)?.id
-        }
-      }
-      myAssigneeCombo.isSwingPopup = false
-      myAssigneePanel = JPanel()
-      myAssigneePanel.add(JBLabel(DiagnosticBundle.message("label.assignee")))
-      myAssigneePanel.add(myAssigneeCombo)
-    }
     @NlsSafe val heightSample = " "
     myCredentialLabel = SwingHelper.createHtmlViewer(false, null, null, null).apply {
       text = heightSample
@@ -279,12 +257,9 @@ open class IdeErrorsDialog internal constructor(
         }
       }
     }
-    if (myAssigneeVisible) {
-      val topOffset = (myAssigneePanel.preferredSize.height - myCredentialLabel.preferredSize.height) / 2
-      myCredentialLabel.border = JBUI.Borders.emptyTop(topOffset)
-    }
-    myPrivacyNotice = PrivacyNotice(DiagnosticBundle.message("error.dialog.notice.label"),
-                                    DiagnosticBundle.message("error.dialog.notice.label.expanded"))
+    myPrivacyNotice = PrivacyNotice(
+      DiagnosticBundle.message("error.dialog.notice.label"),
+      DiagnosticBundle.message("error.dialog.notice.label.expanded"))
     val commentPanel = JPanel(BorderLayout())
     commentPanel.border = JBUI.Borders.emptyTop(5)
     commentPanel.add(scrollPane(myCommentArea, 0, 0), BorderLayout.CENTER)
@@ -296,9 +271,6 @@ open class IdeErrorsDialog internal constructor(
     val accountRow = JPanel(GridBagLayout())
     accountRow.border = JBUI.Borders.empty(6, 0)
     accountRow.add(myCredentialLabel, GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBInsets.emptyInsets(), 0, 0))
-    if (myAssigneeVisible) {
-      accountRow.add(myAssigneePanel, GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, NORTHEAST, NONE, JBInsets.emptyInsets(), 0, 0))
-    }
     val bottomRow = JPanel(BorderLayout())
     bottomRow.add(accountRow, BorderLayout.NORTH)
     bottomRow.add(myPrivacyNotice.panel, BorderLayout.CENTER)
@@ -338,10 +310,10 @@ open class IdeErrorsDialog internal constructor(
   }
 
   override fun createLeftSideActions(): Array<Action> {
-    if (myAssigneeVisible && myProject != null && !myProject.isDefault) {
-      val action = ActionManager.getInstance().getAction("Unscramble")
-      if (action != null) {
-        return arrayOf(AnalyzeAction(action))
+    if (myProject != null && !myProject.isDefault && PluginManagerCore.isPluginInstalled(PluginId.getId(ITNProxy.EA_PLUGIN_ID))) {
+      @Suppress("UnresolvedPluginConfigReference")
+      ActionManager.getInstance().getAction("Unscramble")?.let {
+        return arrayOf(AnalyzeAction(it))
       }
     }
     return emptyArray()
@@ -351,7 +323,6 @@ open class IdeErrorsDialog internal constructor(
 
   override fun dispose() {
     myMessagePool.removeListener(this)
-    myLoadingDeveloperListJob?.cancel()
     myUpdateControlsJob.cancel()
     super.dispose()
   }
@@ -382,9 +353,6 @@ open class IdeErrorsDialog internal constructor(
       cluster.messages.forEach { it.isRead = true }
       updateLabels(cluster)
       updateDetails(cluster)
-      if (myAssigneeVisible) {
-        updateAssigneePanel(cluster)
-      }
       updateCredentialsPanel(submitter)
       isOKActionEnabled = cluster.canSubmit()
       setDefaultReportActionText(submitter?.reportActionText ?: DiagnosticBundle.message("error.report.impossible.action"))
@@ -528,32 +496,6 @@ open class IdeErrorsDialog internal constructor(
     myAttachmentList.setEditable(canReport)
   }
 
-  private fun updateAssigneePanel(cluster: MessageCluster) {
-    if (cluster.submitter is ITNReporter) {
-      myAssigneePanel.isVisible = true
-      myAssigneeCombo.isEnabled = cluster.isUnsent
-      val assignee = cluster.first.assigneeId
-      if (assignee == null) {
-        myAssigneeCombo.setSelectedIndex(-1)
-      }
-      else {
-        val assigneeIndex = getAssigneeIndex(assignee)
-        if (assigneeIndex != -1) {
-          myAssigneeCombo.setSelectedIndex(assigneeIndex)
-        }
-        else {
-          cluster.first.assigneeId = null
-        }
-      }
-    }
-    else {
-      myAssigneePanel.isVisible = false
-    }
-  }
-
-  private fun getAssigneeIndex(assigneeId: Int): Int =
-    (0 until myAssigneeCombo.itemCount).firstOrNull { assigneeId == myAssigneeCombo.getItemAt(it).id } ?: -1
- 
   private suspend fun updateCredentialsPanel(submitter: ErrorReportSubmitter?) {
     myCredentialLabel.isVisible = false
     if (submitter != null) {
@@ -564,7 +506,6 @@ open class IdeErrorsDialog internal constructor(
   private fun reportMessage(cluster: MessageCluster, dialogClosed: Boolean): Boolean {
     val submitter = cluster.submitter ?: return false
     val message = cluster.first
-    message.isAssigneeVisible = myAssigneeVisible
     message.isSubmitting = true
 
     service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {

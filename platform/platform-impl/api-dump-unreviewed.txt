@@ -1275,7 +1275,6 @@ a:com.intellij.diagnostic.AbstractMessage
 - getAdditionalInfo():java.lang.String
 - getAllAttachments():java.util.List
 - p:getAppInfo():java.lang.String
-- getAssigneeId():java.lang.Integer
 - getDate():java.util.Date
 - getIncludedAttachments():java.util.List
 - a:getMessage():java.lang.String
@@ -1287,7 +1286,6 @@ a:com.intellij.diagnostic.AbstractMessage
 - isSubmitting():Z
 - setAdditionalInfo(java.lang.String):V
 - p:setAppInfo(java.lang.String):V
-- setAssigneeId(java.lang.Integer):V
 - setOnReadCallback(java.lang.Runnable):V
 - setRead(Z):V
 - setSubmitted(com.intellij.openapi.diagnostic.SubmittedReportInfo):V

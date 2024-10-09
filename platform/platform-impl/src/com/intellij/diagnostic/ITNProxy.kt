@@ -5,7 +5,6 @@ import com.intellij.errorreport.error.InternalEAPException
 import com.intellij.errorreport.error.NoSuchEAPUserException
 import com.intellij.errorreport.error.UpdateAvailableException
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.Service
@@ -73,7 +72,6 @@ internal object ITNProxy {
     template["app.name.full"] = namesInfo.fullProductName
     template["app.name.version"] = appInfo.versionName
     template["app.eap"] = java.lang.Boolean.toString(appInfo.isEAP)
-    template["app.internal"] = java.lang.Boolean.toString(ApplicationManager.getApplication().isInternal)
     template["app.build"] = appInfo.apiVersion
     template["app.version.major"] = appInfo.majorVersion
     template["app.version.minor"] = appInfo.minorVersion
@@ -205,13 +203,6 @@ internal object ITNProxy {
       for (attachment in eventData.includedAttachments) {
         append(builder, "attachment.name", attachment.name)
         append(builder, "attachment.value", attachment.encodedBytes)
-      }
-      if (eventData.assigneeId != null) {
-        append(builder, "assignee.id", eventData.assigneeId!!.toString())
-      }
-      append(builder, "assignee.list.visible", java.lang.Boolean.toString(eventData.isAssigneeVisible))
-      if (eventData.devListTimestamp != null) {
-        append(builder, "assignee.list.timestamp", eventData.devListTimestamp!!.toString())
       }
     }
     return builder
