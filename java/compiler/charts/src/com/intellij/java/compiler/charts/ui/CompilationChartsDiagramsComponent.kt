@@ -7,8 +7,11 @@ import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemorySta
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
 import com.intellij.java.compiler.charts.ui.CompilationChartsModuleInfo.CompilationChartsUsageInfo
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.Magnificator
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -119,12 +122,16 @@ class CompilationChartsDiagramsComponent(
     usageInfo = CompilationChartsUsageInfo(this, charts, zoom)
     addMouseMotionListener(usageInfo)
 
+    ApplicationManager.getApplication().getMessageBus().connect(vm.disposable)
+      .subscribe(EditorColorsManager.TOPIC, EditorColorsListener { scheme -> smartDraw(true, false) })
+
     putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, object : Magnificator {
       override fun magnify(magnification: Double, at: Point): Point = zoom.adjust(viewport, at.x, magnification)
     })
 
     AppExecutorUtil.createBoundedScheduledExecutorService("Compilation charts component", 1)
       .scheduleWithFixedDelay({ if (hasNewData()) smartDraw() }, 0, Settings.Refresh.timeout, Settings.Refresh.unit)
+      .also { feature -> Disposer.register(vm.disposable) { -> feature.cancel(true) } }
   }
 
   internal fun cleanCache() {

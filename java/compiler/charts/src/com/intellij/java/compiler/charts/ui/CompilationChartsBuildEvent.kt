@@ -9,17 +9,18 @@ import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.icons.AllIcons
 import com.intellij.java.compiler.charts.CompilationChartsBundle
 import com.intellij.java.compiler.charts.CompilationChartsViewModel
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import javax.swing.Icon
 import javax.swing.JComponent
 
-class CompilationChartsBuildEvent(project: Project, val view: BuildViewManager, val buildId: Any) :
+class CompilationChartsBuildEvent(project: Project, val view: BuildViewManager, val buildId: Any, disposable: Disposable) :
   AbstractBuildEvent(Any(), buildId, System.currentTimeMillis(), CompilationChartsBundle.message("charts.tab.name")),
   PresentableBuildEvent {
 
-  private val console: CompilationChartsExecutionConsole by lazy { CompilationChartsExecutionConsole(project) }
+  private val console: CompilationChartsExecutionConsole by lazy { CompilationChartsExecutionConsole(project, disposable) }
 
   override fun getPresentationData(): BuildEventPresentationData = CompilationChartsPresentationData(console)
 
@@ -33,8 +34,8 @@ class CompilationChartsBuildEvent(project: Project, val view: BuildViewManager, 
     override fun consoleToolbarActions(): ActionGroup? = null
   }
 
-  private class CompilationChartsExecutionConsole(project: Project) : ExecutionConsole {
-    val vm: CompilationChartsViewModel = CompilationChartsViewModel(this.createLifetime())
+  private class CompilationChartsExecutionConsole(project: Project, disposable: Disposable) : ExecutionConsole {
+    val vm: CompilationChartsViewModel = CompilationChartsViewModel(this.createLifetime(), disposable)
     private val _component: CompilationChartsView by lazy {
       CompilationChartsView(project, vm)
     }
