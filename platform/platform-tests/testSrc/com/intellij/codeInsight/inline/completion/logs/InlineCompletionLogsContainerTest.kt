@@ -42,6 +42,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
         logsContainer.logCurrent()
       }
 
+      // expect both logs
       assertMaps(
         mapOf(
           "inline_api_starting" to mapOf(
@@ -68,6 +69,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
         logsContainer.logCurrent()
       }
 
+      // expect both logs
       assertMaps(
         mapOf(
           "inline_api_starting" to mapOf(
@@ -95,6 +97,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
         logsContainer.logCurrent()
       }
 
+      // expect both logs
       assertMaps(
         mapOf(
           "inline_api_starting" to mapOf(
@@ -121,6 +124,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
         logsContainer.logCurrent()
       }
 
+      // expect only the basic log
       assertMaps(
         mapOf(
           "inline_api_starting" to mapOf(
@@ -129,6 +133,17 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
         ),
         logs.first().event.data
       )
+    }
+  }
+
+  /**
+   * Fields which are not registered for a specific phase are not allowed.
+   */
+  @Test
+  fun testPhaseNotFoundForField() {
+    val logsContainer = InlineCompletionLogsContainer(0)
+    assertThrows(IllegalArgumentException::class.java) {
+      logsContainer.add(EventFields.Boolean("incorrect_field").with(false))
     }
   }
 
