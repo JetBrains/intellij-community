@@ -1,0 +1,10 @@
+f:com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalysisResult
+- <init>(java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalysisResult
+- bs:copy$default(com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalysisResult,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalysisResult
+- equals(java.lang.Object):Z
+- f:getMessage():java.lang.String
+- f:getStackTrace():java.lang.String
+- hashCode():I
