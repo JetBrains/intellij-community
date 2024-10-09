@@ -9,6 +9,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -190,7 +192,9 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   @Override
   void scheduleReload() {
-    resetSourcePosition(); // sync init source position just in case
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-360452, EA-1479781")) {
+      resetSourcePosition(); // sync init source position just in case
+    }
     super.scheduleReload();
   }
 
