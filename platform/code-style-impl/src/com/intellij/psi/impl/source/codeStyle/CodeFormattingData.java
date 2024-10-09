@@ -59,6 +59,7 @@ public final class CodeFormattingData {
 
   public @NotNull Set<TextRange> getInjectedRanges(@NotNull TextRange range) {
     if (myPsiFile.getProject().isDefault() || range.isEmpty()) return Collections.emptySet();
+    if ("Rust".equals(myPsiFile.getLanguage().getID())) return Collections.emptySet();
     Set<TextRange> injectedRanges = injectedFileRangesMap.get(range.getStartOffset());
     if (injectedRanges == null) {
       injectedRanges = collectInjectedRanges(range);
