@@ -4,20 +4,25 @@ package com.intellij.platform.diagnostic.telemetry.rt.context
 import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.propagation.TextMapGetter
+import io.opentelemetry.context.propagation.TextMapPropagator
 import io.opentelemetry.context.propagation.TextMapSetter
 import org.jetbrains.annotations.ApiStatus
+import java.io.Serializable
 
 @ApiStatus.Internal
-class TelemetryContext : HashMap<String, String>() {
+class TelemetryContext : HashMap<String, String>(), Serializable {
+
   companion object {
     @JvmStatic
+    fun from(context: Context, propagator: TextMapPropagator): TelemetryContext {
+      val holder = TelemetryContext()
+      propagator.inject(context, holder, TelemetryContextSetter())
+      return holder
+    }
+
+    @JvmStatic
     fun current(): TelemetryContext {
-      val context = TelemetryContext()
-      GlobalOpenTelemetry.get()
-        .propagators
-        .textMapPropagator
-        .inject(Context.current(), context, TelemetryContextSetter())
-      return context
+      return from(Context.current(), GlobalOpenTelemetry.getPropagators().textMapPropagator)
     }
 
     @JvmStatic
@@ -43,11 +48,12 @@ class TelemetryContext : HashMap<String, String>() {
     return entries.joinToString(", ")
   }
 
+  fun extract(propagator: TextMapPropagator): Context {
+    return propagator.extract(Context.current(), this, TelemetryContextGetter())
+  }
+
   fun extract(): Context {
-    return GlobalOpenTelemetry.get()
-      .propagators
-      .textMapPropagator
-      .extract(Context.current(), this, TelemetryContextGetter())
+    return extract(GlobalOpenTelemetry.get().propagators.textMapPropagator)
   }
 }
 
