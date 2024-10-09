@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -10,7 +10,6 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.util.preferredHeight
 import com.intellij.ui.util.preferredWidth
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.KeyEvent
 import java.util.function.Supplier
@@ -21,10 +20,11 @@ import javax.swing.SwingConstants
 
 private const val NAVIGATION_PLACE = "DefinitionChooser"
 
-@ApiStatus.Internal
-class DefinitionSwitcher<T>(elements: Array<T>,
-                            private val component: JComponent,
-                            private val onUpdate: (T)-> Unit) {
+internal class DefinitionSwitcher<T>(
+  elements: Array<T>,
+  private val component: JComponent,
+  private val onUpdate: (T) -> Unit,
+) {
   var elements: Array<T> = elements
     set(value) {
       field = value
@@ -43,7 +43,7 @@ class DefinitionSwitcher<T>(elements: Array<T>,
     return Dimension(maxWidth, label.preferredHeight)
   }
 
-  var index = 0
+  var index: Int = 0
   fun getCurrentElement() = elements[index]
 
   fun createToolbar(additionalAction: AnAction? = null): ActionToolbar {
@@ -54,8 +54,10 @@ class DefinitionSwitcher<T>(elements: Array<T>,
     group.add(back)
 
     group.add(object : ToolbarLabelAction() {
-      override fun createCustomComponent(presentation: Presentation,
-                                         place: String): JComponent =
+      override fun createCustomComponent(
+        presentation: Presentation,
+        place: String,
+      ): JComponent =
         (super.createCustomComponent(presentation, place) as JBLabel).apply {
           border = jbEmptyBorder()
           horizontalAlignment = SwingConstants.TRAILING
@@ -100,7 +102,7 @@ class DefinitionSwitcher<T>(elements: Array<T>,
   }
 
   private fun navigationAction(name: Supplier<String>, icon: Icon, direction: Int): AnAction {
-    return object: AnAction(name, icon), ActionToIgnore {
+    return object : AnAction(name, icon), ActionToIgnore {
       override fun actionPerformed(e: AnActionEvent) {
         val i = index + direction
         index = when {

@@ -36,8 +36,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleBundle.message
 import org.jetbrains.plugins.gradle.util.suggestGradleVersion
 
-class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
-
+internal class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
   private val propertyGraph = PropertyGraph()
 
   private val distributionTypeProperty = propertyGraph.lateinitProperty<DistributionTypeItem>()

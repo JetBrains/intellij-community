@@ -1,16 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.charts
 
 import java.awt.BasicStroke
 import java.awt.BasicStroke.CAP_BUTT
 import java.awt.BasicStroke.JOIN_ROUND
 import java.awt.Graphics2D
-import java.awt.Rectangle
 import java.awt.geom.Area
 import java.awt.geom.Path2D
 import java.awt.geom.Point2D
 import java.util.*
-import kotlin.NoSuchElementException
 import kotlin.math.hypot
 import kotlin.math.min
 

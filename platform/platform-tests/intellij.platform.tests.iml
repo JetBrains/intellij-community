@@ -107,5 +107,6 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.eelHelper" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.ui" scope="TEST" />
   </component>
 </module>
