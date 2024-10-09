@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.unscramble;
+package com.intellij.threadDumpParser;
 
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -165,7 +165,7 @@ public class NormalizeTextTest extends TestCase {
        at sun.nio.cs.StreamDecoder.readBytes(StreamDecoder.java:284)
        at sun.nio.cs.StreamDecoder.implRead(StreamDecoder.java:326)
        at sun.nio.cs.StreamDecoder.read(StreamDecoder.java:178)""");
-    assertEquals(2, ThreadDumpParser.parse(UnscrambleDialog.normalizeText(text)).size());
+    assertEquals(2, ThreadDumpParser.parse(ThreadDumpParser.normalizeText(text)).size());
   }
 
   public void testJsonEscapes() {
@@ -182,6 +182,6 @@ public class NormalizeTextTest extends TestCase {
   }
 
   private static void doTest(@NonNls String stackTrace, @NonNls String expected) {
-    assertEquals(expected, UnscrambleDialog.normalizeText(stackTrace));
+    assertEquals(expected, ThreadDumpParser.normalizeText(stackTrace));
   }
 }

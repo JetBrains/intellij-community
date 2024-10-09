@@ -45,7 +45,7 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.intellij.unscramble.ThreadDumpPanel;
-import com.intellij.unscramble.ThreadState;
+import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;

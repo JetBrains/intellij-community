@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.unscramble;
+package com.intellij.threadDumpParser;
 
 import com.intellij.diagnostic.EventCountDumper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +17,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.diagnostic.CoroutineDumperKt.isCoroutineDumpHeader;
 
-
+@ApiStatus.Internal
 public final class ThreadDumpParser {
   private static final Pattern ourThreadStartPattern = Pattern.compile("^\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?.*tid=[^\\s]+ nid=[^\\s]+|[Ii][Dd]=\\d+) ([^\\[]+)");
   private static final Pattern ourForcedThreadStartPattern = Pattern.compile("^Thread (\\d+): \\(state = (.+)\\)");
@@ -29,6 +32,8 @@ public final class ThreadDumpParser {
   private static final Pattern ourIdleSwingTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at javax\\.swing\\.TimerQueue\\.run");
   private static final String AT_JAVA_LANG_OBJECT_WAIT = "at java.lang.Object.wait(";
   private static final Pattern ourLockedOwnableSynchronizersPattern = Pattern.compile("- <(0x[\\da-f]+)> \\(.*\\)");
+
+  private static final String[] IMPORTANT_THREAD_DUMP_WORDS = ContainerUtil.ar("tid", "nid", "wait", "parking", "prio", "os_prio", "java");
 
 
   private ThreadDumpParser() {
@@ -263,4 +268,72 @@ public final class ThreadDumpParser {
     }
     return false;
   }
+
+  public static String normalizeText(@NonNls String text) {
+    StringBuilder builder = new StringBuilder(text.length());
+
+    text = text.replaceAll("(\\S[ \\t\\x0B\\f\\r]+)(at\\s+)", "$1\n$2");
+    text = text.replaceAll("(\\\\n|\\\\r|\\\\t)+(at\\s+)", "\n$2");
+    String[] lines = text.split("\n");
+
+    boolean first = true;
+    boolean inAuxInfo = false;
+    for (final String line : lines) {
+      //noinspection HardCodedStringLiteral
+      if (!inAuxInfo && (line.startsWith("JNI global references") || line.trim().equals("Heap"))) {
+        builder.append("\n");
+        inAuxInfo = true;
+      }
+      if (inAuxInfo) {
+        builder.append(trimSuffix(line)).append("\n");
+        continue;
+      }
+      if (line.startsWith("at breakpoint")) { // possible thread status mixed with "at ..."
+        builder.append(" ").append(trimSuffix(line));
+        continue;
+      }
+      if (!first && (mustHaveNewLineBefore(line) || StringUtil.endsWith(builder, ")"))) {
+        if (!StringUtil.endsWith(builder, "\n")) builder.append("\n");
+        if (line.startsWith("\"")) builder.append("\n"); // Additional line break for thread names
+      }
+      first = false;
+      int i = builder.lastIndexOf("\n");
+      CharSequence lastLine = i == -1 ? builder : builder.subSequence(i + 1, builder.length());
+      if (!line.matches("\\s+.*") && lastLine.length() > 0) {
+        if (lastLine.toString().matches("\\s*at") //separate 'at' from filename
+            || ContainerUtil.or(IMPORTANT_THREAD_DUMP_WORDS, word -> line.startsWith(word))) {
+          builder.append(" ");
+        }
+      }
+      builder.append(trimSuffix(line));
+    }
+    return builder.toString();
+  }
+
+  private static boolean mustHaveNewLineBefore(String line) {
+    final int nonWs = CharArrayUtil.shiftForward(line, 0, " \t");
+    if (nonWs < line.length()) {
+      line = line.substring(nonWs);
+    }
+
+    if (line.startsWith("at")) return true;        // Start of the new stack frame entry
+    if (line.startsWith("Caused")) return true;    // Caused by message
+    if (line.startsWith("- locked")) return true;  // "Locked a monitor" logging
+    if (line.startsWith("- waiting")) return true; // "Waiting for monitor" logging
+    if (line.startsWith("- parking to wait")) return true;
+    if (line.startsWith("java.lang.Thread.State")) return true;
+    if (line.startsWith("\"")) return true;        // Start of the new thread (thread name)
+
+    return false;
+  }
+
+  private static String trimSuffix(final String line) {
+    int len = line.length();
+
+    while ((0 < len) && (line.charAt(len - 1) <= ' ')) {
+      len--;
+    }
+    return (len < line.length()) ? line.substring(0, len) : line;
+  }
+
 }
