@@ -787,8 +787,6 @@
                          key="configurable.Runtime.Targets.Configurable.display.name"
                          provider="com.intellij.execution.target.TargetEnvironmentsConfigurableProvider"/>
 
-    <projectService serviceImplementation="com.intellij.execution.configurations.RunConfigurationVcsSupport"/>
-
     <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.DefaultFindUsagesHandlerFactory" id="default" order="last"/>
     <usageTargetProvider implementation="com.intellij.find.findUsages.DefaultUsageTargetProvider" id="default" order="last"/>
     <registryKey defaultValue="false"

@@ -50,6 +50,7 @@
   <xi:include href="/META-INF/LangExtensionPoints.xml"/>
 
   <xi:include href="/META-INF/PlatformExtensions.xml"/>
+  <xi:include href="/META-INF/PlatformExecutionExtensions.xml"/>
 
   <xi:include href="/META-INF/credential-store.xml">
     <xi:fallback/>

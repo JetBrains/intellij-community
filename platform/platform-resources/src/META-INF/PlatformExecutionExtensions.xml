@@ -1,0 +1,24 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.execution.RunManager"
+                    serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
+    <projectServiceContainerInitializedListener implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer"/>
+    <projectFileScanner implementation="com.intellij.execution.impl.RunConfigurationInArbitraryFileScanner"/>
+    <vfs.asyncListener implementation="com.intellij.execution.impl.RCInArbitraryFileListener"/>
+    <editorNotificationProvider implementation="com.intellij.execution.impl.RunConfigEditorNotificationProvider"/>
+    <postStartupActivity implementation="com.intellij.execution.impl.RunConfigurationFeatureCollector"/>
+    <applicationService serviceInterface="com.intellij.execution.ui.FragmentStatisticsService"
+                        serviceImplementation="com.intellij.execution.impl.statistics.FragmentedStatisticsServiceImpl"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector"/>
+
+    <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
+                        serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
+    <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
+
+    <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
+
+    <notificationGroup id="Test Runner" displayType="NONE" bundle="messages.TestRunnerBundle" key="notification.group.test.runner"/>
+
+    <projectService serviceImplementation="com.intellij.execution.configurations.RunConfigurationVcsSupport"/>
+  </extensions>
+</idea-plugin>
