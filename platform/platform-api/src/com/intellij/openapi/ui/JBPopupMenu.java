@@ -14,6 +14,7 @@ import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -45,6 +46,47 @@ public class JBPopupMenu extends JPopupMenu {
     setLayout(myLayout);
     setLightWeightPopupEnabled(false);
     setOpaque(false);
+  }
+
+  @Override
+  public void show(Component invoker, int x, int y) {
+    if (LOG.isDebugEnabled()) logMenuPosition(invoker, x, y);
+    super.show(invoker, x, y);
+  }
+
+  /**
+   * Logs enough information to be able to reason about what {@link JPopupMenu#adjustPopupLocationToFitScreen(int, int)} does.
+   *
+   * @param invoker as passed to {@code show}
+   * @param x as passed to {@code show}
+   * @param y as passed to {@code show}
+   */
+  private void logMenuPosition(@Nullable Component invoker, int x, int y) {
+    if (GraphicsEnvironment.isHeadless()) return;
+    LOG.debug(
+      "Showing popup menu at " +
+      "x=" + x + ", y=" + y +
+      ", preferredSize=" + getPreferredSize() +
+      ", invokerOrigin=" + (invoker == null ? "null" : invoker.getLocationOnScreen())
+    );
+    LOG.debug("Available raster screens are");
+    var lge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    var tk = Toolkit.getDefaultToolkit();
+    for (GraphicsDevice device : lge.getScreenDevices()) {
+      if (device.getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
+        GraphicsConfiguration dgc = device.getDefaultConfiguration();
+        LOG.debug("bounds=" + dgc.getBounds().toString() + ", insets=" + tk.getScreenInsets(dgc));
+      }
+    }
+    if (invoker != null) {
+      var igc = invoker.getGraphicsConfiguration();
+      LOG.debug("Invoker's screen: " + "bounds=" + igc.getBounds().toString() + ", insets=" + tk.getScreenInsets(igc));
+    }
+    var defGc = lge.getDefaultScreenDevice().getDefaultConfiguration();
+    LOG.debug("Default graphics configuration: " + "bounds=" + defGc.getBounds().toString() + ", insets=" + tk.getScreenInsets(defGc));
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(new Throwable("The menu was invoked from here"));
+    }
   }
 
   @Override

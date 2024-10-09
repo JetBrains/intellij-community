@@ -3908,6 +3908,7 @@ c:com.intellij.openapi.ui.JBPopupMenu
 - paint(java.awt.Graphics):V
 - processMouseWheelEvent(java.awt.event.MouseWheelEvent):V
 - setLayout(java.awt.LayoutManager):V
+- show(java.awt.Component,I,I):V
 - s:showAbove(java.awt.Component,javax.swing.JPopupMenu):V
 - s:showAt(com.intellij.ui.awt.RelativePoint,javax.swing.JPopupMenu):V
 - s:showAtRight(java.awt.Component,javax.swing.JPopupMenu):V
