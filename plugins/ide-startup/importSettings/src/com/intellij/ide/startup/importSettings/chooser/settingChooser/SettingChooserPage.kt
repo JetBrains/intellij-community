@@ -117,6 +117,7 @@ internal sealed class SettingChooserPage(
         add(ScrollSnapToFocused(listPane, this@SettingChooserPage).apply {
           viewport.isOpaque = false
           background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
+          accessibleContext.accessibleName = ImportSettingsBundle.message("choose.settings.title.accessible.name", provider.getText(product))
 
           SwingUtilities.invokeLater {
             this.requestFocus()
