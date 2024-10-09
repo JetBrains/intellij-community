@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
@@ -85,10 +84,10 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
     const val REPOSITORY_GROUPING = "repository" // NON-NLS
     const val NONE_GROUPING = "none" // NON-NLS
 
-    private val FACTORIES: ClearableLazyValue<AvailableFactories> = ClearableLazyValue.create { buildFactories() }
+    private var FACTORIES: AvailableFactories = buildFactories()
 
     init {
-      ChangesGroupingPolicyFactory.EP_NAME.addChangeListener({ FACTORIES.drop() }, null)
+      ChangesGroupingPolicyFactory.EP_NAME.addChangeListener({ FACTORIES = buildFactories() }, null)
     }
 
     @JvmStatic
@@ -98,12 +97,12 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
 
     @JvmStatic
     fun findFactory(key: String): ChangesGroupingPolicyFactory? {
-      val availableFactories = FACTORIES.value
+      val availableFactories = FACTORIES
       return availableFactories.keyToFactory[key]
     }
 
     private fun sortedFactoriesFor(keys: Collection<String>): List<ChangesGroupingPolicyFactory> {
-      val availableFactories = FACTORIES.value
+      val availableFactories = FACTORIES
       return keys
         .sortedByDescending { availableFactories.keyToWeight[it] ?: ChangesGroupingPolicyFactoryEPBean.DEFAULT_WEIGHT }
         .map { groupingKey ->
@@ -133,7 +132,7 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
 
     private class AvailableFactories(
       val keyToFactory: Map<String, ChangesGroupingPolicyFactory>,
-      val keyToWeight: Map<String, Int>
+      val keyToWeight: Map<String, Int>,
     )
   }
 }
