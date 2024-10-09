@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
     <orderEntry type="module" module-name="intellij.performanceTesting.vcs" />
     <orderEntry type="module" module-name="kotlin.idea" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
   </component>
 </module>

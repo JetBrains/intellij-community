@@ -62,6 +62,5 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.driver.client" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.bus" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
   </component>
 </module>
