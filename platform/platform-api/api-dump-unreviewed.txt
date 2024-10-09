@@ -2800,7 +2800,9 @@ f:com.intellij.openapi.observable.util.ListenerUiUtil
 - sf:whenCaretMoved(javax.swing.text.JTextComponent,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - bs:whenCaretMoved$default(javax.swing.text.JTextComponent,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - sf:whenDocumentChanged(com.intellij.ui.EditorTextComponent,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- sf:whenDocumentChanged(javax.swing.text.Document,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - bs:whenDocumentChanged$default(com.intellij.ui.EditorTextComponent,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- bs:whenDocumentChanged$default(javax.swing.text.Document,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - sf:whenFocusGained(java.awt.Component,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - bs:whenFocusGained$default(java.awt.Component,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - sf:whenFocusLost(java.awt.Component,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
@@ -2835,10 +2837,10 @@ f:com.intellij.openapi.observable.util.ListenerUiUtil
 - sf:whenTableChanged(com.intellij.util.ui.TableViewModel,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - bs:whenTableChanged$default(com.intellij.ui.table.TableView,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - bs:whenTableChanged$default(com.intellij.util.ui.TableViewModel,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
-- sf:whenTextChanged(com.intellij.openapi.ui.TextFieldWithBrowseButton,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
-- sf:whenTextChanged(com.intellij.ui.SearchTextField,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
-- sf:whenTextChanged(javax.swing.text.Document,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
-- sf:whenTextChanged(javax.swing.text.JTextComponent,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- bsf:whenTextChanged(com.intellij.openapi.ui.TextFieldWithBrowseButton,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- bsf:whenTextChanged(com.intellij.ui.SearchTextField,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- bsf:whenTextChanged(javax.swing.text.Document,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- bsf:whenTextChanged(javax.swing.text.JTextComponent,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - bs:whenTextChanged$default(com.intellij.openapi.ui.TextFieldWithBrowseButton,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - bs:whenTextChanged$default(com.intellij.ui.SearchTextField,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - bs:whenTextChanged$default(javax.swing.text.Document,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
@@ -2847,6 +2849,15 @@ f:com.intellij.openapi.observable.util.ListenerUiUtil
 - sf:whenTreeChanged(javax.swing.tree.TreeModel,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - bs:whenTreeChanged$default(javax.swing.JTree,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - bs:whenTreeChanged$default(javax.swing.tree.TreeModel,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+f:com.intellij.openapi.observable.util.ListenerWithValueUiUtil
+- sf:whenTextChanged(com.intellij.openapi.ui.TextFieldWithBrowseButton,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- sf:whenTextChanged(com.intellij.ui.SearchTextField,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- sf:whenTextChanged(javax.swing.text.Document,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- sf:whenTextChanged(javax.swing.text.JTextComponent,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- bs:whenTextChanged$default(com.intellij.openapi.ui.TextFieldWithBrowseButton,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- bs:whenTextChanged$default(com.intellij.ui.SearchTextField,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- bs:whenTextChanged$default(javax.swing.text.Document,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- bs:whenTextChanged$default(javax.swing.text.JTextComponent,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 f:com.intellij.openapi.observable.util.ModificationTrackerUtilKt
 - sf:createPropertyModificationTracker(com.intellij.openapi.observable.properties.ObservableMutableProperty,com.intellij.openapi.Disposable):com.intellij.openapi.util.ModificationTracker
 - bs:createPropertyModificationTracker$default(com.intellij.openapi.observable.properties.ObservableMutableProperty,com.intellij.openapi.Disposable,I,java.lang.Object):com.intellij.openapi.util.ModificationTracker

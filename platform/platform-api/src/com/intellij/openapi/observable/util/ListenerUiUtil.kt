@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ListenerUiUtil")
-@file:Suppress("unused")
 
 package com.intellij.openapi.observable.util
 
@@ -100,19 +99,27 @@ fun TableViewModel<*>.whenTableChanged(parentDisposable: Disposable? = null, lis
   })
 }
 
+@Deprecated("Changed listener argument type from DocumentEvent to String.", level = DeprecationLevel.HIDDEN)
 fun TextFieldWithBrowseButton.whenTextChanged(parentDisposable: Disposable? = null, listener: (DocumentEvent) -> Unit) {
-  textField.whenTextChanged(parentDisposable, listener)
+  textField.document.whenDocumentChanged(parentDisposable, listener)
 }
 
+@Deprecated("Changed listener argument type from DocumentEvent to String.", level = DeprecationLevel.HIDDEN)
 fun SearchTextField.whenTextChanged(parentDisposable: Disposable? = null, listener: (DocumentEvent) -> Unit) {
-  textEditor.whenTextChanged(parentDisposable, listener)
+  textEditor.document.whenDocumentChanged(parentDisposable, listener)
 }
 
+@Deprecated("Changed listener argument type from DocumentEvent to String.", level = DeprecationLevel.HIDDEN)
 fun JTextComponent.whenTextChanged(parentDisposable: Disposable? = null, listener: (DocumentEvent) -> Unit) {
-  document.whenTextChanged(parentDisposable, listener)
+  document.whenDocumentChanged(parentDisposable, listener)
 }
 
+@Deprecated("Changed listener argument type from DocumentEvent to String.", level = DeprecationLevel.HIDDEN)
 fun Document.whenTextChanged(parentDisposable: Disposable? = null, listener: (DocumentEvent) -> Unit) {
+  whenDocumentChanged(parentDisposable, listener)
+}
+
+fun Document.whenDocumentChanged(parentDisposable: Disposable? = null, listener: (DocumentEvent) -> Unit) {
   addDocumentListener(parentDisposable, object : DocumentAdapter() {
     override fun textChanged(e: DocumentEvent) = listener(e)
   })
