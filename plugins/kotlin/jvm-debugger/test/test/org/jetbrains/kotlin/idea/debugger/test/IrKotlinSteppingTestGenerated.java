@@ -1698,6 +1698,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoDeferredSamLambdas.kt");
         }
 
+        @TestMetadata("smartStepIntoFunWithContext.kt")
+        public void testSmartStepIntoFunWithContext() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoFunWithContext.kt");
+        }
+
         @TestMetadata("smartStepIntoFunWithDefaultArgs.kt")
         public void testSmartStepIntoFunWithDefaultArgs() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoFunWithDefaultArgs.kt");

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -53,9 +54,11 @@ internal fun CallableMemberInfo(
 internal fun KaFunctionSymbol.isSuspend(): Boolean = this is KaNamedFunctionSymbol && this.isSuspend
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 internal fun KaFunctionSymbol.containsInlineClassInParameters(): Boolean =
     valueParameters.any { it.returnType.expandedSymbol?.isInlineClass() == true }
-            || receiverParameter?.type?.expandedSymbol?.isInlineClass() == true
+            || receiverParameter?.returnType?.expandedSymbol?.isInlineClass() == true
+            || contextReceivers.any { it.type.expandedSymbol?.isInlineClass() == true }
 
 context(KaSession)
 private fun KaFunctionSymbol.methodName() = when (this) {

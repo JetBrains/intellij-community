@@ -238,8 +238,10 @@ private fun String.isSubClassOf(baseInternalName: String?): Boolean {
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun KaCallableSymbol.getJvmSignature(): String? {
     val element = psi ?: return null
+    val contextReceivers = contextReceivers.mapNotNull { it.type.jvmName(element) }.joinToString("")
     val receiver = receiverType?.jvmName(element) ?: ""
     val isSuspend = this is KaFunctionSymbol && isSuspend()
     val parameterTypes = if (this is KaFunctionSymbol) {
@@ -253,7 +255,7 @@ private fun KaCallableSymbol.getJvmSignature(): String? {
         else -> returnType.jvmName(element) ?: return null
     }
     val continuationParameter = if (isSuspend) "Lkotlin/coroutines/Continuation;" else ""
-    return "($receiver$parameterTypes$continuationParameter)$returnType"
+    return "($contextReceivers$receiver$parameterTypes$continuationParameter)$returnType"
 }
 
 context(KaSession)

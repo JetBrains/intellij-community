@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.codeinsight.utils.getCallExpressionSymbol
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveFunctionCall
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isInlineOnly
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
 import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
@@ -330,7 +331,7 @@ class SmartStepTargetVisitor(
 
     private fun recordFunctionCall(expression: KtExpression, highlightExpression: KtExpression) {
         analyze(expression) {
-            val resolvedCall = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return
+            val resolvedCall = resolveFunctionCall(expression) ?: return
             val symbol = resolvedCall.partiallyAppliedSymbol.symbol
             if (symbol.annotations.any { it.classId?.internalName == "kotlin/internal/IntrinsicConstEvaluation" }) {
                 return

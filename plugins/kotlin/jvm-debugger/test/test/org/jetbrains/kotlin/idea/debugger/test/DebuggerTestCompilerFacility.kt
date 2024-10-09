@@ -200,6 +200,7 @@ open class DebuggerTestCompilerFacility(
     private fun getCompilerOptionsCommonForLibAndSource(): List<String> {
         val options = mutableListOf(
             "-Xlambdas=${compileConfig.lambdasGenerationScheme.description}",
+            "-Xcontext-receivers",
         )
         if (compileConfig.languageVersion != null) {
             options.add("-language-version=${compileConfig.languageVersion}")
