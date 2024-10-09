@@ -15,6 +15,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
+import static com.intellij.openapi.diagnostic.AsyncLogKt.log;
+
 @ApiStatus.Internal
 public class JulLogger extends Logger {
 
@@ -47,13 +49,8 @@ public class JulLogger extends Logger {
     logSevere(msg, null);
   }
 
-  protected final void logSevere(@Nullable String msg, @Nullable Object p) {
-    if (p == null) {
-      myLogger.log(Level.SEVERE, msg);
-    }
-    else {
-      myLogger.log(Level.SEVERE, msg, p);
-    }
+  protected final void logSevere(@NotNull String msg, @Nullable Throwable t) {
+    log(new LogEvent(myLogger, LogLevel.ERROR, msg, t));
   }
 
   @Override
@@ -63,12 +60,12 @@ public class JulLogger extends Logger {
 
   @Override
   public void trace(String message) {
-    myLogger.log(Level.FINER, message);
+    log(new LogEvent(myLogger, LogLevel.TRACE, message, null));
   }
 
   @Override
   public void trace(@Nullable Throwable t) {
-    myLogger.log(Level.FINER, "", t);
+    log(new LogEvent(myLogger, LogLevel.TRACE, "", t));
   }
 
   @Override
@@ -78,23 +75,23 @@ public class JulLogger extends Logger {
 
   @Override
   public void debug(String message, @Nullable Throwable t) {
-    myLogger.log(Level.FINE, message, t);
+    log(new LogEvent(myLogger, LogLevel.DEBUG, message, t));
   }
 
   @Override
   public void info(String message, @Nullable Throwable t) {
-    myLogger.log(Level.INFO, message, t);
+    log(new LogEvent(myLogger, LogLevel.INFO, message, t));
   }
 
   @Override
   public void warn(String message, @Nullable Throwable t) {
-    myLogger.log(Level.WARNING, message, t);
+    log(new LogEvent(myLogger, LogLevel.WARNING, message, t));
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
     String fullMessage = details.length > 0 ? message + "\nDetails: " + String.join("\n", details) : message;
-    myLogger.log(Level.SEVERE, fullMessage, t);
+    log(new LogEvent(myLogger, LogLevel.ERROR, fullMessage, t));
   }
 
   @Override
