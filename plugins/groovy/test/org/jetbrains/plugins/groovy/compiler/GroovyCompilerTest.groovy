@@ -100,7 +100,7 @@ abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertOutput("Foo", "239")
 
     setFileText(file, "class Bar {}")
-    shouldFail { make() }
+    shouldFail make()
 
     setFileText(file, barText)
     make()
@@ -326,7 +326,7 @@ class Bar extends Foo {
 
       touch(foo.virtualFile)
       touch(main.containingFile.virtualFile)
-      shouldSucceed { make() }
+      shouldSucceed make()
 
       assert oldFooStamp != findClassFile("Foo").lastModified()
       assert oldMainStamp != findClassFile("Main").lastModified()
@@ -626,7 +626,7 @@ class Indirect {
     }
 
     setFileText(used, 'class Used2 {}')
-    shouldFail { make() }
+    shouldFail make()
     assert findClassFile('Used') == null
 
     setFileText(used, 'class Used3 {}')
@@ -707,7 +707,7 @@ class Main {
     def barStamp = barCompiled.lastModified()
 
     setFileText(fooFile, 'class Foo ext { }')
-    shouldFail { make() }
+    shouldFail make()
     setFileText(fooFile, 'interface Foo extends Runnable { }')
     assertEmpty make()
 
@@ -777,7 +777,7 @@ public class Main {
 
     excludeFromCompilation(foo)
 
-    shouldFail { rebuild() }
+    shouldFail rebuild()
   }
 
   void "test compile groovy excluded from stub generation"() {
@@ -807,7 +807,7 @@ public class Main {
 
     def compilerTempRoot = BuildManager.instance.getProjectSystemDirectory(project).absolutePath
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), compilerTempRoot) //because compilation error points to file under 'groovyStubs' directory
-    shouldFail { make() }
+    shouldFail make()
 
     setFileText(foo, 'class Foo {}')
 
@@ -822,7 +822,7 @@ public class Main {
 
     excludeFromCompilation(foo)
 
-    shouldFail { compileModule(module) }
+    shouldFail compileModule(module)
   }
 
   void "test stubs generated while processing groovy class file dependencies"() {
@@ -890,7 +890,7 @@ string
 
       touch(bar1.virtualFile)
       touch(bar3.virtualFile)
-      shouldSucceed { make() }
+      shouldSucceed make()
 
       assert oldBar1Stamp != findClassFile("bar/Bar1").lastModified()
       assert oldBar2Stamp != findClassFile("bar/Bar2").lastModified()
@@ -1076,7 +1076,7 @@ class BuildContextImpl extends BuildContext {
 
     myFixture.addClass('class Foo {}')
     myFixture.addFileToProject('a.groovy', 'import goo.Goo; class Bar { }')
-    shouldFail { compileModule(module) }
+    shouldFail compileModule(module)
   }
 
   void "test honor bytecode version"() {
