@@ -161,10 +161,14 @@ private fun UserDataHolderEx.addActionAvailabilityHintImpl(vararg newHints: Edit
     putUserDataIfAbsent(hintsKey, hints)
   }
   for (newHint in newHints) {
-    if (hints.any { it.actionId == newHint.actionId }) {
-      logger.error("Availability hint for action '${newHint.actionId}' already exists")
-      return
+    val existingHint = hints.find { it.actionId == newHint.actionId }
+    if (existingHint != null) {
+      if (existingHint.condition != newHint.condition) {
+        logger.error("Availability hint for action '${newHint.actionId}' already exists")
+      }
+      continue
     }
+
     hints.add(newHint)
   }
 }
