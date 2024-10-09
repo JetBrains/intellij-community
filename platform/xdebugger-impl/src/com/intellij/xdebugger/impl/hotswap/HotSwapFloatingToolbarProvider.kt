@@ -6,7 +6,7 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.PopupHandler
-import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
 import icons.PlatformDebuggerImplIcons
@@ -29,6 +28,7 @@ import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 import kotlin.time.Duration.Companion.seconds
 
 private val hotSwapIcon: Icon by lazy {
@@ -119,16 +119,16 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
 
   private val tooltip = createHelpTooltip()
     .setShortcut(ActionManager.getInstance().getKeyboardShortcut("XDebugger.Hotswap.Modified.Files"))
-  val button = ActionButton(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).apply {
+  val button = ActionButtonWithText(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).apply {
+    setHorizontalTextPosition(SwingConstants.LEADING)
     tooltip.installOn(this)
+    installPopupMenu()
   }
 
   init {
     isOpaque = false
-    add(JBLabel(XDebuggerBundle.message("xdebugger.hotswap.code.changed")), BorderLayout.WEST)
     add(button, BorderLayout.CENTER)
     tooltip.installOn(this)
-    installPopupMenu()
   }
 
   fun update(status: HotSwapButtonStatus, presentation: Presentation) {
@@ -140,6 +140,8 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
     }
     presentation.icon = icon
     presentation.disabledIcon = icon
+    @Suppress("DialogTitleCapitalization")
+    presentation.text = XDebuggerBundle.message("xdebugger.hotswap.code.changed")
   }
 
 }
