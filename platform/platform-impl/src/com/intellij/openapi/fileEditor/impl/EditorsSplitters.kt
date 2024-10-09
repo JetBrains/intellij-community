@@ -713,8 +713,8 @@ open class EditorsSplitters internal constructor(
   private inner class MyFocusWatcher : FocusWatcher() {
     init {
       val focusRequestListener = object : AWTEventListener {
-        override fun eventDispatched(event: AWTEvent?) {
-          if (event is FocusEvent && event.getID() == FocusEvent.FOCUS_GAINED) {
+        override fun eventDispatched(event: AWTEvent) {
+          if (event.getID() == FocusEvent.FOCUS_GAINED) {
             rollbackFocusGainedIfNecessary(event.source as Component)
           }
         }
