@@ -395,7 +395,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     @Override
     public void fix(@NotNull PsiMethodCallExpression callExpression) {
       PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
-      if (expressions.length < 1) {
+      if (expressions.length < 1 || expressions.length > 2) {
         return;
       }
 
