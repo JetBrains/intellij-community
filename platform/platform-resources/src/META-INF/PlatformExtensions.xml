@@ -1113,6 +1113,7 @@
 
     <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
 
+    <fileEditorProvider implementation="com.intellij.openapi.wm.impl.ToolWindowTabFileEditorProvider" id="ToolWindowTabFileEditor"/>
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider" id="LargeFileEditor"/>
     <fileEditorProvider id="html-editor" implementation="com.intellij.openapi.fileEditor.impl.HTMLEditorProvider"/>
     <fileEditorProvider id="jcomponent-editor" implementation="com.intellij.openapi.fileEditor.impl.JComponentEditorProvider"/>
