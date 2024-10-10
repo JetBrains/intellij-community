@@ -29,7 +29,7 @@ public enum IntelliJPlatformProduct {
   /**
    * @deprecated Code With Me Guest is an old name for JetBrains Client
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   CWM_GUEST("CWMG", "Code With Me Guest", PlatformUtils.CWM_GUEST_PREFIX, null, null),
   JETBRAINS_CLIENT("JBC", "JetBrains Client", PlatformUtils.JETBRAINS_CLIENT_PREFIX, null, null),
   GATEWAY("GW", "Gateway", PlatformUtils.GATEWAY_PREFIX, "com.jetbrains.intellij.gateway:gateway", "idea/gateway:JetBrainsGateway"),

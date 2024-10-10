@@ -110,7 +110,7 @@ public final class PsiUtil {
    * @deprecated Use {@linkplain IntelliJProjectUtil#markAsIntelliJPlatformProject(Project, Boolean)} instead
    */
   @TestOnly
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void markAsIdeaProject(@NotNull Project project, boolean value) {
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, value);
   }
