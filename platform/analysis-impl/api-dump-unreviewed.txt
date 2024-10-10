@@ -656,7 +656,6 @@ com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:unescapedToolTip(java.lang.String):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 c:com.intellij.codeInsight.daemon.impl.HighlightInfo$IntentionActionDescriptor
 - <init>(com.intellij.codeInsight.intention.IntentionAction,java.util.List,java.lang.String,javax.swing.Icon,com.intellij.codeInsight.daemon.HighlightDisplayKey,com.intellij.lang.annotation.ProblemGroup,com.intellij.lang.annotation.HighlightSeverity):V
-- <init>(com.intellij.codeInsight.intention.IntentionAction,java.util.List,java.lang.String,javax.swing.Icon,com.intellij.codeInsight.daemon.HighlightDisplayKey,com.intellij.lang.annotation.ProblemGroup,com.intellij.lang.annotation.HighlightSeverity,com.intellij.openapi.util.Segment):V
 - equals(java.lang.Object):Z
 - getAction():com.intellij.codeInsight.intention.IntentionAction
 - getDisplayName():java.lang.String

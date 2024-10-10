@@ -16,7 +16,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +47,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   private Object toolId;
   private PsiElement psiElement;
   private int group;
-  private final List<HighlightInfo.IntentionActionDescriptor> fixes = new ArrayList<>();
+  private final List<FixInfo> fixes = new ArrayList<>();
   private boolean created;
   private PsiReference unresolvedReference;
 
@@ -223,6 +222,13 @@ final class HighlightInfoB implements HighlightInfo.Builder {
     unresolvedReference = ref;
   }
 
+  private record FixInfo(@NotNull IntentionAction action,
+                         @Nullable List<? extends IntentionAction> options,
+                         @Nls @Nullable String displayName,
+                         @Nullable TextRange fixRange,
+                         @Nullable HighlightDisplayKey key) {
+  }
+
   @Override
   public HighlightInfo.@NotNull Builder registerFix(@NotNull IntentionAction action,
                                                     @Nullable List<? extends IntentionAction> options,
@@ -230,8 +236,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
                                                     @Nullable TextRange fixRange,
                                                     @Nullable HighlightDisplayKey key) {
     assertNotCreated();
-    // both problemGroup and severity are null here since they might haven't been set yet; we'll pass actual values later, in createUnconditionally()
-    fixes.add(new HighlightInfo.IntentionActionDescriptor(action, options, displayName, null, key, null, null, fixRange));
+    fixes.add(new FixInfo(action, options, displayName, fixRange, key));
     return this;
   }
 
@@ -257,10 +262,9 @@ final class HighlightInfoB implements HighlightInfo.Builder {
                                            escapedToolTip, severity, isAfterEndOfLine, myNeedsUpdateOnTyping, isFileLevelAnnotation,
                                            navigationShift,
                                            problemGroup, toolId, gutterIconRenderer, group, unresolvedReference);
-    // fill IntentionActionDescriptor.problemGroup and IntentionActionDescriptor.severity - they can be null because .registerFix() might have been called before .problemGroup() and .severity()
-    List<HighlightInfo.IntentionActionDescriptor> iads = ContainerUtil.map(fixes, fixInfo -> new HighlightInfo.IntentionActionDescriptor(
-      fixInfo.getAction(), fixInfo.myOptions, fixInfo.getDisplayName(), fixInfo.getIcon(), fixInfo.myKey, problemGroup, severity, fixInfo.getFixRange()));
-    info.registerFixes(iads);
+    for (FixInfo fix : fixes) {
+      info.registerFix(fix.action(), fix.options(), fix.displayName(), fix.fixRange(), fix.key());
+    }
     return info;
   }
 

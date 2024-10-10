@@ -29,7 +29,6 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -58,7 +57,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
@@ -631,23 +629,18 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     UIUtil.dispatchAllInvocationEvents();
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
-    Editor editor = getEditor();
+    @NotNull Editor editor = getEditor();
     TextRange visibleRange = editor.calculateVisibleRange();
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 5000 && visibleRange.getEndOffset() < 10_000); // sanity check that visible range has been indeed changed
 
-    List<HighlightInfo> errors = ContainerUtil.sorted(highlightErrors(), Segment.BY_START_OFFSET_THEN_END_OFFSET);
-    assertSize(1000, errors);
+    List<HighlightInfo> errors = highlightErrors();
+    assertNotEmpty(errors);
     UnresolvedReferenceQuickFixUpdaterImpl updater = (UnresolvedReferenceQuickFixUpdaterImpl)UnresolvedReferenceQuickFixUpdater.getInstance(getProject());
-    for (int i = 0; i < errors.size(); i++) {
-      HighlightInfo error = errors.get(i);
-      if (visibleRange.contains(error)) { // we care only for visible errors; invisible ones may or may not be computed
-        updater.waitForBackgroundJobIfStartedInTests(error, 60, TimeUnit.SECONDS);
-        if (!error.hasHint()) {
-          List<HintAction> hints = ShowAutoImportPass.extractHints(error);
-          String message = error + ": " + i + " hasHints: "+error.hasHint() + "; hints:" + hints + "; visibleRange:" + visibleRange + "; contains: " + visibleRange.contains(error);
-          fail(message);
-        }
-      }
+    for (HighlightInfo error : errors) {
+      updater.waitForBackgroundJobIfStartedInTests(error);
+      List<HintAction> hints = ShowAutoImportPass.extractHints(error);
+      String message = error + " hasHints: " + error.hasHint() + "; hints:" + hints + "; visibleRange:" + visibleRange + "; contains: " + visibleRange.contains(error);
+      assertEquals(message, error.hasHint(), visibleRange.contains(error));
     }
   }
 }

@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
@@ -23,11 +25,13 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manages execution of {@link UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, HighlightInfo.Builder)} in background.
@@ -53,24 +57,20 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
     for (HighlightInfo info : infos) {
       PsiReference reference = info.unresolvedReference;
       if (reference == null) continue;
-      Future<?> job;
+      if (info.isUnresolvedReferenceQuickFixesComputed()) continue;
       PsiElement refElement = ReadAction.compute(() -> reference.getElement());
-      CompletableFuture<Object> newFuture = null;
-      synchronized (info) {
-        if (info.isUnresolvedReferenceQuickFixesComputed()) continue;
-        job = refElement.getUserData(JOB);
-        if (job == null) {
-          newFuture = new CompletableFuture<>();
-          job = ((UserDataHolderEx)refElement).putUserDataIfAbsent(JOB, newFuture);
-        }
-      }
-      if (job == newFuture) {
-        try {
-          ReadAction.run(() -> registerReferenceFixes(info, editor, file, reference, new ProperTextRange(file.getTextRange())));
-          newFuture.complete(null);
-        }
-        catch (Throwable t) {
-          newFuture.completeExceptionally(t);
+      Future<?> job = refElement.getUserData(JOB);
+      if (job == null) {
+        CompletableFuture<Object> newFuture = new CompletableFuture<>();
+        job = ((UserDataHolderEx)refElement).putUserDataIfAbsent(JOB, newFuture);
+        if (job == newFuture) {
+          try {
+            ReadAction.run(() -> registerReferenceFixes(info, editor, file, reference, new ProperTextRange(file.getTextRange())));
+            newFuture.complete(null);
+          }
+          catch (Throwable t) {
+            newFuture.completeExceptionally(t);
+          }
         }
       }
       try {
@@ -96,20 +96,31 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
   public void startComputingNextQuickFixes(@NotNull PsiFile file, @NotNull Editor editor, @NotNull ProperTextRange visibleRange) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    int offset = editor.getCaretModel().getOffset();
     Project project = file.getProject();
     Document document = editor.getDocument();
-    // compute unresolved refs suggestions from the caret to two pages down (in case the user is scrolling down, which is often the case)
-    int startOffset = Math.max(0, visibleRange.getStartOffset());
-    int endOffset = Math.min(document.getTextLength(), visibleRange.getEndOffset()+visibleRange.getLength());
+    AtomicInteger unresolvedInfosProcessed = new AtomicInteger();
     // first, compute quick fixes close to the caret
-    DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, startOffset, endOffset, info -> {
-      if (!info.isUnresolvedReference()) {
-        return true;
-      }
-      startUnresolvedRefsJob(info, editor, file, visibleRange);
-
-      return true;
-    });
+    DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, offset,
+                                           document.getTextLength(), info -> {
+        if (!info.isUnresolvedReference()) {
+          return true;
+        }
+        startUnresolvedRefsJob(info, editor, file, visibleRange);
+        // start no more than two jobs
+        return unresolvedInfosProcessed.incrementAndGet() <= 2;
+      });
+    // then, compute quickfixes inside the entire visible area, to show import hints for all unresolved references in vicinity if enabled
+    if (DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled() &&
+        DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(file)) {
+      DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, visibleRange.getStartOffset(),
+                                             visibleRange.getEndOffset(), info -> {
+          if (info.isUnresolvedReference()) {
+            startUnresolvedRefsJob(info, editor, file, visibleRange);
+          }
+          return true;
+        });
+    }
   }
 
   private void startUnresolvedRefsJob(@NotNull HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile file,
@@ -122,25 +133,19 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
     PsiReference reference = info.unresolvedReference;
     if (reference == null) return;
     PsiElement refElement = reference.getElement();
-    synchronized (info) {
-      Future<?> job = refElement.getUserData(JOB);
-      if (job != null) {
-        return;
-      }
-      if (!info.isUnresolvedReferenceQuickFixesComputed()) {
-        job = ForkJoinPool.commonPool().submit(ThreadContext.captureThreadContext(() ->
-          ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(
-          () -> ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
-          () -> registerReferenceFixes(info, editor, file, reference, visibleRange), new DaemonProgressIndicator()))), null);
-        refElement.putUserData(JOB, job);
-      }
+    Future<?> job = refElement.getUserData(JOB);
+    if (job != null) {
+      return;
     }
+    if (info.isUnresolvedReferenceQuickFixesComputed()) return;
+    job = ForkJoinPool.commonPool().submit(ThreadContext.captureThreadContext(() ->
+      ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(
+        () -> ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
+          () -> registerReferenceFixes(info, editor, file, reference, visibleRange), new DaemonProgressIndicator()))), null);
+    refElement.putUserData(JOB, job);
   }
 
-  private void registerReferenceFixes(@NotNull HighlightInfo info,
-                                      @NotNull Editor editor,
-                                      @NotNull PsiFile file,
-                                      @NotNull PsiReference reference,
+  private void registerReferenceFixes(@NotNull HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiReference reference,
                                       @NotNull ProperTextRange visibleRange) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -150,30 +155,25 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
       // this will be restarted anyway on smart mode switch
       return;
     }
-    List<HighlightInfo.IntentionActionDescriptor> quickfixes = new ArrayList<>();
-    UnresolvedReferenceQuickFixProvider.registerReferenceFixes(
-      reference, new QuickFixActionRegistrarImpl(info) {
-        @Override
-        void doRegister(@NotNull IntentionAction action,
-                        @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable String displayName,
-                        @Nullable TextRange fixRange,
-                        @Nullable HighlightDisplayKey key) {
-          quickfixes.add(new HighlightInfo.IntentionActionDescriptor(action, null, displayName, null, key, info.getProblemGroup(),
-                                                                     info.getSeverity(),fixRange));
-        }
-      });
-    synchronized (info) {
-      try {
-        if (!info.isUnresolvedReferenceQuickFixesComputed()) {
-          info.registerFixes(quickfixes);
-          info.setUnresolvedReferenceQuickFixesComputed();
-        }
-      }
-      finally {
-        referenceElement.putUserData(JOB, null);
-      }
+    AtomicBoolean changed = new AtomicBoolean();
+    try {
+      UnresolvedReferenceQuickFixProvider.registerReferenceFixes(
+        reference, new QuickFixActionRegistrarImpl(info) {
+          @Override
+          void doRegister(@NotNull IntentionAction action,
+                          @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable String displayName,
+                          @Nullable TextRange fixRange,
+                          @Nullable HighlightDisplayKey key) {
+            super.doRegister(action, displayName, fixRange, key);
+            changed.set(true);
+          }
+        });
+      info.setUnresolvedReferenceQuickFixesComputed();
     }
-    if (quickfixes.isEmpty() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    finally {
+      referenceElement.putUserData(JOB, null);
+    }
+    if (!changed.get() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return;
     }
     TextEditorHighlightingPass showAutoImportPass = new ShowAutoImportPass(file, editor, visibleRange);
@@ -191,12 +191,12 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
   }
 
   @TestOnly
-  void waitForBackgroundJobIfStartedInTests(@NotNull HighlightInfo info, int timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  void waitForBackgroundJobIfStartedInTests(@NotNull HighlightInfo info) throws InterruptedException, ExecutionException, TimeoutException {
     PsiReference reference = info.unresolvedReference;
     if (reference == null) return;
     Future<?> job = reference.getElement().getUserData(JOB);
     if (job != null) {
-      job.get(timeout, unit);
+      job.get(60, TimeUnit.SECONDS);
     }
   }
 }
