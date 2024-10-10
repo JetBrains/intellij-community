@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.completion.*;
@@ -9,6 +9,7 @@ import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonReferenceExpression;
 import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -27,7 +28,7 @@ import java.util.function.Predicate;
 /**
  * Completion in IntelliJ theme files.
  */
-final class ThemeJsonCompletionContributor extends CompletionContributor {
+final class ThemeJsonCompletionContributor extends CompletionContributor implements DumbAware {
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
