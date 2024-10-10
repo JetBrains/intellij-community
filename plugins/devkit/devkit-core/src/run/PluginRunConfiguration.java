@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModulePointer;
@@ -54,8 +53,6 @@ import static com.intellij.idea.LoggerFactory.LOG_FILE_NAME;
 import static org.jetbrains.idea.devkit.run.ProductInfoKt.resolveIdeHomeVariable;
 
 public class PluginRunConfiguration extends RunConfigurationBase<Element> implements ModuleRunConfiguration {
-
-  private static final Logger LOG = Logger.getInstance(PluginRunConfiguration.class);
 
   private static final String NAME = "name";
   private static final String MODULE = "module";
@@ -302,7 +299,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
     if (value == null) return;
 
     for (String parameter : value.split(" ")) {
-      if (parameter != null && parameter.length() > 0) {
+      if (!parameter.isEmpty()) {
         list.add(parameter);
       }
     }
