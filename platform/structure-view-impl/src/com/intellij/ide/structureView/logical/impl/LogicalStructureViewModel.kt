@@ -40,7 +40,7 @@ class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Ed
   }
 
   override fun isAlwaysLeaf(element: StructureViewTreeElement?): Boolean {
-    return element is ElementsBuilder.PropertyPsiElementStructureElement<*> || element is ElementsBuilder.PropertyStructureElement
+    return element is ElementsBuilder.PropertyStructureElement
   }
 
   override fun isAutoExpand(element: StructureViewTreeElement): Boolean {
@@ -307,7 +307,7 @@ private class ElementsBuilder {
     override fun getIcon(open: Boolean): Icon? = getPresentation().getIcon(open)
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
-      return emptyList() // getChildrenNodes (assembledModel, parentKey + "." + assembledModel.model.hashCode())
+      return getChildrenNodes(assembledModel)
     }
 
     override fun isAllowExtensions(): Boolean = false
@@ -335,7 +335,8 @@ private class ElementsBuilder {
     override fun getPresentation(): ItemPresentation = getPropertyPresentationData(grouper, assembledModel.model!!)
 
     override fun getChildren(): Array<TreeElement> {
-      return getChildrenNodes(assembledModel).toTypedArray()
+      //return getChildrenNodes(assembledModel).toTypedArray()
+      return emptyArray()
     }
 
     override fun equals(other: Any?): Boolean {

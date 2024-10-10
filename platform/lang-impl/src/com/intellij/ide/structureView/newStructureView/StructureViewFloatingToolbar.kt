@@ -53,6 +53,7 @@ internal class StructureViewFloatingToolbar(
     init(ownerComponent)
     showingTime = 150
     hidingTime = 50
+    backgroundAlpha = 1F
     border = BorderFactory.createEmptyBorder()
   }
 }
