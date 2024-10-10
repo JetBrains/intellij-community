@@ -67,7 +67,6 @@ class CsvDataset(
       result += object : EvaluationDatasetChunk {
         override val datasetName: String = this@CsvDataset.datasetRef.name
         override val name: String = "$datasetName:${offset - rows.size + 1}-${offset}"
-        override val sessionCount: Int = calls.size
         override val presentationText: String = presentationText.toString()
 
         override fun evaluate(
@@ -87,7 +86,7 @@ class CsvDataset(
             val session = featureInvoker.callFeature(call.expectedText, call.offset, call.nodeProperties)
             sessions += session
             sessionHandler(session)
-            if (handler.onSessionFinished(name, sessionCount - sessions.size)) {
+            if (handler.onSessionFinished(name, calls.size - sessions.size)) {
               break
             }
           }

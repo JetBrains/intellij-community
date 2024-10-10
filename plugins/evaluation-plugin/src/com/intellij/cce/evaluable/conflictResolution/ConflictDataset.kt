@@ -36,7 +36,6 @@ class ConflictDataset(
 
   private inner class ConflictChunk(
     private val conflictPath: Path,
-    override val sessionCount: Int = 1 // FIXME we should pre-calculate it?
   ) : EvaluationDatasetChunk {
     override val datasetName: String = datasetRef.name
     override val name: String = conflictPath.fileName.toString()

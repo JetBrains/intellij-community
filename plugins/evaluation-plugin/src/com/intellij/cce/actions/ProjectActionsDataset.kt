@@ -235,7 +235,6 @@ open class ProjectActionsDataset(
   ) : EvaluationDatasetChunk {
     override val datasetName: String = config.projectName
     override val name: String = fileActions.path
-    override val sessionCount: Int = fileActions.sessionsCount
 
     override fun evaluate(
       handler: InterpretationHandler,

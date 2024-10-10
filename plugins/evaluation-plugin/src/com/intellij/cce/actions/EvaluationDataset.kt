@@ -28,7 +28,6 @@ interface EvaluationDataset { // FIXME with implicit invoker inside it may make 
 interface EvaluationDatasetChunk {
   val datasetName: String
   val name: String
-  val sessionCount: Int
   val presentationText: String
 
   fun evaluate(
