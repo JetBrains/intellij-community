@@ -2106,6 +2106,7 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 - shelveChanges(java.util.Collection,java.lang.String,Z,Z):com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 - shelveChanges(java.util.Collection,java.lang.String,Z,Z,Z):com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 - shelveSilentlyUnderProgress(java.util.List,Z):V
+- showGotItTooltip(com.intellij.openapi.project.Project,java.awt.Component):V
 - s:suggestPatchName(com.intellij.openapi.project.Project,java.lang.String,java.io.File,java.lang.String):java.io.File
 - unshelveChangeList(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList,java.util.List,java.util.List,com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
 - unshelveChangeList(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList,java.util.List,java.util.List,com.intellij.openapi.vcs.changes.LocalChangeList,Z,Z,Z,java.lang.String,java.lang.String,Z):com.intellij.openapi.diff.impl.patch.ApplyPatchStatus
