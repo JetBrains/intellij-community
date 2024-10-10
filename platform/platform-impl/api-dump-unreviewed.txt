@@ -16823,14 +16823,11 @@ f:com.intellij.ui.popup.list.ListPopupWrapper$Companion
 c:com.intellij.ui.popup.list.PopupListElementRenderer
 - com.intellij.ui.popup.list.GroupedItemsListRenderer
 - sf:CUSTOM_KEY_STROKE_TEXT:com.intellij.openapi.util.Key
-- p:myButtonPane:javax.swing.JPanel
 - p:myButtonSeparator:javax.swing.JComponent
 - p:myIconBar:javax.swing.JComponent
 - p:myIconLabel:javax.swing.JLabel
-- p:myMainPane:javax.swing.JComponent
 - p:myMnemonicLabel:javax.swing.JLabel
 - pf:myPopup:com.intellij.ui.popup.list.ListPopupImpl
-- p:mySecondaryTextLabel:javax.swing.JLabel
 - <init>(com.intellij.ui.popup.list.ListPopupImpl):V
 - ps:createButtonsSeparator():javax.swing.JComponent
 - p:createIconBar():javax.swing.JComponent

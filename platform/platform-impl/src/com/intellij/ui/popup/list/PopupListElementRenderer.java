@@ -34,12 +34,12 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
   protected final ListPopupImpl myPopup;
   private @Nullable JLabel myShortcutLabel;
-  protected @Nullable JLabel mySecondaryTextLabel;
+  private @Nullable JLabel mySecondaryTextLabel;
   protected JLabel myMnemonicLabel;
   protected JLabel myIconLabel;
 
-  protected JPanel myButtonPane;
-  protected JComponent myMainPane;
+  private JPanel myButtonPane;
+  private JComponent myMainPane;
   protected JComponent myButtonSeparator;
   protected JComponent myIconBar;
 
