@@ -141,7 +141,7 @@ public class TestCaseLoader {
   /**
    * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).build();` instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TestCaseLoader(String classFilterName) {
     this(classFilterName, false);
   }
@@ -149,7 +149,7 @@ public class TestCaseLoader {
   /**
    * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).withForceLoadPerformanceTests(flag).build();` instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
     this(getFilter(getTestPatterns(), classFilterName, getTestGroups(), false), forceLoadPerformanceTests);
   }
