@@ -50,6 +50,11 @@ public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInsp
     return super.buildVisitor(holder, isOnTheFly);
   }
 
+  @Override
+  public final boolean isDumbAware() {
+    return false;
+  }
+
   protected static @NotNull ProblemsHolder createProblemsHolder(@NotNull UElement uElement,
                                                                 @NotNull InspectionManager manager,
                                                                 boolean isOnTheFly) {

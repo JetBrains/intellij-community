@@ -49,4 +49,9 @@ public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInsp
     return virtualFile != null &&
            ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION);
   }
+
+  @Override
+  public final boolean isDumbAware() {
+    return false;
+  }
 }

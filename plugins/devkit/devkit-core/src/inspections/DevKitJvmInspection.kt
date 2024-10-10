@@ -30,6 +30,9 @@ abstract class DevKitJvmInspection : JvmLocalInspection() {
 
   protected open fun isAllowed(holder: ProblemsHolder) = DevKitInspectionUtil.isAllowed(holder.file)
 
+  final override fun isDumbAware(): Boolean {
+    return false
+  }
 
   abstract class ForClass : DevKitJvmInspection() {
 
