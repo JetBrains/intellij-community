@@ -17,17 +17,17 @@ class BackgroundStepFactory(
   private val datasetContext: DatasetContext
 ) : StepFactory {
 
-  override fun generateActionsStep(): EvaluationStep = DatasetPreparationStep(environment.dataset, datasetContext)
+  override fun generateActionsStep(): EvaluationStep = DatasetPreparationStep(environment, datasetContext)
 
   override fun interpretActionsStep(): EvaluationStep =
-    ActionsInterpretationStep(config, environment.dataset, datasetContext, newWorkspace = false)
+    ActionsInterpretationStep(config, environment, datasetContext, newWorkspace = false)
 
   override fun generateReportStep(): EvaluationStep =
     ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it, SetupStatsCollectorStep.statsCollectorLogsDirectory) },
                          config.reports.sessionsFilters, config.reports.comparisonFilters, feature)
 
   override fun interpretActionsOnNewWorkspaceStep(): EvaluationStep =
-    ActionsInterpretationStep(config, environment.dataset, datasetContext, newWorkspace = true)
+    ActionsInterpretationStep(config, environment, datasetContext, newWorkspace = true)
 
   override fun reorderElements(): EvaluationStep =
     ReorderElementsStep(config)
@@ -39,9 +39,9 @@ class BackgroundStepFactory(
       SetupStatsCollectorStep(config.interpret.experimentGroup, config.interpret.logLocationAndItemText)
     else null
 
-  override fun setupSdkStep(): EvaluationStep? = environment.dataset.setupSdk
+  override fun setupSdkStep(): EvaluationStep? = environment.setupSdk
 
-  override fun checkSdkConfiguredStep(): EvaluationStep? = environment.dataset.checkSdk
+  override fun checkSdkConfiguredStep(): EvaluationStep? = environment.checkSdk
 
   override fun finishEvaluationStep(): FinishEvaluationStep = HeadlessFinishEvaluationStep()
 

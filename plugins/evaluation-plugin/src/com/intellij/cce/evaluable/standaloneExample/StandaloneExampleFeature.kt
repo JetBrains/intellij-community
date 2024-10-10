@@ -2,12 +2,12 @@ package com.intellij.cce.evaluable.standaloneExample
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonSerializationContext
-import com.intellij.cce.actions.CsvDataset
+import com.intellij.cce.actions.CsvEnvironment
 import com.intellij.cce.actions.DatasetRef
-import com.intellij.cce.actions.EvaluationDataset
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StandaloneFeature
 import com.intellij.cce.evaluable.StrategySerializer
+import com.intellij.cce.evaluation.EvaluationEnvironment
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.metric.Metric
 import com.intellij.cce.metric.PrecisionMetric
@@ -22,9 +22,9 @@ class StandaloneExampleFeature : StandaloneFeature<DatasetStrategy>("standalone-
     override fun deserialize(map: Map<String, Any>, language: String): DatasetStrategy = DatasetStrategy()
   }
 
-  override fun getDataset(config: Config): EvaluationDataset {
+  override fun prepareEnvironment(config: Config): EvaluationEnvironment {
     val fileDataset = config.csvDataset ?: throw IllegalStateException("Required dataset config")
-    return CsvDataset(
+    return CsvEnvironment(
       datasetRef = DatasetRef.parse(fileDataset.url),
       chunkSize = fileDataset.chunkSize,
       targetField = "Type",

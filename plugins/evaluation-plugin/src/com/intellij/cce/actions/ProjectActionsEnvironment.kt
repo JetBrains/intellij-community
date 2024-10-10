@@ -4,10 +4,9 @@ package com.intellij.cce.actions
 import com.intellij.cce.core.*
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.common.CommonActionsInvoker
-import com.intellij.cce.evaluation.EvaluationRootInfo
-import com.intellij.cce.evaluation.EvaluationStep
-import com.intellij.cce.evaluation.SetupSdkStep
+import com.intellij.cce.evaluation.*
 import com.intellij.cce.evaluation.step.CheckProjectSdkStep
+import com.intellij.cce.evaluation.step.runInIntellij
 import com.intellij.cce.interpreter.*
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
 import com.intellij.cce.processor.EvaluationRootByRangeProcessor
@@ -19,15 +18,19 @@ import com.intellij.cce.util.Summary
 import com.intellij.cce.util.text
 import com.intellij.cce.visitor.CodeFragmentBuilder
 import com.intellij.cce.workspace.Config
+import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.cce.workspace.storages.storage.ActionsSingleFileStorage
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.warmup.util.importOrOpenProjectAsync
+import java.nio.file.FileSystems
 import kotlin.random.Random
 
-open class ProjectActionsDataset(
+open class ProjectActionsEnvironment(
   private val strategy: EvaluationStrategy,
   val config: Config.ActionsGeneration,
   private val filesLimit: Int?, // TODO dataset generation could be lazy
@@ -37,7 +40,7 @@ open class ProjectActionsDataset(
   val processor: GenerateActionsProcessor,
   private val featureName: String,
   val featureInvoker: FeatureInvoker,
-) : EvaluationDataset {
+) : EvaluationEnvironment {
   private val datasetRef = config.sourceFile.run {
     val sf = this ?: ""
     if (sf.isNotBlank()) {
@@ -89,7 +92,7 @@ open class ProjectActionsDataset(
     return datasetContext.actionsStorage.computeSessionsCount()
   }
 
-  override fun chunks(datasetContext: DatasetContext): Iterator<EvaluationDatasetChunk> {
+  override fun chunks(datasetContext: DatasetContext): Iterator<EvaluationChunk> {
     ensureDataRefIsHandled(datasetContext)
     val files = datasetContext.actionsStorage.getActionFiles()
     return files.shuffled(FILES_RANDOM).asSequence().map { file ->
@@ -170,6 +173,13 @@ open class ProjectActionsDataset(
     actionsSummarizer.save(datasetContext)
   }
 
+  override fun execute(step: EvaluationStep, workspace: EvaluationWorkspace): EvaluationWorkspace? =
+    step.runInIntellij(project, workspace)
+
+  override fun close() {
+    ProjectOpeningUtils.closeProject(project)
+  }
+
   private class ActionsSummarizer {
     private val rootSummary: Summary = Summary.create()
     fun update(fileActions: FileActions) {
@@ -232,7 +242,7 @@ open class ProjectActionsDataset(
   private inner class FileActionsChunk(
     private val fileActions: FileActions,
     override val presentationText: String,
-  ) : EvaluationDatasetChunk {
+  ) : EvaluationChunk {
     override val datasetName: String = config.projectName
     override val name: String = fileActions.path
 
@@ -250,7 +260,28 @@ open class ProjectActionsDataset(
       return actionInterpreter.interpret(fileActions, sessionHandler)
     }
   }
+
+  companion object {
+    fun open(projectPath: String, init: (Project) -> ProjectActionsEnvironment): ProjectActionsEnvironment {
+      println("Open and load project $projectPath. Operation may take a few minutes.")
+      @Suppress("DEPRECATION")
+      val project = runUnderModalProgressIfIsEdt {
+        importOrOpenProjectAsync(OpenProjectArgsData(FileSystems.getDefault().getPath(projectPath)))
+      }
+      println("Project loaded!")
+
+      val environment = try {
+        init(project)
+      }
+      catch (exception: Exception) {
+        ProjectOpeningUtils.closeProject(project)
+        throw RuntimeException("Failed to initialize project environment: $exception", exception)
+      }
+
+      return environment
+    }
+  }
 }
 
-private val LOG = Logger.getInstance(ProjectActionsDataset::class.java)
+private val LOG = Logger.getInstance(ProjectActionsEnvironment::class.java)
 private val FILES_RANDOM = Random(42)

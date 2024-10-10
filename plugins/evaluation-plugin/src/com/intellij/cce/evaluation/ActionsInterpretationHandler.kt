@@ -2,9 +2,7 @@
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.actions.DatasetContext
-import com.intellij.cce.actions.EvaluationDataset
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
-import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.interpreter.InterpretFilter
 import com.intellij.cce.interpreter.InterpretationHandlerImpl
 import com.intellij.cce.util.ExceptionsUtil
@@ -35,10 +33,10 @@ class ActionsInterpretationHandler(
     logsSaverIf(config.interpret.saveFusLogs) { workspace.fusLogsSaver }
   ).asCompositeLogsSaver()
 
-  fun invoke(dataset: EvaluationDataset, workspace: EvaluationWorkspace, indicator: Progress) {
+  fun invoke(environment: EvaluationEnvironment, workspace: EvaluationWorkspace, indicator: Progress) {
     var sessionsCount: Int
     val computingTime = measureTimeMillis {
-      sessionsCount = dataset.sessionCount(datasetContext)
+      sessionsCount = environment.sessionCount(datasetContext)
     }
     LOG.info("Computing of sessions count took $computingTime ms")
     val interpretationConfig = config.interpret
@@ -55,7 +53,7 @@ class ActionsInterpretationHandler(
       println("During actions interpretation will be skipped about $skippedSessions sessions")
     }
     var fileCount = 0
-    for (chunk in dataset.chunks(datasetContext)) {
+    for (chunk in environment.chunks(datasetContext)) {
       if (config.interpret.filesLimit?.let { it <= fileCount } == true) {
         break
       }

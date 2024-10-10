@@ -58,21 +58,19 @@ internal class ContextCollectionEvaluationCommand : CompletionEvaluationStarter.
     val workspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
     val evaluationRootInfo = EvaluationRootInfo(true)
     feature.prepareEnvironment(config).use { environment ->
-      val dataset = environment.dataset
+      check(environment is ProjectActionsEnvironment)
 
-      check(dataset is ProjectActionsDataset)
-
-      val actions = dataset.config
-      val newDataset = object : ProjectActionsDataset(
+      val actions = environment.config
+      val newEnvironment = object : ProjectActionsEnvironment(
         config.strategy,
         actions,
         config.interpret.filesLimit,
         config.interpret.sessionsLimit,
         evaluationRootInfo,
-        dataset.project,
-        dataset.processor,
+        environment.project,
+        environment.processor,
         feature.name,
-        dataset.featureInvoker
+        environment.featureInvoker
       ) {
         override fun prepare(datasetContext: DatasetContext, progress: Progress) {
           val files = runReadAction {
@@ -82,10 +80,6 @@ internal class ContextCollectionEvaluationCommand : CompletionEvaluationStarter.
           val sampled = files.shuffled(Random(strategy.samplingSeed)).take(strategy.samplesCount).sortedBy { it.name }
           generateActions(datasetContext, actions.language, sampled, evaluationRootInfo, progress)
         }
-      }
-
-      val newEnvironment = object : EvaluationEnvironment by environment {
-        override val dataset: EvaluationDataset = newDataset
       }
 
       val datasetContext = DatasetContext(workspace, workspace, null)

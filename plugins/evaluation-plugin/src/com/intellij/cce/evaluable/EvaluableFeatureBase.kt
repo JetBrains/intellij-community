@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluable
 
-import com.intellij.cce.actions.DatasetRef
-import com.intellij.cce.actions.ProjectActionsDataset
+import com.intellij.cce.actions.ProjectActionsEnvironment
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluation.*
 import com.intellij.cce.interpreter.FeatureInvoker
@@ -44,19 +43,17 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
   override fun prepareEnvironment(config: Config): EvaluationEnvironment {
     val actions = actions(config)
     val strategy = config.strategy<T>()
-    return ProjectEnvironment.open(actions.projectPath) { project ->
-      StandaloneEnvironment(
-        dataset = ProjectActionsDataset(
-          strategy,
-          actions,
-          config.interpret.filesLimit,
-          config.interpret.sessionsLimit,
-          EvaluationRootInfo(true),
-          project,
-          getGenerateActionsProcessor(strategy, project),
-          name,
-          featureInvoker = getFeatureInvoker(project, Language.resolve(actions.language), strategy)
-        )
+    return ProjectActionsEnvironment.open(actions.projectPath) { project ->
+      ProjectActionsEnvironment(
+        strategy,
+        actions,
+        config.interpret.filesLimit,
+        config.interpret.sessionsLimit,
+        EvaluationRootInfo(true),
+        project,
+        getGenerateActionsProcessor(strategy, project),
+        name,
+        featureInvoker = getFeatureInvoker(project, Language.resolve(actions.language), strategy)
       )
     }
   }

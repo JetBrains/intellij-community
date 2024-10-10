@@ -4,32 +4,27 @@ import com.intellij.cce.core.Session
 import com.intellij.cce.core.SimpleTokenProperties
 import com.intellij.cce.core.SymbolLocation
 import com.intellij.cce.core.TypeProperty
-import com.intellij.cce.evaluation.EvaluationStep
+import com.intellij.cce.evaluation.EvaluationChunk
+import com.intellij.cce.evaluation.SimpleFileEnvironment
 import com.intellij.cce.interpreter.*
-import com.intellij.cce.util.Progress
+import java.nio.file.Path
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readLines
 
-class CsvDataset(
-  private val datasetRef: DatasetRef,
+class CsvEnvironment(
+  override val datasetRef: DatasetRef,
   private val chunkSize: Int,
   private val targetField: String,
   private val featureInvoker: FeatureInvoker,
-) : EvaluationDataset {
-  override val setupSdk: EvaluationStep? = null
-  override val checkSdk: EvaluationStep? = null
+) : SimpleFileEnvironment() {
 
   override val preparationDescription: String = "Checking that CSV file exists"
 
-  override fun prepare(datasetContext: DatasetContext, progress: Progress) {
-    val datasetPath = datasetContext.path(datasetRef)
-
+  override fun checkFile(datasetPath: Path) {
     require(datasetPath.extension == "csv") {
       "Csv dataset should have the appropriate extension: $datasetRef"
     }
-
-    datasetRef.prepare(datasetContext)
 
     check(datasetPath.isRegularFile()) {
       "$datasetRef didn't create a file: $datasetPath"
@@ -38,13 +33,13 @@ class CsvDataset(
 
   override fun sessionCount(datasetContext: DatasetContext): Int = datasetContext.path(datasetRef).readLines().size - 1
 
-  override fun chunks(datasetContext: DatasetContext): Iterator<EvaluationDatasetChunk> {
+  override fun chunks(datasetContext: DatasetContext): Iterator<EvaluationChunk> {
     val lines = datasetContext.path(datasetRef).readLines()
     val dataLines = lines.subList(1, lines.size)
     val names = lines.first().split(',').map { it.trim() }
 
     var offset = 0
-    val result = mutableListOf<EvaluationDatasetChunk>()
+    val result = mutableListOf<EvaluationChunk>()
     for (rows in dataLines.chunked(chunkSize)) {
       val presentationText = StringBuilder()
       val calls = mutableListOf<CallFeature>()
@@ -64,8 +59,8 @@ class CsvDataset(
         offset += 1
       }
 
-      result += object : EvaluationDatasetChunk {
-        override val datasetName: String = this@CsvDataset.datasetRef.name
+      result += object : EvaluationChunk {
+        override val datasetName: String = this@CsvEnvironment.datasetRef.name
         override val name: String = "$datasetName:${offset - rows.size + 1}-${offset}"
         override val presentationText: String = presentationText.toString()
 

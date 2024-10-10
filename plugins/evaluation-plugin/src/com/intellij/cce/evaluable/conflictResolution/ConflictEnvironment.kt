@@ -3,32 +3,26 @@ package com.intellij.cce.evaluable.conflictResolution
 import com.intellij.cce.actions.*
 import com.intellij.cce.core.*
 import com.intellij.cce.evaluable.AIA_CONTEXT
-import com.intellij.cce.evaluation.EvaluationStep
+import com.intellij.cce.evaluation.EvaluationChunk
+import com.intellij.cce.evaluation.SimpleFileEnvironment
 import com.intellij.cce.interpreter.InterpretFilter
 import com.intellij.cce.interpreter.InterpretationHandler
 import com.intellij.cce.interpreter.InterpretationOrder
-import com.intellij.cce.util.Progress
 import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readText
 
-class ConflictDataset(
-  private val datasetRef: DatasetRef,
+class ConflictEnvironment(
+  override val datasetRef: DatasetRef,
   private val conflictResolver: ConflictResolver<*>
-) : EvaluationDataset {
-  override val setupSdk: EvaluationStep? = null
-  override val checkSdk: EvaluationStep? = null
+) : SimpleFileEnvironment() {
 
   override val preparationDescription: String = "Checking that conflict dataset exists"
-
-  override fun prepare(datasetContext: DatasetContext, progress: Progress) {
-    datasetRef.prepare(datasetContext)
-  }
 
   override fun sessionCount(datasetContext: DatasetContext): Int =
     datasetContext.path(datasetRef).listDirectoryEntries().size // FIXME should be pre-calculated
 
-  override fun chunks(datasetContext: DatasetContext): Iterator<EvaluationDatasetChunk> {
+  override fun chunks(datasetContext: DatasetContext): Iterator<EvaluationChunk> {
     return datasetContext.path(datasetRef).listDirectoryEntries().map { conflictPath ->
       ConflictChunk(conflictPath)
     }.iterator()
@@ -36,7 +30,7 @@ class ConflictDataset(
 
   private inner class ConflictChunk(
     private val conflictPath: Path,
-  ) : EvaluationDatasetChunk {
+  ) : EvaluationChunk {
     override val datasetName: String = datasetRef.name
     override val name: String = conflictPath.fileName.toString()
     override val presentationText: String = readText("result")
