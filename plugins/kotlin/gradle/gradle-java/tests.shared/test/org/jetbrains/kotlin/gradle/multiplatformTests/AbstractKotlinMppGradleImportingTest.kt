@@ -134,20 +134,28 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
 
     open fun TestConfigurationDslScope.defaultTestConfiguration() {}
 
-    protected fun doTest(runImport: Boolean = true, testSpecificConfiguration: TestConfigurationDslScope.() -> Unit = { }) {
+    protected fun doTest(
+        runImport: Boolean = true,
+        afterImport: (KotlinMppTestsContextImpl) -> Unit = { },
+        testSpecificConfiguration: TestConfigurationDslScope.() -> Unit = { },
+    ) {
         context.testConfiguration.defaultTestConfiguration()
         context.testConfiguration.testSpecificConfiguration()
-        context.doTest(runImport)
+        context.doTest(runImport, afterImport)
     }
 
-    private fun KotlinMppTestsContextImpl.doTest(runImport: Boolean) {
+    private fun KotlinMppTestsContextImpl.doTest(runImport: Boolean, afterImport: (KotlinMppTestsContextImpl) -> Unit = { }) {
         runAll(
             {
                 runForEnabledFeatures { context.beforeTestExecution() }
                 createLocalPropertiesFile()
                 configureByFiles()
                 runForEnabledFeatures { context.beforeImport() }
-                if (runImport) importProject()
+                if (runImport) {
+                    importProject()
+                }
+                afterImport.invoke(context)
+
                 runForEnabledFeatures { context.afterImport() }
             },
             {
