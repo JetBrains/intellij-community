@@ -24,7 +24,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 /**
  * @deprecated Use MavenSyncConsole instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class BTWMavenConsole extends MavenConsole {
 
   private final Project myProject;

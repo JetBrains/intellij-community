@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
@@ -32,6 +33,7 @@ class MavenProjectReader(private val myProject: Project) {
   private val myReadHelper: MavenProjectModelReadHelper = MavenUtil.createModelReadHelper(myProject)
   private var mySettingsProfilesCache: SettingsProfilesCache? = null
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use async method", ReplaceWith("readProjectAsync(generalSettings, file, explicitProfiles, locator) }"))
   fun readProject(generalSettings: MavenGeneralSettings,
                   file: VirtualFile,
@@ -562,6 +564,7 @@ class MavenProjectReader(private val myProject: Project) {
 
 
   // used in third-party plugins
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use {@link MavenProjectResolver}")
   @Throws(MavenProcessCanceledException::class)
   fun resolveProject(generalSettings: MavenGeneralSettings,

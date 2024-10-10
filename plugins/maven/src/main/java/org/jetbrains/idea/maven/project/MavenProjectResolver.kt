@@ -457,7 +457,7 @@ class MavenProjectResolver(private val myProject: Project) {
     return null
   }
 
-
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link #resolveProject()}")
   internal fun resolveProjectSync(embedder: MavenEmbedderWrapper,
                                   files: Collection<VirtualFile>,

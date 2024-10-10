@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.util.progress.RawProgressReporter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
@@ -174,6 +175,7 @@ class MavenArtifactDownloader(private val myProject: Project,
   companion object {
     @Throws(MavenProcessCanceledException::class)
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use downloadSourcesAndJavadocs()")
     fun download(project: Project,
                  projectsTree: MavenProjectsTree,
