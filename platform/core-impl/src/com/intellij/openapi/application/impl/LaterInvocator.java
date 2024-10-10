@@ -368,6 +368,7 @@ public final class LaterInvocator {
   /**
    * @deprecated use {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllEventsInIdeEventQueue()} instead
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @TestOnly
   public static void dispatchPendingFlushes() {

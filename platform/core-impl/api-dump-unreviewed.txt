@@ -1415,7 +1415,6 @@ com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType
 f:com.intellij.openapi.progress.ProgressIndicatorForCollections
 - bsf:forEachWithProgress(java.util.Collection,com.intellij.openapi.progress.ProgressIndicator,kotlin.jvm.functions.Function2):V
 - bsf:mapWithProgress(java.util.Collection,com.intellij.openapi.progress.ProgressIndicator,kotlin.jvm.functions.Function2):java.util.List
-- sf:runUnderBoundCancellation(com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.progress.ProgressIndicator,kotlin.jvm.functions.Function0):java.lang.Object
 - sf:runUnderNestedProgressAndRelayMessages(com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.progress.ProgressIndicator,kotlin.jvm.functions.Function1):java.lang.Object
 - sf:runWithStateDelegate(com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase,com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase,kotlin.jvm.functions.Function0):java.lang.Object
 - bsf:withPushPop(com.intellij.openapi.progress.ProgressIndicator,kotlin.jvm.functions.Function0):java.lang.Object
@@ -4057,5 +4056,4 @@ org.picocontainer.MutablePicoContainer
 - a:getComponentAdapter(java.lang.Object):org.picocontainer.ComponentAdapter
 - registerComponentImplementation(java.lang.Class):org.picocontainer.ComponentAdapter
 - a:registerComponentImplementation(java.lang.Object,java.lang.Class):org.picocontainer.ComponentAdapter
-- a:registerComponentInstance(java.lang.Object,java.lang.Object):org.picocontainer.ComponentAdapter
 - a:unregisterComponent(java.lang.Object):org.picocontainer.ComponentAdapter

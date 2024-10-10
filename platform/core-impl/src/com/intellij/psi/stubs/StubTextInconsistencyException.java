@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContentImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,7 @@ public final class StubTextInconsistencyException extends RuntimeException imple
    *
    * @deprecated Use {@link #checkStubTextConsistency(PsiFile, SourceOfCheck)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static void checkStubTextConsistency(@NotNull PsiFile file,
                                               @NotNull StubInconsistencyReporter.SourceOfCheck reason,

@@ -70,7 +70,6 @@ com.intellij.lexer.RestartableLexer
 - a:applyBranchChanges():V
 - a:getBranchChanges():java.util.Map
 *:com.intellij.model.Pointer
-- s:delegatingPointer(com.intellij.model.Pointer,java.lang.Object,java.util.function.Function):com.intellij.model.Pointer
 - s:delegatingPointer(com.intellij.model.Pointer,java.util.function.Function):com.intellij.model.Pointer
 - a:dereference():java.lang.Object
 - s:fileRangePointer(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,java.util.function.BiFunction):com.intellij.model.Pointer

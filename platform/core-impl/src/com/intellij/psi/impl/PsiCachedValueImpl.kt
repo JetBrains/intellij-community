@@ -4,6 +4,7 @@ package com.intellij.psi.impl
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
+import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.SoftReference
 
 sealed class AbstractPsiCachedValue<T>(
@@ -23,6 +24,7 @@ sealed class AbstractPsiCachedValue<T>(
 
 open class PsiCachedValueImpl<T>
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use PsiCachedValueImpl.Soft")
 internal constructor(
   manager: PsiManager,
