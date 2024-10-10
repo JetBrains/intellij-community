@@ -1,0 +1,11 @@
+// "Convert to 'forEach'" "true"
+// WITH_STDLIB
+fun test(list: List<String>) {
+    list.forEach { s ->
+        when (s) {
+            "a" -> return@forEach
+            "b" -> return@forEach
+            else -> println(s)
+        }
+    }
+}
