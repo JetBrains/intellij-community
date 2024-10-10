@@ -50,13 +50,12 @@ fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinaryExpressio
     val rightPartOfBinaryExpression = binaryExpression.right ?: return null
 
     val leftPartOfBinaryExpression = binaryExpression.left ?: return null
-    val textOfLeftPartOfBinaryExpression = leftPartOfBinaryExpression.text
 
     val (optionName, replacementOfKotlinOptionsIfNeeded) = getOptionName(leftPartOfBinaryExpression)
         ?: return null
 
     if (rightPartOfBinaryExpression is KtBinaryExpression && !optionName.contains("freeCompilerArgs")) {
-        return getReplacementOnlyOfKotlinOptionsIfNeeded(rightPartOfBinaryExpression, textOfLeftPartOfBinaryExpression)
+        return getReplacementOnlyOfKotlinOptionsIfNeeded(binaryExpression)
     }
 
     val (optionValue, valueContainsMultipleValues) = getOptionValue(rightPartOfBinaryExpression, optionName) ?: return null
@@ -75,7 +74,7 @@ fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinaryExpressio
         return Replacement(binaryExpression, expressionForCompilerOption.expression, expressionForCompilerOption.classToImport)
     }
     // ALL OTHER
-    return getReplacementOnlyOfKotlinOptionsIfNeeded(binaryExpression, textOfLeftPartOfBinaryExpression)
+    return getReplacementOnlyOfKotlinOptionsIfNeeded(binaryExpression)
 }
 
 private fun getOptionValue(expression: KtExpression, optionName: String): Pair<String, Boolean>? {
@@ -264,11 +263,11 @@ fun getCompilerOption(optionName: String, optionValue: String): CompilerOption {
 private val collectionsNamesRegex = Regex("listOf|mutableListOf|setOf|mutableSetOf")
 
 private fun getReplacementOnlyOfKotlinOptionsIfNeeded(
-    binaryExpression: KtBinaryExpression,
-    textOfLeftPartOfBinaryExpression: String,
+    binaryExpression: KtBinaryExpression
 ): Replacement? {
-    return if (textOfLeftPartOfBinaryExpression.startsWith("kotlinOptions.")) {
-        val replacement = binaryExpression.text.replace("kotlinOptions.", "compilerOptions.")
+    val leftPartOfBinaryExpression = binaryExpression.left ?: return null
+    return if (leftPartOfBinaryExpression is KtDotQualifiedExpression && leftPartOfBinaryExpression.text.startsWith("kotlinOptions")) {
+        val replacement = binaryExpression.text.replace("kotlinOptions", "compilerOptions")
         Replacement(binaryExpression, replacement)
     } else {
         null
