@@ -81,7 +81,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 
 import static com.intellij.xdebugger.impl.CoroutineUtilsKt.createMutableStateFlow;
-import static com.intellij.xdebugger.impl.XDebuggerActiveSessionControllerKt.synchronizeActiveSessionWithDb;
 
 @ApiStatus.Internal
 @State(name = "XDebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -113,8 +112,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myWatchesManager = new XDebuggerWatchesManager(project, coroutineScope);
     myPinToTopManager = new XDebuggerPinToTopManager(coroutineScope);
     myExecutionPointManager = new XDebuggerExecutionPointManager(project, coroutineScope);
-
-    synchronizeActiveSessionWithDb(coroutineScope, project, myActiveSession);
 
     messageBusConnection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override

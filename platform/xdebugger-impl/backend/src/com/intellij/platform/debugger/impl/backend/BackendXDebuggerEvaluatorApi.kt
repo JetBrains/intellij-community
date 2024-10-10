@@ -12,7 +12,6 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
 import com.intellij.xdebugger.frame.*
-import com.intellij.xdebugger.impl.LocalXDebuggerSessionEvaluatorEntity
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil.XValuePresentationTextExtractor
 import com.jetbrains.rhizomedb.entity
