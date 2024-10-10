@@ -11,6 +11,7 @@ import com.intellij.psi.xml.XmlTag
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.model.MavenDomProfiles
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel
+import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -890,16 +891,17 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testMavenHome() = runBlocking {
-    updateProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <name>${'$'}{<caret>maven.home}</name>
-                       """.trimIndent())
-    val ref = getReferenceAtCaret(projectPom)!!
-    // the reference for maven.home property resolves to its PsiElement
-    assertResolved(projectPom, ref.element)
+  fun testResolvingPropertiesToThemselves() = runBlocking {
+    MavenPropertyPsiReference.PROPS_RESOLVING_TO_MY_ELEMENT.forEach { propertyName ->
+      updateProjectPom("""
+                         <groupId>test</groupId>
+                         <artifactId>project</artifactId>
+                         <version>1</version>
+                         <name>${'$'}{<caret>$propertyName}</name>
+                         """.trimIndent())
+      val ref = getReferenceAtCaret(projectPom)!!
+      assertResolved(projectPom, ref.element)
+    }
   }
 
   @Test
@@ -1111,8 +1113,12 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
     assertContain(variants, "artifactId", "project.artifactId", "pom.artifactId")
     assertContain(variants, "basedir", "project.basedir", "pom.basedir", "project.baseUri", "pom.basedir")
     assertDoNotContain(variants, "baseUri")
+    assertContain(variants, "build.timestamp")
     assertContain(variants, "maven.build.timestamp")
     assertContain(variants, "maven.multiModuleProjectDirectory")
+    assertContain(variants, "maven.home")
+    assertContain(variants, "maven.version")
+    assertContain(variants, "maven.build.version")
     assertDoNotContain(variants, "project.maven.build.timestamp")
     assertContain(variants, "settingsXmlProp")
     assertContain(variants, "settings.localRepository")

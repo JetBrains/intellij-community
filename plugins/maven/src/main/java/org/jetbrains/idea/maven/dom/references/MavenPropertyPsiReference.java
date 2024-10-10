@@ -60,6 +60,8 @@ import static icons.OpenapiIcons.RepositoryLibraryLogo;
 public class MavenPropertyPsiReference extends MavenPsiReference implements LocalQuickFixProvider {
   public static final String TIMESTAMP_PROP = "maven.build.timestamp";
   public static final String MULTIPROJECT_DIR_PROP = "maven.multiModuleProjectDirectory";
+  public static final Set<String> PROPS_RESOLVING_TO_MY_ELEMENT = Set.of(
+    TIMESTAMP_PROP, "build.timestamp", "maven.home", "maven.version", "maven.build.version");
 
   @Nullable
   protected final MavenDomProjectModel myProjectDom;
@@ -153,8 +155,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
       return getBaseDir(mavenProject);
     }
 
-
-    if (myText.equals(TIMESTAMP_PROP)) {
+    if (PROPS_RESOLVING_TO_MY_ELEMENT.contains(myText)) {
       return myElement;
     }
 
@@ -217,10 +218,6 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     if (myProjectDom != null) {
       PsiElement result = MavenDomProjectProcessorUtils.searchProperty(myText, myProjectDom, myProject);
       if (result != null) return result;
-    }
-
-    if ("maven.home".equals(myText)) {
-      return myElement;
     }
 
     if ("java.home".equals(myText)) {
@@ -408,8 +405,10 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     if (prefix == null) {
       result.add(createLookupElement(baseDir, "project.baseUri", RepositoryLibraryLogo));
       result.add(createLookupElement(baseDir, "pom.baseUri", RepositoryLibraryLogo));
-      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(RepositoryLibraryLogo));
       result.add(LookupElementBuilder.create(MULTIPROJECT_DIR_PROP).withIcon(RepositoryLibraryLogo));
+      for (String property : PROPS_RESOLVING_TO_MY_ELEMENT) {
+        result.add(LookupElementBuilder.create(property).withIcon(RepositoryLibraryLogo));
+      }
     }
 
     processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, (property, descriptor) -> {
