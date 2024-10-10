@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,40 +47,22 @@ public final class CharsetUtil {
    * @return a {@code TextRange} representing the range of unmappable characters, or {@code null} if all characters can be mapped
    */
   public static @Nullable TextRange findUnmappableCharacters(@Nullable CharSequence text, @NotNull Charset charset) {
-    if(text == null || text.length() == 0) return null;
-    return findUnmappableRange(CharBuffer.wrap(text), Ref.create(), CharBuffer.allocate(text.length()), charset);
-  }
+    if (text == null || text.length() == 0) return null;
 
-  /**
-   * Identifies the range of characters that either fail to encode or decode properly with the specified charset.
-   *
-   * @param inputBuffer  the input character buffer to be checked
-   * @param encodedBufferRef a reference to the output byte buffer for storing encoded bytes
-   * @param decodedBuffer a character buffer to hold the decoded characters
-   * @param charset the charset used for encoding and decoding
-   * @return a {@code TextRange} object representing the range of unmappable characters, or {@code null} if all characters are mappable
-   */
-  private static @Nullable TextRange findUnmappableRange(@NotNull CharBuffer inputBuffer,
-                                                         @NotNull Ref<ByteBuffer> encodedBufferRef,
-                                                         @NotNull CharBuffer decodedBuffer,
-                                                         @NotNull Charset charset) {
+    CharBuffer inputBuffer = text instanceof CharBuffer ? (CharBuffer)text : CharBuffer.wrap(text);
     CharsetEncoder encoder = charset.newEncoder()
       .onUnmappableCharacter(CodingErrorAction.REPORT)
       .onMalformedInput(CodingErrorAction.REPORT);
-    int remainingChars = inputBuffer.limit();
 
-    ByteBuffer encodedBuffer = encodedBufferRef.get();
-    if (encodedBuffer == null) {
-      encodedBufferRef.set(encodedBuffer = ByteBuffer.allocate((int)(encoder.averageBytesPerChar() * remainingChars)));
-    }
-    encodedBuffer.rewind();
-    encodedBuffer.limit(encodedBuffer.capacity());
+    int remainingChars = inputBuffer.remaining();
+    ByteBuffer encodedBuffer = ByteBuffer.allocate((int)(encoder.maxBytesPerChar() * remainingChars));
     inputBuffer.rewind();
-    inputBuffer.position(0);
+    encodedBuffer.clear();
+
     CoderResult encodeResult;
 
     while (true) {
-      encodeResult = inputBuffer.hasRemaining() ? encoder.encode(inputBuffer, encodedBuffer, true) : CoderResult.UNDERFLOW;
+      encodeResult = encoder.encode(inputBuffer, encodedBuffer, true);  // Кодируем символы
       if (encodeResult.isUnderflow()) {
         encodeResult = encoder.flush(encodedBuffer);
       }
@@ -89,27 +70,22 @@ public final class CharsetUtil {
         break;
       }
 
-      ByteBuffer tempBuffer = ByteBuffer.allocate(3 * encodedBuffer.capacity() / 2 + 1);
+      ByteBuffer tempBuffer = ByteBuffer.allocate(2 * encodedBuffer.capacity());
       encodedBuffer.flip();
       tempBuffer.put(encodedBuffer);
-      encodedBufferRef.set(encodedBuffer = tempBuffer);
+      encodedBuffer = tempBuffer;
     }
 
     if (encodeResult.isError()) {
       return TextRange.from(inputBuffer.position(), encodeResult.length());
     }
 
-    int encodedLength = encodedBuffer.position();
-    CharsetDecoder decoder = charset.newDecoder()
-      .onUnmappableCharacter(CodingErrorAction.REPORT)
-      .onMalformedInput(CodingErrorAction.REPORT);
-    encodedBuffer.rewind();
-    encodedBuffer.limit(encodedLength);
-    decodedBuffer.rewind();
+    encodedBuffer.flip();
+    CharBuffer decodedBuffer = CharBuffer.allocate(encodedBuffer.remaining());
+    TextRange range = findUnmappableRange(encodedBuffer, charset, decodedBuffer);
 
-    CoderResult decodeResult = decoder.decode(encodedBuffer, decodedBuffer, true);
-    if (decodeResult.isError()) {
-      return TextRange.from(decodedBuffer.position(), decodeResult.length());
+    if (range != null) {
+      return range;
     }
 
     if (decodedBuffer.position() != remainingChars) {
@@ -117,9 +93,48 @@ public final class CharsetUtil {
     }
 
     inputBuffer.rewind();
-    inputBuffer.position(0);
     decodedBuffer.rewind();
     int commonPrefixLength = StringUtil.commonPrefixLength(inputBuffer, decodedBuffer);
+
     return commonPrefixLength == remainingChars ? null : TextRange.from(commonPrefixLength, 1);
+  }
+
+  /**
+   * Checks if the given byte buffer contains unmappable characters for the specified charset.
+   *
+   * @param byteBuffer the byte buffer to be checked
+   * @param charset    the charset to be used for decoding
+   * @return a {@code TextRange} representing the range of unmappable characters, or {@code null} if all characters can be mapped
+   */
+  public static @Nullable TextRange findUnmappableCharacters(@NotNull ByteBuffer byteBuffer, @NotNull Charset charset) {
+    return findUnmappableRange(byteBuffer, charset, CharBuffer.allocate(byteBuffer.remaining()));
+  }
+
+  /**
+   * Identifies the range of unmappable characters in the byte buffer during decoding with the specified charset.
+   *
+   * @param byteBuffer    the input byte buffer to be checked
+   * @param charset       the charset used for decoding
+   * @param decodedBuffer the buffer to store the result of decoding; must have enough capacity to hold the decoded characters
+   * @return a {@code TextRange} object representing the range of unmappable characters, or {@code null} if all characters are mappable
+   */
+  private static @Nullable TextRange findUnmappableRange(@NotNull ByteBuffer byteBuffer,
+                                                         @NotNull Charset charset,
+                                                         @NotNull CharBuffer decodedBuffer) {
+    CharsetDecoder decoder = charset.newDecoder()
+      .onUnmappableCharacter(CodingErrorAction.REPORT)
+      .onMalformedInput(CodingErrorAction.REPORT);
+
+    CoderResult result = decoder.decode(byteBuffer, decodedBuffer, true);
+    if (result.isError()) {
+      return TextRange.from(byteBuffer.position(), result.length());
+    }
+
+    result = decoder.flush(decodedBuffer);
+    if (result.isError()) {
+      return TextRange.from(byteBuffer.position(), result.length());
+    }
+
+    return null;
   }
 }

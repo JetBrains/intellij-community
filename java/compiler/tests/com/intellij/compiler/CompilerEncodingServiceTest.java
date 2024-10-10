@@ -1,12 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -51,6 +54,40 @@ public class CompilerEncodingServiceTest extends JavaPsiTestCase {
     assertSameElements(getService().getAllModuleEncodings(myModule), getProjectDefault());
   }
 
+  @SuppressWarnings({"TextBlockMigration", "NonAsciiCharacters"})
+  public void testPropertiesAutoEncoding() throws IOException {
+    //
+    final Ref<byte[]> content = Ref.create();
+    final VirtualFile file = createFile("test.properties");
+    WriteAction.run(() -> {
+      content.set(("one=1\n" +
+                   "two=2\n").getBytes(StandardCharsets.ISO_8859_1));
+      file.setBinaryContent(content.get());
+    });
+    file.setCharset(null);
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
+
+    //
+    WriteAction.run(() -> {
+      content.set(ArrayUtil.mergeArrays(content.get(), ("three=3️⃣\n" +
+                                                        "four=4️⃣\n").getBytes(StandardCharsets.UTF_8)));
+      file.setBinaryContent(content.get());
+    });
+    file.setCharset(null);
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
+
+    //
+    WriteAction.run(() -> {
+      content.set(ArrayUtil.mergeArrays(content.get(), ("five=fünf\n" +
+                                                        "six=sechs\n").getBytes(StandardCharsets.ISO_8859_1)));
+
+      file.setBinaryContent(content.get());
+    });
+    file.setCharset(null);
+    assertEquals(StandardCharsets.ISO_8859_1, file.getCharset());
+  }
+
+
   public void testPropertiesEncodingFeatureFlagTest() {
     RegistryValue registryValue = Registry.get("properties.file.encoding.legacy.support");
     try {
@@ -60,7 +97,8 @@ public class CompilerEncodingServiceTest extends JavaPsiTestCase {
       EncodingProjectManager.getInstance(myProject).setEncoding(file, WINDOWS_1251);
 
       assertSameElements(getService().getAllModuleEncodings(myModule), getProjectDefault());
-    } finally {
+    }
+    finally {
       registryValue.resetToDefault();
     }
   }
@@ -101,7 +139,8 @@ public class CompilerEncodingServiceTest extends JavaPsiTestCase {
       EncodingProjectManager.getInstance(myProject).setEncoding(fileB, WINDOWS_1252);
 
       assertSameElements(getService().getAllModuleEncodings(myModule), projectDefaultPlus(WINDOWS_1251));
-    } finally {
+    }
+    finally {
       registryValue.resetToDefault();
     }
   }

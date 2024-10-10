@@ -2,6 +2,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
+import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,6 +12,7 @@ import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -48,6 +50,11 @@ public final class PropertiesFileType extends LanguageFileType {
     Charset charset = EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file);
     if (charset == null) {
       charset = getDefaultCharset();
+      if (content.length > 0 &&
+          StandardCharsets.UTF_8.equals(charset) &&
+          CharsetUtil.findUnmappableCharacters(ByteBuffer.wrap(content), StandardCharsets.UTF_8) != null) {
+        charset = StandardCharsets.ISO_8859_1;
+      }
     }
     if (EncodingRegistry.getInstance().isNative2Ascii(file)) {
       charset = Native2AsciiCharset.wrap(charset);
@@ -56,9 +63,10 @@ public final class PropertiesFileType extends LanguageFileType {
   }
 
   public @NotNull Charset getDefaultCharset() {
-    if(Registry.is("properties.file.encoding.legacy.support", false)) {
+    if (Registry.is("properties.file.encoding.legacy.support", false)) {
       return StandardCharsets.ISO_8859_1;
-    } else {
+    }
+    else {
       return StandardCharsets.UTF_8;
     }
   }
