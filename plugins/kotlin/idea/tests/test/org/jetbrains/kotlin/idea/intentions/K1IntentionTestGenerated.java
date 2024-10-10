@@ -8719,6 +8719,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertStringTemplateToBuildString/inAnnotation.kt");
         }
 
+        @TestMetadata("KTIJ-30269.kt")
+        public void testKTIJ_30269() throws Exception {
+            runTest("testData/intentions/convertStringTemplateToBuildString/KTIJ-30269.kt");
+        }
+
         @TestMetadata("raw.kt")
         public void testRaw() throws Exception {
             runTest("testData/intentions/convertStringTemplateToBuildString/raw.kt");
@@ -9065,6 +9070,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("interpolateStringWithInt.kt")
         public void testInterpolateStringWithInt() throws Exception {
             runTest("testData/intentions/convertToConcatenatedString/interpolateStringWithInt.kt");
+        }
+
+        @TestMetadata("KTIJ-30269.kt")
+        public void testKTIJ_30269() throws Exception {
+            runTest("testData/intentions/convertToConcatenatedString/KTIJ-30269.kt");
         }
 
         @TestMetadata("lastExprIsNamedExpression.kt")
