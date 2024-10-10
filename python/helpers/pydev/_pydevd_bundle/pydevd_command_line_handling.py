@@ -133,8 +133,8 @@ def process_command_line(argv):
 
         elif argv[i] == '--file':
             # --file is special because it's the last one (so, no handler for it).
-            del argv[i]
             setup['file'] = argv[i]
+            del argv[i]
             i = len(argv) # pop out, file is our last argument
 
         elif argv[i] == '--DEBUG':
