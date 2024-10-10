@@ -14843,8 +14843,16 @@ f:com.intellij.ui.TextIcon
 - <init>(java.lang.String,java.awt.Color,java.awt.Color,I,Z,I):V
 - <init>(java.lang.String,java.awt.Color,java.awt.Color,java.awt.Color,I,Z):V
 - equals(java.lang.Object):Z
+- getBackground():java.awt.Color
+- getBorderColor():java.awt.Color
+- getFont():java.awt.Font
+- getForeground():java.awt.Color
 - getIconHeight():I
 - getIconWidth():I
+- getInsets():java.awt.Insets
+- getRound():java.lang.Integer
+- getText():java.lang.String
+- getWithBorders():java.lang.Boolean
 - hashCode():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 - setBackground(java.awt.Color):V
