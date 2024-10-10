@@ -5,7 +5,6 @@ import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.lang.Language
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
@@ -28,10 +27,11 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    // Disable for kotlin for now because retrieving types from expressions doesn't always result in the correct type
-    if (holder.file.language == Language.findLanguageByID("kotlin")) return PsiElementVisitor.EMPTY_VISITOR
     return UastHintedVisitorAdapter.create(
-      holder.file.language, AssertEqualsBetweenInconvertibleTypesVisitor(holder), arrayOf(UCallExpression::class.java), true
+      language = holder.file.language,
+      visitor = AssertEqualsBetweenInconvertibleTypesVisitor(holder),
+      uElementTypesHint = arrayOf(UCallExpression::class.java),
+      directOnly = true,
     )
   }
 }
@@ -92,6 +92,7 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
       it is UCallExpression && ASSERTJ_IS_EQUALS_MATCHER.uCallMatches(it)
     } as? UCallExpression
     var checkType = isEqualsCall?.valueArguments?.firstOrNull()?.getExpressionType() ?: return
+    if (checkType is UastErrorType) return
     val receiverType = GenericsUtil.getVariableTypeByExpressionType(isEqualsCall.receiverType)
     var sourceType = GenericsUtil.getVariableTypeByExpressionType(PsiUtil.substituteTypeParameter(receiverType, ASSERTJ_ASSERT, 1, false)) ?: return
     sourceType = normalizeType(sourceType, receiverType)
