@@ -42,7 +42,7 @@ fun <T> withCurrentSpan(span: Span, body: () -> T): T =
 
 fun <T> span(name: String, info: SpanInfoBuilder.() -> Unit = {}, body: () -> T): T =
   currentSpan.let { span ->
-    when(span) {
+    when (span) {
       is Span.Noop -> body()
       else -> withSpan(span.startChild(spanInfo(name, span.job, false, info))) { child ->
         withCurrentSpan(child, body)
@@ -56,8 +56,10 @@ fun Span.asContextElement(): CoroutineContext.Element =
 suspend fun <T> spannedScope(name: String, info: SpanInfoBuilder.() -> Unit = {}, body: suspend CoroutineScope.() -> T): T =
   spannedScope(currentSpan.startChild(spanInfo(name, coroutineContext.job, true, info)), body)
 
-suspend fun <T> spannedScope(span: CompletableSpan,
-                             body: suspend CoroutineScope.() -> T): T =
+suspend fun <T> spannedScope(
+  span: CompletableSpan,
+  body: suspend CoroutineScope.() -> T,
+): T =
   withSpan(span) {
     withContext(span.asContextElement(), body)
   }

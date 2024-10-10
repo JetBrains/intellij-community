@@ -201,10 +201,7 @@ class DispatchChannelOverflowException : RuntimeException("dispatch channel is o
 
 class ChangeInterceptor(
   val debugName: String,
-  val change: suspend (
-    changeFn: ChangeScope.() -> Unit,
-    next: suspend (ChangeScope.() -> Unit) -> Change,
-  ) -> Change,
+  val change: suspend (changeFn: ChangeScope.() -> Unit, next: suspend (ChangeScope.() -> Unit) -> Change) -> Change,
 ) : CoroutineContext.Element {
   companion object : CoroutineContext.Key<ChangeInterceptor> {
     val Identity: ChangeInterceptor = ChangeInterceptor("identity") { changeFn, next ->
@@ -257,7 +254,7 @@ sealed interface SubscriptionEvent {
  * [middleware] is applied to every change fn synchronously, being able to supply meta to the change, or alter the behavior of fn in other ways
  * Consider adding KernelMiddleware if additional routine has to be performed on every [Transactor.changeAsync]
  */
-suspend fun<T> withTransactor(
+suspend fun <T> withTransactor(
   entityClasses: List<EntityTypeDefinition>,
   middleware: TransactorMiddleware = TransactorMiddleware.Identity,
   defaultPart: Int = CommonPart,
@@ -354,7 +351,11 @@ suspend fun<T> withTransactor(
 
       override suspend fun changeSuspend(f: ChangeScope.() -> Unit): Change {
         currentCoroutineContext().job.ensureActive()
-        return frequentSpannedScope("change") {
+        /**
+         * DO NOT WRAP THIS BLOCK IN A SCOPE!
+         * see `change suspend is atomic case 2` in [fleet.test.frontend.kernel.TransactorTest]
+         * */
+        return run {
           val rendezvous = CompletableDeferred<Unit>()
           try {
             val deferred = CompletableDeferred<Change>()
@@ -363,7 +364,7 @@ suspend fun<T> withTransactor(
                                                       resultDeferred = deferred,
                                                       causeSpan = currentSpan))
             /** we want to preserve structured concurrency which means current job should be completed only when [body] has finished
-             * see `change suspend is atomic` in [fleet.test.frontend.kernel.KernelTest]
+             * see `change suspend is atomic` in [fleet.test.frontend.kernel.TransactorTest]
              */
             withContext(NonCancellable) {
               rendezvous.complete(Unit)
