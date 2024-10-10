@@ -37,5 +37,5 @@ internal fun CoroutineScope.createRenderer(model: GHPREditorMappedComponentModel
   when (model) {
     is GHPREditorMappedComponentModel.Thread<*> -> GHPRReviewThreadEditorInlayRenderer(this, model.vm)
     is GHPREditorMappedComponentModel.NewComment<*> -> GHPRNewCommentEditorInlayRenderer(this, model.vm)
-    is GHPREditorMappedComponentModel.AIComment -> GHPRAICommentEditorInlayRenderer(this, userIcon, model.vm)
+    is GHPREditorMappedComponentModel.AIComment -> GHPRAICommentEditorInlayRenderer(userIcon, model.vm)
   }

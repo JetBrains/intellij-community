@@ -10,7 +10,6 @@ import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.Range
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcsUtil.VcsFileUtil
@@ -20,6 +19,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
+import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
 import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
@@ -31,19 +31,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosi
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
-
-interface GHPRAICommentViewModelProvider {
-  companion object {
-    val EP_NAME = ExtensionPointName<GHPRAICommentViewModelProvider>("intellij.vcs.github.commentViewModelProvider")
-  }
-
-  fun getComments(
-    project: Project,
-    dataProvider: GHPRDataProvider,
-    change: RefComparisonChange,
-    diffData: GitTextFilePatchWithHistory,
-  ): Flow<List<GHPRAICommentViewModel>>
-}
 
 interface GHPRDiffChangeViewModel {
   val commentableRanges: List<Range>
@@ -107,8 +94,8 @@ internal class GHPRDiffChangeViewModelImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override val aiComments: StateFlow<Collection<GHPRAICommentViewModel>> =
-    GHPRAICommentViewModelProvider.EP_NAME.extensionListFlow()
-      .flatMapLatest { it.firstOrNull()?.getComments(project, dataProvider, change, diffData) ?: flowOf(listOf()) }
+    GHPRAIReviewExtension.EP.extensionListFlow()
+      .flatMapLatest { it.firstOrNull()?.provideCommentVms(project, dataProvider, change, diffData) ?: flowOf(listOf()) }
       .stateIn(cs, SharingStarted.Eagerly, emptyList())
 
   init {
