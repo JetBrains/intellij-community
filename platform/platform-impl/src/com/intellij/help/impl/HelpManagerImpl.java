@@ -2,9 +2,11 @@
 package com.intellij.help.impl;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.help.KeymapHelpIdPresenter;
 import com.intellij.openapi.help.WebHelpProvider;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,8 +54,8 @@ public class HelpManagerImpl extends HelpManager {
       activeKeymap = activeKeymap.getParent();
     }
     if (activeKeymap != null) {
-      //We need to use the presentable name here because that's what is stored on the docs side
-      url = url.addParameters(Map.of("keymap", activeKeymap.getPresentableName()));
+      var keymapID = ApplicationManager.getApplication().getService(KeymapHelpIdPresenter.class).getKeymapIdForHelp(activeKeymap);
+      url = url.addParameters(Map.of("keymap", keymapID));
     }
 
     return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url.toExternalForm());

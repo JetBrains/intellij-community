@@ -241,6 +241,8 @@
                         serviceImplementation="com.intellij.ide.actions.ShowSettingsUtilImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.help.HelpManager"
                         serviceImplementation="com.intellij.help.impl.HelpManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.help.KeymapHelpIdPresenter"
+                        serviceImplementation="com.intellij.help.impl.KeymapHelpIdPresenterImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.fileChooser.FileChooserFactory"
                         serviceImplementation="com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.fileChooser.ClientFileChooserFactory"
