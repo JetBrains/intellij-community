@@ -31,7 +31,6 @@ import com.intellij.util.system.OS
 import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.*
@@ -77,6 +76,10 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       PlatformUtils.RUBY_PREFIX -> RuntimeModuleId.module("intellij.rubymine.frontend")
       PlatformUtils.RUSTROVER_PREFIX -> RuntimeModuleId.module("intellij.rustrover.frontend")
       else -> RuntimeModuleId.module("intellij.platform.frontend.split")
+    }
+
+    fun isThinClientCustomCommand(customCommandData: ProductInfo.CustomCommandLaunchData): Boolean {
+      return customCommandData.commands.contains("thinClient")
     }
   }
 
@@ -128,21 +131,13 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
 
   private fun createLauncherViaIdeExecutable(): JetBrainsClientLauncherData? {
     val ideHome = Path(PathManager.getHomePath())
-    val productInfoPath = ideHome.resolve(if (SystemInfo.isMac) ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC else ApplicationEx.PRODUCT_INFO_FILE_NAME)
-    if (!productInfoPath.exists()) {
-      LOG.warn("$productInfoPath does not exist")
-      return null
+    val productInfoPath = if (SystemInfo.isMac) ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC else ApplicationEx.PRODUCT_INFO_FILE_NAME
+    val productInfoData = CodeWithMeClientDownloader.parseProductInfo(ideHome.resolve(productInfoPath)) ?: return null
+    val frontendLaunchData = productInfoData.launch.find { launchData ->
+      launchData.customCommands.orEmpty().any { isThinClientCustomCommand(it) }
     }
-    val productInfoData = try {
-      ProductInfo.fromJson(productInfoPath.readText())
-    }
-    catch (e: IOException) {
-      LOG.warn("Failed to parse $productInfoPath: $e", e)
-      return null
-    }
-    val frontendLaunchData = productInfoData.launch.find { launchData -> launchData.customCommands.any { it.commands.contains("thinClient") } }
     if (frontendLaunchData == null) {
-      LOG.info("Cannot use IDE's launcher because $productInfoPath doesn't have special handling for 'thinClient' command")
+      LOG.info("Cannot use IDE's launcher because product info under $ideHome doesn't have special handling for 'thinClient' command")
       return null
     }
 

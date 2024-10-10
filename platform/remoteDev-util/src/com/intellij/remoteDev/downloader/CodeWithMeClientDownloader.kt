@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
@@ -72,6 +73,20 @@ object CodeWithMeClientDownloader {
   private const val extractDirSuffix = ".ide.d"
 
   private val config get () = service<JetBrainsClientDownloaderConfigurationProvider>()
+
+  internal fun parseProductInfo(productInfoPath: Path): ProductInfo? {
+    if (!productInfoPath.exists()) {
+      LOG.warn("$productInfoPath does not exist")
+      return null
+    }
+    try {
+      return ProductInfo.fromJson(productInfoPath.readText())
+    }
+    catch (e: IOException) {
+      LOG.warn("Failed to parse $productInfoPath: $e", e)
+      return null
+    }
+  }
 
   private fun isJbrSymlink(file: Path): Boolean = file.name == "jbr" && isSymlink(file)
   private fun isSymlink(file: Path): Boolean = FileSystemUtil.getAttributes(file.toFile())?.isSymLink == true
@@ -642,29 +657,23 @@ object CodeWithMeClientDownloader {
   }
 
   private fun findLauncher(guestRoot: Path, launcherNames: List<String>): JetBrainsClientLauncherData {
-    val launcher = launcherNames.firstNotNullOfOrNull {
-      val launcherRelative = Path.of("bin", it)
-      val launcher = findLauncher(guestRoot, launcherRelative)
-      launcher?.let {
-        JetBrainsClientLauncherData(launcher, listOf(launcher.toString()))
-      }
-    }
-
-    return launcher ?: error("Could not find launchers (${launcherNames.joinToString { "'$it'" }}) under $guestRoot")
+    val launcherPath = findInInstallation(guestRoot, launcherNames.map { Path.of("bin", it) })
+    return JetBrainsClientLauncherData(launcherPath, listOf(launcherPath.toString()))
   }
 
-  private fun findLauncher(guestRoot: Path, launcherName: Path): Path? {
+  private fun findInInstallation(guestRoot: Path, relativePathsToFind: List<Path>): Path {
     // maxDepth 2 for macOS's .app/Contents
     Files.walk(guestRoot, 2).use {
       for (dir in it) {
-        val candidate = dir.resolve(launcherName)
-        if (candidate.exists()) {
-          return candidate
+        for (fileToFind in relativePathsToFind) {
+          val candidate = dir.resolve(fileToFind)
+          if (candidate.exists()) {
+            return candidate
+          }
         }
       }
     }
-
-    return null
+    return error("Could not find any of (${relativePathsToFind.joinToString { "'$it'" }}) under $guestRoot")
   }
 
   private fun findLauncherUnderCwmGuestRoot(guestRoot: Path): JetBrainsClientLauncherData {
@@ -701,6 +710,14 @@ object CodeWithMeClientDownloader {
   internal fun createLauncherDataForMacOs(app: Path) =
     JetBrainsClientLauncherData(app, listOf("open", "-n", "-W", "-a", app.pathString, "--args"))
 
+  fun processBeforeRunHooks(frontendInstallation: FrontendInstallation) {
+    val productInfoRelPath = listOf(Path.of(ApplicationEx.PRODUCT_INFO_FILE_NAME), Path.of(ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC))
+    val productInfoPath = findInInstallation(frontendInstallation.installationHome, productInfoRelPath)
+    val productInfo = checkNotNull(parseProductInfo(productInfoPath))
+    val configPaths = FrontendConfigPaths.fromProductInfo(productInfo)
+    ConfigureClientHook.EP.extensionList.forEach { e -> e.beforeRun(frontendInstallation, productInfo, configPaths) }
+  }
+
   /**
    * Launches client and returns process's lifetime (which will be terminated on process exit)
    */
@@ -709,6 +726,11 @@ object CodeWithMeClientDownloader {
     url: String,
     frontendInstallation: FrontendInstallation
   ): Lifetime {
+    try {
+      processBeforeRunHooks(frontendInstallation)
+    } catch (e: Throwable) {
+      LOG.error("Could not process hooks before launching client $frontendInstallation", e)
+    }
     when (frontendInstallation) {
       is EmbeddedFrontendInstallation -> {
         return frontendInstallation.frontendLauncher.launch(url, lifetime, NotificationBasedEmbeddedClientErrorReporter(null))
@@ -755,6 +777,7 @@ object CodeWithMeClientDownloader {
 
     val vmOptionsFile = if (SystemInfoRt.isMac) {
       // macOS stores vmoptions file inside .app file – we can't edit it
+      // TODO it's incorrect
       Paths.get(
         PathManager.getDefaultConfigPathFor(PlatformUtils.JETBRAINS_CLIENT_PREFIX + clientBuild.asStringWithoutProductCode()),
         "jetbrains_client.vmoptions"
