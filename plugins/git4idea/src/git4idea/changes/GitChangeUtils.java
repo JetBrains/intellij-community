@@ -81,12 +81,21 @@ public final class GitChangeUtils {
                                    @Nullable GitRevisionNumber parentRevision,
                                    StringScanner s,
                                    Collection<? super Change> changes) throws VcsException {
+    FileStatusLineParser<Change> parser = getChangesParser(project, thisRevision, parentRevision);
     parseChanges(vcsRoot, s, (status, beforePath, afterPath) -> {
+      changes.add(parser.parse(status, beforePath, afterPath));
+    });
+  }
+
+  private static @NotNull FileStatusLineParser<Change> getChangesParser(@NotNull Project project,
+                                                                        @Nullable GitRevisionNumber thisRevision,
+                                                                        @Nullable GitRevisionNumber parentRevision) {
+    return (status, beforePath, afterPath) -> {
       assert beforePath != null || afterPath != null;
       ContentRevision before = beforePath != null ? GitContentRevision.createRevision(beforePath, parentRevision, project) : null;
       ContentRevision after = afterPath != null ? GitContentRevision.createRevision(afterPath, thisRevision, project) : null;
-      changes.add(new Change(before, after, status));
-    });
+      return new Change(before, after, status);
+    };
   }
 
   private static void parseChanges(@NotNull VirtualFile vcsRoot,
@@ -149,6 +158,10 @@ public final class GitChangeUtils {
     void consume(@NotNull FileStatus status, @Nullable FilePath beforePath, @Nullable FilePath afterPath);
   }
 
+  private interface FileStatusLineParser<T> {
+    T parse(@NotNull FileStatus status, @Nullable FilePath beforePath, @Nullable FilePath afterPath);
+  }
+
   /**
    * Load actual revision number with timestamp basing on a reference: name of a branch or tag, or revision number expression.
    */
@@ -160,7 +173,7 @@ public final class GitChangeUtils {
     if (!stk.hasMoreTokens()) {
       try {
         GitLineHandler dh = new GitLineHandler(project, vcsRoot, GitCommand.LOG);
-        dh.addParameters("-1", "HEAD");
+        dh.addParameters("-1", GitUtil.HEAD);
         dh.setSilent(true);
         String out = Git.getInstance().runCommand(dh).getOutputOrThrow();
         LOG.info("Diagnostic output from 'git log -1 HEAD': [" + out + "]");
@@ -295,6 +308,14 @@ public final class GitChangeUtils {
     return getDiff(project, root, oldRevision, newRevision, dirtyPaths, true, false);
   }
 
+  public static @NotNull Collection<Change> getLocalChangesDiff(@NotNull Project project,
+                                                                @NotNull VirtualFile root,
+                                                                @Nullable Collection<? extends FilePath> dirtyPaths) throws VcsException {
+    var head = resolveReference(project, root, GitUtil.HEAD);
+    return getLocalChanges(project, root, dirtyPaths, getChangesParser(project, null, head), "-M", GitUtil.HEAD);
+  }
+
+
   private static @NotNull Collection<Change> getDiff(@NotNull Project project,
                                                      @NotNull VirtualFile root,
                                                      @Nullable @NonNls String oldRevision,
@@ -356,17 +377,25 @@ public final class GitChangeUtils {
                                                                          @Nullable Collection<FilePath> paths,
                                                                          boolean detectMoves) throws VcsException {
     if (detectMoves) {
-      return getLocalChanges(project, root, paths, "-M", "HEAD");
+      return getLocalChanges(project, root, paths, "-M", GitUtil.HEAD);
     }
     else {
-      return getLocalChanges(project, root, paths, "--no-renames", "HEAD");
+      return getLocalChanges(project, root, paths, "--no-renames", GitUtil.HEAD);
     }
   }
 
   private static @NotNull Collection<GitDiffChange> getLocalChanges(@NotNull Project project,
                                                                     @NotNull VirtualFile root,
-                                                                    @Nullable Collection<FilePath> paths,
+                                                                    @Nullable Collection<? extends FilePath> paths,
                                                                     @NonNls String... parameters) throws VcsException {
+    return getLocalChanges(project, root, paths, GitDiffChange::new, parameters);
+  }
+
+  private static <T> @NotNull Collection<T> getLocalChanges(@NotNull Project project,
+                                                            @NotNull VirtualFile root,
+                                                            @Nullable Collection<? extends FilePath> paths,
+                                                            @NotNull FileStatusLineParser<T> parser,
+                                                            @NonNls String... parameters) throws VcsException {
     if (paths != null && paths.isEmpty()) return Collections.emptyList();
 
     GitLineHandler handler = GitUtil.createHandlerWithPaths(paths, () -> {
@@ -377,9 +406,9 @@ public final class GitChangeUtils {
     });
     String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
-    Collection<GitDiffChange> changes = new ArrayList<>();
+    Collection<T> changes = new ArrayList<>();
     parseChanges(root, new StringScanner(output), (status, beforePath, afterPath) -> {
-      changes.add(new GitDiffChange(status, beforePath, afterPath));
+      changes.add(parser.parse(status, beforePath, afterPath));
     });
     return changes;
   }

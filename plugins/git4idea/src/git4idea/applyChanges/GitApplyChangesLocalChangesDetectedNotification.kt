@@ -7,9 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsNotificationIdsHolder
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.ui.UIUtil
@@ -18,7 +16,7 @@ import git4idea.GitApplyChangesNotification
 import git4idea.GitApplyChangesProcess
 import git4idea.GitDisposable
 import git4idea.GitNotificationIdsHolder
-import git4idea.GitUtil
+import git4idea.changes.GitChangeUtils
 import git4idea.commands.Git
 import git4idea.config.GitSaveChangesPolicy
 import git4idea.config.GitVcsApplicationSettings
@@ -45,8 +43,7 @@ internal class GitApplyChangesLocalChangesDetectedNotification(
   init {
     val project = repository.project
     val affectedPaths = repository.getStagingAreaHolder().allRecords.map { it.path }
-    val localChanges =
-      GitUtil.findLocalChangesForPaths(project, repository.getRoot(), affectedPaths.map(FilePath::getPath), false)
+    val localChanges = GitChangeUtils.getLocalChangesDiff(project, repository.getRoot(), affectedPaths).toList()
 
     setDisplayId(GitNotificationIdsHolder.Companion.APPLY_CHANGES_LOCAL_CHANGES_DETECTED)
 
