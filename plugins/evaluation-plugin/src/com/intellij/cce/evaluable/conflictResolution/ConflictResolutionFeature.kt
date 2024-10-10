@@ -13,7 +13,7 @@ class ConflictResolutionFeature : StandaloneFeature<ConflictResolutionStrategy>(
   override fun getStrategySerializer(): StrategySerializer<ConflictResolutionStrategy> = ConflictResolutionStrategy.Serializer()
 
   override fun prepareEnvironment(config: Config): SimpleFileEnvironment = ConflictEnvironment(
-    DatasetRef.parse(config.conflictDataset!!.url),
+    DatasetRef.parse(config.fileDataset!!.url),
     TheirConflictResolver()
   )
 

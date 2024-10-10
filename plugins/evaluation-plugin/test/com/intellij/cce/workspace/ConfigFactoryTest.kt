@@ -91,15 +91,15 @@ class ConfigFactoryTest {
       {
         "outputDir": "test_outputDir",
         "strategy": {},
-        "csvDataset": {
+        "fileDataset": {
           "url": "test_url",
           "chunkSize": 300
         }
       }
       """.trimIndent()
     ).also {
-      assertEquals("test_url", it.csvDataset?.url)
-      assertEquals(300, it.csvDataset?.chunkSize)
+      assertEquals("test_url", it.fileDataset?.url)
+      assertEquals(300, it.fileDataset?.chunkSize)
     }
   }
 

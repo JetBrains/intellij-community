@@ -1,7 +1,7 @@
 {
   "outputDir": "ml-eval-conflict-resolution-output",
   "strategy": {},
-  "conflictDataset": {
+  "fileDataset": {
     "url": "existing:conflicts"
   },
   "interpret": {

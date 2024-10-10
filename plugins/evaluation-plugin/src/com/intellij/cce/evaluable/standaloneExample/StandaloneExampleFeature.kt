@@ -23,10 +23,10 @@ class StandaloneExampleFeature : StandaloneFeature<DatasetStrategy>("standalone-
   }
 
   override fun prepareEnvironment(config: Config): EvaluationEnvironment {
-    val fileDataset = config.csvDataset ?: throw IllegalStateException("Required dataset config")
+    val fileDataset = config.fileDataset ?: throw IllegalStateException("Required dataset config")
     return CsvEnvironment(
       datasetRef = DatasetRef.parse(fileDataset.url),
-      chunkSize = fileDataset.chunkSize,
+      chunkSize = fileDataset.chunkSize ?: 1,
       targetField = "Type",
       featureInvoker = StandaloneExampleInvoker(),
     )

@@ -1,7 +1,7 @@
 {
   "outputDir": "ml-eval-standalone-example-output",
   "strategy": {},
-  "csvDataset": {
+  "fileDataset": {
     "url": "./latin_letters.csv",
     "chunkSize": 10
   },

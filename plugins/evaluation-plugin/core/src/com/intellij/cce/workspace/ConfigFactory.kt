@@ -63,8 +63,7 @@ object ConfigFactory {
         map.getIfExists<String>("language"),
         this
       )
-      deserializeFileDataset(map.getIfExists("csvDataset"), this)
-      deserializeConflictDataset(map.getIfExists("conflictDataset"), this)
+      deserializeFileDataset(map.getIfExists("fileDataset"), this)
 
       deserializeStrategy(map.getIfExists("strategy"), strategySerializer, actions?.language, this)
       deserializeActionsInterpretation(map.getIfExists("interpret"), this)
@@ -120,20 +119,7 @@ object ConfigFactory {
 
     builder.fileDataset = Config.FileDataset(
       map.getAs("url"),
-      map.getAs<Double>("chunkSize").toInt(),
-    )
-  }
-
-  private fun deserializeConflictDataset(
-    map: Map<String, Any>?,
-    builder: Config.Builder
-  ) {
-    if (map == null) {
-      return
-    }
-
-    builder.conflictDataset = Config.ConflictDataset(
-      map.getAs("url")
+      map.getIfExists<Double?>("chunkSize")?.toInt(),
     )
   }
 
