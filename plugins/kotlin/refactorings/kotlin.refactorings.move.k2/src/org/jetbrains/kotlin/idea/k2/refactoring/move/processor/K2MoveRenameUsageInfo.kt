@@ -210,7 +210,7 @@ sealed class K2MoveRenameUsageInfo(
             if (expr is KtEnumEntrySuperclassReferenceExpression) return
             if (expr is KtCollectionLiteralExpression) return
             val parent = expr.parent
-            if (parent is KtSuperExpression || parent is KtThisExpression) return
+            if (parent is KtSuperExpression || parent is KtThisExpression || parent is KtValueArgumentName) return
             if (expr.parentOfType<KtPackageDirective>() != null) return
             if (expr.parentOfType<KtImportDirective>(withSelf = false) != null) return
             if (mainReference is KtConstructorDelegationReference) return
