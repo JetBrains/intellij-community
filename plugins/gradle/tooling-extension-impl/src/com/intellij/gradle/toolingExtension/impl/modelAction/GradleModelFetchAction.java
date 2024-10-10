@@ -4,12 +4,12 @@ package com.intellij.gradle.toolingExtension.impl.modelAction;
 import com.intellij.gradle.toolingExtension.impl.model.utilTurnOffDefaultTasksModel.TurnOffDefaultTasks;
 import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializerConverter;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
-import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.impl.telemetry.TelemetryHolder;
 import com.intellij.gradle.toolingExtension.impl.util.GradleExecutorServiceUtil;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext;
 import com.intellij.util.ReflectionUtilRt;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
@@ -44,7 +44,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
   private boolean myUseProjectsLoadedPhase = false;
   private boolean myUseStreamedValues = false;
 
-  private @Nullable GradleTracingContext myTracingContext = null;
+  private @Nullable TelemetryContext myTracingContext = null;
 
   private transient boolean myProjectLoadedAction = false;
 
@@ -91,7 +91,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     myUseStreamedValues = useStreamedValues;
   }
 
-  public void setTracingContext(@NotNull GradleTracingContext tracingContext) {
+  public void setTracingContext(@NotNull TelemetryContext tracingContext) {
     myTracingContext = tracingContext;
   }
 
@@ -108,7 +108,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
   }
 
   private GradleModelHolderState withOpenTelemetry(@NotNull Function<GradleOpenTelemetry, GradleModelHolderState> action) {
-    GradleTracingContext tracingContext = myTracingContext;
+    TelemetryContext tracingContext = myTracingContext;
     if (tracingContext == null) {
       GradleOpenTelemetry noopTelemetry = new GradleOpenTelemetry();
       return action.apply(noopTelemetry);

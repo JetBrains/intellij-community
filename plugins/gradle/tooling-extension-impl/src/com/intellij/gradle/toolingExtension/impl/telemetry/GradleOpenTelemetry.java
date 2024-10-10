@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.telemetry;
 
+import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
@@ -9,7 +10,6 @@ import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
-import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
@@ -27,6 +27,7 @@ import java.util.function.Function;
 
 public final class GradleOpenTelemetry {
 
+  public static final @NotNull String REQUESTED_FORMAT_KEY = "REQUESTED_FORMAT";
   private static final String INSTRUMENTATION_NAME = "GradleDaemon";
 
   private @NotNull OpenTelemetry myOpenTelemetry = OpenTelemetry.noop();
@@ -34,8 +35,9 @@ public final class GradleOpenTelemetry {
   private @Nullable FilteringSpanDataCollector mySpanDataCollector = null;
   private @NotNull GradleTelemetryFormat myFormat = GradleTelemetryFormat.PROTOBUF;
 
-  public void start(@NotNull GradleTracingContext context) {
+  public void start(@NotNull TelemetryContext context) {
     mySpanDataCollector = new FilteringSpanDataCollector();
+    W3CTraceContextPropagator contextPropagator = W3CTraceContextPropagator.getInstance();
     myOpenTelemetry = OpenTelemetrySdk.builder()
       .setTracerProvider(SdkTracerProvider.builder()
                            .addSpanProcessor(BatchSpanProcessor.builder(mySpanDataCollector)
@@ -43,10 +45,11 @@ public final class GradleOpenTelemetry {
                                                .build())
                            .setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), INSTRUMENTATION_NAME)))
                            .build())
-      .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+      .setPropagators(ContextPropagators.create(contextPropagator))
       .build();
 
-    myScope = injectTracingContext(myOpenTelemetry, context);
+    myScope = context.extract(contextPropagator)
+      .makeCurrent();
     myFormat = getRequestedTelemetryFormat(context);
   }
 
@@ -112,16 +115,8 @@ public final class GradleOpenTelemetry {
     return TelemetryHolder.empty();
   }
 
-  private static @NotNull Scope injectTracingContext(@NotNull OpenTelemetry telemetry, @NotNull GradleTracingContext context) {
-    return telemetry
-      .getPropagators()
-      .getTextMapPropagator()
-      .extract(Context.current(), context, GradleTracingContext.GETTER)
-      .makeCurrent();
-  }
-
-  private static @NotNull GradleTelemetryFormat getRequestedTelemetryFormat(@NotNull GradleTracingContext context) {
-    String requestedFormat = context.get(GradleTracingContext.REQUESTED_FORMAT_KEY);
+  private static @NotNull GradleTelemetryFormat getRequestedTelemetryFormat(@NotNull TelemetryContext context) {
+    String requestedFormat = context.get(REQUESTED_FORMAT_KEY);
     if (requestedFormat == null) {
       return GradleTelemetryFormat.PROTOBUF;
     }

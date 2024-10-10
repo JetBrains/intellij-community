@@ -7,7 +7,7 @@ import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.DefaultGradleTaskModel;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
-import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
+import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
 import com.intellij.gradle.toolingExtension.impl.telemetry.TelemetryHolder;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTreeTraverserUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
@@ -33,6 +33,7 @@ import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -40,9 +41,9 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.ProjectConfigurationException;
@@ -89,7 +90,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext.REQUESTED_FORMAT_KEY;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static org.jetbrains.plugins.gradle.service.project.ArtifactMappingServiceKt.OWNER_BASE_GRADLE;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
@@ -334,7 +334,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .spanBuilder("GradleCall")
       .startSpan();
     if (GradleDaemonOpenTelemetryUtil.isDaemonTracingEnabled(executionSettings)) {
-      GradleTracingContext gradleDaemonObservabilityContext = getActionTelemetryContext(gradleCallSpan, executionSettings);
+      TelemetryContext gradleDaemonObservabilityContext = getActionTelemetryContext(gradleCallSpan, executionSettings);
       buildAction.setTracingContext(gradleDaemonObservabilityContext);
     }
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
@@ -1041,13 +1041,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return chainWrapper;
   }
 
-  private static @NotNull GradleTracingContext getActionTelemetryContext(@NotNull Span span, @NotNull GradleExecutionSettings settings) {
-    GradleTracingContext context = new GradleTracingContext();
-    context.put(REQUESTED_FORMAT_KEY, GradleDaemonOpenTelemetryUtil.getTelemetryFormat(settings).name());
-    GlobalOpenTelemetry.get()
-      .getPropagators()
-      .getTextMapPropagator()
-      .inject(Context.current().with(span), context, GradleTracingContext.SETTER);
+  private static @NotNull TelemetryContext getActionTelemetryContext(@NotNull Span span, @NotNull GradleExecutionSettings settings) {
+    TelemetryContext context = TelemetryContext.from(Context.current().with(span), W3CTraceContextPropagator.getInstance());
+    context.put(GradleOpenTelemetry.REQUESTED_FORMAT_KEY, GradleDaemonOpenTelemetryUtil.getTelemetryFormat(settings).name());
     return context;
   }
 
