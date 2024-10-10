@@ -500,8 +500,19 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     var originalFileName = file.getName();
     var t = LOG.isTraceEnabled() ? System.nanoTime() : 0;
     try {
+      var nioFile = convertToNioFileAndCheck(file, false);
       if (SystemInfo.isWindows) {
-        return convertToNioFileAndCheck(file, false).toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName().toString();
+        return nioFile.toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName().toString();
+      }
+      else {
+        // Handle one common case as quickly as possible: compute the file's realpath, resolving links
+        // (to avoid quadratic behaviour from directory listing). In general this is not a suitable canonical name for the
+        // file, because links have been resolved, but if the result compares with case-insensitive equality with the given
+        // file's path, then the return value is suitable for use as a canonical name.
+        var resolvedRealPath = nioFile.toRealPath();
+        if (resolvedRealPath.toString().equalsIgnoreCase(file.getPath())) {
+          return resolvedRealPath.getFileName().toString();
+        }
       }
       // `Path#toRealPath` resolves the whole path starting from the root, but only the last component is necessary
       try (var stream = Files.newDirectoryStream(convertToNioFileAndCheck(parent, false))) {
