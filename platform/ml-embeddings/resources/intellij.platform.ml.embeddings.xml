@@ -45,7 +45,7 @@
       key="intellij.platform.ml.embeddings.index.memory.limit"/>
 
     <registryKey
-      defaultValue="false"
+      defaultValue="true"
       description="Use native server for embeddings search and storage"
       key="intellij.platform.ml.embeddings.use.native.server"/>
 
