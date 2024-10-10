@@ -22,7 +22,7 @@ import kotlin.time.Duration
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 25)
+  private val GROUP = EventLogGroup(GROUP_ID, 26)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
@@ -234,6 +234,7 @@ internal enum class TimeSpanType(val description: String) {
   FROM_STARTUP_TO_READY_PROMPT("time from startup to prompt ready for command input"),
   FROM_COMMAND_SUBMIT_TO_VISUALLY_STARTED("time from command submitted by user to command visually started"),
   FROM_COMMAND_SUBMIT_TO_ACTUALLY_STARTED("time from command submitted by user to command actually started in shell"),
+  FROM_TEXT_IN_BUFFER_TO_TEXT_VISIBLE("time from command output text is read into text buffer to output is visible"),
 }
 
 private const val GROUP_ID = "terminalShell"

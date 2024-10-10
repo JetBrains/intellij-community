@@ -25,6 +25,7 @@ internal class TerminalOutputChangesTracker(
   private val textBuffer: TerminalTextBuffer,
   private val shellIntegration: ShellIntegration,
   parentDisposable: Disposable,
+  onUpdateStart: () -> Unit,
 ) {
   /**
    * Index of the last changed line in the Text Buffer.
@@ -65,6 +66,8 @@ internal class TerminalOutputChangesTracker(
   init {
     val listener = object : TextBufferChangesListener {
       override fun linesChanged(fromIndex: Int) = textBuffer.withLock {
+        onUpdateStart()
+
         val line = textBuffer.historyLinesCount + fromIndex
         lastChangedVisualLine = min(lastChangedVisualLine, line)
         isAnyLineChanged = true

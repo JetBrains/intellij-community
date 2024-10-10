@@ -9,7 +9,12 @@ import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.model.TerminalTextBuffer
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
+import org.jetbrains.plugins.terminal.block.util.ActionCoordinator
+import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
+import org.jetbrains.plugins.terminal.fus.TimeSpanType
 import org.jetbrains.plugins.terminal.util.ShellIntegration
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * Tracks the changes of the terminal output and schedules [applyUpdate] calls when something is changed.
@@ -32,7 +37,12 @@ internal class TerminalOutputContentUpdatesScheduler(
     private set
 
   fun startUpdating() = textBuffer.withLock {
-    val tracker = TerminalOutputChangesTracker(textBuffer, shellIntegration, trackerDisposable)
+    val tracker = TerminalOutputChangesTracker(
+      textBuffer,
+      shellIntegration,
+      trackerDisposable,
+      onUpdateStart = { metricTextInBufferToTextVisible.started(Unit, TimeSource.Monotonic.markNow()) }
+    )
     changesTracker = tracker
 
     val job = coroutineScope.launch {
@@ -59,6 +69,7 @@ internal class TerminalOutputContentUpdatesScheduler(
     // Launch it in the new scope to not cancel already scheduled requests on `finishUpdating`.
     return coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       applyUpdate(output)
+      metricTextInBufferToTextVisible.finished(Unit)
     }
   }
 
@@ -70,4 +81,23 @@ internal class TerminalOutputContentUpdatesScheduler(
 
     tracker.collectChangedOutputOrNull()
   }
+
+  private val metricTextInBufferToTextVisible = ActionCoordinator<Unit, TimeMark>(
+    10,
+    onActionComplete = { unit, startTime ->
+      TerminalUsageTriggerCollector.logBlockTerminalTimeSpanFinished(
+        null,
+        shellIntegration.shellType,
+        TimeSpanType.FROM_TEXT_IN_BUFFER_TO_TEXT_VISIBLE,
+        startTime.elapsedNow()
+      )
+    },
+    onActionDiscarded = { unit, startTime ->
+      // do nothing
+    },
+    onActionUnknown = { unit ->
+      // do nothing
+    }
+  )
+
 }
