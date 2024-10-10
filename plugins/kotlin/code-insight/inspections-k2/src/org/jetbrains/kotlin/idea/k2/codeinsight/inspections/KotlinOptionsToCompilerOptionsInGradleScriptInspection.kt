@@ -61,10 +61,6 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
         return object : KtVisitorVoid() {
             override fun visitReferenceExpression(expression: KtReferenceExpression) {
                 val referencedName = (expression as? KtNameReferenceExpression)?.getReferencedName() ?: return
-                // ATM, we don't have proper dependencies for tests to perform `analyze` in Gradle build scripts
-                if (referencedName == "android" && !isUnitTestMode()) {
-                    if (elementIsAndroidDsl(expression)) return
-                }
                 if (referencedName != "kotlinOptions") return
 
                 val expressionParent = expression.parent
@@ -137,17 +133,6 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
 
             else -> true
         }
-    }
-
-    private fun elementIsAndroidDsl(expression: KtExpression): Boolean {
-        val importableFqName = analyze(expression) {
-            val symbol = expression.resolveToCall()
-                ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.signature?.symbol
-            val kaSymbol =
-                (symbol?.containingDeclaration as? KaClassLikeSymbol) ?: expression.resolveExpression()
-            kaSymbol?.importableFqName?.toString()
-        }
-        return importableFqName == "org.gradle.kotlin.dsl.android"
     }
 
     private fun expressionsContainForbiddenOperations(element: PsiElement): Boolean {
