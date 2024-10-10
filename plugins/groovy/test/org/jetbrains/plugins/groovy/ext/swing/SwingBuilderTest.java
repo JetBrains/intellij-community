@@ -19,7 +19,7 @@ public final class SwingBuilderTest extends LightProjectTest implements ResolveT
   @Test
   public void swingBuilderMethod() {
     PsiMethod method = resolveTest("new groovy.swing.SwingBuilder().<caret>frame()", PsiMethod.class);
-    assert !method.isPhysical();
+    Assert.assertFalse(method.isPhysical());
   }
 
   @Test

@@ -7,7 +7,6 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.util.containers.ContainerUtil;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor;
@@ -16,9 +15,7 @@ import org.jetbrains.plugins.groovy.RepositoryTestLibrary;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.junit.Assert;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.LIB_GROOVY_LATEST;
 
@@ -78,8 +75,7 @@ public class LogbackTest extends LightGroovyTestCase {
       logger("", ERROR, ['<caret>'])
       """);
     myFixture.completeBasic();
-    assert DefaultGroovyMethods.equals(DefaultGroovyMethods.toSet(new ArrayList<>(Arrays.asList("FOO_APP", "BAR_APP"))),
-                                       DefaultGroovyMethods.toSet(getFixture().getLookupElementStrings()));
+    Assert.assertEquals(Set.of("FOO_APP", "BAR_APP"), new HashSet<>(getFixture().getLookupElementStrings()));
   }
 
   public void testTargetNavigation() {
