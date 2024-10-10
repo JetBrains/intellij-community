@@ -2,6 +2,7 @@ package com.intellij.cce.evaluable.conflictResolution
 
 import com.intellij.cce.actions.*
 import com.intellij.cce.core.*
+import com.intellij.cce.evaluable.AIA_CONTEXT
 import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.interpreter.InterpretFilter
 import com.intellij.cce.interpreter.InterpretationHandler
@@ -98,7 +99,7 @@ class ConflictDataset(
         selectedPosition = suggestions.indexOfFirst { it.isRelevant },
         isNew = false,
         mapOf(
-          "aia_context" to contextPresentation(conflicts, conflictIndex)
+          AIA_CONTEXT to contextPresentation(conflicts, conflictIndex)
         )
       )
 
