@@ -153,9 +153,9 @@ internal class TrustedProjectStartupDialog(
               .apply {
                 component.toolTipText = null
                 component.addMouseMotionListener(TooltipMouseAdapter { listOf(getIdePath(), getTrustFolder(trustAll.get()).pathString) })
+                comment(IdeBundle.message("untrusted.project.location.comment"))
                 visible(isWinDefenderEnabled)
               }
-              .comment(IdeBundle.message("untrusted.project.location.comment"))
           }
         }.align(AlignX.FILL + AlignY.FILL)
       }
