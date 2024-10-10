@@ -15,6 +15,10 @@
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - f:getEditor():com.intellij.openapi.editor.Editor
 - toRequest():com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+*f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$TemplateInserted
+- com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+- f:getEditor():com.intellij.openapi.editor.Editor
+- toRequest():com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 *f:com.intellij.codeInsight.inline.completion.InlineCompletionEventType$AfterInsert
 - com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 - sf:INSTANCE:com.intellij.codeInsight.inline.completion.InlineCompletionEventType$AfterInsert
