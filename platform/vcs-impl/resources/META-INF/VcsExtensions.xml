@@ -364,6 +364,10 @@
 
     <history.activityPresentationProvider implementation="com.intellij.vcs.VcsActivityPresentationProvider"/>
     <editorSearchAreaProvider implementation="com.intellij.openapi.diff.impl.SearchInDiffChangesProvider"/>
+
+    <registryKey key="llm.vcs.shelve.title.generation"
+                 description="Enables AI generated shelve change list title"
+                 defaultValue="false"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
