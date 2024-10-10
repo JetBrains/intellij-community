@@ -4,6 +4,7 @@ package org.jetbrains.jps.builders.java;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.FileCollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.incremental.BuilderRegistry;
@@ -31,6 +32,7 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
    * @deprecated use {@link #JavaSourceRootDescriptor(File, ModuleBuildTarget, boolean, boolean, String, Set, FileFilter)} instead;
    * this constructor method doesn't honor excluded patterns which may be specified for the module.
    */
+  @ApiStatus.Internal
   @Deprecated
   public JavaSourceRootDescriptor(@NotNull File root,
                                   @NotNull ModuleBuildTarget target,

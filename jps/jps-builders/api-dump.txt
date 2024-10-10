@@ -1776,7 +1776,6 @@ c:org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 - f:root:java.io.File
 - f:rootFile:java.nio.file.Path
 - f:target:org.jetbrains.jps.incremental.ModuleBuildTarget
-- <init>(java.io.File,org.jetbrains.jps.incremental.ModuleBuildTarget,Z,Z,java.lang.String,java.util.Set):V
 - <init>(java.io.File,org.jetbrains.jps.incremental.ModuleBuildTarget,Z,Z,java.lang.String,java.util.Set,java.io.FileFilter):V
 - canUseFileCache():Z
 - createFileFilter():java.io.FileFilter
