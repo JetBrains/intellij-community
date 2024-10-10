@@ -186,6 +186,9 @@ class KotlinJUnit4Framework: JUnit4Framework(), KotlinPsiBasedTestFramework {
         return FileTemplateDescriptor("Kotlin JUnit4 Parameters Function.kt")
     }
 
+    override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor? =
+        FileTemplateDescriptor("Kotlin JUnit4 Test Class.kt")
+
     override fun isFrameworkAvailable(clazz: PsiElement): Boolean {
         return super.isFrameworkAvailable(clazz) || clazz is KtClass && psiBasedDelegate.isFrameworkAvailable(clazz)
     }

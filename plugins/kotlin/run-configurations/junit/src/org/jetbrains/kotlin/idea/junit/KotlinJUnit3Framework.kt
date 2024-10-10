@@ -233,17 +233,17 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean =
         psiBasedDelegate.isIgnoredMethod(declaration)
 
-    override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
-        return FileTemplateDescriptor("Kotlin JUnit3 SetUp Function.kt")
-    }
+    override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor? =
+        FileTemplateDescriptor("Kotlin JUnit3 SetUp Function.kt")
 
-    override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
-        return FileTemplateDescriptor("Kotlin JUnit3 TearDown Function.kt")
-    }
+    override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor? =
+        FileTemplateDescriptor("Kotlin JUnit3 TearDown Function.kt")
 
-    override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor {
-        return FileTemplateDescriptor("Kotlin JUnit3 Test Function.kt")
-    }
+    override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor =
+        FileTemplateDescriptor("Kotlin JUnit3 Test Function.kt")
+
+    override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor? =
+        FileTemplateDescriptor("Kotlin JUnit3 Test Class.kt")
 }
 
 private val TEST_CLASS_FQN = setOf(JUnitUtil.TEST_CASE_CLASS)

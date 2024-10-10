@@ -2,12 +2,15 @@
 package org.jetbrains.kotlin.idea.testIntegration
 
 import com.intellij.codeInsight.navigation.activateFileWithPsiElement
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -28,13 +31,15 @@ class KotlinCreateTestIntention: AbstractKotlinCreateTestIntention() {
     override fun isApplicableForModule(module: Module): Boolean =
         !(module.platform.isJs() && !AdvancedSettings.getBoolean("kotlin.mpp.experimental"))
 
-    override fun convertJavaClass(
+    override fun convertClass(
         project: Project,
         generatedClass: PsiClass,
         existingClass: KtClassOrObject?,
-        generatedFile: PsiJavaFile,
+        generatedFile: PsiFile,
         srcModule: Module
     ) {
+        if (generatedFile !is PsiJavaFile || generatedClass.language != JavaFileType.INSTANCE) return
+
         project.executeCommand<Unit>(
             KotlinBundle.message("convert.class.0.to.kotlin", generatedClass.name.toString()),
             this

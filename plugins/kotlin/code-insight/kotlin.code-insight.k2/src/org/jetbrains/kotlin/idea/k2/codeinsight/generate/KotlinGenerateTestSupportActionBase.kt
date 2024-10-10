@@ -47,6 +47,105 @@ abstract class KotlinGenerateTestSupportActionBase(
     private val methodKind: MethodKind,
 ) : KotlinGenerateActionBase(), GenerateActionPopupTemplateInjector {
     companion object {
+        private val DUMMY_NAME = "__KOTLIN_RULEZZZ__"
+
+        internal fun doGenerate(
+            editor: Editor,
+            file: PsiFile, klass: KtClassOrObject,
+            framework: TestFramework,
+            methodKind: MethodKind
+        ): KtNamedFunction? {
+            val project = file.project
+            val commandName = KotlinBundle.message("command.generate.test.support.generate.test.function")
+
+            val fileTemplateDescriptor = methodKind.getFileTemplateDescriptor(framework)
+            val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(fileTemplateDescriptor.fileName)
+            var templateText = fileTemplate.text.replace(BODY_VAR, "")
+            var name: String? = null
+            if (templateText.contains(NAME_VAR)) {
+                name = if (templateText.contains("test$NAME_VAR")) "Name" else "name"
+                if (!isUnitTestMode()) {
+                    val message = KotlinBundle.message("action.generate.test.support.choose.test.name")
+                    name = Messages.showInputDialog(message, commandName, null, name, NAME_VALIDATOR) ?: return null
+                }
+
+                templateText = templateText.replace(NAME_VAR, DUMMY_NAME)
+            }
+
+            return try {
+                val factory = KtPsiFactory(project)
+                var function = factory.createFunction(templateText)
+                name?.let {
+                    function = substituteNewName(function, it)
+                }
+                val functionInPlace = runWriteAction { insertMembersAfterAndReformat(editor, klass, function) }
+
+                val (bodyText, needToOverride) = analyzeInModalWindow(functionInPlace, commandName) {
+                    val functionSymbol = functionInPlace.symbol as KaNamedFunctionSymbol
+                    val overriddenSymbols = functionSymbol.directlyOverriddenSymbols.filterIsInstance<KaNamedFunctionSymbol>().toList()
+
+                    fun isDefaultTemplate(): Boolean =
+                        (functionInPlace.bodyBlockExpression?.text?.trimStart('{')?.trimEnd('}') ?: functionInPlace.bodyExpression?.text).isNullOrBlank()
+
+                    when (overriddenSymbols.size) {
+                        0 -> if (isDefaultTemplate()) generateUnsupportedOrSuperCall(project, functionSymbol, BodyType.FromTemplate) else null
+                        1 -> generateUnsupportedOrSuperCall(project, overriddenSymbols.single(), BodyType.Super)
+                        else -> generateUnsupportedOrSuperCall(project, overriddenSymbols.first(), BodyType.QualifiedSuper)
+                    } to overriddenSymbols.isNotEmpty()
+                }
+
+                runWriteAction {
+                    if (bodyText != null) {
+                        functionInPlace.bodyExpression?.delete()
+                        functionInPlace.add(KtPsiFactory(project).createBlock(bodyText))
+                    }
+
+                    if (needToOverride) {
+                        functionInPlace.addModifier(KtTokens.OVERRIDE_KEYWORD)
+                    }
+                }
+
+                setupEditorSelection(editor, functionInPlace)
+                functionInPlace
+            } catch (e: IncorrectOperationException) {
+                val message = KotlinBundle.message("action.generate.test.support.error.cant.generate.method", e.message.toString())
+                HintManager.getInstance().showErrorHint(editor, message)
+                null
+            }
+        }
+
+        private fun substituteNewName(function: KtNamedFunction, name: String): KtNamedFunction {
+            val psiFactory = KtPsiFactory(function.project)
+
+            // First replace all DUMMY_NAME occurrences in names as they need special treatment due to quotation
+            var function1 = function
+            function1.accept(
+                object : KtTreeVisitorVoid() {
+                    private fun getNewId(currentId: String): String? {
+                        if (!currentId.contains(DUMMY_NAME)) return null
+                        return currentId.replace(DUMMY_NAME, name).quoteIfNeeded()
+                    }
+
+                    override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+                        val nameIdentifier = declaration.nameIdentifier ?: return
+                        val newId = getNewId(nameIdentifier.text) ?: return
+                        declaration.setName(newId)
+                    }
+
+                    override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                        val newId = getNewId(expression.text) ?: return
+                        expression.replace(psiFactory.createSimpleName(newId))
+                    }
+                }
+            )
+            // Then text-replace remaining occurrences (if any)
+            val functionText = function1.text
+            if (functionText.contains(DUMMY_NAME)) {
+                function1 = psiFactory.createFunction(function1.text.replace(DUMMY_NAME, name))
+            }
+            return function1
+        }
+
         private fun findTargetClass(editor: Editor, file: PsiFile): KtClassOrObject? {
             val elementAtCaret = file.findElementAt(editor.caretModel.offset) ?: return null
             return elementAtCaret.parentsWithSelf.filterIsInstance<KtClassOrObject>().firstOrNull { !it.isLocal }
@@ -85,7 +184,7 @@ abstract class KotlinGenerateTestSupportActionBase(
     }
 
     class Test : KotlinGenerateTestSupportActionBase(MethodKind.TEST) {
-        override fun isApplicableTo(framework: TestFramework, targetClass: KtClassOrObject) = true
+        override fun isApplicableTo(framework: TestFramework, targetClass: KtClassOrObject): Boolean = true
     }
 
     class Data : KotlinGenerateTestSupportActionBase(MethodKind.DATA) {
@@ -117,7 +216,7 @@ abstract class KotlinGenerateTestSupportActionBase(
         if (testFrameworkToUse != null) {
             val frameworkToUse = findSuitableFrameworks(klass).first { it.name == testFrameworkToUse }
             if (isApplicableTo(frameworkToUse, klass)) {
-                doGenerate(editor, file, klass, frameworkToUse)
+                doGenerate(editor, file, klass, frameworkToUse, methodKind)
             }
         } else {
             val frameworks = findSuitableFrameworks(klass).filter {
@@ -126,106 +225,13 @@ abstract class KotlinGenerateTestSupportActionBase(
 
             chooseAndPerform(editor, frameworks) {
                 project.executeCommand(KotlinBundle.message("command.generate.test.support.generate.test.function"), null) {
-                    doGenerate(editor, file, klass, it)
+                    doGenerate(editor, file, klass, it, methodKind)
                 }
             }
         }
     }
 
     var testFrameworkToUse: String? = null
-
-    private val DUMMY_NAME = "__KOTLIN_RULEZZZ__"
-
-    private fun doGenerate(editor: Editor, file: PsiFile, klass: KtClassOrObject, framework: TestFramework) {
-        val project = file.project
-        val commandName = KotlinBundle.message("command.generate.test.support.generate.test.function")
-
-        val fileTemplateDescriptor = methodKind.getFileTemplateDescriptor(framework)
-        val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(fileTemplateDescriptor.fileName)
-        var templateText = fileTemplate.text.replace(BODY_VAR, "")
-        var name: String? = null
-        if (templateText.contains(NAME_VAR)) {
-            name = if (templateText.contains("test$NAME_VAR")) "Name" else "name"
-            if (!isUnitTestMode()) {
-                val message = KotlinBundle.message("action.generate.test.support.choose.test.name")
-                name = Messages.showInputDialog(message, commandName, null, name, NAME_VALIDATOR) ?: return
-            }
-
-            templateText = templateText.replace(NAME_VAR, DUMMY_NAME)
-        }
-
-        try {
-            val factory = KtPsiFactory(project)
-            var function = factory.createFunction(templateText)
-            name?.let {
-                function = substituteNewName(function, it)
-            }
-            val functionInPlace = runWriteAction { insertMembersAfterAndReformat(editor, klass, function) }
-
-            val (bodyText, needToOverride) = analyzeInModalWindow(functionInPlace, commandName) {
-                val functionSymbol = functionInPlace.symbol as KaNamedFunctionSymbol
-                val overriddenSymbols = functionSymbol.directlyOverriddenSymbols.filterIsInstance<KaNamedFunctionSymbol>().toList()
-
-                fun isDefaultTemplate(): Boolean =
-                    (functionInPlace.bodyBlockExpression?.text?.trimStart('{')?.trimEnd('}') ?: functionInPlace.bodyExpression?.text).isNullOrBlank()
-
-                when (overriddenSymbols.size) {
-                    0 -> if (isDefaultTemplate()) generateUnsupportedOrSuperCall(project, functionSymbol, BodyType.FromTemplate) else null
-                    1 -> generateUnsupportedOrSuperCall(project, overriddenSymbols.single(), BodyType.Super)
-                    else -> generateUnsupportedOrSuperCall(project, overriddenSymbols.first(), BodyType.QualifiedSuper)
-                } to overriddenSymbols.isNotEmpty()
-            }
-
-            runWriteAction {
-                if (bodyText != null) {
-                    functionInPlace.bodyExpression?.delete()
-                    functionInPlace.add(KtPsiFactory(project).createBlock(bodyText))
-                }
-
-                if (needToOverride) {
-                    functionInPlace.addModifier(KtTokens.OVERRIDE_KEYWORD)
-                }
-            }
-
-            setupEditorSelection(editor, functionInPlace)
-
-        } catch (e: IncorrectOperationException) {
-            val message = KotlinBundle.message("action.generate.test.support.error.cant.generate.method", e.message.toString())
-            HintManager.getInstance().showErrorHint(editor, message)
-        }
-    }
-
-    private fun substituteNewName(function: KtNamedFunction, name: String): KtNamedFunction {
-        val psiFactory = KtPsiFactory(function.project)
-
-        // First replace all DUMMY_NAME occurrences in names as they need special treatment due to quotation
-        var function1 = function
-        function1.accept(
-            object : KtTreeVisitorVoid() {
-                private fun getNewId(currentId: String): String? {
-                    if (!currentId.contains(DUMMY_NAME)) return null
-                    return currentId.replace(DUMMY_NAME, name).quoteIfNeeded()
-                }
-
-                override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
-                    val nameIdentifier = declaration.nameIdentifier ?: return
-                    val newId = getNewId(nameIdentifier.text) ?: return
-                    declaration.setName(newId)
-                }
-
-                override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-                    val newId = getNewId(expression.text) ?: return
-                    expression.replace(psiFactory.createSimpleName(newId))
-                }
-            }
-        )
-        // Then text-replace remaining occurrences (if any)
-        val functionText = function1.text
-        if (functionText.contains(DUMMY_NAME)) {
-            function1 = psiFactory.createFunction(function1.text.replace(DUMMY_NAME, name))
-        }
-        return function1
-    }
 
     override fun createEditTemplateAction(dataContext: DataContext): AnAction? {
         val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return null

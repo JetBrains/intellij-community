@@ -9,27 +9,21 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
-import com.intellij.util.ThreeState.NO
-import com.intellij.util.ThreeState.UNSURE
-import com.intellij.util.ThreeState.YES
+import com.intellij.util.ThreeState.*
 import com.theoryinpractice.testng.TestNGFramework
 import com.theoryinpractice.testng.util.TestNGUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.asKtClassOrObject
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.asKtNamedFunction
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import kotlin.collections.plus
 
 class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
     private val psiBasedDelegate = object : AbstractKotlinPsiBasedTestFramework() {
@@ -190,6 +184,13 @@ class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
     override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor {
         return FileTemplateDescriptor("Kotlin TestNG Test Function.kt")
     }
+
+    override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor? =
+        if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getTestClassFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin TestNG Test Class.kt")
+        }
 
     override fun getParametersMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
         return FileTemplateDescriptor("Kotlin TestNG Parameters Function.kt")

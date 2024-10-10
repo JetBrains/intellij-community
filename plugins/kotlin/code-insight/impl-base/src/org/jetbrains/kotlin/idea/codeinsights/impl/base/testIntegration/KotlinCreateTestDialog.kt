@@ -6,8 +6,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiPackage
+import com.intellij.refactoring.util.RefactoringMessageUtil
 import com.intellij.testIntegration.createTest.CreateTestDialog
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.KotlinFileType
 
 class KotlinCreateTestDialog(
     project: Project,
@@ -18,5 +20,8 @@ class KotlinCreateTestDialog(
 ) : CreateTestDialog(project, title, targetClass, targetPackage, targetModule) {
     var explicitClassName: String? = null
 
-    override fun getClassName(): String = explicitClassName ?: super.getClassName()
+    override fun getClassName(): String = explicitClassName ?: super.className
+
+    override fun checkCanCreateClass(): String? =
+        RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, getClassName(), KotlinFileType.INSTANCE)
 }

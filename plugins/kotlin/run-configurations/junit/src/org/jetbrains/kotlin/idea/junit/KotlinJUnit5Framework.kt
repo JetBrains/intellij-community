@@ -163,6 +163,9 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
     override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor {
         return FileTemplateDescriptor("Kotlin JUnit5 Test Function.kt")
     }
+
+    override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor? =
+        FileTemplateDescriptor("Kotlin JUnit5 Test Class.kt")
 }
 
 private val METHOD_ANNOTATION_FQN = setOf(
