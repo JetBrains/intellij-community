@@ -37,7 +37,7 @@ internal class ThreadingInlayHintsProvider : InlayHintsProvider {
         val offset = uCallExpression.methodIdentifier?.sourcePsi?.textRange?.startOffset ?: return@forEach
         sink.addPresentation(InlineInlayPosition(offset, true),
                              tooltip = "@${threadingStatus.getDisplayName()}",
-                             hasBackground = true) {
+                             hintFormat = HintFormat.default) {
           text("@${threadingStatus.shortName}")
         }
       }
