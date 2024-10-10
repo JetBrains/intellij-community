@@ -24,7 +24,9 @@ val isRunningFromSources: Boolean by lazy {
 }
 
 object KotlinPluginLayout {
+    @get:ApiStatus.ScheduledForRemoval
     @Deprecated("Use 'KotlinPluginLayout' directly", ReplaceWith("KotlinPluginLayout"))
+    @get:Deprecated("Use 'KotlinPluginLayout' directly", ReplaceWith("KotlinPluginLayout"))
     @JvmStatic
     val instance: KotlinPluginLayout
         get() = KotlinPluginLayout

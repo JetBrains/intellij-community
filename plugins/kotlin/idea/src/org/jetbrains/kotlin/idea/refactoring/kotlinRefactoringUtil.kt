@@ -24,6 +24,7 @@ import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.descriptors.*
@@ -60,6 +61,7 @@ import java.util.*
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
 
+@ApiStatus.Internal
 @Deprecated("Was moved to the common part", replaceWith = ReplaceWith("canRefactorElement()"))
 fun PsiElement.canRefactor(): Boolean {
     return when {
