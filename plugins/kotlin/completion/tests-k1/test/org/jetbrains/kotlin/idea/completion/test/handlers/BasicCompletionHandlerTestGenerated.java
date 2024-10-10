@@ -1487,6 +1487,26 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/AnonymousFunctionReturnType.kt");
         }
 
+        @TestMetadata("BacktickedClassStartsWithNumber.kt")
+        public void testBacktickedClassStartsWithNumber() throws Exception {
+            runTest("../testData/handlers/basic/BacktickedClassStartsWithNumber.kt");
+        }
+
+        @TestMetadata("BacktickedEnumEntryStartsWithNumber.kt")
+        public void testBacktickedEnumEntryStartsWithNumber() throws Exception {
+            runTest("../testData/handlers/basic/BacktickedEnumEntryStartsWithNumber.kt");
+        }
+
+        @TestMetadata("BacktickedFunctionStartsWithNumber.kt")
+        public void testBacktickedFunctionStartsWithNumber() throws Exception {
+            runTest("../testData/handlers/basic/BacktickedFunctionStartsWithNumber.kt");
+        }
+
+        @TestMetadata("BacktickedPropertyStartsWithNumber.kt")
+        public void testBacktickedPropertyStartsWithNumber() throws Exception {
+            runTest("../testData/handlers/basic/BacktickedPropertyStartsWithNumber.kt");
+        }
+
         @TestMetadata("BeforeCallee.kt")
         public void testBeforeCallee() throws Exception {
             runTest("../testData/handlers/basic/BeforeCallee.kt");

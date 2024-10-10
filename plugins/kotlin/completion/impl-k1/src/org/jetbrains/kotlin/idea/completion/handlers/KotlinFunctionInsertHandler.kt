@@ -195,7 +195,7 @@ fun createNormalFunctionInsertHandler(
             // enclosing with backticks
             run {
                 if (!functionName.isSpecial) {
-                    val renderedName = functionName.render()
+                    val renderedName = functionName.renderIdentifier()
                     // it's possible, that nothing typedFuzzyName is empty, and cursor is located after the last symbol in the document,
                     // which means: `functionStartOffset` and `offset` are outside `chars` bounds.
                     val alreadyHasTickAtFront = chars.getOrNull(functionStartOffset) == '`'
