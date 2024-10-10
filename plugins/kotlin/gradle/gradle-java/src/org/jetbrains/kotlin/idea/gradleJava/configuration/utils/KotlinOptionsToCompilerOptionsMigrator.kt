@@ -3,16 +3,18 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.utils
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
+import com.intellij.psi.tree.IElementType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion
 import org.jetbrains.kotlin.idea.gradleTooling.compareTo
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.util.function.Function
@@ -23,30 +25,22 @@ data class Replacement(val expressionToReplace: KtExpression, val replacement: S
 
 @ApiStatus.Internal
 fun expressionContainsOperationForbiddenToReplace(binaryExpression: KtBinaryExpression): Boolean {
-    val operationReference = binaryExpression.operationReference.text
-    return if (operationReference == "-=") {
-        true
+    if (binaryExpression.operationToken == KtTokens.MINUSEQ) return true
+    val rightPartOfBinaryExpression = binaryExpression.right ?: return true
+    return if (rightPartOfBinaryExpression is KtBinaryExpression) {
+        checkIfExpressionContainsMinusOperator(rightPartOfBinaryExpression)
     } else {
-        val rightPartOfBinaryExpression = binaryExpression.right ?: return true
-        if (rightPartOfBinaryExpression is KtBinaryExpression) {
-            checkIfExpressionContainsMinusOperator(rightPartOfBinaryExpression)
-        } else {
-            false
-        }
+        false
     }
 }
 
 private fun checkIfExpressionContainsMinusOperator(binaryExpression: KtBinaryExpression): Boolean {
-    val operationReference = binaryExpression.operationReference.text
-    return if (operationReference == "-") {
-        true
+    if (binaryExpression.operationToken == KtTokens.MINUS) return true
+    val leftPartOfBinaryExpression = binaryExpression.left ?: return true
+    return if (leftPartOfBinaryExpression is KtBinaryExpression) {
+        checkIfExpressionContainsMinusOperator(leftPartOfBinaryExpression)
     } else {
-        val leftPartOfBinaryExpression = binaryExpression.left ?: return true
-        if (leftPartOfBinaryExpression is KtBinaryExpression) {
-            checkIfExpressionContainsMinusOperator(leftPartOfBinaryExpression)
-        } else {
-            false
-        }
+        false
     }
 }
 
@@ -67,14 +61,14 @@ fun getReplacementForOldKotlinOptionIfNeeded(binaryExpression: KtBinaryExpressio
 
     val (optionValue, valueContainsMultipleValues) = getOptionValue(rightPartOfBinaryExpression, optionName) ?: return null
 
-    val operationReference = binaryExpression.operationReference.text
+    val operationToken = binaryExpression.operationToken
 
     val expressionForCompilerOption =
         getReplacementForOldKotlinOptionIfNeeded(
             replacementOfKotlinOptionsIfNeeded,
             optionName,
             optionValue,
-            operationReference,
+            operationToken,
             valueContainsMultipleValues
         )
     if (expressionForCompilerOption != null) {
@@ -88,7 +82,7 @@ private fun getOptionValue(expression: KtExpression, optionName: String): Pair<S
     val optionValue: String
     val valueContainsMultipleValues: Boolean
     if (expression is KtBinaryExpression) {
-        if (expression.operationReference.text != "+") {
+        if (expression.operationToken != KtTokens.PLUS) {
             return null
         }
         if (optionName == "freeCompilerArgs") {
@@ -112,16 +106,13 @@ private fun getOptionValue(expression: KtExpression, optionName: String): Pair<S
  */
 private fun getOptionsFromFreeCompilerArgsExpression(expression: KtExpression, optionValues: MutableSet<String>): Set<String>? {
     if (expression is KtBinaryExpression) {
-        val operationReference = expression.operationReference.text
-        if (operationReference != "+") {
-            return null
-        } else {
-            optionValues.add(expression.right?.text ?: return null)
-            getOptionsFromFreeCompilerArgsExpression(expression.left ?: return null, optionValues)
-        }
+        if (expression.operationToken != KtTokens.PLUS) return null
+        optionValues.add(expression.right?.text ?: return null)
+        getOptionsFromFreeCompilerArgsExpression(expression.left ?: return null, optionValues)
     } else {
-        if (expression.text != "freeCompilerArgs") {
-            optionValues.add(expression.text)
+        val expressionName = expression.text ?: return null
+        if (expressionName != "freeCompilerArgs") {
+            optionValues.add(expressionName)
         }
     }
     return optionValues
@@ -143,8 +134,8 @@ private fun getOptionName(expression: KtExpression): Pair<String, StringBuilder>
             expression.getCalleeExpressionIfAny()?.text ?: return null
         }
 
-        is KtReferenceExpression -> {
-            expression.text
+        is KtNameReferenceExpression -> {
+            expression.getReferencedName()
         }
 
         else -> {
@@ -169,12 +160,12 @@ fun kotlinVersionIsEqualOrHigher(major: Int, minor: Int, patch: Int, file: PsiFi
 }
 
 private fun getOperationReplacer(
-    operationReference: String,
+    operationToken: IElementType,
     optionValue: String,
     valueContainsMultipleValues: Boolean = false
 ): String? {
-    return when (operationReference) {
-        "=" -> {
+    return when (operationToken) {
+        KtTokens.EQ -> {
             if (valueContainsMultipleValues) {
                 "addAll"
             } else {
@@ -182,7 +173,7 @@ private fun getOperationReplacer(
             }
         }
 
-        "+=" -> {
+        KtTokens.PLUSEQ -> {
             if (!collectionsNamesRegex.find(optionValue)?.value.isNullOrEmpty() || valueContainsMultipleValues) {
                 "addAll"
             } else {
@@ -200,11 +191,11 @@ private fun getReplacementForOldKotlinOptionIfNeeded(
     replacement: StringBuilder,
     optionName: String,
     optionValue: String,
-    operationReference: String,
+    operationToken: IElementType,
     valueContainsMultipleValues: Boolean = false,
 ): CompilerOption? {
     val operationReplacer =
-        getOperationReplacer(operationReference, optionValue, valueContainsMultipleValues) ?: return null
+        getOperationReplacer(operationToken, optionValue, valueContainsMultipleValues) ?: return null
     // jvmTarget, apiVersion and languageVersion
     val versionOptionData = optionsWithValuesMigratedFromNumericStringsToEnums[optionName]
     if (versionOptionData != null) {
@@ -266,7 +257,7 @@ private fun getCompilerOptionForJsValue(
 @ApiStatus.Internal
 fun getCompilerOption(optionName: String, optionValue: String): CompilerOption {
     val replacement = StringBuilder()
-    val compilerOption = getReplacementForOldKotlinOptionIfNeeded(replacement, optionName, optionValue, operationReference = "=")
+    val compilerOption = getReplacementForOldKotlinOptionIfNeeded(replacement, optionName, optionValue, operationToken = KtTokens.EQ)
     return compilerOption ?: CompilerOption("$optionName = $optionValue")
 }
 
