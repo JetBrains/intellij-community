@@ -580,7 +580,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
    * @deprecated this is an internal method, must not be used outside the class
    */
   @SuppressWarnings("DataFlowIssue")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Executor getExecutor() {
     final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);

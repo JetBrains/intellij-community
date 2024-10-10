@@ -2917,7 +2917,6 @@ f:com.intellij.util.SingleAlarm$Companion
 - f:singleAlarm(I,kotlinx.coroutines.CoroutineScope,java.lang.Runnable):com.intellij.util.SingleAlarm
 - f:singleAlarm(I,kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function0):com.intellij.util.SingleAlarm
 f:com.intellij.util.WaitForProgressToShow
-- s:execute(com.intellij.openapi.progress.ProgressIndicator):V
 - s:runOrInvokeAndWaitAboveProgress(java.lang.Runnable):V
 - s:runOrInvokeAndWaitAboveProgress(java.lang.Runnable,com.intellij.openapi.application.ModalityState):V
 - s:runOrInvokeLaterAboveProgress(java.lang.Runnable,com.intellij.openapi.application.ModalityState,com.intellij.openapi.project.Project):V

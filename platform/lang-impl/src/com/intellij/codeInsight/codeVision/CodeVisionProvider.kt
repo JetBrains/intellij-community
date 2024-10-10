@@ -57,6 +57,7 @@ interface CodeVisionProvider<T> {
    *
    * Note that this method is not executed under read action.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use computeCodeVision instead", ReplaceWith("computeCodeVision"))
   fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
 

@@ -173,7 +173,7 @@ public final class ProgressIndicatorUtils {
   /**
    * @deprecated see {@link ReadTask}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator,
                                                                               @NotNull Executor executor,
                                                                               @NotNull ReadTask readTask) {

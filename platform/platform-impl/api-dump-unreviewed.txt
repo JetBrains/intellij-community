@@ -1892,7 +1892,6 @@ c:com.intellij.execution.wsl.WSLDistribution
 - s:mustRunCommandLineWithIjent(com.intellij.execution.wsl.WSLCommandLineOptions):Z
 - s:neverRunTTYFix(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.configurations.GeneralCommandLine
 - patchCommandLine(com.intellij.execution.configurations.GeneralCommandLine,com.intellij.openapi.project.Project,com.intellij.execution.wsl.WSLCommandLineOptions):com.intellij.execution.configurations.GeneralCommandLine
-- patchCommandLine(com.intellij.execution.configurations.GeneralCommandLine,com.intellij.openapi.project.Project,java.lang.String,Z):com.intellij.execution.configurations.GeneralCommandLine
 - patchProcessHandler(com.intellij.execution.configurations.GeneralCommandLine,com.intellij.execution.process.ProcessHandler):com.intellij.execution.process.ProcessHandler
 - readReleaseInfo():java.lang.String
 - resolveSymlink(java.lang.String):java.lang.String
@@ -5921,12 +5920,9 @@ com.intellij.ide.wizard.LanguageNewProjectWizardData
 - com.intellij.ide.wizard.NewProjectWizardBaseData
 - sf:Companion:com.intellij.ide.wizard.LanguageNewProjectWizardData$Companion
 - a:getLanguage():java.lang.String
-- s:getLanguageData(com.intellij.ide.wizard.NewProjectWizardStep):com.intellij.ide.wizard.LanguageNewProjectWizardData
 - a:getLanguageProperty():com.intellij.openapi.observable.properties.GraphProperty
 - a:setLanguage(java.lang.String):V
 f:com.intellij.ide.wizard.LanguageNewProjectWizardData$Companion
-- f:getKEY():com.intellij.openapi.util.Key
-- f:getLanguageData(com.intellij.ide.wizard.NewProjectWizardStep):com.intellij.ide.wizard.LanguageNewProjectWizardData
 f:com.intellij.ide.wizard.NewProjectWizardActivityKey
 - com.intellij.platform.backend.observation.ActivityKey
 - sf:INSTANCE:com.intellij.ide.wizard.NewProjectWizardActivityKey

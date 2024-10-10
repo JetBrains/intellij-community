@@ -4,8 +4,8 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +21,7 @@ public interface WelcomeTabFactory {
   /**
    * @deprecated use createWelcomeTabs instead
    */
+  @ApiStatus.Internal
   @Deprecated
   default WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) { return null; }
 

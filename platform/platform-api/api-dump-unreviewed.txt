@@ -3039,7 +3039,6 @@ com.intellij.openapi.options.MasterDetails
 com.intellij.openapi.options.NonDefaultProjectConfigurable
 a:com.intellij.openapi.options.SchemeExporter
 - <init>():V
-- exportScheme(com.intellij.openapi.options.Scheme,java.io.OutputStream):V
 - exportScheme(com.intellij.openapi.project.Project,com.intellij.openapi.options.Scheme,java.io.OutputStream):V
 - getDefaultDir(com.intellij.openapi.project.Project):com.intellij.openapi.vfs.VirtualFile
 - getDefaultFileName(java.lang.String):java.lang.String
@@ -5491,7 +5490,6 @@ com.intellij.openapi.wm.WelcomeScreenTab
 - updateComponent():V
 com.intellij.openapi.wm.WelcomeTabFactory
 - sf:WELCOME_TAB_FACTORY_EP:com.intellij.openapi.extensions.ExtensionPointName
-- createWelcomeTab(com.intellij.openapi.Disposable):com.intellij.openapi.wm.WelcomeScreenTab
 - createWelcomeTabs(com.intellij.openapi.wm.WelcomeScreen,com.intellij.openapi.Disposable):java.util.List
 - isApplicable():Z
 com.intellij.openapi.wm.WindowInfo

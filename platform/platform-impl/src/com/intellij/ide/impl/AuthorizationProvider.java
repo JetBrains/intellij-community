@@ -33,7 +33,7 @@ public interface AuthorizationProvider {
    * @param url the URL denoting the resource for which the access token is required
    * @return an access token data or null if the token does not exist. If the token exists, it should always be returned, even if it might be already expired.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   default String getAccessToken(@NotNull String url) {
     return null;

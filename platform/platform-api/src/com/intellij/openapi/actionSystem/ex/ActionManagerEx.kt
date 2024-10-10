@@ -75,6 +75,7 @@ abstract class ActionManagerEx : ActionManager() {
   @Internal
   abstract fun fireAfterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use [ActionUtil.performActionDumbAwareWithCallbacks] instead",
               ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
               DeprecationLevel.ERROR)
@@ -83,6 +84,7 @@ abstract class ActionManagerEx : ActionManager() {
     fireBeforeActionPerformed(action, event)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use [ActionUtil.performActionDumbAwareWithCallbacks] instead",
               ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
               DeprecationLevel.ERROR)

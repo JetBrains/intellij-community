@@ -992,7 +992,6 @@ f:com.intellij.execution.processTools.ProcessExtKt
 a:com.intellij.execution.rmi.RemoteProcessSupport
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
 - <init>(java.lang.Class):V
-- acquire(java.lang.Object,java.lang.Object):java.lang.Object
 - acquire(java.lang.Object,java.lang.Object,com.intellij.openapi.progress.ProgressIndicator):java.lang.Object
 - p:acquireInProcessFactory(java.lang.Object,java.lang.Object):com.intellij.openapi.util.ThrowableComputable
 - pa:fireModificationCountChanged():V

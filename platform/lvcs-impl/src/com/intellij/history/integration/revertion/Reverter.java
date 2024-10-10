@@ -35,7 +35,7 @@ public abstract class Reverter {
   /**
    * @deprecated always returns empty list
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<String> askUserForProceeding() throws IOException {
     return Collections.emptyList();
   }

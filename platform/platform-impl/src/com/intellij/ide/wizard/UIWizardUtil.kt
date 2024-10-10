@@ -31,6 +31,7 @@ import javax.swing.JLabel
 
 val WizardContext.projectOrDefault: Project get() = project ?: ProjectManager.getInstance().defaultProject
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Use NewProjectWizardChainStep.nextStep instead",
   replaceWith = ReplaceWith(
@@ -44,6 +45,7 @@ fun <T1, T2, T3> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3): NewProjectWizardStep
     .nextStep(f2)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Use NewProjectWizardChainStep.nextStep instead",
   replaceWith = ReplaceWith(

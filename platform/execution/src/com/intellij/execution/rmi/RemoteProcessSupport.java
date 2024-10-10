@@ -24,6 +24,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -159,6 +160,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   /**
    * @deprecated use acquire(Target, Parameters, ProgressIndicator)
    */
+  @ApiStatus.Internal
   @Deprecated
   public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration) throws Exception {
     return acquire(target, configuration, null);

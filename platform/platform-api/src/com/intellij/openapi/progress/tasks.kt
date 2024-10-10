@@ -67,6 +67,7 @@ suspend fun <T> withBackgroundProgress(
   return withBackgroundProgress(project, title, cancellation, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Moved to com.intellij.platform.ide.progress",
   ReplaceWith(
@@ -83,6 +84,7 @@ suspend fun <T> withModalProgress(
   return withModalProgress(project, title, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Moved to com.intellij.platform.ide.progress",
   ReplaceWith(

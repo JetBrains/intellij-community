@@ -112,7 +112,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor<Object> imple
    * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
    * or update presentation dynamically by defining {@link #update(PresentationData)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final void setPlainText(String aText) {
     clearColoredText();
     getTemplatePresentation().addText(new ColoredFragment(aText, getPlainAttributes()));

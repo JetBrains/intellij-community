@@ -124,7 +124,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
   /**
    * @deprecated BuildViewSettingsProvider is not used anymore.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public BuildTreeConsoleView(@NotNull Project project,
                               @NotNull BuildDescriptor buildDescriptor,
                               @Nullable ExecutionConsole executionConsole,

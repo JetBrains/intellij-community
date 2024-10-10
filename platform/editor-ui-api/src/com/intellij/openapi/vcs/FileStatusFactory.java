@@ -25,7 +25,7 @@ public final class FileStatusFactory {
   /**
    * @deprecated this method is not locale-friendly or plugin unloading-friendly
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public FileStatus createFileStatus(@NonNls @NotNull String id,
                                      @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description) {
     return createFileStatus(id, () -> description, null, null);
