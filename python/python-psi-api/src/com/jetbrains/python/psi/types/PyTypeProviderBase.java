@@ -90,6 +90,13 @@ public class PyTypeProviderBase implements PyTypeProvider {
     return null;
   }
 
+
+  @Override
+  public @Nullable Ref<@Nullable PyType> getAnnotationType(@NotNull PyExpression typeHint,
+                                                          @NotNull TypeEvalContext context) {
+    return null;
+  }
+
   protected void registerSelfReturnType(@NotNull String classQualifiedName, @NotNull Collection<String> methods) {
     registerReturnType(classQualifiedName, methods, mySelfTypeCallback);
   }
