@@ -166,7 +166,7 @@ internal suspend fun uploadJpsCache(
 }
 
 private suspend fun uploadToS3(s3Dir: Path) {
-  spanBuilder("aws s3 sync").use {
+  spanBuilder("aws s3 cp").use {
     awsS3Cli("cp", "--no-progress", "--include", "*", "--recursive", s3Dir.toString(), "s3://intellij-jps-cache", returnStdOut = false)
   }
 }
