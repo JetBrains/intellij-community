@@ -54,7 +54,6 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
       argument {
         displayName(CLASSPATH_ARGUMENT_NAME)
-        suggestions(JavaShellCommandUtils.classpathSuggestionsGenerator())
       }
     }
     option("-showversion") {
@@ -116,7 +115,6 @@ class JavaShellCommandSpecsProvider : ShellCommandSpecsProvider {
       description(JavaTerminalBundle.message("java.command.terminal.classpath.option.description"))
       argument {
         displayName(CLASSPATH_ARGUMENT_NAME)
-        suggestions(JavaShellCommandUtils.classpathSuggestionsGenerator())
       }
     }
     option("--help") {

@@ -5,7 +5,6 @@ import com.intellij.terminal.completion.spec.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.getFileSuggestions
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCommandSpecImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators
 import java.io.File
@@ -25,7 +24,6 @@ object ShellDataGenerators {
    * Note that the suggestions are not filtered by the file prefix extracted from the [typed prefix][com.intellij.terminal.completion.spec.ShellRuntimeContext.typedPrefix].
    * All the files from the base directory extracted from the typed prefix are returned as [ShellCompletionSuggestion]'s.
    * All prefix matching logic is performed by the core completion logic.
-   * @see getFileSuggestions
    */
   fun fileSuggestionsGenerator(onlyDirectories: Boolean = false): ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> {
     val key = if (onlyDirectories) "directories" else "files"
@@ -33,54 +31,37 @@ object ShellDataGenerators {
       debugName = key,
       getCacheKey = { "$key:${getParentPath(it.typedPrefix, it.shellName)}" }
     ) { context ->
-      getFileSuggestions(context, context.typedPrefix, onlyDirectories)
-    }
-  }
-
-  /**
-   * Generates file suggestions for a given typed prefix in the specified shell context.
-   *
-   * @param context the runtime context of the shell containing information about the current environment
-   * @param typedPrefix the typed prefix for which suggestions are generated
-   * @param onlyDirectories if only directories should be suggested
-   * @param replacementIndexDelta
-   */
-  suspend fun getFileSuggestions(
-    context: ShellRuntimeContext,
-    typedPrefix: String,
-    onlyDirectories: Boolean,
-    replacementIndexDelta: Int = 0,
-  ): List<ShellCompletionSuggestion> {
-    val path = getParentPath(typedPrefix, context.shellName)
-    val files: List<String> = context.getChildFiles(path, onlyDirectories)
-    val prefixReplacementIndex = path.length + if (context.typedPrefix.startsWith('"')) 1 else 0 + replacementIndexDelta
-    val suggestions = files.flatMap {
-      val type = if (it.endsWith(File.separatorChar)) ShellSuggestionType.FOLDER else ShellSuggestionType.FILE
-      val suggestion = ShellCompletionSuggestion(name = it, type = type, prefixReplacementIndex = prefixReplacementIndex)
-      if (type == ShellSuggestionType.FILE) {
-        listOf(suggestion)
+      val path = getParentPath(context.typedPrefix, context.shellName)
+      val files: List<String> = context.getChildFiles(path, onlyDirectories)
+      val prefixReplacementIndex = path.length + if (context.typedPrefix.startsWith('"')) 1 else 0
+      val suggestions = files.flatMap {
+        val type = if (it.endsWith(File.separatorChar)) ShellSuggestionType.FOLDER else ShellSuggestionType.FILE
+        val suggestion = ShellCompletionSuggestion(name = it, type = type, prefixReplacementIndex = prefixReplacementIndex)
+        if (type == ShellSuggestionType.FILE) {
+          listOf(suggestion)
+        }
+        else {
+          // Directory suggestion has a trailing file separator, but suggestion without it is also valid.
+          // It is needed for the parser to consider it as a valid suggestion and not mark it as something unknown.
+          val hiddenSuggestion = ShellCompletionSuggestion(
+            name = it.removeSuffix(File.separator),
+            type = ShellSuggestionType.FOLDER,
+            prefixReplacementIndex = prefixReplacementIndex,
+            isHidden = true
+          )
+          listOf(suggestion, hiddenSuggestion)
+        }
       }
-      else {
-        // Directory suggestion has a trailing file separator, but suggestion without it is also valid.
-        // It is needed for the parser to consider it as a valid suggestion and not mark it as something unknown.
-        val hiddenSuggestion = ShellCompletionSuggestion(
-          name = it.removeSuffix(File.separator),
-          type = ShellSuggestionType.FOLDER,
-          prefixReplacementIndex = prefixReplacementIndex,
-          isHidden = true
-        )
-        listOf(suggestion, hiddenSuggestion)
+      val adjustedPrefix = context.typedPrefix.removePrefix("\"").removeSuffix("'")
+      // If the base path is the same as the typed prefix, then add an empty suggestion.
+      // Because the current typed prefix is already a valid value of the file argument.
+      // It is needed for the parser to consider current typed prefix as a valid file suggestion.
+      if (path.isNotEmpty() && path == adjustedPrefix) {
+        val emptySuggestion = ShellCompletionSuggestion(name = "", prefixReplacementIndex = prefixReplacementIndex, isHidden = true)
+        suggestions + emptySuggestion
       }
+      else suggestions
     }
-    val adjustedPrefix = typedPrefix.removePrefix("\"").removeSuffix("'")
-    // If the base path is the same as the typed prefix, then add an empty suggestion.
-    // Because the current typed prefix is already a valid value of the file argument.
-    // It is needed for the parser to consider current typed prefix as a valid file suggestion.
-    return if (path.isNotEmpty() && path == adjustedPrefix) {
-      val emptySuggestion = ShellCompletionSuggestion(name = "", prefixReplacementIndex = prefixReplacementIndex, isHidden = true)
-      suggestions + emptySuggestion
-    }
-    else suggestions
   }
 
   /**
