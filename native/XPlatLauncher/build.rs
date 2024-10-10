@@ -276,15 +276,20 @@ fn embed_metadata() -> Result<()> {
     let cargo_root = PathBuf::from(cargo_root_env_var);
 
     let manifest_relative_path = "resources/windows/WinLauncher.manifest";
+    let mut res = WindowsResource::new();
     assert_exists_and_file(&cargo_root.join(manifest_relative_path))?;
     cargo!("rerun-if-changed={manifest_relative_path}");
-    cargo!("rustc-link-arg-bins=/MANIFEST:EMBED");
-    cargo!("rustc-link-arg-bins=/MANIFESTINPUT:{manifest_relative_path}");
-
+    
+    #[cfg(target_env = "msvc")] {
+        cargo!("rustc-link-arg-bins=/MANIFEST:EMBED");
+        cargo!("rustc-link-arg-bins=/MANIFESTINPUT:{manifest_relative_path}");
+    }  
+    #[cfg(not(target_env = "msvc"))] {
+        res.set_manifest_file(manifest_relative_path);
+    }
     let icon_relative_path = "resources/windows/WinLauncher.ico";
     assert_exists_and_file(&cargo_root.join(icon_relative_path))?;
 
-    let mut res = WindowsResource::new();
     res.set_icon_with_id(icon_relative_path, "2000");  // see `resources/windows/resource.h`
     res.compile().context("Failed to embed resources")
 }
