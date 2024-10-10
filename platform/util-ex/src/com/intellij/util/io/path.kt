@@ -208,6 +208,7 @@ fun Path.isFile(): Boolean = isRegularFile()
 @Suppress("DeprecatedCallableAddReplaceWith")
 fun Path.size(): Long = fileSize()
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use kotlin.io.path.getLastModifiedTime", level = DeprecationLevel.ERROR)
 @Suppress("DeprecatedCallableAddReplaceWith")
 fun Path.lastModified(): FileTime = getLastModifiedTime()
@@ -221,10 +222,12 @@ fun Path.isAncestor(child: Path): Boolean = child.startsWith(this)
 @Throws(IOException::class)
 fun Path.inputStream(): InputStream = inputStream()
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Trivial, just inline", ReplaceWith("resolve(relativePath).write(data.toByteArray())"), level = DeprecationLevel.ERROR)
 @Throws(IOException::class)
 fun Path.writeChild(relativePath: String, data: String): Path = resolve(relativePath).write(data.toByteArray())
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use `kotlin.io.path.createSymbolicLinkPointingTo` with `com.intellij.util.io.createParentDirectories`", level = DeprecationLevel.ERROR)
 @Suppress("DeprecatedCallableAddReplaceWith")
 fun Path.createSymbolicLink(target: Path): Path = this.createParentDirectories().createSymbolicLinkPointingTo(target)

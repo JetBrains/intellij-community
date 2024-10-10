@@ -373,6 +373,7 @@ public final class JDOMUtil {
   /**
    * @deprecated Use {@link #write(Element, Path, String)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static void write(@NotNull Parent element, @NotNull File file, @NotNull String lineSeparator) throws IOException {
     FileUtilRt.createParentDirs(file);

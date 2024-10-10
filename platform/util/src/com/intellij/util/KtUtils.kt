@@ -3,6 +3,7 @@
 
 package com.intellij.util
 
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
@@ -26,6 +27,7 @@ inline fun <T> runIf(condition: Boolean, block: () -> T): T? {
   return if (condition) block() else null
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("""
   Unfortunately, this function provokes cryptic code, please do not use it.
   

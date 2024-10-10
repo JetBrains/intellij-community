@@ -85,6 +85,7 @@ fun Path.findOrCreateDirectory(relativePath: String): Path {
 }
 
 @Deprecated("Do not use", level = DeprecationLevel.ERROR)
+@ApiStatus.ScheduledForRemoval
 @ApiStatus.Internal
 fun String.toNioPath(): Path {
   return Paths.get(FileUtilRt.toSystemDependentName(this))
