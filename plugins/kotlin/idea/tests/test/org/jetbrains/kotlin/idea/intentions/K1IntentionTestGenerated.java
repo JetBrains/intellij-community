@@ -10341,19 +10341,19 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertToStringTemplate/invalidChar.kt");
         }
 
-        @TestMetadata("kt11295.kt")
-        public void testKt11295() throws Exception {
-            runTest("testData/intentions/convertToStringTemplate/kt11295.kt");
+        @TestMetadata("KTIJ-30491.kt")
+        public void testKTIJ_30491() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/KTIJ-30491.kt");
         }
 
-        @TestMetadata("ktij30491.kt")
-        public void testKtij30491() throws Exception {
-            runTest("testData/intentions/convertToStringTemplate/ktij30491.kt");
+        @TestMetadata("KTIJ-30491-2.kt")
+        public void testKTIJ_30491_2() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/KTIJ-30491-2.kt");
         }
 
-        @TestMetadata("ktij30491_2.kt")
-        public void testKtij30491_2() throws Exception {
-            runTest("testData/intentions/convertToStringTemplate/ktij30491_2.kt");
+        @TestMetadata("KT-11295.kt")
+        public void testKT_11295() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/KT-11295.kt");
         }
 
         @TestMetadata("lambdaInParentheses.kt")
