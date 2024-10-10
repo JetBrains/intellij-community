@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.BiConsumer
 import java.util.function.Consumer
 
 private val obsoleteError: RuntimeException by lazy { MessageError("Obsolete", false) }
@@ -375,6 +376,73 @@ fun <T> any(promises: Collection<Promise<T>>, totalError: String): Promise<T> {
     promise.onSuccess(done)
     promise.onError(rejected)
   }
+  return totalPromise
+}
+
+
+fun <T> Collection<Promise<T>>.waitAll(node: Obsolescent): Promise<List<T>> {
+  if (isEmpty()) {
+    return resolvedPromise(emptyList())
+  }
+  else if (size == 1) {
+    return first().then(node, ::listOf)
+  }
+
+  val totalPromise = AsyncPromise<List<T>>()
+
+  val done = object : BiConsumer<Int, T> {
+    val toConsume = AtomicInteger(size)
+    val result = Collections.synchronizedList(
+      MutableList<T?>(size) { null }
+    )
+
+    override fun accept(index: Int, t: T) {
+      result[index] = t
+      if (toConsume.decrementAndGet() <= 0) {
+        @Suppress("UNCHECKED_CAST")
+        totalPromise.setResult(result as List<T>)
+      }
+    }
+  }
+
+  val rejected = Consumer<Throwable> { throwable -> totalPromise.setError(throwable) }
+
+  for ((index, promise) in withIndex()) {
+    promise.onSuccess(node) { done.accept(index, it) }
+    promise.onError(node, rejected::accept)
+  }
+
+  return totalPromise
+}
+
+fun <T> Collection<T>.first(node: Obsolescent, predicate: (T) -> Promise<Boolean>): Promise<T?> {
+  if (isEmpty()) {
+    return resolvedPromise()
+  }
+
+  val totalPromise = AsyncPromise<T?>()
+  val toConsume = AtomicInteger(size)
+
+  val done = Consumer<T?> { value ->
+    if (value != null) {
+      totalPromise.setResult(value)
+    } else if (toConsume.decrementAndGet() <= 0) {
+      totalPromise.setResult(null)
+    }
+  }
+
+  val rejected = Consumer<Throwable> { throwable ->
+    if (toConsume.decrementAndGet() <= 0) {
+      totalPromise.setError(throwable)
+    }
+  }
+
+  for (element in this) {
+    predicate(element)
+      .then(node) { matched -> done.accept(element.takeIf { matched }) }
+      .onError(node) { rejected.accept(it) }
+  }
+
   return totalPromise
 }
 
