@@ -4,8 +4,6 @@ package com.intellij.debugger.settings;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationsPanel;
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.JVMNameUtil;
-import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
@@ -29,11 +27,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
@@ -58,7 +55,6 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -93,7 +89,6 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
   @Override
   public JComponent createComponent() {
     myTableModel = new MyTableModel();
-    myTableModel.addFromAnnotations(myProject);
 
     JBTable table = new JBTable(myTableModel);
     table.setColumnSelectionAllowed(false);
@@ -343,76 +338,6 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
       myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
     }
 
-    private void addFromAnnotations(@NotNull Project project) {
-      if (Registry.is("debugger.capture.points.annotations")) {
-        List<CapturePoint> capturePointsFromAnnotations = new ArrayList<>();
-        processCaptureAnnotations(project, (capture, e, annotation) -> {
-          if (e instanceof PsiMethod) {
-            addCapturePointIfNeeded(e, (PsiMethod)e, "this", capture, capturePointsFromAnnotations);
-          }
-          else if (e instanceof PsiParameter psiParameter) {
-            PsiMethod psiMethod = (PsiMethod)psiParameter.getDeclarationScope();
-            addCapturePointIfNeeded(psiParameter, psiMethod,
-                                    DecompiledLocalVariable.PARAM_PREFIX + psiMethod.getParameterList().getParameterIndex(psiParameter),
-                                    capture, capturePointsFromAnnotations);
-          }
-        });
-
-        capturePointsFromAnnotations.forEach(this::addIfNeeded);
-      }
-    }
-
-    private static void addCapturePointIfNeeded(PsiModifierListOwner psiElement,
-                                                PsiMethod psiMethod,
-                                                String defaultExpression,
-                                                boolean capture,
-                                                List<CapturePoint> capturePointsFromAnnotations) {
-      CapturePoint capturePoint = new CapturePoint();
-      capturePoint.myEnabled = false;
-      if (capture) {
-        capturePoint.myClassName = JVMNameUtil.getNonAnonymousClassName(psiMethod.getContainingClass());
-        capturePoint.myMethodName = JVMNameUtil.getJVMMethodName(psiMethod);
-      }
-      else {
-        capturePoint.myInsertClassName = JVMNameUtil.getNonAnonymousClassName(psiMethod.getContainingClass());
-        capturePoint.myInsertMethodName = JVMNameUtil.getJVMMethodName(psiMethod);
-      }
-
-      PsiModifierList modifierList = psiElement.getModifierList();
-      if (modifierList != null) {
-        PsiAnnotation annotation = modifierList.findAnnotation(getAnnotationName(capture));
-        if (annotation != null) {
-          PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
-          String keyExpression = keyExpressionValue != null ? StringUtil.unquoteString(keyExpressionValue.getText()) : null;
-          if (StringUtil.isEmpty(keyExpression)) {
-            keyExpression = defaultExpression;
-          }
-          if (capture) {
-            capturePoint.myCaptureKeyExpression = keyExpression;
-          }
-          else {
-            capturePoint.myInsertKeyExpression = keyExpression;
-          }
-
-          PsiAnnotationMemberValue groupValue = annotation.findAttributeValue("group");
-          String group = groupValue != null ? StringUtil.unquoteString(groupValue.getText()) : null;
-          if (!StringUtil.isEmpty(group)) {
-            for (CapturePoint capturePointsFromAnnotation : capturePointsFromAnnotations) {
-              if (StringUtil.startsWith(group, capturePointsFromAnnotation.myClassName) &&
-                  StringUtil.endsWith(group, capturePointsFromAnnotation.myMethodName)) {
-                capturePointsFromAnnotation.myInsertClassName = capturePoint.myInsertClassName;
-                capturePointsFromAnnotation.myInsertMethodName = capturePoint.myInsertMethodName;
-                capturePointsFromAnnotation.myInsertKeyExpression = capturePoint.myInsertKeyExpression;
-                return;
-              }
-            }
-          }
-        }
-      }
-
-      capturePointsFromAnnotations.add(capturePoint);
-    }
-
     @Override
     public String getColumnName(int column) {
       return COLUMN_NAMES[column];
@@ -528,7 +453,6 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
     myCaptureVariables.setSelected(DebuggerSettings.getInstance().CAPTURE_VARIABLES);
     myDebuggerAgent.setSelected(DebuggerSettings.getInstance().INSTRUMENTING_AGENT);
     myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
-    myTableModel.addFromAnnotations(myProject);
     myTableModel.fireTableDataChanged();
   }
 
