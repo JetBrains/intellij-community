@@ -489,7 +489,7 @@ public final class RefactoringUtil {
   /**
    * @deprecated use CommonJavaRefactoringUtil.suggestUniqueVariableName instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static String suggestUniqueVariableName(String baseName, PsiElement place, PsiField fieldToReplace) {
     return CommonJavaRefactoringUtil.suggestUniqueVariableName(baseName, place, fieldToReplace);
   }

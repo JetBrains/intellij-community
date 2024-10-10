@@ -218,7 +218,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
    */
   @NotNull
   @Nls
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public String getDescription() {
     return getDisplayName();
   }
