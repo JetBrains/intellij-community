@@ -18,6 +18,7 @@ open class TestingOptions {
     const val BOOTSTRAP_SUITE_DEFAULT = "com.intellij.tests.BootstrapTests"
     const val PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests"
     const val TEST_JRE_PROPERTY = "intellij.build.test.jre"
+    const val REDIRECT_STDOUT_TO_FILE = "intellij.build.test.redirectStdoutToFile"
   }
 
   /**
@@ -168,4 +169,12 @@ open class TestingOptions {
    * Better together with [BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK]
    */
   val useArchivedCompiledClasses: Boolean = getBooleanProperty("intellij.build.test.use.compiled.classes.archives", false)
+
+  /**
+   * If `true` then a test process's stdout is redirected to a file,
+   * which is then [streamed](https://www.jetbrains.com/help/teamcity/service-messages.html#Writing+the+File+into+the+Build+Log) into the TeamCity build log.
+   * The resulting file will be available as a build artifact also.
+   * This may be required as a workaround for the blocked TeamCity agent stdout.
+   */
+  val redirectStdOutToFile: Boolean = getBooleanProperty(REDIRECT_STDOUT_TO_FILE, false)
 }

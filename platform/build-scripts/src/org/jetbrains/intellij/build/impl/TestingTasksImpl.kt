@@ -29,7 +29,6 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
-import java.io.FileOutputStream
 import java.io.PrintStream
 import java.lang.reflect.Modifier
 import java.nio.charset.Charset
@@ -37,6 +36,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.regex.Pattern
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.outputStream
 import kotlin.io.path.readLines
 
 private const val NO_TESTS_ERROR = 42
@@ -78,27 +78,41 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       .toList()
   }
 
-  override suspend fun runTests(additionalJvmOptions: List<String>,
-               additionalSystemProperties: Map<String, String>,
-               defaultMainModule: String?,
-               rootExcludeCondition: ((Path) -> Boolean)?) {
-    if (TeamCityHelper.isUnderTeamCity) {
-      val outputFile = Files.createTempFile("testBuildOutput", ".txt").apply { Files.delete(this) }.toFile()
-      context.messages.startWritingFileToBuildLog(outputFile.absolutePath)
-      val outputStream = System.out
-      PrintStream(FileOutputStream(outputFile)).use {
-        System.setOut(it)
-        try {
-          runTestsImpl(additionalJvmOptions, additionalSystemProperties, defaultMainModule, rootExcludeCondition)
-        }
-        finally {
-          System.setOut(outputStream)
-          context.messages.artifactBuilt(outputFile.absolutePath)
-        }
+  override suspend fun runTests(
+    additionalJvmOptions: List<String>,
+    additionalSystemProperties: Map<String, String>,
+    defaultMainModule: String?,
+    rootExcludeCondition: ((Path) -> Boolean)?,
+  ) {
+    if (options.redirectStdOutToFile && !TeamCityHelper.isUnderTeamCity) {
+      context.messages.warning("'${TestingOptions.REDIRECT_STDOUT_TO_FILE}' can be set only for a TeamCity build, ignored.")
+    }
+    if (TeamCityHelper.isUnderTeamCity && options.redirectStdOutToFile) {
+      redirectStdOutToFile {
+        runTestsImpl(additionalJvmOptions, additionalSystemProperties, defaultMainModule, rootExcludeCondition)
       }
     }
     else {
       runTestsImpl(additionalJvmOptions, additionalSystemProperties, defaultMainModule, rootExcludeCondition)
+    }
+  }
+
+  /**
+   * See [TestingOptions.redirectStdOutToFile]
+   */
+  private suspend fun redirectStdOutToFile(runTests: suspend () -> Unit) {
+    val outputFile = context.paths.tempDir.resolve("testStdOut.txt")
+    context.messages.startWritingFileToBuildLog(outputFile.absolutePathString())
+    val outputStream = System.out
+    PrintStream(outputFile.outputStream()).use {
+      System.setOut(it)
+      try {
+        runTests()
+      }
+      finally {
+        System.setOut(outputStream)
+        context.messages.artifactBuilt(outputFile.absolutePathString())
+      }
     }
   }
 
