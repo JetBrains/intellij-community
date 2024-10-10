@@ -115,7 +115,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   /**
    * @deprecated use {@link XLightBreakpointPropertiesPanel#XLightBreakpointPropertiesPanel(Project, XBreakpointManager, XBreakpointBase, boolean, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint, boolean showAllOptions) {
     this(project, breakpointManager, breakpoint, showAllOptions, false);
   }
