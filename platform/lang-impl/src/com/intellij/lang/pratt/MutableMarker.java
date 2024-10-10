@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.pratt;
 
-import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.tree.IElementType;
@@ -22,7 +21,7 @@ public class MutableMarker {
     myPath = path;
     myStartMarker = startMarker;
     myInitialPathLength = initialPathLength;
-    myMode = startMarker instanceof LighterASTNode && ((LighterASTNode)startMarker).getTokenType() != null? Mode.COMMITTED : Mode.READY;
+    myMode = startMarker != null && startMarker.getTokenType() != null ? Mode.COMMITTED : Mode.READY;
   }
 
   // for easier transition only
@@ -30,7 +29,7 @@ public class MutableMarker {
     myPath = path;
     myStartMarker = (PsiBuilder.Marker)builder.getLatestDoneMarker();
     myInitialPathLength = path.size();
-    myResultType = myStartMarker != null ? ((LighterASTNode)myStartMarker).getTokenType() : null;
+    myResultType = myStartMarker != null ? myStartMarker.getTokenType() : null;
     myMode = myResultType != null ? Mode.COMMITTED : Mode.READY;
   }
 

@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -546,7 +545,7 @@ final class FileTypeDetectionService implements Disposable {
                                                                              file, true, true,
                                                                              PlainTextFileType.INSTANCE, (@Nullable CharSequence text) -> {
         if (toLog()) {
-          log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): bytes length=" + ((ByteSequence)bytes).length() +
+          log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): bytes length=" + bytes.length() +
               "; isText=" + (text != null) + "; text='" + (text == null ? null : StringUtil.first(text, 100, true)) + "'" +
               ", detectors=" + detectors);
         }
@@ -651,7 +650,7 @@ final class FileTypeDetectionService implements Disposable {
     if (!file.isCharsetSet()) {
       // when detecting type from content of a file with unknown charset we have to determine charset first,
       // which in turn may require file content. But in this case, the whole file content because the UTF surrogates may very well be at the end of the file.
-      return FileUtilRt.getUserContentLoadLimit(); 
+      return FileUtilRt.getUserContentLoadLimit();
     }
     int bufferLength = cachedDetectFileBufferSize;
     if (bufferLength == -1) {

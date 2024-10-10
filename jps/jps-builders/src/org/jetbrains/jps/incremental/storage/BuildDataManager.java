@@ -265,7 +265,7 @@ public final class BuildDataManager {
       finally {
         SourceToOutputMappingWrapper sourceToOutput = buildTargetToSourceToOutputMapping.remove(target);
         if (sourceToOutput != null && sourceToOutput.myDelegate != null) {
-          ((StorageOwner)sourceToOutput.myDelegate).close();
+          sourceToOutput.myDelegate.close();
         }
 
         if (newDataManager != null) {
@@ -385,7 +385,7 @@ public final class BuildDataManager {
     if (outputToTargetMapping != null) {
       outputToTargetMapping.flush(memoryCachesOnly);
     }
-    
+
     if (sourceToFormMap != null) {
       sourceToFormMap.flush(memoryCachesOnly);
     }
@@ -464,7 +464,7 @@ public final class BuildDataManager {
     static <T extends Throwable> void execAll(Class<T> errorClass, IOOperation<T>... operations) throws T {
       execAll(errorClass, Arrays.asList(operations));
     }
-    
+
     static <T extends Throwable> void execAll(Class<T> errorClass, Iterable<IOOperation<T>> operations) throws T {
       Throwable error = null;
       for (IOOperation<T> operation : operations) {
@@ -616,7 +616,7 @@ public final class BuildDataManager {
   private @NotNull StorageOwner allTargetStorages() {
     return allTargetStorages(f -> {});
   }
-  
+
   private static final class SourceToOutputMappingWrapper implements SourceToOutputMapping {
     private final SourceToOutputMappingImpl myDelegate;
     private final int myBuildTargetId;

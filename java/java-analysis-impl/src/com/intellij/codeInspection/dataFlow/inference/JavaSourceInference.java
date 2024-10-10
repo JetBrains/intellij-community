@@ -269,22 +269,22 @@ public final class JavaSourceInference {
       return contract;
     });
   }
-  
+
   public static boolean canInferFromSource(@NotNull PsiMethodImpl method) {
     return getInferenceMode(method) == InferenceMode.ENABLED;
   }
 
   private static InferenceMode getInferenceMode(@NotNull PsiMethodImpl method) {
     if (isLibraryCode(method) ||
-        ((PsiMethod)method).hasModifierProperty(PsiModifier.ABSTRACT) ||
-        ((PsiMethod)method).hasModifierProperty(PsiModifier.NATIVE)) {
+        method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+        method.hasModifierProperty(PsiModifier.NATIVE)) {
       return InferenceMode.DISABLED;
     }
 
-    if (((PsiMethod)method).hasModifierProperty(PsiModifier.STATIC)) return InferenceMode.ENABLED;
+    if (method.hasModifierProperty(PsiModifier.STATIC)) return InferenceMode.ENABLED;
     if (PsiUtil.canBeOverridden(method)) {
       PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null && (PsiUtil.isLocalClass(containingClass) || 
+      if (containingClass != null && (PsiUtil.isLocalClass(containingClass) ||
                                       !containingClass.isInterface() && containingClass.hasModifierProperty(PsiModifier.PRIVATE))) {
         if (ClassInheritorsSearch.search(containingClass, new LocalSearchScope(containingClass.getContainingFile()), false)
               .findFirst() == null) {
