@@ -52,7 +52,7 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
     myVcs = vcs;
     myHgDir = rootDir.findChild(HgUtil.DOT_HG);
     assert myHgDir != null : ".hg directory wasn't found under " + rootDir.getPresentableUrl();
-    myReader = new HgRepositoryReader(vcs, VfsUtilCore.virtualToIoFile(myHgDir));
+    myReader = new HgRepositoryReader(vcs, VfsUtilCore.virtualToIoFile(myHgDir), rootDir);
     myConfig = HgConfig.getInstance(getProject(), rootDir);
     myLocalIgnoredHolder = new HgLocalIgnoredHolder(this, HgUtil.getRepositoryManager(getProject()));
     myLocalIgnoredHolder.setupListeners(vcs.getCoroutineScope());
