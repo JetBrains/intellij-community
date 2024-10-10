@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.logical.model
 
-import com.intellij.ide.structureView.logical.ContainerElementsProvider
-import com.intellij.ide.structureView.logical.ConvertElementsProvider
-import com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
-import com.intellij.ide.structureView.logical.PropertyElementProvider
+import com.intellij.ide.structureView.logical.*
 import com.intellij.openapi.project.Project
 
 /**
@@ -35,16 +32,22 @@ class LogicalStructureAssembledModel<T> private constructor(
    * The grouping element in each pair - Any - can be any object, for which a PresentationProvider is registered
    */
   fun getChildrenGrouped(): List<Pair<Any, () -> List<LogicalStructureAssembledModel<*>>>> {
-    return LogicalStructureElementsProvider.getProviders(model!!)
-      .mapNotNull { provider ->
-        if (provider !is ContainerElementsProvider && provider !is PropertyElementProvider) return@mapNotNull null
-        val children = {
-          provider.getElements(model)
-            .map { LogicalStructureAssembledModel(project, it, this) }
+    val result = mutableListOf<Pair<Any, () -> List<LogicalStructureAssembledModel<*>>>>()
+    for (provider in LogicalStructureElementsProvider.getProviders(model!!)) {
+      if (provider !is ContainerElementsProvider && provider !is PropertyElementProvider) continue
+      if (provider is ContainerGroupedElementsProvider<*, *, *>) {
+        for (groupedElement in (provider as ContainerGroupedElementsProvider<T, *, *>).getGroupedElements(model)) {
+          result.add(Pair(groupedElement.key!!) { groupedElement.value.map { LogicalStructureAssembledModel(project, it, this) } })
         }
-        Pair(provider, children)
+        continue
       }
-      .toList()
+      val children = {
+        provider.getElements(model)
+          .map { LogicalStructureAssembledModel(project, it, this) }
+      }
+      result.add(Pair(provider, children))
+    }
+    return result
   }
 
   override fun equals(other: Any?): Boolean {
