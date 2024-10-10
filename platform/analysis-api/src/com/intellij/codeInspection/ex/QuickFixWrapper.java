@@ -176,7 +176,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
    * @deprecated use {@link QuickFixWrapper#unwrap(CommonIntentionAction)} instead. Avoid {@code instanceof QuickFixWrapper} checks,
    * as the implementation may be different in the future
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull LocalQuickFix getFix() {
     return myFix;
   }
