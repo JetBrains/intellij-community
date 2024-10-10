@@ -232,6 +232,16 @@ interface InlineCompletionEvent {
     }
   }
 
+  /**
+   * Triggered by insertion of templates, like Live Templates.
+   */
+  @ApiStatus.Experimental
+  class TemplateInserted internal constructor(val editor: Editor) : InlineCompletionEvent {
+    override fun toRequest(): InlineCompletionRequest? {
+      return getRequest(event = this, editor = editor)
+    }
+  }
+
   @ApiStatus.Internal
   @ApiStatus.Experimental
   sealed class PartialAccept @ApiStatus.Internal constructor(val editor: Editor) : InlineCompletionEvent {
