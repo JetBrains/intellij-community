@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import groovy.lang.Reference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
@@ -12,10 +11,6 @@ public class GrNamedVariantLabelsInspectionTest extends LightGroovyTestCase {
   @NotNull
   public final LightProjectDescriptor getProjectDescriptor() {
     return GroovyProjectDescriptors.GROOVY_2_5;
-  }
-
-  public static GrNamedVariantLabelsInspection getInspection() {
-    return new GrNamedVariantLabelsInspection();
   }
 
   public void testBasic() {
@@ -93,14 +88,12 @@ public class GrNamedVariantLabelsInspectionTest extends LightGroovyTestCase {
   }
 
   private void doTest(String before) {
-    final Reference<String> s = new Reference<>(before);
-
-    myFixture.enableInspections(getInspection());
-    if (s.get().contains("NamedVariant")) s.set("import groovy.transform.NamedVariant\n" + s.get());
-    if (s.get().contains("NamedParam")) s.set("import groovy.transform.NamedParam\n" + s.get());
-    if (s.get().contains("NamedDelegate")) s.set("import groovy.transform.NamedDelegate\n" + s.get());
-    if (s.get().contains("CompileStatic")) s.set("import groovy.transform.CompileStatic\n" + s.get());
-    myFixture.configureByText("_.groovy", s.get());
+    myFixture.enableInspections(new GrNamedVariantLabelsInspection());
+    if (before.contains("NamedVariant")) before = "import groovy.transform.NamedVariant\n" + before;
+    if (before.contains("NamedParam")) before = "import groovy.transform.NamedParam\n" + before;
+    if (before.contains("NamedDelegate")) before = "import groovy.transform.NamedDelegate\n" + before;
+    if (before.contains("CompileStatic")) before = "import groovy.transform.CompileStatic\n" + before;
+    myFixture.configureByText("_.groovy", before);
     myFixture.checkHighlighting();
   }
 }

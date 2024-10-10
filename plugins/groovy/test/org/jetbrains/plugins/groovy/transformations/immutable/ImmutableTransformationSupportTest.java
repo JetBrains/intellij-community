@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.LightProjectDescriptor;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
@@ -15,6 +14,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl;
+import org.junit.Assert;
 
 import java.util.Arrays;
 
@@ -56,8 +56,8 @@ public class ImmutableTransformationSupportTest extends LightGroovyTestCase {
       """);
     PsiClass clazz = myFixture.findClass("CopyWithExistingMethod");
     PsiMethod[] methods = clazz.findMethodsByName("copyWith", false);
-    assert DefaultGroovyMethods.size(methods) == 1;
-    assert DefaultGroovyMethods.first(methods) instanceof GrMethodImpl;
+    Assert.assertEquals(1, methods.length);
+    Assert.assertTrue(methods[0] instanceof GrMethodImpl);
   }
 
   public void testCopyWithResolveArguments() {
@@ -67,9 +67,9 @@ public class ImmutableTransformationSupportTest extends LightGroovyTestCase {
       }
       """);
     PsiReference ref = myFixture.getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
-    assert ref != null;
+    Assert.assertNotNull(ref);
     PsiElement resolved = ref.resolve();
-    assert resolved instanceof GrField;
+    Assert.assertTrue(resolved instanceof GrField);
   }
 
   public void testCopyWithCheckArgumentTypes() {
@@ -92,6 +92,6 @@ public class ImmutableTransformationSupportTest extends LightGroovyTestCase {
       }
       """);
     myFixture.complete(CompletionType.BASIC);
-    assert myFixture.getLookupElementStrings().containsAll(Arrays.asList("stringProp", "integerProp"));
+    Assert.assertTrue(myFixture.getLookupElementStrings().containsAll(Arrays.asList("stringProp", "integerProp")));
   }
 }

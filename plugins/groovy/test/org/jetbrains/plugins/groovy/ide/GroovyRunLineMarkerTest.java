@@ -6,6 +6,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.junit.Assert;
 
 public class GroovyRunLineMarkerTest extends LightGroovyTestCase {
   @Override
@@ -27,8 +28,8 @@ public class GroovyRunLineMarkerTest extends LightGroovyTestCase {
         static void main(String[] args) {}
       }
       """);
-    assert getFixture().findGuttersAtCaret().isEmpty();
-    assert getFixture().findAllGutters().size() == 2;
+    Assert.assertTrue(getFixture().findGuttersAtCaret().isEmpty());
+    Assert.assertEquals(2, getFixture().findAllGutters().size());
   }
 
   public void testImplicitStringArray() {
@@ -49,7 +50,7 @@ public class GroovyRunLineMarkerTest extends LightGroovyTestCase {
     getFixture().configureByText("_.groovy", """
       class MainTest extends Main {}
       """);
-    assert getFixture().findAllGutters().size() == 1;
+    Assert.assertEquals(1, getFixture().findAllGutters().size());
   }
 
   public void testDefaultParameters() {
@@ -58,6 +59,6 @@ public class GroovyRunLineMarkerTest extends LightGroovyTestCase {
         static void main(String[] args, b = 2) {}
       }
       """);
-    assert getFixture().findAllGutters().size() == 2;
+    Assert.assertEquals(2, getFixture().findAllGutters().size());
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyVisitorFactory;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,11 +32,11 @@ public class GrDependencyVisitorTest extends LightGroovyTestCase {
     DependenciesBuilder.analyzeFileDependencies(file, (place, dependency) -> {
       deps.add(dependency);
     }, DependencyVisitorFactory.VisitorOptions.SKIP_IMPORTS);
-    assert deps.isEmpty();
+    Assert.assertTrue(deps.isEmpty());
 
     DependenciesBuilder.analyzeFileDependencies(file, (place, dependency) -> {
       deps.add(dependency);
     }, DependencyVisitorFactory.VisitorOptions.INCLUDE_IMPORTS);
-    assert deps.size() == 3;
+    Assert.assertEquals(3, deps.size());
   }
 }

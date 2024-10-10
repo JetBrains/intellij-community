@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import groovy.lang.Reference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
