@@ -87,6 +87,16 @@ private fun getOptionValue(expression: KtExpression, optionName: String): Pair<S
         if (optionName == "freeCompilerArgs") {
             val leftPart = expression.left ?: return null
             val rightPart = expression.right ?: return null
+            /*
+              rightPart.text might be:
+              "-Xopt-in=kotlin.RequiresOptIn" OR
+              project.compilerArgs OR
+              listOf(
+                  "-Xopt-in=kotlin.RequiresOptIn",
+                  "-Xopt-in=kotlin.ExperimentalStdlibApi"), etc.
+
+              That's why using `rightPart.text` is ok
+             */
             val optionValues = getOptionsFromFreeCompilerArgsExpression(leftPart, mutableSetOf(rightPart.text)) ?: return null
             optionValue = StringUtil.join(optionValues.reversed(), ", ")
             valueContainsMultipleValues = true
@@ -94,7 +104,7 @@ private fun getOptionValue(expression: KtExpression, optionName: String): Pair<S
             return null
         }
     } else {
-        optionValue = expression.text
+        optionValue = expression.text // The same reason of using `.text` as above for `rightPart.text`
         valueContainsMultipleValues = false
     }
     return Pair(optionValue, valueContainsMultipleValues)
@@ -106,30 +116,39 @@ private fun getOptionValue(expression: KtExpression, optionName: String): Pair<S
 private fun getOptionsFromFreeCompilerArgsExpression(expression: KtExpression, optionValues: MutableSet<String>): Set<String>? {
     if (expression is KtBinaryExpression) {
         if (expression.operationToken != KtTokens.PLUS) return null
-        optionValues.add(expression.right?.text ?: return null)
+        optionValues.add(expression.right?.text ?: return null) // `expression.right?.text` looks like `"-Xopt-in=kotlin.RequiresOptIn"`
         getOptionsFromFreeCompilerArgsExpression(expression.left ?: return null, optionValues)
     } else {
-        val expressionName = expression.text ?: return null
-        if (expressionName != "freeCompilerArgs") {
-            optionValues.add(expressionName)
+        /*
+        expression.text can be `project.benchmark.compilerOpts` OR
+        `allLibraries.map { listOf("-include-binary", it) }.flatten()` OR
+         a recursion bottom like "-Xexport-kdoc"
+         */
+        val expressionText = expression.text ?: return null
+        if (expressionText != "freeCompilerArgs") {
+            optionValues.add(expressionText)
         }
     }
     return optionValues
+}
+
+private fun getLeftmostReceiver(expression: KtDotQualifiedExpression): KtExpression {
+    val receiver = expression.receiverExpression
+    if (receiver is KtDotQualifiedExpression) {
+        return getLeftmostReceiver(receiver)
+    }
+    return receiver
 }
 
 private fun getOptionName(expression: KtExpression): Pair<String, StringBuilder>? {
     val replacementOfKotlinOptionsIfNeeded = StringBuilder()
     val optionName = when (expression) {
         is KtDotQualifiedExpression -> {
-            val partBeforeDot = expression.receiverExpression.text
-
-            if (!partBeforeDot.contains("kotlinOptions")) {
-                if (partBeforeDot != "options") {
-                    return null
-                }
-            } else {
-                replacementOfKotlinOptionsIfNeeded.append("compilerOptions.")
+            if (expressionStartsWithKotlinOptionsReference(expression)) {
+                val partBeforeDot = expression.receiverExpression.text // Might be `kotlinOptions.options`
+                replacementOfKotlinOptionsIfNeeded.append(partBeforeDot.replace("kotlinOptions", "compilerOptions") + ".")
             }
+            // optionName is everything that is on the right side of `kotlinOptions.`:
             expression.getCalleeExpressionIfAny()?.text ?: return null
         }
 
@@ -266,12 +285,20 @@ private fun getReplacementOnlyOfKotlinOptionsIfNeeded(
     binaryExpression: KtBinaryExpression
 ): Replacement? {
     val leftPartOfBinaryExpression = binaryExpression.left ?: return null
-    return if (leftPartOfBinaryExpression is KtDotQualifiedExpression && leftPartOfBinaryExpression.text.startsWith("kotlinOptions")) {
+    return if (leftPartOfBinaryExpression is KtDotQualifiedExpression) {
+        if (!expressionStartsWithKotlinOptionsReference(leftPartOfBinaryExpression)) return null
         val replacement = binaryExpression.text.replace("kotlinOptions", "compilerOptions")
         Replacement(binaryExpression, replacement)
     } else {
         null
     }
+}
+
+private fun expressionStartsWithKotlinOptionsReference(expression: KtDotQualifiedExpression): Boolean {
+    val leftmostReceiver = getLeftmostReceiver(expression)
+    if (leftmostReceiver !is KtNameReferenceExpression) return false
+    val leftmostReceiverName = leftmostReceiver.getReferencedName()
+    return (leftmostReceiverName == "kotlinOptions")
 }
 
 private data class JsOptionValue(val optionValue: String, val className: String, val fqClassName: FqName)

@@ -22,5 +22,5 @@ tasks.test {
 }
 
 tasks.withType<KotlinCompile>().configureEach {
-    compilerOptions.jvmTarget.set(JvmTarget.JVM_11)
+    compilerOptions.options.jvmTarget.set(JvmTarget.JVM_11)
 }
