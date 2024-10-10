@@ -96,9 +96,7 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                             ?.getLambdaExpression()?.bodyExpression?.statements?.requireNoNulls()
 
                         // compileKotlin.kotlinOptions { .. }
-                        lambdaStatements?.forEach {
-                            if (expressionsContainForbiddenOperations(it)) return
-                        }
+                        if (lambdaStatements?.any(::expressionsContainForbiddenOperations) == true) return
                     }
 
                     else -> return
