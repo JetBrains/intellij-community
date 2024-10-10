@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.logging.TeamCityBuildMessageLogger
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.incremental.MessageHandler
 import org.jetbrains.jps.incremental.messages.*
@@ -86,7 +87,7 @@ internal class JpsMessageHandler(private val context: CompilationContext, privat
   private val compilationFinishTimeForTarget = ConcurrentHashMap<String, Long>()
   private var progress = -1.0f
 
-  override fun processMessage(message: BuildMessage) {
+  override fun processMessage(message: BuildMessage): Unit = TeamCityBuildMessageLogger.withFlow(span) {
     val text = message.messageText
     when (message.kind) {
       BuildMessage.Kind.ERROR, BuildMessage.Kind.INTERNAL_BUILDER_ERROR -> {
