@@ -7,6 +7,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.Assert;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class CreateConstantFromJavaUsageTest extends GrHighlightingTestBase {
 
     myFixture.enableInspections(getCustomInspections());
     List<IntentionAction> fixes = myFixture.filterAvailableIntentions(action);
-    assert fixes.size() == actionsCount;
+    Assert.assertEquals(fixes.size(), actionsCount);
     if (actionsCount == 0) return;
 
     myFixture.launchAction(fixes.get(0));

@@ -4,11 +4,12 @@ package org.jetbrains.plugins.groovy.fixes;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
+import org.junit.Assert;
 
 import java.util.List;
 
@@ -80,8 +81,8 @@ public class GrMultipleAssignmentTest extends GrHighlightingTestBase {
     myFixture.configureByText("_.groovy", before);
     myFixture.enableInspections(getCustomInspections());
     List<IntentionAction> fixes = myFixture.getAllQuickFixes("_.groovy");
-    assert fixes.size() == 1 : before;
-    myFixture.launchAction(DefaultGroovyMethods.first(fixes));
+    Assert.assertEquals(before, 1, fixes.size());
+    myFixture.launchAction(ContainerUtil.getFirstItem(fixes));
     myFixture.checkResult(after);
   }
 }

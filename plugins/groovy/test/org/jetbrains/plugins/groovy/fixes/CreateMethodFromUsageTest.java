@@ -3,11 +3,12 @@ package org.jetbrains.plugins.groovy.fixes;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.Assert;
 
 import java.util.List;
 
@@ -26,10 +27,10 @@ public class CreateMethodFromUsageTest extends GrHighlightingTestBase {
   private void doTest(String action, int actionCount, String[] files) {
     myFixture.configureByFiles(files);
     List<IntentionAction> fixes = myFixture.filterAvailableIntentions(action);
-    assert fixes.size() == actionCount;
+    Assert.assertEquals(fixes.size(), actionCount);
     if (actionCount == 0) return;
 
-    myFixture.launchAction(DefaultGroovyMethods.first(fixes));
+    myFixture.launchAction(ContainerUtil.getFirstItem(fixes));
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     myFixture.checkResultByFile(BEFORE, AFTER, true);
   }

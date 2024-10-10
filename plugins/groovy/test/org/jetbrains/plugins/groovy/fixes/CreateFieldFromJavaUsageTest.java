@@ -3,9 +3,10 @@ package org.jetbrains.plugins.groovy.fixes;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.Assert;
 
 import java.util.List;
 
@@ -28,8 +29,8 @@ public class CreateFieldFromJavaUsageTest extends GrHighlightingTestBase {
 
   private void doTest() {
     List<IntentionAction> fixes = myFixture.filterAvailableIntentions("Create field");
-    assert !fixes.isEmpty();
-    myFixture.launchAction(DefaultGroovyMethods.first(fixes));
+    Assert.assertFalse(fixes.isEmpty());
+    myFixture.launchAction(ContainerUtil.getFirstItem(fixes));
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     myFixture.checkResultByFile(BEFORE, AFTER, true);
   }
