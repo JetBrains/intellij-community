@@ -17,19 +17,30 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
 private val logger by lazy { logger<InlineCompletionLogsContainer>()}
 
 @ApiStatus.Internal
-class InlineCompletionLogsContainer(@VisibleForTesting val random: Float = Random.nextFloat()) {
+class InlineCompletionLogsContainer() {
 
-  // ratio of requests that should be fully logged (otherwise, only basic fields)
-  private val fullLogsShare = 0.01f
+  /**
+   * used to determine if all features would be sent or only basic
+   */
+  private var random: Float = Random.nextFloat()
 
-  // for release, log only basic fields for most of the requests and very rarely log everything.
-  // since we skip filtering in the random pass scenario, we want the full logs in such cases too.
-  val forceFullLogs: AtomicBoolean = AtomicBoolean(ApplicationManager.getApplication().isEAP || random < fullLogsShare)
+  /**
+   * Ratio (in percents) of requests that should be fully logged (otherwise, only basic fields).
+   * Can be different for Cloud and Local.
+   */
+  val fullLogsShare: AtomicInteger = AtomicInteger(1)
+
+  private val forceFullLogs: AtomicBoolean = AtomicBoolean(false)
+
+  fun forceFullLogs() {
+    forceFullLogs.set(true)
+  }
 
   /**
    * Describes phase of the Inline completion session.
@@ -44,6 +55,11 @@ class InlineCompletionLogsContainer(@VisibleForTesting val random: Float = Rando
     PROVIDER_FINISHING("End of postprocessing, end of pipeline"),
     INLINE_API_FINISHING("Finishing execution inside inline completion API"),
     ;
+  }
+
+  @VisibleForTesting
+  fun mockRandom(mocked: Float) {
+    random = mocked
   }
 
   private val logs: Map<Phase, MutableSet<EventPair<*>>> = Phase.entries.associateWith {
@@ -99,7 +115,8 @@ class InlineCompletionLogsContainer(@VisibleForTesting val random: Float = Rando
     InlineCompletionLogs.Session.SESSION_EVENT.log( // log function is asynchronous, so it's ok to launch it even on EDT
       logs.filter { it.value.isNotEmpty() }.mapNotNull() { (phase, logs) ->
 
-        val filteredEvents = if (forceFullLogs.get()) {
+        // for release, log only basic fields for most of the requests and very rarely log everything.
+        val filteredEvents = if (forceFullLogs.get() || ApplicationManager.getApplication().isEAP || random < (1f / 100f * fullLogsShare.get())) {
           logs
         } else {
           logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }

@@ -34,7 +34,8 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
   @Test
   fun testEapLogs() {
     withEap(true) {
-      val logsContainer = InlineCompletionLogsContainer(1f)
+      val logsContainer = InlineCompletionLogsContainer()
+      logsContainer.mockRandom(1f)
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
@@ -61,7 +62,8 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
   @Test
   fun testFullLogsForRelease() {
     withEap(false) {
-      val logsContainer = InlineCompletionLogsContainer(0f)
+      val logsContainer = InlineCompletionLogsContainer()
+      logsContainer.mockRandom(0f)
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
@@ -88,8 +90,9 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
   @Test
   fun testFullLogsForReleaseRandomPass() {
     withEap(false) {
-      val logsContainer = InlineCompletionLogsContainer(1f)
-      logsContainer.forceFullLogs.set(true)
+      val logsContainer = InlineCompletionLogsContainer()
+      logsContainer.mockRandom(1f)
+      logsContainer.forceFullLogs()
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
@@ -116,7 +119,8 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
   @Test
   fun testFullLogFiltered() {
     withEap(false) {
-      val logsContainer = InlineCompletionLogsContainer(1f)
+      val logsContainer = InlineCompletionLogsContainer()
+      logsContainer.mockRandom(1f)
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
@@ -141,7 +145,8 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
    */
   @Test
   fun testPhaseNotFoundForField() {
-    val logsContainer = InlineCompletionLogsContainer(1f)
+    val logsContainer = InlineCompletionLogsContainer()
+    logsContainer.mockRandom(1f)
     assertThrows(IllegalArgumentException::class.java) {
       logsContainer.add(EventFields.Boolean("incorrect_field").with(false))
     }
