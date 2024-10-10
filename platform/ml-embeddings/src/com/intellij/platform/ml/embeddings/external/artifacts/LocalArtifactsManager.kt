@@ -176,7 +176,7 @@ class LocalArtifactsManager {
     }
 
     fun getArchitectureId(): String = when (CpuArch.CURRENT) {
-      CpuArch.X86 -> "x86_64"
+      CpuArch.X86_64 -> "x86_64"
       CpuArch.ARM64 -> "arm_64"
       else -> throw UnsupportedArchitectureException(System.getProperty("os.arch"))
     }
