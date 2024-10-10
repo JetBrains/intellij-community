@@ -18,6 +18,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoView
 interface GHPRAIReviewViewModel {
   val isLoading: StateFlow<Boolean>
 
+  fun loadReview()
   fun showDiffFor(change: RefComparisonChange, line: Int? = null)
   fun getAICommentsForDiff(change: RefComparisonChange, diffData: GitTextFilePatchWithHistory): Flow<List<GHPRAICommentViewModel>>
 }
