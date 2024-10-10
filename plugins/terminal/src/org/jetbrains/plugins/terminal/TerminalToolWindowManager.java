@@ -55,6 +55,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,6 +113,7 @@ public final class TerminalToolWindowManager implements Disposable {
   /**
    * @deprecated use {@link #getTerminalWidgets()} instead
    */
+  @ApiStatus.Internal
   @Deprecated
   public Set<JBTerminalWidget> getWidgets() {
     return ContainerUtil.map2SetNotNull(myContainerByWidgetMap.keySet(),
