@@ -2,10 +2,10 @@
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.UpdateSession
-import com.intellij.openapi.actionSystem.impl.SuspendingUpdateSession
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.openapi.util.text.StringUtil
@@ -43,18 +43,12 @@ class GroupMapping @JvmOverloads constructor(private val myShowNonPopupGroups: B
       return if (path != null) getPathName(path) else null
     }
 
-  suspend fun updateBeforeShowSuspend(session: UpdateSession) {
-    val suspendingSession = (session as? SuspendingUpdateSession)
-    if (suspendingSession == null) {
-      updateBeforeShow(session)
-      return
-    }
-
+  suspend fun updateBeforeShowSuspend(presentationProvider: suspend (AnAction) -> Presentation) {
     if (myBestNameComputed) return
     myBestNameComputed = true
 
     for (path in myPaths) {
-      val name = getActualPathNameSuspend(path, suspendingSession)
+      val name = getActualPathNameSuspend(path, presentationProvider)
       if (name != null) {
         myBestGroupName = name
         return
@@ -86,10 +80,10 @@ class GroupMapping @JvmOverloads constructor(private val myShowNonPopupGroups: B
     return StringUtil.nullize(name)
   }
 
-  private suspend fun getActualPathNameSuspend(path: List<ActionGroup>, session: SuspendingUpdateSession): @Nls String? {
+  private suspend fun getActualPathNameSuspend(path: List<ActionGroup>, presentationProvider: suspend (AnAction) -> Presentation): @Nls String? {
     var name = ""
     for (group in path) {
-      val presentation = session.presentationSuspend(group)
+      val presentation = presentationProvider(group)
       if (!presentation.isVisible()) return null
       name = appendGroupName(name, group, presentation)
     }
