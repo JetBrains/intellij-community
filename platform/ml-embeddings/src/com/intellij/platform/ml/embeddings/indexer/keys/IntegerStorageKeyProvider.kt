@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ml.embeddings.external.artifacts.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.indexer.IndexId
 import com.intellij.platform.ml.embeddings.indexer.entities.IndexableEntity
@@ -33,6 +34,18 @@ class IntegerStorageKeyProvider : EmbeddingStorageKeyProvider<Long>, Disposable 
     val path = IndexPath(project, indexId)
     return mutex.withLock {
       enumerators.getOrPut(path) {
+        if (project != null) {
+          Disposer.register(project, object: Disposable {
+            override fun dispose() {
+              runBlockingMaybeCancellable {
+                mutex.withLock {
+                  enumerators[path]?.close()
+                  enumerators.remove(path)
+                }
+              }
+            }
+          })
+        }
         var projectIndexRoot = LocalArtifactsManager.indicesRoot
         if (project != null) projectIndexRoot /= project.getProjectCacheFileName()
         projectIndexRoot /= indexId.toString()
