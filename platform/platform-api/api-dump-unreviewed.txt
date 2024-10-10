@@ -2312,6 +2312,8 @@ a:com.intellij.openapi.help.HelpManager
 - s:getInstance():com.intellij.openapi.help.HelpManager
 - a:invokeHelp(java.lang.String):V
 - ps:logWillOpenHelpId(java.lang.String):V
+com.intellij.openapi.help.KeymapHelpIdPresenter
+- a:getKeymapIdForHelp(com.intellij.openapi.keymap.Keymap):java.lang.String
 a:com.intellij.openapi.help.WebHelpProvider
 - com.intellij.openapi.extensions.PluginAware
 - <init>():V
