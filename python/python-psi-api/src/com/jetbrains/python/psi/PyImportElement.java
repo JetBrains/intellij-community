@@ -6,6 +6,7 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.ast.PyAstImportElement;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ public interface PyImportElement extends PyAstImportElement, PyElement, PyImport
   /**
    * @deprecated Use {@link #multiResolve()} instead.
    */
+  @ApiStatus.Internal
   @Deprecated
   @Nullable
   PsiElement resolve();

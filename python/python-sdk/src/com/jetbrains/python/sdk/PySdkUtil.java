@@ -27,10 +27,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.File;
@@ -220,6 +217,7 @@ public final class PySdkUtil {
   /**
    * @deprecated doesn't support targets
    */
+  @ApiStatus.Internal
   @Deprecated
   @NotNull
   public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {

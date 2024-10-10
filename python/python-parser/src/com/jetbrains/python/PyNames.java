@@ -3,6 +3,7 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -447,6 +448,7 @@ public final @NonNls class PyNames {
   /**
    * @deprecated use {@link #getBuiltinMethods(LanguageLevel)} instead
    */
+  @ApiStatus.Internal
   @Deprecated
   public static final Map<String, BuiltinDescription> PY36_BUILTIN_METHODS = concat(
     PY35_BUILTIN_METHODS,
