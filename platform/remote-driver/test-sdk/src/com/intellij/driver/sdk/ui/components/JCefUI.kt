@@ -5,6 +5,7 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
+import com.intellij.driver.sdk.withRetries
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.intellij.lang.annotations.Language
@@ -106,7 +107,10 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
   private fun String.escapeXpath() = replace("'", "\\x27").replace("\"", "\\x22")
 
   private fun injectElementFinderIfNeeded() {
-    if (!jcefWorker.callJs("!!window.elementFinder", 3_000).toBoolean()) {
+    val isElementFinderInjected = withRetries("check elementFinder injected", 2) {
+      jcefWorker.callJs("!!window.elementFinder", 3_000)
+    }.toBoolean()
+    if (!isElementFinderInjected) {
       jcefWorker.runJs(initScript)
     }
   }
