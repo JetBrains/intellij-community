@@ -580,10 +580,11 @@ public class org/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewOnKeyEvent 
 	public fun onSelectPreviousItem (Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;)V
 }
 
-public final class org/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewPointerEventAction : org/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLazyColumnEventAction {
+public class org/jetbrains/jewel/foundation/lazy/tree/DefaultTreeViewPointerEventAction : org/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLazyColumnEventAction {
 	public static final field $stable I
 	public fun <init> (Lorg/jetbrains/jewel/foundation/lazy/tree/TreeState;)V
 	public fun handlePointerEventPress (Landroidx/compose/ui/input/pointer/PointerEvent;Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Ljava/util/List;Ljava/lang/Object;)V
+	public final fun notifyItemClicked (Lorg/jetbrains/jewel/foundation/lazy/tree/Tree$Element;Lkotlinx/coroutines/CoroutineScope;JLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 }
 
 public abstract interface class org/jetbrains/jewel/foundation/lazy/tree/KeyActions {
