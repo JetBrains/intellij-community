@@ -99,8 +99,9 @@ public fun BasicSelectableLazyColumn(
                         if (actionHandled) {
                             scope.launch { state.lastActiveItemIndex?.let { state.scrollToItem(it) } }
                         }
+                        return@onPreviewKeyEvent actionHandled
                     }
-                    true
+                    false
                 },
         state = state.lazyListState,
         contentPadding = contentPadding,
