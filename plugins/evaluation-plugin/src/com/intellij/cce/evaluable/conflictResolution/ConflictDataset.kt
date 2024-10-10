@@ -43,9 +43,9 @@ class ConflictDataset(
     override val presentationText: String = readText("result")
 
     override fun evaluate(
-      handler: InterpretationHandler, // FIXME use this as well as filter and order
-      filter: InterpretFilter,
-      order: InterpretationOrder,
+      handler: InterpretationHandler,
+      filter: InterpretFilter, // TODO should we use it somehow?
+      order: InterpretationOrder, // TODO should we use somehow?
       sessionHandler: (Session) -> Unit
     ): List<Session> {
       val props = ConflictResolver.Props(
@@ -59,11 +59,18 @@ class ConflictDataset(
 
       require(resolvedConflicts.keys.containsAll(TextLabel.entries))
 
-      return (0 until resolvedConflicts.size).map { conflictIndex ->
-        val session = conflictSession(resolvedConflicts, conflictIndex)
-        sessionHandler(session)
-        session
+      val sessions = (0 until resolvedConflicts.size).map { conflictIndex ->
+        conflictSession(resolvedConflicts, conflictIndex)
       }
+
+      for ((index, session) in sessions.withIndex()) {
+        sessionHandler(session)
+        handler.onSessionFinished(name, sessions.size - index - 1)
+      }
+
+      handler.onFileProcessed(name)
+
+      return sessions
     }
 
     private fun <T> conflictSession(
