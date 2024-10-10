@@ -501,7 +501,7 @@ open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCompo
       }
 
       override fun getMinimumSize(): Dimension = preferredSize.apply {
-        width = UIUtil.computeTextComponentMinimumSize(width, text, font?.let { getFontMetrics(it) }, 4)
+        width = UIUtil.computeTextComponentMinimumSize(width, text, font?.let { getFontMetrics(it) })
       }
     }.also {
       it.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND

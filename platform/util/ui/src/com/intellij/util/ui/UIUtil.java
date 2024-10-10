@@ -562,6 +562,24 @@ public final class UIUtil {
 
   /**
    * Computes the minimum size the component must have to keep the given number of characters
+   *
+   * Same as {@code computeTextComponentMinimumSize(preferredSize, text, fontMetrics, 4)}.
+   *
+   * @param preferredSize     the size of the component needed to keep everything, usually computed by {@link Component#getPreferredSize()}
+   * @param text              the currently set text
+   * @param fontMetrics       the current font metrics
+   * @return the minimum size the component has to have to keep the given number of characters
+   */
+  public static int computeTextComponentMinimumSize(
+    int preferredSize,
+    @Nullable String text,
+    @Nullable FontMetrics fontMetrics
+  ) {
+    return computeTextComponentMinimumSize(preferredSize, text, fontMetrics, 4);
+  }
+
+  /**
+   * Computes the minimum size the component must have to keep the given number of characters
    * <p>
    *   Intended to be used for simple {@code JLabel}-like text components.
    *   Often they provide the preferred size, but not the minimum size.

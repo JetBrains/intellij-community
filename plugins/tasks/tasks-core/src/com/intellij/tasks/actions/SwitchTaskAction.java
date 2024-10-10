@@ -59,7 +59,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
         var result = super.getMinimumSize();
         var font = getFont();
         if (font == null) return result;
-        result.width = UIUtil.computeTextComponentMinimumSize(result.width, getText(), getFontMetrics(font), 4);
+        result.width = UIUtil.computeTextComponentMinimumSize(result.width, getText(), getFontMetrics(font));
         return result;
       }
     };
