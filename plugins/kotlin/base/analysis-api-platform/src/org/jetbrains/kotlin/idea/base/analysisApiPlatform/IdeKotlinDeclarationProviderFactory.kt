@@ -99,10 +99,8 @@ private class IdeKotlinDeclarationProvider(
             classId.asStringForIndexes(),
             project,
             scope
-        ) {
-            ProgressManager.checkCanceled()
-            it.getClassId() == classId
-        }
+        ) { it.getClassId() == classId }
+            .toList()
 
     override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> {
         return listOfNotNull(getTypeAliasByClassId(classId)) //todo

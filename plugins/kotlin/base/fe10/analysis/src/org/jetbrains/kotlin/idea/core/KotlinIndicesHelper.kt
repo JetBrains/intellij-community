@@ -106,25 +106,23 @@ class KotlinIndicesHelper(
     fun getTopLevelExtensionOperatorsByName(name: String): Collection<FunctionDescriptor> {
         return KotlinFunctionShortNameIndex.getAllElements(name, project, scope) {
             it.parent is KtFile && it.receiverTypeReference != null && it.hasModifier(KtTokens.OPERATOR_KEYWORD)
-        }
-            .flatMap {
-                ProgressManager.checkCanceled()
-                it.resolveToDescriptors<FunctionDescriptor>()
-            }
-            .filter { descriptorFilter(it) && it.extensionReceiverParameter != null }
-            .distinct()
+        }.flatMap {
+            ProgressManager.checkCanceled()
+            it.resolveToDescriptors<FunctionDescriptor>()
+        }.filter { descriptorFilter(it) }
+            .filter { it.extensionReceiverParameter != null }
+            .toSet()
     }
 
     fun getMemberOperatorsByName(name: String): Collection<FunctionDescriptor> {
         return KotlinFunctionShortNameIndex.getAllElements(name, project, scope) {
             it.parent is KtClassBody && it.receiverTypeReference == null && it.hasModifier(KtTokens.OPERATOR_KEYWORD)
-        }
-            .flatMap {
-                ProgressManager.checkCanceled()
-                it.resolveToDescriptors<FunctionDescriptor>()
-            }
-            .filter { descriptorFilter(it) && it.extensionReceiverParameter == null }
-            .distinct()
+        }.flatMap {
+            ProgressManager.checkCanceled()
+            it.resolveToDescriptors<FunctionDescriptor>()
+        }.filter { descriptorFilter(it) }
+            .filter { it.extensionReceiverParameter == null }
+            .toSet()
     }
 
     fun processTopLevelCallables(nameFilter: (String) -> Boolean, processor: (CallableDescriptor) -> Unit) {
@@ -317,7 +315,8 @@ class KotlinIndicesHelper(
     fun getKotlinEnumsByName(name: String): Collection<DeclarationDescriptor> {
         val enumEntries = KotlinClassShortNameIndex.getAllElements(name, project, scope) {
             it is KtEnumEntry
-        }
+        }.toList()
+
         val result = HashSet<DeclarationDescriptor>(enumEntries.size)
         for (enumEntry in enumEntries) {
             ProgressManager.checkCanceled()
