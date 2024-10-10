@@ -14,8 +14,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.ai.GHPRAIReviewViewModel
-import org.jetbrains.plugins.github.ai.GHPRAIReviewViewModelProvider
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -68,8 +68,8 @@ internal class GHPRViewModelContainerImpl(
   private val reviewVmHelper: GHPRReviewViewModelHelper by lazy { GHPRReviewViewModelHelper(cs, dataProvider) }
 
   override val aiReviewVm: StateFlow<GHPRAIReviewViewModel?> =
-    GHPRAIReviewViewModelProvider.EP_NAME.extensionListFlow()
-      .mapScoped { it.firstOrNull()?.provide(project, this, infoVm) }
+    GHPRAIReviewExtension.EP.extensionListFlow()
+      .mapScoped { it.firstOrNull()?.provideReviewVm(project, this, infoVm) }
       .stateIn(cs, SharingStarted.Eagerly, null)
 
   private val branchStateVm by lazy {
