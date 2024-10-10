@@ -23,7 +23,7 @@ class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributo
     val context = Context.gather(hostFile.project, hostEditor, hostFile) ?: return
     for (providerInfo in context.providersToToggle) {
       val action = DeclarativeHintsTogglingIntention(providerInfo.providerId, providerInfo.providerName, providerInfo.providerEnabled)
-      val descriptor = HighlightInfo.IntentionActionDescriptor(action, listOf(), null, null, null, null, HighlightSeverity.INFORMATION, null)
+      val descriptor = HighlightInfo.IntentionActionDescriptor(action, mutableListOf(), null, null, null, null, HighlightSeverity.INFORMATION)
       intentions.intentionsToShow.add(descriptor)
     }
     val settings = DeclarativeInlayHintsSettings.getInstance()
@@ -46,7 +46,7 @@ class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributo
         DeclarativeHintsTogglingOptionIntention.Mode.EnableProviderAndOption
       }
       val action = DeclarativeHintsTogglingOptionIntention(optionId, providerId, providersWithOption.providerName, optionInfo.name, mode)
-      val descriptor = HighlightInfo.IntentionActionDescriptor(action, listOf(), null, null, null, null, HighlightSeverity.INFORMATION, null)
+      val descriptor = HighlightInfo.IntentionActionDescriptor(action, mutableListOf(), null, null, null, null, HighlightSeverity.INFORMATION)
       intentions.intentionsToShow.add(descriptor)
     }
   }

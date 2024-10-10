@@ -29,7 +29,7 @@ public class CleanupIntentionMenuContributor implements IntentionMenuContributor
         actionDescriptors.add(new HighlightInfo.IntentionActionDescriptor(manager.createCleanupAllIntention(),
                                                                           manager.getCleanupIntentionOptions(),
                                                                           InspectionsBundle.message("action.description.code.cleanup.options"),
-                                                                          null, null, null, null, null));
+                                                                          null, null, null, null));
         return true;
       }
     }

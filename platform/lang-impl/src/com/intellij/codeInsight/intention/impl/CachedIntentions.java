@@ -187,7 +187,7 @@ public final class CachedIntentions implements IntentionContainer {
       intentionAction.updateFromPresentation(presentation);
       if (!filter.test(intentionAction)) continue;
       HighlightInfo.IntentionActionDescriptor descriptor = new HighlightInfo.IntentionActionDescriptor(
-        intentionAction, Collections.emptyList(), intentionAction.getText(), intentionAction.getIcon(0), null, null, null, null);
+        intentionAction, Collections.emptyList(), intentionAction.getText(), intentionAction.getIcon(0), null, null, null);
       descriptors.add(descriptor);
       hasSeparatorAbove = false;
     }

@@ -163,15 +163,15 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     }
     for (IntentionAction optionIntention : action.getOptionIntentions()) {
       intentions.intentionsToShow.add(
-        new HighlightInfo.IntentionActionDescriptor(optionIntention, null, null, getIcon(optionIntention), null, null, null, null));
+        new HighlightInfo.IntentionActionDescriptor(optionIntention, null, null, getIcon(optionIntention), null, null, null));
     }
     for (IntentionAction optionFix : action.getOptionErrorFixes()) {
       intentions.errorFixesToShow.add(
-        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null, null));
+        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
     }
     for (IntentionAction optionFix : action.getOptionInspectionFixes()) {
       intentions.inspectionFixesToShow.add(
-        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null, null));
+        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
     }
     intentions.setTitle(title);
 

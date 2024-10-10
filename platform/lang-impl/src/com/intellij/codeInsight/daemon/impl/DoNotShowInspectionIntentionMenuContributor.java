@@ -151,7 +151,7 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
               String displayName = displayNames.get(shortName);
               HighlightInfo.IntentionActionDescriptor actionDescriptor =
                 new HighlightInfo.IntentionActionDescriptor(intentionAction, null, displayName, null,
-                                                            key, null, HighlightSeverity.INFORMATION, range);
+                                                            key, null, HighlightSeverity.INFORMATION);
               (problemDescriptor.getHighlightType() == ProblemHighlightType.ERROR
                ? outIntentions.errorFixesToShow
                : outIntentions.intentionsToShow).add(actionDescriptor);

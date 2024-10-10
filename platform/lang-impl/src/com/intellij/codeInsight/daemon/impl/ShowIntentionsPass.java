@@ -152,7 +152,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     });
 
     if (!hasAvailableAction[0] && unavailableAction[0] != null) {
-      HighlightInfo.IntentionActionDescriptor emptyActionDescriptor = unavailableAction[0].withEmptyAction();
+      HighlightInfo.IntentionActionDescriptor emptyActionDescriptor = unavailableAction[0].copyWithEmptyAction();
       if (emptyActionDescriptor != null) {
         outList.add(emptyActionDescriptor);
       }
@@ -326,6 +326,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
         boolean added = false;
         for (HighlightInfo.IntentionActionDescriptor fix : additionalFixes) {
           if (!ContainerUtil.exists(fixes, descriptor -> descriptor.getAction().getText().equals(fix.getAction().getText()))) {
+            fix.setFixRange(info.getFixTextRange());
             fixes.add(fix);
             added = true;
           }
@@ -390,7 +391,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
           enableDisableIntentionAction.add(new AssignShortcutToIntentionAction(action));
         }
         HighlightInfo.IntentionActionDescriptor descriptor =
-          new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null, null, null, null, null, null);
+          new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null, null, null, null, null);
         if (!currentFixes.contains(descriptor)) {
           intentions.intentionsToShow.add(descriptor);
         }
