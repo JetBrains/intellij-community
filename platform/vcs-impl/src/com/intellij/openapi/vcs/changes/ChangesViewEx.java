@@ -12,7 +12,7 @@ public interface ChangesViewEx extends ChangesViewI {
   /**
    * @deprecated Changes no longer could be refreshed immediately, use {@link #promiseRefresh()} or {@link #scheduleRefresh()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   void refreshImmediately();
 
   /**

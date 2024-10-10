@@ -140,7 +140,7 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
    * @deprecated get cached commit details by commit id ({@link VcsLogCommitListModel#getId(int)})
    * from {@link VcsLogDataProvider#getFullCommitDetailsCache()}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull VcsFullCommitDetails getFullDetails(int row) {
     return myLogData.getCommitDetailsGetter().getCachedDataOrPlaceholder(getId(row));
   }
