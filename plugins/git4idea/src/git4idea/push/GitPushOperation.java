@@ -277,9 +277,9 @@ public class GitPushOperation {
       GitPushRepoResult repoResult = null;
 
       StructuredIdeActivity pushActivity = GitOperationsCollector.startLogPush(repository.getProject());
-      GitPushTargetType targetType = getPushTargetType(repository, spec);
+      boolean setUpstream = spec.getTarget().shouldSetUpstream(spec.getSource(), repository);
       try {
-        resultWithOutput = doPush(repository, spec);
+        resultWithOutput = doPush(repository, spec, setUpstream);
         LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultWithOutput);
 
         GitPushSource pushSource = spec.getSource();
@@ -308,7 +308,14 @@ public class GitPushOperation {
         }
       }
       finally {
-        GitOperationsCollector.endLogPush(pushActivity, resultWithOutput != null ? resultWithOutput.resultOutput : null, repoResult, targetType);
+        GitOperationsCollector.endLogPush(
+          pushActivity,
+          resultWithOutput != null ? resultWithOutput.resultOutput : null,
+          repoResult,
+          getPushTargetType(repository, spec),
+          spec.getTarget().isNewBranchCreated(),
+          setUpstream
+        );
       }
 
       LOG.debug("Converted result: " + repoResult);
@@ -392,20 +399,14 @@ public class GitPushOperation {
     }
   }
 
-  private @NotNull ResultWithOutput doPush(@NotNull GitRepository repository, @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec) {
-    GitPushSource pushSource = pushSpec.getSource();
+  private @NotNull ResultWithOutput doPush(@NotNull GitRepository repository, @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec, boolean setUpstream) {
     GitPushTarget pushTarget = pushSpec.getTarget();
-    GitLocalBranch sourceBranch = pushSource.getBranch();
     GitRemoteBranch targetBranch = pushTarget.getBranch();
 
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(myProgressIndicator);
-    boolean setUpstream = sourceBranch != null &&
-                          pushTarget.isNewBranchCreated() &&
-                          pushSource.isBranchRef() &&
-                          !branchTrackingInfoIsSet(repository, sourceBranch);
     String tagMode = myTagMode == null ? null : myTagMode.getArgument();
 
-    String spec = createPushSpec(pushSource, pushTarget, setUpstream);
+    String spec = createPushSpec(pushSpec.getSource(), pushTarget, setUpstream);
     GitRemote remote = targetBranch.getRemote();
 
     List<GitPushParams.ForceWithLease> forceWithLease = emptyList();

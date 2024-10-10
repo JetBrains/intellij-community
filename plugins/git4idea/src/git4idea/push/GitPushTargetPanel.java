@@ -21,7 +21,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,11 +37,11 @@ import git4idea.i18n.GitBundle;
 import git4idea.remote.GitDefineRemoteDialog;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.*;
@@ -58,14 +58,6 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   private static final Comparator<GitRemoteBranch> REMOTE_BRANCH_COMPARATOR = new MyRemoteBranchComparator();
   private static final String SEPARATOR = " : ";
-  private static final Color NEW_BRANCH_LABEL_FG = new JBColor(0x00b53d, 0x6ba65d);
-  private static final Color NEW_BRANCH_LABEL_SELECTION_FG = UIUtil.getTreeSelectionForeground();
-  private static final Color NEW_BRANCH_LABEL_BG = new JBColor(0xebfcf1, 0x313b32);
-  private static final Color NEW_BRANCH_LABEL_SELECTION_BG =
-    new JBColor(ColorUtil.toAlpha(NEW_BRANCH_LABEL_SELECTION_FG, 20), ColorUtil.toAlpha(NEW_BRANCH_LABEL_SELECTION_FG, 30));
-  private static final RelativeFont NEW_BRANCH_LABEL_FONT = RelativeFont.TINY.small();
-  private static final TextIcon NEW_BRANCH_LABEL =
-    new TextIcon(GitBundle.message("push.dialog.target.panel.new"), NEW_BRANCH_LABEL_FG, NEW_BRANCH_LABEL_BG, 0);
 
   private final @NotNull GitPushSupport myPushSupport;
   private final @NotNull GitRepository myRepository;
@@ -76,6 +68,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   private final @NotNull PushTargetTextField myTargetEditor;
   private final @NotNull VcsLinkedTextComponent myRemoteRenderer;
   private final @NotNull Project myProject;
+  private final @Nullable SetUpstreamCheckbox myUpstreamCheckbox;
 
   private @Nullable GitPushTarget myCurrentTarget;
   private @Nullable @Nls String myError;
@@ -99,6 +92,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
     myTargetRenderer = new VcsEditableTextComponent("", null);
     myTargetEditor = new PushTargetTextField(repository.getProject(), getTargetNames(myRepository), "");
+
     myRemoteRenderer = new VcsLinkedTextComponent("", new VcsLinkListener() {
       @Override
       public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event) {
@@ -114,15 +108,27 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       }
     });
 
-    setLayout(new BorderLayout());
     setOpaque(false);
-    JPanel remoteAndSeparator = new JPanel(new BorderLayout());
-    remoteAndSeparator.setOpaque(false);
-    remoteAndSeparator.add(myRemoteRenderer, BorderLayout.CENTER);
-    remoteAndSeparator.add(new JBLabel(SEPARATOR), BorderLayout.EAST);
 
-    add(remoteAndSeparator, BorderLayout.WEST);
+    setLayout(new BorderLayout());
     add(myTargetEditor, BorderLayout.CENTER);
+
+    if (source instanceof GitPushSource.OnBranch && defaultTarget != null &&
+        // "Set upstream" checkbox isn't shown if there is no existing tracking branch
+        defaultTarget.getTargetType() == GitPushTargetType.TRACKING_BRANCH && !defaultTarget.isNewBranchCreated()
+    ) {
+      myUpstreamCheckbox = new SetUpstreamCheckbox(defaultTarget.getBranch().getNameForRemoteOperations());
+      myTargetEditor.addDocumentListener(new DocumentListener() {
+        @Override
+        public void documentChanged(@NotNull DocumentEvent event) {
+          myUpstreamCheckbox.setVisible(myTargetEditor.getText());
+        }
+      });
+      add(myUpstreamCheckbox, BorderLayout.EAST);
+    }
+    else {
+      myUpstreamCheckbox = null;
+    }
 
     updateComponents(defaultTarget);
 
@@ -164,6 +170,10 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     myTargetRenderer.updateLinkText(initialBranch);
     myTargetEditor.setText(initialBranch);
     myRemoteRenderer.updateLinkText(noRemotes ? GitBundle.message("push.dialog.target.panel.define.remote") : initialRemote);
+
+    if (myUpstreamCheckbox != null) {
+      myUpstreamCheckbox.setVisible(initialBranch);
+    }
 
     myTargetEditor.setVisible(!noRemotes);
   }
@@ -299,14 +309,19 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         myTargetRenderer.setSelected(isSelected);
         myTargetRenderer.setTransparent(!isActive);
         myTargetRenderer.render(renderer);
-        if (newRemoteBranch) {
+        boolean newUpstream = myUpstreamCheckbox != null &&
+                              target != null &&
+                              myUpstreamCheckbox.isSelected() &&
+                              !myUpstreamCheckbox.isDefaultUpstream(target.getBranch().getNameForRemoteOperations());
+        if (newRemoteBranch || newUpstream) {
           renderer.setIconOnTheRight(true);
-          NEW_BRANCH_LABEL.setInsets(JBUI.insets(2));
-          NEW_BRANCH_LABEL.setRound(JBUIScale.scale(4));
-          NEW_BRANCH_LABEL.setFont(NEW_BRANCH_LABEL_FONT.derive(renderer.getFont()));
-          NEW_BRANCH_LABEL.setForeground(isSelected ? NEW_BRANCH_LABEL_SELECTION_FG : NEW_BRANCH_LABEL_FG);
-          NEW_BRANCH_LABEL.setBackground(isSelected ? NEW_BRANCH_LABEL_SELECTION_BG : NEW_BRANCH_LABEL_BG);
-          renderer.setIcon(NEW_BRANCH_LABEL);
+        }
+        if (newRemoteBranch && newUpstream) {
+          renderer.setIcon(BranchLabels.getNewAndUpstreamBranchLabel(renderer.getFont(), isSelected));
+        } else if (newRemoteBranch) {
+          renderer.setIcon(BranchLabels.getNewBranchLabel(renderer.getFont(), isSelected));
+        } else if (newUpstream) {
+          renderer.setIcon(BranchLabels.getUpstreamBranchLabel(renderer.getFont(), isSelected));
         }
       }
     }
@@ -322,18 +337,40 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   @Override
+  public void editingStarted() {
+    if (myUpstreamCheckbox != null) {
+      // Checkbox should be explicitly enabled and disabled when toggling editing, as click
+      // to start editing can change checkbox state
+      // See BasicTreeUi#startEditing for details
+      myUpstreamCheckbox.setVisible(myTargetEditor.getText());
+      myUpstreamCheckbox.setEnabled(true);
+    }
+  }
+
+  @Override
   public void fireOnCancel() {
+    if (myUpstreamCheckbox != null) {
+      myUpstreamCheckbox.setEnabled(false);
+    }
+
     myTargetEditor.setText(getTextFieldText(myCurrentTarget));
   }
 
   @Override
   public void fireOnChange() {
+    if (myUpstreamCheckbox != null) {
+      myUpstreamCheckbox.setEnabled(false);
+    }
+
     //any changes are senselessly if no remotes
     if (myError != null || myRepository.getRemotes().isEmpty()) return;
     String remoteName = myRemoteRenderer.getText();
     String branchName = myTargetEditor.getText();
     try {
       GitPushTarget target = GitPushTarget.parse(myRepository, remoteName, branchName);
+      if (myUpstreamCheckbox != null) {
+        target.shouldSetNewUpstream(myUpstreamCheckbox.isVisible() && myUpstreamCheckbox.isSelected());
+      }
       if (!target.equals(myCurrentTarget)) {
         myCurrentTarget = target;
         myTargetRenderer.updateLinkText(branchName);
@@ -435,6 +472,11 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     }
   }
 
+  @Override
+  public boolean showSourceWhenEditing() {
+    return false;
+  }
+
   private static final class PopupItem {
     static final PopupItem DEFINE_REMOTE = new PopupItem(null);
 
@@ -484,6 +526,59 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         return super.getComponentBefore(aContainer, aComponent);
       }
       return aComponent;
+    }
+  }
+
+  private static class SetUpstreamCheckbox extends JBCheckBox {
+    private final String upstreamBranchName;
+
+    SetUpstreamCheckbox(String upstreamBranchName) {
+      super(GitBundle.message("push.dialog.target.panel.upstream.checkbox"), false);
+
+      this.upstreamBranchName = upstreamBranchName;
+      setBorder(JBUI.Borders.empty(0, 5, 0, 10));
+      setOpaque(false);
+      setFocusable(false);
+    }
+
+    public void setVisible(String targetName) {
+      boolean valid = GitRefNameValidator.getInstance().checkInput(targetName);
+      setVisible(valid && !isDefaultUpstream(targetName));
+    }
+
+    public boolean isDefaultUpstream(String targetName) {
+      return upstreamBranchName.equals(targetName);
+    }
+  }
+
+  private static final class BranchLabels {
+    private static final Color LABEL_FG = new JBColor(0x00b53d, 0x6ba65d);
+    private static final Color LABEL_SELECTION_FG = UIUtil.getTreeSelectionForeground();
+    private static final Color LABEL_BG = new JBColor(0xebfcf1, 0x313b32);
+    private static final Color LABEL_SELECTION_BG =
+      new JBColor(ColorUtil.toAlpha(LABEL_SELECTION_FG, 20), ColorUtil.toAlpha(LABEL_SELECTION_FG, 30));
+    private static final RelativeFont LABEL_FONT = RelativeFont.TINY.small();
+
+    public static TextIcon getNewBranchLabel(Font font, boolean selected) {
+      return getLabel(GitBundle.message("push.dialog.target.panel.new"), font, selected);
+    }
+
+    public static TextIcon getUpstreamBranchLabel(Font font, boolean selected) {
+      return getLabel(GitBundle.message("push.dialog.target.panel.upstream.label"), font, selected);
+    }
+
+    public static TextIcon getNewAndUpstreamBranchLabel(Font font, boolean selected) {
+      return getLabel(GitBundle.message("push.dialog.target.panel.new.and.upstream"), font, selected);
+    }
+
+    private static TextIcon getLabel(String text, Font font, boolean selected) {
+      TextIcon label = new TextIcon(text, LABEL_FG, LABEL_BG, 0);
+      label.setInsets(JBUI.insets(2));
+      label.setRound(JBUIScale.scale(4));
+      label.setFont(LABEL_FONT.derive(font));
+      label.setForeground(selected ? LABEL_SELECTION_FG : LABEL_FG);
+      label.setBackground(selected ? LABEL_SELECTION_BG : LABEL_BG);
+      return label;
     }
   }
 }

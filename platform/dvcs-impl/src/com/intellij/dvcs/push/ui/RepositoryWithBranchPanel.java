@@ -116,7 +116,10 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     Rectangle bounds = tree.getPathBounds(tree.getPathForRow(row));
     invalidate();
     myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-    if (!(value instanceof SingleRepositoryNode)) {
+    if (value instanceof SingleRepositoryNode) {
+      myTextRenderer.setIpad(JBUI.insetsLeft(10));
+      myRepositoryCheckbox.setVisible(false);
+    } else {
       RepositoryNode node = (RepositoryNode)value;
       myRepositoryCheckbox.setSelected(node.isChecked());
       myRepositoryCheckbox.setVisible(true);
@@ -124,13 +127,14 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
       myTextRenderer.append(getRepositoryName(), SimpleTextAttributes.GRAY_ATTRIBUTES);
       myTextRenderer.appendTextPadding(120);
     }
-    else {
-      myTextRenderer.setIpad(JBUI.insetsLeft(10));
-      myRepositoryCheckbox.setVisible(false);
-      myTextRenderer.append(" ");
+
+    if (myDestPushTargetPanelComponent.showSourceWhenEditing()) {
+      if (value instanceof SingleRepositoryNode) {
+        myTextRenderer.append(" ");
+      }
+      myTextRenderer.append(getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      myTextRenderer.append(getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    myTextRenderer.append(getSourceName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    myTextRenderer.append(getArrow(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     if (bounds != null) {
       setPreferredSize(new Dimension(tree.getVisibleRect().width - bounds.x, bounds.height));
     }

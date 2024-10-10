@@ -183,7 +183,7 @@ fun findGitLogProvider(project: Project): GitLogProvider {
   return providers[0] as GitLogProvider
 }
 
-internal fun makePushSpec(repository: GitRepository, from: String, to: String): PushSpec<GitPushSource, GitPushTarget> {
+internal fun makePushSpec(repository: GitRepository, from: String, to: String, canChangeUpstream: Boolean = false): PushSpec<GitPushSource, GitPushTarget> {
   val source = repository.branches.findLocalBranch(from)!!
   var target: GitRemoteBranch? = repository.branches.findBranchByName(to) as GitRemoteBranch?
   val newBranch: Boolean
@@ -196,7 +196,11 @@ internal fun makePushSpec(repository: GitRepository, from: String, to: String): 
   else {
     newBranch = false
   }
-  return PushSpec(GitPushSource.create(source), GitPushTarget(target, newBranch))
+  val pushTarget = GitPushTarget(target, newBranch)
+  if (canChangeUpstream) {
+    pushTarget.shouldSetNewUpstream(true)
+  }
+  return PushSpec(GitPushSource.create(source), pushTarget)
 }
 
 internal fun GitRepository.resolveConflicts() {

@@ -37,6 +37,8 @@ public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
   @Nullable
   abstract public T getValue();
 
+  public void editingStarted() { }
+
   public abstract void fireOnCancel();
 
   public abstract void fireOnChange();
@@ -52,5 +54,9 @@ public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
   public abstract void addTargetEditorListener(@NotNull PushTargetEditorListener listener);
 
   public void forceUpdateEditableUiModel(@NotNull String forcedText) {
+  }
+
+  public boolean showSourceWhenEditing() {
+    return true;
   }
 }

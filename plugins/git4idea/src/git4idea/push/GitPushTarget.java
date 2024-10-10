@@ -34,6 +34,8 @@ public class GitPushTarget implements PushTarget {
   private final boolean myPushingToSpecialRef;
   private final @Nullable GitPushTargetType myTargetType;
 
+  private boolean shouldSetNewUpstream;
+
   public GitPushTarget(@NotNull GitRemoteBranch remoteBranch, boolean isNewBranchCreated) {
     this(remoteBranch, isNewBranchCreated, false, null);
   }
@@ -74,6 +76,18 @@ public class GitPushTarget implements PushTarget {
 
   public boolean isSpecialRef() {
     return myPushingToSpecialRef;
+  }
+
+  public void shouldSetNewUpstream(boolean value) {
+    shouldSetNewUpstream = value;
+  }
+
+  public boolean shouldSetUpstream(@NotNull GitPushSource pushSource, @NotNull GitRepository repository) {
+    GitLocalBranch sourceBranch = pushSource.getBranch();
+
+    return sourceBranch != null &&
+           pushSource.isBranchRef() &&
+           ((isNewBranchCreated() && !branchTrackingInfoIsSet(repository, sourceBranch)) || shouldSetNewUpstream);
   }
 
   public @Nullable GitPushTargetType getTargetType() {
@@ -146,6 +160,10 @@ public class GitPushTarget implements PushTarget {
     return getDefaultOrFirstRemote(repository.getRemotes());
   }
 
+  private static boolean branchTrackingInfoIsSet(@NotNull GitRepository repository, final @NotNull GitLocalBranch source) {
+    return ContainerUtil.exists(repository.getBranchTrackInfos(), info -> info.getLocalBranch().equals(source));
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -153,6 +171,7 @@ public class GitPushTarget implements PushTarget {
 
     if (myIsNewBranchCreated != target.myIsNewBranchCreated) return false;
     if (!myRemoteBranch.equals(target.myRemoteBranch)) return false;
+    if (shouldSetNewUpstream != target.shouldSetNewUpstream) return false;
 
     return true;
   }
@@ -161,6 +180,7 @@ public class GitPushTarget implements PushTarget {
   public int hashCode() {
     int result = myRemoteBranch.hashCode();
     result = 31 * result + (myIsNewBranchCreated ? 1 : 0);
+    result = 31 * result + (shouldSetNewUpstream ? 1 : 0);
     return result;
   }
 

@@ -29,7 +29,6 @@ import org.junit.Before
 import java.io.File
 import java.nio.file.Path
 import java.util.Collections.singletonMap
-import kotlin.Throws
 
 class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
   private lateinit var repository: GitRepository
@@ -448,6 +447,13 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertEmpty(pushedTags)
   }
 
+  fun `test push with setting upstream`() {
+    push("master", "origin/feature", canChangeUpstream = true)
+    assertUpstream("master", "origin", "feature")
+    push("master", "origin/feature-1", canChangeUpstream = true)
+    assertUpstream("master", "origin", "feature-1")
+  }
+
   fun `test skip pre push hook`() {
     assumeTrue("Not testing: pre-push hooks are not supported in ${vcs.version}", GitVersionSpecialty.PRE_PUSH_HOOK.existsIn(vcs.version))
 
@@ -494,12 +500,12 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     makeCommit("file.txt")
   }
 
-  private fun push(from: String, to: String, force: Boolean = false, skipHook: Boolean = false): GitPushResult {
+  private fun push(from: String, to: String, force: Boolean = false, skipHook: Boolean = false, canChangeUpstream: Boolean = false): GitPushResult {
     updateRepositories()
     refresh()
     updateChangeListManager()
 
-    val spec = makePushSpec(repository, from, to)
+    val spec = makePushSpec(repository, from, to, canChangeUpstream)
     return GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, force, skipHook).execute()
   }
 

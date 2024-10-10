@@ -83,7 +83,6 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
     treeModel.nodeStructureChanged(root);
     myTreeCellRenderer = new MyTreeCellRenderer();
     myTree = new CheckboxTree(myTreeCellRenderer, root) {
-
       @Override
       protected boolean shouldShowBusyIconIfNeeded() {
         return true;
@@ -744,6 +743,16 @@ public final class PushLog extends JPanel implements Disposable, UiDataProvider 
           return dimensions;
         }
       };
+    }
+
+    @Override
+    protected boolean startEditing(TreePath path, MouseEvent event) {
+      boolean editingStarted = super.startEditing(path, event);
+      if (editingStarted && myTree.getCellEditor() instanceof MyTreeCellEditor editor) {
+        editor.myValue.getTargetPanel().editingStarted();
+      }
+
+      return editingStarted;
     }
   }
 

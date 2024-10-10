@@ -88,12 +88,14 @@ a:com.intellij.dvcs.push.PushTargetPanel
 - javax.swing.JPanel
 - <init>():V
 - a:addTargetEditorListener(com.intellij.dvcs.push.ui.PushTargetEditorListener):V
+- editingStarted():V
 - a:fireOnCancel():V
 - a:fireOnChange():V
 - forceUpdateEditableUiModel(java.lang.String):V
 - a:getValue():com.intellij.dvcs.push.PushTarget
 - a:render(com.intellij.ui.ColoredTreeCellRenderer,Z,Z,java.lang.String):V
 - a:setFireOnChangeAction(java.lang.Runnable):V
+- showSourceWhenEditing():Z
 - a:verify():com.intellij.openapi.ui.ValidationInfo
 a:com.intellij.dvcs.push.Pusher
 - <init>():V
