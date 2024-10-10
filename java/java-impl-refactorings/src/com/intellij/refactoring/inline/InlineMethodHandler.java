@@ -7,7 +7,9 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -15,14 +17,19 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Supplier;
 
@@ -51,6 +58,10 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
    */
   public static void performInline(Project project, Editor editor, PsiMethod method, boolean allowInlineThisOnly) {
     PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+
+    if (reference != null && reference.isReferenceTo(method) && method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (tryInlineAbstractMethodImplementation(project, editor, method, reference)) return;
+    }
 
     PsiCodeBlock methodBody = method.getBody();
     Supplier<PsiCodeBlock> specialization = InlineMethodSpecialization.forReference(reference);
@@ -139,7 +150,7 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
 
     if (reference != null) {
       final PsiElement referenceElement = reference.getElement();
-      if (referenceElement.getLanguage() == JavaLanguage.INSTANCE && 
+      if (referenceElement.getLanguage() == JavaLanguage.INSTANCE &&
           !(referenceElement instanceof PsiJavaCodeReferenceElement)) {
         reference = null;
       }
@@ -157,8 +168,34 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     }
   }
 
+  private static boolean tryInlineAbstractMethodImplementation(@NotNull Project project,
+                                                               @NotNull Editor editor,
+                                                               @NotNull PsiMethod method,
+                                                               @NotNull PsiReference reference) {
+    PsiMethod realMethod = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.nonBlocking(() -> {
+        Collection<PsiMethod> methods =
+          OverridingMethodsSearch.search(method).filtering(m -> !m.hasModifierProperty(PsiModifier.ABSTRACT))
+            .findAll();
+        return ContainerUtil.getOnlyItem(methods);
+      }).executeSynchronously(),
+      JavaRefactoringBundle.message("dialog.title.resolving.method.implementation"), true, project);
+    if (realMethod == null || realMethod.getBody() == null) return false;
+    String message = JavaRefactoringBundle.message("dialog.message.confirmation.to.process.only.implementation",
+                                                   PsiFormatUtil.formatMethod(realMethod, PsiSubstitutor.EMPTY,
+                                                                              PsiFormatUtilBase.SHOW_NAME |
+                                                                              PsiFormatUtilBase.SHOW_CONTAINING_CLASS, 0));
+    int answer = Messages.showYesNoDialog(project, message, getRefactoringName(), Messages.getQuestionIcon());
+    if (answer == Messages.NO) return true;
+    InlineMethodProcessor processor = new InlineMethodProcessor(project, realMethod, reference, editor, true, false, false, true);
+    processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
+    processor.run();
+    return true;
+  }
+
   public static boolean checkRecursive(PsiMethod method) {
-    return checkCalls(method.getBody(), method);
+    PsiCodeBlock body = method.getBody();
+    return body != null && checkCalls(body, method);
   }
 
   private static boolean checkCalls(PsiElement scope, PsiMethod method) {
@@ -179,15 +216,10 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
   }
 
   public static boolean isThisReference(PsiReference reference) {
-    if (reference != null) {
-      final PsiElement referenceElement = reference.getElement();
-      if (referenceElement instanceof PsiJavaCodeReferenceElement &&
-          referenceElement.getParent() instanceof PsiMethodCallExpression &&
-          "this".equals(((PsiJavaCodeReferenceElement)referenceElement).getReferenceName())) {
-        return true;
-      }
-    }
-    return false;
+    return reference != null &&
+           reference.getElement() instanceof PsiJavaCodeReferenceElement codeRef &&
+           codeRef.getParent() instanceof PsiMethodCallExpression &&
+           "this".equals(codeRef.getReferenceName());
   }
 
   @Override
