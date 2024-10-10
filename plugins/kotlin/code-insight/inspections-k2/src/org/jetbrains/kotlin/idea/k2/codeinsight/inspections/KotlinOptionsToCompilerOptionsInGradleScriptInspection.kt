@@ -64,7 +64,7 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
             override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
                 val referenceExpression = expression.receiverExpression.referenceExpression() ?: return
 
-                if (!isApplicable(referenceExpression)) return
+                if (!isKotlinOptionsOfNeededType(referenceExpression)) return
 
                 val expressionParent = expression.parent
                 if (elementContainsOperationForbiddenToReplaceOrCantBeProcessed(expressionParent)) return
@@ -75,7 +75,7 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
             override fun visitCallExpression(callExpression: KtCallExpression) {
                 val referenceExpression = callExpression.referenceExpression() ?: return
 
-                if (!isApplicable(referenceExpression)) return
+                if (!isKotlinOptionsOfNeededType(referenceExpression)) return
 
                 val lambdaStatements = callExpression.lambdaArguments.firstOrNull()
                     ?.getLambdaExpression()?.bodyExpression?.statements?.requireNoNulls()
@@ -84,24 +84,27 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
                 addProblemToHolder(referenceExpression)
             }
 
-            private fun isApplicable(referenceExpression: KtReferenceExpression): Boolean {
+            private fun isKotlinOptionsOfNeededType(referenceExpression: KtReferenceExpression): Boolean {
                 val referencedName = (referenceExpression as? KtNameReferenceExpression)?.getReferencedName() ?: return false
                 if (referencedName != "kotlinOptions") return false
 
-                if (!isUnitTestMode()) { // ATM, we don't have proper dependencies for tests to perform `analyze` in Gradle build scripts
-                    val jvmClassForKotlinCompileTask = analyze(referenceExpression) {
-                        val symbol = referenceExpression.resolveToCall()
-                            ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.signature?.symbol
-                        val containingDeclarationOrSymbol =
-                            (symbol?.containingDeclaration as? KaClassLikeSymbol)
-                                ?: referenceExpression.resolveExpression()?.containingSymbol
-                        containingDeclarationOrSymbol?.importableFqName?.toString()
-                    }
-                    if (jvmClassForKotlinCompileTask !in kotlinCompileTasksNames) {
-                        return false
-                    }
+                return if (!isUnitTestMode()) { // ATM, we don't have proper dependencies for tests to perform `analyze` in Gradle build scripts
+                    kotlinOptionsAreOfNeededType(referenceExpression)
+                } else {
+                    true
                 }
-                return true
+            }
+
+            private fun kotlinOptionsAreOfNeededType(referenceExpression: KtReferenceExpression): Boolean {
+                val jvmClassForKotlinCompileTask = analyze(referenceExpression) {
+                    val symbol = referenceExpression.resolveToCall()
+                        ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.signature?.symbol
+                    val containingDeclarationOrSymbol =
+                        (symbol?.containingDeclaration as? KaClassLikeSymbol)
+                            ?: referenceExpression.resolveExpression()?.containingSymbol
+                    containingDeclarationOrSymbol?.importableFqName?.toString()
+                }
+                return jvmClassForKotlinCompileTask in kotlinCompileTasksNames
             }
 
             private fun addProblemToHolder(referenceExpression: KtReferenceExpression) {
@@ -137,12 +140,15 @@ internal class KotlinOptionsToCompilerOptionsInGradleScriptInspection : Abstract
     }
 
     private fun expressionsContainForbiddenOperations(element: PsiElement): Boolean {
-        if (element is KtBinaryExpression) { // for sth like `kotlinOptions.sourceMapEmbedSources = "inlining"`
-            if (expressionContainsOperationForbiddenToReplace(element)) return true
+        return if (element is KtBinaryExpression) { // for sth like `kotlinOptions.sourceMapEmbedSources = "inlining"`
+            if (expressionContainsOperationForbiddenToReplace(element)) {
+                true
+            } else {
+                false
+            }
         } else {
-            return element.children.any { expressionsContainForbiddenOperations(it) }
+            element.children.any { expressionsContainForbiddenOperations(it) }
         }
-        return false
     }
 }
 
