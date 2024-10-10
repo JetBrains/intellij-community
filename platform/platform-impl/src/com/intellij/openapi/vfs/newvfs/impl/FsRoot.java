@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -64,6 +65,10 @@ public final class FsRoot extends VirtualDirectoryImpl {
   private static boolean looksCanonical(@NotNull String pathBeforeSlash) {
     if (pathBeforeSlash.endsWith("/")) {
       return false;
+    }
+    // Don't try to check UNC roots.
+    if (SystemInfoRt.isWindows && pathBeforeSlash.startsWith("//")) {
+      return true;
     }
     int start = 0;
     while (true) {
