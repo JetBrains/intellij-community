@@ -32,7 +32,9 @@ class SettingsDialogUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun installPluginFromList(pluginName: String) {
     x("//div[@class='ListPluginComponent'][./div[@text='$pluginName']]", ListPluginComponent::class.java)
-      .installButton.click()
+      .waitFound()
+      .installButton
+      .click()
   }
 
   val pluginDetailsPage: PluginDetailsPage
