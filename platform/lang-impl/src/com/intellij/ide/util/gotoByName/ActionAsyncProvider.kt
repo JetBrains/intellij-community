@@ -91,8 +91,7 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
 
     actionIds.forEachConcurrent { id ->
       val action = loadAction(id) ?: return@forEachConcurrent
-      val presentation = presentationProvider(action)
-      val wrapper = wrapAnAction(action, presentation)
+      val wrapper = wrapAnAction(action, presentationProvider)
       val degree = matcher.matchingDegree(pattern)
       val matchedValue = abbreviationMatchedValue(wrapper, pattern, degree)
       if (!consumer(matchedValue)) cancel()
@@ -117,9 +116,8 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
       val action = matchedActionOrStub.action
       val matchedAction = if (action is ActionStubBase) loadAction(action.id)?.let { MatchedAction(it, matchedActionOrStub.mode, matchedActionOrStub.weight) } else matchedActionOrStub
       if (matchedAction == null) return@forEachConcurrentOrdered
-      val presentation = presentationProvider(matchedAction.action)
       val matchedValue = matchItem(
-        item = wrapAnAction(action = matchedAction.action, presentation = presentation, matchMode = matchedAction.mode),
+        item = wrapAnAction(action = matchedAction.action, presentationProvider = presentationProvider, matchMode = matchedAction.mode),
         matcher = weightMatcher,
         pattern = pattern,
         matchType = MatchedValueType.ACTION,
@@ -192,8 +190,7 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
 
         val weight = calcElementWeight(element = action, pattern = pattern, matcher = weightMatcher)
         val matchedAction = MatchedAction(action = action, mode = mode, weight = weight)
-        val presentation = presentationProvider(matchedAction.action)
-        val item = wrapAnAction(matchedAction.action, presentation, matchedAction.mode)
+        val item = wrapAnAction(matchedAction.action, presentationProvider, matchedAction.mode)
         val matchedValue = matchItem(item = item, matcher = weightMatcher, pattern = pattern, matchType = MatchedValueType.ACTION)
         return@runCatching matchedValue
       }.getOrLogException(LOG)
@@ -237,7 +234,7 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
     }
 
     val matchedValues = collector.result.mapConcurrent { item ->
-      val obj = (item as? AnAction)?.let { wrapAnAction(action = it, presentation = presentationProvider(it)) } ?: item
+      val obj = (item as? AnAction)?.let { wrapAnAction(action = it, presentationProvider = presentationProvider) } ?: item
       matchItem(item = obj, matcher = matcher, pattern = pattern, matchType = MatchedValueType.TOP_HIT)
     }.sortedWith(MATCHED_VALUE_COMPARATOR)
 
@@ -369,9 +366,10 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
     return if (weight == null) MatchedValue(item, pattern, matchType) else MatchedValue(item, pattern, weight, matchType)
   }
 
-  private suspend fun wrapAnAction(action: AnAction, presentation: Presentation, matchMode: MatchMode = MatchMode.NAME): ActionWrapper {
+  private suspend fun wrapAnAction(action: AnAction, presentationProvider: suspend (AnAction) -> Presentation, matchMode: MatchMode = MatchMode.NAME): ActionWrapper {
     val groupMapping = model.getGroupMapping(action)
-    groupMapping?.updateBeforeShowSuspend(model.updateSession)
+    groupMapping?.updateBeforeShowSuspend(presentationProvider)
+    val presentation = presentationProvider(action)
     return ActionWrapper(action, groupMapping, matchMode, presentation)
   }
 
