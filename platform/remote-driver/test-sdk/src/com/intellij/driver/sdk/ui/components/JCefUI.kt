@@ -97,7 +97,7 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
     return callJs("""document.documentElement.outerHTML""")
   }
 
-  private fun callJs(@Language("JavaScript") js: String, timeout: Long = 3000): String {
+  fun callJs(@Language("JavaScript") js: String, timeout: Long = 3000): String {
     waitFor("document exists", 10.seconds) { hasDocument() }
     injectElementFinderIfNeeded()
     return jcefWorker.callJs(js, timeout)
