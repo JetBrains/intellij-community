@@ -3537,6 +3537,20 @@ public final class HighlightUtil {
         return null;
       }
 
+      //do not highlight module keyword if the statement is not complete
+      //see com.intellij.lang.java.parser.BasicFileParser.parseImportStatement
+      if (PsiKeyword.MODULE.equals(ref.getText()) && refParent instanceof PsiImportStatement &&
+          PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, ref)) {
+        PsiElement importKeywordExpected = PsiTreeUtil.skipWhitespacesAndCommentsBackward(ref);
+        PsiElement errorElementExpected = PsiTreeUtil.skipWhitespacesAndCommentsForward(ref);
+        if (importKeywordExpected instanceof PsiKeyword keyword &&
+            keyword.textMatches(PsiKeyword.IMPORT) &&
+            errorElementExpected instanceof PsiErrorElement errorElement &&
+            JavaPsiBundle.message("expected.identifier.or.semicolon").equals(errorElement.getErrorDescription())) {
+          return null;
+        }
+      }
+
       JavaResolveResult[] results = ref.multiResolve(true);
       String description;
       if (results.length > 1) {

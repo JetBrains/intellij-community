@@ -193,6 +193,7 @@ public class BasicFileParser {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
+    String identifierText = builder.getTokenText();
     IElementType type = getImportType(builder);
     boolean isStatic = type == myJavaElementTypeContainer.IMPORT_STATIC_STATEMENT;
     boolean isModule = type == myJavaElementTypeContainer.IMPORT_MODULE_STATEMENT;
@@ -202,7 +203,15 @@ public class BasicFileParser {
     } else {
       isOk = myParser.getReferenceParser().parseImportCodeReference(builder, isStatic);
     }
-    if (isOk) semicolon(builder);
+
+    //if it is `module` it should expect or `;` or `identifier`
+    if (isOk && !isModule && !isStatic && builder.getTokenType() != JavaTokenType.SEMICOLON &&
+        PsiKeyword.MODULE.equals(identifierText)) {
+      BasicJavaParserUtil.error(builder, JavaPsiBundle.message("expected.identifier.or.semicolon"));
+    }
+    else if (isOk) {
+      semicolon(builder);
+    }
 
     done(statement, type, myWhiteSpaceAndCommentSetHolder);
     return statement;

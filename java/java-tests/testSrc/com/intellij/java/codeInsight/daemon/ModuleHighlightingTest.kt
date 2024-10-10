@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.pom.java.JavaFeature
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.JavaCompilerConfigurationProxy
 import com.intellij.psi.PsiJavaModule
@@ -763,6 +764,19 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           private <error descr="Package 'p' is declared in the unnamed module, but module 'M' does not read it">p</error>.C c;
         }
         """.trimIndent())
+  }
+
+  fun testBrokenImportModuleStatement() {
+    IdeaTestUtil.withLevel(module, JavaFeature.MODULE_IMPORT_DECLARATIONS.minimumLevel){
+      highlight("A.java", """
+        package a;
+        
+        import module<error descr="Identifier or ';' expected"> </error>
+        
+        public class A {
+        }
+        """.trimIndent())
+    }
   }
 
   private fun addVirtualManifest(moduleName: String, attributes: Map<String, String>) {
