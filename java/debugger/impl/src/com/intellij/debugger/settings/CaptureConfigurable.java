@@ -30,7 +30,9 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiParameter;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
@@ -484,7 +486,8 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
     try {
       getAsyncAnnotations(debuggerProjectSettings, capture)
         .forEach(annotationName -> NodeRendererSettings.visitAnnotatedElements(annotationName, project,
-                                                                               (e, annotation) -> consumer.accept(capture, e, annotation)));
+                                                                               (e, annotation) -> consumer.accept(capture, e, annotation),
+                                                                               PsiMethod.class, PsiParameter.class));
     }
     catch (IndexNotReadyException | ProcessCanceledException | AlreadyDisposedException ignore) {
     }
