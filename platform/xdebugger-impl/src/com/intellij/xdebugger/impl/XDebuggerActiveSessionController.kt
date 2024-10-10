@@ -103,7 +103,8 @@ internal fun synchronizeActiveSessionWithDb(coroutineScope: CoroutineScope, proj
 
 private suspend fun synchronizeSessionEvaluatorWithDb(session: XDebugSessionImpl, sessionEntity: XDebuggerActiveSessionEntity) {
   // NB!: we assume that the current evaluator depends only on the current StackFrame
-  session.currentStackFrameFlow.collect { stackFrame ->
+  session.currentStackFrameFlow.collect { stackFrameRef ->
+    val stackFrame = stackFrameRef.get()
     withKernel {
       change {
         val currentEvaluator = stackFrame?.evaluator
