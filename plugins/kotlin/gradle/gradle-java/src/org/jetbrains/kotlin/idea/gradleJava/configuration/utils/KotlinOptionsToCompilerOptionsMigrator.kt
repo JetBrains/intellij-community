@@ -330,80 +330,50 @@ private data class VersionOption(val newOptionType: String, val fqClassName: FqN
 
 private val kotlinVersionFqName = FqName("org.jetbrains.kotlin.gradle.dsl.KotlinVersion")
 private val optionsWithValuesMigratedFromNumericStringsToEnums = mapOf(
-    Pair(
-        "jvmTarget",
-        VersionOption("JvmTarget.JVM_", FqName("org.jetbrains.kotlin.gradle.dsl.JvmTarget"), ::jvmTargetValueMappingRule)
-    ),
-    Pair(
-        "apiVersion",
-        VersionOption("KotlinVersion.KOTLIN_", kotlinVersionFqName, ::kotlinVersionValueMappingRule)
-    ),
-    Pair(
-        "languageVersion",
-        VersionOption("KotlinVersion.KOTLIN_", kotlinVersionFqName, ::kotlinVersionValueMappingRule)
-    )
+    "jvmTarget" to VersionOption("JvmTarget.JVM_", FqName("org.jetbrains.kotlin.gradle.dsl.JvmTarget"), ::jvmTargetValueMappingRule),
+    "apiVersion" to VersionOption("KotlinVersion.KOTLIN_", kotlinVersionFqName, ::kotlinVersionValueMappingRule),
+    "languageVersion" to VersionOption("KotlinVersion.KOTLIN_", kotlinVersionFqName, ::kotlinVersionValueMappingRule)
 )
 
 private val jsSourceMapEmbedModeFqClassName = FqName("org.jetbrains.kotlin.gradle.dsl.JsSourceMapEmbedMode")
 private const val jsSourceMapEmbedModeClassName = "JsSourceMapEmbedMode"
 private val sourceMapEmbedSourcesValues = mapOf(
-    Pair(
-        "inlining",
-        JsOptionValue("SOURCE_MAP_SOURCE_CONTENT_INLINING", jsSourceMapEmbedModeClassName, jsSourceMapEmbedModeFqClassName)
-    ),
-    Pair(
-        "never",
-        JsOptionValue("SOURCE_MAP_SOURCE_CONTENT_NEVER", jsSourceMapEmbedModeClassName, jsSourceMapEmbedModeFqClassName)
-    ),
-    Pair(
-        "always",
-        JsOptionValue("SOURCE_MAP_SOURCE_CONTENT_ALWAYS", jsSourceMapEmbedModeClassName, jsSourceMapEmbedModeFqClassName)
-    )
+    "inlining" to JsOptionValue("SOURCE_MAP_SOURCE_CONTENT_INLINING", jsSourceMapEmbedModeClassName, jsSourceMapEmbedModeFqClassName),
+    "never" to JsOptionValue("SOURCE_MAP_SOURCE_CONTENT_NEVER", jsSourceMapEmbedModeClassName, jsSourceMapEmbedModeFqClassName),
+    "always" to JsOptionValue("SOURCE_MAP_SOURCE_CONTENT_ALWAYS", jsSourceMapEmbedModeClassName, jsSourceMapEmbedModeFqClassName)
 )
 
 private val jsMainFunctionExecutionModeFqClassName = FqName("org.jetbrains.kotlin.gradle.dsl.JsMainFunctionExecutionMode")
 private const val jsMainFunctionExecutionModeClassName = "JsMainFunctionExecutionMode"
 private val jsMainFunctionExecutionModeValues = mapOf(
-    Pair(
-        "call",
-        JsOptionValue("CALL", jsMainFunctionExecutionModeClassName, jsMainFunctionExecutionModeFqClassName)
-    ),
-    Pair(
-        "noCall",
-        JsOptionValue("NO_CALL", jsMainFunctionExecutionModeClassName, jsMainFunctionExecutionModeFqClassName)
-    )
+    "call" to JsOptionValue("CALL", jsMainFunctionExecutionModeClassName, jsMainFunctionExecutionModeFqClassName),
+    "noCall" to JsOptionValue("NO_CALL", jsMainFunctionExecutionModeClassName, jsMainFunctionExecutionModeFqClassName)
+
 )
 
 private val jsModuleKindFqClassName = FqName("org.jetbrains.kotlin.gradle.dsl.JsModuleKind")
 private const val jsModuleKindClassName = "JsModuleKind"
 private val jsModuleKindValues = mapOf(
-    Pair("amd", JsOptionValue("MODULE_AMD", jsModuleKindClassName, jsModuleKindFqClassName)),
-    Pair("plain", JsOptionValue("MODULE_PLAIN", jsModuleKindClassName, jsModuleKindFqClassName)),
-    Pair("es", JsOptionValue("MODULE_ES", jsModuleKindClassName, jsModuleKindFqClassName)),
-    Pair("commonjs", JsOptionValue("MODULE_COMMONJS", jsModuleKindClassName, jsModuleKindFqClassName)),
-    Pair("umd", JsOptionValue("MODULE_UMD", jsModuleKindClassName, jsModuleKindFqClassName))
+    "amd" to JsOptionValue("MODULE_AMD", jsModuleKindClassName, jsModuleKindFqClassName),
+    "plain" to JsOptionValue("MODULE_PLAIN", jsModuleKindClassName, jsModuleKindFqClassName),
+    "es" to JsOptionValue("MODULE_ES", jsModuleKindClassName, jsModuleKindFqClassName),
+    "commonjs" to JsOptionValue("MODULE_COMMONJS", jsModuleKindClassName, jsModuleKindFqClassName),
+    "umd" to JsOptionValue("MODULE_UMD", jsModuleKindClassName, jsModuleKindFqClassName)
 )
 
 private val jsSourceMapNamesPolicyFqClassName = FqName("org.jetbrains.kotlin.gradle.dsl.JsSourceMapNamesPolicy")
 private const val jsSourceMapNamesPolicyClassName = "JsSourceMapNamesPolicy"
 private val jsSourceMapNamesPolicyValues = mapOf(
-    Pair(
-        "fully-qualified-names",
-        JsOptionValue("SOURCE_MAP_NAMES_POLICY_FQ_NAMES", jsSourceMapNamesPolicyClassName, jsSourceMapNamesPolicyFqClassName)
-    ),
-    Pair(
-        "simple-names",
-        JsOptionValue("SOURCE_MAP_NAMES_POLICY_SIMPLE_NAMES", jsSourceMapNamesPolicyClassName, jsSourceMapNamesPolicyFqClassName)
-    ),
-    Pair(
-        "no",
-        JsOptionValue("SOURCE_MAP_NAMES_POLICY_NO", jsSourceMapNamesPolicyClassName, jsSourceMapNamesPolicyFqClassName)
-    ),
+    "fully-qualified-names" to
+            JsOptionValue("SOURCE_MAP_NAMES_POLICY_FQ_NAMES", jsSourceMapNamesPolicyClassName, jsSourceMapNamesPolicyFqClassName),
+    "simple-names" to
+            JsOptionValue("SOURCE_MAP_NAMES_POLICY_SIMPLE_NAMES", jsSourceMapNamesPolicyClassName, jsSourceMapNamesPolicyFqClassName),
+    "no" to JsOptionValue("SOURCE_MAP_NAMES_POLICY_NO", jsSourceMapNamesPolicyClassName, jsSourceMapNamesPolicyFqClassName),
 )
 
 private val jsOptions = mapOf(
-    Pair("main", jsMainFunctionExecutionModeValues),
-    Pair("moduleKind", jsModuleKindValues),
-    Pair("sourceMapEmbedSources", sourceMapEmbedSourcesValues),
-    Pair("sourceMapNamesPolicy", jsSourceMapNamesPolicyValues)
+    "main" to jsMainFunctionExecutionModeValues,
+    "moduleKind" to jsModuleKindValues,
+    "sourceMapEmbedSources" to sourceMapEmbedSourcesValues,
+    "sourceMapNamesPolicy" to jsSourceMapNamesPolicyValues
 )
