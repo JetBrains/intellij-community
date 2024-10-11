@@ -195,7 +195,8 @@ object KotlinPluginBuilder {
     "kotlin.refactorings.rename.k2",
     "kotlin.performanceExtendedPlugin",
     "kotlin.bundled-compiler-plugins-support",
-    "kotlin.jsr223"
+    "kotlin.jsr223",
+    "kotlin.k2.internal",
   )
 
   private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(

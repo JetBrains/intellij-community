@@ -256,6 +256,7 @@
   - name: kotlin.performanceExtendedPlugin
   - name: kotlin.bundled-compiler-plugins-support
   - name: kotlin.jsr223
+  - name: kotlin.k2.internal
   - name: kotlin-ultimate.common-native
   - name: kotlin-ultimate.javascript.debugger
   - name: kotlin-ultimate.javascript.nodeJs

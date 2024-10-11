@@ -272,6 +272,7 @@
     <module name="kotlin.base.injection"/>
 
     <module name="kotlin.j2k.k2"/>
+    <module name="kotlin.k2.internal"/>
 
     <module name="kotlin.performanceExtendedPlugin"/>
   </content>
