@@ -25,7 +25,7 @@ import kotlin.math.floor
  * @author Alexander Lobas
  */
 @ApiStatus.Internal
-class RiderWidgetLabel(text: @Nls String, private val clientSide: Boolean) : JLabel(text) {
+open class RiderWidgetLabel(text: @Nls String, private val clientSide: Boolean) : JLabel(text) {
   companion object {
     fun createStatusBarBorder(): Border {
       if (ExperimentalUI.Companion.isNewUI()) {
