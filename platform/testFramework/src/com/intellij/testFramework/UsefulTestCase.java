@@ -29,6 +29,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.common.TestApplicationKt;
+import com.intellij.testFramework.common.TestEnvironmentKt;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.IconManager;
@@ -504,7 +505,13 @@ Most likely there was an uncaught exception in asynchronous execution that resul
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     ThrowableRunnable<Throwable> wrappedRunnable = wrapTestRunnable(testRunnable);
     if (runInDispatchThread()) {
-      UITestUtil.replaceIdeEventQueueSafely();
+      try {
+        UITestUtil.replaceIdeEventQueueSafely();
+      }
+      catch (IllegalAccessError e) {
+        TestEnvironmentKt.checkAddOpens();
+        throw e;
+      }
       EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wrappedRunnable));
     }
     else if (runFromCoroutine()) {

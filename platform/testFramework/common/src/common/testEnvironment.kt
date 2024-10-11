@@ -27,7 +27,6 @@ fun initializeTestEnvironment() {
   if (isTestEnvironmentInitialized) {
     return
   }
-  checkAddOpens()
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true) // from UsefulTestCase
   Logger.setFactory(TestLoggerFactory::class.java) // from UsefulTestCase
   // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
@@ -39,6 +38,8 @@ fun initializeTestEnvironment() {
   isTestEnvironmentInitialized = true
 }
 
+@TestOnly
+@Internal
 fun checkAddOpens() {
   val jvmArguments = ManagementFactory.getRuntimeMXBean().inputArguments;
   if ("--add-opens=java.base/java.lang=ALL-UNNAMED" !in jvmArguments) {
