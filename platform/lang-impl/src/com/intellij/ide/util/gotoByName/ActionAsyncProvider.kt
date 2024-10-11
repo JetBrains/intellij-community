@@ -30,9 +30,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.channels.toList
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
+import kotlin.sequences.forEach
 
 private val LOG = logger<ActionAsyncProvider>()
 
@@ -139,36 +141,34 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
   private suspend fun collectMatchedActions(pattern: String, allIds: Collection<String>, weightMatcher: MinusculeMatcher, unmatchedIdsChannel: SendChannel<String>): List<MatchedAction> = coroutineScope {
     val matcher = buildMatcher(pattern)
 
-    data class ActionWithID(val action: AnAction, val id: String?)
-    fun List<AnAction>.withIDs() = map { ActionWithID(it, actionManager.getId(it)) }
-
-    val mainActions: List<ActionWithID> = allIds.mapNotNull {
+    val mainActions: Sequence<AnAction> = allIds.asSequence().mapNotNull {
       val action = actionManager.getActionOrStub(it) ?: return@mapNotNull null
       if (action is ActionGroup && !action.isSearchable) return@mapNotNull null
 
-      return@mapNotNull ActionWithID(action, it)
+      return@mapNotNull action
     }
-    val extendedActions: List<ActionWithID> = model.dataContext.getData(QuickActionProvider.KEY)?.getActions(true)?.withIDs() ?: emptyList()
-    val allActions: List<ActionWithID> = mainActions +
-                                         extendedActions +
-                                         extendedActions.flatMap { (it.action as? ActionGroup)?.let { model.updateSession.children(it).withIDs() } ?: emptyList() }
-    val actions = allActions.mapNotNullConcurrent { actionWithID ->
-      runCatching {
-        val mode = model.actionMatches(pattern, matcher, actionWithID.action)
-        if (mode != MatchMode.NONE) {
-          val weight = calcElementWeight(actionWithID, pattern, weightMatcher)
-          return@runCatching(MatchedAction(actionWithID.action, mode, weight))
+    val extendedActions: Sequence<AnAction> = model.dataContext.getData(QuickActionProvider.KEY)?.getActions(true)?.asSequence() ?: emptySequence<AnAction>()
+    val allActions: Sequence<AnAction> = mainActions + extendedActions + extendedActions.flatMap { (it as? ActionGroup)?.let { model.updateSession.children(it) } ?: emptyList() }
+    val matchedActions = produce(capacity = Channel.UNLIMITED) {
+      allActions.forEach { action ->
+        launch {
+          runCatching {
+            val mode = model.actionMatches(pattern, matcher, action)
+            if (mode != MatchMode.NONE) {
+              val weight = calcElementWeight(action, pattern, weightMatcher)
+              send(MatchedAction(action, mode, weight))
+            }
+            else {
+              if (action is ActionStubBase) actionManager.getId(action)?.let { unmatchedIdsChannel.send(it) }
+            }
+          }.getOrLogException(LOG)
         }
-        else {
-          if (actionWithID.action is ActionStubBase) actionWithID.id?.let { unmatchedIdsChannel.send(it) }
-          return@runCatching null
-        }
-      }.getOrLogException(LOG)
-    }
+      }
+    }.toList()
     unmatchedIdsChannel.close()
 
     val comparator = Comparator.comparing<MatchedAction, Int> { it.weight ?: 0 }.reversed()
-    return@coroutineScope actions.sortedWith(comparator)
+    return@coroutineScope matchedActions.sortedWith(comparator)
   }
 
   private fun CoroutineScope.processUnmatchedStubs(nonMatchedIds: ReceiveChannel<String>,
