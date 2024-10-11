@@ -89,6 +89,7 @@ public class UnsupportedCharacterInspection extends PropertiesInspectionBase {
             ByteBuffer encoded = Native2AsciiCharset.wrap(OLD_JAVA_DEFAULT_CHARSET).encode(propertyValue);
             String newValue = OLD_JAVA_DEFAULT_CHARSET.decode(encoded).toString();
             updater.getWritable(property).setValue(newValue);
+            break;
           }
         }
       }
