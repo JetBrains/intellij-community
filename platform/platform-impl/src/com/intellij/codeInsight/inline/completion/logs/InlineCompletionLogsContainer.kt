@@ -30,16 +30,22 @@ class InlineCompletionLogsContainer() {
    */
   private var random: Float = Random.nextFloat()
 
-  /**
-   * Ratio (in percents) of requests that should be fully logged (otherwise, only basic fields).
-   * Can be different for Cloud and Local.
-   */
-  val fullLogsShare: AtomicInteger = AtomicInteger(1)
+  private val fullLogsShare: AtomicInteger = AtomicInteger(1)
 
   private val forceFullLogs: AtomicBoolean = AtomicBoolean(false)
 
   fun forceFullLogs() {
     forceFullLogs.set(true)
+  }
+
+  /**
+   * Share (in percents) of requests that should be fully logged (otherwise, only basic fields).
+   * Can be different for Cloud and Local.
+   * [newValue] Should be in the [1,100] interval.
+   */
+  fun setFullLogsShare(newValue: Int) {
+    check(newValue in 1..100) { "Share should be in [1,100] interval" }
+    fullLogsShare.set(newValue)
   }
 
   /**
