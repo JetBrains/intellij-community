@@ -69,7 +69,7 @@ private val libsThatUsedInJps = java.util.Set.of(
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val presignedLibNames = java.util.Set.of(
-  "pty4j", "jna", "sqlite-native", "async-profiler", "jetbrains.skiko.awt.runtime.all"
+  "pty4j", "jna", "sqlite-native", "async-profiler" //, "jetbrains.skiko.awt.runtime.all" - do not pre-sign skiko until we can use different files per classloader
 )
 
 private fun isLibPreSigned(library: JpsLibrary) = presignedLibNames.contains(library.name)
