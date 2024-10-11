@@ -234,13 +234,13 @@ public class ComparisonFailureData {
   private static ComparisonFailureData createOpentest4jAssertion(Throwable assertion) {
     try {
       if (isInstance(assertion.getClass(), OPENTEST4J_ASSERTION)) {
-        Method isExpectedDefinedMethod = assertion.getClass().getDeclaredMethod("isExpectedDefined");
-        Method isActualDefinedMethod = assertion.getClass().getDeclaredMethod("isActualDefined");
+        Method isExpectedDefinedMethod = assertion.getClass().getMethod("isExpectedDefined");
+        Method isActualDefinedMethod = assertion.getClass().getMethod("isActualDefined");
         boolean isExpectedDefined = ((Boolean)isExpectedDefinedMethod.invoke(assertion)).booleanValue();
         boolean isActualDefined = ((Boolean)isActualDefinedMethod.invoke(assertion)).booleanValue();
         if (isExpectedDefined && isActualDefined) {
-          Method expectedMethod = assertion.getClass().getDeclaredMethod("getExpected");
-          Method actualMethod = assertion.getClass().getDeclaredMethod("getActual");
+          Method expectedMethod = assertion.getClass().getMethod("getExpected");
+          Method actualMethod = assertion.getClass().getMethod("getActual");
           Object expectedValueWrapper = expectedMethod.invoke(assertion);
           Object actualValueWrapper = actualMethod.invoke(assertion);
           AssertionValue expected = getOpentest4jAssertionValue(expectedValueWrapper);
@@ -258,17 +258,17 @@ public class ComparisonFailureData {
     throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
     if (isInstance(valueWrapper.getClass(), OPENTEST4J_VALUE_WRAPPER)) {
-      Method valueMethod = valueWrapper.getClass().getDeclaredMethod("getValue");
+      Method valueMethod = valueWrapper.getClass().getMethod("getValue");
       Object value = valueMethod.invoke(valueWrapper);
       if (value != null && isInstance(value.getClass(), OPENTEST4J_FILE_INFO)) {
-        Method contentAsStringMethod = value.getClass().getDeclaredMethod("getContentsAsString", Charset.class);
+        Method contentAsStringMethod = value.getClass().getMethod("getContentsAsString", Charset.class);
         String valueString = (String)contentAsStringMethod.invoke(value, OPENTEST4J_FILE_CONTENT_CHARSET);
-        Method pathMethod = value.getClass().getDeclaredMethod("getPath");
+        Method pathMethod = value.getClass().getMethod("getPath");
         String valuePath = (String)pathMethod.invoke(value);
         return new AssertionValue(valueString, valuePath);
       }
       else {
-        Method stringRepresentationMethod = valueWrapper.getClass().getDeclaredMethod("getStringRepresentation");
+        Method stringRepresentationMethod = valueWrapper.getClass().getMethod("getStringRepresentation");
         String valueString = (String)stringRepresentationMethod.invoke(valueWrapper);
         return new AssertionValue(valueString, null);
       }
