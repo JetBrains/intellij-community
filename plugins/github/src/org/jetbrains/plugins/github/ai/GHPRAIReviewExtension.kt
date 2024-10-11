@@ -8,6 +8,7 @@ import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoViewModel
 import javax.swing.Icon
@@ -29,4 +30,6 @@ interface GHPRAIReviewExtension {
   ): Flow<List<GHPRAICommentViewModel>>
 
   fun createAIThread(userIcon: Icon, vm: GHPRAICommentViewModel): JComponent
+
+  fun createAIReviewAction(project: Project, prId: GHPRIdentifier): JComponent
 }
