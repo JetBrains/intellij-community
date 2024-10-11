@@ -468,6 +468,9 @@
     </group>
 
     <!-- Code -->
+    <group id="Floating.CodeToolbar.Minimal" popup="false" searchable="false">
+    </group>
+
     <group id="Floating.CodeToolbar" popup="false" searchable="false">
       <group id="Floating.CodeToolbar.Extract" popup="true" class="com.intellij.ui.codeFloatingToolbar.DropdownActionGroup"
              searchable="false" />
@@ -483,6 +486,7 @@
       </group>
       <reference id="XDebugger.Code.Toolbar"/>
     </group>
+
     <action id="CodeFloatingToolbar.GotoNextMenu" class="com.intellij.ui.codeFloatingToolbar.GotoNextFloatingToolbarMenu" />
     <action id="CodeFloatingToolbar.GotoPrevMenu" class="com.intellij.ui.codeFloatingToolbar.GotoPreviousFloatingToolbarMenu" />
     <action id="Floating.CodeToolbar.Disable" class="com.intellij.ui.codeFloatingToolbar.DisableCodeFloatingToolbarAction" />
@@ -615,6 +619,7 @@
         <action id="CommentByLineComment" class="com.intellij.codeInsight.generation.actions.CommentByLineCommentAction"
                 icon="AllIcons.Actions.InlayRenameInComments">
           <add-to-group group-id="Floating.CodeToolbar" anchor="after" relative-to-action="Floating.CodeToolbar.Surround" />
+          <add-to-group group-id="Floating.CodeToolbar.Minimal" anchor="last" />
         </action>
         <action id="CommentByBlockComment" class="com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction"/>
       </group>
@@ -622,6 +627,7 @@
       <group id="CodeFormatGroup">
         <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction" icon="AllIcons.Actions.ReformatCode">
           <add-to-group group-id="Floating.CodeToolbar" anchor="after" relative-to-action="CommentByLineComment" />
+          <add-to-group group-id="Floating.CodeToolbar.Minimal" anchor="after" relative-to-action="CommentByLineComment" />
           <synonym key="action.ReformatCode.synonym1"/>
         </action>
         <action id="ShowReformatFileDialog" class="com.intellij.codeInsight.actions.ShowReformatFileDialog"/>

@@ -2,6 +2,7 @@
 package com.intellij.ui.codeFloatingToolbar
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCustomizer
@@ -14,17 +15,23 @@ private class FloatingCodeToolbarEditorCustomizer: TextEditorCustomizer {
     val editor = textEditor.editor
     val psiDocumentManager = (editor.project ?: return).serviceAsync<PsiDocumentManager>()
     val none = readAction {
+      if (editor.isDisposed) return@readAction true
+
       val file = psiDocumentManager.getPsiFile(editor.document) ?: return@readAction true
       val languages = file.viewProvider.languages
-      languages.none { language -> FloatingToolbarCustomizer.findActionGroupFor(language) != null }
+      languages.none { language -> findActionGroupFor(language) != null }
     }
     if (none) {
       return
     }
 
     coroutineScope {
-      val toolbar = CodeFloatingToolbar(editor = editor, coroutineScope = this)
-      Disposer.register(textEditor, toolbar)
+      readActionBlocking {
+        if (editor.isDisposed) return@readActionBlocking
+
+        val toolbar = CodeFloatingToolbar(editor = editor, coroutineScope = this)
+        Disposer.register(textEditor, toolbar)
+      }
     }
   }
 }
