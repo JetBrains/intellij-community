@@ -146,7 +146,9 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   }
 
   protected abstract @Label String getNameLabelText();
-  protected abstract @BorderTitle String getBorderTitle();
+  
+  /** @deprecated Unused since 2011 */
+  @Deprecated protected @BorderTitle String getBorderTitle() { return null; }
   protected abstract @RadioButton String getInlineAllText();
   protected @RadioButton String getKeepTheDeclarationText() {return null;}
   protected boolean isKeepTheDeclarationByDefault() {

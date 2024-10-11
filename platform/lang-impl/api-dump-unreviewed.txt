@@ -16884,7 +16884,7 @@ a:com.intellij.refactoring.inline.InlineOptionsDialog
 - p:canInlineThisOnly():Z
 - p:createCenterPanel():javax.swing.JComponent
 - p:createNorthPanel():javax.swing.JComponent
-- pa:getBorderTitle():java.lang.String
+- p:getBorderTitle():java.lang.String
 - pa:getInlineAllText():java.lang.String
 - pa:getInlineThisText():java.lang.String
 - p:getKeepTheDeclarationText():java.lang.String
