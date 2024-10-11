@@ -27,8 +27,8 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     myReference = ref;
     myEditor = editor;
     myAllowInlineThisOnly = allowInlineThisOnly;
-    myInvokedOnReference = ref != null;
     myOccurrencesNumber = getNumberOfOccurrences(method);
+    myInvokedOnReference = ref != null && myOccurrencesNumber != 1;
 
     setTitle(getRefactoringName());
     init();
@@ -41,27 +41,23 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected String getNameLabelText() {
-    String methodText = PsiFormatUtil.formatMethod(myMethod,
-                                                   PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                   PsiFormatUtilBase.SHOW_TYPE);
+    int options = myReference != null
+                  ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS
+                  : PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS;
+    String methodText = PsiFormatUtil.formatMethod(myMethod, PsiSubstitutor.EMPTY, options, PsiFormatUtilBase.SHOW_TYPE);
     return myOccurrencesNumber > -1 ?
            JavaRefactoringBundle.message("inline.method.method.occurrences", methodText, myOccurrencesNumber) :
            JavaRefactoringBundle.message("inline.method.method.label", methodText);
   }
 
   @Override
-  protected String getBorderTitle() {
-    return RefactoringBundle.message("inline.method.border.title");
-  }
-
-  @Override
   protected String getInlineThisText() {
-    return RefactoringBundle.message("this.invocation.only.and.keep.the.method");
+    return JavaRefactoringBundle.message("this.invocation.only.and.keep.the.method");
   }
 
   @Override
   protected String getInlineAllText() {
-    return RefactoringBundle.message(isLibraryInline() ? "all.invocations.in.project" : "all.invocations.and.remove.the.method");
+    return JavaRefactoringBundle.message(isLibraryInline() ? "all.invocations.in.project" : "all.invocations.and.remove.the.method");
   }
 
   @Override
