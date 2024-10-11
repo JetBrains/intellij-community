@@ -1915,8 +1915,6 @@
 
     <listener class="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionTypingListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
-    <listener class="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionNewLineAnActionListener"
-              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.diff.tools.combined.CombinedDiffAdvancedSettingsChangeListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.listeners
 
-import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
@@ -15,7 +14,8 @@ import com.intellij.codeInsight.template.TemplateManagerListener
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.isCurrent
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ClientEditorManager
@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.removeUserData
 import com.intellij.psi.PsiFile
 import com.intellij.util.application
@@ -40,23 +39,8 @@ internal class InlineCompletionDocumentListener(private val editor: Editor) : Bu
       hideInlineCompletion(editor, FinishType.DOCUMENT_CHANGED)
       return
     }
-
     val handler = InlineCompletion.getHandlerOrNull(editor)
-    if (handler != null) {
-      if (event.isBlankAppended() && InlineCompletionNewLineTracker.isNewLineInsertion(editor)) {
-        val range = TextRange.from(event.offset, event.newLength)
-        handler.allowTyping(TypingEvent.NewLine(event.newFragment.toString(), range))
-      }
-      handler.onDocumentEvent(event, editor)
-    }
-  }
-
-  private fun DocumentEvent.isBlankAppended(): Boolean {
-    return oldLength == 0 && newLength > 0 && newFragment.isBlank()
-  }
-
-  fun isEnabled(event: DocumentEvent): Boolean {
-    return event.newFragment != CompletionUtil.DUMMY_IDENTIFIER && event.newLength >= 1
+    handler?.onDocumentEvent(event, editor)
   }
 }
 

@@ -1591,11 +1591,15 @@
       id="inline.completion.backspace" action="EditorBackSpace"
       implementationClass="com.intellij.codeInsight.inline.completion.BackSpaceInlineCompletionHandler"
       order="first"/>
+    <editorActionHandler
+      id="inline.completion.enter"
+      action="EditorEnter"
+      order="before editorEnter, after templateEnter"
+      implementationClass="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionEnterHandler"/>
     <editorFactoryListener implementation="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionEditorListener"/>
     <actionPromoter id="InlineCompletionPromoter"
                     implementation="com.intellij.codeInsight.inline.completion.InlineCompletionActionsPromoter"
                     order="last"/>
-    <editorFactoryListener implementation="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionNewLineEditorListener"/>
     <inline.completion.partial.accept.handler
       implementation="com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionPartialAcceptHandlerImpl"
       order="first"/>
