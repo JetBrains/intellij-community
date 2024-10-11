@@ -17,9 +17,12 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
-private val items = listOf("The first group", "Item 1", "Item 2",
-                           "Another Item 1", "Another Item 2",
-                           "Group Item 1", "Group Item 2")
+private val items: List<String> = mutableListOf("The first group", "Item 1", "Item 2",
+                                                "Another Item 1", "Another Item 2",
+                                                "Group Item 1").apply {
+  addAll((2..20).map { "Group Item $it" })
+}
+
 private val separators = mapOf("The first group" to "The first", "Another Item 1" to "", "Group Item 1" to "Group")
 
 internal class LcrSeparatorPanel : UISandboxPanel {
