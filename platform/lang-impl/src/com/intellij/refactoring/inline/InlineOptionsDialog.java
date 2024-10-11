@@ -125,12 +125,11 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
       myRbInlineThisOnly.setSelected(false);
     }
 
-    getPreviewAction().setEnabled(myRbInlineAll.isSelected() || myKeepTheDeclaration != null && myKeepTheDeclaration.isSelected());
+    getPreviewAction().setEnabled(!isInlineThisOnly());
     final ActionListener previewListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        boolean enabled = myRbInlineAll.isSelected() || myKeepTheDeclaration != null && myKeepTheDeclaration.isSelected();
-        getPreviewAction().setEnabled(enabled);
+        getPreviewAction().setEnabled(!isInlineThisOnly());
       }
     };
     for (JRadioButton button : buttons) {

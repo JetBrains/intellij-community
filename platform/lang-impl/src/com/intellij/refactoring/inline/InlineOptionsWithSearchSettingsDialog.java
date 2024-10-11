@@ -77,7 +77,7 @@ public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOption
     final ActionListener actionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        setEnabledSearchSettngs(myRbInlineAll.isSelected() || myKeepTheDeclaration != null && myKeepTheDeclaration.isSelected());
+        setEnabledSearchSettngs(!isInlineThisOnly());
       }
     };
     myRbInlineThisOnly.addActionListener(actionListener);
@@ -85,7 +85,7 @@ public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOption
     if (myKeepTheDeclaration != null) {
       myKeepTheDeclaration.addActionListener(actionListener);
     }
-    setEnabledSearchSettngs(myRbInlineAll.isSelected());
+    setEnabledSearchSettngs(!isInlineThisOnly());
     return panel;
   }
 }
