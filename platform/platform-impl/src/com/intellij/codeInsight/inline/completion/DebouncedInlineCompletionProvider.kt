@@ -60,13 +60,18 @@ abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
    *
    * @return `true` if the inline completion need to be forced, `false` otherwise.
    */
+  @Deprecated(
+    message = "Please, use getDebounceDelay(event). This method is going to be removed soon.",
+    level = DeprecationLevel.WARNING,
+  )
+  @ScheduledForRemoval
   open fun shouldBeForced(request: InlineCompletionRequest): Boolean {
     return request.event is InlineCompletionEvent.DirectCall
   }
 
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
     replaceJob()
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (ApplicationManager.getApplication().isUnitTestMode || request.event is InlineCompletionEvent.DirectCall) {
       return getSuggestionDebounced(request)
     }
 
