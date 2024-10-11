@@ -2,6 +2,9 @@ f:com.intellij.platform.diagnostic.telemetry.impl.TracerKt
 - sf:rootTask():kotlin.coroutines.CoroutineContext
 - sf:span(java.lang.String,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:span$default(java.lang.String,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+f:com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentResolver
+- sf:INSTANCE:com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentResolver
+- f:getAgentLocation():java.nio.file.Path
 f:com.intellij.platform.diagnostic.telemetry.impl.helpers.ReentrantLockUsageMonitor
 - java.lang.AutoCloseable
 - sf:DEFAULT_SAMPLING_INTERVAL_MS:I
