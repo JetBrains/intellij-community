@@ -1,16 +1,11 @@
 package com.intellij.platform.diagnostic.freezeAnalyzer
 
-import com.intellij.diagnostic.ThreadDump
 import com.intellij.threadDumpParser.ThreadDumpParser
 import com.intellij.threadDumpParser.ThreadState
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 object FreezeAnalyzer {
-
-  fun getRelevantThreads(threadDump: ThreadDump): List<ThreadState> {
-    return analyzeFreeze(threadDump.rawDump, null)?.threads ?: emptyList()
-  }
 
   /**
    * Analyze freeze based on the IJ Platform knowledge and try to infer the relevant message.
@@ -165,4 +160,5 @@ object FreezeAnalyzer {
   }
 }
 
+@ApiStatus.Internal
 data class FreezeAnalysisResult(val message: String, val threads: List<ThreadState>, val additionalMessage: String? = null)

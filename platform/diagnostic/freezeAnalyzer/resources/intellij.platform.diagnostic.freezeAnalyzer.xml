@@ -1,0 +1,3 @@
+<!--The code is shared with tests, it must not depend on anything-->
+<idea-plugin package="com.intellij.platform.diagnostic.freezeAnalyzer">
+</idea-plugin>
