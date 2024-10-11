@@ -40,7 +40,7 @@ const val DEFAULT_FEEDBACK_CONSENT_ID = "rsch.statistics.feedback.common"
 private const val REQUEST_ID_KEY = "Request-Id"
 
 private const val EMAIL_PLACEHOLDER = "<EMAIL>"
-internal val EMAIL_REGEX = Regex("\\S+@\\S+\\.\\S+")
+internal val EMAIL_REGEX = Regex("^[a-zA-Z0-9\\\\._%+!$&*=^|~#{}-]+@([a-zA-Z0-9\\\\-]+\\.)+([a-zA-Z]{2,22})$")
 internal val SPACE_SYMBOL_REGEX = Regex("\\s")
 
 private val LOG = Logger.getInstance(FeedbackRequestDataHolder::class.java)
@@ -89,7 +89,7 @@ data class FeedbackRequestDataWithDetailedAnswer(val email: String,
     return buildJsonObject {
       put(FEEDBACK_FROM_ID_KEY, FEEDBACK_FORM_ID_WITH_DETAILED_ANSWER)
       put(FEEDBACK_AUTO_SOLVE_TICKET_KEY, autoSolveTicket)
-      put(FEEDBACK_EMAIL_KEY, email)
+      put(FEEDBACK_EMAIL_KEY, if (email.matches(EMAIL_REGEX)) email else "")
       put(FEEDBACK_SUBJECT_KEY, title)
       put(FEEDBACK_COMMENT_KEY, description)
       put(FEEDBACK_INTELLIJ_PRODUCT_KEY, getProductTag())
