@@ -7,22 +7,25 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts.DialogTitle
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.InsertPathAction
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.actionListener
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.selected
+import java.util.function.Consumer
 import javax.swing.JCheckBox
 import javax.swing.JRadioButton
+import javax.swing.event.DocumentEvent
 
 class BuildElementsEditorUi(
-  val compilerExtension: CompilerModuleExtension,
   val module: Module,
-  fireModuleConfigurationChanged: Runnable,
+  enableCompilerSettings: Consumer<Boolean>,
   commitCompilerOutputPath: Runnable,
   commitTestCompilerOutputPath: Runnable,
+  commitExcludeOutputPaths: Consumer<Boolean>,
 ) {
 
   lateinit var inheritCompilerOutput: JRadioButton
@@ -37,12 +40,12 @@ class BuildElementsEditorUi(
       buttonsGroup {
         row {
           inheritCompilerOutput = radioButton(JavaUiBundle.message("project.inherit.compile.output.path"))
-            .onChanged { compilerExtension.inheritCompilerOutputPath(it.isSelected) }
+            .onChanged { enableCompilerSettings.accept(!it.isSelected) }
             .component
         }
         row {
           perModuleCompilerOutput = radioButton(JavaUiBundle.message("project.module.compile.output.path"))
-            .onChanged { compilerExtension.inheritCompilerOutputPath(!it.isSelected) }
+            .onChanged { enableCompilerSettings.accept(it.isSelected) }
             .component
         }
         indent {
@@ -52,9 +55,9 @@ class BuildElementsEditorUi(
               .applyToComponent {
                 InsertPathAction.addTo(textField, descriptor)
                 FileChooserFactory.getInstance().installFileCompletion(textField, descriptor, true, null)
+                addTextFieldListeners(commitCompilerOutputPath)
               }
               .align(AlignX.FILL)
-              .onChanged { commitCompilerOutputPath.run() }
               .component
           }
           row(JavaUiBundle.message("module.paths.test.output.label")) {
@@ -63,21 +66,32 @@ class BuildElementsEditorUi(
               .applyToComponent {
                 InsertPathAction.addTo(textField, descriptor)
                 FileChooserFactory.getInstance().installFileCompletion(textField, descriptor, true, null)
+                addTextFieldListeners(commitTestCompilerOutputPath)
               }
               .align(AlignX.FILL)
-              .onChanged { commitTestCompilerOutputPath.run() }
               .component
           }
           row {
             excludeOutput = checkBox(JavaUiBundle.message("module.paths.exclude.output.checkbox"))
-              .onChanged {
-                compilerExtension.isExcludeOutput = it.isSelected
-                fireModuleConfigurationChanged.run()
-              }
+              .actionListener { _, checkBox -> commitExcludeOutputPaths.accept(checkBox.isSelected) }
               .component
           }
         }
           .enabledIf(perModuleCompilerOutput.selected)
+      }
+    }
+  }
+
+  private fun TextFieldWithBrowseButton.addTextFieldListeners(commitRunnable: Runnable) {
+    addDocumentListener(object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent) {
+        if (perModuleCompilerOutput.isSelected)
+          commitRunnable.run()
+      }
+    })
+    addActionListener { e ->
+      if (perModuleCompilerOutput.isSelected) {
+        commitRunnable.run()
       }
     }
   }

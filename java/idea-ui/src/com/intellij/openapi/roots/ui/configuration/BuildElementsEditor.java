@@ -21,11 +21,11 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     super(state);
 
     myUi = new BuildElementsEditorUi(
-      getCompilerExtension(),
       getModel().getModule(),
-      this::fireModuleConfigurationChanged,
+      this::enableCompilerSettings,
       this::commitCompilerOutputPath,
-      this::commitTestsOutputPath
+      this::commitTestsOutputPath,
+      this::commitExcludeOutput
     );
   }
 
@@ -90,7 +90,13 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       canonicalPath = path;
     }
 
-    return canonicalPath;
+    return VfsUtilCore.pathToUrl(canonicalPath);
+  }
+
+  private void enableCompilerSettings(final boolean enabled) {
+    getCompilerExtension().inheritCompilerOutputPath(!enabled);
+    updateOutputPathPresentation();
+    fireModuleConfigurationChanged();
   }
 
   private void commitCompilerOutputPath() {
@@ -104,6 +110,11 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     if (!getModel().isWritable()) return;
     final String path = myUi.testCompilerOutputPath.getText();
     getCompilerExtension().setCompilerOutputPathForTests(resolveCanonicalPath(path));
+    fireModuleConfigurationChanged();
+  }
+
+  private void commitExcludeOutput(boolean excludeOutput) {
+    getCompilerExtension().setExcludeOutput(excludeOutput);
     fireModuleConfigurationChanged();
   }
 
