@@ -16,11 +16,12 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isToString
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 
 private const val TRIPLE_DOUBLE_QUOTE = "\"\"\""
 
 /**
- * Recursively visits all operands of binary [expression] with plus and,
+ * Recursively visits all operands of binary expression with plus and,
  * returns true if all operands do not have a new line. Otherwise, returns false.
  */
 fun KtExpression.containNoNewLine(): Boolean {
@@ -180,7 +181,7 @@ private fun foldOperandsOfBinaryExpression(left: KtExpression?, right: String, f
 context(KaSession)
 fun buildStringTemplateForBinaryExpression(expression: KtBinaryExpression): KtStringTemplateExpression {
     val rightText = buildStringTemplateForExpression(expression.right, forceBraces = false, nextText = null)
-    return foldOperandsOfBinaryExpression(expression.left, rightText, KtPsiFactory(expression))
+    return foldOperandsOfBinaryExpression(expression.left, rightText, KtPsiFactory(expression.project))
 }
 
 context(KaSession)
@@ -223,8 +224,8 @@ fun KtStringTemplateExpression.canBeConvertedToStringLiteral(): Boolean {
         // the replacement may make things even worse, suppress the action
         return false
     }
-    val text = text
-    if (text.startsWith("\"\"\"")) return false // already raw
+    if (!isSingleQuoted()) return false // already raw
+    if (interpolationPrefix != null) return false // unsupported
 
     val escapeEntries = entries.filterIsInstance<KtEscapeStringTemplateEntry>()
     for (entry in escapeEntries) {

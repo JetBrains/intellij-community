@@ -9597,6 +9597,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertToRawStringTemplate/consecutiveBreaks.kt");
         }
 
+        @TestMetadata("KTIJ-30275.kt")
+        public void testKTIJ_30275() throws Exception {
+            runTest("testData/intentions/convertToRawStringTemplate/KTIJ-30275.kt");
+        }
+
         @TestMetadata("multiDollar.kt")
         public void testMultiDollar() throws Exception {
             runTest("testData/intentions/convertToRawStringTemplate/multiDollar.kt");
@@ -19517,6 +19522,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("dollar2.kt")
         public void testDollar2() throws Exception {
             runTest("testData/intentions/toRawStringLiteral/dollar2.kt");
+        }
+
+        @TestMetadata("KTIJ-30275.kt")
+        public void testKTIJ_30275() throws Exception {
+            runTest("testData/intentions/toRawStringLiteral/KTIJ-30275.kt");
         }
 
         @TestMetadata("quotesAndSlashes.kt")
