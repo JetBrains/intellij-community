@@ -10,8 +10,8 @@ import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.StackFrame
-import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.codegen.inline.*
+import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.KOTLIN_DEBUG_STRATA_NAME
 import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
@@ -314,7 +314,7 @@ private fun computeStackFrameInfosUsingScopeNumbers(
 
     for (variable in sortedVariables) {
         val name = variable.name
-        if (!isFakeLocalVariableForInline(name)) {
+        if (!JvmAbi.isFakeLocalVariableForInline(name)) {
             continue
         }
 
@@ -502,5 +502,5 @@ private fun fetchCallLocations(
 private fun shouldComputeStackFrameInfosUsingTheOldScheme(variables: List<VariableWithLocation>): Boolean =
     variables.any {
         val name = it.name
-        isFakeLocalVariableForInline(name) && name.getInlineScopeInfo() == null
+        JvmAbi.isFakeLocalVariableForInline(name) && name.getInlineScopeInfo() == null
     }

@@ -1082,7 +1082,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractStubBuilderTest> {
-            model("stubs", pattern = KT)
+            model("stubs", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractMultiplatformAnalysisTest> {
