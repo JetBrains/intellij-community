@@ -62,7 +62,7 @@ public final class CharsetUtil {
     CoderResult encodeResult;
 
     while (true) {
-      encodeResult = encoder.encode(inputBuffer, encodedBuffer, true);  // Кодируем символы
+      encodeResult = encoder.encode(inputBuffer, encodedBuffer, true);
       if (encodeResult.isUnderflow()) {
         encodeResult = encoder.flush(encodedBuffer);
       }
