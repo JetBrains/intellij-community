@@ -1,7 +1,7 @@
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.impl.generateProjectStructureMapping
+import org.jetbrains.intellij.build.impl.buildDistributions
 import java.nio.file.Paths
 
 /**
@@ -23,7 +23,7 @@ object AndroidStudioSourceMapBuildTarget {
       val buildContext = BuildContextImpl.createContext(communityRoot, ideProperties)
       val compilationTasks = CompilationTasks.create(buildContext)
       compilationTasks.compileModules(ideProperties.productLayout.bundledPluginModules)
-      generateProjectStructureMapping(Paths.get(outfile), buildContext)
+      buildDistributions(buildContext)
     }
   }
 }

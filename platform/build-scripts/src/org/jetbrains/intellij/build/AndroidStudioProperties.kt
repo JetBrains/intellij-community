@@ -15,6 +15,7 @@
  */
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.intellij.build.CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
 import org.jetbrains.intellij.build.impl.PatchOverwriteMode
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
@@ -66,7 +67,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.gradle.java.maven",
       "intellij.grazie",
       "intellij.java.byteCodeViewer",
-      "intellij.java.guiForms.designer",
       "intellij.marketplaceMl", // Currently experimental and disabled by default anyway (in IJ 2024.2).
       "intellij.maven",
       "intellij.platform.tracing.ide",
@@ -81,8 +81,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     mainClassName = "com.android.tools.idea.MainWrapper"
     applicationInfoModule = "intellij.android.adt.branding"
     useSplash = true
-    additionalIDEPropertiesFilePaths = listOf(home.resolve("build/conf/ideaCE.properties"))
-    toolsJarRequired = true
     scrambleMainJar = false
     buildSourcesArchive = true
 
@@ -143,10 +141,9 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
 
     val unknownExcludedPlugins = EXCLUDED_PLUGINS - INHERITED_PLUGINS
     check(unknownExcludedPlugins.isEmpty()) { "AndroidStudioProperties.EXCLUDED_PLUGINS contains nonexistent plugins: $unknownExcludedPlugins" }
-    val bundledPlugins = INHERITED_PLUGINS + EXTRA_PLUGINS - EXCLUDED_PLUGINS.toSet()
-    productLayout.bundledPluginModules = bundledPlugins.toMutableList()
+    val bundledPlugins = (INHERITED_PLUGINS + EXTRA_PLUGINS - EXCLUDED_PLUGINS.toSet()).toPersistentList()
+    productLayout.bundledPluginModules = bundledPlugins
 
-    productLayout.mainModules = listOf("intellij.idea.community.main")
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
 
@@ -154,7 +151,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     productLayout.pluginLayouts = inheritedPluginLayouts.addAll(listOf(
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin(),
-      CommunityRepositoryModules.githubPlugin("intellij.vcs.github.community"),
       plugin("intellij.cidr.debugger.plugin") { spec ->
         spec.withModule("intellij.cidr.debugger", spec.mainJarName)
         spec.withModule("intellij.cidr.debugger.backend", spec.mainJarName)
@@ -274,7 +270,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
         FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/win/x64"))
           .includeAll()
-          .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/win/x64"))
+          .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/win/x64/bin"))
 
         GameTools(context, OsFamily.WINDOWS, JvmArchitecture.x64).copyAdditionalFiles(targetDir.resolve("bin"))
       }
@@ -294,7 +290,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
         FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/linux/x64"))
           .includeAll()
-          .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/linux/x64"))
+          .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/linux/x64/bin"))
 
         GameTools(context, OsFamily.LINUX, arch).copyAdditionalFiles(targetDir.resolve("bin"))
       }
@@ -325,7 +321,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       }
       FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac/$archDir"))
         .includeAll()
-        .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/mac/$archDir"))
+        .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/bin/clang/mac/$archDir/bin"))
     }
   }
 
