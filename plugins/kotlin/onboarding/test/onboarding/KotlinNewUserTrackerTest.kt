@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package onboarding
 
 import com.intellij.internal.statistic.DeviceIdManager
@@ -11,30 +11,23 @@ import org.junit.jupiter.api.Test
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.temporal.ChronoUnit
-import java.util.*
 import kotlin.test.*
 
 class KotlinNewUserTrackerTest {
     private val now = Instant.now()
     private val today = LocalDate.now()
 
-    private fun Long.isRecentEpochTimestamp(): Boolean {
-        return Duration.between(Instant.ofEpochSecond(this), Instant.now()) < Duration.ofSeconds(30)
-    }
+    private fun Long.isRecentEpochTimestamp(): Boolean =
+        Duration.between(Instant.ofEpochSecond(this), Instant.now()) < Duration.ofSeconds(30)
 
-    private fun LocalDate.daysSinceDate(): Int {
-        return ChronoUnit.DAYS.between(this, today).toInt()
-    }
-
+    private fun LocalDate.daysSinceDate(): Int = ChronoUnit.DAYS.between(this, today).toInt()
 
     private fun createInstance(
         installationDate: LocalDate? = LocalDate.now().minusDays(NEW_IDEA_USER_DURATION.toDays() + 1)
     ): KotlinNewUserTracker {
         val installationId = installationDate?.let {
-            val calendar = GregorianCalendar.from(installationDate.atStartOfDay(ZoneId.systemDefault()))
-            DeviceIdManager.generateId(calendar, 'B')
+            DeviceIdManager.generateId(installationDate, 'B')
         }
         val tracker = KotlinNewUserTracker()
         tracker.deviceIdProvider = { installationId }
@@ -80,7 +73,7 @@ class KotlinNewUserTrackerTest {
     fun `Old users coming back to Kotlin after a long time should be marked as new users`() {
         val instance = createInstance()
         instance.state.lastKtFileOpened = (now - NEW_USER_RESET - Duration.ofHours(1)).epochSecond
-        // This is just some random time that we want to stay unaltered, the actual value does not matter
+        // this is just some random time that we want to stay unaltered; the actual value does not matter
         val originalFirstKtFileOpened = (now - Duration.ofDays(180)).epochSecond
         instance.state.firstKtFileOpened = originalFirstKtFileOpened
         instance.state.newKtUserSince = (now - NEW_USER_DURATION - Duration.ofHours(1)).epochSecond

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic;
 
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -6,16 +6,18 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.prefs.Preferences;
@@ -27,32 +29,33 @@ public final class DeviceIdManager {
   private static final String DEVICE_ID_SHARED_FILE = "PermanentDeviceId";
   private static final String DEVICE_ID_PREFERENCE_KEY = "device_id";
 
-  public static String getOrGenerateId(@Nullable DeviceIdToken token, @NotNull String recorderId) throws InvalidDeviceIdTokenException {
+  public static @NotNull String getOrGenerateId(@Nullable DeviceIdToken token, @NotNull String recorderId) throws InvalidDeviceIdTokenException {
     assertAllowed(token, recorderId);
 
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    Preferences prefs = getPreferences(appInfo);
+    var appInfo = ApplicationInfoImpl.getShadowInstance();
+    var preferences = getPreferences(appInfo);
+    var preferenceKey = getPreferenceKey(recorderId);
+    var deviceId = preferences.get(preferenceKey, "");
 
-    String preferenceKey = getPreferenceKey(recorderId);
-    String deviceId = prefs.get(preferenceKey, null);
-    if (StringUtil.isEmptyOrSpaces(deviceId)) {
-      deviceId = generateId(Calendar.getInstance(Locale.ENGLISH), getOSChar());
-      prefs.put(preferenceKey, deviceId);
+    if (deviceId.isBlank()) {
+      deviceId = generateId(LocalDate.now(), getOsCode());
+      preferences.put(preferenceKey, deviceId);
       LOG.info("Generating new Device ID for '" + recorderId + "'");
     }
 
     if (appInfo.isVendorJetBrains() && SystemInfo.isWindows) {
       if (isBaseRecorder(recorderId)) {
-        deviceId = syncWithSharedFile(DEVICE_ID_SHARED_FILE, deviceId, prefs, preferenceKey);
+        deviceId = syncWithSharedFile(DEVICE_ID_SHARED_FILE, deviceId, preferences, preferenceKey);
       }
       else {
-        deleteLegacySharedFile(recorderId + "_" + DEVICE_ID_SHARED_FILE);
+        deleteLegacySharedFile(recorderId + '_' + DEVICE_ID_SHARED_FILE);
       }
     }
+
     return deviceId;
   }
 
-  private static void assertAllowed(@Nullable DeviceIdToken token, @NotNull String recorderId) throws InvalidDeviceIdTokenException {
+  private static void assertAllowed(@Nullable DeviceIdToken token, String recorderId) throws InvalidDeviceIdTokenException {
     if (isBaseRecorder(recorderId)) {
       if (token == null) {
         throw new InvalidDeviceIdTokenException("Cannot access base device id from unknown class");
@@ -68,115 +71,84 @@ public final class DeviceIdManager {
     }
   }
 
-  @NotNull
-  private static String getPreferenceKey(@NotNull String recorderId) {
-    return isBaseRecorder(recorderId) ? DEVICE_ID_PREFERENCE_KEY : StringUtil.toLowerCase(recorderId) + "_" + DEVICE_ID_PREFERENCE_KEY;
+  private static String getPreferenceKey(String recorderId) {
+    return isBaseRecorder(recorderId) ? DEVICE_ID_PREFERENCE_KEY : recorderId.toLowerCase(Locale.ROOT) + "_" + DEVICE_ID_PREFERENCE_KEY;
   }
 
-  private static boolean isBaseRecorder(@NotNull String recorderId) {
+  private static boolean isBaseRecorder(String recorderId) {
     return "FUS".equals(recorderId);
   }
 
-  private static boolean isUndefinedRecorder(@NotNull String recorderId) {
+  private static boolean isUndefinedRecorder(String recorderId) {
     return UNDEFINED.equals(recorderId);
   }
 
-  @SuppressWarnings("SameParameterValue")
-  @NotNull
-  private static String syncWithSharedFile(@NotNull String fileName,
-                                           @NotNull String installationId,
-                                           @NotNull Preferences prefs,
-                                           @NotNull String prefsKey) {
-    final String appdata = System.getenv("APPDATA");
+  @SuppressWarnings({"SameParameterValue", "DuplicatedCode"})
+  private static String syncWithSharedFile(String fileName, String installationId, Preferences preferences, String prefKey) {
+    var appdata = System.getenv("APPDATA");
     if (appdata != null) {
-      final File dir = new File(appdata, "JetBrains");
-      if (dir.exists() || dir.mkdirs()) {
-        final File permanentIdFile = new File(dir, fileName);
+      try {
+        var permanentIdFile = Path.of(appdata, "JetBrains", fileName);
+        Files.createDirectories(permanentIdFile.getParent());
         try {
-          String fromFile = "";
-          if (permanentIdFile.exists()) {
-            fromFile = loadFromFile(permanentIdFile).trim();
-          }
-          if (!fromFile.isEmpty()) {
-            if (!fromFile.equals(installationId)) {
-              installationId = fromFile;
-              prefs.put(prefsKey, installationId);
-            }
-          }
-          else {
-            writeToFile(permanentIdFile, installationId);
+          var bytes = Files.readAllBytes(permanentIdFile);
+          var offset = CharsetToolkit.hasUTF8Bom(bytes) ? CharsetToolkit.UTF8_BOM.length : 0;
+          var fromFile = new String(bytes, offset, bytes.length - offset, StandardCharsets.UTF_8);
+          if (!fromFile.equals(installationId)) {
+            installationId = fromFile;
+            preferences.put(prefKey, installationId);
           }
         }
-        catch (IOException ignored) { }
+        catch (NoSuchFileException ignored) {
+          Files.writeString(permanentIdFile, installationId);
+        }
       }
+      catch (IOException ignored) { }
     }
     return installationId;
   }
 
-  private static void deleteLegacySharedFile(@NotNull String fileName) {
-    try {
-      String appdata = System.getenv("APPDATA");
-      if (appdata != null) {
-        File dir = new File(appdata, "JetBrains");
-        if (dir.exists()) {
-          File permanentIdFile = new File(dir, fileName);
-          if (permanentIdFile.exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            permanentIdFile.delete();
-          }
-        }
+  private static void deleteLegacySharedFile(String fileName) {
+    var appdata = System.getenv("APPDATA");
+    if (appdata != null) {
+      try {
+        Files.deleteIfExists(Path.of(appdata, "JetBrains", fileName));
       }
-    }
-    catch (Exception ignored) { }
-  }
-
-  @NotNull
-  private static String loadFromFile(@NotNull File file) throws IOException {
-    try (FileInputStream is = new FileInputStream(file)) {
-      final byte[] bytes = FileUtilRt.loadBytes(is);
-      final int offset = CharsetToolkit.hasUTF8Bom(bytes) ? CharsetToolkit.UTF8_BOM.length : 0;
-      return new String(bytes, offset, bytes.length - offset, StandardCharsets.UTF_8);
+      catch (Exception ignored) { }
     }
   }
 
-  private static void writeToFile(@NotNull File file, @NotNull String text) throws IOException {
-    try (DataOutputStream stream = new DataOutputStream(new FileOutputStream(file))) {
-      stream.write(text.getBytes(StandardCharsets.UTF_8));
-    }
-  }
-
-  @NotNull
-  private static Preferences getPreferences(@NotNull ApplicationInfoEx appInfo) {
-    String companyName = appInfo.getShortCompanyName();
-    String name = StringUtil.isEmptyOrSpaces(companyName) ? "jetbrains" : companyName.toLowerCase(Locale.US);
-    return Preferences.userRoot().node(name);
+  private static Preferences getPreferences(ApplicationInfoEx appInfo) {
+    var companyName = appInfo.getShortCompanyName();
+    var nodeName = companyName == null || companyName.isBlank() ? "jetbrains" : companyName.toLowerCase(Locale.ROOT);
+    return Preferences.userRoot().node(nodeName);
   }
 
   /**
-   * Device id is generating by concatenating following values:
-   * Current date, written in format ddMMyy, where year coerced between 2000 and 2099
-   * Character, representing user's OS (see [getOSChar])
-   * [toString] call on representation of [UUID.randomUUID]
+   * Device ID is generated by concatenating the following values:
+   * <ul>
+   *   <li>the current date in "ddMMyy" format with the year coerced between 2000 and 2099</li>
+   *   <li>an OS code (see {@link #getOsCode()}</li>
+   *   <li>a string representation of {@link UUID#randomUUID()}</li>
+   * </ul>
    */
-  public static String generateId(@NotNull Calendar calendar, char OSChar) {
-    int year = calendar.get(Calendar.YEAR);
-    if (year < 2000) year = 2000;
-    if (year > 2099) year = 2099;
-    calendar.set(Calendar.YEAR, year);
-    return new SimpleDateFormat("ddMMyy", Locale.ENGLISH).format(calendar.getTime()) + OSChar + UUID.randomUUID();
+  @VisibleForTesting
+  public static @NotNull String generateId(@NotNull LocalDate date, char osCode) {
+    var coercedDate = date.withYear(Math.min(Math.max(date.getYear(), 2000), 2099));
+    return coercedDate.format(DateTimeFormatter.ofPattern("ddMMyy")) + osCode + UUID.randomUUID();
   }
 
-  private static char getOSChar() {
+  private static char getOsCode() {
     if (SystemInfo.isWindows) return '1';
-    else if (SystemInfo.isMac) return '2';
-    else if (SystemInfo.isLinux) return '3';
+    if (SystemInfo.isMac) return '2';
+    if (SystemInfo.isLinux) return '3';
     return '0';
   }
 
   /**
-   * Marker interface used to identify the client which retrieves device id
+   * Marker interface used to identify the client which retrieves a device ID.
    */
-  public interface DeviceIdToken {}
+  public interface DeviceIdToken { }
 
   public static class InvalidDeviceIdTokenException extends Exception {
     private InvalidDeviceIdTokenException(String message) {

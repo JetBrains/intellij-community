@@ -6665,7 +6665,6 @@ f:com.intellij.openapi.application.JBProtocolCommandResult
 f:com.intellij.openapi.application.PermanentInstallationID
 - <init>():V
 - s:get():java.lang.String
-- s:syncWithSharedFile(java.lang.String,java.lang.String,java.util.prefs.Preferences,java.lang.String):java.lang.String
 f:com.intellij.openapi.application.PluginPathManager
 - s:getPluginHome(java.lang.String):java.io.File
 - s:getPluginHomePath(java.lang.String):java.lang.String
