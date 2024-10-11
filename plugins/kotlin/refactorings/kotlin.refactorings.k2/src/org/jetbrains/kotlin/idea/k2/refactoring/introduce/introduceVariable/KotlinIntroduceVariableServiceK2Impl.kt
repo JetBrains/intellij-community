@@ -10,6 +10,7 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler.getCandidateContainers
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService
@@ -18,13 +19,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.findElement
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtDoubleColonExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.*
 
 internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project) : KotlinIntroduceVariableService {
     override fun findElement(
@@ -70,11 +65,12 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
         occurrencesToReplace: List<KtExpression>?
     ) {
         K2IntroduceVariableHandler.doRefactoringWithSelectedTargetContainer(
-            project, editor,
-            expressionToExtract,
+            project = project,
+            editor = editor,
+            expression = expressionToExtract,
             // TODO: fix occurence container (currently it is not used in K2-implementation)
-            KotlinIntroduceVariableHelper.Containers(container, container),
-            isVar = false,
+            containers = KotlinIntroduceVariableHelper.Containers(container, container),
+            isVar = KotlinCommonRefactoringSettings.getInstance().INTRODUCE_DECLARE_WITH_VAR,
         )
     }
 

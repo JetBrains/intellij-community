@@ -16,6 +16,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper.Containers
 import org.jetbrains.kotlin.idea.refactoring.selectElement
@@ -72,7 +73,12 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
         try {
             selectElement(editor, file, failOnEmptySuggestion = false, listOf(ElementKind.EXPRESSION)) { psi ->
                 SlowOperations.knownIssue("KTIJ-31332").use {
-                    collectCandidateTargetContainersAndDoRefactoring(project, editor, psi as KtExpression?, isVar = false)
+                    collectCandidateTargetContainersAndDoRefactoring(
+                        project = project,
+                        editor = editor,
+                        expressionToExtract = psi as KtExpression?,
+                        isVar = KotlinCommonRefactoringSettings.getInstance().INTRODUCE_DECLARE_WITH_VAR
+                    )
                 }
             }
         } catch (e: IntroduceRefactoringException) {
