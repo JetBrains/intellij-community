@@ -11,42 +11,18 @@ import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
-import training.learn.lesson.general.assistance.QuickPopupsLearningUtils.lessonQuickDocSteps
 import training.ui.LearningUiUtil
 import java.util.concurrent.TimeUnit
 
-class QuickPopupsLesson(private val sample: LessonSample,
-                        private val helpUrl: String = "using-code-editor.html#quick_popups")
+class QuickPopupsLesson(
+  private val sample: LessonSample,
+  private val helpUrl: String = "using-code-editor.html#quick_popups",
+)
   : KLesson("CodeAssistance.QuickPopups", LessonsBundle.message("quick.popups.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
 
-    lessonQuickDocSteps(sample)
-
-    task("QuickImplementations") {
-      text(LessonsBundle.message("quick.popups.show.implementation", action(it)))
-      triggerUI().component { _: ImplementationViewComponent -> true }
-      restoreIfModifiedOrMoved()
-      test {
-        actions(it)
-        val delay = Timeout.timeout(3, TimeUnit.SECONDS)
-        LearningUiUtil.findShowingComponentWithTimeout(project, ImplementationViewComponent::class.java, delay)
-        Thread.sleep(500)
-        invokeActionViaShortcut("ESCAPE")
-      }
-    }
-  }
-
-  override val helpLinks: Map<String, String>
-    get() = mapOf(
-      Pair(LessonsBundle.message("quick.popups.help.link"),
-           LessonUtil.getHelpLink(helpUrl)),
-    )
-}
-
-object QuickPopupsLearningUtils {
-  fun LessonContext.lessonQuickDocSteps(sample: LessonSample) {
     task("QuickJavaDoc") {
       text(LessonsBundle.message("quick.popups.show.documentation", strong("Quick Documentation"), action(it)))
       triggerOnQuickDocumentationPopup()
@@ -83,5 +59,24 @@ object QuickPopupsLearningUtils {
       restoreIfModifiedOrMoved()
       test { action(it) }
     }
+
+    task("QuickImplementations") {
+      text(LessonsBundle.message("quick.popups.show.implementation", action(it)))
+      triggerUI().component { _: ImplementationViewComponent -> true }
+      restoreIfModifiedOrMoved()
+      test {
+        actions(it)
+        val delay = Timeout.timeout(3, TimeUnit.SECONDS)
+        LearningUiUtil.findShowingComponentWithTimeout(project, ImplementationViewComponent::class.java, delay)
+        Thread.sleep(500)
+        invokeActionViaShortcut("ESCAPE")
+      }
+    }
   }
+
+  override val helpLinks: Map<String, String>
+    get() = mapOf(
+      Pair(LessonsBundle.message("quick.popups.help.link"),
+           LessonUtil.getHelpLink(helpUrl)),
+    )
 }
