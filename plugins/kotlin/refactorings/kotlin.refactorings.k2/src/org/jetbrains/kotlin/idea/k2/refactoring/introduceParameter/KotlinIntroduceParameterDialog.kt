@@ -283,4 +283,6 @@ class KotlinIntroduceParameterDialog(
             startMarkAction
         }
     }
+
+    override fun hasHelpAction(): Boolean = false
 }
