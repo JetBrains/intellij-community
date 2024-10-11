@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.plugin
 import com.intellij.ide.ApplicationActivity
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -45,6 +46,9 @@ internal class K2UnsupportedPluginsNotificationActivity : ApplicationActivity {
                 )
                 .addAction(NotificationAction.create(KotlinBasePluginBundle.message("action.about.k2.mode.text")) {
                     BrowserUtil.browse("https://blog.jetbrains.com/idea/2024/08/meet-the-renovated-kotlin-support-k2-mode/")
+                })
+                .addAction(NotificationAction.create(KotlinBasePluginBundle.message("action.show.incompatible.plugins.text")) {
+                    PluginManagerConfigurable.showPluginConfigurable(/* project = */ null, incompatiblePlugins.map { it.pluginId })
                 })
                 .notify(/* project = */ null)
         }
