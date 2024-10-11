@@ -28,13 +28,15 @@ internal class KotlinIntroduceVariablePostfixTemplate(
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
         val isVar = kind == "var"
-        val introduceVariableHandler =
-            LanguageRefactoringSupport.getInstance().forLanguage(KotlinLanguage.INSTANCE).introduceVariableHandler as KotlinIntroduceVariableHandler
+        val provider = LanguageRefactoringSupport.getInstance().forLanguage(KotlinLanguage.INSTANCE)
+        val introduceVariableHandler = provider.introduceVariableHandler as KotlinIntroduceVariableHandler
         allowAnalysisOnEdt {
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 introduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
-                    expression.project, editor, expression as KtExpression,
+                    project = expression.project,
+                    editor = editor,
+                    expressionToExtract = expression as KtExpression,
                     isVar = isVar
                 )
             }
