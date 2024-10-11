@@ -14,21 +14,21 @@ class Test {
 
         other as Test
 
-        if (age != other.age) return false
         if (id != other.id) return false
-        if (color != other.color) return false
         if (serial != other.serial) return false
         if (name != other.name) return false
+        if (age != other.age) return false
+        if (color != other.color) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = age
-        result = 31 * result + id
-        result = 31 * result + color.hashCode()
+        var result = id
         result = 31 * result + serial.hashCode()
         result = 31 * result + name.hashCode()
+        result = 31 * result + age
+        result = 31 * result + color.hashCode()
         return result
     }
 

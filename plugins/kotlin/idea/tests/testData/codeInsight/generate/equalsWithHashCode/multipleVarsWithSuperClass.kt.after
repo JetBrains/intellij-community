@@ -18,8 +18,8 @@ class A(val n: Int, val s: String) : X() {
         other as A
 
         if (n != other.n) return false
-        if (s != other.s) return false
         if (f != other.f) return false
+        if (s != other.s) return false
 
         return true
     }
@@ -27,8 +27,8 @@ class A(val n: Int, val s: String) : X() {
     override fun hashCode(): Int {
         var result = super.hashCode()
         result = 31 * result + n
-        result = 31 * result + s.hashCode()
         result = 31 * result + f.hashCode()
+        result = 31 * result + s.hashCode()
         return result
     }
 }

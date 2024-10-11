@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNonNullableBooleanType
@@ -164,8 +165,9 @@ object GenerateEqualsAndHashCodeUtils {
         contextMap[SUPER_HAS_EQUALS] = equalsFunction != null && (equalsFunction.containingSymbol as? KaClassSymbol)?.classId != StandardClassIds.Any
         contextMap[CHECK_PARAMETER_WITH_INSTANCEOF] = CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER
 
+        val sortedVariables = info.variablesForEquals.sortedWithPrimitiveFirst()
         val methodText = VelocityGeneratorHelper
-            .velocityGenerateCode(klass, info.variablesForEquals, contextMap,
+            .velocityGenerateCode(klass, sortedVariables, contextMap,
                                   KotlinEqualsHashCodeTemplatesManager.getInstance().defaultEqualsTemplate.template, false) ?: return null
 
 
@@ -185,8 +187,10 @@ object GenerateEqualsAndHashCodeUtils {
         val hashCodeFunction = findHashCodeMethodForClass(klass.symbol as KaClassSymbol)
         contextMap[SUPER_HAS_HASHCODE] = hashCodeFunction != null && (hashCodeFunction.containingSymbol as? KaClassSymbol)?.classId != StandardClassIds.Any
 
+        // Sort variables in `hashCode()` to preserve the same order as in `equals()`
+        val sortedVariables = info.variablesForHashCode.sortedWithPrimitiveFirst()
         val methodText = VelocityGeneratorHelper
-            .velocityGenerateCode(klass, info.variablesForHashCode,
+            .velocityGenerateCode(klass, sortedVariables,
                                   contextMap, KotlinEqualsHashCodeTemplatesManager.getInstance().defaultHashcodeTemplate.template, false) ?: return null
 
 
@@ -266,4 +270,27 @@ object GenerateEqualsAndHashCodeUtils {
         ) == Messages.YES
     }
 
+}
+
+context(KaSession)
+private fun List<KtNamedDeclaration>.sortedWithPrimitiveFirst(): List<KtNamedDeclaration> = sortedWith(object : Comparator<KtNamedDeclaration> {
+    override fun compare(o1: KtNamedDeclaration, o2: KtNamedDeclaration): Int {
+        val isBacking1 = o1.propertyHasBackingField()
+        val isBacking2 = o2.propertyHasBackingField()
+        val fieldCompare = -isBacking1.compareTo(isBacking2)
+        if (fieldCompare != 0) return fieldCompare
+        return -o1.returnType.isPrimitive.compareTo(o2.returnType.isPrimitive)
+    }
+})
+
+context(KaSession)
+private fun KtNamedDeclaration.propertyHasBackingField(): Boolean {
+    val symbol = symbol
+    return when (symbol) {
+        is KaPropertySymbol -> symbol.hasBackingField
+        is KaValueParameterSymbol -> {
+            symbol.generatedPrimaryConstructorProperty?.hasBackingField == true
+        }
+        else -> false
+    }
 }

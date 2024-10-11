@@ -11,17 +11,17 @@ class A(val n: IntArray, val s: Array<String>) {
 
         other as A
 
+        if (f != other.f) return false
         if (!n.contentEquals(other.n)) return false
         if (!s.contentEquals(other.s)) return false
-        if (f != other.f) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = n.contentHashCode()
+        var result = f.hashCode()
+        result = 31 * result + n.contentHashCode()
         result = 31 * result + s.contentHashCode()
-        result = 31 * result + f.hashCode()
         return result
     }
 }
