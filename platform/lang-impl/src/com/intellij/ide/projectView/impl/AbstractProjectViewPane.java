@@ -96,6 +96,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   private final Map<String,TreeState> myReadTreeState = new HashMap<>();
   private final AtomicBoolean myTreeStateRestored = new AtomicBoolean();
   boolean myNonEmptyTreeStateRestored = false;
+  boolean myPersistingPresentationEnabled = true;
   private String mySubId;
   private static final @NonNls String ELEMENT_SUB_PANE = "subPane";
   private static final @NonNls String ATTRIBUTE_SUB_ID = "subId";
@@ -576,6 +577,17 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     }
   }
 
+  @ApiStatus.Internal
+  public void writeExternalWithoutPresentations(Element element) {
+    myPersistingPresentationEnabled = false;
+    try {
+      writeExternal(element);
+    }
+    finally {
+      myPersistingPresentationEnabled = true;
+    }
+  }
+
   public void writeExternal(Element element) {
     saveExpandedPaths();
     for (Map.Entry<String, TreeState> entry : myReadTreeState.entrySet()) {
@@ -591,7 +603,8 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   }
 
   protected @NotNull TreeState createTreeState(@NotNull JTree tree) {
-    return TreeState.createOn(tree, true, false, Registry.is("ide.project.view.persist.cached.presentation", true));
+    var persistPresentation = myPersistingPresentationEnabled && Registry.is("ide.project.view.persist.cached.presentation", true);
+    return TreeState.createOn(tree, true, false, persistPresentation);
   }
 
   protected void saveExpandedPaths() {
