@@ -46,6 +46,11 @@
       "pressedBackground": "#000000"
     },
 
+    "Badge": {
+      "greenOutlineForeground": "#16F334",
+      "greenOutlineBorderColor": "#0DA522"
+    },
+
     "Button": {
       "startBackground": "#000000",
       "endBackground": "#000000",
