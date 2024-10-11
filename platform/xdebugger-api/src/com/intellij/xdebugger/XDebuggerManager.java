@@ -48,6 +48,8 @@ public abstract class XDebuggerManager {
    */
   public abstract @NotNull XDebugSession startSession(@NotNull ExecutionEnvironment environment, @NotNull XDebugProcessStarter processStarter) throws ExecutionException;
 
+  public abstract XDebugSession startMixedDebugSession(@NotNull ExecutionEnvironment environment, @NotNull XMixedModeDebugProcessStarter processStarter) throws ExecutionException;
+
   /**
    * Start a new debugging session and open 'Debug' tool window
    * @param sessionName title of 'Debug' tool window

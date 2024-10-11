@@ -84,6 +84,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private static final StateFlow<Boolean> ALWAYS_FALSE_STATE = FlowKt.asStateFlow(StateFlowKt.MutableStateFlow(false));
 
   private XDebugProcess myDebugProcess;
+  private XDebugProcess myMixedModeDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints = new HashMap<>();
   private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = Collections.synchronizedSet(new HashSet<>());
   private boolean myBreakpointsDisabled;
@@ -313,6 +314,13 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @NotNull StateFlow<@NotNull Boolean> getAlternativeSourceKindState() {
     return myAlternativeSourceHandler != null ? myAlternativeSourceHandler.getAlternativeSourceKindState() : ALWAYS_FALSE_STATE;
+  }
+
+  void initMixedMode(@NotNull XDebugProcess process,
+                     @NotNull XDebugProcess mixedModeProcess,
+                     @Nullable RunContentDescriptor contentToReuse) {
+    myMixedModeDebugProcess = mixedModeProcess;
+    init(process, contentToReuse);
   }
 
   void init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse) {

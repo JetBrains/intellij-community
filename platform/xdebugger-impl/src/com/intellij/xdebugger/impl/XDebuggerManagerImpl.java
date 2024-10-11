@@ -236,6 +236,12 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   @Override
+  public @NotNull XDebugSession startMixedDebugSession(@NotNull ExecutionEnvironment environment, @NotNull XMixedModeDebugProcessStarter processStarter)
+    throws ExecutionException {
+    return startMixedModeDebugSession(environment.getContentToReuse(), processStarter, new XDebugSessionImpl(environment, this));
+  }
+
+  @Override
   public @NotNull XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
                                                        @NotNull XDebugProcessStarter starter) throws ExecutionException {
     return startSessionAndShowTab(sessionName, contentToReuse, false, starter);
@@ -280,6 +286,38 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     handler.startNotify();
     return session;
   }
+
+  private XDebugSessionImpl startMixedModeDebugSession(@Nullable RunContentDescriptor contentToReuse,
+                                         @NotNull XMixedModeDebugProcessStarter processStarter,
+                                         @NotNull XDebugSessionImpl session) throws ExecutionException {
+    var processes = processStarter.start(session);
+    var first = processes.getFirstToRun();
+    var second = processes.getSecondToRun();
+    myProject.getMessageBus().syncPublisher(TOPIC).processStarted(first);
+    myProject.getMessageBus().syncPublisher(TOPIC).processStarted(second);
+
+    session.initMixedMode(first, second, contentToReuse);
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      session.addSessionListener(new XDebugSessionListener() {
+        @Override
+        public void sessionPaused() {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+            if (editor == null) {
+              return;
+            }
+            reshowInlayToolbar(editor);
+          });
+        }
+      });
+    }
+
+    mySessions.put(session.getDebugProcess().getProcessHandler(), session);
+
+    return session;
+  }
+
 
   private XDebugSessionImpl startSession(@Nullable RunContentDescriptor contentToReuse,
                                          @NotNull XDebugProcessStarter processStarter,
