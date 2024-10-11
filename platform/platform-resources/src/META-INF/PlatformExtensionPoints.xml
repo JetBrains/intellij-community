@@ -515,6 +515,8 @@
 
     <extensionPoint name="protocolHandler" interface="com.intellij.ide.ProtocolHandler" dynamic="true"/>
 
+    <extensionPoint name="protocolNavigationCommandProcessor" interface="com.intellij.ide.protocolHandler.ProtocolNavigationCommandProcessor" dynamic="true"/>
+
     <extensionPoint name="recoveryAction" interface="com.intellij.ide.actions.cache.RecoveryAction" dynamic="true"/>
 
     <extensionPoint name="fragments.dsl.builder.extender" interface="com.intellij.execution.ui.utils.FragmentsDslBuilderExtender" dynamic="true"/>
