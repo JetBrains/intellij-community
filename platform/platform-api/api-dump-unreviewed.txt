@@ -4447,6 +4447,7 @@ f:com.intellij.openapi.ui.TestDialogManager
 - s:getTestImplementation():com.intellij.openapi.ui.TestDialog
 - s:getTestInputImplementation():com.intellij.openapi.ui.TestInputDialog
 - s:setTestDialog(com.intellij.openapi.ui.TestDialog):com.intellij.openapi.ui.TestDialog
+- s:setTestDialog(com.intellij.openapi.ui.TestDialog,com.intellij.openapi.Disposable):com.intellij.openapi.ui.TestDialog
 - s:setTestInputDialog(com.intellij.openapi.ui.TestInputDialog):com.intellij.openapi.ui.TestInputDialog
 com.intellij.openapi.ui.TestInputDialog
 - sf:DEFAULT:com.intellij.openapi.ui.TestInputDialog
