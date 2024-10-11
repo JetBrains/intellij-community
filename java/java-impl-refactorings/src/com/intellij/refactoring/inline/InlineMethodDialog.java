@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -61,13 +61,17 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected String getInlineAllText() {
-    return RefactoringBundle.message(myMethod.isWritable() ? "all.invocations.and.remove.the.method" : "all.invocations.in.project");
+    return RefactoringBundle.message(isLibraryInline() ? "all.invocations.in.project" : "all.invocations.and.remove.the.method");
   }
 
   @Override
   protected String getKeepTheDeclarationText() {
-    if (myMethod.isWritable()) return JavaRefactoringBundle.message("all.invocations.keep.the.method");
+    if (!isLibraryInline()) return JavaRefactoringBundle.message("all.invocations.keep.the.method");
     return super.getKeepTheDeclarationText();
+  }
+
+  private boolean isLibraryInline() {
+    return myMethod.getOriginalElement() instanceof PsiCompiledElement;
   }
 
   @Override
@@ -75,7 +79,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     super.doAction();
     invokeRefactoring(
       new InlineMethodProcessor(getProject(), myMethod, myReference, myEditor, isInlineThisOnly(), isSearchInCommentsAndStrings(),
-                                isSearchForTextOccurrences(), !isKeepTheDeclaration()));
+                                isSearchForTextOccurrences(), !isLibraryInline() && !isKeepTheDeclaration()));
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_METHOD_THIS = isInlineThisOnly();

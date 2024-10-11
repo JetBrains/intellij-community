@@ -176,7 +176,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   @Override
   protected RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
-    data.addElement(myField);
+    if (myDeleteDeclaration) data.addElement(myField);
     return data;
   }
 
