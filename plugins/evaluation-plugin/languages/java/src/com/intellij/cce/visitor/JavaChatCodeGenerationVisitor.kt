@@ -2,6 +2,7 @@
 package com.intellij.cce.visitor
 
 import com.intellij.cce.core.*
+import com.intellij.cce.evaluable.chat.INTERNAL_RELEVANT_FILES_PROPERTY
 import com.intellij.cce.evaluable.chat.INTERNAL_API_CALLS_PROPERTY
 import com.intellij.cce.evaluable.chat.METHOD_NAME_PROPERTY
 import com.intellij.cce.evaluable.chat.extractCalledInternalApiMethods
@@ -13,6 +14,8 @@ import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.startOffset
+import kotlin.io.path.Path
+import kotlin.io.path.relativeTo
 
 class JavaChatCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
   private var codeFragment: CodeFragment? = null
@@ -29,23 +32,36 @@ class JavaChatCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVis
   }
 
   override fun visitMethod(method: PsiMethod) {
-    val internalApiCalls = runBlockingCancellable { extractInternalApiCalls(method) }
+    val (internalApiCalls, internalRelevantFiles) = runBlockingCancellable {
+      extractInternalApiCallsAndRelevantFiles(method)
+    }
     codeFragment?.addChild(
       CodeToken(
         method.text,
         method.startOffset,
         SimpleTokenProperties.create(tokenType = TypeProperty.METHOD, SymbolLocation.PROJECT) {
           put(INTERNAL_API_CALLS_PROPERTY, internalApiCalls.joinToString("\n"))
+          put(INTERNAL_RELEVANT_FILES_PROPERTY, internalRelevantFiles.joinToString("\n"))
           put(METHOD_NAME_PROPERTY, method.name)
         })
     )
   }
 
-  private suspend fun extractInternalApiCalls(method: PsiMethod): List<String> {
+  private suspend fun extractInternalApiCallsAndRelevantFiles(method: PsiMethod): Pair<List<String>, List<String>> {
     return smartReadActionBlocking(method.project) {
-      extractCalledInternalApiMethods(method).mapNotNull {
-        QualifiedNameProviderUtil.getQualifiedName(it)
+      val methodNames = mutableListOf<String>()
+      val fileNames = mutableListOf<String>()
+
+      for (calledMethod in extractCalledInternalApiMethods(method)) {
+        val projectPath = method.project.basePath ?: continue
+        val file = calledMethod.containingFile.virtualFile ?: continue
+        val methodName = QualifiedNameProviderUtil.getQualifiedName(calledMethod) ?: continue
+
+        methodNames.add(methodName)
+        fileNames.add(Path(file.path).relativeTo(Path(projectPath)).toString())
       }
+
+      Pair(methodNames.distinct(), fileNames.distinct())
     }
   }
 }

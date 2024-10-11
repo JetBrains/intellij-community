@@ -5,6 +5,7 @@ import com.intellij.cce.actions.*
 import com.intellij.cce.core.Session
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 import com.intellij.cce.util.FileTextUtil.getDiff
+import java.util.UUID
 
 class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
                                 private val handler: InterpretationHandler,
@@ -14,6 +15,7 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
   fun interpret(fileActions: FileActions, sessionHandler: (Session) -> Unit): List<Session> {
     val actionsInvoker = invokersFactory.createActionsInvoker()
     val featureInvoker = invokersFactory.createFeatureInvoker()
+    val fileOpener = FileOpener(fileActions.path, actionsInvoker)
     val sessions = mutableListOf<Session>()
     val needToClose = !actionsInvoker.isOpen(fileActions.path)
     val text = actionsInvoker.openFile(fileActions.path)
@@ -22,9 +24,15 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
       return emptyList()
     }
     var shouldCompleteToken = filter.shouldCompleteToken()
+    var currentSessionId: UUID? = null
     var isCanceled = false
     val actions = fileActions.actions.reorder(order)
     for (action in actions) {
+      if (currentSessionId != action.sessionId) {
+        fileOpener.closeOpenedFiles()
+        currentSessionId = action.sessionId
+      }
+
       handler.onActionStarted(action)
       when (action) {
         is MoveCaret -> {
@@ -44,10 +52,12 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
         is DeleteRange -> actionsInvoker.deleteRange(action.begin, action.end)
         is SelectRange -> actionsInvoker.selectRange(action.begin, action.end)
         is Delay -> actionsInvoker.delay(action.seconds)
+        is OpenFileInBackground -> fileOpener.openInBackground(action.file)
       }
       if (isCanceled) break
     }
 
+    fileOpener.closeOpenedFiles()
     actionsInvoker.save()
     val resultText = actionsInvoker.getText()
     if (text != resultText) {
@@ -59,5 +69,22 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
     if (needToClose) actionsInvoker.closeFile(fileActions.path)
     handler.onFileProcessed(fileActions.path)
     return sessions.sortedBy { it.offset }
+  }
+}
+
+private class FileOpener(private val baseFile: String, private val invoker: ActionsInvoker) {
+  private val openedFiles = mutableSetOf<String>()
+
+  fun openInBackground(file: String) {
+    invoker.openFile(file)
+    invoker.openFile(baseFile)
+    openedFiles.add(file)
+  }
+
+  fun closeOpenedFiles() {
+    openedFiles.forEach {
+      invoker.closeFile(it)
+    }
+    openedFiles.clear()
   }
 }

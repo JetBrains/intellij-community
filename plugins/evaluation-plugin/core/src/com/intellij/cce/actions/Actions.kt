@@ -11,7 +11,7 @@ sealed interface Action {
   val sessionId: UUID
 
   enum class ActionType {
-    MOVE_CARET, CALL_FEATURE, PRINT_TEXT, DELETE_RANGE, SELECT_RANGE, RENAME, DELAY
+    MOVE_CARET, CALL_FEATURE, PRINT_TEXT, DELETE_RANGE, SELECT_RANGE, RENAME, DELAY, OPEN_FILE_IN_BACKGROUND,
   }
 
   object JsonAdapter : JsonDeserializer<Action>, JsonSerializer<Action> {
@@ -24,6 +24,7 @@ sealed interface Action {
         ActionType.SELECT_RANGE -> context.deserialize(json, SelectRange::class.java)
         ActionType.RENAME -> context.deserialize(json, Rename::class.java)
         ActionType.DELAY -> context.deserialize(json, Delay::class.java)
+        ActionType.OPEN_FILE_IN_BACKGROUND -> context.deserialize(json, OpenFileInBackground::class.java)
       }
     }
 
@@ -63,6 +64,10 @@ data class Delay internal constructor(override val sessionId: UUID, val seconds:
   override val type: Action.ActionType = Action.ActionType.DELAY
 }
 
+data class OpenFileInBackground internal constructor(override val sessionId: UUID, val file: String) : Action {
+  override val type: Action.ActionType = Action.ActionType.OPEN_FILE_IN_BACKGROUND
+}
+
 data class TextRange(val start: Int, val end: Int)
 
 
@@ -89,5 +94,6 @@ class ActionsBuilder {
     fun deleteRange(begin: Int, end: Int) = actions.add(DeleteRange(sessionId, begin, end))
     fun selectRange(begin: Int, end: Int) = actions.add(SelectRange(sessionId, begin, end))
     fun delay(seconds: Int) = actions.add(Delay(sessionId, seconds))
+    fun openFileInBackground(filePath: String) = actions.add(OpenFileInBackground(sessionId, filePath))
   }
 }
