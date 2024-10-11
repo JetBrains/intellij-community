@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.junit;
 
 import org.jetbrains.annotations.NonNls;
@@ -72,6 +72,7 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_API_EXTENSION_AFTER_ALL_CALLBACK = "org.junit.jupiter.api.extension.AfterAllCallback";
   public static final String ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER = "org.junit.jupiter.api.extension.ParameterResolver";
   public static final String ORG_JUNIT_JUPITER_API_EXTENSION_EXTENSION = "org.junit.jupiter.api.extension.Extension";
+  public static final String ORG_JUNIT_JUPITER_API_EXTENSION_EXTENSIONS = "org.junit.jupiter.api.extension.Extensions";
   public static final String ORG_JUNIT_JUPITER_API_BEFORE_ALL = "org.junit.jupiter.api.BeforeAll";
   public static final String ORG_JUNIT_JUPITER_API_AFTER_ALL = "org.junit.jupiter.api.AfterAll";
   public static final String ORG_JUNIT_JUPITER_API_BEFORE_EACH = "org.junit.jupiter.api.BeforeEach";

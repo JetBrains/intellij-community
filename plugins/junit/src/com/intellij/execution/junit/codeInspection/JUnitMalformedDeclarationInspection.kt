@@ -229,21 +229,27 @@ private class JUnitMalformedSignatureVisitor(
   }
 
   private fun PsiModifierListOwner.inParameterResolverContext(): Boolean {
-    val hasAnnotation = MetaAnnotationUtil.findMetaAnnotationsInHierarchy(this, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
+    val extendsWith = MetaAnnotationUtil.findMetaAnnotationsInHierarchy(this, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
       .asSequence()
-      .any { annotation ->
-        annotation?.flattenedAttributeValues(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)?.any {
-          val uClassLiteral = it.toUElementOfType<UClassLiteralExpression>()
-          uClassLiteral != null && InheritanceUtil.isInheritor(uClassLiteral.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
-        } == true
-      }
+    val extensionsEntries = MetaAnnotationUtil.findMetaAnnotationsInHierarchy(this, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTENSIONS))
+      .asSequence()
+      .map { annotation -> annotation.flattenedAttributeValues(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME) }
+      .flatten()
+      .filterIsInstance<PsiAnnotation>()
+    val hasAnnotation = (extendsWith + extensionsEntries).any { annotation ->
+      annotation?.flattenedAttributeValues(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)?.any {
+        val uClassLiteral = it.toUElementOfType<UClassLiteralExpression>()
+        uClassLiteral != null && InheritanceUtil.isInheritor(uClassLiteral.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
+      } == true
+    }
     if (hasAnnotation) return true
     val hasRegisteredExtension = if (this is PsiClass) {
-      fields.any {  field ->
+      fields.any { field ->
         field.hasAnnotation(ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION)
         && InheritanceUtil.isInheritor(field.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
       }
-    } else false
+    }
+    else false
     if (hasRegisteredExtension) return true
     if (parentOfType<PsiModifierListOwner>(withSelf = false)?.inParameterResolverContext() == true) return true
     return hasPotentialAutomaticParameterResolver(this)

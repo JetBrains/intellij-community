@@ -832,6 +832,35 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+    fun `test non-malformed with multiple extensions inside extensions annotation`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        class TestNonParameterResolver implements org.junit.jupiter.api.extension.Extension { }
+
+        class TestParameterResolver implements org.junit.jupiter.api.extension.ParameterResolver {
+            @Override
+            public boolean supportsParameter(
+              org.junit.jupiter.api.extension.ParameterContext parameterContext,
+              org.junit.jupiter.api.extension.ExtensionContext extensionContext
+            ) { return false; }
+
+            @Override
+            public Object resolveParameter(
+              org.junit.jupiter.api.extension.ParameterContext parameterContext,
+              org.junit.jupiter.api.extension.ExtensionContext extensionContext
+            ) { return null; }
+        }
+
+        @org.junit.jupiter.api.extension.Extensions({
+            @org.junit.jupiter.api.extension.ExtendWith(TestNonParameterResolver.class),
+            @org.junit.jupiter.api.extension.ExtendWith(TestParameterResolver.class)
+        })
+        class ParameterResolver {
+            @org.junit.jupiter.api.BeforeAll
+            public static void beforeAll(String foo) { }
+        }
+
+      """.trimIndent())
+    }
     fun `test malformed before class highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class MainTest {
