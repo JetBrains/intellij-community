@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -15,6 +14,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineOptionsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -340,11 +340,6 @@ public final class GroovyInlineMethodUtil {
     }
 
     @Override
-    protected String getBorderTitle() {
-      return GroovyRefactoringBundle.message("inline.method.border.title");
-    }
-
-    @Override
     protected String getNameLabelText() {
       return GroovyRefactoringBundle.message("inline.method.label", GroovyRefactoringUtil.getMethodSignature(myMethod));
     }
@@ -570,6 +565,6 @@ public final class GroovyInlineMethodUtil {
   }
 
   public static @Nls(capitalization = Title) String getRefactoringName() {
-    return GroovyRefactoringBundle.message("inline.method.title");
+    return RefactoringBundle.message("inline.method.title");
   }
 }

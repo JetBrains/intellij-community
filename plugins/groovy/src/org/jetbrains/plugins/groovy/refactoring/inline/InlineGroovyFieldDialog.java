@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -6,9 +6,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineOptionsDialog;
 import org.jetbrains.annotations.Nls;
 
@@ -32,14 +32,11 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
 
   @Override
   protected String getNameLabelText() {
-    @SuppressWarnings("StaticFieldReferencedViaSubclass")
-    String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE, PsiSubstitutor.EMPTY);
-    return JavaRefactoringBundle.message("inline.field.field.name.label", fieldText, "");
-  }
-
-  @Override
-  protected String getBorderTitle() {
-    return RefactoringBundle.message("inline.field.border.title");
+    int options = myInvokedOnReference
+                  ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME 
+                  : PsiFormatUtilBase.SHOW_NAME;
+    String fieldText = PsiFormatUtil.formatVariable(myField, options, PsiSubstitutor.EMPTY);
+    return JavaRefactoringBundle.message("inline.field.field.name.label", fieldText);
   }
 
   @Override
