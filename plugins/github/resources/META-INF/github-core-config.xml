@@ -232,6 +232,5 @@
     </group>
 
     <group id="GitHub.Pull.Request.Create.Title.Actions"/>
-    <group id="Github.PullRequest.StatusChecks.AdditionalActions"/>
   </actions>
 </idea-plugin>
