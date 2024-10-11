@@ -15,11 +15,9 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
-import org.jetbrains.kotlin.idea.core.script.LegacyBundledIdeScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
-import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
@@ -40,7 +38,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
       val allApplicableDefinitions = ScriptDefinitionsManager.getInstance(project)
         .allDefinitions
         .filter {
-          it.asLegacyOrNull<LegacyBundledIdeScriptDefinition>() == null && it.isScript(KtFileScriptSource(ktFile)) &&
+          it.isScript(KtFileScriptSource(ktFile)) &&
           KotlinScriptingSettings.getInstance(project).isScriptDefinitionEnabled(it)
         }
         .toList()
@@ -73,8 +71,6 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
                             @NlsSafe
                             val text = value.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let {
                                 it.name + " (${it.scriptFilePattern})"
-                            } ?: value.asLegacyOrNull<LegacyBundledIdeScriptDefinition>()?.let {
-                                it.name + " (${KotlinParserDefinition.STD_SCRIPT_EXT})"
                             } ?: (value.name + " (${value.fileExtension})")
                             return text
                         }

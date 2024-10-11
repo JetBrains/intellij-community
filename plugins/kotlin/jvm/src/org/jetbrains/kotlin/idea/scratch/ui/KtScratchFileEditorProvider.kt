@@ -257,7 +257,7 @@ class KtScratchFileEditorWithPreview internal constructor(
 }
 
 fun TextEditor.findScratchFileEditorWithPreview(): KtScratchFileEditorWithPreview? =
-    if (this is KtScratchFileEditorWithPreview) this else parentScratchEditorWithPreview
+    this as? KtScratchFileEditorWithPreview ?: parentScratchEditorWithPreview
 
 private var TextEditor.parentScratchEditorWithPreview: KtScratchFileEditorWithPreview?
         by UserDataProperty(Key.create("parent.preview.editor"))

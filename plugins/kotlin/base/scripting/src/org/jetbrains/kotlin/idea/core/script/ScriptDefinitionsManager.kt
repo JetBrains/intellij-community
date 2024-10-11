@@ -15,16 +15,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
-import org.jetbrains.kotlin.scripting.definitions.*
+import org.jetbrains.kotlin.scripting.definitions.LazyScriptDefinitionProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 import org.jetbrains.kotlin.utils.addToStdlib.measureTimeMillisWithResult
-import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.script.experimental.api.SourceCode
-import kotlin.script.experimental.host.toScriptSource
 
 
 /**
@@ -161,9 +162,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
      * @return Definition bundled with IDEA and aimed for basic '.kts' scripts support.
      */
     override fun getDefaultDefinition(): ScriptDefinition {
-        val bundledScriptDefinitionContributor = getBundledScriptDefinitionContributor()
-            ?: error("BundledScriptDefinitionContributor must be registered in plugin.xml")
-        return bundledScriptDefinitionContributor.definitions.last()
+        return project.defaultDefinition
     }
 
     // This function is aimed to fix locks acquisition order.
@@ -301,9 +300,6 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
             else script.locationId?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
         return virtualFile != null && ScratchFileService.getInstance().getRootType(virtualFile) is ScratchRootType
     }
-
-    protected open fun getBundledScriptDefinitionContributor() =
-        SCRIPT_DEFINITIONS_SOURCES.findExtension(BundledScriptDefinitionSource::class.java, project)
 
     protected open fun executeUnderReadLock(block: () -> Unit) = runReadAction { block() }
 

@@ -3,76 +3,79 @@ package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.script.IdeConsoleRootType
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.ex.PathUtilEx
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
-import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
+import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import java.io.File
-import kotlin.script.dependencies.Environment
-import kotlin.script.dependencies.ScriptContents
-import kotlin.script.experimental.dependencies.DependenciesResolver
-import kotlin.script.experimental.dependencies.ScriptDependencies
-import kotlin.script.experimental.dependencies.asSuccess
+import kotlin.script.experimental.api.*
+import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
+import kotlin.script.experimental.jvm.jdkHome
+import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContextOrStdlib
-import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
+val scriptClassPath = listOf(
+    KotlinArtifacts.kotlinScriptRuntime,
+    KotlinArtifacts.kotlinStdlib,
+    KotlinArtifacts.kotlinReflect
+)
 
 class BundledScriptDefinitionSource(val project: Project) : ScriptDefinitionsSource {
-    private val myLegacyBundledIdeScriptDefinition = LegacyBundledIdeScriptDefinition(project)
-
-    override val definitions: Sequence<ScriptDefinition>
-        get() = sequenceOf(myLegacyBundledIdeScriptDefinition).map { ScriptDefinition.FromLegacy(defaultJvmScriptingHostConfiguration, it) }
+    override val definitions: Sequence<ScriptDefinition> = sequenceOf(project.defaultScratchDefinition, project.defaultDefinition)
 }
 
-class LegacyBundledIdeScriptDefinition internal constructor(project: Project) : KotlinScriptDefinition(ScriptTemplateWithArgs::class) {
-    override val dependencyResolver = BundledKotlinScriptDependenciesResolver(project)
+val Project.defaultScratchDefinition: ScriptDefinition
+    get() {
+        val compilationConfiguration = ScriptCompilationConfiguration.Default.with {
+            javaHomePath()?.let {
+                jvm.jdkHome(it)
+            }
+            dependencies(JvmDependency(scriptClassPath + scriptCompilationClasspathFromContextOrStdlib(wholeClasspath = true)))
+            displayName("Bundled Script Definition")
+            hostConfiguration(defaultJvmScriptingHostConfiguration)
+        }
+
+        return object : BundledScriptDefinition(compilationConfiguration) {
+            override fun isScript(script: SourceCode): Boolean =
+                when (script) {
+                    is VirtualFileScriptSource -> ScratchFileService.getInstance().getRootType(script.virtualFile) is IdeConsoleRootType
+                    else -> false
+                }
+        }
+    }
+
+private fun Project.javaHomePath(): File? {
+    val sdk = ProjectRootManager.getInstance(this)?.projectSdk?.takeIf { it.sdkType is JavaSdkType }
+    val anyJdk = PathUtilEx.getAnyJdk(this)
+    return (sdk ?: anyJdk)?.homePath?.let { File(it) }
 }
 
-class BundledKotlinScriptDependenciesResolver(private val project: Project) : DependenciesResolver {
-    override fun resolve(
-        scriptContents: ScriptContents,
-        environment: Environment
-    ): DependenciesResolver.ResolveResult {
-        val virtualFile = scriptContents.file?.let { VfsUtil.findFileByIoFile(it, true) }
-
-        val javaHome = getScriptSDK(project, virtualFile)
-
-        val classpath = buildList {
-            if (ScratchFileService.getInstance().getRootType(virtualFile) is IdeConsoleRootType) {
-                addAll(scriptCompilationClasspathFromContextOrStdlib(wholeClasspath = true))
+val Project.defaultDefinition: ScriptDefinition
+    get() {
+        val compilationConfiguration = ScriptCompilationConfiguration.Default.with {
+            javaHomePath()?.let {
+                jvm.jdkHome(it)
             }
-            add(KotlinArtifacts.kotlinReflect)
-            add(KotlinArtifacts.kotlinStdlib)
-            add(KotlinArtifacts.kotlinScriptRuntime)
+            dependencies(JvmDependency(scriptClassPath))
+            displayName("Bundled Script Definition")
+            hostConfiguration(defaultJvmScriptingHostConfiguration)
         }
 
-        return ScriptDependencies(javaHome = javaHome?.let { File(it)}, classpath = classpath).asSuccess()
+        return BundledScriptDefinition(compilationConfiguration)
     }
 
-    private fun getScriptSDK(project: Project, virtualFile: VirtualFile?): String? {
-        if (virtualFile != null) {
-            for (result in ModuleInfoProvider.getInstance(project).collect(virtualFile)) {
-                val moduleInfo = result.getOrNull() ?: break
-                val sdk = moduleInfo.dependencies().asSequence().filterIsInstance<SdkInfo>().singleOrNull()?.sdk ?: continue
-                return sdk.homePath
-            }
-        }
-
-        val jdk = ProjectRootManager.getInstance(project).projectSdk
-            ?: runReadAction { ProjectJdkTable.getInstance() }.allJdks
-                .firstOrNull { sdk -> sdk.sdkType is JavaSdk }
-            ?: PathUtilEx.getAnyJdk(project)
-        return jdk?.homePath
-    }
+open class BundledScriptDefinition(
+    compilationConfiguration: ScriptCompilationConfiguration,
+) : ScriptDefinition.FromConfigurations(
+    defaultJvmScriptingHostConfiguration,
+    compilationConfiguration,
+    ScriptEvaluationConfiguration.Default
+) {
+    override val canDefinitionBeSwitchedOff: Boolean = false
+    override val isDefault: Boolean = true
 }

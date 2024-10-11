@@ -8,7 +8,6 @@ import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.script.LegacyBundledIdeScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
@@ -55,6 +54,7 @@ class KotlinScriptDefinitionsModel private constructor(definitions: MutableList<
         override fun valueOf(item: ModelDescriptor): String {
             val definition = item.definition
             return definition.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.scriptFilePattern?.pattern
+                ?: (definition as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern
                 ?: (definition as? ScriptDefinition.FromConfigurationsBase)?.filePathPattern
                 ?: ("." + definition.fileExtension)
         }
@@ -69,8 +69,7 @@ class KotlinScriptDefinitionsModel private constructor(definitions: MutableList<
         }
 
         override fun isCellEditable(item: ModelDescriptor): Boolean {
-            return item.definition.asLegacyOrNull<LegacyBundledIdeScriptDefinition>() == null
-                   && item.definition.canDefinitionBeSwitchedOff
+            return item.definition.canDefinitionBeSwitchedOff
         }
     }
 

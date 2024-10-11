@@ -126,7 +126,7 @@
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptDefinitionSource"/>
     <scriptDependenciesSource implementation="org.jetbrains.kotlin.idea.script.k2.CustomScriptDependenciesSource"/>
 
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.BundledScriptDefinitionSource"/>
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionSource"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.script.k2.ScriptTemplatesFromDependenciesDefinitionSource"/>
   </extensions>
