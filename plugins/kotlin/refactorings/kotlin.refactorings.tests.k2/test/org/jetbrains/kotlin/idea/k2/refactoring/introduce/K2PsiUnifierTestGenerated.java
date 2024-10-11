@@ -775,6 +775,11 @@ public abstract class K2PsiUnifierTestGenerated extends AbstractK2PsiUnifierTest
                     runTest("../../idea/tests/testData/unifier/equivalence/expressions/const.kt");
                 }
 
+                @TestMetadata("constDifferentlySpelled.kt")
+                public void testConstDifferentlySpelled() throws Exception {
+                    runTest("../../idea/tests/testData/unifier/equivalence/expressions/constDifferentlySpelled.kt");
+                }
+
                 @TestMetadata("importedObjectMethod.kt")
                 public void testImportedObjectMethod() throws Exception {
                     runTest("../../idea/tests/testData/unifier/equivalence/expressions/importedObjectMethod.kt");

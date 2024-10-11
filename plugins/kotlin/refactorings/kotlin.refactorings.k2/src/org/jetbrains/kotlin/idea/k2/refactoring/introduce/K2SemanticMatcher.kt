@@ -7,6 +7,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -452,8 +453,15 @@ object K2SemanticMatcher {
 
         override fun visitConstantExpression(expression: KtConstantExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtConstantExpression ?: return false
-
-            return expression.text == patternExpression.text
+            with(analysisSession) {
+                val evaluatedExpression = expression.evaluate() ?: return false
+                val evaluatedPatternExpression = patternExpression.evaluate() ?: return false
+                if (evaluatedExpression.value is KaConstantValue.ErrorValue ||
+                    evaluatedPatternExpression.value is KaConstantValue.ErrorValue ||
+                    evaluatedExpression.render() != evaluatedPatternExpression.render()
+                ) return false
+            }
+            return true
         }
 
         override fun visitLabeledExpression(expression: KtLabeledExpression, data: KtElement): Boolean = false // TODO()

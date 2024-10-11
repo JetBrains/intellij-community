@@ -775,6 +775,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                     runTest("testData/unifier/equivalence/expressions/const.kt");
                 }
 
+                @TestMetadata("constDifferentlySpelled.kt")
+                public void testConstDifferentlySpelled() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/constDifferentlySpelled.kt");
+                }
+
                 @TestMetadata("importedObjectMethod.kt")
                 public void testImportedObjectMethod() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/importedObjectMethod.kt");
