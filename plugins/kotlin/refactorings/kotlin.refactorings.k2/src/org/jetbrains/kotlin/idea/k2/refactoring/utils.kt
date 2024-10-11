@@ -13,24 +13,13 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.name
-import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -221,7 +210,20 @@ fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
  * @return The matching callable symbol if found, null otherwise.
  */
 context(KaSession)
-fun KaClassSymbol.findCallableMemberBySignature(
+fun KaDeclarationContainerSymbol.findCallableMemberBySignature(
+    callableSignature: KaCallableSignature<KaCallableSymbol>
+): KaCallableSymbol? = declaredMemberScope.findCallableMemberBySignature(callableSignature)
+
+/**
+ * Finds a callable member of the class by its signature in the scope.
+ *
+ * @param callableSignature The signature of the callable to be found, which includes
+ * the symbol name, return type, receiver type, and value parameters.
+ *
+ * @return The matching callable symbol if found, null otherwise.
+ */
+context(KaSession)
+fun KaScope.findCallableMemberBySignature(
     callableSignature: KaCallableSignature<KaCallableSymbol>
 ): KaCallableSymbol? {
     fun KaType?.eq(anotherType: KaType?): Boolean {
@@ -229,7 +231,7 @@ fun KaClassSymbol.findCallableMemberBySignature(
         return this.semanticallyEquals(anotherType)
     }
 
-    return declaredMemberScope.callables.firstOrNull { callable ->
+    return callables.firstOrNull { callable ->
         fun parametersMatch(): Boolean {
             if (callableSignature is KaFunctionSignature && callable is KaFunctionSymbol) {
                 if (callable.valueParameters.size != callableSignature.valueParameters.size) return false

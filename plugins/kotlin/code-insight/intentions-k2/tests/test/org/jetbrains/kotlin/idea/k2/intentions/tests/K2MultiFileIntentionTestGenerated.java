@@ -18,40 +18,72 @@ import org.junit.runner.RunWith;
 @TestRoot("code-insight/intentions-k2/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../../idea/tests/testData/multiFileIntentions/moveDeclarationToSeparateFile")
-public class K2MultiFileIntentionTestGenerated extends AbstractK2MultiFileIntentionTest {
-    @java.lang.Override
-    @org.jetbrains.annotations.NotNull
-    public final KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K2;
+public abstract class K2MultiFileIntentionTestGenerated extends AbstractK2MultiFileIntentionTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/multiFileIntentions/moveDeclarationToSeparateFile")
+    public static class MoveDeclarationToSeparateFile extends AbstractK2MultiFileIntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("moveClassToExistingFile/moveClassToExistingFile.test")
+        public void testMoveClassToExistingFile_MoveClassToExistingFile() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/moveDeclarationToSeparateFile/moveClassToExistingFile/moveClassToExistingFile.test");
+        }
+
+        @TestMetadata("moveClassToFileInDefaultPackage/moveClassToFileInDefaultPackage.test")
+        public void testMoveClassToFileInDefaultPackage_MoveClassToFileInDefaultPackage() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/moveDeclarationToSeparateFile/moveClassToFileInDefaultPackage/moveClassToFileInDefaultPackage.test");
+        }
+
+        @TestMetadata("moveClassToFile/moveClassToFile.test")
+        public void testMoveClassToFile_MoveClassToFile() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/moveDeclarationToSeparateFile/moveClassToFile/moveClassToFile.test");
+        }
+
+        @TestMetadata("moveSingleToFile/moveSingleToFile.test")
+        public void testMoveSingleToFile_MoveSingleToFile() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/moveDeclarationToSeparateFile/moveSingleToFile/moveSingleToFile.test");
+        }
+
+        @TestMetadata("optimizeImports/optimizeImports.test")
+        public void testOptimizeImports_OptimizeImports() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/moveDeclarationToSeparateFile/optimizeImports/optimizeImports.test");
+        }
     }
 
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/multiFileIntentions/implementAbstractMember")
+    public static class ImplementAbstractMember extends AbstractK2MultiFileIntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
-    @TestMetadata("moveClassToExistingFile/moveClassToExistingFile.test")
-    public void testMoveClassToExistingFile_MoveClassToExistingFile() throws Exception {
-        runTest("../../../idea/tests/testData/multiFileIntentions/moveDeclarationToSeparateFile/moveClassToExistingFile/moveClassToExistingFile.test");
-    }
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("moveClassToFileInDefaultPackage/moveClassToFileInDefaultPackage.test")
-    public void testMoveClassToFileInDefaultPackage_MoveClassToFileInDefaultPackage() throws Exception {
-        runTest("../../../idea/tests/testData/multiFileIntentions/moveDeclarationToSeparateFile/moveClassToFileInDefaultPackage/moveClassToFileInDefaultPackage.test");
-    }
+        @TestMetadata("implementFunctionInJava/implementAllInJava.test")
+        public void testImplementFunctionInJava_ImplementAllInJava() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/implementAbstractMember/implementFunctionInJava/implementAllInJava.test");
+        }
 
-    @TestMetadata("moveClassToFile/moveClassToFile.test")
-    public void testMoveClassToFile_MoveClassToFile() throws Exception {
-        runTest("../../../idea/tests/testData/multiFileIntentions/moveDeclarationToSeparateFile/moveClassToFile/moveClassToFile.test");
-    }
+        @TestMetadata("implementValInJava/implementAllInJava.test")
+        public void testImplementValInJava_ImplementAllInJava() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/implementAbstractMember/implementValInJava/implementAllInJava.test");
+        }
 
-    @TestMetadata("moveSingleToFile/moveSingleToFile.test")
-    public void testMoveSingleToFile_MoveSingleToFile() throws Exception {
-        runTest("../../../idea/tests/testData/multiFileIntentions/moveDeclarationToSeparateFile/moveSingleToFile/moveSingleToFile.test");
-    }
-
-    @TestMetadata("optimizeImports/optimizeImports.test")
-    public void testOptimizeImports_OptimizeImports() throws Exception {
-        runTest("../../../idea/tests/testData/multiFileIntentions/moveDeclarationToSeparateFile/optimizeImports/optimizeImports.test");
+        @TestMetadata("implementVarInJava/implementAllInJava.test")
+        public void testImplementVarInJava_ImplementAllInJava() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/implementAbstractMember/implementVarInJava/implementAllInJava.test");
+        }
     }
 }

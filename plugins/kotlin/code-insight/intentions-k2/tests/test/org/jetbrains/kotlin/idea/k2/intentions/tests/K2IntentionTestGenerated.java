@@ -7190,7 +7190,74 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/implementAsConstructorParameter")
+    public static class ImplementAsConstructorParameter extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("enumClass.kt")
+        public void testEnumClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/implementAsConstructorParameter/enumClass.kt");
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/implementAsConstructorParameter/function.kt");
+        }
+
+        @TestMetadata("implementAll.kt")
+        public void testImplementAll() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/implementAsConstructorParameter/implementAll.kt");
+        }
+
+        @TestMetadata("inEnumClass.kt")
+        public void testInEnumClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/implementAsConstructorParameter/inEnumClass.kt");
+        }
+
+        @TestMetadata("inFinalClass.kt")
+        public void testInFinalClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/implementAsConstructorParameter/inFinalClass.kt");
+        }
+
+        @TestMetadata("inObject.kt")
+        public void testInObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/implementAsConstructorParameter/inObject.kt");
+        }
+
+        @TestMetadata("noDirectOverridesNeeded.kt")
+        public void testNoDirectOverridesNeeded() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/implementAsConstructorParameter/noDirectOverridesNeeded.kt");
+        }
+
+        @TestMetadata("noInheritors.kt")
+        public void testNoInheritors() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/implementAsConstructorParameter/noInheritors.kt");
+        }
+
+        @TestMetadata("notAbstractInClass.kt")
+        public void testNotAbstractInClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/implementAsConstructorParameter/notAbstractInClass.kt");
+        }
+
+        @TestMetadata("notAbstractNoBodyInClass.kt")
+        public void testNotAbstractNoBodyInClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/implementAsConstructorParameter/notAbstractNoBodyInClass.kt");
+        }
+
+        @TestMetadata("notAbstractWithGetterInInterface.kt")
+        public void testNotAbstractWithGetterInInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/implementAsConstructorParameter/notAbstractWithGetterInInterface.kt");
+        }
+    }
 
 
 
@@ -10450,7 +10517,167 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/implementAbstractMember")
+    public abstract static class ImplementAbstractMember extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/implementAbstractMember/function")
+        public static class Function extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumClass.kt")
+            public void testEnumClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/function/enumClass.kt");
+            }
+
+            @TestMetadata("enumClassWithSemicolon.kt")
+            public void testEnumClassWithSemicolon() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/function/enumClassWithSemicolon.kt");
+            }
+
+            @TestMetadata("enumClassWithSemicolonAndMembers.kt")
+            public void testEnumClassWithSemicolonAndMembers() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/function/enumClassWithSemicolonAndMembers.kt");
+            }
+
+            @TestMetadata("enumEntries.kt")
+            public void testEnumEntries() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/function/enumEntries.kt");
+            }
+
+            @TestMetadata("enumEntriesWithArgs.kt")
+            public void testEnumEntriesWithArgs() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/function/enumEntriesWithArgs.kt");
+            }
+
+            @TestMetadata("implementAll.kt")
+            public void testImplementAll() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/function/implementAll.kt");
+            }
+
+            @TestMetadata("inFinalClass.kt")
+            public void testInFinalClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/function/inFinalClass.kt");
+            }
+
+            @TestMetadata("inObject.kt")
+            public void testInObject() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/function/inObject.kt");
+            }
+
+            @TestMetadata("noDirectOverridesNeeded.kt")
+            public void testNoDirectOverridesNeeded() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/function/noDirectOverridesNeeded.kt");
+            }
+
+            @TestMetadata("noInheritors.kt")
+            public void testNoInheritors() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/function/noInheritors.kt");
+            }
+
+            @TestMetadata("notAbstractInClass.kt")
+            public void testNotAbstractInClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/function/notAbstractInClass.kt");
+            }
+
+            @TestMetadata("notAbstractInInterface.kt")
+            public void testNotAbstractInInterface() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/function/notAbstractInInterface.kt");
+            }
+
+            @TestMetadata("notAbstractNoBodyInClass.kt")
+            public void testNotAbstractNoBodyInClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/function/notAbstractNoBodyInClass.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/implementAbstractMember/property")
+        public static class Property extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumClass.kt")
+            public void testEnumClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/property/enumClass.kt");
+            }
+
+            @TestMetadata("enumClassWithSemicolon.kt")
+            public void testEnumClassWithSemicolon() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/property/enumClassWithSemicolon.kt");
+            }
+
+            @TestMetadata("enumClassWithSemicolonAndMembers.kt")
+            public void testEnumClassWithSemicolonAndMembers() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/property/enumClassWithSemicolonAndMembers.kt");
+            }
+
+            @TestMetadata("enumEntries.kt")
+            public void testEnumEntries() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/property/enumEntries.kt");
+            }
+
+            @TestMetadata("enumEntriesWithArgs.kt")
+            public void testEnumEntriesWithArgs() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/property/enumEntriesWithArgs.kt");
+            }
+
+            @TestMetadata("implementAll.kt")
+            public void testImplementAll() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/property/implementAll.kt");
+            }
+
+            @TestMetadata("inFinalClass.kt")
+            public void testInFinalClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/property/inFinalClass.kt");
+            }
+
+            @TestMetadata("inObject.kt")
+            public void testInObject() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/property/inObject.kt");
+            }
+
+            @TestMetadata("noDirectOverridesNeeded.kt")
+            public void testNoDirectOverridesNeeded() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/property/noDirectOverridesNeeded.kt");
+            }
+
+            @TestMetadata("noInheritors.kt")
+            public void testNoInheritors() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/property/noInheritors.kt");
+            }
+
+            @TestMetadata("notAbstractInClass.kt")
+            public void testNotAbstractInClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/property/notAbstractInClass.kt");
+            }
+
+            @TestMetadata("notAbstractNoBodyInClass.kt")
+            public void testNotAbstractNoBodyInClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/property/notAbstractNoBodyInClass.kt");
+            }
+
+            @TestMetadata("notAbstractWithGetterInInterface.kt")
+            public void testNotAbstractWithGetterInInterface() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/implementAbstractMember/property/notAbstractWithGetterInInterface.kt");
+            }
+        }
+    }
 
 
 

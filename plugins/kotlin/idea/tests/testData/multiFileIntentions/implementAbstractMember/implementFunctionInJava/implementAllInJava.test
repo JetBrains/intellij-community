@@ -1,5 +1,6 @@
 {
   "mainFile": "source/test.kt",
   "intentionClass": "org.jetbrains.kotlin.idea.intentions.ImplementAbstractMemberIntention",
+  "intentionK2Class": "org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ImplementAbstractMemberIntention",
   "withRuntime": "true"
 }

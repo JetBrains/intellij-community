@@ -77,7 +77,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertRangeCheckToTwoComparisons", pattern = pattern, isIgnored = true)
             model("${idea}intentions/removeRedundantCallsOfConversionMethods", pattern = pattern, isIgnored = true)
             model("${idea}intentions/addJvmStatic", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/implementAsConstructorParameter", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/implementAsConstructorParameter", pattern = pattern)
             model("${idea}intentions/insertCurlyBracesToTemplate", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceUntilWithRangeTo", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertLateinitPropertyToNullable", pattern = pattern, isIgnored = true)
@@ -161,7 +161,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/copyConcatenatedStringToClipboard", pattern = pattern, isIgnored = true)
             model("${idea}intentions/inlayHints", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertToScope", pattern = pattern)
-            model("${idea}intentions/implementAbstractMember", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/implementAbstractMember", pattern = pattern)
             model("${idea}intentions/replaceSizeZeroCheckWithIsEmpty", pattern = pattern, isIgnored = true)
             model("${idea}intentions/movePropertyToClassBody", pattern = pattern, isIgnored = true)
             model("${idea}intentions/indentRawString", pattern = pattern, isIgnored = true)
@@ -190,6 +190,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
 
         testClass<AbstractK2MultiFileIntentionTest> {
             model("${idea}/multiFileIntentions/moveDeclarationToSeparateFile", pattern = TEST, flatten = true)
+            model("${idea}/multiFileIntentions/implementAbstractMember", pattern = TEST, flatten = true)
         }
 
         testClass<AbstractK2GotoTestOrCodeActionTest> {
