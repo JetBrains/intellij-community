@@ -4,7 +4,6 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
-import com.intellij.codeInsight.inline.completion.suggestion.invoke
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Key
 import kotlinx.coroutines.flow.Flow
@@ -15,49 +14,6 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 internal class InlineCompletionDeprecatedTest : InlineCompletionTestCase() {
-
-  @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
-  @Test
-  fun `test old over typing`() = myFixture.testInlineCompletion {
-    val overtyper = object : DefaultInlineCompletionOvertyper() {}
-    val provider = object : InlineCompletionProvider {
-      override val id: InlineCompletionProviderID = InlineCompletionProviderID("TEST")
-
-      override val overtyper = overtyper
-
-      override fun isEnabled(event: InlineCompletionEvent): Boolean {
-        return event is InlineCompletionEvent.DirectCall || event is InlineCompletionEvent.DocumentChange
-      }
-
-      override suspend fun getSuggestion(request: InlineCompletionRequest) = InlineCompletionSuggestion {
-        variant {
-          emit(InlineCompletionGrayTextElement("abcd"))
-          emit(InlineCompletionGrayTextElement("efgh"))
-        }
-        variant {
-          emit(InlineCompletionGrayTextElement("abcd"))
-          emit(InlineCompletionGrayTextElement("1234"))
-        }
-      }
-    }
-    InlineCompletionHandler.registerTestHandler(provider)
-
-    init(PlainTextFileType.INSTANCE)
-    callInlineCompletion()
-    delay()
-    assertInlineRender("abcdefgh")
-    nextVariant()
-    assertInlineRender("abcd1234")
-    typeChar('a')
-    assertInlineRender("bcd1234")
-    assertAllVariants("bcd1234")
-
-    typeChars("bcd12")
-    assertInlineRender("34")
-    insert()
-    assertInlineHidden()
-    assertFileContent("abcd1234<caret>")
-  }
 
   @Suppress("DEPRECATION")
   @Test

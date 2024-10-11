@@ -10,7 +10,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Proposals provider for inline completion.
@@ -99,21 +98,8 @@ interface InlineCompletionProvider {
     get() = DefaultInlineCompletionInsertHandler.INSTANCE
 
   /**
-   * @see InlineCompletionOvertyper
-   */
-  @Deprecated(
-    message = "Use InlineCompletionSuggestionUpdateManager",
-    replaceWith = ReplaceWith("suggestionUpdateManager")
-  )
-  val overtyper: InlineCompletionOvertyper
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated(message = "Use InlineCompletionSuggestionUpdateManager")
-    get() = DefaultInlineCompletionOvertyper()
-
-  /**
    * Reacts on [InlineCompletionEvent] while a session exists and update the current suggestions.
    *
-   * **Since previously there was [overtyper], this property is used if you haven't overridden [overtyper]**.
    * @see InlineCompletionSuggestionUpdateManager
    */
   val suggestionUpdateManager: InlineCompletionSuggestionUpdateManager

@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.session
 
-import com.intellij.codeInsight.inline.completion.DefaultInlineCompletionOvertyper
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
-import com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
@@ -52,7 +50,7 @@ internal abstract class InlineCompletionSessionManager {
    * Otherwise, whether [onUpdate] was called with either [UpdateSessionResult.Succeeded] or [UpdateSessionResult.Emptied], meaning that
    * the update succeeded.
    *
-   * @see InlineCompletionOvertyper
+   * @see InlineCompletionSuggestionUpdateManager
    */
   @RequiresEdt
   fun updateSession(request: InlineCompletionRequest): Boolean {
@@ -78,11 +76,7 @@ internal abstract class InlineCompletionSessionManager {
     if (request.event.mayMutateCaretPosition()) {
       session.context.expectedStartOffset = request.endOffset
     }
-
-    val provider = session.provider
-    val overtyper = provider.overtyper
-    // Preserving back compatibility
-    val updateManager = if (overtyper::class != DefaultInlineCompletionOvertyper::class) overtyper else provider.suggestionUpdateManager
+    val updateManager = session.provider.suggestionUpdateManager
     return updateSession(session, updateManager, request)
   }
 

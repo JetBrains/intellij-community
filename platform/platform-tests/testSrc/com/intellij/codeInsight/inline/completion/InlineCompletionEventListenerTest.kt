@@ -16,7 +16,6 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayT
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
 import com.intellij.codeInsight.inline.completion.impl.GradualMultiSuggestInlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
-import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.suggestion.*
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.openapi.application.EDT
@@ -402,101 +401,6 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
     assertInlineHidden()
     expectEvents(
       change(1, 1), change(2, 1),
-      hide(FinishType.TYPED, false)
-    )
-  }
-
-  @Test
-  fun `test over typing with deprecated over typer`() = testListener {
-    @Suppress("DEPRECATION")
-    val overtyper = object : DefaultInlineCompletionOvertyper() {
-      override fun onOneSymbol(
-        context: InlineCompletionContext,
-        typing: TypingEvent.OneSymbol
-      ): InlineCompletionOvertyper.UpdatedElements? {
-        return if (context.state.elements.isNotEmpty()) {
-          return InlineCompletionOvertyper.UpdatedElements(
-            context.state.elements.drop(1).map { it.element },
-            context.state.elements.first().element.text.length
-          )
-        }
-        else null
-      }
-    }
-    @Suppress("OVERRIDE_DEPRECATION")
-    val provider = object : InlineCompletionProvider {
-      override val id: InlineCompletionProviderID = InlineCompletionProviderID("TEST")
-
-      override val overtyper = overtyper
-
-      override fun isEnabled(event: InlineCompletionEvent): Boolean {
-        return event is InlineCompletionEvent.DirectCall || event is InlineCompletionEvent.DocumentChange
-      }
-
-      override suspend fun getSuggestion(request: InlineCompletionRequest) = InlineCompletionSuggestion {
-        variant {
-          emit(InlineCompletionGrayTextElement("ab"))
-          emit(InlineCompletionGrayTextElement("bcd"))
-        }
-        variant {
-          emit(InlineCompletionGrayTextElement("ab"))
-          emit(InlineCompletionGrayTextElement("cd"))
-          emit(InlineCompletionGrayTextElement("ef"))
-        }
-        variant {
-          emit(InlineCompletionGrayTextElement("def"))
-          emit(InlineCompletionGrayTextElement("abcd"))
-          emit(InlineCompletionGrayTextElement("xyz"))
-        }
-        variant { emit(InlineCompletionGrayTextElement("abde")) }
-      }
-    }
-    InlineCompletionHandler.registerTestHandler(provider, testRootDisposable)
-    callInlineCompletion()
-    delay()
-    nextVariant()
-    assertInlineRender("abcdef")
-
-    expectEvents(
-      request(InlineCompletionEvent.DirectCall::class, InlineCompletionProvider::class),
-      computed(0, "ab", 0), show(0, "ab", 0),
-      computed(0, "bcd", 1), show(0, "bcd", 1),
-      variantComputed(0),
-      computed(1, "ab", 0), computed(1, "cd", 1), computed(1, "ef", 2),
-      variantComputed(1),
-      computed(2, "def", 0), computed(2, "abcd", 1), computed(2, "xyz", 2),
-      variantComputed(2),
-      computed(3, "abde", 0),
-      variantComputed(3),
-      completion(null, true),
-      variantSwitched(0, 1, true),
-      show(1, "ab", 0), show(1, "cd", 1), show(1, "ef", 2)
-    )
-
-    typeChar('q')
-    expectEvents(
-      invalidated(0),
-      change(1, 2),
-      invalidated(2),
-      invalidated(3),
-      show(1, "cd", 0), show(1, "ef", 1)
-    )
-
-    assertInlineRender("cdef")
-    nextVariant()
-    assertInlineRender("cdef")
-    prevVariant()
-    assertInlineRender("cdef")
-    expectEvents()
-
-    typeChar('w')
-    expectEvents(
-      change(1, 2),
-      show(1, "ef", 0)
-    )
-    typeChar('e')
-    expectEvents(
-      change(1, 2),
       hide(FinishType.TYPED, false)
     )
   }
