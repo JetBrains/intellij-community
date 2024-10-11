@@ -10,6 +10,7 @@ import com.intellij.cce.interpreter.InterpretationHandler
 import com.intellij.cce.interpreter.InterpretationOrder
 import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 import kotlin.io.path.readText
 
 class ConflictEnvironment(
@@ -20,19 +21,19 @@ class ConflictEnvironment(
   override val preparationDescription: String = "Checking that conflict dataset exists"
 
   override fun sessionCount(datasetContext: DatasetContext): Int =
-    datasetContext.path(datasetRef).listDirectoryEntries().size // FIXME should be pre-calculated
+    datasetContext.path(datasetRef).conflicts().sumOf { it.conflictCount }
 
   override fun chunks(datasetContext: DatasetContext): Iterator<EvaluationChunk> {
-    return datasetContext.path(datasetRef).listDirectoryEntries().map { conflictPath ->
+    return datasetContext.path(datasetRef).conflicts().map { conflictPath ->
       ConflictChunk(conflictPath)
     }.iterator()
   }
 
   private inner class ConflictChunk(
-    private val conflictPath: Path,
+    private val fileConflict: FileConflict,
   ) : EvaluationChunk {
+    override val name: String = "${fileConflict.hash} - ${fileConflict.fileName}"
     override val datasetName: String = datasetRef.name
-    override val name: String = conflictPath.fileName.toString()
     override val presentationText: String = readText("result")
 
     override fun evaluate(
@@ -109,7 +110,7 @@ class ConflictEnvironment(
     }
 
     private fun readText(namePrefix: String): String =
-      conflictPath.listDirectoryEntries().first { it.fileName.toString().startsWith(namePrefix) }.readText()
+      fileConflict.path.listDirectoryEntries().first { it.fileName.toString().startsWith(namePrefix) }.readText()
 
     private fun contextPresentation(conflicts: MatchSequence<*>, conflictIndex: Int) = """
 <<<<<<< BASE
@@ -121,5 +122,16 @@ ${conflicts.text(TextLabel.PARENT_2, conflictIndex).trimEnd()}
 >>>>>>>
 """.trim()
   }
+
+  private fun Path.conflicts() = listDirectoryEntries()
+    .flatMap { repoDir ->
+      repoDir.listDirectoryEntries().map {
+        val (hash, conflictCount, fileName) = it.name.split(" - ")
+        FileConflict(hash, fileName, conflictCount.toInt(), it)
+      }
+    }
+    .sortedBy { "${it.hash} ${it.fileName}" }
+
+  private data class FileConflict(val hash: String, val fileName: String, val conflictCount: Int, val path: Path)
 }
 
