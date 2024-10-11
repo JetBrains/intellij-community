@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.psi.KtExpression
 
@@ -26,6 +27,7 @@ internal class KotlinIntroduceVariablePostfixTemplate(
 ) {
     @OptIn(KaAllowAnalysisOnEdt::class)
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
+        val isVar = kind == "var"
         val introduceVariableHandler =
             LanguageRefactoringSupport.getInstance().forLanguage(KotlinLanguage.INSTANCE).introduceVariableHandler as KotlinIntroduceVariableHandler
         allowAnalysisOnEdt {
@@ -33,9 +35,10 @@ internal class KotlinIntroduceVariablePostfixTemplate(
             allowAnalysisFromWriteAction {
                 introduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
                     expression.project, editor, expression as KtExpression,
-                    isVar = kind == "var"
+                    isVar = isVar
                 )
             }
+            KotlinCommonRefactoringSettings.getInstance().INTRODUCE_DECLARE_WITH_VAR = isVar
         }
     }
 }
