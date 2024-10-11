@@ -24,28 +24,15 @@ import kotlin.time.Duration
 abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
   private val jobCall = AtomicReference<Job?>(null)
 
-  @Deprecated(
-    message = "Please, use more flexible method: getDebounceDelay. This method is going to be removed soon.",
-    replaceWith = ReplaceWith("getDebounceDelay(request)"),
-    level = DeprecationLevel.WARNING
-  )
-  protected open val delay: Duration
-    @ScheduledForRemoval
-    @Deprecated(
-      message = "Please, use more flexible method: getDebounceDelay. This method is going to be removed soon.",
-      replaceWith = ReplaceWith("getDebounceDelay(request)"),
-      level = DeprecationLevel.WARNING
-    )
-    get() = throw UnsupportedOperationException("Please, use more flexible method: getDebounceDelay.")
-
   /**
    * Retrieves the delay duration for debouncing code completion requests.
    * This function gives the time interval for which input events are delayed before
    * the completion suggestions are calculated.
    */
   protected open suspend fun getDebounceDelay(request: InlineCompletionRequest): Duration {
-    @Suppress("DEPRECATION")
-    return delay
+    // This method is not abstract because it initially replaced another method and was not abstract from the start.
+    // So making this method abstract will break backwards compatibility with older versions.
+    throw NotImplementedError("Please override getDebounceDelay.")
   }
 
   /**
