@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
@@ -168,7 +167,7 @@ class KtScratchExecutionSession(
             }
 
             try {
-                val compilerTarget = KaCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
+                val compilerTarget = KaCompilerTarget.Jvm(isTestMode = false)
                 val allowedErrorFilter: (KaDiagnostic) -> Boolean = { false }
 
                 compileToDirectory(psiFile, configuration, compilerTarget, allowedErrorFilter, tmpDir)

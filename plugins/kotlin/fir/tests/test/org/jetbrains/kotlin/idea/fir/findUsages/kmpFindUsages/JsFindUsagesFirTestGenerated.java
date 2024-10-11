@@ -697,6 +697,30 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findEnumEntryUsages")
+    public static class FindEnumEntryUsages extends AbstractFindUsagesFirTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        @java.lang.Override
+        public KMPTestPlatform getTestPlatform() {
+            return KMPTestPlatform.Js;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("enumEntry.0.kt")
+        public void testEnumEntry() throws Exception {
+            runTest("../../idea/tests/testData/findUsages/kotlin/findEnumEntryUsages/enumEntry.0.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
     public static class FindFunctionUsages extends AbstractFindUsagesFirTest {
         @java.lang.Override
