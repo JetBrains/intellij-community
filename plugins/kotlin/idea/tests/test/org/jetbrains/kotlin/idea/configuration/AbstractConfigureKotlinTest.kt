@@ -13,7 +13,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService.Companion.KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME
+import org.jetbrains.kotlin.idea.configuration.ui.KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME
 import org.junit.Assert
 
 abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.facet.FacetManager
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.project.RootsChangeRescanningInfo
@@ -12,7 +11,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -24,7 +22,6 @@ import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumen
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService.Companion.KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector
 import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetectorListener

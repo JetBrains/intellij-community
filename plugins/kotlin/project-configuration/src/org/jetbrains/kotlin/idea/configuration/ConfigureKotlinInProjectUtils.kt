@@ -30,7 +30,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -147,10 +146,7 @@ fun isModuleConfigured(moduleSourceRootGroup: ModuleSourceRootGroup): Boolean {
 /**
  * Returns a list of modules which contain sources in Kotlin.
  * Note that this method is expensive and should not be called more often than strictly necessary.
- *
- * DO NOT CALL THIS ON AWT THREAD
  */
-@RequiresBackgroundThread
 suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Module>? = null): Collection<Module> {
     if (!isUnitTestMode() && isDispatchThread()) {
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
