@@ -756,7 +756,6 @@ a:com.intellij.codeInsight.inline.completion.DebouncedInlineCompletionProvider
 - <init>():V
 - f:debounce(com.intellij.codeInsight.inline.completion.InlineCompletionRequest,kotlin.coroutines.Continuation):java.lang.Object
 - p:getDebounceDelay-3nIYWDw(com.intellij.codeInsight.inline.completion.InlineCompletionRequest,kotlin.coroutines.Continuation):java.lang.Object
-- p:getDelay-UwyO8pc():J
 - getSuggestion(com.intellij.codeInsight.inline.completion.InlineCompletionRequest,kotlin.coroutines.Continuation):java.lang.Object
 - a:getSuggestionDebounced(com.intellij.codeInsight.inline.completion.InlineCompletionRequest,kotlin.coroutines.Continuation):java.lang.Object
 - shouldBeForced(com.intellij.codeInsight.inline.completion.InlineCompletionRequest):Z
@@ -767,10 +766,6 @@ c:com.intellij.codeInsight.inline.completion.DefaultInlineCompletionInsertHandle
 - afterInsertion(com.intellij.codeInsight.inline.completion.InlineCompletionInsertEnvironment,java.util.List):V
 f:com.intellij.codeInsight.inline.completion.DefaultInlineCompletionInsertHandler$Companion
 - f:getINSTANCE():com.intellij.codeInsight.inline.completion.DefaultInlineCompletionInsertHandler
-c:com.intellij.codeInsight.inline.completion.DefaultInlineCompletionOvertyper
-- com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper$Adapter
-- <init>():V
-- p:onOneSymbol(com.intellij.codeInsight.inline.completion.session.InlineCompletionContext,com.intellij.codeInsight.inline.completion.TypingEvent$OneSymbol):com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper$UpdatedElements
 f:com.intellij.codeInsight.inline.completion.InlineCompletion
 - sf:INSTANCE:com.intellij.codeInsight.inline.completion.InlineCompletion
 - f:getHandlerOrNull(com.intellij.openapi.editor.Editor):com.intellij.codeInsight.inline.completion.InlineCompletionHandler
@@ -893,7 +888,6 @@ f:com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 - bs:hide$default(com.intellij.codeInsight.inline.completion.InlineCompletionHandler,com.intellij.codeInsight.inline.completion.session.InlineCompletionContext,com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker$ShownEvents$FinishType,I,java.lang.Object):V
 - f:insert():V
 - f:invoke(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$DirectCall):V
-- f:invoke(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$DocumentChange):V
 - f:invoke(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupCancelled):V
 - f:invoke(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupChange):V
 - f:invokeEvent(com.intellij.codeInsight.inline.completion.InlineCompletionEvent):V
@@ -914,26 +908,10 @@ f:com.intellij.codeInsight.inline.completion.InlineCompletionInsertHandler$Dummy
 - com.intellij.codeInsight.inline.completion.InlineCompletionInsertHandler
 - sf:INSTANCE:com.intellij.codeInsight.inline.completion.InlineCompletionInsertHandler$Dummy
 - afterInsertion(com.intellij.codeInsight.inline.completion.InlineCompletionInsertEnvironment,java.util.List):V
-com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper
-- com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$Adapter
-- onDocumentChange(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$DocumentChange,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
-- a:overtype(com.intellij.codeInsight.inline.completion.session.InlineCompletionContext,com.intellij.codeInsight.inline.completion.TypingEvent):com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper$UpdatedElements
-a:com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper$Adapter
-- com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper
-- <init>():V
-- p:onNewLine(com.intellij.codeInsight.inline.completion.session.InlineCompletionContext,com.intellij.codeInsight.inline.completion.TypingEvent$NewLine):com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper$UpdatedElements
-- p:onOneSymbol(com.intellij.codeInsight.inline.completion.session.InlineCompletionContext,com.intellij.codeInsight.inline.completion.TypingEvent$OneSymbol):com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper$UpdatedElements
-- p:onPairedEnclosureInsertion(com.intellij.codeInsight.inline.completion.session.InlineCompletionContext,com.intellij.codeInsight.inline.completion.TypingEvent$PairedEnclosureInsertion):com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper$UpdatedElements
-- overtype(com.intellij.codeInsight.inline.completion.session.InlineCompletionContext,com.intellij.codeInsight.inline.completion.TypingEvent):com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper$UpdatedElements
-f:com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper$UpdatedElements
-- <init>(java.util.List,I):V
-- f:getElements():java.util.List
-- f:getOvertypedLength():I
 com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 - sf:Companion:com.intellij.codeInsight.inline.completion.InlineCompletionProvider$Companion
 - a:getId-S2YkoFA():java.lang.String
 - getInsertHandler():com.intellij.codeInsight.inline.completion.InlineCompletionInsertHandler
-- getOvertyper():com.intellij.codeInsight.inline.completion.InlineCompletionOvertyper
 - getProviderPresentation():com.intellij.codeInsight.inline.completion.InlineCompletionProviderPresentation
 - a:getSuggestion(com.intellij.codeInsight.inline.completion.InlineCompletionRequest,kotlin.coroutines.Continuation):java.lang.Object
 - getSuggestionUpdateManager():com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
