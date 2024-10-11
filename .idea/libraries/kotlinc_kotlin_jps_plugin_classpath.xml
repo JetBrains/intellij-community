@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-jps-plugin-classpath" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-classpath:2.0.20-release-360">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-classpath:2.0.21-release-482">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.0.20-release-360/kotlin-jps-plugin-classpath-2.0.20-release-360.jar">
-          <sha256sum>a4bddd5b59886b4a2b150fdad372ec06fff3ef78e294e4c5496e2ea500cf825a</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.0.21-release-482/kotlin-jps-plugin-classpath-2.0.21-release-482.jar">
+          <sha256sum>e583f6bbb97292944b576c39140691e73cc2c4c4c5479b984ce0cf072ce9b749</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.0.20-release-360/kotlin-jps-plugin-classpath-2.0.20-release-360.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.0.21-release-482/kotlin-jps-plugin-classpath-2.0.21-release-482.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.0.20-release-360/kotlin-jps-plugin-classpath-2.0.20-release-360-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2.0.21-release-482/kotlin-jps-plugin-classpath-2.0.21-release-482-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-jps-plugin-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-tests-for-ide:2.0.20-release-360">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-plugin-tests-for-ide:2.0.21-release-482">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/2.0.20-release-360/kotlin-jps-plugin-tests-for-ide-2.0.20-release-360.jar">
-          <sha256sum>5575917e93c8485a9ab11ffbd7a6b7ea2493ed3d73539908b1283730bf626589</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/2.0.21-release-482/kotlin-jps-plugin-tests-for-ide-2.0.21-release-482.jar">
+          <sha256sum>c600098bb441fc147eced59c2f4647a378184a5637bbce66e3a98dae6b13772b</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/2.0.20-release-360/kotlin-jps-plugin-tests-for-ide-2.0.20-release-360.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/2.0.21-release-482/kotlin-jps-plugin-tests-for-ide-2.0.21-release-482.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/2.0.20-release-360/kotlin-jps-plugin-tests-for-ide-2.0.20-release-360-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-tests-for-ide/2.0.21-release-482/kotlin-jps-plugin-tests-for-ide-2.0.21-release-482-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
