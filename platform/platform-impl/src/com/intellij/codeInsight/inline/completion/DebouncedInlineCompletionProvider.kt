@@ -65,6 +65,11 @@ abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
     return if (shouldBeForced(request)) getSuggestionDebounced(request) else debounce(request)
   }
 
+  @Deprecated(
+    message = "This method is going to become private. No need to use it outside of the provider implementation.",
+    level = DeprecationLevel.WARNING,
+  )
+  @ScheduledForRemoval
   suspend fun debounce(request: InlineCompletionRequest): InlineCompletionSuggestion {
     delay(getDebounceDelay(request))
     return getSuggestionDebounced(request)
