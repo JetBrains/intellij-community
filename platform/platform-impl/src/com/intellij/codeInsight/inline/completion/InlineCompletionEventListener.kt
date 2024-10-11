@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.util.*
 
 /**
@@ -57,11 +58,15 @@ sealed class InlineCompletionEventType {
    */
   class Hide @ApiStatus.Internal constructor(
     val finishType: FinishType,
-    @Deprecated("""
-      This value delegates to InlineCompletionContext.isCurrentlyDisplaying(). 
-      In cases of invalidation (e.g., mismatched typing), the context is already cleared, causing the method to return false, 
-      which can be misleading. 
-      Please use other methods of the listener to determine whether completion is or was being shown.""")
+    @Deprecated(
+      message = """
+This value delegates to InlineCompletionContext.isCurrentlyDisplaying(). 
+In cases of invalidation (e.g., mismatched typing), the context is already cleared, causing the method to return false, 
+which can be misleading. 
+Please use other methods of the listener to determine whether completion is or was being shown.
+      """,
+    )
+    @ScheduledForRemoval
     val isCurrentlyDisplaying: Boolean,
   ) : InlineCompletionEventType()
 
@@ -127,6 +132,11 @@ sealed class InlineCompletionEventType {
       replaceWith = ReplaceWith("lengthChange")
     )
     val overtypedLength: Int
+      @ScheduledForRemoval
+      @Deprecated(
+        "Use lengthChange, because now a variant can be updated not only due typings.",
+        replaceWith = ReplaceWith("lengthChange"),
+      )
       get() = lengthChange
   }
 
