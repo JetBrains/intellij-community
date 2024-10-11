@@ -188,6 +188,7 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     int answer = Messages.showYesNoDialog(project, message, getRefactoringName(), Messages.getQuestionIcon());
     if (answer == Messages.NO) return true;
     InlineMethodProcessor processor = new InlineMethodProcessor(project, realMethod, reference, editor, true, false, false, true);
+    // Without this line, conflicts view is not shown
     processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
     processor.run();
     return true;
