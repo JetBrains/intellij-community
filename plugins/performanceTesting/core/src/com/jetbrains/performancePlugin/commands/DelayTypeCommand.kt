@@ -18,6 +18,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerResult
+import com.jetbrains.performancePlugin.utils.HighlightingTestUtil
 import com.jetbrains.performancePlugin.utils.findTypingTarget
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
@@ -25,6 +26,7 @@ import kotlinx.coroutines.*
 import java.awt.KeyboardFocusManager
 import javax.swing.JComponent
 import kotlin.time.Duration.Companion.seconds
+import com.intellij.openapi.util.Pair
 
 /**
  * Command types text with some delay between typing.
@@ -93,6 +95,12 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
             }
           }
         }
+
+        val editor = FileEditorManager.getInstance(context.project).selectedTextEditor
+        HighlightingTestUtil.storeProcessFinishedTime(
+          scopeName = "delayTyping",
+          spanName = "typing_target_${editor?.virtualFile?.name}",
+          additionalAttributes = arrayOf(Pair("typed_text", text)))
       }
       if (calculateAnalyzesTime) {
         val spanRef = Ref<Span>(PerformanceTestSpan.TRACER.spanBuilder(CODE_ANALYSIS_SPAN_NAME).setParent(Context.current().with(span)).startSpan())

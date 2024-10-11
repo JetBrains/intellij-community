@@ -13,10 +13,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.KeyCodeTypeCommand;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Pair;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
 import com.jetbrains.performancePlugin.utils.EditorUtils;
+import com.jetbrains.performancePlugin.utils.HighlightingTestUtil;
 import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
@@ -70,6 +72,11 @@ public class IdeEditorKeyCommand extends KeyCodeTypeCommand {
           return null;
         });
       }));
+
+      HighlightingTestUtil.storeProcessFinishedTime(
+        "pressKey",
+        "typing_target_" + editor.getVirtualFile().getName(),
+        Pair.pair("typed_text", actionID));
     }
     else {
       throw new IllegalStateException("Editor is not opened");
