@@ -142,7 +142,7 @@ fun interface QueryObserver<in T> {
  * */
 internal interface ReteNetwork {
   companion object {
-    fun new(dbState: MutableStateFlow<DB>, failWhenPropagationFailed: Boolean): ReteNetwork =
+    fun new(dbState: MutableStateFlow<ReteState>, failWhenPropagationFailed: Boolean): ReteNetwork =
       ReteNetworkImpl(dbState, failWhenPropagationFailed)
   }
 

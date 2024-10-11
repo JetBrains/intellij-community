@@ -2,7 +2,6 @@
 package fleet.kernel.rete
 
 import com.jetbrains.rhizomedb.Change
-import com.jetbrains.rhizomedb.DB
 import fleet.kernel.timestamp
 import kotlinx.coroutines.flow.StateFlow
 import fleet.util.PriorityQueue
@@ -12,7 +11,7 @@ internal interface PosponedVars {
   fun propagateChange(change: Change)
 }
 
-internal fun postponedVars(lastKnownDb: StateFlow<DB>, reteNetwork: ReteNetwork): PosponedVars {
+internal fun postponedVars(lastKnownDb: StateFlow<ReteState>, reteNetwork: ReteNetwork): PosponedVars {
   val subs = HashMap<Rete.ObserverId, Subscription>()
   val postponedVars = PriorityQueue<Rete.Command.AddObserver<*>>(compareBy { x -> x.dbTimestamp })
   fun <T> addTerminal(cmd: Rete.Command.AddObserver<T>) {
@@ -30,7 +29,7 @@ internal fun postponedVars(lastKnownDb: StateFlow<DB>, reteNetwork: ReteNetwork)
     override fun command(cmd: Rete.Command) {
       when (cmd) {
         is Rete.Command.AddObserver<*> -> {
-          val db = lastKnownDb.value
+          val db = lastKnownDb.value.dbOrThrow()
           when {
             db.timestamp < cmd.dbTimestamp -> {
               postponedVars.add(cmd)

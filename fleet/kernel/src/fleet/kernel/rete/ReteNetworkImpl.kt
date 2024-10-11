@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import fleet.util.PriorityQueue
 
 internal class IdGen(private val observerId: Int) {
-  var nextQueryId: Int = 1
+  private var nextQueryId: Int = 1
 
   fun nextQueryId(): NodeId = NodeId(observerId, nextQueryId++)
 }
@@ -105,7 +105,7 @@ internal class ObserverNode(
 internal class Node(val nodeId: NodeId) {
 
   var retainers: MutableSet<Node>? = null
-  var retainees: ArrayList<Node>? = null
+  private var retainees: ArrayList<Node>? = null
   val subscriptionTree = SubscriptionTree(null).also {
     it.attach {
       retainees?.toList()?.forEach { retainee ->
@@ -191,7 +191,7 @@ internal class Propagation {
 }
 
 internal class ReteNetworkImpl(
-  val lastKnownDb: MutableStateFlow<DB>,
+  val lastKnownDb: MutableStateFlow<ReteState>,
   val failWhenPropagationFailed: Boolean
 ) : ReteNetwork {
 
@@ -295,7 +295,7 @@ internal class ReteNetworkImpl(
     observer: QueryObserver<T>
   ): Subscription =
     if (dependencies.all { match -> match.job.isActive }) {
-      val db = lastKnownDb.value
+      val db = lastKnownDb.value.dbOrThrow()
       val observerId = nextObserverId++
       val observerIdPair = NodeId(observerId, 0)
       require(observerIdPair.id !in observers.keys) { "observer id is not unique" }
@@ -425,7 +425,7 @@ internal class ReteNetworkImpl(
       prop.failedNodes.clear()
     }
 
-    lastKnownDb.value = change.dbAfter
+    lastKnownDb.value = ReteState.Db(change.dbAfter)
 
     // notify assertions:
     run {
