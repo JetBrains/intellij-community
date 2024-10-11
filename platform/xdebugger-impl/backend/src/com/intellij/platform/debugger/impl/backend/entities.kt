@@ -41,6 +41,7 @@ internal data class LocalValueHintEntity(override val eid: EID) : Entity {
 internal data class LocalHintXValueEntity(override val eid: EID) : Entity {
   val projectEntity by Project
   val xValue by XValue
+  val parentXValue by ParentXValue
 
   @ApiStatus.Internal
   companion object : EntityType<LocalHintXValueEntity>(
@@ -50,6 +51,7 @@ internal data class LocalHintXValueEntity(override val eid: EID) : Entity {
   ) {
     val Project = requiredRef<ProjectEntity>("project")
     val XValue = requiredTransient<XValue>("xValue")
+    val ParentXValue = optionalRef<LocalHintXValueEntity>("parentXValue", RefFlags.CASCADE_DELETE_BY)
   }
 }
 

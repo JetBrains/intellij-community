@@ -68,6 +68,7 @@ public class XValueHint extends AbstractValueHint {
   private final PsiElement myElement;
   private final XSourcePosition myExpressionPosition;
   private Disposable myDisposable;
+  private Disposable myXValueDisposable;
 
   public XValueHint(@NotNull Project project,
                     @NotNull Editor editor,
@@ -124,6 +125,10 @@ public class XValueHint extends AbstractValueHint {
 
   @Override
   protected void onHintHidden() {
+    if (myXValueDisposable != null && !myInsideShow) {
+      Disposer.dispose(myXValueDisposable);
+      myXValueDisposable = null;
+    }
     disposeVisibleHint();
   }
 
@@ -219,6 +224,12 @@ public class XValueHint extends AbstractValueHint {
 
     @Override
     public void evaluated(@NotNull final XValue result) {
+      LOG.assertTrue(myXValueDisposable == null, "XValue wasn't disposed before evaluating new one.");
+      myXValueDisposable = Disposer.newDisposable();
+      if (result instanceof HintXValue) {
+        Disposer.register(myXValueDisposable, (Disposable)result);
+      }
+
       result.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
         private XFullValueEvaluator myFullValueEvaluator;
         private boolean myShown = false;

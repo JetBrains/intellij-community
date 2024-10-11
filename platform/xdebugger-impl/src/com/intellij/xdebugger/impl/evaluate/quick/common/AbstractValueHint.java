@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -226,7 +226,8 @@ public abstract class AbstractValueHint {
     }
   }
 
-  private boolean myInsideShow = false; // to avoid invoking myHideRunnable for new popups with updated presentation
+  @ApiStatus.Internal
+  protected boolean myInsideShow = false; // to avoid invoking myHideRunnable for new popups with updated presentation
 
   protected void processHintHidden() {
     if (!myInsideShow) {
@@ -368,8 +369,14 @@ public abstract class AbstractValueHint {
             }
           }
           else {
-            hideCurrentHint();
-            expand.run();
+            myInsideShow = true;
+            try {
+              hideCurrentHint();
+              expand.run();
+            }
+            finally {
+              myInsideShow = false;
+            }
           }
           return true;
         }

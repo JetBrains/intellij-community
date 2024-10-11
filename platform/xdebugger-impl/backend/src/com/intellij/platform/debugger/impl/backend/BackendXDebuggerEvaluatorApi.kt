@@ -54,7 +54,6 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
       }
       val xValueEntity = withKernel {
         change {
-          // TODO[IJPL-160146]: leaked XValue entity, it is never disposed
           LocalHintXValueEntity.new {
             it[LocalHintXValueEntity.Project] = evaluatorEntity.sessionEntity.projectEntity
             it[LocalHintXValueEntity.XValue] = xValue
@@ -62,6 +61,15 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         }
       }
       XEvaluationResult.Evaluated(XValueId(xValueEntity.eid))
+    }
+  }
+
+  override suspend fun disposeXValue(xValueId: XValueId) {
+    withKernel {
+      val xValueEntity = entity(xValueId.eid) as? LocalHintXValueEntity ?: return@withKernel
+      change {
+        xValueEntity.delete()
+      }
     }
   }
 
@@ -114,9 +122,9 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   }
 
   override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>? = withKernel {
-    val hintEntity = entity(xValueId.eid) as? LocalHintXValueEntity ?: return@withKernel null
+    val xValueEntity = entity(xValueId.eid) as? LocalHintXValueEntity ?: return@withKernel null
     val computeEvents = Channel<XValueComputeChildrenEvent>(capacity = Int.MAX_VALUE)
-    val xValue = hintEntity.xValue
+    val xValue = xValueEntity.xValue
     channelFlow {
       var isObsolete = false
 
@@ -129,20 +137,21 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
           val names = (0 until children.size()).map { children.getName(it) }
           val childrenXValues = (0 until children.size()).map { children.getValue(it) }
           launch {
-            val xValueEntities = withKernel {
-              val projectEntity = hintEntity.projectEntity
+            val childrenXValueEntities = withKernel {
+              val projectEntity = xValueEntity.projectEntity
               childrenXValues.map { childXValue ->
                 change {
                   // TODO: leaked XValue entity, it is never disposed
                   LocalHintXValueEntity.new {
                     it[LocalHintXValueEntity.Project] = projectEntity
                     it[LocalHintXValueEntity.XValue] = childXValue
+                    it[LocalHintXValueEntity.ParentXValue] = xValueEntity
                   }
                 }
               }
             }
-            val xValueIds = xValueEntities.map { XValueId(it.eid) }
-            computeEvents.trySend(XValueComputeChildrenEvent.AddChildren(names, xValueIds, last))
+            val childrenXValueIds = childrenXValueEntities.map { XValueId(it.eid) }
+            computeEvents.trySend(XValueComputeChildrenEvent.AddChildren(names, childrenXValueIds, last))
           }
         }
 

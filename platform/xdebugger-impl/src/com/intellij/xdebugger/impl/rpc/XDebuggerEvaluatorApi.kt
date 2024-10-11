@@ -18,6 +18,8 @@ import org.jetbrains.annotations.ApiStatus
 interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
   suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String): Deferred<XEvaluationResult>
 
+  suspend fun disposeXValue(xValueId: XValueId)
+
   suspend fun computePresentation(xValueId: XValueId): Flow<XValuePresentation>?
 
   suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>?

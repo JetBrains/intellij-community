@@ -37,7 +37,7 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
           // TODO[IJPL-160146]: Service coroutine scope should contain Rete by default
           val newSessionCoroutineScope = cs.childScope("FrontendXDebuggerSession") + KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext.kernelCoroutineContext()
           sessionCoroutineScope = newSessionCoroutineScope
-          FrontendXDebuggerSession(newSessionCoroutineScope, token.value)
+          FrontendXDebuggerSession(project, newSessionCoroutineScope, token.value)
         }
         else {
           sessionCoroutineScope = null

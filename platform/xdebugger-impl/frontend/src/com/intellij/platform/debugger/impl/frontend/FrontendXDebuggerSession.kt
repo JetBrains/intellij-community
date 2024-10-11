@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXDebuggerEvaluator
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.impl.XDebuggerActiveSessionEntity
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 internal class FrontendXDebuggerSession(
+  private val project: Project,
   private val cs: CoroutineScope,
   sessionEntity: XDebuggerActiveSessionEntity,
 ) {
@@ -28,7 +30,7 @@ internal class FrontendXDebuggerSession(
         if (evaluatorId != null) {
           val newEvaluatorCoroutineScope = cs.childScope("FrontendXDebuggerEvaluator")
           evaluatorCoroutineScope = newEvaluatorCoroutineScope
-          FrontendXDebuggerEvaluator(newEvaluatorCoroutineScope, evaluatorId)
+          FrontendXDebuggerEvaluator(project, newEvaluatorCoroutineScope, evaluatorId)
         }
         else {
           evaluatorCoroutineScope = null
