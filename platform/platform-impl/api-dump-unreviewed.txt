@@ -1280,10 +1280,8 @@ c:com.intellij.diagnostic.ITNReporter
 - <init>():V
 - <init>(java.lang.String):V
 - b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- changeReporterAccount(java.awt.Component):V
 - getPrivacyNoticeText():java.lang.String
 - getReportActionText():java.lang.String
-- getReporterAccount():java.lang.String
 - showErrorInRelease(com.intellij.openapi.diagnostic.IdeaLoggingEvent):Z
 - submit(com.intellij.openapi.diagnostic.IdeaLoggingEvent[],java.lang.String,java.awt.Component,com.intellij.util.Consumer):Z
 c:com.intellij.diagnostic.IdeErrorsDialog
