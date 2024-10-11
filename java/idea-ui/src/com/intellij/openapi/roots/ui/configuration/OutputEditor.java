@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,8 @@ public class OutputEditor extends ModuleElementsEditor {
 
   @Override
   protected JComponent createComponentImpl() {
-    return new OutputEditorUi().createPanel(myCompilerOutputEditor, myJavadocEditor, myAnnotationsEditor);
+    final var panel = new OutputEditorUi().createPanel(myCompilerOutputEditor, myJavadocEditor, myAnnotationsEditor);
+    return ScrollPaneFactory.createScrollPane(panel);
   }
 
   @Override
