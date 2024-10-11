@@ -6,8 +6,8 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.CompilerType
+import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationCompilerResult
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluatorStatisticsCollector
-import org.jetbrains.kotlin.idea.debugger.evaluate.StatisticsEvaluationResult
 import org.jetbrains.kotlin.idea.debugger.evaluate.gatherProjectFilesDependedOnByFragment
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
@@ -73,7 +73,7 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
             CompilerType.IR,
-            StatisticsEvaluationResult.SUCCESS,
+            EvaluationCompilerResult.SUCCESS,
             stats
         )
     }
@@ -83,7 +83,7 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
             CompilerType.IR,
-            StatisticsEvaluationResult.FAILURE,
+            EvaluationCompilerResult.COMPILER_INTERNAL_ERROR,
             stats
         )
         if (ApplicationManager.getApplication().isUnitTestMode) {

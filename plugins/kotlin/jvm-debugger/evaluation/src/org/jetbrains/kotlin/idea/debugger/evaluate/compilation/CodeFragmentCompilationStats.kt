@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.debugger.evaluate.CompilerFailType
 import java.util.concurrent.Callable
 
 @ApiStatus.Internal
@@ -18,6 +19,8 @@ class CodeFragmentCompilationStats {
         private set
     var interruptions: Int = 0
         private set
+
+    var compilerFailType = CompilerFailType.OTHER
 
     fun <R> startAndMeasureWrapAnalysisUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { wrapTimeMs = it }
     fun <R> startAndMeasureAnalysisUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { analysisTimeMs = it }

@@ -24,6 +24,9 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTI
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.psi.KtCodeFragment
+import java.util.concurrent.ExecutionException
+
+private class IncorrectCodeFragmentException(message: String) : EvaluateException(message)
 
 interface KotlinCodeFragmentCompiler {
     fun compileCodeFragment(context: ExecutionContext, codeFragment: KtCodeFragment): CompiledCodeFragmentData
@@ -34,12 +37,13 @@ interface KotlinCodeFragmentCompiler {
 }
 
 class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
+    @OptIn(KaExperimentalApi::class)
     override fun compileCodeFragment(
         context: ExecutionContext,
         codeFragment: KtCodeFragment
     ): CompiledCodeFragmentData {
         val stats = CodeFragmentCompilationStats()
-        fun onFinish(status: StatisticsEvaluationResult) =
+        fun onFinish(status: EvaluationCompilerResult) =
             KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(codeFragment.project, CompilerType.K2, status, stats)
         try {
             patchCodeFragment(context, codeFragment, stats)
@@ -47,12 +51,18 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
             val result = stats.startAndMeasureAnalysisUnderReadAction {
                 compiledCodeFragmentDataK2Impl(context, codeFragment)
             }.getOrThrow()
-            onFinish(StatisticsEvaluationResult.SUCCESS)
+            onFinish(EvaluationCompilerResult.SUCCESS)
             return result
         } catch(e: ProcessCanceledException) {
             throw e
         } catch (e: Throwable) {
-            onFinish(StatisticsEvaluationResult.FAILURE)
+            val cause = (e as? ExecutionException)?.cause ?: e
+            if ((cause as? EvaluateException)?.cause is KaCodeCompilationException) {
+                stats.compilerFailType = CompilerFailType.K2_COMPILER_CORE_FAIL
+            }
+
+            onFinish(if (cause is IncorrectCodeFragmentException) EvaluationCompilerResult.COMPILATION_FAILURE
+                     else EvaluationCompilerResult.COMPILER_INTERNAL_ERROR)
             throw e
         }
     }
@@ -94,7 +104,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                     }
                     is KaCompilationResult.Failure -> {
                         val firstError = result.errors.first()
-                        throw EvaluateExceptionUtil.createEvaluateException(firstError.defaultMessage)
+                        throw IncorrectCodeFragmentException(firstError.defaultMessage)
                     }
                 }
             } catch (e: ProcessCanceledException) {

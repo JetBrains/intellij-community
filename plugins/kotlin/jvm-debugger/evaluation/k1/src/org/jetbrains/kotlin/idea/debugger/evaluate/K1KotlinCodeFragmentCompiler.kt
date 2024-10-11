@@ -36,7 +36,7 @@ class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         }
 
         compilerStrategy.beforeAnalyzingCodeFragment()
-        val analysisResult = analyze(codeFragment, debugProcess)
+        val analysisResult = analyze(codeFragment, debugProcess, compilerStrategy)
 
         analysisResult.illegalSuspendFunCallDiagnostic?.let {
             evaluationException(DefaultErrorMessages.render(it))
@@ -52,10 +52,10 @@ class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         return createCompiledDataDescriptor(result)
     }
 
-    private fun analyze(codeFragment: KtCodeFragment, debugProcess: DebugProcessImpl): ErrorCheckingResult {
+    private fun analyze(codeFragment: KtCodeFragment, debugProcess: DebugProcessImpl, compilerStrategy: IRCodeFragmentCompilingStrategy): ErrorCheckingResult {
         val result = ReadAction.nonBlocking<Result<ErrorCheckingResult>> {
             try {
-                Result.success(doAnalyze(codeFragment, debugProcess))
+                Result.success(doAnalyze(codeFragment, debugProcess, compilerStrategy))
             } catch (ex: ProcessCanceledException) {
                 throw ex // Restart the action
             } catch (ex: Exception) {
@@ -65,7 +65,7 @@ class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         return result.getOrThrow()
     }
 
-    private fun doAnalyze(codeFragment: KtCodeFragment, debugProcess: DebugProcessImpl): ErrorCheckingResult {
+    private fun doAnalyze(codeFragment: KtCodeFragment, debugProcess: DebugProcessImpl, compilerStrategy: IRCodeFragmentCompilingStrategy): ErrorCheckingResult {
         try {
             AnalyzingUtils.checkForSyntacticErrors(codeFragment)
         } catch (e: IllegalArgumentException) {
@@ -83,7 +83,7 @@ class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         }
 
         val bindingContext = analysisResult.bindingContext
-        reportErrorDiagnosticIfAny(bindingContext, codeFragment)
+        reportErrorDiagnosticIfAny(bindingContext, codeFragment, compilerStrategy.stats)
         return ErrorCheckingResult(
             bindingContext,
             analysisResult.moduleDescriptor,
@@ -101,11 +101,23 @@ class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         val illegalSuspendFunCallDiagnostic: Diagnostic?
     )
 
-    private fun reportErrorDiagnosticIfAny(bindingContext: BindingContext, codeFragment: KtCodeFragment) {
+    private fun reportErrorDiagnosticIfAny(
+        bindingContext: BindingContext,
+        codeFragment: KtCodeFragment,
+        stats: CodeFragmentCompilationStats
+    ) {
         bindingContext.diagnostics
             .filter { it.factory !in IGNORED_DIAGNOSTICS }
             .firstOrNull { it.severity == Severity.ERROR && it.psiElement.containingFile == codeFragment }
-            ?.let { evaluationException(DefaultErrorMessages.render(it)) }
+            ?.let {
+                KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
+                    codeFragment.project,
+                    CompilerType.IR,
+                    EvaluationCompilerResult.COMPILATION_FAILURE,
+                    stats
+                )
+                evaluationException(DefaultErrorMessages.render(it))
+            }
     }
 
     private fun Diagnostic.isIllegalSuspendFunCallInCodeFragment(codeFragment: KtCodeFragment) =
