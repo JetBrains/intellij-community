@@ -13,10 +13,6 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.types.Variance
 
 class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
-    override fun KtExpression.shouldShowStatementType(): Boolean {
-        return true /* TODO */
-    }
-
     // this method gets called from the non-blocking read action
     @OptIn(KaExperimentalApi::class)
     override fun getInformationHint(element: KtExpression): String = analyze(element) {

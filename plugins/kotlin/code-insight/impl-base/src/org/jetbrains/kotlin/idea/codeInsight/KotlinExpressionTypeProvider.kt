@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -18,8 +19,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 abstract class KotlinExpressionTypeProvider : ExpressionTypeProvider<KtExpression>() {
-    protected abstract fun KtExpression.shouldShowStatementType(): Boolean
-
     override fun getExpressionsAt(elementAt: PsiElement): List<KtExpression> {
         val candidates = elementAt.parentsWithSelf.filterIsInstance<KtExpression>().filter { it.shouldShowType() }.toList()
         val fileEditor =
@@ -48,18 +47,33 @@ abstract class KotlinExpressionTypeProvider : ExpressionTypeProvider<KtExpressio
         else -> getQualifiedExpressionForSelector() == null && parent !is KtCallableReferenceExpression && !isFunctionCallee()
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    private fun KtExpression.shouldShowStatementType(): Boolean {
+        if (parent !is KtBlockExpression) return true
+        if (parent.children.lastOrNull() == this) {
+            return analyzeForShowExpressionType(this) { isUsedAsExpression }
+        }
+        return false
+    }
+
     private fun KtExpression.isFunctionCallee(): Boolean {
         val callExpression = parent as? KtCallExpression ?: return false
         if (callExpression.calleeExpression != this) return false
 
-        // getExpressionsAt is executed from EDT
-        allowAnalysisOnEdt {
-            allowAnalysisFromWriteAction {
-                analyze(callExpression) {
-                    return callExpression.isImplicitInvokeCall() == false
-                }
-            }
+        analyzeForShowExpressionType(callExpression) {
+            return callExpression.isImplicitInvokeCall() == false
+        }
+    }
+}
+
+// getExpressionsAt is executed from EDT
+@OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+private inline fun <R> analyzeForShowExpressionType(
+    useSiteElement: KtElement,
+    action: KaSession.() -> R
+): R = allowAnalysisOnEdt {
+    allowAnalysisFromWriteAction {
+        analyze(useSiteElement) {
+            action()
         }
     }
 }
