@@ -57,7 +57,8 @@ public class UnsupportedCharacterInspection extends PropertiesInspectionBase {
         VirtualFile file = psiFile.getVirtualFile();
         if (file == null) return false;
         EncodingRegistry encoding = EncodingRegistry.getInstance();
-        boolean isCustomized = encoding.getDefaultCharsetForPropertiesFiles(file) != null ||
+        boolean isCustomized = encoding.isNative2Ascii(file) ||
+                               encoding.getDefaultCharsetForPropertiesFiles(file) != null ||
                                encoding.getEncoding(file, true) != NEW_JAVA_DEFAULT_CHARSET;
         return !isCustomized && hasErrorCharacter(element, property.getValue());
       }

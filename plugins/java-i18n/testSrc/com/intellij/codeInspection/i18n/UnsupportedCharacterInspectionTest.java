@@ -4,9 +4,11 @@ package com.intellij.codeInspection.i18n;
 import com.intellij.lang.properties.UnsupportedCharacterInspection;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 
 import java.io.IOException;
@@ -47,6 +49,28 @@ public class UnsupportedCharacterInspectionTest extends JavaCodeInsightFixtureTe
     checkHighlighting(javaFile);
     applyFix(javaFile, "Convert to escape sequences");
     checkFile(props, "key1=Java + \\u2615");
+  }
+
+  public void testJava8WithNative2Ascii() {
+    javaVersion(LanguageLevel.JDK_1_8);
+
+    PsiFile javaFile = addClass("Test.java", """
+      import java.util.*;
+      public final class Test {
+        public static void main(String[] args) {
+          String value = ResourceBundle.getBundle("test").getString("<caret>key1");
+        }
+      }
+      """);
+
+    PsiFile props = addFile("test.properties", "key1=Java + ☕");
+    EncodingProjectManager.getInstance(getProject()).setNative2AsciiForPropertiesFiles(props.getVirtualFile(), true);
+    UIUtil.dispatchAllInvocationEvents();
+
+    fileEncoding(props, StandardCharsets.UTF_8);
+    propertiesEncoding(props, null);
+
+    checkHighlighting(javaFile);
   }
 
   public void testJava8PlusConstantWithConversion() throws IOException {
