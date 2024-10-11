@@ -204,7 +204,7 @@ public class BasicFileParser {
       isOk = myParser.getReferenceParser().parseImportCodeReference(builder, isStatic);
     }
 
-    //if it is `module` it should expect or `;` or `identifier`
+    //if it is `module` we should expect either `;` or `identifier`
     if (isOk && !isModule && !isStatic && builder.getTokenType() != JavaTokenType.SEMICOLON &&
         PsiKeyword.MODULE.equals(identifierText)) {
       BasicJavaParserUtil.error(builder, JavaPsiBundle.message("expected.identifier.or.semicolon"));
