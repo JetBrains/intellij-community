@@ -13,13 +13,13 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RadioUpDownListener;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Query;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.function.Function;
@@ -60,7 +60,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   @Override
   protected @NotNull JComponent createCenterPanel() {
     JPanel optionsPanel = new JPanel();
-    optionsPanel.setBorder(new EmptyBorder(JBUIScale.scale(10), 0, 0, 0));
+    optionsPanel.setBorder(JBUI.Borders.empty(10, UIUtil.DEFAULT_HGAP, 0, 0));
     optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
 
     myRbInlineAll = new JRadioButton();
@@ -89,7 +89,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
 
     myRbInlineThisOnly.setEnabled(myInvokedOnReference);
     myRbInlineAll.setEnabled(writable);
-    if(myInvokedOnReference) {
+    if (myInvokedOnReference) {
       if (canInlineThisOnly()) {
         myRbInlineAll.setSelected(false);
         myRbInlineAll.setEnabled(false);
