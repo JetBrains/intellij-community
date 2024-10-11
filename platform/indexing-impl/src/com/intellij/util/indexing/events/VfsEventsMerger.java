@@ -274,7 +274,12 @@ public final class VfsEventsMerger {
 
   public static void tryLog(Supplier<String> message) {
     if (LOG != null) {
-      LOG.info(message.get());
+      try {
+        LOG.info(message.get());
+      }
+      catch (Throwable t) {
+        Logger.getInstance(VfsEventsMerger.class).error("Could not evaluate log message (message.get())", t);
+      }
     }
   }
 
