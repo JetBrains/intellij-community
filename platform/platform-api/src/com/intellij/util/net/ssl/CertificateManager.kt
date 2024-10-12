@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.crypto.BadPaddingException
+import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.KeyManager
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
@@ -90,6 +91,7 @@ class CertificateManager(coroutineScope: CoroutineScope) : PersistentStateCompon
       // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
       // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
       SSLContext.setDefault(sslContext)
+      HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.socketFactory) // in case a previous value was already cached
       LOG.info("Default SSL context initialized")
     }
   }
