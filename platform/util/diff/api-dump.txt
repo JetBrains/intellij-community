@@ -1,27 +1,30 @@
 f:com.intellij.diff.comparison.ByCharRt
-- s:compare(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
-- s:compareIgnoreWhitespaces(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.DiffIterable
-- s:comparePunctuation(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
-- s:compareTrimWhitespaces(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.DiffIterable
-- s:compareTwoStep(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
+- sf:INSTANCE:com.intellij.diff.comparison.ByCharRt
+- sf:compare(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
+- sf:compareIgnoreWhitespaces(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.DiffIterable
+- sf:comparePunctuation(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
+- sf:compareTrimWhitespaces(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.DiffIterable
+- sf:compareTwoStep(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
 f:com.intellij.diff.comparison.ByLineRt
-- s:compare(java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
-- s:compare(java.util.List,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):java.util.List
-- s:convertIntoMergeLineFragments(java.util.List):java.util.List
-- s:merge(java.util.List,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):java.util.List
+- sf:INSTANCE:com.intellij.diff.comparison.ByLineRt
+- sf:compare(java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):com.intellij.diff.comparison.iterables.FairDiffIterable
+- sf:compare(java.util.List,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):java.util.List
+- sf:convertIntoMergeLineFragments(java.util.List):java.util.List
+- sf:merge(java.util.List,java.util.List,java.util.List,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):java.util.List
 f:com.intellij.diff.comparison.ByWordRt
-- s:compare(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):java.util.List
-- s:compare(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):java.util.List
-- s:compare(java.lang.CharSequence,java.util.List,java.lang.CharSequence,java.util.List,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):java.util.List
-- s:compareAndSplit(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):java.util.List
-- s:convertIntoDiffFragments(com.intellij.diff.comparison.iterables.DiffIterable):java.util.List
-- s:convertIntoMergeWordFragments(java.util.List):java.util.List
-- s:getInlineChunks(java.lang.CharSequence):java.util.List
-- s:isWordChunk(com.intellij.diff.comparison.ByWordRt$InlineChunk):Z
+- sf:INSTANCE:com.intellij.diff.comparison.ByWordRt
+- sf:compare(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):java.util.List
+- sf:compare(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):java.util.List
+- sf:compare(java.lang.CharSequence,java.util.List,java.lang.CharSequence,java.util.List,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):java.util.List
+- sf:compareAndSplit(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.comparison.CancellationChecker):java.util.List
+- sf:convertIntoDiffFragments(com.intellij.diff.comparison.iterables.DiffIterable):java.util.List
+- sf:convertIntoMergeWordFragments(java.util.List):java.util.List
+- sf:getInlineChunks(java.lang.CharSequence):java.util.List
+- sf:isWordChunk(com.intellij.diff.comparison.ByWordRt$InlineChunk):Z
 com.intellij.diff.comparison.ByWordRt$InlineChunk
 - a:getOffset1():I
 - a:getOffset2():I
-c:com.intellij.diff.comparison.ByWordRt$LineBlock
+f:com.intellij.diff.comparison.ByWordRt$LineBlock
 - f:fragments:java.util.List
 - f:newlines1:I
 - f:newlines2:I
