@@ -26,9 +26,9 @@ object MultiLineVisitorUtils {
   }
 
   private fun findEndOfMultiLineComment(start: Int, lines: List<LineInfo>, token: String): Int {
-    val end = lines.asSequence().drop(start).indexOfFirst { it.text.contains(token) }
-    if (end < 0) return lines.size
-    return start + end
+    val followingLines = lines.asSequence().drop(start + 1)
+    val end = followingLines.indexOfFirst { it.text.contains(token) }
+    return if (end < 0) lines.size else start + end
   }
 
   private fun LanguageSupporter.getCommentRanges(lines: List<LineInfo>): List<Pair<Int, Int>> {
@@ -47,7 +47,10 @@ object MultiLineVisitorUtils {
           if (line.startsWith(start)) {
             val match = findEndOfMultiLineComment(pos, lines, end)
             add(pos to match)
-            assert(pos < match)
+            assert(pos <= match) {
+              "Multiline comment started at line ${pos} and ended at line ${match}:\n" +
+              lines.subList(pos, match).joinToString("\n") { it.text }
+            }
             pos = match + 1
             continue@outer
           }
