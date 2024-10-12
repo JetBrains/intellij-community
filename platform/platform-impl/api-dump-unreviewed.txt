@@ -2771,18 +2771,6 @@ c:com.intellij.ide.actions.SearchWebAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - s:search(java.lang.String):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.SendFeedbackAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- sf:Companion:com.intellij.ide.actions.SendFeedbackAction$Companion
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- sf:submit(com.intellij.openapi.project.Project):V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.SendFeedbackAction$Companion
-- f:getDescription(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- f:submit(com.intellij.openapi.project.Project):V
 f:com.intellij.ide.actions.SettingsEntryPointAction
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.openapi.actionSystem.RightAlignedToolbarAction

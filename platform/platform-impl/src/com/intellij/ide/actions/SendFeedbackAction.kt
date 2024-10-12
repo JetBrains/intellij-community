@@ -23,8 +23,10 @@ import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.awt.GraphicsEnvironment
 
+@ApiStatus.Internal
 class SendFeedbackAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     val (os, arch) = OS.CURRENT to CpuArch.CURRENT
