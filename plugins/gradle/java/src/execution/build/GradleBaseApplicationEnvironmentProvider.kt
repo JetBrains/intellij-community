@@ -65,7 +65,6 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     }
     val params = JavaParameters().apply {
       JavaParametersUtil.configureConfiguration(this, runProfile)
-      this.vmParametersList.addParametersString(runProfile.vmParameters)
     }
 
     val taskSettings = ExternalSystemTaskExecutionSettings()
