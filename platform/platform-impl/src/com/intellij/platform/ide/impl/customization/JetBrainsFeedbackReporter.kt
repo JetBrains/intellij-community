@@ -27,6 +27,7 @@ class JetBrainsFeedbackReporter(private val productName: String,
         "build" to if (appInfo.isEAP) build.asStringWithoutProductCode() else build.asString(),
         "timezone" to System.getProperty("user.timezone", ""),
         "eval" to (LicensingFacade.getInstance()?.isEvaluationLicense == true).toString(),
+        "license" to (LicensingFacade.getInstance()?.subType ?: "unknown")
       ))
   }
 
