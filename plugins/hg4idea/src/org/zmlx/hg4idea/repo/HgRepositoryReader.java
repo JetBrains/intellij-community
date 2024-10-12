@@ -8,6 +8,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
@@ -15,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.command.HgTagsCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgVersion;
 
 import java.io.File;
@@ -38,6 +41,7 @@ public final class HgRepositoryReader {
   private static final Pattern HASH_NAME = Pattern.compile("\\s*([0-9a-fA-F]{40})[:?|\\s+](.+)");
   private static final Pattern HASH_STATUS_NAME = Pattern.compile("\\s*([0-9a-fA-F]+)\\s+\\w\\s+(.+)");
   //hash + name_or_revision_num; hash + status_character +  name_or_revision_num
+  private static final Pattern TAGS_PATTERN = Pattern.compile("^(.*) (?:[-0-9]+):([a-f0-9]+)( local)?$");   //pattern get from old javahg source
 
   @NotNull private final File myHgDir;            // .hg
   @NotNull private File myBranchHeadsFile;  // .hg/cache/branch* + part depends on version
@@ -45,8 +49,6 @@ public final class HgRepositoryReader {
   @NotNull private final File myCurrentBranch;    // .hg/branch
   @NotNull private final File myBookmarksFile; //.hg/bookmarks
   @NotNull private final File myCurrentBookmark; //.hg/bookmarks.current
-  @NotNull private final File myTagsFile; //.hgtags  - not in .hg directory!!!
-  @NotNull private final File myLocalTagsFile;  // .hg/localtags
   @NotNull private final File myDirStateFile;  // .hg/dirstate
   @NotNull private final File mySubrepoFile;  // .hgsubstate
 
@@ -56,9 +58,11 @@ public final class HgRepositoryReader {
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
   private final boolean myStatusInBranchFile;
   @NotNull private final HgVcs myVcs;
+  @NotNull private final VirtualFile myRootDir;
 
-  public HgRepositoryReader(@NotNull HgVcs vcs, @NotNull File hgDir) {
+    public HgRepositoryReader(@NotNull HgVcs vcs, @NotNull File hgDir, @NotNull VirtualFile rootDir) {
     myHgDir = hgDir;
+    myRootDir = rootDir;
     DvcsUtil.assertFileExists(myHgDir, ".hg directory not found in " + myHgDir);
     myVcs = vcs;
     HgVersion version = myVcs.getVersion();
@@ -68,8 +72,6 @@ public final class HgRepositoryReader {
     myCurrentBranch = new File(myHgDir, "branch");
     myBookmarksFile = new File(myHgDir, "bookmarks");
     myCurrentBookmark = new File(myHgDir, "bookmarks.current");
-    myLocalTagsFile = new File(myHgDir, "localtags");
-    myTagsFile = new File(myHgDir.getParentFile(), ".hgtags");
     mySubrepoFile = new File(myHgDir.getParentFile(), ".hgsubstate");
     myDirStateFile = new File(myHgDir, "dirstate");
     myMqInternalDir = new File(myHgDir, "patches");
@@ -235,12 +237,36 @@ public final class HgRepositoryReader {
 
   @NotNull
   public Collection<HgNameWithHashInfo> readTags() {
-    return readReferences(myTagsFile);
+        return readTagsFromCommandResult(false);
   }
 
   @NotNull
   public Collection<HgNameWithHashInfo> readLocalTags() {
-    return readReferences(myLocalTagsFile);
+        return readTagsFromCommandResult(true);
+    }
+
+    @NotNull Collection<HgNameWithHashInfo> readTagsFromCommandResult(boolean local){
+        HgCommandResult result = new HgTagsCommand(myVcs.getProject(), myRootDir).collectTags();
+        if(result==null || result.getExitValue()!=0){
+            return Collections.emptySet();
+        }
+        return readTagsFromCommandResult(result, local);
+    }
+
+  @NotNull Collection<HgNameWithHashInfo> readTagsFromCommandResult(@NotNull HgCommandResult result, boolean local){
+    HashSet<HgNameWithHashInfo> tags = new HashSet<>();
+    String tagName,changeset;
+    for (final String line : result.getOutputLines()){
+      Matcher matcher = TAGS_PATTERN.matcher(line);
+      if (matcher.matches() && (local == (matcher.group(3)!=null))) {     //if ask local so tag should be local
+        tagName = matcher.group(1).trim().strip();
+        if(!tagName.equals("tip")){
+          changeset = matcher.group(2).trim().strip();
+          tags.add(new HgNameWithHashInfo(tagName, myVcsObjectsFactory.createHash(changeset)));
+        }
+      }
+    }
+    return tags;
   }
 
   @NotNull
