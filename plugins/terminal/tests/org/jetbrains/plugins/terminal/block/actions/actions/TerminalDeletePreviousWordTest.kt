@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.removeUserData
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptModel
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
@@ -94,6 +95,9 @@ internal class TerminalDeletePreviousWordTest : LightPlatformCodeInsightTestCase
     val virtualFile = FileDocumentManager.getInstance().getFile(editor.document)!!
     // Used in TerminalPromptFileViewProvider
     virtualFile.putUserData(TerminalPromptModel.KEY, promptModel)
+    Disposer.register(testRootDisposable) {
+      virtualFile.removeUserData(TerminalPromptModel.KEY)
+    }
     virtualFile.putUserData(ShellType.KEY, ShellType.ZSH)  // The shell type doesn't matter for this test
     return editor
   }
