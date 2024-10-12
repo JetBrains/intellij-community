@@ -408,12 +408,22 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 
     private fun injectionForKotlinCall(argument: KtValueArgument, ktFunction: KtFunction, reference: PsiReference): InjectionInfo? {
         val argumentName = argument.getArgumentName()?.asName
-        val argumentIndex = (argument.parent as KtValueArgumentList).arguments.indexOf(argument)
-        // Prefer using argument name if present
-        val ktParameter = if (argumentName != null) {
-            ktFunction.valueParameters.firstOrNull { it.nameAsName == argumentName }
+        val argumentListIndex = (argument.parent as KtValueArgumentList).arguments.indexOf(argument)
+        val valueParameters = ktFunction.valueParameters
+        val argumentIndex = if (argumentName != null) {
+            null
         } else {
-            ktFunction.valueParameters.getOrNull(argumentIndex)
+            // Skip vararg check if name is present
+            (argumentListIndex downTo 0).firstNotNullOfOrNull { index ->
+                valueParameters.getOrNull(index)?.takeIf { it.isVarArg }?.let { index }
+            }
+        } ?: argumentListIndex
+
+        // Prefer using argument name if present
+         val ktParameter = if (argumentName != null) {
+            valueParameters.firstOrNull { it.nameAsName == argumentName }
+        } else {
+            valueParameters.getOrNull(argumentIndex)
         } ?: return null
         return injectionForKotlinCall(ktParameter, reference, argumentName, argumentIndex)
     }
