@@ -71,6 +71,7 @@ internal class TerminalOutputController(
     editor.highlighter = CompositeTerminalTextHighlighter(
       outputModel,
       textHighlighter,
+      project,
       commandBlockHighlighters.toMutableList()
     )
     session.model.addTerminalListener(this)
