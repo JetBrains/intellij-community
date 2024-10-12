@@ -398,7 +398,10 @@ internal suspend fun buildNonBundledPlugins(
 
     val nonBundledPluginsArtifacts = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-plugins")
     val autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
-    val buildKeymapPluginsTask = async { buildKeymapPlugins(targetDir = autoUploadingDir, context = context) }
+    var buildKeymapPluginsTask: Deferred<List<Pair<Path, ByteArray>>>? = null
+    if (!context.isStepSkipped(BuildOptions.KEYMAP_PLUGINS_STEP)) {
+      buildKeymapPluginsTask = async { buildKeymapPlugins(targetDir = autoUploadingDir, context = context) }
+    }
     val moduleOutputPatcher = ModuleOutputPatcher()
     val stageDir = context.paths.tempDir.resolve("non-bundled-plugins-${context.applicationInfo.productCode}")
     NioFiles.deleteRecursively(stageDir)
@@ -453,8 +456,10 @@ internal suspend fun buildNonBundledPlugins(
       pluginSpecs.add(spec)
     }
 
-    for (item in buildKeymapPluginsTask.await()) {
-      pluginSpecs.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
+    if (!context.isStepSkipped(BuildOptions.KEYMAP_PLUGINS_STEP)) {
+      for (item in buildKeymapPluginsTask?.await() ?: error("buildKeymapPluginsTask is null")) {
+        pluginSpecs.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
+      }
     }
 
     if (prepareCustomPluginRepository) {
