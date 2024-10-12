@@ -21,6 +21,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.ThreeState.*
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
@@ -234,16 +235,32 @@ class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
         psiBasedDelegate.isIgnoredMethod(declaration)
 
     override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor? =
-        FileTemplateDescriptor("Kotlin JUnit3 SetUp Function.kt")
+        if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getSetUpMethodFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin JUnit3 SetUp Function.kt")
+        }
 
     override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor? =
-        FileTemplateDescriptor("Kotlin JUnit3 TearDown Function.kt")
+        if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getTearDownMethodFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin JUnit3 TearDown Function.kt")
+        }
 
     override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor =
-        FileTemplateDescriptor("Kotlin JUnit3 Test Function.kt")
+        if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getTestMethodFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin JUnit3 Test Function.kt")
+        }
 
     override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor? =
-        FileTemplateDescriptor("Kotlin JUnit3 Test Class.kt")
+        if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getTestClassFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin JUnit3 Test Class.kt")
+        }
 }
 
 private val TEST_CLASS_FQN = setOf(JUnitUtil.TEST_CASE_CLASS)

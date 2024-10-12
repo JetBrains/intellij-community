@@ -2,9 +2,8 @@
 package org.jetbrains.kotlin.idea.testIntegration
 
 import com.intellij.codeInsight.navigation.activateFileWithPsiElement
-import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -38,7 +37,7 @@ class KotlinCreateTestIntention: AbstractKotlinCreateTestIntention() {
         generatedFile: PsiFile,
         srcModule: Module
     ) {
-        if (generatedFile !is PsiJavaFile || generatedClass.language != JavaFileType.INSTANCE) return
+        if (generatedFile !is PsiJavaFile || generatedClass.language != JavaLanguage.INSTANCE) return
 
         project.executeCommand<Unit>(
             KotlinBundle.message("convert.class.0.to.kotlin", generatedClass.name.toString()),

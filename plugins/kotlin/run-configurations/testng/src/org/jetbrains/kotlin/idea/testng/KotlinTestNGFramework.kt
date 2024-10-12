@@ -174,15 +174,27 @@ class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
         psiBasedDelegate.isIgnoredMethod(declaration)
 
     override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
-        return FileTemplateDescriptor("Kotlin TestNG SetUp Function.kt")
+        return if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getSetUpMethodFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin TestNG SetUp Function.kt")
+        }
     }
 
     override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
-        return FileTemplateDescriptor("Kotlin TestNG TearDown Function.kt")
+        return if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getTearDownMethodFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin TestNG TearDown Function.kt")
+        }
     }
 
     override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor {
-        return FileTemplateDescriptor("Kotlin TestNG Test Function.kt")
+        return if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getTestMethodFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin TestNG Test Function.kt")
+        }
     }
 
     override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor? =
@@ -193,7 +205,11 @@ class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
         }
 
     override fun getParametersMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
-        return FileTemplateDescriptor("Kotlin TestNG Parameters Function.kt")
+        return if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getParametersMethodFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin TestNG Parameters Function.kt")
+        }
     }
 }
 

@@ -15,6 +15,7 @@ import com.intellij.util.ThreeState.*
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.asKtClassOrObject
@@ -153,19 +154,35 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
         psiBasedDelegate.isIgnoredMethod(declaration)
 
     override fun getSetUpMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
-        return FileTemplateDescriptor("Kotlin JUnit5 SetUp Function.kt")
+        return if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getSetUpMethodFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin JUnit5 SetUp Function.kt")
+        }
     }
 
     override fun getTearDownMethodFileTemplateDescriptor(): FileTemplateDescriptor? {
-        return FileTemplateDescriptor("Kotlin JUnit5 TearDown Function.kt")
+        return if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getTearDownMethodFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin JUnit5 TearDown Function.kt")
+        }
     }
 
     override fun getTestMethodFileTemplateDescriptor(): FileTemplateDescriptor {
-        return FileTemplateDescriptor("Kotlin JUnit5 Test Function.kt")
+        return if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getTestMethodFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin JUnit5 Test Function.kt")
+        }
     }
 
     override fun getTestClassFileTemplateDescriptor(): FileTemplateDescriptor? =
-        FileTemplateDescriptor("Kotlin JUnit5 Test Class.kt")
+        if (KotlinPluginModeProvider.isK1Mode()) {
+            super.getTestClassFileTemplateDescriptor()
+        } else {
+            FileTemplateDescriptor("Kotlin JUnit5 Test Class.kt")
+        }
 }
 
 private val METHOD_ANNOTATION_FQN = setOf(
