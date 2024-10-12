@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -111,7 +112,7 @@ public final class VfsUtil extends VfsUtilCore {
    */
   public static VirtualFile @NotNull [] getCommonAncestors(VirtualFile @NotNull [] files) {
     // Separate files by first component in the path.
-    Map<VirtualFile,Set<VirtualFile>> map = new HashMap<>();
+    Map<VirtualFile, Set<VirtualFile>> map = new HashMap<>();
     for (VirtualFile aFile : files) {
       VirtualFile directory = aFile.isDirectory() ? aFile : aFile.getParent();
       if (directory == null) return VirtualFile.EMPTY_ARRAY;
@@ -189,16 +190,29 @@ public final class VfsUtil extends VfsUtilCore {
     return VirtualFileManager.getInstance().findFileByUrl(vfsUrl);
   }
 
+  public static @Nullable VirtualFile findFile(@NotNull Path file, @Nullable Project project, boolean refreshIfNeeded) {
+    return findFile(file.toAbsolutePath().toString().replace(File.separatorChar, '/'), project, refreshIfNeeded);
+  }
+
   public static @Nullable VirtualFile findFile(@NotNull Path file, boolean refreshIfNeeded) {
-    return findFile(file.toAbsolutePath().toString().replace(File.separatorChar, '/'), refreshIfNeeded);
+    return findFile(file.toAbsolutePath().toString().replace(File.separatorChar, '/'), null, refreshIfNeeded);
   }
 
   public static @Nullable VirtualFile findFileByIoFile(@NotNull File file, boolean refreshIfNeeded) {
-    return findFile(file.getAbsolutePath().replace(File.separatorChar, '/'), refreshIfNeeded);
+    return findFile(file.getAbsolutePath().replace(File.separatorChar, '/'), null, refreshIfNeeded);
   }
 
-  private static @Nullable VirtualFile findFile(@NotNull String filePath, boolean refreshIfNeeded) {
+  private static @Nullable VirtualFile findFile(@NotNull String filePath, @Nullable Project project, boolean refreshIfNeeded) {
     VirtualFileSystem fileSystem = StandardFileSystems.local();
+    VirtualFile virtualFile = findFile(filePath, refreshIfNeeded, fileSystem);
+    if (virtualFile == null && project.getPresentableUrl() != null) {
+      virtualFile = findFile(project.getPresentableUrl() + filePath, refreshIfNeeded, fileSystem);
+    }
+    return virtualFile;
+  }
+
+  @Nullable
+  private static VirtualFile findFile(@NotNull String filePath, boolean refreshIfNeeded, VirtualFileSystem fileSystem) {
     VirtualFile virtualFile = fileSystem.findFileByPath(filePath);
     if (refreshIfNeeded && (virtualFile == null || !virtualFile.isValid())) {
       virtualFile = fileSystem.refreshAndFindFileByPath(filePath);
@@ -459,7 +473,7 @@ public final class VfsUtil extends VfsUtilCore {
   public static @Nullable @NlsSafe String extractFileName(@Nullable String urlOrPath) {
     if (urlOrPath == null) return null;
     int index = urlOrPath.lastIndexOf(VfsUtilCore.VFS_SEPARATOR_CHAR);
-    return index < 0 ? null : urlOrPath.substring(index+1);
+    return index < 0 ? null : urlOrPath.substring(index + 1);
   }
 
   public static @NotNull List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, VirtualFile @NotNull ... files) {
