@@ -13,13 +13,12 @@ import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.Hint
-import com.intellij.ui.HintHint
-import com.intellij.ui.HintListener
-import com.intellij.ui.LightweightHint
+import com.intellij.ui.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import java.awt.Point
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 
 @Service(Service.Level.APP)
 internal class LineStatusMarkerPopupService {
@@ -42,6 +41,7 @@ internal class LineStatusMarkerPopupService {
     hint.addHintListener(HintListener { Disposer.dispose(popupDisposable) })
     hint.setForceLightweightPopup(true)
 
+
     val line = editor.getCaretModel().logicalPosition.line
     val point = HintManagerImpl.getHintPosition(hint, editor, LogicalPosition(line, 0), HintManager.UNDER)
     if (mousePosition != null) { // show right after the nearest line
@@ -52,6 +52,7 @@ internal class LineStatusMarkerPopupService {
     }
     point.x -= panel.editorTextOffset // align a main editor with the one in popup
 
+    trackInnerEditorResizing(panel, hint, popupDisposable)
     setupEditorListeners(editor, popupDisposable, hint)
 
     beforeShowNewHint(hint)
@@ -81,6 +82,33 @@ internal class LineStatusMarkerPopupService {
   }
 
   companion object {
+    private fun trackInnerEditorResizing(
+      panel: LineStatusMarkerPopupPanel,
+      hint: LightweightHint,
+      popupDisposable: Disposable,
+    ) {
+      val adapter: ComponentAdapter = object : ComponentAdapter() {
+        override fun componentResized(e: ComponentEvent?) {
+          hint.pack()
+        }
+      }
+
+      val componentsWithListener = mutableListOf<EditorTextComponent>()
+
+      UIUtil.forEachComponentInHierarchy(panel) { c ->
+        if (c is EditorTextComponent) {
+          componentsWithListener.add(c)
+          c.component.addComponentListener(adapter)
+        }
+      }
+
+      Disposer.register(popupDisposable, Disposable {
+        for (c in componentsWithListener) {
+          c.component.removeComponentListener(adapter)
+        }
+      })
+    }
+
     private fun setupEditorListeners(editor: Editor, popupDisposable: Disposable, hint: LightweightHint) {
       trackFileEditorChange(popupDisposable, hint)
       trackDocumentChange(editor, popupDisposable, hint)
