@@ -253,6 +253,9 @@
               topic="com.intellij.ide.AppLifecycleListener"
               activeInHeadlessMode="true"
               activeInTestMode="false" />
+
+    <listener class="com.intellij.refactoring.suggested.SuggestedRefactoringEditorHintAdvSettingListener"
+              topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"

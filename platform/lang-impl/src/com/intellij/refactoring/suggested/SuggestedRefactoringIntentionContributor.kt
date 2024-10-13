@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 internal val REFACTORING_DATA_KEY: Key<SuggestedRefactoringData> = Key.create<SuggestedRefactoringData>("suggested.refactoring.data")
@@ -100,19 +101,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
     if (!range.containsOffset(offset)) return null
 
     SuggestedRefactoringFeatureUsage.refactoringSuggested(refactoringData, state)
-
-    val text = when (refactoringData) {
-      is SuggestedRenameData -> RefactoringBundle.message(
-        "suggested.refactoring.rename.intention.text",
-        refactoringData.oldName,
-        refactoringData.newName
-      )
-
-      is SuggestedChangeSignatureData -> RefactoringBundle.message(
-        "suggested.refactoring.change.signature.intention.text",
-        refactoringData.nameOfStuffToUpdate
-      )
-    }
+    val text = refactoringData.getIntentionText()
 
     return MyIntention(text, showReviewBalloon = refactoringData is SuggestedChangeSignatureData)
   }

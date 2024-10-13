@@ -135,6 +135,11 @@
     <projectService serviceInterface="com.intellij.refactoring.suggested.SuggestedRefactoringProvider"
                     serviceImplementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl"/>
     <postStartupActivity implementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"/>
+    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.suggested.SuggestedRefactoringEditorEscapeHandler" order="last"/>
+    <editorActionHandler action="EditorEnter" implementationClass="com.intellij.refactoring.suggested.SuggestedRefactoringEditorEnterHandler" order="last"/>
+    <advancedSetting id="promote.suggested.refactoring.in.editor" default="false"
+                     groupKey="suggested.refactoring.group.key"
+                     bundle="messages.RefactoringBundle"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever"
                         serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>
