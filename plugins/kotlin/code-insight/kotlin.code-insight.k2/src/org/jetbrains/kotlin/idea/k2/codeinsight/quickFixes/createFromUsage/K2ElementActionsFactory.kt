@@ -3,23 +3,23 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtil
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtClassOrFile
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
@@ -128,62 +128,44 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
             it.language == KotlinLanguage.INSTANCE
         } ?: return emptyList()
 
-        return listOf(ChangeAnnotationAction(annotationEntry, attributeIndex, request, text, familyName))
+        return listOf(ChangeAnnotationAction(annotationEntry, attributeIndex, request, familyName).asIntention())
     }
 
     //TODO: this is copy paste from KotlinElementActionsFactory, maybe we should extract it to common place?
     // or implement this for K1 and K2?
-
-    private class ChangeAnnotationAction(
+    class ChangeAnnotationAction(
         annotationEntry: KtAnnotationEntry,
         private val attributeIndex: Int,
         private val request: AnnotationAttributeRequest,
-        @IntentionName private val text: String,
         @IntentionFamilyName private val familyName: String
-    ) : IntentionAction {
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtAnnotationEntry, Unit>(annotationEntry, Unit) {
 
-        private val pointer: SmartPsiElementPointer<KtAnnotationEntry> = annotationEntry.createSmartPointer()
         private val qualifiedName: String = annotationEntry.toLightAnnotation()?.qualifiedName ?: throw IllegalStateException("r")
-
-        override fun startInWriteAction(): Boolean = true
 
         override fun getFamilyName(): String = familyName
 
-        override fun getText(): String = text
-
-        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = pointer.element != null
-
-        override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-            invokeImpl(PsiTreeUtil.findSameElementInCopy(pointer.element, file), project)
-            return IntentionPreviewInfo.DIFF
-        }
-
-        override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
-            val annotationEntry = pointer.element ?: return
-            invokeImpl(annotationEntry, project)
-        }
-
-        private fun invokeImpl(annotationEntry: KtAnnotationEntry, project: Project) {
-            val facade = JavaPsiFacade.getInstance(annotationEntry.project)
-            val language = facade.findClass(qualifiedName, annotationEntry.resolveScope)?.language
+        override fun invoke(actionContext: ActionContext, element: KtAnnotationEntry, elementContext: Unit, updater: ModPsiUpdater) {
+            val project = element.project
+            val facade = JavaPsiFacade.getInstance(project)
+            val language = facade.findClass(qualifiedName, element.resolveScope)?.language
             val dummyAnnotationRequest = annotationRequest(qualifiedName, request)
             val psiFactory = KtPsiFactory(project)
             val dummyAnnotationText = '@' + renderAnnotation(dummyAnnotationRequest, psiFactory) { language == KotlinLanguage.INSTANCE }
             val dummyArgumentList = psiFactory.createAnnotationEntry(dummyAnnotationText).valueArgumentList!!
-            val argumentList = annotationEntry.valueArgumentList
+            val argumentList = element.valueArgumentList
 
             if (argumentList == null) {
-                annotationEntry.add(dummyArgumentList)
-                //ShortenReferences.DEFAULT.process(annotationEntry)
+                element.add(dummyArgumentList)
+                shortenReferences(element)
                 return
             }
 
             when (language) {
-                JavaLanguage.INSTANCE -> changeJava(annotationEntry, argumentList, dummyArgumentList)
-                KotlinLanguage.INSTANCE -> changeKotlin(annotationEntry, argumentList, dummyArgumentList)
-                else -> changeKotlin(annotationEntry, argumentList, dummyArgumentList)
+                JavaLanguage.INSTANCE -> changeJava(element, argumentList, dummyArgumentList)
+                KotlinLanguage.INSTANCE -> changeKotlin(element, argumentList, dummyArgumentList)
+                else -> changeKotlin(element, argumentList, dummyArgumentList)
             }
-            //ShortenReferences.DEFAULT.process(annotationEntry)
+            shortenReferences(element)
         }
 
         private fun changeKotlin(annotationEntry: KtAnnotationEntry, argumentList: KtValueArgumentList, dummyArgumentList: KtValueArgumentList) {

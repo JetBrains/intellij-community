@@ -478,7 +478,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         }
 
         private fun invokeImpl(annotationEntry: KtAnnotationEntry, project: Project) {
-            val facade = JavaPsiFacade.getInstance(annotationEntry.project)
+            val facade = JavaPsiFacade.getInstance(project)
             val language = facade.findClass(qualifiedName, annotationEntry.resolveScope)?.language
             val dummyAnnotationRequest = annotationRequest(qualifiedName, request)
             val psiFactory = KtPsiFactory(project)
