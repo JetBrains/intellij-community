@@ -4,6 +4,7 @@ package com.intellij.openapi.progress;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.DebugAttachDetectorArgs;
 import kotlinx.coroutines.Job;
 import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -65,7 +66,22 @@ public final class Cancellation {
   // do not supply initial value to conserve memory
   private static final ThreadLocal<Boolean> isInNonCancelableSection = new ThreadLocal<>();
 
+  /**
+   * This flag is used only while debugging an IDE.
+   *
+   * @see Cancellation#initThreadNonCancellableState()
+   */
+  private static final ThreadLocal<DebugNonCancellableState> debugIsInNonCancelableSection = new ThreadLocal<>();
+
   public static boolean isInNonCancelableSection() {
+    if (isInNonCancelableSectionInternal()) return true;
+    // Avoid thread-local access when the debugger is not enabled.
+    if (!DebugNonCancellableState.isDebugEnabled) return false;
+    DebugNonCancellableState state = debugIsInNonCancelableSection.get();
+    return state != null && state.inNonCancelableSection;
+  }
+
+  private static boolean isInNonCancelableSectionInternal() {
     return isInNonCancelableSection.get() != null;
   }
 
@@ -90,7 +106,7 @@ public final class Cancellation {
    * </pre>
    */
   public static <T, E extends Exception> T computeInNonCancelableSection(@NotNull ThrowableComputable<T, E> computable) throws E {
-    if (isInNonCancelableSection()) {
+    if (isInNonCancelableSectionInternal()) {
       return computable.compute();
     }
     try {
@@ -116,7 +132,7 @@ public final class Cancellation {
   }
 
   public static @NotNull AccessToken withNonCancelableSection() {
-    if (isInNonCancelableSection()) {
+    if (isInNonCancelableSectionInternal()) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
@@ -147,5 +163,33 @@ public final class Cancellation {
   @Deprecated
   public static <T> T forceNonCancellableSectionInClassInitializer(@NotNull Supplier<T> computable) {
     return computeInNonCancelableSection(computable::get);
+  }
+
+  /**
+   * Used from devkit plugin while debugging an IDE to prevent PCE throwing during stepping.
+   * @return cancellability state of the current thread which can be adjusted by the debugger
+   */
+  @SuppressWarnings("unused")
+  @NotNull
+  private static DebugNonCancellableState initThreadNonCancellableState() {
+    DebugNonCancellableState state = debugIsInNonCancelableSection.get();
+    if (state != null) return state;
+    state = new DebugNonCancellableState();
+    debugIsInNonCancelableSection.set(state);
+    return state;
+  }
+
+  /**
+   * This state is extracted to a separate class so that the fields can be modified by the debugger without the need of evaluation.
+   * Do not modify the names without the corresponding updates in the devkit plugin.
+   */
+  private static class DebugNonCancellableState {
+    private static final boolean isDebugEnabled = DebugAttachDetectorArgs.isDebugEnabled();
+
+    /**
+     * This field is set to true only via debugger.
+     */
+    @SuppressWarnings("FieldMayBeFinal")
+    private volatile boolean inNonCancelableSection = false;
   }
 }

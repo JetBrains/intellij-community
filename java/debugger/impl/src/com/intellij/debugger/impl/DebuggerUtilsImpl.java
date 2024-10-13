@@ -547,17 +547,31 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return new Range<>(variableImpl.getScopeStart(), variableImpl.getScopeEnd());
   }
 
-  public static @Nullable Value invokeObjectMethod(@NotNull EvaluationContextImpl evaluationContext,
+  public static @Nullable Value invokeClassMethod(@NotNull EvaluationContext evaluationContext,
+                                                  @NotNull ClassType type,
+                                                  @NotNull String methodName,
+                                                  @Nullable String signature) throws EvaluateException {
+    Method method = findMethodOrLogError(type, methodName, signature);
+    if (method == null) return null;
+    return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, type, method, Collections.emptyList());
+  }
+
+  public static @Nullable Value invokeObjectMethod(@NotNull EvaluationContext evaluationContext,
                                                    @NotNull ObjectReference value,
                                                    @NotNull String methodName,
                                                    @Nullable String signature) throws EvaluateException {
     ReferenceType type = value.referenceType();
+    Method method = findMethodOrLogError(type, methodName, signature);
+    if (method == null) return null;
+    return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, value, method, Collections.emptyList());
+  }
+
+  private static @Nullable Method findMethodOrLogError(ReferenceType type, @NotNull String methodName, @Nullable String signature) {
     Method method = findMethod(type, methodName, signature);
-    if (method != null) {
-      return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, value, method, Collections.emptyList());
+    if (method == null) {
+      LOG.error("Method " + methodName + ", signature " + signature + " not found in class " + type.name());
     }
-    LOG.error("Method " + methodName + ", signature " + signature + " not found in class " + type.name());
-    return null;
+    return method;
   }
 
   public static Value invokeHelperMethod(EvaluationContextImpl evaluationContext,

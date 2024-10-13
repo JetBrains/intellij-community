@@ -1,15 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.debugger
 
-import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.DebuggerUtils
-import com.intellij.debugger.engine.JavaStackFrame
-import com.intellij.debugger.engine.JavaValue
-import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.jdi.StackFrameProxy
+import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.memory.utils.StackFrameItem
 import com.intellij.debugger.ui.tree.ExtraDebugNodesProvider
 import com.intellij.icons.AllIcons
@@ -21,7 +17,7 @@ import com.intellij.xdebugger.impl.frame.XFramesView
 import com.sun.jdi.BooleanValue
 import com.sun.jdi.ClassType
 import com.sun.jdi.ObjectReference
-import com.sun.jdi.Value
+import java.util.*
 
 /**
  * @see com.intellij.ide.debug.ApplicationStateDebugSupport
@@ -36,29 +32,30 @@ private const val APPLICATION_IMPL_FQN = "com.intellij.openapi.application.impl.
 private const val COROUTINES_KT_FQN = "com.intellij.openapi.application.CoroutinesKt"
 private const val ACTIONS_KT_FQN = "com.intellij.openapi.application.ActionsKt"
 
+internal data class IdeState(val readAllowed: Boolean?, val writeAllowed: Boolean?)
+
+private val cachedIdeState = WeakHashMap<SuspendContext, IdeState?>()
+internal fun getIdeState(evaluationContext: EvaluationContext): IdeState? = cachedIdeState.computeIfAbsent(evaluationContext.suspendContext) f@{
+  val supportClass = findClassOrNull(evaluationContext, SUPPORT_CLASS_FQN) as? ClassType ?: return@f null
+  val state = DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE)
+                as? ObjectReference ?: return@f null
+
+  val stateClass = state.referenceType()
+  val fieldValues = state.getValues(stateClass.allFields()).mapKeys { it.key.name() }
+
+  val readField = (fieldValues[READ_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
+  val writeField = (fieldValues[WRITE_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
+  IdeState(readAllowed = readField, writeAllowed = writeField)
+}
+
 
 internal class DebugeeIdeStateRenderer : ExtraDebugNodesProvider {
   override fun addExtraNodes(evaluationContext: EvaluationContext, children: XValueChildrenList) {
     if (!Registry.`is`("devkit.debugger.show.ide.state")) return
-    val debugProcess = evaluationContext.debugProcess as? DebugProcessImpl ?: return
-    val supportClass = try {
-      debugProcess.findLoadedClass(evaluationContext, SUPPORT_CLASS_FQN, evaluationContext.classLoader) ?: return
-    }
-    catch (_: EvaluateException) {
-      return
-    }
-    val getStateMethod = DebuggerUtils.findMethod(supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE) ?: return
-    val state = debugProcess.invokeMethod(evaluationContext, supportClass as ClassType, getStateMethod, emptyList<Value>()) as ObjectReference?
-    if (state == null) return
-    val stateClass = state.referenceType()
+    val ideState = getIdeState(evaluationContext) ?: return
+    if (ideState.readAllowed == null && ideState.writeAllowed == null) return
 
-    val fieldValues = state.getValues(stateClass.allFields()).mapKeys { it.key.name() }
-
-    val readField = (fieldValues[READ_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
-    val writeField = (fieldValues[WRITE_ACTION_ALLOWED_FIELD_NAME] as? BooleanValue)?.value()
-    if (readField == null && writeField == null) return
-
-    val (isReadActionAllowed, isWriteActionAllowed) = (readField to writeField).adjustLockStatus(evaluationContext)
+    val (isReadActionAllowed, isWriteActionAllowed) = (ideState.readAllowed to ideState.writeAllowed).adjustLockStatus(evaluationContext)
 
     fun icon(isAvailable: Boolean) = if (isAvailable) "✓" else "✗"
     children.addTopValue(object : XNamedValue(DevKitDebuggerBundle.message("debugger.ide.state")) {
@@ -159,7 +156,7 @@ private fun findLockAccessIndex(frames: List<StackFrameProxy>): Pair<Int, Int> {
       if (className == THREADING_SUPPORT_FQN
           && (methodName == "runWriteAction"
               && signature == "(Ljava/lang/Class;Lcom/intellij/openapi/util/ThrowableComputable;)Ljava/lang/Object;")) {
-        writeIndex = i;
+        writeIndex = i
       }
     }
     if (readIndex != -1 && writeIndex != -1) break
