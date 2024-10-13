@@ -303,9 +303,12 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
           inlineSuperCall(memberInfo, methodBySignature);
         }
       }
-      else if (member instanceof PsiClass) {
+      else if (member instanceof PsiClass aClass) {
         if (sourceClass.isInterface() && !targetClass.isInterface()) {
           PsiUtil.setModifierProperty(member, PsiModifier.PUBLIC, true);
+          if (!aClass.isRecord() && !aClass.isInterface() && !aClass.isEnum()) {
+            PsiUtil.setModifierProperty(member, PsiModifier.STATIC, true);
+          }
         }
         if (Boolean.FALSE.equals(memberInfo.getOverrides())) {
           final PsiClass psiClass = (PsiClass)memberInfo.getMember();
