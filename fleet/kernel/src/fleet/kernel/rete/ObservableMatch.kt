@@ -1,15 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rete
 
+import com.jetbrains.rhizomedb.DbContext
+import fleet.kernel.timestamp
 import fleet.util.causeOfType
 import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.select
 import kotlin.coroutines.coroutineContext
 
-internal class ObservableMatch<T>(internal val observerId: NodeId,
-                                  internal val match: Match<T>,
-                                  internal val job: CompletableJob) : Match<T> {
+internal class ObservableMatch<T>(
+  internal val observerId: NodeId,
+  internal val match: Match<T>,
+  internal val invalidationTs: CompletableDeferred<Long>,
+) : Match<T> {
   override val value: T
     get() = match.value
 
@@ -19,15 +23,16 @@ internal class ObservableMatch<T>(internal val observerId: NodeId,
   override fun observableSubmatches(): Sequence<Match<*>> =
     sequenceOf(this)
 
-  override fun toString(): String = "($job $observerId $match)"
+  override fun toString(): String = "($invalidationTs $observerId $match)"
 }
 
 internal suspend fun <U> withObservableMatches(
   matches: Set<ObservableMatch<*>>,
-  body: suspend CoroutineScope.() -> U
+  body: suspend CoroutineScope.() -> U,
 ): WithMatchResult<U> =
   try {
     val contextMatches = coroutineContext[ContextMatches]?.matches ?: persistentHashSetOf()
+
     @Suppress("NAME_SHADOWING")
     val matches = matches.filter { it !in contextMatches }
     when {
@@ -36,16 +41,16 @@ internal suspend fun <U> withObservableMatches(
         withReteDbSource {
           withContext(ContextMatches(contextMatches.addAll(matches))) {
             val def = async(start = CoroutineStart.UNDISPATCHED) {
-              val inactiveMatch = matches.firstOrNull { !it.job.isActive }
+              val inactiveMatch = matches.firstOrNull { !it.invalidationTs.isActive }
               when {
                 inactiveMatch == null -> WithMatchResult.Success(body())
                 else -> WithMatchResult.Failure(CancellationReason("match terminated by rete", inactiveMatch))
               }
             }
-            select<WithMatchResult<U>> {
+            select {
               def.onAwait { res -> res }
               for (m in matches) {
-                m.job.onJoin {
+                m.invalidationTs.onJoin {
                   val reason = CancellationReason("match terminated by rete", m)
                   def.cancel(UnsatisfiedMatchException(reason))
                   WithMatchResult.Failure(reason)
@@ -72,15 +77,16 @@ internal fun <T> Query<T>.observable(terminalId: NodeId): Query<T> =
       if (observableMatches.isNotEmpty()) {
         val ex = RuntimeException("the match is no longer being tracked")
         // use java forEach, entryset is not implemented for AdaptiveMap
+        @Suppress("JavaMapForEach")
         observableMatches.forEach { _, a ->
-          a.job.completeExceptionally(ex)
+          a.invalidationTs.completeExceptionally(ex)
         }
       }
     }
     producer().transform { token, emit ->
       when (token.added) {
         true -> {
-          val observableMatch = ObservableMatch(terminalId, token.match, Job())
+          val observableMatch = ObservableMatch(terminalId, token.match, CompletableDeferred())
           observableMatches[token.match] = observableMatch
           emit(Token(true, observableMatch))
         }
@@ -92,7 +98,7 @@ internal fun <T> Query<T>.observable(terminalId: NodeId): Query<T> =
               }
             }
             else -> {
-              observableMatch.job.complete()
+              observableMatch.invalidationTs.complete(DbContext.threadBound.impl.timestamp)
               emit(Token(false, observableMatch))
             }
           }

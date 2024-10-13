@@ -35,6 +35,7 @@ fun ReteState.dbOrThrow(): DB =
 data class Rete internal constructor(
   internal val commands: SendChannel<Command>,
   val lastKnownDb: StateFlow<ReteState>,
+  internal val dbSource: ReteDbSource,
 ) : CoroutineContext.Element {
 
   class ObserverId
@@ -113,7 +114,8 @@ suspend fun <T> withRete(failWhenPropagationFailed: Boolean = false, body: suspe
             }
           }.use {
             val rete = Rete(commands = commandsSender,
-                            lastKnownDb = lastKnownDb)
+                            lastKnownDb = lastKnownDb,
+                            dbSource = ReteDbSource(lastKnownDb))
             val reteEntity = change {
               register(ReteEntity)
               ReteEntity.new {
@@ -153,9 +155,17 @@ suspend fun <T, U> Match<T>.withMatch(body: suspend CoroutineScope.(T) -> U): Wi
  * */
 suspend fun waitForReteToCatchUp(targetDb: Q) {
   val targetTimestamp = targetDb.timestamp
-  yield()
-  val reteDb = requireNotNull(coroutineContext[Rete]) { "Rete is not found on the context" }
+  requireNotNull(coroutineContext[Rete]) { "Rete is not found on the context" }
     .lastKnownDb.first { reteDb -> reteDb.dbOrThrow().timestamp >= targetTimestamp }
+
+  // now that rete has caught up with targetDb, we can go and check if our context matches are still valid
+  coroutineContext[ContextMatches]?.matches?.let { matches ->
+    matches.forEach { match ->
+      if (match.invalidationTs.isCompleted && match.invalidationTs.getCompleted() <= targetTimestamp) {
+        throw UnsatisfiedMatchException(CancellationReason("match invalidated by rete", match.match))
+      }
+    }
+  }
 
   // bug in kotlin coroutines:
   // the suspend call is in tail position of a function returning Unit,
@@ -163,7 +173,7 @@ suspend fun waitForReteToCatchUp(targetDb: Q) {
   // resulting in a db leak if the calling code suspends right after this.
 
   // since now, suspend call is not in tail position, we're safe.
-  DbContext.threadBound.set(reteDb.dbOrThrow())
+  DbContext.threadBound.set(targetDb)
 }
 
 /**
@@ -202,7 +212,7 @@ private val ReteSpinChangeInterceptor: ChangeInterceptor =
           r.and {
             val reteTimestamp = rete.lastKnownDb.value.dbOrThrow().timestamp
             when {
-              match.job.isCompleted -> ValidationResult.Invalid(match)
+              match.invalidationTs.isCompleted -> ValidationResult.Invalid(match)
               dbBefore.timestamp == reteTimestamp -> ValidationResult.Valid
               else -> when (match.validate()) {
                 ValidationResultEnum.Inconclusive -> ValidationResult.Inconclusive
@@ -267,28 +277,25 @@ fun <T> Query<T>.observe(
  * */
 internal suspend fun <T> withReteDbSource(body: suspend () -> T): T =
   requireNotNull(coroutineContext[Rete]) { "no rete on context" }.let { rete ->
-    if ((coroutineContext[DbSource.ContextElement]?.dbSource as? FlowDbSource)?.stateFlow === rete.lastKnownDb) {
+    if (coroutineContext[DbSource.ContextElement]?.dbSource == rete.dbSource) {
       body()
     }
     else {
       waitForReteToCatchUp(coroutineContext.transactor.dbState.value)
-      val dbSourceContextElement = DbSource.ContextElement(
-        ReteDbSource(reteState = rete.lastKnownDb, debugName = "rete $rete")
-      )
+      val dbSourceContextElement = DbSource.ContextElement(rete.dbSource)
       withContext(dbSourceContextElement + ReteSpinChangeInterceptor) {
         body()
       }
     }
   }
 
-private class ReteDbSource(
-  val reteState: StateFlow<ReteState>,
-  override val debugName: String,
-) : DbSource {
+internal data class ReteDbSource(val reteState: StateFlow<ReteState>) : DbSource {
   override val flow: Flow<DB>
     get() = reteState.map { it.dbOrThrow() }
   override val latest: DB
     get() = reteState.value.dbOrThrow()
+
+  override val debugName: String get() = "rete $reteState"
 }
 
 private inline fun <T> DisposableHandle.useInline(function: () -> T): T =
