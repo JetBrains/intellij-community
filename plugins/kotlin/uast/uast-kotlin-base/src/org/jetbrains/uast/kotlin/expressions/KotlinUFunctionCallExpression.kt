@@ -145,6 +145,11 @@ class KotlinUFunctionCallExpression(
     }
 
     override fun getExpressionType(): PsiType? {
+        if (sourcePsi !is KtExpression) {
+            // E.g., constructor(...) : this(...)
+            // [KtConstructorDelegationCall] is a subtype of [KtCallElement], but not [KtExpression]
+            return null
+        }
         // KTIJ-17870: One-off handling for instantiation of local classes
         if (classReference != null) {
             // [classReference] is created only if this call expression is resolved to constructor.
