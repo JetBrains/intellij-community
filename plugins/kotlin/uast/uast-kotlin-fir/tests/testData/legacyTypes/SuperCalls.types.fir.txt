@@ -56,7 +56,7 @@ UFile (package = ) [public final class SuperCallsKt {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A(i.toString())] : A
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A(i.toString())]
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
                     USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A]
                     UQualifiedReferenceExpression [i.toString()] : java.lang.String
@@ -86,7 +86,7 @@ UFile (package = ) [public final class SuperCallsKt {...]
             UParameter (name = p) [@org.jetbrains.annotations.NotNull var p: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A(p)] : A
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A(p)]
                     UIdentifier (Identifier (super)) [UIdentifier (Identifier (super))]
                     USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A]
                     USimpleNameReferenceExpression (identifier = p) [p] : java.lang.String
@@ -94,7 +94,7 @@ UFile (package = ) [public final class SuperCallsKt {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A(i)] : A
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A(i)]
                     UIdentifier (Identifier (super)) [UIdentifier (Identifier (super))]
                     USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A]
                     USimpleNameReferenceExpression (identifier = i) [i] : int

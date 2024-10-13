@@ -994,6 +994,43 @@ interface UastApiFixtureTestBase {
         })
     }
 
+    fun checkExpressionTypeForConstructorDelegationCall(myFixture: JavaCodeInsightTestFixture) {
+        // Regression test from KTIJ-31633
+        myFixture.configureByText(
+            "main.kt", """
+                class Constructors {
+                  class ThisCall {
+                    constructor() // (1)
+                    constructor(i: Int) : this() // (2)
+                  }
+                  open class SuperCallToImplicit {
+                    class C : SuperCallToImplicit {
+                      constructor() : super() // (3)
+                    }
+                  }
+                  open class SuperCallToExplicit {
+                    constructor() // (4)
+                    class C : SuperCallToExplicit {
+                      constructor() : super() // (5)
+                    }
+                  }
+                }
+            """.trimIndent()
+        )
+        var count = 0
+        myFixture.file.toUElement()!!.accept(
+            object : AbstractUastVisitor() {
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    val t = node.getExpressionType()
+                    TestCase.assertNull(node.sourcePsi?.text ?: "<no source PSI>", t)
+                    count++
+                    return super.visitCallExpression(node)
+                }
+            }
+        )
+        TestCase.assertEquals(5, count)
+    }
+
     fun checkFlexibleFunctionalInterfaceType(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """

@@ -58,7 +58,7 @@ UFile (package = ) [public final class CommentOwnersKt {...]
             UParameter (name = t) [@org.jetbrains.annotations.NotNull var t: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()] : java.lang.Object
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()]
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
                     USimpleNameReferenceExpression (identifier = Object, resolvesTo = PsiClass: Object) [Object]
         UClass (name = NestedClass) [public static final class NestedClass {...}]
