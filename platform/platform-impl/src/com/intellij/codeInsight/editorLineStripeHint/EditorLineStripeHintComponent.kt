@@ -136,6 +136,7 @@ class EditorLineStripeHintComponent(
 
     init {
       reposition()
+      isOpaque = false
     }
 
     fun reposition() {
