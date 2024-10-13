@@ -2,9 +2,6 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.codeInsight.hint.EditorHintListener;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
@@ -12,10 +9,8 @@ import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -121,7 +116,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
   }
 
-  private int getEditorTextOffset() {
+  int getEditorTextOffset() {
     return createEditorFragmentBorder().getBorderInsets(myEditorComponent).left;
   }
 
@@ -156,41 +151,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
                                  @NotNull LineStatusMarkerPopupPanel panel,
                                  @Nullable Point mousePosition,
                                  @NotNull Disposable popupDisposable) {
-    LightweightHint hint = new LightweightHint(panel);
-    Disposer.register(popupDisposable, () -> UIUtil.invokeLaterIfNeeded(hint::hide));
-    hint.addHintListener(e -> Disposer.dispose(popupDisposable));
-    hint.setForceLightweightPopup(true);
-
-    int line = editor.getCaretModel().getLogicalPosition().line;
-    Point point = HintManagerImpl.getHintPosition(hint, editor, new LogicalPosition(line, 0), HintManager.UNDER);
-    if (mousePosition != null) { // show right after the nearest line
-      int lineHeight = editor.getLineHeight();
-      int delta = (point.y - mousePosition.y) % lineHeight;
-      if (delta < 0) delta += lineHeight;
-      point.y = mousePosition.y + delta;
-    }
-    point.x -= panel.getEditorTextOffset(); // align main editor with the one in popup
-
-    int flags = HintManager.HIDE_BY_CARET_MOVE | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING |
-                HintManager.HIDE_BY_ESCAPE;
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
-
-    ApplicationManager.getApplication().getMessageBus().connect(popupDisposable)
-      .subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
-        @Override
-        public void hintShown(@NotNull Editor newEditor, @NotNull LightweightHint newHint, int flags, @NotNull HintHint hintInfo) {
-          // Ex: if popup re-shown by ToggleByWordDiffAction
-          if (newHint.getComponent() instanceof LineStatusMarkerPopupPanel newPopupPanel) {
-            if (newPopupPanel.getEditor().equals(newEditor)) {
-              hint.hide();
-            }
-          }
-        }
-      });
-
-    if (!hint.isVisible()) {
-      Disposer.dispose(popupDisposable);
-    }
+    LineStatusMarkerPopupService.getInstance().showPopupAt(editor, panel, mousePosition, popupDisposable);
   }
 
   @NotNull
