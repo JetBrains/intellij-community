@@ -483,9 +483,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   override fun prohibitWriteActionsInside(): AccessToken {
-    if (isWriteActionPending()) {
-      throwCannotWriteException()
-    }
     myNoWriteActionCounter.incrementAndGet()
     return object: AccessToken() {
       override fun finish() {
