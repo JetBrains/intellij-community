@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,12 +26,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.intellij.diff.comparison.TrimUtil.isPunctuation;
 import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
@@ -46,6 +46,9 @@ public final class CommitPresentationUtil {
   private static final @NlsSafe String ELLIPSIS = "...";
   private static final int BIG_CUT_SIZE = 10;
   private static final double EPSILON = 1.5;
+  private static final String ROBOTIC_REPORTERS_KEY = "vcs.log.git.committers.robots";
+
+  private static @Nullable Set<String> myRoboticReporters = null;
 
   public static boolean isShowHideBranches(@NotNull HyperlinkEvent e) {
     return SHOW_HIDE_BRANCHES.equals(e.getDescription());
@@ -56,8 +59,30 @@ public final class CommitPresentationUtil {
   }
 
   public static @NotNull String getAuthorPresentation(@NotNull VcsShortCommitDetails details) {
-    String authorString = VcsUserUtil.getShortPresentation(details.getAuthor());
-    return authorString + (VcsUserUtil.isSamePerson(details.getAuthor(), details.getCommitter()) ? "" : "*");
+    VcsUser author = details.getAuthor();
+    VcsUser committer = details.getCommitter();
+    String authorString = VcsUserUtil.getShortPresentation(author);
+    Set<String> robots = getRoboticReporters();
+    String asterisk = VcsUserUtil.isSamePerson(author, committer) || robots.contains(committer.getEmail()) ? "" : "*";
+    return authorString + asterisk;
+  }
+
+  private static @NotNull Set<String> getRoboticReporters() {
+    var rr = myRoboticReporters;
+    if (rr == null) {
+      rr = prepareRoboticReporters();
+      myRoboticReporters = rr;
+    }
+    return rr;
+  }
+
+  private static @NotNull Set<String> prepareRoboticReporters() {
+    String str = Registry.stringValue(ROBOTIC_REPORTERS_KEY);
+    if (str.isEmpty()) return Collections.emptySet();
+    return StringUtil.split(str, ",", true, true).stream()
+      .map(s -> s.trim())
+      .filter(s -> !s.isEmpty())
+      .collect(Collectors.toUnmodifiableSet());
   }
 
   private static @NotNull @Nls String escapeMultipleSpaces(@NotNull @Nls String text) {
