@@ -262,7 +262,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     private void checkCallSite(@NotNull PyCallSiteExpression callSite) {
       final List<AnalyzeCalleeResults> calleesResults = StreamEx
         .of(mapArguments(callSite, getResolveContext()))
-        .filter(mapping -> mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty())
+        .filter(mapping -> mapping.isComplete())
         .map(mapping -> analyzeCallee(callSite, mapping))
         .nonNull()
         .toList();
