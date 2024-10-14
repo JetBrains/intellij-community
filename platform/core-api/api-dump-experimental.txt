@@ -194,7 +194,6 @@ com.intellij.openapi.application.Application
 - *:isWriteThread():Z
 - *:runWriteIntentReadAction(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 f:com.intellij.openapi.application.CoroutinesKt
-- *sf:backgroundWriteAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:isBackgroundWriteAction(kotlin.coroutines.CoroutineContext):Z
 - *sf:writeAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeIntentReadAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object

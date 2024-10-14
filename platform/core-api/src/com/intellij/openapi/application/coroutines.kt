@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
 /**
  * Suspends until it's possible to obtain the read lock and then
@@ -255,6 +256,8 @@ private object RunInBackgroundWriteActionMarker
 fun CoroutineContext.isBackgroundWriteAction(): Boolean =
   currentThreadContext()[RunInBackgroundWriteActionMarker] != null
 
+private val useBackgroundWriteAction = System.getProperty("idea.background.write.action.enabled", "false").toBoolean()
+
 /**
  * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
  *
@@ -273,12 +276,20 @@ fun CoroutineContext.isBackgroundWriteAction(): Boolean =
  */
 @Experimental
 @ApiStatus.Obsolete
+@Internal
 suspend fun <T> backgroundWriteAction(action: () -> T): T {
-  return withContext(Dispatchers.Default + RunInBackgroundWriteActionMarker) {
-    blockingContext {
-      ApplicationManager.getApplication().runWriteAction(Computable(action))
+  if (useBackgroundWriteAction) {
+    val contextModality = coroutineContext.contextModality()
+    if (contextModality == null || contextModality == ModalityState.nonModal()) {
+      return withContext(Dispatchers.Default + RunInBackgroundWriteActionMarker) {
+        blockingContext {
+          ApplicationManager.getApplication().runWriteAction(Computable(action))
+        }
+      }
     }
   }
+
+  return writeAction(action)
 }
 
 /**
