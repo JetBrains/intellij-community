@@ -37,8 +37,9 @@ internal data class IdeState(val readAllowed: Boolean?, val writeAllowed: Boolea
 private val cachedIdeState = WeakHashMap<SuspendContext, IdeState?>()
 internal fun getIdeState(evaluationContext: EvaluationContext): IdeState? = cachedIdeState.computeIfAbsent(evaluationContext.suspendContext) f@{
   val supportClass = findClassOrNull(evaluationContext, SUPPORT_CLASS_FQN) as? ClassType ?: return@f null
-  val state = DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE)
-                as? ObjectReference ?: return@f null
+  val state = evaluationContext.computeAndKeep {
+    DebuggerUtilsImpl.invokeClassMethod(evaluationContext, supportClass, GET_STATE_METHOD_NAME, GET_STATE_METHOD_SIGNATURE) as? ObjectReference
+  } ?: return@f null
 
   val stateClass = state.referenceType()
   val fieldValues = state.getValues(stateClass.allFields()).mapKeys { it.key.name() }
