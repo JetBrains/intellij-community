@@ -649,7 +649,6 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
 
   @Test
   fun testUpdatingWhenPropertiesInModelAreChanged() = runBlocking {
-    needFixForMaven4()
     createProjectSubFile("resources/file.properties", "value=\${project.name}")
 
     val moduleManager = getInstance(project)
