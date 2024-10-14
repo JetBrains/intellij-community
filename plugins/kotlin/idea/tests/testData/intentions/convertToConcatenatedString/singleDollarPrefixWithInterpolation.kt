@@ -2,6 +2,7 @@
 // SKIP_ERRORS_AFTER
 // SKIP_WARNINGS_AFTER
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+// Issue: KTIJ-30269
 
 fun foo() {
     val a = "aaa"

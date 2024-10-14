@@ -1,6 +1,7 @@
 // IGNORE_K1
 // IS_APPLICABLE: false
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+// Issue: KTIJ-30269
 
 fun foo() {
     val a = "a"

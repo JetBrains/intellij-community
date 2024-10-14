@@ -8709,6 +8709,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertStringTemplateToBuildString/basic3.kt");
         }
 
+        @TestMetadata("disableConversionForDoubleDollarPrefix.kt")
+        public void testDisableConversionForDoubleDollarPrefix() throws Exception {
+            runTest("testData/intentions/convertStringTemplateToBuildString/disableConversionForDoubleDollarPrefix.kt");
+        }
+
         @TestMetadata("empty.kt")
         public void testEmpty() throws Exception {
             runTest("testData/intentions/convertStringTemplateToBuildString/empty.kt");
@@ -8717,11 +8722,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("inAnnotation.kt")
         public void testInAnnotation() throws Exception {
             runTest("testData/intentions/convertStringTemplateToBuildString/inAnnotation.kt");
-        }
-
-        @TestMetadata("KTIJ-30269.kt")
-        public void testKTIJ_30269() throws Exception {
-            runTest("testData/intentions/convertStringTemplateToBuildString/KTIJ-30269.kt");
         }
 
         @TestMetadata("raw.kt")
@@ -9072,11 +9072,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertToConcatenatedString/interpolateStringWithInt.kt");
         }
 
-        @TestMetadata("KTIJ-30269.kt")
-        public void testKTIJ_30269() throws Exception {
-            runTest("testData/intentions/convertToConcatenatedString/KTIJ-30269.kt");
-        }
-
         @TestMetadata("lastExprIsNamedExpression.kt")
         public void testLastExprIsNamedExpression() throws Exception {
             runTest("testData/intentions/convertToConcatenatedString/lastExprIsNamedExpression.kt");
@@ -9110,6 +9105,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("notAvailableForDollarSignLiteral.kt")
         public void testNotAvailableForDollarSignLiteral() throws Exception {
             runTest("testData/intentions/convertToConcatenatedString/notAvailableForDollarSignLiteral.kt");
+        }
+
+        @TestMetadata("singleDollarPrefixWithInterpolation.kt")
+        public void testSingleDollarPrefixWithInterpolation() throws Exception {
+            runTest("testData/intentions/convertToConcatenatedString/singleDollarPrefixWithInterpolation.kt");
         }
 
         @TestMetadata("singleVar.kt")
