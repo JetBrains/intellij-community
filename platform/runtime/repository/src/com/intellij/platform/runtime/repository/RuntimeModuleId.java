@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -46,7 +46,9 @@ public final class RuntimeModuleId {
    * Creates ID of a runtime module corresponding to the test part of module {@code moduleName} in intellij project configuration.
    */
   public static @NotNull RuntimeModuleId moduleTests(@NotNull String moduleName) {
-    return new RuntimeModuleId(moduleName + TESTS_NAME_SUFFIX);
+    return new RuntimeModuleId(moduleName.equals("intellij.platform.split")
+                               ? "intellij.platform.split.testFramework"
+                               : moduleName + TESTS_NAME_SUFFIX);
   }
 
   /**

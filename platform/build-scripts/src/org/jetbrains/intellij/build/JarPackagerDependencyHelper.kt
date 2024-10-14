@@ -45,7 +45,9 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
 
     val moduleName = module.name
     // todo use some marker
-    if (moduleName == "intellij.rdct.testFramework" || moduleName == "intellij.rdct.tests.distributed") {
+    if (moduleName == "intellij.rdct.testFramework" ||
+        moduleName == "intellij.platform.split.testFramework" ||
+        moduleName == "intellij.rdct.tests.distributed") {
       return true
     }
 
