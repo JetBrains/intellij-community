@@ -47,7 +47,7 @@ class GitRepositoryImpl private constructor(
   private val tagHolder: GitTagHolder
 
   @Volatile
-  private lateinit var repoInfo: GitRepoInfo
+  private var repoInfo: GitRepoInfo
 
   @Volatile
   private var recentCheckoutBranches = emptyList<GitLocalBranch>()
@@ -65,6 +65,7 @@ class GitRepositoryImpl private constructor(
     Disposer.register(this, untrackedFilesHolder)
 
     tagHolder = GitTagHolder(this)
+    repoInfo = readRepoInfo()
   }
 
   @Deprecated("Deprecated in Java")
@@ -156,7 +157,7 @@ class GitRepositoryImpl private constructor(
 
   override fun update() {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    val previousInfo = if (::repoInfo.isInitialized) repoInfo else null
+    val previousInfo = repoInfo
     repoInfo = readRepoInfo()
     notifyIfRepoChanged(this, previousInfo, repoInfo)
   }
@@ -254,14 +255,13 @@ class GitRepositoryImpl private constructor(
       parentDisposable: Disposable,
     ): GitRepository {
       ProgressManager.checkCanceled()
-      return GitRepositoryImpl(project, root, gitDir, parentDisposable).apply { installListeners() }
-    }
-
-    private fun GitRepositoryImpl.installListeners() {
-      val updater = GitRepositoryUpdater(this, repositoryFiles)
-      updater.installListeners(this)
-      update()
-      untrackedFilesHolder.invalidate()
+      return GitRepositoryImpl(project, root, gitDir, parentDisposable).apply {
+        val initialRepoInfo = repoInfo
+        val updater = GitRepositoryUpdater(this, this.repositoryFiles)
+        updater.installListeners(this)
+        notifyIfRepoChanged(this, null, initialRepoInfo)
+        this.untrackedFilesHolder.invalidate()
+      }
     }
 
     private fun notifyIfRepoChanged(repository: GitRepository, previousInfo: GitRepoInfo?, info: GitRepoInfo) {
