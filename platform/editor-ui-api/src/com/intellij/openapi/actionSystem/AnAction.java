@@ -183,6 +183,9 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     }
   }
 
+  /**
+   * Do not override, but prefer extending from {@link DumbAwareAction} instead.
+   */
   @Override
   public boolean isDumbAware() {
     if (PossiblyDumbAware.super.isDumbAware()) {
