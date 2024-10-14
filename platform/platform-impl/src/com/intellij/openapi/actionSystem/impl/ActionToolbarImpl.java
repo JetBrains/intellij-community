@@ -75,7 +75,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private static final Set<ActionToolbarImpl> ourToolbars = new LinkedHashSet<>();
 
-
   private static final Key<String> SECONDARY_SHORTCUT = Key.create("SecondaryActions.shortcut");
 
   private static final String LOADING_LABEL = "LOADING_LABEL";
@@ -188,8 +187,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                            boolean customizable) {
     super(null);
     if (ActionPlaces.UNKNOWN.equals(place) || place.isEmpty()) {
-      LOG.warn("Please do not use ActionPlaces.UNKNOWN or the empty place. " +
-               "Any string unique enough to deduce the toolbar location will do.", myCreationTrace);
+      LOG.warn(new Throwable(
+        "Please do not use ActionPlaces.UNKNOWN or the empty place. Any string unique enough to deduce the toolbar location will do.",
+        myCreationTrace));
     }
 
     myAlphaContext.getAnimator().setVisibleImmediately(true);
@@ -995,8 +995,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   protected void updateActionsImmediately(boolean includeInvisible) {
     boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (getParent() == null && !isTestMode && !includeInvisible) {
-      LOG.warn(new Throwable("'" + myPlace + "' toolbar manual update is ignored. " +
-                             "Newly created toolbars are updated automatically on `addNotify`.", myCreationTrace));
+      LOG.warn(new Throwable(
+        "'" + myPlace + "' toolbar manual update is ignored. Newly created toolbars are updated automatically on `addNotify`.",
+        myCreationTrace));
       return;
     }
     updateActionsWithoutLoadingIcon(includeInvisible);
@@ -1263,9 +1264,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (myTargetComponent == null && getClientProperty(SUPPRESS_TARGET_COMPONENT_WARNING) == null &&
         !ApplicationManager.getApplication().isUnitTestMode()) {
       putClientProperty(SUPPRESS_TARGET_COMPONENT_WARNING, true);
-      LOG.warn("'" + myPlace + "' toolbar by default uses any focused component to update its actions. " +
-               "Toolbar actions that need local UI context would be incorrectly disabled. " +
-               "Please call toolbar.setTargetComponent() explicitly.", myCreationTrace);
+      LOG.warn(new Throwable(
+        "'" + myPlace + "' toolbar by default uses any focused component to update its actions. " +
+        "Toolbar actions that need local UI context would be incorrectly disabled. " +
+        "Please call toolbar.setTargetComponent() explicitly.",
+        myCreationTrace));
     }
     Component target = myTargetComponent != null ? myTargetComponent : IJSwingUtilities.getFocusedComponentInWindowOrSelf(this);
     return DataManager.getInstance().getDataContext(target);
