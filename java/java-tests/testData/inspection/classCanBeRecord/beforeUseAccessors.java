@@ -16,6 +16,8 @@ public class SpreadSymb<caret>ol {
 
 class Use {
   /**
+   * You may also want to use {@link SpreadSymbol#legs}.
+   *
    * @see SpreadSymbol#legs
    */
   public static void main(String[] args) {

@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -304,6 +305,10 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
         PsiElement target = fieldUsageInfo.getElement();
         if (target instanceof PsiReferenceExpression refExpr && !PsiUtil.isAccessedForWriting(refExpr) && !isAccessible(target, field)) {
           refExpr.replace(JavaPsiFacade.getElementFactory(myProject).createExpressionFromText(refExpr.getText() + "()", refExpr));
+        }
+        if (target instanceof PsiDocTagValue docTagValue) {
+          PsiDocTag docTag = JavaPsiFacade.getElementFactory(myProject).createDocTagFromText("@see " + docTagValue.getText() + "()");
+          docTagValue.replace(Objects.requireNonNull(docTag.getValueElement()));
         }
       }
     }

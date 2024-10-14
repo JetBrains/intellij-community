@@ -9,7 +9,9 @@ public record SpreadSymbol(String symbol, int legs) {
 
 class Use {
   /**
-   * @see SpreadSymbol#legs
+   * You may also want to use {@link SpreadSymbol#legs()}.
+   *
+   * @see SpreadSymbol#legs()
    */
   public static void main(String[] args) {
     SpreadSymbol ss = new SpreadSymbol("123", 123);
