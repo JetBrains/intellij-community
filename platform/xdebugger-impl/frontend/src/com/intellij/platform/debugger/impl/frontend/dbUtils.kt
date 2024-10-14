@@ -3,8 +3,7 @@ package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.platform.kernel.KernelService
 import com.jetbrains.rhizomedb.asOf
-import fleet.kernel.rete.Rete
-import fleet.kernel.rete.dbOrThrow
+import fleet.kernel.DbSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
@@ -18,7 +17,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun <T> withCurrentDb(f: () -> T): T {
-  return asOf(KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext[Rete]!!.lastKnownDb.value.dbOrThrow()) {
+  return asOf(KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext[DbSource.ContextElement]!!.dbSource.latest) {
     f()
   }
 }

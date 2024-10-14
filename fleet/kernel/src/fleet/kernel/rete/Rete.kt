@@ -34,7 +34,7 @@ fun ReteState.dbOrThrow(): DB =
 
 data class Rete internal constructor(
   internal val commands: SendChannel<Command>,
-  val lastKnownDb: StateFlow<ReteState>,
+  internal val reteState: StateFlow<ReteState>,
   internal val dbSource: ReteDbSource,
 ) : CoroutineContext.Element {
 
@@ -114,7 +114,7 @@ suspend fun <T> withRete(failWhenPropagationFailed: Boolean = false, body: suspe
             }
           }.use {
             val rete = Rete(commands = commandsSender,
-                            lastKnownDb = lastKnownDb,
+                            reteState = lastKnownDb,
                             dbSource = ReteDbSource(lastKnownDb))
             val reteEntity = change {
               register(ReteEntity)
@@ -156,7 +156,7 @@ suspend fun <T, U> Match<T>.withMatch(body: suspend CoroutineScope.(T) -> U): Wi
 suspend fun waitForReteToCatchUp(targetDb: Q) {
   val targetTimestamp = targetDb.timestamp
   requireNotNull(coroutineContext[Rete]) { "Rete is not found on the context" }
-    .lastKnownDb.first { reteDb -> reteDb.dbOrThrow().timestamp >= targetTimestamp }
+    .reteState.first { reteDb -> reteDb.dbOrThrow().timestamp >= targetTimestamp }
 
   // now that rete has caught up with targetDb, we can go and check if our context matches are still valid
   coroutineContext[ContextMatches]?.matches?.let { matches ->
@@ -210,7 +210,7 @@ private val ReteSpinChangeInterceptor: ChangeInterceptor =
       val change = next {
         val validation = matchInfos.fold<ObservableMatch<*>, ValidationResult>(ValidationResult.Valid) { r, match ->
           r.and {
-            val reteTimestamp = rete.lastKnownDb.value.dbOrThrow().timestamp
+            val reteTimestamp = rete.reteState.value.dbOrThrow().timestamp
             when {
               match.invalidationTs.isCompleted -> ValidationResult.Invalid(match)
               dbBefore.timestamp == reteTimestamp -> ValidationResult.Valid
@@ -354,7 +354,7 @@ fun <T> Query<T>.tokenSetsFlow(): Flow<TokenSet<T>> = let { query ->
         // DbSource will not be invoked to update the db on thread local context.
         // this trick partially mitigates this problem, but it does not always work,
         // because the real collector might be actually running on a different thread
-        DbContext.threadBound.set(rete.lastKnownDb.value.dbOrThrow())
+        DbContext.threadBound.set(rete.reteState.value.dbOrThrow())
         emit(ts)
       }
     }
