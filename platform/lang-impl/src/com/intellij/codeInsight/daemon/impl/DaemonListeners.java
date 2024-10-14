@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProviders;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingListener;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -302,7 +303,8 @@ public final class DaemonListeners implements Disposable {
       private void fileRenamed(@NotNull VFilePropertyChangeEvent event) {
         stopDaemonAndRestartAllFiles("Virtual file name changed");
         VirtualFile virtualFile = event.getFile();
-        PsiFile psiFile = !virtualFile.isValid() ? null : ((FileManagerImpl)PsiManagerEx.getInstanceEx(myProject).getFileManager()).getFastCachedPsiFile(virtualFile);
+        // todo IJPL-339 fix this
+        PsiFile psiFile = !virtualFile.isValid() ? null : ((FileManagerImpl)PsiManagerEx.getInstanceEx(myProject).getFileManager()).getFastCachedPsiFile(virtualFile, CodeInsightContextKt.defaultContext());
         if (psiFile == null || myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
           return;
         }

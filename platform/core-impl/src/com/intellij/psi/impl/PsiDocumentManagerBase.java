@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.core.CoreBundle;
@@ -143,9 +144,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    * It's guaranteed to not perform any expensive ops like creating files/reparse/resurrecting PsiFile from temp comatose state.
    */
   @ApiStatus.Internal
-  public PsiFile getRawCachedFile(@NotNull VirtualFile virtualFile) {
+  public PsiFile getRawCachedFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context) {
     FileManagerImpl manager = ((FileManagerImpl)getFileManager());
-    return manager.getRawCachedFile(virtualFile);
+    return manager.getRawCachedFile(virtualFile, context);
   }
 
   @Nullable

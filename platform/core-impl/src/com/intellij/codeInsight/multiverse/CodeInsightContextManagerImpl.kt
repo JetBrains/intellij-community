@@ -11,6 +11,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.FileViewProvider
+import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.impl.file.impl.FileManagerImpl
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.AtomicMapCache
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -123,6 +127,18 @@ class CodeInsightContextManagerImpl(
     }
   }
 
+  override fun getCodeInsightContext(fileViewProvider: FileViewProvider): CodeInsightContext {
+    if (!isSharedSourceSupportEnabled(project)) return defaultContext()
+
+    val context = getCodeInsightContextRaw(fileViewProvider)
+
+    if (context == anyContext()) {
+      return inferContext(fileViewProvider)
+    }
+
+    return context
+  }
+
   private fun findFirstContext(file: VirtualFile?): CodeInsightContext {
     if (file == null) return defaultContext()
 
@@ -145,6 +161,39 @@ class CodeInsightContextManagerImpl(
       log.error(e)
       return null
     }
+  }
+
+  private fun inferContext(fileViewProvider: FileViewProvider): CodeInsightContext {
+    val preferredContext = getPreferredContext(fileViewProvider.virtualFile)
+    log.assertTrue(preferredContext != anyContext()) { "preferredContext must not be anyContext" }
+
+    val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as? FileManagerImpl
+    if (fileManager != null) {
+      val result = fileManager.trySetContext(fileViewProvider, preferredContext)
+      if (result != null) {
+        return result
+      }
+
+      // let's make sure fileViewProvider is still valid
+      val mainPsi = fileViewProvider.getPsi(fileViewProvider.baseLanguage)
+      if (mainPsi != null) {
+        PsiUtilCore.ensureValid(mainPsi)
+      }
+    }
+
+    setCodeInsightContext(fileViewProvider, preferredContext)
+    return preferredContext
+  }
+
+  /**
+   * does not infer the substitution for `anyContext`
+   */
+  fun getCodeInsightContextRaw(fileViewProvider: FileViewProvider): CodeInsightContext =
+    fileViewProvider.getUserData(codeInsightContextKey) ?: defaultContext()
+
+  fun setCodeInsightContext(fileViewProvider: FileViewProvider, context: CodeInsightContext) {
+    val effectiveContext = context.takeUnless { it == defaultContext() }
+    fileViewProvider.putUserData(codeInsightContextKey, effectiveContext)
   }
 
   override val isSharedSourceSupportEnabled: Boolean
@@ -178,6 +227,8 @@ private class CodeInsightSessionImpl(
 ) : CodeInsightSession
 
 private val EP_NAME = ExtensionPointName.create<CodeInsightContextProvider>("com.intellij.multiverse.codeInsightContextProvider")
+
+private val codeInsightContextKey = Key.create<CodeInsightContext>("codeInsightContextKey")
 
 private val log = logger<CodeInsightContextManagerImpl>()
 
@@ -215,4 +266,15 @@ object MultiverseTestEnabler {
     val prev = value.getAndSet(false)
     return prev
   }
+}
+
+internal sealed interface SetContextResult {
+  /** the context was successfully installed */
+  object Success : SetContextResult
+
+  /** the context was not installed because of a concurrent context update */
+  class ConcurrentlyUpdated(val newContext: CodeInsightContext) : SetContextResult
+
+  /** the context was not installed because the file view provider is missing in the file manager storage */
+  object ProviderIsMissing : SetContextResult
 }
