@@ -11,11 +11,7 @@ internal object IdeConstants {
    */
   const val JETBRAINS_CLIENT_PREFIX = "JetBrainsClient"
 
-  /**
-   * See `com.jetbrains.rdct.testFramework.launch.ProcessLauncher.GATEWAY_PLUGIN_MODULE`
-   */
-  const val INTELLIJ_CWM_GUEST_MAIN_MODULE = "intellij.platform.frontend.split.main"
-  const val INTELLIJ_IDEA_ULTIMATE_MAIN_MODULE = "intellij.idea.ultimate.main"
+  const val PLATFORM_LOADER_MODULE = "intellij.platform.runtime.loader"
   const val GATEWAY_PLUGIN_MODULE = "intellij.gateway.plugin"
 
   const val DEFAULT_CWM_PASSWORD = "qwerty123"

@@ -35,7 +35,7 @@ internal sealed interface BackendLaunchResult {
 
 internal fun runIdeBackend(backendDescription: IdeBackendInEnvDescription, coroutineScope: CoroutineScope): BackendLaunchResult {
   val projectPath = backendDescription.ideBackendDescription.projectPath
-  val mainModule = backendDescription.ideBackendDescription.product.mainModule
+  val mainModule = backendDescription.ideBackendDescription.product.backendMainModule
   val paths = IdeaPathsProvider()
   val classpathCollector = classpathCollector(
     localPaths = paths,
