@@ -14,7 +14,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.BooleanValue
 import com.sun.jdi.ClassType
 import com.sun.jdi.ObjectReference
+import com.sun.jdi.ReferenceType
 import java.util.concurrent.ConcurrentHashMap
+
+private const val CANCELLATION_FQN = "com.intellij.openapi.progress.Cancellation"
 
 private object PauseListener : DebuggerManagerListener {
   private val sessions = ConcurrentHashMap<DebuggerSession, SessionThreadsData>()
@@ -26,8 +29,7 @@ private object PauseListener : DebuggerManagerListener {
     session.process.addDebugProcessListener(object : DebugProcessListener {
       override fun paused(suspendContext: SuspendContext) {
         val context = suspendContext as? SuspendContextImpl ?: return
-        val pausedThreads = context.debugProcess.suspendManager.pausedContexts.mapNotNull { it.thread }
-        getSessionData(context.debugProcess.session)?.resetNonCancellableSection(context, pausedThreads)
+        getSessionData(context.debugProcess.session)?.resetNonCancellableSection(context)
       }
     }, disposable)
   }
@@ -64,14 +66,15 @@ private data class ThreadState(val reference: ObjectReference, var state: Boolea
  */
 private class SessionThreadsData(val disposable: Disposable) {
   private val threadStates = hashMapOf<ThreadReferenceProxyImpl, ThreadState?>()
+  private var isIdeRuntime = false
 
   /**
    * Sets the non-cancellable state for the current thread.
    * This method requires a suspend context command, as it may cause evaluation.
    */
   fun setNonCancellableSection(suspendContext: SuspendContextImpl) {
-    if (!isSteppingAdjustmentEnabled()) return
     try {
+      if (!isSteppingAdjustmentEnabled(suspendContext)) return
       val state = getOrCreateThreadState(suspendContext) ?: return
       state.setNonCancellable(suspendContext, true)
     }
@@ -83,10 +86,13 @@ private class SessionThreadsData(val disposable: Disposable) {
   /**
    * Resets the non-cancellable flag for the paused threads.
    */
-  fun resetNonCancellableSection(suspendContext: SuspendContextImpl, pausedThreads: List<ThreadReferenceProxyImpl>) {
-    if (!isSteppingAdjustmentEnabled()) return
+  fun resetNonCancellableSection(suspendContext: SuspendContextImpl) {
     try {
-      for (state in pausedThreads.mapNotNull { threadStates[it] }) {
+      if (!isSteppingAdjustmentEnabled(suspendContext)) return
+      val pausedThreads = suspendContext.debugProcess.suspendManager.pausedContexts
+        .mapNotNull { it.thread }
+        .mapNotNull { threadStates[it] }
+      for (state in pausedThreads) {
         state.setNonCancellable(suspendContext, false)
       }
     }
@@ -107,11 +113,14 @@ private class SessionThreadsData(val disposable: Disposable) {
     val state = reference?.let { ThreadState(it) }
     return state.also { threadStates[thread] = it }
   }
+
+  private fun isSteppingAdjustmentEnabled(suspendContextImpl: SuspendContextImpl): Boolean {
+    if (!Registry.`is`("devkit.debugger.prevent.pce.while.stepping")) return false
+    if (isIdeRuntime) return true
+    val cancellationClasses = suspendContextImpl.virtualMachineProxy.classesByName(CANCELLATION_FQN).filter(ReferenceType::isPrepared)
+    return cancellationClasses.isNotEmpty().also { isIde -> if (isIde) isIdeRuntime = true }
+  }
 }
-
-private fun isSteppingAdjustmentEnabled() = Registry.`is`("devkit.debugger.prevent.pce.while.stepping")
-
-
 
 /**
  * @see com.intellij.openapi.progress.Cancellation.initThreadNonCancellableState
@@ -119,7 +128,7 @@ private fun isSteppingAdjustmentEnabled() = Registry.`is`("devkit.debugger.preve
  */
 private fun initializeThreadState(suspendContext: SuspendContextImpl): ObjectReference? {
   val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
-  val cancellationClass = findClassOrNull(evaluationContext, "com.intellij.openapi.progress.Cancellation") as? ClassType ?: return null
+  val cancellationClass = findClassOrNull(evaluationContext, CANCELLATION_FQN) as? ClassType ?: return null
   return DebuggerUtilsImpl.invokeClassMethod(evaluationContext, cancellationClass, "initThreadNonCancellableState",
                                              "()Lcom/intellij/openapi/progress/Cancellation\$DebugNonCancellableState;") as? ObjectReference
 }
