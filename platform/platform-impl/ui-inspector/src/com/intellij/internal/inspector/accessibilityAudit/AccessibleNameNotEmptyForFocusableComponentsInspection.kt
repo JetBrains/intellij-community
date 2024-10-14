@@ -13,12 +13,7 @@ class AccessibleNameNotEmptyForFocusableComponentsInspection : UiInspectorAccess
   override val severity: Severity = Severity.WARNING
 
   override fun passesInspection(context: AccessibleContext): Boolean {
-    val states = context.accessibleStateSet
-    val containsAll = states.contains(AccessibleState.ENABLED)
-                      && states.contains(AccessibleState.FOCUSABLE)
-                      && states.contains(AccessibleState.VISIBLE)
-                      && states.contains(AccessibleState.SHOWING)
-    if (containsAll) {
+    if (context.isVisibleAndEnabled() && context.accessibleStateSet.contains(AccessibleState.FOCUSABLE) && context.isInteractive()) {
       return context.accessibleName != null && !context.accessibleName.isEmpty()
     }
     return true

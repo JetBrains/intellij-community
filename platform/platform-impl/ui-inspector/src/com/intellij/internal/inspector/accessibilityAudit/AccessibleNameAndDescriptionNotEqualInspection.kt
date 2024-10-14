@@ -12,10 +12,8 @@ class AccessibleNameAndDescriptionNotEqualInspection : UiInspectorAccessibilityI
   override val severity: Severity = Severity.WARNING
 
   override fun passesInspection(context: AccessibleContext): Boolean {
-    val name = context.accessibleName
-    val description = context.accessibleDescription
-    if (name != null && description != null && name.isNotEmpty() && description.isNotEmpty()) {
-      return name != description
+    if (context.accessibleName != null && context.accessibleDescription != null && context.accessibleName.isNotEmpty() && context.accessibleDescription.isNotEmpty()) {
+      return context.accessibleName != context.accessibleDescription
     }
     return true
   }

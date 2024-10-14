@@ -4,7 +4,6 @@ package com.intellij.internal.inspector.accessibilityAudit
 import com.intellij.internal.InternalActionsBundle
 import org.jetbrains.annotations.ApiStatus
 import javax.accessibility.AccessibleContext
-import javax.accessibility.AccessibleRole
 import javax.accessibility.AccessibleState
 
 @ApiStatus.Internal
@@ -14,23 +13,7 @@ class AccessibleStateSetContainsFocusableInspection : UiInspectorAccessibilityIn
   override val severity: Severity = Severity.WARNING
 
   override fun passesInspection(context: AccessibleContext): Boolean {
-    if ((context.accessibleStateSet.contains(AccessibleState.ENABLED) &&
-         context.accessibleStateSet.contains(AccessibleState.VISIBLE) &&
-         context.accessibleStateSet.contains(AccessibleState.SHOWING)) &&
-        context.accessibleRole in arrayOf(AccessibleRole.CHECK_BOX,
-                                          AccessibleRole.PUSH_BUTTON,
-                                          AccessibleRole.RADIO_BUTTON,
-                                          AccessibleRole.TOGGLE_BUTTON,
-                                          AccessibleRole.LIST,
-                                          AccessibleRole.LIST_ITEM,
-                                          AccessibleRole.TABLE,
-                                          AccessibleRole.TREE,
-                                          AccessibleRole.PAGE_TAB_LIST,
-                                          AccessibleRole.TEXT,
-                                          AccessibleRole.PASSWORD_TEXT,
-                                          AccessibleRole.HYPERLINK,
-                                          AccessibleRole.POPUP_MENU,
-                                          AccessibleRole.SLIDER)) {
+    if (context.isInteractive() && context.isVisibleAndEnabled()) {
       return context.accessibleStateSet.contains(AccessibleState.FOCUSABLE)
     }
     return true
