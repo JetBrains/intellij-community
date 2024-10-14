@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class FileManagerImpl implements FileManager {
   private static final Key<Boolean> IN_COMA = Key.create("IN_COMA");
   private static final Logger LOG = Logger.getInstance(FileManagerImpl.class);
@@ -680,7 +681,6 @@ public final class FileManagerImpl implements FileManager {
    * Useful for retrieving the PsiFile in EDT where expensive PSI operations are prohibited.
    * Do not use, since this is an extremely fragile and low-level API that can return surprising results. Use {@link #getCachedPsiFile(VirtualFile)} instead.
    */
-  @ApiStatus.Internal
   @RequiresReadLock
   public PsiFile getFastCachedPsiFile(@NotNull VirtualFile vFile) {
     if (!vFile.isValid()) {
@@ -698,7 +698,6 @@ public final class FileManagerImpl implements FileManager {
     return ((AbstractFileViewProvider)viewProvider).getCachedPsi(viewProvider.getBaseLanguage());
   }
 
-  @ApiStatus.Internal
   public void forEachCachedDocument(@NotNull Consumer<? super @NotNull Document> consumer) {
     ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
     if (map != null) {
