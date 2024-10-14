@@ -4,6 +4,9 @@
     <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>
 
     <writingAccessProvider implementation="com.intellij.diff.DiffLightVirtualFileWritingAccessProvider"/>
+
+    <registryKey key="diff.by.word.deprioritize.line.differences" defaultValue="false"
+                 description="When possible, let 'changed words' have influence on 'changed lines'"/>
   </extensions>
 
   <applicationListeners>

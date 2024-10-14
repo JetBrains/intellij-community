@@ -3,6 +3,7 @@
 
 package com.intellij.diff.comparison
 
+import com.intellij.diff.comparison.ByWordRt.compare
 import com.intellij.diff.comparison.ChunkOptimizer.WordChunkOptimizer
 import com.intellij.diff.comparison.LineFragmentSplitter.WordBlock
 import com.intellij.diff.comparison.iterables.DiffIterable
@@ -13,11 +14,15 @@ import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.fragments.DiffFragmentImpl
 import com.intellij.diff.fragments.MergeWordFragment
 import com.intellij.diff.fragments.MergeWordFragmentImpl
+import com.intellij.diff.tools.util.text.LineOffsets
+import com.intellij.diff.util.DiffRangeUtil
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.Range
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.text.Strings
+import com.intellij.util.IntPair
 import com.intellij.util.text.MergingCharSequence
+import org.jetbrains.annotations.ApiStatus
 
 object ByWordRt {
   @JvmStatic
@@ -88,22 +93,6 @@ object ByWordRt {
   ): List<LineBlock> {
     indicator.checkCanceled()
 
-    // TODO: figure out, what do we exactly want from 'Split' logic
-    // -- it is used for trimming of ignored blocks. So we want whitespace-only leading/trailing lines to be separate block.
-    // -- old approach: split by matched '\n's
-
-    // TODO: other approach could lead to better results:
-    // * Compare words-only
-    // * prefer big chunks
-    // -- here we can try to minimize number of matched pairs 'pair[i]' and 'pair[i+1]' such that
-    //    containsNewline(pair[i].left .. pair[i+1].left) XOR containsNewline(pair[i].right .. pair[i+1].right) == true
-    //    ex: "A X C" - "A Y C \n M C" - do not match with last 'C'
-    //    ex: "A \n" - "A B \n \n" - do not match with last '\n'
-    //    Try some greedy approach ?
-    // * split into blocks
-    // -- squash blocks with too small unchanged words count (1 matched word out of 40 - is a bad reason to create new block)
-    // * match adjustment punctuation
-    // * match adjustment whitespaces ('\n' are matched here)
     val words1 = getInlineChunks(text1)
     val words2 = getInlineChunks(text2)
 
@@ -171,6 +160,246 @@ object ByWordRt {
       subIterables.add(DiffIterableUtil.fair(SubiterableDiffIterable(changed, words.start1, words.end1, words.start2, words.end2, index)))
     }
     return subIterables
+  }
+
+  /**
+   * Constructs 'lines + words' differences while giving priority to the 'words' delta.
+   *
+   * This works better than [compare] for inputs that have no matching lines (and get dragged away by the empty lines as a result).
+   * For example,
+   *  'Java -> Kotlin' conversions, as the latter has no trailing ';'
+   *  Text in natural language with manual line wrapping (that is inconsistent between compared texts)
+   */
+  @JvmStatic
+  @ApiStatus.Internal
+  fun compareWordsFirst(
+    text1: CharSequence,
+    text2: CharSequence,
+    lineOffsets1: LineOffsets,
+    lineOffsets2: LineOffsets,
+    policy: ComparisonPolicy,
+    indicator: CancellationChecker,
+  ): List<WordLineBlock> {
+    val words1 = getInlineChunks(text1).filterIsInstance<WordChunk>()
+    val words2 = getInlineChunks(text2).filterIsInstance<WordChunk>()
+
+    var wordChanges = DiffIterableUtil.diff(words1, words2, indicator)
+    wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges, indicator)
+
+    val delimitersIterable = matchAdjustmentDelimiters(text1, text2, words1, words2, wordChanges, indicator)
+
+    val lineBlocks = LineUplifter(text1, text2, lineOffsets1, lineOffsets2, delimitersIterable, indicator).build()
+
+    val subIterables = collectLineBlockSubIterables(delimitersIterable, lineBlocks, lineOffsets1, lineOffsets2)
+
+    val result = mutableListOf<WordLineBlock>()
+    for (i in lineBlocks.indices) {
+      val lineBlock = lineBlocks[i]
+      val subIterable = subIterables[i]
+
+      val subRange1 = DiffRangeUtil.getLinesRange(lineOffsets1, lineBlock.start1, lineBlock.end1, true)
+      val subRange2 = DiffRangeUtil.getLinesRange(lineOffsets2, lineBlock.start2, lineBlock.end2, true)
+
+      val subtext1 = text1.subSequence(subRange1.startOffset, subRange1.endOffset)
+      val subtext2 = text2.subSequence(subRange2.startOffset, subRange2.endOffset)
+
+      val iterable = matchAdjustmentWhitespaces(subtext1, subtext2, subIterable, policy, indicator)
+
+      val innerFragments = convertIntoDiffFragments(iterable)
+      if (innerFragments.isEmpty()) continue
+
+      val shiftedLineBlock = Range(lineBlock.start1,
+                                   lineBlock.end1,
+                                   lineBlock.start2,
+                                   lineBlock.end2)
+      result += WordLineBlock(shiftedLineBlock, innerFragments)
+    }
+
+    return result
+  }
+
+  private fun collectLineBlockSubIterables(
+    iterable: FairDiffIterable,
+    lineBlocks: List<Range>,
+    lineOffsets1: LineOffsets,
+    lineOffsets2: LineOffsets,
+  ): List<FairDiffIterable> {
+    val changed = ArrayList<Range>()
+    for (range in iterable.iterateChanges()) {
+      changed.add(range)
+    }
+
+    var index = 0
+
+    val subIterables = ArrayList<FairDiffIterable>(lineBlocks.size)
+    for (lineBlock in lineBlocks) {
+      val subRange1 = DiffRangeUtil.getLinesRange(lineOffsets1, lineBlock.start1, lineBlock.end1, true)
+      val subRange2 = DiffRangeUtil.getLinesRange(lineOffsets2, lineBlock.start2, lineBlock.end2, true)
+
+      while (index < changed.size) {
+        val range = changed[index]
+        if (range.end1 < subRange1.startOffset || range.end2 < subRange2.startOffset) {
+          index++
+          continue
+        }
+
+        break
+      }
+
+      subIterables.add(DiffIterableUtil.fair(SubiterableDiffIterable(changed,
+                                                                     subRange1.startOffset, subRange1.endOffset,
+                                                                     subRange2.startOffset, subRange2.endOffset,
+                                                                     index)))
+    }
+    return subIterables
+  }
+
+  /**
+   * Collects 'changed line blocks' that correspond to the given 'by-word differences' (or 'by-word + delimiters')
+   *
+   * The result is 'good enough' and may not be optimal from the human's point of view.
+   * For example, it leaves the 'unmatched empty lines' inside an unmatched block,
+   * when a human would match these empty lines, breaking the changed block into two changed blocks.
+   * The correct answer in this case may depend on the context, so we can't blindly match these as post-processing.
+   */
+  private class LineUplifter(
+    private val text1: CharSequence,
+    private val text2: CharSequence,
+    private val lineOffsets1: LineOffsets,
+    private val lineOffsets2: LineOffsets,
+    private val changes: FairDiffIterable,
+    private val indicator: CancellationChecker,
+  ) {
+    val lineBlocks = mutableListOf<Range>()
+
+    var blockStart1 = 0
+    var blockStart2 = 0
+
+    fun build(): List<Range> {
+      execute()
+      return lineBlocks
+    }
+
+    fun execute() {
+      var lastIndex1 = 0
+      var lastIndex2 = 0
+
+      // walk from 'unchanged' deeper into the 'changed' territory,
+      // find 'closest' and 'furthest' newline, aborting walking at the first non-whitespace symbol,
+      // if found - end current block at the nearest newline, mark the furthest newline as a separate whitespaces-only block
+
+      for (range in changes.iterateUnchanged()) {
+        val pair = walkForward(lastIndex1, lastIndex2, range.start1, range.start2)
+        if (pair != null) {
+          walkBackward(pair.first, pair.second, range.start1, range.start2)
+        }
+        else {
+          walkBackward(lastIndex1, lastIndex2, range.start1, range.start2)
+        }
+        lastIndex1 = range.end1
+        lastIndex2 = range.end2
+      }
+
+      val pair = walkForward(lastIndex1, lastIndex2, text1.length, text2.length)
+      if (pair != null) {
+        walkBackward(pair.first, pair.second, text1.length, text2.length)
+      }
+      else {
+        walkBackward(lastIndex1, lastIndex2, text1.length, text2.length)
+      }
+      markNextBlock(lineOffsets1.lineCount, lineOffsets2.lineCount)
+    }
+
+    /**
+     * @return offsets of the nearest block, if found
+     */
+    private fun walkForward(start1: Int, start2: Int, end1: Int, end2: Int): IntPair? {
+      val found1 = walkSideForward(text1, start1, end1) ?: return null
+      val found2 = walkSideForward(text2, start2, end2) ?: return null
+
+      markNextBlockOffset(found1.first, found2.first)
+      markNextBlockOffset(found1.second, found2.second)
+      return IntPair(found1.second, found2.second)
+    }
+
+    private fun walkBackward(start1: Int, start2: Int, end1: Int, end2: Int) {
+      val found1 = walkSideBackward(text1, start1, end1) ?: return
+      val found2 = walkSideBackward(text2, start2, end2) ?: return
+
+      markNextBlockOffset(found1.second, found2.second)
+      markNextBlockOffset(found1.first, found2.first)
+    }
+
+    private fun markNextBlockOffset(blockEndOffset1: Int, blockEndOffset2: Int) {
+      val blockEnd1 = lineOffsets1.getLineNumber(blockEndOffset1) + 1
+      val blockEnd2 = lineOffsets2.getLineNumber(blockEndOffset2) + 1
+      markNextBlock(blockEnd1, blockEnd2)
+    }
+
+    private fun markNextBlock(blockEnd1: Int, blockEnd2: Int) {
+      if (blockStart1 == blockEnd1 && blockStart2 == blockEnd2) return
+
+      lineBlocks += Range(blockStart1, blockEnd1, blockStart2, blockEnd2)
+      blockStart1 = blockEnd1
+      blockStart2 = blockEnd2
+    }
+
+    companion object {
+      private fun walkSideForward(text: CharSequence, start: Int, end: Int): IntPair? {
+        var foundFirst: Int? = null
+        var foundLast: Int? = null
+
+        var index = start
+        outer@ while (true) {
+          while (index < end) {
+            val ch = text[index]
+
+            if (ch == '\n') {
+              break
+            }
+            if (!Strings.isWhiteSpace(ch)) break@outer
+            index++
+          }
+          if (index == end) break@outer
+          if (foundFirst == null) foundFirst = index
+          foundLast = index
+
+          index++
+        }
+
+        if (foundFirst == null || foundLast == null) return null
+
+        return IntPair(foundFirst, foundLast)
+      }
+
+      private fun walkSideBackward(text: CharSequence, start: Int, end: Int): IntPair? {
+        var foundFirst: Int? = null
+        var foundLast: Int? = null
+
+        var index = end - 1
+        outer@ while (true) {
+          while (start <= index) {
+            val ch = text[index]
+
+            if (ch == '\n') {
+              break
+            }
+            if (!Strings.isWhiteSpace(ch)) break@outer
+            index--
+          }
+          if (index < start) break@outer
+
+          if (foundFirst == null) foundFirst = index
+          foundLast = index
+
+          index--
+        }
+
+        if (foundFirst == null || foundLast == null) return null
+
+        return IntPair(foundFirst, foundLast)
+      }
+    }
   }
 
   //
@@ -270,7 +499,7 @@ object ByWordRt {
   }
 
   /*
-   * Compare one char sequence with two others (as if they were single sequence)
+   * Compare one char sequence with two others (as if they were a single sequence)
    *
    * Return two DiffIterable: (0, len1) - (0, len21) and (0, len1) - (0, len22)
    */
@@ -574,7 +803,7 @@ object ByWordRt {
 
       val changes = comparePunctuation2Side(sequence2, sequence11, sequence12, indicator)
 
-      // Mirrored ch.*1 and ch.*2 as we use "compare2Side" that works with 2 right side, while we have 2 left here
+      // Mirrored ch.*1 and ch.*2 as we use "compare2Side" that works with 2 right sides, while we have 2 left here
       for (ch in changes.first.iterateUnchanged()) {
         builder.markEqual(start11 + ch.start2, start2 + ch.start1, start11 + ch.end2, start2 + ch.end1)
       }
@@ -863,5 +1092,13 @@ object ByWordRt {
     val newlines1: Int,
     @JvmField
     val newlines2: Int,
+  )
+
+  @ApiStatus.Experimental
+  class WordLineBlock(
+    @JvmField
+    val lineRange: Range,
+    @JvmField
+    val fragments: List<DiffFragment>,
   )
 }

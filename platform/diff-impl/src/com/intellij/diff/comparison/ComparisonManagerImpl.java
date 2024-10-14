@@ -14,6 +14,7 @@ import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Consumer;
 import com.intellij.util.IntPair;
 import com.intellij.util.containers.ContainerUtil;
@@ -159,6 +160,11 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                               @NotNull ComparisonPolicy policy,
                                               @NotNull InnerFragmentsPolicy fragmentsPolicy,
                                               @NotNull ProgressIndicator indicator) throws DiffTooBigException {
+    if (fragmentsPolicy == InnerFragmentsPolicy.WORDS &&
+        Registry.is("diff.by.word.deprioritize.line.differences")) {
+      return compareLinesWordFirst(text1, text2, lineOffsets1, lineOffsets2, policy, indicator);
+    }
+
     List<LineFragment> lineFragments = compareLines(text1, text2, lineOffsets1, lineOffsets2, policy, indicator);
     if (fragmentsPolicy != InnerFragmentsPolicy.NONE) {
       return createInnerFragments(lineFragments, text1, text2, policy, fragmentsPolicy, indicator);
@@ -190,6 +196,15 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                               @NotNull ComparisonPolicy policy,
                                               @NotNull InnerFragmentsPolicy fragmentsPolicy,
                                               @NotNull ProgressIndicator indicator) throws DiffTooBigException {
+    if (fragmentsPolicy == InnerFragmentsPolicy.WORDS &&
+        Registry.is("diff.by.word.deprioritize.line.differences")) {
+      if (boundaryRange.start1 == 0 && boundaryRange.start2 == 0 &&
+          boundaryRange.end1 == lineOffsets1.getLineCount() && boundaryRange.end2 == lineOffsets2.getLineCount()) {
+        // non-full-text comparison is not supported, need to fix handling of the trailing '\n'
+        return compareLinesWordFirst(text1, text2, lineOffsets1, lineOffsets2, policy, indicator);
+      }
+    }
+
     List<LineFragment> lineFragments = compareLines(boundaryRange, text1, text2, lineOffsets1, lineOffsets2, policy, indicator);
     if (fragmentsPolicy != InnerFragmentsPolicy.NONE) {
       return createInnerFragments(lineFragments, text1, text2, policy, fragmentsPolicy, indicator);
@@ -325,6 +340,24 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     }
 
     return ByWordRt.convertIntoDiffFragments(iterable);
+  }
+
+  @NotNull
+  @ApiStatus.Experimental
+  public List<LineFragment> compareLinesWordFirst(@NotNull CharSequence text1,
+                                                  @NotNull CharSequence text2,
+                                                  @NotNull LineOffsets lineOffsets1,
+                                                  @NotNull LineOffsets lineOffsets2,
+                                                  @NotNull ComparisonPolicy policy,
+                                                  @NotNull ProgressIndicator indicator) throws DiffTooBigException {
+    List<ByWordRt.WordLineBlock> lineBlocks = ByWordRt.compareWordsFirst(text1, text2, lineOffsets1, lineOffsets2, policy,
+                                                                         new IndicatorCancellationChecker(indicator));
+    return ContainerUtil.map(lineBlocks, block -> {
+      Range lineRange = block.lineRange;
+      LineFragment fragment = createLineFragment(lineRange.start1, lineRange.end1, lineRange.start2, lineRange.end2,
+                                                 lineOffsets1, lineOffsets2);
+      return new LineFragmentImpl(fragment, block.fragments);
+    });
   }
 
   @NotNull
