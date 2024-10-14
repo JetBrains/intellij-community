@@ -202,8 +202,8 @@ public final class FileManagerImpl implements FileManager {
   @Override
   public @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile vFile) {
     assert !vFile.isDirectory();
-    FileViewProvider viewProvider = findCachedViewProvider(vFile);
-    if (viewProvider != null) return viewProvider;
+    FileViewProvider cachedViewProvider = findCachedViewProvider(vFile);
+    if (cachedViewProvider != null) return cachedViewProvider;
     if (vFile instanceof VirtualFileWindow) {
       throw new IllegalStateException("File " + vFile + " is invalid");
     }
@@ -213,7 +213,7 @@ public final class FileManagerImpl implements FileManager {
       return Objects.requireNonNull(tempMap.get(vFile), "Recursive file view provider creation");
     }
 
-    viewProvider = createFileViewProvider(vFile, !LightVirtualFile.shouldSkipEventSystem(vFile));
+    FileViewProvider viewProvider = createFileViewProvider(vFile, !LightVirtualFile.shouldSkipEventSystem(vFile));
     if (vFile instanceof LightVirtualFile) {
       checkLightFileHasNoOtherPsi((LightVirtualFile)vFile);
       return vFile.putUserDataIfAbsent(myPsiHardRefKey, viewProvider);
@@ -237,7 +237,11 @@ public final class FileManagerImpl implements FileManager {
   @Override
   public FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile) {
     FileViewProvider viewProvider = getRawCachedViewProvider(vFile);
+    return reanimateProviderIfNecessary(vFile, viewProvider);
+  }
 
+  private @Nullable FileViewProvider reanimateProviderIfNecessary(@NotNull VirtualFile vFile,
+                                                                  @Nullable FileViewProvider viewProvider) {
     if (viewProvider instanceof AbstractFileViewProvider && viewProvider.getUserData(IN_COMA) != null) {
       Map<VirtualFile, FileViewProvider> tempMap = myTempProviders.get();
       FileViewProvider temp = tempMap.get(vFile);
@@ -281,15 +285,19 @@ public final class FileManagerImpl implements FileManager {
   }
 
   @Override
-  public @NotNull FileViewProvider createFileViewProvider(@NotNull VirtualFile vFile, boolean eventSystemEnabled) {
+  public @NotNull FileViewProvider createFileViewProvider(@NotNull VirtualFile vFile,
+                                                          boolean eventSystemEnabled) {
     FileType fileType = vFile.getFileType();
     Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), vFile, fileType);
     FileViewProviderFactory factory = language == null
                                       ? FileTypeFileViewProviders.INSTANCE.forFileType(fileType)
                                       : LanguageFileViewProviders.INSTANCE.forLanguage(language);
-    FileViewProvider viewProvider = factory == null ? null : factory.createFileViewProvider(vFile, language, myManager, eventSystemEnabled);
 
-    return viewProvider == null ? new SingleRootFileViewProvider(myManager, vFile, eventSystemEnabled, fileType) : viewProvider;
+    FileViewProvider viewProvider = factory != null
+                                    ? factory.createFileViewProvider(vFile, language, myManager, eventSystemEnabled)
+                                    : new SingleRootFileViewProvider(myManager, vFile, eventSystemEnabled, fileType);
+
+    return viewProvider;
   }
 
   private boolean myProcessingFileTypesChange;
@@ -336,9 +344,7 @@ public final class FileManagerImpl implements FileManager {
 
   @TestOnly
   void checkConsistency() {
-    for (VirtualFile vFile : new ArrayList<>(getVFileToViewProviderMap().keySet())) {
-      findCachedViewProvider(vFile); // complete delayed validity checks
-    }
+    removePossiblyInvalidated();
 
     Map<VirtualFile, FileViewProvider> fileToViewProvider = new HashMap<>(getVFileToViewProviderMap());
     myVFileToViewProviderMap.set(null);
@@ -366,6 +372,13 @@ public final class FileManagerImpl implements FileManager {
       if (parent != null) {
         LOG.assertTrue(getVFileToPsiDirMap().get(parent) != null);
       }
+    }
+  }
+
+  @TestOnly
+  private void removePossiblyInvalidated() {
+    for (VirtualFile vFile : new ArrayList<>(getVFileToViewProviderMap().keySet())) {
+      findCachedViewProvider(vFile); // complete delayed validity checks
     }
   }
 
@@ -691,6 +704,7 @@ public final class FileManagerImpl implements FileManager {
       LOG.error("Project is already disposed: " + project);
     }
     dispatchPendingEvents();
+
     FileViewProvider viewProvider = getRawCachedViewProvider(vFile);
     if (viewProvider == null || viewProvider.getUserData(IN_COMA) != null) {
       return null;
