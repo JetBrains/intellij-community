@@ -12,11 +12,11 @@ import com.intellij.openapi.util.TextRange
 
 internal class InlineCompletionEnterHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-    val caret = caret ?: editor.caretModel.currentCaret
-    val initialOffset = caret.offset
+    val currentCaret = caret ?: editor.caretModel.currentCaret
+    val initialOffset = currentCaret.offset
     originalHandler.execute(editor, caret, dataContext)
 
-    val finalOffset = caret.offset
+    val finalOffset = currentCaret.offset
     val handler = InlineCompletion.getHandlerOrNull(editor)
     if (initialOffset >= finalOffset || handler == null) {
       return
