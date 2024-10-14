@@ -519,11 +519,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val customMemoryOptions = options.jvmMemoryOptions?.trim()?.split(Regex("\\s+"))?.takeIf { it.isNotEmpty() }
     jvmArgs.addAll(
       index = 0,
-      elements = computeVmOptions(
+      elements = VmOptionsGenerator.generate(
         isEAP = true,
         bundledRuntime = context.bundledRuntime,
-        customJvmMemoryOptions = if (customMemoryOptions == null) mapOf("-Xms" to "750m", "-Xmx" to "1024m") else emptyMap(),
-        additionalVmOptions = customMemoryOptions,
+        customVmMemoryOptions = if (customMemoryOptions == null) mapOf("-Xms" to "750m", "-Xmx" to "1024m") else emptyMap(),
+        additionalVmOptions = customMemoryOptions ?: emptyList(),
       ),
     )
 

@@ -444,9 +444,9 @@ class MacDistributionBuilder(
 
   private fun writeMacOsVmOptions(distBinDir: Path, context: BuildContext): Path {
     val executable = context.productProperties.baseFileName
-    val fileVmOptions = VmOptionsGenerator.computeVmOptions(context).asSequence() + sequenceOf("-Dapple.awt.application.appearance=system")
-    val vmOptionsPath = distBinDir.resolve("$executable.vmoptions")
-    writeVmOptions(vmOptionsPath, fileVmOptions, separator = "\n")
+    val fileVmOptions = VmOptionsGenerator.generate(context).asSequence() + sequenceOf("-Dapple.awt.application.appearance=system")
+    val vmOptionsPath = distBinDir.resolve("${executable}.vmoptions")
+    VmOptionsGenerator.writeVmOptions(vmOptionsPath, fileVmOptions, separator = "\n")
     return vmOptionsPath
   }
 

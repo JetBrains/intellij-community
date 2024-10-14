@@ -29,7 +29,7 @@ internal class ModuleBasedProductRunner(private val rootModuleForModularLoader: 
       classpath = ideClasspath,
       args = args,
       vmProperties = systemProperties + additionalVmProperties,
-      vmOptions = VmOptionsGenerator.computeVmOptions(context) +
+      vmOptions = VmOptionsGenerator.generate(context) +
                   //we need to unset 'jna.nounpack' (see IJ-CR-125211), otherwise the process will fail to load JNA on macOS (IJPL-150094)
                   context.productProperties.additionalIdeJvmArguments.filterNot { it == "-Djna.nounpack=true" } +
                   context.productProperties.getAdditionalContextDependentIdeJvmArguments(context),
