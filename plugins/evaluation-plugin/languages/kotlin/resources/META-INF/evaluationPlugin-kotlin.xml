@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij.cce">
-    <completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCompletionEvaluationVisitor"/>
+    <!--<completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCompletionEvaluationVisitor"/>-->
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinMultiLineEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCompletionContextEvaluationVisitor"/>
     <lineCompletionVisitorFactory implementation="com.intellij.cce.visitor.KotlinLineCompletionVisitorFactory"/>
