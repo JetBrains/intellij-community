@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.generate
 
 import com.intellij.codeInsight.CodeInsightUtil
-import com.intellij.codeInsight.daemon.impl.analysis.ImportsHighlightUtil
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor
 import com.intellij.ide.fileTemplates.FileTemplateManager
@@ -17,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.search.GlobalSearchScopesCore
-import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.util.classMembers.MemberInfo
 import com.intellij.testIntegration.TestFramework
 import com.intellij.testIntegration.TestIntegrationUtils
@@ -27,10 +25,8 @@ import com.intellij.testIntegration.createTest.TestGenerator
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
@@ -68,26 +64,6 @@ class KotlinTestGenerator: TestGenerator {
                         d.shouldGeneratedAfter()
                     )
 
-                    if (file is KtFile) {
-                        val list = file.importList
-                        if (list != null) {
-                            val importStatements = file.importDirectives
-                            if (importStatements.isNotEmpty()) {
-                                val virtualFile = PsiUtilCore.getVirtualFile(list)
-                                if (virtualFile != null) {
-                                    val imports: MutableSet<String?> = HashSet<String?>()
-                                    for (base in importStatements) {
-                                        imports.add(base.text)
-                                    }
-                                    virtualFile.putCopyableUserData<MutableSet<String?>?>(
-                                        ImportsHighlightUtil.IMPORTS_FROM_TEMPLATE,
-                                        imports
-                                    )
-                                }
-                            }
-                        }
-                    }
-
                     return@runWriteAction targetClass
                 } catch (_: IncorrectOperationException) {
                     showErrorLater(project, d.className)
@@ -97,14 +73,12 @@ class KotlinTestGenerator: TestGenerator {
         }
     }
 
-    override fun toString(): String {
-        return KotlinBundle.message("intention.create.test.dialog.kotlin")
-    }
+    override fun toString(): String = KotlinBundle.message("intention.create.test.dialog.kotlin")
 
     companion object {
         private fun createTestClass(d: CreateTestDialog): PsiElement? {
             val testFrameworkDescriptor = d.selectedTestFrameworkDescriptor
-            val fileTemplateDescriptor = TestIntegrationUtils.MethodKind.TEST_CLASS.getFileTemplateDescriptor(testFrameworkDescriptor)
+            val fileTemplateDescriptor = MethodKind.TEST_CLASS.getFileTemplateDescriptor(testFrameworkDescriptor)
             val targetDirectory = d.targetDirectory
 
             val aPackage = JavaDirectoryService.getInstance().getPackage(targetDirectory)
@@ -158,7 +132,7 @@ class KotlinTestGenerator: TestGenerator {
             if (referenceElements.isEmpty()) {
                 val superTypeListEntry =
                     targetClass.addSuperTypeListEntry(superTypeEntry)
-                ShortenReferencesFacility.getInstance().shorten(superTypeListEntry)
+                shortenReferences(superTypeListEntry)
             } else {
                 referenceElements[0]!!.element.replace(superTypeEntry)
             }
@@ -177,19 +151,11 @@ class KotlinTestGenerator: TestGenerator {
             val existingNames: MutableSet<String?> = HashSet<String?>()
             var anchor: KtNamedFunction? = null
             if (generateBefore && descriptor.findSetUpMethod(targetClass) == null) {
-                anchor = allowAnalysisOnEdt {
-                    allowAnalysisFromWriteAction {
-                        KotlinGenerateTestSupportActionBase.doGenerate(editor, targetClass.containingFile, targetClass, descriptor, MethodKind.SET_UP)
-                    }
-                }
+                anchor = KotlinGenerateTestSupportActionBase.doGenerate(editor, targetClass.containingFile, targetClass, descriptor, MethodKind.SET_UP)
             }
 
             if (generateAfter && descriptor.findTearDownMethod(targetClass) == null) {
-                anchor = allowAnalysisOnEdt {
-                    allowAnalysisFromWriteAction {
-                        KotlinGenerateTestSupportActionBase.doGenerate(editor, targetClass.containingFile, targetClass, descriptor, MethodKind.TEAR_DOWN)
-                    }
-                }
+                anchor = KotlinGenerateTestSupportActionBase.doGenerate(editor, targetClass.containingFile, targetClass, descriptor, MethodKind.TEAR_DOWN)
             }
 
             val template = TestIntegrationUtils.createTestMethodTemplate(
@@ -214,8 +180,9 @@ class KotlinTestGenerator: TestGenerator {
             }
         }
 
-        private fun showErrorLater(project: Project?, targetClassName: String) {
+        private fun showErrorLater(project: Project, targetClassName: String) {
             ApplicationManager.getApplication().invokeLater(Runnable {
+                if (project.isDisposed) return@Runnable
                 Messages.showErrorDialog(project,
                                          KotlinBundle.message("intention.error.cannot.create.class.message", targetClassName),
                                          KotlinBundle.message("intention.error.cannot.create.class.title"))
@@ -228,7 +195,7 @@ class KotlinTestGenerator: TestGenerator {
             sourceClass: PsiClass?,
             editor: Editor,
             name: String?,
-            existingNames: MutableSet<in String?>?,
+            existingNames: MutableSet<in String?>,
             anchor: KtNamedFunction?
         ): KtNamedFunction? {
             val project = targetClass.getProject()
@@ -239,8 +206,8 @@ class KotlinTestGenerator: TestGenerator {
             TestIntegrationUtils.runTestMethodTemplate(MethodKind.TEST,
                                                        descriptor, editor,
                                                        targetClass, sourceClass, function,
-                                                       function.modifierList ?: function
-                                                       , name,
+                                                       function.modifierList ?: function,
+                                                       name,
                                                        true,
                                                        existingNames)
             return function

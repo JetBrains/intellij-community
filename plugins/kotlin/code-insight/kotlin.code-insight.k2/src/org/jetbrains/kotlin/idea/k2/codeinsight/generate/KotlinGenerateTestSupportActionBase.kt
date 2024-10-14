@@ -23,6 +23,10 @@ import com.intellij.testIntegration.TestFramework
 import com.intellij.testIntegration.TestIntegrationUtils.MethodKind
 import com.intellij.ui.components.JBList
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateActionBase
@@ -49,6 +53,7 @@ abstract class KotlinGenerateTestSupportActionBase(
     companion object {
         private val DUMMY_NAME = "__KOTLIN_RULEZZZ__"
 
+        @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
         internal fun doGenerate(
             editor: Editor,
             file: PsiFile, klass: KtClassOrObject,
@@ -80,19 +85,31 @@ abstract class KotlinGenerateTestSupportActionBase(
                 }
                 val functionInPlace = runWriteAction { insertMembersAfterAndReformat(editor, klass, function) }
 
-                val (bodyText, needToOverride) = analyzeInModalWindow(functionInPlace, commandName) {
-                    val functionSymbol = functionInPlace.symbol as KaNamedFunctionSymbol
-                    val overriddenSymbols = functionSymbol.directlyOverriddenSymbols.filterIsInstance<KaNamedFunctionSymbol>().toList()
+                val (bodyText, needToOverride) =
+                    allowAnalysisOnEdt {
+                        allowAnalysisFromWriteAction {
+                            analyzeInModalWindow(functionInPlace, commandName) {
+                                val functionSymbol = functionInPlace.symbol as KaNamedFunctionSymbol
+                                val overriddenSymbols =
+                                    functionSymbol.directlyOverriddenSymbols.filterIsInstance<KaNamedFunctionSymbol>().toList()
 
-                    fun isDefaultTemplate(): Boolean =
-                        (functionInPlace.bodyBlockExpression?.text?.trimStart('{')?.trimEnd('}') ?: functionInPlace.bodyExpression?.text).isNullOrBlank()
+                                fun isDefaultTemplate(): Boolean =
+                                    (functionInPlace.bodyBlockExpression?.text?.trimStart('{')?.trimEnd('}')
+                                        ?: functionInPlace.bodyExpression?.text).isNullOrBlank()
 
-                    when (overriddenSymbols.size) {
-                        0 -> if (isDefaultTemplate()) generateUnsupportedOrSuperCall(project, functionSymbol, BodyType.FromTemplate) else null
-                        1 -> generateUnsupportedOrSuperCall(project, overriddenSymbols.single(), BodyType.Super)
-                        else -> generateUnsupportedOrSuperCall(project, overriddenSymbols.first(), BodyType.QualifiedSuper)
-                    } to overriddenSymbols.isNotEmpty()
-                }
+                                when (overriddenSymbols.size) {
+                                    0 -> if (isDefaultTemplate()) generateUnsupportedOrSuperCall(
+                                        project,
+                                        functionSymbol,
+                                        BodyType.FromTemplate
+                                    ) else null
+
+                                    1 -> generateUnsupportedOrSuperCall(project, overriddenSymbols.single(), BodyType.Super)
+                                    else -> generateUnsupportedOrSuperCall(project, overriddenSymbols.first(), BodyType.QualifiedSuper)
+                                } to overriddenSymbols.isNotEmpty()
+                            }
+                        }
+                    }
 
                 runWriteAction {
                     if (bodyText != null) {

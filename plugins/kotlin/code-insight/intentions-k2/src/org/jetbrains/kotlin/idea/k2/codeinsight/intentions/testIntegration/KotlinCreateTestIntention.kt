@@ -12,10 +12,8 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.AbstractKotlinCreateTestIntention
-import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.platform.isJs
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 // do not change intention class to be aligned with docs
@@ -29,10 +27,7 @@ class KotlinCreateTestIntention: AbstractKotlinCreateTestIntention() {
             }
         }
 
-    override fun isApplicableForModule(module: Module): Boolean {
-        // TODO: KMP JS case is not applicable
-        return !module.platform.isJs()
-    }
+    override fun isApplicableForModule(module: Module): Boolean = module.platform.isJvm()
 
     override fun getTempClassName(project: Project, existingClass: KtClassOrObject): String {
         // no reason for a new temp class name, reuse existed
@@ -46,22 +41,17 @@ class KotlinCreateTestIntention: AbstractKotlinCreateTestIntention() {
         generatedFile: PsiFile,
         srcModule: Module
     ) {
-        project.executeCommand<Unit>(
-            KotlinBundle.message("convert.class.0.to.kotlin", generatedClass.name.toString()),
-            this
-        ) {
-            runWriteAction {
-                generatedClass.methods.forEach {
-                    it.throwsList.referenceElements.forEach { referenceElement -> referenceElement.delete() }
-                }
+        runWriteAction {
+            generatedClass.methods.forEach {
+                it.throwsList.referenceElements.forEach { referenceElement -> referenceElement.delete() }
             }
+        }
 
-            if (existingClass != null) {
-                activateFileWithPsiElement(existingClass)
-            } else {
-                with(PsiDocumentManager.getInstance(project)) {
-                    getDocument(generatedFile)?.let { doPostponedOperationsAndUnblockDocument(it) }
-                }
+        if (existingClass != null) {
+            activateFileWithPsiElement(existingClass)
+        } else {
+            with(PsiDocumentManager.getInstance(project)) {
+                getDocument(generatedFile)?.let { doPostponedOperationsAndUnblockDocument(it) }
             }
         }
     }
