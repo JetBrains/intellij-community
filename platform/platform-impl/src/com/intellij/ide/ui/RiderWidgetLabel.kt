@@ -25,13 +25,13 @@ import kotlin.math.floor
  * @author Alexander Lobas
  */
 @ApiStatus.Internal
-class RiderWidgetLabel(text: @Nls String, private val clientSide: Boolean) : JLabel(text) {
+open class RiderWidgetLabel(text: @Nls String, private val clientSide: Boolean) : JLabel(text) {
   companion object {
     fun createStatusBarBorder(): Border {
       if (ExperimentalUI.Companion.isNewUI()) {
         return CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.StatusBar.BORDER_COLOR, 1, 0, 0, 0), JBUI.Borders.emptyLeft(10))
       }
-      return JBUI.Borders.emptyLeft(1)
+      return JBUI.Borders.emptyTop(1)
     }
   }
 
