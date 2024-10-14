@@ -38,7 +38,6 @@ import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.time.DayOfWeek
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
@@ -108,7 +107,8 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     for (child in files) {
-      if (child.fileName.toString() != "log") {
+      val fileName = child.fileName.toString()
+      if (fileName != "log" && fileName != "bin") {
         launch {
           NioFiles.deleteRecursively(child)
         }
@@ -117,7 +117,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     buildDir
   }
 
-  val runDir = buildDir.resolve(productDirNameWithoutClassifier)
+  val runDir = buildDir
   val context = createBuildContext(createProductProperties = createProductProperties, request = request, runDir = runDir, jarCacheDir = request.jarCacheDir, buildDir = buildDir)
   compileIfNeeded(context)
 
@@ -134,15 +134,22 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
         val binDir = Files.createDirectories(runDir.resolve("bin"))
+        val oldFiles = Files.newDirectoryStream(binDir).use { it -> it.toCollection(HashSet()) }
+
         val osDistributionBuilder = getOsDistributionBuilder(os = OsFamily.currentOs, context = context)
         if (osDistributionBuilder != null) {
-          val vmOptionsFile = osDistributionBuilder.writeVmOptions(binDir)
-          // copying outside the installation directory is necessary to specify system property "jb.vmOptionsFile"
-          Files.copy(vmOptionsFile, binDir.parent.parent.resolve(vmOptionsFile.fileName), StandardCopyOption.REPLACE_EXISTING)
+          oldFiles.remove(osDistributionBuilder.writeVmOptions(binDir))
         }
 
         val ideaPropertyFile = binDir.resolve(PathManager.PROPERTIES_FILE_NAME)
         Files.writeString(ideaPropertyFile, createIdeaPropertyFile(context))
+        oldFiles.remove(ideaPropertyFile)
+
+        if (oldFiles.isNotEmpty()) {
+          for (oldFile in oldFiles) {
+            NioFiles.deleteRecursively(oldFile)
+          }
+        }
       }
 
       val (platformDistributionEntries, classPath) = spanBuilder("layout platform").use {
@@ -420,7 +427,7 @@ private suspend fun createBuildContext(
       request.productionClassOutput.parent
     }
     else {
-      buildOptionsTemplate?.classOutDir?.let { Path.of(it) }
+      buildOptionsTemplate.classOutDir?.let { Path.of(it) }
       ?: System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)?.let { Path.of(it) }
       ?: request.productionClassOutput.parent
     }

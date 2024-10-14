@@ -50,7 +50,7 @@ fun getIdeSystemProperties(runDir: Path): VmProperties {
       // require bundled JNA dispatcher lib
       "jna.nosys" to "true",
       "jna.noclasspath" to "true",
-      "jb.vmOptionsFile" to "${Files.newDirectoryStream(runDir.parent, "*.vmoptions").use { it.singleOrNull() }}",
+      "jb.vmOptionsFile" to "${Files.newDirectoryStream(runDir.resolve("bin"), "*.vmoptions").use { it.single() }}",
       "compose.swing.render.on.graphics" to "true",
     )
   )
