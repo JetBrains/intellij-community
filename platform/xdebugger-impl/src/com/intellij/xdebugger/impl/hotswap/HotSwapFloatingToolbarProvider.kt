@@ -25,6 +25,7 @@ import icons.PlatformDebuggerImplIcons
 import kotlinx.coroutines.*
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Insets
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -115,11 +116,14 @@ private class HotSwapWithRebuildAction : AnAction(), CustomComponentAction {
 }
 
 private class HotSwapToolbarComponent(action: AnAction, presentation: Presentation, place: String)
-  : JPanel(BorderLayout(JBUI.scale(4), 0)) {
+  : JPanel(BorderLayout(0, 0)) {
 
   private val tooltip = createHelpTooltip()
     .setShortcut(ActionManager.getInstance().getKeyboardShortcut("XDebugger.Hotswap.Modified.Files"))
-  val button = ActionButtonWithText(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).apply {
+  val button = object : ActionButtonWithText(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+    override fun getMargins(): Insets = JBUI.insets(4, 6)
+    override fun iconTextSpace(): Int = JBUI.scale(4)
+  }.apply {
     setHorizontalTextPosition(SwingConstants.LEADING)
     tooltip.installOn(this)
     installPopupMenu()
@@ -129,6 +133,7 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
     isOpaque = false
     add(button, BorderLayout.CENTER)
     tooltip.installOn(this)
+    border = JBUI.Borders.emptyLeft(JBUI.scale(2))
   }
 
   fun update(status: HotSwapButtonStatus, presentation: Presentation) {
