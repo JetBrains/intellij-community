@@ -56,25 +56,25 @@ class FreezeAnalyzerTest {
 
   @Test
   fun testLockFreeze2() {
-    val threadDump = File(this::class.java.classLoader.getResource("freezes/readWriteLock/KTIJ-23464.txt")!!.path).toPath().readText()
+    val threadDump = File(this::class.java.classLoader.getResource("freezes/readWriteLock/KTIJ-23464.txt")!!.path).toPath().readText().replace("2.", ".")
     FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in org.jetbrains.kotlin.org.eclipse.aether.internal.impl.synccontext.named.DiscriminatingNameMapper.getHostname")
   }
 
   @Test
   fun testLockFreeze3() {
-    val threadDump = File(this::class.java.classLoader.getResource("freezes/readWriteLock/IDEA-344522.txt")!!.path).toPath().readText()
+    val threadDump = File(this::class.java.classLoader.getResource("freezes/readWriteLock/IDEA-344522.txt")!!.path).toPath().readText().replace("2.", ".")
     FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.jetbrains.jsonSchema.impl.PatternProperties.<init>")
   }
 
   @Test
   fun testLockFreeze4() {
-    val threadDump = File(this::class.java.classLoader.getResource("freezes/readWriteLock/WEB-65320.txt")!!.path).toPath().readText()
+    val threadDump = File(this::class.java.classLoader.getResource("freezes/readWriteLock/WEB-65320.txt")!!.path).toPath().readText().replace("2.", ".")
     FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in com.intellij.lang.javascript.buildTools.npm.PackageJsonUtil.findChildPackageJsonFile")
   }
 
   @Test
   fun testLockFreeze5() {
-    val threadDump = File(this::class.java.classLoader.getResource("freezes/readWriteLock/KT-65652.txt")!!.path).toPath().readText()
+    val threadDump = File(this::class.java.classLoader.getResource("freezes/readWriteLock/KT-65652.txt")!!.path).toPath().readText().replace("2.", ".")
     FreezeAnalyzer.analyzeFreeze(threadDump)?.message.shouldBe("Long read action in org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPluginsKt.readFileContentFromJar")
   }
 
@@ -117,7 +117,7 @@ class FreezeAnalyzerTest {
 
   @Test
   fun testNoFreeze() {
-    val threadDump = File(this::class.java.classLoader.getResource("freezes/noFreeze/lowMemory.txt")!!.path).toPath().readText()
+    val threadDump = File(this::class.java.classLoader.getResource("freezes/noFreeze/lowMemory.txt")!!.path).toPath().readText().replace("2.", ".")
     FreezeAnalyzer.analyzeFreeze(threadDump, testName = "kotlin/testCase")?.message.shouldBe("kotlin/testCase: EDT is not blocked/busy (freeze can be the result of extensive GC)")
   }
 }
