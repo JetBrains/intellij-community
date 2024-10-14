@@ -32,6 +32,8 @@ public final class LicensingFacade {
   @SuppressWarnings("StaticNonFinalField")
   public static volatile LicensingFacade INSTANCE;
   public boolean ai_enabled;
+  /** @deprecated temporary field; use {@link #metadata} instead */
+  @Deprecated(forRemoval = true)
   public String subType;
 
   public static @Nullable LicensingFacade getInstance() {
