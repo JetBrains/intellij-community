@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -43,6 +44,7 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
     scroll.setViewportView(diagrams)
 
     val panel = ActionPanel(project, vm, scroll.viewport)
+    panel.border = JBUI.Borders.customLineBottom(JBColor.border())
     addToTop(panel)
     addToCenter(scroll)
 
