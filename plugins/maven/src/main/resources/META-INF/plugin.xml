@@ -396,9 +396,6 @@
     <registryKey key="maven.sync.refresh.resolved.artifacts" defaultValue="false"
                  description="Refresh resolved artifacts after Maven sync"/>
 
-    <registryKey key="maven.incremental.sync.in.ui" defaultValue="true"
-                 description="Show Maven incremental sync option in UI"/>
-
     <registryKey key="maven.incremental.sync.resolve.dependencies.incrementally" defaultValue="true"
                  description="During incremental sync, resolve dependencies incrementally"/>
 
@@ -803,11 +800,17 @@
       <reference id="Maven.DownloadAllSourcesAndDocs"/>
     </group>
 
-    <group id="Maven.NavigatorActionsToolbar">
+    <group id="Maven.SyncAllGroup">
       <reference id="Maven.SyncIncrementally"/>
       <reference id="Maven.Reimport"/>
-      <reference id="Maven.UpdateFolders"/>
+    </group>
 
+    <group id="Maven.NavigatorActionsToolbar">
+      <group id="Maven.SyncAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.SyncActionGroup"
+             icon="AllIcons.Actions.Refresh">
+        <reference id="Maven.SyncAllGroup"/>
+      </group>
+      <reference id="Maven.UpdateFolders"/>
       <group id="Maven.DownloadAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
              icon="AllIcons.Actions.Download">
         <reference id="Maven.DownloadAllGroup"/>
