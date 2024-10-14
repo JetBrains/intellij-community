@@ -319,8 +319,7 @@ public final class DiffIterableUtil {
   }
 
   public static class ChangeBuilder extends ChangeBuilderBase {
-    @Nullable private Diff.Change myFirstChange;
-    @Nullable private Diff.Change myLastChange;
+    private final List<Range> myChanges = new ArrayList<>();
 
     public ChangeBuilder(int length1, int length2) {
       super(length1, length2);
@@ -328,20 +327,13 @@ public final class DiffIterableUtil {
 
     @Override
     protected void addChange(int start1, int start2, int end1, int end2) {
-      Diff.Change change = new Diff.Change(start1, start2, end1 - start1, end2 - start2, null);
-      if (myLastChange != null) {
-        myLastChange.link = change;
-      }
-      else {
-        myFirstChange = change;
-      }
-      myLastChange = change;
+      myChanges.add(new Range(start1, end1, start2, end2));
     }
 
     @NotNull
     public DiffIterable finish() {
       doFinish();
-      return create(myFirstChange, getLength1(), getLength2());
+      return create(myChanges, getLength1(), getLength2());
     }
   }
 
