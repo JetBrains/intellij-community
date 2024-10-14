@@ -60,9 +60,11 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
@@ -72,6 +74,7 @@ public final class CompileDriver {
 
   private static final Key<Boolean> COMPILATION_STARTED_AUTOMATICALLY = Key.create("compilation_started_automatically");
   private static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
+  private static final Key<Boolean> REBUILD_CLEAN = Key.create("rebuild_clean_requested");
   private static final long ONE_MINUTE_MS = 60L * 1000L;
 
   @ApiStatus.Internal
@@ -90,8 +93,10 @@ public final class CompileDriver {
   public void setCompilerFilter(@SuppressWarnings("unused") CompilerFilter compilerFilter) {
   }
 
-  public void rebuild(CompileStatusNotification callback) {
-    startup(new ProjectCompileScope(myProject), true, false, false, callback, null);
+  public void rebuild(CompileStatusNotification callback, boolean cleanSystemData) {
+    ProjectCompileScope scope = new ProjectCompileScope(myProject);
+    REBUILD_CLEAN.set(scope, cleanSystemData);
+    startup(scope, true, false, false, callback, null);
   }
 
   public void make(CompileScope scope, CompileStatusNotification callback) {
@@ -427,6 +432,7 @@ public final class CompileDriver {
       Tracer.Span compileWorkSpan = Tracer.start("compileWork");
       CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
       final BuildManager buildManager = BuildManager.getInstance();
+      final Ref<TaskFutureAdapter<Void>> buildSystemDataCleanupTask = new Ref<>(null);
       try {
         buildManager.postponeBackgroundTasks();
         buildManager.cancelAutoMakeTasks(myProject);
@@ -434,11 +440,27 @@ public final class CompileDriver {
         if (message != null) {
           compileContext.addMessage(message);
         }
+
         if (isRebuild) {
-          CompilerUtil.runInContext(compileContext, JavaCompilerBundle.message("progress.text.clearing.build.system.data"),
-                                    (ThrowableRunnable<Throwable>)() -> compilerCacheManager
-                                      .clearCaches(compileContext));
+          // if possible, ensure the rebuild starts from the clean state
+          // if CLEAR_OUTPUT_DIRECTORY is allowed, we can clear cached directory completely, otherwise the build won't be able to clean outputs correctly without build caches
+          boolean canCleanBuildSystemData = Boolean.TRUE.equals(REBUILD_CLEAN.get(scope)) && CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY;
+
+          CompilerUtil.runInContext(compileContext, JavaCompilerBundle.message("progress.text.clearing.build.system.data"), (ThrowableRunnable<Throwable>)() -> {
+            TaskFuture<Boolean> cancelPreload = canCleanBuildSystemData? buildManager.cancelPreloadedBuilds(myProject) : new TaskFutureAdapter<>(CompletableFuture.completedFuture(Boolean.TRUE));
+
+            compilerCacheManager.clearCaches(compileContext);
+
+            if (canCleanBuildSystemData) {
+              cancelPreload.waitFor();
+              File[] systemFiles = buildManager.getProjectSystemDirectory(myProject).listFiles();
+              if (systemFiles != null && systemFiles.length > 0) {
+                buildSystemDataCleanupTask.set(new TaskFutureAdapter<>(FileUtil.asyncDelete(Arrays.asList(systemFiles))));
+              }
+            }
+          });
         }
+
         final boolean beforeTasksOk = executeCompileTasks(compileContext, true);
 
         final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
@@ -486,6 +508,11 @@ public final class CompileDriver {
         );
         if (status == ExitStatus.SUCCESS) {
           BuildUsageCollector.logBuildCompleted(duration, isRebuild, false);
+        }
+
+        TaskFutureAdapter<Void> cleanupTask = buildSystemDataCleanupTask.get();
+        if (cleanupTask != null) {
+          cleanupTask.waitFor();
         }
       }
     };
