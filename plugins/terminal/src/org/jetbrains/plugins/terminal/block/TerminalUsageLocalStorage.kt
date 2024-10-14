@@ -27,6 +27,7 @@ internal class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsag
   fun recordBlockTerminalUsed() {
     val curVersionString = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
     state.blockTerminalUsedLastVersion = curVersionString
+    state.blockTerminalUsedLastTimeMillis = System.currentTimeMillis()
   }
 
   override fun getState(): State = state
@@ -40,6 +41,7 @@ internal class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsag
     val shellToExecutedCommandsNumber: MutableMap<String, Int> = HashMap()
     var feedbackNotificationShown: Boolean = false
     var blockTerminalUsedLastVersion: String? = null
+    var blockTerminalUsedLastTimeMillis: Long = 0
   }
 
   companion object {
