@@ -6062,6 +6062,24 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  public void testTypeAliasToAny() {
+    doTest("int | Any", """
+      from typing import Any, TypeAlias
+      
+      Plug: TypeAlias = Any
+      expr: int | Plug
+      """);
+  }
+
+  public void testNewStyleTypeAliasToAny() {
+    doTest("int | Any", """
+      from typing import Any
+      
+      type Plug = Any
+      expr: int | Plug
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
