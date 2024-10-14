@@ -3231,4 +3231,24 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
       }
       """);
   }
+
+  public void testCompletionWithBrokenClass() {
+    myFixture.configureByText("UICallback.java", """
+      public <caret>interface UICallback {
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+    for (LookupElement element : elements) {
+      if (!element.getLookupString().equals("UICallback")) {
+        continue;
+      }
+      selectItem(element);
+      break;
+    }
+
+    myFixture.checkResult("""
+      public UICallbackinterface UICallback {
+      }
+      """);
+  }
 }
