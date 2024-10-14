@@ -65,8 +65,6 @@ class GitRepositoryImpl private constructor(
     Disposer.register(this, untrackedFilesHolder)
 
     tagHolder = GitTagHolder(this)
-
-    installListeners()
   }
 
   @Deprecated("Deprecated in Java")
