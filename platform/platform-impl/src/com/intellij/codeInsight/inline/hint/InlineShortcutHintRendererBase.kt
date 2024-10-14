@@ -68,6 +68,7 @@ abstract class InlineShortcutHintRendererBase(text: String?) : HintRenderer(text
     super.paint(inlay, g, r, textAttributes)
   }
 
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun isAvailableForLine(editor: Editor, lineNumber: Int): Boolean {
