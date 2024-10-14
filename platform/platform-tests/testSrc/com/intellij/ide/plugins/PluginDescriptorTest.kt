@@ -539,17 +539,22 @@ class PluginDescriptorTest {
   
   @Test
   fun `required content module uses same classloader as the main module`() {
+    val samplePluginDir = pluginDirPath.resolve("sample-plugin")
     PluginBuilder()
       .noDepends()
       .id("sample.plugin")
-      .module("required.module", PluginBuilder().packagePrefix("required"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module("required.module", PluginBuilder().packagePrefix("required"), loadingRule = ModuleLoadingRule.REQUIRED, separateJar = true)
       .module("optional.module", PluginBuilder().packagePrefix("optional"))
-      .build(pluginDirPath.resolve("sample-plugin"))
+      .build(samplePluginDir)
     val result = PluginSetTestBuilder(pluginDirPath).build()
     assertThat(result.enabledPlugins).hasSize(1)
     val mainClassLoader = result.enabledPlugins.single().pluginClassLoader
     val requiredModuleClassLoader = result.findEnabledModule("required.module")!!.pluginClassLoader
     assertThat(requiredModuleClassLoader).isSameAs(mainClassLoader)
+    assertThat((mainClassLoader as PluginClassLoader).files).containsExactly(
+      samplePluginDir.resolve("lib/sample.plugin.jar"),
+      samplePluginDir.resolve("lib/modules/required.module.jar"),
+    )
     val optionalModuleClassLoader = result.findEnabledModule("optional.module")!!.pluginClassLoader
     assertThat(optionalModuleClassLoader).isNotSameAs(mainClassLoader)
   }

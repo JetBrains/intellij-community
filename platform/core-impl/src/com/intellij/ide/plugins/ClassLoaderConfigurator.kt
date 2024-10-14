@@ -182,12 +182,24 @@ class ClassLoaderConfigurator(
       return exisingMainInfo.mainClassLoader
     } 
 
-    var files = module.jarFiles
-    if (files == null) {
+    var mainModuleFiles = module.jarFiles
+    if (mainModuleFiles == null) {
       if (!module.isUseIdeaClassLoader) {
         log.error("jarFiles is not set for $module")
       }
-      files = emptyList()
+      mainModuleFiles = emptyList()
+    }
+    var allFiles: MutableList<Path>? = null
+    for (contentModule in module.content.modules) {
+      if (contentModule.loadingRule == ModuleLoadingRule.REQUIRED) {
+        val customJarFiles = contentModule.requireDescriptor().jarFiles
+        if (customJarFiles != null) {
+          if (allFiles == null) {
+            allFiles = ArrayList(mainModuleFiles)
+          }
+          allFiles.addAll(customJarFiles)
+        }
+      }
     }
 
     var libDirectories = Collections.emptyList<Path>()
@@ -197,6 +209,7 @@ class ClassLoaderConfigurator(
     }
 
     val mimicJarUrlConnection = !module.isBundled && module.vendor != "JetBrains"
+    val files = allFiles ?: mainModuleFiles
     val pluginClassPath = ClassPath(/* files = */ files,
                                     /* configuration = */ DEFAULT_CLASSLOADER_CONFIGURATION,
                                     /* resourceFileFactory = */ resourceFileFactory,
