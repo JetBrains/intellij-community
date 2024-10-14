@@ -14,7 +14,6 @@ jobs:
       fail-fast: false
       matrix:
         branch-name:
-          - releases/233
           - releases/241
           - releases/242
           - main
