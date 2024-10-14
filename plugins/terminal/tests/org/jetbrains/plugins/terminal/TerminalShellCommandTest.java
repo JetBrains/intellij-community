@@ -2,16 +2,19 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Maps;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+@TestFor(classes = {LocalTerminalDirectRunner.class, LocalTerminalStartCommandBuilder.class})
 public class TerminalShellCommandTest extends BasePlatformTestCase {
   public void testDontAddAnything() {
     if (SystemInfo.isUnix) {
@@ -42,7 +45,7 @@ public class TerminalShellCommandTest extends BasePlatformTestCase {
   }
 
   private List<String> getCommand(@NotNull String shellPath, @NotNull Map<String, String> envs, boolean shellIntegration) {
-    List<String> shellCommand = LocalTerminalDirectRunner.convertShellPathToCommand(shellPath);
+    List<String> shellCommand = LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath);
     if (shellIntegration) {
       var runner = new LocalTerminalDirectRunner(getProject());
       ShellStartupOptions options = runner.injectShellIntegration(shellCommand, envs);

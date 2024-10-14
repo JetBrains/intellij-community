@@ -57,6 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.*;
+import static org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder.convertShellPathToCommand;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
@@ -66,8 +67,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String IJ_COMMAND_END_MARKER = "JETBRAINS_INTELLIJ_COMMAND_END_MARKER";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
-  private static final String LOGIN_CLI_OPTION = "--login";
-  private static final List<String> LOGIN_CLI_OPTIONS = List.of(LOGIN_CLI_OPTION, "-l");
+  @ApiStatus.Internal
+  public static final String LOGIN_CLI_OPTION = "--login";
+  @ApiStatus.Internal
+  public static final List<String> LOGIN_CLI_OPTIONS = List.of(LOGIN_CLI_OPTION, "-l");
   private static final String INTERACTIVE_CLI_OPTION = "-i";
   private static final String BASH_NAME = "bash";
   private static final String SH_NAME = "sh";
@@ -289,34 +292,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     finally {
       myStartupOptionsThreadLocal.remove();
     }
-  }
-
-  public static @NotNull List<String> convertShellPathToCommand(@NotNull String shellPath) {
-    List<String> shellCommand;
-    if (isAbsoluteFilePathAndExists(shellPath)) {
-      shellCommand = List.of(shellPath);
-    }
-    else {
-      shellCommand = ParametersListUtil.parse(shellPath, false, !SystemInfo.isWindows);
-    }
-    String shellExe = ContainerUtil.getFirstItem(shellCommand);
-    if (shellExe == null) return shellCommand;
-    String shellName = PathUtil.getFileName(shellExe);
-    if (!containsLoginOrInteractiveOption(shellCommand)) {
-      shellCommand = new ArrayList<>(shellCommand);
-      if (isLoginOptionAvailable(shellName) && SystemInfo.isMac) {
-        shellCommand.add(LOGIN_CLI_OPTION);
-      }
-      if (isInteractiveOptionAvailable(shellName)) {
-        shellCommand.add(INTERACTIVE_CLI_OPTION);
-      }
-    }
-    return List.copyOf(shellCommand);
-  }
-
-  private static boolean isAbsoluteFilePathAndExists(@NotNull String path) {
-    File file = new File(path);
-    return file.isAbsolute() && file.isFile();
   }
 
   private static @NotNull String stringifyProcessInfo(String @NotNull[] command,
@@ -553,14 +528,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
            || shellName.equals(FISH_NAME) && Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false);
   }
 
-  private static boolean isLoginOptionAvailable(@NotNull String shellName) {
-    return isBashZshFish(shellName);
-  }
-
-  private static boolean isInteractiveOptionAvailable(@NotNull String shellName) {
-    return isBashZshFish(shellName);
-  }
-
   private static boolean isBashZshFish(@NotNull String shellName) {
     return shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME)) ||
            shellName.equals(ZSH_NAME) || shellName.equals(FISH_NAME);
@@ -592,11 +559,4 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
   }
 
-  private static boolean containsLoginOrInteractiveOption(List<String> command) {
-    return isLogin(command) || command.contains(INTERACTIVE_CLI_OPTION);
-  }
-
-  private static boolean isLogin(@NotNull List<String> command) {
-    return ContainerUtil.exists(command, LOGIN_CLI_OPTIONS::contains);
-  }
 }
