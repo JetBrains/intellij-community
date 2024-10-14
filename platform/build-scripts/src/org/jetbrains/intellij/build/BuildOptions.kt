@@ -481,6 +481,11 @@ data class BuildOptions(
   var isNightlyBuild: Boolean = getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, (buildNumber?.count { it == '.' } ?: 1) <= 1)
 
   /**
+   * Specifies an additional list of compatible plugin names which should not be built, see [ProductModulesLayout.compatiblePluginsToIgnore]
+   */
+  var compatiblePluginsToIgnore: Set<String> = getSetProperty("intellij.build.compatible.plugins.to.ignore")
+
+  /**
    * If `false`, [org.jetbrains.intellij.build.impl.projectStructureMapping.buildJarContentReport]
    * won't be affected by [PluginBundlingRestrictions.includeInDistribution]
    */
