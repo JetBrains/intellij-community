@@ -157,7 +157,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (declaredType.isUnsignedNumberType()) return false
         val value = constant.getValue(declaredType) ?: return false
         if (value !is Int && value !is Long && value !is Float && value !is Double && value !is String) return false
-        val actualType = constant.type 
+        val actualType = constant.type
         val dfConstantType = DfTypes.constant(value, actualType.toDfType())
         addInstruction(PushValueInstruction(dfConstantType, KotlinExpressionAnchor(expr)))
         addImplicitConversion(actualType, declaredType)
@@ -1231,8 +1231,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(ControlTransferInstruction(trapTracker.transferValue(DfaControlTransferValue.RETURN_TRANSFER)))
         } else {
             val body = if (expr is KtBreakExpression) targetLoop else targetLoop.body!!
+            val trapContainer = if (expr is KtBreakExpression) body else body.parent
             val transfer = createTransfer(body, body, factory.unknown, expr is KtBreakExpression)
-            val transferValue = factory.controlTransfer(transfer, trapTracker.getTrapsInsideElement(body))
+            val transferValue = factory.controlTransfer(transfer, trapTracker.getTrapsInsideElement(trapContainer))
             addInstruction(ControlTransferInstruction(transferValue))
         }
     }

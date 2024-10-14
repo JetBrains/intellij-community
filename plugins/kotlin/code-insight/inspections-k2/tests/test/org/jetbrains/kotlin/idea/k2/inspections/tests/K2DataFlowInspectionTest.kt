@@ -71,6 +71,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testMapEmpty() = doTest()
     fun testMath() = doTest()
     fun testMembers() = doTest()
+    fun testNestedLoopLabel() = doTest()
     fun testNothingType() = doTest()
     fun testPlatformType() {
         // KTIJ-22430
