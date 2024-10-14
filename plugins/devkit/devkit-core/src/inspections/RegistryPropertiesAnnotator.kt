@@ -86,7 +86,7 @@ internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
     }
   }
 
-  private class ShowEPDeclarationIntention(private val propertyName: String) : IntentionAction {
+  private class ShowEPDeclarationIntention(private val propertyName: String) : IntentionAction, DumbAware {
     override fun startInWriteAction(): Boolean = false
 
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
@@ -119,7 +119,7 @@ internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
     }
   }
 
-  private class AddDescriptionKeyIntention(private val myPropertyName: String) : IntentionAction {
+  private class AddDescriptionKeyIntention(private val myPropertyName: String) : IntentionAction, DumbAware {
 
     @Nls
     override fun getText(): String = DevKitBundle.message("registry.properties.annotator.add.description.text", myPropertyName)
