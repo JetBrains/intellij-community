@@ -23,11 +23,6 @@
     <module name="intellij.searchEverywhereMl.ranking.java"/>
     <module name="intellij.searchEverywhereMl.ranking.yaml"/>
     <module name="intellij.searchEverywhereMl.ranking.vcs"/>
-    <module name="intellij.searchEverywhereMl.semantics"/>
-    <module name="intellij.searchEverywhereMl.semantics.java"/>
-    <module name="intellij.searchEverywhereMl.semantics.kotlin"/>
-    <module name="intellij.searchEverywhereMl.semantics.python"/>
-    <module name="intellij.searchEverywhereMl.semantics.testCommands"/>
   </content>
 
   <resource-bundle>messages.searchEverywhereMlCoreBundle</resource-bundle>
@@ -87,6 +82,10 @@
 
     <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.itemSelectedListener"
                     interface="com.intellij.searchEverywhereMl.SearchEverywhereItemSelectedListener"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.textEmbeddingProvider"
+                    interface="com.intellij.searchEverywhereMl.TextEmbeddingProvider"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

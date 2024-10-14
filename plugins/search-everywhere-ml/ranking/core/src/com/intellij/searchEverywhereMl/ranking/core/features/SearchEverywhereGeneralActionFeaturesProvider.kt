@@ -9,13 +9,9 @@ import com.intellij.ide.util.gotoByName.getAnActionText
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.platform.ml.embeddings.jvm.indices.EntityId
-import com.intellij.platform.ml.embeddings.jvm.wrappers.ActionEmbeddingsStorageWrapper
-import com.intellij.platform.ml.embeddings.utils.generateEmbeddingBlocking
+import com.intellij.searchEverywhereMl.TextEmbeddingProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_ENABLED
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_HIGH_PRIORITY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.ITEM_TYPE
@@ -66,11 +62,10 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
       data.addAll(getNameMatchingFeatures(it, searchQuery))
     }
     if (similarityScore != null) {
-      data.add(SIMILARITY_SCORE.with(roundDouble(similarityScore!!)))
+      data.add(SIMILARITY_SCORE.with(roundDouble(similarityScore)))
     }
     else if (ApplicationManager.getApplication().isEAP) { // for now, we can collect the data only from EAP builds
-      val action = extractAction(element)
-      val actionEmbedding = getActionEmbedding(action, valueName)
+      val actionEmbedding = getActionEmbedding(valueName)
       val queryEmbedding = getQueryEmbedding(searchQuery, split = false)
       if (actionEmbedding != null && queryEmbedding != null) {
         data.add(SIMILARITY_SCORE.with(roundDouble(actionEmbedding.cosine(queryEmbedding).toDouble())))
@@ -90,6 +85,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
     }
   }
 
+  @Suppress("Unused")
   private fun extractAction(item: Any): AnAction? {
     if (item is AnAction) return item
     return ((if (item is GotoActionModel.MatchedValue) item.value else item) as? GotoActionModel.ActionWrapper)?.action
@@ -97,15 +93,10 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
 
   private fun isHighPriority(priority: Int): Boolean = priority >= 11001
 
-  private fun getActionEmbedding(action: AnAction?, actionText: String?): FloatTextEmbedding? {
+  private fun getActionEmbedding(actionText: String?): FloatTextEmbedding? {
     var embedding: FloatTextEmbedding? = null
-    if (action != null) {
-      embedding = ActionManager.getInstance().getId(action)?.let { id ->
-        runBlockingMaybeCancellable { ActionEmbeddingsStorageWrapper.getInstance().lookup(EntityId(id)) }
-      }
-    }
-    if (embedding == null && actionText != null) {
-      embedding = generateEmbeddingBlocking(actionText)
+    if (actionText != null) {
+      embedding = TextEmbeddingProvider.getProvider()?.embed(actionText)
     }
     return embedding
   }

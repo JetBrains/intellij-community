@@ -3,7 +3,6 @@
 
   <dependencies>
     <module name="intellij.searchEverywhereMl.ranking.ext"/>
-    <module name="intellij.platform.ml.embeddings"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.searchEverywhereMl">

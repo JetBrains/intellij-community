@@ -17,7 +17,8 @@ interface SearchEverywhereMlContributorReplacement {
 
     @JvmStatic
     fun getFirstExtension(): SearchEverywhereMlContributorReplacement? {
-      return EP_NAME.extensions.firstOrNull()
+      val extensions = EP_NAME.extensionList
+      return extensions.firstOrNull()
     }
 
     @JvmStatic
