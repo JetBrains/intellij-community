@@ -4,13 +4,22 @@ package com.intellij.openapi.diagnostic
 import com.intellij.platform.util.coroutines.internal.runSuspend
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import org.jetbrains.annotations.TestOnly
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+
+private sealed interface LogQueueItem
 
 internal data class LogEvent(
   val julLogger: java.util.logging.Logger,
   val level: LogLevel,
   val message: String?,
   val throwable: Throwable?,
-)
+) : LogQueueItem
+
+private class AwaitQueueEvent(
+  val continuation: Continuation<Unit>,
+) : LogQueueItem
 
 internal fun LogEvent.log() {
   if (asyncLog != null) {
@@ -46,13 +55,18 @@ private val asyncLog: AsyncLog? = run {
   }
 }
 
+@TestOnly
+fun awaitLogQueueProcessed() {
+  asyncLog?.awaitQueueProcessed()
+}
+
 internal fun shutdownLogProcessing() {
   asyncLog?.shutdown()
 }
 
 private class AsyncLog {
 
-  private val queue: Channel<LogEvent> = Channel(capacity = Channel.UNLIMITED)
+  private val queue: Channel<LogQueueItem> = Channel(capacity = Channel.UNLIMITED)
 
   private val job: Job = run {
     // separate dispatcher which is outside the 64-thread limit
@@ -61,13 +75,24 @@ private class AsyncLog {
     @OptIn(DelicateCoroutinesApi::class)
     GlobalScope.launch(dispatcher + CoroutineName("AsyncLog")) {
       for (event in queue) {
-        event.logNow()
+        when (event) {
+          is LogEvent -> event.logNow()
+          is AwaitQueueEvent -> event.continuation.resume(Unit)
+        }
       }
     }
   }
 
   fun log(event: LogEvent) {
     check(queue.trySend(event).isSuccess)
+  }
+
+  fun awaitQueueProcessed() {
+    runSuspend {
+      suspendCancellableCoroutine {
+        check(queue.trySend(AwaitQueueEvent(it)).isSuccess)
+      }
+    }
   }
 
   fun shutdown() {

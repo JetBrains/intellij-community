@@ -292,6 +292,8 @@ f:com.intellij.openapi.application.PathManager
 - s:isUnderHomeDirectory(java.lang.String):Z
 - s:isUnderHomeDirectory(java.nio.file.Path):Z
 - s:setExplicitConfigPath(java.lang.String):V
+f:com.intellij.openapi.diagnostic.AsyncLogKt
+- sf:awaitLogQueueProcessed():V
 f:com.intellij.openapi.diagnostic.Attachment
 - sf:EMPTY_ARRAY:com.intellij.openapi.diagnostic.Attachment[]
 - <init>(java.lang.String,java.io.File,java.lang.String):V
