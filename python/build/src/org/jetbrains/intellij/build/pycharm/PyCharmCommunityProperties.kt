@@ -10,7 +10,7 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.Files
 import java.nio.file.Path
 
-class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPropertiesBase() {
+open class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPropertiesBase() {
   override val customProductCode: String
     get() = "PC"
 
