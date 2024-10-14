@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.idea.base.analysis.injectionRequiresOnlyEssentialHighlighting
 import org.jetbrains.kotlin.idea.base.analysis.isInjectedFileShouldBeAnalyzed
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -70,7 +71,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
 
     override fun analyze(file: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
         val highlightingLevelManager = HighlightingLevelManager.getInstance(file.project)
-        if (highlightingLevelManager.runEssentialHighlightingOnly(file)) {
+        if (highlightingLevelManager.runEssentialHighlightingOnly(file) || file.injectionRequiresOnlyEssentialHighlighting) {
             return true
         }
 

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPromoter.Companion.EP_NAME
@@ -17,6 +18,8 @@ import org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPro
 interface KotlinIdeInjectedFilesAnalysisPromoter {
     fun shouldRunAnalysisForInjectedFile(viewProvider: FileViewProvider): Boolean
 
+    fun shouldRunOnlyEssentialHighlightingForInjectedFile(psiFile: PsiFile): Boolean
+
     companion object {
         internal val EP_NAME: ExtensionPointName<KotlinIdeInjectedFilesAnalysisPromoter> =
             ExtensionPointName.Companion.create("org.jetbrains.kotlin.kotlinInjectedFilesAnalysisProvider")
@@ -27,3 +30,6 @@ val FileViewProvider.isInjectedFileShouldBeAnalyzed: Boolean
     get() {
         return this is InjectedFileViewProvider && EP_NAME.extensionList.any { it.shouldRunAnalysisForInjectedFile(this) }
     }
+
+val PsiFile.injectionRequiresOnlyEssentialHighlighting: Boolean
+    get() = viewProvider is InjectedFileViewProvider && EP_NAME.extensionList.any { it.shouldRunOnlyEssentialHighlightingForInjectedFile(this) }
