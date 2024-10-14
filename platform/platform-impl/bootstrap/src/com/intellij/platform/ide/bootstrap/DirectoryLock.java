@@ -13,8 +13,8 @@ import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.ui.User32Ex;
 import com.intellij.util.Suppressions;
-import com.intellij.util.User32Ex;
 import com.sun.jna.platform.win32.WinDef;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,7 @@ import static java.util.Objects.requireNonNullElseGet;
 
 /**
  * The class ensures that only one IDE instance is running on the given pair of configuration/cache directories
- * and participates in the CLI by passing arguments and relaying back exit codes and error messages.
+ * and participates in the CLI bypassing arguments and relaying back exit codes and error messages.
  */
 final class DirectoryLock {
   static final class CannotActivateException extends Exception {

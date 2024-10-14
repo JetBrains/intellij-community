@@ -14876,10 +14876,6 @@ c:com.intellij.ui.TreeTableSpeedSearch
 - p:isSpeedSearchEnabled():Z
 - p:selectElement(java.lang.Object,java.lang.String):V
 - setCanExpand(Z):V
-f:com.intellij.ui.WinFocusStealer
-- java.awt.event.AWTEventListener
-- eventDispatched(java.awt.AWTEvent):V
-- s:setFocusStealingEnabled(Z):V
 c:com.intellij.ui.WindowMoveListener
 - java.awt.event.MouseAdapter
 - javax.swing.event.MouseInputListener

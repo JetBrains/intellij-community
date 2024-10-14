@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui;
 
 import com.sun.jna.Callback;
 import com.sun.jna.Memory;
@@ -29,10 +29,15 @@ public interface User32Ex extends StdCallLibrary {
                                         int Flags);
 
   boolean FlashWindow(WinDef.HWND hwnd, boolean bInvert);
+
   boolean SystemParametersInfo(WinDef.UINT uiAction, WinDef.UINT uiParam, WinDef.BOOLByReference pvParam, WinDef.UINT fWinIni);
+
   boolean SystemParametersInfo(WinDef.UINT uiAction, WinDef.UINT uiParam, WinDef.UINTByReference pvParam, WinDef.UINT fWinIni);
+
   boolean SystemParametersInfo(WinDef.UINT uiAction, WinDef.UINT uiParam, WinDef.UINT pvParam, WinDef.UINT fWinIni);
+
   boolean AllowSetForegroundWindow(WinDef.DWORD pid);
+
   boolean SetForegroundWindow(WinDef.HWND hwnd);
 
   @ApiStatus.Internal

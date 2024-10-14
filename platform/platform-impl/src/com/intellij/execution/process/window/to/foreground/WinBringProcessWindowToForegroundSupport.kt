@@ -3,9 +3,8 @@ package com.intellij.execution.process.window.to.foreground
 
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
-import com.intellij.util.User32Ex
+import com.intellij.ui.User32Ex
 import com.intellij.util.findMainWindow
 import com.intellij.util.findWindowsWithText
 import com.jetbrains.rd.util.getLogger

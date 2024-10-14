@@ -26,6 +26,7 @@
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="library" name="jbr-api" level="project" />

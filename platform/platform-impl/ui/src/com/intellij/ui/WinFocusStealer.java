@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.User32Ex;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.win32.Advapi32Util;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinReg;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,11 +16,12 @@ import java.awt.event.AWTEventListener;
 
 /**
  * This class allows to disable Windows focus stealing prevention mechanism. The changes have a system-wide effect,
- * i.e. focus stealing can only be enabled for all applications in the system, not just for IDE process.
+ * i.e., focus stealing can only be enabled for all applications in the system, not just for an IDE process.
  * <p>
  * The desired effect is achieved by setting system-wide 'foreground lock timeout' value to zero. This is a duration that should pass after
  * user input in one window before another window is allowed to steal focus.
  */
+@ApiStatus.Internal
 public final class WinFocusStealer implements AWTEventListener {
   private static final Logger LOG = Logger.getInstance(WinFocusStealer.class);
   private static final int DEFAULT_TIMEOUT_MS = 200000; // default registry value on Windows 10 as of time this code is written
@@ -30,7 +31,7 @@ public final class WinFocusStealer implements AWTEventListener {
   private WinFocusStealer() {
     if (JnaLoader.isLoaded()) {
       myEnabled = true;
-      doUpdate(false); // make sure to restore the default state if IDE crashed after enabling focus stealing
+      doUpdate(false); // make sure to restore the default state if the IDE crashed after enabling focus stealing
       SwingUtilities.invokeLater(() -> Toolkit.getDefaultToolkit().addAWTEventListener(this,
                                                                                        AWTEvent.KEY_EVENT_MASK |
                                                                                        AWTEvent.MOUSE_EVENT_MASK |
@@ -46,7 +47,7 @@ public final class WinFocusStealer implements AWTEventListener {
 
   /**
    * Enables or disables focus stealing globally in the system. This can only come to effect if the IDE window is currently active.
-   * If this is not the case, at the time this method is invoked, the actual change will be performed when next user input event is
+   * If this is not the case, at the time this method is invoked, the actual change will be performed when the next user input event is
    * received.
    * <p>
    * With focus stealing enabled, {@link AppIcon#requestFocus(Window)} method should bring the target IDE window into foreground, even if
