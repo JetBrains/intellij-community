@@ -295,8 +295,8 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   private fun attachFullSyncQuickFix() {
     try {
       mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
-        override val title: String = "Incremental Sync Finished"
-        override val description: String = "Incremental sync finished. If there is something wrong with the project model, <a href=\"${MavenFullSyncQuickFix.ID}\">run full sync</a>\n"
+        override val title: String = "Sync Finished"
+        override val description: String = "Sync finished. If there is something wrong with the project model, <a href=\"${MavenFullSyncQuickFix.ID}\">reload all projects</a>\n"
         override val quickFixes: List<BuildIssueQuickFix> = listOf(MavenFullSyncQuickFix())
         override fun getNavigatable(project: Project): Navigatable? = null
       }, MessageEvent.Kind.INFO))
