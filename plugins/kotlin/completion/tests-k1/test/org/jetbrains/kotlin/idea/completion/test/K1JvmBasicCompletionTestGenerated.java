@@ -2198,6 +2198,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/primaryConstructor/parameterDefaultValue.kt");
             }
 
+            @TestMetadata("parameterDefaultValueNotContainsUnitializedParams.kt")
+            public void testParameterDefaultValueNotContainsUnitializedParams() throws Exception {
+                runTest("../testData/basic/common/primaryConstructor/parameterDefaultValueNotContainsUnitializedParams.kt");
+            }
+
             @TestMetadata("previousParameter.kt")
             public void testPreviousParameter() throws Exception {
                 runTest("../testData/basic/common/primaryConstructor/previousParameter.kt");
