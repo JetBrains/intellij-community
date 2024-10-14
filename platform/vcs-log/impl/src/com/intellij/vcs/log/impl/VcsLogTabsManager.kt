@@ -1,11 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.TabTitle
@@ -23,11 +19,9 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsLogContentUtil.getToolWindow
 import com.intellij.vcs.log.impl.VcsLogContentUtil.openLogTab
 import com.intellij.vcs.log.impl.VcsLogContentUtil.updateLogUiName
-import com.intellij.vcs.log.impl.VcsLogEditorUtil.findVcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiEx
-import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem
 import com.intellij.vcs.log.util.GraphOptionsUtil.presentationForTabTitle
 import com.intellij.vcs.log.visible.filters.getPresentation
 import org.jetbrains.annotations.ApiStatus
@@ -57,19 +51,12 @@ class VcsLogTabsManager internal constructor(private val project: Project,
       LOG.warn("Reopening standalone tabs is not supported")
     }
 
-    if (editorTabs.isNotEmpty()) {
-      invokeLater(ModalityState.nonModal()) {
-        if (logManager.isDisposed) return@invokeLater
-        LOG.debug("Reopening editor tabs with ids: $editorTabs")
-        editorTabs.forEach { openEditorLogTab(it, false, null) }
-      }
-    }
-
-    if (toolWindowTabs.isNotEmpty()) {
+    if (toolWindowTabs.isNotEmpty() || editorTabs.isNotEmpty()) {
       futureToolWindow.thenAccept { toolWindow ->
         if (!LOG.assertTrue(!logManager.isDisposed, "Attempting to open tabs on disposed VcsLogManager")) return@thenAccept
         LOG.debug("Reopening toolwindow tabs with ids: $toolWindowTabs")
         toolWindowTabs.forEach { openToolWindowLogTab(toolWindow, it, false, null) }
+        editorTabs.forEach { openToolWindowLogTab(toolWindow, it, false, null) }
       }
     }
 
@@ -99,8 +86,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
     val tabId = generateTabId(logManager)
     uiProperties.resetState(tabId)
     if (location === VcsLogTabLocation.EDITOR) {
-      val editors = openEditorLogTab(tabId, true, filters)
-      return findVcsLogUi(editors, MainVcsLogUi::class.java)!!
+      error("Unsupported")
     }
     else if (location === VcsLogTabLocation.TOOL_WINDOW) {
       val toolWindow = VcsLogContentUtil.getToolWindowOrThrow(project)
@@ -108,11 +94,6 @@ class VcsLogTabsManager internal constructor(private val project: Project,
       return openToolWindowLogTab(toolWindow, tabId, true, filters)
     }
     throw UnsupportedOperationException("Only log in editor or tool window is supported")
-  }
-
-  private fun openEditorLogTab(tabId: String, focus: Boolean, filters: VcsLogFilterCollection?): Array<FileEditor> {
-    val file = VcsLogVirtualFileSystem.Holder.getInstance().createVcsLogFile(project, tabId, filters)
-    return FileEditorManager.getInstance(project).openFile(file, focus, true)
   }
 
   private fun openToolWindowLogTab(toolWindow: ToolWindow, tabId: String, focus: Boolean,

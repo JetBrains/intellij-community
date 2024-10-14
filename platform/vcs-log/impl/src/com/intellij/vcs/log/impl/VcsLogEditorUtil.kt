@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,20 +23,10 @@ object VcsLogEditorUtil {
     return FileEditorManager.getInstance(project).selectedEditors.flatMapTo(mutableSetOf(), ::getLogIds)
   }
 
-  @JvmStatic
-  fun <T : VcsLogUiEx> findVcsLogUi(editors: Array<FileEditor>, clazz: Class<T>): T? {
-    return editors.asSequence().flatMap { VcsLogUiHolder.getLogUis(it.component) }.filterIsInstance(clazz).firstOrNull()
-  }
-
   internal fun selectLogUi(project: Project, ui: VcsLogUi): Boolean {
     val fileEditorManager = FileEditorManager.getInstance(project)
     val editor = fileEditorManager.findLogFile(ui) ?: return false
     return fileEditorManager.openFile(editor, true, true).isNotEmpty()
-  }
-
-  internal fun updateTabName(project: Project, ui: VcsLogUiEx) {
-    val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
-    fileEditorManager.findLogFile(ui)?.let { fileEditorManager.updateFilePresentation(it) }
   }
 
   private fun FileEditorManager.findLogFile(ui: VcsLogUi): VirtualFile? {

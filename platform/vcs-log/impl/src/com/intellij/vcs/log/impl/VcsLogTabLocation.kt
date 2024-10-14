@@ -19,6 +19,7 @@ enum class VcsLogTabLocation {
   TOOL_WINDOW {
     override fun select(project: Project, logUi: VcsLogUi): Boolean = VcsLogContentUtil.selectLogUi(project, logUi)
   },
+  @Deprecated("Unused")
   EDITOR {
     override fun select(project: Project, logUi: VcsLogUi): Boolean = VcsLogEditorUtil.selectLogUi(project, logUi)
   },
