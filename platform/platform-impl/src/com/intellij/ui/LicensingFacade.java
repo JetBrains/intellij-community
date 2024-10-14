@@ -27,6 +27,8 @@ public final class LicensingFacade {
   public Map<String, ProductLicenseData> productLicenses;
   public String metadata;
   public boolean ai_enabled;
+  /** @deprecated temporary field; use {@link #metadata} instead */
+  @Deprecated(forRemoval = true)
   public String subType;
 
   @SuppressWarnings("StaticNonFinalField")
