@@ -1729,8 +1729,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
       if (mySearchProgressIndicator == null || mySearchProgressIndicator.isCanceled()) return;
 
-      boolean wasEmpty = myListModel.getSize() == 0;
-
       if (myMlService != null) {
         myMlService.notifySearchResultsUpdated();
       }
@@ -1741,13 +1739,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
       mySelectionTracker.restoreSelection();
 
-      if (wasEmpty && myListModel.getSize() > 0) {
-        Object prevSelection = ((SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject))
-          .getPrevSelection(getSelectedTabID());
+      if (myListModel.getSize() > 0) {
+        SearchEverywhereManagerImpl manager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
+        String contributorID = getSelectedTabID();
+        Object prevSelection = manager.getPrevSelection(contributorID);
         if (prevSelection instanceof Integer) {
           for (Object item : myListModel.getItems()) {
             if (Objects.hashCode(item) == ((Integer)prevSelection).intValue()) {
               myResultsList.setSelectedValue(item, true);
+              manager.savePrevSelection(contributorID, null);
               break;
             }
           }
