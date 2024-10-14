@@ -69,7 +69,7 @@ public abstract class ComparisonManager {
                                                                 @NotNull CharSequence text2,
                                                                 @NotNull CharSequence text3,
                                                                 @NotNull ComparisonPolicy policy,
-                                                                @NotNull MergeRange range,
+                                                                @NotNull MergeRange boundaryRange,
                                                                 @NotNull ProgressIndicator indicator) throws DiffTooBigException;
 
   /**

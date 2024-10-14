@@ -57,24 +57,24 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                          @NotNull LineOffsets lineOffsets2,
                                          @NotNull ComparisonPolicy policy,
                                          @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    Range range = new Range(0, lineOffsets1.getLineCount(),
-                            0, lineOffsets2.getLineCount());
-    return compareLines(range, text1, text2, lineOffsets1, lineOffsets2, policy, indicator);
+    Range boundaryRange = new Range(0, lineOffsets1.getLineCount(),
+                                    0, lineOffsets2.getLineCount());
+    return compareLines(boundaryRange, text1, text2, lineOffsets1, lineOffsets2, policy, indicator);
   }
 
   @NotNull
-  public List<LineFragment> compareLines(@NotNull Range range,
+  public List<LineFragment> compareLines(@NotNull Range boundaryRange,
                                          @NotNull CharSequence text1,
                                          @NotNull CharSequence text2,
                                          @NotNull LineOffsets lineOffsets1,
                                          @NotNull LineOffsets lineOffsets2,
                                          @NotNull ComparisonPolicy policy,
                                          @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    List<CharSequence> lineTexts1 = getLineContents(range.start1, range.end1, text1, lineOffsets1);
-    List<CharSequence> lineTexts2 = getLineContents(range.start2, range.end2, text2, lineOffsets2);
+    List<CharSequence> lineTexts1 = getLineContents(boundaryRange.start1, boundaryRange.end1, text1, lineOffsets1);
+    List<CharSequence> lineTexts2 = getLineContents(boundaryRange.start2, boundaryRange.end2, text2, lineOffsets2);
 
     FairDiffIterable iterable = ByLine.compare(lineTexts1, lineTexts2, policy, indicator);
-    return convertIntoLineFragments(range, lineOffsets1, lineOffsets2, iterable);
+    return convertIntoLineFragments(boundaryRange, lineOffsets1, lineOffsets2, iterable);
   }
 
   @NotNull
@@ -112,13 +112,13 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                                        @NotNull CharSequence text2,
                                                        @NotNull CharSequence text3,
                                                        @NotNull ComparisonPolicy policy,
-                                                       @NotNull MergeRange range,
+                                                       @NotNull MergeRange boundaryRange,
                                                        @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    List<CharSequence> lineTexts1 = getLineContents(range.start1, range.end1, text1, LineOffsetsImpl.create(text1));
-    List<CharSequence> lineTexts2 = getLineContents(range.start2, range.end2, text2, LineOffsetsImpl.create(text2));
-    List<CharSequence> lineTexts3 = getLineContents(range.start3, range.end3, text3, LineOffsetsImpl.create(text3));
+    List<CharSequence> lineTexts1 = getLineContents(boundaryRange.start1, boundaryRange.end1, text1, LineOffsetsImpl.create(text1));
+    List<CharSequence> lineTexts2 = getLineContents(boundaryRange.start2, boundaryRange.end2, text2, LineOffsetsImpl.create(text2));
+    List<CharSequence> lineTexts3 = getLineContents(boundaryRange.start3, boundaryRange.end3, text3, LineOffsetsImpl.create(text3));
     List<MergeRange> ranges = ByLine.merge(lineTexts1, lineTexts2, lineTexts3, policy, indicator);
-    return ByLineRt.convertIntoMergeLineFragments(ranges, range);
+    return ByLineRt.convertIntoMergeLineFragments(ranges, boundaryRange);
   }
 
   @Override
@@ -169,7 +169,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
-  public List<LineFragment> compareLinesInner(@NotNull Range range,
+  public List<LineFragment> compareLinesInner(@NotNull Range boundaryRange,
                                               @NotNull CharSequence text1,
                                               @NotNull CharSequence text2,
                                               @NotNull LineOffsets lineOffsets1,
@@ -178,11 +178,11 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                               boolean innerFragments,
                                               @NotNull ProgressIndicator indicator) throws DiffTooBigException {
     InnerFragmentsPolicy fragmentsPolicy = innerFragments ? InnerFragmentsPolicy.WORDS : InnerFragmentsPolicy.NONE;
-    return compareLinesInner(range, text1, text2, lineOffsets1, lineOffsets2, policy, fragmentsPolicy, indicator);
+    return compareLinesInner(boundaryRange, text1, text2, lineOffsets1, lineOffsets2, policy, fragmentsPolicy, indicator);
   }
 
   @NotNull
-  public List<LineFragment> compareLinesInner(@NotNull Range range,
+  public List<LineFragment> compareLinesInner(@NotNull Range boundaryRange,
                                               @NotNull CharSequence text1,
                                               @NotNull CharSequence text2,
                                               @NotNull LineOffsets lineOffsets1,
@@ -190,7 +190,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                               @NotNull ComparisonPolicy policy,
                                               @NotNull InnerFragmentsPolicy fragmentsPolicy,
                                               @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    List<LineFragment> lineFragments = compareLines(range, text1, text2, lineOffsets1, lineOffsets2, policy, indicator);
+    List<LineFragment> lineFragments = compareLines(boundaryRange, text1, text2, lineOffsets1, lineOffsets2, policy, indicator);
     if (fragmentsPolicy != InnerFragmentsPolicy.NONE) {
       return createInnerFragments(lineFragments, text1, text2, policy, fragmentsPolicy, indicator);
     }
@@ -358,22 +358,22 @@ public final class ComparisonManagerImpl extends ComparisonManager {
   public static List<LineFragment> convertIntoLineFragments(@NotNull LineOffsets lineOffsets1,
                                                             @NotNull LineOffsets lineOffsets2,
                                                             @NotNull DiffIterable changes) {
-    Range range = new Range(0, lineOffsets1.getLineCount(),
-                            0, lineOffsets2.getLineCount());
-    return convertIntoLineFragments(range, lineOffsets1, lineOffsets2, changes);
+    Range boundaryRange = new Range(0, lineOffsets1.getLineCount(),
+                                    0, lineOffsets2.getLineCount());
+    return convertIntoLineFragments(boundaryRange, lineOffsets1, lineOffsets2, changes);
   }
 
   @NotNull
-  public static List<LineFragment> convertIntoLineFragments(@NotNull Range range,
+  public static List<LineFragment> convertIntoLineFragments(@NotNull Range boundaryRange,
                                                             @NotNull LineOffsets lineOffsets1,
                                                             @NotNull LineOffsets lineOffsets2,
                                                             @NotNull DiffIterable changes) {
     List<LineFragment> fragments = new ArrayList<>();
-    for (Range ch : changes.iterateChanges()) {
-      int startLine1 = ch.start1 + range.start1;
-      int startLine2 = ch.start2 + range.start2;
-      int endLine1 = ch.end1 + range.start1;
-      int endLine2 = ch.end2 + range.start2;
+    for (Range range : changes.iterateChanges()) {
+      int startLine1 = range.start1 + boundaryRange.start1;
+      int startLine2 = range.start2 + boundaryRange.start2;
+      int endLine1 = range.end1 + boundaryRange.start1;
+      int endLine2 = range.end2 + boundaryRange.start2;
       fragments.add(createLineFragment(startLine1, endLine1, startLine2, endLine2, lineOffsets1, lineOffsets2));
     }
     return fragments;
@@ -598,9 +598,9 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                                           @NotNull BitSet ignored2,
                                                           @NotNull InnerFragmentsPolicy fragmentsPolicy,
                                                           @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    Range range = new Range(0, lineOffsets1.getLineCount(),
-                            0, lineOffsets2.getLineCount());
-    return compareLinesWithIgnoredRanges(range, text1, text2, lineOffsets1, lineOffsets2, ignored1, ignored2,
+    Range boundaryRange = new Range(0, lineOffsets1.getLineCount(),
+                                    0, lineOffsets2.getLineCount());
+    return compareLinesWithIgnoredRanges(boundaryRange, text1, text2, lineOffsets1, lineOffsets2, ignored1, ignored2,
                                          fragmentsPolicy, indicator);
   }
 
@@ -608,7 +608,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
    * Compare two texts by-line and then compare changed fragments by-word
    */
   @NotNull
-  public List<LineFragment> compareLinesWithIgnoredRanges(@NotNull Range range,
+  public List<LineFragment> compareLinesWithIgnoredRanges(@NotNull Range boundaryRange,
                                                           @NotNull CharSequence text1,
                                                           @NotNull CharSequence text2,
                                                           @NotNull LineOffsets lineOffsets1,
@@ -617,18 +617,18 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                                           @NotNull BitSet ignored2,
                                                           @NotNull InnerFragmentsPolicy fragmentsPolicy,
                                                           @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    List<CharSequence> lineTexts1 = getNotIgnoredLineContents(range.start1, range.end1, text1, lineOffsets1, ignored1);
-    List<CharSequence> lineTexts2 = getNotIgnoredLineContents(range.start2, range.end2, text2, lineOffsets2, ignored2);
+    List<CharSequence> lineTexts1 = getNotIgnoredLineContents(boundaryRange.start1, boundaryRange.end1, text1, lineOffsets1, ignored1);
+    List<CharSequence> lineTexts2 = getNotIgnoredLineContents(boundaryRange.start2, boundaryRange.end2, text2, lineOffsets2, ignored2);
 
     FairDiffIterable iterable = ByLine.compare(lineTexts1, lineTexts2, ComparisonPolicy.DEFAULT, indicator);
 
-    FairDiffIterable correctedIterable = correctIgnoredRangesSecondStep(range, iterable, text1, text2, lineOffsets1, lineOffsets2,
+    FairDiffIterable correctedIterable = correctIgnoredRangesSecondStep(boundaryRange, iterable, text1, text2, lineOffsets1, lineOffsets2,
                                                                         ignored1, ignored2);
 
-    DiffIterable trimmedIterable = trimIgnoredLines(range, correctedIterable, text1, text2, lineOffsets1, lineOffsets2,
+    DiffIterable trimmedIterable = trimIgnoredLines(boundaryRange, correctedIterable, text1, text2, lineOffsets1, lineOffsets2,
                                                     ignored1, ignored2);
 
-    List<LineFragment> lineFragments = convertIntoLineFragments(range, lineOffsets1, lineOffsets2, trimmedIterable);
+    List<LineFragment> lineFragments = convertIntoLineFragments(boundaryRange, lineOffsets1, lineOffsets2, trimmedIterable);
 
     if (fragmentsPolicy != InnerFragmentsPolicy.NONE) {
       lineFragments = createInnerFragments(lineFragments, text1, text2, ComparisonPolicy.DEFAULT, fragmentsPolicy, indicator);
@@ -647,7 +647,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
-  private static FairDiffIterable correctIgnoredRangesSecondStep(@NotNull Range range,
+  private static FairDiffIterable correctIgnoredRangesSecondStep(@NotNull Range boundaryRange,
                                                                  @NotNull FairDiffIterable iterable,
                                                                  @NotNull CharSequence text1,
                                                                  @NotNull CharSequence text2,
@@ -661,8 +661,8 @@ public final class ComparisonManagerImpl extends ComparisonManager {
       for (int i = 0; i < count; i++) {
         int index1 = ch.start1 + i;
         int index2 = ch.start2 + i;
-        if (areIgnoredEqualLines(range.start1 + index1, range.start2 + index2, text1, text2, lineOffsets1, lineOffsets2, ignored1,
-                                 ignored2)) {
+        if (areIgnoredEqualLines(boundaryRange.start1 + index1, boundaryRange.start2 + index2, text1, text2,
+                                 lineOffsets1, lineOffsets2, ignored1, ignored2)) {
           builder.markEqual(index1, index2);
         }
       }
@@ -671,7 +671,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
-  private static DiffIterable trimIgnoredLines(@NotNull Range range,
+  private static DiffIterable trimIgnoredLines(@NotNull Range boundaryRange,
                                                @NotNull FairDiffIterable iterable,
                                                @NotNull CharSequence text1,
                                                @NotNull CharSequence text2,
@@ -684,12 +684,15 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     for (Range ch : iterable.iterateChanges()) {
       Range trimmedRange = TrimUtil.trimExpandRange(ch.start1, ch.start2,
                                                     ch.end1, ch.end2,
-                                                    (index1, index2) -> areIgnoredEqualLines(range.start1 + index1, range.start2 + index2,
-                                                                                             text1, text2,
-                                                                                             lineOffsets1, lineOffsets2,
-                                                                                             ignored1, ignored2),
-                                                    index -> isIgnoredLine(range.start1 + index, lineOffsets1, ignored1),
-                                                    index -> isIgnoredLine(range.start2 + index, lineOffsets2, ignored2));
+                                                    (index1, index2) -> {
+                                                      return areIgnoredEqualLines(boundaryRange.start1 + index1,
+                                                                                  boundaryRange.start2 + index2,
+                                                                                  text1, text2,
+                                                                                  lineOffsets1, lineOffsets2,
+                                                                                  ignored1, ignored2);
+                                                    },
+                                                    index -> isIgnoredLine(boundaryRange.start1 + index, lineOffsets1, ignored1),
+                                                    index -> isIgnoredLine(boundaryRange.start2 + index, lineOffsets2, ignored2));
 
       if (!trimmedRange.isEmpty()) changedRanges.add(trimmedRange);
     }
