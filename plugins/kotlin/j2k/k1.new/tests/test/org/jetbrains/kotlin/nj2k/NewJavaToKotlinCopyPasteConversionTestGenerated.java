@@ -165,6 +165,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("../../shared/tests/testData/copyPaste/Imports3.java");
     }
 
+    @TestMetadata("InClassContextProperty.java")
+    public void testInClassContextProperty() throws Exception {
+        runTest("../../shared/tests/testData/copyPaste/InClassContextProperty.java");
+    }
+
     @TestMetadata("IncompleteCodeWithVariableReference.java")
     public void testIncompleteCodeWithVariableReference() throws Exception {
         runTest("../../shared/tests/testData/copyPaste/IncompleteCodeWithVariableReference.java");
@@ -183,6 +188,16 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
     @TestMetadata("InsertIntoString.java")
     public void testInsertIntoString() throws Exception {
         runTest("../../shared/tests/testData/copyPaste/InsertIntoString.java");
+    }
+
+    @TestMetadata("LocalAndMemberConflict.java")
+    public void testLocalAndMemberConflict() throws Exception {
+        runTest("../../shared/tests/testData/copyPaste/LocalAndMemberConflict.java");
+    }
+
+    @TestMetadata("LocalContextProperty.java")
+    public void testLocalContextProperty() throws Exception {
+        runTest("../../shared/tests/testData/copyPaste/LocalContextProperty.java");
     }
 
     @TestMetadata("MethodDeclarationWithNoBody.java")
@@ -268,6 +283,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
     @TestMetadata("SingleWordFromIdentifier.java")
     public void testSingleWordFromIdentifier() throws Exception {
         runTest("../../shared/tests/testData/copyPaste/SingleWordFromIdentifier.java");
+    }
+
+    @TestMetadata("TopLevelContextProperty.java")
+    public void testTopLevelContextProperty() throws Exception {
+        runTest("../../shared/tests/testData/copyPaste/TopLevelContextProperty.java");
     }
 
     @TestMetadata("TopLevelMainWithUsedArgs.java")
