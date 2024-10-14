@@ -387,10 +387,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       boolean showErrorQuickFix = shouldShowBulbForActions(cachedIntentions.getErrorFixes());
       if (showErrorQuickFix) return AllIcons.Actions.QuickfixBulb;
 
-      boolean showWarningQuickFix = shouldShowBulbForActions(cachedIntentions.getInspectionFixes());
-      Icon customBulb = findSingleCustomBulbIcon(cachedIntentions);
-      if (customBulb != null && !showWarningQuickFix) return customBulb;
-
+      Set<IntentionActionWithTextCaching> inspectionFixes = cachedIntentions.getInspectionFixes();
+      boolean showWarningQuickFix = shouldShowBulbForActions(inspectionFixes);
+      Icon customBulb = showWarningQuickFix
+                        ? findSingleCustomBulbIcon(inspectionFixes)
+                        : findSingleCustomBulbIcon(cachedIntentions.getAllActions());
+      if (customBulb != null) return customBulb;
       return AllIcons.Actions.IntentionBulb;
     }
 
@@ -510,8 +512,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       );
     }
 
-    private static @Nullable Icon findSingleCustomBulbIcon(@NotNull IntentionContainer cachedIntentions) {
-      List<Icon> customBulbs = cachedIntentions.getAllActions().stream()
+    private static @Nullable Icon findSingleCustomBulbIcon(@NotNull Collection<IntentionActionWithTextCaching> cachedIntentions) {
+      List<Icon> customBulbs = cachedIntentions.stream()
         .map(descriptor -> IntentionActionDelegate.unwrap(descriptor.getAction()))
         .filter(LightBulbUtil::canOverrideBulb)
         .map(LightBulbUtil::getActionIcon)
