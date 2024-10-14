@@ -49,9 +49,13 @@ public final class UpdateRequestParameters {
 
     var facade = LicensingFacade.getInstance();
     if (facade != null) {
-      var subType = facade.subType;
+      @SuppressWarnings("removal") var subType = facade.subType;
       if (subType != null) {
         parameters.put("license", subType);
+      }
+      var metadata = facade.metadata;
+      if (metadata != null) {
+        parameters.put("metadata", metadata);
       }
     }
 
