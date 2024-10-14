@@ -122,7 +122,7 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
       }
     }
     if (insertFieldsAfter == null) {
-      result.append("{\n");
+      result.append("\n{\n");
       insertFields(result, recordClass);
       insertConstructor(result, JavaPsiRecordUtil.findCanonicalConstructor(recordClass), recordClass);
       insertMethods(result, recordClass, recordClass.getRecordComponents());
