@@ -218,7 +218,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       restartActions = restartActionsList.toArray(AnAction.EMPTY_ARRAY);
     }
 
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(),
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getProcessHandler(),
                                                       myUi.getComponent(), session.getSessionName(), icon, this::computeWatches, restartActions);
     myRunContentDescriptor.setRunnerLayoutUi(myUi);
     Disposer.register(myRunContentDescriptor, this);

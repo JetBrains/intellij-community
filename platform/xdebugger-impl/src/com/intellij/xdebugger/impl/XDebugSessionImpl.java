@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
+import com.intellij.execution.process.CompositeProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -397,6 +398,9 @@ public final class XDebugSessionImpl implements XDebugSession {
   private void initSessionTab(@Nullable RunContentDescriptor contentToReuse) {
     mySessionTab = XDebugSessionTab.create(this, myIcon, myEnvironment, contentToReuse);
     myDebugProcess.sessionInitialized();
+    if (myMixedModeDebugProcess != null) {
+      myMixedModeDebugProcess.sessionInitialized();
+    }
     addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionPaused() {
@@ -1080,7 +1084,12 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stop() {
-    ProcessHandler processHandler = myDebugProcess == null ? null : myDebugProcess.getProcessHandler();
+    stop(myDebugProcess);
+    stop(myMixedModeDebugProcess);
+  }
+
+  private void stop(XDebugProcess process) {
+    ProcessHandler processHandler = process == null ? null : process.getProcessHandler();
     if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return;
 
     if (processHandler.detachIsDefault()) {
@@ -1211,5 +1220,22 @@ public final class XDebugSessionImpl implements XDebugSession {
     else {
       XDebuggerPerformanceCollector.logBreakpointReached(myProject, fileType);
     }
+  }
+
+  private ProcessHandler myCompositeProcessHandler;
+
+  public ProcessHandler getProcessHandler() {
+    if (myMixedModeDebugProcess == null) {
+      return myDebugProcess.getProcessHandler();
+    }
+    if (myCompositeProcessHandler != null) {
+      return myCompositeProcessHandler;
+    }
+
+    var handlersList = new ArrayList<ProcessHandler>();
+    handlersList.add(myDebugProcess.getProcessHandler());
+    handlersList.add(myMixedModeDebugProcess.getProcessHandler());
+    myCompositeProcessHandler = new CompositeProcessHandler(handlersList);
+    return myCompositeProcessHandler;
   }
 }
