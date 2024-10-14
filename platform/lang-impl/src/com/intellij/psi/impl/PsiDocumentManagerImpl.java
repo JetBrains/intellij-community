@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -78,10 +78,14 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
                             // and use DefaultProjectFactory.getDefaultProject() because why bother
                             || myProject.isDefault();
       if (!isMyProject) {
-        LOG.error("Trying to get PSI for an alien project. VirtualFile=" +
-                  virtualFile + ";" +
-                  " project=" + myProject + " (" + myProject.getBasePath() + ")"
-                  + "; but the file actually belongs to " + StringUtil.join(projects, p -> p + " (" + p.getBasePath() + ")", ","));
+        LOG.error("Trying to get PSI for a file that is not included in the project model of this project.\n" +
+                  "virtualFile=" + virtualFile + ";\n" +
+                  "project=" + myProject + " (" + myProject.getBasePath() + ");\n" +
+                  "The file actually belongs to\n  " + StringUtil.join(projects, p -> p + " (" + p.getBasePath() + ")", "\n  ") + "\n" +
+                  "Note:\n" +
+                  "This error happens if ProjectLocatorImpl#isUnder(project, file) returns false, which means that the file is not included\n" +
+                  "in the project model of the project. And usually, projects should not touch such files.\n" +
+                  "Feel free to reach out to IntelliJ Code Platform team if you have questions or concerns.");
       }
     }
   }
