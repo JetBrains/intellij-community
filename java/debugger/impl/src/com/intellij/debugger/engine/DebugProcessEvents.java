@@ -895,7 +895,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (event == null) return;
 
     // IDE user is not intended to see notifications about our synthetic breakpoints.
-    final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
+    final Requestor requestor = RequestManagerImpl.findRequestor(event.request());
     if (requestor instanceof SyntheticBreakpoint) return;
 
     DebuggerStatistics.logBreakpointSkipped(getProject(), reason);
