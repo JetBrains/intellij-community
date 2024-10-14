@@ -14,33 +14,33 @@ class IjentWslNioPath(
 
   override fun isAbsolute(): Boolean = delegate.isAbsolute
 
-  override fun getRoot(): Path? = delegate.root?.toIjentWslPath()
+  override fun getRoot(): IjentWslNioPath? = delegate.root?.toIjentWslPath()
 
-  override fun getFileName(): Path? = delegate.fileName?.toIjentWslPath()
+  override fun getFileName(): IjentWslNioPath? = delegate.fileName?.toIjentWslPath()
 
-  override fun getParent(): Path? = delegate.parent?.toIjentWslPath()
+  override fun getParent(): IjentWslNioPath? = delegate.parent?.toIjentWslPath()
 
   override fun getNameCount(): Int = delegate.nameCount
 
-  override fun getName(index: Int): Path = delegate.getName(index).toIjentWslPath()
+  override fun getName(index: Int): IjentWslNioPath = delegate.getName(index).toIjentWslPath()
 
-  override fun subpath(beginIndex: Int, endIndex: Int): Path = delegate.subpath(beginIndex, endIndex).toIjentWslPath()
+  override fun subpath(beginIndex: Int, endIndex: Int): IjentWslNioPath = delegate.subpath(beginIndex, endIndex).toIjentWslPath()
 
   override fun startsWith(other: Path): Boolean = delegate.startsWith(other.toOriginalPath())
 
   override fun endsWith(other: Path): Boolean = delegate.endsWith(other.toOriginalPath())
 
-  override fun normalize(): Path = delegate.normalize().toIjentWslPath()
+  override fun normalize(): IjentWslNioPath = delegate.normalize().toIjentWslPath()
 
-  override fun resolve(other: Path): Path = delegate.resolve(other.toOriginalPath()).toIjentWslPath()
+  override fun resolve(other: Path): IjentWslNioPath = delegate.resolve(other.toOriginalPath()).toIjentWslPath()
 
-  override fun relativize(other: Path): Path = delegate.relativize(other.toOriginalPath()).toIjentWslPath()
+  override fun relativize(other: Path): IjentWslNioPath = delegate.relativize(other.toOriginalPath()).toIjentWslPath()
 
   override fun toUri(): URI = delegate.toUri()
 
-  override fun toAbsolutePath(): Path = delegate.toAbsolutePath().toIjentWslPath()
+  override fun toAbsolutePath(): IjentWslNioPath = delegate.toAbsolutePath().toIjentWslPath()
 
-  override fun toRealPath(vararg options: LinkOption?): Path = delegate.toRealPath(*options).toIjentWslPath()
+  override fun toRealPath(vararg options: LinkOption?): IjentWslNioPath = delegate.toRealPath(*options).toIjentWslPath()
 
   override fun register(watcher: WatchService, events: Array<out WatchEvent.Kind<*>?>?, vararg modifiers: WatchEvent.Modifier?): WatchKey =
     delegate.register(watcher, events, *modifiers)
