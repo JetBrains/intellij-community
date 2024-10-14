@@ -1,10 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -65,10 +62,25 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
   @Override
   protected void doFillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     result.restartCompletionWhenNothingMatches();
-    var results = result.runRemainingContributors(parameters, true);
-    if (results.isEmpty() || parameters.isExtendedCompletion()) {
+    var remainingResults = result.runRemainingContributors(parameters, true);
+
+    for (var completionResult : remainingResults) {
+      result.passResult(completionResult);
+    }
+
+    if (parameters.isExtendedCompletion() || remainingResults.isEmpty() || containsOnlyElementUnderTheCaret(remainingResults, parameters)) {
       fillCompletionVariantsImpl(parameters, result);
     }
+  }
+
+  private static boolean containsOnlyElementUnderTheCaret(@NotNull Set<CompletionResult> remainingResults,
+                                                          @NotNull CompletionParameters parameters) {
+    PsiElement position = parameters.getOriginalPosition();
+    if (remainingResults.size() == 1 && position != null) {
+      var lookup = remainingResults.iterator().next();
+      return lookup.getLookupElement().getLookupString().equals(position.getText());
+    }
+    return false;
   }
 
   private void fillCompletionVariantsImpl(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
