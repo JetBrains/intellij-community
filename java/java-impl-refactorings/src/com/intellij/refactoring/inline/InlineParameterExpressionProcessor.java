@@ -349,6 +349,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       } else if (element instanceof PsiParameter param && PsiTreeUtil.isAncestor(param.getDeclarationScope(), myInitializer, true)) {
         boolean bound = false;
         for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
+          if (parameter == myParameter) continue;
           if (parameter.getType().equals(param.getType()) && parameter.getName().equals(param.getName())) {
             bound = true;
             break;

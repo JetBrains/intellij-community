@@ -302,6 +302,15 @@ public class InlineParameterTest extends LightRefactoringTestCase {
       assertEquals("Cannot find constant initializer for parameter", e.getMessage());
     }
   }
+  
+  public void testCantInlineRecursive2() {
+    try {
+      doTest(false);
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Parameter initializer depends on caller's parameter <b><code>a</code></b>", e.getMessage());
+    }
+  }
 
   public void testParameterDefWithWriteAccess() {
     try {
