@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import java.util.stream.Stream
 
 class KtClassDef(
-    private val module: KaModule,
+    internal val module: KaModule,
     private val hash: Int,
     val pointer: KaSymbolPointer<KaClassSymbol>,
     private val kind: KaClassKind,

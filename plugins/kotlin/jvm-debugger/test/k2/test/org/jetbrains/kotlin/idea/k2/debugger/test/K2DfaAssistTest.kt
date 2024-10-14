@@ -437,6 +437,46 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    fun testInlineClass() {
+        val text = """
+            fun main() {
+                InlineClass(true).foo(InlineClass(false))
+            }
+            
+            @JvmInline
+            value class InlineClass(val a: Boolean) {
+                fun foo(other: InlineClass) {
+                    <caret>if (a/*TRUE*/) println()
+                    if (other.a/*FALSE*/) /*unreachable_start*/println()/*unreachable_end*/
+                }
+            }
+        """
+        doTest(text) { vm, frame ->
+            frame.addVariable("arg0", MockBooleanValue(vm, true))
+            frame.addVariable("other", MockBooleanValue(vm, false))
+        }
+    }
+
+    fun testInlineClassBoxing() {
+        val text = """
+            fun main() {
+                InlineClass(12).foo(InlineClass(null))
+            }
+            
+            @JvmInline
+            value class InlineClass(val a: Int?) {
+                fun foo(other: InlineClass) {
+                    <caret>if (a == 12/*TRUE*/) println()
+                    if (other.a == 13/*FALSE*/) /*unreachable_start*/println()/*unreachable_end*/
+                }
+            }
+        """
+        doTest(text) { vm, frame ->
+            frame.addVariable("arg0", MockValue.createValue(12, Integer::class.java, vm))
+            frame.addVariable(MockLocalVariable(vm, "other", vm.createReferenceType(Integer::class.java), null))
+        }
+    }
+
     private fun doTest(text: String, mockValues: BiConsumer<MockVirtualMachine, MockStackFrame>) {
         doTest(text, mockValues, "Test.kt")
     }

@@ -25,6 +25,7 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -34,10 +35,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KotlinConstantConditionsInspection
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtThisDescriptor
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtVariableDescriptor
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -82,6 +80,15 @@ class K2DfaAssistProvider : DfaAssistProvider {
         anchor: PsiElement
     ): Value? {
         if (anchor !is KtElement) return null
+        if ((dfaVar.descriptor as? KtBaseDescriptor)?.isInlineClassReference() == true) return null
+        return getJdiValueInner(proxy, dfaVar, anchor)
+    }
+
+    private fun getJdiValueInner(
+        proxy: StackFrameProxyEx,
+        dfaVar: DfaVariableValue,
+        anchor: KtElement
+    ): Value? {
         val qualifier = dfaVar.qualifier
         val descriptor = dfaVar.descriptor
         val inlined = (anchor.parentOfType<KtFunction>() as? KtNamedFunction)?.hasInlineModifier() == true
@@ -94,7 +101,8 @@ class K2DfaAssistProvider : DfaAssistProvider {
                         val nameString = symbol.classId?.asSingleFqName()
                         if (nameString != null) {
                             if (inlined) {
-                                val thisName = KotlinDebuggerConstants.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
+                                val thisName =
+                                    KotlinDebuggerConstants.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
                                 val thisVar = proxy.visibleVariableByName(thisName)
                                 if (thisVar != null) {
                                     return postprocess(proxy.getVariableValue(thisVar))
@@ -105,6 +113,12 @@ class K2DfaAssistProvider : DfaAssistProvider {
                                     val signature = AsmType.getType(thisObject.type().signature()).className
                                     val jvmName = KotlinPsiHeuristics.getJvmName(nameString)
                                     if (signature == jvmName) return thisObject
+                                }
+                            }
+                            if (symbol.isInline) {
+                                val thisVar = proxy.visibleVariableByName("arg0")
+                                if (thisVar != null) {
+                                    return postprocess(proxy.getVariableValue(thisVar))
                                 }
                             }
                             val contextName = descriptor.contextName
@@ -140,13 +154,20 @@ class K2DfaAssistProvider : DfaAssistProvider {
             }
             // TODO: support `this` references for outer types, etc.
         } else {
-            val jdiQualifier = getJdiValueForDfaVariable(proxy, qualifier, anchor)
-            if (jdiQualifier is ObjectReference && descriptor is KtVariableDescriptor) {
-                val type = jdiQualifier.referenceType()
+            val jdiQualifier = getJdiValueInner(proxy, qualifier, anchor)
+            if (descriptor is KtVariableDescriptor) {
+                val type = (jdiQualifier as? ObjectReference)?.referenceType()
                 val pointer = descriptor.pointer
                 analyze(anchor) {
                     val symbol = pointer.restoreSymbol()
-                    if (symbol is KaVariableSymbol) {
+                    if (symbol is KaPropertySymbol) {
+                        val parent = symbol.containingDeclaration
+                        if (parent is KaNamedClassSymbol && parent.isInline) {
+                            // Inline class sole property is represented by inline class itself
+                            return jdiQualifier
+                        }
+                    }
+                    if (symbol is KaVariableSymbol && type != null) {
                         val field = type.fieldByName(symbol.name.asString())
                         if (field != null) {
                             return postprocess(jdiQualifier.getValue(field))

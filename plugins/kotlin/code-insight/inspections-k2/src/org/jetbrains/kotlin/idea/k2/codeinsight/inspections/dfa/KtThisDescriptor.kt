@@ -8,7 +8,9 @@ import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -19,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 
-class KtThisDescriptor(val classDef: KtClassDef, val contextName: String? = null) : VariableDescriptor {
+class KtThisDescriptor(val classDef: KtClassDef, val contextName: String? = null) : KtBaseDescriptor {
     private val dfType = TypeConstraints.exactClass(this@KtThisDescriptor.classDef).instanceOf().asDfType()
 
     override fun isStable(): Boolean = true
@@ -38,6 +40,10 @@ class KtThisDescriptor(val classDef: KtClassDef, val contextName: String? = null
         else
             dfType.toString()
         return "$receiver.this"
+    }
+
+    override fun isInlineClassReference(): Boolean = analyze(classDef.module) {
+        (classDef.pointer.restoreSymbol() as? KaNamedClassSymbol)?.isInline == true
     }
 
     companion object {

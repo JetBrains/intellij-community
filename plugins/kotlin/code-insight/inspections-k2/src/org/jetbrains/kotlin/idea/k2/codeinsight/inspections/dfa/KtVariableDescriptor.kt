@@ -28,7 +28,7 @@ class KtVariableDescriptor(
     val pointer: KaSymbolPointer<KaVariableSymbol>,
     val type: DfType,
     val hash: Int
-) : JvmVariableDescriptor() {
+) : JvmVariableDescriptor(), KtBaseDescriptor {
     val stable: Boolean by lazy {
         when (val result = analyze(module) {
             when (val symbol = pointer.restoreSymbol()) {
@@ -48,6 +48,10 @@ class KtVariableDescriptor(
             is KtElement -> !getVariablesChangedInNestedFunctions(result).contains(this@KtVariableDescriptor)
             else -> false
         }
+    }
+
+    override fun isInlineClassReference(): Boolean = analyze(module) {
+        ((pointer.restoreSymbol()?.returnType as? KaClassType)?.symbol as? KaNamedClassSymbol)?.isInline == true
     }
 
     override fun isStable(): Boolean = stable
