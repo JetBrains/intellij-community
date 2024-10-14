@@ -3,19 +3,16 @@ package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType.HighlightInfoTypeImpl
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.util.NlsSafe
@@ -190,11 +187,10 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             && isIncompleteModel(diagnostic.psi)
             && diagnostic.severity == KaSeverity.ERROR
         ) {
-            val message = K2HighlightingBundle.message("text.required.dependency.not.loaded.yet")
-            val htmlMessage = XmlStringUtil.wrapInHtml(message)
-            HighlightInfo.newHighlightInfo(INCOMPLETE_MODE_ERROR)
-                .escapedToolTip(htmlMessage)
-                .description(message)
+            val message = K2HighlightingBundle.message("incomplete.project.state.pending.reference")
+
+            HighlightInfo.newHighlightInfo(HighlightInfoType.PENDING_REFERENCE)
+                .descriptionAndTooltip(message)
                 .range(range)
         } else {
             val message = diagnostic.getMessageToRender()
@@ -268,5 +264,3 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         return KotlinDiagnosticHighlightVisitor()
     }
 }
-
-val INCOMPLETE_MODE_ERROR = HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INFORMATION_ATTRIBUTES)
