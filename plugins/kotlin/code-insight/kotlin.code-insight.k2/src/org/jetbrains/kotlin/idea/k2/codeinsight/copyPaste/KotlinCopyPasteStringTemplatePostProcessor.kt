@@ -141,7 +141,7 @@ internal class KotlinCopyPasteStringTemplatePostProcessor : CopyPastePostProcess
         } catch (e: Throwable) {
             if (e is ControlFlowException) throw e
             LOG.error(e)
-            ReplacementResult.KeepPreprocessed
+            return
         }
 
         val replacementText = when (replacementResult) {
