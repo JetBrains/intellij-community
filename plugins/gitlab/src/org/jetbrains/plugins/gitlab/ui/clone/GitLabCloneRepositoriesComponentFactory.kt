@@ -16,6 +16,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
@@ -31,6 +32,7 @@ import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import git4idea.GitUtil
 import git4idea.remote.GitRememberedInputs
+import git4idea.ui.GitShallowCloneComponentFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
@@ -92,6 +94,9 @@ internal object GitLabCloneRepositoriesComponentFactory {
           .validationOnApply {
             CloneDvcsValidationUtils.checkDirectory(it.text, it.textField as JComponent)
           }
+      }
+      if (Registry.`is`("git.clone.shallow")) {
+        GitShallowCloneComponentFactory.appendShallowCloneRow(this, repositoriesVm.shallowCloneVm)
       }
     }.apply {
       border = JBEmptyBorder(UIUtil.getRegularPanelInsets())

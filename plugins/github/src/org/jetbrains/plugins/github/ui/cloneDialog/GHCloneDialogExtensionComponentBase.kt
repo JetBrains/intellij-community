@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -42,6 +43,8 @@ import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
+import git4idea.ui.GitShallowCloneComponentFactory
+import git4idea.ui.GitShallowCloneViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -109,6 +112,8 @@ internal abstract class GHCloneDialogExtensionComponentBase(
 
   private val accountListModel: ListModel<GithubAccount> = createAccountsModel()
 
+  private val shallowCloneModel = GitShallowCloneViewModel()
+
   init {
     repositoryList = JBList(loader.listModel).apply {
       cellRenderer = GHRepositoryListCellRenderer(ErrorHandler()) { accountListModel.itemsSet }
@@ -168,6 +173,9 @@ internal abstract class GHCloneDialogExtensionComponentBase(
           .validationOnApply {
             CloneDvcsValidationUtils.checkDirectory(it.text, it.textField)
           }
+      }
+      if (Registry.`is`("git.clone.shallow")) {
+        GitShallowCloneComponentFactory.appendShallowCloneRow(this, shallowCloneModel)
       }
     }
     repositoriesPanel.border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
@@ -300,7 +308,16 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     val directoryName = Paths.get(directoryField.text).fileName.toString()
     val parentDirectory = parent.toAbsolutePath().toString()
 
-    GitCheckoutProvider.clone(project, Git.getInstance(), checkoutListener, destinationParent, selectedUrl, directoryName, parentDirectory)
+    GitCheckoutProvider.clone(
+      project,
+      Git.getInstance(),
+      checkoutListener,
+      destinationParent,
+      selectedUrl,
+      directoryName,
+      parentDirectory,
+      shallowCloneModel.getShallowCloneOptions(),
+    )
   }
 
   override fun onComponentSelected() {

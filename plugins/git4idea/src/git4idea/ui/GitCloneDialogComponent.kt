@@ -4,13 +4,11 @@ package git4idea.ui
 import com.intellij.application.subscribe
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsCloneDialogComponent
-import com.intellij.ide.IdeBundle.message
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
@@ -25,7 +23,6 @@ import git4idea.GitNotificationIdsHolder.Companion.CLONE_ERROR_UNABLE_TO_CREATE_
 import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
-import git4idea.commands.GitShallowCloneOptions
 import git4idea.config.*
 import git4idea.i18n.GitBundle
 import git4idea.remote.GitRememberedInputs
@@ -161,33 +158,13 @@ class GitCloneDialogComponent(project: Project,
 }
 
 private class GitCloneDialogMainPanelCustomizer : DvcsCloneDialogComponent.MainPanelCustomizer() {
-  private var shallowClone = false
-  private var depth = 1
+  private val vm = GitShallowCloneViewModel()
 
   override fun configure(panel: Panel) {
     if (Registry.`is`("git.clone.shallow")) {
-      with(panel) {
-        row {
-          var shallowCloneCheckbox = checkBox(GitBundle.message("clone.dialog.shallow.clone"))
-            .gap(RightGap.SMALL)
-            .bindSelected(::shallowClone)
-
-          val depthTextField = intTextField(1..Int.MAX_VALUE, 1)
-            .bindIntText(::depth)
-            .enabledIf(shallowCloneCheckbox.selected)
-            .gap(RightGap.SMALL)
-          depthTextField.component.toolTipText = GIT_CLONE_DEPTH_ARG
-
-          @Suppress("DialogTitleCapitalization")
-          label(GitBundle.message("clone.dialog.shallow.clone.depth"))
-        }.bottomGap(BottomGap.SMALL)
-      }
+      GitShallowCloneComponentFactory.appendShallowCloneRow(panel, vm).bottomGap(BottomGap.SMALL)
     }
   }
 
-  fun getShallowCloneOptions() = if (shallowClone) GitShallowCloneOptions(depth) else null
-
-  private companion object {
-    const val GIT_CLONE_DEPTH_ARG: @NlsSafe String = "--depth"
-  }
+  fun getShallowCloneOptions() = vm.getShallowCloneOptions()
 }
