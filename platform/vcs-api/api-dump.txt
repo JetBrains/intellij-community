@@ -463,6 +463,7 @@ f:com.intellij.openapi.vcs.VcsConfiguration
 - GROUP_MULTIFILE_MERGE_BY_DIRECTORY:Z
 - IGNORED_UNREGISTERED_ROOTS:java.util.List
 - INCLUDE_TEXT_INTO_SHELF:Z
+- LAST_CHUNK_COMMIT_MESSAGE:java.lang.String
 - LAST_COMMIT_MESSAGE:java.lang.String
 - LIMIT_HISTORY:Z
 - LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN:Z
@@ -503,6 +504,7 @@ f:com.intellij.openapi.vcs.VcsConfiguration
 - getPatchFileExtension():java.lang.String
 - getRecentMessages():java.util.ArrayList
 - getState():com.intellij.openapi.vcs.VcsConfiguration
+- getTempChunkCommitMessage():java.lang.String
 - getUpdateOption():com.intellij.openapi.progress.PerformInBackgroundOption
 - isChangedOnServerEnabled():Z
 - isIgnoredUnregisteredRoot(java.lang.String):Z
@@ -510,6 +512,7 @@ f:com.intellij.openapi.vcs.VcsConfiguration
 - removeFromIgnoredUnregisteredRoots(java.util.Collection):V
 - replaceMessage(java.lang.String,java.lang.String):V
 - saveCommitMessage(java.lang.String):V
+- saveTempChunkCommitMessage(java.lang.String):V
 - setRecentMessages(java.util.List):V
 e:com.intellij.openapi.vcs.VcsConfiguration$StandardConfirmation
 - java.lang.Enum

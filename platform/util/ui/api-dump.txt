@@ -2866,6 +2866,7 @@ c:com.intellij.ui.components.JBPanel
 - getMaximumSize():java.awt.Dimension
 - getMinimumSize():java.awt.Dimension
 - getPreferredSize():java.awt.Dimension
+- f:resetPreferredHeight():com.intellij.ui.components.JBPanel
 - f:withBackground(java.awt.Color):com.intellij.ui.components.JBPanel
 - f:withBorder(javax.swing.border.Border):com.intellij.ui.components.JBPanel
 - f:withFont(com.intellij.util.ui.JBFont):com.intellij.ui.components.JBPanel

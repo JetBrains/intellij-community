@@ -2412,6 +2412,7 @@ a:com.intellij.openapi.vcs.ex.LineStatusTrackerMarkerRenderer
 - <init>(com.intellij.openapi.vcs.ex.LineStatusTrackerI,com.intellij.openapi.editor.markup.MarkupEditorFilter):V
 - b:<init>(com.intellij.openapi.vcs.ex.LineStatusTrackerI,com.intellij.openapi.editor.markup.MarkupEditorFilter,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - p:createAdditionalInfoPanel(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point,com.intellij.openapi.Disposable):javax.swing.JComponent
+- p:createAdditionalToolbarActions(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point,com.intellij.openapi.Disposable):java.util.List
 - pf:createPopupPanel(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point,com.intellij.openapi.Disposable):com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel
 - p:createToolbarActions(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point):java.util.List
 - pf:getFileType():com.intellij.openapi.fileTypes.FileType
