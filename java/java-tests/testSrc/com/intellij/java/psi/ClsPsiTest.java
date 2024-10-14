@@ -20,6 +20,8 @@ import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.decompiler.DecompilerPreset;
+import org.jetbrains.java.decompiler.IdeaDecompilerSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -281,13 +283,47 @@ public class ClsPsiTest extends LightIdeaTestCase {
     checkNames.run();
   }
 
-  public void testModifiers() {
-    PsiClass aClass = getFile().getClasses()[0];
-    assertEquals("private transient", aClass.getFields()[0].getModifierList().getText());
-    assertEquals("private volatile", aClass.getFields()[1].getModifierList().getText());
-    assertEquals("public", aClass.getMethods()[0].getModifierList().getText());
-    assertEquals("private", aClass.getMethods()[1].getModifierList().getText());
-    assertEquals("private synchronized", aClass.getMethods()[2].getModifierList().getText());
+  public void testModifiers_high() {
+    final var originalState = IdeaDecompilerSettings.getInstance().getState();
+    IdeaDecompilerSettings.State state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.HIGH);
+    IdeaDecompilerSettings.getInstance().loadState(state);
+    try {
+      PsiClass aClass = getFile("Modifiers").getClasses()[0];
+      assertEquals("private transient", aClass.getFields()[0].getModifierList().getText());
+      assertEquals("private volatile", aClass.getFields()[1].getModifierList().getText());
+
+      PsiMethod methodM1 = aClass.getMethods()[1];
+      assertEquals("private", methodM1.getModifierList().getText());
+
+      PsiMethod methodM2 = aClass.getMethods()[2];
+      assertEquals("private synchronized", methodM2.getModifierList().getText());
+    }
+    finally {
+      IdeaDecompilerSettings.getInstance().loadState(originalState);
+    }
+  }
+
+  public void testModifiers_medium() {
+    final var originalState = IdeaDecompilerSettings.getInstance().getState();
+    IdeaDecompilerSettings.State state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.MEDIUM);
+    IdeaDecompilerSettings.getInstance().loadState(state);
+    try {
+      PsiClass aClass = getFile("Modifiers").getClasses()[0];
+      assertEquals("private transient", aClass.getFields()[0].getModifierList().getText());
+      assertEquals("private volatile", aClass.getFields()[1].getModifierList().getText());
+
+      PsiMethod constructor = aClass.getMethods()[0];
+      assertEquals("public", constructor.getModifierList().getText());
+
+      PsiMethod methodM1 = aClass.getMethods()[1];
+      assertEquals("private", methodM1.getModifierList().getText());
+
+      PsiMethod methodM2 = aClass.getMethods()[2];
+      assertEquals("private synchronized", methodM2.getModifierList().getText());
+    }
+    finally {
+      IdeaDecompilerSettings.getInstance().loadState(originalState);
+    }
   }
 
   public void testEnum() {
@@ -485,7 +521,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     WriteAction.run(() -> copyVFile.delete(this));
     assertFalse(clsFile.isValid());
     assertFalse(mirror.isValid());
-    assertThat(PsiInvalidElementAccessException.findOutInvalidationReason(mirror))
-      .contains(PsiInvalidElementAccessException.findOutInvalidationReason(clsFile));
+    assertThat(PsiInvalidElementAccessException.findOutInvalidationReason(mirror)).contains(
+      PsiInvalidElementAccessException.findOutInvalidationReason(clsFile));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -253,6 +253,6 @@ public final class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameter
 
   @Override
   public String toString() {
-    return "PsiParameter";
+    return "PsiParameter:" + getName();
   }
 }

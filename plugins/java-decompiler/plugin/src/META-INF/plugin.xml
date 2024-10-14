@@ -13,6 +13,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <psi.classFileDecompiler implementation="org.jetbrains.java.decompiler.IdeaDecompiler" order="last, before clsStubBuilder"/>
+    <editorFactoryListener implementation="org.jetbrains.java.decompiler.DecompilerInEditorListener"/>
+    <applicationService serviceImplementation="org.jetbrains.java.decompiler.IdeaDecompilerSettings"/>
   </extensions>
 
   <applicationListeners>

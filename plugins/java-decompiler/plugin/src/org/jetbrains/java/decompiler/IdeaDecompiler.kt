@@ -1,10 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.execution.filters.LineNumbersMapping
 import com.intellij.ide.highlighter.JavaClassFileType
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.plugins.DynamicPlugins
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -105,7 +103,6 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
   }
 
   private val myLogger = lazy { IdeaLogger() }
-  private val myOptions = lazy { getOptions() }
 
   override fun accepts(file: VirtualFile): Boolean = true
 
@@ -134,7 +131,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       val mask = "${file.nameWithoutExtension}$"
       val files = listOf(file) + file.parent.children.filter { it.name.startsWith(mask) && it.fileType === JavaClassFileType.INSTANCE }
 
-      val options = HashMap(myOptions.value)
+      val options: MutableMap<String, Any> = IdeaDecompilerSettings.getInstance().state.preset.options.toMutableMap()
       if (Registry.`is`("decompiler.use.line.mapping")) {
         options[IFernflowerPreferences.BYTECODE_SOURCE_MAPPING] = "1"
       }
@@ -228,25 +225,3 @@ private const val POSTPONE_EXIT_CODE = DialogWrapper.CANCEL_EXIT_CODE
 private const val DECLINE_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
 
 private val TASK_KEY: Key<Future<CharSequence>> = Key.create("java.decompiler.optimistic.task")
-
-private fun getOptions(): Map<String, Any> {
-  val options = CodeStyle.getDefaultSettings().getIndentOptions(JavaFileType.INSTANCE)
-  val indent = " ".repeat(options.INDENT_SIZE)
-  return mapOf(
-    IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR to "0",
-    IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES to "1",
-    IFernflowerPreferences.REMOVE_SYNTHETIC to "1",
-    IFernflowerPreferences.REMOVE_BRIDGE to "1",
-    IFernflowerPreferences.NEW_LINE_SEPARATOR to "1",
-    IFernflowerPreferences.BANNER to IDEA_DECOMPILER_BANNER,
-    IFernflowerPreferences.MAX_PROCESSING_METHOD to 60,
-    IFernflowerPreferences.INDENT_STRING to indent,
-    IFernflowerPreferences.IGNORE_INVALID_BYTECODE to "1",
-    IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES to "1",
-    IFernflowerPreferences.CONVERT_PATTERN_SWITCH to "1",
-    IFernflowerPreferences.CONVERT_RECORD_PATTERN to "1",
-    IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS to "0", //must be 0. Otherwise there are problems with mirroring
-    IFernflowerPreferences.CHECK_CLOSABLE_INTERFACE to "0", //must be 0. Otherwise it doesn't work in idea
-    //IFernflowerPreferences.UNIT_TEST_MODE to if (ApplicationManager.getApplication().isUnitTestMode) "1" else "0"
-  )
-}
