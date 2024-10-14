@@ -125,12 +125,7 @@ public final class CharsetUtil {
       .onUnmappableCharacter(CodingErrorAction.REPORT)
       .onMalformedInput(CodingErrorAction.REPORT);
 
-    CoderResult result = decoder.decode(byteBuffer, decodedBuffer, true);
-    if (result.isError()) {
-      return TextRange.from(byteBuffer.position(), result.length());
-    }
-
-    result = decoder.flush(decodedBuffer);
+    CoderResult result = decoder.decode(byteBuffer, decodedBuffer, false);
     if (result.isError()) {
       return TextRange.from(byteBuffer.position(), result.length());
     }

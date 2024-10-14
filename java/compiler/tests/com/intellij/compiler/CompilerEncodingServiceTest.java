@@ -2,6 +2,7 @@
 package com.intellij.compiler;
 
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -85,6 +86,21 @@ public class CompilerEncodingServiceTest extends JavaPsiTestCase {
     });
     file.setCharset(null);
     assertEquals(StandardCharsets.ISO_8859_1, file.getCharset());
+  }
+
+  public void testBigPropertiesAutoEncoding() throws IOException {
+    final VirtualFile file = createFile("test.properties");
+
+    WriteAction.run(() -> {
+      @SuppressWarnings("NonAsciiCharacters")
+      byte[] bytes = "verifyEmail.tooltip=初回ログイン後またはアドレスの変更が送信された後に、ユーザーに自分の電子メールアドレスを確認するように要求します。\n"
+        .repeat(64).getBytes(StandardCharsets.UTF_8);
+      file.setBinaryContent(bytes);
+    });
+
+    LoadTextUtil.loadText(file, 1024);
+    assertEquals(StandardCharsets.UTF_8, file.getCharset());
+
   }
 
 
