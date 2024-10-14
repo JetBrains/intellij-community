@@ -14,6 +14,7 @@ import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
@@ -118,16 +119,19 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
   internal val coroutineScope = parentScope.childScope("HotSwapSession $this")
   private lateinit var changesCollector: SourceFileChangesCollector<T>
 
-  @Volatile
-  internal var currentStatus: HotSwapVisibleStatus = HotSwapVisibleStatus.NO_CHANGES
+  internal val currentStatus: HotSwapVisibleStatus get() = _currentStatus.get()
+  private val _currentStatus = AtomicReference(HotSwapVisibleStatus.NO_CHANGES)
 
   internal val hasChanges: Boolean
     get() = currentStatus == HotSwapVisibleStatus.CHANGES_READY
 
   private fun setStatus(status: HotSwapVisibleStatus, fireUpdate: Boolean = true) {
-    // No further updates after the session is complete
-    if (currentStatus == HotSwapVisibleStatus.SESSION_COMPLETED) return
-    currentStatus = status
+    while (true) {
+      val curStatus = currentStatus
+      // No further updates after the session is complete
+      if (curStatus == HotSwapVisibleStatus.SESSION_COMPLETED) return
+      if (_currentStatus.compareAndSet(curStatus, status)) break
+    }
     if (logger.isDebugEnabled) {
       logger.debug("Session status changed: $status (fire=$fireUpdate)")
     }
