@@ -17,7 +17,7 @@ class JavaIntentionsOrderProvider : IntentionsOrderProvider {
   }
 
   private fun isCompilationFix(context: CachedIntentions, intention: IntentionActionWithTextCaching): Boolean {
-    if (intention.fixRange?.contains(context.offset) == false) return false
+    if (intention.fixRange?.containsOffset(context.offset) == false) return false
     val isInspectionHighlighting = context.highlightInfoType?.isInspectionHighlightInfoType == true
     return context.errorFixes.contains(intention) && !isInspectionHighlighting
   }
