@@ -8,6 +8,7 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
@@ -136,48 +137,7 @@ public final class DiffIterableUtil {
    */
   @NotNull
   public static Iterable<Pair<Range, /* isUnchanged */ Boolean>> iterateAll(@NotNull final DiffIterable iterable) {
-    return () -> new Iterator<Pair<Range, Boolean>>() {
-      @NotNull private final Iterator<Range> myChanges = iterable.changes();
-      @NotNull private final Iterator<Range> myUnchanged = iterable.unchanged();
-
-      @Nullable private Range lastChanged = myChanges.hasNext() ? myChanges.next() : null;
-      @Nullable private Range lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
-
-      @Override
-      public boolean hasNext() {
-        return lastChanged != null || lastUnchanged != null;
-      }
-
-      @Override
-      public Pair<Range, Boolean> next() {
-        boolean equals;
-        if (lastChanged == null) {
-          equals = true;
-        }
-        else if (lastUnchanged == null) {
-          equals = false;
-        }
-        else {
-          equals = lastUnchanged.start1 < lastChanged.start1 || lastUnchanged.start2 < lastChanged.start2;
-        }
-
-        if (equals) {
-          Range range = lastUnchanged;
-          lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
-          return Pair.create(range, true);
-        }
-        else {
-          Range range = lastChanged;
-          lastChanged = myChanges.hasNext() ? myChanges.next() : null;
-          return Pair.create(range, false);
-        }
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
+    return () -> new AllRangesIterator(iterable);
   }
 
   public static int getRangeDelta(@NotNull Range range) {
@@ -394,6 +354,52 @@ public final class DiffIterableUtil {
       this.equals = equals;
       this.objects1 = objects1;
       this.objects2 = objects2;
+    }
+  }
+
+  private static class AllRangesIterator implements Iterator<Pair<Range, Boolean>> {
+    private final @NotNull DiffIterable myIterable;
+    private final @NotNull PeekableIteratorWrapper<Range> myChanges;
+
+    private Range myNextUnchanged;
+
+    AllRangesIterator(@NotNull DiffIterable iterable) {
+      myChanges = new PeekableIteratorWrapper<>(iterable.changes());
+      myIterable = iterable;
+
+      myNextUnchanged = peekNextUnchanged(0, 0);
+    }
+
+    private @Nullable Range peekNextUnchanged(int start1, int start2) {
+      Range nextChange = myChanges.hasNext() ? myChanges.peek() : null;
+      Range range = nextChange != null
+                    ? new Range(start1, nextChange.start1, start2, nextChange.start2)
+                    : new Range(start1, myIterable.getLength1(), start2, myIterable.getLength2());
+      if (range.isEmpty()) return null;
+      return range;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return myChanges.hasNext() || myNextUnchanged != null;
+    }
+
+    @Override
+    public Pair<Range, Boolean> next() {
+      if (myNextUnchanged != null) {
+        Range result = myNextUnchanged;
+        myNextUnchanged = null;
+        return Pair.create(result, true);
+      }
+
+      Range range = myChanges.next();
+      myNextUnchanged = peekNextUnchanged(range.end1, range.end2);
+      return Pair.create(range, false);
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
     }
   }
 }
