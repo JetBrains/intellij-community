@@ -95,10 +95,7 @@ import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Job;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicArrowButton;
@@ -1516,10 +1513,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private static @Nullable Value invokeWithHelper(@NotNull ReferenceType type,
                                                   @Nullable ObjectReference objRef,
                                                   @NotNull Method method,
-                                                  @NotNull List<? extends Value> args,
+                                                  @NotNull List<? extends Value> originalArgs,
                                                   @NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
     DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
-    VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+    VirtualMachineProxyImpl virtualMachineProxy = evaluationContext.getSuspendContext().getVirtualMachineProxy();
     ArrayList<Value> invokerArgs = new ArrayList<>();
 
     ReferenceType lookupClass =
@@ -1533,10 +1530,23 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     invokerArgs.add(DebuggerUtilsEx.mirrorOfString(method.signature(), virtualMachineProxy, evaluationContext)); // method descriptor
 
     // argument values
+    List<Value> args = new ArrayList<>(originalArgs);
+    if (method.isVarArgs()) {
+      // If vararg is Object... and an array of Objects is passed, we need to unwrap it or we'll not be able to distinguish what was passed later
+      List<String> argumentTypeNames = method.argumentTypeNames();
+      int lastIndex = argumentTypeNames.size() - 1;
+      if (args.size() == lastIndex + 1 && args.get(lastIndex) instanceof ArrayReference arrayRef &&
+          argumentTypeNames.get(lastIndex).startsWith(CommonClassNames.JAVA_LANG_OBJECT)) {
+        args.remove(lastIndex);
+        args.addAll(arrayRef.getValues());
+      }
+    }
+
     List<Value> boxedArgs = new ArrayList<>(args.size());
     for (Value arg : args) {
       boxedArgs.add((Value)BoxingEvaluator.box(arg, evaluationContext));
     }
+
     ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
       evaluationContext,
       CommonClassNames.JAVA_LANG_OBJECT + "[]",
@@ -1544,7 +1554,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     ArrayReference arrayArgs = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, boxedArgs, evaluationContext);
     invokerArgs.add(arrayArgs);
-    invokerArgs.add(evaluationContext.getClassLoader()); // class laoder
+    invokerArgs.add(evaluationContext.getClassLoader()); // class loader
     return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke", invokerArgs, false);
   }
 
