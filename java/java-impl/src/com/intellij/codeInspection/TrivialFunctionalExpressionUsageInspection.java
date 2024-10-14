@@ -145,7 +145,6 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
                              call.getArgumentList().getExpressionCount() == method.getParameterList().getParametersCount() &&
                              elementContainerPredicate.test(call);
     if (!suitableMethod) return null;
-    //if (SideEffectChecker.definitelyChangesSemantics(call)) return null;
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
     if (method == interfaceMethod || interfaceMethod != null && MethodSignatureUtil.isSuperMethod(interfaceMethod, method)) {
       return new Problem(referenceNameElement, fix);
