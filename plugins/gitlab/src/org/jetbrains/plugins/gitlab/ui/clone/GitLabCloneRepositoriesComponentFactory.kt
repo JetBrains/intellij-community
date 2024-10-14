@@ -146,7 +146,21 @@ internal object GitLabCloneRepositoriesComponentFactory {
     cs: CoroutineScope,
     repositoriesVm: GitLabCloneRepositoriesViewModel,
   ): ListModel<GitLabCloneListItem> {
-    val repositoriesModel = CollectionListModel<GitLabCloneListItem>()
+    // Hack: selection is reset on removal, so we prevent removal events from being fired.
+    // Instead, we just rely on `contentsChanged` events, which better reflects the intention of replacing all anyway .
+    val repositoriesModel = object : CollectionListModel<GitLabCloneListItem>() {
+      override fun fireIntervalAdded(source: Any?, index0: Int, index1: Int) {
+      }
+
+      override fun fireIntervalRemoved(source: Any?, index0: Int, index1: Int) {
+      }
+
+      override fun replaceAll(elements: List<GitLabCloneListItem?>) {
+        super.replaceAll(elements)
+        super.fireContentsChanged(this, 0, elements.size)
+      }
+    }
+
     cs.launch {
       repositoriesVm.listVm.allItems.collectLatest { items ->
         repositoriesModel.replaceAll(items)
