@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.*;
 import static org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder.convertShellPathToCommand;
+import static org.jetbrains.plugins.terminal.util.ShellNameUtil.*;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
@@ -72,10 +73,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @ApiStatus.Internal
   public static final List<String> LOGIN_CLI_OPTIONS = List.of(LOGIN_CLI_OPTION, "-l");
   private static final String INTERACTIVE_CLI_OPTION = "-i";
-  private static final String BASH_NAME = "bash";
-  private static final String SH_NAME = "sh";
-  private static final String ZSH_NAME = "zsh";
-  private static final String FISH_NAME = "fish";
 
   protected final Charset myDefaultCharset;
   private final ThreadLocal<ShellStartupOptions> myStartupOptionsThreadLocal = new ThreadLocal<>();
@@ -105,13 +102,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       }
     }
     return null;
-  }
-
-  private static boolean isPowerShell(@NotNull String shellName) {
-    return shellName.equalsIgnoreCase("powershell") ||
-           shellName.equalsIgnoreCase("powershell.exe") ||
-           shellName.equalsIgnoreCase("pwsh") ||
-           shellName.equalsIgnoreCase("pwsh.exe");
   }
 
   @NotNull
@@ -526,11 +516,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
            || SystemInfo.isMac && shellName.equals(SH_NAME)
            || shellName.equals(ZSH_NAME)
            || shellName.equals(FISH_NAME) && Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false);
-  }
-
-  private static boolean isBashZshFish(@NotNull String shellName) {
-    return shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME)) ||
-           shellName.equals(ZSH_NAME) || shellName.equals(FISH_NAME);
   }
 
   private static void setLoginShellEnv(@NotNull Map<String, String> envs, boolean loginShell) {
