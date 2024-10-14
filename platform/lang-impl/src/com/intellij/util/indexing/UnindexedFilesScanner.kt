@@ -47,6 +47,7 @@ import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.Closeable
 import java.time.Instant
 import java.util.concurrent.Future
 import java.util.function.BiPredicate
@@ -66,7 +67,7 @@ class UnindexedFilesScanner @JvmOverloads constructor(
   private val shouldHideProgressInSmartMode: Boolean? = null,
   private val forceReindexingTrigger: BiPredicate<IndexedFile, FileIndexingStamp>? = null,
   private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean = false,
-) : FilesScanningTask {
+) : FilesScanningTask, Closeable {
 
   enum class TestMode {
     PUSHING, PUSHING_AND_SCANNING
