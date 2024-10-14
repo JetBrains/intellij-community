@@ -9,13 +9,10 @@ import com.intellij.util.containers.with
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
@@ -112,6 +109,10 @@ class BuildContextImpl internal constructor(
         AttributeKey.stringArrayKey("stepsToSkip"), java.util.List.copyOf(options.buildStepsToSkip)
       )
       )
+    }
+    if (!options.compatiblePluginsToIgnore.isEmpty()) {
+      productProperties.productLayout.compatiblePluginsToIgnore =
+        productProperties.productLayout.compatiblePluginsToIgnore.addAll(options.compatiblePluginsToIgnore)
     }
   }
 
