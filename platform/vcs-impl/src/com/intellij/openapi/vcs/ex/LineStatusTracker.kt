@@ -235,10 +235,6 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 fun saveDocumentWhenUnchanged(project: Project, document: Document) {
   if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
     // Use 'invokeLater' to avoid saving inside document change event processing and deadlock with CLM.
-    if (ModalityState.current() != ModalityState.nonModal()) {
-      println("Saving document from non-modal")
-      Throwable().printStackTrace()
-    }
     ApplicationManager.getApplication().invokeLater(Runnable {
       FileDocumentManager.getInstance().saveDocument(document)
     }, ModalityState.nonModal(), project.disposed)
