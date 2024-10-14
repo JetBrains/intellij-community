@@ -6,7 +6,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <debugger.extraDebugNodesProvider implementation="org.jetbrains.idea.devkit.debugger.DebugeeIdeStateRenderer"/>
     <registryKey defaultValue="true" description="Show details of a debugee IDE in the variables view" key="devkit.debugger.show.ide.state"/>
-    <registryKey defaultValue="false" description="Do not throw PCE during stepping" key="devkit.debugger.prevent.pce.while.stepping"/>
+    <registryKey defaultValue="true" description="Do not throw PCE during stepping" key="devkit.debugger.prevent.pce.while.stepping"/>
   </extensions>
   <applicationListeners>
     <listener class="org.jetbrains.idea.devkit.debugger.SteppingStartListener"
