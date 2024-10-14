@@ -25,6 +25,7 @@ object VmOptionsGenerator {
     "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
     "-Djdk.attach.allowAttachSelf=true",
     "-Djdk.module.illegalAccess.silent=true",
+    "-Djdk.nio.maxCachedBufferSize=2097152",
     "-Djava.util.zip.use.nio.for.zip.file.access=true", // IJPL-149160
     "-Dkotlinx.coroutines.debug=off",
   )
