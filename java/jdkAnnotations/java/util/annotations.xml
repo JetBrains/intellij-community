@@ -3545,6 +3545,312 @@
   <item name='java.util.List void sort(java.util.Comparator&lt;? super E&gt;) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
+  <item name='java.util.Locale java.lang.String getCountry()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayCountry()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayCountry(java.util.Locale)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayCountry(java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayLanguage()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayLanguage(java.util.Locale)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayLanguage(java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayName()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayName(java.util.Locale)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayName(java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayScript()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayScript(java.util.Locale)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayScript(java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayVariant()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayVariant(java.util.Locale)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getDisplayVariant(java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getISO3Country()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale java.lang.String getISO3Language()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale java.lang.String getLanguage()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+  <item name='java.util.Locale java.lang.String getScript()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getUnicodeLocaleType(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String getVariant()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Locale java.lang.String lookupTag(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.lang.String&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Locale java.lang.String lookupTag(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.lang.String&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.lang.String toLanguageTag()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item
+    name='java.util.Locale java.util.List&lt;java.lang.String&gt; filterTags(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.lang.String&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Locale java.util.List&lt;java.lang.String&gt; filterTags(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.lang.String&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Locale java.util.List&lt;java.lang.String&gt; filterTags(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.lang.String&gt;, java.util.Locale.FilteringMode)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item
+    name='java.util.Locale java.util.List&lt;java.lang.String&gt; filterTags(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.lang.String&gt;, java.util.Locale.FilteringMode) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Locale java.util.List&lt;java.lang.String&gt; filterTags(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.lang.String&gt;, java.util.Locale.FilteringMode) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Locale java.util.List&lt;java.util.Locale&gt; filter(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.util.Locale&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item
+    name='java.util.Locale java.util.List&lt;java.util.Locale&gt; filter(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.util.Locale&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Locale java.util.List&lt;java.util.Locale&gt; filter(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.util.Locale&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Locale java.util.List&lt;java.util.Locale&gt; filter(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.util.Locale&gt;, java.util.Locale.FilteringMode)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item
+    name='java.util.Locale java.util.List&lt;java.util.Locale&gt; filter(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.util.Locale&gt;, java.util.Locale.FilteringMode) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Locale java.util.List&lt;java.util.Locale&gt; filter(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.util.Locale&gt;, java.util.Locale.FilteringMode) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Locale java.util.Locale lookup(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.util.Locale&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.Locale java.util.Locale lookup(java.util.List&lt;java.util.Locale.LanguageRange&gt;, java.util.Collection&lt;java.util.Locale&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.util.Locale stripExtensions()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale java.util.Set&lt;java.lang.Character&gt; getExtensionKeys()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Unmodifiable'/>
+  </item>
+  <item name='java.util.Locale java.util.Set&lt;java.lang.String&gt; getISOCountries(java.util.Locale.IsoCountryCode)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='java.util.Locale java.util.Set&lt;java.lang.String&gt; getISOCountries(java.util.Locale.IsoCountryCode) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale java.util.Set&lt;java.lang.String&gt; getUnicodeLocaleAttributes()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.Unmodifiable'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale java.util.Set&lt;java.lang.String&gt; getUnicodeLocaleKeys()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Unmodifiable'/>
+  </item>
+  <item name='java.util.Locale.Builder Builder()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale build()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale.Builder addUnicodeLocaleAttribute(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale.Builder clear()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;-&gt;this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale.Builder clearExtensions()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;-&gt;this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale.Builder removeUnicodeLocaleAttribute(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale.Builder setExtension(char, java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale.Builder setLanguage(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale.Builder setLanguageTag(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale.Builder setLocale(java.util.Locale)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale.Builder setLocale(java.util.Locale) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale.Builder setRegion(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale.Builder setScript(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale.Builder setUnicodeLocaleKeyword(java.lang.String, java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Locale.Builder java.util.Locale.Builder setVariant(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
   <item name='java.util.Map V compute(K, java.util.function.BiFunction&lt;? super K,? super V,? extends V&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
