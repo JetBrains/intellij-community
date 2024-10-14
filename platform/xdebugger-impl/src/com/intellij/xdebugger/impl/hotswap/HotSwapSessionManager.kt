@@ -150,7 +150,7 @@ class HotSwapSession<T> internal constructor(val project: Project, internal val 
   /**
    * Get elements modified since the last hot swap.
    */
-  fun getChanges() = changesCollector.getChanges()
+  fun getChanges(): Set<T> = changesCollector.getChanges()
 
   /**
    * Start a hot swap process.
