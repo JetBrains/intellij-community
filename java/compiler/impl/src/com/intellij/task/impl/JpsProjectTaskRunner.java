@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task.impl;
 
 import com.intellij.compiler.impl.CompileDriver;
@@ -115,7 +115,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
     CompilerManager compilerManager = CompilerManager.getInstance(project);
 
     if (buildSettings.isRebuild()) {
-      compilerManager.rebuild(new MyCompileStatusNotification(notificationCollector));
+      compilerManager.rebuildClean(new MyCompileStatusNotification(notificationCollector));
     }
     else {
       CompileScope scope = createScope(

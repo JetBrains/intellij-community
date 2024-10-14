@@ -122,7 +122,8 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -820,39 +821,49 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  public void cancelPreloadedBuilds(@NotNull Project project) {
-    cancelPreloadedBuilds(getProjectPath(project));
+  @NotNull
+  public TaskFuture<Boolean> cancelPreloadedBuilds(@NotNull Project project) {
+    return cancelPreloadedBuilds(getProjectPath(project));
   }
 
-  private void cancelPreloadedBuilds(@NotNull String projectPath) {
+  @NotNull
+  private TaskFuture<Boolean> cancelPreloadedBuilds(@NotNull String projectPath) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Cancel preloaded build for " + projectPath + "\n" + getThreadTrace(Thread.currentThread(), 50));
     }
+    CompletableFuture<Boolean> future = new CompletableFuture<>();
     runCommand(() -> {
       Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> pair = takePreloadedProcess(projectPath);
-      if (pair == null) {
-        return;
+      if (pair != null) {
+        stopProcess(projectPath, pair.first.getRequestID(), pair.second, future);
       }
+      else {
+        future.complete(Boolean.TRUE);
+      }
+    });
+    return new TaskFutureAdapter<>(future);
+  }
 
-      final RequestFuture<PreloadedProcessMessageHandler> future = pair.first;
-      final OSProcessHandler processHandler = pair.second;
-      myMessageDispatcher.cancelSession(future.getRequestID());
-      // waiting for the preloaded process from project's task queue guarantees no build is started for this project
-      // until this one gracefully exits and closes all its storages
-      getProjectData(projectPath).taskQueue.execute(() -> {
-        Throwable error = null;
-        try {
-          while (!processHandler.waitFor()) {
-            LOG.info("processHandler.waitFor() returned false for session " + future.getRequestID() + ", continue waiting");
-          }
+  private void stopProcess(@NotNull String projectPath, @NotNull UUID sessionId, @NotNull OSProcessHandler processHandler, @Nullable CompletableFuture<Boolean> future) {
+    myMessageDispatcher.cancelSession(sessionId);
+    // waiting for the process from project's task queue guarantees no build is started for this project
+    // until this one gracefully exits and closes all its storages
+    getProjectData(projectPath).taskQueue.execute(() -> {
+      Throwable error = null;
+      try {
+        while (!processHandler.waitFor()) {
+          LOG.info("processHandler.waitFor() returned false for session " + sessionId + ", continue waiting");
         }
-        catch (Throwable e) {
-          error = e;
+      }
+      catch (Throwable e) {
+        error = e;
+      }
+      finally {
+        notifySessionTerminationIfNeeded(sessionId, error);
+        if (future != null) {
+          future.complete(error == null? Boolean.TRUE : Boolean.FALSE);
         }
-        finally {
-          notifySessionTerminationIfNeeded(future.getRequestID(), error);
-        }
-      });
+      }
     });
   }
 
