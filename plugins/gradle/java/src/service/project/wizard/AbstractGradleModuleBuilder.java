@@ -185,7 +185,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   }
 
   @Override
-  protected void setupModule(Module module) throws ConfigurationException {
+  protected void setupModule(@NotNull Module module) throws ConfigurationException {
     super.setupModule(module);
     assert rootProjectPath != null;
 
@@ -222,17 +222,28 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, Boolean.TRUE);
     }
 
-    // execute when current dialog is closed
+    // execute when the current dialog is closed
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (isCreatingBuildScriptFile) {
-        preImportConfigurators.forEach(c -> c.accept(buildScriptFile, settingsScriptFile));
-        openBuildScriptFile(project, buildScriptFile);
-      }
-      if (isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
-        generateGradleWrapper(project);
-      }
-      reloadProject(project);
+      finishModuleSetup(buildScriptFile, project);
     }, ModalityState.nonModal(), project.getDisposed());
+  }
+
+  private void finishModuleSetup(@Nullable VirtualFile buildScriptFile, @NotNull Project project) {
+    if (!project.isOpen()) {
+      ApplicationManager.getApplication().invokeLater(() -> finishModuleSetup(buildScriptFile, project),
+                                                      ModalityState.nonModal(),
+                                                      project.getDisposed());
+      return;
+    }
+
+    if (isCreatingBuildScriptFile) {
+      preImportConfigurators.forEach(c -> c.accept(buildScriptFile, settingsScriptFile));
+      openBuildScriptFile(project, buildScriptFile);
+    }
+    if (isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
+      generateGradleWrapper(project);
+    }
+    reloadProject(project);
   }
 
   private void reloadProject(@NotNull Project project) {
