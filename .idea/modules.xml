@@ -906,6 +906,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/vcs/intellij.searchEverywhereMl.ranking.vcs.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/vcs/intellij.searchEverywhereMl.ranking.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/yaml/intellij.searchEverywhereMl.ranking.yaml.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/ranking/yaml/intellij.searchEverywhereMl.ranking.yaml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/typos/intellij.searchEverywhereMl.typos.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/typos/intellij.searchEverywhereMl.typos.iml" />
+      <module fileurl="file://$PROJECT_DIR$/community/plugins/search-everywhere-ml/semantics/tests/intellij.searchEverywhereMl.semantics.tests.iml" filepath="$PROJECT_DIR$/community/plugins/search-everywhere-ml/semantics/tests/intellij.searchEverywhereMl.semantics.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.tests.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-sync/intellij.settingsSync.iml" filepath="$PROJECT_DIR$/plugins/settings-sync/intellij.settingsSync.iml" />
