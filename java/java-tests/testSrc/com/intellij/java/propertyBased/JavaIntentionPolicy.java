@@ -58,6 +58,7 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Unimplement") || // e.g. leaves red references to the former superclass methods
            actionText.startsWith("Add 'catch' clause for '") || // if existing catch contains "return value", new error "Missing return statement" may appear
            actionText.startsWith("Surround with try-with-resources block") || // if 'close' throws, we don't add a new 'catch' for that, see IDEA-196544
+           actionText.startsWith("Replace 'catch' section") || //expected, it can be called and this new exception will not be caught
            actionText.equals("Split into declaration and initialization") || // TODO: remove when IDEA-179081 is fixed
            actionText.matches("Replace with throws .*") || // may break catches with explicit exceptions
            actionText.matches("Replace '.+' with '.+' in cast") || // can produce uncompilable code by design
@@ -174,6 +175,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
     return actionText.equals("Add clarifying parentheses") ||
            actionText.equals("Remove unnecessary parentheses") ||
            actionText.equals("See other similar duplicates") ||
+           actionText.equals("Replace 'catch' section with 'throws' declaration") ||
            actionText.equals("Replace character literal with string") ||
            actionText.matches("Simplify '\\(+(true|false)\\)+' to \\1") ||
            // Parenthesizing sub-expression causes cutting the action name at different position, so name changes significantly
