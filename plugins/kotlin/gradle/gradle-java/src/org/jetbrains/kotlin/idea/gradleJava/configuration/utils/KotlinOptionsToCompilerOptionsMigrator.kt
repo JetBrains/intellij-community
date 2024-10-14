@@ -153,7 +153,7 @@ private fun getOptionName(expression: KtExpression): Pair<String, StringBuilder>
             } else if (leftmostReceiverName != "options") {
                 return null // We don't know what to do with such an option
             }
-            expression.getCalleeExpressionIfAny()?.text ?: return null
+            (expression.getCalleeExpressionIfAny() as? KtNameReferenceExpression)?.getReferencedName() ?: return null
         }
 
         is KtNameReferenceExpression -> {
