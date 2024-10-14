@@ -808,24 +808,8 @@ public final class PyTypeChecker {
             }
           }
           else {
-            PyTypeParameterMapping mapping = PyTypeParameterMapping.mapByShape(definitionTypeParameters, genericType.getElementTypes(),
-                                                                               Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
-            if (mapping != null) {
-              for (Couple<PyType> pair : mapping.getMappedTypes()) {
-                PyType typeParameter = pair.getFirst();
-                PyType typeArgument = pair.getSecond();
-                if (typeParameter instanceof PyTypeVarType typeVarType) {
-                  result.typeVars.put(typeVarType, typeArgument);
-                }
-                else if (typeParameter instanceof PyTypeVarTupleType typeVarTuple) {
-                  assert typeArgument instanceof PyVariadicType || typeArgument == null;
-                  result.typeVarTuples.put(typeVarTuple, (PyVariadicType)typeArgument);
-                }
-                else if (typeParameter instanceof PyParamSpecType) {
-                  result.paramSpecs.put((PyParamSpecType)typeParameter, as(typeArgument, PyParamSpecType.class));
-                }
-              }
-            }
+            mapTypeParametersToSubstitutions(result, definitionTypeParameters, genericType.getElementTypes(),
+                                             Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
           }
         }
       }
@@ -1628,10 +1612,16 @@ public final class PyTypeChecker {
 
   @ApiStatus.Internal
   @Nullable
-  public static GenericSubstitutions mapTypeParametersToSubstitutions(@NotNull GenericSubstitutions substitutions,
-                                                                      @NotNull List<? extends PyType> expectedTypes,
+  public static GenericSubstitutions mapTypeParametersToSubstitutions(@NotNull List<? extends PyType> expectedTypes,
                                                                       @NotNull List<? extends PyType> actualTypes,
                                                                       Option @NotNull ... options) {
+    return mapTypeParametersToSubstitutions(new GenericSubstitutions(), expectedTypes, actualTypes, options);
+  }
+
+  private static @Nullable GenericSubstitutions mapTypeParametersToSubstitutions(@NotNull GenericSubstitutions substitutions,
+                                                                                 @NotNull List<? extends PyType> expectedTypes,
+                                                                                 @NotNull List<? extends PyType> actualTypes,
+                                                                                 Option @NotNull ... options) {
     PyTypeParameterMapping mapping = PyTypeParameterMapping.mapByShape(expectedTypes, actualTypes, options);
     if (mapping != null) {
       for (Couple<PyType> pair : mapping.getMappedTypes()) {
