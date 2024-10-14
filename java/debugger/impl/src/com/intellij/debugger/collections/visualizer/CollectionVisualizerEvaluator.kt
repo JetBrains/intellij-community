@@ -52,6 +52,7 @@ class CollectionVisualizerEvaluator(private val visualizer: CollectionVisualizer
           disposeOnResume(evaluationContext, scope)
           closeOnEsc()
           show()
+          CollectionVisualizerStatisticsCollector.reportShown(project)
         }
       }
     }
@@ -64,14 +65,21 @@ class CollectionVisualizerEvaluator(private val visualizer: CollectionVisualizer
     evaluationContext.debugProcess.addDebugProcessListener(object : DebugProcessListener {
       override fun resumed(suspendContext: SuspendContext?) {
         if (affectedByResume(suspendContext)) {
-          close()
-          scope.cancel()
+          CollectionVisualizerStatisticsCollector.reportClosed(evaluationContext.project, VisualizerClosedCause.RESUME)
+          doClose()
         }
       }
 
       override fun processDetached(process: DebugProcess, closedByUser: Boolean) {
+        val cause = if (closedByUser) VisualizerClosedCause.DETACH_MANUAL else VisualizerClosedCause.DETACH_AUTO
+        CollectionVisualizerStatisticsCollector.reportClosed(evaluationContext.project, cause)
+        doClose()
+      }
+
+      private fun doClose() {
         close()
         scope.cancel()
+        evaluationContext.debugProcess.removeDebugProcessListener(this)
       }
 
       // maximum conservatism -- better close more popups than make them leak
