@@ -4,6 +4,8 @@ package com.intellij.xdebugger.impl.hotswap
 import com.intellij.history.LocalHistory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
@@ -11,17 +13,93 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.SearchScope
+import com.intellij.util.containers.DisposableWrapperList
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2IntFunction
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.atomic.AtomicInteger
+
+@Service(Service.Level.APP)
+private class ChangesProcessingService(private val coroutineScope: CoroutineScope) : Disposable.Default {
+  private val collectors = DisposableWrapperList<SourceFileChangesCollectorImpl>()
+  private val listenersCount = AtomicInteger()
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val documentChangeDispatcher = Dispatchers.Default.limitedParallelism(1)
+  private val allCache = Long2ObjectOpenHashMap<Object2IntOpenHashMap<VirtualFile>>()
+
+  private val documentListener = object : DocumentListener {
+    override fun documentChanged(event: DocumentEvent) {
+      if (logger.isDebugEnabled) {
+        logger.debug("Document changed: ${event.document}")
+      }
+      onDocumentChange(event.document)
+    }
+  }
+
+  fun addCollector(collector: SourceFileChangesCollectorImpl) {
+    Disposer.register(collector, Disposable {
+      coroutineScope.launch(documentChangeDispatcher) {
+        // clear cache
+        allCache.remove(collector.lastResetTimeStamp)
+      }
+      if (listenersCount.decrementAndGet() == 0) {
+        val eventMulticaster = EditorFactory.getInstance().eventMulticaster
+        eventMulticaster.removeDocumentListener(documentListener)
+      }
+    })
+    if (listenersCount.getAndIncrement() == 0) {
+      val eventMulticaster = EditorFactory.getInstance().eventMulticaster
+      eventMulticaster.addDocumentListener(documentListener, this)
+    }
+    collectors.add(collector, collector)
+  }
+
+  private fun onDocumentChange(document: Document) = coroutineScope.launch(documentChangeDispatcher) {
+    val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return@launch
+    val filteredCollectors = collectors
+      .map { collector -> collector to async(Dispatchers.Default) { collector.filters.all { it.isApplicable(virtualFile) } } }
+      .filter { it.second.await() }
+      .map { it.first }
+    if (filteredCollectors.isEmpty()) {
+      if (logger.isDebugEnabled) {
+        logger.debug("Document change skipped as filtered: $document")
+      }
+      return@launch
+    }
+    if (logger.isDebugEnabled) {
+      logger.debug("Document change processing: $document")
+    }
+    val contentHash = Strings.stringHashCode(document.immutableCharSequence)
+    val groupedByTimeStamp = filteredCollectors.groupBy { it.lastResetTimeStamp }
+    dropUnusedTimestamps(groupedByTimeStamp.keys)
+
+    for ((timestamp, collectors) in groupedByTimeStamp) {
+      val cache = allCache.computeIfAbsent(timestamp) { Object2IntOpenHashMap() }
+      val hasChanges = hasChangesSinceLastReset(virtualFile, timestamp, contentHash, cache)
+      for (collector in collectors) {
+        launch(Dispatchers.Default) {
+          collector.processDocumentChange(hasChanges, virtualFile, document)
+        }
+      }
+    }
+  }
+
+  private fun dropUnusedTimestamps(active: Set<Long>) {
+    allCache.keys.minus(active).forEach { allCache.remove(it) }
+  }
+
+  companion object {
+    fun getInstance() = service<ChangesProcessingService>()
+  }
+}
 
 @ApiStatus.Internal
 fun interface SourceFileChangeFilter<T> {
@@ -35,36 +113,20 @@ private val logger = logger<SourceFileChangesCollectorImpl>()
  */
 @ApiStatus.Internal
 class SourceFileChangesCollectorImpl(
-  private val coroutineScope: CoroutineScope,
-  private val listener: SourceFileChangesListener,
-  private vararg val filters: SourceFileChangeFilter<VirtualFile>,
-) : SourceFileChangesCollector<VirtualFile>, Disposable {
-  private val channel = Channel<Update>(Channel.UNLIMITED)
+  coroutineScope: CoroutineScope,
+  internal val listener: SourceFileChangesListener,
+  internal vararg val filters: SourceFileChangeFilter<VirtualFile>,
+) : SourceFileChangesCollector<VirtualFile>, Disposable.Default {
 
   @Volatile
   private var currentChanges: MutableSet<VirtualFile> = hashSetOf()
 
   @Volatile
-  private var lastResetTimeStamp: Long = System.currentTimeMillis()
-
-  @TestOnly
-  internal var customLocalHistory: LocalHistory? = null
+  internal var lastResetTimeStamp: Long = System.currentTimeMillis()
+    private set
 
   init {
-    val eventMulticaster = EditorFactory.getInstance().eventMulticaster
-    eventMulticaster.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        if (logger.isDebugEnabled) {
-          logger.debug("Document changed: ${event.document}")
-        }
-        onDocumentChange(event.document)
-      }
-    }, this)
-    coroutineScope.collectChanges()
-  }
-
-  override fun dispose() {
-    channel.close()
+    ChangesProcessingService.getInstance().addCollector(this)
   }
 
   override fun getChanges(): Set<VirtualFile> = currentChanges
@@ -73,74 +135,48 @@ class SourceFileChangesCollectorImpl(
     currentChanges = hashSetOf()
   }
 
-  private fun onDocumentChange(document: Document) {
-    coroutineScope.launch(Dispatchers.Default) {
-      val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return@launch
-      if (filters.any { !it.isApplicable(virtualFile) }) {
-        if (logger.isDebugEnabled) {
-          logger.debug("Document change skipped as filtered: $document")
-        }
-        return@launch
-      }
+  internal fun processDocumentChange(hasChangesSinceLastReset: Boolean, file: VirtualFile, document: Document) {
+    val currentChanges = currentChanges
+    if (hasChangesSinceLastReset) {
+      currentChanges.add(file)
+    }
+    else {
+      currentChanges.remove(file)
+    }
+
+    val isEmpty = currentChanges.isEmpty()
+    if (isEmpty) {
       if (logger.isDebugEnabled) {
-        logger.debug("Document change processing: $document")
+        logger.debug("Document change reverted previous changes: $document")
       }
-      channel.send(Update(virtualFile, document))
+      listener.onChangesCanceled()
+    }
+    else {
+      if (logger.isDebugEnabled) {
+        logger.debug("Document change active: $document")
+      }
+      listener.onNewChanges()
     }
   }
 
-  private fun CoroutineScope.collectChanges() = launch(Dispatchers.Default) {
-    var timestamp = lastResetTimeStamp
-    val cache = Object2IntOpenHashMap<VirtualFile>()
-    fun checkCacheValidity() {
-      val current = lastResetTimeStamp
-      if (timestamp == current) return
-      timestamp = current
-      cache.clear()
-    }
-
-    for ((file, document) in channel) {
-      checkCacheValidity()
-      val currentChanges = currentChanges
-      val contentHash = Strings.stringHashCode(document.immutableCharSequence)
-
-      if (hasChangesSinceLastReset(file, contentHash, cache)) {
-        currentChanges.add(file)
-      }
-      else {
-        currentChanges.remove(file)
-      }
-
-      val isEmpty = currentChanges.isEmpty()
-      if (isEmpty) {
-        if (logger.isDebugEnabled) {
-          logger.debug("Document change reverted previous changes: $document")
-        }
-        listener.onChangesCanceled()
-      } else {
-        if (logger.isDebugEnabled) {
-          logger.debug("Document change active: $document")
-        }
-        listener.onNewChanges()
-      }
-    }
-  }
-
-  private fun hasChangesSinceLastReset(file: VirtualFile, contentHash: Int, cache: Object2IntOpenHashMap<VirtualFile>): Boolean {
-    val oldHash = cache.computeIfAbsent(file, Object2IntFunction { getContentHashBeforeLastReset(file) })
-    if (oldHash == -1) return true
-    return contentHash != oldHash
-  }
-
-  private fun getContentHashBeforeLastReset(file: VirtualFile): Int {
-    val localHistory = customLocalHistory ?: LocalHistory.getInstance()
-    val bytes = localHistory.getByteContent(file) { timestamp -> timestamp < lastResetTimeStamp } ?: return -1
-    val content = LoadTextUtil.getTextByBinaryPresentation(bytes, file, false, false)
-    return Strings.stringHashCode(content)
+  companion object {
+    @TestOnly
+    internal var customLocalHistory: LocalHistory? = null
   }
 }
 
-private data class Update(val file: VirtualFile, val contentHash: Document)
+private fun hasChangesSinceLastReset(file: VirtualFile, lastTimestamp: Long, contentHash: Int, cache: Object2IntOpenHashMap<VirtualFile>): Boolean {
+  val oldHash = cache.computeIfAbsent(file) { getContentHashBeforeLastReset(file, lastTimestamp) }
+  if (oldHash == -1) return true
+  return contentHash != oldHash
+}
+
+private fun getContentHashBeforeLastReset(file: VirtualFile, lastTimestamp: Long): Int {
+  val localHistory = SourceFileChangesCollectorImpl.customLocalHistory ?: LocalHistory.getInstance()
+  val bytes = localHistory.getByteContent(file) { timestamp -> timestamp < lastTimestamp } ?: return -1
+  val content = LoadTextUtil.getTextByBinaryPresentation(bytes, file, false, false)
+  return Strings.stringHashCode(content)
+}
 
 @ApiStatus.Internal
 class SearchScopeFilter(private val searchScope: SearchScope) : SourceFileChangeFilter<VirtualFile> {

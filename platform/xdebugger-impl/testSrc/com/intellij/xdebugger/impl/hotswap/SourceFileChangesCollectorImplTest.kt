@@ -8,10 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
@@ -88,7 +86,7 @@ class SourceFileChangesCollectorImplTest : LightPlatformCodeInsightTestCase() {
     val disposable = Disposer.newDisposable(testRootDisposable)
     doTest { scope, document ->
       scope.withCollector { collector, channel ->
-        (collector as SourceFileChangesCollectorImpl).customLocalHistory = MockLocalHistory(document.text.toByteArray())
+        SourceFileChangesCollectorImpl.customLocalHistory = MockLocalHistory(document.text.toByteArray())
         assertNull(channel.tryReceive().getOrNull())
 
         writeCommandAction(project, "Replace first line") { document.replaceString(0, 4, "string") }
@@ -109,14 +107,9 @@ private inline fun CoroutineScope.withCollector(
   action: (SourceFileChangesCollector<VirtualFile>, channel: ReceiveChannel<Response>) -> Unit,
 ) {
   val channel = Channel<Response>()
-  val collectorScope = childScope("Collector")
-  try {
-    val collector = SourceFileChangesCollectorImpl(collectorScope, MockListener(this, channel), *filters)
-    action(collector, channel)
-  }
-  finally {
-    collectorScope.cancel()
-  }
+  val collector = SourceFileChangesCollectorImpl(this, MockListener(this, channel), *filters)
+  action(collector, channel)
+  Disposer.dispose(collector)
 }
 
 private enum class Response {
