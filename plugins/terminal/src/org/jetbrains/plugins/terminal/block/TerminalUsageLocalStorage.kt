@@ -30,6 +30,10 @@ internal class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsag
     state.blockTerminalUsedLastTimeMillis = System.currentTimeMillis()
   }
 
+  fun recordBlockTerminalDisabled() {
+    state.blockTerminalDisabledLastTimeMillis = System.currentTimeMillis()
+  }
+
   override fun getState(): State = state
 
   override fun loadState(state: State) {
@@ -42,6 +46,7 @@ internal class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsag
     var feedbackNotificationShown: Boolean = false
     var blockTerminalUsedLastVersion: String? = null
     var blockTerminalUsedLastTimeMillis: Long = 0
+    var blockTerminalDisabledLastTimeMillis: Long = 0
   }
 
   companion object {

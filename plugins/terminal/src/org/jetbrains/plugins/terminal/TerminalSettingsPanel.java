@@ -36,6 +36,7 @@ import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions;
+import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage;
 import org.jetbrains.plugins.terminal.block.feedback.BlockTerminalFeedbackSurveyKt;
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle;
 import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace;
@@ -222,6 +223,7 @@ public final class TerminalSettingsPanel {
       TerminalUsageTriggerCollector.triggerBlockTerminalSwitched$intellij_terminal(myProject, myNewUiCheckbox.isSelected(),
                                                                                    BlockTerminalSwitchPlace.SETTINGS);
       if (!myNewUiCheckbox.isSelected()) {
+        TerminalUsageLocalStorage.getInstance().recordBlockTerminalDisabled();
         ApplicationManager.getApplication().invokeLater(() -> {
           BlockTerminalFeedbackSurveyKt.showBlockTerminalFeedbackNotification(myProject);
         }, ModalityState.nonModal());
