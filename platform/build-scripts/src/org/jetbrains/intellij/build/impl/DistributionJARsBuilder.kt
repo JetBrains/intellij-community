@@ -398,9 +398,11 @@ internal suspend fun buildNonBundledPlugins(
 
     val nonBundledPluginsArtifacts = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-plugins")
     val autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
-    var buildKeymapPluginsTask: Deferred<List<Pair<Path, ByteArray>>>? = null
-    if (!context.isStepSkipped(BuildOptions.KEYMAP_PLUGINS_STEP)) {
-      buildKeymapPluginsTask = async { buildKeymapPlugins(targetDir = autoUploadingDir, context = context) }
+    var buildKeymapPluginsTask = if (context.options.buildStepsToSkip.contains(BuildOptions.KEYMAP_PLUGINS_STEP)) {
+      null
+    }
+    else {
+      async { buildKeymapPlugins(targetDir = autoUploadingDir, context = context) }
     }
     val moduleOutputPatcher = ModuleOutputPatcher()
     val stageDir = context.paths.tempDir.resolve("non-bundled-plugins-${context.applicationInfo.productCode}")
@@ -456,8 +458,8 @@ internal suspend fun buildNonBundledPlugins(
       pluginSpecs.add(spec)
     }
 
-    if (!context.isStepSkipped(BuildOptions.KEYMAP_PLUGINS_STEP)) {
-      for (item in buildKeymapPluginsTask?.await() ?: error("buildKeymapPluginsTask is null")) {
+    buildKeymapPluginsTask?.let {
+      for (item in it.await()) {
         pluginSpecs.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
       }
     }
