@@ -69,6 +69,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
@@ -582,8 +583,12 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
                PsiReference reference = element.getReference();
                if (reference == null) return true;
                atLeastOnReferenceFound.set(true);
+               if (reference.isSoft()) return true;
+               if (reference instanceof PsiPolyVariantReference multiReference) {
+                 return multiReference.multiResolve(false).length > 0;
+               }
                PsiElement resolved = reference.resolve();
-               return resolved != null || reference.isSoft();
+               return resolved != null;
              }) && atLeastOnReferenceFound.get();
   }
 
