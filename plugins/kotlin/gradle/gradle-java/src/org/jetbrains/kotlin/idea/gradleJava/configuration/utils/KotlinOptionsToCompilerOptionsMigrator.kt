@@ -144,11 +144,15 @@ private fun getOptionName(expression: KtExpression): Pair<String, StringBuilder>
     val replacementOfKotlinOptionsIfNeeded = StringBuilder()
     val optionName = when (expression) {
         is KtDotQualifiedExpression -> {
-            if (expressionStartsWithKotlinOptionsReference(expression)) {
-                val partBeforeDot = expression.receiverExpression.text // Might be `kotlinOptions.options`
-                replacementOfKotlinOptionsIfNeeded.append(partBeforeDot.replace("kotlinOptions", "compilerOptions") + ".")
+            val receiver = getLeftmostReceiver(expression)
+            if (receiver !is KtNameReferenceExpression) return null
+
+            val leftmostReceiverName = receiver.getReferencedName()
+            if (leftmostReceiverName == "kotlinOptions") {
+                replacementOfKotlinOptionsIfNeeded.append("compilerOptions.")
+            } else if (leftmostReceiverName != "options") {
+                return null // We don't know what to do with such an option
             }
-            // optionName is everything that is on the right side of `kotlinOptions.`:
             expression.getCalleeExpressionIfAny()?.text ?: return null
         }
 
