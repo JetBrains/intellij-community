@@ -4,11 +4,6 @@
     <extensionPoint qualifiedName="org.jetbrains.kotlin.codeinsight.quickfix.registrar"
                     interface="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar"
                     dynamic="true"/>
-
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.kotlinInjectedFilesAnalysisProvider"
-                    interface="org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPromoter"
-                    dynamic="true">
-    </extensionPoint>
   </extensionPoints>
 
 </idea-plugin>

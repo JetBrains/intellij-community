@@ -95,6 +95,11 @@
     <extensionPoint qualifiedName="org.jetbrains.kotlin.bundledFirCompilerPluginProvider"
                     interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinBundledFirCompilerPluginProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.kotlinInjectedFilesAnalysisProvider"
+                    interface="org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPromoter"
+                    dynamic="true">
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
