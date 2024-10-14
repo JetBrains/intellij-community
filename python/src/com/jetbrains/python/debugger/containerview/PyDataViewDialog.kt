@@ -2,7 +2,6 @@
 package com.jetbrains.python.debugger.containerview
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
@@ -13,6 +12,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndE
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.debugger.PyDebugValue
@@ -44,14 +44,10 @@ class PyDataViewDialog(private val myProject: Project, value: PyDebugValue) : Di
     mainPanel = JPanel(BorderLayout())
 
     // If PythonPro installed and enabled.
-    val pythonPluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId("Pythonid"))
-    if (isJupyterSuggestionEnabled(myProject) && pythonPluginDescriptor?.isEnabled == true) {
-      val jupyterPluginId = PluginId.findId("intellij.jupyter")
-      if (jupyterPluginId != null) {
-        val jupyterSuggestionPanel = createJupyterSuggestionPanel(jupyterPluginId)
-        this.jupyterSuggestionPanel = jupyterSuggestionPanel
-        mainPanel.add(jupyterSuggestionPanel, BorderLayout.NORTH)
-      }
+    val jupyterSuggestionPanel = createJupyterSuggestionPanel()
+    this.jupyterSuggestionPanel = jupyterSuggestionPanel
+    if (jupyterSuggestionPanel != null) {
+      mainPanel.add(jupyterSuggestionPanel, BorderLayout.NORTH)
     }
 
     mainPanel.add(dataViewerPanel, BorderLayout.CENTER)
@@ -99,24 +95,52 @@ class PyDataViewDialog(private val myProject: Project, value: PyDebugValue) : Di
 
   override fun createCenterPanel() = mainPanel
 
-  private fun createJupyterSuggestionPanel(pluginId: PluginId): EditorNotificationPanel {
+  private fun createJupyterSuggestionPanel(): JPanel? {
+    if (PlatformUtils.isCommunityEdition()) return null
+    if (!isJupyterSuggestionEnabled(myProject)) return null
+    val requiredPluginIds = listOf(PluginId.getId("Pythonid"), PluginId.getId("intellij.jupyter"))
+
+    var needToInstallPlugin = false
+    val toInstallOrEnable = mutableSetOf<PluginId>().apply {
+      requiredPluginIds.forEach { pluginId ->
+        val pluginDescriptor = PluginManagerCore.findPlugin(pluginId)
+        if (pluginDescriptor == null) {
+          add(pluginId)
+          needToInstallPlugin = true
+        }
+        else {
+          if (!pluginDescriptor.isEnabled) {
+            add(pluginId)
+          }
+        }
+      }
+    }
+
+    if (toInstallOrEnable.isEmpty()) return null
+
     val panel = EditorNotificationPanel()
     panel.text = PyBundle.message("debugger.data.view.reach.view.suggestion")
 
-    if (!PluginManager.isPluginInstalled(pluginId)) {
+    fun supposeRestartIfFRequired() {
+      val requireRestart = toInstallOrEnable.firstOrNull { PluginManagerCore.getPlugin(it)?.isRequireRestart == true } != null
+      if (requireRestart) {
+        PluginManagerConfigurable.shutdownOrRestartApp()
+      }
+    }
+
+    if (needToInstallPlugin) {
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugin.name", "Jupyter")) {
-        installAndEnable(myProject, setOf(pluginId), true) {
+        installAndEnable(myProject, toInstallOrEnable, showDialog = false) {
           hideJupyterSuggestionPanel()
+          supposeRestartIfFRequired()
         }
       }
     }
     else {
-      val jupyterPluginDescriptor = PluginManagerCore.getPlugin(PluginId.findId("com.intellij.grazie.pro"))
-      if (jupyterPluginDescriptor != null) {
-        panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.enable.plugin", jupyterPluginDescriptor.name)) {
-          PluginManagerConfigurable.showPluginConfigurableAndEnable(myProject, setOf(jupyterPluginDescriptor))
-          hideJupyterSuggestionPanel()
-        }
+      panel.createActionLabel(IdeBundle.message("link.enable.required.plugin", "Jupyter")) {
+        toInstallOrEnable.forEach { PluginManagerCore.enablePlugin(it) }
+        hideJupyterSuggestionPanel()
+        supposeRestartIfFRequired()
       }
     }
 
