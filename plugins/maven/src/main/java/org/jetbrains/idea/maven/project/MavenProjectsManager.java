@@ -208,6 +208,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     initProjectsTree();
     doInit();
     doActivate();
+
+    if (!myProjectsTree.getManagedFilesPaths().isEmpty() && myProjectsTree.getRootProjects().isEmpty()) {
+      MavenLog.LOG.warn("MavenProjectsTree is inconsistent");
+      scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
+    }
   }
 
 
@@ -255,37 +260,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     try {
       if (projectsTreeInitialized.getAndSet(true)) return;
 
-      if (!PlatformProjectOpenProcessor.Companion.isNewProject(myProject)) {
-        loadTree();
-      }
-
-      if (myProjectsTree == null) {
-        myProjectsTree = new MavenProjectsTree(myProject);
-        applyStateToTree(myProjectsTree, this);
-      }
-
+      Path path = getProjectsTreeFile();
+      myProjectsTree = MavenProjectsTree.read(myProject, path);
+      applyStateToTree(myProjectsTree, this);
       myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
     }
     finally {
       initLock.unlock();
-    }
-  }
-
-  private void loadTree() {
-    try {
-      Path file = getProjectsTreeFile();
-      if (Files.exists(file)) {
-        var readTree = MavenProjectsTree.read(myProject, file);
-        if (null != readTree) {
-          myProjectsTree = readTree;
-        }
-        else {
-          MavenLog.LOG.warn("Could not load existing tree, read null");
-        }
-      }
-    }
-    catch (IOException e) {
-      MavenLog.LOG.info(e);
     }
   }
 

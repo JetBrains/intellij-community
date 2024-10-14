@@ -1063,34 +1063,44 @@ class MavenProjectsTree(val project: Project) {
   companion object {
     private val LOG = Logger.getInstance(MavenProjectsTree::class.java)
 
-    private val STORAGE_VERSION = MavenProjectsTree::class.java.simpleName + ".10"
+    private const val STORAGE_VERSION_NUMBER = 10
+    private val STORAGE_VERSION = MavenProjectsTree::class.java.simpleName + "." + STORAGE_VERSION_NUMBER
+
+    private fun String.getStorageVersionNumber(): Int {
+      val parts = this.split(".")
+      return try {
+        parts.last().toInt()
+      }
+      catch (_: Exception) {
+        0
+      }
+    }
 
     @JvmStatic
-    @Throws(IOException::class)
     @ApiStatus.Internal
-    fun read(project: Project, file: Path): MavenProjectsTree? {
-      val result = MavenProjectsTree(project)
-
-      DataInputStream(BufferedInputStream(Files.newInputStream(file))).use { inputStream ->
+    fun read(project: Project, path: Path): MavenProjectsTree {
+      val tree = MavenProjectsTree(project)
+      if (!Files.exists(path)) return tree
+      DataInputStream(BufferedInputStream(Files.newInputStream(path))).use { inputStream ->
+        var storageVersion = ""
         try {
-          if (STORAGE_VERSION != inputStream.readUTF()) return null
-          result.myManagedFilesPaths = readCollection(inputStream, LinkedHashSet())
-          result.myIgnoredFilesPaths = readCollection(inputStream, ArrayList())
-          result.myIgnoredFilesPatterns = readCollection(inputStream, ArrayList())
-          result.myExplicitProfiles = MavenExplicitProfiles(readCollection(inputStream, HashSet()),
-                                                            readCollection(inputStream, HashSet()))
-          result.myRootProjects.addAll(readProjectsRecursively(inputStream, result))
+          storageVersion = inputStream.readUTF()
+          val storageVersionNumber = storageVersion.getStorageVersionNumber()
+
+          tree.myManagedFilesPaths = readCollection(inputStream, LinkedHashSet())
+          tree.myIgnoredFilesPaths = readCollection(inputStream, ArrayList())
+          tree.myIgnoredFilesPatterns = readCollection(inputStream, ArrayList())
+          tree.myExplicitProfiles = MavenExplicitProfiles(readCollection(inputStream, HashSet()), readCollection(inputStream, HashSet()))
+
+          if (STORAGE_VERSION_NUMBER == storageVersionNumber) {
+            tree.myRootProjects.addAll(readProjectsRecursively(inputStream, tree))
+          }
         }
         catch (e: IOException) {
-          inputStream.close()
-          Files.delete(file)
-          throw e
-        }
-        catch (e: Throwable) {
-          throw IOException(e)
+          MavenLog.LOG.warn("Cannot read project tree from storage, storageVersion $storageVersion", e)
         }
       }
-      return result
+      return tree
     }
 
     @Throws(IOException::class)
