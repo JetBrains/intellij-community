@@ -617,7 +617,11 @@ public final class FindInProjectUtil {
     result.add(directory);
     addSourceDirectoriesFromLibraries(project, directory, result);
     VirtualFile[] array = result.toArray(VirtualFile.EMPTY_ARRAY);
-    return GlobalSearchScopesCore.directoriesScope(project, withSubdirectories, array);
+    GlobalSearchScope scope = GlobalSearchScopesCore.directoriesScope(project, withSubdirectories, array);
+    for (FindInDirectoryScopeProvider provider : FindInDirectoryScopeProvider.EP_NAME.getExtensionList()) {
+      scope = provider.alterDirectorySearchScope(project, directory, withSubdirectories, scope);
+    }
+    return scope;
   }
 
   public static void initFileFilter(@NotNull JComboBox<? super String> fileFilter, @NotNull JCheckBox useFileFilter) {

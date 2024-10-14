@@ -596,6 +596,7 @@
     </extensionPoint>
     <extensionPoint name="genericAuthProvider"
                     interface="com.intellij.auth.GenericAuthProviderExtension" dynamic="true"/>
+    <extensionPoint name="findInDirectoryScopeProvider" interface="com.intellij.find.impl.FindInDirectoryScopeProvider" dynamic="true"/>
 
   </extensionPoints>
 </idea-plugin>
