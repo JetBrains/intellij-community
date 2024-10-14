@@ -21,7 +21,8 @@ internal object VcsCloneCollector : CounterUsagesCollector() {
 
   private val CLONE_ACTIVITY = GROUP.registerIdeActivity(
     activityName = "cloning",
-    finishEventAdditionalFields = arrayOf(CLONE_STATUS_EVENT_FIELD)
+    startEventAdditionalFields = arrayOf(SHALLOW_CLONE_DEPTH),
+    finishEventAdditionalFields = arrayOf(CLONE_STATUS_EVENT_FIELD, SHALLOW_CLONE_DEPTH)
   )
 
   fun cloneStarted(cloneTaskInfo: CloneTaskInfo): StructuredIdeActivity {
