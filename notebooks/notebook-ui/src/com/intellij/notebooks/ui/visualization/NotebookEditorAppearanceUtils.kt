@@ -9,14 +9,12 @@ object NotebookEditorAppearanceUtils {
   val JUPYTER_HISTORY_EDITOR_KEY = Key.create<Boolean>("JUPYTER_HISTORY_EDITOR_KEY")
 
   fun getJupyterCellSpacing(editor: Editor): Int = editor.getLineHeight()
-
   fun EditorKind.isDiff(): Boolean = this === EditorKind.DIFF
+  fun Editor.isDiffKind(): Boolean = this.editorKind == EditorKind.DIFF
 
   fun Editor.isOrdinaryNotebookEditor() = when {
     this.editorKind != EditorKind.MAIN_EDITOR -> false
     this.getUserData(JUPYTER_HISTORY_EDITOR_KEY) == true -> false
     else -> true
   }
-
-
 }

@@ -1,6 +1,7 @@
 package com.intellij.notebooks.ui.visualization
 
 import com.intellij.icons.AllIcons
+import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isDiffKind
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -130,7 +131,7 @@ class NotebookBelowCellDelimiterPanel(
           else -> null
         }
       }
-      val event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.EDITOR_INLAY, dataContext)
+      val event = AnActionEvent.createEvent(action, dataContext, null, ActionPlaces.EDITOR_INLAY,  ActionUiKind.NONE, null)
       action.actionPerformed(event)
     }
   }
@@ -155,7 +156,10 @@ class NotebookBelowCellDelimiterPanel(
   fun updateExecutionStatus(
     @NlsSafe tooltipText: String?, executionCount: Int?, statusIcon: Icon?, @NlsSafe executionDurationText: String?
   ) {
-    val showStatus = isExecutionCountDefined(executionCount) || (tooltipText != null && statusIcon != AllIcons.General.GreenCheckmark)
+
+    val showStatus = (isExecutionCountDefined(executionCount) || (tooltipText != null && statusIcon != AllIcons.General.GreenCheckmark))
+                     && !editor.isDiffKind()
+
     if (showStatus) {
       getOrCreateExecutionLabel().apply {
         text = getExecutionLabelText(executionCount, executionDurationText)
