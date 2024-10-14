@@ -176,6 +176,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     PassConfig[] frozenPassConfigs = freezeRegisteredPassFactories();
     List<TextEditorHighlightingPass> result = new ArrayList<>(frozenPassConfigs.length);
     IntList passesRefusedToCreate = new IntArrayList();
+    boolean shouldHighlightFile = ProblemHighlightFilter.shouldHighlightFile(psiFile);
     try (AccessToken ignored = ClientId.withExplicitClientId(ClientEditorManager.Companion.getClientId(editor))) {
       for (int passId = 1; passId < frozenPassConfigs.length; passId++) {
         ProgressManager.checkCanceled();
@@ -185,8 +186,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
           continue;
         }
         TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-        TextEditorHighlightingPass pass = DumbService.getInstance(myProject).isUsableInCurrentContext(factory)
-          && ProblemHighlightFilter.shouldHighlightFile(psiFile) ? factory.createHighlightingPass(psiFile, editor) : null;
+        TextEditorHighlightingPass pass = shouldHighlightFile && DumbService.getInstance(myProject).isUsableInCurrentContext(factory) ?
+                                          factory.createHighlightingPass(psiFile, editor) : null;
         if (pass == null || !DumbService.getInstance(myProject).isUsableInCurrentContext(pass)) {
           passesRefusedToCreate.add(passId);
         }
@@ -216,8 +217,13 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
 
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     FileStatusMap statusMap = daemonCodeAnalyzer.getFileStatusMap();
-    for (IntListIterator iterator = passesRefusedToCreate.iterator(); iterator.hasNext(); ) {
-      statusMap.markFileUpToDate(document, iterator.nextInt());
+    for (int i = 0; i < passesRefusedToCreate.size(); i++) {
+      int id = passesRefusedToCreate.getInt(i);
+      statusMap.markFileUpToDate(document, id);
+    }
+    if (!shouldHighlightFile) {
+      // in case when some extension prohibited highlighting, return empty pass to distinguish from error during pass creation and endless restart
+      result.add(new ProgressableTextEditorHighlightingPass.EmptyPass(myProject, document));
     }
     return result;
   }
