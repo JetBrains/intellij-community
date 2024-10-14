@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.*
 import com.intellij.util.xmlb.annotations.XMap
 
@@ -21,6 +22,11 @@ internal class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsag
 
   fun recordCommandExecuted(shellName: String) {
     state.shellToExecutedCommandsNumber.merge(shellName.lowercase(), 1, Int::plus)
+  }
+
+  fun recordBlockTerminalUsed() {
+    val curVersionString = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
+    state.blockTerminalUsedLastVersion = curVersionString
   }
 
   override fun getState(): State = state

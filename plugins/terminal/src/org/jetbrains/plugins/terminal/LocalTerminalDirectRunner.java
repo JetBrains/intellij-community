@@ -244,8 +244,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
 
     if (isBlockTerminal) {
-      String curVersionString = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCodeAndSnapshot();
-      TerminalUsageLocalStorage.getInstance().getState().setBlockTerminalUsedLastVersion(curVersionString);
+      TerminalUsageLocalStorage.getInstance().recordBlockTerminalUsed();
     }
 
     try {
