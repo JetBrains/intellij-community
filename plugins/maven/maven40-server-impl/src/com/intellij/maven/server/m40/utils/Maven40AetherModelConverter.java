@@ -39,7 +39,7 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
     result.setName(mavenProject.getName());
     result.setProperties(mavenProject.getProperties() == null ? new Properties() : mavenProject.getProperties());
     //noinspection SSBasedInspection
-    result.setPlugins(convertPlugins(mavenProject.getModel()));
+    result.setPlugins(convertPlugins(mavenProject.getModel(), mavenProject.getPluginArtifacts()));
 
     Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<>();
     result.setExtensions(convertArtifacts(mavenProject.getExtensionArtifacts(), convertedArtifacts, localRepository));
