@@ -4,8 +4,7 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.dependents
 import com.google.gson.JsonObject
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
-import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
@@ -35,7 +34,7 @@ abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<Modul
                 projectLibrariesByName.getValue(entityReference.name).toKaLibraryModules(project).first()
 
             is TestProjectModuleReference ->
-                modulesByName.getValue(entityReference.name).getMainKtSourceModule()!!
+                modulesByName.getValue(entityReference.name).toKaSourceModuleForProduction()!!
         }
 
         val directDependents = moduleDependentsProvider.getDirectDependents(targetModule)

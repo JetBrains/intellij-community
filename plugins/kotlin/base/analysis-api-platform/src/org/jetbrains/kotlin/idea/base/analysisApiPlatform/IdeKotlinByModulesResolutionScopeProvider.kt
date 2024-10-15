@@ -90,7 +90,7 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
             .collectDependencies(ModuleDependencyCollector.CollectionMode.COLLECT_IGNORED)
             .map { it.contentScope }
 
-        val searchScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module.ideaModule, includeTests)
+        val searchScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module.openapiModule, includeTests)
         if (ignored.isEmpty()) return searchScope
         return (searchScope - KotlinGlobalSearchScopeMerger.getInstance(project).union(ignored)) as GlobalSearchScope
     }

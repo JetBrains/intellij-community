@@ -6,9 +6,9 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
-import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTests
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTest
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
 import java.io.File
@@ -43,7 +43,7 @@ sealed class AbstractSessionInvalidationTest : AbstractProjectStructureTest<Sess
 
     override fun doTestWithProjectStructure(testDirectory: String) {
         val rootIdeaModule = modulesByName.getValue(testProjectStructure.rootModule)
-        val rootModule = rootIdeaModule.getMainKtSourceModule()!!
+        val rootModule = rootIdeaModule.toKaSourceModuleForProduction()!!
 
         val sessionsBeforeModification = getAllModuleSessions(rootModule)
 
@@ -57,7 +57,7 @@ sealed class AbstractSessionInvalidationTest : AbstractProjectStructureTest<Sess
     @OptIn(LLFirInternals::class)
     private fun getAllModuleSessions(mainModule: KaModule): List<LLFirSession> {
         val projectModules = ModuleManager.getInstance(mainModule.project).modules
-            .flatMap { listOfNotNull(it.toKaSourceModuleForProductionOrTest(), it.toKaSourceModuleForTests()) }
+            .flatMap { listOfNotNull(it.toKaSourceModuleForProductionOrTest(), it.toKaSourceModuleForTest()) }
 
         val resolveSession = LLFirResolveSessionService.getInstance(mainModule.project).getFirResolveSession(mainModule)
         return projectModules.map(resolveSession::getSessionFor)

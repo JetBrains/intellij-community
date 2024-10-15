@@ -39,9 +39,9 @@ import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.fir.extensions.FirAssignExpressionAltererExtension
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
-import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleRootType
-import org.jetbrains.kotlin.idea.base.projectStructure.getSourceModuleKind
-import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
+import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
+import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
@@ -148,7 +148,7 @@ internal class KtCompilerPluginsProviderIdeImpl(
     @OptIn(Frontend10ApiUsage::class)
     private fun computeExtensionStorage(module: KaSourceModule): CompilerPluginRegistrar.ExtensionStorage? {
         val classLoader = pluginsCache?.pluginsClassLoader ?: return null
-        val compilerArguments = module.ideaModule.getCompilerArguments()
+        val compilerArguments = module.openapiModule.getCompilerArguments()
         val pluginClasspaths = collectSubstitutedPluginClasspaths(listOf(compilerArguments)).map { it.toFile() }
         if (pluginClasspaths.isEmpty()) return null
 
@@ -173,10 +173,10 @@ internal class KtCompilerPluginsProviderIdeImpl(
             // Temporary work-around for KTIJ-24320. Calls to 'setupCommonArguments()' and 'setupJvmSpecificArguments()'
             // (or even a platform-agnostic alternative) should be added.
             if (compilerArguments is K2JVMCompilerArguments) {
-                val compilerExtension = CompilerModuleExtension.getInstance(module.ideaModule)
-                val outputUrl = when (module.getSourceModuleKind()) {
-                    KaSourceModuleRootType.TEST -> compilerExtension?.compilerOutputUrlForTests
-                    KaSourceModuleRootType.SOURCE, null -> compilerExtension?.compilerOutputUrl
+                val compilerExtension = CompilerModuleExtension.getInstance(module.openapiModule)
+                val outputUrl = when (module.sourceModuleKind) {
+                    KaSourceModuleKind.TEST -> compilerExtension?.compilerOutputUrlForTests
+                    KaSourceModuleKind.PRODUCTION, null -> compilerExtension?.compilerOutputUrl
                 }
 
                 putIfNotNull(JVMConfigurationKeys.JVM_TARGET, compilerArguments.jvmTarget?.let(JvmTarget::fromString))

@@ -6,16 +6,25 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ConcurrentFactoryMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.ide.legacyBridge.findLibraryEntity
+import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
@@ -23,12 +32,12 @@ import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBuiltinsModuleImpl
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_EXT
@@ -66,7 +75,8 @@ inline fun <reified T : KaModule> IdeaModuleInfo.toKaModuleOfType(): @kotlin.int
     return toKaModule() as T
 }
 
-internal class ProjectStructureProviderIdeImpl(private val project: Project) : KotlinProjectStructureProviderBase() {
+@OptIn(Frontend10ApiUsage::class)
+internal class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProjectStructureProvider() {
     @OptIn(KaExperimentalApi::class)
     override fun getModule(element: PsiElement, contextualModule: KaModule?): KaModule {
         ProgressManager.checkCanceled()
@@ -186,6 +196,63 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : K
         }
 
         return null
+    }
+
+    override fun getKaSourceModule(
+        moduleId: ModuleId,
+        type: KaSourceModuleKind
+    ): KaSourceModule? {
+        val snapshot = project.workspaceModel.currentSnapshot
+        val openapiModule = moduleId.resolve(snapshot)?.findModule(snapshot) ?: return null
+        return getKaSourceModule(openapiModule, type)
+    }
+
+    override fun getKaSourceModuleKind(module: KaSourceModule): KaSourceModuleKind {
+        require(module is KtSourceModuleByModuleInfo)
+        val moduleInfo = module.moduleInfo as ModuleSourceInfo
+        return when (moduleInfo) {
+            is ModuleProductionSourceInfo -> KaSourceModuleKind.PRODUCTION
+            is ModuleTestSourceInfo -> KaSourceModuleKind.TEST
+            else -> error("Unexpected platform: ${moduleInfo.platform}")
+        }
+    }
+
+    override fun getKaSourceModuleSymbolId(module: KaSourceModule): ModuleId {
+        require(module is KtSourceModuleByModuleInfo)
+        return module.moduleId
+    }
+
+    override fun getKaSourceModule(
+        openapiModule: Module,
+        type: KaSourceModuleKind
+    ): KaSourceModule? {
+        val moduleInfo = when (type) {
+            KaSourceModuleKind.PRODUCTION -> openapiModule.productionSourceInfo
+            KaSourceModuleKind.TEST -> openapiModule.testSourceInfo
+        } ?: return null
+        return getKtModuleByModuleInfo(moduleInfo) as KtSourceModuleByModuleInfo
+    }
+
+    override fun getOpenapiModule(module: KaSourceModule): Module {
+        require(module is KtSourceModuleByModuleInfo)
+        return module.ideaModule
+    }
+
+    override fun getKaLibraryModules(libraryId: LibraryId): List<KaLibraryModule> {
+        val snapshot = project.workspaceModel.currentSnapshot
+        val library = libraryId.resolve(snapshot)?.findLibraryBridge(snapshot) ?: return emptyList()
+        return getKaLibraryModules(library)
+    }
+
+    override fun getKaLibraryModules(library: Library): List<KaLibraryModule> {
+        return LibraryInfoCache.getInstance(project)[library].map { getKtModuleByModuleInfo(it) as KtLibraryModuleByModuleInfo }
+    }
+
+
+    override fun getKaLibraryModuleSymbolicId(libraryModule: KaLibraryModule): LibraryId {
+        require(libraryModule is KtLibraryModuleByModuleInfo)
+        return libraryModule.libraryInfo.library.findLibraryEntity(project.workspaceModel.currentSnapshot)?.symbolicId
+            ?: error("Cannot find library entity for ${libraryModule.libraryInfo.library.name}")
     }
 
     companion object {

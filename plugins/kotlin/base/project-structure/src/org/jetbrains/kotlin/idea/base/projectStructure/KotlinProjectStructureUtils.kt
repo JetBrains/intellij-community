@@ -26,9 +26,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -47,44 +45,6 @@ val KaModule.moduleInfo: IdeaModuleInfo
         return ideaModuleInfo
     }
 
-
-val KaSourceModule.ideaModule: Module
-    get() {
-        require(this is KtSourceModuleByModuleInfo)
-        return ideaModule
-    }
-
-fun Module.getMainKtSourceModule(): KaSourceModule? {
-    val moduleInfo = productionSourceInfo ?: return null
-    return moduleInfo.toKaModuleOfType<KaSourceModule>()
-}
-
-fun Module.toKaSourceModuleForTests(): KaSourceModule? {
-    val moduleInfo = testSourceInfo ?: return null
-    return moduleInfo.toKaModuleOfType<KaSourceModule>()
-}
-
-fun Module.toKaSourceModuleForProductionOrTest(): KaSourceModule? {
-    val moduleInfo = productionSourceInfo ?: testSourceInfo ?: return null
-    return moduleInfo.toKaModuleOfType<KaSourceModule>()
-}
-
-@OptIn(Frontend10ApiUsage::class)
-fun KaSourceModule.getSourceModuleKind(): KaSourceModuleRootType? {
-    return when (moduleInfo) {
-        is ModuleProductionSourceInfo -> KaSourceModuleRootType.SOURCE
-        is ModuleTestSourceInfo -> KaSourceModuleRootType.TEST
-        else -> null
-    }
-}
-
-enum class KaSourceModuleRootType {
-    SOURCE, TEST;
-}
-
-fun Library.toKaLibraryModules(project: Project): List<KaLibraryModule> {
-    return LibraryInfoCache.getInstance(project)[this].map { it.toKaModuleOfType<KaLibraryModule>() }
-}
 
 val ModuleInfo.kotlinSourceRootType: KotlinSourceRootType?
     get() = when (this) {
@@ -173,9 +133,9 @@ fun ProjectFileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSo
     return runReadAction {
         val sourceRootType = getContainingSourceRootType(virtualFile) ?: return@runReadAction null
         when (sourceRootType) {
-          in testRootTypes -> TestSourceKotlinRootType
-          in sourceRootTypes -> SourceKotlinRootType
-          else -> null
+            in testRootTypes -> TestSourceKotlinRootType
+            in sourceRootTypes -> SourceKotlinRootType
+            else -> null
         }
     }
 }

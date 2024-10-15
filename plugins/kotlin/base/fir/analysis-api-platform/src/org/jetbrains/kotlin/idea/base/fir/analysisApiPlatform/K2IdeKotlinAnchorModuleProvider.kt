@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinAnchorModuleProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
-import org.jetbrains.kotlin.idea.base.projectStructure.getMainKtSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.caches.resolve.util.ResolutionAnchorCacheState
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 
@@ -91,7 +91,7 @@ class K2IdeKotlinAnchorModuleProvider(val project: Project) : IdeKotlinAnchorMod
                 return@forEach
             }
 
-            val anchor: KaSourceModule = moduleManager.findModuleByName(anchorName)?.getMainKtSourceModule() ?: run {
+            val anchor: KaSourceModule = moduleManager.findModuleByName(anchorName)?.toKaSourceModuleForProduction() ?: run {
                 logger.warn("Resolution anchor mapping value doesn't point to a source module: $anchorName. Skipping this anchor")
                 return@forEach
             }
