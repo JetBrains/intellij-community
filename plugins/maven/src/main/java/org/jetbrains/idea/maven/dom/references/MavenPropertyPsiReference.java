@@ -646,7 +646,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     if (configuration != null) {
       Element customPrefix = configuration.getChild("propertyPrefix");
       if (customPrefix != null) {
-        propertyPrefix = customPrefix.getText();
+        propertyPrefix = customPrefix.getTextTrim();
       }
     }
     return propertyPrefix;
