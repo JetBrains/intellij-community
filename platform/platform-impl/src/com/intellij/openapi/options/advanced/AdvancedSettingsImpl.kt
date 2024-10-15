@@ -17,6 +17,7 @@ import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
+import com.jetbrains.rd.util.concurrentMapOf
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.util.*
@@ -197,28 +198,30 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
   override fun getInstance(): AdvancedSettingBean = this
 }
 
+private val logger = logger<AdvancedSettingsImpl>()
+
 @State(name = "AdvancedSettings", category = SettingsCategory.TOOLS, exportable = true, storages = [
   Storage("advancedSettings.xml", roamingType = RoamingType.DISABLED),
   Storage(value = "ide.general.xml", deprecated = true, roamingType = RoamingType.DISABLED)
 ])
 class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState>, Disposable {
   class AdvancedSettingsState {
-    var settings: MutableMap<String, String> = mutableMapOf()
+    var settings: Map<String, String> = mapOf()
   }
 
   private val epCollector = KeyedExtensionCollector<AdvancedSettingBean, String>(AdvancedSettingBean.EP_NAME.name)
-  private var state = mutableMapOf<String, Any>()
-  private var defaultValueCache = mutableMapOf<String, Any>()
+  private val internalState = concurrentMapOf<String, Any>()
+  private val defaultValueCache = concurrentMapOf<String, Any>()
   private var modificationCount = 0L
 
   init {
     AdvancedSettingBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<AdvancedSettingBean> {
       override fun extensionAdded(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
-        logger<AdvancedSettingsImpl>().info("Extension added ${pluginDescriptor.pluginId}: ${extension.id}")
+        logger.info("Extension added ${pluginDescriptor.pluginId}: ${extension.id}")
       }
 
       override fun extensionRemoved(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
-        logger<AdvancedSettingsImpl>().info("Extension removed ${pluginDescriptor.pluginId}: ${extension.id}")
+        logger.info("Extension removed ${pluginDescriptor.pluginId}: ${extension.id}")
         defaultValueCache.remove(extension.id)
       }
     }, this)
@@ -226,17 +229,27 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
 
   override fun dispose() { }
 
-  override fun getState(): AdvancedSettingsState =
-    AdvancedSettingsState().also { state.map { (k, v) -> k to getOption(k).valueToString(v) }.toMap(it.settings) }
+  override fun getState(): AdvancedSettingsState {
+    if (logger.isDebugEnabled) {
+      logger.debug("Getting advanced settings state: $internalState")
+    }
+    return  AdvancedSettingsState().also { it.settings = internalState.map { (k, v) -> k to getOption(k).valueToString(v) }.toMap() }
+  }
 
   override fun loadState(state: AdvancedSettingsState) {
-    this.state.clear()
-    state.settings.mapNotNull { (k, v) -> getOptionOrNull(k)?.let { option -> k to option.valueFromString(v) } }.toMap(this.state)
+    if (logger.isDebugEnabled) {
+      logger.debug("Will load advanced settings state: ${state.settings}. Current state: ${this.internalState}")
+    }
+    this.internalState.clear()
+    state.settings.mapNotNull { (k, v) -> getOptionOrNull(k)?.let { option -> k to option.valueFromString(v) } }.toMap(this.internalState)
   }
 
   override fun getStateModificationCount(): Long = modificationCount
 
   override fun setSetting(id: String, value: Any, expectType: AdvancedSettingType) {
+    if (logger.isDebugEnabled) {
+      logger.debug("Will set advanced setting $id = $value. Current state: $internalState")
+    }
     val option = getOption(id)
     if (option.type() != expectType) {
       throw IllegalArgumentException("Setting type ${option.type()} does not match parameter type $expectType")
@@ -250,11 +263,17 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
     }
 
     val oldValue = getSetting(id)
+    if (logger.isDebugEnabled) {
+      logger.debug("Old value for $id: $oldValue")
+    }
     if (option.defaultValueObject == value) {
-      state.remove(id)
+      if (logger.isDebugEnabled) {
+        logger.debug("new value \"$value\" for $id is the same as default value, removing the setting")
+      }
+      internalState.remove(id)
     }
     else {
-      state.put(id, value)
+      internalState.put(id, value)
     }
     modificationCount++
 
@@ -270,7 +289,7 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
         return it.read(instance)
       }
     }
-    return state[id] ?: defaultValueCache.getOrPut(id) { getOption(id).defaultValueObject }
+    return internalState[id] ?: defaultValueCache.getOrPut(id) { getOption(id).defaultValueObject }
   }
 
   override fun getDefault(id: String): Any =
@@ -283,9 +302,9 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
     val bean = epCollector.findSingle(id)
     if (bean == null) {
       if (ApplicationManager.getApplication().isEAP)
-        logger<AdvancedSettingsImpl>().error("Cannot find advanced setting $id", Throwable())
+        logger.error("Cannot find advanced setting $id", Throwable())
       else
-        logger<AdvancedSettingsImpl>().warn("Cannot find advanced setting $id", Throwable())
+        logger.warn("Cannot find advanced setting $id", Throwable())
     }
     return bean
   }
@@ -294,7 +313,7 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
   private fun getSettingAndType(id: String): Pair<Any, AdvancedSettingType> =
     getSetting(id) to getOption(id).type()
 
-  fun isNonDefault(id: String): Boolean = id in state
+  fun isNonDefault(id: String): Boolean = id in internalState
 
   @TestOnly
   fun setSetting(id: String, value: Any, revertOnDispose: Disposable) {
