@@ -403,19 +403,14 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-
-        if (LOG.isDebugEnabled()) {
-          String out = "";
-          if (outputType == ProcessOutputTypes.STDOUT) {
-            out = "stdout";
-          }
-          if (outputType == ProcessOutputTypes.STDERR) {
-            out = "stderr";
-          }
-          if (outputType == ProcessOutputTypes.SYSTEM) {
-            out = "system";
-          }
-          LOG.debug("Remote process " + out + ":" + event.getText());
+        if (outputType == ProcessOutputTypes.STDOUT) {
+          LOG.debug("Remote process stdout:" + event.getText());
+        } else
+        if (outputType == ProcessOutputTypes.STDERR) {
+          LOG.warn("Remote process stderr:" + event.getText());
+        } else
+        if (outputType == ProcessOutputTypes.SYSTEM) {
+          LOG.info("Remote process system:" + event.getText());
         }
 
         String text = StringUtil.notNullize(event.getText());
