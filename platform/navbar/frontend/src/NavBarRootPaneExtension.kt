@@ -218,7 +218,9 @@ internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent
     if (show) {
       ApplicationManager.getApplication().invokeLater {
         val navBarPanel = getNavBarPanel()
-        add(navBarPanel, BorderLayout.CENTER)
+        if (navBarPanel.parent != this) { // do not fire events without need
+          add(navBarPanel, BorderLayout.CENTER)
+        }
         navBarPanel.updateUI()
       }
     }
