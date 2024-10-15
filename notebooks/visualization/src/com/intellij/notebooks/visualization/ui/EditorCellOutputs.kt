@@ -284,6 +284,17 @@ class EditorCellOutputs(
   override fun doGetInlays(): Sequence<Inlay<*>> {
     return inlay?.let { sequenceOf(it) } ?: emptySequence()
   }
+
+  override fun doCheckAndRebuildInlays() {
+    val offset = computeInlayOffset(editor.document, cell.interval.lines)
+    inlay?.let { currentInlay ->
+      if (!currentInlay.isValid || currentInlay.offset != offset) {
+        currentInlay.let { Disposer.dispose(it) }
+        inlay = null
+        recreateInlayIfNecessary()
+      }
+    }
+  }
 }
 
 private var JComponent.outputComponentFactory: NotebookOutputComponentFactory<*, *>? by SwingClientProperty("outputComponentFactory")
