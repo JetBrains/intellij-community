@@ -17,6 +17,7 @@
   <technology name="apache-camel" root="org.apache.camel"/>
   <technology name="apache-cayenne" root="org.apache.cayenne"/>
   <technology name="apache-collections" root="org.apache.commons.collections4"/>
+  <technology name="apache-commons-lang3" root="org.apache.commons.lang3"/>
   <technology name="apache-deltaspike" root="org.apache.deltaspike"/>
   <technology name="apache-deltaspike" root="org.apache.deltaspike.core"/>
   <technology name="apache-deltaspike-data" root="org.apache.deltaspike.data"/>

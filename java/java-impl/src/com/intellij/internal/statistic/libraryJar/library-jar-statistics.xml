@@ -7,6 +7,7 @@
   <technology name="allure2" class="io.qameta.allure.Step"/>
   <technology name="apache-bval" class="org.apache.bval.jsr.ApacheValidationProvider"/>
   <technology name="apache-camel" class="org.apache.camel.Processor"/>
+  <technology name="apache-commons-lang3" class="org.apache.commons.lang3.ArrayUtils"/>
   <technology name="apache-deltaspike" class="org.apache.deltaspike.core.api.config.DeltaSpikeConfig"/>
   <technology name="apache-deltaspike-data" class="org.apache.deltaspike.data.api.EntityRepository"/>
   <technology name="apache-dubbo" class="org.apache.dubbo.config.ServiceConfig"/>
@@ -43,6 +44,7 @@
   <technology name="eureka" class="com.netflix.discovery.EurekaClient"/>
   <technology name="exposed" class="org.jetbrains.exposed.sql.Query"/>
   <technology name="fastjson2" class="com.alibaba.fastjson2.JSONObject"/>
+  <technology name="fastutil" class="it.unimi.dsi.fastutil.Function"/>
   <technology name="finagle" class="com.twitter.finagle.Client"/>
   <technology name="flowable-bpm" class="org.flowable.engine.repository.Model"/>
   <technology name="fluentlenium" class="org.fluentlenium.core.annotation.Page"/>
@@ -60,6 +62,7 @@
   <technology name="groovy" class="groovy.lang.GroovyObject"/>
   <technology name="grpc" class="io.grpc.ManagedChannel"/>
   <technology name="gson" class="com.google.gson.Gson"/>
+  <technology name="guava" class="com.google.common.base.Optional"/>
   <technology name="guice" class="com.google.inject.Provider"/>
   <technology name="gwt" class="com.google.gwt.core.client.EntryPoint"/>
   <technology name="hazelcast" class="com.hazelcast.config.Config"/>
