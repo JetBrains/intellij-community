@@ -80,5 +80,6 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
+    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
   </component>
 </module>

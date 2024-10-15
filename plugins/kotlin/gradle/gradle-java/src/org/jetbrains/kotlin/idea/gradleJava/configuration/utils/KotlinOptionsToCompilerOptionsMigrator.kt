@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion
 import org.jetbrains.kotlin.idea.gradleTooling.compareTo
@@ -132,19 +133,11 @@ private fun getOptionsFromFreeCompilerArgsExpression(expression: KtExpression, o
     return optionValues
 }
 
-private fun getLeftmostReceiver(expression: KtDotQualifiedExpression): KtExpression {
-    val receiver = expression.receiverExpression
-    if (receiver is KtDotQualifiedExpression) {
-        return getLeftmostReceiver(receiver)
-    }
-    return receiver
-}
-
 private fun getOptionName(expression: KtExpression): Pair<String, StringBuilder>? {
     val replacementOfKotlinOptionsIfNeeded = StringBuilder()
     val optionName = when (expression) {
         is KtDotQualifiedExpression -> {
-            val receiver = getLeftmostReceiver(expression)
+            val receiver = expression.getLeftMostReceiverExpression()
             if (receiver !is KtNameReferenceExpression) return null
 
             val leftmostReceiverName = receiver.getReferencedName()
@@ -299,7 +292,7 @@ private fun getReplacementOnlyOfKotlinOptionsIfNeeded(
 }
 
 private fun expressionStartsWithKotlinOptionsReference(expression: KtDotQualifiedExpression): Boolean {
-    val leftmostReceiver = getLeftmostReceiver(expression)
+    val leftmostReceiver = expression.getLeftMostReceiverExpression()
     if (leftmostReceiver !is KtNameReferenceExpression) return false
     val leftmostReceiverName = leftmostReceiver.getReferencedName()
     return (leftmostReceiverName == "kotlinOptions")
