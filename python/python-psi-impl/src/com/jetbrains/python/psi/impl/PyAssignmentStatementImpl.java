@@ -4,19 +4,16 @@ package com.jetbrains.python.psi.impl;
 import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.*;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,68 +34,14 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
   public PyExpression @NotNull [] getTargets() {
     PyExpression[] result = myTargets;
     if (result == null) {
-      myTargets = result = calcTargets(false);
+      myTargets = result = PyAstAssignmentStatement.calcTargets(this, false, PyExpression.EMPTY_ARRAY);
     }
     return result;
   }
 
   @Override
   public PyExpression @NotNull [] getRawTargets() {
-    return calcTargets(true);
-  }
-
-  private PyExpression @NotNull [] calcTargets(boolean raw) {
-    final ASTNode[] eqSigns = getNode().getChildren(TokenSet.create(PyTokenTypes.EQ));
-    if (eqSigns.length == 0) {
-      return PyExpression.EMPTY_ARRAY;
-    }
-    final ASTNode lastEq = eqSigns[eqSigns.length - 1];
-    List<PyExpression> candidates = new ArrayList<>();
-    ASTNode node = getNode().getFirstChildNode();
-    while (node != null && node != lastEq) {
-      final PsiElement psi = node.getPsi();
-      if (psi instanceof PyExpression) {
-        if (raw) {
-          candidates.add((PyExpression) psi);
-        }
-        else {
-          addCandidate(candidates, (PyExpression)psi);
-        }
-      }
-      node = node.getTreeNext();
-    }
-    List<PyExpression> targets = new ArrayList<>();
-    for (PyExpression expr : candidates) { // only filter out targets
-      if (raw ||
-          expr instanceof PyTargetExpression ||
-          expr instanceof PyReferenceExpression ||
-          expr instanceof PySubscriptionExpression ||
-          expr instanceof PySliceExpression) {
-        targets.add(expr);
-      }
-    }
-    return targets.toArray(PyExpression.EMPTY_ARRAY);
-  }
-
-  private static void addCandidate(List<PyExpression> candidates, PyExpression psi) {
-    if (psi instanceof PyParenthesizedExpression) {
-      addCandidate(candidates, ((PyParenthesizedExpression)psi).getContainedExpression());
-    }
-    else if (psi instanceof PySequenceExpression) {
-      final PyExpression[] pyExpressions = ((PySequenceExpression)psi).getElements();
-      for (PyExpression pyExpression : pyExpressions) {
-        addCandidate(candidates, pyExpression);
-      }
-    }
-    else if (psi instanceof PyStarExpression) {
-      final PyExpression expression = ((PyStarExpression)psi).getExpression();
-      if (expression != null) {
-        addCandidate(candidates, expression);
-      }
-    }
-    else {
-      candidates.add(psi);
-    }
+    return PyAstAssignmentStatement.calcTargets(this, true, PyExpression.EMPTY_ARRAY);
   }
 
   @Override
