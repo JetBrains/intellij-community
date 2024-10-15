@@ -12,8 +12,7 @@ import java.time.temporal.ChronoUnit
   name = "PluginFreezes",
   storages = [Storage(value = "pluginFreezes.xml")]
 )
-@ApiStatus.Internal
-class PluginsFreezesService : PersistentStateComponent<PluginsFreezesServiceState> {
+internal class PluginsFreezesService : PersistentStateComponent<PluginsFreezesServiceState> {
   private var state: PluginsFreezesServiceState = PluginsFreezesServiceState()
 
   companion object {

@@ -15,8 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 import javax.swing.JComponent
 
-@ApiStatus.Internal
-class PluginFreezeNotifier : EditorNotificationProvider {
+internal class PluginFreezeNotifier : EditorNotificationProvider {
   private val freezeWatcher = PluginFreezeWatcher.getInstance()
   private val freezeStorageService = PluginsFreezesService.getInstance()
 
