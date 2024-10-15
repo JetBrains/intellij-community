@@ -16,6 +16,7 @@
 package com.jetbrains.python.ast;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -117,5 +118,65 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
       final int nodeRelativeOffset = node.getTextRange().getStartOffset() - elementStart;
       return node.getContentRange().shiftRight(nodeRelativeOffset);
     });
+  }
+
+  @NotNull
+  @Override
+  default String getStringValue() {
+    final StringBuilder out = new StringBuilder();
+    for (Pair<TextRange, String> fragment : getDecodedFragments()) {
+      out.append(fragment.getSecond());
+    }
+    return out.toString();
+  }
+
+  /**
+   * Returns unescaped fragments of string's value together with their respective text ranges <i>relative to the element's start offset</i>.
+   * For most escape sequences the decoded character is returned and the text range that spans the sequence itself.
+   * Other "literal" fragments of the string are returned as is so that {@code pair.getFirst().length() == pair.getSecond().getLength()}.
+   * <p>
+   * For example, for the next "glued" string literal:
+   * <p>
+   * <pre>{@code
+   * u"\u0066\x6F\157" '\bar' r'\baz'
+   * }</pre>
+   * <p>
+   * this method returns:
+   * <p>
+   * <code><pre>
+   * [
+   *   ([2,8),"f"),
+   *   ([8,12),"o"),
+   *   ([12,16),"o"),
+   *   ([16,16),""),
+   *   ([19,21),"\b"),
+   *   ([21,23),"ar"),
+   *   ([27,29),"\\b"),
+   *   ([29,31),"az"),
+   * ]
+   * </code></pre>
+   */
+  @NotNull
+  default List<Pair<TextRange, String>> getDecodedFragments() {
+    final int elementStart = getTextRange().getStartOffset();
+    return StreamEx.of(getStringElements())
+      .flatMap(node -> StreamEx.of(node.getDecodedFragments())
+        .map(pair -> {
+          final int nodeRelativeOffset = node.getTextRange().getStartOffset() - elementStart;
+          return Pair.create(pair.getFirst().shiftRight(nodeRelativeOffset), pair.getSecond());
+        }))
+      .toList();
+  }
+
+  @Override
+  default TextRange getStringValueTextRange() {
+    List<TextRange> allRanges = getStringValueTextRanges();
+    if (allRanges.size() == 1) {
+      return allRanges.get(0);
+    }
+    if (allRanges.size() > 1) {
+      return allRanges.get(0).union(allRanges.get(allRanges.size() - 1));
+    }
+    return new TextRange(0, getTextLength());
   }
 }
