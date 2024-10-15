@@ -92,6 +92,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myDebugProcess = debugProcess;
     mySuspendPolicy = suspendPolicy;
     // Save the VM related to this suspend context, as a VM may be changed due to reattach
+    //noinspection UsagesOfObsoleteApi
     myVirtualMachine = debugProcess.getVirtualMachineProxy();
     myVotesToVote = eventVotes;
     myEventSet = set;

@@ -93,6 +93,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       final boolean showGroups = ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS;
       try {
         final ThreadReferenceProxyImpl currentThread = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD ? suspendContextThread : null;
+        @SuppressWarnings("UsagesOfObsoleteApi")
         final VirtualMachineProxyImpl vm = suspendContext != null ? suspendContext.getVirtualMachineProxy() : debugProcess.getVirtualMachineProxy();
 
         final EvaluationContextImpl evaluationContext = suspendContext != null ? getDebuggerContext().createEvaluationContext() : null;

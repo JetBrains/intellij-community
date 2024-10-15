@@ -38,7 +38,7 @@ private class CancelingSteppingListener : SteppingListener {
     val filter: LightOrRealThreadInfo? = debuggerProcessImpl.requestsManager.filterThread
 
     val threadForStepping: ThreadReferenceProxyImpl? =
-      if (filter != null) debuggerProcessImpl.virtualMachineProxy.getThreadReferenceProxy(filter.realThread)
+      if (filter != null) suspendContext.virtualMachineProxy.getThreadReferenceProxy(filter.realThread)
       else suspendContext.thread
 
     val needSuspendOnlyThread = suspendContext.suspendPolicy == EventRequest.SUSPEND_EVENT_THREAD && threadForStepping != null

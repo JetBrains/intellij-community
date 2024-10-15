@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,12 @@ public interface DebugProcess extends UserDataHolder {
   @NotNull
   PositionManager getPositionManager();
 
+  /**
+   * Get the current VM proxy connected to the process.
+   * The VM can change due to a single debug process can be connected to several VMs.
+   * Prefer {@link SuspendContextImpl#getVirtualMachineProxy()} when possible.
+   */
+  @ApiStatus.Obsolete
   VirtualMachineProxy getVirtualMachineProxy();
 
   void addDebugProcessListener(DebugProcessListener listener, Disposable parentDisposable);

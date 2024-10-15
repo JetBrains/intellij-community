@@ -900,6 +900,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
    */
   @NotNull
   @Override
+  @ApiStatus.Obsolete
   public VirtualMachineProxyImpl getVirtualMachineProxy() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
