@@ -15,6 +15,18 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
 import java.beans.PropertyChangeListener
 
+/**
+ * Per-editor service on which can one subscribe.
+ * It sends the boundsChanged event to the subscribed JupyterBoundsChangeListener.
+ *
+ * boundsChanged event will be dispatched if
+ * - someone directly calls JupyterBoundsChangeHandler.get(editor).boundsChanged()
+ * - EditorImpl property was changed
+ * - On soft wrap recalculation ends
+ * - Folding model change
+ * - Inlay model change
+ */
+// Class name does not reflect the functionality of this class.
 class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
   private var isDelayed = false
   private var isShouldBeRecalculated = false
@@ -26,10 +38,8 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
       boundsChanged()
     }, this)
 
-
     editor.softWrapModel.addSoftWrapChangeListener(object : SoftWrapChangeListener {
-      override fun softWrapsChanged() {
-      }
+      override fun softWrapsChanged() = Unit
 
       override fun recalculationEnds() {
         if (editor.document.isInEventsHandling)
@@ -81,7 +91,7 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
     }, this)
   }
 
-  override fun dispose() {}
+  override fun dispose() = Unit
 
   fun subscribe(listener: JupyterBoundsChangeListener) {
     dispatcher.addListener(listener)
@@ -91,13 +101,14 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
     dispatcher.removeListener(listener)
   }
 
-
   fun boundsChanged() {
     if (isDelayed) {
       isShouldBeRecalculated = true
       return
     }
-    dispatcher.multicaster.boundsChanged()
+    if (!editor.isDisposed) {
+      dispatcher.multicaster.boundsChanged()
+    }
   }
 
   fun postponeUpdates() {
@@ -116,7 +127,8 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
     private val INSTANCE_KEY = Key<JupyterBoundsChangeHandler>("INLAYS_CHANGE_HANDLER")
 
     fun install(editor: EditorImpl) {
-      val updater = JupyterBoundsChangeHandler(editor).also { Disposer.register(editor.disposable, it) }
+      val updater = JupyterBoundsChangeHandler(editor)
+      Disposer.register(editor.disposable, updater)
       editor.putUserData(INSTANCE_KEY, updater)
     }
 

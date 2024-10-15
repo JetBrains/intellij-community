@@ -1,12 +1,12 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Disposer
-import com.intellij.notebooks.visualization.UpdateContext
 import java.awt.Rectangle
-import java.util.Collections
+import java.util.*
 
 abstract class EditorCellViewComponent : Disposable {
   protected var parent: EditorCellViewComponent? = null
@@ -23,7 +23,7 @@ abstract class EditorCellViewComponent : Disposable {
     Disposer.register(this, child)
   }
 
-  /* Chile disposable will be automatically disposed. */
+  /* Child will be automatically disposed. */
   fun remove(child: EditorCellViewComponent) {
     Disposer.dispose(child)
     _children.remove(child)

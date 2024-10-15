@@ -1,9 +1,6 @@
 package com.intellij.notebooks.visualization
 
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.notebooks.ui.editor.actions.command.mode.NOTEBOOK_EDITOR_MODE
-import com.intellij.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
-import com.intellij.notebooks.ui.editor.actions.command.mode.NotebookEditorModeListener
 import com.intellij.notebooks.ui.isFoldingEnabledKey
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.ui.*
@@ -39,7 +36,7 @@ class NotebookCellInlayManager private constructor(
   private val shouldCheckInlayOffsets: Boolean,
   private val inputFactories: List<NotebookCellInlayController.InputFactory>,
   private val cellExtensionFactories: List<CellExtensionFactory>,
-) : Disposable, NotebookIntervalPointerFactory.ChangeListener, NotebookEditorModeListener {
+) : Disposable, NotebookIntervalPointerFactory.ChangeListener {
 
   private val notebookCellLines = NotebookCellLines.get(editor)
 
@@ -83,19 +80,22 @@ class NotebookCellInlayManager private constructor(
       val newCtx = UpdateContext(force)
       updateCtx = newCtx
       try {
-        JupyterBoundsChangeHandler.get(editor).postponeUpdates()
+        val jupyterBoundsChangeHandler = JupyterBoundsChangeHandler.get(editor)
+        jupyterBoundsChangeHandler.postponeUpdates()
         val r = keepScrollingPositionWhile(editor) {
           val r = block(newCtx)
           updateCtx = null
           if (editorIsProcessingDocument) {
             postponedUpdates.add(newCtx)
-          } else {
+          }
+          else {
             newCtx.applyUpdates(editor)
           }
           r
         }
         inlaysChanged()
-        JupyterBoundsChangeHandler.get(editor).performPostponed()
+        jupyterBoundsChangeHandler.boundsChanged()
+        jupyterBoundsChangeHandler.performPostponed()
         r
       }
       finally {
@@ -184,8 +184,6 @@ class NotebookCellInlayManager private constructor(
     setupFoldingListener()
     setupSelectionUI()
 
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(NOTEBOOK_EDITOR_MODE, this)
-
     cellEventListeners.addListener(object : EditorCellEventListener {
       override fun onEditorCellEvents(events: List<EditorCellEvent>) {
         updateUI(events)
@@ -232,7 +230,6 @@ class NotebookCellInlayManager private constructor(
       }
     }
   }
-
 
   private fun createCellViewIfNecessary(cell: EditorCell, ctx: UpdateContext) {
     if (views[cell] == null) {
@@ -502,28 +499,6 @@ class NotebookCellInlayManager private constructor(
   internal fun getInputFactories(): Sequence<NotebookCellInlayController.InputFactory> {
     return inputFactories.asSequence()
   }
-
-  override fun onModeChange(editor: Editor, mode: NotebookEditorMode) {
-    if (editor == this.editor) {
-      when (mode) {
-        NotebookEditorMode.EDIT -> {
-          editor.caretModel.allCarets.forEach { caret ->
-            getCellByLine(editor.document.getLineNumber(caret.offset))?.switchToEditMode()
-          }
-        }
-        NotebookEditorMode.COMMAND -> {
-          _cells.forEach {
-            it.switchToCommandMode()
-          }
-        }
-      }
-    }
-  }
-
-  fun getCellByLine(line: Int): EditorCell? {
-    return _cells.firstOrNull { it.interval.lines.contains(line) }
-  }
-
 }
 
 class UpdateContext(val force: Boolean = false) {
