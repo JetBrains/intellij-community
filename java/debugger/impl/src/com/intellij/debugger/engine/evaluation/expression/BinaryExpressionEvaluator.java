@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class BinaryExpressionEvaluator
@@ -48,7 +48,7 @@ class BinaryExpressionEvaluator implements Evaluator {
                                   final Evaluator rightOperand,
                                   final String expectedType,
                                   final EvaluationContextImpl context) throws EvaluateException {
-    VirtualMachineProxyImpl vm = context.getSuspendContext().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getVirtualMachineProxy();
     if (leftResult instanceof BooleanValue) {
       boolean v1 = ((PrimitiveValue)leftResult).booleanValue();
       if (opType == JavaTokenType.OROR && v1) {
@@ -78,7 +78,7 @@ class BinaryExpressionEvaluator implements Evaluator {
       if (leftResult instanceof StringReference || rightResult instanceof StringReference) {
         String v1 = DebuggerUtils.getValueAsString(context, leftResult);
         String v2 = DebuggerUtils.getValueAsString(context, rightResult);
-        return DebuggerUtilsEx.mirrorOfString(v1 + v2, vm, context);
+        return DebuggerUtilsEx.mirrorOfString(v1 + v2, context);
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "+"));
     }

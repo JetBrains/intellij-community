@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -33,7 +33,7 @@ public class SyntheticVariableEvaluator implements Evaluator {
     if (myTypeNameString == null && myTypeName != null) {
       myTypeNameString = myTypeName.getName(context.getDebugProcess());
     }
-    return myCodeFragmentEvaluator.getValue(myLocalName, context.getSuspendContext().getVirtualMachineProxy());
+    return myCodeFragmentEvaluator.getValue(myLocalName, context.getVirtualMachineProxy());
   }
 
   @Override

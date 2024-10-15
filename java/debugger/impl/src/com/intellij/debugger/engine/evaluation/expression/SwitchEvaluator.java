@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -160,7 +160,7 @@ public class SwitchEvaluator implements Evaluator {
     @Override
     public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
       Object value = myValueEvaluator == null ?
-                     context.getSuspendContext().getVirtualMachineProxy().mirrorOfVoid() :
+                     context.getVirtualMachineProxy().mirrorOfVoid() :
                      myValueEvaluator.evaluate(context);
       throw new YieldException(value);
     }

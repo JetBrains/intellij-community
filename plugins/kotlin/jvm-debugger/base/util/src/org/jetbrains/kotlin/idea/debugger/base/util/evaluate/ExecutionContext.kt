@@ -53,7 +53,7 @@ class DefaultExecutionContext(evaluationContext: EvaluationContextImpl) : BaseEx
 
 sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) {
     val vm: VirtualMachineProxyImpl
-        get() = evaluationContext.suspendContext.virtualMachineProxy
+        get() = evaluationContext.virtualMachineProxy
 
     val classLoader: ClassLoaderReference?
         get() = evaluationContext.classLoader

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -24,7 +24,6 @@ public class ExpressionListEvaluator implements Evaluator {
     for (Evaluator evaluator : myEvaluators) {
       strings.add(DebuggerUtils.getValueAsString(context, (Value)evaluator.evaluate(context)));
     }
-    return DebuggerUtilsEx.mirrorOfString(StringUtil.join(strings, ", "),
-                                          context.getSuspendContext().getVirtualMachineProxy(), context);
+    return DebuggerUtilsEx.mirrorOfString(StringUtil.join(strings, ", "), context);
   }
 }

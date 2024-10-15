@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.CommonBundle;
@@ -483,7 +483,7 @@ class InstancesView extends InstancesViewBase {
 
     @Override
     public List<JavaReferenceInfo> fetchInstances(@NotNull EvaluationContextImpl evaluationContext) {
-      final int limit = DebuggerUtils.isAndroidVM(evaluationContext.getSuspendContext().getVirtualMachineProxy().getVirtualMachine())
+      final int limit = DebuggerUtils.isAndroidVM(evaluationContext.getVirtualMachineProxy().getVirtualMachine())
                         ? AndroidUtil.ANDROID_INSTANCES_LIMIT
                         : DEFAULT_INSTANCES_LIMIT;
       List<JavaReferenceInfo> instances = getInstances(limit);

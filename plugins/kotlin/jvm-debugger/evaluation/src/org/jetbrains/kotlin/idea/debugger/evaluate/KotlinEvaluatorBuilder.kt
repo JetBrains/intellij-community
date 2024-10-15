@@ -263,7 +263,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 }
 
                 override fun jdiMirrorOfString(str: String): StringReference {
-                    return DebuggerUtilsEx.mirrorOfString(str, context.vm, context.evaluationContext)
+                    return DebuggerUtilsEx.mirrorOfString(str, context.evaluationContext)
                 }
 
                 override fun jdiNewArray(arrayType: ArrayType, size: Int): ArrayReference {

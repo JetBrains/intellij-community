@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
@@ -109,7 +109,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       return fieldValue;
     }
     catch (InternalException e) {
-      if (evaluationContext.getSuspendContext().getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
+      if (evaluationContext.getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
         LOG.debug(e);
       }
       else {

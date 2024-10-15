@@ -41,11 +41,11 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.intellij.unscramble.ThreadDumpPanel;
-import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
@@ -391,6 +391,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     ui.selectAndFocus(content, true, true);
   }
 
+  public static StringReference mirrorOfString(@NotNull String s, @NotNull EvaluationContextImpl context)
+    throws EvaluateException {
+    return mirrorOfString(s, context.getVirtualMachineProxy(), context);
+  }
+
+  /**
+   * @deprecated use {@link #mirrorOfString(String, EvaluationContextImpl)}
+   */
+  @Deprecated
   public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)
     throws EvaluateException {
     return context.computeAndKeep(() -> virtualMachineProxy.mirrorOf(s));

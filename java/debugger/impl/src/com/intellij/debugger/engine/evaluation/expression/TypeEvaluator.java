@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class TypeEvaluator
@@ -45,7 +45,7 @@ public class TypeEvaluator implements Evaluator {
     ReferenceType lastRes = SoftReference.dereference(myLastResult);
     if (lastRes != null && classLoader == SoftReference.dereference(myLastClassLoader)) {
       // if class loader is null, check that vms match
-      if (classLoader != null || lastRes.virtualMachine().equals(context.getSuspendContext().getVirtualMachineProxy().getVirtualMachine())) {
+      if (classLoader != null || lastRes.virtualMachine().equals(context.getVirtualMachineProxy().getVirtualMachine())) {
         return lastRes;
       }
     }
@@ -57,7 +57,7 @@ public class TypeEvaluator implements Evaluator {
     }
     catch (EvaluateException e) {
       ReferenceType singleLoadedClass =
-        getOnlyItem(filter(context.getSuspendContext().getVirtualMachineProxy().classesByName(typeName), ReferenceType::isPrepared));
+        getOnlyItem(filter(context.getVirtualMachineProxy().classesByName(typeName), ReferenceType::isPrepared));
       if (singleLoadedClass == null) {
         throw e;
       }

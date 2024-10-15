@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -41,7 +41,7 @@ public class IfStatementEvaluator implements Evaluator {
           myModifier = myElseEvaluator.getModifier();
         }
         else {
-          value = context.getSuspendContext().getVirtualMachineProxy().mirrorOfVoid();
+          value = context.getVirtualMachineProxy().mirrorOfVoid();
           myModifier = null;
         }
       }

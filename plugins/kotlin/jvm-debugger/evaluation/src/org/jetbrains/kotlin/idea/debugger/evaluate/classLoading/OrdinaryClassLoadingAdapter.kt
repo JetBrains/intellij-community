@@ -138,7 +138,7 @@ class OrdinaryClassLoadingAdapter : ClassLoadingAdapter {
             val vm = context.vm
             val classLoaderType = classLoader.referenceType() as ClassType
             val defineMethod = classLoaderType.concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;")
-            val nameObj = mirrorOfString(name, vm, context.evaluationContext)
+            val nameObj = mirrorOfString(name, context.evaluationContext)
 
             val args = listOf(
                 nameObj,

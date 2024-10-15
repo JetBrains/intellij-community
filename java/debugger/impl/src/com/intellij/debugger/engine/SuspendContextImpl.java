@@ -107,6 +107,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
   }
 
+  @NotNull
   public VirtualMachineProxyImpl getVirtualMachineProxy() {
     return myVirtualMachine;
   }

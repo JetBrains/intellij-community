@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class FieldEvaluator
@@ -126,7 +126,7 @@ public class FieldEvaluator implements Evaluator {
 
       // expressions like 'array.length' must be treated separately
       if (objRef instanceof ArrayReference && "length".equals(myFieldName)) {
-        return context.getSuspendContext().getVirtualMachineProxy().mirrorOf(((ArrayReference)objRef).length());
+        return context.getVirtualMachineProxy().mirrorOf(((ArrayReference)objRef).length());
       }
 
       Field field = findField(refType);

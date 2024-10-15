@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.sun.jdi.ClassLoaderReference;
@@ -60,6 +61,11 @@ public final class EvaluationContextImpl implements EvaluationContext {
   @Override
   public SuspendContextImpl getSuspendContext() {
     return mySuspendContext;
+  }
+
+  @NotNull
+  public VirtualMachineProxyImpl getVirtualMachineProxy() {
+    return mySuspendContext.getVirtualMachineProxy();
   }
 
   @Override

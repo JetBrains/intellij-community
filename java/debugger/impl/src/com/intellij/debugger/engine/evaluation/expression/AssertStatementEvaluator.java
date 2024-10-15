@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -44,7 +44,7 @@ public class AssertStatementEvaluator implements Evaluator {
       }
     }
     if (status == ThreeState.NO) {
-      return context.getSuspendContext().getVirtualMachineProxy().mirrorOfVoid();
+      return context.getVirtualMachineProxy().mirrorOfVoid();
     }
     return myEvaluator.evaluate(context);
   }

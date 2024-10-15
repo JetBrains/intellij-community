@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -26,14 +26,14 @@ class PatternLabelEvaluator implements Evaluator {
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value value = (Value)myOperandEvaluator.evaluate(context);
     if (value == null) {
-      return context.getSuspendContext().getVirtualMachineProxy().mirrorOf(false);
+      return context.getVirtualMachineProxy().mirrorOf(false);
     }
     if (!(value instanceof ObjectReference)) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.object.reference.expected"));
     }
     try {
       boolean res = myPatternEvaluator.match(value, context);
-      return context.getSuspendContext().getVirtualMachineProxy().mirrorOf(res);
+      return context.getVirtualMachineProxy().mirrorOf(res);
     }
     catch (Exception e) {
       LOG.debug(e);
