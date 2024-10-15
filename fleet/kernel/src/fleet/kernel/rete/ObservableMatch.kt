@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rete
 
-import com.jetbrains.rhizomedb.DbContext
-import fleet.kernel.timestamp
 import fleet.util.causeOfType
 import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.coroutines.*
@@ -12,7 +10,7 @@ import kotlin.coroutines.coroutineContext
 internal class ObservableMatch<T>(
   internal val observerId: NodeId,
   internal val match: Match<T>,
-  internal val invalidationTs: CompletableDeferred<Long>,
+  internal val invalidation: CompletableJob,
 ) : Match<T> {
   override val value: T
     get() = match.value
@@ -23,7 +21,7 @@ internal class ObservableMatch<T>(
   override fun observableSubmatches(): Sequence<Match<*>> =
     sequenceOf(this)
 
-  override fun toString(): String = "($invalidationTs $observerId $match)"
+  override fun toString(): String = "($invalidation $observerId $match)"
 }
 
 internal suspend fun <U> withObservableMatches(
@@ -41,7 +39,7 @@ internal suspend fun <U> withObservableMatches(
         withReteDbSource {
           withContext(ContextMatches(contextMatches.addAll(matches))) {
             val def = async(start = CoroutineStart.UNDISPATCHED) {
-              val inactiveMatch = matches.firstOrNull { !it.invalidationTs.isActive }
+              val inactiveMatch = matches.firstOrNull { !it.invalidation.isActive }
               when {
                 inactiveMatch == null -> WithMatchResult.Success(body())
                 else -> WithMatchResult.Failure(CancellationReason("match terminated by rete", inactiveMatch))
@@ -50,7 +48,7 @@ internal suspend fun <U> withObservableMatches(
             select {
               def.onAwait { res -> res }
               for (m in matches) {
-                m.invalidationTs.onJoin {
+                m.invalidation.onJoin {
                   val reason = CancellationReason("match terminated by rete", m)
                   def.cancel(UnsatisfiedMatchException(reason))
                   WithMatchResult.Failure(reason)
@@ -79,14 +77,14 @@ internal fun <T> Query<T>.observable(terminalId: NodeId): Query<T> =
         // use java forEach, entryset is not implemented for AdaptiveMap
         @Suppress("JavaMapForEach")
         observableMatches.forEach { _, a ->
-          a.invalidationTs.completeExceptionally(ex)
+          a.invalidation.completeExceptionally(ex)
         }
       }
     }
     producer().transform { token, emit ->
       when (token.added) {
         true -> {
-          val observableMatch = ObservableMatch(terminalId, token.match, CompletableDeferred())
+          val observableMatch = ObservableMatch(terminalId, token.match, Job())
           observableMatches[token.match] = observableMatch
           emit(Token(true, observableMatch))
         }
@@ -98,7 +96,7 @@ internal fun <T> Query<T>.observable(terminalId: NodeId): Query<T> =
               }
             }
             else -> {
-              observableMatch.invalidationTs.complete(DbContext.threadBound.impl.timestamp)
+              observableMatch.invalidation.complete()
               emit(Token(false, observableMatch))
             }
           }

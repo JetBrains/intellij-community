@@ -159,13 +159,11 @@ suspend fun waitForReteToCatchUp(targetDb: Q) {
     .reteState.first { reteDb -> reteDb.dbOrThrow().timestamp >= targetTimestamp }
 
   // now that rete has caught up with targetDb, we can go and check if our context matches are still valid
-  coroutineContext[ContextMatches]?.matches?.let { matches ->
-    matches.forEach { match ->
-      if (match.invalidationTs.isCompleted && match.invalidationTs.getCompleted() <= targetTimestamp) {
-        throw UnsatisfiedMatchException(CancellationReason("match invalidated by rete", match.match))
-      }
+  val invalidation = coroutineContext[ContextMatches]?.matches
+    ?.firstOrNull { it.invalidation.isCompleted }
+    ?.let { invalidatedMatch ->
+      UnsatisfiedMatchException(CancellationReason("match invalidated by rete", invalidatedMatch.match))
     }
-  }
 
   // bug in kotlin coroutines:
   // the suspend call is in tail position of a function returning Unit,
@@ -173,7 +171,10 @@ suspend fun waitForReteToCatchUp(targetDb: Q) {
   // resulting in a db leak if the calling code suspends right after this.
 
   // since now, suspend call is not in tail position, we're safe.
-  DbContext.threadBound.set(targetDb)
+  when (invalidation) {
+    null -> DbContext.threadBound.set(targetDb)
+    else -> DbContext.threadBound.setPoison(invalidation)
+  }
 }
 
 /**
@@ -212,7 +213,7 @@ private val ReteSpinChangeInterceptor: ChangeInterceptor =
           r.and {
             val reteTimestamp = rete.reteState.value.dbOrThrow().timestamp
             when {
-              match.invalidationTs.isCompleted -> ValidationResult.Invalid(match)
+              match.invalidation.isCompleted -> ValidationResult.Invalid(match)
               dbBefore.timestamp == reteTimestamp -> ValidationResult.Valid
               else -> when (match.validate()) {
                 ValidationResultEnum.Inconclusive -> ValidationResult.Inconclusive
