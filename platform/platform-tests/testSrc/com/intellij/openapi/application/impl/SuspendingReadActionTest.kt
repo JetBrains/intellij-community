@@ -36,6 +36,12 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
         application.assertReadAccessNotAllowed()
       }
 
+      fun assertNestedContext(job: Job) {
+        assertEquals(job, Cancellation.currentJob())
+        assertNull(ProgressManager.getGlobalProgressIndicator())
+        application.assertReadAccessAllowed()
+      }
+
       fun assertReadActionWithCurrentJob() {
         assertNotNull(Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
@@ -56,7 +62,12 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
           val suspendingJob = Cancellation.currentJob()!!
           assertReadActionWithoutCurrentJob(suspendingJob) // TODO consider explicitly turning off RA inside runBlockingCancellable
           withContext(Dispatchers.Default) {
-            assertEmptyContext(coroutineContext.job)
+            if (isLockStoredInContext) {
+              assertNestedContext(coroutineContext.job)
+            }
+            else {
+              assertEmptyContext(coroutineContext.job)
+            }
           }
           assertReadActionWithoutCurrentJob(suspendingJob)
         }

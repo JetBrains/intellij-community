@@ -1100,8 +1100,10 @@ com.intellij.openapi.application.Application
 - exit(Z,Z,Z,I):V
 - a:getDefaultModalityState():com.intellij.openapi.application.ModalityState
 - a:getIdleTime():J
+- getLockStateAsCoroutineContext():kotlin.coroutines.CoroutineContext
 - a:getModalityStateForComponent(java.awt.Component):com.intellij.openapi.application.ModalityState
 - a:getStartTime():J
+- hasLockStateInContext(kotlin.coroutines.CoroutineContext):Z
 - a:hasWriteAction(java.lang.Class):Z
 - a:invokeAndWait(java.lang.Runnable):V
 - a:invokeAndWait(java.lang.Runnable,com.intellij.openapi.application.ModalityState):V
