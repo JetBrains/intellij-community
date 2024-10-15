@@ -71,6 +71,54 @@ object WebAnimationUtils {
     return createSingleContentHtmlPage(body, background, componentId)
   }
 
+  fun createVideoHtmlPageWithUrl(
+    videoUrl: String,
+    background: Color,
+    stubImageUrl: String? = null,
+    autoplay: Boolean = true,
+    loop: Boolean = true,
+    injectedVideoEndedListener: String? = null,
+  ): String {
+    val componentId = "video"
+    val scriptText =
+      """
+        document.addEventListener("DOMContentLoaded", function() {
+            let video = document.getElementById("$componentId");
+
+            window.playVideo = function() {
+                video.play();
+            }
+
+            window.pauseVideo = function() {
+                video.pause();
+            }
+            
+            window.resetVideo = function() {
+              video.currentTime = 0;
+            }
+            ${if (injectedVideoEndedListener != null) """video.addEventListener('ended', function() { $injectedVideoEndedListener });""" else ""}
+        });
+    """.trimIndent()
+
+    val script = HtmlChunk.tag("script").addRaw(scriptText)
+
+    val videoTag = HtmlChunk.tag("video")
+      .attr("id", componentId)
+      .let { if (autoplay) it.attr("autoplay") else it }
+      .let { if (loop) it.attr("loop") else it }
+      .attr("muted")
+      .let { if (stubImageUrl != null) it.attr("poster", stubImageUrl) else it }
+      .child(HtmlChunk.tag("source")
+               .attr("type", "video/webm")
+               .attr("src", videoUrl)
+      )
+    val body = HtmlChunk.body()
+      .child(script)
+      .child(videoTag)
+
+    return createSingleContentHtmlPage(body, background, componentId)
+  }
+
   private fun createSingleContentHtmlPage(body: HtmlChunk, background: Color, componentId: String): String {
     val head = HtmlChunk.head().child(getSingleContentCssStyles(background, componentId))
     return HtmlChunk.html()
