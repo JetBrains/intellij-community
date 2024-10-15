@@ -21,14 +21,33 @@ class JetBrainsFeedbackReporter(private val productName: String,
     val appInfo = ApplicationInfo.getInstance()
     val build = appInfo.getBuild()
 
+    val metadata = LicensingFacade.getInstance()?.metadata?.takeIf { it.length > 10 }
+    val isEval = LicensingFacade.getInstance()?.isEvaluationLicense == true
+
     return Urls.newFromEncoded("https://www.jetbrains.com/feedback/feedback.jsp")
       .addParameters(mapOf(
         "product" to productName,
         "build" to if (appInfo.isEAP) build.asStringWithoutProductCode() else build.asString(),
         "timezone" to System.getProperty("user.timezone", ""),
-        "eval" to (LicensingFacade.getInstance()?.isEvaluationLicense == true).toString(),
-        "license" to (LicensingFacade.getInstance()?.subType ?: "unknown")
+        "eval" to isEval.toString(),
+        "license" to licenseInfo(metadata, isEval)
       ))
+  }
+
+  // how license flags are passed to web URLs
+  private fun licenseInfo(metadata: String?, isEval: Boolean): String {
+    if (isEval) return "eval"
+
+    val char = metadata?.get(10)
+    when (char) {
+      'C' -> return "commercial"
+      'E' -> return "academic"
+      'F' -> return "free"
+      'L' -> return "classroom"
+      'O' -> return "opensource"
+      'P' -> return "personal"
+      else -> return "unknown"
+    }
   }
 
   override fun showFeedbackForm(project: Project?, requestedForEvaluation: Boolean): Boolean {
