@@ -1482,6 +1482,20 @@ com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 - com.intellij.openapi.vcs.checkin.CheckinModificationHandler
 - a:runCheckinHandlers(java.lang.Runnable):V
 com.intellij.openapi.vcs.checkin.CheckinModificationHandler
+com.intellij.openapi.vcs.checkin.CommitCheck
+- com.intellij.openapi.project.PossiblyDumbAware
+- a:getExecutionOrder():com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
+- a:isEnabled():Z
+- a:runCheck(com.intellij.openapi.vcs.checkin.CommitInfo,kotlin.coroutines.Continuation):java.lang.Object
+e:com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
+- java.lang.Enum
+- sf:EARLY:com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
+- sf:LATE:com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
+- sf:MODIFICATION:com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
+- sf:POST_COMMIT:com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder
+- s:values():com.intellij.openapi.vcs.checkin.CommitCheck$ExecutionOrder[]
 f:com.intellij.openapi.vcs.checkin.CommitCheckKt
 - sf:getCommittedVirtualFiles(com.intellij.openapi.vcs.checkin.CommitInfo):java.util.List
 com.intellij.openapi.vcs.checkin.CommitInfo
@@ -1492,6 +1506,17 @@ com.intellij.openapi.vcs.checkin.CommitInfo
 - a:getCommittedChanges():java.util.List
 - a:getExecutor():com.intellij.openapi.vcs.changes.CommitExecutor
 - a:isVcsCommit():Z
+com.intellij.openapi.vcs.checkin.CommitProblem
+- sf:Companion:com.intellij.openapi.vcs.checkin.CommitProblem$Companion
+- a:getText():java.lang.String
+- showModalSolution(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CommitInfo):com.intellij.openapi.vcs.checkin.CheckinHandler$ReturnResult
+f:com.intellij.openapi.vcs.checkin.CommitProblem$Companion
+- f:createError(java.lang.Throwable):com.intellij.openapi.vcs.checkin.CommitProblem
+com.intellij.openapi.vcs.checkin.CommitProblemWithDetails
+- com.intellij.openapi.vcs.checkin.CommitProblem
+- a:getShowDetailsAction():java.lang.String
+- getShowDetailsLink():java.lang.String
+- a:showDetails(com.intellij.openapi.project.Project):V
 f:com.intellij.openapi.vcs.checkin.TextCommitProblem
 - com.intellij.openapi.vcs.checkin.CommitProblem
 - <init>(java.lang.String):V
@@ -2362,3 +2387,8 @@ f:com.intellij.vcsUtil.VcsUtil
 - s:shouldDetectVcsMappingsFor(com.intellij.openapi.project.Project):Z
 - s:sortPathsFromOutermost(com.intellij.openapi.vcs.FilePath[]):com.intellij.openapi.vcs.FilePath[]
 - s:trimCommitMessageToSaneSize(java.lang.String):java.lang.String
+com.intellij.vfs.AsyncVfsEventsListener
+- a:filesChanged(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.vfs.AsyncVfsEventsPostProcessor
+- a:addListener(com.intellij.vfs.AsyncVfsEventsListener,kotlinx.coroutines.CoroutineScope):V
+- s:getInstance():com.intellij.vfs.AsyncVfsEventsPostProcessor

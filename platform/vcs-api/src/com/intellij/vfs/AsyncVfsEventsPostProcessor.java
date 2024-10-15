@@ -4,7 +4,6 @@ package com.intellij.vfs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see AsyncVfsEventsListener
  */
-@ApiStatus.Experimental
 public interface AsyncVfsEventsPostProcessor {
   /**
    * Subscribes the given listener to get the VFS events on a pooled thread.

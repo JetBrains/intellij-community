@@ -600,6 +600,17 @@ f:com.intellij.vcs.log.impl.VcsLogProjectTabsProperties$State
 - f:setOpenTabs(java.util.LinkedHashMap):V
 - f:setRecentFilters(java.util.Map):V
 - f:setTabStates(java.util.Map):V
+e:com.intellij.vcs.log.impl.VcsLogTabLocation
+- java.lang.Enum
+- sf:Companion:com.intellij.vcs.log.impl.VcsLogTabLocation$Companion
+- sf:TOOL_WINDOW:com.intellij.vcs.log.impl.VcsLogTabLocation
+- b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- s:getEntries():kotlin.enums.EnumEntries
+- a:select(com.intellij.openapi.project.Project,com.intellij.vcs.log.VcsLogUi):Z
+- s:valueOf(java.lang.String):com.intellij.vcs.log.impl.VcsLogTabLocation
+- s:values():com.intellij.vcs.log.impl.VcsLogTabLocation[]
+f:com.intellij.vcs.log.impl.VcsLogTabLocation$Companion
+- f:findLogUi(com.intellij.vcs.log.impl.VcsLogManager,com.intellij.vcs.log.impl.VcsLogTabLocation,java.lang.Class,Z,kotlin.jvm.functions.Function1):com.intellij.vcs.log.VcsLogUi
 f:com.intellij.vcs.log.impl.VcsLogTabsManager
 - sf:Companion:com.intellij.vcs.log.impl.VcsLogTabsManager$Companion
 - sf:generateDisplayName(com.intellij.vcs.log.ui.VcsLogUiEx):java.lang.String

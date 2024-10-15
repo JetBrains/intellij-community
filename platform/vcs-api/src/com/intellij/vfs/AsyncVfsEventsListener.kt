@@ -2,7 +2,6 @@
 package com.intellij.vfs
 
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Receives notifications about changes in the virtual file system,
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.ApiStatus
  *
  * @see AsyncVfsEventsPostProcessor
  */
-@ApiStatus.Experimental
 interface AsyncVfsEventsListener {
   /**
    * Invoked after the given events were applied to the VFS.

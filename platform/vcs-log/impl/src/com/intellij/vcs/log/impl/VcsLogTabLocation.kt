@@ -14,15 +14,17 @@ import org.jetbrains.annotations.ApiStatus
  * @see VcsLogTabsWatcher
  * @see VcsLogTabsWatcherExtension
  */
-@ApiStatus.Experimental
 enum class VcsLogTabLocation {
   TOOL_WINDOW {
     override fun select(project: Project, logUi: VcsLogUi): Boolean = VcsLogContentUtil.selectLogUi(project, logUi)
   },
   @Deprecated("Unused")
+  @ApiStatus.Experimental
   EDITOR {
     override fun select(project: Project, logUi: VcsLogUi): Boolean = VcsLogEditorUtil.selectLogUi(project, logUi)
   },
+
+  @ApiStatus.Experimental
   STANDALONE {
     override fun select(project: Project, logUi: VcsLogUi): Boolean {
       throw UnsupportedOperationException("Selecting standalone log tabs is not supported")
