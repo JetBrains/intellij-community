@@ -18508,11 +18508,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/surroundWithLambda/argumentSuspend.kt");
             }
 
-            @TestMetadata("arityIsNotZero.kt")
-            public void testArityIsNotZero() throws Exception {
-                runTest("testData/quickfix/typeMismatch/surroundWithLambda/arityIsNotZero.kt");
-            }
-
             @TestMetadata("assignment.kt")
             public void testAssignment() throws Exception {
                 runTest("testData/quickfix/typeMismatch/surroundWithLambda/assignment.kt");
@@ -18521,6 +18516,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("initializer.kt")
             public void testInitializer() throws Exception {
                 runTest("testData/quickfix/typeMismatch/surroundWithLambda/initializer.kt");
+            }
+
+            @TestMetadata("lambdaWithParam.kt")
+            public void testLambdaWithParam() throws Exception {
+                runTest("testData/quickfix/typeMismatch/surroundWithLambda/lambdaWithParam.kt");
+            }
+
+            @TestMetadata("lambdaWithParams.kt")
+            public void testLambdaWithParams() throws Exception {
+                runTest("testData/quickfix/typeMismatch/surroundWithLambda/lambdaWithParams.kt");
             }
 
             @TestMetadata("return.kt")

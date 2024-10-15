@@ -4677,11 +4677,6 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/argumentSuspend.kt");
         }
 
-        @TestMetadata("arityIsNotZero.kt")
-        public void testArityIsNotZero() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/arityIsNotZero.kt");
-        }
-
         @TestMetadata("assignment.kt")
         public void testAssignment() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/assignment.kt");
@@ -4690,6 +4685,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("initializer.kt")
         public void testInitializer() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/initializer.kt");
+        }
+
+        @TestMetadata("lambdaWithParam.kt")
+        public void testLambdaWithParam() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/lambdaWithParam.kt");
+        }
+
+        @TestMetadata("lambdaWithParams.kt")
+        public void testLambdaWithParams() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda/lambdaWithParams.kt");
         }
 
         @TestMetadata("return.kt")

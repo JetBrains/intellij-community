@@ -44,7 +44,7 @@ internal object SurroundWithLambdaForTypeMismatchFixFactory {
         actualType: KaType,
     ): SurroundWithLambdaForTypeMismatchFix? {
         if (element !is KtExpression || expectedType !is KaFunctionType) return null
-        if (expectedType.arity != 0) return null
+        if (expectedType.arity > 1) return null
         val lambdaReturnType = expectedType.returnType
 
         if (!actualType.withNullability(KaTypeNullability.NON_NULLABLE).isSubtypeOf(lambdaReturnType) &&
