@@ -102,7 +102,6 @@ class MPSProperties : JetBrainsProductProperties() {
             layout.withoutProjectLibrary("Gradle")
         }
 
-        additionalModulesToCompile = persistentListOf("intellij.tools.jps.build.standalone")
         modulesToCompileTests = persistentListOf(
             "intellij.platform.jps.build",
             "intellij.platform.jps.build.tests",
