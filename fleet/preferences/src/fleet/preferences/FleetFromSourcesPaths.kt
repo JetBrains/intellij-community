@@ -41,8 +41,12 @@ object FleetFromSourcesPaths {
     projectRoot.resolve("plugins/emmet/frontend/resources/nemmet/dist/nemmet.js")
   }
 
+  private val buildDirectory: Path by lazy {
+    fleetProperty("fleet.build.directory.path")?.let { Path.of(it) } ?: projectRoot.resolve("build/build")
+  }
+
   val skikoLibraryDirectory: Path by lazy {
-    projectRoot.resolve("build/build/localDistribution/libs")
+    buildDirectory.resolve("localDistribution/libs")
   }
 
   //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.plugins.keymap.test", "fleet.app.fleet.tests"])
