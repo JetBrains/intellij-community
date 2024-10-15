@@ -64,35 +64,6 @@ public interface PyStringLiteralExpression extends PyAstStringLiteralExpression,
   int valueOffsetToTextOffset(int valueOffset);
 
   /**
-   * Returns unescaped fragments of string's value together with their respective text ranges <i>relative to the element's start offset</i>.
-   * For most escape sequences the decoded character is returned and the text range that spans the sequence itself.
-   * Other "literal" fragments of the string are returned as is so that {@code pair.getFirst().length() == pair.getSecond().getLength()}.
-   * <p>
-   * For example, for the next "glued" string literal:
-   * <p>
-   * <pre>{@code
-   * u"\u0066\x6F\157" '\bar' r'\baz'
-   * }</pre>
-   * <p>
-   * this method returns:
-   * <p>
-   * <code><pre>
-   * [
-   *   ([2,8),"f"),
-   *   ([8,12),"o"),
-   *   ([12,16),"o"),
-   *   ([16,16),""),
-   *   ([19,21),"\b"),
-   *   ([21,23),"ar"),
-   *   ([27,29),"\\b"),
-   *   ([29,31),"az"),
-   * ]
-   * </code></pre>
-   */
-  @NotNull
-  List<Pair<TextRange, String>> getDecodedFragments();
-
-  /**
    * @return true if this element has single string node and its type is {@link com.jetbrains.python.PyTokenTypes#DOCSTRING}
    */
   boolean isDocString();

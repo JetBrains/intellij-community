@@ -65,17 +65,9 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @Override
   @NotNull
   public List<Pair<TextRange, String>> getDecodedFragments() {
-    final int elementStart = getTextRange().getStartOffset();
     List<Pair<TextRange, String>> result = myDecodedFragments;
     if (result == null) {
-      final List<Pair<TextRange, String>> combined = StreamEx.of(getStringElements())
-        .flatMap(node -> StreamEx.of(node.getDecodedFragments())
-          .map(pair -> {
-            final int nodeRelativeOffset = node.getTextRange().getStartOffset() - elementStart;
-            return Pair.create(pair.getFirst().shiftRight(nodeRelativeOffset), pair.getSecond());
-          }))
-        .toList();
-      myDecodedFragments = result = combined;
+      myDecodedFragments = result = PyStringLiteralExpression.super.getDecodedFragments();
     }
     return result;
   }
@@ -100,11 +92,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     //assert child != null;
     String result = myStringValue;
     if (result == null) {
-      final StringBuilder out = new StringBuilder();
-      for (Pair<TextRange, String> fragment : getDecodedFragments()) {
-        out.append(fragment.getSecond());
-      }
-      myStringValue = result = out.toString();
+      myStringValue = result = PyStringLiteralExpression.super.getStringValue();
     }
     return result;
   }
@@ -113,18 +101,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @Override
   public Object getValue() {
     return getStringValue();
-  }
-
-  @Override
-  public TextRange getStringValueTextRange() {
-    List<TextRange> allRanges = getStringValueTextRanges();
-    if (allRanges.size() == 1) {
-      return allRanges.get(0);
-    }
-    if (allRanges.size() > 1) {
-      return allRanges.get(0).union(allRanges.get(allRanges.size() - 1));
-    }
-    return new TextRange(0, getTextLength());
   }
 
   @Override
