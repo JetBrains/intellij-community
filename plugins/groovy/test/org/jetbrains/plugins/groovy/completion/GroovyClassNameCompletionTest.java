@@ -1,350 +1,361 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.completion
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.completion;
 
-
-import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.completion.StaticallyImportable
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.StaticallyImportable;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
  * @author Maxim.Medvedev
  */
-class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTestCase {
-  private boolean old
-
+public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "groovy/completion/classNameCompletion"
+    return TestUtils.getTestDataPath() + "groovy/completion/classNameCompletion";
   }
 
-  private void doTest() throws Exception {
-    addClassToProject("a", "FooBar")
-    myFixture.configureByFile(getTestName(false) + ".groovy")
-    complete()
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
+  private void doTest() {
+    addClassToProject("a", "FooBar");
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    complete();
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  private void addClassToProject(@Nullable String packageName, @NotNull String name) throws IOException {
-    myFixture.addClass("package $packageName; public class $name {}")
+  private void addClassToProject(@Nullable String packageName, @NotNull String name) {
+    myFixture.addClass("package " + packageName + "; public class " + name + " {}");
   }
 
-  void testInFieldDeclaration() throws Exception { doTest() }
+  public void testInFieldDeclaration() { doTest(); }
 
-  void testInFieldDeclarationNoModifiers() throws Exception { doTest() }
+  public void testInFieldDeclarationNoModifiers() { doTest(); }
 
-  void testInParameter() throws Exception { doTest() }
+  public void testInParameter() { doTest(); }
 
-  void testInImport() throws Exception {
-    addClassToProject("a", "FooBar")
-    myFixture.configureByFile(getTestName(false) + ".groovy")
-    complete()
-    myFixture.type('\n')
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
+  public void testInImport() {
+    addClassToProject("a", "FooBar");
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    complete();
+    myFixture.type("\n");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  void testWhenClassExistsInSamePackage() throws Exception {
-    addClassToProject("a", "FooBar")
-    myFixture.configureByFile(getTestName(false) + ".groovy")
-    complete()
-    def lookup = LookupManager.getActiveLookup(myFixture.editor)
-    lookup.currentItem = lookup.items[1]
-    myFixture.type('\n')
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
+  public void testWhenClassExistsInSamePackage() {
+    addClassToProject("a", "FooBar");
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    complete();
+    LookupEx lookup = LookupManager.getActiveLookup(myFixture.getEditor());
+    lookup.setCurrentItem(lookup.getItems().get(1));
+    myFixture.type("\n");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  void testInComment() throws Exception { doTest() }
+  public void testInComment() { doTest(); }
 
-  void testInTypeElementPlace() throws Exception { doTest() }
+  public void testInTypeElementPlace() { doTest(); }
 
-  void testWhenImportExists() throws Exception { doTest() }
+  public void testWhenImportExists() { doTest(); }
 
-  void testFinishByDot() throws Exception {
-    addClassToProject("a", "FooBar")
-    myFixture.configureByText("a.groovy", "FB<caret>a")
-    complete()
-    myFixture.type '.'.charAt(0)
-    myFixture.checkResult '''\
-import a.FooBar
-
-FooBar.<caret>a'''
+  public void testFinishByDot() {
+    addClassToProject("a", "FooBar");
+    myFixture.configureByText("a.groovy", "FB<caret>a");
+    complete();
+    myFixture.type(".");
+    myFixture.checkResult("""
+                            import a.FooBar
+                            
+                            FooBar.<caret>a""");
   }
 
   private LookupElement[] complete() {
-    myFixture.complete(CompletionType.BASIC, 2)
+    return myFixture.complete(CompletionType.BASIC, 2);
   }
 
-  void testDelegateBasicToClassName() throws Exception {
-    addClassToProject("a", "FooBarGooDoo")
-    myFixture.configureByText("a.groovy", "FBGD<caret>a")
-    myFixture.complete(CompletionType.BASIC, 2)
-    myFixture.type '.'
-    myFixture.checkResult '''\
-import a.FooBarGooDoo
-
-FooBarGooDoo.<caret>a'''
+  public void testDelegateBasicToClassName() {
+    addClassToProject("a", "FooBarGooDoo");
+    myFixture.configureByText("a.groovy", "FBGD<caret>a");
+    myFixture.complete(CompletionType.BASIC, 2);
+    myFixture.type(".");
+    myFixture.checkResult("""
+                            import a.FooBarGooDoo
+                            
+                            FooBarGooDoo.<caret>a""");
   }
 
-  void testDelegateBasicToClassNameAutoinsert() throws Exception {
-    addClassToProject("a", "FooBarGooDoo")
-    myFixture.configureByText("a.groovy", "FBGD<caret>")
-    myFixture.complete(CompletionType.BASIC, 2)
-    myFixture.checkResult """\
-import a.FooBarGooDoo
-
-FooBarGooDoo<caret>"""
+  public void testDelegateBasicToClassNameAutoinsert() {
+    addClassToProject("a", "FooBarGooDoo");
+    myFixture.configureByText("a.groovy", "FBGD<caret>");
+    myFixture.complete(CompletionType.BASIC, 2);
+    myFixture.checkResult("""
+                            import a.FooBarGooDoo
+                            
+                            FooBarGooDoo<caret>""");
   }
 
-  void testImportedStaticMethod() throws Exception {
+  public void testImportedStaticMethod() {
     myFixture.addFileToProject("b.groovy", """
-class Foo {
-  static def abcmethod1(int a) {}
-  static def abcmethod2(int a) {}
-}""")
-    myFixture.configureByText("a.groovy", """def foo() {
-  abcme<caret>
-}""")
-    def item = complete()[0]
-
-    LookupElementPresentation presentation = renderElement(item)
-    assert "Foo.abcmethod1" == presentation.itemText
-    assert presentation.tailText == "(int a)"
-
-    ((StaticallyImportable) item).shouldBeImported = true
-    myFixture.type('\n')
-    myFixture.checkResult """import static Foo.abcmethod1
-
-def foo() {
-  abcmethod1(<caret>)
-}"""
-
-  }
-
-  void testImportedStaticField() throws Exception {
-    myFixture.addFileToProject("b.groovy", """
-class Foo {
-  static def abcfield1
-  static def abcfield2
-}""")
-    myFixture.configureByText("a.groovy", """def foo() {
-  abcfi<caret>
-}""")
-    def item = complete()[0]
-    ((StaticallyImportable) item).shouldBeImported = true
-    myFixture.type('\n')
-    myFixture.checkResult """import static Foo.abcfield1
-
-def foo() {
-  abcfield1<caret>
-}"""
-
-  }
-
-  void testImportedInterfaceConstant() throws Exception {
-    myFixture.addFileToProject("b.groovy", """
-interface Foo {
-  static def abcfield1 = 2
-  static def abcfield2 = 3
-}""")
-    myFixture.configureByText("a.groovy", """def foo() {
-  abcfi<caret>
-}""")
-    def item = complete()[0]
-    ((StaticallyImportable) item).shouldBeImported = true
-    myFixture.type('\n')
-    myFixture.checkResult """import static Foo.abcfield1
-
-def foo() {
-  abcfield1<caret>
-}"""
-
-  }
-
-  void testQualifiedStaticMethod() throws Exception {
-    myFixture.addFileToProject("foo/b.groovy", """package foo
-class Foo {
-  static def abcmethod(int a) {}
-}""")
-    myFixture.configureByText("a.groovy", """def foo() {
-  abcme<caret>
-}""")
-    complete()
-    myFixture.checkResult """import foo.Foo
-
-def foo() {
-  Foo.abcmethod(<caret>)
-}"""
-
-  }
-
-  void testQualifiedStaticMethodIfThereAreAlreadyStaticImportsFromThatClass() throws Exception {
-    myFixture.addFileToProject("foo/b.groovy", """package foo
-class Foo {
-  static def abcMethod() {}
-  static def anotherMethod() {}
-}""")
+      
+      class Foo {
+        static def abcmethod1(int a) {}
+        static def abcmethod2(int a) {}
+      }""");
     myFixture.configureByText("a.groovy", """
-import static foo.Foo.anotherMethod
+      def foo() {
+        abcme<caret>
+      }""");
+    LookupElement item = complete()[0];
 
-anotherMethod()
-abcme<caret>x""")
-    def element = assertOneElement(complete()[0])
+    LookupElementPresentation presentation = renderElement(item);
+    assertEquals("Foo.abcmethod1", presentation.getItemText());
+    assertEquals("(int a)", presentation.getTailText());
 
-    LookupElementPresentation presentation = renderElement(element)
-    assert "abcMethod" == presentation.itemText
-    assert presentation.tailText == "() in Foo (foo)"
-
-    myFixture.type('\t')
-    myFixture.checkResult """\
-import static foo.Foo.abcMethod
-import static foo.Foo.anotherMethod
-
-anotherMethod()
-abcMethod()<caret>"""
-
+    ((StaticallyImportable)item).setShouldBeImported(true);
+    myFixture.type("\n");
+    myFixture.checkResult("""
+                            import static Foo.abcmethod1
+                            
+                            def foo() {
+                              abcmethod1(<caret>)
+                            }""");
   }
 
-  private LookupElementPresentation renderElement(LookupElement element) {
-    return LookupElementPresentation.renderElement(element)
-  }
-
-  void testNewClassName() {
-    addClassToProject("foo", "Fxoo")
-    myFixture.configureByText("a.groovy", "new Fxo<caret>\n")
-    myFixture.complete(CompletionType.BASIC, 2)
-    myFixture.checkResult """import foo.Fxoo
-
-new Fxoo()<caret>\n"""
-
-  }
-
-  void testNewImportedClassName() {
-    myFixture.configureByText("a.groovy", "new ArrayIndexOut<caret>\n")
-    myFixture.completeBasic()
-    myFixture.checkResult "new ArrayIndexOutOfBoundsException(<caret>)\n"
-  }
-
-  void testOnlyAnnotationsAfterAt() {
-    myFixture.addClass "class AbcdClass {}; @interface AbcdAnno {}"
-    myFixture.configureByText "a.groovy", "@Abcd<caret>"
-    complete()
-    assert myFixture.lookupElementStrings[0] == 'AbcdAnno'
-  }
-
-  void testOnlyExceptionsInCatch() {
-    myFixture.addClass "class AbcdClass {}; class AbcdException extends Throwable {}"
-    myFixture.configureByText "a.groovy", "try {} catch (Abcd<caret>"
-    complete()
-    assert myFixture.lookupElementStrings[0] == 'AbcdException'
-  }
-
-  void testClassNameInMultilineString() {
-    myFixture.configureByText "a.groovy", 'def s = """a\nAIOOBE<caret>\na"""'
-    complete()
-    myFixture.checkResult 'def s = """a\njava.lang.ArrayIndexOutOfBoundsException<caret>\na"""'
-  }
-
-  void testDoubleClass() {
-    myFixture.addClass "package foo; public class Zooooooo {}"
-    myFixture.configureByText("a.groovy", """import foo.Zooooooo
-Zoooo<caret>x""")
-    assertOneElement(myFixture.completeBasic())
-  }
-
-  void testClassOnlyOnce() {
-    myFixture.addClass('class FooBarGoo {}')
-    myFixture.configureByText('a.groovy', 'FoBaGo<caret>')
-    assert !complete()
-    myFixture.checkResult('''FooBarGoo<caret>''')
-  }
-
-  void testMethodFromTheSameClass() {
+  public void testImportedStaticField() {
+    myFixture.addFileToProject("b.groovy", """
+      
+      class Foo {
+        static def abcfield1
+        static def abcfield2
+      }""");
     myFixture.configureByText("a.groovy", """
-class A {
-  static void foo() {}
-
-  static void goo() {
-    f<caret>
-  }
-}
-""")
-    def items = complete()
-    def fooItem = items.find { renderElement(it).itemText == 'foo' }
-    LookupManager.getActiveLookup(myFixture.editor).currentItem = fooItem
-    myFixture.type '\n'
-    myFixture.checkResult '''
-class A {
-  static void foo() {}
-
-  static void goo() {
-    foo()<caret>
-  }
-}
-'''
+      def foo() {
+        abcfi<caret>
+      }""");
+    LookupElement item = complete()[0];
+    ((StaticallyImportable)item).setShouldBeImported(true);
+    myFixture.type("\n");
+    myFixture.checkResult("""
+                            import static Foo.abcfield1
+                            
+                            def foo() {
+                              abcfield1<caret>
+                            }""");
   }
 
-  void testInnerClassCompletion() {
-    myFixture.addClass('''\
-package foo;
-
-public class Upper {
-  public static class Inner {}
-}
-''')
-
-    myFixture.configureByText('_.groovy', '''\
-import foo.Upper
-print new Inner<caret>
-''')
-    myFixture.complete(CompletionType.BASIC)
-    myFixture.type('\n')
-
-    myFixture.checkResult('''\
-import foo.Upper
-print new Upper.Inner()
-''')
+  public void testImportedInterfaceConstant() {
+    myFixture.addFileToProject("b.groovy", """
+      
+      interface Foo {
+        static def abcfield1 = 2
+        static def abcfield2 = 3
+      }""");
+    myFixture.configureByText("a.groovy", """
+      def foo() {
+        abcfi<caret>
+      }""");
+    LookupElement item = complete()[0];
+    ((StaticallyImportable)item).setShouldBeImported(true);
+    myFixture.type("\n");
+    myFixture.checkResult("""
+                            import static Foo.abcfield1
+                            
+                            def foo() {
+                              abcfield1<caret>
+                            }""");
   }
 
-  void "test complete class within 'in' package"() {
-    myFixture.with {
-      addClass '''\
-package in.foo.com;
-public class Foooo {}
-'''
-      configureByText '_.groovy', 'Fooo<caret>'
-      complete CompletionType.BASIC
-      type '\n'
-      checkResult '''import in.foo.com.Foooo
-
-Foooo<caret>'''
-    }
+  public void testQualifiedStaticMethod() {
+    myFixture.addFileToProject("foo/b.groovy", """
+      package foo
+      class Foo {
+        static def abcmethod(int a) {}
+      }""");
+    myFixture.configureByText("a.groovy", """
+      def foo() {
+        abcme<caret>
+      }""");
+    complete();
+    myFixture.checkResult("""
+                            import foo.Foo
+                            
+                            def foo() {
+                              Foo.abcmethod(<caret>)
+                            }""");
   }
 
-  void "test complete class within 'def' package"() {
-    myFixture.with {
-      addClass '''\
-package def.foo.com;
-public class Foooo {}
-'''
-      configureByText '_.groovy', 'Fooo<caret>'
-      complete CompletionType.BASIC
-      type '\n'
-      checkResult '''import def.foo.com.Foooo
+  public void testQualifiedStaticMethodIfThereAreAlreadyStaticImportsFromThatClass() {
+    myFixture.addFileToProject("foo/b.groovy", """
+      package foo
+      class Foo {
+        static def abcMethod() {}
+        static def anotherMethod() {}
+      }""");
+    myFixture.configureByText("a.groovy", """
+      
+      import static foo.Foo.anotherMethod
+      
+      anotherMethod()
+      abcme<caret>x""");
+    LookupElement element = UsefulTestCase.assertOneElement(new LookupElement[]{complete()[0]});
 
-Foooo<caret>'''
-    }
+    LookupElementPresentation presentation = renderElement(element);
+    assertEquals("abcMethod", presentation.getItemText());
+    assertEquals("() in Foo (foo)", presentation.getTailText());
+
+    myFixture.type("\t");
+    myFixture.checkResult("""
+                            import static foo.Foo.abcMethod
+                            import static foo.Foo.anotherMethod
+                            
+                            anotherMethod()
+                            abcMethod()<caret>""");
   }
 
-  void 'test complete package name'() {
-    myFixture.addClass '''package com.foo.bar; class C {}'''
-    myFixture.configureByText '_.groovy', 'import com.<caret>\n'
-    myFixture.completeBasic()
-    myFixture.type '\t'
-    myFixture.checkResult 'import com.foo<caret>\n'
+  private static LookupElementPresentation renderElement(LookupElement element) {
+    return LookupElementPresentation.renderElement(element);
+  }
+
+  public void testNewClassName() {
+    addClassToProject("foo", "Fxoo");
+    myFixture.configureByText("a.groovy", "new Fxo<caret>\n");
+    myFixture.complete(CompletionType.BASIC, 2);
+    myFixture.checkResult("""
+                            import foo.Fxoo
+                            
+                            new Fxoo()<caret>
+                            """);
+  }
+
+  public void testNewImportedClassName() {
+    myFixture.configureByText("a.groovy", "new ArrayIndexOut<caret>\n");
+    myFixture.completeBasic();
+    myFixture.checkResult("new ArrayIndexOutOfBoundsException(<caret>)\n");
+  }
+
+  public void testOnlyAnnotationsAfterAt() {
+    myFixture.addClass("class AbcdClass {}; @interface AbcdAnno {}");
+    myFixture.configureByText("a.groovy", "@Abcd<caret>");
+    complete();
+    assertEquals("AbcdAnno", myFixture.getLookupElementStrings().get(0));
+  }
+
+  public void testOnlyExceptionsInCatch() {
+    myFixture.addClass("class AbcdClass {}; class AbcdException extends Throwable {}");
+    myFixture.configureByText("a.groovy", "try {} catch (Abcd<caret>");
+    complete();
+    assertEquals("AbcdException", myFixture.getLookupElementStrings().get(0));
+  }
+
+  public void testClassNameInMultilineString() {
+    myFixture.configureByText("a.groovy", "def s = \"\"\"a\nAIOOBE<caret>\na\"\"\"");
+    complete();
+    myFixture.checkResult("def s = \"\"\"a\njava.lang.ArrayIndexOutOfBoundsException<caret>\na\"\"\"");
+  }
+
+  public void testDoubleClass() {
+    myFixture.addClass("package foo; public class Zooooooo {}");
+    myFixture.configureByText("a.groovy", """
+      import foo.Zooooooo
+      Zoooo<caret>x""");
+    UsefulTestCase.assertOneElement(myFixture.completeBasic());
+  }
+
+  public void testClassOnlyOnce() {
+    myFixture.addClass("class FooBarGoo {}");
+    myFixture.configureByText("a.groovy", "FoBaGo<caret>");
+    assertNull(complete());
+    myFixture.checkResult("""
+                            FooBarGoo<caret>""");
+  }
+
+  public void testMethodFromTheSameClass() {
+    myFixture.configureByText("a.groovy", """
+      
+      class A {
+        static void foo() {}
+      
+        static void goo() {
+          f<caret>
+        }
+      }
+      """);
+    LookupElement[] items = complete();
+    LookupElement fooItem = ContainerUtil.find(items, element -> renderElement(element).getItemText().equals("foo"));
+    LookupManager.getActiveLookup(myFixture.getEditor()).setCurrentItem(fooItem);
+    myFixture.type("\n");
+    myFixture.checkResult("""
+                            
+                            class A {
+                              static void foo() {}
+                            
+                              static void goo() {
+                                foo()<caret>
+                              }
+                            }
+                            """);
+  }
+
+  public void testInnerClassCompletion() {
+    myFixture.addClass("""
+                         package foo;
+                         
+                         public class Upper {
+                           public static class Inner {}
+                         }
+                         """);
+
+    myFixture.configureByText("_.groovy", """
+      import foo.Upper
+      print new Inner<caret>
+      """);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type("\n");
+    myFixture.checkResult("""
+                            import foo.Upper
+                            print new Upper.Inner()
+                            """);
+  }
+
+  public void test_complete_class_within__in__package() {
+    myFixture.addClass("""
+                         package in.foo.com;
+                         public class Foooo {}
+                         """);
+    myFixture.configureByText("_.groovy", "Fooo<caret>");
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type("\n");
+    myFixture.checkResult("""
+                            import in.foo.com.Foooo
+                            
+                            Foooo<caret>""");
+  }
+
+  public void test_complete_class_within__def__package() {
+    myFixture.addClass("""
+                         package def.foo.com;
+                         public class Foooo {}
+                         """);
+    myFixture.configureByText("_.groovy", "Fooo<caret>");
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type("\n");
+    myFixture.checkResult("""
+                            import def.foo.com.Foooo
+                            
+                            Foooo<caret>""");
+  }
+
+  public void test_complete_package_name() {
+    myFixture.addClass("package com.foo.bar; class C {}");
+    myFixture.configureByText("_.groovy", "import com.<caret>\n");
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type("\t");
+    myFixture.checkResult("import com.foo<caret>\n");
   }
 }
