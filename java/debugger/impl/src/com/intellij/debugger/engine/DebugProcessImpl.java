@@ -1552,7 +1552,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       CommonClassNames.JAVA_LANG_OBJECT + "[]",
       evaluationContext.getClassLoader());
 
-    ArrayReference arrayArgs = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, boxedArgs, evaluationContext);
+    // reserve one extra element for the return value
+    ArrayReference arrayArgs = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, boxedArgs.size() + 1, evaluationContext);
+    try {
+      DebuggerUtilsEx.setArrayValues(arrayArgs, boxedArgs, false);
+    }
+    catch (Exception e) {
+      throw new EvaluateException(e.getMessage(), e);
+    }
     invokerArgs.add(arrayArgs);
     invokerArgs.add(evaluationContext.getClassLoader()); // class loader
     return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke", invokerArgs, false);

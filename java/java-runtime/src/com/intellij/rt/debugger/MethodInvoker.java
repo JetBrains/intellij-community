@@ -5,17 +5,15 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.WrongMethodTypeException;
+import java.util.Arrays;
 
 public final class MethodInvoker {
-  // TODO: may leak objects here
-  static ThreadLocal<Object> returnValue = new ThreadLocal<>();
-
   public static Object invoke(MethodHandles.Lookup lookup,
                               Class<?> cls,
                               Object obj,
                               String name,
                               String descriptor,
-                              Object[] args,
+                              Object[] argsArray,
                               ClassLoader loader)
     throws Throwable {
     try {
@@ -31,6 +29,9 @@ public final class MethodInvoker {
         method = lookup.findStatic(cls, name, mt);
       }
 
+      // the last element is always null, it is reserved for the return value
+      Object[] args = Arrays.copyOf(argsArray, argsArray.length - 1);
+
       Object result;
 
       // handle the case where null is passed as the vararg array
@@ -41,7 +42,7 @@ public final class MethodInvoker {
       else {
         result = method.invokeWithArguments(args);
       }
-      returnValue.set(result);
+      argsArray[argsArray.length - 1] = result; // store the result as the last array element to avoid it being collected
       return result;
     }
     catch (WrongMethodTypeException | ClassCastException e) {
