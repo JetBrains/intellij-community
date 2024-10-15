@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
+import com.intellij.codeInsight.inline.completion.InlineCompletionEapSupport
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
@@ -122,7 +122,7 @@ class InlineCompletionLogsContainer() {
       logs.filter { it.value.isNotEmpty() }.mapNotNull() { (phase, logs) ->
 
         // for release, log only basic fields for most of the requests and very rarely log everything.
-        val filteredEvents = if (forceFullLogs.get() || ApplicationManager.getApplication().isEAP || random < (1f / 100f * fullLogsShare.get())) {
+        val filteredEvents = if (forceFullLogs.get() || InlineCompletionEapSupport.getInstance().isEap() || random < (1f / 100f * fullLogsShare.get())) {
           logs
         } else {
           logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
