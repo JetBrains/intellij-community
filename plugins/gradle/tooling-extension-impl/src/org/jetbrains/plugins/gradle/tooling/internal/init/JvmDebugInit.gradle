@@ -10,10 +10,6 @@ gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
   logger.debug("idea.gradle.debug.all is ${debugAllIsEnabled}")
 
   taskGraph.allTasks.each { Task task ->
-    if (task instanceof Test) {
-      task.maxParallelForks = 1
-      task.forkEvery = 0
-    }
   }
   def jvmTasks = taskGraph.allTasks.findAll { task -> task instanceof JavaForkOptions }
   def matchedTasks = debugAllIsEnabled ? jvmTasks : GradleTasksUtil.filterStartTasks(jvmTasks, gradle, rootProject)
@@ -22,6 +18,10 @@ gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
     task.doFirst {
       if (!GradleDebuggerUtil.isDebuggerEnabled()) {
         return
+      }
+      if (task instanceof Test) {
+        task.maxParallelForks = 1
+        task.forkEvery = 0
       }
       String debuggerId = GradleDebuggerUtil.getDebuggerId()
       String processParameters = GradleDebuggerUtil.getProcessParameters()
