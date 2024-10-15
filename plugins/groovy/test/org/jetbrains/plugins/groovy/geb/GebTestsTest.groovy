@@ -15,7 +15,7 @@ import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.LIB_GROOVY_1
 class GebTestsTest extends LightJavaCodeInsightFixtureTestCase {
 
   private static final TestLibrary LIB_GEB = new RepositoryTestLibrary(
-    'org.codehaus.geb:geb-core:0.7.2',
+    'org.gebish:geb-core:7.0',
     'org.codehaus.geb:geb-junit4:0.7.2',
     'org.codehaus.geb:geb-spock:0.7.2',
     'org.codehaus.geb:geb-testng:0.7.2'
@@ -282,5 +282,159 @@ class A extends geb.Page {
   }
 }
 """)
+  }
+
+  void testPageContentIsInScope() {
+    myFixture.enableInspections(GroovyAssignabilityCheckInspection)
+
+    myFixture.configureByText("SomeSpec.groovy", """
+class SomeSpec extends geb.spock.GebSpec {
+  void "test"() {
+    expect:
+    to PageOne
+    geb.navigator.Navigator aNavigator = header
+    String aString = headerText
+    Integer <warning descr="Cannot assign 'Navigator' to 'Integer'">notAnInteger</warning> = header
+
+    then:
+    header
+    headerText
+  } 
+}
+
+class PageOne extends geb.Page {
+  static content = {
+    header { \$("h1") }
+    headerText { header.text() }
+  }
+}
+
+""")
+
+    myFixture.checkHighlighting(true, false, true)
+    TestUtils.checkResolve(myFixture.file)
+  }
+
+  void testPageContentIsCompletable() {
+    myFixture.enableInspections(GroovyAssignabilityCheckInspection)
+
+    myFixture.configureByText("SomeSpec.groovy", """
+class SomeSpec extends geb.spock.GebSpec {
+  void "test"() {
+    when:
+    to PageOne
+
+    then:
+    <caret>
+  } 
+}
+
+class PageOne extends geb.Page {
+  static content = {
+    header { \$("h1") }
+    headerText { header.text() }
+  }
+}
+
+""")
+
+    TestUtils.checkCompletionType(myFixture, "header", "geb.navigator.Navigator")
+    TestUtils.checkCompletionType(myFixture, "headerText", "java.lang.String")
+  }
+
+  void testOnlyCurrentPageContentIsInScope() {
+    myFixture.enableInspections(GroovyAssignabilityCheckInspection)
+
+    myFixture.configureByText("SomeSpec.groovy", """
+class SomeSpec extends geb.spock.GebSpec {
+  void "test"() {
+    when:
+    to PageOne
+
+    then:
+    header
+
+    when:
+    to PageTwo
+
+    then:
+    pageTwoContent
+    headerText
+  } 
+}
+
+class PageOne extends geb.Page {
+  static content = {
+    header { \$("h1") }
+    headerText { header.text() }
+  }
+}
+
+class PageTwo extends geb.Page {
+  static content = {
+    pageTwoContent { \$("h1") }
+  }
+}
+
+""")
+
+    myFixture.checkHighlighting(true, false, true)
+    TestUtils.checkResolve(myFixture.file, "headerText")
+  }
+
+  void testChangingCurrentPage() {
+    myFixture.enableInspections(GroovyAssignabilityCheckInspection)
+
+    myFixture.configureByText("SomeSpec.groovy", """
+class SomeSpec extends geb.spock.GebSpec {
+  void "to"() {
+    when:
+    to PageOne
+
+    then:
+    header
+  }
+
+  void "via"() {
+    when:
+    via PageOne
+
+    then:
+    header
+  }
+
+  void "at"() {
+    expect:
+    at PageOne
+    header
+  }
+
+  void "explicit"() {
+    when:
+    page(PageOne)
+
+    then:
+    header
+  }
+  
+  void "assignment"() {
+    when:
+    geb.Page newPage = to PageOne
+
+    then:
+    header
+  }
+}
+
+class PageOne extends geb.Page {
+  static content = {
+    header { \$("h1") }
+    headerText { header.text() }
+  }
+}
+""")
+
+    myFixture.checkHighlighting(true, false, true)
+    TestUtils.checkResolve(myFixture.file)
   }
 }

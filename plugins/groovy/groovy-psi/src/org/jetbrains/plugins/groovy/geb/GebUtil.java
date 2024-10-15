@@ -2,21 +2,29 @@
 package org.jetbrains.plugins.groovy.geb;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,10 +45,79 @@ public final class GebUtil {
 
       if (pageClass != null) {
         if (!pageClass.processDeclarations(processor, state, null, place)) return false;
+        contributePageContent(processor, state, place);
       }
     }
 
     return true;
+  }
+
+  private static void contributePageContent(PsiScopeProcessor processor, ResolveState state, PsiElement place) {
+    if(place instanceof GrReferenceExpressionImpl expr
+       && !(expr.getParent() instanceof GrMethodCall)) {
+
+      PsiClassType gebPageType = PsiType.getTypeByName("geb.Page", place.getProject(), place.getResolveScope());
+      PsiClass ourPage = findPageChange(expr, gebPageType);
+      if (ourPage != null) {
+        Map<String, PsiClass> supers = ClassUtil.getSuperClassesWithCache(ourPage);
+        String nameHint = ResolveUtil.getNameHint(processor);
+
+        for (PsiClass psiClass : supers.values()) {
+          Map<String, PsiMember> contentElements = getContentElements(psiClass);
+
+          if (nameHint == null) {
+            for (Map.Entry<String, PsiMember> entry : contentElements.entrySet()) {
+              processor.execute(entry.getValue(), state);
+            }
+            return;
+          }
+          else {
+            PsiVariable defElement = (PsiVariable)contentElements.get(nameHint);
+            if (defElement != null) {
+              processor.execute(defElement, state);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  
+  private static @Nullable PsiClass findPageChange(PsiElement place, PsiClassType pageType) {
+    PsiElement currentElement = place;
+    PsiClass ourPage = null;
+    while (currentElement != null) {
+      PsiElement examineThis = currentElement;
+      if (currentElement instanceof GrLabeledStatement labeled) {
+        examineThis = labeled.getStatement();
+      }
+      if(examineThis instanceof GrVariableDeclaration) {
+        PsiElement findCall = examineThis.getLastChild();
+        while(findCall != null) {
+          if(findCall instanceof GrExpression) {
+            examineThis = findCall;
+            break;
+          }
+          findCall = findCall.getLastChild();
+        }
+      }
+      if (examineThis instanceof GrExpression call && !(examineThis instanceof GrReferenceExpression)) {
+        PsiType ret = call.getType();
+        if (ret != null && pageType.isAssignableFrom(ret) && ret instanceof PsiImmediateClassType ct) {
+          ourPage = ct.resolve();
+          break;
+        }
+      }
+      currentElement = currentElement.getPrevSibling();
+    }
+
+    if (ourPage == null) {
+      PsiElement parent = place.getParent();
+      if (parent != null && !(parent instanceof GrMethod))
+        return findPageChange(parent, pageType);
+    }
+
+    return ourPage;
   }
 
   public static Map<String, PsiMember> getContentElements(@NotNull PsiClass pageOrModuleClass) {
