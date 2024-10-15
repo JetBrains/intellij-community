@@ -40,9 +40,6 @@ internal class ProjectConfigurationFilesProcessorImpl(
 ) : FilesProcessorWithNotificationImpl(project, parentDisposable), ChangeListListener {
 
   private val foundProjectConfigurationFiles = AtomicBoolean()
-
-  private val fileSystem = LocalFileSystem.getInstance()
-
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
   fun install() {
@@ -70,8 +67,7 @@ internal class ProjectConfigurationFilesProcessorImpl(
   }
 
   override fun unchangedFileStatusChanged(upToDate: Boolean) {
-    if (!upToDate) return
-    if (foundProjectConfigurationFiles.compareAndSet(true, false)) {
+    if (upToDate && foundProjectConfigurationFiles.compareAndSet(true, false)) {
       val unversionedProjectConfigurationFiles = doFilterFiles(ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles)
       if (unversionedProjectConfigurationFiles.isNotEmpty()) {
         setForCurrentProject(VcsImplUtil.isProjectSharedInVcs(project))
@@ -81,7 +77,7 @@ internal class ProjectConfigurationFilesProcessorImpl(
   }
 
   override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> {
-    val projectConfigDir = project.getProjectConfigDir()
+    val projectConfigDir = getProjectConfigDir(project)
 
     return files
       .asSequence()
@@ -109,20 +105,22 @@ internal class ProjectConfigurationFilesProcessorImpl(
   override val showActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.view")
   override val forCurrentProjectActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.add")
 
-
   override val muteActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.mute")
   override val viewFilesDialogTitle: String = VcsBundle.message("project.configuration.files.view.dialog.title", vcs.displayName)
+}
 
-  private fun isProjectConfigurationFile(configDir: VirtualFile?, file: VirtualFile) =
-    configDir != null && VfsUtilCore.isAncestor(configDir, file, true)
+private fun isProjectConfigurationFile(configDir: VirtualFile?, file: VirtualFile): Boolean {
+  return configDir != null && VfsUtilCore.isAncestor(configDir, file, true)
+}
 
-  private fun Project.getProjectConfigDir(): VirtualFile? {
-    if (!isDirectoryBased || isDefault) return null
-
-    val projectConfigDir = stateStore.directoryStorePath?.let(fileSystem::findFileByNioFile)
-    if (projectConfigDir == null) {
-      LOG.warn("Cannot find project config directory for non-default and non-directory based project ${name}")
-    }
-    return projectConfigDir
+private fun getProjectConfigDir(project: Project): VirtualFile? {
+  if (!project.isDirectoryBased || project.isDefault) {
+    return null
   }
+
+  val projectConfigDir = project.stateStore.directoryStorePath?.let(LocalFileSystem.getInstance()::findFileByNioFile)
+  if (projectConfigDir == null) {
+    LOG.warn("Cannot find project config directory for non-default and non-directory based project ${project.name}")
+  }
+  return projectConfigDir
 }
