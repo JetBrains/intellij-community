@@ -1,14 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
+import com.intellij.codeInsight.inline.completion.InlineCompletionEapSupport
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.util.ReflectionUtil
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -153,13 +151,11 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
   }
 
   private fun withEap(isEAP: Boolean, action: () -> Unit) {
-    val previousState = ApplicationManager.getApplication().isEAP
-    val appInfo = ApplicationInfoImpl.getShadowInstance()
     try {
-      ReflectionUtil.setField(ApplicationInfoImpl::class.java, appInfo, Boolean::class.java, "myEAP", isEAP)
+      InlineCompletionEapSupport.getInstance().setMockEap(isEAP)
       action()
     } finally {
-      ReflectionUtil.setField(ApplicationInfoImpl::class.java, appInfo, Boolean::class.java, "myEAP", previousState)
+      InlineCompletionEapSupport.getInstance().clearMock()
     }
   }
 
