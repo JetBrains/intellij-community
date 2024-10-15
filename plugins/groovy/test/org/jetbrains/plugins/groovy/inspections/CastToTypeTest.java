@@ -1,59 +1,74 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.inspections
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.inspections;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.testFramework.LightProjectDescriptor;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import org.jetbrains.plugins.groovy.util.TestUtils
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Maxim.Medvedev
  */
-class CastToTypeTest extends LightGroovyTestCase {
-
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
-
+public class CastToTypeTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.testDataPath + 'groovy/inspections/castToType'
+    return TestUtils.getTestDataPath() + "groovy/inspections/castToType";
   }
 
   private void doTest(String name) {
-    myFixture.configureByFile(getTestName(true) + '.groovy')
-    myFixture.enableInspections(new GroovyAssignabilityCheckInspection())
-    final IntentionAction quickFix = myFixture.findSingleIntention(name)
-    assertNotNull(quickFix)
-    myFixture.launchAction(quickFix)
-    myFixture.checkResultByFile(getTestName(true) + '_after.groovy')
+    myFixture.configureByFile(getTestName(true) + ".groovy");
+    myFixture.enableInspections(new GroovyAssignabilityCheckInspection());
+    final IntentionAction quickFix = myFixture.findSingleIntention(name);
+    TestCase.assertNotNull(quickFix);
+    myFixture.launchAction(quickFix);
+    myFixture.checkResultByFile(getTestName(true) + "_after.groovy");
   }
 
+  @SuppressWarnings("SameParameterValue")
   private void checkIntentions(String hint, Set<String> intentions) {
-    myFixture.configureByFile(getTestName(true) + '.groovy')
-    myFixture.enableInspections(new GroovyAssignabilityCheckInspection())
-    assertEquals intentions, myFixture.filterAvailableIntentions(hint).collect {it.text}.toSet()
+    myFixture.configureByFile(getTestName(true) + ".groovy");
+    myFixture.enableInspections(new GroovyAssignabilityCheckInspection());
+    TestCase.assertEquals(intentions,
+                          myFixture.filterAvailableIntentions(hint).stream().map(it -> it.getText()).collect(Collectors.toSet()));
   }
 
-  void testSimple() {doTest('Cast to List<? extends Abc>')}
-  void testInReturnType() {doTest('Cast to int')}
-  void testInForCycle() {doTest('Cast to List<Integer>')}
+  public void testSimple() { doTest("Cast to List<? extends Abc>"); }
 
-  void testInBinaryExpression() {doTest('Cast operand to String')}
-  void testBinaryExpressionTwoIntentions() {checkIntentions('Cast', ['Cast operand to Integer', 'Cast operand to Double'].toSet())}
+  public void testInReturnType() { doTest("Cast to int"); }
 
-  void testConstructorInvocation() {
-    doTest('Cast 1st parameter to Integer')
-  }
-  void testConstructorInvocationSeveralFixes() {
-    checkIntentions('Cast', ['Cast 1st parameter to Boolean', "Cast 1st parameter to String", "Cast 2nd parameter to Double"].toSet())
+  public void testInForCycle() { doTest("Cast to List<Integer>"); }
+
+  public void testInBinaryExpression() { doTest("Cast operand to String"); }
+
+  public void testBinaryExpressionTwoIntentions() {
+    checkIntentions("Cast", Set.of("Cast operand to Integer", "Cast operand to Double"));
   }
 
-  void testNewExpression() {
-    doTest('Cast 1st parameter to Integer')
+  public void testConstructorInvocation() {
+    doTest("Cast 1st parameter to Integer");
   }
-  void testNewExpressionSeveralFixes() {
-    checkIntentions('Cast', ['Cast 1st parameter to Boolean', "Cast 1st parameter to String", "Cast 2nd parameter to Double"].toSet())
+
+  public void testConstructorInvocationSeveralFixes() {
+    checkIntentions("Cast", Set.of("Cast 1st parameter to Boolean", "Cast 1st parameter to String", "Cast 2nd parameter to Double"));
+  }
+
+  public void testNewExpression() {
+    doTest("Cast 1st parameter to Integer");
+  }
+
+  public void testNewExpressionSeveralFixes() {
+    checkIntentions("Cast", Set.of("Cast 1st parameter to Boolean", "Cast 1st parameter to String", "Cast 2nd parameter to Double"));
+  }
+
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_LATEST;
   }
 }
