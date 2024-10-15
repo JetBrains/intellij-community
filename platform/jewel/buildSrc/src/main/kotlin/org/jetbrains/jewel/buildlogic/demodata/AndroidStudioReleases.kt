@@ -1,8 +1,8 @@
 package org.jetbrains.jewel.buildlogic.demodata
 
 import com.squareup.kotlinpoet.ClassName
-import gradle.kotlin.dsl.accessors._34fcf23848cfa0f534eebf6913e08a53.kotlin
-import gradle.kotlin.dsl.accessors._34fcf23848cfa0f534eebf6913e08a53.sourceSets
+import gradle.kotlin.dsl.accessors._327d2b3378ed6d2c1bec5d20438f90c7.kotlin
+import gradle.kotlin.dsl.accessors._327d2b3378ed6d2c1bec5d20438f90c7.sourceSets
 import java.io.File
 import java.net.URI
 import kotlinx.serialization.json.Json

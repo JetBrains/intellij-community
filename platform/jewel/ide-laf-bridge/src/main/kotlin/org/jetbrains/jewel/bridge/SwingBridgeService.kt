@@ -3,34 +3,30 @@ package org.jetbrains.jewel.bridge
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.sp
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.Service.Level
+import com.intellij.ide.ui.LafFlowService
 import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.jewel.bridge.theme.createBridgeComponentStyling
 import org.jetbrains.jewel.bridge.theme.createBridgeThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.ui.component.copyWithSize
 
-@Service(Level.APP)
-internal class SwingBridgeService(scope: CoroutineScope) {
+@Suppress("UnstableApiUsage")
+internal class SwingBridgeService {
     private val scrollbarHelper = ScrollbarHelper.getInstance()
 
     internal val currentBridgeThemeData: StateFlow<BridgeThemeData> =
-        combine(
-                IntelliJApplication.lookAndFeelChangedFlow(scope),
-                scrollbarHelper.scrollbarVisibilityStyleFlow,
-                scrollbarHelper.trackClickBehaviorFlow,
-            ) { _, _, _ ->
+        LafFlowService.getInstance().customLafFlowState(BridgeThemeData.DEFAULT) { flow ->
+            combine(flow, scrollbarHelper.scrollbarVisibilityStyleFlow, scrollbarHelper.trackClickBehaviorFlow) {
+                _,
+                _,
+                _ ->
                 tryGettingThemeData()
             }
-            .stateIn(scope, SharingStarted.Eagerly, BridgeThemeData.DEFAULT)
+        }
 
     private suspend fun tryGettingThemeData(): BridgeThemeData {
         var counter = 0

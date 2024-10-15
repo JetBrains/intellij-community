@@ -8,6 +8,7 @@ plugins {
     `jewel-check-public-api`
     `icon-keys-generator`
     alias(libs.plugins.composeDesktop)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinx.serialization)
 }
 

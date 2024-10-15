@@ -282,10 +282,11 @@ and the branch on which the corresponding bridge code lives:
 
 | IntelliJ Platform version(s) | Branch to use           |
 |------------------------------|-------------------------|
-| 2024.2 (beta 1+)             | `main`                  |
+| 2024.3 (EAP 6+)              | `main`                  |
+| 2024.2 (beta 1+)             | `releases/242`          |
 | 2024.1 (EAP 3+)              | `releases/241`          |
-| 2023.3                       | `releases/233`          |
-| 2023.2 (**deprecated**)      | `archived-releases/232` |
+| 2023.3 (**archived**)        | `archived-releases/233` |
+| 2023.2 (**archived**)        | `archived-releases/232` |
 | 2023.1 or older              | **Not supported**       |
 
 For an example on how to set up an IntelliJ Plugin, you can refer to

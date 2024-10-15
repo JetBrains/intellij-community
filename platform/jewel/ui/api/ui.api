@@ -2708,6 +2708,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Actions {
 	public final fun getRestart ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRestartDebugger ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRestartFrame ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getRestartStop ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getResume ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRollback ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRunAll ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -2764,13 +2765,6 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Breakpoints {
 	public final fun getBreakpointUnsuspendentDisabled ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getMultipleBreakpointsDisabled ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getMultipleBreakpointsMuted ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-}
-
-public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Build {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Build;
-	public final fun getTask ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getToggleSkipTestsMode ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Chooser {
@@ -2881,6 +2875,9 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Debugger {
 	public final fun getDb_watch ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getEvaluateExpression ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getEvaluationResult ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getForceRunToCursor ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getForceStepInto ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getForceStepOver ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getFrame ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getKillProcess ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLambdaBreakpoint ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -2959,48 +2956,11 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Duplicates {
 	public final fun getSendToTheRightGrayed ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
-public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Expui {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Expui;
-}
-
-public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Expui$FileTypes {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Expui$FileTypes;
-	public final fun getJavaScript ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getProperties ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getText ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-}
-
-public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Expui$General {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Expui$General;
-	public final fun getAdd ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getChevronDown ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getChevronUp ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getGreenCheckmark ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-}
-
-public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Expui$Nodes {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Expui$Nodes;
-	public final fun getDataTables ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getFolder ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-}
-
-public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Expui$RunConfigurations {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Expui$RunConfigurations;
-	public final fun getApplication ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-}
-
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$FileTypes {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$FileTypes;
 	public final fun getAS ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getActionScript ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getAddAny ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getAngularJS ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getAny_type ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getArchive ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getAspectj ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3009,7 +2969,6 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$FileTypes {
 	public final fun getContextsModifier ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getCss ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getCsv ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getCucumber ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getCustom ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getDiagram ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getDtd ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3018,38 +2977,32 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$FileTypes {
 	public final fun getHprof ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getHtaccess ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getHtml ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getI18n ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getIdl ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getImage ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJava ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJavaClass ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJavaOutsideSource ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJavaScript ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getJest ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJfr ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJson ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJsonSchema ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJsp ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJspx ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getLess ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getManifest ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getMicrosoftWindows ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getPerl ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getProperties ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getReact ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRegexp ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getSbt ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getScala ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSourceMap ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getText ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUiForm ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUnknown ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getVueJs ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getWsdlFile ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getXhtml ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getXml ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getXsdFile ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getYaml ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getYarn ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$General {
@@ -3592,7 +3545,6 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes {
 	public final fun getModule ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getModule8x8 ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getModuleGroup ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getModuleJava ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getMultipleTypeDefinitions ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getNativeLibrariesFolder ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getNewParameter ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3845,9 +3797,6 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Providers {
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Run {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Run;
-	public final fun getForceRunToCursor ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getForceStepInto ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getForceStepOver ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRestart ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getShowIgnored ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getStop ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;

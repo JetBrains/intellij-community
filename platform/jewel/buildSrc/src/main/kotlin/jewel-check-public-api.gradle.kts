@@ -16,7 +16,7 @@ apiValidation {
     nonPublicMarkers.add("org.jetbrains.jewel.InternalJewelApi")
 }
 
-poko { pokoAnnotation = "org.jetbrains.jewel.foundation.GenerateDataFunctions" }
+poko { pokoAnnotation = "org/jetbrains/jewel/foundation/GenerateDataFunctions" }
 
 kotlin { explicitApi() }
 

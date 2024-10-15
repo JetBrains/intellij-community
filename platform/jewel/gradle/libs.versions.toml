@@ -3,18 +3,18 @@ commonmark = "0.22.0"
 composeDesktop = "1.7.0-rc01"
 detekt = "1.23.6"
 dokka = "1.9.20"
-idea = "2024.2.3"
-intelliJPlatformBuild = "242.23339.11"
+idea = "243.20331"
+intelliJPlatformBuild = "243.19420.21-EAP-SNAPSHOT"
 ideaPlugin = "2.1.0"
 jna = "5.14.0"
-kotlin = "1.9.24"
+kotlin = "2.0.21-RC"
 kotlinSarif = "0.5.0"
-kotlinpoet = "1.17.0"
+kotlinpoet = "1.18.1"
 kotlinterGradlePlugin = "4.4.1"
-kotlinxSerialization = "1.6.3"
-kotlinxBinaryCompat = "0.14.0"
+kotlinxSerialization = "1.7.3"
+kotlinxBinaryCompat = "0.16.3"
 ktfmtGradlePlugin = "0.20.1"
-poko = "0.15.3"
+poko = "0.17.1"
 
 [libraries]
 commonmark-core = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
@@ -43,6 +43,7 @@ poko-gradlePlugin = { module = "dev.drewhamilton.poko:poko-gradle-plugin", versi
 
 [plugins]
 composeDesktop = { id = "org.jetbrains.compose", version.ref = "composeDesktop" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 ideaPlugin = { id = "org.jetbrains.intellij.platform", version.ref = "ideaPlugin" }

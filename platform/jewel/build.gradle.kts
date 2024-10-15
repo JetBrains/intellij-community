@@ -2,6 +2,7 @@ import java.io.ByteArrayOutputStream
 
 plugins {
     alias(libs.plugins.composeDesktop) apply false
+    alias(libs.plugins.compose.compiler) apply false
     `jewel-linting`
 }
 
@@ -22,13 +23,13 @@ dependencies {
 }
 
 tasks {
-//    val mergeSarifReports by
-//        registering(MergeSarifTask::class) {
-//            source(configurations.outgoingSarif)
-//            include { it.file.extension == "sarif" }
-//        }
-//
-//    register("check") { dependsOn(mergeSarifReports) }
+    //    val mergeSarifReports by
+    //        registering(MergeSarifTask::class) {
+    //            source(configurations.outgoingSarif)
+    //            include { it.file.extension == "sarif" }
+    //        }
+    //
+    //    register("check") { dependsOn(mergeSarifReports) }
 
     register("tagRelease") {
         description = "Tags main branch and releases branches with provided tag name"

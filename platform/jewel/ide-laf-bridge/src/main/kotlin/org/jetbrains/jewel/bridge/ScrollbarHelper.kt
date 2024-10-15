@@ -1,7 +1,5 @@
 package org.jetbrains.jewel.bridge
 
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
@@ -23,12 +21,12 @@ internal interface ScrollbarHelper {
 
     companion object {
         @JvmStatic
-        fun getInstance(): ScrollbarHelper =
-            if (hostOs == OS.MacOS) service<MacScrollbarHelperImpl>() else DummyScrollbarHelper
+        fun getInstance(): ScrollbarHelper = if (hostOs == OS.MacOS) scrollbarService else DummyScrollbarHelper
     }
 }
 
-@Service(Service.Level.APP)
+private val scrollbarService by lazy { MacScrollbarHelperImpl() }
+
 private class MacScrollbarHelperImpl : Callback, ScrollbarHelper {
     private val logger = myLogger()
 

@@ -103,3 +103,7 @@ $RECYCLE.BIN/
 
 # Ignore release patch generator output
 /this-release.txt
+
+# Ignore Kotlin compiler sessions
+/.kotlin
+/buildSrc/.kotlin

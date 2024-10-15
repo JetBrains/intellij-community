@@ -1,6 +1,9 @@
+import java.net.URI
+
 plugins {
     jewel
     alias(libs.plugins.composeDesktop)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ideaPlugin)
     `android-studio-releases-generator`
 }
@@ -12,7 +15,19 @@ repositories {
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     mavenCentral()
 
-    intellijPlatform { defaultRepositories() }
+    intellijPlatform {
+        ivy {
+            name = "PKGS IJ Snapshots"
+            url = URI("https://packages.jetbrains.team/files/p/kpm/public/idea/snapshots/")
+            patternLayout {
+                artifact("[module]-[revision](-[classifier]).[ext]")
+                artifact("[module]-[revision](.[classifier]).[ext]")
+            }
+            metadataSources { artifact() }
+        }
+
+        defaultRepositories()
+    }
 }
 
 dependencies {
