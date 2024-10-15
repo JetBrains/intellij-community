@@ -52,8 +52,11 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
 
   public abstract PyBinaryExpression createBinaryExpression(String s, PyExpression expr, PyExpression listLiteral);
 
+  @Override
   @NotNull
-  public abstract PyExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException;
+  public PyExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException {
+    return (PyExpression)super.createExpressionFromText(languageLevel, text);
+  }
 
   @NotNull
   public abstract PyPattern createPatternFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException;
