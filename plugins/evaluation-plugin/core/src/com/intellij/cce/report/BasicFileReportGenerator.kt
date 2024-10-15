@@ -12,7 +12,8 @@ open class BasicFileReportGenerator(
   filterName: String,
   comparisonFilterName: String,
   featuresStorages: List<FeaturesStorage>,
-  dirs: GeneratorDirectories
+  dirs: GeneratorDirectories,
+  private val externalVariables: Map<String, String> = mapOf(),
 ) : FileReportGenerator(featuresStorages, dirs, filterName, comparisonFilterName) {
 
   override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, resourcePath: String, text: String): String {
@@ -33,6 +34,16 @@ open class BasicFileReportGenerator(
       codeBlocks(text, sessions, maxLookupOrder)
       for (resource in scripts){
         script { src = resource.destinationPath }
+      }
+
+      script {
+        unsafe {
+          raw(
+            externalVariables
+              .map { "EXTERNAL_VARIABLES[\"${it.key}\"] = \"${it.value}\";" }
+              .joinToString("\n")
+          )
+        }
       }
     }
   }

@@ -5,6 +5,7 @@ const prefix = "ep@"
 const LC_KEYS = {
   delimiter: prefix + "delimiter"
 };
+const EXTERNAL_VARIABLES = {}
 
 
 document.addEventListener("click", function (e) {
@@ -120,6 +121,9 @@ function updatePopup(sessionDiv) {
   const lookup = getLookup(sessionDiv)
   const popup = document.createElement("DIV")
   popup.setAttribute("class", "autocomplete-items")
+  if (EXTERNAL_VARIABLES["popup.show.under.session"] === "true") {
+    popup.classList.add("popup-show-under-session")
+  }
   const prefixDiv = document.createElement("DIV")
   prefixDiv.setAttribute("style", "background-color: lightgrey;")
   const codeElement = document.querySelector('.code');
@@ -292,8 +296,8 @@ function addSuggestions(sessionDiv, popup, lookup) {
       p.setAttribute("style", "font-weight: bold;")
     }
     const presentationText = suggestions[i].presentationText.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    p.innerHTML = presentationText
-    // p.innerHTML = removeCommonIndentFromCodeSnippet(presentationText)  // FIXME doesn't work anyway?
+    p.innerHTML = EXTERNAL_VARIABLES["suggestion.indent.preserve"] === "true" ?
+      presentationText : removeCommonIndentFromCodeSnippet(presentationText)
     suggestionDiv.appendChild(p)
     popup.appendChild(suggestionDiv)
   }
@@ -555,6 +559,9 @@ function updateMultilinePopup(event) {
   const lookup = getLookup(sessionDiv)
   const popup = document.createElement("DIV")
   popup.setAttribute("class", "autocomplete-items")
+  if (EXTERNAL_VARIABLES["popup.show.under.session"] === "true") {
+    popup.classList.add("popup-show-under-session")
+  }
 
   addMultilineHeaders(popup, showSuggestion)
   let context = getMultilineContext(sessionDiv)

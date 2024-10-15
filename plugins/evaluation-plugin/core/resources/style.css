@@ -127,8 +127,12 @@ button:focus {
   border-bottom: none;
   border-top: none;
   z-index: 99;
-  top: 100%;
+  top: 1.5em;
   left: 0;
+}
+
+.autocomplete-items.popup-show-under-session {
+  top: 100%;
 }
 
 .autocomplete-items div {
