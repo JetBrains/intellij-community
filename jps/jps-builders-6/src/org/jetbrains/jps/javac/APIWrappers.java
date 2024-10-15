@@ -172,7 +172,21 @@ public final class APIWrappers {
     }
 
     public String getMessage(Locale locale) {
-      return myProcContext.adjustMessage(getWrapperDelegate().getMessage(locale));
+      try {
+        try {
+          return myProcContext.adjustMessage(getWrapperDelegate().getMessage(locale));
+        }
+        catch (Throwable e) {
+          // Diagnostic.getMessage() can cause unexpected exceptions while building the message based on a structured data contained in the disgnostic object
+          // For example, it may fail with a class name resolution error, if some symbols required to build a message are not resolvable at the moment
+          // Sometimes just repeating a call helps to get the actual diagnostic message
+          return myProcContext.adjustMessage(getWrapperDelegate().getMessage(locale));
+        }
+      }
+      catch (Throwable e) {
+        // fallback logic
+        return "Unexpected error: " + e.getClass() + ": " + e.getMessage();
+      }
     }
   }
 
