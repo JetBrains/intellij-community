@@ -40,7 +40,7 @@ interface FloatingToolbarCustomizer {
   open class MinimalGroup : FloatingToolbarCustomizer {
     override fun getActionGroup(): String? {
       val hasPrimaryToolbar = IdeLanguageCustomization.getInstance().primaryIdeLanguages
-        .any { findActionGroupFor(it) != null }
+        .any { EP.allForLanguage(it).isNotEmpty() }
 
       // primary language does not support floating toolbar, ignore in this IDE
       if (!hasPrimaryToolbar) return null
