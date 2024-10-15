@@ -46,7 +46,7 @@ public class Maven40ModelConverter {
     result.setPackaging(model.getPackaging());
     result.setName(model.getName());
     result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
-    result.setPlugins(convertPlugins(model));
+    result.setPlugins(convertPlugins(model, Collections.emptyList()));
 
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
     result.setRemotePluginRepositories(convertRepositories(model.getPluginRepositories()));
@@ -57,7 +57,7 @@ public class Maven40ModelConverter {
     return result;
   }
 
-  public static List<MavenPlugin> convertPlugins(Model mavenModel) {
+  protected static List<MavenPlugin> convertPlugins(Model mavenModel, Collection<? extends Artifact> pluginArtifacts) {
     List<MavenPlugin> result = new ArrayList<>();
     Build build = mavenModel.getBuild();
 
@@ -65,7 +65,7 @@ public class Maven40ModelConverter {
       List<Plugin> plugins = build.getPlugins();
       if (plugins != null) {
         for (Plugin each : plugins) {
-          result.add(convertPlugin(each));
+          result.add(convertPlugin(each, pluginArtifacts));
         }
       }
     }
@@ -73,7 +73,7 @@ public class Maven40ModelConverter {
     return result;
   }
 
-  public static MavenPlugin convertPlugin(Plugin plugin) {
+  private static MavenPlugin convertPlugin(Plugin plugin, Collection<? extends Artifact> pluginArtifacts) {
     List<MavenPlugin.Execution> executions = new ArrayList<>(plugin.getExecutions().size());
     for (PluginExecution each : plugin.getExecutions()) {
       executions.add(convertExecution(each));
@@ -84,13 +84,26 @@ public class Maven40ModelConverter {
       deps.add(new MavenId(each.getGroupId(), each.getArtifactId(), each.getVersion()));
     }
 
+    String pluginVersion = getPluginVersion(plugin, pluginArtifacts);
     return new MavenPlugin(plugin.getGroupId(),
                            plugin.getArtifactId(),
-                           plugin.getVersion(),
+                           pluginVersion,
                            false,
                            "true".equals(plugin.getExtensions()),
                            convertConfiguration(plugin.getConfiguration()),
                            executions, deps);
+  }
+
+  private static String getPluginVersion(Plugin plugin, Collection<? extends Artifact> pluginArtifacts) {
+    String pluginVersion = plugin.getVersion();
+    if (null != pluginVersion) return pluginVersion;
+    if (null == plugin.getGroupId() || null == plugin.getArtifactId()) return null;
+    for (Artifact each : pluginArtifacts) {
+      if (plugin.getGroupId().equals(each.getGroupId()) && plugin.getArtifactId().equals(each.getArtifactId())) {
+        return each.getVersion();
+      }
+    }
+    return null;
   }
 
   public static MavenPlugin.Execution convertExecution(PluginExecution execution) {

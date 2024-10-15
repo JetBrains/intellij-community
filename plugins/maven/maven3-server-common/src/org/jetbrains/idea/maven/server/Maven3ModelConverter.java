@@ -31,9 +31,6 @@ public class Maven3ModelConverter {
     return convertModel(model,
                         asSourcesList(build.getSourceDirectory()),
                         asSourcesList(build.getTestSourceDirectory()),
-                        Collections.emptyList(),
-                        Collections.emptyList(),
-                        Collections.emptyList(),
                         localRepository);
   }
 
@@ -45,9 +42,6 @@ public class Maven3ModelConverter {
   public static MavenModel convertModel(Model model,
                                         List<String> sources,
                                         List<String> testSources,
-                                        Collection<? extends Artifact> dependencies,
-                                        Collection<? extends DependencyNode> dependencyTree,
-                                        Collection<? extends Artifact> extensions,
                                         File localRepository) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
@@ -60,12 +54,12 @@ public class Maven3ModelConverter {
     result.setPackaging(model.getPackaging());
     result.setName(model.getName());
     result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
-    result.setPlugins(convertPlugins(model));
+    result.setPlugins(convertPlugins(model, Collections.emptyList()));
 
     Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<Artifact, MavenArtifact>();
-    result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
-    result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
-    result.setDependencyTree(convertDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
+    result.setExtensions(convertArtifacts(Collections.emptyList(), convertedArtifacts, localRepository));
+    result.setDependencies(convertArtifacts(Collections.emptyList(), convertedArtifacts, localRepository));
+    result.setDependencyTree(convertDependencyNodes(null, Collections.emptyList(), convertedArtifacts, localRepository));
 
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
     result.setRemotePluginRepositories(convertRepositories(model.getPluginRepositories()));
@@ -247,7 +241,7 @@ public class Maven3ModelConverter {
     return result;
   }
 
-  public static List<MavenPlugin> convertPlugins(Model mavenModel) {
+  protected static List<MavenPlugin> convertPlugins(Model mavenModel, Collection<? extends Artifact> pluginArtifacts) {
     List<MavenPlugin> result = new ArrayList<MavenPlugin>();
     Build build = mavenModel.getBuild();
 
@@ -255,7 +249,7 @@ public class Maven3ModelConverter {
       List<Plugin> plugins = build.getPlugins();
       if (plugins != null) {
         for (Plugin each : plugins) {
-          result.add(convertPlugin(false, each));
+          result.add(convertPlugin(false, each, pluginArtifacts));
         }
       }
     }
@@ -263,7 +257,7 @@ public class Maven3ModelConverter {
     return result;
   }
 
-  private static MavenPlugin convertPlugin(boolean isDefault, Plugin plugin) {
+  private static MavenPlugin convertPlugin(boolean isDefault, Plugin plugin, Collection<? extends Artifact> pluginArtifacts) {
     List<MavenPlugin.Execution> executions = new ArrayList<MavenPlugin.Execution>(plugin.getExecutions().size());
     for (PluginExecution each : plugin.getExecutions()) {
       executions.add(convertExecution(each));
@@ -274,13 +268,26 @@ public class Maven3ModelConverter {
       deps.add(new MavenId(each.getGroupId(), each.getArtifactId(), each.getVersion()));
     }
 
+    String pluginVersion = getPluginVersion(plugin, pluginArtifacts);
     return new MavenPlugin(plugin.getGroupId(),
                            plugin.getArtifactId(),
-                           plugin.getVersion(),
+                           pluginVersion,
                            isDefault,
                            "true".equals(plugin.getExtensions()),
                            convertConfiguration(plugin.getConfiguration()),
                            executions, deps);
+  }
+
+  private static String getPluginVersion(Plugin plugin, Collection<? extends Artifact> pluginArtifacts) {
+    String pluginVersion = plugin.getVersion();
+    if (null != pluginVersion) return pluginVersion;
+    if (null == plugin.getGroupId() || null == plugin.getArtifactId()) return null;
+    for (Artifact each : pluginArtifacts) {
+      if (plugin.getGroupId().equals(each.getGroupId()) && plugin.getArtifactId().equals(each.getArtifactId())) {
+        return each.getVersion();
+      }
+    }
+    return null;
   }
 
   public static MavenPlugin.Execution convertExecution(PluginExecution execution) {

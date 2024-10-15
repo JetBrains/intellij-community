@@ -328,8 +328,14 @@ public class Maven3XProjectResolver {
       List<DependencyNode> dependencyNodes =
         dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
       model = Maven3AetherModelConverter.convertModelWithAetherDependencyTree(
-        mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
-        mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), myEmbedder.getLocalRepositoryFile());
+        mavenProject.getModel(),
+        mavenProject.getCompileSourceRoots(),
+        mavenProject.getTestCompileSourceRoots(),
+        mavenProject.getArtifacts(),
+        dependencyNodes,
+        mavenProject.getPluginArtifacts(),
+        mavenProject.getExtensionArtifacts(),
+        myEmbedder.getLocalRepositoryFile());
     }
     catch (Exception e) {
       problems.addAll(myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), modelProblems));

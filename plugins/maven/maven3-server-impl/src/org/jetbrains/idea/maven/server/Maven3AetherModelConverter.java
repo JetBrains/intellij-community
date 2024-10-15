@@ -29,6 +29,7 @@ public final class Maven3AetherModelConverter extends Maven3ModelConverter {
                                                                 List<String> testSources,
                                                                 Collection<? extends Artifact> dependencies,
                                                                 Collection<? extends DependencyNode> dependencyTree,
+                                                                Collection<? extends Artifact> pluginArtifacts,
                                                                 Collection<? extends Artifact> extensions,
                                                                 File localRepository) throws RemoteException {
     MavenModel result = new MavenModel();
@@ -42,7 +43,7 @@ public final class Maven3AetherModelConverter extends Maven3ModelConverter {
     result.setPackaging(model.getPackaging());
     result.setName(model.getName());
     result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
-    result.setPlugins(convertPlugins(model));
+    result.setPlugins(convertPlugins(model, pluginArtifacts));
 
     Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<Artifact, MavenArtifact>();
     result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
