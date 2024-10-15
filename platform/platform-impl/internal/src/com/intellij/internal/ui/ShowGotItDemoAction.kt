@@ -37,7 +37,7 @@ import javax.swing.JComponent
 import kotlin.random.Random
 import kotlin.reflect.KMutableProperty0
 
-class ShowGotItDemoAction : DumbAwareAction() {
+private class ShowGotItDemoAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
     val component = e.getData(CONTEXT_COMPONENT) as JComponent
