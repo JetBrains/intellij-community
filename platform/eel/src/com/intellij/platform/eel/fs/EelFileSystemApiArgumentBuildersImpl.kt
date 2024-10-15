@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.fs
 
-import com.intellij.platform.eel.fs.EelFileSystemApi.CopyOptions
-import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode
+import com.intellij.platform.eel.fs.EelFileSystemApi.*
 import com.intellij.platform.eel.path.EelPath
 
 internal data class WriteOptionsImpl(
@@ -50,4 +49,27 @@ internal data class ChangeAttributesOptionsImpl(
   override fun modificationTime(duration: EelFileSystemApi.TimeSinceEpoch): EelFileSystemApi.ChangeAttributesOptions = apply { modificationTime = duration }
 
   override fun permissions(permissions: EelFileInfo.Permissions): EelFileSystemApi.ChangeAttributesOptions = apply { this.permissions = permissions }
+}
+
+internal data class CreateTemporaryDirectoryOptionsImpl(
+  override var prefix: String = "tmp",
+  override var suffix: String = "",
+  override var deleteOnExit: Boolean = false,
+  override var parentDirectory: EelPath.Absolute? = null,
+) : CreateTemporaryDirectoryOptions {
+  override fun prefix(prefix: String): CreateTemporaryDirectoryOptions = apply {
+    this.prefix = prefix
+  }
+
+  override fun suffix(suffix: String): CreateTemporaryDirectoryOptions = apply {
+    this.suffix = suffix
+  }
+
+  override fun deleteOnExit(deleteOnExit: Boolean): CreateTemporaryDirectoryOptions = apply {
+    this.deleteOnExit = deleteOnExit
+  }
+
+  override fun parentDirectory(parentDirectory: EelPath.Absolute?): CreateTemporaryDirectoryOptions = apply {
+    this.parentDirectory = parentDirectory
+  }
 }

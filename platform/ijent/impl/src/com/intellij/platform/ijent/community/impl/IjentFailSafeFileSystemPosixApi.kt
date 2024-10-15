@@ -209,4 +209,11 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       createSymbolicLink(target, linkPath)
     }
   }
+
+  override suspend fun createTemporaryDirectory(
+    options: EelFileSystemApi.CreateTemporaryDirectoryOptions,
+  ): EelResult<EelPath.Absolute, EelFileSystemApi.CreateTemporaryDirectoryError> =
+    holder.withDelegateRetrying {
+      createTemporaryDirectory(options)
+    }
 }
