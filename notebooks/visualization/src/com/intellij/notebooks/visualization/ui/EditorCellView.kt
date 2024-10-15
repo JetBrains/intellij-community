@@ -4,6 +4,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
 import com.intellij.notebooks.ui.visualization.*
+import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isDiffKind
 import com.intellij.notebooks.visualization.*
 import com.intellij.notebooks.visualization.NotebookCellInlayController.InputFactory
 import com.intellij.notebooks.visualization.context.NotebookDataContext
@@ -267,7 +268,7 @@ class EditorCellView(
     removeCellHighlight()
 
     // manages the cell background + clips background on the right below the scroll bar
-    if (interval.type == NotebookCellLines.CellType.CODE) {
+    if (interval.type == NotebookCellLines.CellType.CODE && !editor.isDiffKind()) {
       addCellHighlighter {
         editor.markupModel.addRangeHighlighter(
           startOffset,
