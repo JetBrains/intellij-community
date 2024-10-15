@@ -20,7 +20,7 @@ interface InlayTreeSink {
 
   /**
    * Saves presentation for later application.
-   * @param builder builder for a given inlay entry. It can be executed zero times or once.
+   * @param builder builder for a given inlay entry. It will be called in place, and it can be called zero times or once.
    */
   fun addPresentation(position: InlayPosition,
                       payloads: List<InlayPayload>? = null,
@@ -30,6 +30,8 @@ interface InlayTreeSink {
 
   /**
    * Explicit branch, which will be executed only if given [optionId] is enabled.
+   *
+   * @param block block of code to conditionally execute. It will be called in place.
    */
   fun whenOptionEnabled(optionId: String, block: () -> Unit)
 }
