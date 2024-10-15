@@ -185,6 +185,7 @@
   <technology name="jsoniter-scala" root="jsoniter_scala"/>
   <technology name="jsoup" root="org.jsoup"/>
   <technology name="junit" root="org.junit"/>
+  <technology name="junit3" root="junit.framework"/>
   <technology name="junit5" root="org.junit.jupiter"/>
   <technology name="justauth" root="me.zhyd.oauth"/>
   <technology name="kafka" root="org.apache.kafka"/>
