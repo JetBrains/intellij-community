@@ -164,6 +164,26 @@ class EditorCellView(
   private fun updateInput() = runInEdt {
     updateCellHighlight()
     input.updateInput()
+    checkAndRebuildInlays()
+  }
+
+  override fun doCheckAndRebuildInlays() {
+    if (isInlaysBroken()) {
+      recreateControllers()
+    }
+  }
+
+  private fun isInlaysBroken(): Boolean {
+    val inlaysOffsets = buildSet {
+        add(editor.document.getLineStartOffset(interval.lines.first))
+        add(editor.document.getLineEndOffset(interval.lines.last))
+    }
+    for (inlay in getInlays()) {
+      if (!inlay.isValid || inlay.offset !in inlaysOffsets) {
+        return true
+      }
+    }
+    return false
   }
 
   private fun updateOutputs() = runInEdt {

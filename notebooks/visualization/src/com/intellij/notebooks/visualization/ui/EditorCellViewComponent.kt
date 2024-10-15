@@ -62,4 +62,18 @@ abstract class EditorCellViewComponent : Disposable {
   open fun removeInlayBelow(presentation: InlayPresentation) {
     throw UnsupportedOperationException("Operation is not supported")
   }
+
+  /**
+   * As there are so many possible document editing operations that can destroy cell inlays by removing document range they attached to,
+   * the only option we have to preserve consistency is to check inlays validity
+   * and recreate them if needed.
+   * This logic is supposed to be as simple as check `isValid` and `offset` attributes of inlays
+   * so it should not introduce significant performance degradation.
+   */
+  fun checkAndRebuildInlays() {
+    _children.forEach { it.checkAndRebuildInlays() }
+    doCheckAndRebuildInlays()
+  }
+
+  open fun doCheckAndRebuildInlays() {}
 }
