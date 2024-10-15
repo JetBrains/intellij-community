@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -83,8 +82,7 @@ class KtClassDef(
     override fun superTypes(): Stream<TypeConstraints.ClassDef> =
         analyze(module) {
             val classLikeSymbol = pointer.restoreSymbol() ?: return@analyze Stream.empty<TypeConstraints.ClassDef>()
-            val list: List<TypeConstraints.ClassDef> =
-                ((classLikeSymbol as? KaNamedClassSymbol)?.defaultType?.allSupertypes ?: emptySequence())
+            val list: List<TypeConstraints.ClassDef> = classLikeSymbol.defaultType.allSupertypes
                 .filterIsInstance<KaClassType>()
                 .mapNotNull { type -> type.expandedSymbol }
                 .map { symbol -> symbol.classDef() }
