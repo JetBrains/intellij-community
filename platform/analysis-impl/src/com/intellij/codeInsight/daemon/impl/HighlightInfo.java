@@ -96,7 +96,7 @@ public class HighlightInfo implements Segment {
   @Unmodifiable
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 
-  private @Unmodifiable List<IntentionActionDescriptor> myIntentionActionDescriptors = List.of();
+  private @Unmodifiable @NotNull List<IntentionActionDescriptor> myIntentionActionDescriptors = List.of(); // guarded by this
 
   private final @DetailedDescription String description;
   private final @Tooltip String toolTip;
@@ -486,8 +486,10 @@ public class HighlightInfo implements Segment {
     if (getDescription() != null) s += ", description='" + getDescription() + "'";
     s += "; severity=" + getSeverity();
     synchronized (this) {
-      s += "; quickFixes: " + StringUtil.join(
-        myIntentionActionDescriptors, q -> ReportingClassSubstitutor.getClassToReport(q.myAction).getName(), ", ");
+      if (!myIntentionActionDescriptors.isEmpty()) {
+        s += "; quickFixes: " + StringUtil.join(
+          myIntentionActionDescriptors, q -> ReportingClassSubstitutor.getClassToReport(q.myAction).getName(), ", ");
+      }
     }
     if (gutterIconRenderer != null) {
       s += "; gutter: " + gutterIconRenderer;
