@@ -43,7 +43,6 @@ class TextEditorCellViewComponent(
     override fun mousePressed(e: MouseEvent) {
       if (editor.xyToLogicalPosition(e.point).line in cell.interval.lines) {
         editor.setMode(NotebookEditorMode.EDIT)
-        cell.switchToEditMode()
       }
     }
   }
@@ -60,21 +59,21 @@ class TextEditorCellViewComponent(
 
   private fun updateGutterIcons(gutterAction: AnAction?) = runInEdt {
     disposeExistingHighlighter()
-    if (gutterAction != null) {
-      val markupModel = editor.markupModel
-      val interval = safeInterval ?: return@runInEdt
-      val startOffset = editor.document.getLineStartOffset(interval.lines.first)
-      val endOffset = editor.document.getLineEndOffset(interval.lines.last)
-      val highlighter = markupModel.addRangeHighlighter(
-        startOffset,
-        endOffset,
-        HighlighterLayer.FIRST - 100,
-        TextAttributes(),
-        HighlighterTargetArea.LINES_IN_RANGE
-      )
-      highlighter.gutterIconRenderer = ActionToGutterRendererAdapter(gutterAction)
-      this.highlighters = listOf(highlighter)
-    }
+    if (gutterAction == null) return@runInEdt
+
+    val markupModel = editor.markupModel
+    val interval = safeInterval ?: return@runInEdt
+    val startOffset = editor.document.getLineStartOffset(interval.lines.first)
+    val endOffset = editor.document.getLineEndOffset(interval.lines.last)
+    val highlighter = markupModel.addRangeHighlighter(
+      startOffset,
+      endOffset,
+      HighlighterLayer.FIRST - 100,
+      TextAttributes(),
+      HighlighterTargetArea.LINES_IN_RANGE
+    )
+    highlighter.gutterIconRenderer = ActionToGutterRendererAdapter(gutterAction)
+    this.highlighters = listOf(highlighter)
   }
 
   override fun dispose() = cell.manager.update { ctx ->

@@ -13,10 +13,10 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.util.Key
+import com.intellij.ui.Gray
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
-import java.awt.Color
 
 /**
  * The Jupyter Notebook has a modal user interface.
@@ -37,7 +37,6 @@ val NOTEBOOK_EDITOR_MODE: Topic<NotebookEditorModeListener> = Topic.create("Note
 
 @FunctionalInterface
 interface NotebookEditorModeListener {
-
   fun onModeChange(editor: Editor, mode: NotebookEditorMode)
 }
 
@@ -150,7 +149,6 @@ fun Editor.setMode(mode: NotebookEditorMode) {
   }
 }
 
-private val INVISIBLE_CARET = CaretVisualAttributes(
-  Color(0, 0, 0, 0),
-  CaretVisualAttributes.Weight.NORMAL)
+private val INVISIBLE_CARET = CaretVisualAttributes(Gray.TRANSPARENT,
+                                                    CaretVisualAttributes.Weight.NORMAL)
 
