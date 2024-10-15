@@ -107,7 +107,7 @@ public final class AsyncStacksUtils {
       () -> process.invokeMethod(evaluationContext, finalMethodPair.first, finalMethodPair.second,
                                  args, ObjectReference.INVOKE_SINGLE_THREADED, true),
       result -> result instanceof StringReference ? ((StringReference)result).value() : null,
-      process.getVirtualMachineProxy());
+      evaluationContext);
     if (value != null) {
       List<StackFrameItem> res = new ArrayList<>();
       ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(virtualMachineProxy.allClasses());

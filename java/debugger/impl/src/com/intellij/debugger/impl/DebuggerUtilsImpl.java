@@ -7,7 +7,6 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
-import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
@@ -355,7 +354,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   public <R, T extends Value> R processCollectibleValue(
     @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
     @NotNull Function<? super T, ? extends R> processor,
-    @NotNull VirtualMachineProxy proxy) throws EvaluateException {
+    @NotNull EvaluationContext evaluationContext) throws EvaluateException {
     int retries = 1;
     while (true) {
       T result = valueComputable.compute();
@@ -364,12 +363,13 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
       }
       catch (ObjectCollectedException oce) {
         if (--retries < 0) {
-          if (proxy instanceof VirtualMachineProxyImpl proxyImpl) {
-            proxyImpl.suspend();
+          if (evaluationContext.getSuspendContext() instanceof SuspendContextImpl suspendContextImpl) {
+            VirtualMachineProxyImpl virtualMachineProxy = suspendContextImpl.getVirtualMachineProxy();
+            virtualMachineProxy.suspend();
             try {
               return processor.apply(valueComputable.compute());
             } finally {
-              proxyImpl.resume();
+              virtualMachineProxy.resume();
             }
           }
           else {
