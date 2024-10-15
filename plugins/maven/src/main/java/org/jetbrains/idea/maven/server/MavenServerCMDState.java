@@ -186,6 +186,9 @@ public class MavenServerCMDState extends CommandLineState {
       params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS, mavenEmbedderCliOptions);
     }
 
+    //workaround for JDK-4716483
+    params.getVMParametersList().addProperty("sun.rmi.server.exceptionTrace", "true");
+
     setupMainExt(params);
     return params;
   }
