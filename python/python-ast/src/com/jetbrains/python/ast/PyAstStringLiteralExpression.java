@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -178,5 +179,84 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
       return allRanges.get(0).union(allRanges.get(allRanges.size() - 1));
     }
     return new TextRange(0, getTextLength());
+  }
+
+  @Override
+  @NotNull
+  default LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+    return new LiteralTextEscaper<>(this) {
+      @Override
+      public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull final StringBuilder outChars) {
+        for (Pair<TextRange, String> fragment : myHost.getDecodedFragments()) {
+          final TextRange encodedTextRange = fragment.getFirst();
+          final TextRange intersection = encodedTextRange.intersection(rangeInsideHost);
+          if (intersection != null && !intersection.isEmpty()) {
+            final String value = fragment.getSecond();
+            final String intersectedValue;
+            if (value.codePointCount(0, value.length()) == 1 || value.length() == intersection.getLength()) {
+              intersectedValue = value;
+            }
+            else {
+              final int start = Math.max(0, rangeInsideHost.getStartOffset() - encodedTextRange.getStartOffset());
+              final int end = Math.min(value.length(), start + intersection.getLength());
+              intersectedValue = value.substring(start, end);
+            }
+            outChars.append(intersectedValue);
+          }
+        }
+        return true;
+      }
+
+      @Override
+      public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
+        int offset = 0; // running offset in the decoded fragment
+        int endOffset = -1;
+        for (Pair<TextRange, String> fragment : myHost.getDecodedFragments()) {
+          final TextRange encodedTextRange = fragment.getFirst();
+          final TextRange intersection = encodedTextRange.intersection(rangeInsideHost);
+          if (intersection != null && !intersection.isEmpty()) {
+            final String value = fragment.getSecond();
+            final int valueLength = value.length();
+            final int intersectionLength = intersection.getLength();
+            if (valueLength == 0) {
+              return -1;
+            }
+            // A long unicode escape of form \U01234567 can be decoded into a surrogate pair
+            else if (value.codePointCount(0, valueLength) == 1) {
+              if (offset == offsetInDecoded) {
+                return intersection.getStartOffset();
+              }
+              offset += valueLength;
+            }
+            else {
+              // Literal fragment without escapes: it's safe to use intersection length instead of value length
+              if (offset + intersectionLength >= offsetInDecoded) {
+                final int delta = offsetInDecoded - offset;
+                return intersection.getStartOffset() + delta;
+              }
+              offset += intersectionLength;
+            }
+            endOffset = intersection.getEndOffset();
+          }
+        }
+        // XXX: According to the real use of getOffsetInHost() it should return the correct host offset for the offset in decoded at the
+        // end of the range inside host, not -1
+        if (offset == offsetInDecoded) {
+          return endOffset;
+        }
+        return -1;
+      }
+
+      @Override
+      public boolean isOneLine() {
+        return true;
+      }
+
+      @NotNull
+      @Override
+      public TextRange getRelevantTextRange() {
+        return myHost.getStringValueTextRange();
+      }
+    };
   }
 }
