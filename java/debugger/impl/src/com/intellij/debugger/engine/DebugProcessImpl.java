@@ -95,7 +95,10 @@ import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Job;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicArrowButton;
@@ -1517,7 +1520,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                                   @NotNull List<? extends Value> originalArgs,
                                                   @NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
     DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
-    VirtualMachineProxyImpl virtualMachineProxy = evaluationContext.getSuspendContext().getVirtualMachineProxy();
     ArrayList<Value> invokerArgs = new ArrayList<>();
 
     ReferenceType lookupClass =
@@ -1527,8 +1529,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     invokerArgs.add(implLookup); // lookup
     invokerArgs.add(type.classObject()); // class
     invokerArgs.add(objRef); // object
-    invokerArgs.add(DebuggerUtilsEx.mirrorOfString(method.name(), virtualMachineProxy, evaluationContext)); // method name
-    invokerArgs.add(DebuggerUtilsEx.mirrorOfString(method.signature(), virtualMachineProxy, evaluationContext)); // method descriptor
+    invokerArgs.add(DebuggerUtilsEx.mirrorOfString(method.name() + ";" + method.signature(),
+                                                   evaluationContext)); // method name and descriptor
 
     // argument values
     List<Value> args = new ArrayList<>(originalArgs);
@@ -1826,7 +1828,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     final Method forNameMethod;
     List<Value> args = new ArrayList<>(); // do not use unmodifiable lists because the list is modified by JPDA
-    args.add(DebuggerUtilsEx.mirrorOfString(qName, virtualMachine, evaluationContext));
+    args.add(DebuggerUtilsEx.mirrorOfString(qName, evaluationContext));
     if (classLoader != null) {
       forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
       args.add(virtualMachine.mirrorOf(true));

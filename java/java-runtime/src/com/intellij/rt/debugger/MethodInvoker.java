@@ -11,12 +11,15 @@ public final class MethodInvoker {
   public static Object invoke(MethodHandles.Lookup lookup,
                               Class<?> cls,
                               Object obj,
-                              String name,
-                              String descriptor,
+                              String nameAndDescriptor,
                               Object[] argsArray,
                               ClassLoader loader)
     throws Throwable {
     try {
+      int separatorIndex = nameAndDescriptor.indexOf(';');
+      String name = nameAndDescriptor.substring(0, separatorIndex);
+      String descriptor = nameAndDescriptor.substring(separatorIndex + 1);
+
       MethodType mt = MethodType.fromMethodDescriptorString(descriptor, loader);
       MethodHandle method;
       if ("<init>".equals(name)) {
