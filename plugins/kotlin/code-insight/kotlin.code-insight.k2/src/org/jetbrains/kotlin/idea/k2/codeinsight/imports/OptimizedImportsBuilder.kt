@@ -21,7 +21,7 @@ internal fun KaSession.buildOptimizedImports(
     file: KtFile,
     data: UsedReferencesCollector.Result,
 ): List<ImportPath>? {
-    return OptimizedImportsBuilder(file, data, file.kotlinCustomSettings).run { build() }
+    return OptimizedImportsBuilder(file, data, file.kotlinCustomSettings).run { buildOptimizedImports() }
 }
 
 internal class OptimizedImportsBuilder(
@@ -31,14 +31,42 @@ internal class OptimizedImportsBuilder(
 ) {
     private val apiVersion: ApiVersion = file.languageVersionSettings.apiVersion
 
-    fun KaSession.build(): List<ImportPath>? {
-        val importsToGenerate = hashSetOf<ImportPath>()
-        val importableSymbols = usedReferencesData.usedSymbols.mapNotNull { it.run { restore() } }
+    private sealed class ImportRule {
+        // force presence of this import
+        data class Add(val importPath: ImportPath) : ImportRule() {
+            override fun toString() = "+$importPath"
+        }
+
+        // force absence of this import
+        data class DoNotAdd(val importPath: ImportPath) : ImportRule() {
+            override fun toString() = "-$importPath"
+        }
+    }
+
+    private val importRules: MutableSet<ImportRule> = mutableSetOf()
+
+    fun KaSession.buildOptimizedImports(): List<ImportPath>? {
+        require(importRules.isEmpty())
 
         val importsWithUnresolvedNames = file.importDirectives
             .filter { it.mayReferToSomeUnresolvedName() || it.isExistedUnresolvedName() }
+            .mapNotNull { it.importPath }
 
-        importsToGenerate += importsWithUnresolvedNames.mapNotNull { it.importPath }
+        importRules += importsWithUnresolvedNames.map { ImportRule.Add(it) }
+
+        while (true) {
+            ProgressManager.checkCanceled()
+            val importRulesBefore = importRules.size
+            val result = tryBuildOptimizedImports()
+            if (importRules.size == importRulesBefore) return result
+        }
+    }
+
+    fun KaSession.tryBuildOptimizedImports(): List<ImportPath>? {
+        val importsToGenerate = hashSetOf<ImportPath>()
+        importsToGenerate += importRules.filterIsInstance<ImportRule.Add>().map { it.importPath }
+
+        val importableSymbols = usedReferencesData.usedSymbols.mapNotNull { it.run { restore() } }
 
         val symbolsByParentFqName = HashMap<FqName, MutableSet<ImportableKaSymbol>>()
         for (importableSymbol in importableSymbols) {
@@ -171,10 +199,7 @@ internal class OptimizedImportsBuilder(
         return this.toString() in codeStyleSettings.PACKAGES_TO_USE_STAR_IMPORTS
     }
 
-    private fun ImportPath.isAllowedByRules(): Boolean {
-        // trivial implementation until proper conflicts resolution is implemented
-        return true
-    }
+    private fun ImportPath.isAllowedByRules(): Boolean = importRules.none { it is ImportRule.DoNotAdd && it.importPath == this }
 
     private fun needExplicitImport(fqName: FqName): Boolean = hasAlias(fqName) || !isImportedByDefault(fqName)
 
