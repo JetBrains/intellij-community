@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.SweepProcessor;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiCompiledFile;
@@ -472,6 +473,9 @@ public final class UpdateHighlightersUtil {
       if (highlighter != null) {
         highlighter.dispose();
       }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       // in theory, rogue plugin might register a listener on range marker 'dispose', which can do nasty things, including throwing exceptions,
