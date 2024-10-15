@@ -2,10 +2,9 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.progress.util.ColorProgressBar;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 
@@ -21,18 +20,6 @@ import java.awt.geom.RoundRectangle2D;
  * @author Konstantin Bulenkov
  */
 public class DarculaProgressBarUI extends BasicProgressBarUI {
-
-  private static final Color TRACK_COLOR = JBColor.namedColor("ProgressBar.trackColor", new JBColor(Gray.xC4, Gray.x55));
-  private static final Color PROGRESS_COLOR = JBColor.namedColor("ProgressBar.progressColor", new JBColor(Gray.x80, Gray.xA0));
-  private static final Color INDETERMINATE_START_COLOR = JBColor.namedColor("ProgressBar.indeterminateStartColor", new JBColor(Gray.xC4, Gray.x69));
-  private static final Color INDETERMINATE_END_COLOR = JBColor.namedColor("ProgressBar.indeterminateEndColor", new JBColor(Gray.x80, Gray.x83));
-
-  private static final Color FAILED_COLOR = JBColor.namedColor("ProgressBar.failedColor", new JBColor(0xd64f4f, 0xe74848));
-  private static final Color FAILED_END_COLOR = JBColor.namedColor("ProgressBar.failedEndColor", new JBColor(0xfb8f89, 0xf4a2a0));
-  private static final Color PASSED_COLOR = JBColor.namedColor("ProgressBar.passedColor", new JBColor(0x34b171, 0x008f50));
-  private static final Color PASSED_END_COLOR = JBColor.namedColor("ProgressBar.passedEndColor", new JBColor(0x7ee8a5, 0x5dc48f));
-  private static final Color WARNING_COLOR = JBColor.namedColor("ProgressBar.warningColor", new JBColor(0xF0A732, 0xD9A343));
-  private static final Color WARNING_END_COLOR = JBColor.namedColor("ProgressBar.warningEndColor", new JBColor(0xEAD2A1, 0xEAD2A1));
 
   private static final int CYCLE_TIME_DEFAULT = 800;
   private static final int REPAINT_INTERVAL_DEFAULT = 50;
@@ -80,21 +67,20 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       JBInsets.removeFrom(r, i);
       int orientation = progressBar.getOrientation();
 
-      // Use foreground color as a reference, don't use it directly. This is done for compatibility reason.
-      // Colors are hardcoded in UI delegates by design. If more colors are needed contact designers.
       Color startColor, endColor;
       Color foreground = progressBar.getForeground();
-      if (foreground == ColorProgressBar.RED) {
-        startColor = FAILED_COLOR;
-        endColor = FAILED_END_COLOR;
+      Object statusProperty = progressBar.getClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey());
+      if (JBUI.CurrentTheme.ProgressBar.failedStatusValue().equals(statusProperty) || foreground == ColorProgressBar.RED) {
+        startColor = JBUI.CurrentTheme.ProgressBar.FAILED;
+        endColor = JBUI.CurrentTheme.ProgressBar.FAILED_END;
       }
-      else if (foreground == ColorProgressBar.GREEN) {
-        startColor = PASSED_COLOR;
-        endColor = PASSED_END_COLOR;
+      else if (JBUI.CurrentTheme.ProgressBar.passedStatusValue().equals(statusProperty) ||foreground == ColorProgressBar.GREEN) {
+        startColor = JBUI.CurrentTheme.ProgressBar.PASSED;
+        endColor = JBUI.CurrentTheme.ProgressBar.PASSED_END;
       }
-      else if (foreground == ColorProgressBar.YELLOW) {
-        startColor = WARNING_COLOR;
-        endColor = WARNING_END_COLOR;
+      else if (JBUI.CurrentTheme.ProgressBar.warningStatusValue().equals(statusProperty) || foreground == ColorProgressBar.YELLOW) {
+        startColor = JBUI.CurrentTheme.ProgressBar.WARNING;
+        endColor = JBUI.CurrentTheme.ProgressBar.WARNING_END;
       }
       else {
         Object clientPropertyStartColor = progressBar.getClientProperty("ProgressBar.indeterminateStartColor");
@@ -160,11 +146,11 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   }
 
   protected Color getStartColor(JComponent c) {
-    return INDETERMINATE_START_COLOR;
+    return JBUI.CurrentTheme.ProgressBar.INDETERMINATE_START;
   }
 
   protected Color getEndColor(JComponent c) {
-    return INDETERMINATE_END_COLOR;
+    return JBUI.CurrentTheme.ProgressBar.INDETERMINATE_END;
   }
 
   private void paintString(Graphics2D g, int x, int y, int w, int h, int fillStart, int amountFull) {
@@ -231,17 +217,16 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       g2.setColor(getRemainderColor());
       g2.fill(fullShape);
 
-      // Use foreground color as a reference, don't use it directly. This is done for compatibility reason.
-      // Colors are hardcoded in UI delegates by design. If more colors are needed contact designers.
       Color foreground = progressBar.getForeground();
-      if (foreground == ColorProgressBar.RED) {
-        g2.setColor(FAILED_COLOR);
+      Object statusProperty = progressBar.getClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey());
+      if (JBUI.CurrentTheme.ProgressBar.failedStatusValue().equals(statusProperty) || foreground == ColorProgressBar.RED) {
+        g2.setColor(JBUI.CurrentTheme.ProgressBar.FAILED);
       }
-      else if (foreground == ColorProgressBar.GREEN) {
-        g2.setColor(PASSED_COLOR);
+      else if (JBUI.CurrentTheme.ProgressBar.passedStatusValue().equals(statusProperty) || foreground == ColorProgressBar.GREEN) {
+        g2.setColor(JBUI.CurrentTheme.ProgressBar.PASSED);
       }
-      else if (foreground == ColorProgressBar.YELLOW) {
-        g2.setColor(WARNING_COLOR);
+      else if (JBUI.CurrentTheme.ProgressBar.warningStatusValue().equals(statusProperty) || foreground == ColorProgressBar.YELLOW) {
+        g2.setColor(JBUI.CurrentTheme.ProgressBar.WARNING);
       }
       else {
         g2.setColor(getFinishedColor(c));
@@ -259,11 +244,11 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   }
 
   protected Color getRemainderColor() {
-    return TRACK_COLOR;
+    return JBUI.CurrentTheme.ProgressBar.TRACK;
   }
 
   protected Color getFinishedColor(JComponent c) {
-    return PROGRESS_COLOR;
+    return JBUI.CurrentTheme.ProgressBar.PROGRESS;
   }
 
   @Override

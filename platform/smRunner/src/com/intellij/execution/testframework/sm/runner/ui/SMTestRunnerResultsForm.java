@@ -35,7 +35,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -54,9 +53,13 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -225,7 +228,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.updateFromRoot();
 
     // Status line
-    myStatusLine.setStatusColor(ColorProgressBar.GREEN);
+    myStatusLine.setStatus(JBUI.CurrentTheme.ProgressBar.passedStatusValue());
 
     // Tests tree
     selectAndNotify(myTestsRootNode);
@@ -284,10 +287,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
 
     fireOnTestingFinished();
-
-    if (testsRoot.wasTerminated() && myStatusLine.getStatusColor() == ColorProgressBar.GREEN) {
-      myStatusLine.setStatusColor(JBColor.LIGHT_GRAY);
-    }
 
     if (testsRoot.isEmptySuite() &&
         testsRoot.isTestsReporterAttached() &&
@@ -566,8 +565,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   }
 
   @ApiStatus.Internal
-  public Color getTestsStatusColor() {
-    return myStatusLine.getStatusColor();
+  public String getTestsStatus() {
+    return myStatusLine.getStatus();
   }
 
   @ApiStatus.Internal
@@ -656,7 +655,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   private void updateStatusLabel(final boolean testingFinished) {
     if (myFailedTestCount > 0) {
-      myStatusLine.setStatusColor(ColorProgressBar.RED);
+      myStatusLine.setStatus(JBUI.CurrentTheme.ProgressBar.failedStatusValue());
     }
 
     // launchedAndFinished - is launched and not in progress. If we remove "launched' that onTestingStarted() before

@@ -931,6 +931,28 @@ public final class JBUI {
       }
     }
 
+    public static final class ProgressBar {
+      public static final Color PROGRESS = JBColor.namedColor("ProgressBar.progressColor", new JBColor(0x808080, 0xA0A0A0));
+
+      public static final Color INDETERMINATE_START = JBColor.namedColor("ProgressBar.indeterminateStartColor", new JBColor(0xC4C4C4, 0x696969));
+      public static final Color INDETERMINATE_END = JBColor.namedColor("ProgressBar.indeterminateEndColor", new JBColor(0x808080, 0x838383));
+
+      public static final Color PASSED = JBColor.namedColor("ProgressBar.passedColor", new JBColor(0x55A76A, 0x4E8052));
+      public static final Color WARNING = JBColor.namedColor("ProgressBar.warningColor", new JBColor(0xF0A732, 0xD9A343));
+      public static final Color FAILED = JBColor.namedColor("ProgressBar.failedColor", new JBColor(0xE55765, 0x9C4E4E));
+
+      public static final Color PASSED_END = JBColor.namedColor("ProgressBar.passedEndColor", new JBColor(0x7ee8a5, 0x5dc48f));
+      public static final Color WARNING_END = JBColor.namedColor("ProgressBar.warningEndColor", new JBColor(0xEAD2A1, 0xEAD2A1));
+      public static final Color FAILED_END = JBColor.namedColor("ProgressBar.failedEndColor", new JBColor(0xfb8f89, 0xf4a2a0));
+
+      public static final Color TRACK = JBColor.namedColor("ProgressBar.trackColor", new JBColor(0x55A76A, 0x4E8052));
+
+      public static @NotNull String statusKey() { return "ProgressBar.status"; }
+      public static @NotNull String passedStatusValue() { return "passed"; }
+      public static @NotNull String warningStatusValue() { return "value"; }
+      public static @NotNull String failedStatusValue() { return "failed"; }
+    }
+
     public static final class Spinner {
       public static @NotNull Dimension minimumSize() {
         return size("Spinner.minimumSize", size(72, 0));

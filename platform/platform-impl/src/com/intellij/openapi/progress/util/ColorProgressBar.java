@@ -17,6 +17,7 @@ import java.awt.geom.Rectangle2D;
 /**
  * @author Eugene Belyaev
  * @deprecated Use {@link JProgressBar} component. Use colors in {@link com.intellij.util.ui.JBUI.CurrentTheme.ProgressBar}.
+ * To update the color of a {@link JProgressBar}, change the client property with key {@link com.intellij.util.ui.JBUI.CurrentTheme.ProgressBar#statusKey()}.
  */
 @Deprecated
 public final class ColorProgressBar extends JComponent {

@@ -11,7 +11,6 @@ import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.ListSelection;
-import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestUtil;
 
@@ -389,7 +388,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     myResultsViewer.onCustomProgressTestFailed();
     assertEquals(1, myResultsViewer.getFailedTestCount());
 
-    assertEquals(ColorProgressBar.RED, myResultsViewer.getTestsStatusColor());
+    assertEquals("failed", myResultsViewer.getTestsStatus());
   }
 
   public void testProgressBar_Ignored() {
@@ -401,7 +400,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     assertEquals(0, myResultsViewer.getFailedTestCount());
     assertEquals(1, myResultsViewer.getIgnoredTestCount());
 
-    assertEquals(ColorProgressBar.GREEN, myResultsViewer.getTestsStatusColor());
+    assertEquals("passed", myResultsViewer.getTestsStatus());
   }
 
   public void testCustomProgress_Terminated() {
@@ -412,7 +411,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
 
     myResultsViewer.onTestingFinished(myTestsRootNode);
 
-    assertEquals(ColorProgressBar.GREEN, myResultsViewer.getTestsStatusColor());
+    assertEquals("passed", myResultsViewer.getTestsStatus());
   }
 
   public void testCustomProgress_Terminated_SmthFailed() {
@@ -424,7 +423,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     myResultsViewer.onTestStarted(createTestProxy("some_test2", myTestsRootNode));
     myResultsViewer.onTestingFinished(myTestsRootNode);
 
-    assertEquals(ColorProgressBar.RED, myResultsViewer.getTestsStatusColor());
+    assertEquals("failed", myResultsViewer.getTestsStatus());
   }
 
   public void testCustomProgress_UnSetCount() {

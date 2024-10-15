@@ -38,7 +38,7 @@ public class TestStatusLine extends NonOpaquePanel {
     myProgressBar.setMaximum(100);
     myProgressBar.putClientProperty("ProgressBar.stripeWidth", 3);
     myProgressBar.putClientProperty("ProgressBar.flatEnds", Boolean.TRUE);
-    setStatusColor(ColorProgressBar.GREEN);
+    myProgressBar.putClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey(), JBUI.CurrentTheme.ProgressBar.passedStatusValue());
 
     JPanel stateWrapper = new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     myState.setOpaque(false);
@@ -145,10 +145,29 @@ public class TestStatusLine extends NonOpaquePanel {
     });
   }
 
+  @ApiStatus.Internal
+  public String getStatus() {
+    final var property = myProgressBar.getClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey());
+    if (property == null) return null;
+    return (String)property;
+  }
+
+  public void setStatus(@NotNull String status) {
+    myProgressBar.putClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey(), status);
+  }
+
+  /**
+   * @deprecated Use {@link #setStatus(String)} with values from {@link JBUI.CurrentTheme.ProgressBar}.
+   */
+  @Deprecated
   public void setStatusColor(Color color) {
     myProgressBar.setForeground(color);
   }
 
+  /**
+   * @deprecated Use {@link #getStatus()} instead.
+   */
+  @Deprecated
   public Color getStatusColor() {
     return myProgressBar.getForeground();
   }
