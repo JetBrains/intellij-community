@@ -75,7 +75,7 @@ internal class GitLinkToCommitResolver(private val project: Project) {
     val end = max(0, endRow)
     val rowRange = startFrom..end
 
-    val processingCount = min(abs(Registry.intValue("vcs.log.render.commit.links.process.chunk")), rowRange.count())
+    val processingCount = max(abs(Registry.intValue("vcs.log.render.commit.links.process.chunk")), rowRange.count())
     if (processingCount < 2) return
 
     val visibleGraph = visiblePack.visibleGraph
