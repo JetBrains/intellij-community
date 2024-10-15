@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
@@ -22,11 +23,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinableSourceAndClassRootsScope
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinedSourceAndClassRootsScope
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.PoweredLibraryScopeBase
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.calculateEntriesVirtualFileSystems
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.calculateTopPackageNames
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
@@ -50,18 +47,21 @@ abstract class LibraryInfo internal constructor(
     override val project: Project,
     val library: LibraryEx,
 ) : IdeaModuleInfo, LibraryModuleInfo, BinaryModuleInfo, TrackableModuleInfo {
-    private val topClassesPackageNames: Set<String>
+    private val topClassesPackageNames: Set<String>?
     private val classesEntriesVirtualFileSystems: Set<NewVirtualFileSystem>?
 
-    private val topSourcesPackageNames: Set<String>
+    private val topSourcesPackageNames: Set<String>?
     private val sourcesEntriesVirtualFileSystems: Set<NewVirtualFileSystem>?
 
     init {
-        val classes = library.getFiles(OrderRootType.CLASSES)
+        val (classes, sources) =
+            runReadAction {
+                library.getFiles(OrderRootType.CLASSES) to library.getFiles(OrderRootType.SOURCES)
+            }
+
         topClassesPackageNames = classes.calculateTopPackageNames()
         classesEntriesVirtualFileSystems = classes.calculateEntriesVirtualFileSystems()
 
-        val sources = library.getFiles(OrderRootType.SOURCES)
         topSourcesPackageNames = sources.calculateTopPackageNames()
         sourcesEntriesVirtualFileSystems = sources.calculateEntriesVirtualFileSystems()
     }
@@ -148,7 +148,7 @@ private class ResolutionAnchorAwareLibraryModificationTracker(libraryInfo: Libra
 @Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide calcHashCode()
 private class LibraryWithoutSourceScope(
     project: Project,
-    topPackageNames: Set<String>,
+    topPackageNames: Set<String>?,
     entriesVirtualFileSystems: Set<NewVirtualFileSystem>?,
     private val library: Library
 ) : PoweredLibraryScopeBase(

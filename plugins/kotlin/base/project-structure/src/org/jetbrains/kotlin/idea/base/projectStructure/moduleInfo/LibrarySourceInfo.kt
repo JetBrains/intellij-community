@@ -23,7 +23,7 @@ data class LibrarySourceInfo(
     override val project: Project,
     val library: Library,
     override val binariesModuleInfo: BinaryModuleInfo,
-    private val topPackageNames: Set<String>,
+    private val topPackageNames: Set<String>?,
     private val entriesVirtualFileSystems: Set<NewVirtualFileSystem>?
 ) :
     IdeaModuleInfo, SourceForBinaryModuleInfo {
