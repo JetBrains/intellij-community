@@ -144,16 +144,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                                              boolean ensureCanonicalName,
                                                              @NotNull NewVirtualFileSystem fs,
                                                              boolean isCaseSensitive) {
-    VirtualFileSystemEntry child;
+    VirtualFileSystemEntry newlyLoadedChild;
     synchronized (myData) {
       // maybe another doFindChild() sneaked in the middle
-      child = doFindChildInArray(name, isCaseSensitive);
-      if (child != null) return child; // including NULL_VIRTUAL_FILE
+      VirtualFileSystemEntry existingChild = doFindChildInArray(name, isCaseSensitive);
+      if (existingChild != null) return existingChild; // including NULL_VIRTUAL_FILE
       if (allChildrenLoaded()) {
         return null;//all children loaded, but child not found -> not exist
       }
 
-      // do not extract getId outside the synchronized block since it will cause a concurrency problem.
       PersistentFS pfs = owningPersistentFS();
       ChildInfo childInfo = pfs.findChildInfo(this, name, fs);
       if (childInfo == null) {
@@ -164,9 +163,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (ensureCanonicalName) {
         CharSequence persistedName = childInfo.getName();
         if (!Comparing.equal(name, persistedName)) {
-          name = persistedName.toString();
-          child = doFindChildInArray(name, isCaseSensitive);
-          if (child != null) return child;
+          //lookup again, with persistedName: persistedName _could_ be != name because pfs.findChildInfo() could access
+          // actual FS, and FS's rules for file name normalization may be trickier than we implemented in VFS
+          existingChild = doFindChildInArray(persistedName.toString(), isCaseSensitive);
+          if (existingChild != null) return existingChild;
         }
       }
 
@@ -177,18 +177,17 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       //         otherwise 'already deleted' exception is thrown sometimes (EA-933381)?
       boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !pfs.mayHaveChildren(id);
 
-      child = createChildImpl(id, nameId, attributes, isEmptyDirectory);
-
-      addChild(child);
+      newlyLoadedChild = createChildImpl(id, nameId, attributes, isEmptyDirectory);
+      addChild(newlyLoadedChild);
     }
 
-    if (!child.isDirectory()) {
+    if (!newlyLoadedChild.isDirectory()) {
       // access check should only be called when a child is actually added to the parent, otherwise it may break VFP validity
       //noinspection TestOnlyProblems
-      VfsRootAccess.assertAccessInTests(child, getFileSystem());
+      VfsRootAccess.assertAccessInTests(newlyLoadedChild, getFileSystem());
     }
 
-    return child;
+    return newlyLoadedChild;
   }
 
   private <T> T handleInvalidDirectory(T empty) {
@@ -256,6 +255,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
+  /**
+   * 'create' is a bit misleading: method loads child data from persistence into {@link VfsData} in-memory cache
+   * Note that loaded entry is _not_ added to a parent's children list.
+   */
   //@GuardedBy("myData")
   private VirtualFileSystemEntry createChildImpl(int id, int nameId, @PersistentFS.Attributes int attributes, boolean isEmptyDirectory) {
     FileLoadingTracker.fileLoaded(this, nameId);
@@ -674,6 +677,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
+  /** does nothing if child.id is already in myData.childrenIds list */
   public void addChild(@NotNull VirtualFileSystemEntry child) {
     CharSequence childName = child.getNameSequence();
     boolean isCaseSensitive = isCaseSensitive();

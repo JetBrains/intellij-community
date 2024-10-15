@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.*;
@@ -600,8 +599,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
 
       if (child == null) {
-        //FIXME RC: inside makeChildRecord() there will be a fileRecordLock acquisition -- and recursive acquisition is
-        //          impossible with StampedLock
         child = makeChildRecord(parent, parentId, canonicalName, childData, fs, null);
         foundChildRef.set(child);
         return children.insert(child);
@@ -909,10 +906,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static boolean shouldCache(long len) {
-    if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
-      return false;
-    }
-    return true;
+    return len <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
   }
 
   private @NotNull InputStream createReplicatorAndStoreContent(@NotNull VirtualFile file,

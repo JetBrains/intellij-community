@@ -339,7 +339,8 @@ public final class VfsData {
 
       Object existingData = objectFieldsArray.get(offset);
       if (existingData != null) {
-        //RC: it seems like concurrency issue, really -- check the locks acquired up the stack in all invocation traces
+        //RC: it seems like concurrency issue, but I can't find a specific location
+        //MAYBE RC: don't throw the exception -- if an entry was already created, so be it, log warn and go on?
 
         FSRecordsImpl vfsPeer = owningVfsData.owningPersistentFS.peer();
         int parentId = vfsPeer.getParent(fileId);
@@ -354,6 +355,7 @@ public final class VfsData {
           + ", synchronized(parentData): " + (parentData != null ? Thread.holdsLock(parentData) : "...")
         );
       }
+
       objectFieldsArray.set(offset, fileData);
     }
 
