@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
+import org.jetbrains.kotlin.idea.debugger.core.nameMatchesUpToDollar
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
@@ -145,12 +146,6 @@ internal fun methodNameMatches(methodInfo: CallableMemberInfo, name: String): Bo
         return nameMatchesUpToDollar(name, methodInfo.name)
     }
     return false
-}
-
-// Internal functions have a '$<MODULE_NAME>' suffix
-// Local functions can be '$1' suffixed
-private fun nameMatchesUpToDollar(methodName: String, targetMethodName: String): Boolean {
-    return methodName.startsWith("$targetMethodName\$")
 }
 
 private fun LocalVariable.isInlinedFromFunction(methodName: String, isNameMangledInBytecode: Boolean, isInternalMethod: Boolean): Boolean {

@@ -90,6 +90,7 @@ private suspend fun isInlinedArgument(localVariables: List<LocalVariable>, inlin
     val markerLocalVariables = localVariables
         .map { it.name() }
         .filter { it.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
+    if (markerLocalVariables.isEmpty()) return false
 
     return readAction {
         val lambdaOrdinal = (inlineArgument as? KtFunction)?.let { lambdaOrdinalByArgument(it) }
@@ -100,7 +101,10 @@ private suspend fun isInlinedArgument(localVariables: List<LocalVariable>, inlin
             .any { variableName ->
                 if (variableName.startsWith("-")) {
                     val lambdaClassName = ClassNameCalculator.getClassName(inlineArgument)?.substringAfterLast('.') ?: return@any false
-                    dropInlineSuffix(variableName).dropInlineScopeInfo() == "-$functionName-$lambdaClassName"
+                    val cleanedVarName = dropInlineSuffix(variableName).dropInlineScopeInfo().removePrefix("-")
+                    if (!cleanedVarName.endsWith("-$lambdaClassName")) return@any false
+                    val candidateMethodName = cleanedVarName.removeSuffix("-$lambdaClassName")
+                    candidateMethodName == functionName || nameMatchesUpToDollar(candidateMethodName, functionName)
                 } else {
                     // For Kotlin up to 1.3.10
                     lambdaOrdinalByLocalVariable(variableName) == lambdaOrdinal
@@ -108,6 +112,12 @@ private suspend fun isInlinedArgument(localVariables: List<LocalVariable>, inlin
                 }
             }
     }
+}
+
+// Internal functions have a '$<MODULE_NAME>' suffix
+// Local functions can be '$1' suffixed
+internal fun nameMatchesUpToDollar(methodName: String, targetMethodName: String): Boolean {
+    return methodName.startsWith("$targetMethodName\$")
 }
 
 fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) -> T?): T? {
