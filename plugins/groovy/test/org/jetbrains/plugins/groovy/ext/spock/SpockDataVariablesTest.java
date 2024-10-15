@@ -1,96 +1,98 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.ext.spock
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.ext.spock;
 
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.util.BaseTest
-import org.junit.Test
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.util.BaseTest;
+import org.junit.Test;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
-import static com.intellij.testFramework.UsefulTestCase.assertContainsElements
+import java.util.Map;
 
-@CompileStatic
-class SpockDataVariablesTest extends SpockTestBase implements BaseTest {
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
+import static com.intellij.testFramework.UsefulTestCase.assertContainsElements;
+import static junit.framework.TestCase.assertEquals;
+
+public class SpockDataVariablesTest extends SpockTestBase implements BaseTest {
 
   private Map<String, SpockVariableDescriptor> variableMap(String text) {
-    def file = configureByText """\
-class FooSpec extends spock.lang.Specification {
-  def feature() {
-    $text
-  }
-}
-"""
-    def spec = file.typeDefinitions.first()
-    def feature = (GrMethod)spec.findMethodsByName("feature").first()
-    return SpockUtils.getVariableMap(feature)
+    String fileText = """
+                class FooSpec extends spock.lang.Specification {
+                  def feature() {
+                """ + text + """
+                  }
+                }
+                """;
+    var file = configureByText(fileText);
+    var spec = file.getTypeDefinitions()[0];
+    var feature = (GrMethod) spec.findMethodsByName("feature")[0];
+    return SpockUtils.getVariableMap(feature);
   }
 
   private void testVariableNames(String text, String... names) {
-    def variables = variableMap(text)
-    assert names.length == variables.size()
-    assertContainsElements(variables.values()*.name, names)
+    Map<String, SpockVariableDescriptor> variables = variableMap(text);
+    assert names.length == variables.size();
+    assertContainsElements(variables.values().stream().map(SpockVariableDescriptor::getName).toList(), names);
   }
 
   @Test
-  void 'where block with additional labels'() {
-    testVariableNames 'foo: abc: where: bar = 1', 'bar'
+  public void whereBlockWithAdditionalLabels() {
+    testVariableNames("foo: abc: where: bar = 1", "bar");
   }
 
   @Test
-  void 'derived parameterization'() {
-    testVariableNames 'where: bar = 1', 'bar'
+  public void derivedParameterization() {
+    testVariableNames("where: bar = 1", "bar");
   }
 
   @Test
-  void 'simple parameterization'() {
-    testVariableNames 'where: bar << [1]', 'bar'
+  public void simpleParameterization() {
+    testVariableNames("where: bar << [1]", "bar");
   }
 
   @Test
-  void 'multi parameterization'() {
-    testVariableNames 'where: [bar, baz] << [[1,2]]', 'bar', 'baz'
+  public void multiParameterization() {
+    testVariableNames("where: [bar, baz] << [[1,2]]", "bar", "baz");
   }
 
   @Test
-  void 'empty single column table'() {
-    testVariableNames 'where: bar | _', 'bar'
+  public void emptySingleColumnTable() {
+    testVariableNames("where: bar | _", "bar");
   }
 
   @Test
-  void 'empty multi column table'() {
-    testVariableNames 'where: bar | baz | bad', 'bar', 'baz', 'bad'
+  public void emptyMultiColumnTable() {
+    testVariableNames("where: bar | baz | bad", "bar", "baz", "bad");
   }
 
   @Test
-  void 'derived parameterization after table'() {
-    testVariableNames '''\
-where: 
-bar | baz | bad
-1 | 2 | 3
-foo = bar * baz
-''', 'bar', 'baz', 'bad', 'foo'
+  public void derivedParameterizationAfterTable() {
+    testVariableNames("""
+                where:
+                bar | baz | bad
+                1 | 2 | 3
+                foo = bar * baz
+                """, "bar", "baz", "bad", "foo");
   }
 
   @Test
-  void 'derived parameterization with label after table'() {
-    testVariableNames '''\
-where: 
-bar | baz | bad
-1 | 2 | 3
-and:
-foo = bar * baz
-''', 'bar', 'baz', 'bad', 'foo'
+  public void derivedParameterizationWithLabelAfterTable() {
+    testVariableNames("""
+                where:
+                bar | baz | bad
+                1 | 2 | 3
+                and:
+                foo = bar * baz
+                """, "bar", "baz", "bad", "foo");
   }
 
   @Test
-  void 'and label inside table'() {
-    def variables = variableMap '''\
-where:
-bar | _
-and:
-1   | _
-'''
-    assert variables.size() == 1
-    assert variables.values().first().type.equalsToText(JAVA_LANG_INTEGER)
+  public void andLabelInsideTable() {
+    Map<String, SpockVariableDescriptor> variables = variableMap("""
+                where:
+                bar | _
+                and:
+                1   | _
+                """);
+    assertEquals(1, variables.size());
+    assertEquals(JAVA_LANG_INTEGER, variables.values().iterator().next().getType().getCanonicalText());
   }
 }
