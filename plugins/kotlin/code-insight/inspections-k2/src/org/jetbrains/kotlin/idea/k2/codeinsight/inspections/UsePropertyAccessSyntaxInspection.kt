@@ -402,8 +402,8 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         propertyName: String
     ): Boolean {
         val allOverriddenSymbols = symbol.allOverriddenSymbolsWithSelf.toList()
+        if (functionOrItsAncestorIsInNotPropertiesList(allOverriddenSymbols, callExpression)) return false
         if (functionOriginateNotFromJava(allOverriddenSymbols)) return false
-        if (functionNameIsInNotPropertiesList(symbol, callExpression)) return false
 
         // Check that the receiver or its ancestors don't have public fields with the same name as the probable synthetic property
         if (receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType, propertyName)) return false
@@ -554,11 +554,18 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         return replacementReceiverType.semanticallyEquals(expectedReceiverType)
     }
 
-    private fun functionNameIsInNotPropertiesList(symbol: KaCallableSymbol, callExpression: KtExpression): Boolean {
-        val symbolUnsafeName = symbol.callableId?.asSingleFqName()?.toUnsafe()
-
+    private fun functionOrItsAncestorIsInNotPropertiesList(
+        allOverriddenSymbols: List<KaCallableSymbol>,
+        callExpression: KtExpression
+    ): Boolean {
         val notProperties = NotPropertiesService.getNotProperties(callExpression)
-        return symbolUnsafeName in notProperties
+
+        for (overriddenSymbol in allOverriddenSymbols) {
+            val symbolUnsafeName = overriddenSymbol.callableId?.asSingleFqName()?.toUnsafe()
+                ?: return true // something went wrong, and it's better to stop the inspection
+            if (symbolUnsafeName in notProperties) return true
+        }
+        return false
     }
 
     context(KaSession)
