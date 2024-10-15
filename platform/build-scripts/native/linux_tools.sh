@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eu
 
 # Creates the directory if it does not exist and returns its absolute path
 function make_target_dir() {
@@ -30,6 +31,9 @@ function verify_statically_linked() {
   fi
 }
 
+declare failed_count=0
+declare failed_builds=""
+
 # Build fsNotifier
 (
     mkdir $out_dir/fsNotifier && cd $out_dir/fsNotifier
@@ -39,7 +43,7 @@ function verify_statically_linked() {
     verify_glibc fsnotifier
     cp fsnotifier $dist_dir/.
     chmod +x $dist_dir/fsnotifier
-)
+) || { failed_builds+=" fsnotifier" ;  ((failed_count++)) ; }
 
 # Build WslTools
 (
@@ -64,7 +68,7 @@ function verify_statically_linked() {
 
     cp ttyfix $dist_dir/.
     chmod +x $dist_dir/ttyfix
-)
+) || { failed_builds+=" WslTools" ;  ((failed_count++)) ; }
 
 # Build Restarter
 (
@@ -81,7 +85,7 @@ function verify_statically_linked() {
 
   cp "$out_dir/restarter/x86_64-unknown-linux-musl/release/restarter" $dist_dir/.
   chmod +x $dist_dir/restarter
-)
+) || { failed_builds+=" restarter" ;  ((failed_count++)) ; }
 
 # Build Launcher
 (
@@ -97,6 +101,16 @@ function verify_statically_linked() {
   verify_glibc "$out_dir/launcher/x86_64-unknown-linux-gnu/release/xplat-launcher"
   cp "$out_dir/launcher/x86_64-unknown-linux-gnu/release/xplat-launcher" $dist_dir/launcher
   chmod +x $dist_dir/launcher
-)
+) || { failed_builds+=" launcher" ;  ((failed_count++)) ; }
 
-echo "Done Building IntelliJ Linux Tools!"
+echo "=========================="
+ls -lha $dist_dir
+echo "=========================="
+
+if [ $failed_count -gt 0 ]; then
+  echo "Failed to build: $failed_builds"
+  exit 4
+else
+  echo "Done Building IntelliJ Linux Tools!"
+  exit 0
+fi
