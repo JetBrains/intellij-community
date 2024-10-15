@@ -42,6 +42,7 @@
   <technology name="eclipselink-jpa" class="org.eclipse.persistence.jpa.PersistenceProvider"/>
   <technology name="eureka" class="com.netflix.discovery.EurekaClient"/>
   <technology name="exposed" class="org.jetbrains.exposed.sql.Query"/>
+  <technology name="fastjson2" class="com.alibaba.fastjson2.JSONObject"/>
   <technology name="finagle" class="com.twitter.finagle.Client"/>
   <technology name="flowable-bpm" class="org.flowable.engine.repository.Model"/>
   <technology name="fluentlenium" class="org.fluentlenium.core.annotation.Page"/>

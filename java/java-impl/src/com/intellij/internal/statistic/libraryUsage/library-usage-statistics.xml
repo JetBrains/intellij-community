@@ -92,6 +92,7 @@
   <technology name="elasticmq" root="elasticmq"/>
   <technology name="eureka" root="com.netflix.discovery"/>
   <technology name="exposed" root="org.jetbrains.exposed"/>
+  <technology name="fastjson2" root="com.alibaba.fastjson2"/>
   <technology name="fastutil" root="it.unimi.dsi.fast"/>
   <technology name="finagle" root="com.twitter.finagle"/>
   <technology name="finatra" root="com.twitter.finatra"/>
