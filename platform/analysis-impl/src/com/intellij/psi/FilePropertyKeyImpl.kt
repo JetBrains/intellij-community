@@ -16,6 +16,7 @@ import java.io.IOException
 import java.util.function.Function
 import java.util.function.IntFunction
 import java.util.function.ToIntFunction
+import kotlin.Throws
 
 abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
                                                                  private val persistentAttribute: FileAttribute) : FilePropertyKey<T> {
@@ -147,6 +148,11 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
                                persistentDataName: String,
                                persistentDataVersion: Int): FilePropertyKey<Int> {
       return FilePropertyIntKey(userDataName, FileAttribute(persistentDataName, persistentDataVersion, true), { t -> t }, { t -> t })
+    }
+
+    @JvmStatic
+    fun createPersistentBooleanKey(userDataName: String, persistentDataName: String, persistentDataVersion: Int): FilePropertyKey<Boolean> {
+      return FilePropertyIntKey(userDataName, FileAttribute(persistentDataName, persistentDataVersion, true), { t -> if (t) 1 else 0 }, { t -> t != 0 })
     }
 
     @JvmStatic
