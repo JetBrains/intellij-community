@@ -13,13 +13,12 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
+import com.intellij.execution.target.eel.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -37,6 +36,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.eel.LocalEelApi;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,10 +72,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public class MavenRunConfiguration extends LocatableConfigurationBase implements ModuleRunProfile, TargetEnvironmentAwareRunProfile {
@@ -338,31 +337,33 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
     @Override
     public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
-      try {
-        JavaParameters parameters = getJavaParameters();
+      var project = myConfiguration.getProject();
+      var eel = EelProviderUtil.getEelApiBlocking(project);
 
-        WslTargetEnvironmentConfiguration config = checkCreateWslConfiguration(parameters.getJdk());
-        if (config == null || config.getDistribution() == null) {
-          return null;
-        }
-
-        MavenDistribution mavenDistribution =
-          MavenDistributionsCache.getInstance(myConfiguration.getProject()).getMavenDistribution(myConfiguration.getRunnerParameters()
-                                                                                                   .getWorkingDirPath());
-        String mavenHome = StringUtil.notNullize(config.getDistribution().getWslPath(mavenDistribution.getMavenHome()));
-        String mavenVersion = StringUtil.notNullize(mavenDistribution.getVersion());
-
-        MavenRuntimeTargetConfiguration mavenConfig = new MavenRuntimeTargetConfiguration();
-        mavenConfig.setHomePath(mavenHome);
-        mavenConfig.setVersionString(mavenVersion);
-        config.addLanguageRuntime(mavenConfig);
-
-        return new WslTargetEnvironmentRequest(config);
+      if (eel instanceof LocalEelApi) {
+        return null;
       }
-      catch (ExecutionException e) {
-        // ignore
-      }
-      return null;
+
+      var mavenCache = MavenDistributionsCache.getInstance(project);
+      var mavenDistribution = mavenCache.getMavenDistribution(myConfiguration.getRunnerParameters().getWorkingDirPath());
+
+      var mavenHomePath = mavenDistribution.getMavenHome();
+      var effectiveMavenHome = StringUtil.notNullize(
+        Optional.ofNullable(eel.getMapper().getOriginalPath(mavenHomePath)).map(EelPath.Absolute::toString).orElse(mavenHomePath.toString())
+      );
+
+      var mavenVersion = StringUtil.notNullize(mavenDistribution.getVersion());
+
+      var mavenConfig = new MavenRuntimeTargetConfiguration();
+
+      mavenConfig.setHomePath(effectiveMavenHome);
+      mavenConfig.setVersionString(mavenVersion);
+
+      var configuration = new EelTargetEnvironmentRequest.Configuration(eel);
+
+      configuration.addLanguageRuntime(mavenConfig);
+
+      return new EelTargetEnvironmentRequest(configuration);
     }
 
     @Override
@@ -532,7 +533,8 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       String targetWorkingDirectory = targetedCommandLineBuilder.build().getWorkingDirectory();
       String workingDir =
         targetWorkingDirectory != null ? targetFileMapper.apply(targetWorkingDirectory) : getEnvironment().getProject().getBasePath();
-      ExternalSystemTaskId taskId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, myConfiguration.getProject());
+      ExternalSystemTaskId taskId =
+        ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, myConfiguration.getProject());
       DefaultBuildDescriptor descriptor =
         new DefaultBuildDescriptor(taskId, myConfiguration.getName(), workingDir, System.currentTimeMillis());
       if (MavenRunConfigurationType.isDelegate(getEnvironment())) {
