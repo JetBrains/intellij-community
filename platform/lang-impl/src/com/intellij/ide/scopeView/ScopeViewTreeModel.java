@@ -895,6 +895,14 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     }
 
     @Override
+    protected @Nullable VirtualFile getCacheableFile() {
+      // There are slow ops involved in getVirtualFile(),
+      // and we don't need file name caching for groups because a cached file name is only used to open an editor,
+      // and for a group it's impossible anyway.
+      return null;
+    }
+
+    @Override
     protected void update(@NotNull PresentationData presentation) {
       presentation.setIcon(getIcon());
       if (prefix != null) presentation.addText(prefix, SimpleTextAttributes.REGULAR_ATTRIBUTES);
