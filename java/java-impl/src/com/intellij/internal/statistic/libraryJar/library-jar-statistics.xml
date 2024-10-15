@@ -31,6 +31,7 @@
   <technology name="breeze" class="breeze.linalg.DenseVector"/>
   <technology name="camunda-bpm" class="org.camunda.bpm.model.bpmn.Bpmn"/>
   <technology name="cats" class="cats.Functor"/>
+  <technology name="checkerframework" class="org.checkerframework.checker.nullness.qual.Nullable"/>
   <technology name="citrus" class="com.consol.citrus.Citrus"/>
   <technology name="coherence" class="com.oracle.coherence.persistence.PersistentStore"/>
   <technology name="consul" class="com.ecwid.consul.v1.ConsulClient"/>
@@ -41,6 +42,7 @@
   <technology name="dropwizard" class="io.dropwizard.Application"/>
   <technology name="easymock" class="org.easymock.Mock"/>
   <technology name="eclipselink-jpa" class="org.eclipse.persistence.jpa.PersistenceProvider"/>
+  <technology name="errorprone" class="com.google.errorprone.annotations.Immutable"/>
   <technology name="eureka" class="com.netflix.discovery.EurekaClient"/>
   <technology name="exposed" class="org.jetbrains.exposed.sql.Query"/>
   <technology name="fastjson2" class="com.alibaba.fastjson2.JSONObject"/>
@@ -93,6 +95,7 @@
   <technology name="jakarta-ws" class="jakarta.jws.WebService"/>
   <technology name="javafx" class="javafx.scene.Scene"/>
   <technology name="javalin" class="io.javalin.Javalin"/>
+  <technology name="javax-annotation" class="javax.annotation.Nullable"/>
   <technology name="javax-batch" class="javax.batch.api.BatchProperty"/>
   <technology name="javax-cdi" class="javax.enterprise.context.ApplicationScoped"/>
   <technology name="javax-ejb" class="javax.ejb.EJB"/>
@@ -191,6 +194,7 @@
   <technology name="spek" class="org.jetbrains.spek.api.Spek"/>
   <technology name="sphinx" class="org.axonframework.commandhandling.CommandHandler"/>
   <technology name="spock" class="spock.mock.MockingApi"/>
+  <technology name="spotbugs" class="edu.umd.cs.findbugs.annotations.Nullable"/>
   <technology name="spring-amqp" class="org.springframework.amqp.core.AbstractExchange"/>
   <technology name="spring-amqp" class="org.springframework.amqp.core.Message"/>
   <technology name="spring-batch" class="org.springframework.batch.core.Job"/>

@@ -58,6 +58,7 @@
   <technology name="camunda" root="org.camunda.bpm"/>
   <technology name="cats" root="cats"/>
   <technology name="cats-effect" root="cats.effect"/>
+  <technology name="checkerframework" root="org.checkerframework"/>
   <technology name="chimney" root="chimney"/>
   <technology name="chisel3" root="chisel3"/>
   <technology name="circe" root="io.circe"/>
@@ -91,6 +92,7 @@
   <technology name="elastic4s" root="elastic4s"/>
   <technology name="elasticjob" root="org.apache.shardingsphere.elasticjob"/>
   <technology name="elasticmq" root="elasticmq"/>
+  <technology name="errorprone" root="com.google.errorprone.annotations"/>
   <technology name="eureka" root="com.netflix.discovery"/>
   <technology name="exposed" root="org.jetbrains.exposed"/>
   <technology name="fastjson2" root="com.alibaba.fastjson2"/>
@@ -155,6 +157,7 @@
   <technology name="java-websocket" root="org.java_websocket"/>
   <technology name="javafx" root="javafx"/>
   <technology name="javalin" root="io.javalin"/>
+  <technology name="javax-annotation" root="javax.annotation"/>
   <technology name="javax-batch" root="javax.batch"/>
   <technology name="javax-cdi" root="javax.enterprise.context"/>
   <technology name="javax-ejb" root="javax.ejb"/>
@@ -316,6 +319,7 @@
   <technology name="spek" root="org.jetbrains.spek"/>
   <technology name="spire" root="spire"/>
   <technology name="spock" root="spock"/>
+  <technology name="spotbugs" root="edu.umd.cs.findbugs.annotations"/>
   <technology name="spring-amqp" root="org.springframework.amqp"/>
   <technology name="spring-batch" root="org.springframework.batch"/>
   <technology name="spring-boot" root="org.springframework.boot"/>
