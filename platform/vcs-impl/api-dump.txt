@@ -330,7 +330,7 @@ a:com.intellij.openapi.vcs.VcsVFSListener
 - p:selectFilesToAdd(java.util.List):java.util.List
 - p:shouldIgnoreDeletion(com.intellij.openapi.vcs.FileStatus):Z
 - pf:waitForEventsProcessedInTestMode():V
-pc:com.intellij.openapi.vcs.VcsVFSListener$MovedFileInfo
+pf:com.intellij.openapi.vcs.VcsVFSListener$MovedFileInfo
 - myNewPath:java.lang.String
 - f:myOldPath:java.lang.String
 - getNewPath():com.intellij.openapi.vcs.FilePath

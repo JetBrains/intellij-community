@@ -52,7 +52,7 @@ public abstract class VcsVFSListener implements Disposable {
   private final VcsIgnoreManager myVcsIgnoreManager;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
-  protected static class MovedFileInfo {
+  protected static final class MovedFileInfo {
     @NotNull
     public final String myOldPath;
     @NotNull
@@ -511,9 +511,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       // backward compatibility with plugins
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        performAddingWithConfirmation(addedFiles, copyFromMap);
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> performAddingWithConfirmation(addedFiles, copyFromMap));
     }
     else {
       performAddingWithConfirmation(addedFiles, copyFromMap);
@@ -827,7 +825,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     /**
      * Not using modal progress here, because it could lead to some focus related assertion (e.g. "showing dialogs from popup" in com.intellij.ui.popup.tree.TreePopupImpl)
-     * Assume, that it is a safe to do all processing in background even if "Add to VCS" dialog may appear during such processing.
+     * Assume that it is a safe to do all processing in background even if "Add to VCS" dialog may appear during such processing.
      */
     private void processEventsInBackground(List<? extends VFileEvent> events) {
       new Task.Backgroundable(myProject, VcsBundle.message("progress.title.version.control.processing.changed.files"), true) {
