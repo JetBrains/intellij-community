@@ -1,336 +1,157 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.groovy.ext.ginq
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.ext.ginq;
 
-import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
-import org.jetbrains.plugins.groovy.completion.GroovyCompletionTestBase
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
+import org.jetbrains.plugins.groovy.completion.GroovyCompletionTestBase;
 
-class GinqCompletionTest extends GroovyCompletionTestBase {
-
-  final LightProjectDescriptor projectDescriptor = GinqTestUtils.projectDescriptor
+public class GinqCompletionTest extends GroovyCompletionTestBase {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GinqTestUtils.getProjectDescriptor();
+  }
 
   @Override
-  void setUp() throws Exception {
-    super.setUp()
-    myFixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new GrUnresolvedAccessInspection(), new GroovyAssignabilityCheckInspection());
   }
 
   private void completeGinq(String before, String after) {
-    doBasicTest("GQ {\n$before\n}", "GQ {\n$after\n}")
+    doBasicTest("GQ {\n" + before + "\n}", "GQ {\n" + after + "\n}");
   }
 
   private void completeMethodGinq(String before, String after) {
-    def testCode = {
-      """
-import groovy.ginq.transform.GQ
-
-@GQ
-def foo() {
-  $it 
-}"""
-    }
-    doBasicTest(testCode(before), testCode(after))
+    String testCode = """
+      import groovy.ginq.transform.GQ;
+      
+      @GQ
+      public void foo() {
+        %s 
+      }""".formatted(before);
+    doBasicTest(testCode, testCode.replace(before, after));
   }
 
   private void noCompleteGinq(String before, String... excluded) {
-    doNoVariantsTest("GQ { \n $before \n }", excluded)
+    doNoVariantsTest("GQ { \n " + before + " \n }", excluded);
   }
 
-  void testFrom() {
-    completeGinq('''\
-fro<caret>
-''', '''\
-from x in
-''')
+  public void testFrom() {
+    completeGinq("fro<caret>", "from x in");
   }
 
-  void testSelect() {
-    completeGinq('''\
-from x in [1]
-selec<caret>
-''', '''\
-from x in [1]
-select
-''')
+  public void testSelect() {
+    completeGinq("from x in [1]\nselec<caret>", "from x in [1]\nselect");
   }
 
-  void testBareJoin() {
-    completeGinq('''\
-from x in [1]
-fullhashjoi<caret>
-''', '''\
-from x in [1]
-fullhashjoin x1 in  on
-''')
+  public void testBareJoin() {
+    completeGinq("from x in [1]\nfullhashjoi<caret>", "from x in [1]\nfullhashjoin x1 in  on");
   }
 
-  void testJoin() {
-    completeGinq('''\
-from x in [1] 
-fullhashjoi<caret>
-select x
-''', '''\
-from x in [1] 
-fullhashjoin x1 in  on
-select x
-''')
+  public void testJoin() {
+    completeGinq("from x in [1] \nfullhashjoi<caret>\nselect x", "from x in [1] \nfullhashjoin x1 in  on\nselect x");
   }
 
-  void testWhere() {
-    completeGinq('''\
-from x in [1] 
-whe<caret>
-select x
-''', '''\
-from x in [1] 
-where 
-select x
-''')
+  public void testWhere() {
+    completeGinq("from x in [1] \nwhe<caret>\nselect x", "from x in [1] \nwhere \nselect x");
   }
 
-  void testOn() {
-    completeGinq('''\
-from x in [1] 
-join y in [1] o<caret>
-select x
-''', '''\
-from x in [1] 
-join y in [1] on
-select x
-''')
+  public void testOn() {
+    completeGinq("from x in [1] \njoin y in [1] o<caret>\nselect x", "from x in [1] \njoin y in [1] on\nselect x");
   }
 
-  void testAfterCrossjoin() {
-    completeGinq('''\
-from x in [1] 
-crossjoin y in [1]
-whe<caret>
-select x
-''', '''\
-from x in [1] 
-crossjoin y in [1]
-where 
-select x
-''')
+  public void testAfterCrossjoin() {
+    completeGinq("from x in [1] \ncrossjoin y in [1]\nwhe<caret>\nselect x", "from x in [1] \ncrossjoin y in [1]\nwhere \nselect x");
   }
 
-  void testNoOnAfterCrossjoin() {
-    noCompleteGinq('''\
-from x in [1] 
-crossjoin y in [1] <caret>
-select x
-''', 'on')
+  public void testNoOnAfterCrossjoin() {
+    noCompleteGinq("from x in [1] \ncrossjoin y in [1] <caret>\nselect x", "on");
   }
 
-  void testNoJoinAfterJoin() {
-    noCompleteGinq('''\
-from x in [1] 
-join y in [1] <caret>
-select x
-''', 'join', 'crossjoin')
+  public void testNoJoinAfterJoin() {
+    noCompleteGinq("from x in [1] \njoin y in [1] <caret>\nselect x", "join", "crossjoin");
   }
 
-
-  void testCompleteCrossjoin() {
-    completeGinq('''\
-from x in [1] 
-crossjo<caret>
-select x
-''', '''\
-from x in [1] 
-crossjoin x1 in 
-select x
-''')
+  public void testCompleteCrossjoin() {
+    completeGinq("from x in [1] \ncrossjo<caret>\nselect x", "from x in [1] \ncrossjoin x1 in \nselect x");
   }
 
-  void testCompleteBindings() {
-    completeGinq('''
-from xxxx in [1] 
-where xxx<caret>
-select xxxx
-''', '''
-from xxxx in [1] 
-where xxxx
-select xxxx
-''')
+  public void testCompleteBindings() {
+    completeGinq("from xxxx in [1] \nwhere xxx<caret>\nselect xxxx", "from xxxx in [1] \nwhere xxxx\nselect xxxx");
   }
 
-  void testCompleteInWindow() {
-    completeGinq('''
-from x in [1]
-select rowNu<caret>
-''', '''
-from x in [1]
-select (rowNumber() over ())
-''')
+  public void testCompleteInWindow() {
+    completeGinq("from x in [1]\nselect rowNu<caret>", "from x in [1]\nselect (rowNumber() over ())");
   }
 
-  void testCompleteInWindow2() {
-    completeGinq('''
-from x in [1]
-select firstVal<caret>
-''', '''
-from x in [1]
-select (firstValue() over ())
-''')
+  public void testCompleteInWindow2() {
+    completeGinq("from x in [1]\nselect firstVal<caret>", "from x in [1]\nselect (firstValue() over ())");
   }
 
-  void testCompleteInOver() {
-    completeGinq('''
-from x in [1]
-select (rowNumber() over (orde<caret>))
-''', '''
-from x in [1]
-select (rowNumber() over (orderby ))
-''')
+  public void testCompleteInOver() {
+    completeGinq("from x in [1]\nselect (rowNumber() over (orde<caret>))", "from x in [1]\nselect (rowNumber() over (orderby ))");
   }
 
-  void testCompleteInOver2() {
-    completeGinq('''
-from x in [1]
-select (rowNumber() over (parti<caret>))
-''', '''
-from x in [1]
-select (rowNumber() over (partitionby ))
-''')
+  public void testCompleteInOver2() {
+    completeGinq("from x in [1]\nselect (rowNumber() over (parti<caret>))", "from x in [1]\nselect (rowNumber() over (partitionby ))");
   }
 
-  void testCompleteInOver3() {
-    completeGinq('''
-from x in [1]
-select (rowNumber() over (partitionby x orderb<caret>))
-''', '''
-from x in [1]
-select (rowNumber() over (partitionby x orderby ))
-''')
+  public void testCompleteInOver3() {
+    completeGinq("from x in [1]\nselect (rowNumber() over (partitionby x orderb<caret>))",
+                 "from x in [1]\nselect (rowNumber() over (partitionby x orderby ))");
   }
 
-  void testCompleteInOver4() {
-    completeGinq('''
-from x in [1]
-select (rowNumber() over (partitionby x orderby x ro<caret>))
-''', '''
-from x in [1]
-select (rowNumber() over (partitionby x orderby x rows ))
-''')
+  public void testCompleteInOver4() {
+    completeGinq("from x in [1]\nselect (rowNumber() over (partitionby x orderby x ro<caret>))",
+                 "from x in [1]\nselect (rowNumber() over (partitionby x orderby x rows ))");
   }
 
-  void testCompleteInner() {
-    completeGinq('''
-from nnnn in (from a in [1] innerhashjo<caret> select b)
-select nnnn
-''', '''
-from nnnn in (from a in [1] innerhashjoin x in  on  select b)
-select nnnn
-''')
+  public void testCompleteInner() {
+    completeGinq("from nnnn in (from a in [1] innerhashjo<caret> select b)\nselect nnnn",
+                 "from nnnn in (from a in [1] innerhashjoin x in  on  select b)\nselect nnnn");
   }
 
-  void testCompleteAsc() {
-    completeGinq('''
-from x in [1]
-orderby x in as<caret>
-select x
-''', '''
-from x in [1]
-orderby x in asc
-select x
-''')
+  public void testCompleteAsc() {
+    completeGinq("from x in [1]\norderby x in as<caret>\nselect x", "from x in [1]\norderby x in asc\nselect x");
   }
 
-  void testCompleteDesc() {
-    completeGinq('''
-from x in [1]
-orderby x in des<caret>
-select x
-''', '''
-from x in [1]
-orderby x in desc
-select x
-''')
+  public void testCompleteDesc() {
+    completeGinq("from x in [1]\norderby x in des<caret>\nselect x", "from x in [1]\norderby x in desc\nselect x");
   }
 
-  void testCompleteAscNullsfirst() {
-    completeGinq('''
-from x in [1]
-orderby x in asc(nullsf<caret>)
-select x
-''', '''
-from x in [1]
-orderby x in asc(nullsfirst)
-select x
-''')
+  public void testCompleteAscNullsfirst() {
+    completeGinq("from x in [1]\norderby x in asc(nullsf<caret>)\nselect x", "from x in [1]\norderby x in asc(nullsfirst)\nselect x");
   }
 
-  void testCompleteDescNullslast() {
-    completeGinq('''
-from x in [1]
-orderby x in desc(nullsla<caret>)
-select x
-''', '''
-from x in [1]
-orderby x in desc(nullslast)
-select x
-''')
+  public void testCompleteDescNullslast() {
+    completeGinq("from x in [1]\norderby x in desc(nullsla<caret>)\nselect x", "from x in [1]\norderby x in desc(nullslast)\nselect x");
   }
 
-  void testMethodJoin() {
-    completeMethodGinq('''\
-from x in [1] 
-fullhashjoi<caret>
-select x
-''', '''\
-from x in [1] 
-fullhashjoin x1 in  on
-select x
-''')
+  public void testMethodJoin() {
+    completeMethodGinq("from x in [1] \nfullhashjoi<caret>\nselect x", "from x in [1] \nfullhashjoin x1 in  on\nselect x");
   }
 
-  void testMethodCompleteBindings() {
-    completeMethodGinq('''
-from xxxx in [1] 
-where xxx<caret>
-select xxxx
-''', '''
-from xxxx in [1] 
-where xxxx
-select xxxx
-''')
+  public void testMethodCompleteBindings() {
+    completeMethodGinq("from xxxx in [1] \nwhere xxx<caret>\nselect xxxx", "from xxxx in [1] \nwhere xxxx\nselect xxxx");
   }
 
-  void testMethodCompleteInner() {
-    completeMethodGinq('''
-from nnnn in (from a in [1] innerhashjo<caret> select b)
-select nnnn
-''', '''
-from nnnn in (from a in [1] innerhashjoin x in  on  select b)
-select nnnn
-''')
+  public void testMethodCompleteInner() {
+    completeMethodGinq("from nnnn in (from a in [1] innerhashjo<caret> select b)\nselect nnnn",
+                       "from nnnn in (from a in [1] innerhashjoin x in  on  select b)\nselect nnnn");
   }
 
-  void testShutdown() {
-    doVariantableTest('''
-GQ {
-  shut<caret>
-}
-''', '', CompletionType.BASIC, 'shutdown ', 'addShutdownHook')
+  public void testShutdown() {
+    doVariantableTest("GQ {\n  shut<caret>\n}", "", CompletionType.BASIC, "shutdown ", "addShutdownHook");
   }
 
-  void testImmediate() {
-    completeGinq('''
-shutdown immedi<caret>
-''', '''
-shutdown immediate
-''')
+  public void testImmediate() {
+    completeGinq("shutdown immedi<caret>", "shutdown immediate");
   }
 
-  void testAbort() {
-    completeGinq('''
-shutdown abor<caret>
-''', '''
-shutdown abort
-''')
+  public void testAbort() {
+    completeGinq("shutdown abor<caret>", "shutdown abort");
   }
-
 }
