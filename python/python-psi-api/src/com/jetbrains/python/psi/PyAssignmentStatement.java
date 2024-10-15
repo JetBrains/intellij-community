@@ -84,7 +84,10 @@ public interface PyAssignmentStatement extends PyAstAssignmentStatement, PyState
    */
   @Override
   @NotNull
-  List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping();
+  default List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping() {
+    //noinspection unchecked
+    return (List<Pair<PyExpression, PyExpression>>)PyAstAssignmentStatement.super.getTargetsToValuesMapping();
+  }
 
   @Override
   @Nullable
