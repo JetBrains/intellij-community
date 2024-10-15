@@ -282,22 +282,22 @@ public class DebuggerDfaRunner {
   }
 
   private void addConditions(@NotNull DfaVariableValue var, @Nullable JdiValueInfo valueInfo, @NotNull DfaMemoryState state) {
-    if (valueInfo instanceof JdiValueInfo.PrimitiveConstant) {
-      state.applyCondition(var.eq(((JdiValueInfo.PrimitiveConstant)valueInfo).getDfType()));
+    if (valueInfo instanceof JdiValueInfo.PrimitiveConstant primitiveConstant) {
+      state.applyCondition(var.eq(primitiveConstant.getDfType()));
     }
-    else if (valueInfo instanceof JdiValueInfo.StringConstant) {
+    else if (valueInfo instanceof JdiValueInfo.StringConstant stringConstant) {
       TypeConstraint stringType = myProvider.constraintFromJvmClassName(myBody, "java/lang/String");
-      state.applyCondition(var.eq(DfTypes.referenceConstant(((JdiValueInfo.StringConstant)valueInfo).getValue(), stringType)));
+      state.applyCondition(var.eq(DfTypes.referenceConstant(stringConstant.getValue(), stringType)));
     }
-    else if (valueInfo instanceof JdiValueInfo.ObjectRef) {
-      TypeConstraint exactType = getType(myBody, ((JdiValueInfo.ObjectRef)valueInfo).getSignature());
+    else if (valueInfo instanceof JdiValueInfo.ObjectRef objectRef) {
+      TypeConstraint exactType = getType(myBody, objectRef.getSignature());
       if (exactType == TypeConstraints.TOP) {
         state.meetDfType(var, DfTypes.NOT_NULL_OBJECT);
         return;
       }
       state.meetDfType(var, exactType.asDfType().meet(DfTypes.NOT_NULL_OBJECT));
-      if (valueInfo instanceof JdiValueInfo.EnumConstant) {
-        String name = ((JdiValueInfo.EnumConstant)valueInfo).getName();
+      if (valueInfo instanceof JdiValueInfo.EnumConstant enumConstant) {
+        String name = enumConstant.getName();
         if (exactType.isEnum()) {
           PsiClass enumClass = PsiUtil.resolveClassInClassTypeOnly(exactType.getPsiType(myProject));
           if (enumClass != null) {
