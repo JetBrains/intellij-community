@@ -19,6 +19,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 const val MAX_BUILDER_LENGTH = 20
 const val ADD_ARGUMENT_METHOD_NAME = "addArgument"
 const val SET_MESSAGE_METHOD_NAME = "setMessage"
+private val knownNames = setOf(ADD_ARGUMENT_METHOD_NAME, SET_MESSAGE_METHOD_NAME)
 
 internal interface LoggerTypeSearcher {
   fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType?
@@ -278,8 +279,7 @@ internal fun getLogStringIndex(parameters: List<UParameter>): Int? {
 }
 
 internal fun detectLoggerMethod(uCallExpression: UCallExpression): UCallExpression? {
-  val name = uCallExpression.methodName
-  return if (name == ADD_ARGUMENT_METHOD_NAME || name == SET_MESSAGE_METHOD_NAME) {
+  return if (uCallExpression.isMethodNameOneOf(knownNames)) {
     detectLoggerBuilderMethod(uCallExpression) ?: return null
   }
   else {
