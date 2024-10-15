@@ -16,11 +16,13 @@ internal class UsedReferencesCollector(private val file: KtFile) {
         val usedDeclarations: Map<FqName, Set<Name>>,
         val unresolvedNames: Set<Name>,
         val usedSymbols: Set<ImportableKaSymbolPointer>,
+        val references: Collection<KtReference>,
     )
 
     private val unresolvedNames: HashSet<Name> = hashSetOf()
     private val usedDeclarations: HashMap<FqName, MutableSet<Name>> = hashMapOf()
     private val importableSymbols: HashSet<ImportableKaSymbol> = hashSetOf()
+    private val references: HashSet<KtReference> = hashSetOf()
 
     private val aliases: Map<FqName, List<Name>> = collectImportAliases(file)
 
@@ -46,7 +48,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
             .map { it.run { createPointer() } }
             .toSet()
 
-        return Result(usedDeclarations, unresolvedNames, importableSymbolPointers)
+        return Result(usedDeclarations, unresolvedNames, importableSymbolPointers, references)
     }
 
     private fun KaSession.collectReferencesFrom(element: KtElement) {
@@ -56,24 +58,26 @@ internal class UsedReferencesCollector(private val file: KtFile) {
 
         if (element is KtLabelReferenceExpression) return
 
-        val references = element.references
+        val usedReferences = element.references
             .filterIsInstance<KtReference>()
             .mapNotNull { UsedReference.run { createFrom(it) } }
 
-        if (references.isEmpty()) return
+        if (usedReferences.isEmpty()) return
 
-        for (reference in references) {
+        for (usedReference in usedReferences) {
             ProgressIndicatorProvider.checkCanceled()
 
-            val isResolved = reference.run { isResolved() }
+            references += usedReference.reference
 
-            val names = reference.run { resolvesByNames() }
+            val isResolved = usedReference.run { isResolved() }
+
+            val names = usedReference.run { resolvesByNames() }
             if (!isResolved) {
                 unresolvedNames += names
                 continue
             }
 
-            val symbols = reference.run { resolveToImportableSymbols() }
+            val symbols = usedReference.run { resolveToImportableSymbols() }
 
             for (symbol in symbols) {
                 if (!symbol.run { isResolvedWithImport() }) continue
