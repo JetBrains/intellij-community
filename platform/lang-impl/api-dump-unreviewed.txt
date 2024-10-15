@@ -9238,10 +9238,10 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 - <init>(com.intellij.openapi.project.Project):V
 - getCurrentlyShownUI():com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - getPrevSelection(java.lang.String):java.lang.Object
-- savePrevSelection(java.lang.String,java.lang.Object):V
 - getSelectedTabID():java.lang.String
 - isEverywhere():Z
 - isShown():Z
+- savePrevSelection(java.lang.String,java.lang.Object):V
 - setEverywhere(Z):V
 - setSelectedTabID(java.lang.String):V
 - show(java.lang.String,java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):V
