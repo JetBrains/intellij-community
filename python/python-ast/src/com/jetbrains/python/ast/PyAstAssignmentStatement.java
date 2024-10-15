@@ -15,10 +15,13 @@
  */
 package com.jetbrains.python.ast;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +37,62 @@ import static com.jetbrains.python.ast.PyAstElementKt.findChildByClass;
  */
 @ApiStatus.Experimental
 public interface PyAstAssignmentStatement extends PyAstStatement, PyAstNamedElementContainer, PyAstAnnotationOwner {
+
+  @ApiStatus.Internal
+  static <T extends PyAstExpression> T @NotNull [] calcTargets(@NotNull PyAstAssignmentStatement statement,
+                                                               boolean raw,
+                                                               T @NotNull [] result) {
+    final ASTNode[] eqSigns = statement.getNode().getChildren(TokenSet.create(PyTokenTypes.EQ));
+    if (eqSigns.length == 0) {
+      return result;
+    }
+    final ASTNode lastEq = eqSigns[eqSigns.length - 1];
+    List<PyAstExpression> candidates = new ArrayList<>();
+    ASTNode node = statement.getNode().getFirstChildNode();
+    while (node != null && node != lastEq) {
+      final PsiElement psi = node.getPsi();
+      if (psi instanceof PyAstExpression expression) {
+        if (raw) {
+          candidates.add(expression);
+        }
+        else {
+          addCandidate(candidates, expression);
+        }
+      }
+      node = node.getTreeNext();
+    }
+    List<PyAstExpression> targets = new ArrayList<>();
+    for (PyAstExpression expr : candidates) { // only filter out targets
+      if (raw ||
+          expr instanceof PyAstTargetExpression ||
+          expr instanceof PyAstReferenceExpression ||
+          expr instanceof PyAstSubscriptionExpression ||
+          expr instanceof PyAstSliceExpression) {
+        targets.add(expr);
+      }
+    }
+    return targets.toArray(result);
+  }
+
+  private static void addCandidate(List<PyAstExpression> candidates, PyAstExpression psi) {
+    if (psi instanceof PyAstParenthesizedExpression parenthesizedExpression) {
+      addCandidate(candidates, parenthesizedExpression.getContainedExpression());
+    }
+    else if (psi instanceof PyAstSequenceExpression sequenceExpression) {
+      for (PyAstExpression pyExpression : sequenceExpression.getElements()) {
+        addCandidate(candidates, pyExpression);
+      }
+    }
+    else if (psi instanceof PyAstStarExpression starExpression) {
+      final PyAstExpression expression = starExpression.getExpression();
+      if (expression != null) {
+        addCandidate(candidates, expression);
+      }
+    }
+    else {
+      candidates.add(psi);
+    }
+  }
 
   @Nullable
   @Override
