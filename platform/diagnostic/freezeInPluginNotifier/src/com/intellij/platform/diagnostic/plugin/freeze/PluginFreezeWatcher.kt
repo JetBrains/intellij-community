@@ -17,8 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @Service(Service.Level.APP)
-@ApiStatus.Internal
-class PluginFreezeWatcher : IdePerformanceListener, Disposable {
+internal class PluginFreezeWatcher : IdePerformanceListener, Disposable {
   var latestFrozenPlugin: PluginId? = null
   private val stackTracePattern = """at (\S+)\.(\S+)\(([^:]+):(\d+)\)""".toRegex()
 
