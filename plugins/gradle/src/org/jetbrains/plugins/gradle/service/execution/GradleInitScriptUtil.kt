@@ -25,6 +25,11 @@ import java.util.regex.Matcher
 import kotlin.io.path.*
 
 private val LOG = Logger.getInstance("org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil")
+private val EXCLUDED_JAR_SUFFIXES = setOf(
+  "lib/app.jar",
+  "lib/app-client.jar",
+  "lib/lib-client.jar"
+)
 
 const val MAIN_INIT_SCRIPT_NAME = "ijInit"
 const val MAPPER_INIT_SCRIPT_NAME = "ijMapper"
@@ -291,10 +296,10 @@ private fun getToolingExtensionsJarPaths(toolingExtensionClasses: Set<Class<*>>)
       LOG.warn("The gradle api jar shouldn't be added to the gradle daemon classpath: {$aClass,$path}")
       return@map2SetNotNull null
     }
-    if (FileUtil.normalize(path).endsWith("lib/app.jar")) {
-      val message = "Attempting to pass whole IDEA app [$path] into Gradle Daemon for class [$aClass]"
+    if (isExcluded(path)) {
+      val message = "Attempting to pass an excluded IDEA component path [$path] into Gradle Daemon for class [$aClass]"
       if (ApplicationManagerEx.isInIntegrationTest()) {
-        LOG.error(message)
+        throw IllegalArgumentException(message)
       }
       else {
         LOG.warn(message)
@@ -302,4 +307,9 @@ private fun getToolingExtensionsJarPaths(toolingExtensionClasses: Set<Class<*>>)
     }
     return@map2SetNotNull FileUtil.toCanonicalPath(path)
   }
+}
+
+private fun isExcluded(jarPath: String): Boolean {
+  val normalizedJarPath = FileUtil.normalize(jarPath)
+  return EXCLUDED_JAR_SUFFIXES.any { suffix -> normalizedJarPath.endsWith(suffix) }
 }
