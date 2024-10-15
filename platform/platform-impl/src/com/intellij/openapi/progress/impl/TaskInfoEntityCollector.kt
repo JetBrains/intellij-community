@@ -2,6 +2,8 @@
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
@@ -20,14 +22,18 @@ import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+private val LOG = logger<TaskInfoEntityCollector>()
+
 private class TaskInfoEntityCollector(cs: CoroutineScope) {
   init {
+    LOG.trace { "TaskInfoEntityCollector started for application"}
     collectActiveTasks(cs, project = null)
   }
 }
 
 private class PerProjectTaskInfoEntityCollector(project: Project, cs: CoroutineScope) {
   init {
+    LOG.trace { "PerProjectTaskInfoEntityCollector started for $project"}
     collectActiveTasks(cs, project)
   }
 }
@@ -41,6 +47,7 @@ private fun collectActiveTasks(cs: CoroutineScope, project: Project?) {
         .collect { task ->
           if (!isRhizomeProgressEnabled) return@collect
 
+          LOG.trace { "Task received: entityId=${task.eid}, title=${task.title}, project=$projectOrDefault"}
           showTaskIndicator(cs, projectOrDefault, task)
         }
     }
@@ -51,6 +58,7 @@ private fun showTaskIndicator(cs: CoroutineScope, project: Project, task: TaskIn
   cs.launch {
     withKernel {
       tryWithEntities(task) {
+        LOG.trace { "Showing indicator for task: entityId=${task.eid}, title=${task.title}, project=$project"}
         showIndicator(
           project,
           taskCancellingIndicator(this, task),
@@ -63,9 +71,12 @@ private fun showTaskIndicator(cs: CoroutineScope, project: Project, task: TaskIn
 }
 
 private fun taskCancellingIndicator(cs: CoroutineScope, taskInfo: TaskInfoEntity): ProgressIndicatorEx {
+  val title = taskInfo.title
+  val entityId = taskInfo.eid
   val indicator = ProgressIndicatorBase()
   indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
     override fun cancel() {
+      LOG.trace { "Cancelling task: entityId=$entityId, title=$title"}
       cs.launch {
         TaskManager.cancelTask(taskInfo)
       }

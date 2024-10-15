@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.kernel.withKernel
 import fleet.kernel.*
 import org.jetbrains.annotations.ApiStatus
@@ -76,6 +77,7 @@ object TaskManager {
       return
     }
 
+    LOG.trace { "Changing task status from $taskStatus to $newStatus" }
     taskStatus = newStatus
   }
 

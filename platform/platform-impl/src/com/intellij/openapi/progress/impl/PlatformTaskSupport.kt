@@ -11,13 +11,12 @@ import com.intellij.openapi.application.impl.JobProvider
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.application.isModalAwareContext
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.*
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isHeadlessEnv
 import com.intellij.openapi.util.EmptyRunnable
@@ -30,16 +29,12 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
 import com.intellij.platform.kernel.withKernel
-import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.awaitCancellationAndInvoke
-import fleet.kernel.rete.asValuesFlow
 import fleet.kernel.rete.collect
-import fleet.kernel.rete.filter
-import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -53,6 +48,8 @@ import kotlin.coroutines.coroutineContext
 
 internal val isRhizomeProgressEnabled
   get() = Registry.`is`("rhizome.progress")
+
+private val LOG = logger<PlatformTaskSupport>()
 
 @Internal
 class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
@@ -91,12 +88,16 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       return@coroutineScope withBackgroundProgressInternalOld(project, title, cancellation, action)
     }
 
+    LOG.trace { "Task received: title=$title, project=$project" }
+
     val context = currentCoroutineContext()
     val taskStorage = TaskStorage.getInstance()
 
     val pipe = cs.createProgressPipe()
 
     val taskInfoEntity = taskStorage.addTask(project, title, cancellation)
+    val entityId = taskInfoEntity.eid
+    LOG.trace { "Task added to storage: entityId=$entityId, title=$title" }
 
     try {
       cs.subscribeToTask(taskInfoEntity, context, pipe).use {
@@ -104,8 +105,10 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       }
     }
     finally {
+      LOG.trace { "Task finished: entityId=$entityId, title=$title" }
       cs.launch {
         taskStorage.removeTask(taskInfoEntity)
+        LOG.trace { "Task removed from storage: entityId=$entityId, title=$title" }
       }
     }
   }
@@ -120,9 +123,12 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   }
 
   private fun CoroutineScope.subscribeToTaskStatus(taskInfo: TaskInfoEntity, context: CoroutineContext): Job {
+    val title = taskInfo.title
+    val entityId = taskInfo.eid
     return launch {
       withKernel {
         taskInfo.statuses.collect { status ->
+          LOG.trace { "Task status changed to $status, entityId=$entityId, title=$title" }
           when (status) {
             TaskStatus.RUNNING -> { /* TODO RDCT-1620 */ }
             TaskStatus.PAUSED -> { /* TODO RDCT-1620 */ }
@@ -265,6 +271,7 @@ internal fun CoroutineScope.showIndicator(
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
     withContext(progressManagerTracer.span("Progress: ${taskInfo.title}")) {
       withContext(Dispatchers.EDT) {
+        LOG.trace { "Showing indicator for task: $taskInfo" }
         val indicatorAdded = showIndicatorInUI(project, taskInfo, indicator)
         try {
           indicator.start() // must be after showIndicatorInUI
@@ -280,6 +287,7 @@ internal fun CoroutineScope.showIndicator(
           }
         }
         finally {
+          LOG.trace { "Hiding indicator for task: $taskInfo" }
           indicator.finish(taskInfo) // removes indicator from UI if added
         }
       }
