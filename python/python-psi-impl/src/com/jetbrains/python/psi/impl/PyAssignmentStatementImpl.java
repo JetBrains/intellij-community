@@ -51,10 +51,11 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     if (!PsiTreeUtil.hasErrorElements(this)) { // no parse errors
       PyExpression[] constituents = PsiTreeUtil.getChildrenOfType(this, PyExpression.class); // "a = b = c" -> [a, b, c]
       if (constituents != null && constituents.length > 1) {
-        PyExpression rhs = constituents[constituents.length - 1]; // last
-        List<PyExpression> lhses = Lists.newArrayList(constituents);
-        if (!lhses.isEmpty()) lhses.remove(lhses.size() - 1); // copy all but last; most often it's one element.
-        for (PyExpression lhs : lhses) mapToValues(lhs, rhs, ret);
+        int lastIndex = constituents.length - 1;
+        PyExpression rhs = constituents[lastIndex];
+        for (int i = 0; i < lastIndex; i++) {
+          mapToValues(constituents[i], rhs, ret);
+        }
       }
     }
     return ret;
