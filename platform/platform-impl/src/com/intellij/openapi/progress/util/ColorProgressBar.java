@@ -20,7 +20,9 @@ import java.awt.geom.Rectangle2D;
 
 /**
  * @author Eugene Belyaev
+ * @deprecated Use {@link JProgressBar} component. Use colors in {@link com.intellij.util.ui.JBUI.CurrentTheme.ProgressBar}.
  */
+@Deprecated
 public final class ColorProgressBar extends JComponent {
   private static final Dimension PREFERRED_SIZE = new Dimension(146, 17);
 
