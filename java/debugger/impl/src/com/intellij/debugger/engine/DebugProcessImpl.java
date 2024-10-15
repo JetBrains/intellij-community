@@ -1968,6 +1968,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     @Override
     public void step(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, RequestHint hint, Object commandToken) {
+      super.step(suspendContext, stepThread, hint, commandToken);
       doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_OUT, hint, commandToken);
     }
 
@@ -2020,6 +2021,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     @Override
     public void step(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, RequestHint hint, Object commandToken) {
+      super.step(suspendContext, stepThread, hint, createCommandToken());
       doStep(suspendContext, stepThread, myStepSize, StepRequest.STEP_INTO, hint, commandToken);
     }
 
@@ -2093,6 +2095,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     @Override
     public void step(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, RequestHint hint, Object commandToken) {
+      super.step(suspendContext, stepThread, hint, commandToken);
       doStep(suspendContext, stepThread, myStepSize, getStepDepth(), hint, commandToken);
     }
 
@@ -2131,6 +2134,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (myIgnoreBreakpoints) {
         DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
       }
+      beforeSteppingAction(context);
       LightOrRealThreadInfo threadFilterFromContext = getThreadFilterFromContext(context);
       applyThreadFilter(threadFilterFromContext);
       int breakpointSuspendPolicy = context.getSuspendPolicy();
@@ -2183,12 +2187,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         myThreadBlockedMonitor.startWatching(myContextThread);
       }
 
-      if (context != null) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(SteppingListener.TOPIC)
-          .beforeSteppingStarted(context, getSteppingAction());
-      }
-
-
       if (context != null
           && isResumeOnlyCurrentThread()
           && context.getSuspendPolicy() == EventRequest.SUSPEND_ALL
@@ -2201,6 +2199,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     public void step(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, RequestHint hint, Object commandToken) {
+      beforeSteppingAction(suspendContext);
+    }
+
+    protected void beforeSteppingAction(SuspendContextImpl context) {
+      if (context != null) {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(SteppingListener.TOPIC)
+          .beforeSteppingStarted(context, getSteppingAction());
+      }
     }
 
     protected @NotNull Engine getEngine() {
