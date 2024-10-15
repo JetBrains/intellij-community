@@ -8,6 +8,7 @@ import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -20,11 +21,13 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.actions.BooleanPropertyToggleAction
 import com.intellij.vcs.log.util.VcsLogUtil.HEAD
+import git4idea.GitRemoteBranch
 import git4idea.actions.GitFetch
 import git4idea.actions.branch.GitBranchActionsUtil.calculateNewBranchInitialName
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBrancher
+import git4idea.branch.GitRefType
 import git4idea.branch.IncomingOutgoingState
 import git4idea.commands.Git
 import git4idea.config.GitVcsSettings
@@ -204,7 +207,7 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class DeleteBranchAction : BranchesActionBase(
+  class DeleteBranchAction : RefActionBase(
     text = messagePointer("action.Git.Delete.Branch.title", 0),
     icon = AllIcons.Actions.GC
   ) {
@@ -215,13 +218,19 @@ internal object BranchesDashboardActions {
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-    override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>, selection: BranchesTreeSelection) {
-      e.presentation.text = message("action.Git.Delete.Branch.title", branches.size)
+    override fun update(e: AnActionEvent, project: Project, refs: Collection<RefInfo>, selection: BranchesTreeSelection) {
+      val allRefsAreBranches = refs.all { it is BranchInfo}
 
-      val disabled =
-        branches.any {
-          it.isCurrent || (!it.isLocalBranch && isRemoteBranchProtected(selection.getSelectedRepositories(it), it.branchName))
-        }
+      e.presentation.text =
+        if (allRefsAreBranches) message("action.Git.Delete.Branch.title", refs.size)
+        else ApplicationBundle.message("button.delete")
+
+      val disabled = refs.any {
+        if (it.isCurrent) return@any true
+        val asRemoteBranch = (it as? BranchInfo)?.branch as? GitRemoteBranch ?: return@any false
+
+        isRemoteBranchProtected(selection.getSelectedRepositories(it), asRemoteBranch.name)
+      }
 
       e.presentation.isEnabled = !disabled
     }
@@ -236,28 +245,40 @@ internal object BranchesDashboardActions {
     private fun delete(project: Project, selection: BranchesTreeSelection) {
       val gitBrancher = GitBrancher.getInstance(project)
 
-        val deleteRemoteBranches = {
-          val remoteBranchesNames = mutableSetOf<String>()
-          val remoteBranchesRepos = mutableSetOf<GitRepository>()
-          selection.selectedBranchesToRepositories.forEach { (branch, repos) ->
-            if (!branch.isLocalBranch) {
-              remoteBranchesNames.add(branch.branchName)
+      val remoteBranchesNames = mutableSetOf<String>()
+      val remoteBranchesRepos = mutableSetOf<GitRepository>()
+      val localBranches = mutableMapOf<String, List<GitRepository>>()
+      val tags = mutableMapOf<String, List<GitRepository>>()
+      selection.selectedRefsToRepositories.forEach { (refInfo, repos) ->
+        when (refInfo) {
+          is BranchInfo -> {
+            if (refInfo.isLocalBranch) {
+              localBranches[refInfo.branchName] = repos
+            }
+            else {
+              remoteBranchesNames.add(refInfo.branchName)
               remoteBranchesRepos.addAll(repos)
             }
           }
-          gitBrancher.deleteRemoteBranches(remoteBranchesNames.toList(), remoteBranchesRepos.toList())
+          is TagInfo -> {
+            tags[refInfo.ref.name] = repos
+          }
         }
+      }
 
-      val localBranches = selection.selectedBranchesToRepositories
-        .filter { (branch, _) -> branch.isLocalBranch }
-        .associate { (branch, repos) -> branch.branchName to repos }
+      val deleteRemoteBranches = {
+        gitBrancher.deleteRemoteBranches(remoteBranchesNames.toList(), remoteBranchesRepos.toList())
+      }
 
-        if (localBranches.isNotEmpty()) { //delete local (possible tracked) branches first if any
-          gitBrancher.deleteBranches(localBranches, deleteRemoteBranches)
-        }
-        else {
-          deleteRemoteBranches()
-        }
+      if (tags.isNotEmpty()) {
+        gitBrancher.deleteTags(tags)
+      }
+      if (localBranches.isNotEmpty()) { //delete local (possible tracked) branches first if any
+        gitBrancher.deleteBranches(localBranches, deleteRemoteBranches)
+      }
+      else {
+        deleteRemoteBranches()
+      }
     }
   }
 
@@ -279,9 +300,9 @@ internal object BranchesDashboardActions {
       val selection = e.getData(GIT_BRANCHES_TREE_SELECTION) ?: return
       val gitBrancher = GitBrancher.getInstance(project)
 
-      selection.selectedBranchesToRepositories.forEach { (branch, repositories) ->
-        if (!branch.isCurrent) {
-          gitBrancher.compare(branch.branchName, repositories)
+      selection.selectedRefsToRepositories.forEach { (refInfo, repositories) ->
+        if (refInfo is BranchInfo && !refInfo.isCurrent) {
+          gitBrancher.compare(refInfo.branchName, repositories)
         }
       }
     }
@@ -437,17 +458,16 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class ToggleFavoriteAction : BranchesActionBase(text = messagePointer("action.Git.Toggle.Favorite.title"),
-                                                  icon = AllIcons.Nodes.Favorite) {
+  class ToggleFavoriteAction : RefActionBase(text = messagePointer("action.Git.Toggle.Favorite.title"), icon = AllIcons.Nodes.Favorite) {
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
       val selection = e.getData(GIT_BRANCHES_TREE_SELECTION) ?: return
 
       val gitBranchManager = project.service<GitBranchManager>()
-      selection.selectedBranchesToRepositories.forEach { (branch, repositories) ->
-        val type = if (branch.isLocalBranch) GitBranchType.LOCAL else GitBranchType.REMOTE
+      selection.selectedRefsToRepositories.forEach { (refInfo, repositories) ->
+        val type = GitRefType.of(refInfo.ref)
         for (repository in repositories) {
-          gitBranchManager.setFavorite(type, repository, branch.branchName, !branch.isFavorite)
+          gitBranchManager.setFavorite(type, repository, refInfo.refName, !refInfo.isFavorite)
         }
       }
     }
@@ -592,6 +612,27 @@ internal object BranchesDashboardActions {
     }
   }
 
+  abstract class RefActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String, icon: Icon) :
+    DumbAwareAction(text, icon) {
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
+    }
+
+    override fun update(e: AnActionEvent) {
+      val selection = e.getData(GIT_BRANCHES_TREE_SELECTION)
+      val selectedRefs = selection?.selectedRefs
+      val project = e.project
+      val enabled = project != null && !selectedRefs.isNullOrEmpty()
+      e.presentation.isEnabled = enabled
+      if (enabled) {
+        update(e, project, selectedRefs, selection)
+      }
+    }
+
+    open fun update(e: AnActionEvent, project: Project, refs: Collection<RefInfo>, selection: BranchesTreeSelection) {}
+  }
+
   abstract class BranchesActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String = { "" },
                                     private val description: () -> @Nls(capitalization = Nls.Capitalization.Sentence) String = { "" },
                                     icon: Icon? = null) :
@@ -651,14 +692,14 @@ internal object BranchesDashboardActions {
         return
       }
 
-      val selectedFilters = e.getData(GIT_BRANCHES_TREE_SELECTION)?.selectedBranchFilters
-      e.presentation.isEnabled = selectedFilters?.size == 1
+      e.presentation.isEnabled = e.getData(GIT_BRANCHES_TREE_SELECTION)?.logNavigatableNodeDescriptor != null
       e.presentation.isVisible = true
     }
 
     override fun actionPerformed(e: AnActionEvent) {
       val controller = e.getData(BRANCHES_UI_CONTROLLER) ?: return
-      controller.navigateLogToSelectedBranch()
+      val selection = e.getData(GIT_BRANCHES_TREE_SELECTION)?.logNavigatableNodeDescriptor ?: return
+      controller.navigateLogToRef(selection)
     }
   }
 }

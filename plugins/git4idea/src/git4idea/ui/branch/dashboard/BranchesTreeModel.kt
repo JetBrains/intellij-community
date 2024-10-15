@@ -71,7 +71,7 @@ internal sealed class BranchNodeDescriptor {
     override fun toString() = "ROOT"
   }
 
-  internal object Head : BranchNodeDescriptor() {
+  internal object Head : BranchNodeDescriptor(), LogNavigatable {
     override val displayName: @Nls String = message("group.Git.HEAD.Branch.Filter.title")
     override val children: List<BranchNodeDescriptor>
       get() = emptyList()
@@ -94,7 +94,7 @@ internal sealed class BranchNodeDescriptor {
     override fun toString(): String = "REMOTE:$displayName"
   }
 
-  sealed class Ref(val refInfo: RefInfo) : BranchNodeDescriptor() {
+  sealed class Ref(val refInfo: RefInfo) : BranchNodeDescriptor(), LogNavigatable {
     override val children: List<BranchNodeDescriptor>
       get() = emptyList()
   }
@@ -126,6 +126,8 @@ internal sealed class BranchNodeDescriptor {
   ) : BranchNodeDescriptor() {
     override fun toString(): String = "GROUP:$displayName"
   }
+
+  sealed interface LogNavigatable
 }
 
 internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMutableTreeNode(nodeDescriptor) {
