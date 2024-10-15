@@ -139,7 +139,8 @@ private class EelMavenCmdState(
        * Params normalization should be performed automatically
        * @see [com.intellij.execution.eel.EelApiWithPathsNormalization]
        */
-      val builder = EelExecApi.executeProcessBuilder(eel.mapper.getOriginalPath(Path.of(cmd.exePath)).toString())
+      val exe = eel.mapper.getOriginalPath(Path.of(cmd.exePath)) ?: error("Cannot find exe for ${cmd.exePath}")
+      val builder = EelExecApi.executeProcessBuilder(exe.toString())
         .args(cmd.parametersList.parameters)
         .env(cmd.environment)
         .workingDirectory(workingDirectory)
