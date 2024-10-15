@@ -10302,7 +10302,6 @@ f:com.intellij.openapi.progress.util.ColorProgressBar
 - getMinimumSize():java.awt.Dimension
 - getPreferredSize():java.awt.Dimension
 - isIndeterminate():Z
-- s:main(java.lang.String[]):V
 - setColor(java.awt.Color):V
 - setFraction(D):V
 - setIndeterminate(Z):V

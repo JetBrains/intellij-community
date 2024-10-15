@@ -12,10 +12,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.geom.Rectangle2D;
 
 /**
@@ -210,35 +206,5 @@ public final class ColorProgressBar extends JComponent {
 
   public Color getColor() {
     return myColor;
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  public static void main(String[] args) {
-    JFrame frame = new JFrame("ColorProgressBar Test");
-    frame.addWindowListener(
-      new WindowAdapter() {
-        @Override
-        public void windowClosing(WindowEvent e) {
-          System.exit(0);
-        }
-      }
-    );
-    frame.setSize(800, 600);
-    frame.setLocation(0, 0);
-    Container contentPane = frame.getContentPane();
-    contentPane.setLayout(new BorderLayout());
-    final ColorProgressBar colorProgressBar = new ColorProgressBar();
-    colorProgressBar.setFraction(0.5);
-    colorProgressBar.setIndeterminate(true);
-    contentPane.add(colorProgressBar, BorderLayout.NORTH);
-    frame.setVisible(true);
-    JButton b = new JButton ("X");
-    b.addActionListener(new ActionListener () {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-         colorProgressBar.setFraction(1);
-      }
-    });
-    contentPane.add(b, BorderLayout.SOUTH);
   }
 }
