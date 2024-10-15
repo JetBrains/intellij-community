@@ -4,12 +4,14 @@ package org.jetbrains.plugins.gitlab.ui
 import com.intellij.ide.FileIconProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitlabIcons
 import javax.swing.Icon
 
 private val GITLAB_CI_FILE_MASK = Regex(""".*\.gitlab-ci(\..*)?\.(yaml|yml)""")
 
-internal fun isGitlabCiFile(file: VirtualFile): Boolean {
+@ApiStatus.Internal
+fun isGitlabCiFile(file: VirtualFile): Boolean {
   return GITLAB_CI_FILE_MASK.matches(file.name)
 }
 
