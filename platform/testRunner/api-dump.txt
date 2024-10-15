@@ -465,6 +465,7 @@ c:com.intellij.execution.testframework.ui.TestStatusLine
 - onTestsDone(java.util.function.Supplier):V
 - setFraction(D):V
 - setIndeterminate(Z):V
+- setStatus(java.lang.String):V
 - setStatusColor(java.awt.Color):V
 - setText(java.lang.String):V
 c:com.intellij.execution.testframework.ui.TestsConsoleBuilderImpl

@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.nls.NlsMessages;
-import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
@@ -19,18 +18,28 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import javax.swing.*;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
 
 public class TestStatusLine extends NonOpaquePanel {
-  private static final SimpleTextAttributes IGNORE_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.YELLOW);
-  private static final SimpleTextAttributes ERROR_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.RED_TEXT);
+  private static final SimpleTextAttributes IGNORED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Label.warningForeground());
+  private static final SimpleTextAttributes FAILED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Label.errorForeground());
 
   protected final JProgressBar myProgressBar = new JProgressBar();
   protected final SimpleColoredComponent myState = new SimpleColoredComponent();
+  private final SimpleColoredComponent myStateDescription = new SimpleColoredComponent();
   private final JPanel myProgressPanel;
   private final JLabel myWarning = new JLabel();
 
@@ -47,12 +56,14 @@ public class TestStatusLine extends NonOpaquePanel {
     final var constraint = new GridBag();
     myState.setOpaque(false);
     stateWrapper.add(myState, constraint.next());
+    myStateDescription.setOpaque(false);
+    myStateDescription.setVisible(false);
+    stateWrapper.add(myStateDescription, constraint.next().insetLeft(6));
 
     myWarning.setOpaque(false);
     myWarning.setVisible(false);
     myWarning.setIcon(AllIcons.General.Warning);
-    myWarning.setBorder(JBUI.Borders.emptyLeft(12));
-    stateWrapper.add(myWarning, constraint.next());
+    stateWrapper.add(myWarning, constraint.next().insetLeft(12));
 
     add(stateWrapper, BorderLayout.WEST);
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
@@ -81,57 +92,67 @@ public class TestStatusLine extends NonOpaquePanel {
                                    Long duration,
                                    long endTime) {
     myState.clear();
+    myStateDescription.clear();
+    myStateDescription.setVisible(false);
+
     if (testsTotal == 0) {
       testsTotal = finishedTestsCount;
       if (testsTotal == 0) return;
     }
+
     int passedCount = finishedTestsCount - failuresCount - ignoredTestsCount;
-    if (duration == null || endTime == 0) {
-      //running tests
-      formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
+    int failedCount = finishedTestsCount - passedCount - ignoredTestsCount;
+    int ignoredCount = finishedTestsCount - failuresCount - passedCount;
+
+    if (finishedTestsCount != testsTotal) {
+      if (endTime != 0) {
+        myState.append(TestRunnerBundle.message("test.result.stopped"));
+        myState.append(" ");
+      }
+
+      if (finishedTestsCount == passedCount) myState.append(TestRunnerBundle.message("test.result.in.progress.all.passed", finishedTestsCount, testsTotal));
+      else if (finishedTestsCount == failedCount) appendColored(TestRunnerBundle.message("test.result.in.progress.failed", finishedTestsCount, testsTotal, failedCount));
+      else if (finishedTestsCount == ignoredCount) appendColored(TestRunnerBundle.message("test.result.in.progress.ignored", finishedTestsCount, testsTotal, ignoredCount));
+      else if (ignoredCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.failed.passed", finishedTestsCount, testsTotal, failedCount, passedCount));
+      else if (passedCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.failed.ignored", finishedTestsCount, testsTotal, failedCount, ignoredCount));
+      else if (failedCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.passed.ignored", finishedTestsCount, testsTotal, passedCount, ignoredCount));
+      else appendColored(TestRunnerBundle.message("test.result.in.progress.failed.passed.ignored", finishedTestsCount, testsTotal, failedCount, passedCount, ignoredCount));
       return;
     }
 
-    //finished tests
-    boolean stopped = finishedTestsCount != testsTotal;
-    if (stopped) {
-      myState.append(TestRunnerBundle.message("test.stopped") + " ");
-    }
+    if (finishedTestsCount == passedCount) myState.append(TestRunnerBundle.message("test.result.finished.all.passed"));
+    else if (finishedTestsCount == failedCount) myState.append(TestRunnerBundle.message("test.result.finished.all.failed"), FAILED_ATTRIBUTES);
+    else if (finishedTestsCount == ignoredCount) myState.append(TestRunnerBundle.message("test.result.finished.all.ignored"), IGNORED_ATTRIBUTES);
+    else if (ignoredCount == 0) appendColored(TestRunnerBundle.message("test.result.finished.failed.passed", failedCount, passedCount));
+    else if (passedCount == 0) appendColored(TestRunnerBundle.message("test.result.finished.failed.ignored", failedCount, ignoredCount));
+    else if (failedCount == 0) appendColored(TestRunnerBundle.message("test.result.finished.passed.ignored", passedCount, ignoredCount));
+    else appendColored(TestRunnerBundle.message("test.result.finished.failed.passed.ignored", failedCount, passedCount, ignoredCount));
 
-    formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
-
-    @NlsSafe String fragment = " – " + NlsMessages.formatDurationApproximateNarrow(duration);
-    myState.append(fragment, SimpleTextAttributes.GRAY_ATTRIBUTES);
+    if (duration == null) return;
+    myStateDescription.setVisible(true);
+    @NlsSafe String fragment = TestRunnerBundle.message("test.result.finished.description", testsTotal, NlsMessages.formatDurationApproximateNarrow(duration));
+    myStateDescription.append(fragment, SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
 
-  private void formatCounts(int failuresCount, int ignoredTestsCount, int passedCount, int testsTotal) {
-    boolean something = false;
-    if (failuresCount > 0) {
-      myState.append(TestRunnerBundle.message("tests.result.prefix") + " ", ERROR_ATTRIBUTES);
-      myState.append(TestRunnerBundle.message("tests.result.failed.count", failuresCount), ERROR_ATTRIBUTES);
-      something = true;
-    }
-    else {
-      myState.append(TestRunnerBundle.message("tests.result.prefix")+" ");
-    }
+  private void appendColored(@Nls String text) {
+    try {
+      Document document = DocumentBuilderFactory.newInstance()
+        .newDocumentBuilder()
+        .parse(new ByteArrayInputStream(("<root>" + text + "</root>").getBytes(StandardCharsets.UTF_8)));
+      NodeList divs = document.getElementsByTagName("div");
 
-    if (passedCount > 0 || ignoredTestsCount + failuresCount == 0) {
-      if (something) {
-        myState.append(", ");
+      for (int i = 0; i < divs.getLength(); i++) {
+        Element div = (Element) divs.item(i);
+        var style = switch (div.getAttribute("class")) {
+          case "failed" -> FAILED_ATTRIBUTES;
+          case "ignored" -> IGNORED_ATTRIBUTES;
+          default -> SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        };
+        //noinspection HardCodedStringLiteral
+        myState.append(div.getTextContent(), style);
       }
-      something = true;
-      myState.append(TestRunnerBundle.message("tests.result.passed.count", passedCount));
-    }
-
-    if (ignoredTestsCount > 0) {
-      if (something) {
-        myState.append(", ");
-      }
-      myState.append(TestRunnerBundle.message("tests.result.ignored.count", ignoredTestsCount), IGNORE_ATTRIBUTES);
-    }
-
-    if (testsTotal > 0) {
-      myState.append(TestRunnerBundle.message("tests.result.total.count", testsTotal), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    } catch (ParserConfigurationException | SAXException | IOException e) {
+      throw new RuntimeException("Couldn't parse test status message", e);
     }
   }
 

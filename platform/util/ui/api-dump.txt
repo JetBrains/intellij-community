@@ -4349,8 +4349,10 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Label
 - <init>():V
 - s:disabledForeground():java.awt.Color
 - s:disabledForeground(Z):java.awt.Color
+- s:errorForeground():java.awt.Color
 - s:foreground():java.awt.Color
 - s:foreground(Z):java.awt.Color
+- s:warningForeground():java.awt.Color
 f:com.intellij.util.ui.JBUI$CurrentTheme$Link
 - sf:FOCUSED_BORDER_COLOR:java.awt.Color
 - <init>():V
@@ -4488,6 +4490,22 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$PopupMenu$Selection
 - <init>():V
 - s:innerInsets():com.intellij.util.ui.JBInsets
 - s:outerInsets():com.intellij.util.ui.JBInsets
+f:com.intellij.util.ui.JBUI$CurrentTheme$ProgressBar
+- sf:FAILED:java.awt.Color
+- sf:FAILED_END:java.awt.Color
+- sf:INDETERMINATE_END:java.awt.Color
+- sf:INDETERMINATE_START:java.awt.Color
+- sf:PASSED:java.awt.Color
+- sf:PASSED_END:java.awt.Color
+- sf:PROGRESS:java.awt.Color
+- sf:TRACK:java.awt.Color
+- sf:WARNING:java.awt.Color
+- sf:WARNING_END:java.awt.Color
+- <init>():V
+- s:failedStatusValue():java.lang.String
+- s:passedStatusValue():java.lang.String
+- s:statusKey():java.lang.String
+- s:warningStatusValue():java.lang.String
 f:com.intellij.util.ui.JBUI$CurrentTheme$RunWidget
 - sf:FOREGROUND:java.awt.Color
 - sf:HOVER_BACKGROUND:java.awt.Color
