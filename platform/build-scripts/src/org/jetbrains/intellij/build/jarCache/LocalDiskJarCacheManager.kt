@@ -28,7 +28,7 @@ import kotlin.time.Duration.Companion.days
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".bin"
 
-private const val cacheVersion: Byte = 10
+private const val cacheVersion: Byte = 11
 
 internal class LocalDiskJarCacheManager(
   private val cacheDir: Path,
