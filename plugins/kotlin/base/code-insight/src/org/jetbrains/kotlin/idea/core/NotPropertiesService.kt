@@ -28,6 +28,9 @@ interface NotPropertiesService {
             for (byteBufferMethod in listOf("getChar", "getDouble", "getFloat", "getInt", "getLong", "getShort")) {
                 add("java.nio.ByteBuffer.$byteBufferMethod")
             }
+
+            add("java.util.AbstractCollection.isEmpty") // KTIJ-31157
+            add("java.util.AbstractMap.isEmpty") // KTIJ-31157
         }
 
         fun getNotProperties(element: PsiElement): Set<FqNameUnsafe> {
