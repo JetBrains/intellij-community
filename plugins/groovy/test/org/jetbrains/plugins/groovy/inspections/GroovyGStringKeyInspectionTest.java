@@ -1,81 +1,82 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.groovy.inspections
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.inspections;
 
-import com.intellij.codeInspection.InspectionProfileEntry
-import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyGStringKeyInspection
-import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
+import com.intellij.codeInspection.InspectionProfileEntry;
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyGStringKeyInspection;
+import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
 
-class GroovyGStringKeyInspectionTest extends GrHighlightingTestBase {
+public class GroovyGStringKeyInspectionTest extends GrHighlightingTestBase {
   @Override
-  InspectionProfileEntry[] getCustomInspections() { [new GroovyGStringKeyInspection()] }
+  public InspectionProfileEntry[] getCustomInspections() { return new GroovyGStringKeyInspection[]{new GroovyGStringKeyInspection()}; }
 
-  void testMapLiteral() {
-    doTestHighlighting('''
-      def key = 'key'
-      [<warning>"${key}"</warning>: 'value', (key): "${key}"]
-    ''')
-  }
-  void testMapLiteralGStringFromClosure() {
-    doTestHighlighting('''
-      def key = 'foo'
-      [<warning>({"${key}"}())</warning>: 'bar']
-    ''')
+  public void testMapLiteral() {
+    doTestHighlighting("""
+                         def key = 'key'
+                         [<warning>"${key}"</warning>: 'value', (key): "${key}"]
+                         """);
   }
 
-  void testSeveralElementsInMapLiteral() {
-    doTestHighlighting('''
-      def key = 'foo'
-      [<warning>"${key}"</warning>: 'bar', <warning>"${key}2"</warning>: 'bar2']
-    ''')
+  public void testMapLiteralGStringFromClosure() {
+    doTestHighlighting("""
+                         def key = 'foo'
+                         [<warning>({"${key}"}())</warning>: 'bar']
+                         """);
   }
 
-  void testCategoryInMapLiteral() {
-    doTestHighlighting('''
-      class GStringCategory {
-        static GString gstring(String str) {
-            "${str}"
-        }
-      }
-      use (GStringCategory) {
-        [<warning>('fo'.gstring())</warning> : 'bar']
-      }
-    ''')
+  public void testSeveralElementsInMapLiteral() {
+    doTestHighlighting("""
+                         def key = 'foo'
+                         [<warning>"${key}"</warning>: 'bar', <warning>"${key}2"</warning>: 'bar2']
+                         """);
   }
 
-  void testGStringPutCall() {
-    doTestHighlighting('''
-      def key = 'foo'
-      def map = [:]
-      map.put(<warning>"${key}"</warning>, "${key}")
-    ''')
+  public void testCategoryInMapLiteral() {
+    doTestHighlighting("""
+                         class GStringCategory {
+                           static GString gstring(String str) {
+                               "${str}"
+                           }
+                         }
+                         use (GStringCategory) {
+                           [<warning>('fo'.gstring())</warning> : 'bar']
+                         }
+                         """);
   }
 
-  void testGStringPutCallSkipParentheses() {
-    doTestHighlighting('''
-      def key = 'foo'
-      def map = [:]
-      map.put <warning>"${key}"</warning>, 'bar'
-    ''')
+  public void testGStringPutCall() {
+    doTestHighlighting("""
+                         def key = 'foo'
+                         def map = [:]
+                         map.put(<warning>"${key}"</warning>, "${key}")
+                         """);
   }
 
-  void testGStringOverloadedPutCall() {
-    doTestHighlighting('''
-      public class StrangeMap extends HashMap<String, String> {
-        public void put(GString str, int k) {
-        }
-      }
-      new StrangeMap().put("${key}", 1)
-    ''')
+  public void testGStringPutCallSkipParentheses() {
+    doTestHighlighting("""
+                         def key = 'foo'
+                         def map = [:]
+                         map.put <warning>"${key}"</warning>, 'bar'
+                         """);
   }
 
-  void testPutAtLiteralCall() {
-    doTestHighlighting('''
-      def key = 'foo'
-      [:]."${key}"='bar'
-    ''')
+  public void testGStringOverloadedPutCall() {
+    doTestHighlighting("""
+                         public class StrangeMap extends HashMap<String, String> {
+                           public void put(GString str, int k) {
+                           }
+                         }
+                         new StrangeMap().put("${key}", 1)
+                         """);
   }
 
-  void 'test do not highlight null'() {
-    doTestHighlighting '[(null):1]'
+  public void testPutAtLiteralCall() {
+    doTestHighlighting("""
+                         def key = 'foo'
+                         [:]."${key}"='bar'
+                         """);
+  }
+
+  public void test_do_not_highlight_null() {
+    doTestHighlighting("[(null):1]");
   }
 }
