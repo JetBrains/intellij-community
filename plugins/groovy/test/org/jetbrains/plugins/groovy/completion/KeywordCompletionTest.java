@@ -1,143 +1,242 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.completion
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.completion;
 
-import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiPackage
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiPackage;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import static org.jetbrains.plugins.groovy.util.TestUtils.readInput
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
 
-class KeywordCompletionTest extends LightJavaCodeInsightFixtureTestCase {
+public class KeywordCompletionTest extends LightJavaCodeInsightFixtureTestCase {
+  public void testBr1() { doTest(); }
 
-  void testBr1()                 { doTest() }
-  void testCase_return()         { doTest() }
-  void testClass1()              { doTest() }
-  void testClass2()              { doTest() }
-  void testClass3()              { doTest() }
-  void testClass4()              { doTest() }
-  void testExpr1()               { doTest() }
-  void testExpr2()               { doTest() }
-  void testFile11()              { doTest() }
-  void testFile12()              { doTest() }
-  void testFin()                 { doTest() }
-  void testFin2()                { doTest() }
-  void testGRVY1064()            { doTest() }
-  void testGrvy1404()            { doTest() }
-  void testImp1()                { doTest() }
-  void testImp2()                { doTest() }
-  void testImp3()                { doTest() }
-  void testIns1()                { doTest() }
-  void testIns2()                { doTest() }
-  void testIns3()                { doTest() }
-  void testInt1()                { doTest() }
-  void testLocal1()              { doTest() }
-  void testMod1()                { doTest() }
-  void testMod10()               { doTest() }
-  void testMod11()               { doTest() }
-  void testMod2()                { doTest() }
-  void testMod3()                { doTest() }
-  void testMod4()                { doTest() }
-  void testMod5()                { doTest() }
-  void testMod6()                { doTest() }
-  void testMod7()                { doTest() }
-  void testMod8()                { doTest() }
-  void testMod9()                { doTest() }
-  void testPack1()               { doTest() }
-  void testSt1()                 { doTest() }
-  void testSwit1()               { doTest() }
-  void testSwit13()              { doTest() }
-  void testSwit14()              { doTest() }
-  void testSwit2()               { doTest() }
-  void testSwit3()               { doTest() }
-  void testSwit4()               { doTest() }
-  void testSwit5()               { doTest() }
-  void testTag1()                { doTest() }
-  void testTag2()                { doTest() }
-  void testTag3()                { doTest() }
-  void testTag4()                { doTest() }
-  void testTh1()                 { doTest() }
-  void testTh2()                 { doTest() }
-  void testVar1()                { doTest() }
-  void testVar10()               { doTest() }
-  void testVar13()               { doTest() }
-  void testVar2()                { doTest() }
-  void testVar3()                { doTest() }
-  void testVar4()                { doTest() }
-  void testVar5()                { doTest() }
-  void testVar6()                { doTest() }
-  void testVar7()                { doTest() }
-  void testVar8()                { doTest() }
-  void testWhile55()             { doTest() }
-  void testDefInsideCase()       { doTest() }
-  void testThrows1()             { doTest() }
-  void testThrows2()             { doTest() }
-  void testThrows3()             { doTest() }
-  void testPrimitiveTypes()      { doTest() }
-  void testIncompleteConstructor() { doTest() }
-  void testAtInterface()         { doTest() }
-  void testInstanceOf()          { doTest() }
-  void testAssert()              { doTest() }
-  void testReturn()              { doTest() }
-  void testAssertInClosure()     { doTest() }
-  void testAfterLabel()          { doTest() }
-  void testKeywordsInParentheses() { doTest() }
-  void testCompletionInTupleVar(){ doTest() }
-  void testAnnotationArg()       { doTest() }
-  void testDefaultAnnotationArg(){ doTest() }
-  void testDefaultInAnnotation() { doTest() }
-  void testElse1()               { doTest() }
-  void testElse2()               { doTest() }
-  void testElse3()               { doTest() }
-  void testClassAfterAnnotation(){ doTest() }
-  void testClassAfterAnno2()     { doTest() }
-  void testExtends()             { doTest() }
-  void testImplements()          { doTest() }
-  void testAfterNumberLiteral()  { doTest() }
-  void testDoWhile()             { doTest() }
-  void testDoWhile2()            { doTest() }
+  public void testCase_return() { doTest(); }
 
-  String basePath = TestUtils.testDataPath + 'groovy/oldCompletion/keyword'
+  public void testClass1() { doTest(); }
 
-  private boolean oldAutoInsert
+  public void testClass2() { doTest(); }
+
+  public void testClass3() { doTest(); }
+
+  public void testClass4() { doTest(); }
+
+  public void testExpr1() { doTest(); }
+
+  public void testExpr2() { doTest(); }
+
+  public void testFile11() { doTest(); }
+
+  public void testFile12() { doTest(); }
+
+  public void testFin() { doTest(); }
+
+  public void testFin2() { doTest(); }
+
+  public void testGRVY1064() { doTest(); }
+
+  public void testGrvy1404() { doTest(); }
+
+  public void testImp1() { doTest(); }
+
+  public void testImp2() { doTest(); }
+
+  public void testImp3() { doTest(); }
+
+  public void testIns1() { doTest(); }
+
+  public void testIns2() { doTest(); }
+
+  public void testIns3() { doTest(); }
+
+  public void testInt1() { doTest(); }
+
+  public void testLocal1() { doTest(); }
+
+  public void testMod1() { doTest(); }
+
+  public void testMod10() { doTest(); }
+
+  public void testMod11() { doTest(); }
+
+  public void testMod2() { doTest(); }
+
+  public void testMod3() { doTest(); }
+
+  public void testMod4() { doTest(); }
+
+  public void testMod5() { doTest(); }
+
+  public void testMod6() { doTest(); }
+
+  public void testMod7() { doTest(); }
+
+  public void testMod8() { doTest(); }
+
+  public void testMod9() { doTest(); }
+
+  public void testPack1() { doTest(); }
+
+  public void testSt1() { doTest(); }
+
+  public void testSwit1() { doTest(); }
+
+  public void testSwit13() { doTest(); }
+
+  public void testSwit14() { doTest(); }
+
+  public void testSwit2() { doTest(); }
+
+  public void testSwit3() { doTest(); }
+
+  public void testSwit4() { doTest(); }
+
+  public void testSwit5() { doTest(); }
+
+  public void testTag1() { doTest(); }
+
+  public void testTag2() { doTest(); }
+
+  public void testTag3() { doTest(); }
+
+  public void testTag4() { doTest(); }
+
+  public void testTh1() { doTest(); }
+
+  public void testTh2() { doTest(); }
+
+  public void testVar1() { doTest(); }
+
+  public void testVar10() { doTest(); }
+
+  public void testVar13() { doTest(); }
+
+  public void testVar2() { doTest(); }
+
+  public void testVar3() { doTest(); }
+
+  public void testVar4() { doTest(); }
+
+  public void testVar5() { doTest(); }
+
+  public void testVar6() { doTest(); }
+
+  public void testVar7() { doTest(); }
+
+  public void testVar8() { doTest(); }
+
+  public void testWhile55() { doTest(); }
+
+  public void testDefInsideCase() { doTest(); }
+
+  public void testThrows1() { doTest(); }
+
+  public void testThrows2() { doTest(); }
+
+  public void testThrows3() { doTest(); }
+
+  public void testPrimitiveTypes() { doTest(); }
+
+  public void testIncompleteConstructor() { doTest(); }
+
+  public void testAtInterface() { doTest(); }
+
+  public void testInstanceOf() { doTest(); }
+
+  public void testAssert() { doTest(); }
+
+  public void testReturn() { doTest(); }
+
+  public void testAssertInClosure() { doTest(); }
+
+  public void testAfterLabel() { doTest(); }
+
+  public void testKeywordsInParentheses() { doTest(); }
+
+  public void testCompletionInTupleVar() { doTest(); }
+
+  public void testAnnotationArg() { doTest(); }
+
+  public void testDefaultAnnotationArg() { doTest(); }
+
+  public void testDefaultInAnnotation() { doTest(); }
+
+  public void testElse1() { doTest(); }
+
+  public void testElse2() { doTest(); }
+
+  public void testElse3() { doTest(); }
+
+  public void testClassAfterAnnotation() { doTest(); }
+
+  public void testClassAfterAnno2() { doTest(); }
+
+  public void testExtends() { doTest(); }
+
+  public void testImplements() { doTest(); }
+
+  public void testAfterNumberLiteral() { doTest(); }
+
+  public void testDoWhile() { doTest(); }
+
+  public void testDoWhile2() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp()
-    def instance = CodeInsightSettings.instance
-    oldAutoInsert = instance.AUTOCOMPLETE_ON_CODE_COMPLETION
-    instance.AUTOCOMPLETE_ON_CODE_COMPLETION = false
+    super.setUp();
+    CodeInsightSettings instance = CodeInsightSettings.getInstance();
+    oldAutoInsert = instance.AUTOCOMPLETE_ON_CODE_COMPLETION;
+    instance.AUTOCOMPLETE_ON_CODE_COMPLETION = false;
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeInsightSettings.instance.AUTOCOMPLETE_ON_CODE_COMPLETION = oldAutoInsert
-    super.tearDown()
+    try {
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = oldAutoInsert;
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected void doTest() {
-    final testName = getTestName(true)
-    def fileName = "${testName}.test"
-    final def (input) = readInput("$testDataPath/$fileName")
-    myFixture.configureByText "${testName}.groovy", input
-    def actual = myFixture.completeBasic().findAll {
-      def o = it.object
-      !(o instanceof PsiMember) &&
-      !(o instanceof GrVariable) &&
-      !(o instanceof GroovyResolveResult) &&
-      !(o instanceof PsiPackage)
-    } collect {
-      it.lookupString
-    } sort() join("\n")
+    final String testName = getTestName(true);
+    String fileName = testName + ".test";
+    final Iterator<String> iterator = TestUtils.readInput(getTestDataPath() + "/" + fileName).iterator();
+    final String input = iterator.hasNext() ? iterator.next() : null;
 
-    myFixture.configureByText "actual.txt", """\
-${input}
------
-${actual}\
-"""
-    myFixture.checkResultByFile fileName
+    myFixture.configureByText(testName + ".groovy", input);
+    Set<String> result = new TreeSet<>();
+    for (LookupElement element : myFixture.completeBasic()) {
+      Object object = element.getObject();
+      if (!(object instanceof PsiMember) && !(object instanceof GrVariable) && !(object instanceof GroovyResolveResult) && !(object instanceof PsiPackage)) {
+        result.add(element.getLookupString());
+      }
+    }
+    String actual = StringUtil.join(result, "\n");
+    myFixture.configureByText("actual.txt", input + "\n-----\n" + actual);
+    myFixture.checkResultByFile(fileName);
   }
+
+  @Override
+  public String getBasePath() {
+    return basePath;
+  }
+
+  public void setBasePath(String basePath) {
+    this.basePath = basePath;
+  }
+
+  private String basePath = TestUtils.getTestDataPath() + "groovy/oldCompletion/keyword";
+  private boolean oldAutoInsert;
 }
