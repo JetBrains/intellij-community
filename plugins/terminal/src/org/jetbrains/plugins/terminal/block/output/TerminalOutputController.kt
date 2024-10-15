@@ -18,8 +18,6 @@ import org.jetbrains.plugins.terminal.block.BlockTerminalScopeProvider
 import org.jetbrains.plugins.terminal.block.TerminalFocusModel
 import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.output.highlighting.CompositeTerminalTextHighlighter
-import org.jetbrains.plugins.terminal.block.output.highlighting.TerminalCommandBlockHighlighter
-import org.jetbrains.plugins.terminal.block.output.highlighting.TerminalCommandBlockHighlighterProvider.Companion.COMMAND_BLOCK_HIGHLIGHTER_PROVIDER_EP_NAME
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
 import org.jetbrains.plugins.terminal.block.session.*
 import org.jetbrains.plugins.terminal.block.ui.executeInBulk
@@ -62,16 +60,11 @@ internal class TerminalOutputController(
 
   private val nextBlockCanBeStartedQueue: Queue<() -> Unit> = LinkedList()
 
-  private val commandBlockHighlighters: List<TerminalCommandBlockHighlighter> = COMMAND_BLOCK_HIGHLIGHTER_PROVIDER_EP_NAME
-    .extensionList
-    .map { it.getHighlighter(editor.colorsScheme) }
-
   init {
     editor.putUserData(IS_OUTPUT_EDITOR_KEY, true)
     editor.highlighter = CompositeTerminalTextHighlighter(
       outputModel,
       textHighlighter,
-      commandBlockHighlighters.toMutableList(),
       session
     )
     session.model.addTerminalListener(this)
