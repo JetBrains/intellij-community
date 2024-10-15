@@ -268,7 +268,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     boolean isDirectory = PersistentFS.isDirectory(attributes);
     Object fileData = isDirectory ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP;
-    segment.initFileData(id, fileData);
+    segment.initFileData(id, fileData, this);
 
     VirtualFileSystemEntry child = vfsData.getFileById(id, this, true);
     assert child != null;
@@ -565,7 +565,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     PersistentFSImpl persistence = owningPersistentFS();
     String name = persistence.getName(id);
-    VirtualFileSystemEntry fileByName = findChild(name, false, false, getFileSystem());
+    //RC: why ensureCanonicalName=false?
+    VirtualFileSystemEntry fileByName = findChild(name, /*refresh: */ false, /*ensureCanonicalName: */ false, getFileSystem());
     if (fileByName != null && fileByName.getId() != id) {
       // a child with the same name and different ID was recreated after a refresh session -
       // it doesn't make sense to check it earlier because it is executed outside the VFS' read/write lock

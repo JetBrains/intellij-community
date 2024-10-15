@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * <li> The file has not been instantiated yet, so {@link #getFileById} returns null. </li>
  *
  * <li> A file is explicitly requested by calling getChildren or findChild on its parent. The parent initializes all the necessary data (in a thread-safe context)
- * and creates the file instance. See {@link Segment#initFileData(int, Object)} </li>
+ * and creates the file instance. See {@link Segment#initFileData(int, Object, VirtualDirectoryImpl)} </li>
  *
  * <li> After that the file is live, an object representing it can be retrieved any time from its parent. File system roots are
  * kept on hard references in {@link PersistentFS} </li>
@@ -334,7 +334,7 @@ public final class VfsData {
     }
 
     //@GuardedBy("parent.DirectoryData")
-    void initFileData(int fileId, @NotNull Object fileData) throws FileAlreadyCreatedException {
+    void initFileData(int fileId, @NotNull Object fileData, @NotNull VirtualDirectoryImpl parent) throws FileAlreadyCreatedException {
       int offset = objectOffsetInSegment(fileId);
 
       Object existingData = objectFieldsArray.get(offset);
@@ -351,7 +351,7 @@ public final class VfsData {
           describeAlreadyCreatedFile(fileId)
           + " data: " + fileData
           + ", alreadyExistingData: " + existingData
-          + ", parentData: " + parentData
+          + ", parentData: " + parentData + ", parent.data: " + parent.myData + " equals: " + (parentData == parent.myData)
           + ", synchronized(parentData): " + (parentData != null ? Thread.holdsLock(parentData) : "...")
         );
       }
