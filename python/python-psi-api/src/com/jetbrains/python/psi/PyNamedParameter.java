@@ -40,17 +40,6 @@ public interface PyNamedParameter extends PyAstNamedParameter, PyParameter, PsiN
 
   /**
    * @param includeDefaultValue if true, include the default value after an "=".
-   * @return canonical representation of parameter.
-   * Includes asterisks for *param and **param, and name.
-   */
-  @Override
-  @NotNull
-  default String getRepr(boolean includeDefaultValue) {
-    return getRepr(includeDefaultValue, null);
-  }
-
-  /**
-   * @param includeDefaultValue if true, include the default value after an "=".
    * @param context             context to be used to resolve argument type
    * @return canonical representation of parameter.
    * Includes asterisks for *param and **param, and name.

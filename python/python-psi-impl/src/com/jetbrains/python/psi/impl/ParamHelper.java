@@ -15,10 +15,9 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.ast.impl.ParamHelperCore;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
@@ -148,15 +147,7 @@ public final class ParamHelper {
 
   @NotNull
   public static String getNameInSignature(@NotNull PyNamedParameter parameter) {
-    final StringBuilder sb = new StringBuilder();
-
-    if (parameter.isPositionalContainer()) sb.append("*");
-    else if (parameter.isKeywordContainer()) sb.append("**");
-
-    final String name = parameter.getName();
-    sb.append(name != null ? name : "...");
-
-    return sb.toString();
+    return ParamHelperCore.getNameInSignature(parameter);
   }
 
   /**
@@ -168,25 +159,7 @@ public final class ParamHelper {
   @Nullable
   @Contract("null, _->null")
   public static String getDefaultValuePartInSignature(@Nullable String defaultValue, boolean parameterRenderedAsTyped) {
-    if (defaultValue == null) return null;
-
-    final StringBuilder sb = new StringBuilder();
-
-    // According to PEP 8 equal sign should be surrounded by spaces if annotation is present
-    sb.append(parameterRenderedAsTyped ? " = " : "=");
-
-    final Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(defaultValue);
-    if (quotes != null) {
-      final String value = defaultValue.substring(quotes.getFirst().length(), defaultValue.length() - quotes.getSecond().length());
-      sb.append(quotes.getFirst());
-      StringUtil.escapeStringCharacters(value.length(), value, sb);
-      sb.append(quotes.getSecond());
-    }
-    else {
-      sb.append(defaultValue);
-    }
-
-    return sb.toString();
+    return ParamHelperCore.getDefaultValuePartInSignature(defaultValue, parameterRenderedAsTyped);
   }
 
   public static boolean couldHaveDefaultValue(@NotNull String parameterName) {

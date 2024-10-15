@@ -17,9 +17,7 @@ package com.jetbrains.python.ast;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.StubElement;
-import com.jetbrains.python.PyElementTypes;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.ast.impl.ParamHelperCore;
@@ -94,7 +92,17 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
    * Includes asterisks for *param and **param, and name.
    */
   @NotNull
-  String getRepr(boolean includeDefaultValue);
+  default String getRepr(boolean includeDefaultValue) {
+    final StringBuilder sb = new StringBuilder();
+
+    sb.append(ParamHelperCore.getNameInSignature(this));
+
+    if (includeDefaultValue) {
+      sb.append(ObjectUtils.notNull(ParamHelperCore.getDefaultValuePartInSignature(getDefaultValueText(), false), ""));
+    }
+
+    return sb.toString();
+  }
 
   @Override
   @NotNull
