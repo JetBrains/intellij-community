@@ -9,12 +9,15 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.fileTypes.FileTypesBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandlerBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.platform.backend.presentation.TargetPresentationBuilder;
+import com.intellij.project.ProjectKt;
+import com.intellij.project.ProjectStoreOwner;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -25,6 +28,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 @State(name = "ReadonlyStatusHandler", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -73,21 +78,35 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
 
   @Override
   protected @NotNull OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles, Collection<? extends VirtualFile> files) {
-    List<FileInfo> fileInfos = files.stream()
+    IProjectStore stateStore = (myProject instanceof ProjectStoreOwner) ? ProjectKt.getStateStore(myProject) : null;
+    Map<Boolean, List<FileInfo>> projectFilesAndOthersInfos = files.stream()
       .filter(vf-> vf != null && !vf.isWritable() && vf.isInLocalFileSystem())
       .map(vf -> new FileInfo(vf, myProject))
-      .toList();
+      .collect(Collectors.partitioningBy(info -> stateStore != null && stateStore.isProjectFile(info.getFile())));
+
+    List<FileInfo> projectFiles = projectFilesAndOthersInfos.get(true);
+    List<FileInfo> fileInfos = projectFilesAndOthersInfos.get(false);
 
     // if all files are already writable
-    if (fileInfos.isEmpty()) {
+    if (fileInfos.isEmpty() && projectFiles.isEmpty()) {
       return createResultStatus(originalFiles, files);
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (myClearReadOnlyInTests) {
-        processFiles(new ArrayList<>(fileInfos), null, false);
+        ArrayList<FileInfo> allInfos = new ArrayList<>(fileInfos.size() + projectFiles.size());
+        allInfos.addAll(fileInfos);
+        allInfos.addAll(projectFiles);
+        processFiles(allInfos, null, false);
       }
       return createResultStatus(originalFiles, files);
+    }
+
+    if (!projectFiles.isEmpty()) {
+      processFiles(new ArrayList<>(projectFiles), null, false);
+      if (fileInfos.isEmpty()) {
+        return createResultStatus(originalFiles, files);
+      }
     }
 
     // This event count hack is necessary to allow actions that called this stuff could still get data from their data contexts.
