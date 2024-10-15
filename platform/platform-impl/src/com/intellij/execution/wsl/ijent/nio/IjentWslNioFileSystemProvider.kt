@@ -66,6 +66,8 @@ class IjentWslNioFileSystemProvider(
 
   override fun canHandleRouting(): Boolean = true
 
+  internal fun toIjentNioPath(path: Path): IjentNioPath = path.toIjentPath()
+
   private fun Path.toIjentPath(): IjentNioPath =
     when (this) {
       is IjentNioPath -> this
@@ -73,9 +75,11 @@ class IjentWslNioFileSystemProvider(
       else -> fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, IjentNioPath::resolve)
     }
 
+  internal fun toOriginalPath(path: Path): Path = path.toOriginalPath()
+
   private fun Path.toOriginalPath(): Path =
     when (this) {
-      is IjentNioPath -> FileSystems.getDefault().getPath(toAbsolutePath().toString())
+      is IjentNioPath -> fold(wslLocalRoot) { parent, file -> parent.resolve(file.toString()) }
       is IjentWslNioPath -> delegate.toOriginalPath()
       else -> this
     }
