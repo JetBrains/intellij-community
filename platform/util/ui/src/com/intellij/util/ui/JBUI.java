@@ -1368,6 +1368,14 @@ public final class JBUI {
       public static @NotNull Color disabledForeground() {
         return disabledForeground(false);
       }
+
+      public static @NotNull Color errorForeground() {
+        return NamedColorUtil.getErrorForeground();
+      }
+
+      public static @NotNull Color warningForeground() {
+        return JBColor.namedColor("Label.warningForeground", 0xA46704, 0xBA9752);
+      }
     }
 
     public static final class CompletionPopup {

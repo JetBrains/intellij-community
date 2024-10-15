@@ -339,7 +339,10 @@
       }
     },
 
-    "Label.errorForeground": "Red7",
+    "Label": {
+      "errorForeground": "Red7",
+      "warningForeground": "Yellow5"
+    },
 
     "Link": {
       "activeForeground": "Blue9",

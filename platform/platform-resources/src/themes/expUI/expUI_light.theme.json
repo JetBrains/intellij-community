@@ -338,7 +338,10 @@
       "Gray": "#F0F1F5"
     },
 
-    "Label.errorForeground": "Red4",
+    "Label": {
+      "errorForeground": "Red4",
+      "warningForeground": "Yellow1"
+    },
 
     "Link": {
       "activeForeground": "Blue2",
