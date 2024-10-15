@@ -14,6 +14,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaListener
 import com.intellij.debugger.engine.dfaassist.DfaAssistProvider
 import com.intellij.debugger.jdi.StackFrameProxyEx
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -22,6 +23,7 @@ import com.intellij.util.ThreeState
 import com.intellij.xdebugger.impl.dfaassist.DfaHint
 import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
+import com.sun.jdi.PrimitiveType
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
@@ -147,7 +149,18 @@ class K2DfaAssistProvider : DfaAssistProvider {
                         }
                         val variable = proxy.visibleVariableByName(name)
                         if (variable != null) {
-                            return postprocess(proxy.getVariableValue(variable))
+                            val value = postprocess(proxy.getVariableValue(variable))
+                            val expectedType = symbol.returnType
+                            if (inlined && value.type() is PrimitiveType && !(expectedType.isPrimitive && !expectedType.canBeNull)) {
+                                val typeKind = JvmPrimitiveTypeKind.getKindByName(value.type().name())
+                                if (typeKind != null) {
+                                    val referenceType = proxy.virtualMachine.classesByName(typeKind.boxedFqn).firstOrNull()
+                                    if (referenceType != null) {
+                                        return DfaAssistProvider.BoxedValue(value, referenceType)
+                                    }
+                                }
+                            }
+                            return value
                         }
                     }
                 }

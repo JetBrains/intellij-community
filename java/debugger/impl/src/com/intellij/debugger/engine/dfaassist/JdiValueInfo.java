@@ -106,6 +106,12 @@ interface JdiValueInfo {
     if (value instanceof StringReference stringReference) {
       return new StringConstant(stringReference.value());
     }
+    if (value instanceof DfaAssistProvider.BoxedValue boxedValue) {
+      DfConstantType<?> wrappedConstant = primitiveConstant(boxedValue.value());
+      if (wrappedConstant != null) {
+        return new ObjectWithSpecialField(boxedValue.type(), SpecialField.UNBOX, new PrimitiveConstant(wrappedConstant));
+      }
+    }
     if (value instanceof ObjectReference ref) {
       ReferenceType type = ref.referenceType();
       if (!classLoaderFilter.test(type.classLoader())) return null;

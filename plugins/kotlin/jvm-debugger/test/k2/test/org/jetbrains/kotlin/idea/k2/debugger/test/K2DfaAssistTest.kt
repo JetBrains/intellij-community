@@ -401,6 +401,23 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    fun testInlineFunctionGenericUnboxed() {
+        val text = """
+            package org.jetbrains.kotlin.idea.k2.debugger.test
+            
+            fun main() {
+                inlineGeneric(42)
+            }
+            
+            inline fun <T> inlineGeneric(par: T) {
+                <caret>if (par is Int/*TRUE*/) println("Int")
+            }
+        """
+        doTest(text) { vm, frame ->
+            frame.addVariable("par" + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX, MockIntegerValue(vm, 42))
+        }
+    }
+
     fun testInlineFunctionReceiverThis() {
         val text = """
             fun main() {
