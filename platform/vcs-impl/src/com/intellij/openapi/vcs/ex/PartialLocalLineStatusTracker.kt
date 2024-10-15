@@ -795,7 +795,13 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   @RequiresEdt
   override fun setExcludedFromCommit(isExcluded: Boolean) {
-    affectedChangeLists.forEach { setExcludedFromCommit(it, isExcluded) }
+    setExcludedFromCommit({ true }, isExcluded)
+
+    if (!isOperational()) {
+      for (changelistId in affectedChangeLists) {
+        initialExcludeState[ChangeListMarker(changelistId)] = isExcluded
+      }
+    }
   }
 
   override fun setExcludedFromCommit(changelistId: String, isExcluded: Boolean) {
@@ -821,13 +827,6 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
           block.excludedFromCommit = if (isExcluded) RangeExclusionState.Excluded else RangeExclusionState.Included
         }
       }
-    }
-    fireExcludedFromCommitChanged()
-  }
-
-  fun excludeAllBlocks() {
-    documentTracker.writeLock {
-      blocks.forEach { b -> b.excludedFromCommit = RangeExclusionState.Excluded }
     }
     fireExcludedFromCommitChanged()
   }

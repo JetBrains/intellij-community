@@ -288,7 +288,7 @@ private class CommitChunkWorkFlowHandler(
   }
 
   override fun executorCalled(executor: CommitExecutor?) {
-    tracker.excludeAllBlocks()
+    tracker.setExcludedFromCommit(true)
     tracker.setExcludedFromCommit(rangeProvider(), false)
     super.executorCalled(executor)
   }
