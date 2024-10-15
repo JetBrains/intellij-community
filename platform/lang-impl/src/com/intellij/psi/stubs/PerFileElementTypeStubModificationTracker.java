@@ -33,6 +33,7 @@ import java.nio.file.NoSuchFileException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.FileUpdateProcessor {
   static final Logger LOG = Logger.getInstance(PerFileElementTypeStubModificationTracker.class);
@@ -66,6 +67,8 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     });
 
   private final SimpleMessageBusConnection myProjectCloseListener;
+
+  private final AtomicReference<Throwable> disposeTrace = new AtomicReference<>();
 
   PerFileElementTypeStubModificationTracker() {
     myProjectCloseListener = ApplicationManager.getApplication().getMessageBus().simpleConnect();
@@ -119,6 +122,9 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   public synchronized void endUpdatesBatch() {
     myModificationsInCurrentBatch.clear();
     ReadAction.run(() -> {
+      if (disposeTrace.get() != null) {
+        throw new IllegalStateException("Cannot end updates batch because the tracker is disposed! Disposal trace is in the cause", disposeTrace.get());
+      }
       fastCheck();
       if (myProbablyExpensiveUpdates.size() > PRECISE_CHECK_THRESHOLD) {
         coarseCheck();
@@ -253,7 +259,14 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     return FileContentImpl.createByText(file, content.getText(), project);
   }
 
+  void undispose() {
+    // we have a real problem when plugins are installed. At the moment suppress it, because there seems to be
+    // one more problem (possible race between dispose() and endUpdatesBatch()) which is otherwise masked by this one.
+    disposeTrace.set(null);
+  }
+
   public void dispose() {
+    disposeTrace.set(new Throwable());
     myProjectCloseListener.disconnect();
     myFileElementTypesCache.clear();
     myModCounts.clear();

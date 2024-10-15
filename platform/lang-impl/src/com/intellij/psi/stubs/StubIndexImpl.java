@@ -231,6 +231,8 @@ public final class StubIndexImpl extends StubIndexEx {
   void initializeStubIndexes() {
     assert !myInitialized;
 
+    myPerFileElementTypeStubModificationTracker.undispose();
+
     // might be called on the same thread twice if initialization has been failed
     if (myStateFuture == null) {
       // ensure that FileBasedIndex task "FileIndexDataInitialization" submitted first
