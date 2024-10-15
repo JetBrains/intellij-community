@@ -36,6 +36,7 @@
   <technology name="coherence" class="com.oracle.coherence.persistence.PersistentStore"/>
   <technology name="consul" class="com.ecwid.consul.v1.ConsulClient"/>
   <technology name="cucumber" class="io.cucumber.java.Before"/>
+  <technology name="dagger" class="dagger.Provides"/>
   <technology name="datanucleus-jpa" class="org.datanucleus.api.jpa.PersistenceProviderImpl"/>
   <technology name="debezium" class="io.debezium.engine.ChangeEvent"/>
   <technology name="drools" class="org.drools.core.spi.KnowledgeHelper"/>
