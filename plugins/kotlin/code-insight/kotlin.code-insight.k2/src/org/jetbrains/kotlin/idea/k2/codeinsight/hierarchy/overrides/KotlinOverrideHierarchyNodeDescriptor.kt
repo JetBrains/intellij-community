@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -84,7 +85,7 @@ class KotlinOverrideHierarchyNodeDescriptor(
 
     internal fun calculateState(): Icon? {
         val element = psiElement ?: return null
-        val module = KaModuleProvider.getModule(project, element, useSiteModule = null)
+        val module = element.getKaModule(project, useSiteModule = null)
         return analyze(module) {
             val classSymbol = getCurrentClassSymbol() ?: return@analyze null
             val callableSymbol = getCurrentSymbol() ?: return@analyze AllIcons.Hierarchy.MethodNotDefined

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
@@ -211,7 +212,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
         }
 
         fun isImportable(t: PsiElement): Boolean {
-            val module = KaModuleProvider.getModule(t.project, t, useSiteModule = null)
+            val module = t.getKaModule(t.project, useSiteModule = null)
             return analyze(module) {
                 val resolvedSymbol = when (t) {
                     is KtNamedDeclaration -> t.symbol

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -29,7 +30,7 @@ abstract class AbstractInheritorsProviderTest : AbstractProjectStructureTest<Inh
     private fun checkTargetFile(testTarget: InheritorsProviderTestTarget, testDirectory: String) {
         val module = modulesByName[testTarget.moduleName] ?: error("The target module `${testTarget.moduleName}` does not exist.")
         val ktFile = module.findSourceKtFile(testTarget.filePath)
-        val kaModule = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)
+        val kaModule = ktFile.getKaModule(project, useSiteModule = null)
 
         val targetClass = ktFile.findReferenceAt(getCaretPosition(ktFile))?.resolve() as? KtClass
             ?: error("Expected a `${KtClass::class.simpleName}` reference at the caret position.")

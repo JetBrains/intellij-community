@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
@@ -35,7 +36,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         val ktFile = declaration.containingKtFile
         if (!ktFile.isCompiled) return declaration
         val project = ktFile.project
-        return when (val module = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
+        return when (val module = ktFile.getKaModule(project, useSiteModule = null) ) {
             is KaLibraryModule -> getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(
                 module.librarySources ?: return declaration,
                 declaration,
@@ -50,7 +51,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         val ktFile = declaration.containingKtFile
         if (ktFile.isCompiled) return declaration
         val project = ktFile.project
-        return when (val module = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
+        return when (val module = ktFile.getKaModule(project, useSiteModule = null)) {
             is KaLibrarySourceModule -> getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(
                 module.binaryLibrary,
                 declaration,

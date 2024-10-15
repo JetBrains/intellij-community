@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.module.Module
@@ -5,7 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 
 /**
@@ -136,3 +141,33 @@ val KaSourceModule.openapiModule: Module
  */
 fun Library.toKaLibraryModules(project: Project): List<KaLibraryModule> =
     project.ideProjectStructureProvider.getKaLibraryModules(this)
+
+/**
+ * Returns a [KaModule] for a given PsiElement in the context of the [useSiteModule].
+ *
+ * The use-site module is the [KaModule] from which [getKaModule] is called. This concept is the same as the use-site module accepted by
+ * [analyze][org.jetbrains.kotlin.analysis.api.analyze], and closely related to the concept of a use-site element. In essence, when we
+ * are performing analysis, most of the time we do so from the point of view of a particular [KaModule] or [PsiElement]. If this module
+ * is already known, it should be passed as the [useSiteModule] to [getKaModule].
+ *
+ * @see org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider.getModule
+ */
+fun PsiElement.getKaModule(project: Project, useSiteModule: KaModule?): KaModule =
+    KaModuleProvider.getModule(project, this, useSiteModule)
+
+/**
+ * @return [KaModule] for a given PsiElement in the context of the [useSiteModule] if it's of type [M]. Returns `null` otherwise.
+ *
+ * @see org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider.getModule
+ */
+inline fun <reified M : KaModule> PsiElement.getKaModuleOfTypeSafe(project: Project, useSiteModule: KaModule?): M? =
+    getKaModule(project, useSiteModule) as? M
+
+
+/**
+ * @return [KaModule] for a given PsiElement in the context of the [useSiteModule] if it's of type [M]. Throws an exception otherwise.
+ *
+ * @see org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider.getModule
+ */
+inline fun <reified M : KaModule> PsiElement.getKaModuleOfType(project: Project, useSiteModule: KaModule?): M =
+    getKaModule(project, useSiteModule) as M

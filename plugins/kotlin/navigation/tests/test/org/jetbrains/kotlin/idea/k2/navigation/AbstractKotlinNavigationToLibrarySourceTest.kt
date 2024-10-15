@@ -10,6 +10,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -28,7 +29,7 @@ abstract class AbstractKotlinNavigationToLibrarySourceTest : AbstractReferenceRe
     override fun performAdditionalResolveChecks(results: List<PsiElement>) {
         for (result in results) {
             val navigationElement = result.navigationElement
-            val module = KaModuleProvider.getModule(project, navigationElement, useSiteModule = null)
+            val module = navigationElement.getKaModule(project, useSiteModule = null)
             UsefulTestCase.assertTrue(
                 "reference should be resolved to the psi element from ${KaLibrarySourceModule::class} but was resolved to ${module::class}",
                 module is KaLibrarySourceModule

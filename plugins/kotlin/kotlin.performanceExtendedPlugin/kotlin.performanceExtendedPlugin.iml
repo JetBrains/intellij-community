@@ -33,5 +33,6 @@
     <orderEntry type="module" module-name="intellij.performanceTesting.vcs" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="kotlin.base.project-structure" />
   </component>
 </module>

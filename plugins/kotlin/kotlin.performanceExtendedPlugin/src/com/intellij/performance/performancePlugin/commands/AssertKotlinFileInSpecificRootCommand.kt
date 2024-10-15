@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 
 internal class AssertKotlinFileInSpecificRootCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
     companion object {
@@ -27,7 +28,7 @@ internal class AssertKotlinFileInSpecificRootCommand(text: String, line: Int) : 
             //maybe readaction
             writeIntentReadAction {
                 val psiFile = file.findPsiFile(project) ?: error("Fail to find psi file $filePath")
-                val module = KaModuleProvider.getModule(project, psiFile, useSiteModule = null)
+                val module = psiFile.getKaModule(project, useSiteModule = null)
                 if (module !is KaSourceModule) {
                     throw IllegalStateException("File $file ($module) not in kt source root module")
                 }

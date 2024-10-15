@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KaClassifierBodyRenderer
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -31,7 +32,7 @@ abstract class AbstractKaSymbolByPsiClassTest : KotlinLightCodeInsightFixtureTes
             val psiClass =
                 JavaFullClassNameIndex.getInstance().getClasses(classFqName, project, GlobalSearchScope.allScope(project)).single()
 
-            analyze(KaModuleProvider.getModule(project, psiClass, useSiteModule = null)) {
+            analyze(psiClass.getKaModule(project, useSiteModule = null)) {
                 val kaClassSymbol = psiClass.namedClassSymbol ?: return@analyze "<KaNamedClassSymbol cannot be created>"
                 // render should always trigger analysis and thus FIR symbol creation
                 kaClassSymbol.render(KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {

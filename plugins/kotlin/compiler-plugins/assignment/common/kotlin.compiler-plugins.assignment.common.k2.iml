@@ -37,5 +37,6 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="kotlin.code-insight.fixes.k2" />
+    <orderEntry type="module" module-name="kotlin.base.project-structure" />
   </component>
 </module>

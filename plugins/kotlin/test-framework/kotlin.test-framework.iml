@@ -43,5 +43,6 @@
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.external-build-system" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.project-structure" scope="TEST" />
   </component>
 </module>

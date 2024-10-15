@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
@@ -34,7 +35,7 @@ internal class FirBasicCompletionContext(
     val project: Project
         get() = originalKtFile.project
 
-    val useSiteModule: KaModule = KaModuleProvider.getModule(project, originalKtFile, useSiteModule = null)
+    val useSiteModule: KaModule = originalKtFile.getKaModule(project, useSiteModule = null)
 
     val importStrategyDetector = ImportStrategyDetector(originalKtFile, project)
 
