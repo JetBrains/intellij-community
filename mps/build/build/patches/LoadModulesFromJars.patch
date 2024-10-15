@@ -1,0 +1,17 @@
+Index: platform/core-impl/src/com/intellij/ide/plugins/PluginManagerCore.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/core-impl/src/com/intellij/ide/plugins/PluginManagerCore.kt b/platform/core-impl/src/com/intellij/ide/plugins/PluginManagerCore.kt
+--- a/platform/core-impl/src/com/intellij/ide/plugins/PluginManagerCore.kt	(revision 43d904233529a54f279792e8866a04304a3758af)
++++ b/platform/core-impl/src/com/intellij/ide/plugins/PluginManagerCore.kt	(date 1728992306399)
+@@ -108,7 +108,7 @@
+   fun isRunningFromSources(): Boolean {
+     var result = isRunningFromSources
+     if (result == null) {
+-      result = Files.isDirectory(Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER))
++      result = false
+       isRunningFromSources = result
+     }
+     return result

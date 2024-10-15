@@ -165,6 +165,19 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
+        <property name="LoadModulesFromJars"
+                  value="${basedir}/patches/LoadModulesFromJars.patch"/>
+        <echo message="Applying ${LoadModulesFromJars}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-check"/>
+            <arg value="${LoadModulesFromJars}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${LoadModulesFromJars}"/>
+        </exec>
+
         <property name="patchIconLoader"
                   value="${basedir}/patches/IconLoader-MPS-36435.patch"/>
         <echo message="Applying ${patchIconLoader}"/>
