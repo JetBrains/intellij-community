@@ -88,8 +88,8 @@ internal class BranchesDashboardController(
     ui.updateLogBranchFilter()
   }
 
-  fun navigateLogToSelectedBranch() {
-    ui.navigateToSelectedBranch(true)
+  fun navigateLogToRef(selection: BranchNodeDescriptor.LogNavigatable) {
+    ui.navigateToSelection(selection, true)
   }
 
   fun toggleGrouping(key: GroupingKey, state: Boolean) {

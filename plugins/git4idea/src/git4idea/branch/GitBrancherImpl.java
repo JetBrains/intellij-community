@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.CompareWithLocalDialog;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitReference;
@@ -265,10 +266,21 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void deleteTag(@NotNull String name, @NotNull List<? extends GitRepository> repositories) {
-    new CommonBackgroundTask(myProject, GitBundle.message("branch.deleting.tag.process", name), null) {
+    deleteTags(Collections.singletonMap(name, repositories));
+  }
+
+  @Override
+  public void deleteTags(@NotNull Map<String, List<? extends GitRepository>> tagsToContainingRepositories) {
+    if (tagsToContainingRepositories.isEmpty()) return;
+    String singleTag = ContainerUtil.getOnlyItem(tagsToContainingRepositories.keySet());
+    String message = singleTag == null ? GitBundle.message("branch.deleting.tags.process")
+                                       : GitBundle.message("branch.deleting.tag.process", singleTag);
+
+    new CommonBackgroundTask(myProject, message, null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).deleteTag(name, repositories);
+        GitBranchWorker worker = newWorker(indicator);
+        tagsToContainingRepositories.forEach(worker::deleteTag);
       }
     }.runInBackground();
   }
