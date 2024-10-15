@@ -494,6 +494,29 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    fun testPlatformBooleanNull() {
+        createAndSaveFile("AA.java", """
+            public class AA {
+                public static Boolean getBoolean() {
+                    return null;
+                }
+            }""".trimIndent())
+        val text = """
+            fun main() {
+                callNullable()
+            }
+            
+            fun callNullable() {
+                val nullable = AA.getBoolean()
+                <caret>print("")
+                if (nullable/*NPE*/) /*unreachable_start*/println("bravo")/*unreachable_end*/
+            }
+        """
+        doTest(text) { vm, frame ->
+            frame.addVariable(MockLocalVariable(vm, "nullable", vm.createReferenceType(java.lang.Boolean::class.java), null))
+        }
+    }
+
     private fun doTest(text: String, mockValues: BiConsumer<MockVirtualMachine, MockStackFrame>) {
         doTest(text, mockValues, "Test.kt")
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.debugger.dfaassist
 
+import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem
 import com.intellij.codeInspection.dataFlow.TypeConstraint
 import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField
@@ -256,6 +257,13 @@ class K2DfaAssistProvider : DfaAssistProvider {
                 hints.merge(
                     problem.cast.operationReference,
                     if (failed == ThreeState.YES) DfaHint.CCE else DfaHint.NONE,
+                    DfaHint::merge
+                )
+            }
+            if (problem is NullabilityProblem<*>) {
+                hints.merge(
+                    problem.anchor,
+                    if (failed == ThreeState.YES) DfaHint.NPE else DfaHint.NONE,
                     DfaHint::merge
                 )
             }

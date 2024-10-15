@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa
 
 import com.intellij.codeInsight.Nullability
+import com.intellij.codeInspection.dataFlow.NullabilityProblemKind
 import com.intellij.codeInspection.dataFlow.TypeConstraint
 import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
@@ -606,9 +607,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 continue
             }
             if (curType != null && curType.isArrayOrPrimitiveArray) {
-                if (indexType.canBeNull()) {
-                    addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
-                }
+                unboxIfNecessary(idx)
                 val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
                 val elementType = curType.arrayElementType
                 if (lastIndex && storedValue != null) {
@@ -623,9 +622,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             } else {
                 when {
                     kotlinType?.isStringType == true -> {
-                        if (indexType.canBeNull()) {
-                            addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
-                        }
+                        unboxIfNecessary(idx)
                         val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
                         addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.STRING_LENGTH, idx), transfer))
                         if (lastIndex && storedValue != null) {
@@ -636,9 +633,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     }
 
                     kotlinType?.isSubtypeOf(StandardClassIds.List) == true -> {
-                        if (indexType.canBeNull()) {
-                            addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
-                        }
+                        unboxIfNecessary(idx)
                         val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
                         addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.COLLECTION_SIZE, idx), transfer))
                         if (lastIndex && storedValue != null) {
@@ -841,9 +836,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processIfExpression(ifExpression: KtIfExpression) {
         val condition = ifExpression.condition
         processExpression(condition)
-        if (condition?.getKotlinType()?.canBeNull() == true) {
-            addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
-        }
+        unboxIfNecessary(condition)
         val skipThenOffset = DeferredOffset()
         val thenStatement = ifExpression.then
         val elseStatement = ifExpression.`else`
@@ -861,6 +854,15 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addImplicitConversion(elseStatement, exprType)
         setOffset(skipElseOffset)
         addInstruction(FinishElementInstruction(ifExpression))
+    }
+
+    context(KaSession)
+    private fun unboxIfNecessary(expression: KtExpression?) {
+        if (expression?.getKotlinType()?.canBeNull() == true) {
+            addInstruction(CheckNotNullInstruction(NullabilityProblemKind.unboxingNullable.problem(expression, null)!!,
+                                                   trapTracker.maybeTransferValue("java.lang.NullPointerException")))
+            addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+        }
     }
 
     context(KaSession)
@@ -926,8 +928,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     addInstruction(JvmPushInstruction(dfVar, null))
                     addImplicitConversion(dfVarType, balancedType)
                     addInstruction(BooleanBinaryInstruction(RelationType.EQ, true, KotlinWhenConditionAnchor(condition)))
-                } else if (exprType?.canBeNull() == true) {
-                    addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                } else {
+                    unboxIfNecessary(expr)
                 }
             }
 
@@ -966,7 +968,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val offset = ControlFlow.FixedOffset(flow.instructionCount)
             processExpression(expr.body)
             addInstruction(PopInstruction())
-            processExpression(expr.condition)
+            val condition = expr.condition
+            processExpression(condition)
+            unboxIfNecessary(condition)
             addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
             flow.finishElement(expr)
         }
@@ -980,6 +984,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
             val condition = expr.condition
             processExpression(condition)
+            unboxIfNecessary(condition)
             val endOffset = DeferredOffset()
             addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.FALSE, condition))
             processExpression(expr.body)
