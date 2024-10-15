@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -134,7 +133,7 @@ public abstract class DebuggerUtils {
             }
             return result instanceof StringReference ? ((StringReference)result).value() : result.toString();
           },
-          debugProcess.getVirtualMachineProxy());
+          evaluationContext);
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.unsupported.expression.type"));
     }
@@ -147,7 +146,7 @@ public abstract class DebuggerUtils {
   public abstract <R, T extends Value> R processCollectibleValue(
     @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
     @NotNull Function<? super T, ? extends R> processor,
-    @NotNull VirtualMachineProxy proxy) throws EvaluateException;
+    @NotNull EvaluationContext evaluationContext) throws EvaluateException;
 
   public static void ensureNotInsideObjectConstructor(@NotNull ObjectReference reference, @NotNull EvaluationContext context)
     throws EvaluateException {

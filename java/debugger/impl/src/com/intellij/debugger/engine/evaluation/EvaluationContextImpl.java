@@ -160,7 +160,7 @@ public final class EvaluationContextImpl implements EvaluationContext {
     return DebuggerUtils.getInstance().processCollectibleValue(computable, value -> {
       keep(value);
       return value;
-    }, getDebugProcess().getVirtualMachineProxy());
+    }, this);
   }
 
   public boolean isEvaluationPossible() {

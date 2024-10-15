@@ -135,7 +135,7 @@ public final class BatchEvaluator {
           evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray),
           MethodImpl.SKIP_ASSIGNABLE_CHECK, true),
         result -> result instanceof StringReference ? ((StringReference)result).value() : null,
-        debugProcess.getVirtualMachineProxy());
+        evaluationContext);
       if (value != null) {
         byte[] bytes = value.getBytes(StandardCharsets.ISO_8859_1);
         try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes))) {
