@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 
 internal fun MutableTWorkspace.generateK2DebuggerTests() {
     testGroup("jvm-debugger/test/k2", testDataPath = "../testData", category = DEBUGGER) {
@@ -53,6 +54,12 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
         testClass<AbstractK2PositionManagerTest> {
             model("positionManager", isRecursive = false, pattern = Patterns.KT, testClassName = "SingleFile")
             model("positionManager", isRecursive = false, pattern = Patterns.DIRECTORY, testClassName = "MultiFile")
+        }
+
+        listOf(AbstractK2IdeK1CodeBreakpointHighlightingTest::class, AbstractK2IdeK2CodeBreakpointHighlightingTest::class).forEach {
+            testClass(it) {
+                model("highlighting", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
+            }
         }
 
         testClass<AbstractK2SmartStepIntoTest> {
