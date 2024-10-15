@@ -16,6 +16,6 @@ fun VirtualFileUrl.isEqualOrParentOf(other: VirtualFileUrl): Boolean = FileUtil.
 
 fun VirtualFileUrl.toPath(): Path = Path.of(JpsPathUtil.urlToPath(url))
 
-val Project.isCaseSensitive: Boolean
+internal val Project.isCaseSensitive: Boolean
   get() = basePath?.let { File(it) }?.let { FileSystemUtil.readParentCaseSensitivity(it) == FileAttributes.CaseSensitivity.SENSITIVE }
           ?: false
