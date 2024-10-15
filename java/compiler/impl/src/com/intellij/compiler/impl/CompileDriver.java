@@ -444,7 +444,8 @@ public final class CompileDriver {
         if (isRebuild) {
           // if possible, ensure the rebuild starts from the clean state
           // if CLEAR_OUTPUT_DIRECTORY is allowed, we can clear cached directory completely, otherwise the build won't be able to clean outputs correctly without build caches
-          boolean canCleanBuildSystemData = Boolean.TRUE.equals(REBUILD_CLEAN.get(scope)) && CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY;
+          boolean cleanBuildRequested = Boolean.TRUE.equals(REBUILD_CLEAN.get(scope));
+          boolean canCleanBuildSystemData = cleanBuildRequested && CompilerWorkspaceConfiguration.getInstance(myProject).CLEAR_OUTPUT_DIRECTORY;
 
           CompilerUtil.runInContext(compileContext, JavaCompilerBundle.message("progress.text.clearing.build.system.data"), (ThrowableRunnable<Throwable>)() -> {
             TaskFuture<Boolean> cancelPreload = canCleanBuildSystemData? buildManager.cancelPreloadedBuilds(myProject) : new TaskFutureAdapter<>(CompletableFuture.completedFuture(Boolean.TRUE));
@@ -456,6 +457,13 @@ public final class CompileDriver {
               File[] systemFiles = buildManager.getProjectSystemDirectory(myProject).listFiles();
               if (systemFiles != null && systemFiles.length > 0) {
                 buildSystemDataCleanupTask.set(new TaskFutureAdapter<>(FileUtil.asyncDelete(Arrays.asList(systemFiles))));
+              }
+            }
+            else {
+              if (cleanBuildRequested) {
+                compileContext.addMessage(
+                  CompilerMessageCategory.INFORMATION, JavaCompilerBundle.message("error.clean.state.rebuild.not.possible"), null, -1, -1
+                );
               }
             }
           });
