@@ -153,7 +153,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         return null;//all children loaded, but child not found -> not exist
       }
 
-      PersistentFS pfs = owningPersistentFS();
+      PersistentFSImpl pfs = owningPersistentFS();
       ChildInfo childInfo = pfs.findChildInfo(this, name, fs);
       if (childInfo == null) {
         myData.addAdoptedName(name, isCaseSensitive);
@@ -170,14 +170,31 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
 
-      int nameId = childInfo.getNameId(); // the name can change if file record was created
-      int id = childInfo.getId();
-      int attributes = pfs.getFileAttributes(id);
+
+      int childId = childInfo.getId();
+      int childNameId = childInfo.getNameId(); // the name can change if file record was created
+
+      //Lookup a child by id: it is mostly useful for ensureCanonicalName=false, but it seems there are some cases
+      // there even with ensureCanonicalName=true a child couldn't be found by name, but _could_ be found by id
+      // so let's be sure:
+      VirtualFileSystemEntry childById = findCachedChildById(childId);
+      if (childById != null) {
+        if (ensureCanonicalName) {
+          //It is definitely possible for childId to be in this.childrenIds list, but not found by name, if
+          // ensureCanonicalName=false -- because of file name normalisation intricacies.
+          // But same for ensureCanonicalName=true it is a suspicious case: why didn't we find a child by name then?
+          logChildLookupFailure(pfs, childId, childNameId, name);
+        }
+
+        return childById;
+      }
+
+      int childAttributes = pfs.getFileAttributes(childId);
       //TODO RC: check isDeleted(attributes) before .mayHaveChildren() call,
       //         otherwise 'already deleted' exception is thrown sometimes (EA-933381)?
-      boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !pfs.mayHaveChildren(id);
+      boolean isEmptyDirectory = PersistentFS.isDirectory(childAttributes) && !pfs.mayHaveChildren(childId);
 
-      newlyLoadedChild = createChildImpl(id, nameId, attributes, isEmptyDirectory);
+      newlyLoadedChild = createChildImpl(childId, childNameId, childAttributes, isEmptyDirectory);
       addChild(newlyLoadedChild);
     }
 
@@ -188,6 +205,18 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     return newlyLoadedChild;
+  }
+
+  private void logChildLookupFailure(@NotNull PersistentFSImpl pfs,
+                                     int childId,
+                                     int childNameId,
+                                     @NotNull String childName) {
+    FSRecordsImpl vfsPeer = pfs.peer();
+    LOG.warn(
+      "Child[#" + childId + ", nameId: " + childNameId + "][name='" + vfsPeer.getNameByNameId(childId) + "']" +
+      " present in a childrenIds list [" + Arrays.toString(myData.childrenIds) + "], " +
+      " but can't be found by name[" + childName + "] even though ensureCanonicalName=true"
+    );
   }
 
   private <T> T handleInvalidDirectory(T empty) {
@@ -545,16 +574,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @ApiStatus.Internal
   public VirtualFileSystemEntry doFindChildById(int id) {
-    int i = ArrayUtil.indexOf(myData.childrenIds, id);
-    if (i >= 0) {
-      VirtualFileSystemEntry fileById = getVfsData().getFileById(id, this, true);
-      if (fileById != null) {
-        if (fileById.getId() != id) {
-          LOG.error("getFileById(" + id + ") returns " + fileById + " with different id(=" + fileById.getId() + ")");
-        }
-      }
-      return fileById;
-    }
+    VirtualFileSystemEntry existingChild = findCachedChildById(id);
+    if (existingChild != null) return existingChild;
 
     //We come here only from PersistentFSImpl.findFileById(), on a descend phase, there we resolve fileIds to
     // VFiles. Hence, it must be a child with childId -- because 'this' was collected as .parent during an
@@ -596,6 +617,20 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return null;
     }
     return fileByName;
+  }
+
+  private @Nullable VirtualFileSystemEntry findCachedChildById(int childId) {
+    int i = ArrayUtil.indexOf(myData.childrenIds, childId);
+    if (i >= 0) {
+      VirtualFileSystemEntry fileById = getVfsData().getFileById(childId, this, true);
+      if (fileById != null) {
+        if (fileById.getId() != childId) {
+          LOG.error("getFileById(" + childId + ") returns " + fileById + " with different id(=" + fileById.getId() + ")");
+        }
+      }
+      return fileById;
+    }
+    return null;
   }
 
   @Override
