@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListListener
@@ -43,11 +42,7 @@ internal class ProjectConfigurationFilesProcessorImpl(
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
   fun install() {
-    runReadAction {
-      if (!project.isDisposed) {
-        project.messageBus.connect(parentDisposable).subscribe(ChangeListListener.TOPIC, this)
-      }
-    }
+    project.messageBus.connect(parentDisposable).subscribe(ChangeListListener.TOPIC, this)
   }
 
   /**

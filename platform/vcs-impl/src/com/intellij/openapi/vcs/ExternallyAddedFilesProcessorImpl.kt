@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -52,12 +51,8 @@ internal class ExternallyAddedFilesProcessorImpl(
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
   fun install(coroutineScope: CoroutineScope) {
-    runReadAction {
-      if (!project.isDisposed) {
-        project.messageBus.connect(coroutineScope).subscribe(ChangeListListener.TOPIC, this)
-        AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope)
-      }
-    }
+    project.messageBus.connect(coroutineScope).subscribe(ChangeListListener.TOPIC, this)
+    AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope)
   }
 
   override fun unchangedFileStatusChanged(upToDate: Boolean) {
