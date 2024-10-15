@@ -1521,7 +1521,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     ReferenceType lookupClass =
       debugProcess.findClass(evaluationContext, "java.lang.invoke.MethodHandles$Lookup", evaluationContext.getClassLoader());
-    ObjectReference implLookup = (ObjectReference)lookupClass.getValue(lookupClass.fieldByName("IMPL_LOOKUP"));
+    ObjectReference implLookup = (ObjectReference)lookupClass.getValue(DebuggerUtils.findField(lookupClass, "IMPL_LOOKUP"));
 
     invokerArgs.add(implLookup); // lookup
     invokerArgs.add(type.classObject()); // class

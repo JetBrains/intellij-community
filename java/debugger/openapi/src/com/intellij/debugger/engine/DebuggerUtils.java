@@ -239,6 +239,42 @@ public abstract class DebuggerUtils {
     return null;
   }
 
+  /**
+   * Optimized version of {@link ReferenceType#fieldByName(String)}.
+   * It does not gather all visible fields before checking so can return early
+   */
+  @Nullable
+  public static Field findField(@NotNull ReferenceType type, @NotNull String name) {
+    LinkedList<ReferenceType> types = new LinkedList<>();
+    // first check classes
+    while (type != null) {
+      for (Field candidate : type.fields()) {
+        if (candidate.name().equals(name)) {
+          return candidate;
+        }
+      }
+      types.add(type);
+      type = type instanceof ClassType classType ? classType.superclass() : null;
+    }
+    // then interfaces
+    Set<ReferenceType> checkedInterfaces = new HashSet<>();
+    ReferenceType t;
+    while ((t = types.poll()) != null) {
+      if (t instanceof ClassType) {
+        types.addAll(0, ((ClassType)t).interfaces());
+      }
+      else if (t instanceof InterfaceType && checkedInterfaces.add(t)) {
+        for (Field candidate : t.fields()) {
+          if (candidate.name().equals(name)) {
+            return candidate;
+          }
+        }
+        types.addAll(0, ((InterfaceType)t).superinterfaces());
+      }
+    }
+    return null;
+  }
+
   public static boolean isNumeric(Value value) {
     return value != null &&
            (isInteger(value) ||
