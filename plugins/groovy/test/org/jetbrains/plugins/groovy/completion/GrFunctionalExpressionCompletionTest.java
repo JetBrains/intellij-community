@@ -1,37 +1,33 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.completion
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.completion;
 
+public abstract class GrFunctionalExpressionCompletionTest extends GroovyCompletionTestBase {
+  public void testInjectMethodForCollection() { doBasicTest(); }
 
-import groovy.transform.CompileStatic
+  public void testEachMethodForMapWithKeyValue() { doBasicTest(); }
 
-@CompileStatic
-abstract class GrFunctionalExpressionCompletionTest extends GroovyCompletionTestBase {
-  void testInjectMethodForCollection() throws Throwable { doBasicTest() }
+  public void testEachMethodForList() { doBasicTest(); }
 
-  void testEachMethodForMapWithKeyValue() throws Throwable { doBasicTest() }
+  public void testClosureDefaultParameterInEachMethod() { doBasicTest(); }
 
-  void testEachMethodForList() throws Throwable { doBasicTest() }
-
-  void testClosureDefaultParameterInEachMethod() throws Throwable { doBasicTest() }
-
-  void testEachMethodForEnumRanges() throws Throwable {
-    myFixture.configureByFile(getTestName(false) + ".groovy")
-    myFixture.completeBasic()
-    myFixture.type('\n')
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
+  public void testEachMethodForEnumRanges() {
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.completeBasic();
+    myFixture.type("\n");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  void testEachMethodForMapWithEntry() throws Throwable { doBasicTest() }
+  public void testEachMethodForMapWithEntry() { doBasicTest(); }
 
-  void testEachMethodForRanges() throws Throwable { doBasicTest() }
+  public void testEachMethodForRanges() { doBasicTest(); }
 
-  void testInjectMethodForArray() throws Throwable { doBasicTest() }
+  public void testInjectMethodForArray() { doBasicTest(); }
 
-  void testCompletionInEachClosure() {
-    doHasVariantsTest('intValue', 'intdiv')
+  public void testCompletionInEachClosure() {
+    doHasVariantsTest("intValue", "intdiv");
   }
 
-  void testWithMethod() throws Throwable { doBasicTest() }
+  public void testWithMethod() { doBasicTest(); }
 
-  void testInjectMethodForMap() throws Throwable { doBasicTest() }
+  public void testInjectMethodForMap() { doBasicTest(); }
 }
