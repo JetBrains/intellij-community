@@ -141,20 +141,27 @@ object LogPacker {
         withContext(Dispatchers.IO) {
           val file = packLogs(project)
           checkCanceled()
-          val responseJson = requestSign(file.name)
-          val uploadUrl = responseJson["url"] as String
-          val folderName = responseJson["folderName"] as String
-          val headers = responseJson["headers"] as Map<*, *>
-          checkCanceled()
-          coroutineToIndicator {
-            upload(file, uploadUrl, headers)
-          }
+
+          val folderName = uploadFile(file)
+
           val message = IdeBundle.message("collect.logs.notification.sent.success", UPLOADS_SERVICE_URL, folderName)
           Notification(COLLECT_LOGS_NOTIFICATION_GROUP, message, NotificationType.INFORMATION).notify(project)
           folderName
         }
       }
     }
+  }
+
+  suspend fun uploadFile(file: Path): String {
+    val responseJson = requestSign(file.name)
+    val uploadUrl = responseJson["url"] as String
+    val folderName = responseJson["folderName"] as String
+    val headers = responseJson["headers"] as Map<*, *>
+    checkCanceled()
+    coroutineToIndicator {
+      upload(file, uploadUrl, headers)
+    }
+    return folderName
   }
 
   private fun requestSign(fileName: String): Map<String, Any> {
