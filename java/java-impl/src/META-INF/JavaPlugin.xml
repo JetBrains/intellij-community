@@ -1342,6 +1342,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ExpectedTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ExpressionTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.AnnotatedMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.AnnotationTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.MethodNameMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.MethodParametersMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.MethodParameterTypesMacro"/>
