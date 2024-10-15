@@ -40,7 +40,12 @@ class IjentWslNioPath(
 
   override fun toAbsolutePath(): IjentWslNioPath = delegate.toAbsolutePath().toIjentWslPath()
 
-  override fun toRealPath(vararg options: LinkOption?): IjentWslNioPath = delegate.toRealPath(*options).toIjentWslPath()
+  override fun toRealPath(vararg options: LinkOption): IjentWslNioPath {
+    val ijentNioPath = fileSystem.provider().toIjentNioPath(this)
+    val ijentNioRealPath = ijentNioPath.toRealPath(*options)
+    val originalPath = fileSystem.provider().toOriginalPath(ijentNioRealPath)
+    return originalPath.toIjentWslPath()
+  }
 
   override fun register(watcher: WatchService, events: Array<out WatchEvent.Kind<*>?>?, vararg modifiers: WatchEvent.Modifier?): WatchKey =
     delegate.register(watcher, events, *modifiers)
