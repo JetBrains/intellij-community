@@ -2,10 +2,8 @@
 package com.intellij.vcs.impl.shared.rhizome
 
 import com.intellij.platform.kernel.EntityTypeProvider
-import com.jetbrains.rhizomedb.EID
-import com.jetbrains.rhizomedb.Entity
-import com.jetbrains.rhizomedb.EntityType
-import com.jetbrains.rhizomedb.Mixin
+import com.intellij.platform.project.ProjectEntity
+import com.jetbrains.rhizomedb.*
 import fleet.kernel.DurableEntityType
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
@@ -14,9 +12,12 @@ class ShelfEntityTypeProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> = listOf(ShelvesTreeRootEntity, ShelvedChangeListEntity, ShelvedChangeEntity, TagNodeEntity, SelectShelveChangeEntity)
 }
 
-abstract class NodeEntity : Entity {
-  val children by Children
-  val orderInParent by Order
+interface NodeEntity : Entity {
+  val children: Set<NodeEntity>
+    get() = this[Children]
+
+  val orderInParent: Int
+    get() = this[Order]
 
   companion object : Mixin<NodeEntity>(NodeEntity::class.java.name, "com.intellij") {
     val Children = manyRef<NodeEntity>("children")
@@ -24,12 +25,16 @@ abstract class NodeEntity : Entity {
   }
 }
 
-class ShelvesTreeRootEntity(override val eid: EID) : NodeEntity() {
-  companion object : DurableEntityType<ShelvesTreeRootEntity>(ShelvesTreeRootEntity::class.java.name, "com.intellij", ::ShelvesTreeRootEntity)
+class ShelvesTreeRootEntity(override val eid: EID) : NodeEntity {
+  val project: ProjectEntity by Project
+
+  companion object : DurableEntityType<ShelvesTreeRootEntity>(ShelvesTreeRootEntity::class.java.name, "com.intellij", ::ShelvesTreeRootEntity, NodeEntity) {
+    val Project = requiredRef<ProjectEntity>("project")
+  }
 }
 
 @Serializable
-class ShelvedChangeListEntity(override val eid: EID) : NodeEntity() {
+class ShelvedChangeListEntity(override val eid: EID) : NodeEntity {
   val name: String by Name
   val description: String by Description
   val date: Long by Date
@@ -51,7 +56,7 @@ class ShelvedChangeListEntity(override val eid: EID) : NodeEntity() {
 }
 
 @Serializable
-class ShelvedChangeEntity(override val eid: EID) : NodeEntity() {
+class ShelvedChangeEntity(override val eid: EID) : NodeEntity {
   val filePath: String by FilePath
   val additionalText: String? by AdditionalText
   val fileStatus: String by FileStatus
@@ -63,7 +68,7 @@ class ShelvedChangeEntity(override val eid: EID) : NodeEntity() {
   }
 }
 
-class TagNodeEntity(override val eid: EID) : NodeEntity() {
+class TagNodeEntity(override val eid: EID) : NodeEntity {
   val text: String by Text
 
   companion object : DurableEntityType<TagNodeEntity>(TagNodeEntity::class.java.name, "com.intellij", ::TagNodeEntity, NodeEntity) {
@@ -74,9 +79,11 @@ class TagNodeEntity(override val eid: EID) : NodeEntity() {
 class SelectShelveChangeEntity(override val eid: EID) : Entity {
   val changeList: ShelvedChangeListEntity by ChangeList
   val change: ShelvedChangeEntity by Change
+  val project: ProjectEntity by Project
 
   companion object : DurableEntityType<SelectShelveChangeEntity>(SelectShelveChangeEntity::class.java.name, "com.intellij", ::SelectShelveChangeEntity) {
     val ChangeList = requiredRef<ShelvedChangeListEntity>("ChangeList")
     val Change = requiredRef<ShelvedChangeEntity>("Change")
+    val Project = requiredRef<ProjectEntity>("project")
   }
 }

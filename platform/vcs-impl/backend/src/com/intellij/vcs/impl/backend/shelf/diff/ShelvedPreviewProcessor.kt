@@ -21,13 +21,13 @@ internal class ShelvedPreviewProcessor(
   tree: ShelfTree,
   private val isInEditor: Boolean,
 ) : TreeHandlerDiffRequestProcessor(
-  DiffPlaces.SHELVE_VIEW, tree, ShelveTreeDiffPreviewHandler(cs)), DiffPreviewUpdateProcessor {
+  DiffPlaces.SHELVE_VIEW, tree, ShelveTreeDiffPreviewHandler(project, cs)), DiffPreviewUpdateProcessor {
 
   private val preloader = PatchesPreloader(project)
 
   init {
     putContextUserData(PatchesPreloader.SHELF_PRELOADER, preloader)
-    TreeHandlerChangesTreeTracker(tree, this, ShelveTreeDiffPreviewHandler(cs), !isInEditor).track()
+    TreeHandlerChangesTreeTracker(tree, this, ShelveTreeDiffPreviewHandler(project, cs), !isInEditor).track()
   }
 
   @RequiresEdt

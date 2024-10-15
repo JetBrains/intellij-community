@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.project.asEntity
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update.Companion.create
@@ -18,6 +19,7 @@ import com.intellij.vcs.impl.backend.shelf.diff.BackendShelveEditorDiffPreview
 import com.intellij.vcs.impl.shared.rhizome.NodeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvesTreeRootEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
+import com.jetbrains.rhizomedb.entities
 import fleet.kernel.SharedRef
 import fleet.kernel.change
 import fleet.kernel.shared
@@ -28,7 +30,7 @@ import kotlinx.coroutines.launch
 import javax.swing.tree.TreePath
 
 @Service(Service.Level.PROJECT)
-class ShelfTreeHolder(project: Project, val cs: CoroutineScope) : Disposable {
+class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable {
 
   init {
     project.messageBus.connect(this).subscribe(ShelveChangesManager.SHELF_TOPIC, ShelveChangesManagerListener { scheduleTreeUpdate() })
@@ -38,7 +40,7 @@ class ShelfTreeHolder(project: Project, val cs: CoroutineScope) : Disposable {
 
   private val tree = ShelfTree(project)
 
-  private val diffPreview = BackendShelveEditorDiffPreview(tree, cs)
+  private val diffPreview = BackendShelveEditorDiffPreview(tree, cs, project)
 
   private fun updateTreeModel() {
     tree.invalidateDataAndRefresh {
@@ -50,7 +52,7 @@ class ShelfTreeHolder(project: Project, val cs: CoroutineScope) : Disposable {
     cs.launch {
       val root = tree.model.root as ChangesBrowserNode<*>
       withKernel {
-        val rootEntity = ShelvesTreeRootEntity.single()
+        val rootEntity = entities(ShelvesTreeRootEntity.Project, project.asEntity()).firstOrNull() ?: return@withKernel
         var order = 0
         for (child in root.children()) {
           val nodeEntity = dfs(child as ChangesBrowserNode<*>, null, order++) ?: continue

@@ -43,5 +43,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.kernel" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.project" />
   </component>
 </module>

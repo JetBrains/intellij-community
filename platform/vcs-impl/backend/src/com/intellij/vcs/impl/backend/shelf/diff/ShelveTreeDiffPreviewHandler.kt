@@ -2,6 +2,7 @@
 package com.intellij.vcs.impl.backend.shelf.diff
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapper
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
@@ -9,6 +10,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.project.asEntity
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.backend.shelf.ShelfTree
 import com.intellij.vcs.impl.backend.shelf.ShelfTreeHolder.Companion.ENTITY_ID_KEY
@@ -21,8 +23,7 @@ import fleet.kernel.shared
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-@Service(Service.Level.PROJECT)
-internal class ShelveTreeDiffPreviewHandler(private val cs: CoroutineScope) : ChangesTreeDiffPreviewHandler() {
+internal class ShelveTreeDiffPreviewHandler(private val project: Project, private val cs: CoroutineScope) : ChangesTreeDiffPreviewHandler() {
   override fun iterateSelectedChanges(tree: ChangesTree): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
     return (tree as ShelfTree).selectedChanges
   }
@@ -36,7 +37,7 @@ internal class ShelveTreeDiffPreviewHandler(private val cs: CoroutineScope) : Ch
   }
 
   override fun selectChange(tree: ChangesTree, change: ChangeViewDiffRequestProcessor.Wrapper) {
-    if (change is ShelvedWrapper) { //TODO project
+    if (change is ShelvedWrapper) {
       cs.launch {
         withKernel {
           val nodeToSelect = TreeUtil.findNodeWithObject(tree.model.root as ChangesBrowserNode<*>, change) as? ChangesBrowserNode<*>
@@ -49,6 +50,7 @@ internal class ShelveTreeDiffPreviewHandler(private val cs: CoroutineScope) : Ch
               SelectShelveChangeEntity.new {
                 it[SelectShelveChangeEntity.Change] = changeEntity
                 it[SelectShelveChangeEntity.ChangeList] = changeListEntity
+                it[SelectShelveChangeEntity.Project] = project.asEntity()
               }
             }
           }

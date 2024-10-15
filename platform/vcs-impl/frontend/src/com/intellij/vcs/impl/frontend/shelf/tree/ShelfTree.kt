@@ -18,7 +18,6 @@ class ShelfTree(project: Project, private val treeRoot: ChangesBrowserRootNode) 
     updateTreeModel(DefaultTreeModel(treeRoot))
   }
 
-
   fun getSelectedLists(): Set<ShelvedChangeListEntity> {
     return selectionPaths?.mapNotNull { TreeUtil.findObjectInPath(it, ShelvedChangeListEntity::class.java) }?.toSet() ?: emptySet()
   }

@@ -2,7 +2,9 @@
 package com.intellij.vcs.impl.frontend.shelf.tree
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.project.asEntity
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.ChangesTreeEditorDiffPreview
@@ -19,10 +21,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.swing.tree.DefaultMutableTreeNode
 
-class ShelfTreeEditorDiffPreview(tree: ShelfTree, val cs: CoroutineScope) : ChangesTreeEditorDiffPreview<ShelfTree>(tree) {
+class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope, private val project: Project) : ChangesTreeEditorDiffPreview<ShelfTree>(tree) {
 
   init {
-    subscribeToShelfTreeSelectionChanged(cs, ::selectNodeInTree)
+    subscribeToShelfTreeSelectionChanged(project, cs, ::selectNodeInTree)
     trackTreeSelection()
   }
 
@@ -31,7 +33,7 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, val cs: CoroutineScope) : Chan
       cs.launch {
         withKernel {
           val changeListDto = creteSelectedListsDto() ?: return@withKernel
-          RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).notifyNodeSelected(1, changeListDto)
+          RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).notifyNodeSelected(project.asEntity().sharedRef(), changeListDto)
         }
       }
     }
@@ -41,7 +43,7 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, val cs: CoroutineScope) : Chan
     cs.launch {
       withKernel {
         val changeListDto = creteSelectedListsDto() ?: return@withKernel
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).showDiffForChanges(1, changeListDto)
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).showDiffForChanges(project.asEntity().sharedRef(), changeListDto)
       }
     }
     return true

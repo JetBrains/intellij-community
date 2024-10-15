@@ -49,5 +49,7 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.project" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
   </component>
 </module>
