@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -12,10 +12,13 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,20 +40,21 @@ public class TestStatusLine extends NonOpaquePanel {
     add(myProgressPanel, BorderLayout.SOUTH);
     myProgressBar.setMaximum(100);
     myProgressBar.putClientProperty("ProgressBar.stripeWidth", 3);
-    myProgressBar.putClientProperty("ProgressBar.flatEnds", Boolean.TRUE);
     myProgressBar.putClientProperty(JBUI.CurrentTheme.ProgressBar.statusKey(), JBUI.CurrentTheme.ProgressBar.passedStatusValue());
 
-    JPanel stateWrapper = new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    JPanel stateWrapper = new NonOpaquePanel(new GridBagLayout());
+    stateWrapper.setBorder(JBUI.Borders.emptyLeft(2));
+    final var constraint = new GridBag();
     myState.setOpaque(false);
-    stateWrapper.add(myState);
+    stateWrapper.add(myState, constraint.next());
 
     myWarning.setOpaque(false);
     myWarning.setVisible(false);
     myWarning.setIcon(AllIcons.General.Warning);
-    myWarning.setBorder(JBUI.Borders.emptyLeft(10));
-    stateWrapper.add(myWarning);
+    myWarning.setBorder(JBUI.Borders.emptyLeft(12));
+    stateWrapper.add(myWarning, constraint.next());
 
-    add(stateWrapper, BorderLayout.CENTER);
+    add(stateWrapper, BorderLayout.WEST);
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
   }
 
@@ -67,7 +71,7 @@ public class TestStatusLine extends NonOpaquePanel {
   }
 
   private void updateWarningVisibility() {
-    myWarning.setVisible(myState.getCharSequence(false).length() > 0 && StringUtil.isNotEmpty(myWarning.getText()));
+    myWarning.setVisible(!myState.getCharSequence(false).isEmpty() && StringUtil.isNotEmpty(myWarning.getText()));
   }
 
   private void doFormatTestMessage(int testsTotal,
@@ -138,7 +142,6 @@ public class TestStatusLine extends NonOpaquePanel {
 
   public void onTestsDone(@Nullable Supplier<? extends Icon> toolbarIconSupplier) {
     EdtInvocationManager.getInstance().invokeLater(() -> {
-      myProgressPanel.remove(myProgressBar);
       if (toolbarIconSupplier != null) {
         myState.setIcon(toolbarIconSupplier.get());
       }
