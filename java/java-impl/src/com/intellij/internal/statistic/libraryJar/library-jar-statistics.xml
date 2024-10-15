@@ -115,6 +115,7 @@
   <technology name="jooby" class="org.jooby.Jooby"/>
   <technology name="jooq" class="org.jooq.DSLContext"/>
   <technology name="json-path" class="com.jayway.jsonpath.JsonPath"/>
+  <technology name="junit3" class="junit.framework.TestCase"/>
   <technology name="junit4" class="org.junit.Test"/>
   <technology name="junit5" class="org.junit.jupiter.api.Test"/>
   <technology name="kafka" class="org.apache.kafka.clients.consumer.Consumer"/>
