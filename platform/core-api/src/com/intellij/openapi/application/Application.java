@@ -10,6 +10,8 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.*;
+import kotlin.coroutines.CoroutineContext;
+import kotlin.coroutines.EmptyCoroutineContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -672,4 +674,12 @@ public interface Application extends ComponentManager {
     assertWriteIntentLockAcquired();
   }
   //</editor-fold>
+
+  default CoroutineContext getLockStateAsCoroutineContext() {
+    return EmptyCoroutineContext.INSTANCE;
+  }
+
+  default boolean hasLockStateInContext(CoroutineContext context) {
+    return false;
+  }
 }

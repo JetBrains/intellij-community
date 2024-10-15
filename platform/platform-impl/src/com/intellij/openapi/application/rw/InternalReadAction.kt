@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.isLockStoredInContext
 import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
@@ -36,8 +37,17 @@ internal class InternalReadAction<T>(
       }
     }
     else {
+      if (isLockStoredInContext && application.isReadAccessAllowed && !application.isWriteIntentLockAcquired) {
+        val unsatisfiedConstraint = findUnsatisfiedConstraint()
+        check(unsatisfiedConstraint == null) {
+          "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
+        }
+        return withContext(Dispatchers.Default) {
+          action()
+        }
+      }
       withContext(Dispatchers.Default) {
-        check(!application.isReadAccessAllowed) {
+        check(isLockStoredInContext || !application.isReadAccessAllowed) {
           "This thread unexpectedly holds the read lock"
         }
         readLoop()

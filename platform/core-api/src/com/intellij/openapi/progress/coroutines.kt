@@ -8,6 +8,7 @@ import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.application.isLockStoredInContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
@@ -479,8 +480,16 @@ private fun assertBackgroundThreadOrWriteAction() {
 @Internal
 fun readActionContext(): CoroutineContext {
   val application = ApplicationManager.getApplication()
-  return if (application != null && application.isReadAccessAllowed) {
-    RunBlockingUnderReadActionMarker
+  return if (application != null) {
+    if (isLockStoredInContext) {
+      application.lockStateAsCoroutineContext
+    }
+    else if (application.isReadAccessAllowed) {
+      RunBlockingUnderReadActionMarker
+    }
+    else {
+      EmptyCoroutineContext
+    }
   }
   else {
     EmptyCoroutineContext
@@ -490,7 +499,13 @@ fun readActionContext(): CoroutineContext {
 @IntellijInternalApi
 @Internal
 fun CoroutineContext.isRunBlockingUnderReadAction(): Boolean {
-  return this[RunBlockingUnderReadActionMarker] != null
+  return if (isLockStoredInContext) {
+    val application = ApplicationManager.getApplication()
+    application != null && application.hasLockStateInContext(this)
+  }
+  else {
+    this[RunBlockingUnderReadActionMarker] != null
+  }
 }
 
 private object RunBlockingUnderReadActionMarker
