@@ -18,27 +18,28 @@ import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-val EP_NAME: ExtensionPointName<EmptyIntentionProvider> = ExtensionPointName("com.intellij.emptyIntentionProvider")
+private val EP_NAME = ExtensionPointName<EmptyIntentionProvider>("com.intellij.emptyIntentionProvider")
 
 @ApiStatus.Internal
 interface EmptyIntentionProvider {
   fun invoke(project: Project, editor: Editor?, file: PsiFile?, template: String): Boolean
 }
 
-@ApiStatus.Internal
-class EmptyIntentionGeneratorIntention(val name: @IntentionFamilyName String, val template: String) :
+internal class EmptyIntentionGeneratorIntention(private val name: @IntentionFamilyName String, private val template: String) :
   IntentionAction, LowPriorityAction, Iconable {
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     EP_NAME.extensionList.any { it.invoke(project, editor, file, template) }
   }
 
   override fun startInWriteAction(): Boolean = true
+
   override fun getText(): @IntentionFamilyName String = name
+
   override fun getFamilyName(): @IntentionFamilyName String = name
+
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = true
 
-  override fun getIcon(@IconFlags flags: Int): Icon =
-    if (NewUiValue.isEnabled()) EmptyIcon.ICON_0 else AllIcons.Actions.RealIntentionBulb
+  override fun getIcon(@IconFlags flags: Int): Icon = if (NewUiValue.isEnabled()) EmptyIcon.ICON_0 else AllIcons.Actions.RealIntentionBulb
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

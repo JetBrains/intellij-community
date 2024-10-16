@@ -2243,11 +2243,12 @@ com.intellij.codeInsight.daemon.impl.EditorTrackerListener
 - a:activeEditorsChanged(java.util.List):V
 f:com.intellij.codeInsight.daemon.impl.EditorTrackerListener$Companion
 f:com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager
-- com.intellij.openapi.Disposable
-- <init>(com.intellij.openapi.project.Project):V
-- dispose():V
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager
-- repaintErrorStripePanel(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
+- sf:Companion:com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager$Companion
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager
+- f:repaintErrorStripePanel(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
+f:com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager
 c:com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler
 - com.intellij.codeInsight.CodeInsightActionHandler
 - <init>(Z):V
@@ -2485,7 +2486,6 @@ pc:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$DefaultUIController
 - getActions():java.util.List
 - isToolbarEnabled():Z
 com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createRenderer(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 c:com.intellij.codeInsight.daemon.impl.actions.GotoNextErrorAction
 - com.intellij.codeInsight.actions.BaseCodeInsightAction
