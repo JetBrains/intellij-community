@@ -335,8 +335,17 @@ public final class PyTypeHintGenerationUtil {
       else if (type instanceof PyTupleType && useGenericAliasFromTyping) {
         typingTypes.add("Tuple");
       }
-      else if (type instanceof PyTypedDictType) {
-        typingTypes.add("Dict");
+      else if (type instanceof PyTypedDictType typedDictType) {
+        if (typedDictType.isInferred()) {
+          if (useGenericAliasFromTyping) {
+            typingTypes.add("Dict");
+          }
+        }
+        else {
+          symbols.add((PsiNamedElement)typedDictType.getDeclarationElement());
+          // Don't go through its type arguments
+          return;
+        }
       }
       for (PyType pyType : ((PyCollectionType)type).getElementTypes()) {
         collectImportTargetsFromType(pyType, context, symbols, typingTypes);
