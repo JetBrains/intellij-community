@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
@@ -13,13 +14,13 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 private class WorkspaceEntitiesLifecycleActivity : ProjectActivity {
-  override suspend fun execute(project: Project) {
+  init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      //todo GoGutterMarkerTest failed without it - ideally, we should setup project in tests without this activity
-      WorkspaceEntityLifecycleSupporterUtils.ensureAllEntitiesInWorkspaceAreAsProvidersDefined(project)
-      return
+      throw ExtensionNotApplicableException.create()
     }
+  }
 
+  override suspend fun execute(project: Project) {
     coroutineScope {
       WorkspaceEntityLifecycleSupporter.EP_NAME.addExtensionPointListener(this, object : ExtensionPointListener<WorkspaceEntityLifecycleSupporter<out WorkspaceEntity, out WorkspaceEntity.Builder<out WorkspaceEntity>>> {
         override fun extensionAdded(extension: WorkspaceEntityLifecycleSupporter<out WorkspaceEntity, out WorkspaceEntity.Builder<out WorkspaceEntity>>, pluginDescriptor: PluginDescriptor) {
