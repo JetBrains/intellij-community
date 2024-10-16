@@ -1,0 +1,7 @@
+// "Convert to 'onEach'" "true"
+// WITH_STDLIB
+fun test(list: List<String>) {
+    list.onEach { s ->
+        println(s)
+    }
+}

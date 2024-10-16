@@ -1,0 +1,8 @@
+// "Convert to 'scan'" "true"
+// WITH_STDLIB
+@OptIn(ExperimentalStdlibApi::class)
+fun test(list: List<String>) {
+    list.scan("") { acc, s ->
+        acc + s
+    }
+}
