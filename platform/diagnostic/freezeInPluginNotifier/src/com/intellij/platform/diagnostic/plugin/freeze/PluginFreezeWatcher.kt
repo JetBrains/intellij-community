@@ -13,11 +13,11 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalyzer
 import com.intellij.threadDumpParser.ThreadState
 import com.intellij.ui.EditorNotifications
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @Service(Service.Level.APP)
 internal class PluginFreezeWatcher : IdePerformanceListener, Disposable {
+  @Volatile
   var latestFrozenPlugin: PluginId? = null
   private val stackTracePattern = """at (\S+)\.(\S+)\(([^:]+):(\d+)\)""".toRegex()
 
