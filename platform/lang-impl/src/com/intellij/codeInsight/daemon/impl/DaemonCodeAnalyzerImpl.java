@@ -135,6 +135,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private final AtomicInteger daemonCancelEventCount = new AtomicInteger();
   private final DaemonListener myDaemonListenerPublisher;
 
+  private final DaemonCodeAnalyzerRepaintIconHelper repaintIconHelper;
+
   public DaemonCodeAnalyzerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     // DependencyValidationManagerImpl adds scope listener, so we need to force service creation
     DependencyValidationManager.getInstance(project);
@@ -165,7 +167,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     myDaemonListenerPublisher = project.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC);
     myListeners = new DaemonListeners(project, this);
     Disposer.register(this, myListeners);
-    repaintIconAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, null, null, coroutineScope);
+    repaintIconHelper = new DaemonCodeAnalyzerRepaintIconHelper(coroutineScope);
   }
 
   private @NotNull FileEditorManager getFileEditorManager() {
@@ -441,23 +443,15 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @Override
   protected void progressIsAdvanced(@NotNull HighlightingSession session, Editor editor, double progress) {
-    repaintTrafficIcon(session.getPsiFile(), editor, progress);
-  }
-
-  private final Alarm repaintIconAlarm;
-
-  private void repaintTrafficIcon(@NotNull PsiFile file, @Nullable Editor editor, double progress) {
-    if (ApplicationManager.getApplication().isCommandLine()) return;
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    if (editor != null && (repaintIconAlarm.isEmpty() || progress >= 1)) {
-      repaintIconAlarm.addRequest(() -> {
-        Project myProject = file.getProject();
-        if (!myProject.isDisposed() && !editor.isDisposed()) {
-          repaintErrorStripeAndIcon(editor, myProject, file);
-        }
-      }, 50, null);
+    if (editor != null) {
+      repaintIconHelper.repaintTrafficIcon(session.getPsiFile(), editor, progress);
     }
   }
+
+  void scheduleRepaintErrorStripeAndIcon(@NotNull Editor editor, @Nullable PsiFile file) {
+    repaintIconHelper.scheduleRepaintErrorStripeAndIcon(editor, myProject, file, 0);
+  }
+
   static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project, @Nullable PsiFile file) {
     MarkupModel markup = editor.getMarkupModel();
     if (markup instanceof EditorMarkupModelImpl editorMarkup) {
