@@ -11,6 +11,8 @@ import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStat
  * @author Max Medvedev
  */
 public class GrMethodMayBeStaticTest extends LightGroovyTestCase {
+  private final GrMethodMayBeStaticInspection inspection = new GrMethodMayBeStaticInspection();
+
   public void testSimple() {
     doTest("""
              class A {
@@ -68,7 +70,7 @@ public class GrMethodMayBeStaticTest extends LightGroovyTestCase {
 
   private void doTest(final String text) {
     myFixture.configureByText("_.groovy", text);
-    myFixture.enableInspections(new GrMethodMayBeStaticInspection());
+    myFixture.enableInspections(getInspection());
     myFixture.checkHighlighting(true, false, false);
   }
 
@@ -149,7 +151,7 @@ public class GrMethodMayBeStaticTest extends LightGroovyTestCase {
   }
 
   public void test_trait_methods_with() {
-    new GrMethodMayBeStaticInspection().myIgnoreTraitMethods = false;
+    getInspection().myIgnoreTraitMethods = false;
     doTest("""
              trait A {
                def <warning descr="Method may be static">foo</warning>() {1}
@@ -163,7 +165,7 @@ public class GrMethodMayBeStaticTest extends LightGroovyTestCase {
     return GroovyProjectDescriptors.GROOVY_LATEST;
   }
 
-  public static GrMethodMayBeStaticInspection getInspection() {
-    return new GrMethodMayBeStaticInspection();
+  private GrMethodMayBeStaticInspection getInspection() {
+    return inspection;
   }
 }
