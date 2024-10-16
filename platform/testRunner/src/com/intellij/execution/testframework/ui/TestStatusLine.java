@@ -105,7 +105,8 @@ public class TestStatusLine extends NonOpaquePanel {
     int ignoredCount = finishedTestsCount - failuresCount - passedCount;
 
     if (finishedTestsCount != testsTotal) {
-      if (endTime != 0) {
+      final var stopped = endTime != 0;
+      if (stopped) {
         myState.append(TestRunnerBundle.message("test.result.stopped"));
         myState.append(" ");
       }
@@ -117,6 +118,12 @@ public class TestStatusLine extends NonOpaquePanel {
       else if (passedCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.failed.ignored", finishedTestsCount, testsTotal, failedCount, ignoredCount));
       else if (failedCount == 0) appendColored(TestRunnerBundle.message("test.result.in.progress.passed.ignored", finishedTestsCount, testsTotal, passedCount, ignoredCount));
       else appendColored(TestRunnerBundle.message("test.result.in.progress.failed.passed.ignored", finishedTestsCount, testsTotal, failedCount, passedCount, ignoredCount));
+
+      if (stopped && duration != null) {
+        myStateDescription.setVisible(true);
+        myStateDescription.append(NlsMessages.formatDurationApproximateNarrow(duration), SimpleTextAttributes.GRAY_ATTRIBUTES);
+      }
+
       return;
     }
 
