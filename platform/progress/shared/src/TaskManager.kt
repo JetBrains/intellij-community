@@ -22,7 +22,7 @@ object TaskManager {
    *
    * @param taskInfoEntity task to cancel
    */
-  suspend fun cancelTask(taskInfoEntity: TaskInfoEntity) = withKernel {
+  suspend fun cancelTask(taskInfoEntity: TaskInfoEntity): Unit = withKernel {
     tryWithEntities(taskInfoEntity) {
       if (taskInfoEntity.cancellation is TaskCancellation.NonCancellable) {
         LOG.error("Task ${taskInfoEntity.eid} is not cancellable")
@@ -39,7 +39,7 @@ object TaskManager {
    *
    * @param taskInfoEntity task to pause
    */
-  suspend fun pauseTask(taskInfoEntity: TaskInfoEntity) = withKernel {
+  suspend fun pauseTask(taskInfoEntity: TaskInfoEntity): Unit = withKernel {
     tryWithEntities(taskInfoEntity) {
       // TODO Check that task can be suspended RDCT-1620
 
@@ -53,7 +53,7 @@ object TaskManager {
    *
    * @param taskInfoEntity task to pause
    */
-  suspend fun resumeTask(taskInfoEntity: TaskInfoEntity) = withKernel {
+  suspend fun resumeTask(taskInfoEntity: TaskInfoEntity): Unit = withKernel {
     tryWithEntities(taskInfoEntity) {
       taskInfoEntity.setTaskStatus(TaskStatus.RUNNING)
     }
