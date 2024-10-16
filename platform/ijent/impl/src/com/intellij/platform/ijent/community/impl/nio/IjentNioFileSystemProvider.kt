@@ -362,8 +362,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     TODO("Not yet implemented")
   }
 
-  override fun getFileStore(path: Path): FileStore =
-    IjentNioFileStore(ensureIjentNioPath(path).nioFs.ijentFs)
+  override fun getFileStore(path: Path): FileStore {
+    val path = ensureIjentNioPath(path)
+    ensurePathIsAbsolute(path.eelPath)
+    return IjentNioFileStore(path.eelPath, path.nioFs.ijentFs)
+  }
 
   private enum class UnixFilePermissionBranch { OWNER, GROUP, OTHER }
 

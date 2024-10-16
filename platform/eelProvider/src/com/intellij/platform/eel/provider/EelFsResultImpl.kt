@@ -15,6 +15,9 @@ object EelFsResultImpl {
   data class BytesReadImpl(override val bytesRead: Int) : EelOpenedFile.Reader.ReadResult.Bytes
   data object EOFImpl : EelOpenedFile.Reader.ReadResult.EOF
 
+  data class DiskInfoImpl(override val totalSpace: ULong, override val availableSpace: ULong) : EelFileSystemApi.DiskInfo
+
+
   data class Other(override val where: EelPath.Absolute, override val message: String) :
     EelFileSystemApi.FileReaderError.Other,
     EelFileSystemApi.FileWriterError.Other,
@@ -26,7 +29,8 @@ object EelFsResultImpl {
     EelOpenedFile.SeekError.Other,
     EelOpenedFile.TellError.Other,
     EelOpenedFile.Reader.ReadError.Other,
-    EelOpenedFile.Writer.WriteError.Other
+    EelOpenedFile.Writer.WriteError.Other,
+    EelFileSystemApi.DiskInfoError.Other
 
   data class DoesNotExist(override val where: EelPath.Absolute, override val message: String) :
     EelFileSystemApi.FileReaderError.DoesNotExist,
@@ -34,7 +38,8 @@ object EelFsResultImpl {
     EelFileSystemApi.ListDirectoryError.DoesNotExist,
     EelFileSystemApi.SameFileError.DoesNotExist,
     EelFileSystemApi.StatError.DoesNotExist,
-    EelFileSystemApi.CanonicalizeError.DoesNotExist
+    EelFileSystemApi.CanonicalizeError.DoesNotExist,
+    EelFileSystemApi.DiskInfoError.PathDoesNotExists
 
   data class AlreadyExists(override val where: EelPath.Absolute, override val message: String) :
     EelFileSystemApi.FileReaderError.AlreadyExists,
@@ -47,7 +52,8 @@ object EelFsResultImpl {
     EelFileSystemApi.FileWriterError.PermissionDenied,
     EelFileSystemApi.ListDirectoryError.PermissionDenied,
     EelFileSystemApi.SameFileError.PermissionDenied,
-    EelFileSystemApi.StatError.PermissionDenied
+    EelFileSystemApi.StatError.PermissionDenied,
+    EelFileSystemApi.DiskInfoError.PermissionDenied
 
   data class NotDirectory(override val where: EelPath.Absolute, override val message: String) :
     EelFileSystemApi.CanonicalizeError.NotDirectory,
@@ -57,6 +63,9 @@ object EelFsResultImpl {
     EelFileSystemApi.ListDirectoryError.NotDirectory,
     EelFileSystemApi.SameFileError.NotDirectory,
     EelFileSystemApi.StatError.NotDirectory
+
+  data class NameTooLong(override val where: EelPath.Absolute, override val message: String) :
+    EelFileSystemApi.DiskInfoError.NameTooLong
 
   data class NotFile(override val where: EelPath.Absolute, override val message: String) :
     EelFileSystemApi.CanonicalizeError.NotFile,

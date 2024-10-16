@@ -356,6 +356,32 @@ interface EelFileSystemApi {
     fun createTemporaryDirectoryOptions(): CreateTemporaryDirectoryOptions =
       CreateTemporaryDirectoryOptionsImpl()
   }
+
+  /**
+   * Returns information about a logical disk that contains [path].
+   */
+  suspend fun getDiskInfo(path: EelPath.Absolute): EelResult<DiskInfo, DiskInfoError>
+
+  interface DiskInfo {
+    /**
+     * Total capacity of a logical disk.
+     * If more than [ULong.MAX_VALUE] available, then the returned value is [ULong.MAX_VALUE]
+     */
+    val totalSpace: ULong
+
+    /**
+     * The number of available bytes on a logical disk.
+     * If more than [ULong.MAX_VALUE] available, then the returned value is [ULong.MAX_VALUE]
+     */
+    val availableSpace: ULong
+  }
+
+  sealed interface DiskInfoError : EelFsError {
+    interface PathDoesNotExists : DiskInfoError, EelFsError.DoesNotExist
+    interface PermissionDenied : DiskInfoError, EelFsError.PermissionDenied
+    interface NameTooLong : DiskInfoError, EelFsError.NameTooLong
+    interface Other : DiskInfoError, EelFsError.Other
+  }
 }
 
 sealed interface EelOpenedFile {
