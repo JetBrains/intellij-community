@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -26,11 +27,12 @@ import org.jetbrains.kotlin.psi.KtElement
 import java.util.stream.Stream
 
 class KtClassDef(
-    internal val module: KaModule,
+    private val module: KaModule,
     private val hash: Int,
     val pointer: KaSymbolPointer<KaClassSymbol>,
     private val kind: KaClassKind,
-    private val modality: KaSymbolModality?
+    private val modality: KaSymbolModality?,
+    internal val inline: Boolean
 ) : TypeConstraints.ClassDef {
 
   override fun isInheritor(superType: TypeConstraints.ClassDef): Boolean =
@@ -119,7 +121,7 @@ class KtClassDef(
         context(KaSession)
         fun KaClassSymbol.classDef(): KtClassDef = KtClassDef(
             useSiteModule, classId?.hashCode() ?: name.hashCode(), createPointer(),
-            classKind, modality
+            classKind, modality, this is KaNamedClassSymbol && this.isInline
         )
 
         fun fromJvmClassName(context: KtElement, jvmClassName: String): KtClassDef? {

@@ -27,7 +27,8 @@ class KtVariableDescriptor(
     val module: KaModule,
     val pointer: KaSymbolPointer<KaVariableSymbol>,
     val type: DfType,
-    val hash: Int
+    val hash: Int,
+    private val inline: Boolean
 ) : JvmVariableDescriptor(), KtBaseDescriptor {
     val stable: Boolean by lazy {
         when (val result = analyze(module) {
@@ -50,9 +51,7 @@ class KtVariableDescriptor(
         }
     }
 
-    override fun isInlineClassReference(): Boolean = analyze(module) {
-        ((pointer.restoreSymbol()?.returnType as? KaClassType)?.symbol as? KaNamedClassSymbol)?.isInline == true
-    }
+    override fun isInlineClassReference(): Boolean = inline
 
     override fun isStable(): Boolean = stable
 
@@ -101,7 +100,9 @@ class KtVariableDescriptor(
 
         context(KaSession)
         internal fun KaVariableSymbol.variableDescriptor(): KtVariableDescriptor {
-            return KtVariableDescriptor(useSiteModule, this.createPointer(), this.returnType.toDfType(), this.name.hashCode())
+            val type = this.returnType
+            return KtVariableDescriptor(useSiteModule, this.createPointer(), type.toDfType(), this.name.hashCode(),
+                                        ((type as? KaClassType)?.symbol as? KaNamedClassSymbol)?.isInline == true)
         }
 
         private fun getVariablesChangedInNestedFunctions(parent: KtElement): Set<KtVariableDescriptor> =
