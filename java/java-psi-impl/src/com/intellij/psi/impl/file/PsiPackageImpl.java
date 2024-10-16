@@ -55,7 +55,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   @Unmodifiable
-  protected Collection<PsiDirectory> getAllDirectories(GlobalSearchScope scope) {
+  protected Collection<PsiDirectory> getAllDirectories(@NotNull GlobalSearchScope scope) {
     if (scope.isForceSearchingInLibrarySources()) {
       if (myDirectoriesWithLibSources == null) {
         myDirectoriesWithLibSources = createCachedDirectories(true);
@@ -80,7 +80,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  protected PsiPackageImpl findPackage(String qName) {
+  protected PsiPackageImpl findPackage(@NotNull String qName) {
     return (PsiPackageImpl)getFacade().findPackage(qName);
   }
 

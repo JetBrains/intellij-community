@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.lang.ASTNode;
@@ -29,14 +29,14 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   private static final Logger LOG = Logger.getInstance(PsiPackageBase.class);
 
   private final PsiManager myManager;
-  private final String myQualifiedName;
+  private final @NotNull String myQualifiedName;
 
   @Unmodifiable
-  protected abstract Collection<PsiDirectory> getAllDirectories(GlobalSearchScope scope);
+  protected abstract Collection<PsiDirectory> getAllDirectories(@NotNull GlobalSearchScope scope);
 
-  protected abstract PsiPackageBase findPackage(String qName);
+  protected abstract PsiPackageBase findPackage(@NotNull String qName);
 
-  public PsiPackageBase(PsiManager manager, String qualifiedName) {
+  public PsiPackageBase(PsiManager manager, @NotNull String qualifiedName) {
     myManager = manager;
     myQualifiedName = qualifiedName;
   }
@@ -104,7 +104,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     }
   }
 
-  public PsiPackageBase getParentPackage() {
+  public @Nullable PsiPackageBase getParentPackage() {
     if (myQualifiedName.isEmpty()) return null;
     return findPackage(StringUtil.getPackageName(myQualifiedName));
   }
