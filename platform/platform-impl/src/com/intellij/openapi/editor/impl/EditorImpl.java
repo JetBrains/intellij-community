@@ -459,7 +459,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myView = new EditorView(this);
     myView.reinitSettings();
-
+    if (LOG.isDebugEnabled()) {
+      float scaledEditorFontSize = UISettingsUtils.getInstance().getScaledEditorFontSize();
+      int currentFontSize = myScheme.getEditorFontSize();
+      LOG.debug(String.format(
+        "Creating editor view of type %s.\nCurrent font size: %d\nScaled font size: %f",
+        kind, currentFontSize, scaledEditorFontSize));
+    }
     myScheme.setEditorFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
 
     myGutterComponent.updateSize();
