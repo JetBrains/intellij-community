@@ -155,15 +155,15 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
           .notifyConnectionAboutChangedPaths(connection);
       }
 
-      if (isApplicableTestLauncher(id, projectPath, tasks, settings, gradleVersion)) {
-        TestLauncher launcher = myHelper.getTestLauncher(connection, id, tasks, settings, listener);
-        launcher.withCancellationToken(cancellationToken);
-        launcher.run();
+      var operation = isApplicableTestLauncher(id, projectPath, tasks, settings, gradleVersion)
+                      ? connection.newTestLauncher()
+                      : connection.newBuild();
+      GradleExecutionHelper.prepareForExecution(connection, operation, cancellationToken, id, tasks, settings, listener);
+      if (operation instanceof BuildLauncher) {
+        ((BuildLauncher)operation).run();
       }
       else {
-        BuildLauncher launcher = myHelper.getBuildLauncher(connection, id, tasks, settings, listener);
-        launcher.withCancellationToken(cancellationToken);
-        launcher.run();
+        ((TestLauncher)operation).run();
       }
       GradleTaskResultListener.EP_NAME.forEachExtensionSafe(ext -> ext.onSuccess(id, projectPath));
     }

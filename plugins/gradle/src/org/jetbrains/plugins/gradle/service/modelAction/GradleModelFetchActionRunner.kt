@@ -77,7 +77,6 @@ class GradleModelFetchActionRunner private constructor(
       .buildFinished(modelFetchAction, resultHandler.asBuildFinishedResultHandler())
       .build()
       .prepareOperationForSync()
-      .withCancellationToken(resolverContext.cancellationToken)
       .withStreamedValueListener(resultHandler.asStreamValueListener())
       .forTasks(emptyList()) // this will allow setting up Gradle StartParameter#taskNames using model builders
       .run(resultHandler.asResultHandler())
@@ -86,16 +85,17 @@ class GradleModelFetchActionRunner private constructor(
   private fun runDefaultBuildAction(resultHandler: GradleModelFetchActionResultHandlerBridge) {
     resolverContext.connection.action(modelFetchAction)
       .prepareOperationForSync()
-      .withCancellationToken(resolverContext.cancellationToken)
       .withStreamedValueListener(resultHandler.asStreamValueListener())
       .run(resultHandler.asResultHandler())
   }
 
   private fun <T : LongRunningOperation> T.prepareOperationForSync(): T {
-    GradleExecutionHelper.prepare(
+    GradleExecutionHelper.prepareForExecution(
       resolverContext.connection,
       this,
+      resolverContext.cancellationToken,
       resolverContext.externalSystemTaskId,
+      mutableListOf(),
       settings,
       resolverContext.listener
     )

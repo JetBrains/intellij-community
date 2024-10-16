@@ -12,9 +12,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.PlatformUtils
 import io.opentelemetry.api.trace.StatusCode
-import org.gradle.tooling.BuildLauncher
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.ProjectConnection
 import org.gradle.util.GradleVersion
@@ -135,8 +133,8 @@ object GradleWrapperHelper {
     cancellationToken: CancellationToken
   ) {
     SystemPropertiesAdjuster.executeAdjusted(projectPath) {
-      val launcher: BuildLauncher = GradleExecutionHelper().getBuildLauncher(connection, id, listOf("wrapper"), settings, listener)
-      launcher.withCancellationToken(cancellationToken)
+      val launcher = connection.newBuild()
+      GradleExecutionHelper.prepareForExecution(connection, launcher, cancellationToken, id, listOf("wrapper"), settings, listener)
       ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
         .spanBuilder("ExecuteWrapperTask")
         .use { launcher.run() }

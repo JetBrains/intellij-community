@@ -57,30 +57,6 @@ public class GradleExecutionHelper {
 
   private static final Logger LOG = Logger.getInstance(GradleExecutionHelper.class);
 
-  public @NotNull BuildLauncher getBuildLauncher(
-    @NotNull ProjectConnection connection,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull List<String> tasksAndArguments,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener
-  ) {
-    BuildLauncher operation = connection.newBuild();
-    prepare(connection, operation, id, tasksAndArguments, settings, listener);
-    return operation;
-  }
-
-  public @NotNull TestLauncher getTestLauncher(
-    @NotNull ProjectConnection connection,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull List<String> tasksAndArguments,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener
-  ) {
-    var operation = connection.newTestLauncher();
-    prepare(connection, operation, id, tasksAndArguments, settings, listener);
-    return operation;
-  }
-
   public <T> T execute(@NotNull String projectPath,
                        @Nullable GradleExecutionSettings settings,
                        @NotNull Function<? super ProjectConnection, ? extends T> f) {
@@ -127,19 +103,11 @@ public class GradleExecutionHelper {
       });
   }
 
-  public static void prepare(
+  @ApiStatus.Internal
+  public static void prepareForExecution(
     @NotNull ProjectConnection connection,
     @NotNull LongRunningOperation operation,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener
-  ) {
-    prepare(connection, operation, id, Collections.emptyList(), settings, listener);
-  }
-
-  private static void prepare(
-    @NotNull ProjectConnection connection,
-    @NotNull LongRunningOperation operation,
+    @NotNull CancellationToken cancellationToken,
     @NotNull ExternalSystemTaskId id,
     @NotNull List<String> tasksAndArguments,
     @NotNull GradleExecutionSettings settings,
@@ -164,6 +132,8 @@ public class GradleExecutionHelper {
     setupProgressListeners(operation, settings, id, listener, buildEnvironment);
 
     setupStandardIO(operation, settings, id, listener);
+
+    operation.withCancellationToken(cancellationToken);
 
     GradleOperationHelperExtension.EP_NAME
       .forEachExtensionSafe(proc -> proc.prepareForExecution(id, operation, settings, buildEnvironment));
