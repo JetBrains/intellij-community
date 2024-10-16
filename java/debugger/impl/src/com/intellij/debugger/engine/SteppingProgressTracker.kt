@@ -4,10 +4,13 @@ package com.intellij.debugger.engine
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy
+import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.sun.jdi.request.EventRequest
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.CompletableFuture
 
 private data class TrackedSteppingData(val stepCompetedStatus: CompletableDeferred<Unit>, val threadFilter: (ThreadReferenceProxy?) -> Boolean)
 
@@ -43,17 +46,31 @@ private class CancelingSteppingListener : SteppingListener {
 
     val needSuspendOnlyThread = suspendContext.suspendPolicy == EventRequest.SUSPEND_EVENT_THREAD && threadForStepping != null
 
-    val whereStr =
-      if (threadForStepping != null) JavaDebuggerBundle.message("stepping.filter.real.thread.name", threadForStepping.name())
-      else filter?.filterName ?: debuggerProcessImpl.session.sessionName
-
-    val steppingRestrictionMessage = getSteppingRestrictionMessage(whereStr, steppingAction)
     val steppingName = steppingAction.steppingName
-    val stepCompetedStatus = debuggerProcessImpl.managerThread.makeCancelable(debuggerProcessImpl.project, steppingRestrictionMessage, steppingName) {
-      val command: DebuggerCommandImpl =
-        if (needSuspendOnlyThread) debuggerProcessImpl.createFreezeThreadCommand(threadForStepping)
-        else debuggerProcessImpl.createPauseCommand(threadForStepping)
-      debuggerProcessImpl.managerThread.schedule(command)
+    val stepCompetedStatus = CompletableDeferred<Unit>()
+
+    debuggerProcessImpl.managerThread.schedule(PrioritizedTask.Priority.NORMAL) {
+      // Need to schedule in the separate debugger command, so async name getter will not fail
+      // because of the current suspend context become resumed
+      val whereStrFuture: CompletableFuture<String> = if (threadForStepping != null) {
+        DebuggerUtilsAsync.nameAsync(threadForStepping.threadReference).thenApply { name ->
+          JavaDebuggerBundle.message("stepping.filter.real.thread.name", name)
+        }
+      }
+      else {
+        CompletableFuture<String>.completedFuture(filter?.filterName ?: debuggerProcessImpl.session.sessionName)
+      }
+
+      whereStrFuture.thenAccept { whereStr ->
+        @Suppress("HardCodedStringLiteral")
+        val steppingRestrictionMessage = getSteppingRestrictionMessage(whereStr, steppingAction)
+        debuggerProcessImpl.managerThread.makeCancelable(debuggerProcessImpl.project, steppingRestrictionMessage, steppingName, stepCompetedStatus) {
+          val command: DebuggerCommandImpl =
+            if (needSuspendOnlyThread) debuggerProcessImpl.createFreezeThreadCommand(threadForStepping)
+            else debuggerProcessImpl.createPauseCommand(threadForStepping)
+          debuggerProcessImpl.managerThread.schedule(command)
+        }
+      }
     }
 
     val tracker = suspendContext.debugProcess.mySteppingProgressTracker

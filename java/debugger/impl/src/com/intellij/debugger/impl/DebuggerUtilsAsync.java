@@ -374,6 +374,12 @@ public final class DebuggerUtilsAsync {
     return toCompletableFuture(() -> thread.frameCount());
   }
 
+  public static CompletableFuture<String> nameAsync(ThreadReference thread) {
+    if (thread instanceof ThreadReferenceImpl threadReferenceImpl && isAsyncEnabled()) {
+      return reschedule(threadReferenceImpl.nameAsync());
+    }
+    return toCompletableFuture(() -> thread.name());
+  }
 
   // Reader thread
   public static CompletableFuture<List<Method>> methods(ReferenceType type) {

@@ -53,8 +53,13 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
   }
 
   @ApiStatus.Internal
-  fun makeCancelable(project: Project, progressTitle: @ProgressTitle String, progressText: @Nls String, howToCancel: () -> Unit): CompletableDeferred<Unit> {
-    val deferred = CompletableDeferred<Unit>()
+  fun makeCancelable(
+    project: Project,
+    progressTitle: @ProgressTitle String,
+    progressText: @Nls String,
+    deferred: CompletableDeferred<Unit>,
+    howToCancel: () -> Unit
+  ) {
     coroutineScope.launch {
       withBackgroundProgress(project, progressTitle) {
         withProgressText(progressText) {
@@ -67,7 +72,6 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
         }
       }
     }
-    return deferred
   }
 
   private fun createScope() = parentScope.childScope("DebuggerManagerThreadImpl")
