@@ -780,7 +780,7 @@ class BasicCompletionSession(
                     "actual" -> {
                         collector.addElement(lookupElement)
 
-                        ActualDeclarationCompletion(project, collector, basicLookupElementFactory).complete(position)
+                        ActualDeclarationCompletion(project, collector, basicLookupElementFactory).complete(position, declaration = null)
                     }
 
                     "class" -> {
@@ -923,9 +923,12 @@ class BasicCompletionSession(
     }
 
     private fun completeDeclarationNameFromUnresolvedOrOverride(declaration: KtNamedDeclaration) {
+        // TODO: [FL-30540] Rename the kind or split it into 3 separate kinds (UNRESOLVED, OVERRIDE, ACTUAL)
         addKind(KotlinCompletionKindName.DECLARATION_NAME_FROM_UNRESOLVED_OVERRIDE) {
             if (declaration is KtCallableDeclaration && declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
                 OverridesCompletion(collector, basicLookupElementFactory).complete(position, declaration)
+            } else if (declaration is KtCallableDeclaration && declaration.hasModifier(KtTokens.ACTUAL_KEYWORD)) {
+                ActualDeclarationCompletion(project, collector, basicLookupElementFactory).complete(position, declaration)
             } else {
                 val referenceScope = referenceScope(declaration) ?: return@addKind
                 val originalScope = toFromOriginalFileMapper.toOriginalFile(referenceScope) ?: return@addKind
