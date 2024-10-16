@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="netty-codec-protobuf" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.netty:netty-codec-protobuf:4.2.0.Alpha5">
+    <properties include-transitive-deps="false" maven-id="io.netty:netty-codec-protobuf:4.2.0.Alpha4">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.0.Alpha5/netty-codec-protobuf-4.2.0.Alpha5.jar">
-          <sha256sum>8c56c3ce98782ff74dd975c73bf6e75a8d9b4171b7f59e60df43873ba397d7e7</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.0.Alpha4/netty-codec-protobuf-4.2.0.Alpha4.jar">
+          <sha256sum>c5c1ce6ba385e8873d028b065507012eaeb4b445c325c9b67fd5e1590dbaef47</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.0.Alpha5/netty-codec-protobuf-4.2.0.Alpha5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.0.Alpha4/netty-codec-protobuf-4.2.0.Alpha4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.0.Alpha5/netty-codec-protobuf-4.2.0.Alpha5-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-protobuf/4.2.0.Alpha4/netty-codec-protobuf-4.2.0.Alpha4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
