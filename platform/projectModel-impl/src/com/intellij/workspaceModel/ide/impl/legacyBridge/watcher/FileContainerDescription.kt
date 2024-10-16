@@ -50,8 +50,6 @@ internal class FileContainerDescription(val urls: List<VirtualFileUrl>, private 
   }
 
   private fun cacheVirtualFilePointersData(): Array<VirtualFile> {
-    timestampOfCachedFiles = virtualFilePointerManager.modificationCount // snapshot at the beginning
-
     val cachedFiles: MutableList<VirtualFile> = ArrayList(virtualFilePointersList.size)
     val cachedDirectories: MutableList<VirtualFile> = ArrayList(virtualFilePointersList.size / 3)
     var allFilesAreDirs = true
@@ -108,6 +106,7 @@ internal class FileContainerDescription(val urls: List<VirtualFileUrl>, private 
     }
     val files = if (allFilesAreDirs) VfsUtilCore.toVirtualFileArray(cachedDirectories) else VfsUtilCore.toVirtualFileArray(cachedFiles)
     cachedFilesList = files
+    timestampOfCachedFiles = virtualFilePointerManager.modificationCount
     return files
   }
 }
