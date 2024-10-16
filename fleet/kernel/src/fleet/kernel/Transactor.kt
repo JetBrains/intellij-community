@@ -6,11 +6,12 @@ import com.jetbrains.rhizomedb.impl.*
 import fleet.kernel.rebase.OfferContributorEntity
 import fleet.kernel.rebase.RemoteKernelConnectionEntity
 import fleet.kernel.rebase.WorkspaceClockEntity
+import fleet.preferences.isUsingMicroSpans
 import fleet.rpc.client.RpcClientDisconnectedException
+import fleet.tracing.*
 import fleet.tracing.runtime.Span
+import fleet.tracing.runtime.SpanInfo
 import fleet.tracing.runtime.currentSpan
-import fleet.tracing.span
-import fleet.tracing.spannedScope
 import fleet.util.*
 import fleet.util.async.catching
 import fleet.util.async.coroutineNameAppended
@@ -353,19 +354,33 @@ suspend fun <T> withTransactor(
       }
 
       override suspend fun changeSuspend(f: ChangeScope.() -> Unit): Change {
-        currentCoroutineContext().job.ensureActive()
+        val job = currentCoroutineContext().job
+        job.ensureActive()
+        val span = if (isUsingMicroSpans) {
+          currentSpan.startChild(
+            SpanInfo(
+              name = "change",
+              job = job,
+              isScope = true,
+              startTimestampNano = null,
+              cause = null,
+              map = HashMap()))
+        }
+        else {
+          null
+        }
         /**
          * DO NOT WRAP THIS BLOCK IN A SCOPE!
          * see `change suspend is atomic case 2` in [fleet.test.frontend.kernel.TransactorTest]
          * */
-        return run {
+        return runCatching {
           val rendezvous = CompletableDeferred<Unit>()
           try {
             val deferred = CompletableDeferred<Change>()
             backgroundDispatchChannel.send(ChangeTask(f = f,
                                                       rendezvous = rendezvous,
                                                       resultDeferred = deferred,
-                                                      causeSpan = currentSpan))
+                                                      causeSpan = span ?: currentSpan))
             /** we want to preserve structured concurrency which means current job should be completed only when [body] has finished
              * see `change suspend is atomic` in [fleet.test.frontend.kernel.TransactorTest]
              */
@@ -377,7 +392,7 @@ suspend fun <T> withTransactor(
           finally {
             rendezvous.completeExceptionally(CancellationException("Suspending change is cancelled"))
           }
-        }
+        }.also { span?.completeWithResult(it) }.getOrThrow()
       }
 
       override val log = flow {
