@@ -106,7 +106,7 @@ object PyCollectionTypeUtil {
     val elements = sequence.elements
     val maxAnalyzedElements = MAX_ANALYZED_ELEMENTS_OF_LITERALS.coerceAtMost(elements.size)
     var allStrKeys = true
-    val strKeysToValueTypes = HashMap<String, Pair<PyExpression?, PyType?>>()
+    val strKeysToValueTypes = LinkedHashMap<String, Pair<PyExpression?, PyType?>>()
 
     elements
       .take(maxAnalyzedElements)
