@@ -27,7 +27,7 @@ class SettingsSyncPromotion : SettingsDialogListener {
   override fun afterApply(settingsEditor: AbstractEditor) {
     if (settingsEditor !is SettingsEditor
         || SettingsSyncSettings.getInstance().syncEnabled
-        || SettingsSyncAuthService.getInstance().isLoggedIn()
+        || SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId != null
         || !Registry.`is`("settingsSync.promotion.in.settings", false)) {
       return
     }
