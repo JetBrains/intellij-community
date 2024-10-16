@@ -15854,12 +15854,6 @@ e:com.intellij.ui.dsl.builder.TopGap
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.TopGap
 - s:values():com.intellij.ui.dsl.builder.TopGap[]
-f:com.intellij.ui.dsl.builder.components.RoundedLineBorderWithBackground
-- javax.swing.border.LineBorder
-- <init>(java.awt.Color,java.awt.Color,I,I):V
-- b:<init>(java.awt.Color,java.awt.Color,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- getBorderInsets(java.awt.Component,java.awt.Insets):com.intellij.util.ui.JBInsets
-- paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
 f:com.intellij.ui.dsl.builder.components.ValidationTooltipKt
 - sf:validationTooltip(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.ui.components.ActionLink,com.intellij.ui.components.ActionLink,com.intellij.ui.dsl.builder.components.ValidationType,Z):com.intellij.ui.dsl.builder.Cell
 - bs:validationTooltip$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.ui.components.ActionLink,com.intellij.ui.components.ActionLink,com.intellij.ui.dsl.builder.components.ValidationType,Z,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
