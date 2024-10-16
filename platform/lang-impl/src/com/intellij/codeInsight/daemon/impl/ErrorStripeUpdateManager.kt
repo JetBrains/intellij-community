@@ -1,153 +1,150 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
-import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.registry.RegistryValueListener;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorMarkupModel
+import com.intellij.openapi.editor.impl.EditorMarkupModelImpl
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx.Companion.getOpenProjects
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import java.util.function.Supplier
+
+private val LOG = logger<ErrorStripeUpdateManager>()
 
 @Service(Service.Level.PROJECT)
-public final class ErrorStripeUpdateManager implements Disposable {
-  public static ErrorStripeUpdateManager getInstance(Project project) {
-    return project.getService(ErrorStripeUpdateManager.class);
-  }
-
-  private static final Logger LOG = Logger.getInstance(ErrorStripeUpdateManager.class);
-  private final Project myProject;
-
-  public ErrorStripeUpdateManager(@NotNull Project project) {
-    myProject = project;
-    TrafficLightRendererContributor.EP_NAME.addChangeListener(() -> {
-      PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
-      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
-        if (fileEditor instanceof TextEditor textEditor) {
-          Editor editor = textEditor.getEditor();
-          PsiFile file = psiDocumentManager.getCachedPsiFile(editor.getDocument());
-          repaintErrorStripePanel(editor, file);
+class ErrorStripeUpdateManager(private val myProject: Project) : Disposable {
+  init {
+    TrafficLightRendererContributor.EP_NAME.addChangeListener(Runnable {
+      val psiDocumentManager = PsiDocumentManager.getInstance(myProject)
+      for (fileEditor in FileEditorManager.getInstance(myProject).getAllEditors()) {
+        if (fileEditor is TextEditor) {
+          val editor = fileEditor.getEditor()
+          val file = psiDocumentManager.getCachedPsiFile(editor.getDocument())
+          repaintErrorStripePanel(editor, file)
         }
       }
-    }, this);
+    }, this)
   }
 
-  @Override
-  public void dispose() {
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): ErrorStripeUpdateManager {
+      return project.getService<ErrorStripeUpdateManager>(ErrorStripeUpdateManager::class.java)
+    }
+  }
+
+  override fun dispose() {
   }
 
   @RequiresEdt
-  public void repaintErrorStripePanel(@NotNull Editor editor, @Nullable PsiFile psiFile) {
+  fun repaintErrorStripePanel(editor: Editor, psiFile: PsiFile?) {
     if (!myProject.isInitialized()) {
-      return;
+      return
     }
 
-    ReadAction.run(() -> {
-      EditorMarkupModel markup = (EditorMarkupModel)editor.getMarkupModel();
-      markup.setErrorPanelPopupHandler(new DaemonEditorPopup(myProject, editor));
-      markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(myProject, editor));
-      markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
+    ReadAction.run<RuntimeException?>(ThrowableRunnable {
+      val markup = editor.getMarkupModel() as EditorMarkupModel
+      markup.setErrorPanelPopupHandler(DaemonEditorPopup(myProject, editor))
+      markup.setErrorStripTooltipRendererProvider(DaemonTooltipRendererProvider(myProject, editor))
+      markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().errorStripeMarkMinHeight)
       if (psiFile != null) {
-        setOrRefreshErrorStripeRenderer(markup, psiFile);
+        setOrRefreshErrorStripeRenderer(markup, psiFile)
       }
-    });
+    })
   }
 
   @RequiresEdt
-  void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @NotNull PsiFile file) {
+  fun setOrRefreshErrorStripeRenderer(editorMarkupModel: EditorMarkupModel, file: PsiFile) {
     if (!editorMarkupModel.isErrorStripeVisible()) {
-      return;
+      return
     }
-    ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
-    if (renderer instanceof TrafficLightRenderer tlr) {
-      EditorMarkupModelImpl markupModelImpl = (EditorMarkupModelImpl) editorMarkupModel;
-      tlr.refresh(markupModelImpl);
-      markupModelImpl.repaintTrafficLightIcon();
-      if (tlr.isValid()) {
-        return;
+    val renderer = editorMarkupModel.getErrorStripeRenderer()
+    if (renderer is TrafficLightRenderer) {
+      val markupModelImpl = editorMarkupModel as EditorMarkupModelImpl
+      renderer.refresh(markupModelImpl)
+      markupModelImpl.repaintTrafficLightIcon()
+      if (renderer.isValid()) {
+        return
       }
     }
 
-    ModalityState modality = ModalityState.defaultModalityState();
-    TrafficLightRenderer.setTrafficLightOnEditor(myProject, editorMarkupModel, modality, () -> {
-      Editor editor = editorMarkupModel.getEditor();
+    val modality = ModalityState.defaultModalityState()
+    TrafficLightRenderer.setTrafficLightOnEditor(myProject, editorMarkupModel, modality, Supplier {
+      val editor = editorMarkupModel.getEditor()
       if (isEditorEligible(editor, file)) {
-        return null;
+        return@Supplier null
       }
-      return createRenderer(editor, file);
-    });
+      createRenderer(editor, file)
+    })
   }
 
   @RequiresBackgroundThread
-  private @NotNull TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
-    for (TrafficLightRendererContributor contributor : TrafficLightRendererContributor.EP_NAME.getExtensionList()) {
-      TrafficLightRenderer renderer = contributor.createRenderer(editor, file);
-      if (renderer != null) return renderer;
+  private fun createRenderer(editor: Editor, file: PsiFile?): TrafficLightRenderer {
+    for (contributor in TrafficLightRendererContributor.EP_NAME.extensionList) {
+      val renderer = contributor.createRenderer(editor, file)
+      if (renderer != null) return renderer
     }
-    return new TrafficLightRenderer(myProject, editor);
+    return TrafficLightRenderer(myProject, editor)
   }
 
-  private boolean isEditorEligible(Editor editor, PsiFile psiFile) {
-    return ReadAction.compute(() -> {
-      boolean isHighlightingAvailable = DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(psiFile);
-      boolean isPsiValid = psiFile.isValid();
-      boolean isEditorDispose = editor.isDisposed();
+  private fun isEditorEligible(editor: Editor, psiFile: PsiFile): Boolean {
+    return ReadAction.compute<Boolean?, RuntimeException?>(ThrowableComputable {
+      val isHighlightingAvailable = DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(psiFile)
+      val isPsiValid = psiFile.isValid()
+      val isEditorDispose = editor.isDisposed()
 
       LOG.debug(
         "Editor params for rendering traffic light: isEditorDispose ", isEditorDispose,
         " isPsiValid ", isPsiValid,
-        " isHighlightingAvailable ", isHighlightingAvailable);
-      return isEditorDispose
-             || !isPsiValid
-             || !isHighlightingAvailable;
-    });
+        " isHighlightingAvailable ", isHighlightingAvailable)
+      isEditorDispose
+      || !isPsiValid || !isHighlightingAvailable
+    })
   }
 
-  static final class EssentialHighlightingModeListener implements RegistryValueListener {
-    @Override
-    public void afterValueChanged(@NotNull RegistryValue value) {
-      if (!"ide.highlighting.mode.essential".equals(value.getKey())) {
-        return;
+  internal class EssentialHighlightingModeListener : RegistryValueListener {
+    override fun afterValueChanged(value: RegistryValue) {
+      if ("ide.highlighting.mode.essential" != value.key) {
+        return
       }
 
-      for (Project project : ProjectManagerEx.Companion.getOpenProjects()) {
-        HighlightingSettingsPerFile.getInstance(project).incModificationCount();
+      for (project in getOpenProjects()) {
+        HighlightingSettingsPerFile.getInstance(project).incModificationCount()
 
-        FileEditor[] allEditors = FileEditorManager.getInstance(project).getAllEditors();
-        if (allEditors.length == 0) {
-          return;
+        val allEditors = FileEditorManager.getInstance(project).getAllEditors()
+        if (allEditors.size == 0) {
+          return
         }
 
-        PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-        ErrorStripeUpdateManager stripeUpdateManager = getInstance(project);
-        for (FileEditor fileEditor : allEditors) {
-          if (fileEditor instanceof TextEditor textEditor) {
-            Editor editor = textEditor.getEditor();
-            stripeUpdateManager.repaintErrorStripePanel(editor, psiDocumentManager.getCachedPsiFile(editor.getDocument()));
+        val psiDocumentManager = PsiDocumentManager.getInstance(project)
+        val stripeUpdateManager: ErrorStripeUpdateManager = getInstance(project)
+        for (fileEditor in allEditors) {
+          if (fileEditor is TextEditor) {
+            val editor = fileEditor.getEditor()
+            stripeUpdateManager.repaintErrorStripePanel(editor, psiDocumentManager.getCachedPsiFile(editor.getDocument()))
           }
         }
 
         // Run all checks after disabling essential highlighting
         if (!value.asBoolean()) {
-          ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).restartToCompleteEssentialHighlighting();
+          (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).restartToCompleteEssentialHighlighting()
         }
       }
     }
