@@ -2,9 +2,11 @@
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.AnnotationInlayProvider
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
@@ -12,10 +14,10 @@ import org.intellij.lang.annotations.Language
 
 class AnnotationHintsTest : InlayHintsProviderTestCase() {
 
-  override fun getProjectDescriptor(): LightProjectDescriptor? {
+  override fun getProjectDescriptor(): LightProjectDescriptor {
     return JAVA_21
   }
-  
+
   fun `test contract inferred annotation`() {
     val text = """
 class Demo {
@@ -25,6 +27,34 @@ class Demo {
   }
 }"""
     testAnnotations(text)
+  }
+
+  fun `test arrays`() {
+    val text = """
+      final class Demo {
+      /*<# block [[@ Contract [( [[value  =  "_ -> new"] ,  [pure  =  true]] )]]] #>*/
+        String/*<# [[@ NotNull]] #>*/[][] data(String/*<# [[@ NotNull]] #>*/... arr) {
+          if (arr.length == 0) return new String[10][20];
+          return new String[20][30];
+        }
+      }
+    """.trimIndent()
+    testAnnotations(text)
+  }
+
+  fun `test arrays java7`() {
+    val text = """
+      final class Demo {
+      /*<# block [[@ Contract [( [[value  =  "_ -> new"] ,  [pure  =  true]] )]] [@ NotNull]] #>*/
+        String[][] data(/*<# [[@ NotNull]] #>*/String... arr) {
+          if (arr.length == 0) return new String[10][20];
+          return new String[20][30];
+        }
+      }
+    """.trimIndent()
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_7) {
+      testAnnotations(text)
+    }
   }
 
   fun `test contract nullable`() {
@@ -45,8 +75,8 @@ public class E {
   fun `test no parameters have no parens`() {
     val text = """
 public class E {
-/*<# block [[@ Contract [( [[pure  =  true]] )]] [@ Nullable]] #>*/
-  static Boolean foo(E e) {
+/*<# block [[@ Contract [( [[pure  =  true]] )]]] #>*/
+  static /*<# [[@ Nullable]] #>*/Boolean foo(E e) {
     if (true) return false;
     return null;
   }
@@ -65,7 +95,7 @@ public class E {
 }"""
     testAnnotations(text)
   }
-  
+
   fun `test external annotations`() {
     val optionalClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_OPTIONAL, GlobalSearchScope.allScope(project))!!
     val file = optionalClass.containingFile
@@ -90,7 +120,7 @@ public final class Optional<T> {
     private static final Optional<?> EMPTY = new Optional((Object)null);
     private final T value;
 
-    /*<# [[@ NotNull] [@ Contract [( [[pure  =  true]] )]]] #>*/public static <T> Optional<T> empty() {
+    /*<# [[@ Contract [( [[pure  =  true]] )]]] #>*/public static <T> /*<# [[@ NotNull]] #>*/Optional<T> empty() {
         Optional<T> t = EMPTY;
         return t;
     }
@@ -99,15 +129,15 @@ public final class Optional<T> {
         this.value = value;
     }
 
-    /*<# [[@ NotNull]] #>*/public static <T> Optional<T> of(/*<# [[@ Flow [( [[targetIsContainer  =  true]] )]]] #>*/T value) {
+    public static <T> /*<# [[@ NotNull]] #>*/Optional<T> of(/*<# [[@ Flow [( [[targetIsContainer  =  true]] )]]] #>*/T value) {
         return new Optional<T>(Objects.requireNonNull(value));
     }
 
-    /*<# [[@ NotNull] [@ Contract [( [[pure  =  true]] )]]] #>*/public static <T> Optional<T> ofNullable(/*<# [[@ Flow [( [[targetIsContainer  =  true]] )]]] #>*/T value) {
+    /*<# [[@ Contract [( [[pure  =  true]] )]]] #>*/public static <T> /*<# [[@ NotNull]] #>*/Optional<T> ofNullable(/*<# [[@ Flow [( [[targetIsContainer  =  true]] )]]] #>*/T value) {
         return value == null ? EMPTY : new Optional(value);
     }
 
-    /*<# [[@ NotNull] [@ Contract [( [[pure  =  true]] )]] [@ Flow [( [[sourceIsContainer  =  true]] )]]] #>*/public T get() {
+    /*<# [[@ Contract [( [[pure  =  true]] )]] [@ Flow [( [[sourceIsContainer  =  true]] )]]] #>*/public /*<# [[@ NotNull]] #>*/T get() {
         if (this.value == null) {
             throw new NoSuchElementException("No value present");
         } else {
@@ -163,7 +193,7 @@ public final class Optional<T> {
         }
     }
 
-    /*<# [[@ NotNull]] #>*/public Optional<T> or(/*<# [[@ NotNull]] #>*/Supplier<? extends /*<# [[@ NotNull]] #>*/Optional<? extends T>> supplier) {
+    public /*<# [[@ NotNull]] #>*/Optional<T> or(/*<# [[@ NotNull]] #>*/Supplier<? extends /*<# [[@ NotNull]] #>*/Optional<? extends T>> supplier) {
         Objects.requireNonNull(supplier);
         if (this.isPresent()) {
             return this;
@@ -173,11 +203,11 @@ public final class Optional<T> {
         }
     }
 
-    /*<# [[@ NotNull] [@ Contract [( [[pure  =  true]] )]]] #>*/public Stream<T> stream() {
+    /*<# [[@ Contract [( [[pure  =  true]] )]]] #>*/public /*<# [[@ NotNull]] #>*/Stream<T> stream() {
         return this.isEmpty() ? Stream.empty() : Stream.of(this.value);
     }
 
-    /*<# [[@ Contract [( [[value  =  "!null -> !null"] ,  [pure  =  true]] )]] [@ Flow [( [[sourceIsContainer  =  true]] )]]] #>*/public T orElse(/*<# [[@ Nullable] [@ Flow [( [[targetIsContainer  =  true]] )]]] #>*/T other) {
+    /*<# [[@ Contract [( [[value  =  "!null -> !null"] ,  [pure  =  true]] )]] [@ Flow [( [[sourceIsContainer  =  true]] )]]] #>*/public T orElse(/*<# [[[@ Flow [( [[targetIsContainer  =  true]] )]]] [[@ Nullable]]] #>*/T other) {
         return (T)(this.value != null ? this.value : other);
     }
 

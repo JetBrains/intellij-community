@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.MakeInferredAnnotationExplicit
@@ -10,21 +11,25 @@ import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
+import com.intellij.codeInspection.dataFlow.Mutability
 import com.intellij.java.JavaBundle
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.BlockInlayPriority
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
+import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.PsiUtil
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.SmartList
 import java.awt.Font
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
@@ -33,6 +38,8 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
 
   override val group: InlayGroup
     get() = InlayGroup.ANNOTATIONS_GROUP
+
+  private val arrayTypeStart = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.ELLIPSIS)
 
   override fun getCollectorFor(file: PsiFile,
                                editor: Editor,
@@ -65,38 +72,69 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
           }
 
           val shownAnnotations = mutableSetOf<String>()
-          val presentations = SmartList<InlayPresentation>()
-          annotations.forEach {
-            val nameReferenceElement = it.nameReferenceElement
-            if (nameReferenceElement != null && element.modifierList != null &&
-                (shownAnnotations.add(nameReferenceElement.qualifiedName) || JavaDocInfoGenerator.isRepeatableAnnotationType(it))) {
-              presentations.add(createPresentation(it, element))
-            }
-          }
-          val modifierList = element.modifierList
-          if (modifierList != null) {
-            val textRange = modifierList.textRange ?: return true
-            val offset = textRange.startOffset
-            if (presentations.isNotEmpty()) {
-              val presentation = SequencePresentation(presentations)
-              val prevSibling = element.prevSibling
-              when {
-                // element is first in line
-                prevSibling is PsiWhiteSpace && element !is PsiParameter && prevSibling.textContains('\n') && document != null -> {
-                  val line = document.getLineNumber(offset)
-                  val startOffset = document.getLineStartOffset(line)
-                  val shifted = factory.inset(presentation, left = EditorUtil.textWidth(editor, document.charsSequence, startOffset, offset, Font.PLAIN, 0))
-
-                  sink.addBlockElement(offset, true, true, BlockInlayPriority.ANNOTATIONS, shifted)
-                }
-                else -> {
-                  sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1), false)
-                }
+          val modifierListPresentations = mutableListOf<InlayPresentation>()
+          val typePresentations = mutableListOf<InlayPresentation>()
+          annotations.forEach { annotation ->
+            val nameReferenceElement = annotation.nameReferenceElement
+            if (nameReferenceElement != null && element.modifierList != null) {
+              if (shownAnnotations.add(nameReferenceElement.qualifiedName) ||
+                  JavaDocInfoGenerator.isRepeatableAnnotationType(annotation)) {
+                val typeAnno = isTypeAnno(annotation)
+                val targetList = if (typeAnno) typePresentations else modifierListPresentations
+                targetList.add(createPresentation(annotation, element))
               }
             }
           }
+          addModifierListPresentations(modifierListPresentations, element, document)
+          addTypePresentations(typePresentations, element)
         }
         return true
+      }
+
+      private fun isTypeAnno(annotation: PsiAnnotation): Boolean {
+        val qualifiedName = annotation.qualifiedName ?: return false
+        val typeAnno = qualifiedName == AnnotationUtil.NOT_NULL ||
+                       qualifiedName == AnnotationUtil.NULLABLE ||
+                       qualifiedName == AnnotationUtil.UNKNOWN_NULLABILITY ||
+                       qualifiedName == Mutability.UNMODIFIABLE_ANNOTATION ||
+                       qualifiedName == Mutability.UNMODIFIABLE_VIEW_ANNOTATION
+        return typeAnno && PsiUtil.isAvailable(JavaFeature.TYPE_ANNOTATIONS, annotation)
+      }
+
+      private fun addTypePresentations(typePresentations: List<InlayPresentation>, element: PsiModifierListOwner) {
+        if (typePresentations.isEmpty()) return
+        val typeElement = when (element) {
+          is PsiVariable -> element.typeElement
+          is PsiMethod -> element.returnTypeElement
+          else -> null
+        } ?: return
+        val anchor = typeElement.children.firstOrNull { PsiUtil.isJavaToken(it, arrayTypeStart) } ?: typeElement
+        val presentation: InlayPresentation = SequencePresentation(typePresentations)
+        val offset = anchor.textRange.startOffset
+        sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1), false)
+      }
+
+      private fun addModifierListPresentations(
+        modifierListPresentations: List<InlayPresentation>,
+        element: PsiModifierListOwner,
+        document: Document?,
+      ) {
+        if (modifierListPresentations.isEmpty()) return
+        val offset = element.modifierList?.textRange?.startOffset ?: return
+        val presentation = SequencePresentation(modifierListPresentations)
+        val prevSibling = element.prevSibling
+        when {
+          // element is first in line
+          prevSibling is PsiWhiteSpace && element !is PsiParameter && prevSibling.textContains('\n') && document != null -> {
+            val line = document.getLineNumber(offset)
+            val startOffset = document.getLineStartOffset(line)
+            val shifted = factory.inset(presentation, left = EditorUtil.textWidth(editor, document.charsSequence, startOffset, offset, Font.PLAIN, 0))
+            sink.addBlockElement(offset, true, true, BlockInlayPriority.ANNOTATIONS, shifted)
+          }
+          else -> {
+            sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1), false)
+          }
+        }
       }
 
       private fun collectTypeAnnotations(type: PsiType, anchor: PsiElement, sink: InlayHintsSink) {
@@ -144,9 +182,9 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
         roundWithBackground(SequencePresentation(presentations))
       }
 
-      private fun parametersPresentation(parameterList: PsiAnnotationParameterList) = with(factory) {
+      private fun parametersPresentation(parameterList: PsiAnnotationParameterList): InlayPresentation? {
         val attributes = parameterList.attributes
-        when {
+        return when {
           attributes.isEmpty() -> null
           else -> insideParametersPresentation(attributes, collapsed = parameterList.textLength > 60)
         }
