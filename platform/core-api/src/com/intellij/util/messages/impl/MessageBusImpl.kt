@@ -4,7 +4,6 @@
 package com.intellij.util.messages.impl
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.isMessageBusErrorPropagationEnabled
 import com.intellij.openapi.application.isMessageBusThrowsWhenDisposed
@@ -129,9 +128,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   override fun <L : Any> syncPublisher(topic: Topic<L>): L {
-    if (isDisposed) {
-      PluginException.logPluginError(LOG, "Already disposed: $this", null, topic.javaClass)
-    }
+    checkDisposed()
 
     @Suppress("UNCHECKED_CAST")
     return publisherCache.computeIfAbsent(topic) { topic1 ->
