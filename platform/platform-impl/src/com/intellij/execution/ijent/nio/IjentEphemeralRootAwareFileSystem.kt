@@ -28,7 +28,7 @@ internal class IjentEphemeralRootAwarePath(val rootPath: Path, val originalPath:
   }
 
   override fun getRoot(): Path? {
-    return originalPath.root
+    return originalPath.root?.let { IjentEphemeralRootAwarePath(rootPath, it) }
   }
 
   override fun getFileName(): Path? {
@@ -177,7 +177,7 @@ internal class IjentEphemeralRootAwareFileSystem(
 
   override fun getPath(first: String, vararg more: String): Path {
     if (first.startsWith(root.pathString)) {
-      val parts = more.flatMap { it.split("/") }.toTypedArray()
+      val parts = more.flatMap { it.split("/") }.filter(String::isNotEmpty).toTypedArray()
       val ijentNioPath = originalFs.getPath(first.removePrefix(root.pathString).nullize() ?: "/", *parts) as IjentNioPath
       return IjentEphemeralRootAwarePath(root, ijentNioPath)
     }
