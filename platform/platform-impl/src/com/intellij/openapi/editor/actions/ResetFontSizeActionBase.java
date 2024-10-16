@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -31,6 +32,7 @@ class ResetFontSizeActionBase extends EditorAction implements ActionRemoteBehavi
   static final String UNSCALED_FONT_SIZE_TO_RESET_EDITOR = "fontSizeToResetEditor";
   public static final String PREVIOUS_COLOR_SCHEME = "previousColorScheme";
   private final boolean myGlobal;
+  private static final Logger LOG = Logger.getInstance(ResetFontSizeActionBase.class);
 
   @ApiStatus.Internal
   public interface Strategy {
@@ -41,7 +43,11 @@ class ResetFontSizeActionBase extends EditorAction implements ActionRemoteBehavi
     @NlsActions.ActionText String getText(float fontSize);
 
     default void reset() {
-      setFontSize(getFontSize());
+      float size = getFontSize();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("Resetting font size to %.2f. Strategy: %s", size, getClass().getSimpleName() ));
+      }
+      setFontSize(size);
     }
   }
 
