@@ -173,17 +173,21 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Override
   public boolean isScript() {
-    final StubElement stub = getStub();
-    if (stub instanceof GrFileStub) {
-      return ((GrFileStub)stub).isScript();
-    }
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      final StubElement stub = getStub();
+      if (stub instanceof GrFileStub) {
+        return ((GrFileStub)stub).isScript();
+      }
 
-    Boolean isScript = myScript;
-    if (isScript == null) {
-      isScript = checkIsScript();
-      myScript = isScript;
+      Boolean isScript = myScript;
+      if (isScript == null) {
+        isScript = checkIsScript();
+        myScript = isScript;
+      }
+      return isScript;
+    } else {
+      return myScript != null ? myScript : false;
     }
-    return isScript;
   }
 
   private boolean checkIsScript() {
