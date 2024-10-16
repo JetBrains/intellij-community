@@ -144,22 +144,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-  override var subRowsVisible: Boolean = true
-    set(value) {
-      if (field == value) {
-        return
-      }
-
-      field = value
-      subRows?.forEach {
-        it.visible = value
-        it.subRowsVisible = value
-        if (it != subRows!!.last()) {
-          it.gapAfter = if (value) null else "0px!"
-        }
-      }
-    }
-
   internal val isLabeledIncludingSubRows: Boolean
     get() = labeled || (subRows?.any { it.isLabeledIncludingSubRows } ?: false)
 
@@ -188,8 +172,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     if (isSeparated) {
       val separatorRow = MigLayoutRow(this, builder, indent = newIndent, noGrid = true)
       configureSeparatorRow(separatorRow, title)
-      separatorRow.visible = subRowsVisible
-      separatorRow.subRowsVisible = subRowsVisible
+      separatorRow.visible = true
       row.getOrCreateSubRowsList().add(separatorRow)
     }
 
@@ -202,8 +185,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
     subRows.add(insertIndex, row)
 
-    row.visible = subRowsVisible
-    row.subRowsVisible = subRowsVisible
+    row.visible = true
 
     if (label != null) {
       row.addComponent(label)
@@ -281,11 +263,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   override fun <T : JComponent> component(component: T): CellBuilder<T> {
     addComponent(component)
     return CellBuilderImpl(builder, this, component)
-  }
-
-  override fun <T : JComponent> component(component: T, viewComponent: JComponent): CellBuilder<T> {
-    addComponent(viewComponent)
-    return CellBuilderImpl(builder, this, component, viewComponent)
   }
 
   internal fun addComponent(component: JComponent, cc: CC = CC()) {
@@ -394,16 +371,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   override fun largeGapAfter() {
     gapAfter = "${spacing.largeVerticalGap}px!"
-  }
-
-  override fun createNoteOrCommentRow(component: JComponent): Row {
-    val cc = CC()
-    cc.vertical.gapBefore = gapToBoundSize(if (subRows == null) spacing.verticalGap else spacing.largeVerticalGap, false)
-    cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
-
-    val row = createChildRow(label = null, noGrid = true)
-    row.addComponent(component, cc)
-    return row
   }
 
   override fun onGlobalApply(callback: () -> Unit): Row {

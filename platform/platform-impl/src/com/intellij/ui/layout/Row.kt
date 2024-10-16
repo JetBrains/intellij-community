@@ -5,10 +5,8 @@ package com.intellij.ui.layout
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
-import com.intellij.ui.components.noteComponent
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import javax.swing.JComponent
 import javax.swing.JLabel
 
 @JvmDefaultWithCompatibility
@@ -29,10 +27,6 @@ interface RowBuilder : BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  fun createNoteOrCommentRow(component: JComponent): Row
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
   fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
     return createChildRow(label = label, isSeparated = separated).apply(init)
   }
@@ -46,15 +40,6 @@ interface RowBuilder : BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun titledRow(@NlsContexts.BorderTitle title: String, init: Row.() -> Unit): Row
-
-  /**
-   * Hyperlinks are supported (`<a href=""></a>`), new lines and `<br>` are supported only if no links (file issue if need).
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun noteRow(text: @Nls String, linkHandler: ((url: String) -> Unit)? = null) {
-    createNoteOrCommentRow(noteComponent(text, linkHandler))
-  }
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
@@ -76,12 +61,6 @@ abstract class Row : Cell(), RowBuilder {
   @set:ApiStatus.ScheduledForRemoval
   abstract var visible: Boolean
 
-  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  @set:ApiStatus.ScheduledForRemoval
-  abstract var subRowsVisible: Boolean
-
   @PublishedApi
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
@@ -97,7 +76,7 @@ abstract class Row : Cell(), RowBuilder {
    * @param isFullWidth If `true`, the cell occupies the full width of the enclosing component.
    */
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   inline fun cell(isVerticalFlow: Boolean = false, isFullWidth: Boolean = false, init: InnerCell.() -> Unit) {
     setCellMode(true, isVerticalFlow, isFullWidth)
     InnerCell(this).init()
