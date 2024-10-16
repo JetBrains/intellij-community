@@ -467,6 +467,19 @@ Here is a small selection of projects that use Compose for Desktop and Jewel:
 * New task-based Profiler UI in Android Studio Koala
 * ...and more to come!
 
+## Throubleshooting
+
+### Git push hook is not working?
+
+On git push you see:
+
+```bash
+error: cannot spawn .git/hooks/pre-push: No such file or directory
+error: waitpid for (NULL) failed: No child processes
+```
+
+Try running `git lfs update --force`.
+
 ## Need help?
 
 You can find help on the [`#jewel`](https://app.slack.com/client/T09229ZC6/C05T8U2C31T) channel on the Kotlin Slack.
