@@ -306,7 +306,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      runForWholeFile="true"
                      language="kotlin"
-                     suppressId="unused" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     suppressId="unused" alternativeId="UNUSED_PARAMETER" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.unused.symbol.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.FunctionNameInspection"
