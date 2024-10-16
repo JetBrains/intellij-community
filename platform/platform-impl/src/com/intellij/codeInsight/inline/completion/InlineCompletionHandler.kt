@@ -57,16 +57,21 @@ import kotlin.coroutines.resumeWithException
  */
 @ApiStatus.NonExtendable
 abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
-  scope: CoroutineScope,
+  @ApiStatus.Internal
+  protected val scope: CoroutineScope,
+
   val editor: Editor,
-  private val parentDisposable: Disposable,
+
+  @ApiStatus.Internal
+  protected val parentDisposable: Disposable,
 ) {
   private val executor = SafeInlineCompletionExecutor(scope)
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
   private val sessionManager = createSessionManager()
   private val typingTracker = InlineCompletionTypingTracker(parentDisposable)
 
-  private val completionState = InlineCompletionState()
+  @ApiStatus.Internal
+  protected val completionState: InlineCompletionState = InlineCompletionState()
 
   private val invalidationListeners = EventDispatcher.create(InlineCompletionInvalidationListener::class.java)
 
@@ -78,6 +83,13 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     addEventListener(logsListener)
     invalidationListeners.addListener(logsListener)
   }
+
+  // TODO docs
+  @ApiStatus.Internal
+  protected abstract fun startSessionOrNull(
+    request: InlineCompletionRequest,
+    provider: InlineCompletionProvider
+  ): InlineCompletionSession?
 
   fun addEventListener(listener: InlineCompletionEventListener) {
     eventListeners.addListener(listener)
@@ -121,17 +133,17 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     ThreadingAssertions.assertEventDispatchThread()
 
     if (completionState.isInvokingEvent) {
-      LOG.trace("Cannot process inline event $event: another event is being processed right now.")
+      LOG.trace("[Inline Completion] Cannot process inline event $event: another event is being processed right now.")
       return
     }
 
     completionState.isInvokingEvent = true
     try {
-      LOG.trace("Start processing inline event $event")
+      LOG.trace("[Inline Completion] Start processing inline event $event")
 
       val request = event.toRequest() ?: return
       if (editor != request.editor) {
-        LOG.warn("Request has an inappropriate editor. Another editor was expected. Will not be invoked.")
+        LOG.warn("[Inline Completion] Request has an inappropriate editor. Another editor was expected. Will not be invoked.")
         return
       }
 
@@ -142,10 +154,9 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
       val provider = getProvider(event) ?: return
 
       // At this point, the previous session must be removed, otherwise, `init` will throw.
-      val newSession = InlineCompletionSession.init(editor, provider, request, parentDisposable).apply {
-        sessionManager.sessionCreated(this)
-        guardCaretModifications()
-      }
+      val newSession = startSessionOrNull(request, provider) ?: return
+      sessionManager.sessionCreated(newSession)
+      newSession.guardCaretModifications()
 
       executor.switchJobSafely(newSession::assignJob) {
         invokeRequest(request, newSession)
@@ -369,25 +380,41 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     return provider.getSuggestion(request)
   }
 
-  private fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
+  @ApiStatus.Internal
+  protected fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
     if (application.isUnitTestMode && testProvider != null) {
-      return testProvider?.takeIf { it.isEnabled(event) }
+      return testProvider?.takeIf { it.isEnabledConsideringEventRequirements(event, remDevAggregatorAllowed = false) }
     }
 
-    return InlineCompletionProvider.extensions().firstOrNull {
+    val allProviders = InlineCompletionProvider.extensions()
+    val result = allProviders.findSafely { it.isEnabledConsideringEventRequirements(event, remDevAggregatorAllowed = false) }
+                 ?: allProviders.findSafely { it.isEnabledConsideringEventRequirements(event, remDevAggregatorAllowed = true) }
+
+    if (result != null) {
+      LOG.trace("[Inline Completion] Selected inline provider: $result")
+    }
+    return result
+  }
+
+  private inline fun <T> List<T>.findSafely(filter: (T) -> Boolean): T? {
+    return firstOrNull { provider ->
       try {
-        it.isEnabledConsideringEventRequirements(event)
+        filter(provider)
       }
       catch (e: Throwable) {
         LOG.errorIfNotMessage(e)
         false
       }
-    }?.also {
-      LOG.trace("Selected inline provider: $it")
     }
   }
 
-  private fun InlineCompletionProvider.isEnabledConsideringEventRequirements(event: InlineCompletionEvent): Boolean {
+  private fun InlineCompletionProvider.isEnabledConsideringEventRequirements(
+    event: InlineCompletionEvent,
+    remDevAggregatorAllowed: Boolean,
+  ): Boolean {
+    if (!remDevAggregatorAllowed && this is RemDevAggregatorInlineCompletionProvider) {
+      return false
+    }
     if (event is InlineCompletionEvent.WithSpecificProvider && event.providerId != this@isEnabledConsideringEventRequirements.id) {
       return false
     }
@@ -573,13 +600,35 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     coroutineToIndicator { traceBlocking(event) }
   }
 
+  // Utils for inheritors
+  // -----------------------------------
+  // TODO maybe re-think this section
+  @RequiresEdt
+  @ApiStatus.Internal
+  protected fun initSession(request: InlineCompletionRequest, provider: InlineCompletionProvider): InlineCompletionSession {
+    ThreadingAssertions.assertEventDispatchThread()
+    return InlineCompletionSession.init(editor, provider, request, parentDisposable)
+  }
+
+  @RequiresEdt
+  @ApiStatus.Internal
+  protected fun switchAndInvokeRequest(request: InlineCompletionRequest, newSession: InlineCompletionSession) {
+    ThreadingAssertions.assertEventDispatchThread()
+    executor.switchJobSafely(newSession::assignJob) {
+      invokeRequest(request, newSession)
+    }
+  }
+
+  // -----------------------------------
+
   @TestOnly
   suspend fun awaitExecution() {
     ThreadingAssertions.assertEventDispatchThread()
     executor.awaitAll()
   }
 
-  private class InlineCompletionState(
+  @ApiStatus.Internal
+  protected class InlineCompletionState(
     var ignoreDocumentChanges: Boolean = false,
     var ignoreCaretMovement: Boolean = false,
     var isInvokingEvent: Boolean = false,

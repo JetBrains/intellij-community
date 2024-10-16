@@ -2,6 +2,9 @@
 package com.intellij.codeInsight.inline.completion.frontend
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
+import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
+import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import kotlinx.coroutines.CoroutineScope
@@ -11,4 +14,8 @@ class FrontendInlineCompletionHandler(
   editor: Editor,
   parentDisposable: Disposable
 ) : InlineCompletionHandler(scope, editor, parentDisposable) {
+
+  override fun startSessionOrNull(request: InlineCompletionRequest, provider: InlineCompletionProvider): InlineCompletionSession? {
+    return initSession(request, provider)
+  }
 }
