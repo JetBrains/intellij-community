@@ -39,7 +39,7 @@ internal class NotebookOutputCollapseAllAction private constructor() : ToggleAct
 }
 
 // same as Collapse All Action, but collapse outputs of selected cells
-internal class NotebookOutputCollapseAllInSelectedCellsAction private constructor() : ToggleAction(), DumbAware {
+open class NotebookOutputCollapseAllInSelectedCellsAction() : ToggleAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
