@@ -3,6 +3,7 @@ package com.intellij.platform.diagnostic.plugin.freeze
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -23,6 +24,7 @@ internal class PluginFreezeNotifier : EditorNotificationProvider {
     val frozenPlugin = freezeWatcher.latestFrozenPlugin ?: return null
     val pluginDescriptor = PluginManagerCore.getPlugin(frozenPlugin) ?: return null
     val application = ApplicationManager.getApplication()
+    if (pluginDescriptor.isImplementationDetail || ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(frozenPlugin)) return null
     if (pluginDescriptor.isBundled && !application.isEAP && !application.isInternal) return null
     if (freezeStorageService.shouldBeIgnored(frozenPlugin)) return null
 
