@@ -300,7 +300,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           .inlineEvaluatorInvoked(session, expression);
       }
       else {
-        LOG.error("No session available while trying evaluate " + expression);
+        // It is not an error: it may be so if evaluating when the session is finished already
       }
       myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, expression);
       DebuggerEvaluationStatisticsCollector.INLINE_EVALUATE.log(getTree().getProject());
