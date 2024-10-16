@@ -54,7 +54,6 @@ abstract class KotlinBaseTest<F : KotlinBaseTest.TestFile> : KtUsefulTestCase() 
         testFilesWithConfigurationDirectives: List<TestFile>
     ): CompilerConfiguration {
         val configuration = KotlinTestUtils.newConfiguration(kind, jdkKind, classpath, javaSource)
-        configuration.put(JVMConfigurationKeys.IR, backend.isIR)
         updateConfigurationByDirectivesInTestFiles(
             testFilesWithConfigurationDirectives,
             configuration,

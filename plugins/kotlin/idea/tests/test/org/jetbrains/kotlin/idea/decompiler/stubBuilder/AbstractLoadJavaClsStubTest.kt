@@ -11,10 +11,12 @@ import com.intellij.util.indexing.FileContentImpl
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinDecompiledFileViewProvider
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinClsStubBuilder
+import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
@@ -32,12 +34,15 @@ abstract class AbstractLoadJavaClsStubTest : KotlinLightCodeInsightFixtureTestCa
         val ktFile = myFixture.file as KtFile
         val analysisResult = ktFile.analyzeWithAllCompilerChecks()
 
-        val configuration = CompilerConfiguration().apply { languageVersionSettings = file.languageVersionSettings }
+        val configuration = CompilerConfiguration().apply {
+            languageVersionSettings = file.languageVersionSettings
+            put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
+        }
 
         val state = GenerationState.Builder(
             project, ClassBuilderFactories.BINARIES, analysisResult.moduleDescriptor,
             analysisResult.bindingContext, listOf(ktFile), configuration
-        ).build()
+        ).codegenFactory(JvmIrCodegenFactory(configuration, null)).build()
 
         try {
             KotlinCodegenFacade.compileCorrectFiles(state)
