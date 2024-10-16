@@ -47,7 +47,7 @@ internal class K2ActualDeclarationContributor(
         if (declaration == null) return
 
         if (declaration.hasModifier(KtTokens.ACTUAL_KEYWORD)) {
-            val elements = ActualKeywordHandler(basicContext).createActualLookups(parameters, project)
+            val elements = ActualKeywordHandler(basicContext, declaration).createActualLookups(parameters, project)
             sink.addAllElements(elements)
         }
     }

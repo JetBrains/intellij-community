@@ -41,7 +41,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 @OptIn(KaExperimentalApi::class)
 internal class ActualKeywordHandler(
-    private val basicContext: FirBasicCompletionContext
+    private val basicContext: FirBasicCompletionContext,
+    private val declaration: KtNamedDeclaration? = null,
 ) : CompletionKeywordHandler<KaSession>(KtTokens.ACTUAL_KEYWORD) {
 
     context(KaSession)
@@ -121,7 +122,8 @@ internal class ActualKeywordHandler(
             },
             shortenReferences = { element ->
                 shortenReferencesInRange(element.containingKtFile, element.textRange)
-            }
+            },
+            declaration = declaration
         )
     }
 
