@@ -6,11 +6,15 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
+import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.getOrThrow
+import com.intellij.util.awaitCancellationAndInvoke
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 
 private fun Path.toEphemeralRootAwarePath(): IjentEphemeralRootAwarePath? = generateSequence(this) {
@@ -52,6 +56,25 @@ private class EelEphemeralRootAwareMapper(
 ) : EelPathMapper {
   override fun getOriginalPath(path: Path): EelPath.Absolute? {
     return path.toEphemeralRootAwarePath()?.originalPath?.let { eelApi.fs.getPath(it.toString()).getOrThrow() }
+  }
+
+  override suspend fun maybeUploadPath(path: Path, scope: CoroutineScope, options: EelFileSystemApi.CreateTemporaryDirectoryOptions): EelPath.Absolute {
+    val originalPath = getOriginalPath(path)
+
+    if (originalPath != null) {
+      return originalPath
+    }
+
+    val tmpDir = eelApi.fs.createTemporaryDirectory(options).getOrThrow()
+    val referencedPath = tmpDir.resolve(EelPath.Relative.parse(path.name).getOrThrow()).getOrThrow()
+
+    EelPathUtils.walkingTransfer(path, toNioPath(referencedPath), false)
+
+    scope.awaitCancellationAndInvoke {
+      eelApi.fs.delete(tmpDir, true)
+    }
+
+    return referencedPath
   }
 
   override fun toNioPath(path: EelPath.Absolute): Path {
