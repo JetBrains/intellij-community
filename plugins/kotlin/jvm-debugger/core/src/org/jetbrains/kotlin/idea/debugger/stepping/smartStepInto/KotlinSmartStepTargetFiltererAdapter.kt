@@ -44,8 +44,11 @@ internal class KotlinSmartStepTargetFiltererAdapter(
         if (inInline) return
         inInline = true
 
-        if (!inlineCall.variableName.isInlineFunctionMarkerVariableName) return
-        add(BytecodeTraceElement.InlineCall(inlineCall))
+        if (inlineCall.isInlineFun) {
+            add(BytecodeTraceElement.InlineCall(inlineCall))
+        } else {
+            add(BytecodeTraceElement.InlineInvoke())
+        }
     }
 
     override fun visitMethodInsn(opcode: Int, owner: String, name: String, descriptor: String, isInterface: Boolean) {
@@ -80,6 +83,10 @@ internal class KotlinSmartStepTargetFiltererAdapter(
                 targetFilterer.visitInlineFunction(calledInlineFunction)
             }
 
+            is BytecodeTraceElement.InlineInvoke -> {
+                targetFilterer.visitInlineInvokeCall()
+            }
+
             is BytecodeTraceElement.MethodCall -> {
                 targetFilterer.visitOrdinaryFunction(element.owner, element.name, element.descriptor)
             }
@@ -89,10 +96,16 @@ internal class KotlinSmartStepTargetFiltererAdapter(
 
 private sealed class BytecodeTraceElement {
     data class InlineCall(val callInfo: InlineCallInfo) : BytecodeTraceElement()
+
+    /**
+     * Should be only one invoke smart step target.
+     * @see [KotlinMethodSmartStepTarget.equals]
+     */
+    class InlineInvoke : BytecodeTraceElement()
     data class MethodCall(val owner: String, val name: String, val descriptor: String) : BytecodeTraceElement()
 }
 
-internal data class InlineCallInfo(val variableName: String, val bciRange: LongRange, val startLocation: Location)
+internal data class InlineCallInfo(val isInlineFun: Boolean, val bciRange: LongRange, val startLocation: Location)
 
 private fun extractInlineCalls(location: Location): List<InlineCallInfo> = location.safeMethod()
     ?.getInlineFunctionAndArgumentVariablesToBordersMap()
@@ -100,7 +113,7 @@ private fun extractInlineCalls(location: Location): List<InlineCallInfo> = locat
     .orEmpty()
     .map { (variable, locationRange) ->
         InlineCallInfo(
-            variableName = variable.name(),
+            isInlineFun = variable.name().isInlineFunctionMarkerVariableName,
             bciRange = locationRange.start.codeIndex()..locationRange.endInclusive.codeIndex(),
             startLocation = locationRange.start
         )

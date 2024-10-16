@@ -53,6 +53,17 @@ class KotlinSmartStepTargetFilterer(
         targetWasVisited[matchedSteppingTargetIndex] = true
     }
 
+    fun visitInlineInvokeCall() {
+        val matchedSteppingTargetIndex = targets.indexOfFirst {
+            it.methodInfo.isInvoke && it.ordinal == functionCounter.getOrDefault(it.label, 0)
+        }
+        if (matchedSteppingTargetIndex < 0) return
+        val labelFound = targets[matchedSteppingTargetIndex].label
+        if (labelFound != null) functionCounter.increment(labelFound)
+
+        targetWasVisited[matchedSteppingTargetIndex] = true
+    }
+
     suspend fun visitOrdinaryFunction(owner: String, name: String, signature: String) {
         val currentCount = functionCounter.increment("$owner.$name$signature") - 1
         for ((i, target) in targets.withIndex()) {

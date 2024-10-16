@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
+import org.jetbrains.kotlin.idea.debugger.core.isInlineFunctionMarkerVariableName
+import org.jetbrains.kotlin.idea.debugger.core.isInlineLambdaMarkerVariableName
 import org.jetbrains.kotlin.idea.debugger.core.nameMatchesUpToDollar
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -111,7 +113,7 @@ open class KotlinMethodFilter(
                 // Otherwise, nested inline with the same method name will not work correctly.
                 method.getInlineFunctionAndArgumentVariablesToBordersMap()
                     .filter { location in it.value }
-                    .any { it.key.isInlinedFromFunction(targetMethodName, isNameMangledInBytecode, methodInfo.isInternalMethod) } ||
+                    .any { it.key.isInlinedFromFunction(methodInfo) } ||
                 !isGeneratedLambda && methodNameMatches(methodInfo, actualMethodName)
     }
 }
@@ -148,12 +150,17 @@ internal fun methodNameMatches(methodInfo: CallableMemberInfo, name: String): Bo
     return false
 }
 
-private fun LocalVariable.isInlinedFromFunction(methodName: String, isNameMangledInBytecode: Boolean, isInternalMethod: Boolean): Boolean {
-    val variableName = name().dropInlineScopeInfo().trimIfMangledInBytecode(isNameMangledInBytecode)
-    if (!variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)) return false
-    val inlineMethodName = variableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
-    return inlineMethodName == methodName ||
-            isInternalMethod && nameMatchesUpToDollar(inlineMethodName, methodName)
+private fun LocalVariable.isInlinedFromFunction(methodInfo: CallableMemberInfo): Boolean {
+    val variableName = name().dropInlineScopeInfo().trimIfMangledInBytecode(methodInfo.isNameMangledInBytecode)
+    return when {
+        variableName.isInlineFunctionMarkerVariableName -> {
+            val inlineMethodName = variableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
+            methodNameMatches(methodInfo, inlineMethodName)
+        }
+
+        variableName.isInlineLambdaMarkerVariableName -> methodInfo.isInvoke
+        else -> false
+    }
 }
 
 private fun getMethodNameInCallerFrame(frameProxy: StackFrameProxyImpl?): String? {

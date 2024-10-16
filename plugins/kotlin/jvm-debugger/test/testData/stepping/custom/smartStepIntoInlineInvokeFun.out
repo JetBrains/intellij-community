@@ -1,0 +1,14 @@
+LineBreakpoint created at smartStepIntoInlineInvokeFun.kt:8
+LineBreakpoint created at smartStepIntoInlineInvokeFun.kt:23
+LineBreakpoint created at smartStepIntoInlineInvokeFun.kt:39
+Run Java
+Connected to the target VM
+smartStepIntoInlineInvokeFun.kt:8
+smartStepIntoInlineInvokeFun.kt:14
+smartStepIntoInlineInvokeFun.kt:23
+smartStepIntoInlineInvokeFun.kt:29
+smartStepIntoInlineInvokeFun.kt:39
+smartStepIntoInlineInvokeFun.kt:45
+Disconnected from the target VM
+
+Process finished with exit code 0

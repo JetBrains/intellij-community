@@ -1718,6 +1718,11 @@ public abstract class K2IdeK1CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/smartStepIntoInlineFun.kt");
         }
 
+        @TestMetadata("smartStepIntoInlineInvokeFun.kt")
+        public void testSmartStepIntoInlineInvokeFun() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoInlineInvokeFun.kt");
+        }
+
         @TestMetadata("smartStepIntoInlineLambda.kt")
         public void testSmartStepIntoInlineLambda() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoInlineLambda.kt");
