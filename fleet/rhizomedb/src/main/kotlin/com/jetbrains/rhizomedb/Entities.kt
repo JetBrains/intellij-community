@@ -393,7 +393,7 @@ fun <T : LegacyEntity> singletonOrNull(c: KClass<T>): T? {
   }
 }
 
-fun <T : Entity, /*@OnlyInputTypes*/ R> datomsForMask(eid: EID?, prop: KProperty1<T, R>, value: R?): Reducible<Datom> {
+fun <T : LegacyEntity, /*@OnlyInputTypes*/ R> datomsForMask(eid: EID?, prop: KProperty1<T, R>, value: R?): Reducible<Datom> {
   return with(DbContext.threadBound.impl) {
     attributeForProperty(prop)?.let { attr ->
       q(eid, attr, value)
