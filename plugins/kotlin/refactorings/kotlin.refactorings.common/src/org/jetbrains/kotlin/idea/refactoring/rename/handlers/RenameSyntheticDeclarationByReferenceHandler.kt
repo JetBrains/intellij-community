@@ -10,17 +10,25 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.asJava.elements.KtLightMember
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
 
 internal class RenameSyntheticDeclarationByReferenceHandler : AbstractForbidRenamingSymbolByReferenceHandler() {
     override fun shouldForbidRenamingFromJava(file: PsiFile, editor: Editor): Boolean {
         if (file is PsiJavaFile) {
-            val targetElement = TargetElementUtil.findTargetElement(editor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED) as? KtLightMethod
+            val targetElement = TargetElementUtil.findTargetElement(editor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED) as? KtLightElement<*, *>
                 ?: return false
 
-            return targetElement.kotlinOrigin !is KtCallableDeclaration
+            val kotlinOrigin = targetElement.kotlinOrigin
+            return when (targetElement) {
+                is KtLightClass -> kotlinOrigin !is KtClassOrObject
+                is KtLightMember<*> -> kotlinOrigin !is KtCallableDeclaration
+                else -> false
+            }
         }
         return false
     }
