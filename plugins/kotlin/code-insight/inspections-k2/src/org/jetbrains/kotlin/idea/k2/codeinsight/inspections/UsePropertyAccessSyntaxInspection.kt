@@ -648,7 +648,10 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         ) KotlinBundle.message("use.of.setter.method.instead.of.property.access.syntax")
         else KotlinBundle.message("use.of.getter.method.instead.of.property.access.syntax")
 
-    val propertiesNotToReplace = NotPropertiesService.DEFAULT.map(::FqNameUnsafe).toMutableSet()
+    val propertiesNotToReplace =
+        (NotPropertiesService.DEFAULT.map(::FqNameUnsafe)
+                + FqNameUnsafe("java.util.AbstractCollection.isEmpty") // KTIJ-31157
+                + FqNameUnsafe("java.util.AbstractMap.isEmpty")).toMutableSet() // KTIJ-31157
 
     // Serialized setting
     @Suppress("MemberVisibilityCanBePrivate")
@@ -694,7 +697,13 @@ class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesServ
     override fun getNotProperties(element: PsiElement): Set<FqNameUnsafe> {
         val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
         val tool = profile.getUnwrappedTool(USE_PROPERTY_ACCESS_INSPECTION, element)
-        return (tool?.propertiesNotToReplace ?: NotPropertiesService.DEFAULT.map(::FqNameUnsafe)).toSet()
+        var propertiesNotToReplace = tool?.propertiesNotToReplace
+        if (propertiesNotToReplace == null) {
+            propertiesNotToReplace = NotPropertiesService.DEFAULT.map(::FqNameUnsafe).toMutableSet()
+            propertiesNotToReplace.add(FqNameUnsafe("java.util.AbstractCollection.isEmpty")) // KTIJ-31157
+            propertiesNotToReplace.add(FqNameUnsafe("java.util.AbstractMap.isEmpty")) // KTIJ-31157
+        }
+        return propertiesNotToReplace
     }
 
     companion object {
