@@ -98,8 +98,9 @@ public class HtmlToSimpleColoredComponentConverter {
         //since <body> tag may be skipped for this parser
         if (errorMsg.startsWith("start.missing body")) return;
 
-        // style attribute can be processed by StyleTagHandler
+        // style and class attributes can be processed by StyleTagHandler
         if (errorMsg.startsWith("invalid.tagatt style")) return;
+        if (errorMsg.startsWith("invalid.tagatt class")) return;
 
         LOG.error("Cannot parse HTML: [" + htmlString + "]", errorMsg);
       }
