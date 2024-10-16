@@ -59,7 +59,7 @@ def display_data_csv(table, start_index, end_index):
         except AttributeError:
             pass
         print(data)
-    _compute_sliced_data(table, ipython_display, end_index)
+    _compute_sliced_data(table, ipython_display, start_index, end_index)
 
 
 # used by DSTableCommands
@@ -69,7 +69,7 @@ def display_data_html(table, start_index, end_index):
     def ipython_display(data):
         from IPython.display import display
         display(data)
-    _compute_sliced_data(table, ipython_display, end_index)
+    _compute_sliced_data(table, ipython_display, start_index, end_index)
 
 
 def __get_data_slice(table, start, end):
