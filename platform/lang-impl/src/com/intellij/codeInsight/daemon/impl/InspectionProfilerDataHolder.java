@@ -42,7 +42,7 @@ class InspectionProfilerDataHolder {
     init.sort((context1, context2) -> {
       String toolId1 = context1.tool().getShortName();
       String toolId2 = context2.tool().getShortName();
-      return HighlightInfoUpdaterImpl.compareLatencies(psiFile, toolId1, toolId2);
+      return highlightInfoUpdater.compareLatencies(psiFile, toolId1, toolId2);
     });
   }
 }
