@@ -47,7 +47,7 @@ class KtThisDescriptor(val classDef: KtClassDef, val contextName: String? = null
         fun descriptorFromThis(expr: KtThisExpression): Pair<VariableDescriptor?, KaType?> {
             val exprType = expr.getKotlinType()
             val symbol = ((expr.instanceReference as? KtNameReferenceExpression)?.reference as? KtReference)?.resolveToSymbol()
-            var declType: KaType? = null
+            val declType: KaType?
             if (symbol is KaReceiverParameterSymbol && exprType != null) {
                 val function = symbol.psi as? KtFunctionLiteral
                 declType = symbol.returnType
