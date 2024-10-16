@@ -37,10 +37,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.frame.XExecutionStack;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XValueMarkerProvider;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
@@ -71,6 +68,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -85,7 +83,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private static final StateFlow<Boolean> ALWAYS_FALSE_STATE = FlowKt.asStateFlow(StateFlowKt.MutableStateFlow(false));
 
   private XDebugProcess myDebugProcess;
-  private XDebugProcess myMixedModeDebugProcess;
+  private XDebugProcess myMixedModeLowLevelDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints = new HashMap<>();
   private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = Collections.synchronizedSet(new HashSet<>());
   private boolean myBreakpointsDisabled;
@@ -118,6 +116,9 @@ public final class XDebugSessionImpl implements XDebugSession {
   private final Icon myIcon;
   private final Deferred<@NotNull XDebugSessionEntity> myEntity;
   private final XDebugSessionCurrentStackFrameManager myCurrentStackFrameManager;
+
+  @Nullable
+  private XDebugSessionMixedModeExtension myMixedModeExtension;
 
   private volatile boolean breakpointsInitialized;
   private long myUserRequestStart;
@@ -318,9 +319,12 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   void initMixedMode(@NotNull XDebugProcess process,
-                     @NotNull XDebugProcess mixedModeProcess,
+                     @NotNull XDebugProcess mixedModeLowLevelProcess,
                      @Nullable RunContentDescriptor contentToReuse) {
-    myMixedModeDebugProcess = mixedModeProcess;
+    myMixedModeLowLevelDebugProcess = mixedModeLowLevelProcess;
+    myMixedModeExtension =
+      /*TODO: move to rider cpp plugin*/
+      new MonoXDebugSessionMixedModeExtension(this.myCoroutineScope, process, mixedModeLowLevelProcess);
     init(process, contentToReuse);
   }
 
@@ -398,8 +402,8 @@ public final class XDebugSessionImpl implements XDebugSession {
   private void initSessionTab(@Nullable RunContentDescriptor contentToReuse) {
     mySessionTab = XDebugSessionTab.create(this, myIcon, myEnvironment, contentToReuse);
     myDebugProcess.sessionInitialized();
-    if (myMixedModeDebugProcess != null) {
-      myMixedModeDebugProcess.sessionInitialized();
+    if (myMixedModeLowLevelDebugProcess != null) {
+      myMixedModeLowLevelDebugProcess.sessionInitialized();
     }
     addSessionListener(new XDebugSessionListener() {
       @Override
@@ -627,6 +631,11 @@ public final class XDebugSessionImpl implements XDebugSession {
   public void pause() {
     rememberUserActionStart(XDebuggerActions.PAUSE);
     if (!myDebugProcess.checkCanPerformCommands()) return;
+
+    if (myMixedModeExtension != null) {
+      myMixedModeExtension.pause();
+      return;
+    }
 
     myDebugProcess.startPausing();
   }
@@ -1001,6 +1010,14 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   public void positionReached(@NotNull XSuspendContext suspendContext, boolean attract) {
+    if (myMixedModeExtension != null) {
+      var mixedSuspendContext = myMixedModeExtension.positionReached(suspendContext);
+      if (mixedSuspendContext == null) {
+        return;
+      }
+      suspendContext = mixedSuspendContext;
+    }
+
     clearActiveNonLineBreakpoint();
     positionReachedInternal(suspendContext, attract);
   }
@@ -1085,7 +1102,6 @@ public final class XDebugSessionImpl implements XDebugSession {
   @Override
   public void stop() {
     stop(myDebugProcess);
-    stop(myMixedModeDebugProcess);
   }
 
   private void stop(XDebugProcess process) {
@@ -1225,7 +1241,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private ProcessHandler myCompositeProcessHandler;
 
   public ProcessHandler getProcessHandler() {
-    if (myMixedModeDebugProcess == null) {
+    if (myMixedModeLowLevelDebugProcess == null) {
       return myDebugProcess.getProcessHandler();
     }
     if (myCompositeProcessHandler != null) {
@@ -1234,7 +1250,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     var handlersList = new ArrayList<ProcessHandler>();
     handlersList.add(myDebugProcess.getProcessHandler());
-    handlersList.add(myMixedModeDebugProcess.getProcessHandler());
+    handlersList.add(myMixedModeLowLevelDebugProcess.getProcessHandler());
     myCompositeProcessHandler = new CompositeProcessHandler(handlersList);
     return myCompositeProcessHandler;
   }

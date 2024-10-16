@@ -313,7 +313,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       });
     }
 
-    mySessions.put(session.getDebugProcess().getProcessHandler(), session);
+    mySessions.put(session.getProcessHandler(), session);
 
     return session;
   }
@@ -352,14 +352,14 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       });
     }
 
-    mySessions.put(session.getDebugProcess().getProcessHandler(), session);
+    mySessions.put(session.getProcessHandler(), session);
 
     return session;
   }
 
   void removeSession(final @NotNull XDebugSessionImpl session) {
     XDebugSessionTab sessionTab = session.getSessionTab();
-    mySessions.remove(session.getDebugProcess().getProcessHandler());
+    mySessions.remove(session.getProcessHandler());
     if (sessionTab != null &&
         !myProject.isDisposed() &&
         !ApplicationManager.getApplication().isUnitTestMode() &&
