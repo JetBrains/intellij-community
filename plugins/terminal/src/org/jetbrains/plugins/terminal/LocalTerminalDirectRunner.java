@@ -1,29 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.execution.process.ProcessService;
-import com.intellij.execution.wsl.WslPath;
-import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
-import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.EnvironmentRestorer;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.CollectionFactory;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
@@ -33,8 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
+import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer;
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector;
-import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -60,11 +47,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   protected final Charset myDefaultCharset;
   private final ThreadLocal<ShellStartupOptions> myStartupOptionsThreadLocal = new ThreadLocal<>();
   private final LocalShellIntegrationInjector shellIntegrationInjector;
+  private final LocalOptionsConfigurer localOptionsConfigurer;
 
   public LocalTerminalDirectRunner(Project project) {
     super(project);
     myDefaultCharset = StandardCharsets.UTF_8;
     shellIntegrationInjector = new LocalShellIntegrationInjector(() -> isBlockTerminalEnabled());
+    localOptionsConfigurer = new LocalOptionsConfigurer(myProject);
   }
 
   @NotNull
@@ -72,65 +61,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return new LocalTerminalDirectRunner(project);
   }
 
-  private @NotNull Map<String, String> getTerminalEnvironment(@NotNull Map<String, String> baseEnvs, @NotNull String workingDir) {
-    Map<String, String> envs = SystemInfo.isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
-    EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(myProject).getEnvData();
-    if (envData.isPassParentEnvs()) {
-      envs.putAll(System.getenv());
-      EnvironmentRestorer.restoreOverriddenVars(envs);
-    }
-    else {
-      LOG.info("No parent environment passed");
-    }
-
-    envs.putAll(baseEnvs);
-    if (!SystemInfo.isWindows) {
-      envs.put("TERM", "xterm-256color");
-    }
-    envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
-    envs.put("TERM_SESSION_ID", UUID.randomUUID().toString());
-
-    TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
-
-    if (TrustedProjects.isTrusted(myProject)) {
-      PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
-      for (Map.Entry<String, String> env : envData.getEnvs().entrySet()) {
-        envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
-      }
-      if (WslPath.isWslUncPath(workingDir)) {
-        setupWslEnv(envData.getEnvs(), envs);
-      }
-    }
-    return envs;
-  }
-
-  private static void setupWslEnv(@NotNull Map<String, String> userEnvs, @NotNull Map<String, String> resultEnvs) {
-    String wslEnv = userEnvs.keySet().stream().map(name -> name + "/u").collect(Collectors.joining(":"));
-    if (wslEnv.isEmpty()) return;
-    String prevValue = userEnvs.get(WslConstants.WSLENV);
-    if (prevValue == null) {
-      prevValue = System.getenv(WslConstants.WSLENV);
-    }
-    String newWslEnv = prevValue != null ? StringUtil.trimEnd(prevValue, ':') + ':' + wslEnv : wslEnv;
-    resultEnvs.put(WslConstants.WSLENV, newWslEnv);
-  }
-
   @Override
   public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
-    String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory());
-    Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), workingDir);
-
-    List<String> initialCommand = doGetInitialCommand(baseOptions, envs);
-    TerminalWidget widget = baseOptions.getWidget();
-    if (widget != null) {
-      widget.setShellCommand(initialCommand);
-    }
-
-    ShellStartupOptions updatedOptions = baseOptions.builder()
-      .shellCommand(initialCommand)
-      .workingDirectory(workingDir)
-      .envVariables(envs)
-      .build();
+    ShellStartupOptions updatedOptions = localOptionsConfigurer.configureStartupOptions(baseOptions);
     if (enableShellIntegration()) {
       updatedOptions = shellIntegrationInjector.configureStartupOptions(updatedOptions);
     }
@@ -202,16 +135,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return TerminalOptionsProvider.getInstance().getShellIntegration();
   }
 
-  private @NotNull List<String> doGetInitialCommand(@NotNull ShellStartupOptions options, @NotNull Map<String, String> envs) {
-    try {
-      myStartupOptionsThreadLocal.set(options);
-      return getInitialCommand(envs);
-    }
-    finally {
-      myStartupOptionsThreadLocal.remove();
-    }
-  }
-
   private static @NotNull String stringifyProcessInfo(String @NotNull[] command,
                                                       @NotNull String workingDirectory,
                                                       @Nullable TermSize initialTermSize,
@@ -233,26 +156,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1, LinkedHashMap::new));
   }
 
-  private @NotNull String getWorkingDirectory(@Nullable String directory) {
-    if (directory != null && isDirectory(directory)) {
-      return directory;
-    }
-    String configuredWorkingDirectory = TerminalProjectOptionsProvider.getInstance(myProject).getStartingDirectory();
-    if (configuredWorkingDirectory != null && isDirectory(configuredWorkingDirectory)) {
-      return configuredWorkingDirectory;
-    }
-    String defaultWorkingDirectory = TerminalProjectOptionsProvider.getInstance(myProject).getDefaultStartingDirectory();
-    if (defaultWorkingDirectory != null && isDirectory(defaultWorkingDirectory)) {
-      return defaultWorkingDirectory;
-    }
-    VirtualFile projectDir = ProjectUtil.guessProjectDir(myProject);
-    if (projectDir != null) {
-      return VfsUtilCore.virtualToIoFile(projectDir).getAbsolutePath();
-    }
-    return SystemProperties.getUserHome();
-  }
-
-  private static boolean isDirectory(@NotNull String directory) {
+  @ApiStatus.Internal
+  public static boolean isDirectory(@NotNull String directory) {
     try {
       boolean ok = Files.isDirectory(Path.of(directory));
       if (!ok) {
@@ -305,9 +210,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
    * @param envs environment variables
    * @return initial command. The result command to execute is calculated by applying
    *         {@link LocalTerminalCustomizer#customizeCommandAndEnvironment} to it.
+   * @deprecated Use {@link #configureStartupOptions}
    */
+  @Deprecated(since = "2024.3", forRemoval = true)
+  @SuppressWarnings("unused") // Has external usages
   public @NotNull List<String> getInitialCommand(@NotNull Map<String, String> envs) {
-    ShellStartupOptions startupOptions = myStartupOptionsThreadLocal.get();
+    ShellStartupOptions startupOptions = myStartupOptionsThreadLocal.get(); // It looks like always empty
     List<String> shellCommand = startupOptions != null ? startupOptions.getShellCommand() : null;
     return shellCommand != null ? shellCommand : convertShellPathToCommand(getShellPath());
   }
