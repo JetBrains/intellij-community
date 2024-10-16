@@ -32,7 +32,7 @@ def get_shape(arr):
 
 def get_head(arr):
     # type: (np.ndarray) -> str
-    return repr(_create_table(arr).head().to_html(notebook=True))
+    return repr(_create_table(arr).head(1).to_html(notebook=True))
 
 
 def get_column_types(arr):

@@ -21,7 +21,7 @@ def get_shape(table):
 def get_head(table):
     # type: (pl.DataFrame) -> str
     with __create_config():
-        return table.head()._repr_html_()
+        return table.head(1)._repr_html_()
 
 
 def get_column_types(table):
