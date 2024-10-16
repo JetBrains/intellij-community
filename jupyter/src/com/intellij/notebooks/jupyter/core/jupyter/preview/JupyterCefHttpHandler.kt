@@ -55,7 +55,7 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
       // PathUtil.getJarPathForClass(javaClass) = out/classes/production/intellij.jupyter.core
       // But our resources lie not in out/classes but in out/dev-run
       if (url.toString().contains("out/classes/production/intellij.jupyter.plugin.frontend")) {
-        url = URL(url.toString().replace("out/classes/production/intellij.jupyter.plugin.frontend", "out/dev-run/Python/Python/plugins/jupyter-plugin"))
+        url = URL(url.toString().replace("out/classes/production/intellij.jupyter.plugin.frontend", "out/dev-run/Python/plugins/jupyter-plugin"))
       }
 
       if (url != null) {
