@@ -150,8 +150,7 @@ public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandActi
       }
       boolean alreadyImported = false;
       String qualifiedName = aClass.getQualifiedName();
-      if (qualifiedName != null &&
-          ImportUtils.createImplicitImportChecker(psiJavaFile).isImplicitlyImported(new ImportUtils.Import(qualifiedName + ".*", true))) {
+      if (qualifiedName != null && ImportUtils.createImplicitImportChecker(psiJavaFile).isImplicitlyImported(qualifiedName + ".*", true)) {
         alreadyImported = true;
       }
       if (!alreadyImported) {

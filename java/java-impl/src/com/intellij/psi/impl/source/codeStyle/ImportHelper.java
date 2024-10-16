@@ -45,6 +45,7 @@ import com.siyeh.ig.psiutils.ImportUtils;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -212,7 +213,7 @@ public final class ImportHelper{
       String name = anImport.name();
       String prefix = getPackageOrClassName(name);
       if (prefix.isEmpty()) continue;
-      boolean isImplicitlyImported = checker.isImplicitlyImported(anImport);
+      boolean isImplicitlyImported = checker.isImplicitlyImported(name, anImport.isStatic());
       if (!onDemandImports.contains(prefix) && !isImplicitlyImported) continue;
       String shortName = PsiNameHelper.getShortClassName(name);
 
@@ -387,7 +388,7 @@ public final class ImportHelper{
       String name = importedName.name();
       boolean isStatic = importedName.isStatic();
       String packageOrClassName = getPackageOrClassName(name);
-      boolean implicitlyImported = implicitImportContext.isImplicitlyImported(importedName);
+      boolean implicitlyImported = implicitImportContext.isImplicitlyImported(name, isStatic);
       boolean useOnDemand = implicitlyImported || packagesOrClassesToImportOnDemand.contains(packageOrClassName);
       Import current = new Import(packageOrClassName, isStatic);
       if (namesToUseSingle.remove(name)) {
@@ -1069,21 +1070,30 @@ public final class ImportHelper{
     if (psiClass == null) return false;
     String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null) return false;
-    ImplicitImportChecker checker = createImplicitImportChecker(file);
-    return checker.isImplicitlyImported(new Import(qualifiedName, psiClass.hasModifierProperty(PsiModifier.STATIC)));
+    return createImplicitImportChecker(file).isImplicitlyImported(qualifiedName, psiClass.hasModifierProperty(PsiModifier.STATIC));
   }
 
   private static boolean isImplicitlyImported(@Nullable PsiClass psiClass, @NotNull ImplicitImportChecker checker) {
     if (psiClass == null) return false;
     String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null) return false;
-    return checker.isImplicitlyImported(new Import(qualifiedName, psiClass.hasModifierProperty(PsiModifier.STATIC)));
+    return checker.isImplicitlyImported(qualifiedName, psiClass.hasModifierProperty(PsiModifier.STATIC));
   }
 
-  static boolean hasPackage(@NotNull String className, @NotNull String packageName){
+  static boolean hasPackage(@NotNull String className, @NotNull String packageName) {
     if (!className.startsWith(packageName)) return false;
     if (className.length() == packageName.length()) return false;
     if (!packageName.isEmpty() && className.charAt(packageName.length()) != '.') return false;
     return className.indexOf('.', packageName.length() + 1) < 0;
   }
+
+  /**
+   * An imported element, e.g. a fully qualified class name. 
+   * This is an implementation detail, unfortunately public because of JavaFX, don't expose it in public API.
+   *
+   * @param name     the fully qualified name of the element that should be imported.
+   * @param isStatic whether it should be imported statically.
+   */
+  @ApiStatus.Internal
+  public record Import(@NotNull String name, boolean isStatic) {}
 }

@@ -237,7 +237,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     String packageName = StringUtil.getPackageName(qualifiedName);
     if (!packageName.isEmpty() &&
         file instanceof PsiJavaFile javaFile &&
-        !ImportUtils.createImplicitImportChecker(javaFile).isImplicitlyImported(new ImportUtils.Import(qualifiedName, false))) {
+        !ImportUtils.createImplicitImportChecker(javaFile).isImplicitlyImported(qualifiedName, false)) {
       classList.removeIf(aClass -> {
         String classQualifiedName = aClass.getQualifiedName();
         return classQualifiedName != null && !packageName.equals(StringUtil.getPackageName(classQualifiedName));
