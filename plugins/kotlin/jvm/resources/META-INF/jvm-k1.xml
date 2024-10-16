@@ -82,11 +82,6 @@
                    description="Whether to use Psi Source type checking optimization"
                    defaultValue="true"
                    restartRequired="true"/>
-
-      <registryKey key="kotlin.jps.instrument.bytecode"
-                   description="Enable bytecode instrumentation for Kotlin classes"
-                   defaultValue="false"
-                   restartRequired="false"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.uast">
