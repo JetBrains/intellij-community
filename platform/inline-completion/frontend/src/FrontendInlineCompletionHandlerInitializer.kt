@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion.frontend
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 import com.intellij.codeInsight.inline.completion.InlineCompletionHandlerInitializer
+import com.intellij.codeInsight.inline.completion.InlineCompletionRemDevUtils
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
@@ -10,7 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 
 internal class FrontendInlineCompletionHandlerInitializer : InlineCompletionHandlerInitializer {
   override fun initialize(editor: Editor, scope: CoroutineScope, disposable: Disposable): InlineCompletionHandler? {
-    if (AppMode.isRemoteDevHost()) {
+    if (AppMode.isRemoteDevHost() && InlineCompletionRemDevUtils.useRhizome()) {
       return null
     }
     return FrontendInlineCompletionHandler(scope, editor, disposable)
