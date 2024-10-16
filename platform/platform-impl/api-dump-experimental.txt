@@ -465,8 +465,19 @@ f:com.intellij.ui.dsl.builder.ExtensionsKt
 - a:getComponent():javax.swing.JComponent
 - a:resizableColumn():com.intellij.ui.dsl.builder.Placeholder
 - a:setComponent(javax.swing.JComponent):V
-- ba:verticalAlign(com.intellij.ui.dsl.gridLayout.VerticalAlign):com.intellij.ui.dsl.builder.Placeholder
 - a:visible(Z):com.intellij.ui.dsl.builder.Placeholder
+com.intellij.ui.dsl.builder.Row
+- *a:textFieldWithBrowseButton(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- *:textFieldWithBrowseButton(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- *:textFieldWithBrowseButton(java.lang.String,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- *bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- *bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- *bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+Ff:com.intellij.ui.dsl.builder.Row$DefaultImpls
+- *s:textFieldWithBrowseButton(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- *s:textFieldWithBrowseButton(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- *bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- *bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 com.intellij.ui.dsl.builder.SegmentedButton
 - com.intellij.ui.dsl.builder.CellBase
 - *a:whenItemSelected(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.SegmentedButton

@@ -3,7 +3,6 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -19,10 +18,6 @@ interface Placeholder : CellBase<Placeholder> {
   override fun visible(isVisible: Boolean): Placeholder
 
   override fun enabled(isEnabled: Boolean): Placeholder
-
-  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  override fun verticalAlign(verticalAlign: VerticalAlign): Placeholder
 
   override fun align(align: Align): Placeholder
 

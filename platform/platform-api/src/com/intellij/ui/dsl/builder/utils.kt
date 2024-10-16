@@ -48,7 +48,7 @@ enum class DslComponentProperty {
    *
    * Value: [JComponent]
    */
-  @Deprecated(message = "Use INTERACTIVE_COMPONENT instead")
+  @Deprecated(message = "Use INTERACTIVE_COMPONENT/SKIP_LABEL_FOR_ASSIGNMENT instead", level = DeprecationLevel.ERROR)
   @ScheduledForRemoval
   LABEL_FOR,
 

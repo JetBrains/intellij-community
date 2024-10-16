@@ -15546,7 +15546,6 @@ com.intellij.ui.dsl.builder.Cell
 - a:applyIfEnabled():com.intellij.ui.dsl.builder.Cell
 - a:applyToComponent(kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
 - a:bind(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
-- ba:bind(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,com.intellij.ui.layout.PropertyBinding):com.intellij.ui.dsl.builder.Cell
 - a:bold():com.intellij.ui.dsl.builder.Cell
 - a:comment(java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction):com.intellij.ui.dsl.builder.Cell
 - bs:comment$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
@@ -15571,7 +15570,6 @@ com.intellij.ui.dsl.builder.Cell
 - a:onIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.dsl.builder.Cell
 - a:onReset(kotlin.jvm.functions.Function0):com.intellij.ui.dsl.builder.Cell
 - a:resizableColumn():com.intellij.ui.dsl.builder.Cell
-- ba:validation(kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.Cell
 - a:validation(com.intellij.openapi.ui.validation.DialogValidation[]):com.intellij.ui.dsl.builder.Cell
 - a:validationOnApply(kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.Cell
 - a:validationOnApply(com.intellij.openapi.ui.validation.DialogValidation$WithParameter[]):com.intellij.ui.dsl.builder.Cell
@@ -15684,8 +15682,6 @@ Ff:com.intellij.ui.dsl.builder.Panel$DefaultImpls
 - bs:separator$default(com.intellij.ui.dsl.builder.Panel,java.awt.Color,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
 - bs:threeColumnsRow$default(com.intellij.ui.dsl.builder.Panel,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
 - bs:twoColumnsRow$default(com.intellij.ui.dsl.builder.Panel,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
-f:com.intellij.ui.dsl.builder.PanelKt
-- bsf:getEMPTY_LABEL():java.lang.String
 e:com.intellij.ui.dsl.builder.RightGap
 - java.lang.Enum
 - sf:COLUMNS:com.intellij.ui.dsl.builder.RightGap
@@ -15696,8 +15692,6 @@ e:com.intellij.ui.dsl.builder.RightGap
 com.intellij.ui.dsl.builder.Row
 - b:actionButton(com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.ui.dsl.builder.Cell
 - bs:actionButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
-- b:actionsButton(com.intellij.openapi.actionSystem.AnAction[],java.lang.String,javax.swing.Icon):com.intellij.ui.dsl.builder.Cell
-- bs:actionsButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction[],java.lang.String,javax.swing.Icon,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - a:bottomGap(com.intellij.ui.dsl.builder.BottomGap):com.intellij.ui.dsl.builder.Row
 - a:browserLink(java.lang.String,java.lang.String):com.intellij.ui.dsl.builder.Cell
 - a:button(java.lang.String,com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.ui.dsl.builder.Cell
@@ -15748,14 +15742,8 @@ com.intellij.ui.dsl.builder.Row
 - bs:text$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - a:textArea():com.intellij.ui.dsl.builder.Cell
 - a:textField():com.intellij.ui.dsl.builder.Cell
-- a:textFieldWithBrowseButton(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
-- textFieldWithBrowseButton(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
 - textFieldWithBrowseButton(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
-- textFieldWithBrowseButton(java.lang.String,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
-- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
-- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
-- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - a:threeStateCheckBox(java.lang.String):com.intellij.ui.dsl.builder.Cell
 - a:topGap(com.intellij.ui.dsl.builder.TopGap):com.intellij.ui.dsl.builder.Row
 - a:visible(Z):com.intellij.ui.dsl.builder.Row
@@ -15764,8 +15752,6 @@ com.intellij.ui.dsl.builder.Row
 Ff:com.intellij.ui.dsl.builder.Row$DefaultImpls
 - bs:actionButton(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.ui.dsl.builder.Cell
 - bs:actionButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
-- bs:actionsButton(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction[],java.lang.String,javax.swing.Icon):com.intellij.ui.dsl.builder.Cell
-- bs:actionsButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction[],java.lang.String,javax.swing.Icon,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:button$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.actionSystem.AnAction,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:comboBox$default(com.intellij.ui.dsl.builder.Row,java.util.Collection,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:comboBox$default(com.intellij.ui.dsl.builder.Row,javax.swing.ComboBoxModel,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
@@ -15778,13 +15764,9 @@ Ff:com.intellij.ui.dsl.builder.Row$DefaultImpls
 - bs:spinner$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.ClosedRange,D,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:spinner$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.IntRange,I,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:text$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
-- s:textFieldWithBrowseButton(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
 - s:textFieldWithBrowseButton(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
-- s:textFieldWithBrowseButton(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
 - bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
-- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
-- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 e:com.intellij.ui.dsl.builder.RowLayout
 - java.lang.Enum
 - sf:INDEPENDENT:com.intellij.ui.dsl.builder.RowLayout

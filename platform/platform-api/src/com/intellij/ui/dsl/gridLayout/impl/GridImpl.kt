@@ -530,7 +530,7 @@ private class LayoutData {
    * 3. In parents that also use [GridLayout]: aligning by visual padding is corrected according [outsideGaps] together with insets,
    * so components in parent and this container are aligned together
    */
-  var outsideGaps = Gaps.EMPTY
+  var outsideGaps = Gaps(0, 0, 0, 0)
 
   fun getPaddedWidth(layoutCellData: LayoutCellData): Int {
     val fullPaddedWidth = getFullPaddedWidth(layoutCellData)
@@ -672,4 +672,4 @@ internal class PreCalculationData(val minimumSize: Dimension, val preferredSize:
 @ApiStatus.Internal
 internal data class PreferredSizeData(val preferredSize: Dimension, val outsideGaps: Gaps)
 
-private fun UnscaledGaps.scale(): Gaps = JBGaps(top = top, left = left, bottom = bottom, right = right)
+private fun UnscaledGaps.scale(): Gaps = Gaps(JBUIScale.scale(top), JBUIScale.scale(left), JBUIScale.scale(bottom), JBUIScale.scale(right))

@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * List of all configurable spacings for building Kotlin UI DSL panels. All returned values are unscaled
@@ -66,16 +64,6 @@ interface SpacingConfiguration {
    * Horizontal gaps between text and button border for segmented buttons
    */
   val segmentedButtonHorizontalGap: Int
-
-  /**
-   * Gaps between dialog content and its content
-   */
-  val dialogGap: Gaps
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use dialogUnscaledGaps instead",
-                ReplaceWith("dialogUnscaledGaps", "com.intellij.ui.dsl.gridLayout.UnscaledGaps"),
-                level = DeprecationLevel.HIDDEN)
-    get() = Gaps.EMPTY
 
   /**
    * Unscaled gaps between dialog content and its content

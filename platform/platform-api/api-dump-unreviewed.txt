@@ -8736,7 +8736,6 @@ com.intellij.ui.dsl.builder.RowsRange
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.RowsRange
 com.intellij.ui.dsl.builder.SpacingConfiguration
 - a:getButtonGroupHeaderBottomGap():I
-- b:getDialogGap():com.intellij.ui.dsl.gridLayout.Gaps
 - getDialogUnscaledGaps():com.intellij.ui.dsl.gridLayout.UnscaledGaps
 - a:getHorizontalColumnsGap():I
 - a:getHorizontalDefaultGap():I
@@ -8788,7 +8787,7 @@ f:com.intellij.ui.dsl.gridLayout.Gaps
 - hashCode():I
 f:com.intellij.ui.dsl.gridLayout.Gaps$Companion
 f:com.intellij.ui.dsl.gridLayout.GapsKt
-- sf:JBGaps(I,I,I,I):com.intellij.ui.dsl.gridLayout.Gaps
+- bsf:JBGaps(I,I,I,I):com.intellij.ui.dsl.gridLayout.Gaps
 - bs:JBGaps$default(I,I,I,I,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.Gaps
 com.intellij.ui.dsl.gridLayout.Grid
 - a:getColumnsGaps():java.util.List

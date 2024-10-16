@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.TooltipTitle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
@@ -232,18 +231,6 @@ interface Row {
     return actionButton(action, actionPlace)
   }
 
-  /**
-   * This method is moved into an extension because Kotlin UI DSL is going to be moved into public API, but [ActionButton] is a part of impl API.
-   * To fix compilation issue add `import com.intellij.ui.dsl.builder.actionsButton`
-   */
-  @Deprecated("Use extension function com.intellij.ui.dsl.builder.ExtensionsKt.actionButton instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun actionsButton(vararg actions: AnAction,
-                    @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
-                    icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton> {
-    return actionsButton(*actions, actionPlace = actionPlace, icon = icon)
-  }
-
   @Deprecated("Use another segmentedButton method instead. API is different and text value must be assigned in new version of renderer",
               level = DeprecationLevel.HIDDEN)
   fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T>
@@ -322,6 +309,7 @@ interface Row {
   /**
    * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
    */
+  @ApiStatus.Experimental
   fun textFieldWithBrowseButton(
     project: Project? = null,
     fileChosen: ((chosenFile: VirtualFile) -> String)? = null
@@ -331,6 +319,7 @@ interface Row {
   /**
    * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
    */
+  @ApiStatus.Experimental
   fun textFieldWithBrowseButton(
     browseDialogTitle: @NlsContexts.DialogTitle String,
     project: Project? = null,
@@ -341,6 +330,7 @@ interface Row {
   /**
    * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
    */
+  @ApiStatus.Experimental
   fun textFieldWithBrowseButton(
     fileChooserDescriptor: FileChooserDescriptor,
     project: Project? = null,

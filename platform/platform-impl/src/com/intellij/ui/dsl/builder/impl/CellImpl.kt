@@ -222,11 +222,6 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  @Suppress("OVERRIDE_DEPRECATION")
-  override fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): CellImpl<T> {
-    return bind(componentGet, componentSet, MutableProperty(binding.get, binding.set))
-  }
-
   override fun validationRequestor(validationRequestor: (() -> Unit) -> Unit): CellImpl<T> {
     return validationRequestor(DialogValidationRequestor { _, it -> validationRequestor(it) })
   }
@@ -239,12 +234,6 @@ internal class CellImpl<T : JComponent>(
 
   override fun validationRequestor(validationRequestor: DialogValidationRequestor.WithParameter<T>): CellImpl<T> {
     return validationRequestor(validationRequestor(component))
-  }
-
-  @Deprecated("Use identical validationInfo method, validation method is reserved for new API")
-  @ApiStatus.ScheduledForRemoval
-  override fun validation(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
-    return validationInfo(validation)
   }
 
   override fun validationInfo(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
