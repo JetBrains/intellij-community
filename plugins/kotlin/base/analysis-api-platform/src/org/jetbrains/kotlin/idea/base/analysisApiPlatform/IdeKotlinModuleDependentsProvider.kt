@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -30,7 +29,13 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
     override fun getDirectDependents(module: KaModule): Set<KaModule> {
         return when (module) {
             is KaSourceModule -> getDirectDependentsForSourceModule(module)
-            is KaLibraryModule -> getDirectDependentsForLibraryModule(module)
+            is KaLibraryModule -> {
+                if (module.isSdk) {
+                    // No dependents need to be provided for SDK modules and `KaBuiltinsModule` (see `KotlinModuleDependentsProvider`).
+                    return emptySet()
+                }
+                getDirectDependentsForLibraryNonSdkModule(module)
+            }
             is KaLibrarySourceModule -> getDirectDependents(module.binaryLibrary)
 
             is KaBuiltinsModule -> emptySet()
@@ -63,15 +68,7 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
 
     protected abstract fun addAnchorModuleDependents(module: KaSourceModule, to: MutableSet<KaModule>)
 
-    private fun getDirectDependentsForLibraryModule(module: KaLibraryModule): Set<KaModule> {
-        if (module.isSdk) {
-            // No dependents need to be provided for SDK modules and `KaBuiltinsModule` (see `KotlinModuleDependentsProvider`).
-            return emptySet()
-        }
-        return project.service<LibraryUsageIndex>()
-            .getDependentModules((module as KtLibraryModuleByModuleInfo).libraryInfo)
-            .mapNotNullTo(mutableSetOf()) { it.toKaSourceModuleForProductionOrTest() }
-    }
+    protected abstract fun getDirectDependentsForLibraryNonSdkModule(module: KaLibraryModule): Set<KaModule>
 
     private fun MutableSet<KaModule>.addWorkspaceModelDependents(symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>) {
         val snapshot = WorkspaceModel.getInstance(project).currentSnapshot

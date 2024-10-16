@@ -1,15 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModuleDependentsProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.KtLibraryModuleByModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryUsageIndex
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
 import org.jetbrains.kotlin.idea.base.projectStructure.util.getTransitiveLibraryDependencyInfos
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 
@@ -41,4 +46,13 @@ internal class K1IdeKotlinModuleDependentsProvider(project: Project) : IdeKotlin
                 to.add(libraryInfo.sourcesModuleInfo.toKaModule())
             }
     }
+
+    override fun getDirectDependentsForLibraryNonSdkModule(module: KaLibraryModule): Set<KaModule> {
+        require(module is KtLibraryModuleByModuleInfo)
+
+        return project.service<LibraryUsageIndex>()
+            .getDependentModules(module.libraryInfo)
+            .mapNotNullTo(mutableSetOf()) { it.toKaSourceModuleForProductionOrTest() }
+    }
+
 }
