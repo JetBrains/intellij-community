@@ -8,8 +8,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="RUNTIME" />
-    <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlin-reflect" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="library" scope="TEST" name="ASM" level="project" />
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
@@ -22,20 +22,20 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="module" module-name="kotlin.base.analysis" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.util" />
-    <orderEntry type="module" module-name="kotlin.base.psi" />
-    <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
-    <orderEntry type="module" module-name="kotlin.base.plugin" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" />
+    <orderEntry type="module" module-name="kotlin.base.util" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.psi" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.compiler-configuration" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.test" />
-    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.scripting" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.core" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence.k1" scope="TEST" />
