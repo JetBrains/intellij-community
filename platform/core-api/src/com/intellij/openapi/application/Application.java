@@ -675,10 +675,14 @@ public interface Application extends ComponentManager {
   }
   //</editor-fold>
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
   default CoroutineContext getLockStateAsCoroutineContext() {
     return EmptyCoroutineContext.INSTANCE;
   }
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
   default boolean hasLockStateInContext(CoroutineContext context) {
     return false;
   }
