@@ -4,6 +4,8 @@ package com.intellij.util.indexing
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -13,7 +15,9 @@ import com.intellij.openapi.startup.StartupActivity.RequiredForSmartMode
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.util.ThrowableRunnable
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.readProjectDirtyFilesQueue
@@ -104,12 +108,17 @@ private class ProjectFileBasedIndexStartupActivity(private val coroutineScope: C
   }
 
   private fun onProjectClosing(project: Project) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously({
-      ReadAction.run(ThrowableRunnable {
-        if (openProjects.remove(project)) {
-          FileBasedIndex.getInstance().onProjectClosing(project)
+    runWithModalProgressBlocking(
+      owner = ModalTaskOwner.project(project),
+      title = IndexingBundle.message("removing.indexable.set.project.handler"),
+      cancellation = TaskCancellation.nonCancellable(),
+    ) {
+      if (openProjects.remove(project)) {
+        val fileBasedIndex = serviceIfCreated<FileBasedIndex>() ?: return@runWithModalProgressBlocking
+        readAction {
+          fileBasedIndex.onProjectClosing(project)
         }
-      })
-    }, IndexingBundle.message("removing.indexable.set.project.handler"), false, project)
+      }
+    }
   }
 }
