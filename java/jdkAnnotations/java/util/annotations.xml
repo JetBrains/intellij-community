@@ -4078,6 +4078,7 @@
   </item>
   <item name='java.util.Map java.util.Map&lt;K,V&gt; ofEntries(java.util.Map.Entry&lt;? extends K,? extends V&gt;...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name="org.jetbrains.annotations.NotNull" typePath="/[]"/>
     <annotation name="org.jetbrains.annotations.NotNull" typePath="/[]/1/*"/>
     <annotation name="org.jetbrains.annotations.NotNull" typePath="/[]/2/*"/>
   </item>
