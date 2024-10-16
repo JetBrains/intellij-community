@@ -8,7 +8,8 @@ import com.intellij.driver.sdk.ui.xQuery
 import org.intellij.lang.annotations.Language
 
 
-fun Finder.textField(@Language("xpath") xpath: String? = null) = x(xpath ?: xQuery { byType(javax.swing.JTextField::class.java) }, JTextFieldUI::class.java)
+fun Finder.textField(@Language("xpath") xpath: String? = null) =
+  x(xpath ?: xQuery { byType(javax.swing.JTextField::class.java) }, JTextFieldUI::class.java)
 
 fun Finder.textField(init: QueryBuilder.() -> String) = x(JTextFieldUI::class.java, init)
 
@@ -16,8 +17,9 @@ class JTextFieldUI(data: ComponentData) : UiComponent(data) {
   private val textFieldComponent by lazy { driver.cast(component, JTextField::class) }
   var text: String
     get() = textFieldComponent.getText()
-    set(value) = driver.withContext(OnDispatcher.EDT) { textFieldComponent.setText (value) }
-  fun appendText(appendString: String){
+    set(value) = driver.withContext(OnDispatcher.EDT) { textFieldComponent.setText(value) }
+
+  fun appendText(appendString: String) {
     text += appendString
   }
 }
