@@ -3,8 +3,9 @@ package com.intellij.diagnostic
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.sun.management.OperatingSystemMXBean
@@ -19,13 +20,18 @@ private class MemorySizeConfigurator : ProjectActivity {
   @Suppress("SSBasedInspection")
   private val LOG = Logger.getInstance(MemorySizeConfigurator::class.java)
 
-  override suspend fun execute(project: Project) {
+  init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  override suspend fun execute(project: Project) {
+    val propertyComponent = serviceAsync<PropertiesComponent>()
+    val memoryAdjusted = propertyComponent.isTrueValue("ide.memory.adjusted")
+    if (memoryAdjusted) {
       return
     }
-
-    val memoryAdjusted = PropertiesComponent.getInstance().isTrueValue("ide.memory.adjusted")
-    if (memoryAdjusted) return
 
     val currentXmx = max(VMOptions.readOption(VMOptions.MemoryKind.HEAP, true),
                          VMOptions.readOption(VMOptions.MemoryKind.HEAP, false))
@@ -43,7 +49,7 @@ private class MemorySizeConfigurator : ProjectActivity {
     val osMxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
     val totalPhysicalMemory = osMxBean.totalMemorySize shr 20
 
-    val newXmx = MemorySizeConfiguratorService.getInstance().getSuggestedMemorySize(totalPhysicalMemory.toInt())
+    val newXmx = serviceAsync<MemorySizeConfiguratorService>().getSuggestedMemorySize(totalPhysicalMemory.toInt())
 
     val currentXms = max(VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, true),
                          VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, false))
@@ -60,18 +66,20 @@ private class MemorySizeConfigurator : ProjectActivity {
         LOG.warn(e)
       }
     }
-    PropertiesComponent.getInstance().setValue("ide.memory.adjusted", true)
+    propertyComponent.setValue("ide.memory.adjusted", true)
   }
 }
 
 // Allow overriding in other IDEs
 @ApiStatus.Internal
 open class MemorySizeConfiguratorService {
-  companion object {
-    fun getInstance(): MemorySizeConfiguratorService = service()
+  open fun getSuggestedMemorySize(totalPhysicalMemory: Int): Int {
+    if (DEFAULT_XMX > totalPhysicalMemory) {
+      // 750 is the old default
+      return 750.coerceAtMost(totalPhysicalMemory)
+    }
+    else {
+      return (totalPhysicalMemory / 8).coerceIn(DEFAULT_XMX, MAXIMUM_SUGGESTED_XMX)
+    }
   }
-
-  open fun getSuggestedMemorySize(totalPhysicalMemory: Int): Int =
-    if (DEFAULT_XMX > totalPhysicalMemory) 750.coerceAtMost(totalPhysicalMemory) // 750 is the old default
-    else (totalPhysicalMemory / 8).coerceIn(DEFAULT_XMX, MAXIMUM_SUGGESTED_XMX)
 }
