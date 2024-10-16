@@ -241,7 +241,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
         });
         toolHighlights.elementHighlights.put(psiElement, List.copyOf(resultInfos));
         if (LOG.isDebugEnabled()) {
-          LOG.debug("removeFromDataAtomically: " + psiElement + ": old=" + oldInfos.size() + "; new=" + resultInfos.size()+ currentProgressInfo());
+          LOG.debug("removeFromDataAtomically: " + psiElement.getClass() + ": old=" + oldInfos.size() + "; new=" + resultInfos.size()+ currentProgressInfo());
         }
       }
     }
@@ -443,8 +443,8 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
 
         //assertNoDuplicates(psiFile, getInfosFromMarkup(hostDocument, project), "markup after psiElementVisited ");
 
-        assertMarkupDataConsistent(psiFile);
       });
+      assertMarkupDataConsistent(psiFile);
     }
   }
 
@@ -481,7 +481,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
   }
 
   @NotNull
-  private static Set<HighlightInfo> getInfosFromMarkup(@NotNull Document document, @Nullable Project project) {
+  static Set<HighlightInfo> getInfosFromMarkup(@NotNull Document document, @Nullable Project project) {
     if (!ASSERT_INVARIANTS) return Set.of();
     return Arrays.stream(DocumentMarkupModel.forDocument(document, project, true).getAllHighlighters())
       .map(m -> HighlightInfo.fromRangeHighlighter(m))
@@ -489,22 +489,22 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
       .collect(Collectors.toSet());
   }
 
-  private synchronized void assertMarkupDataConsistent(@NotNull PsiFile psiFile) {
+  synchronized void assertMarkupDataConsistent(@NotNull PsiFile psiFile) {
     if (!ASSERT_INVARIANTS) return;
-
+    Set<HighlightInfo> fromMarkup = getInfosFromMarkup(psiFile.getFileDocument(), psiFile.getProject());
     Set<HighlightInfo> fromData = getData(psiFile).values().stream()
       .flatMap(t -> t.elementHighlights.values().stream())
       .flatMap(l->l.stream())
       .filter(h -> h.getHighlighter() != null && h.getHighlighter().isValid()) // maybe LIP isn't started yet and its recycleInvalidPsi wasn't run
       .collect(Collectors.toSet());
 
-    Set<HighlightInfo> fromMarkup = getInfosFromMarkup(psiFile.getFileDocument(), psiFile.getProject());
-
     if (!fromMarkup.equals(fromData)) {
+      String fromDataStr = StringUtil.join(ContainerUtil.sorted(fromData, Segment.BY_START_OFFSET_THEN_END_OFFSET), "\n");
+      String fromMarkupStr = StringUtil.join(ContainerUtil.sorted(fromMarkup, Segment.BY_START_OFFSET_THEN_END_OFFSET), "\n");
+      //UsefulTestCase.assertOrderedEquals(fromDataStr+"\n===\n"+fromMarkupStr+"===",fromDataStr, fromMarkupStr);
       throw new AssertionError("data inconsistent with markup: \n"
-                                 + StringUtil.join(ContainerUtil.sorted(fromData, UpdateHighlightersUtil.BY_ACTUAL_START_OFFSET_NO_DUPS), "\n")+"\n"
-                                 + "---------------\n"
-                                 + StringUtil.join(ContainerUtil.sorted(fromMarkup, UpdateHighlightersUtil.BY_ACTUAL_START_OFFSET_NO_DUPS), "\n")+"\n"
+                                 + fromDataStr + "\n---------------\n"
+                                 + fromMarkupStr+"\n========="
       );
     }
   }
