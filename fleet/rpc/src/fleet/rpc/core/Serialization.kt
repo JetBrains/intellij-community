@@ -24,7 +24,6 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.CoroutineContext
-import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
@@ -360,12 +359,12 @@ class Blob(val bytes: ByteArray) {
 object BlobSerializer : DataSerializer<Blob, String>(String.serializer()) {
   @OptIn(ExperimentalEncodingApi::class)
   override fun fromData(data: String): Blob {
-    return Blob(Base64.decode(data))
+    return Blob(Base64WithOptionalPadding.decode(data))
   }
 
   @OptIn(ExperimentalEncodingApi::class)
   override fun toData(value: Blob): String {
-    return Base64.encode(value.bytes)
+    return Base64WithOptionalPadding.encode(value.bytes)
   }
 }
 
