@@ -47,10 +47,9 @@ internal object SurroundWithLambdaForTypeMismatchFixFactory {
         if (expectedType.arity > 1) return null
         val lambdaReturnType = expectedType.returnType
 
-        if (actualType.withNullability(KaTypeNullability.NON_NULLABLE).isSubtypeOf(lambdaReturnType)) {
-            return SurroundWithLambdaForTypeMismatchFix(element)
-        }
-        else if (actualType.isPrimitiveNumberType() && lambdaReturnType.isPrimitiveNumberType()) {
+        if (actualType.withNullability(KaTypeNullability.NON_NULLABLE).isSubtypeOf(lambdaReturnType) ||
+            (actualType.isPrimitiveNumberType() && lambdaReturnType.isPrimitiveNumberType())
+        ) {
             return SurroundWithLambdaForTypeMismatchFix(element)
         }
         return null
