@@ -12,6 +12,50 @@ import org.intellij.lang.annotations.Language;
 @SuppressWarnings("ALL")
 public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCase {
   
+  public void testImportLayoutWithoutSubpackages() {
+    myFixture.addClass("package aaa; public class AAA {}");
+    myFixture.addClass("package bbb; public class BBB {}");
+    myFixture.addClass("package ccc; public class CCC {}");
+
+    @Language("JAVA") String text = """
+      package main;
+      
+      import aaa.AAA;
+      import bbb.BBB;
+      import ccc.CCC;
+      
+      public class Main {
+          void usage() {
+              new AAA();
+              new BBB();
+              new CCC();
+          }
+      }
+      """;
+    myFixture.configureByText(JavaFileType.INSTANCE, text);
+
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    javaSettings.IMPORT_LAYOUT_TABLE.insertEntryAt(new PackageEntry(false, "bbb", false), 1);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+
+    @Language("JAVA") String result = """
+      package main;
+      
+      import aaa.AAA;
+      import ccc.CCC;
+      import bbb.BBB;
+      
+      public class Main {
+          void usage() {
+              new AAA();
+              new BBB();
+              new CCC();
+          }
+      }
+      """;
+    myFixture.checkResult(result);
+  }
+
   public void testSingleImportConflictingWith2Others() {
     myFixture.addClass("package p; public class A1 {}");
     myFixture.addClass("package p; public class A2 {}");

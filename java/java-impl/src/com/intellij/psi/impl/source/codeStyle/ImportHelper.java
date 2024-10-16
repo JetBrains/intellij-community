@@ -175,7 +175,7 @@ public final class ImportHelper{
     PackageEntry[] entries = settings.IMPORT_LAYOUT_TABLE.getEntries();
     for (int i = 0; i < imports.size(); i++) {
       Import anImport = imports.get(i);
-      entryForName[i] = findEntryIndex(anImport.name(), anImport.isStatic(), entries);
+      entryForName[i] = findEntryIndex(ImportUtils.getPackageOrClassName(anImport.name()), anImport.isStatic(), entries);
     }
 
     List<Import> resultList = new ArrayList<>(imports.size());
