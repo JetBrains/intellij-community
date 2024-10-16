@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.runWithImplicitBlockingContextEnabled
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
@@ -156,8 +157,10 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
   @RepeatedTest(REPETITIONS)
   fun `read action works if already obtained`(): Unit = timeoutRunBlocking {
     cra {
+      assertTrue(ApplicationManager.getApplication().isReadAccessAllowed)
       runBlockingCancellable {
         assertEquals(42, cra {
+          assertTrue(ApplicationManager.getApplication().isReadAccessAllowed)
           42
         })
       }
@@ -387,6 +390,7 @@ class NonBlockingUndispatchedSuspendingReadActionTest : SuspendingReadActionTest
       override suspend fun awaitConstraint(): Unit = fail("must not be called")
     }
     cra {
+      assertTrue(ApplicationManager.getApplication().isReadAccessAllowed)
       runBlockingCancellable {
         assertThrows<IllegalStateException> {
           cra(unsatisfiableConstraint) {

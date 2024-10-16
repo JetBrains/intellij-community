@@ -37,7 +37,7 @@ internal class InternalReadAction<T>(
       }
     }
     else {
-      if (isLockStoredInContext && application.isReadAccessAllowed && !application.isWriteIntentLockAcquired) {
+      if (isLockStoredInContext && application.hasLockStateInContext(currentCoroutineContext())) {
         val unsatisfiedConstraint = findUnsatisfiedConstraint()
         check(unsatisfiedConstraint == null) {
           "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
@@ -47,7 +47,7 @@ internal class InternalReadAction<T>(
         }
       }
       withContext(Dispatchers.Default) {
-        check(isLockStoredInContext || !application.isReadAccessAllowed) {
+        check(!application.isReadAccessAllowed) {
           "This thread unexpectedly holds the read lock"
         }
         readLoop()
