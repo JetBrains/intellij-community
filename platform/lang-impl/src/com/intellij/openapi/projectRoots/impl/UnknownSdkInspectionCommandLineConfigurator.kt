@@ -9,8 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.withPushPop
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.SdkType
 
 private val LOG: Logger = logger<UnknownSdkInspectionCommandLineConfigurator>()
 
@@ -39,7 +37,6 @@ internal fun configureUnknownSdks(project: Project, indicator: ProgressIndicator
   ApplicationManager.getApplication().assertIsNonDispatchThread()
 
   fixUnknownSdks(project, indicator)
-  setupSdksRootPaths()
 }
 
 private fun fixUnknownSdks(project: Project, indicator: ProgressIndicator) {
@@ -68,13 +65,4 @@ private fun fixUnknownSdks(project: Project, indicator: ProgressIndicator) {
       }
     }
   }
-}
-
-private fun setupSdksRootPaths() {
-  ProjectJdkTable.getInstance().allJdks
-    .forEach { sdk ->
-      LOG.info("Set resolve roots for SDK $sdk")
-      val sdkType = sdk.sdkType as? SdkType ?: return@forEach
-      sdkType.setupSdkPaths(sdk)
-    }
 }
