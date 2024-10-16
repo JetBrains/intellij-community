@@ -2,56 +2,35 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.impl.FsRoot
-import org.jetbrains.kotlin.idea.base.projectStructure.externalProjectPath
-import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
-import org.jetbrains.kotlin.idea.util.sourceRoots
-import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager
-import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 
 class GradleScriptAdditionalIdeaDependenciesProvider : ScriptAdditionalIdeaDependenciesProvider() {
-    /*
-        We try to find applicable gradle buildSrc-like modules with sources
-     */
     override fun getRelatedModules(file: VirtualFile, project: Project): List<Module> {
-        val gradleSettings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID)
+        val module = ModuleUtilCore.findModuleForFile(file, project) ?: return emptyList()
+        val localSettings = GradleLocalSettings.getInstance(project)
+        val virtualFileManager = VirtualFileManager.getInstance()
+        val esOptions = ExternalSystemModulePropertyManager.getInstance(module)
 
-        val projectSettings = gradleSettings.linkedProjectsSettings.filterIsInstance<GradleProjectSettings>().firstOrNull()
-            ?: return emptyList()
+        val externalProjectPath = esOptions.getRootProjectPath()
+        val linkedProjectPath = esOptions.getLinkedProjectPath()
 
-        val includedModulesPath: List<String> = projectSettings.compositeBuild?.compositeParticipants?.filter { part ->
-            projectSettings.modules.any { it == part.rootPath }
-        }?.flatMap { it.projects } ?: emptyList()
+        val projectBuildClassPath = localSettings.projectBuildClasspath[externalProjectPath] ?: return emptyList()
+        val moduleBuildClassPath = projectBuildClassPath.modulesBuildClasspath[linkedProjectPath] ?: return emptyList()
 
-        val includedModulesBuildSrcPaths = includedModulesPath.map { "$it/buildSrc" }
-
-        val rootBuildSrcPath = "${projectSettings.externalProjectPath}/buildSrc"
-
-        val pathsToGradleSpecialModules = (includedModulesPath + includedModulesBuildSrcPaths + rootBuildSrcPath).toSet()
-
-        val gradleModulesWithSources =
-            ModuleManager.getInstance(project).modules
-                .filter {
-                    pathsToGradleSpecialModules.contains(ExternalSystemApiUtil.getExternalProjectPath(it))
-                            && it.productionSourceInfo != null
-                }
-
-        val gradleModuleClasspath = ModuleUtilCore.findModuleForFile(file, project)?.externalProjectPath?.let {
-            GradleBuildClasspathManager.getInstance(project).getModuleClasspathEntries(it).filter { file -> file !is FsRoot }
-        }?.toSet() ?: emptySet()
-
-        return gradleModulesWithSources.filter { gradleModule ->
-            gradleModule.sourceRoots.intersect(gradleModuleClasspath).isNotEmpty()
-        }
+        return moduleBuildClassPath.entries.asSequence()
+            .mapNotNull { it.toNioPathOrNull() }
+            .mapNotNull { virtualFileManager.findFileByNioPath(it) }
+            .mapNotNull { ModuleUtilCore.findModuleForFile(it, project) }
+            .toList()
     }
 
     override fun getRelatedLibraries(file: VirtualFile, project: Project): List<Library> {
