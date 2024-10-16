@@ -48,7 +48,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.facet.KotlinFacetType
+import org.jetbrains.kotlin.idea.facet.isKotlinFacet
 import org.jetbrains.kotlin.util.ServiceLoaderLite
 import java.io.File
 import java.nio.file.Path
@@ -74,7 +74,8 @@ internal class KtCompilerPluginsProviderIdeImpl(
         cs.launch {
             WorkspaceModel.getInstance(project).eventLog.collect { event ->
                 val hasChanges = event.getChanges<FacetEntity>().any { change ->
-                    change.facetTypes.any { it == KotlinFacetType.ID }
+                    val entities = listOfNotNull(change.oldEntity, change.newEntity)
+                    entities.any { it.isKotlinFacet() }
                 }
                 if (hasChanges) {
                     resetPluginsCache()
@@ -99,13 +100,6 @@ internal class KtCompilerPluginsProviderIdeImpl(
             this
         )
     }
-
-    private val EntityChange<FacetEntity>.facetTypes: List<String>
-        get() = when (this) {
-            is EntityChange.Added -> listOf(newEntity.typeId.name)
-            is EntityChange.Removed -> listOf(oldEntity.typeId.name)
-            is EntityChange.Replaced -> listOf(oldEntity.typeId.name, newEntity.typeId.name)
-        }
 
     private fun createNewCache(): PluginsCache? {
         if (!project.isTrusted()) return null
