@@ -141,8 +141,10 @@ public final class HardcodedContracts {
                 ContractValue.zero(), fail())))
     // All these methods take array as 1st parameter, from index as 2nd and to index as 3rd
     // thus ARRAY_RANGE_CONTRACTS are applicable to them
-    .register(staticCall(JAVA_UTIL_ARRAYS, "binarySearch", "fill", "parallelPrefix", "parallelSort", "sort", "spliterator", "stream"),
+    .register(staticCall(JAVA_UTIL_ARRAYS, "fill", "parallelPrefix", "parallelSort", "sort", "spliterator", "stream"),
               (call, cnt) -> cnt >= 3 ? ARRAY_RANGE_CONTRACTS : null)
+    .register(staticCall(JAVA_UTIL_ARRAYS, "binarySearch"),
+              (call, cnt) -> cnt >= 4 ? ARRAY_RANGE_CONTRACTS : null)
     .register(staticCall("org.mockito.ArgumentMatchers", "argThat", "assertArg").parameterCount(1),
               ContractProvider.of(StandardMethodContract.fromText("_->_")))
     .register(anyOf(

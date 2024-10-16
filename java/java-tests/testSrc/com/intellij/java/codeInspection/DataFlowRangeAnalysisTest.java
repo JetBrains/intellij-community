@@ -94,7 +94,8 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testTwoFlagsMixed() { doTest(); }
   public void testArrayInitializersWithMethodCall() { doTest(); }
   public void testLongMinValue() { doTest(); }
-  
+  public void testArrayBinarySearchNoWarningAtNeedle() { doTest(); }
+
   public void testJmhParamRange() {
     myFixture.addClass("package org.openjdk.jmh.annotations;public @interface Param {String[] value();}");
     doTest();
