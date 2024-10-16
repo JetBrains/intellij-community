@@ -213,8 +213,8 @@ private fun getReplacementForOldKotlinOptionIfNeeded(
         getOperationReplacer(operationToken, optionValue, valueContainsMultipleValues) ?: return null
     // jvmTarget, apiVersion and languageVersion
     val versionOptionData = optionsWithValuesMigratedFromNumericStringsToEnums[optionName]
-    if (versionOptionData != null) {
-        return getCompilerOptionForVersionValue(
+    return if (versionOptionData != null) {
+        getCompilerOptionForVersionValue(
             versionOptionData,
             optionValue,
             replacement,
@@ -225,14 +225,13 @@ private fun getReplacementForOldKotlinOptionIfNeeded(
         val processedOptionValue = optionValue.removeSurrounding("\"").removeSurrounding("'")
         val jsOptionsValuesStringToEnumCorrespondence = jsOptions[optionName] ?: return null
         val jsOptionValue = jsOptionsValuesStringToEnumCorrespondence[processedOptionValue]
-        if (jsOptionValue != null) {
-            return getCompilerOptionForJsValue(jsOptionValue, replacement, optionName, operationReplacer)
+        jsOptionValue?.let {
+            getCompilerOptionForJsValue(jsOptionValue, replacement, optionName, operationReplacer)
         }
     } else {
         replacement.append("$optionName.$operationReplacer($optionValue)")
-        return CompilerOption(replacement.toString())
+        CompilerOption(replacement.toString())
     }
-    return null
 }
 
 private fun getCompilerOptionForVersionValue(
@@ -330,7 +329,7 @@ private fun jvmTargetValueMappingRule(inputValue: String): String? {
         "1_8" -> "1_8"
         else -> {
             val numericValue = version.removePrefix("1_").toIntOrNull() ?: return null
-            return if (numericValue > 8) {
+            if (numericValue > 8) {
                 numericValue.toString()
             } else { // Kotlin doesn't support jvmTarget 7 and less
                 null
