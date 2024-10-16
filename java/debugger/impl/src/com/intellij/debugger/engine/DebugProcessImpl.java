@@ -1497,6 +1497,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           if (LOG.isDebugEnabled()) {
             LOG.debug("Invoking " + objRef.type().name() + "." + method.name());
           }
+          //noinspection SSBasedInspection
           return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
         }
       }.start(internalEvaluate);
@@ -1612,6 +1613,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           if (LOG.isDebugEnabled()) {
             LOG.debug("Invoking " + classType.name() + "." + method.name());
           }
+          //noinspection SSBasedInspection
           return classType.invokeMethod(thread, method, args, invokePolicy | extraInvocationOptions);
         }
       }.start(internalEvaluate);
@@ -1635,6 +1637,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           }
 
           try {
+            //noinspection SSBasedInspection
             return interfaceType.invokeMethod(thread, method, args, invokePolicy);
           }
           catch (LinkageError e) {
@@ -1686,6 +1689,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           if (LOG.isDebugEnabled()) {
             LOG.debug("New instance " + classType.name() + "." + method.name());
           }
+          //noinspection SSBasedInspection
           return classType.newInstance(thread, method, args, invokePolicy | invocationOptions);
         }
       };
