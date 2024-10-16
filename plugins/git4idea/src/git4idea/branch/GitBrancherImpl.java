@@ -136,8 +136,7 @@ class GitBrancherImpl implements GitBrancher {
                              @Nullable Runnable callInAwtAfterExecution) {
     if (branchesToContainingRepositories.isEmpty()) return;
     Set<String> branchNames = branchesToContainingRepositories.keySet();
-    String branchMsg = branchNames.size() == 1 ? branchNames.iterator().next() : StringUtil.join(branchNames, ", ");
-    new CommonBackgroundTask(myProject, GitBundle.message("branch.deleting.branch.process", branchMsg), callInAwtAfterExecution) {
+    new CommonBackgroundTask(myProject, getRefsDeletionProgressMessage(branchNames), callInAwtAfterExecution) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         GitBranchWorker worker = newWorker(indicator);
@@ -156,8 +155,7 @@ class GitBrancherImpl implements GitBrancher {
   @Override
   public void deleteRemoteBranches(@NotNull List<String> branchNames, @NotNull List<? extends GitRepository> repositories) {
     if (branchNames.isEmpty()) return;
-    String branchMsg = branchNames.size() == 1 ? branchNames.iterator().next() : StringUtil.join(branchNames, ", ");
-    new CommonBackgroundTask(myProject, GitBundle.message("branch.deleting.remote.branch", branchMsg), null) {
+    new CommonBackgroundTask(myProject, getRefsDeletionProgressMessage(branchNames), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).deleteRemoteBranches(branchNames, repositories);
@@ -272,11 +270,7 @@ class GitBrancherImpl implements GitBrancher {
   @Override
   public void deleteTags(@NotNull Map<String, List<? extends GitRepository>> tagsToContainingRepositories) {
     if (tagsToContainingRepositories.isEmpty()) return;
-    String singleTag = ContainerUtil.getOnlyItem(tagsToContainingRepositories.keySet());
-    String message = singleTag == null ? GitBundle.message("branch.deleting.tags.process")
-                                       : GitBundle.message("branch.deleting.tag.process", singleTag);
-
-    new CommonBackgroundTask(myProject, message, null) {
+    new CommonBackgroundTask(myProject, getRefsDeletionProgressMessage(tagsToContainingRepositories.keySet()), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         GitBranchWorker worker = newWorker(indicator);
@@ -293,6 +287,11 @@ class GitBrancherImpl implements GitBrancher {
         newWorker(indicator).deleteRemoteTag(name, repositories);
       }
     }.runInBackground();
+  }
+
+  private static @NotNull @Nls String getRefsDeletionProgressMessage(Collection<String> refsNames) {
+    String names = refsNames.size() == 1 ? refsNames.iterator().next() : StringUtil.join(refsNames, ", ");
+    return GitBundle.message("branch.deleting.branch.process", names);
   }
 
   /**

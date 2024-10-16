@@ -225,14 +225,13 @@ internal object BranchesDashboardActions {
         if (allRefsAreBranches) message("action.Git.Delete.Branch.title", refs.size)
         else ApplicationBundle.message("button.delete")
 
-      val disabled = refs.any {
-        if (it.isCurrent) return@any true
-        val asRemoteBranch = (it as? BranchInfo)?.branch as? GitRemoteBranch ?: return@any false
-
-        isRemoteBranchProtected(selection.getSelectedRepositories(it), asRemoteBranch.name)
+      val enabled = refs.none { refInfo ->
+        val remoteBranchInfo = (refInfo as? BranchInfo)?.branch as? GitRemoteBranch
+        refInfo.isCurrent ||
+        (remoteBranchInfo != null && isRemoteBranchProtected(selection.getSelectedRepositories(refInfo), remoteBranchInfo.name))
       }
 
-      e.presentation.isEnabled = !disabled
+      e.presentation.isEnabled = enabled
     }
 
     override fun actionPerformed(e: AnActionEvent) {
