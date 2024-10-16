@@ -210,6 +210,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     }
   }
 
+  @Deprecated
   @Override
   public void checkDelete() throws IncorrectOperationException {
     for (PsiDirectory dir : getDirectories()) {
