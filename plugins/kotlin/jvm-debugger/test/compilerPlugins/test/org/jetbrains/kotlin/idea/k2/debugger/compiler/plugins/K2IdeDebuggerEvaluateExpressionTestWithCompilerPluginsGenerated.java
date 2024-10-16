@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases;
+package org.jetbrains.kotlin.idea.k2.debugger.compiler.plugins;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
@@ -15,11 +15,11 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("jvm-debugger/test/compose")
+@TestRoot("jvm-debugger/test/compilerPlugins")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../testData/stepping/compose")
-public class K2ComposeSteppingTestGenerated extends AbstractK2ComposeSteppingTest {
+@TestMetadata("../testData/evaluation/compilerPlugins")
+public class K2IdeDebuggerEvaluateExpressionTestWithCompilerPluginsGenerated extends AbstractK2IdeDebuggerEvaluateExpressionTestWithCompilerPlugins {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {
@@ -32,6 +32,6 @@ public class K2ComposeSteppingTestGenerated extends AbstractK2ComposeSteppingTes
 
     @TestMetadata("composableLambda.kt")
     public void testComposableLambda() throws Exception {
-        runTest("../testData/stepping/compose/composableLambda.kt");
+        runTest("../testData/evaluation/compilerPlugins/composableLambda.kt");
     }
 }

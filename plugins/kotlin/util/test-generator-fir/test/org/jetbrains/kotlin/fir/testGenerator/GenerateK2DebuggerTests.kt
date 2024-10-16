@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentCom
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2CodeFragmentHighlightingTest
 import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2ComposeSteppingTest
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.AbstractK2MultiplatformCodeFragmentCompletionTest
+import org.jetbrains.kotlin.idea.k2.debugger.compiler.plugins.AbstractK2IdeDebuggerEvaluateExpressionTestWithCompilerPlugins
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.*
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -153,10 +154,13 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
     }
 }
 
-internal fun MutableTWorkspace.generateK2ComposeDebuggerTests() {
-    testGroup("jvm-debugger/test/compose", testDataPath = "../testData", category = DEBUGGER) {
+internal fun MutableTWorkspace.generateK2CompilerPluginDebuggerTests() {
+    testGroup("jvm-debugger/test/compilerPlugins", testDataPath = "../testData", category = DEBUGGER) {
         testClass<AbstractK2ComposeSteppingTest> {
             model("stepping/compose")
+        }
+        testClass<AbstractK2IdeDebuggerEvaluateExpressionTestWithCompilerPlugins> {
+            model("evaluation/compilerPlugins")
         }
     }
 }
