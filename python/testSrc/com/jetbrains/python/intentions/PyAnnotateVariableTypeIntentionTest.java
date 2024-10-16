@@ -279,6 +279,16 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
+  // PY-46546
+  public void testAnnotationGenericBuiltinList() {
+    doTest(LanguageLevel.getLatest());
+  }
+
+  // PY-46546
+  public void testAnnotationGenericBuiltinTuple() {
+    doTest(LanguageLevel.getLatest());
+  }
+
   private void doAnnotationTest() {
     doTest(LanguageLevel.PYTHON36);
   }
