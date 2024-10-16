@@ -564,7 +564,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
         for (overriddenSymbol in allOverriddenSymbols) {
             val symbolUnsafeName = overriddenSymbol.callableId?.asSingleFqName()?.toUnsafe()
-                ?: return true // something went wrong, and it's better to stop the inspection
+                ?: continue
             if (symbolUnsafeName in notProperties) return true
         }
         return false
