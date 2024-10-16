@@ -4,11 +4,14 @@ package com.intellij.codeInsight.inline.completion.logs
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.createAdditionalDataField
 import com.intellij.internal.statistic.eventLog.events.ObjectEventField
+import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
@@ -18,17 +21,34 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 34)
+  private val GROUP = EventLogGroup("inline.completion", 35)
 
   const val INVOKED_EVENT_ID = "invoked"
   const val SHOWN_EVENT_ID = "shown"
   const val INSERTED_STATE_EVENT_ID = "inserted_state"
+
+  private class PluginInfoField(override val name: String, override val description: String?) : PrimitiveEventField<PluginInfo?>() {
+    override val validationRule: List<String>
+      get() = listOf("plugin_info")
+
+    override fun addData(
+      fuData: FeatureUsageData,
+      value: PluginInfo?,
+    ) {
+      if (value == null || !value.type.isSafeToReport()) return
+      val id = value.id
+      if (!id.isNullOrEmpty()) {
+        fuData.addData(name, id)
+      }
+    }
+  }
 
   @ApiStatus.Internal
   object InvokedEvents {
     val REQUEST_ID = EventFields.Long("request_id", "ID of the request. Use it to match invoked, shown and inserted_state events")
     val EVENT = EventFields.Class("event", "Event which triggered completion")
     val PROVIDER = EventFields.Class("provider", "Completion provider class")
+    val PROVIDER_PLUGIN_INFO: PrimitiveEventField<PluginInfo?> = PluginInfoField("plugin_id_of_provider", "Id of provider's plugin")
     val TIME_TO_COMPUTE = EventFields.Long("time_to_compute", "Time of provider execution (ms)")
     val OUTCOME = EventFields.NullableEnum<Outcome>("outcome", description = "Invocation outcome (show, no_suggestions, etc.)")
 
@@ -49,6 +69,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     EventFields.CurrentFile,
     InvokedEvents.EVENT,
     InvokedEvents.PROVIDER,
+    InvokedEvents.PROVIDER_PLUGIN_INFO,
     InvokedEvents.TIME_TO_COMPUTE,
     InvokedEvents.OUTCOME,
     InvokedEvents.ADDITIONAL,
