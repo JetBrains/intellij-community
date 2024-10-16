@@ -119,6 +119,7 @@ class K2DfaAssistProvider : DfaAssistProvider {
                                 }
                             }
                             if (symbol.isInline) {
+                                // See org.jetbrains.kotlin.backend.jvm.MemoizedInlineClassReplacements.createStaticReplacement
                                 val thisVar = proxy.visibleVariableByName("arg0")
                                 if (thisVar != null) {
                                     return postprocess(proxy.getVariableValue(thisVar))
