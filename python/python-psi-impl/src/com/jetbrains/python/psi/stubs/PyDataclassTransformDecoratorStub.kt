@@ -60,7 +60,7 @@ data class PyDataclassTransformDecoratorStub(
     fun create(decorator: PyDecorator): PyDataclassTransformDecoratorStub? {
       val decoratorName = decorator.callee as? PyReferenceExpression ?: return null
       val importedAsDataclassTransform = PyResolveUtil.resolveImportedElementQNameLocally(decoratorName)
-        .any { it.toString() in PyDataclassNames.DataclassTransform.DATACLASS_TRANSFORM_NAMES }
+        .any { it.toString().contains(PyDataclassNames.DataclassTransform.DATACLASS_TRANSFORM_NAME) }
       if (importedAsDataclassTransform) {
         val fieldSpecifierList = PyUtil.peelArgument(decorator.getKeywordArgument("field_specifiers")) as? PyTupleExpression
         return PyDataclassTransformDecoratorStub(
