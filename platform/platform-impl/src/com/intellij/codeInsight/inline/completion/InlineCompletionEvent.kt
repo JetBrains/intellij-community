@@ -19,6 +19,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiUtilBase
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import kotlin.random.Random
 
 class InlineCompletionRequest(
@@ -41,7 +42,7 @@ sealed interface TypingEvent {
 
   val range: TextRange
 
-  class OneSymbol internal constructor(symbol: Char, offset: Int) : TypingEvent {
+  class OneSymbol @ApiStatus.Internal constructor(symbol: Char, offset: Int) : TypingEvent {
     override val typed: String = symbol.toString()
 
     override val range: TextRange = TextRange(offset, offset + 1)
@@ -49,7 +50,7 @@ sealed interface TypingEvent {
 
   class NewLine @ApiStatus.Internal constructor(override val typed: String, override val range: TextRange) : TypingEvent
 
-  class PairedEnclosureInsertion internal constructor(override val typed: String, offset: Int) : TypingEvent {
+  class PairedEnclosureInsertion @ApiStatus.Internal constructor(override val typed: String, offset: Int) : TypingEvent {
     override val range: TextRange = TextRange(offset, offset) // caret does not move
   }
 }
@@ -166,7 +167,7 @@ interface InlineCompletionEvent {
    * **Note**: for now, it's impossible to update a session with this event. Inline Completion will be hidden once a backspace is pressed.
    */
   @ApiStatus.Experimental
-  class Backspace internal constructor(val editor: Editor) : InlineCompletionEvent {
+  class Backspace @ApiStatus.Internal constructor(val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       // TODO offset?
       return getRequest(event = this, editor = editor)
@@ -181,7 +182,20 @@ interface InlineCompletionEvent {
    *
    * @param event The lookup event.
    */
-  class LookupChange @ApiStatus.Internal constructor(override val event: LookupEvent) : InlineLookupEvent {
+  class LookupChange @ApiStatus.Internal constructor(
+    @ApiStatus.Experimental
+    override val editor: Editor,
+    override val event: LookupEvent,
+  ) : InlineLookupEvent {
+
+    @Deprecated("This event should not be created outside the platform.")
+    @ScheduledForRemoval
+    @ApiStatus.Internal
+    constructor(event: LookupEvent) : this(
+      runReadAction { event.lookup!!.editor },
+      event
+    )
+
     override fun toRequest(): InlineCompletionRequest? {
       return super.toRequest()?.takeIf { it.lookupElement != null }
     }
@@ -192,9 +206,25 @@ interface InlineCompletionEvent {
    *
    * @param event The lookup event associated with the cancellation.
    */
-  class LookupCancelled @ApiStatus.Internal constructor(override val event: LookupEvent) : InlineLookupEvent
+  class LookupCancelled @ApiStatus.Internal constructor(
+    @ApiStatus.Experimental
+    override val editor: Editor,
+    override val event: LookupEvent
+  ) : InlineLookupEvent {
+
+    @Deprecated("This event should not be created outside the platform.")
+    @ScheduledForRemoval
+    @ApiStatus.Internal
+    constructor(event: LookupEvent) : this(
+      runReadAction { event.lookup!!.editor },
+      event
+    )
+  }
 
   sealed interface InlineLookupEvent : InlineCompletionEvent {
+
+    @get:ApiStatus.Experimental
+    val editor: Editor
 
     val event: LookupEvent
 

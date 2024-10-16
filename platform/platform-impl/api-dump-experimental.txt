@@ -2,10 +2,19 @@
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - f:getEditor():com.intellij.openapi.editor.Editor
 - toRequest():com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent
+- com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+- *a:getEditor():com.intellij.openapi.editor.Editor
 *f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextLine
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 *f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextWord
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupCancelled
+- com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent
+- *:getEditor():com.intellij.openapi.editor.Editor
+f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupChange
+- com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent
+- *:getEditor():com.intellij.openapi.editor.Editor
 *f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$ManualCall
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - *f:getAdditionalData():com.intellij.openapi.util.UserDataHolder
