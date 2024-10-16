@@ -1488,7 +1488,7 @@
     <codeInsight.parameterNameHints language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider"/>
     <codeInsight.declarativeInlayProviderCustomSettingsProvider language="JAVA"
                                                                 providerId="java.method.chains"
-                                                                implementationClass="com.intellij.codeInsight.hints.chain.DeclarativeCallChainCustomSettingsProvider"/>
+                                                                implementationClass="com.intellij.codeInsight.hints.JavaMethodChainsHintsCustomSettingsProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.AnnotationInlayProvider"/>
     <codeInsight.declarativeInlayProvider language="JAVA"
                                           implementationClass="com.intellij.codeInsight.hints.JavaImplicitTypeDeclarativeInlayHintsProvider"

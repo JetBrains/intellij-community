@@ -14,12 +14,11 @@ import javax.swing.JComponent
 import javax.swing.event.ChangeListener
 
 @ApiStatus.Internal
-class DeclarativeCallChainCustomSettingsProvider : InlayHintsCustomSettingsProvider<Int> {
-  companion object {
-    const val DEFAULT_CHAIN_LENGTH: Int = 2
-  }
+abstract class AbstractDeclarativeCallChainCustomSettingsProvider(
+  private val defaultChainLength: Int
+) : InlayHintsCustomSettingsProvider<Int> {
 
-  private var uniqueTypeCount = DEFAULT_CHAIN_LENGTH
+  private var uniqueTypeCount = defaultChainLength
   private val uniqueTypeCountSpinner: JBIntSpinner by lazy {
     val spinner = JBIntSpinner(uniqueTypeCount, 0, 10)
     spinner.addChangeListener(ChangeListener {
@@ -41,7 +40,7 @@ class DeclarativeCallChainCustomSettingsProvider : InlayHintsCustomSettingsProvi
   override fun createComponent(project: Project, language: Language): JComponent {
     val callChainSettings = DeclarativeCallChainInlaySettings.getInstance(project)
     val chainLength = callChainSettings.getLanguageCallChainLength(language)
-    uniqueTypeCount = chainLength ?: DEFAULT_CHAIN_LENGTH
+    uniqueTypeCount = chainLength ?: defaultChainLength
     invokeLater {
       uniqueTypeCountSpinner.number = uniqueTypeCount
     }
@@ -58,7 +57,7 @@ class DeclarativeCallChainCustomSettingsProvider : InlayHintsCustomSettingsProvi
 
   override fun persistSettings(project: Project, settings: Int, language: Language) {
     val callChainSettings = DeclarativeCallChainInlaySettings.getInstance(project)
-    callChainSettings.setLanguageCallChainLength(language, uniqueTypeCount, DEFAULT_CHAIN_LENGTH)
+    callChainSettings.setLanguageCallChainLength(language, uniqueTypeCount, defaultChainLength)
   }
 
   override fun putSettings(project: Project, settings: Int, language: Language) {
