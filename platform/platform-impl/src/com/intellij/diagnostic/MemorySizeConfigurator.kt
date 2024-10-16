@@ -34,7 +34,8 @@ private class MemorySizeConfigurator : ProjectActivity {
       LOG.info("Memory size configurator skipped: Unable to determine current -Xmx. VM options file is ${System.getProperty("jb.vmOptionsFile")}")
       return
     }
-    if (currentXmx > DEFAULT_XMX) {
+
+    if (currentXmx >= DEFAULT_XMX) {
       // The user has already manually adjusted memory settings
       return
     }
