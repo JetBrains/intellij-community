@@ -391,6 +391,15 @@ public final class CollectionFactory {
     return new SoftHashMap<>(strategy);
   }
 
+  /**
+   * Create {@link Map} with soft-referenced keys and hard-referenced values.
+   * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding value
+   */
+  @Contract(value = "_ -> new", pure = true)
+  public static @NotNull <K,V> Map<@NotNull K,V> createSoftMap(@Nullable BiConsumer<? super @NotNull Map<K, V>, ? super V> evictionListener) {
+    return new SoftHashMap<>(10, HashingStrategy.canonical(), evictionListener);
+  }
+
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap() {
     return new ConcurrentSoftHashMap<>(null);

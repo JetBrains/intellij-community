@@ -2,9 +2,12 @@
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
+import java.util.Map;
+import java.util.function.BiConsumer;
 
 /**
  * Soft keys hash map.
@@ -13,11 +16,14 @@ import java.lang.ref.SoftReference;
  */
 final class SoftHashMap<K,V> extends RefHashMap<K,V> {
   SoftHashMap(int initialCapacity) {
-    super(initialCapacity);
+    super(initialCapacity, 0.8f, HashingStrategy.canonical());
   }
 
   SoftHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
     super(hashingStrategy);
+  }
+  SoftHashMap(int initialCapacity, @NotNull HashingStrategy<? super K> hashingStrategy, @Nullable BiConsumer<? super @NotNull Map<K, V>, ? super V> evictionListener) {
+    super(initialCapacity, 0.8f, hashingStrategy, evictionListener);
   }
 
   @Override

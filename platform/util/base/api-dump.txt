@@ -440,6 +440,7 @@ f:com.intellij.util.containers.CollectionFactory
 - s:createSmallMemoryFootprintSet(java.util.Collection):java.util.Set
 - s:createSoftKeySoftValueMap():java.util.Map
 - s:createSoftMap():java.util.Map
+- s:createSoftMap(java.util.function.BiConsumer):java.util.Map
 - s:createWeakIdentityMap(I,F):java.util.Map
 - s:createWeakKeySoftValueMap():java.util.Map
 - s:createWeakKeyWeakValueMap():java.util.Map
