@@ -101,13 +101,11 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
     // compute unresolved refs suggestions from the caret to two pages down (in case the user is scrolling down, which is often the case)
     int startOffset = Math.max(0, visibleRange.getStartOffset());
     int endOffset = Math.min(document.getTextLength(), visibleRange.getEndOffset()+visibleRange.getLength());
-    // first, compute quick fixes close to the caret
-    List<HighlightInfo> unresolvedInfos = new ArrayList<>();
+    List<HighlightInfo> unresolvedInfos = new ArrayList<>(); // collect unresolved-ref infos into intermediate collection to avoid messing with HighlightInfo lock under the markup lock
     DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, startOffset, endOffset, info -> {
-      if (!info.isUnresolvedReference()) {
-        return true;
+      if (info.isUnresolvedReference()) {
+        unresolvedInfos.add(info);
       }
-      unresolvedInfos.add(info);
       return true;
     });
     for (HighlightInfo info : unresolvedInfos) {
