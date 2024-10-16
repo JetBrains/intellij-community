@@ -3,6 +3,8 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -22,7 +24,10 @@ import com.intellij.util.indexing.PersistentDirtyFilesQueue.readProjectDirtyFile
 import com.intellij.util.indexing.diagnostic.ScanningType
 import kotlinx.coroutines.CoroutineScope
 
-private class ProjectFileBasedIndexStartupActivity(private val coroutineScope: CoroutineScope) : RequiredForSmartMode {
+@Service(Service.Level.PROJECT)
+private class ProjectFileBasedIndexStartupActivityScope(@JvmField val coroutineScope: CoroutineScope)
+
+private class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
   private val openProjects = ContainerUtil.createConcurrentList<Project?>()
 
   init {
@@ -88,7 +93,7 @@ private class ProjectFileBasedIndexStartupActivity(private val coroutineScope: C
       projectDirtyFilesQueue = projectDirtyFilesQueue,
       allowSkippingFullScanning = !wasCorrupted,
       requireReadingIndexableFilesIndexFromDisk = true,
-      coroutineScope = coroutineScope,
+      coroutineScope = project.service<ProjectFileBasedIndexStartupActivityScope>().coroutineScope,
       indexingReason = "On project open",
       fullScanningType = ScanningType.FULL_ON_PROJECT_OPEN,
       partialScanningType = ScanningType.PARTIAL_ON_PROJECT_OPEN,
