@@ -13,11 +13,11 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
  *
  * E.g. a client may add GradleEventListeners to collect specific information or statistics.
  */
-@ApiStatus.Experimental
-interface GradleOperationHelperExtension {
+@ApiStatus.Internal
+interface GradleExecutionHelperExtension {
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<GradleOperationHelperExtension> = ExtensionPointName.create("org.jetbrains.plugins.gradle.operationHelperExtension")
+    val EP_NAME: ExtensionPointName<GradleExecutionHelperExtension> = ExtensionPointName.create("org.jetbrains.plugins.gradle.executionHelperExtension")
   }
 
   /**

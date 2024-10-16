@@ -40,7 +40,7 @@ import org.jetbrains.plugins.gradle.properties.GradleProperties;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.properties.models.Property;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
-import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension;
+import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
@@ -135,8 +135,9 @@ public class GradleExecutionHelper {
 
     operation.withCancellationToken(cancellationToken);
 
-    GradleOperationHelperExtension.EP_NAME
-      .forEachExtensionSafe(proc -> proc.prepareForExecution(id, operation, settings, buildEnvironment));
+    GradleExecutionHelperExtension.EP_NAME.forEachExtensionSafe(proc -> {
+      proc.prepareForExecution(id, operation, settings, buildEnvironment);
+    });
   }
 
   private static void clearSystemProperties(LongRunningOperation operation) {

@@ -12,12 +12,12 @@ import org.gradle.tooling.events.ProgressListener
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.plugins.gradle.service.execution.statistics.GradleTaskExecutionHandler
 import org.jetbrains.plugins.gradle.service.execution.statistics.GradleTaskExecutionListener
-import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
+import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import java.lang.ref.WeakReference
 
-class GradleTaskExecutionMeasuringExtension : GradleOperationHelperExtension {
+class GradleTaskExecutionMeasuringExtension : GradleExecutionHelperExtension {
 
   override fun prepareForExecution(id: ExternalSystemTaskId,
                                    operation: LongRunningOperation,

@@ -18,7 +18,7 @@ import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
+import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
@@ -66,10 +66,10 @@ class GradleTaskManagerTest: UsefulTestCase() {
   @Test
   fun `test task manager calls Operation Helper Extension`() {
     val executed: AtomicReference<Boolean> = AtomicReference(false)
-    val ext = TestOperationHelperExtension(prepareExec = {
+    val ext = TestExecutionHelperExtension(prepareExec = {
       executed.set(true)
     })
-    ExtensionTestUtil.maskExtensions(GradleOperationHelperExtension.EP_NAME, listOf(ext), testRootDisposable, false)
+    ExtensionTestUtil.maskExtensions(GradleExecutionHelperExtension.EP_NAME, listOf(ext), testRootDisposable, false)
     runHelpTask(GradleVersion.version("4.8.1"))
     assertTrue(executed.get())
   }
@@ -165,8 +165,8 @@ class TaskExecutionOutput : ExternalSystemTaskNotificationListener {
   fun anyLineContains(something: String): Boolean = storage.any { it.contains(something) }
 }
 
-class TestOperationHelperExtension(val prepareSync: () -> Unit = {},
-                                   val prepareExec: () -> Unit = {}): GradleOperationHelperExtension {
+class TestExecutionHelperExtension(val prepareSync: () -> Unit = {},
+                                   val prepareExec: () -> Unit = {}): GradleExecutionHelperExtension {
   override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) {
     prepareSync()
   }

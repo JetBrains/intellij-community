@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
-import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
+import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.statistics.GradleSyncCollector
 /**
@@ -99,7 +99,7 @@ class GradleModelFetchActionRunner private constructor(
       settings,
       resolverContext.listener
     )
-    GradleOperationHelperExtension.EP_NAME.forEachExtensionSafe {
+    GradleExecutionHelperExtension.EP_NAME.forEachExtensionSafe {
       it.prepareForSync(this, resolverContext)
     }
     return this
