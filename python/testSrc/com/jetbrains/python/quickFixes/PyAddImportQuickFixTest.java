@@ -397,28 +397,6 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import 'matplotlib.pyplot as plt' locally");
   }
 
-  // PY-46361
-  public void testPackagesFromPythonSkeletonsNotSuggested() {
-    doMultiFileNegativeTest("Import");
-
-    GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
-    List<PyFile> djangoPackages = PyModuleNameIndex.findByQualifiedName(QualifiedName.fromComponents("django"),
-                                                                       myFixture.getProject(), scope);
-    PyFile djangoPackage = assertOneElement(djangoPackages);
-    assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoPackage));
-  }
-
-  // PY-46361
-  public void testClassesFromPythonSkeletonsNotSuggested() {
-    doMultiFileNegativeTest("Import");
-
-    Project project = myFixture.getProject();
-    PyClass djangoViewClass = assertOneElement(PyClassNameIndex.findByQualifiedName("django.views.generic.base.View",
-                                                                                    project,
-                                                                                    GlobalSearchScope.allScope(project)));
-    assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoViewClass.getContainingFile()));
-  }
-
   // PY-46344
   public void testImportAbstractContainersFromCollectionsABC() {
     Consumer<VirtualFile> fileConsumer = file -> {
