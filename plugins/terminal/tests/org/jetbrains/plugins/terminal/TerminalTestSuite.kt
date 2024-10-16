@@ -15,6 +15,11 @@ import org.jetbrains.plugins.terminal.classic.BasicShellTerminalIntegrationTest
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
+/**
+ * Helps to debug project leaks locally, see [_LastInSuiteTest].
+ * Not used on TeamCity.
+ * New tests can be added here on demand.
+ */
 @RunWith(Suite::class)
 @Suite.SuiteClasses(
   BlockTerminalTest::class,
