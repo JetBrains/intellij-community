@@ -117,7 +117,7 @@ public class RemoteServer {
     }
     catch (Throwable e) {
       e.printStackTrace(System.err);
-      System.exit(1);
+      System.exit(2);
     }
   }
 
