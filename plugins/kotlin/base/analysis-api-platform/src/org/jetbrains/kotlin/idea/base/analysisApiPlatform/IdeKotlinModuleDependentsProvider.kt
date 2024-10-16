@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleD
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.projectStructure.*
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -30,12 +29,10 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 abstract class IdeKotlinModuleDependentsProvider(protected val project: Project) : KotlinModuleDependentsProviderBase() {
     override fun getDirectDependents(module: KaModule): Set<KaModule> {
         return when (module) {
-            is KtSourceModuleByModuleInfo -> getDirectDependentsForSourceModule(module)
-            is KtLibraryModuleByModuleInfo -> getDirectDependentsForLibraryModule(module)
-            is KtLibrarySourceModuleByModuleInfo -> getDirectDependents(module.binaryLibrary)
+            is KaSourceModule -> getDirectDependentsForSourceModule(module)
+            is KaLibraryModule -> getDirectDependentsForLibraryModule(module)
+            is KaLibrarySourceModule -> getDirectDependents(module.binaryLibrary)
 
-            // No dependents need to be provided for SDK modules and `KaBuiltinsModule` (see `KotlinModuleDependentsProvider`).
-            is KtSdkLibraryModuleByModuleInfo -> emptySet()
             is KaBuiltinsModule -> emptySet()
 
             // There is no way to find dependents of danging file modules, as such modules are created on-site.
@@ -43,33 +40,38 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
 
             // Script modules are not supported yet (see KTIJ-25620).
             is KaScriptModule, is KaScriptDependencyModule -> emptySet()
-            is NotUnderContentRootModuleByModuleInfo -> emptySet()
+            is KaNotUnderContentRootModule -> emptySet()
 
             else -> throw KotlinExceptionWithAttachments("Unexpected ${module::class.simpleName}").withAttachment("module.txt", module)
         }
     }
 
-    private fun getDirectDependentsForSourceModule(module: KtSourceModuleByModuleInfo): Set<KaModule> =
-        mutableSetOf<KaModule>().apply {
+    private fun getDirectDependentsForSourceModule(module: KaSourceModule): Set<KaModule> =
+        buildSet {
             addFriendDependentsForSourceModule(module)
-            addWorkspaceModelDependents(module.moduleId)
+            addWorkspaceModelDependents(module.symbolicId)
             addAnchorModuleDependents(module, this)
         }
 
-    private fun MutableSet<KaModule>.addFriendDependentsForSourceModule(module: KtSourceModuleByModuleInfo) {
+    private fun MutableSet<KaModule>.addFriendDependentsForSourceModule(module: KaSourceModule) {
         // The only friend dependency that currently exists in the IDE is the dependency of an IDEA module's test sources on its production
         // sources. Hence, a test source `KaModule` is a direct dependent of its production source `KaModule`.
-        if (module.ideaModuleInfo is ModuleProductionSourceInfo) {
-            addIfNotNull(module.ideaModule.toKaSourceModuleForTest())
+        if (module.sourceModuleKind == KaSourceModuleKind.PRODUCTION) {
+            addIfNotNull(module.openapiModule.toKaSourceModuleForTest())
         }
     }
 
     protected abstract fun addAnchorModuleDependents(module: KaSourceModule, to: MutableSet<KaModule>)
 
-    private fun getDirectDependentsForLibraryModule(module: KtLibraryModuleByModuleInfo): Set<KaModule> =
-        project.service<LibraryUsageIndex>()
-            .getDependentModules(module.libraryInfo)
+    private fun getDirectDependentsForLibraryModule(module: KaLibraryModule): Set<KaModule> {
+        if (module.isSdk) {
+            // No dependents need to be provided for SDK modules and `KaBuiltinsModule` (see `KotlinModuleDependentsProvider`).
+            return emptySet()
+        }
+        return project.service<LibraryUsageIndex>()
+            .getDependentModules((module as KtLibraryModuleByModuleInfo).libraryInfo)
             .mapNotNullTo(mutableSetOf()) { it.toKaSourceModuleForProductionOrTest() }
+    }
 
     private fun MutableSet<KaModule>.addWorkspaceModelDependents(symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>) {
         val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
@@ -98,12 +100,13 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
      * due to the existence of `Fe10/FirOrderedWorkspaceModelChangeListener`, but a simpler solution such as the project root modification
      * tracker, which is incremented after *before change* events have been handled, seems preferable.
      */
-    private val transitiveDependentsCache: CachedValue<Cache<KaModule, Set<KaModule>>> = CachedValuesManager.getManager(project).createCachedValue {
-        CachedValueProvider.Result.create(
-            Caffeine.newBuilder().maximumSize(100).build(),
-            ProjectRootModificationTracker.getInstance(project),
-        )
-    }
+    private val transitiveDependentsCache: CachedValue<Cache<KaModule, Set<KaModule>>> =
+        CachedValuesManager.getManager(project).createCachedValue {
+            CachedValueProvider.Result.create(
+                Caffeine.newBuilder().maximumSize(100).build(),
+                ProjectRootModificationTracker.getInstance(project),
+            )
+        }
 
     override fun getTransitiveDependents(module: KaModule): Set<KaModule> =
         transitiveDependentsCache.value.get(module) {
