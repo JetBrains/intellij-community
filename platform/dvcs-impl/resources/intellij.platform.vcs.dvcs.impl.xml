@@ -81,6 +81,7 @@
 
   <projectListeners>
     <listener class="com.intellij.dvcs.shelf.ShelfViewUpdater" topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener" activeInHeadlessMode="false"/>
+    <listener class="com.intellij.dvcs.repo.rhizome.RepositoryCountUpdater" topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener" activeInHeadlessMode="false"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
