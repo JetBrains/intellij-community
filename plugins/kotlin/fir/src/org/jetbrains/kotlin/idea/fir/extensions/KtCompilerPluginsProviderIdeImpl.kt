@@ -17,7 +17,6 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.orNull
@@ -49,6 +48,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgu
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.isKotlinFacet
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
 import org.jetbrains.kotlin.util.ServiceLoaderLite
 import java.io.File
 import java.nio.file.Path
@@ -73,7 +73,9 @@ internal class KtCompilerPluginsProviderIdeImpl(
     init {
         cs.launch {
             WorkspaceModel.getInstance(project).eventLog.collect { event ->
-                val hasChanges = event.getChanges<FacetEntity>().any { change ->
+                val facetChanges = event.getChanges<FacetEntity>() + event.getChanges<KotlinSettingsEntity>()
+
+                val hasChanges = facetChanges.any { change ->
                     val entities = listOfNotNull(change.oldEntity, change.newEntity)
                     entities.any { it.isKotlinFacet() }
                 }

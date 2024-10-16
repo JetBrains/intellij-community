@@ -60,6 +60,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.newEntity
 import org.jetbrains.kotlin.idea.facet.isKotlinFacet
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleBeforeFileEventListener
 import org.jetbrains.kotlin.idea.util.toKaModulesForModificationEvents
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.alwaysTrue
 import java.io.File
@@ -275,6 +276,15 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                 newEntity = it.newEntity,
                 entityFilter = FacetEntity::isKotlinFacet,
                 moduleSelector = FacetEntity::module,
+            )
+        }
+
+        getChanges<KotlinSettingsEntity>().mapNotNullTo(modules) {
+            getChangedModule(
+                oldEntity = it.oldEntity,
+                newEntity = it.newEntity,
+                entityFilter = KotlinSettingsEntity::isKotlinFacet,
+                moduleSelector = KotlinSettingsEntity::module,
             )
         }
     }
