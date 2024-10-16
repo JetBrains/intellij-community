@@ -2,16 +2,28 @@
 package com.intellij.platform.eel.impl.local
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryDirectoryError
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.EelFsResultImpl.Error
+import com.intellij.platform.eel.provider.EelFsResultImpl.Ok
+import com.intellij.platform.eel.provider.EelFsResultImpl.Other
 import com.intellij.platform.eel.provider.EelUserPosixInfoImpl
 import com.intellij.platform.eel.provider.EelUserWindowsInfoImpl
+import com.intellij.platform.eel.provider.fs.PosixNioBasedEelFileSystemApi
+import com.intellij.platform.eel.provider.fs.WindowsNioBasedEelFileSystemApi
+import com.intellij.util.text.nullize
 import com.sun.security.auth.module.UnixSystem
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.VisibleForTesting
+import java.nio.file.FileSystem
+import java.nio.file.FileSystems
 import java.nio.file.Path
 
 internal class LocalEelPathMapper(private val eelApi: EelApi) : EelPathMapper {
@@ -28,7 +40,7 @@ internal class LocalEelPathMapper(private val eelApi: EelApi) : EelPathMapper {
   }
 }
 
-internal class LocalWindowsEelApiImpl : LocalEelApi, EelWindowsApi {
+internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : LocalEelApi, EelWindowsApi {
   init {
     check(SystemInfo.isWindows)
   }
@@ -39,11 +51,16 @@ internal class LocalWindowsEelApiImpl : LocalEelApi, EelWindowsApi {
   override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl
   override val mapper: EelPathMapper = LocalEelPathMapper(this)
 
-  override val fs: EelFileSystemWindowsApi
-    get() = TODO("Not yet implemented")
+  override val fs: EelFileSystemWindowsApi = object : WindowsNioBasedEelFileSystemApi(nioFs, userInfo) {
+    override suspend fun createTemporaryDirectory(
+      options: EelFileSystemApi.CreateTemporaryDirectoryOptions,
+    ): EelResult<EelPath.Absolute, CreateTemporaryDirectoryError> =
+      doCreateTemporaryDirectory(mapper, options)
+  }
 }
 
-internal class LocalPosixEelApiImpl : LocalEelApi, EelPosixApi {
+@VisibleForTesting
+class LocalPosixEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : LocalEelApi, EelPosixApi {
   init {
     check(SystemInfo.isUnix)
   }
@@ -58,6 +75,38 @@ internal class LocalPosixEelApiImpl : LocalEelApi, EelPosixApi {
     EelUserPosixInfoImpl(uid = unix.uid.toInt(), gid = unix.gid.toInt())
   }
 
-  override val fs: EelFileSystemPosixApi
-    get() = TODO("Not yet implemented")
+  override val fs: EelFileSystemPosixApi = object : PosixNioBasedEelFileSystemApi(nioFs, userInfo) {
+    override val pathOs: EelPath.Absolute.OS = EelPath.Absolute.OS.UNIX
+
+    override suspend fun createTemporaryDirectory(
+      options: EelFileSystemApi.CreateTemporaryDirectoryOptions,
+    ): EelResult<EelPath.Absolute, CreateTemporaryDirectoryError> =
+      doCreateTemporaryDirectory(mapper, options)
+  }
+}
+
+private fun doCreateTemporaryDirectory(
+  mapper: EelPathMapper,
+  options: EelFileSystemApi.CreateTemporaryDirectoryOptions,
+): EelResult<EelPath.Absolute, CreateTemporaryDirectoryError> {
+  val dir =
+    options.parentDirectory?.let(mapper::toNioPath)?.toFile()
+    ?: run {
+      val path = Path.of(FileUtilRt.getTempDirectory())
+      if (mapper.getOriginalPath(path) != null) {
+        return Error(Other(EelPath.Absolute.parse(path.toString(), null), "Can't map this path"))
+      }
+      path.toFile()
+    }
+  val tempDirectory = FileUtil.createTempDirectory(
+    dir,
+    options.prefix,
+    options.suffix.nullize(),
+    options.deleteOnExit,
+  )
+  val tempDirectoryEel = mapper.getOriginalPath(tempDirectory.toPath())
+  return if (tempDirectoryEel != null)
+    Ok(tempDirectoryEel)
+  else
+    Error(Other(EelPath.Absolute.parse(tempDirectory.toString(), null), "Can't map this path"))
 }
