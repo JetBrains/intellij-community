@@ -294,7 +294,7 @@ internal class ReteNetworkImpl(
     dependencies: Collection<ObservableMatch<*>>,
     observer: QueryObserver<T>
   ): Subscription =
-    if (dependencies.all { match -> match.invalidation.isActive }) {
+    if (dependencies.all { match -> match.validity.isActive }) {
       val db = lastKnownDb.value.dbOrThrow()
       val observerId = nextObserverId++
       val observerIdPair = NodeId(observerId, 0)

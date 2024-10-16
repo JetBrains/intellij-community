@@ -10,7 +10,7 @@ import kotlin.coroutines.coroutineContext
 internal class ObservableMatch<T>(
   internal val observerId: NodeId,
   internal val match: Match<T>,
-  internal val invalidation: CompletableJob,
+  internal val validity: CompletableJob,
 ) : Match<T> {
   override val value: T
     get() = match.value
@@ -21,7 +21,7 @@ internal class ObservableMatch<T>(
   override fun observableSubmatches(): Sequence<Match<*>> =
     sequenceOf(this)
 
-  override fun toString(): String = "($invalidation $observerId $match)"
+  override fun toString(): String = "($validity $observerId $match)"
 }
 
 internal suspend fun <U> withObservableMatches(
@@ -39,7 +39,7 @@ internal suspend fun <U> withObservableMatches(
         withReteDbSource {
           withContext(ContextMatches(contextMatches.addAll(matches))) {
             val def = async(start = CoroutineStart.UNDISPATCHED) {
-              val inactiveMatch = matches.firstOrNull { !it.invalidation.isActive }
+              val inactiveMatch = matches.firstOrNull { !it.validity.isActive }
               when {
                 inactiveMatch == null -> WithMatchResult.Success(body())
                 else -> WithMatchResult.Failure(CancellationReason("match terminated by rete", inactiveMatch))
@@ -48,7 +48,7 @@ internal suspend fun <U> withObservableMatches(
             select {
               def.onAwait { res -> res }
               for (m in matches) {
-                m.invalidation.onJoin {
+                m.validity.onJoin {
                   val reason = CancellationReason("match terminated by rete", m)
                   def.cancel(UnsatisfiedMatchException(reason))
                   WithMatchResult.Failure(reason)
@@ -77,7 +77,7 @@ internal fun <T> Query<T>.observable(terminalId: NodeId): Query<T> =
         // use java forEach, entryset is not implemented for AdaptiveMap
         @Suppress("JavaMapForEach")
         observableMatches.forEach { _, a ->
-          a.invalidation.completeExceptionally(ex)
+          a.validity.completeExceptionally(ex)
         }
       }
     }
@@ -96,7 +96,7 @@ internal fun <T> Query<T>.observable(terminalId: NodeId): Query<T> =
               }
             }
             else -> {
-              observableMatch.invalidation.complete()
+              observableMatch.validity.complete()
               emit(Token(false, observableMatch))
             }
           }

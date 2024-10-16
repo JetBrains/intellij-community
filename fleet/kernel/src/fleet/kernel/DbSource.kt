@@ -31,7 +31,7 @@ interface DbSource {
         .onSuccess { latest ->
           val ctx = DbContext<DB>(latest, dbSource)
           DbContext.threadLocal.set(ctx)
-          context[ContextMatches]?.matches?.firstOrNull { m -> !m.invalidation.isActive }?.let { cancelledMatch ->
+          context[ContextMatches]?.matches?.firstOrNull { m -> !m.validity.isActive }?.let { cancelledMatch ->
             ctx.setPoison(UnsatisfiedMatchException(CancellationReason("match invalidated by rete", cancelledMatch)))
           }
         }.onFailure { ex ->
