@@ -19,7 +19,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
@@ -66,10 +65,17 @@ class GradleTaskManagerTest: UsefulTestCase() {
   @Test
   fun `test task manager calls Operation Helper Extension`() {
     val executed: AtomicReference<Boolean> = AtomicReference(false)
-    val ext = TestExecutionHelperExtension(prepareExec = {
-      executed.set(true)
-    })
-    ExtensionTestUtil.maskExtensions(GradleExecutionHelperExtension.EP_NAME, listOf(ext), testRootDisposable, false)
+    val extension = object : GradleExecutionHelperExtension {
+      override fun prepareForExecution(
+        id: ExternalSystemTaskId,
+        operation: LongRunningOperation,
+        settings: GradleExecutionSettings,
+        buildEnvironment: BuildEnvironment?,
+      ) {
+        executed.set(true)
+      }
+    }
+    ExtensionTestUtil.maskExtensions(GradleExecutionHelperExtension.EP_NAME, listOf(extension), testRootDisposable, false)
     runHelpTask(GradleVersion.version("4.8.1"))
     assertTrue(executed.get())
   }
@@ -163,18 +169,4 @@ class TaskExecutionOutput : ExternalSystemTaskNotificationListener {
   }
 
   fun anyLineContains(something: String): Boolean = storage.any { it.contains(something) }
-}
-
-class TestExecutionHelperExtension(val prepareSync: () -> Unit = {},
-                                   val prepareExec: () -> Unit = {}): GradleExecutionHelperExtension {
-  override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) {
-    prepareSync()
-  }
-
-  override fun prepareForExecution(id: ExternalSystemTaskId,
-                                   operation: LongRunningOperation,
-                                   gradleExecutionSettings: GradleExecutionSettings,
-                                   buildEnvironment: BuildEnvironment?) {
-    prepareExec()
-  }
 }
