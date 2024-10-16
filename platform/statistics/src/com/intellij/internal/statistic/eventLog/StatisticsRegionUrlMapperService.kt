@@ -20,7 +20,7 @@ abstract class StatisticsRegionUrlMapperService {
         null
       }
       // Explicitly accept only exactly known implementation. Can't use sealed class as implementation is in another module.
-      return if ("com.intellij.ide.StatisticsRegionUrlMapperServiceImpl" == service?.javaClass?.name) service else fallBackInstance
+      return if ("com.intellij.internal.statistic.StatisticsRegionUrlMapperServiceImpl" == service?.javaClass?.name) service else fallBackInstance
     }
   }
 

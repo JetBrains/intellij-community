@@ -39,7 +39,7 @@ private class StatisticsRegionUrlMapperServiceImpl(val scope: CoroutineScope) : 
 
   override fun getRegionUrl(): String? = url
 
-  internal fun updateUrl() {
+  fun updateUrl() {
     scope.launch {
       withContext(Dispatchers.IO) {
         url = RegionUrlMapper.mapUrl(EventLogInternalApplicationInfo.EVENT_LOG_SETTINGS_URL_TEMPLATE)
