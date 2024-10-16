@@ -16,7 +16,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  *                                    at least two switchable highlighters are applicable
  * @property switchableEditorHighlighters List of switchable editor highlighters to combine in this composite highlighter
  */
-abstract class CompositeEditorHighlighter(
+internal abstract class CompositeEditorHighlighter(
   private val defaultEditorHighlighter: EditorHighlighter,
 ) : EditorHighlighter {
 
