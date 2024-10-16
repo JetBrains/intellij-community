@@ -91,10 +91,7 @@ object PyDataclassNames {
   }
 
   object DataclassTransform {
-    val DATACLASS_TRANSFORM_NAMES = setOf(
-      "typing.dataclass_transform",
-      "typing_extensions.dataclass_transform",
-    )
+    const val DATACLASS_TRANSFORM_NAME = "dataclass_transform"
 
     val DECORATOR_OR_CLASS_PARAMETERS = setOf(
       "init",
