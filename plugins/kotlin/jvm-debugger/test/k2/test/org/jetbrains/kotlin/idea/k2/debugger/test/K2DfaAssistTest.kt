@@ -517,6 +517,30 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    fun testInlineLambdaThis() {
+        val text = """
+            package org.jetbrains.kotlin.idea.k2.debugger.test
+            
+            class K2DfaAssistTest {
+              class Nested(val x:Int)
+            }
+            
+            fun useClazz(clazz: K2DfaAssistTest.Nested) {
+                with(clazz) {
+                    <caret>if (x > 3/*FALSE*/) /*unreachable_start*/println("hello")/*unreachable_end*/
+                }
+            }
+            
+            fun main() {
+                useClazz(K2DfaAssistTest.Nested(1))
+            }
+        """
+        //$this$useClazz_u24lambda_u240 in com.sunday.TestKtKt.useClazz(com.sunday.Clazz)@com.sunday.TestKtKt:6
+        doTest(text) { vm, frame ->
+            frame.addVariable("\$this\$useClazz_u24lambda_u240", MockValue.createValue(Nested(1), vm))
+        }
+    }
+
     private fun doTest(text: String, mockValues: BiConsumer<MockVirtualMachine, MockStackFrame>) {
         doTest(text, mockValues, "Test.kt")
     }
