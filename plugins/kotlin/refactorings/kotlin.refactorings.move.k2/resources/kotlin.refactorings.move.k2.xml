@@ -1,4 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.refactoring.move">
+  <dependencies>
+    <module name="kotlin.searching.k2"/>
+  </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <refactoring.moveHandler order="first" implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.K2MoveHandler"/>
     <moveFileHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesHandler"/>
