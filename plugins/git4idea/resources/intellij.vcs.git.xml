@@ -114,6 +114,7 @@
       <reference ref="Vcs.UpdateProject"/>
       <action id="Git.Pull" class="git4idea.actions.GitPull"/>
       <action id="Git.Fetch" class="git4idea.actions.GitFetch" icon="AllIcons.Vcs.Fetch"/>
+      <action id="Git.Unshallow" class="git4idea.actions.GitUnshallowRepositoryAction"/>
       <separator/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" icon="AllIcons.Vcs.Merge"/>
       <reference ref="Git.MainMenu.MergeActions"/>
@@ -518,7 +519,7 @@
       <add-to-group group-id="Copy.Paste.Special" relative-to-action="CopyReference" anchor="after"/>
     </group>
 
-    <action id="Git.Unshallow" class="git4idea.actions.GitUnshallowRepositoryAction"/>
+    <reference ref="Git.Unshallow"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
