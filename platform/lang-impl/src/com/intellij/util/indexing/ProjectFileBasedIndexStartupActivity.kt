@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.progress.ProgressManager
@@ -48,12 +46,9 @@ private class ProjectFileBasedIndexStartupActivity(private val coroutineScope: C
 
     // load indexes while in dumb mode, otherwise someone from read action may hit `FileBasedIndex.getIndex` and hang (IDEA-316697)
     fileBasedIndex.loadIndexes()
-    val registeredIndexes = fileBasedIndex.registeredIndexes
-    if (registeredIndexes == null) {
-      return
-    }
+    val registeredIndexes = fileBasedIndex.registeredIndexes ?: return
 
-    val wasCorrupted = registeredIndexes.getWasCorrupted()
+    val wasCorrupted = registeredIndexes.wasCorrupted
 
     val projectQueueFile = project.getQueueFile()
     val vfsCreationTimestamp = ManagingFS.getInstance().getCreationTimestamp()
@@ -61,14 +56,15 @@ private class ProjectFileBasedIndexStartupActivity(private val coroutineScope: C
 
     // Add a project to various lists in read action to make sure that
     // they are not added to lists during disposing of a project (in this case project may be stuck forever in those lists)
-    val registered = ReadAction.compute(ThrowableComputable {
+    val registered = ApplicationManager.getApplication().runReadAction(ThrowableComputable {
       if (project.isDisposed()) {
         return@ThrowableComputable false
       }
 
-      // done mostly for tests. In real life this is no-op, because the set was removed on project closing
+      // Done mostly for tests.
+      // In real life this is no-op, because the set was removed on project closing
       // note that disposing happens in write action, so it'll be executed after this read action
-      Disposer.register(project, Disposable { onProjectClosing(project) })
+      Disposer.register(project) { onProjectClosing(project) }
 
       fileBasedIndex.registerProject(project, projectDirtyFilesQueue.fileIds)
       fileBasedIndex.registerProjectFileSets(project)
@@ -85,7 +81,7 @@ private class ProjectFileBasedIndexStartupActivity(private val coroutineScope: C
 
     // schedule dumb mode start after the read action we're currently in
     val orphanQueue = registeredIndexes.orphanDirtyFilesQueue
-    val indexesCleanupJob = scanAndIndexProjectAfterOpen(
+    val indexCleanupJob = scanAndIndexProjectAfterOpen(
       project = project,
       orphanQueue = orphanQueue,
       additionalOrphanDirtyFiles = fileBasedIndex.getAllDirtyFiles(null),
@@ -99,7 +95,7 @@ private class ProjectFileBasedIndexStartupActivity(private val coroutineScope: C
       registeredIndexesWereCorrupted = wasCorrupted,
       sourceOfScanning = InitialScanningSkipReporter.SourceOfScanning.OnProjectOpen,
     )
-    indexesCleanupJob.forgetProjectDirtyFilesOnCompletion(
+    indexCleanupJob.forgetProjectDirtyFilesOnCompletion(
       fileBasedIndex = fileBasedIndex,
       project = project,
       projectDirtyFilesQueue = projectDirtyFilesQueue,
