@@ -21,20 +21,12 @@ interface GradleExecutionHelperExtension {
   }
 
   /**
-   * Prepare a Gradle [operation] during Gradle sync.
-   *
-   * **Note: This function may be called more than once with different [operation]s for a single Gradle project sync.**
-   */
-  fun prepareForSync(
-    operation: LongRunningOperation,
-    context: ProjectResolverContext,
-  ) = Unit
-
-  /**
    * Prepare a Gradle [operation] before any Gradle execution.
    *
    * **Note: This function will be called for any Gradle execution.
    * I.e. For Gradle sync and Gradle task executions.**
+   *
+   * **Note: This function may be called more than once with different [operation]s for a single Gradle project sync.**
    */
   fun prepareForExecution(
     id: ExternalSystemTaskId,
