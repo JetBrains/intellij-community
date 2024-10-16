@@ -1,269 +1,275 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy
+package org.jetbrains.plugins.groovy;
 
-import com.intellij.openapi.actionSystem.IdeActions
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.editor.GroovyLiteralCopyPasteProcessor
-import org.jetbrains.plugins.groovy.util.BaseTest
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest
-import org.jetbrains.plugins.groovy.util.TestUtils
-import org.junit.Assert
-import org.junit.Test
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.plugins.groovy.editor.GroovyLiteralCopyPasteProcessor;
+import org.jetbrains.plugins.groovy.lang.psi.util.StringKind;
+import org.jetbrains.plugins.groovy.util.BaseTest;
+import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.Assert;
+import org.junit.Test;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.*
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
 
-@CompileStatic
-class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
+import static org.jetbrains.plugins.groovy.lang.psi.util.StringKind.TestsOnly.*;
 
+public class GroovyCopyPasteStringTest extends GroovyLatestTest implements BaseTest {
   @Test
-  void 'copy'() {
-    def data = [
-      $/<selection>'\\'</selection>/$     : $/'\\'/$,
-      $/<selection>'\\</selection>'/$     : $/'\\/$,
-      $/'<selection>\\'</selection>/$     : $/\\'/$,
-      $/'<selection>\\</selection>'/$     : $/\/$,
+  public void copy() {
+    LinkedHashMap<String, String> map = new LinkedHashMap<>(34);
+    map.put("<selection>'\\\\'</selection>", "'\\\\'");
+    map.put("<selection>'\\\\</selection>'", "'\\\\");
+    map.put("'<selection>\\\\'</selection>", "\\\\'");
+    map.put("'<selection>\\\\</selection>'", "\\");
 
-      $/<selection>'''\\'''</selection>/$ : $/'''\\'''/$,
-      $/'<selection>''\\'''</selection>/$ : $/''\\'''/$,
-      $/''<selection>'\\'''</selection>/$ : $/'\\'''/$,
-      $/'''<selection>\\'''</selection>/$ : $/\\'''/$,
-      $/<selection>'''\\</selection>'''/$ : $/'''\\/$,
-      $/<selection>'''\\'</selection>''/$ : $/'''\\'/$,
-      $/<selection>'''\\''</selection>'/$ : $/'''\\''/$,
-      $/'''<selection>\\</selection>'''/$ : $/\/$,
+    map.put("<selection>'''\\\\'''</selection>", "'''\\\\'''");
+    map.put("'<selection>''\\\\'''</selection>", "''\\\\'''");
+    map.put("''<selection>'\\\\'''</selection>", "'\\\\'''");
+    map.put("'''<selection>\\\\'''</selection>", "\\\\'''");
+    map.put("<selection>'''\\\\</selection>'''", "'''\\\\");
+    map.put("<selection>'''\\\\'</selection>''", "'''\\\\'");
+    map.put("<selection>'''\\\\''</selection>'", "'''\\\\''");
+    map.put("'''<selection>\\\\</selection>'''", "\\");
 
-      $/<selection>"\\"</selection>/$     : $/"\\"/$,
-      $/<selection>"\\</selection>"/$     : $/"\\/$,
-      $/"<selection>\\"</selection>/$     : $/\\"/$,
-      $/"<selection>\\</selection>"/$     : $/\/$,
+    map.put("<selection>\"\\\\\"</selection>", "\"\\\\\"");
+    map.put("<selection>\"\\\\</selection>\"", "\"\\\\");
+    map.put("\"<selection>\\\\\"</selection>", "\\\\\"");
+    map.put("\"<selection>\\\\</selection>\"", "\\");
 
-      $/<selection>"""\\"""</selection>/$ : $/"""\\"""/$,
-      $/"<selection>""\\"""</selection>/$ : $/""\\"""/$,
-      $/""<selection>"\\"""</selection>/$ : $/"\\"""/$,
-      $/"""<selection>\\"""</selection>/$ : $/\\"""/$,
-      $/<selection>"""\\</selection>"""/$ : $/"""\\/$,
-      $/<selection>"""\\"</selection>""/$ : $/"""\\"/$,
-      $/<selection>"""\\""</selection>"/$ : $/"""\\""/$,
-      $/"""<selection>\\</selection>"""/$ : $/\/$,
+    map.put("<selection>\"\"\"\\\\\"\"\"</selection>", "\"\"\"\\\\\"\"\"");
+    map.put("\"<selection>\"\"\\\\\"\"\"</selection>", "\"\"\\\\\"\"\"");
+    map.put("\"\"<selection>\"\\\\\"\"\"</selection>", "\"\\\\\"\"\"");
+    map.put("\"\"\"<selection>\\\\\"\"\"</selection>", "\\\\\"\"\"");
+    map.put("<selection>\"\"\"\\\\</selection>\"\"\"", "\"\"\"\\\\");
+    map.put("<selection>\"\"\"\\\\\"</selection>\"\"", "\"\"\"\\\\\"");
+    map.put("<selection>\"\"\"\\\\\"\"</selection>\"", "\"\"\"\\\\\"\"");
+    map.put("\"\"\"<selection>\\\\</selection>\"\"\"", "\\");
 
-      $/<selection>/\//</selection>/$     : $//\///$,
-      $/<selection>/\/</selection>//$     : $//\//$,
-      $//<selection>\//</selection>/$     : $/\///$,
-      $//<selection>\/</selection>//$     : $///$,
+    map.put("<selection>/\\//</selection>", "/\\//");
+    map.put("<selection>/\\/</selection>/", "/\\/");
+    map.put("/<selection>\\//</selection>", "\\//");
+    map.put("/<selection>\\/</selection>/", "/");
 
-      '<selection>$/\\u2318/$</selection>': '$/\\u2318/$',
-      '$<selection>/\\u2318/$</selection>': '/\\u2318/$',
-      '$/<selection>\\u2318/$</selection>': '\\u2318/$',
-      '<selection>$/\\u2318</selection>/$': '$/\\u2318',
-      '<selection>$/\\u2318/</selection>$': '$/\\u2318/',
-      '$/<selection>\\u2318</selection>/$': '⌘',
-    ]
-    TestUtils.runAll(data) { text, expectedCopy ->
-      doCopyTest(text, expectedCopy)
-    }
+    map.put("<selection>$/\\u2318/$</selection>", "$/\\u2318/$");
+    map.put("$<selection>/\\u2318/$</selection>", "/\\u2318/$");
+    map.put("$/<selection>\\u2318/$</selection>", "\\u2318/$");
+    map.put("<selection>$/\\u2318</selection>/$", "$/\\u2318");
+    map.put("<selection>$/\\u2318/</selection>$", "$/\\u2318/");
+    map.put("$/<selection>\\u2318</selection>/$", "⌘");
+
+    map.forEach((text, expectedCopy) -> {
+      doCopyTest(text, expectedCopy);
+    });
   }
 
   @Test
-  void 'find string kind for paste'() {
-    def data = [
-      // empty strings
-      /'<caret>'/                   : SINGLE_QUOTED,
-      /'''<caret>'''/               : TRIPLE_SINGLE_QUOTED,
-      /"<caret>"/                   : DOUBLE_QUOTED,
-      /"""<caret>"""/               : TRIPLE_DOUBLE_QUOTED,
-      '/<caret>/'                   : null, // slashy string cannot be empty, so it's actually a comment
-      '$/<caret>/$'                 : DOLLAR_SLASHY,
+  public void find_string_kind_for_paste() {
+    LinkedHashMap<String, StringKind> map = new LinkedHashMap<>(84);
+    // empty strings
+    map.put("'<caret>'", SINGLE_QUOTED);
+    map.put("'''<caret>'''", TRIPLE_SINGLE_QUOTED);
+    map.put("\"<caret>\"", DOUBLE_QUOTED);
+    map.put("\"\"\"<caret>\"\"\"", TRIPLE_DOUBLE_QUOTED);
+    map.put("/<caret>/", null);
+    map.put("$/<caret>/$", DOLLAR_SLASHY);
 
-      // in template strings without injections
-      '"<caret>hi there"'           : DOUBLE_QUOTED,
-      '"hi<caret> there"'           : DOUBLE_QUOTED,
-      '"hi there<caret>"'           : DOUBLE_QUOTED,
-      '"""<caret>hi there"""'       : TRIPLE_DOUBLE_QUOTED,
-      '"""hi<caret> there"""'       : TRIPLE_DOUBLE_QUOTED,
-      '"""hi there<caret>"""'       : TRIPLE_DOUBLE_QUOTED,
-      '/<caret>hi there/'           : SLASHY,
-      '/hi<caret> there/'           : SLASHY,
-      '/hi there<caret>/'           : SLASHY,
-      '$/<caret>hi there/$'         : DOLLAR_SLASHY,
-      '$/hi<caret> there/$'         : DOLLAR_SLASHY,
-      '$/hi there<caret>/$'         : DOLLAR_SLASHY,
+    // in template strings without injections
+    map.put("\"<caret>hi there\"", DOUBLE_QUOTED);
+    map.put("\"hi<caret> there\"", DOUBLE_QUOTED);
+    map.put("\"hi there<caret>\"", DOUBLE_QUOTED);
+    map.put("\"\"\"<caret>hi there\"\"\"", TRIPLE_DOUBLE_QUOTED);
+    map.put("\"\"\"hi<caret> there\"\"\"", TRIPLE_DOUBLE_QUOTED);
+    map.put("\"\"\"hi there<caret>\"\"\"", TRIPLE_DOUBLE_QUOTED);
+    map.put("/<caret>hi there/", SLASHY);
+    map.put("/hi<caret> there/", SLASHY);
+    map.put("/hi there<caret>/", SLASHY);
+    map.put("$/<caret>hi there/$", DOLLAR_SLASHY);
+    map.put("$/hi<caret> there/$", DOLLAR_SLASHY);
+    map.put("$/hi there<caret>/$", DOLLAR_SLASHY);
 
-      // in template strings with injections
-      '"<caret>hi there${}"'        : DOUBLE_QUOTED,
-      '"hi<caret> there${}"'        : DOUBLE_QUOTED,
-      '"hi there<caret>${}"'        : DOUBLE_QUOTED,
-      '"${}<caret>hi there"'        : DOUBLE_QUOTED,
-      '"${}hi<caret> there"'        : DOUBLE_QUOTED,
-      '"${}hi there<caret>"'        : DOUBLE_QUOTED,
-      '"""<caret>hi there${}"""'    : TRIPLE_DOUBLE_QUOTED,
-      '"""hi<caret> there${}"""'    : TRIPLE_DOUBLE_QUOTED,
-      '"""hi there<caret>${}"""'    : TRIPLE_DOUBLE_QUOTED,
-      '"""${}<caret>hi there"""'    : TRIPLE_DOUBLE_QUOTED,
-      '"""${}hi<caret> there"""'    : TRIPLE_DOUBLE_QUOTED,
-      '"""${}hi there<caret>"""'    : TRIPLE_DOUBLE_QUOTED,
-      '/<caret>hi there${}/'        : SLASHY,
-      '/hi<caret> there${}/'        : SLASHY,
-      '/hi there<caret>${}/'        : SLASHY,
-      '/${}<caret>hi there/'        : SLASHY,
-      '/${}hi<caret> there/'        : SLASHY,
-      '/${}hi there<caret>/'        : SLASHY,
-      '$/<caret>hi there${}/$'      : DOLLAR_SLASHY,
-      '$/hi<caret> there${}/$'      : DOLLAR_SLASHY,
-      '$/hi there<caret>${}/$'      : DOLLAR_SLASHY,
-      '$/${}<caret>hi there/$'      : DOLLAR_SLASHY,
-      '$/${}hi<caret> there/$'      : DOLLAR_SLASHY,
-      '$/${}hi there<caret>/$'      : DOLLAR_SLASHY,
+    // in template strings with injections
+    map.put("\"<caret>hi there${}\"", DOUBLE_QUOTED);
+    map.put("\"hi<caret> there${}\"", DOUBLE_QUOTED);
+    map.put("\"hi there<caret>${}\"", DOUBLE_QUOTED);
+    map.put("\"${}<caret>hi there\"", DOUBLE_QUOTED);
+    map.put("\"${}hi<caret> there\"", DOUBLE_QUOTED);
+    map.put("\"${}hi there<caret>\"", DOUBLE_QUOTED);
+    map.put("\"\"\"<caret>hi there${}\"\"\"", TRIPLE_DOUBLE_QUOTED);
+    map.put("\"\"\"hi<caret> there${}\"\"\"", TRIPLE_DOUBLE_QUOTED);
+    map.put("\"\"\"hi there<caret>${}\"\"\"", TRIPLE_DOUBLE_QUOTED);
+    map.put("\"\"\"${}<caret>hi there\"\"\"", TRIPLE_DOUBLE_QUOTED);
+    map.put("\"\"\"${}hi<caret> there\"\"\"", TRIPLE_DOUBLE_QUOTED);
+    map.put("\"\"\"${}hi there<caret>\"\"\"", TRIPLE_DOUBLE_QUOTED);
+    map.put("/<caret>hi there${}/", SLASHY);
+    map.put("/hi<caret> there${}/", SLASHY);
+    map.put("/hi there<caret>${}/", SLASHY);
+    map.put("/${}<caret>hi there/", SLASHY);
+    map.put("/${}hi<caret> there/", SLASHY);
+    map.put("/${}hi there<caret>/", SLASHY);
+    map.put("$/<caret>hi there${}/$", DOLLAR_SLASHY);
+    map.put("$/hi<caret> there${}/$", DOLLAR_SLASHY);
+    map.put("$/hi there<caret>${}/$", DOLLAR_SLASHY);
+    map.put("$/${}<caret>hi there/$", DOLLAR_SLASHY);
+    map.put("$/${}hi<caret> there/$", DOLLAR_SLASHY);
+    map.put("$/${}hi there<caret>/$", DOLLAR_SLASHY);
 
-      // between injection and opening quote
-      '"<caret>${}hi there"'        : DOUBLE_QUOTED,
-      '"""<caret>${}hi there"""'    : TRIPLE_DOUBLE_QUOTED,
-      '/<caret>${}hi there/'        : SLASHY,
-      '$/<caret>${}hi there/$'      : DOLLAR_SLASHY,
+    // between injection and opening quote
+    map.put("\"<caret>${}hi there\"", DOUBLE_QUOTED);
+    map.put("\"\"\"<caret>${}hi there\"\"\"", TRIPLE_DOUBLE_QUOTED);
+    map.put("/<caret>${}hi there/", SLASHY);
+    map.put("$/<caret>${}hi there/$", DOLLAR_SLASHY);
 
-      // between injections
-      '"hi ${}<caret>${} there"'    : DOUBLE_QUOTED,
-      '"""hi ${}<caret>${} there"""': TRIPLE_DOUBLE_QUOTED,
-      '/hi ${}<caret>${} there/'    : SLASHY,
-      '$/hi ${}<caret>${} there/$'  : DOLLAR_SLASHY,
+    // between injections
+    map.put("\"hi ${}<caret>${} there\"", DOUBLE_QUOTED);
+    map.put("\"\"\"hi ${}<caret>${} there\"\"\"", TRIPLE_DOUBLE_QUOTED);
+    map.put("/hi ${}<caret>${} there/", SLASHY);
+    map.put("$/hi ${}<caret>${} there/$", DOLLAR_SLASHY);
 
-      // between injection and closing quote
-      '"hi there${}<caret>"'        : DOUBLE_QUOTED,
-      '"""hi there${}<caret>"""'    : TRIPLE_DOUBLE_QUOTED,
-      '/hi there${}<caret>/'        : SLASHY,
-      '$/hi there${}<caret>/$'      : DOLLAR_SLASHY,
+    // between injection and closing quote
+    map.put("\"hi there${}<caret>\"", DOUBLE_QUOTED);
+    map.put("\"\"\"hi there${}<caret>\"\"\"", TRIPLE_DOUBLE_QUOTED);
+    map.put("/hi there${}<caret>/", SLASHY);
+    map.put("$/hi there${}<caret>/$", DOLLAR_SLASHY);
 
-      // inside injection
-      '"hi $<caret>{} there"'       : null,
-      '"hi ${<caret>} there"'       : null,
-      '"""hi $<caret>{} there"""'   : null,
-      '"""hi ${<caret>} there"""'   : null,
-      '/hi $<caret>{} there/'       : null,
-      '/hi ${<caret>} there/'       : null,
-      '$/hi $<caret>{} there/$'     : null,
-      '$/hi ${<caret>} there/$'     : null,
+    // inside injection
+    map.put("\"hi $<caret>{} there\"", null);
+    map.put("\"hi ${<caret>} there\"", null);
+    map.put("\"\"\"hi $<caret>{} there\"\"\"", null);
+    map.put("\"\"\"hi ${<caret>} there\"\"\"", null);
+    map.put("/hi $<caret>{} there/", null);
+    map.put("/hi ${<caret>} there/", null);
+    map.put("$/hi $<caret>{} there/$", null);
+    map.put("$/hi ${<caret>} there/$", null);
 
-      // outside of quotes
-      /<caret>'hi'/                 : null,
-      /'hi'<caret>/                 : null,
-      /<caret>'''hi'''/             : null,
-      /'<caret>''hi'''/             : null,
-      /''<caret>'hi'''/             : null,
-      /'''hi'''<caret>/             : null,
-      /'''hi''<caret>'/             : null,
-      /'''hi'<caret>''/             : null,
-      /<caret>"hi"/                 : null,
-      /"hi"<caret>/                 : null,
-      /<caret>"""hi"""/             : null,
-      /"<caret>""hi"""/             : null,
-      /""<caret>"hi"""/             : null,
-      /"""hi"""<caret>/             : null,
-      /"""hi""<caret>"/             : null,
-      /"""hi"<caret>""/             : null,
-      '<caret>/hi/'                 : null,
-      '/hi/<caret>'                 : null,
-      '<caret>$/hi/$'               : null,
-      '$<caret>/hi/$'               : null,
-      '$/hi/$<caret>'               : null,
-      '$/hi/<caret>$'               : null,
-    ]
+    // outside of quotes
+    map.put("<caret>'hi'", null);
+    map.put("'hi'<caret>", null);
+    map.put("<caret>'''hi'''", null);
+    map.put("'<caret>''hi'''", null);
+    map.put("''<caret>'hi'''", null);
+    map.put("'''hi'''<caret>", null);
+    map.put("'''hi''<caret>'", null);
+    map.put("'''hi'<caret>''", null);
+    map.put("<caret>\"hi\"", null);
+    map.put("\"hi\"<caret>", null);
+    map.put("<caret>\"\"\"hi\"\"\"", null);
+    map.put("\"<caret>\"\"hi\"\"\"", null);
+    map.put("\"\"<caret>\"hi\"\"\"", null);
+    map.put("\"\"\"hi\"\"\"<caret>", null);
+    map.put("\"\"\"hi\"\"<caret>\"", null);
+    map.put("\"\"\"hi\"<caret>\"\"", null);
+    map.put("<caret>/hi/", null);
+    map.put("/hi/<caret>", null);
+    map.put("<caret>$/hi/$", null);
+    map.put("$<caret>/hi/$", null);
+    map.put("$/hi/$<caret>", null);
+    map.put("$/hi/<caret>$", null);
 
-    TestUtils.runAll(data) { text, expectedKind ->
-      def file = fixture.configureByText('_.groovy', text)
-      def selectionModel = fixture.editor.selectionModel
-      def selectionStart = selectionModel.selectionStart
-      def selectionEnd = selectionModel.selectionEnd
-      def kind = GroovyLiteralCopyPasteProcessor.findStringKind(file, selectionStart, selectionEnd)
-      Assert.assertEquals(text, expectedKind, kind)
-    }
+    map.forEach((text, expectedKind) -> {
+        PsiFile file = getFixture().configureByText("_.groovy", text);
+        SelectionModel selectionModel = getFixture().getEditor().getSelectionModel();
+        int selectionStart = selectionModel.getSelectionStart();
+        int selectionEnd = selectionModel.getSelectionEnd();
+        StringKind kind = GroovyLiteralCopyPasteProcessor.findStringKind(file, selectionStart, selectionEnd);
+        Assert.assertEquals(text, expectedKind, kind);
+    });
   }
 
   @Test
-  void 'paste raw'() {
-    def data = [
-      ['\'<selection>\\$ \\\' \\" \\\n \\u2318</selection>\'', '"<caret>"', '"\\$ \\\' \\" \\\n \\u2318"'],
-      ['"<selection>\\$ \\\' \\" \\\n \\u2318</selection>"', "'<caret>'", '\'\\$ \\\' \\" \\\n \\u2318\''],
-      ['"<selection>\\${foo}</selection>"', '"<caret>"', '"\\${foo}"'],
-      ['"<selection>\\$bar</selection>"', '"<caret>"', '"\\$bar"']
-    ]
-    TestUtils.runAll(data) { List<String> entry ->
-      doCopyPasteTest(entry[0], entry[1], entry[2])
-    }
+  public void paste_raw() {
+    List<List<String>> data = Arrays.asList(
+      new ArrayList<>(Arrays.asList("'<selection>\\$ \\' \\\" \\\n \\u2318</selection>'", "\"<caret>\"", "\"\\$ \\' \\\" \\\n \\u2318\"")),
+      new ArrayList<>(Arrays.asList("\"<selection>\\$ \\' \\\" \\\n \\u2318</selection>\"", "'<caret>'", "'\\$ \\' \\\" \\\n \\u2318'")),
+      new ArrayList<>(Arrays.asList("\"<selection>\\${foo}</selection>\"", "\"<caret>\"", "\"\\${foo}\"")),
+      new ArrayList<>(Arrays.asList("\"<selection>\\$bar</selection>\"", "\"<caret>\"", "\"\\$bar\""))
+    );
+
+    TestUtils.runAll(data, entry -> {
+        doCopyPasteTest(entry.get(0), entry.get(1), entry.get(2));
+    });
   }
 
   @Test
-  void 'paste new line'() {
-    def from = '<selection>\n</selection>'
-    def data = [
-      /'<caret>'/    : "'\\n'",
-      /'''<caret>'''/: "'''\n'''",
-      /"<caret>"/    : '"\\n"',
-      /"""<caret>"""/: '"""\n"""',
-      '/ <caret>/'   : '/ \n/',
-      '$/<caret>/$'  : '$/\n/$',
-    ]
-    TestUtils.runAll(data) { to, expected ->
-      doCopyPasteTest(from, to, expected)
-    }
+  public void paste_new_line() {
+    final String from = "<selection>\n</selection>";
+    LinkedHashMap<String, String> map = new LinkedHashMap<>(6);
+    map.put("'<caret>'", "'\\n'");
+    map.put("'''<caret>'''", "'''\n'''");
+    map.put("\"<caret>\"", "\"\\n\"");
+    map.put("\"\"\"<caret>\"\"\"", "\"\"\"\n\"\"\"");
+    map.put("/ <caret>/", "/ \n/");
+    map.put("$/<caret>/$", "$/\n/$");
+
+    map.forEach((text, expectedCopy) -> {
+      doCopyPasteTest(from, text, expectedCopy);
+    });
   }
 
   @Test
-  void 'multiline paste'() {
-    def from = '<selection>hi\nthere\n</selection>'
-    def data = [
-      /'<caret>'/    : "'hi\\n' +\n        'there\\n'",
-      /'''<caret>'''/: "'''hi\nthere\n'''",
-      /"<caret>"/    : '"hi\\n" +\n        "there\\n"',
-      /"""<caret>"""/: '"""hi\nthere\n"""',
-      '/ <caret>/'   : '/ hi\nthere\n/',
-      '$/<caret>/$'  : '$/hi\nthere\n/$',
-    ]
-    TestUtils.runAll(data) { to, expected ->
-      doCopyPasteTest(from, to, expected)
-    }
+  public void multiline_paste() {
+    final String from = "<selection>hi\nthere\n</selection>";
+    LinkedHashMap<String, String> map = new LinkedHashMap<String, String>(6);
+    map.put("'<caret>'", "'hi\\n' +\n        'there\\n'");
+    map.put("'''<caret>'''", "'''hi\nthere\n'''");
+    map.put("\"<caret>\"", "\"hi\\n\" +\n        \"there\\n\"");
+    map.put("\"\"\"<caret>\"\"\"", "\"\"\"hi\nthere\n\"\"\"");
+    map.put("/ <caret>/", "/ hi\nthere\n/");
+    map.put("$/<caret>/$", "$/hi\nthere\n/$");
+
+    map.forEach((text, expectedCopy) -> {
+      doCopyPasteTest(from, text, expectedCopy);
+    });
   }
 
   @Test
-  void 'multiline paste raw'() {
-    def from = '$/<selection>hi\nthere\\u2318</selection>/$'
-    def data = [
-      /'<caret>'/    : "'hi\\n' +\n        'there⌘'", // cannot paste raw
-      /'''<caret>'''/: "'''hi\nthere\\u2318'''",
-      /"<caret>"/    : '"hi\\n" +\n        "there⌘"', // cannot paste raw
-      /"""<caret>"""/: '"""hi\nthere\\u2318"""',
-      '/ <caret>/'   : '/ hi\nthere\\u2318/',
-      '$/<caret>/$'  : '$/hi\nthere\\u2318/$',
-    ]
-    TestUtils.runAll(data) { to, expected ->
-      doCopyPasteTest(from, to, expected)
-    }
+  public void multiline_paste_raw() {
+    final String from = "$/<selection>hi\nthere\\u2318</selection>/$";
+    LinkedHashMap<String, String> map = new LinkedHashMap<>(6);
+    map.put("'<caret>'", "'hi\\n' +\n        'there⌘'");
+    map.put("'''<caret>'''", "'''hi\nthere\\u2318'''");
+    map.put("\"<caret>\"", "\"hi\\n\" +\n        \"there⌘\"");
+    map.put("\"\"\"<caret>\"\"\"", "\"\"\"hi\nthere\\u2318\"\"\"");
+    map.put("/ <caret>/", "/ hi\nthere\\u2318/");
+    map.put("$/<caret>/$", "$/hi\nthere\\u2318/$");
+
+
+    map.forEach((text, expectedCopy) -> {
+      doCopyPasteTest(from, text, expectedCopy);
+    });
   }
 
   @Test
-  void 'paste injection'() {
-    def data = [
-      ['<selection>$a</selection>', '"<caret>"', '"$a"'],
-      ['"<selection>$a</selection>"', '"<caret>"', '"$a"'],
-      ['<selection>${a}</selection>', '"<caret>"', '"${a}"'],
-      ['"<selection>${a}</selection>"', '"<caret>"', '"${a}"'],
-    ]
-    TestUtils.runAll(data) { List<String> entry ->
-      doCopyPasteTest(entry[0], entry[1], entry[2])
-    }
+  public void paste_injection() {
+    List<List<String>> data = Arrays.asList(new ArrayList<>(Arrays.asList("<selection>$a</selection>", "\"<caret>\"", "\"$a\"")),
+      new ArrayList<>(Arrays.asList("\"<selection>$a</selection>\"", "\"<caret>\"", "\"$a\"")),
+      new ArrayList<>(Arrays.asList("<selection>${a}</selection>", "\"<caret>\"", "\"${a}\"")),
+      new ArrayList<>(Arrays.asList("\"<selection>${a}</selection>\"", "\"<caret>\"", "\"${a}\""))
+    );
+
+    TestUtils.runAll(data, entry -> {
+        doCopyPasteTest(entry.get(0), entry.get(1), entry.get(2));
+    });
   }
 
   private void doCopyTest(String text, String expectedCopy) {
-    fixture.configureByText 'from.groovy', text
-    fixture.performEditorAction IdeActions.ACTION_COPY
-    fixture.configureByText 'to.txt', ''
-    fixture.performEditorAction IdeActions.ACTION_PASTE
-    fixture.checkResult expectedCopy
+    getFixture().configureByText("from.groovy", text);
+    getFixture().performEditorAction(IdeActions.ACTION_COPY);
+    getFixture().configureByText("to.txt", "");
+    getFixture().performEditorAction(IdeActions.ACTION_PASTE);
+    getFixture().checkResult(expectedCopy);
   }
 
   private void doCopyPasteTest(String fromText, String toText, String expected) {
-    fixture.configureByText 'from.groovy', fromText
-    fixture.performEditorAction IdeActions.ACTION_COPY
-    fixture.configureByText 'to.groovy', toText
-    fixture.performEditorAction IdeActions.ACTION_PASTE
-    fixture.checkResult expected
+    getFixture().configureByText("from.groovy", fromText);
+    getFixture().performEditorAction(IdeActions.ACTION_COPY);
+    getFixture().configureByText("to.groovy", toText);
+    getFixture().performEditorAction(IdeActions.ACTION_PASTE);
+    getFixture().checkResult(expected);
   }
 }

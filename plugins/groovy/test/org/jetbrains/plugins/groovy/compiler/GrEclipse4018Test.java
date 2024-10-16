@@ -1,20 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.groovy.compiler
+package org.jetbrains.plugins.groovy.compiler;
 
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.TestLibrary
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.TestLibrary;
 
-@CompileStatic
-class GrEclipse4018Test extends GrEclipseTestBase {
-
+public class GrEclipse4018Test extends GrEclipseTestBase {
   @Override
   protected TestLibrary getGroovyLibrary() {
-    GroovyProjectDescriptors.LIB_GROOVY_4_0
+    return GroovyProjectDescriptors.LIB_GROOVY_4_0;
   }
 
   @Override
   protected String getGrEclipseArtifactID() {
-    "org.codehaus.groovy:groovy-eclipse-batch:4.0.18-03"
+    return "org.codehaus.groovy:groovy-eclipse-batch:4.0.18-03";
   }
 }

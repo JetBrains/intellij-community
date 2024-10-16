@@ -1,93 +1,116 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.groovy.compiler
+package org.jetbrains.plugins.groovy.compiler;
 
-import com.intellij.compiler.CompilerConfiguration
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.IndexingTestUtil
-import groovy.transform.CompileStatic
-import org.jetbrains.groovy.compiler.rt.GroovyRtConstants
-import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
+import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner;
 
-import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
-@CompileStatic
-abstract class GroovycTestBase extends GroovyCompilerTest {
+public abstract class GroovycTestBase extends GroovyCompilerTest {
+  public void test_navigate_from_stub_to_source() {
+    myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }").getVirtualFile();
+    myFixture.addClass("class Java4 extends Groovy3 {}");
 
-  void "test navigate from stub to source"() {
-    myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }").virtualFile
-    myFixture.addClass("class Java4 extends Groovy3 {}")
+    final Optional<CompilerMessage> msg = make().stream().filter(it -> it.getMessage().contains("InvalidType")).findFirst();
+    assert msg.isPresent();
+    assert msg.get().getVirtualFile() != null;
 
-    def msg = make().find { it.message.contains('InvalidType') }
-    assert msg?.virtualFile
-    runInEdtAndWait {
-      ApplicationManager.application.runWriteAction { msg.virtualFile.delete(this) }
-    }
+    EdtTestUtil.runInEdtAndWait(() -> {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try { msg.get().getVirtualFile().delete(this); }
+          catch (IOException e) { throw new RuntimeException(e); }
+        });
+    });
 
-    def messages = make()
-    assert messages
-    def error = messages.find { it.message.contains('InvalidType') }
-    assert error?.virtualFile
-    assert ReadAction.compute { myFixture.findClass("Groovy3") == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)}
+    List<CompilerMessage> messages = make();
+    assert messages != null;
+    final Optional<CompilerMessage> msg2 = messages.stream().filter(it -> it.getMessage().contains("InvalidType")).findFirst();
+    assert msg2.isPresent();
+    assert msg2.get().getVirtualFile() != null;
+
+    assert ReadAction.compute(() -> {
+        return myFixture
+          .findClass("Groovy3")
+          .equals(GroovyStubNotificationProvider.findClassByStub(getProject(), msg2.get().getVirtualFile()));
+    });
   }
 
-  void "test config script"() {
-    def script = FileUtil.createTempFile("configScriptTest", ".groovy", true)
-    FileUtil.writeToFile(script, "import groovy.transform.*; withConfig(configuration) { ast(CompileStatic) }")
+  public void test_config_script() throws IOException {
+    File script = FileUtil.createTempFile("configScriptTest", ".groovy", true);
+    FileUtil.writeToFile(script, "import groovy.transform.*; withConfig(configuration) { ast(CompileStatic) }");
 
-    GroovyCompilerConfiguration.getInstance(project).configScript = script.path
+    GroovyCompilerConfiguration.getInstance(getProject()).setConfigScript(script.getPath());
 
-    myFixture.addFileToProject("a.groovy", "class A { int s = 'foo' }")
-    shouldFail make()
+    myFixture.addFileToProject("a.groovy", "class A { int s = 'foo' }");
+    GroovyCompilerTestCase.shouldFail(make());
   }
 
-  void "test user-level diagnostic for missing dependency of groovy-all"() {
-    myFixture.addFileToProject 'Bar.groovy', '''import groovy.util.logging.Commons
-@Commons
-class Bar {}'''
-    def msg = assertOneElement(make())
-    assert msg.message.contains('Please')
-    assert msg.message.contains('org.apache.commons.logging.Log')
+  public void test_user_level_diagnostic_for_missing_dependency_of_groovy_all() {
+    myFixture.addFileToProject("Bar.groovy", """
+      import groovy.util.logging.Commons
+      @Commons
+      class Bar {}
+    """);
+    CompilerMessage msg = UsefulTestCase.assertOneElement(make());
+    assert msg.getMessage().contains("Please");
+    assert msg.getMessage().contains("org.apache.commons.logging.Log");
   }
 
-  void "test circular dependency with in-process class loading resolving"() {
-    def groovyFile = myFixture.addFileToProject('mix/GroovyClass.groovy', '''
-package mix
-@groovy.transform.CompileStatic
-class GroovyClass {
-    JavaClass javaClass
-    String bar() {
-        return javaClass.foo() 
-    }
-}
-''')
-    myFixture.addFileToProject('mix/JavaClass.java', '''
-package mix;
-public class JavaClass {
-    GroovyClass groovyClass;
-    public String foo() {
-        return "foo";
-    }
-}
-''')
-    CompilerConfiguration.getInstance(project).buildProcessVMOptions +=
-      " -D$JpsGroovycRunner.GROOVYC_IN_PROCESS=true -D$GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY=false"
-    assertEmpty(make())
+public void test_circular_dependency_with_in_process_class_loading_resolving() throws IOException {
+    PsiFile groovyFile = myFixture.addFileToProject("mix/GroovyClass.groovy", """
+      package mix
+      @groovy.transform.CompileStatic
+      class GroovyClass {
+          JavaClass javaClass
+          String bar() {
+              return javaClass.foo()
+          }
+      }
+    """);
+    myFixture.addFileToProject("mix/JavaClass.java", """
+        package mix;
+        public class JavaClass {
+            GroovyClass groovyClass;
+            public String foo() {
+                return "foo";
+            }
+        }
+    """);
 
-    touch(groovyFile.virtualFile)
+    final var configuration = CompilerConfiguration.getInstance(getProject());
+    configuration.setBuildProcessVMOptions(
+      configuration.getBuildProcessVMOptions() + " -D" + JpsGroovycRunner.GROOVYC_IN_PROCESS + "=true -D" + GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY + "=false"
+    );
+    assert(make().isEmpty());
 
-    def messages = make()
+    touch(groovyFile.getVirtualFile());
+
+    List<CompilerMessage> messages = make();
     
     /* since only groovy file is changed, its class file is deleted, but javac isn't called (JavaBuilder.compile returns early), so 
        GroovyClass.class file from the generated stub isn't produced, and the classloader failed to load JavaClass during compilation of
        GroovyClass. After chunk rebuild is requested, javac is called so it compiles the stub and groovyc finishes successfully.  
      */
-    assert messages.collect { it.message } == chunkRebuildMessage("Groovy compiler")
+    assert ContainerUtil.map(messages, m -> m.getMessage()).equals(chunkRebuildMessage("Groovy compiler"));
   }
 
-
+  @Override
   protected List<String> chunkRebuildMessage(String builder) {
-    return ['Builder "' + builder + '" requested rebuild of module chunk "mainModule"']
+    return new ArrayList<>(Arrays.asList("Builder \"" + builder + "\" requested rebuild of module chunk \"mainModule\""));
   }
+
 }
