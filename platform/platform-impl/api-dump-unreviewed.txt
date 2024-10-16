@@ -875,9 +875,8 @@ f:com.intellij.codeInsight.inline.completion.InlineCompletionFontUtils
 - sf:INSTANCE:com.intellij.codeInsight.inline.completion.InlineCompletionFontUtils
 - f:color(com.intellij.openapi.editor.Editor):java.awt.Color
 - f:font(com.intellij.openapi.editor.Editor):java.awt.Font
-f:com.intellij.codeInsight.inline.completion.InlineCompletionHandler
+Fa:com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 - sf:Companion:com.intellij.codeInsight.inline.completion.InlineCompletionHandler$Companion
-- <init>(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.editor.Editor,com.intellij.openapi.Disposable):V
 - f:addEventListener(com.intellij.codeInsight.inline.completion.InlineCompletionEventListener):V
 - f:addEventListener(com.intellij.codeInsight.inline.completion.InlineCompletionEventListener,com.intellij.openapi.Disposable):V
 - f:awaitExecution(kotlin.coroutines.Continuation):java.lang.Object

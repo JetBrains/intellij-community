@@ -1,0 +1,11 @@
+<idea-plugin package="com.intellij.codeInsight.inline.completion.frontend">
+  
+  <dependencies>
+    <module name="intellij.platform.inline.completion"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <inline.completion.handlerInitializer
+      implementation="com.intellij.codeInsight.inline.completion.frontend.FrontendInlineCompletionHandlerInitializer"/>
+  </extensions>
+</idea-plugin>

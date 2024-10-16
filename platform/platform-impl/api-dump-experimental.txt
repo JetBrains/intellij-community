@@ -35,7 +35,7 @@ f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupChange
 - hashCode():I
 f:com.intellij.codeInsight.inline.completion.InlineCompletionFontUtils
 - *f:attributes(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.markup.TextAttributes
-f:com.intellij.codeInsight.inline.completion.InlineCompletionHandler
+Fa:com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 - *f:withIgnoringDocumentChanges(kotlin.jvm.functions.Function0):java.lang.Object
 *:com.intellij.codeInsight.inline.completion.InlineCompletionInstallListener
 - *sf:Companion:com.intellij.codeInsight.inline.completion.InlineCompletionInstallListener$Companion

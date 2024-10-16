@@ -14,7 +14,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
+import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 
 object InlineCompletion {
   private val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
@@ -22,12 +24,23 @@ object InlineCompletion {
   fun getHandlerOrNull(editor: Editor): InlineCompletionHandler? = editor.getUserData(KEY)
 
   fun install(editor: EditorEx, scope: CoroutineScope) {
+    if (editor.isDisposed) {
+      return
+    }
+
     val disposable = Disposer.newDisposable("inline-completion").also {
       EditorUtil.disposeWithEditor(editor, it)
     }
 
     val workingScope = scope.childScope(supervisor = !application.isUnitTestMode) // Completely fail only in tests
-    val handler = InlineCompletionHandler(workingScope, editor, disposable)
+    val handler = InlineCompletionHandlerInitializer.initialize(editor, workingScope, disposable)
+    if (handler == null) {
+      workingScope.cancel()
+      Disposer.dispose(disposable)
+      logger<InlineCompletionHandler>().trace("[Inline Completion] No handler initializer is found for $editor.")
+      return
+    }
+
     editor.putUserData(KEY, handler)
 
     editor.document.addDocumentListener(InlineCompletionDocumentListener(editor), disposable)
