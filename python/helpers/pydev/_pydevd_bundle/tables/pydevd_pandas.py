@@ -21,7 +21,7 @@ def get_shape(table):
 # noinspection PyUnresolvedReferences
 def get_head(table):
     # type: (Union[pd.DataFrame, pd.Series]) -> str
-    return repr(__convert_to_df(table).head().to_html(notebook=True, max_cols=None))
+    return repr(__convert_to_df(table).head(1).to_html(notebook=True, max_cols=None))
 
 
 # noinspection PyUnresolvedReferences

@@ -20,7 +20,7 @@ def get_shape(table):
 # noinspection PyUnresolvedReferences
 def get_head(table):
      # type: (datasets.arrow_dataset.Dataset) -> str
-    return repr(__convert_to_df(table.select([0])).head().to_html(notebook=True))
+    return repr(__convert_to_df(table.select([0])).head(1).to_html(notebook=True))
 
 
 # noinspection PyUnresolvedReferences
