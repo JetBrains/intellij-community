@@ -125,10 +125,10 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   }
 
   private fun CoroutineScope.subscribeToTaskStatus(taskInfo: TaskInfoEntity, context: CoroutineContext): Job {
-    val title = taskInfo.title
-    val entityId = taskInfo.eid
     return launch {
       withKernel {
+        val title = taskInfo.title
+        val entityId = taskInfo.eid
         taskInfo.statuses.collect { status ->
           LOG.trace { "Task status changed to $status, entityId=$entityId, title=$title" }
           when (status) {
