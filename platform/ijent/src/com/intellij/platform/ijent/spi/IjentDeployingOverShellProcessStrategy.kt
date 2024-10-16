@@ -45,7 +45,7 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
     context
   }
 
-  final override suspend fun getTargetPlatform(): EelPlatform.Posix {
+  override suspend fun getTargetPlatform(): EelPlatform.Posix {
     return myContext.await().execCommand {
       getTargetPlatform()
     }
