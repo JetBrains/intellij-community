@@ -5,4 +5,10 @@
       dynamic="true"
       interface="com.intellij.codeInsight.inline.completion.InlineCompletionHandlerInitializer"/>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="inline.completion.rem.dev.use.rhizome"
+                 description="Use Rhizome DB for inline completion implementation in RemDev"
+                 defaultValue="false"/>
+  </extensions>
 </idea-plugin>
