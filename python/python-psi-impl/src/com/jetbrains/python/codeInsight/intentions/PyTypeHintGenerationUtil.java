@@ -300,6 +300,8 @@ public final class PyTypeHintGenerationUtil {
                                                    @NotNull TypeEvalContext context,
                                                    @NotNull Set<PsiNamedElement> symbols,
                                                    @NotNull Set<String> typingTypes) {
+    boolean useGenericAliasFromTyping =
+      context.getOrigin() != null && LanguageLevel.forElement(context.getOrigin()).isOlderThan(LanguageLevel.PYTHON39);
     if (type == null) {
       typingTypes.add("Any");
     }
@@ -323,14 +325,14 @@ public final class PyTypeHintGenerationUtil {
       if (type instanceof PyCollectionTypeImpl) {
         final PyClass pyClass = ((PyCollectionTypeImpl)type).getPyClass();
         final String typingCollectionName = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(pyClass.getQualifiedName());
-        if (typingCollectionName != null && type.isBuiltin()) {
+        if (typingCollectionName != null && type.isBuiltin() && useGenericAliasFromTyping) {
           typingTypes.add(typingCollectionName);
         }
         else {
           symbols.add(pyClass);
         }
       }
-      else if (type instanceof PyTupleType) {
+      else if (type instanceof PyTupleType && useGenericAliasFromTyping) {
         typingTypes.add("Tuple");
       }
       else if (type instanceof PyTypedDictType) {
@@ -356,6 +358,7 @@ public final class PyTypeHintGenerationUtil {
         symbols.add(target);
       }
     }
+    // TODO in Python 3.9+ use the builtin "type" instead of "typing.Type"
     if (type instanceof PyInstantiableType && ((PyInstantiableType<?>)type).isDefinition()) {
       typingTypes.add("Type");
     }
