@@ -5,6 +5,7 @@
       <scope name="Production" level="WARNING" enabled="true" />
     </inspection_tool>
     <inspection_tool class="2b82dee6-0e1c-36ce-846f-749c578bd315" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="19b1f229-5172-3fef-9e68-ab45f499fec9" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="807b1a20-1c6f-3175-b372-e193a137c304" enabled="true" level="TYPO" enabled_by_default="true" editorAttributes="TYPO" />
     <inspection_tool class="722cb6a3-860d-3bb9-bfa3-d5ef834939d5" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
     <inspection_tool class="81c39993-de39-3a30-9c64-ab89d04bb566" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="false" editorAttributes="INFO_ATTRIBUTES">
@@ -1289,6 +1290,16 @@
         <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.VirtualMachine" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="Parameter" nameOfExprType="java\.lang\.String" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="Do not use jdi newInstance directly" uuid="19b1f229-5172-3fef-9e68-ab45f499fec9" problemDescriptor="Do not use jdi newInstance directly - use DebuggerUtilsEx.mirrorOfArray instead" text="$Instance$.newInstance($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ArrayType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not use jdi newInstance directly" uuid="19b1f229-5172-3fef-9e68-ab45f499fec9" text="$Instance$.newInstance($Parameter$)" recursive="true" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ArrayType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="Do not use maps with primitive value" description="It's very easy to forget to set the default return value&#10;Use the map that guarantee the default map like Int2IntWithDefaultMap&#10;See IDEA-338250 as issue example" suppressId="NoMapsWithPrimitiveValue" text="Int2IntMap" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap">
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
@@ -2545,6 +2556,11 @@
       <replaceConfiguration name="Use optimized DebuggerUtils.findField" uuid="68d2bd70-db55-358d-84c9-06dc2fb3d82e" text="$Instance$.fieldByName($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.debugger.engine.DebuggerUtils.findField($Instance$, $Parameter$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ReferenceType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use optimized DebuggerUtils.findField" uuid="68d2bd70-db55-358d-84c9-06dc2fb3d82e" text="$Instance$.fieldByName($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.debugger.engine.DebuggerUtils.findField($Instance$, $Parameter$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ReferenceType!" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
       <searchConfiguration name="Use RecursionManager?" text="class $Class$ { &#10;  ThreadLocal&lt;$FieldType$&gt; $FieldName$ = $Init$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
