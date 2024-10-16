@@ -12,27 +12,27 @@ import kotlin.coroutines.cancellation.CancellationException
  * This is where all the db reads and writes are directed to.
  * */
 class DbContext<out QQ : Q>(
-  var _private_value: Any,
-  val dbSource: Any?
+  @PublishedApi
+  internal var privateValue: Any,
+  val dbSource: Any?,
   //var stack: Throwable? = getStack()
 ) {
   val impl: QQ
     get() {
-      val q = _private_value
-      return when {
-        q is CancellationException -> throw CancellationException("DBContext is poisoned", q)
-        q is Throwable -> throw RuntimeException("DBContext is poisoned", q)
+      return when (val q = privateValue) {
+        is CancellationException -> throw CancellationException("DBContext is poisoned", q)
+        is Throwable -> throw RuntimeException("DBContext is poisoned", q)
         else -> q as QQ
       }
     }
 
   fun set(q: Q) {
     //    stack = getStack()
-    _private_value = q
+    privateValue = q
   }
 
   fun setPoison(x: Throwable) {
-    _private_value = x
+    privateValue = x
   }
 
   companion object {
@@ -45,7 +45,7 @@ class DbContext<out QQ : Q>(
     val threadBound: DbContext<Q>
       get() =
         threadLocal.get() ?: throw OutOfDbContext()
-    
+
     /**
      * Current context, associated with the thread.
      * */
@@ -54,7 +54,7 @@ class DbContext<out QQ : Q>(
         threadLocal.get()
 
     @TestOnly
-    fun isBound(): Boolean = 
+    fun isBound(): Boolean =
       threadLocal.get().let {
         it != null && it.impl !is Throwable
       }
@@ -76,18 +76,18 @@ class DbContext<out QQ : Q>(
   }
 
   inline fun <T, U : Q> alter(dbContextPrime: U, f: DbContext<U>.() -> T): T {
-    val oldContext = _private_value
-    _private_value = dbContextPrime
+    val oldContext = privateValue
+    privateValue = dbContextPrime
     return try {
       (this as DbContext<U>).f()
     }
     finally {
-      _private_value = oldContext
+      privateValue = oldContext
     }
   }
 
   inline fun <T> ensureMutable(f: DbContext<Mut>.() -> T): T {
-    return if (_private_value is Mut) {
+    return if (privateValue is Mut) {
       (this as DbContext<Mut>).f()
     }
     else {

@@ -91,13 +91,10 @@ suspend fun <T> change(f: ChangeScope.() -> T): T {
   val kernel = context.transactor
   val interceptor = context[ChangeInterceptor] ?: ChangeInterceptor.Identity
   var res: T? = null
-  // TODO: check required condition after the change too?
-  val change = interceptor.change({ res = f() }) { changeFn ->
+  interceptor.change({ res = f() }) { changeFn ->
     kernel.changeSuspend(changeFn)
   }
-  val result = res as T
-  DbContext.threadBound.set(change.dbAfter)
-  return result
+  return res as T
 }
 
 
@@ -205,7 +202,13 @@ class ChangeInterceptor(
 ) : CoroutineContext.Element {
   companion object : CoroutineContext.Key<ChangeInterceptor> {
     val Identity: ChangeInterceptor = ChangeInterceptor("identity") { changeFn, next ->
-      next(changeFn)
+      next(changeFn).also {
+        /**
+         * because [fleet.kernel.rete.ReteSpinChangeInterceptor] wants to be in control of the threadBound context
+         * setting the database becomes a responsibility of the interceptor
+         * */
+        DbContext.threadBound.set(it.dbAfter)
+      }
     }
   }
 

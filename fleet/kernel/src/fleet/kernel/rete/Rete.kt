@@ -19,6 +19,7 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.whileSelect
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
 sealed interface ReteState {
@@ -153,10 +154,12 @@ suspend fun <T, U> Match<T>.withMatch(body: suspend CoroutineScope.(T) -> U): Wi
  * if not given, until the timestamp of the currently bound db.
  * It rarely makes sense to use this, see [Match.withMatch] instead
  * */
-suspend fun waitForReteToCatchUp(targetDb: Q) {
+suspend fun waitForReteToCatchUp(targetDb: Q, cancellable: Boolean = true) {
   val targetTimestamp = targetDb.timestamp
-  requireNotNull(coroutineContext[Rete]) { "Rete is not found on the context" }
-    .reteState.first { reteDb -> reteDb.dbOrThrow().timestamp >= targetTimestamp }
+  withContext(if (cancellable) EmptyCoroutineContext else NonCancellable) {
+    requireNotNull(coroutineContext[Rete]) { "Rete is not found on the context" }
+      .reteState.first { reteDb -> reteDb.dbOrThrow().timestamp >= targetTimestamp }
+  }
 
   // now that rete has caught up with targetDb, we can go and check if our context matches are still valid
   val invalidation = coroutineContext[ContextMatches]?.matches
@@ -173,7 +176,10 @@ suspend fun waitForReteToCatchUp(targetDb: Q) {
   // since now, suspend call is not in tail position, we're safe.
   when (invalidation) {
     null -> DbContext.threadBound.set(targetDb)
-    else -> DbContext.threadBound.setPoison(invalidation)
+    else -> {
+      Rete.logger.trace { "Caught up to rete, but context matches are invalidated: $invalidation" }
+      DbContext.threadBound.setPoison(invalidation)
+    }
   }
 }
 
@@ -243,9 +249,7 @@ private val ReteSpinChangeInterceptor: ChangeInterceptor =
     /**
      * see `change suspend is atomic case 2` in [fleet.test.frontend.kernel.TransactorTest]
      * */
-    withContext(NonCancellable) {
-      waitForReteToCatchUp(change.dbAfter)
-    }
+    waitForReteToCatchUp(change.dbAfter, cancellable = false)
     change
   }
 
