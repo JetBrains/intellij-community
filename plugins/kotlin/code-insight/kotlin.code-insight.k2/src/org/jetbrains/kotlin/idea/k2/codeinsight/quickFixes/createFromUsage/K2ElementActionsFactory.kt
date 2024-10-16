@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtClassOrFile
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
@@ -131,9 +132,6 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
         return listOf(ChangeAnnotationAction(annotationEntry, attributeIndex, request, text, familyName))
     }
 
-    //TODO: this is copy paste from KotlinElementActionsFactory, maybe we should extract it to common place?
-    // or implement this for K1 and K2?
-
     private class ChangeAnnotationAction(
         annotationEntry: KtAnnotationEntry,
         private val attributeIndex: Int,
@@ -173,17 +171,15 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
             val argumentList = annotationEntry.valueArgumentList
 
             if (argumentList == null) {
-                annotationEntry.add(dummyArgumentList)
-                //ShortenReferences.DEFAULT.process(annotationEntry)
+                shortenReferences(annotationEntry.add(dummyArgumentList) as KtElement)
                 return
             }
 
             when (language) {
                 JavaLanguage.INSTANCE -> changeJava(annotationEntry, argumentList, dummyArgumentList)
-                KotlinLanguage.INSTANCE -> changeKotlin(annotationEntry, argumentList, dummyArgumentList)
                 else -> changeKotlin(annotationEntry, argumentList, dummyArgumentList)
             }
-            //ShortenReferences.DEFAULT.process(annotationEntry)
+            shortenReferences(annotationEntry)
         }
 
         private fun changeKotlin(annotationEntry: KtAnnotationEntry, argumentList: KtValueArgumentList, dummyArgumentList: KtValueArgumentList) {
@@ -266,6 +262,13 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
 private fun KtElement.isAbstractClass(): Boolean {
     val thisClass = this as? KtClassOrObject ?: return false
     return thisClass.isAbstract()
+}
+
+internal fun renderAnnotation(target: PsiElement, request: AnnotationRequest, psiFactory: KtPsiFactory): String {
+    val javaPsiFacade = JavaPsiFacade.getInstance(target.project)
+    fun isKotlinAnnotation(annotation: AnnotationRequest): Boolean =
+        javaPsiFacade.findClass(annotation.qualifiedName, target.resolveScope)?.language == KotlinLanguage.INSTANCE
+    return renderAnnotation(request, psiFactory, ::isKotlinAnnotation)
 }
 
 private fun renderAnnotation(

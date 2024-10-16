@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.jvm.JvmLong
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequest
 import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.openapi.command.WriteCommandAction
@@ -30,7 +29,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
-import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
@@ -254,49 +252,5 @@ object K2CreatePropertyFromUsageBuilder {
 
     private val fieldAnnotationTargetCallableId: CallableId =
         CallableId(StandardClassIds.AnnotationTarget, Name.identifier(KotlinTarget.FIELD.name))
-
-    internal fun renderAnnotation(target: PsiElement, request: AnnotationRequest, psiFactory: KtPsiFactory): String {
-        val javaPsiFacade = JavaPsiFacade.getInstance(target.project)
-        fun isKotlinAnnotation(annotation: AnnotationRequest): Boolean =
-            javaPsiFacade.findClass(annotation.qualifiedName, target.resolveScope)?.language == KotlinLanguage.INSTANCE
-        return renderAnnotation(request, psiFactory, ::isKotlinAnnotation)
-    }
-
-    private fun renderAnnotation(
-        request: AnnotationRequest,
-        psiFactory: KtPsiFactory,
-        isKotlinAnnotation: (AnnotationRequest) -> Boolean
-    ): String {
-        return "${request.qualifiedName}${
-            request.attributes.takeIf { it.isNotEmpty() }?.mapIndexed { i, p ->
-                if (!isKotlinAnnotation(request) && i == 0 && p.name == "value")
-                    renderAttributeValue(p.value, psiFactory, isKotlinAnnotation, isVararg = true)
-                else
-                    "${p.name} = ${renderAttributeValue(p.value, psiFactory, isKotlinAnnotation)}"
-            }?.joinToString(", ", "(", ")") ?: ""
-        }"
-    }
-
-    private fun renderAttributeValue(
-        annotationAttributeRequest: AnnotationAttributeValueRequest,
-        psiFactory: KtPsiFactory,
-        isKotlinAnnotation: (AnnotationRequest) -> Boolean,
-        isVararg: Boolean = false,
-    ): String =
-        when (annotationAttributeRequest) {
-            is AnnotationAttributeValueRequest.PrimitiveValue -> annotationAttributeRequest.value.toString()
-            is AnnotationAttributeValueRequest.StringValue -> "\"" + annotationAttributeRequest.value + "\""
-            is AnnotationAttributeValueRequest.ClassValue -> annotationAttributeRequest.classFqn + "::class"
-            is AnnotationAttributeValueRequest.ConstantValue -> annotationAttributeRequest.text
-            is AnnotationAttributeValueRequest.NestedAnnotation ->
-                renderAnnotation(annotationAttributeRequest.annotationRequest, psiFactory, isKotlinAnnotation)
-
-            is AnnotationAttributeValueRequest.ArrayValue -> {
-                val (prefix, suffix) = if (isVararg) "" to "" else "[" to "]"
-                annotationAttributeRequest.members.joinToString(", ", prefix, suffix) { memberRequest ->
-                    renderAttributeValue(memberRequest, psiFactory, isKotlinAnnotation)
-                }
-            }
-        }
 
 }
