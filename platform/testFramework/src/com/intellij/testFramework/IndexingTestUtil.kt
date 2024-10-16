@@ -12,9 +12,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl
-import kotlinx.coroutines.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert
 import kotlin.time.Duration.Companion.seconds
 
@@ -61,17 +63,10 @@ class IndexingTestUtil(private val project: Project) {
     }
 
     if (ApplicationManager.getApplication().isDispatchThread) {
-      val scope = GlobalScope.childScope("Indexing waiter", Dispatchers.IO)
-      val waiting = scope.launch { suspendUntilIndexesAreReady() }
-      try {
-        do {
-          PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !waiting.isActive }, 600)
-        }
-        while (dispatchAllEventsInIdeEventQueue()) // make sure that all the scheduled write actions are executed
+      do {
+        PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !shouldWait() }, 600)
       }
-      finally {
-        waiting.cancel()
-      }
+      while (dispatchAllEventsInIdeEventQueue()) // make sure that all the scheduled write actions are executed
     }
     else {
       runBlockingMaybeCancellable {
