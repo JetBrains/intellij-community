@@ -20,18 +20,18 @@ import com.intellij.util.indexing.PersistentDirtyFilesQueue.readProjectDirtyFile
 import com.intellij.util.indexing.diagnostic.ScanningType
 import kotlinx.coroutines.CoroutineScope
 
-internal class ProjectFileBasedIndexStartupActivity(private val coroutineScope: CoroutineScope) : RequiredForSmartMode {
+private class ProjectFileBasedIndexStartupActivity(private val coroutineScope: CoroutineScope) : RequiredForSmartMode {
   private val openProjects = ContainerUtil.createConcurrentList<Project?>()
 
   init {
-    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe<ProjectCloseListener>(ProjectCloseListener.TOPIC,
-                                                                                                        object : ProjectCloseListener {
-                                                                                                          override fun projectClosing(
-                                                                                                            project: Project
-                                                                                                          ) {
-                                                                                                            onProjectClosing(project)
-                                                                                                          }
-                                                                                                        })
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe<ProjectCloseListener>(
+      ProjectCloseListener.TOPIC,
+      object : ProjectCloseListener {
+        override fun projectClosing(project: Project) {
+          onProjectClosing(project)
+        }
+      },
+    )
   }
 
   override fun runActivity(project: Project) {
@@ -44,20 +44,24 @@ internal class ProjectFileBasedIndexStartupActivity(private val coroutineScope: 
 
     // load indexes while in dumb mode, otherwise someone from read action may hit `FileBasedIndex.getIndex` and hang (IDEA-316697)
     fileBasedIndex.loadIndexes()
-    val registeredIndexes = fileBasedIndex.getRegisteredIndexes()
-    if (registeredIndexes == null) return
+    val registeredIndexes = fileBasedIndex.registeredIndexes
+    if (registeredIndexes == null) {
+      return
+    }
+
     val wasCorrupted = registeredIndexes.getWasCorrupted()
 
     val projectQueueFile = project.getQueueFile()
     val vfsCreationTimestamp = ManagingFS.getInstance().getCreationTimestamp()
     val projectDirtyFilesQueue = readProjectDirtyFilesQueue(projectQueueFile, vfsCreationTimestamp)
 
-    // Add project to various lists in read action to make sure that
-    // they are not added to lists during disposing of project (in this case project may be stuck forever in those lists)
-    val registered = ReadAction.compute<Boolean?, RuntimeException?>(ThrowableComputable {
+    // Add a project to various lists in read action to make sure that
+    // they are not added to lists during disposing of a project (in this case project may be stuck forever in those lists)
+    val registered = ReadAction.compute(ThrowableComputable {
       if (project.isDisposed()) {
         return@ThrowableComputable false
       }
+
       // done mostly for tests. In real life this is no-op, because the set was removed on project closing
       // note that disposing happens in write action, so it'll be executed after this read action
       Disposer.register(project, Disposable { onProjectClosing(project) })
@@ -65,34 +69,43 @@ internal class ProjectFileBasedIndexStartupActivity(private val coroutineScope: 
       fileBasedIndex.registerProject(project, projectDirtyFilesQueue.fileIds)
       fileBasedIndex.registerProjectFileSets(project)
       fileBasedIndex.setLastSeenIndexInOrphanQueue(project, projectDirtyFilesQueue.lastSeenIndexInOrphanQueue)
-      fileBasedIndex.getIndexableFilesFilterHolder().onProjectOpened(project, vfsCreationTimestamp)
+      fileBasedIndex.indexableFilesFilterHolder.onProjectOpened(project, vfsCreationTimestamp)
 
       openProjects.add(project)
       true
     })
 
-    if (!registered) return
+    if (!registered) {
+      return
+    }
 
     // schedule dumb mode start after the read action we're currently in
-    val orphanQueue = registeredIndexes.getOrphanDirtyFilesQueue()
-    val indexesCleanupJob = scanAndIndexProjectAfterOpen(project,
-                                                         orphanQueue,
-                                                         fileBasedIndex.getAllDirtyFiles(null),
-                                                         projectDirtyFilesQueue,
-                                                         !wasCorrupted,
-                                                         true,
-                                                         coroutineScope,
-                                                         "On project open",
-                                                         ScanningType.FULL_ON_PROJECT_OPEN,
-                                                         ScanningType.PARTIAL_ON_PROJECT_OPEN,
-                                                         wasCorrupted,
-                                                         InitialScanningSkipReporter.SourceOfScanning.OnProjectOpen)
-    indexesCleanupJob.forgetProjectDirtyFilesOnCompletion(fileBasedIndex, project, projectDirtyFilesQueue, orphanQueue.untrimmedSize)
+    val orphanQueue = registeredIndexes.orphanDirtyFilesQueue
+    val indexesCleanupJob = scanAndIndexProjectAfterOpen(
+      project = project,
+      orphanQueue = orphanQueue,
+      additionalOrphanDirtyFiles = fileBasedIndex.getAllDirtyFiles(null),
+      projectDirtyFilesQueue = projectDirtyFilesQueue,
+      allowSkippingFullScanning = !wasCorrupted,
+      requireReadingIndexableFilesIndexFromDisk = true,
+      coroutineScope = coroutineScope,
+      indexingReason = "On project open",
+      fullScanningType = ScanningType.FULL_ON_PROJECT_OPEN,
+      partialScanningType = ScanningType.PARTIAL_ON_PROJECT_OPEN,
+      registeredIndexesWereCorrupted = wasCorrupted,
+      sourceOfScanning = InitialScanningSkipReporter.SourceOfScanning.OnProjectOpen,
+    )
+    indexesCleanupJob.forgetProjectDirtyFilesOnCompletion(
+      fileBasedIndex = fileBasedIndex,
+      project = project,
+      projectDirtyFilesQueue = projectDirtyFilesQueue,
+      orphanQueueUntrimmedSize = orphanQueue.untrimmedSize,
+    )
   }
 
   private fun onProjectClosing(project: Project) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(Runnable {
-      ReadAction.run<RuntimeException?>(ThrowableRunnable {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously({
+      ReadAction.run(ThrowableRunnable {
         if (openProjects.remove(project)) {
           FileBasedIndex.getInstance().onProjectClosing(project)
         }
