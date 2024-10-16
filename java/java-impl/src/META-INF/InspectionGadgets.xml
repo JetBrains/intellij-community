@@ -217,7 +217,7 @@
                      implementationClass="com.siyeh.ig.bugs.EqualsUsesNonFinalVariableInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EqualsWhichDoesntCheckParameterClass" bundle="messages.InspectionGadgetsBundle"
                      key="equals.doesnt.check.class.parameter.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING" 
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      suppressId="EqualsDoesntCheckParameterClass" alternativeId="EqualsWhichDoesntCheckParameterClass"
                      implementationClass="com.siyeh.ig.bugs.EqualsWhichDoesntCheckParameterClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="NonFinalFieldReferencedInHashCode" shortName="HashCodeUsesNonFinalVariable"
@@ -2747,7 +2747,7 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids16"
                      implementationClass="com.intellij.codeInspection.PatternVariableCanBeUsedInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA"
-                     shortName="ForEachWithRecordPatternCanBeUsed" enabledByDefault="true" level="WARNING"
+                     shortName="ForEachWithRecordPatternCanBeUsed" enabledByDefault="true" level="WARNING" isInternal="true"
                      bundle="messages.InspectionGadgetsBundle" key="inspection.enhanced.for.with.record.pattern.can.be.used.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids"
                      implementationClass="com.intellij.codeInspection.ForEachWithRecordPatternCanBeUsedInspection" cleanupTool="true"/>
