@@ -535,7 +535,6 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
                 useClazz(K2DfaAssistTest.Nested(1))
             }
         """
-        //$this$useClazz_u24lambda_u240 in com.sunday.TestKtKt.useClazz(com.sunday.Clazz)@com.sunday.TestKtKt:6
         doTest(text) { vm, frame ->
             frame.addVariable("\$this\$useClazz_u24lambda_u240", MockValue.createValue(Nested(1), vm))
         }
