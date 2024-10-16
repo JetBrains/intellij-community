@@ -1,2 +1,8 @@
 <idea-plugin package="com.intellij.codeInsight.inline.completion">
+  <extensionPoints>
+    <extensionPoint
+      name="inline.completion.handlerInitializer"
+      dynamic="true"
+      interface="com.intellij.codeInsight.inline.completion.InlineCompletionHandlerInitializer"/>
+  </extensionPoints>
 </idea-plugin>

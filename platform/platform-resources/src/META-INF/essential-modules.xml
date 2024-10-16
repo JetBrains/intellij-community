@@ -24,5 +24,6 @@
     <module name="intellij.platform.frontend"/>
 
     <module name="intellij.platform.inline.completion"/>
+    <module name="intellij.platform.inline.completion.frontend"/>
   </content>
 </idea-plugin>

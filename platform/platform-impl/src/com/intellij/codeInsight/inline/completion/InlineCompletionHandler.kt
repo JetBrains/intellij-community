@@ -55,7 +55,8 @@ import kotlin.coroutines.resumeWithException
 /**
  * Use [InlineCompletion] for acquiring, installing and uninstalling [InlineCompletionHandler].
  */
-class InlineCompletionHandler(
+@ApiStatus.NonExtendable
+abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   scope: CoroutineScope,
   val editor: Editor,
   private val parentDisposable: Disposable,
