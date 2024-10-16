@@ -5,7 +5,9 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -25,6 +27,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
 private val LOG = logger<ErrorStripeUpdateManager>()
@@ -63,6 +68,24 @@ class ErrorStripeUpdateManager(private val project: Project, coroutineScope: Cor
       markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().errorStripeMarkMinHeight)
       if (psiFile != null) {
         setOrRefreshErrorStripeRenderer(markup, psiFile)
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  suspend fun asyncRepaintErrorStripePanel(markup: EditorMarkupModel, psiFile: PsiFile?) {
+    if (!project.isInitialized()) {
+      return
+    }
+
+    withContext(Dispatchers.EDT) {
+      writeIntentReadAction {
+        markup.setErrorPanelPopupHandler(DaemonEditorPopup(project, markup.editor))
+        markup.setErrorStripTooltipRendererProvider(DaemonTooltipRendererProvider(project, markup.editor))
+        markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().errorStripeMarkMinHeight)
+        if (psiFile != null) {
+          setOrRefreshErrorStripeRenderer(markup, psiFile)
+        }
       }
     }
   }
