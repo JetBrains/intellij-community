@@ -37,6 +37,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -229,6 +230,7 @@ public final class DebuggerUIUtil {
   public static JBPopup createValuePopup(Project project,
                                          JComponent component,
                                          @Nullable Runnable cancelCallback) {
+    component.putClientProperty(UIUtil.ENABLE_IME_FORWARDING_IN_POPUP, true);
     return createCancelablePopupBuilder(project, component, null, cancelCallback, FULL_VALUE_POPUP_DIMENSION_KEY).createPopup();
   }
 
