@@ -2,6 +2,7 @@
 package com.intellij.platform.diagnostic.plugin.freeze
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -11,7 +12,6 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.ui.RestartDialogImpl
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -22,7 +22,8 @@ internal class PluginFreezeNotifier : EditorNotificationProvider {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     val frozenPlugin = freezeWatcher.latestFrozenPlugin ?: return null
     val pluginDescriptor = PluginManagerCore.getPlugin(frozenPlugin) ?: return null
-    if (pluginDescriptor.isBundled) return null
+    val application = ApplicationManager.getApplication()
+    if (pluginDescriptor.isBundled && !application.isEAP && !application.isInternal) return null
     if (freezeStorageService.shouldBeIgnored(frozenPlugin)) return null
 
     freezeStorageService.setLatestFreezeDate(frozenPlugin)
