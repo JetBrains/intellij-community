@@ -1006,16 +1006,12 @@ public final class ImportHelper{
       JavaResolveResult[] results = ref.multiResolve(false);
       if (results.length == 0) {
         String text = ref.getCanonicalText();
+        boolean isStatic = anImport instanceof PsiImportStaticStatement;
         if (anImport.isOnDemand()) {
-          text += ".*";
-        }
-
-        Import importedName = new Import(text, anImport instanceof PsiImportStaticStatement);
-        if (anImport.isOnDemand()) {
-          unresolvedOnDemand.add(importedName);
+          unresolvedOnDemand.add(new Import(text + ".*", isStatic));
         }
         else {
-          unresolvedNames.put(ref.getReferenceName(), importedName);
+          unresolvedNames.put(ref.getReferenceName(), new Import(text, isStatic));
         }
       }
     }
