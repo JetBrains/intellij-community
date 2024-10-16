@@ -37,7 +37,7 @@ fun preparePrimitiveLiteral(element: KtExpression, type: KaType): PrimitiveLiter
     val typeName = type.expandedSymbol?.classId?.asSingleFqName()?.toUnsafe()
     val expectedTypeIsFloat = type.isFloatType
     val expectedTypeIsDouble = type.isDoubleType
-    val expectedTypeIsUnsigned = type.isUNumberType()
+    val expectedTypeIsUnsigned = isUNumberType(type)
 
     val constValue =
         element.evaluate()?.value

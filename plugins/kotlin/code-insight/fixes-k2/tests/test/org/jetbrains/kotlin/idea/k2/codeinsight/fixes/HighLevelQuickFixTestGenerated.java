@@ -4665,6 +4665,65 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/roundNumber")
+    public static class RoundNumber extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/roundNumber/assignment.kt");
+        }
+
+        @TestMetadata("initializer.kt")
+        public void testInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/roundNumber/initializer.kt");
+        }
+
+        @TestMetadata("notApplicable.kt")
+        public void testNotApplicable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/roundNumber/notApplicable.kt");
+        }
+
+        @TestMetadata("notApplicable2.kt")
+        public void testNotApplicable2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/roundNumber/notApplicable2.kt");
+        }
+
+        @TestMetadata("return.kt")
+        public void testReturn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/roundNumber/return.kt");
+        }
+
+        @TestMetadata("roundDoubleToInt.kt")
+        public void testRoundDoubleToInt() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/roundNumber/roundDoubleToInt.kt");
+        }
+
+        @TestMetadata("roundDoubleToLong.kt")
+        public void testRoundDoubleToLong() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/roundNumber/roundDoubleToLong.kt");
+        }
+
+        @TestMetadata("roundFloatToInt.kt")
+        public void testRoundFloatToInt() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/roundNumber/roundFloatToInt.kt");
+        }
+
+        @TestMetadata("roundFloatToLong.kt")
+        public void testRoundFloatToLong() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/roundNumber/roundFloatToLong.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/typeMismatch/surroundWithLambda")
     public static class SurroundWithLambda extends AbstractHighLevelQuickFixTest {
         @java.lang.Override

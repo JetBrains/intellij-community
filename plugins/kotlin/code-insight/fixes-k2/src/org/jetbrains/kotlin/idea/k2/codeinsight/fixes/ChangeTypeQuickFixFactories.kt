@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
@@ -34,6 +35,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isNull
+import org.jetbrains.kotlin.types.Variance
 
 object ChangeTypeQuickFixFactories {
     enum class TargetType {
@@ -225,6 +227,7 @@ object ChangeTypeQuickFixFactories {
             registerExpressionTypeFixes(expression, expectedType, actualType)
         }
 
+    @OptIn(KaExperimentalApi::class)
     private fun KaSession.registerExpressionTypeFixes(
         expression: KtExpression,
         expectedType: KaType,
@@ -232,7 +235,7 @@ object ChangeTypeQuickFixFactories {
     ): List<IntentionAction> {
         return buildList {
             var primitiveLiteralData: PrimitiveLiteralData? = null
-            if (expression is KtConstantExpression && expectedType.isNumberOrUNumberType() && actualType.isNumberOrUNumberType()) {
+            if (expression is KtConstantExpression && isNumberOrUNumberType(expectedType) && isNumberOrUNumberType(actualType)) {
                 primitiveLiteralData = preparePrimitiveLiteral(expression, expectedType)
                 add(WrongPrimitiveLiteralFix(expression, primitiveLiteralData))
             }
@@ -240,6 +243,13 @@ object ChangeTypeQuickFixFactories {
                 if (primitiveLiteralData == null || !WrongPrimitiveLiteralFix.isAvailable(primitiveLiteralData)) {
                     val elementContext = prepareNumberConversionElementContext(actualType, expectedType)
                     add(NumberConversionFix(expression, elementContext).asIntention())
+                    if (isRoundNumberFixAvailable(expression, expectedType)) {
+                        val renderedExpectedType = expectedType.render(
+                            renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
+                            position = Variance.INVARIANT
+                        )
+                        add(RoundNumberFix(expression, renderedExpectedType).asIntention())
+                    }
                 }
             }
         }
@@ -365,11 +375,14 @@ private fun KaSession.isValReassignment(assignment: KtBinaryExpression): Boolean
     }
 }
 
-context(KaSession)
-fun KaType.isNumberOrUNumberType(): Boolean = isNumberType() || isUNumberType()
+fun KaSession.isNumberOrUNumberType(type: KaType): Boolean = isNumberType(type) || isUNumberType(type)
+fun KaSession.isNumberType(type: KaType): Boolean = with(type) { isPrimitive && !isBooleanType && !isCharType }
+fun KaSession.isUNumberType(type: KaType): Boolean = with(type) { isUByteType || isUShortType || isUIntType || isULongType }
 
-context(KaSession)
-fun KaType.isNumberType(): Boolean = isPrimitive && !isBooleanType && !isCharType
+private fun KaSession.isRoundNumberFixAvailable(expression: KtExpression, type: KaType): Boolean {
+    val expressionType = expression.expressionType ?: return false
+    return isLongOrInt(type) && isDoubleOrFloat(expressionType)
+}
 
-context(KaSession)
-fun KaType.isUNumberType(): Boolean = isUByteType || isUShortType || isUIntType || isULongType
+private fun KaSession.isLongOrInt(type: KaType): Boolean = type.isLongType || type.isIntType
+private fun KaSession.isDoubleOrFloat(type: KaType): Boolean = type.isDoubleType || type.isFloatType

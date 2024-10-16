@@ -54,6 +54,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/typeMismatch/incompatibleTypes", pattern = pattern)
             model("$idea/quickfix/typeMismatch/numberConversion", pattern = pattern)
             model("$idea/quickfix/typeMismatch/parameterTypeMismatch", pattern = pattern)
+            model("$idea/quickfix/typeMismatch/roundNumber", pattern = pattern)
             model("$idea/quickfix/typeMismatch/surroundWithLambda", pattern = pattern)
             model("$idea/quickfix/typeMismatch/typeMismatchOnReturnedExpression", pattern = pattern)
             model("$idea/quickfix/typeMismatch/wrongPrimitive", pattern = pattern)

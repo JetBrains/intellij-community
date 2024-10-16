@@ -1,9 +1,8 @@
 // "Round using roundToInt()" "true"
 // WITH_STDLIB
-fun test(d: Double) {
-    foo(d<caret>)
+fun test(d: Double): Int {
+    return d<caret>
 }
 
-fun foo(x: Int) {}
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RoundNumberFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.RoundNumberFix

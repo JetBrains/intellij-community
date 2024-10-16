@@ -18464,6 +18464,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("assignment.kt")
+            public void testAssignment() throws Exception {
+                runTest("testData/quickfix/typeMismatch/roundNumber/assignment.kt");
+            }
+
+            @TestMetadata("initializer.kt")
+            public void testInitializer() throws Exception {
+                runTest("testData/quickfix/typeMismatch/roundNumber/initializer.kt");
+            }
+
             @TestMetadata("notApplicable.kt")
             public void testNotApplicable() throws Exception {
                 runTest("testData/quickfix/typeMismatch/roundNumber/notApplicable.kt");
@@ -18472,6 +18482,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("notApplicable2.kt")
             public void testNotApplicable2() throws Exception {
                 runTest("testData/quickfix/typeMismatch/roundNumber/notApplicable2.kt");
+            }
+
+            @TestMetadata("return.kt")
+            public void testReturn() throws Exception {
+                runTest("testData/quickfix/typeMismatch/roundNumber/return.kt");
             }
 
             @TestMetadata("roundDoubleToInt.kt")
