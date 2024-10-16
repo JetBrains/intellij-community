@@ -34,7 +34,7 @@ internal fun CallableMemberInfo(
     ordinal: Int = 0,
     name: String = symbol.methodName()
 ): CallableMemberInfo {
-    val isInvoke = symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke
+    val isInvoke = symbol.isInvoke()
     val isSuspend = symbol.isSuspend()
     val effectiveName = if (isInvoke && isSuspend) KotlinDebuggerConstants.INVOKE_SUSPEND_METHOD_NAME else name
     return CallableMemberInfo(
@@ -52,6 +52,7 @@ internal fun CallableMemberInfo(
 }
 
 internal fun KaFunctionSymbol.isSuspend(): Boolean = this is KaNamedFunctionSymbol && this.isSuspend
+internal fun KaFunctionSymbol.isInvoke(): Boolean = this is KaNamedFunctionSymbol && this.isBuiltinFunctionInvoke
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)

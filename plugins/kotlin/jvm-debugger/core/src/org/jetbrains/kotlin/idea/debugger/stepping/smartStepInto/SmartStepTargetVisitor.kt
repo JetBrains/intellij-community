@@ -343,7 +343,7 @@ class SmartStepTargetVisitor(
                 return
             }
 
-            if (declaration == null && !(symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke)) {
+            if (declaration == null && !(symbol.isInvoke())) {
                 return
             }
 
@@ -362,7 +362,7 @@ class SmartStepTargetVisitor(
             }
 
             val callLabel = KotlinMethodSmartStepTarget.calcLabel(symbol)
-            val label = if (symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke && highlightExpression is KtSimpleNameExpression) {
+            val label = if (symbol.isInvoke() && highlightExpression is KtSimpleNameExpression) {
                 "${highlightExpression.text}.$callLabel"
             } else {
                 callLabel
@@ -384,7 +384,7 @@ class SmartStepTargetVisitor(
 
     context(KaSession)
     private fun getFunctionDeclaration(symbol: KaFunctionSymbol): PsiElement? {
-        if (symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke) return null
+        if (symbol.isInvoke()) return null
         symbol.psi?.let { return it }
         // null is returned for implemented by delegation methods in K1
         if (symbol !is KaNamedFunctionSymbol) return null
