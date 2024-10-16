@@ -8,6 +8,7 @@ import com.intellij.codeInsight.inline.completion.utils.InlineCompletionSkipElem
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.actions.EditorActionUtil
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
@@ -26,7 +27,7 @@ private class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartial
     file: PsiFile,
     elements: List<InlineCompletionElement>
   ): List<InlineCompletionElement> {
-    val completion = elements.joinToString("") { it.text }
+    val completion = elements.joinToString("") { it.text }.takeIf { it.isNotEmpty() } ?: return elements
     val offset = editor.caretModel.offset
     val textWithCompletion = editor.document.text.substring(0, offset) + completion
     return withFakeEditor(textWithCompletion, offset, file.fileType, editor.project) { editorWithCompletion ->
@@ -39,7 +40,7 @@ private class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartial
     file: PsiFile,
     elements: List<InlineCompletionElement>
   ): List<InlineCompletionElement> {
-    val completion = elements.joinToString("") { it.text }
+    val completion = elements.joinToString("") { it.text }.takeIf { it.isNotEmpty() } ?: return elements
     val offset = editor.caretModel.offset
     val textWithCompletion = editor.document.text.substring(0, offset) + completion
     return withFakeEditor(textWithCompletion, offset, file.fileType, editor.project) { editorWithCompletion ->
@@ -56,15 +57,14 @@ private class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartial
     elements: List<InlineCompletionElement>
   ): List<InlineCompletionElement> {
     val textWithCompletion = editorWithCompletion.document.text
+    var prefixLength = maxOf(findOffsetDeltaForInsertNextWord(editorWithCompletion, offset), 1)
     val fileType = originalFile.fileType
     val iterator = editorWithCompletion.highlighter.createIterator(offset)
     val braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator)
     val quoteHandlerEx = InlineCompletionQuoteHandlerEx.getAdapter(originalFile, originalEditor)
-    var insertedPrefixLength = 0
-    var searchState = SearchState.INIT
     val skipOffsetsAfterInsertion = mutableListOf<Int>()
     val stuckDetector = IteratorStuckDetector(iterator)
-    iteratorLabel@ while (!iterator.atEnd()) {
+    iteratorLabel@ while (!iterator.atEnd() && iterator.start < offset + prefixLength) {
       if (!stuckDetector.iterateIfStuck()) {
         break
       }
@@ -76,14 +76,22 @@ private class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartial
         quoteHandlerEx = quoteHandlerEx
       )
       if (foundQuotePair != null) {
-        insertedPrefixLength += foundQuotePair.openingQuoteRange.length
         val closingRange = foundQuotePair.closingQuoteRange
         if (closingRange != null) {
           for (i in closingRange.startOffset until closingRange.endOffset) {
             skipOffsetsAfterInsertion += i - offset
           }
+          // We should insert the whole token if it consists of more than one symbol
+          // E.g., we need to insert all the three quotes in """.
+          // E.g., we DO NOT need to insert the entire '1' token.
+          if (foundQuotePair.openingQuoteRange.length > 1) {
+            prefixLength = maxOf(prefixLength, startOffset - offset + foundQuotePair.openingQuoteRange.length)
+          }
         }
-        break
+        if (!iterator.atEnd()) {
+          iterator.advance()
+        }
+        continue
       }
       val foundBracesPair = iterator.checkForOpenBraceAndReturnPair(
         tokenText = tokenText,
@@ -92,33 +100,23 @@ private class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartial
         braceMatcher = braceMatcher
       )
       if (foundBracesPair != null) {
-        insertedPrefixLength += foundBracesPair.bracket.length
         if (foundBracesPair.closingBracketRange != null) {
           for (i in foundBracesPair.closingBracketRange) {
             skipOffsetsAfterInsertion += i - offset
           }
+          // We should insert the whole token
+          prefixLength = maxOf(prefixLength, startOffset - offset + foundBracesPair.bracket.length)
         }
-        break
-      }
-      if (braceMatcher.isRBraceToken(iterator, textWithCompletion, fileType)) {
-        insertedPrefixLength += tokenText.length
-        break
-      }
-      for ((index, sym) in tokenText.withIndex()) {
-        if (quoteHandlerEx != null) {
-          val closingRange = quoteHandlerEx.getClosingQuoteRange(textWithCompletion, iterator, maxOf(startOffset, offset) + index)
-          if (closingRange != null) {
-            insertedPrefixLength += closingRange.length
-            break@iteratorLabel
-          }
+        if (!iterator.atEnd()) {
+          iterator.advance()
         }
-        searchState = searchState.updateWith(sym) ?: break@iteratorLabel
-        insertedPrefixLength++
+        continue
       }
-      iterator.advance()
+      if (!iterator.atEnd()) {
+        iterator.advance()
+      }
     }
-    insertedPrefixLength = maxOf(insertedPrefixLength, 1)
-    return doInsert(originalEditor, originalFile.project, offset, completion, insertedPrefixLength, skipOffsetsAfterInsertion, elements)
+    return doInsert(originalEditor, originalFile.project, offset, completion, prefixLength, skipOffsetsAfterInsertion, elements)
   }
 
   private fun executeInsertNextLine(
@@ -212,6 +210,15 @@ private class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartial
       prefixLength++
     }
     return prefixLength
+  }
+
+  private fun findOffsetDeltaForInsertNextWord(editorWithCompletion: Editor, initialOffset: Int): Int {
+    val initialCaretOffset = editorWithCompletion.caretModel.offset
+    editorWithCompletion.caretModel.moveToOffset(initialOffset)
+    EditorActionUtil.moveCaretToNextWord(editorWithCompletion, false, editorWithCompletion.getSettings().isCamelWords())
+    val finalOffset = editorWithCompletion.caretModel.offset
+    editorWithCompletion.caretModel.moveToOffset(initialCaretOffset)
+    return finalOffset - initialOffset
   }
 
   private fun HighlighterIterator.checkForOpenBraceAndReturnPair(
@@ -352,27 +359,6 @@ private class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartial
     }
   }
 
-  private fun SearchState.updateWith(symbol: Char): SearchState? {
-    return if (symbol.isLetterOrDigit()) {
-      when (this) {
-        SearchState.INIT -> SearchState.LETTER_OR_DIGIT
-        SearchState.LETTER_OR_DIGIT -> SearchState.LETTER_OR_DIGIT
-        SearchState.SYMBOLS -> SearchState.LETTER_OR_DIGIT_AFTER_SYMBOLS
-        SearchState.LETTER_OR_DIGIT_AFTER_SYMBOLS -> SearchState.LETTER_OR_DIGIT_AFTER_SYMBOLS
-        SearchState.SYMBOLS_AFTER_LETTER_OR_DIGIT -> null
-      }
-    }
-    else {
-      when (this) {
-        SearchState.INIT -> SearchState.SYMBOLS
-        SearchState.LETTER_OR_DIGIT -> SearchState.SYMBOLS_AFTER_LETTER_OR_DIGIT
-        SearchState.SYMBOLS -> SearchState.SYMBOLS
-        SearchState.LETTER_OR_DIGIT_AFTER_SYMBOLS -> null
-        SearchState.SYMBOLS_AFTER_LETTER_OR_DIGIT -> SearchState.SYMBOLS_AFTER_LETTER_OR_DIGIT
-      }
-    }
-  }
-
   private class IteratorStuckDetector(private val iterator: HighlighterIterator) {
 
     private var lastStartOffset: Int? = null
@@ -387,14 +373,6 @@ private class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartial
       lastStartOffset = iterator.start
       return true
     }
-  }
-
-  private enum class SearchState {
-    INIT,
-    LETTER_OR_DIGIT,
-    SYMBOLS,
-    LETTER_OR_DIGIT_AFTER_SYMBOLS,
-    SYMBOLS_AFTER_LETTER_OR_DIGIT
   }
 
   private data class FoundQuotesPair(val openingQuoteRange: TextRange, val closingQuoteRange: TextRange?)
