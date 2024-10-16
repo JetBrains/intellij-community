@@ -195,7 +195,7 @@ class UITheme internal constructor(
       val parentThemeData = UiThemeProviderListManager.getInstance().getThemeJson(parentThemeId)
       val parentTheme = parentThemeData?.let { data ->
         if (recursiveReloadParent) {
-          loadFromJsonWithParent(data, parentThemeId, classLoader, iconMapper).bean
+          loadFromJsonWithParent(data, parentThemeId, classLoader, null).bean
         } else {
           readTheme(jsonFactory.createParser(data), warn)
         }
