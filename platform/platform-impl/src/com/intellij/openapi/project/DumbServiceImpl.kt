@@ -8,8 +8,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -39,11 +39,14 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.DeprecationStripePanel
 import com.intellij.util.ui.EDT
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.EdtInvocationManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.jetbrains.annotations.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Async
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -51,16 +54,18 @@ import java.util.concurrent.locks.LockSupport
 import java.util.function.BooleanSupplier
 import javax.swing.JComponent
 
-@ApiStatus.Internal
-open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private val myProject: Project,
-                                                                         private val myPublisher: DumbModeListener,
-                                                                         private val scope: CoroutineScope) : DumbService(), Disposable, ModificationTracker, DumbServiceBalloon.Service {
-  private val myState: MutableStateFlow<DumbState> = MutableStateFlow(DumbState(!myProject.isDefault, 0L, 0))
+@Internal
+open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
+  private val myProject: Project,
+  private val publisher: DumbModeListener,
+  private val scope: CoroutineScope,
+) : DumbService(), Disposable, ModificationTracker, DumbServiceBalloon.Service {
+  private val state: MutableStateFlow<DumbState> = MutableStateFlow(DumbState(!myProject.isDefault, 0L, 0))
 
   private val initialDumbTaskRequiredForSmartModeSubmitted = AtomicBoolean(false)
 
   // should only be accessed from EDT. This is to order synchronous and asynchronous publishing
-  private var lastPublishedState: DumbState = myState.value
+  private var lastPublishedState: DumbState = state.value
 
   @Volatile
   private var isDisposed = false
@@ -107,8 +112,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
     fun launch() {
       if (!launched) {
-        launched = true;
-        myGuiDumbTaskRunner.startBackgroundProcess(onFinish = {
+        launched = true
+        guiDumbTaskRunner.startBackgroundProcess(onFinish = {
           close()
         })
       }
@@ -120,30 +125,33 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   private val dumbTaskLaunchers: MutableList<DumbTaskLauncher> = ArrayList()
 
   override val project: Project = myProject
+
+  @Suppress("OVERRIDE_DEPRECATION")
   override var isAlternativeResolveEnabled: Boolean
-    get() = myAlternativeResolveTracker.isAlternativeResolveEnabled
+    get() = alternativeResolveTracker.isAlternativeResolveEnabled
     set(enabled) {
-      myAlternativeResolveTracker.isAlternativeResolveEnabled = enabled
+      alternativeResolveTracker.isAlternativeResolveEnabled = enabled
     }
 
-  override val modificationTracker: ModificationTracker get() = this
+  override val modificationTracker: ModificationTracker
+    get() = this
 
   @Volatile
   var dumbModeStartTrace: Throwable? = null
     private set
   private var scheduledTasksScope: CoroutineScope = scope.childScope()
-  private val myTaskQueue: DumbServiceMergingTaskQueue = DumbServiceMergingTaskQueue()
-  private val myGuiDumbTaskRunner: DumbServiceGuiExecutor
-  private val myAlternativeResolveTracker: DumbServiceAlternativeResolveTracker
+  private val taskQueue = DumbServiceMergingTaskQueue()
+  private val guiDumbTaskRunner: DumbServiceGuiExecutor
+  private val alternativeResolveTracker: DumbServiceAlternativeResolveTracker
 
   //used from EDT
-  private val myBalloon: DumbServiceBalloon
+  private val balloon: DumbServiceBalloon
 
   @Volatile
-  private var myWaitIntolerantThread: Thread? = null
+  private var waitIntolerantThread: Thread? = null
 
   // should only be accessed from EDT to avoid races between `queueTaskOnEDT` and `enterSmartModeIfDumb` (invoked from `afterLastTask`)
-  private var myLatestReceipt: SubmissionReceipt? = null
+  private var latestReceipt: SubmissionReceipt? = null
 
   private inner class DumbTaskListener : ExecutorStateListener {
     /*
@@ -153,29 +161,27 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
      */
     override fun beforeFirstTask(): Boolean {
       // if a queue has already been emptied by modal dumb progress, DumbServiceGuiExecutor will not invoke processing on empty queue
-      LOG.assertTrue(myState.value.isDumb,
-                     "State should be DUMB, but was " + myState.value)
+      LOG.assertTrue(state.value.isDumb, "State should be DUMB, but was ${state.value}")
       return true
     }
 
     override fun afterLastTask(latestReceipt: SubmissionReceipt?) {
-
     }
   }
 
   constructor(project: Project, scope: CoroutineScope) : this(project, project.messageBus.syncPublisher<DumbModeListener>(DUMB_MODE), scope)
 
   init {
-    myGuiDumbTaskRunner = DumbServiceGuiExecutor(myProject, myTaskQueue, DumbTaskListener())
+    guiDumbTaskRunner = DumbServiceGuiExecutor(myProject, taskQueue, DumbTaskListener())
     if (Registry.`is`("scanning.should.pause.dumb.queue", false)) {
       myProject.service<DumbServiceScanningListener>().subscribe()
     }
     if (Registry.`is`("vfs.refresh.should.pause.dumb.queue", true)) {
-      DumbServiceVfsBatchListener(myProject, myGuiDumbTaskRunner.guiSuspender())
+      DumbServiceVfsBatchListener(myProject, guiDumbTaskRunner.guiSuspender())
     }
-    myBalloon = DumbServiceBalloon(myProject, this)
-    myAlternativeResolveTracker = DumbServiceAlternativeResolveTracker()
-    // any project starts in dumb mode (except default project which is always smart)
+    balloon = DumbServiceBalloon(myProject, this)
+    alternativeResolveTracker = DumbServiceAlternativeResolveTracker()
+    // any project starts in dumb mode (except a default project which is always smart)
     // we assume that queueStartupActivitiesRequiredForSmartMode will be invoked to advance DUMB > SMART
   }
 
@@ -192,23 +198,23 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   override fun cancelTask(task: DumbModeTask) {
     LOG.info("cancel $task [${project.name}]")
-    myTaskQueue.cancelTask(task)
+    taskQueue.cancelTask(task)
   }
 
   override fun dispose() {
     isDisposed = true
     ApplicationManager.getApplication().assertWriteIntentLockAcquired()
-    myBalloon.dispose()
+    balloon.dispose()
     scheduledTasksScope.cancel("On dispose of DumbService", ProcessCanceledException())
-    myTaskQueue.disposePendingTasks()
+    taskQueue.disposePendingTasks()
   }
 
   override fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: Runnable) {
-    myGuiDumbTaskRunner.suspendAndRun(activityName, activity)
+    guiDumbTaskRunner.suspendAndRun(activityName, activity)
   }
 
   override suspend fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: suspend () -> Unit) {
-    myGuiDumbTaskRunner.guiSuspender().suspendAndRun(activityName, activity)
+    guiDumbTaskRunner.guiSuspender().suspendAndRun(activityName, activity)
   }
 
   override val isDumb: Boolean
@@ -218,7 +224,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
         LOG.error("To avoid race conditions isDumb method should be used only under read action or in EDT thread.",
                   IllegalStateException())
       }
-      return myState.value.isDumb
+      return state.value.isDumb
     }
 
   /**
@@ -230,7 +236,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
    * In most cases you don't need this method, because neither checking `isDumb` outside a read action, nor suspending inside a read action
    *  have little sense except a few very special use cases.
    */
-  val isDumbAsFlow: Flow<Boolean> = myState.map { it.isDumb }
+  val isDumbAsFlow: Flow<Boolean> = state.map { it.isDumb }
 
   /**
    * This method starts dumb mode (if not started), then runs suspend lambda, then ends dumb mode (if no other dumb tasks are running).
@@ -274,7 +280,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       return block()
     }
     finally {
-      // in the case of cancellation this block won't execute if NonCancellable is omitted
+      // in the case of cancellation, this block won't execute if NonCancellable is omitted
       withContext(Dispatchers.EDT + NonCancellable) {
         blockingContext {
           decrementDumbCounter()
@@ -289,11 +295,11 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   @RequiresBlockingContext
   private fun incrementDumbCounter(trace: Throwable) {
     ThreadingAssertions.assertEventDispatchThread()
-    if (myState.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState) {
+    if (state.getAndUpdate { it.tryIncrementDumbCounter() }.incrementWillChangeDumbState) {
       // If already dumb - just increment the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
       // Otherwise, increment the counter under write action because this will change dumb state
       val enteredDumb = application.runWriteAction(Computable {
-        val old = myState.getAndUpdate { it.incrementDumbCounter() }
+        val old = state.getAndUpdate { it.incrementDumbCounter() }
         return@Computable old.isSmart
       })
       if (enteredDumb) {
@@ -310,19 +316,19 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       }
     }
 
-    LOG.assertTrue(myState.value.isDumb, "Should be dumb")
+    LOG.assertTrue(state.value.isDumb, "Should be dumb")
   }
 
-  // this method is not suspend for the sake of symmetry: incrementDumbCounter is not suspend as of now
+  // this method is not `suspend` for the sake of symmetry: incrementDumbCounter is not `suspend` as of now
   @RequiresBlockingContext
   private fun decrementDumbCounter() {
     ThreadingAssertions.assertEventDispatchThread()
 
     // If there are other dumb tasks - just decrement the counter. We don't need a write action (to not interrupt NBRA), neither we need EDT.
     // Otherwise, decrement the counter under write action because this will change dumb state
-    if (myState.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
+    if (state.getAndUpdate { it.tryDecrementDumbCounter() }.decrementWillChangeDumbState) {
       val exitDumb = application.runWriteAction(Computable {
-        val new = myState.updateAndGet { it.decrementDumbCounter() }
+        val new = state.updateAndGet { it.decrementDumbCounter() }
         return@Computable new.isSmart
       })
       if (exitDumb) {
@@ -335,7 +341,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   private fun publishDumbModeChangedEvent() {
     ThreadingAssertions.assertEventDispatchThread()
-    val currentState = myState.value
+    val currentState = state.value
     if (lastPublishedState.modificationCounter >= currentState.modificationCounter) {
       return // already published
     }
@@ -343,14 +349,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     // First change lastPublishedState, then publish. This is to address the situation that new event
     // should be published while publishing current event
     val wasDumb = lastPublishedState.isDumb
-    lastPublishedState = myState.value
+    lastPublishedState = state.value
 
     if (wasDumb != currentState.isDumb) {
       if (currentState.isDumb) {
-        runCatchingIgnorePCE { WriteIntentReadAction.run { myPublisher.enteredDumbMode() } }
+        runCatchingIgnorePCE { WriteIntentReadAction.run { publisher.enteredDumbMode() } }
       }
       else {
-        runCatchingIgnorePCE { WriteIntentReadAction.run { myPublisher.exitDumbMode() } }
+        runCatchingIgnorePCE { WriteIntentReadAction.run { publisher.exitDumbMode() } }
       }
     }
   }
@@ -360,7 +366,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   internal val runWhenSmartCondition: BooleanSupplier
-    get() = myProject.getService(SmartModeScheduler::class.java).runWhenSmartCondition
+    get() = myProject.service<SmartModeScheduler>().runWhenSmartCondition
 
   override fun unsafeRunWhenSmart(@Async.Schedule runnable: Runnable) {
     // we probably don't need unsafeRunWhenSmart anymore
@@ -392,26 +398,30 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
           ensureActive()
           queueTaskOnEdt(task, modality, trace)
         }
-        catch (t: CancellationException) {
+        catch (_: CancellationException) {
           Disposer.dispose(task)
         }
       }
     }
   }
 
-  private fun invokeLaterOnEdtInScheduledTasksScope(start: CoroutineStart = CoroutineStart.DEFAULT,
-                                                    block: suspend CoroutineScope.() -> Unit): Job {
+  private fun invokeLaterOnEdtInScheduledTasksScope(
+    start: CoroutineStart = CoroutineStart.DEFAULT,
+    block: suspend CoroutineScope.() -> Unit,
+  ): Job {
     val modality = ModalityState.defaultModalityState()
     return scheduledTasksScope.launch(modality.asContextElement() + Dispatchers.EDT, start, block)
   }
 
   private fun queueTaskOnEdt(task: DumbModeTask, modality: ModalityState, trace: Throwable) {
-    // first, increment dumb mode, then add the task. If increment failed, task execution will not be scheduled, and we will stuck in
-    // dumb mode. In unit tests, much safer behavior is to ignore the task. In prod both behaviors are bad.
+    // First, increment dumb mode, then add the task.
+    // If increment failed, task execution will not be scheduled, and we will be stuck in dumb mode.
+    // In unit tests, much safer behavior is to ignore the task.
+    // In prod, both behaviors are bad.
     incrementDumbCounter(trace)
 
     ThreadingAssertions.assertEventDispatchThread()
-    myLatestReceipt = myTaskQueue.addTask(task)
+    latestReceipt = taskQueue.addTask(task)
 
     // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
     // drain the queue synchronously under modal progress
@@ -453,7 +463,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   private fun doShowDumbModeNotification(message: @NlsContexts.PopupContent String) {
-    UIUtil.invokeLaterIfNeeded {
+    EdtInvocationManager.invokeLaterIfNeeded {
       val ideFrame = WindowManager.getInstance().getIdeFrame(myProject)
       if (ideFrame != null) {
         val statusBar = ideFrame.statusBar as StatusBarEx?
@@ -480,13 +490,19 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     doShowDumbModeNotification(message)
   }
 
-  override fun showDumbModeActionBalloon(balloonText: @NlsContexts.PopupContent String,
-                                         runWhenSmartAndBalloonStillShowing: Runnable,
-                                         actionIds: List<String>) {
-    myBalloon.showDumbModeActionBalloon(balloonText, {
-      DumbModeBlockedFunctionalityCollector.logActionsBlocked(project, actionIds, true)
-      runWhenSmartAndBalloonStillShowing.run()
-    }, { DumbModeBlockedFunctionalityCollector.logActionsBlocked(project, actionIds, false) })
+  override fun showDumbModeActionBalloon(
+    balloonText: @NlsContexts.PopupContent String,
+    runWhenSmartAndBalloonStillShowing: Runnable,
+    actionIds: List<String>,
+  ) {
+    balloon.showDumbModeActionBalloon(
+      balloonText = balloonText,
+      runWhenSmartAndBalloonStillShowing = {
+        DumbModeBlockedFunctionalityCollector.logActionsBlocked(project, actionIds, true)
+        runWhenSmartAndBalloonStillShowing.run()
+      },
+      runWhenCancelled = { DumbModeBlockedFunctionalityCollector.logActionsBlocked(project = project, actionIds = actionIds, executedAfterBlock = false) },
+    )
   }
 
   override fun cancelAllTasksAndWait() {
@@ -494,20 +510,20 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     if (!application.isWriteIntentLockAcquired || application.isWriteAccessAllowed) {
       throw AssertionError("Must be called on write thread without write action")
     }
+
     LOG.info("Purge dumb task queue")
     val currentThread = Thread.currentThread()
     val initialThreadName = currentThread.name
-    ConcurrencyUtil.runUnderThreadName(initialThreadName + " [DumbService.cancelAllTasksAndWait(state = " + myState.value + ")]") {
-
+    ConcurrencyUtil.runUnderThreadName("$initialThreadName [DumbService.cancelAllTasksAndWait(state = ${state.value})]") {
       // isRunning will be false eventually, because we are on EDT, and no new task can be queued outside the EDT
-      // (we only wait for currently running task to terminate).
-      myGuiDumbTaskRunner.cancelAllTasks()
-      while (myGuiDumbTaskRunner.isRunning.value && !myProject.isDisposed) {
+      // (we only wait for a currently running task to terminate).
+      guiDumbTaskRunner.cancelAllTasks()
+      while (guiDumbTaskRunner.isRunning.value && !myProject.isDisposed) {
         PingProgress.interactWithEdtProgress()
-        LockSupport.parkNanos(50000000)
+        LockSupport.parkNanos(50_000_000)
       }
 
-      // Invoked after myGuiDumbTaskRunner has stopped to make sure that all the tasks submitted from the executor callbacks are canceled
+      // Invoked after myGuiDumbTaskRunner has stopped to make sure that all the tasks submitted from the executor callbacks are canceled,
       // This also cancels all the tasks that are waiting for the EDT to queue new dumb tasks
       val oldTaskScope = scheduledTasksScope
       scheduledTasksScope = scope.childScope()
@@ -516,7 +532,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   override fun waitForSmartMode() {
-    waitForSmartMode(null)
+    waitForSmartMode(milliseconds = null)
   }
 
   fun waitForSmartMode(milliseconds: Long?): Boolean {
@@ -525,7 +541,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     if (application.isReadAccessAllowed) {
       throw AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode")
     }
-    if (myWaitIntolerantThread === Thread.currentThread()) {
+    if (waitIntolerantThread === Thread.currentThread()) {
       throw AssertionError("Don't invoke waitForSmartMode from a background startup activity")
     }
     val switched = CountDownLatch(1)
@@ -536,14 +552,17 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     val startTime = System.currentTimeMillis()
     while (!myProject.isDisposed && smartModeScheduler.getCurrentMode() != 0) {
       // it is fine to unblock the caller when myProject.isDisposed, even if didn't reach smart mode: we are on background thread
-      // without read action. Dumb mode may start immediately after the caller is unblocked, so caller is prepared for this situation.
+      // without read action. Dumb mode may start immediately after the caller is unblocked, so the caller is prepared for this situation.
       try {
         if (switched.await(50, TimeUnit.MILLISECONDS)) break
       }
-      catch (ignored: InterruptedException) {
+      catch (_: InterruptedException) {
       }
+
       ProgressManager.checkCanceled()
-      if (milliseconds != null && startTime + milliseconds < System.currentTimeMillis()) return false
+      if (milliseconds != null && startTime + milliseconds < System.currentTimeMillis()) {
+        return false
+      }
     }
     return true
   }
@@ -607,16 +626,16 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     LOG.assertTrue(myProject.isInitialized, "Project should have been initialized")
 
     // there is no race: myTaskQueue is only updated from EDT
-    if (!myTaskQueue.isEmpty) {
+    if (!taskQueue.isEmpty) {
       incrementDumbCounter(Throwable())
       try {
-        while (!myTaskQueue.isEmpty) {
+        while (!taskQueue.isEmpty) {
           val queueProcessedUnderModalProgress = processQueueUnderModalProgress()
           if (!queueProcessedUnderModalProgress) {
             if (application.isUnitTestMode) {
-              LOG.assertTrue(myTaskQueue.isEmpty, "This behavior is valid, but most likely not expected in tests: " +
-                                                  "completeJustSubmittedTasks does nothing because the queue is already " +
-                                                  "being processed in the background thread.")
+              LOG.assertTrue(taskQueue.isEmpty, "This behavior is valid, but most likely not expected in tests: " +
+                                                "completeJustSubmittedTasks does nothing because the queue is already " +
+                                                "being processed in the background thread.")
             }
             // processQueueUnderModalProgress did nothing (i.e. processing is being done under non-modal indicator)
             break
@@ -641,7 +660,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   private fun processQueueUnderModalProgress(): Boolean {
     val startTrace = Throwable()
     NoAccessDuringPsiEvents.checkCallContext("modal indexing")
-    return myGuiDumbTaskRunner.tryStartProcessInThisThread { processTask: AutoclosableProgressive ->
+    return guiDumbTaskRunner.tryStartProcessInThisThread { processTask: AutoclosableProgressive ->
       try {
         LOG.infoWithDebug("Processing dumb queue under modal progress (start)", startTrace)
         (ApplicationManager.getApplication() as ApplicationImpl).executeSuspendingWriteAction(myProject, IndexingBundle.message(
@@ -659,23 +678,25 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   override fun runWithWaitForSmartModeDisabled(): AccessToken {
-    myWaitIntolerantThread = Thread.currentThread()
+    waitIntolerantThread = Thread.currentThread()
     return object : AccessToken() {
       override fun finish() {
-        myWaitIntolerantThread = null
+        waitIntolerantThread = null
       }
     }
   }
 
   override fun getModificationCount(): Long {
     // todo: drop mod tracker in scanner executor after there is a proper way to track indexes updates IJPL-472
-    return myState.value.modificationCounter + UnindexedFilesScannerExecutor.getInstance(project).modificationTracker.modificationCount
+    return state.value.modificationCounter + UnindexedFilesScannerExecutor.getInstance(project).modificationTracker.modificationCount
   }
 
-  internal val dumbStateAsFlow: StateFlow<DumbState> = myState
+  internal val dumbStateAsFlow: StateFlow<DumbState> = state
 
   internal data class DumbState(
-    val isDumb: Boolean, val modificationCounter: Long, val dumbCounter: Int
+    @JvmField val isDumb: Boolean,
+    @JvmField val modificationCounter: Long,
+    @JvmField val dumbCounter: Int,
   ) {
     private fun nextCounterState(nextVal: Int): DumbState {
       if (nextVal > 0) {
@@ -693,7 +714,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     fun decrementDumbCounter(): DumbState = nextCounterState(dumbCounter - 1)
     fun tryIncrementDumbCounter(): DumbState = if (incrementWillChangeDumbState) this else incrementDumbCounter()
     fun tryDecrementDumbCounter(): DumbState = if (decrementWillChangeDumbState) this else decrementDumbCounter()
-    val isSmart: Boolean get() = !isDumb
+    val isSmart: Boolean
+      get() = !isDumb
   }
 
   @TestOnly
@@ -706,9 +728,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   @TestOnly
-  fun isRunning(): Boolean {
-    return myGuiDumbTaskRunner.isRunning.value
-  }
+  fun isRunning(): Boolean = guiDumbTaskRunner.isRunning.value
 
   @TestOnly
   fun hasScheduledTasks(): Boolean {
@@ -719,13 +739,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   companion object {
     @JvmField
-    val REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY: ExtensionPointName<RequiredForSmartMode> = ExtensionPointName(
-      "com.intellij.requiredForSmartModeStartupActivity")
-
-    @JvmField
     val ALWAYS_SMART: Boolean = SystemProperties.getBooleanProperty("idea.no.dumb.mode", false)
 
-    private val LOG = Logger.getInstance(DumbServiceImpl::class.java)
+    private val LOG = logger<DumbServiceImpl>()
 
     @JvmStatic
     fun getInstance(project: Project): DumbServiceImpl {
@@ -736,7 +752,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       try {
         runnable.run()
       }
-      catch (ignored: ProcessCanceledException) {
+      catch (_: ProcessCanceledException) {
       }
       catch (t: Throwable) {
         LOG.error(t)
