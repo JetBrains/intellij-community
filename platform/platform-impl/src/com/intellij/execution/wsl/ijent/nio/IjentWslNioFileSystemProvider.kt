@@ -255,7 +255,7 @@ class IjentWslNioFileSystemProvider(
     originalFsProvider.isHidden(path.toOriginalPath())
 
   override fun getFileStore(path: Path): FileStore =
-    originalFsProvider.getFileStore(path.toOriginalPath())
+    ijentFsProvider.getFileStore(path.toIjentPath())
 
   override fun <V : FileAttributeView?> getFileAttributeView(path: Path, type: Class<V>, vararg options: LinkOption): V =
     originalFsProvider.getFileAttributeView(path.toOriginalPath(), type, *options)

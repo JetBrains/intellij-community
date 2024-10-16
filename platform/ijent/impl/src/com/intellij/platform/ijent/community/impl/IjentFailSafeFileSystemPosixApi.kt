@@ -204,6 +204,12 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
   }
 
+  override suspend fun getDiskInfo(path: EelPath.Absolute): EelResult<EelFileSystemApi.DiskInfo, EelFileSystemApi.DiskInfoError> {
+    return holder.withDelegateRetrying {
+      getDiskInfo(path)
+    }
+  }
+
   override suspend fun createSymbolicLink(target: EelPath, linkPath: EelPath.Absolute) {
     holder.withDelegateRetrying {
       createSymbolicLink(target, linkPath)
