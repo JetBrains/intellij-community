@@ -1,20 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio
 
+import com.intellij.execution.eel.EelPathUtils.walkingTransfer
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.CaseSensitivityAttribute
 import com.intellij.openapi.util.io.FileAttributes
-import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
-import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.ijent.community.impl.nio.EelPosixGroupPrincipal
 import com.intellij.platform.ijent.community.impl.nio.EelPosixUserPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPosixFileAttributes
-import com.intellij.util.io.createDirectories
 import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
@@ -24,7 +22,6 @@ import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
-import java.nio.file.StandardOpenOption.*
 import java.nio.file.attribute.*
 import java.nio.file.attribute.PosixFilePermission.*
 import java.nio.file.spi.FileSystemProvider
@@ -32,8 +29,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.name
-import kotlin.io.path.readAttributes
-import kotlin.io.path.relativeTo
 
 /**
  * A special wrapper for [com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider]
@@ -299,75 +294,6 @@ class IjentWslNioFileSystemProvider(
 
   companion object {
     private val LOG = logger<IjentWslNioFileSystemProvider>()
-
-    @VisibleForTesting
-    fun walkingTransfer(sourceRoot: Path, targetRoot: Path, removeSource: Boolean) {
-      val sourceStack = ArrayDeque<Path>()
-      sourceStack.add(sourceRoot)
-
-      var lastDirectory: Path? = null
-
-      while (true) {
-        val source =
-          try {
-            sourceStack.removeLast()
-          }
-          catch (_: NoSuchElementException) {
-            break
-          }
-
-        while (removeSource && lastDirectory != null && lastDirectory != sourceRoot && source.parent != lastDirectory) {
-          Files.delete(lastDirectory)
-          lastDirectory = lastDirectory.parent
-        }
-
-        val stat =
-          BasicFileAttributesHolder2.getAttributesFromHolder(source)
-          ?: source.readAttributes(LinkOption.NOFOLLOW_LINKS)
-
-        // WindowsPath doesn't support resolve() from paths of different class.
-        val target = source.relativeTo(sourceRoot).fold(targetRoot) { parent, file ->
-          parent.resolve(file.toString())
-        }
-
-        when {
-          stat.isDirectory -> {
-            lastDirectory = source
-            try {
-              target.createDirectories()
-            }
-            catch (err: FileAlreadyExistsException) {
-              if (!Files.isDirectory(target)) {
-                throw err
-              }
-            }
-            source.fileSystem.provider().newDirectoryStream(source, FetchAttributesFilter.ACCEPT_ALL).use { children ->
-              sourceStack.addAll(children.toList().asReversed())
-            }
-          }
-
-          stat.isRegularFile -> {
-            Files.newInputStream(source, READ).use { reader ->
-              Files.newOutputStream(target, CREATE, TRUNCATE_EXISTING, WRITE).use { writer ->
-                reader.copyTo(writer)
-              }
-            }
-            if (removeSource) {
-              Files.delete(source)
-            }
-          }
-
-          else -> {
-            LOG.info("Not copying $source to $target because the source file is neither a regular file nor a directory")
-          }
-        }
-      }
-
-      while (removeSource && lastDirectory != null && lastDirectory != sourceRoot) {
-        Files.delete(lastDirectory)
-        lastDirectory = lastDirectory.parent
-      }
-    }
   }
 }
 
