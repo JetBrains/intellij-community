@@ -5,8 +5,10 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.consumeUnrelatedEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.JobProvider
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.inModalContext
@@ -407,6 +409,10 @@ private suspend fun doShowModalIndicator(
 
     awaitCancellationAndInvoke {
       dialog.close(DialogWrapper.OK_EXIT_CODE)
+    }
+
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      logger<PlatformTaskSupport>().info("Modal dialog is shown: ${descriptor.title}")
     }
 
     // 1. If the dialog is heavy (= spins an inner event loop):
