@@ -69,7 +69,11 @@ private class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
       // Done mostly for tests.
       // In real life this is no-op, because the set was removed on project closing
       // note that disposing happens in write action, so it'll be executed after this read action
-      Disposer.register(project) { onProjectClosing(project) }
+      Disposer.register(project) {
+        if (openProjects.remove(project)) {
+          FileBasedIndex.getInstance().onProjectClosing(project)
+        }
+      }
 
       fileBasedIndex.registerProject(project, projectDirtyFilesQueue.fileIds)
       fileBasedIndex.registerProjectFileSets(project)
@@ -109,16 +113,18 @@ private class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
   }
 
   private fun onProjectClosing(project: Project) {
+    if (!openProjects.remove(project)) {
+      return
+    }
+
     runWithModalProgressBlocking(
       owner = ModalTaskOwner.project(project),
       title = IndexingBundle.message("removing.indexable.set.project.handler"),
       cancellation = TaskCancellation.nonCancellable(),
     ) {
-      if (openProjects.remove(project)) {
-        val fileBasedIndex = serviceIfCreated<FileBasedIndex>() ?: return@runWithModalProgressBlocking
-        readAction {
-          fileBasedIndex.onProjectClosing(project)
-        }
+      val fileBasedIndex = serviceIfCreated<FileBasedIndex>() ?: return@runWithModalProgressBlocking
+      readAction {
+        fileBasedIndex.onProjectClosing(project)
       }
     }
   }
