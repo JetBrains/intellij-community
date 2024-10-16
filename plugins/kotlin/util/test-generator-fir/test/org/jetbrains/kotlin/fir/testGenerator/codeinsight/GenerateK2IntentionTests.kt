@@ -191,6 +191,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
         testClass<AbstractK2MultiFileIntentionTest> {
             model("${idea}/multiFileIntentions/moveDeclarationToSeparateFile", pattern = TEST, flatten = true)
             model("${idea}/multiFileIntentions/implementAbstractMember", pattern = TEST, flatten = true)
+            model("${idea}/multiFileIntentions/convertMemberToExtension", pattern = TEST, flatten = true)
         }
 
         testClass<AbstractK2GotoTestOrCodeActionTest> {
