@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -173,7 +174,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
    * (note that some platforms do not support the file highlighting).
    */
   public static void openFile(@NotNull Path file) {
-    var parent = file.toAbsolutePath().getParent();
+    var parent = canonicalize(file).getParent();
     if (parent != null) {
       doOpen(parent, file);
     }
@@ -195,8 +196,8 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private static void doOpen(@NotNull Path _dir, @Nullable Path _toSelect) {
-    var dir = _dir.toAbsolutePath().normalize().toString();
-    var toSelect = _toSelect != null ? _toSelect.toAbsolutePath().normalize().toString() : null;
+    var dir = canonicalize(_dir).normalize().toString();
+    var toSelect = _toSelect != null ? canonicalize(_toSelect).normalize().toString() : null;
     String fmApp;
 
     if (SystemInfo.isWindows) {
@@ -266,6 +267,16 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         }
       }
     });
+  }
+
+  private static Path canonicalize(@NotNull Path path) {
+    try {
+      return path.toRealPath();
+    }
+    catch (IOException e) {
+      LOG.info("Could not convert " + path + " to canonical path", e);
+      return path.toAbsolutePath();
+    }
   }
 
   private static void openViaExplorerCall(String dir, @Nullable String toSelect) {
