@@ -74,4 +74,12 @@ private fun defaultBorder(movable: Boolean): Insets {
   }
 }
 
-private fun defaultZone(): Int = if (SystemInfo.isMac) Registry.intValue("popup.resize.zone.macos", 8) else 4
+private fun defaultZone(): Int = if (SystemInfo.isMac) {
+  Registry.intValue("popup.resize.zone.macos", 8) // for some reason, small values on macOS make it really uncomfortable
+}
+else if (SystemInfo.isWindows) {
+  Registry.intValue("popup.resize.zone.windows", 4)
+}
+else {
+  Registry.intValue("popup.resize.zone.linux", 4)
+}
