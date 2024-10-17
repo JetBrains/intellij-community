@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ThrowableNotNullFunction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -249,14 +250,14 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
 
   private data class FileDescriptor(
     val originalFilePath: IndexedFilePath,
-    val currentFile: VirtualFile
+    val currentFile: VirtualFile,
   )
 
   private fun resolveFiles(
     storedIndexedFileResolver: StoredIndexedFileResolver,
     errorCollector: ErrorCollector,
     indicator: ProgressIndicator,
-    project: Project
+    project: Project,
   ): List<FileDescriptor> {
     val allCurrentFiles = CurrentIndexedFileResolver.getAllToBeIndexedFilesInProject(project, indicator).values.flatMapTo(
       hashSetOf()) { it }
@@ -291,7 +292,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     storedIndexDir: Path,
     indicator: ProgressIndicator,
     errorCollector: ErrorCollector,
-    project: Project
+    project: Project,
   ) {
     val indexId = extension.name
     indicator.text = PerformanceTestingBundle.message("compare.indexes.comparing.index", indexId.name)
@@ -332,7 +333,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     storedIndex: UpdatableIndex<K, V, FileContent, *>,
     errorCollector: ErrorCollector,
     indicator: ProgressIndicator,
-    project: Project
+    project: Project,
   ) {
     val indexId = extension.name
     indicator.text = PerformanceTestingBundle.message("compare.indexes.comparing.forward.index", indexId.name)
@@ -350,7 +351,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     currentIndex: UpdatableIndex<K, V, FileContent, *>,
     errorCollector: ErrorCollector,
     indicator: ProgressIndicator,
-    project: Project
+    project: Project,
   ) {
     val indexId = extension.name
     indicator.text = PerformanceTestingBundle.message("compare.indexes.comparing.inverted.index", indexId.name)
@@ -380,11 +381,11 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
       indicator.fraction = index.toDouble() / allStoredKeys.size
 
       val storedFileIdToValue = errorCollector.runCatchingError {
-        runReadAction { storedIndex.getData(storedKey!!).toMap() }
+        runReadAction { storedIndex.withData(storedKey!!, ThrowableNotNullFunction { container -> container.toMap() }) }
       } ?: continue
 
       val currentFileIdToValue = errorCollector.runCatchingError {
-        runReadAction { currentIndex.getData(storedKey!!).toMap() }
+        runReadAction { currentIndex.withData(storedKey!!, ThrowableNotNullFunction{container->container.toMap()}) }
       } ?: continue
 
       for ((storedFileId, storedValue) in storedFileIdToValue) {
@@ -421,14 +422,18 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     allStoredKeys: Set<K>,
     allCurrentKeys: Set<K>,
     errorCollector: ErrorCollector,
-    project: Project
+    project: Project,
   ) {
     val missingKeys = allStoredKeys - allCurrentKeys
     if (missingKeys.isNotEmpty()) {
       val originalFileIdToFileDescriptor = resolvedFiles.associateBy { it.originalFilePath.originalFileSystemId }
       for (missingKey in missingKeys) {
         val storedFileIdToValue = errorCollector.runCatchingError {
-          runReadAction { storedIndex.getData(missingKey!!).toMap().filterKeys { it in originalFileIdToFileDescriptor } }
+          runReadAction {
+            storedIndex.withData(missingKey!!, ThrowableNotNullFunction { container ->
+              container.toMap().filterKeys { it in originalFileIdToFileDescriptor }
+            })
+          }
         } ?: continue
 
         if (storedFileIdToValue.isEmpty()) {

@@ -218,7 +218,10 @@ public final class DiscoveredTestDataHolder {
     try {
       MultiMap<String, String> result = new MultiMap<>();
       IOException[] exception = {null};
-      myTestFilesIndex.getData(fileId).forEach((testId, v) -> consumeDiscoveredTest(testId, frameworkId, result, exception));
+      myTestFilesIndex.withData(fileId, container -> {
+        container.forEach((testId, v) -> consumeDiscoveredTest(testId, frameworkId, result, exception));
+        return true;
+      });
       if (exception[0] != null) throw exception[0];
       return result;
     }
@@ -233,7 +236,10 @@ public final class DiscoveredTestDataHolder {
     try {
       MultiMap<String, String> result = new MultiMap<>();
       IOException[] exception = {null};
-      myDiscoveredTestsIndex.getData(classId).forEach((testId, value) -> consumeDiscoveredTest(testId, frameworkId, result, exception));
+      myDiscoveredTestsIndex.withData(classId, container -> {
+        container.forEach((testId, value) -> consumeDiscoveredTest(testId, frameworkId, result, exception));
+        return true;
+      });
       if (exception[0] != null) throw exception[0];
       return result;
     }
@@ -250,8 +256,10 @@ public final class DiscoveredTestDataHolder {
     try {
       MultiMap<String, String> result = new MultiMap<>();
       IOException[] exception = {null};
-      myDiscoveredTestsIndex.getData(classId).forEach(
-        (testId, value) -> !value.contains(methodId) || consumeDiscoveredTest(testId, frameworkId, result, exception));
+      myDiscoveredTestsIndex.withData(classId, container -> {
+        container.forEach((testId, value) -> !value.contains(methodId) || consumeDiscoveredTest(testId, frameworkId, result, exception));
+        return true;
+      });
       if (exception[0] != null) throw exception[0];
       return result;
     }

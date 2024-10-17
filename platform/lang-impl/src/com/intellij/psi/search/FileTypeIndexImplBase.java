@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.*;
@@ -26,6 +27,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntConsumer;
@@ -216,19 +218,20 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   }
 
   @Override
-  public @NotNull ValueContainer<Void> getData(@NotNull FileType type) throws StorageException {
+  public <R, E extends Exception> R withData(@NotNull FileType type,
+                                             @NotNull ThrowableNotNullFunction<ValueContainer<Void>, R, E> processor) throws StorageException, E {
     int fileTypeId = getFileTypeId(type);
-    ValueContainerImpl<Void> result = ValueContainerImpl.createNewValueContainer();
 
-    myLock.readLock().lock();
+    ValueContainerImpl<Void> container = ValueContainerImpl.createNewValueContainer();
+    Lock readLock = myLock.readLock();
+    readLock.lock();
     try {
-      processFileIdsForFileTypeId(fileTypeId, id -> result.addValue(id, null));
+      processFileIdsForFileTypeId(fileTypeId, id -> container.addValue(id, null));
+      return processor.fun(container);
     }
     finally {
-      myLock.readLock().unlock();
+      readLock.unlock();
     }
-
-    return result;
   }
 
   protected void notifyInvertedIndexChangedForFileTypeId(int id) {

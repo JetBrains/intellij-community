@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -276,8 +277,9 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public @NotNull ValueContainer<Value> getData(@NotNull Key key) {
-      return EmptyValueContainer.INSTANCE;
+    public <R, E extends Exception> R withData(@NotNull Key key,
+                                               @NotNull ThrowableNotNullFunction<ValueContainer<Value>, R, E> processor) throws E {
+      return processor.fun((ValueContainer<Value>)EmptyValueContainer.INSTANCE);
     }
 
     @Override

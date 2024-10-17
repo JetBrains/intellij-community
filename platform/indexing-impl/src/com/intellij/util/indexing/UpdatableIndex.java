@@ -20,10 +20,7 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
                          @NotNull GlobalSearchScope scope,
                          @Nullable IdFilter idFilter) throws StorageException;
 
-  //@NotNull ReadWriteLock getLock();
-
-  @NotNull
-  Map<Key, Value> getIndexedFileData(int fileId) throws StorageException;
+  @NotNull Map<Key, Value> getIndexedFileData(int fileId) throws StorageException;
 
   /**
    * Goal of {@code getFileIndexMetaData()} is to allow

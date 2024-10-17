@@ -24,7 +24,6 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
-import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
 import com.intellij.util.indexing.memory.InMemoryIndexStorage;
@@ -48,7 +47,9 @@ public final class StubIndexImpl extends StubIndexEx {
     Disabled,
     ChangedFilesCollector
   }
+
   public static final PerFileElementTypeStubChangeTrackingSource PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE;
+
   static {
     int sourceId = SystemProperties.getIntProperty("stub.index.per.file.element.type.stub.change.tracking.source", 1);
     PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE = PerFileElementTypeStubChangeTrackingSource.values()[sourceId];
@@ -130,8 +131,8 @@ public final class StubIndexImpl extends StubIndexEx {
 
     Path indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
     IndexVersion.IndexVersionDiff versionDiff = forceClean
-                                                 ? new IndexVersion.IndexVersionDiff.InitialBuild(version)
-                                                 : IndexVersion.versionDiffers(indexKey, version);
+                                                ? new IndexVersion.IndexVersionDiff.InitialBuild(version)
+                                                : IndexVersion.versionDiffers(indexKey, version);
 
     registrationResultSink.setIndexVersionDiff(indexKey, versionDiff);
     if (versionDiff != IndexVersion.IndexVersionDiff.UP_TO_DATE) {
@@ -255,7 +256,8 @@ public final class StubIndexImpl extends StubIndexEx {
           LOG.error(e);
         }
       }), false);
-    } finally {
+    }
+    finally {
       clearState();
     }
   }
@@ -279,13 +281,10 @@ public final class StubIndexImpl extends StubIndexEx {
 
   @Override
   void cleanupMemoryStorage() {
-    UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> stubUpdatingIndex = getStubUpdatingIndex();
-    //RC: don't expect stub indexes to be sharded, so ok to cast:
-    ((MapReduceIndex)stubUpdatingIndex).getStorage().withWriteLock(() -> {
-      for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
-        index.cleanupMemoryStorage();
-      }
-    });
+    //'eventually consistent'
+    for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
+      index.cleanupMemoryStorage();
+    }
   }
 
   void clearAllIndices() {

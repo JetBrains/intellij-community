@@ -83,17 +83,20 @@ class VcsLogFullDetailsIndex<T, D> implements Disposable {
   }
 
   private void iterateCommitIds(int key, @NotNull IntConsumer consumer) throws StorageException {
-    ValueContainer<T> data = myMapReduceIndex.getData(key);
-    data.forEach((id, value) -> {
-      consumer.accept(id);
-      return true;
+    myMapReduceIndex.withData(key, container -> {
+      return container.forEach((id, value) -> {
+        consumer.accept(id);
+        return true;
+      });
     });
   }
 
   protected void iterateCommitIdsAndValues(int key, @NotNull ObjIntConsumer<? super T> consumer) throws StorageException {
-    myMapReduceIndex.getData(key).forEach((id, value) -> {
-      consumer.accept(value, id);
-      return true;
+    myMapReduceIndex.withData(key, container -> {
+      return container.forEach((id, value) -> {
+        consumer.accept(value, id);
+        return true;
+      });
     });
   }
 

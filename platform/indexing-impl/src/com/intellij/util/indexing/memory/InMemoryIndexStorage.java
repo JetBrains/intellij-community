@@ -48,9 +48,16 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
   }
 
   @Override
-  public boolean processKeys(@NotNull Processor<? super K> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) {
-    try (var stamp = lockForRead()) {
+  public boolean processKeys(@NotNull Processor<? super K> processor,
+                             GlobalSearchScope scope,
+                             @Nullable IdFilter idFilter) {
+    ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    readLock.lock();
+    try {
       return ContainerUtil.and(inMemoryStorage.keySet(), processor::process);
+    }
+    finally {
+      readLock.unlock();
     }
   }
 

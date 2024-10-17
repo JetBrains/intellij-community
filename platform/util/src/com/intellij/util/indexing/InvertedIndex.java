@@ -2,7 +2,9 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.indexing.impl.InputData;
+import com.intellij.util.indexing.impl.ValueContainerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +12,30 @@ import org.jetbrains.annotations.Nullable;
  * Base interface for the <a href="https://en.wikipedia.org/wiki/Search_engine_indexing#Inverted_indices">inverted indexes</a>.
  */
 public interface InvertedIndex<Key, Value, Input> {
-  @NotNull ValueContainer<Value> getData(@NotNull Key key) throws StorageException;
+  /**
+   * This method is deprecated, because returned value container is hard to make thread-safe.
+   * So {@link #withData(Object, ThrowableNotNullFunction)} is a new method, and this method now returns a copy, which is
+   * thread-safe, but not very effective
+   */
+  @Deprecated
+  default @NotNull ValueContainer<Value> getData(@NotNull Key key) throws StorageException {
+    return withData(
+      key,
+      container -> {
+        ValueContainerImpl<Value> defensiveCopy = ValueContainerImpl.createNewValueContainer();
+        container.forEach( (id, value) -> {
+          defensiveCopy.addValue(id, value);
+          return true;
+        });
+        return defensiveCopy;
+      }
+    );
+  }
+
+
+  <R, E extends Exception> R withData(@NotNull Key key,
+                                      @NotNull ThrowableNotNullFunction<ValueContainer<Value>, R, E> processor) throws StorageException, E;
+
 
   /**
    * Maps input as the first stage and returns a computation that does actual index data structure update.

@@ -115,7 +115,7 @@ public class StringIndex {
 
   @Unmodifiable
   public List<String> getFilesByWord(@NotNull String word) throws StorageException {
-    return ContainerUtil.collect(myIndex.getData(word).getValueIterator());
+    return myIndex.withData(word, container -> ContainerUtil.collect(container.getValueIterator()));
   }
   
   public boolean update(@NotNull String path, @Nullable String content) {

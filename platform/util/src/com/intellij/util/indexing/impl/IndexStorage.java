@@ -2,6 +2,7 @@
 
 package com.intellij.util.indexing.impl;
 
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -13,6 +14,7 @@ import java.io.IOException;
 
 /**
  * Storage of inverted index data
+ *
  * @author Eugene Zhuravlev
  */
 public interface IndexStorage<Key, Value> extends IndexStorageLock, Flushable, Closeable {
@@ -23,14 +25,25 @@ public interface IndexStorage<Key, Value> extends IndexStorageLock, Flushable, C
   void removeAllValues(@NotNull Key key, int inputId) throws StorageException;
 
   default void updateValue(Key key, int inputId, Value newValue) throws StorageException {
-    removeAllValues(key, inputId);
-    addValue(key, inputId, newValue);
+    withWriteLock(() -> {
+      removeAllValues(key, inputId);
+      addValue(key, inputId, newValue);
+    });
   }
 
   void clear() throws StorageException;
 
-  //MAYBE RC: .read(key, Function<ValueContainer>) is a better design for multithreaded use
+
   @NotNull ValueContainer<Value> read(Key key) throws StorageException;
+
+  //MAYBE RC: a better design for multithreaded use -- drop read(key) or make it return a (defensive) copy of ValueContainer?
+  default <R, E extends Exception> R read(Key key,
+                                          @NotNull ThrowableNotNullFunction<? super ValueContainer<Value>, R, E> processor)
+    throws StorageException, E {
+    try (LockStamp stamp = lockForRead()) {
+      return processor.fun(read(key));
+    }
+  }
 
   /**
    * Drops (some of) cached data, without touching data that is modified and needs to be persisted.

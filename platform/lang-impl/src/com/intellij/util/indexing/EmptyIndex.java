@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.impl.InputData;
@@ -97,9 +98,9 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   }
 
   @Override
-  public @NotNull ValueContainer<Value> getData(@NotNull Key key) {
-    //noinspection unchecked
-    return EmptyValueContainer.INSTANCE;
+  public <R, E extends Exception> R withData(@NotNull Key key,
+                                             @NotNull ThrowableNotNullFunction<ValueContainer<Value>, R, E> processor) throws E {
+    return processor.fun((ValueContainer<Value>)EmptyValueContainer.INSTANCE);
   }
 
   @Override

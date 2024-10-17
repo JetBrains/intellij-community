@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
@@ -267,19 +268,9 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
   }
 
   @Override
-  public @NotNull ValueContainer<Value> getData(@NotNull Key key) throws StorageException {
-    return myStorage.withReadLock(() -> {
-      try {
-        if (isDisposed()) {
-          return ValueContainerImpl.createNewValueContainer();
-        }
-        IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
-        return myStorage.read(key);
-      }
-      finally {
-        IndexDebugProperties.DEBUG_INDEX_ID.remove();
-      }
-    });
+  public <R, E extends Exception> R withData(@NotNull Key key,
+                                             @NotNull ThrowableNotNullFunction<ValueContainer<Value>, R, E> processor) throws StorageException, E {
+    return myStorage.read(key, processor);
   }
 
   @Override

@@ -391,13 +391,12 @@ public abstract class StubIndexEx extends StubIndex {
       trace.totalKeysIndexed(MeasurableIndexStore.keysCountApproximatelyIfPossible(index));
       // disable up-to-date check to avoid locks on an attempt to acquire index write lock
       // while holding at the same time the readLock for this index
-      FileBasedIndexEx.disableUpToDateCheckIn(() -> {
-        try (LockStamp stamp = ((MapReduceIndex)getIndex(indexKey)).getStorage().lockForRead()) {
-        //Lock lock = stubUpdatingIndex.getLock().readLock();
-        //CancellationUtil.lockMaybeCancellable(lock);
-          return index.getData(dataKey).forEach(action);
-        }
-      });
+      FileBasedIndexEx.disableUpToDateCheckIn(
+        () -> index.withData(
+          dataKey,
+          container -> container.forEach(action)
+        )
+      );
       return action.result == null ? IntSets.EMPTY_SET : action.result;
     }
     catch (StorageException e) {

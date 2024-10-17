@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndex;
@@ -59,17 +58,19 @@ public class SensitiveFsReferenceIndexTest extends ReferenceIndexTestBase {
       ((MapReduceIndex<CompilerRef, Integer, CompiledFileData>)index.get(BACK_USAGES)).getStorage();
     ((MapIndexStorage<CompilerRef, Integer>)storage).processKeys(usage -> {
       try {
-        ValueContainer<Integer> data = index.get(BACK_USAGES).getData(usage);
-        data.forEach((id, value) -> {
-          try {
-            String fullName = filePathEnumerator.valueOf(id);
-            String fileName = PathUtil.getFileName(fullName);
-            fileNames.remove(fileName);
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-          return false;
+        index.get(BACK_USAGES).withData(usage, data -> {
+            data.forEach((id, value) -> {
+              try {
+                String fullName = filePathEnumerator.valueOf(id);
+                String fileName = PathUtil.getFileName(fullName);
+                fileNames.remove(fileName);
+              }
+              catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+              return false;
+            });
+            return true;
         });
       }
       catch (StorageException e) {

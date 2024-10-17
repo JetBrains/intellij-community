@@ -55,16 +55,14 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
 
   @Override
   public @NotNull Map<Key, Value> getIndexedFileData(int fileId) throws StorageException {
-    return getStorage().withReadLock(() -> {
-      try {
-        // TODO remove Collections.unmodifiableMap when ContainerUtil started to return unmodifiable map in all cases
-        //noinspection RedundantUnmodifiable
-        return Collections.unmodifiableMap(ContainerUtil.notNullize(getNullableIndexedData(fileId)));
-      }
-      catch (IOException e) {
-        throw new StorageException(e);
-      }
-    });
+    try {
+      // TODO remove Collections.unmodifiableMap when ContainerUtil started to return unmodifiable map in all cases
+      //noinspection RedundantUnmodifiable
+      return Collections.unmodifiableMap(ContainerUtil.notNullize(getNullableIndexedData(fileId)));
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
   }
 
   protected @Nullable Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
@@ -76,16 +74,17 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
       // (it _must_ be <=1 entry there, with Key=(Integer)fileId)
       @SuppressWarnings("unchecked")
       Key key = (Key)(Object)fileId;
-      Ref<Map<Key, Value>> result = new Ref<>(Collections.emptyMap());
-      ValueContainer<Value> container = getData(key);
-      container.forEach((id, value) -> {
-        boolean acceptNullValues = ((SingleEntryIndexer<?>)indexer()).isAcceptNullValues();
-        if (value != null || acceptNullValues) {
-          result.set(Collections.singletonMap(key, value));
-        }
-        return false;
+      return withData(key, container -> {
+        Ref<Map<Key, Value>> result = new Ref<>(Collections.emptyMap());
+        container.forEach((id, value) -> {
+          boolean acceptNullValues = ((SingleEntryIndexer<?>)indexer()).isAcceptNullValues();
+          if (value != null || acceptNullValues) {
+            result.set(Collections.singletonMap(key, value));
+          }
+          return false;
+        });
+        return result.get();
       });
-      return result.get();
     }
     if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor) {
       ByteArraySequence serializedInputData = getForwardIndex().get(fileId);

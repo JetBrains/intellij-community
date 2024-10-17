@@ -30,7 +30,10 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
+import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
+import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
+import com.intellij.util.indexing.impl.UpdateData;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import it.unimi.dsi.fastutil.ints.*;
@@ -275,12 +278,14 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       IntSet fileIds = readIndexAndProcessExceptions(indexId, null, scope, index -> {
         IntSet fileIdsInner = new IntOpenHashSet();
         trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
-        index.getData(dataKey).forEach((id, value) -> {
-          ProgressManager.checkCanceled();
-          if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) return true;
-          fileIdsInner.add(id);
-          return true;
-        });
+        index.withData(dataKey,
+                       container -> container.forEach((id, value) -> {
+                         ProgressManager.checkCanceled();
+                         if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) return true;
+                         fileIdsInner.add(id);
+                         return true;
+                       })
+        );
         return fileIdsInner;
       });
 
@@ -318,10 +323,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   /**
    * Reads the index with 'computable' function (index -> R) and returns a result of a computation (R).
-   * Method takes care of all the gory details: ensuring index is initialized and up-to-date, locking, processing
-   * (possible) exceptions.
-   * Only read access is allowed inside 'computable' function: even though index argument is {@link UpdatableIndex}, computable
-   * must not call modification methods, like {@link UpdatableIndex#updateWith(UpdateData)} ot alike
+   * Method takes care of the gory details: ensures index is initialized and up-to-date, processes
+   * (possible) exceptions. But thread safety is a responsibility of calling code
+   * Only read access is allowed inside 'computable' function: even though index argument is {@link UpdatableIndex},
+   * computable must not call modification methods, like {@link UpdatableIndex#updateWith(UpdateData)} ot alike.
    */
   private @Nullable <K, V, R> R readIndexAndProcessExceptions(@NotNull ID<K, V> indexId,
                                                               @Nullable VirtualFile restrictToFile,
@@ -338,8 +343,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       TRACE_OF_ENTRIES_LOOKUP.get()
         .indexValidationFinished();
 
-      //noinspection unchecked
-      return ((MapReduceIndex<K, V, FileContent>)index).getStorage().withReadLock(() -> computable.convert(index));
+      //FIXME RC: need to make all the usages thread-safe
+      //return base.getStorage().withReadLock(() -> computable.convert(index));
+      return computable.convert(index);
     }
     catch (StorageException e) {
       TRACE_OF_ENTRIES_LOOKUP.get().lookupFailed();
@@ -423,12 +429,14 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       trace.keysWithAND(1)
         .withProject(scope.getProject());
       //TODO RC: .scopeFiles( restrictToFile == null ? -1 : 1 )
-      ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, Boolean, StorageException> convertor = index -> {
+      Boolean result = readIndexAndProcessExceptions(indexId, restrictToFile, scope, index -> {
         trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
-        var valuesIterator = (InvertedIndexValueIterator<V>)index.getData(dataKey).getValueIterator();
-        return valueProcessor.process(valuesIterator);
-      };
-      Boolean result = readIndexAndProcessExceptions(indexId, restrictToFile, scope, convertor);
+        return index.withData(dataKey, container -> {
+          var valuesIterator =(InvertedIndexValueIterator<V>)container.getValueIterator();
+          return valueProcessor.process(valuesIterator);
+        });
+      });
+      //noinspection UnnecessaryUnboxing
       return result == null || result.booleanValue();
     }
   }
@@ -561,7 +569,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
                                      accessibleFileFilter.test(id) &&
                                      (restrictedIds == null || restrictedIds.contains(id));
-      ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
+
+      IntSet ids = readIndexAndProcessExceptions(indexId, null, scope, index -> {
         trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
         IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
         try {
@@ -570,9 +579,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         finally {
           IndexDebugProperties.DEBUG_INDEX_ID.remove();
         }
-      };
-
-      IntSet ids = readIndexAndProcessExceptions(indexId, null, scope, convertor);
+      });
 
       trace.lookupResultSize(ids != null ? ids.size() : 0);
       return ids;
@@ -589,7 +596,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
       IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
                                      accessibleFileFilter.test(id);
-      ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
+
+      IntSet ids = readIndexAndProcessExceptions(indexId, null, filter, index -> {
         trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
         IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
         try {
@@ -598,9 +606,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         finally {
           IndexDebugProperties.DEBUG_INDEX_ID.remove();
         }
-      };
-
-      IntSet ids = readIndexAndProcessExceptions(indexId, null, filter, convertor);
+      });
       trace.lookupResultSize(ids != null ? ids.size() : 0);
       return ids;
     }
