@@ -228,6 +228,15 @@ public class JavaHomeFinderBasic {
     return Files.isDirectory(javaHome) ? javaHome : null;
   }
 
+  protected @Nullable Path getPathInEnvironmentVariable(String variable, String path) {
+    String dir = mySystemInfo.getEnvironmentVariable(variable);
+    if (dir != null) {
+      Path primaryDir = mySystemInfo.getPath(path);
+      if (safeIsDirectory(primaryDir)) return primaryDir;
+    }
+    return null;
+  }
+
   /**
    * Finds Java home directories installed by <a href="https://github.com/sdkman">SDKMAN</a>.
    */
@@ -256,11 +265,32 @@ public class JavaHomeFinderBasic {
    * Finds Java home directory installed by <a href="https://mise.jdx.dev/lang/java.html">mise</a>.
    */
   private @NotNull Set<String> findJavaInstalledByMise() {
-    Path jdks = getPathInUserHome(".local/share/mise/installs/java/");
-    if (jdks == null || !Files.isDirectory(jdks)) return Collections.emptySet();
+    Path installsDir = findMiseInstallsDir();
+    if (installsDir == null) return Collections.emptySet();
+    Path jdks = installsDir.resolve("java");
     return scanAll(jdks, true).stream()
       .filter(path -> !Files.isSymbolicLink(Path.of(path)))
       .collect(Collectors.toSet());
+  }
+
+  @Nullable
+  private Path findMiseInstallsDir() {
+    // try to use environment variable for custom data directory
+    // https://mise.jdx.dev/configuration.html#mise-data-dir
+    Path miseDataDir = getPathInEnvironmentVariable("MISE_DATA_DIR", "installs");
+    if (miseDataDir != null) return miseDataDir;
+
+    Path xdgDataDir = getPathInEnvironmentVariable("XDG_DATA_DIR", "mise/installs");
+    if (xdgDataDir != null) return xdgDataDir;
+
+    // finally, try the usual location in Unix or macOS
+    if (!(this instanceof JavaHomeFinderWindows) && !(this instanceof JavaHomeFinderWsl)) {
+      Path installsDir = getPathInUserHome(".local/share/mise/installs");
+      if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;
+    }
+
+    // no chances
+    return null;
   }
 
   private @Nullable Path findSdkManCandidatesDir() {
