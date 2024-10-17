@@ -1,4 +1,4 @@
-# $Id: standalone.py 4802 2006-11-12 18:02:17Z goodger $
+# $Id: standalone.py 9539 2024-02-17 10:36:51Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -7,6 +7,7 @@ Standalone file Reader for the reStructuredText markup syntax.
 """
 
 __docformat__ = 'reStructuredText'
+
 
 from docutils import frontend, readers
 from docutils.transforms import frontmatter, references, misc
@@ -21,24 +22,24 @@ class Reader(readers.Reader):
     """A single document tree."""
 
     settings_spec = (
-        'Standalone Reader',
+        'Standalone Reader Options',
         None,
         (('Disable the promotion of a lone top-level section title to '
           'document title (and subsequent section title to document '
           'subtitle promotion; enabled by default).',
           ['--no-doc-title'],
-          {'dest': 'doctitle_xform', 'action': 'store_false', 'default': 1,
-           'validator': frontend.validate_boolean}),
+          {'dest': 'doctitle_xform', 'action': 'store_false',
+           'default': True, 'validator': frontend.validate_boolean}),
          ('Disable the bibliographic field list transform (enabled by '
           'default).',
           ['--no-doc-info'],
-          {'dest': 'docinfo_xform', 'action': 'store_false', 'default': 1,
-           'validator': frontend.validate_boolean}),
+          {'dest': 'docinfo_xform', 'action': 'store_false',
+           'default': True, 'validator': frontend.validate_boolean}),
          ('Activate the promotion of lone subsection titles to '
           'section subtitles (disabled by default).',
           ['--section-subtitles'],
-          {'dest': 'sectsubtitle_xform', 'action': 'store_true', 'default': 0,
-           'validator': frontend.validate_boolean}),
+          {'dest': 'sectsubtitle_xform', 'action': 'store_true',
+           'default': False, 'validator': frontend.validate_boolean}),
          ('Deactivate the promotion of lone subsection titles.',
           ['--no-section-subtitles'],
           {'dest': 'sectsubtitle_xform', 'action': 'store_false'}),
@@ -48,7 +49,7 @@ class Reader(readers.Reader):
     config_section_dependencies = ('readers',)
 
     def get_transforms(self):
-        return readers.Reader.get_transforms(self) + [
+        return super().get_transforms() + [
             references.Substitutions,
             references.PropagateTargets,
             frontmatter.DocTitle,

@@ -1,5 +1,4 @@
-# coding: utf-8
-# $Id: __init__.py 7668 2013-06-04 12:46:30Z milde $
+# $Id: __init__.py 9544 2024-02-17 10:37:45Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -9,17 +8,19 @@ Miscellaneous utilities for the documentation utilities.
 
 __docformat__ = 'reStructuredText'
 
+import sys
 import os
 import os.path
+from pathlib import PurePath, Path
 import re
-import sys
-import unicodedata
+import itertools
 import warnings
+import unicodedata
 
-import docutils.io
-from docutils import ApplicationError, DataError
-from docutils import nodes
-from docutils.utils.error_reporting import ErrorOutput, SafeString
+from docutils import ApplicationError, DataError, __version_info__
+from docutils import io, nodes
+# for backwards compatibility
+from docutils.nodes import unescape  # noqa: F401
 
 
 class SystemMessage(ApplicationError):
@@ -29,7 +30,8 @@ class SystemMessage(ApplicationError):
         self.level = level
 
 
-class SystemMessagePropagation(ApplicationError): pass
+class SystemMessagePropagation(ApplicationError):
+    pass
 
 
 class Reporter:
@@ -71,7 +73,7 @@ class Reporter:
      INFO_LEVEL,
      WARNING_LEVEL,
      ERROR_LEVEL,
-     SEVERE_LEVEL) = list(range(5))
+     SEVERE_LEVEL) = range(5)
 
     def __init__(self, source, report_level, halt_level, stream=None,
                  debug=False, encoding=None, error_handler='backslashreplace'):
@@ -108,8 +110,8 @@ class Reporter:
         """The level at or above which `SystemMessage` exceptions
         will be raised, halting execution."""
 
-        if not isinstance(stream, ErrorOutput):
-            stream = ErrorOutput(stream, encoding, error_handler)
+        if not isinstance(stream, io.ErrorOutput):
+            stream = io.ErrorOutput(stream, encoding, error_handler)
 
         self.stream = stream
         """Where warning output is sent."""
@@ -126,13 +128,14 @@ class Reporter:
 
     def set_conditions(self, category, report_level, halt_level,
                        stream=None, debug=False):
-        warnings.warn('docutils.utils.Reporter.set_conditions deprecated; '
-                      'set attributes via configuration settings or directly',
+        warnings.warn('docutils.utils.Reporter.set_conditions() deprecated; '
+                      'Will be removed in Docutils 0.21 or later. '
+                      'Set attributes via configuration settings or directly.',
                       DeprecationWarning, stacklevel=2)
         self.report_level = report_level
         self.halt_level = halt_level
-        if not isinstance(stream, ErrorOutput):
-            stream = ErrorOutput(stream, self.encoding, self.error_handler)
+        if not isinstance(stream, io.ErrorOutput):
+            stream = io.ErrorOutput(stream, self.encoding, self.error_handler)
         self.stream = stream
         self.debug_flag = debug
 
@@ -156,9 +159,9 @@ class Reporter:
 
         Raise an exception or generate a warning if appropriate.
         """
-        # `message` can be a `string`, `unicode`, or `Exception` instance.
+        # `message` can be a `str` or `Exception` instance.
         if isinstance(message, Exception):
-            message = SafeString(message)
+            message = str(message)
 
         attributes = kwargs.copy()
         if 'base_node' in kwargs:
@@ -168,11 +171,11 @@ class Reporter:
                 attributes.setdefault('source', source)
             if line is not None:
                 attributes.setdefault('line', line)
-                # assert source is not None, "node has line- but no source-argument"
-        if not 'source' in attributes: # 'line' is absolute line number
-            try: # look up (source, line-in-source)
+                # assert source is not None, "line- but no source-argument"
+        if 'source' not in attributes:
+            # 'line' is absolute line number
+            try:
                 source, line = self.get_source_and_line(attributes.get('line'))
-                # print "locator lookup", kwargs.get('line'), "->", source, line
             except AttributeError:
                 source, line = None, None
             if source is not None:
@@ -264,8 +267,8 @@ def extract_extension_options(field_list, options_spec):
           missing data, bad quotes, etc.).
     """
     option_list = extract_options(field_list)
-    option_dict = assemble_option_dict(option_list, options_spec)
-    return option_dict
+    return assemble_option_dict(option_list, options_spec)
+
 
 def extract_options(field_list):
     """
@@ -289,8 +292,10 @@ def extract_options(field_list):
         body = field[1]
         if len(body) == 0:
             data = None
-        elif len(body) > 1 or not isinstance(body[0], nodes.paragraph) \
-              or len(body[0]) != 1 or not isinstance(body[0][0], nodes.Text):
+        elif (len(body) > 1
+              or not isinstance(body[0], nodes.paragraph)
+              or len(body[0]) != 1
+              or not isinstance(body[0][0], nodes.Text)):
             raise BadOptionDataError(
                   'extension option field body may contain\n'
                   'a single paragraph only (option "%s")' % name)
@@ -298,6 +303,7 @@ def extract_options(field_list):
             data = body[0][0].astext()
         option_list.append((name, data))
     return option_list
+
 
 def assemble_option_dict(option_list, options_spec):
     """
@@ -337,23 +343,26 @@ class NameValueError(DataError): pass
 
 def decode_path(path):
     """
-    Ensure `path` is Unicode. Return `nodes.reprunicode` object.
+    Ensure `path` is Unicode. Return `str` instance.
 
-    Decode file/path string in a failsave manner if not already done.
+    Decode file/path string in a failsafe manner if not already done.
     """
-    # see also http://article.gmane.org/gmane.text.docutils.user/2905
+    # TODO: is this still required with Python 3?
     if isinstance(path, str):
         return path
     try:
         path = path.decode(sys.getfilesystemencoding(), 'strict')
-    except AttributeError: # default value None has no decode method
-        return nodes.reprunicode(path)
+    except AttributeError:  # default value None has no decode method
+        if not path:
+            return ''
+        raise ValueError('`path` value must be a String or ``None``, '
+                         f'not {path!r}')
     except UnicodeDecodeError:
         try:
             path = path.decode('utf-8', 'strict')
         except UnicodeDecodeError:
             path = path.decode('ascii', 'replace')
-    return nodes.reprunicode(path)
+    return path
 
 
 def extract_name_value(line):
@@ -400,6 +409,7 @@ def extract_name_value(line):
         attlist.append((attname.lower(), data))
     return attlist
 
+
 def new_reporter(source_path, settings):
     """
     Return a new Reporter object.
@@ -417,6 +427,7 @@ def new_reporter(source_path, settings):
         error_handler=settings.error_encoding_error_handler)
     return reporter
 
+
 def new_document(source_path, settings=None):
     """
     Return a new empty document object.
@@ -427,22 +438,32 @@ def new_document(source_path, settings=None):
         `settings` : optparse.Values object
             Runtime settings.  If none are provided, a default core set will
             be used.  If you will use the document object with any Docutils
-            components, you must provide their default settings as well.  For
-            example, if parsing, at least provide the parser settings,
-            obtainable as follows::
+            components, you must provide their default settings as well.
 
-                settings = docutils.frontend.OptionParser(
-                    components=(docutils.parsers.rst.Parser,)
-                    ).get_default_values()
+            For example, if parsing rST, at least provide the rst-parser
+            settings, obtainable as follows:
+
+            Defaults for parser component::
+
+                settings = docutils.frontend.get_default_settings(
+                               docutils.parsers.rst.Parser)
+
+            Defaults and configuration file customizations::
+
+                settings = docutils.core.Publisher(
+                    parser=docutils.parsers.rst.Parser).get_settings()
+
     """
+    # Import at top of module would lead to circular dependency!
     from docutils import frontend
     if settings is None:
-        settings = frontend.OptionParser().get_default_values()
+        settings = frontend.get_default_settings()
     source_path = decode_path(source_path)
     reporter = new_reporter(source_path, settings)
     document = nodes.document(settings, reporter, source=source_path)
     document.note_source(source_path, -1)
     return document
+
 
 def clean_rcs_keywords(paragraph, keyword_substitutions):
     if len(paragraph) == 1 and isinstance(paragraph[0], nodes.Text):
@@ -453,14 +474,44 @@ def clean_rcs_keywords(paragraph, keyword_substitutions):
                 paragraph[0] = nodes.Text(pattern.sub(substitution, textnode))
                 return
 
+
 def relative_path(source, target):
     """
     Build and return a path to `target`, relative to `source` (both files).
 
-    If there is no common prefix, return the absolute path to `target`.
+    The return value is a `str` suitable to be included in `source`
+    as a reference to `target`.
+
+    :Parameters:
+        `source` : path-like object or None
+            Path of a file in the start directory for the relative path
+            (the file does not need to exist).
+            The value ``None`` is replaced with "<cwd>/dummy_file".
+        `target` : path-like object
+            End point of the returned relative path.
+
+    Differences to `os.path.relpath()`:
+
+    * Inverse argument order.
+    * `source` is assumed to be a FILE in the start directory (add a "dummy"
+      file name to obtain the path relative from a directory)
+      while `os.path.relpath()` expects a DIRECTORY as `start` argument.
+    * Always use Posix path separator ("/") for the output.
+    * Use `os.sep` for parsing the input
+      (changing the value of `os.sep` is ignored by `os.relpath()`).
+    * If there is no common prefix, return the absolute path to `target`.
+
+    Differences to `pathlib.PurePath.relative_to(other)`:
+
+    * pathlib offers an object oriented interface.
+    * `source` expects path to a FILE while `other` expects a DIRECTORY.
+    * `target` defaults to the cwd, no default value for `other`.
+    * `relative_path()` always returns a path (relative or absolute),
+      while `PurePath.relative_to()` raises a ValueError
+      if `target` is not a subpath of `other` (no ".." inserted).
     """
     source_parts = os.path.abspath(source or type(target)('dummy_file')
-                                  ).split(os.sep)
+                                   ).split(os.sep)
     target_parts = os.path.abspath(target).split(os.sep)
     # Check first 2 parts because '/dir'.split('/') == ['', 'dir']:
     if source_parts[:2] != target_parts[:2]:
@@ -478,6 +529,7 @@ def relative_path(source, target):
     parts = ['..'] * (len(source_parts) - 1) + target_parts
     return '/'.join(parts)
 
+
 def get_stylesheet_reference(settings, relative_to=None):
     """
     Retrieve a stylesheet reference from the settings object.
@@ -486,21 +538,26 @@ def get_stylesheet_reference(settings, relative_to=None):
     enable specification of multiple stylesheets as a comma-separated
     list.
     """
+    warnings.warn('utils.get_stylesheet_reference()'
+                  ' is obsoleted by utils.get_stylesheet_list()'
+                  ' and will be removed in Docutils 2.0.',
+                  DeprecationWarning, stacklevel=2)
     if settings.stylesheet_path:
         assert not settings.stylesheet, (
             'stylesheet and stylesheet_path are mutually exclusive.')
-        if relative_to == None:
+        if relative_to is None:
             relative_to = settings._destination
         return relative_path(relative_to, settings.stylesheet_path)
     else:
         return settings.stylesheet
 
+
 # Return 'stylesheet' or 'stylesheet_path' arguments as list.
 #
 # The original settings arguments are kept unchanged: you can test
-# with e.g. ``if settings.stylesheet_path:``
+# with e.g. ``if settings.stylesheet_path: ...``.
 #
-# Differences to ``get_stylesheet_reference``:
+# Differences to the depracated `get_stylesheet_reference()`:
 # * return value is a list
 # * no re-writing of the path (and therefore no optional argument)
 #   (if required, use ``utils.relative_path(source, target)``
@@ -512,12 +569,15 @@ def get_stylesheet_list(settings):
     assert not (settings.stylesheet and settings.stylesheet_path), (
             'stylesheet and stylesheet_path are mutually exclusive.')
     stylesheets = settings.stylesheet_path or settings.stylesheet or []
-    # programmatically set default can be string or unicode:
+    # programmatically set default may be string with comma separated list:
     if not isinstance(stylesheets, list):
         stylesheets = [path.strip() for path in stylesheets.split(',')]
-    # expand relative paths if found in stylesheet-dirs:
-    return [find_file_in_dirs(path, settings.stylesheet_dirs)
-            for path in stylesheets]
+    if settings.stylesheet_path:
+        # expand relative paths if found in stylesheet-dirs:
+        stylesheets = [find_file_in_dirs(path, settings.stylesheet_dirs)
+                       for path in stylesheets]
+    return stylesheets
+
 
 def find_file_in_dirs(path, dirs):
     """
@@ -525,17 +585,15 @@ def find_file_in_dirs(path, dirs):
 
     Return the first expansion that matches an existing file.
     """
-    if os.path.isabs(path):
-        return path
+    path = Path(path)
+    if path.is_absolute():
+        return path.as_posix()
     for d in dirs:
-        if d == '.':
-            f = path
-        else:
-            d = os.path.expanduser(d)
-            f = os.path.join(d, path)
-        if os.path.exists(f):
-            return f
-    return path
+        f = Path(d).expanduser() / path
+        if f.exists():
+            return f.as_posix()
+    return path.as_posix()
+
 
 def get_trim_footnote_ref_space(settings):
     """
@@ -546,11 +604,11 @@ def get_trim_footnote_ref_space(settings):
     If trim_footnote_reference_space is None, return False unless the
     footnote reference style is 'superscript'.
     """
-    if settings.trim_footnote_reference_space is None:
-        return hasattr(settings, 'footnote_references') and \
-               settings.footnote_references == 'superscript'
+    if settings.setdefault('trim_footnote_reference_space', None) is None:
+        return getattr(settings, 'footnote_references', None) == 'superscript'
     else:
         return settings.trim_footnote_reference_space
+
 
 def get_source_line(node):
     """
@@ -562,6 +620,7 @@ def get_source_line(node):
             return node.source, node.line
         node = node.parent
     return None, None
+
 
 def escape2null(text):
     """Return a string with escape-backslashes converted to nulls."""
@@ -576,38 +635,40 @@ def escape2null(text):
         parts.append('\x00' + text[found+1:found+2])
         start = found + 2               # skip character after escape
 
-def unescape(text, restore_backslashes=False):
+
+def split_escaped_whitespace(text):
     """
-    Return a string with nulls removed or restored to backslashes.
-    Backslash-escaped spaces are also removed.
+    Split `text` on escaped whitespace (null+space or null+newline).
+    Return a list of strings.
     """
-    if restore_backslashes:
-        return text.replace('\x00', '\\')
-    else:
-        for sep in ['\x00 ', '\x00\n', '\x00']:
-            text = ''.join(text.split(sep))
-        return text
+    strings = text.split('\x00 ')
+    strings = [string.split('\x00\n') for string in strings]
+    # flatten list of lists of strings to list of strings:
+    return list(itertools.chain(*strings))
+
 
 def strip_combining_chars(text):
-    if isinstance(text, str) and sys.version_info < (3,0):
-        return text
-    return ''.join([c for c in text if not unicodedata.combining(c)])
+    return ''.join(c for c in text if not unicodedata.combining(c))
+
 
 def find_combining_chars(text):
     """Return indices of all combining chars in  Unicode string `text`.
 
-    >>> find_combining_chars(u'A t̆ab̆lĕ')
+    >>> from docutils.utils import find_combining_chars
+    >>> find_combining_chars('A t̆ab̆lĕ')
     [3, 6, 9]
+
     """
-    if isinstance(text, str) and sys.version_info < (3,0):
-        return []
-    return [i for i,c in enumerate(text) if unicodedata.combining(c)]
+    return [i for i, c in enumerate(text) if unicodedata.combining(c)]
+
 
 def column_indices(text):
     """Indices of Unicode string `text` when skipping combining characters.
 
-    >>> column_indices(u'A t̆ab̆lĕ')
+    >>> from docutils.utils import column_indices
+    >>> column_indices('A t̆ab̆lĕ')
     [0, 1, 2, 4, 5, 7, 8]
+
     """
     # TODO: account for asian wide chars here instead of using dummy
     # replacements in the tableparser?
@@ -616,73 +677,79 @@ def column_indices(text):
         string_indices[index] = None
     return [i for i in string_indices if i is not None]
 
+
 east_asian_widths = {'W': 2,   # Wide
                      'F': 2,   # Full-width (wide)
                      'Na': 1,  # Narrow
                      'H': 1,   # Half-width (narrow)
                      'N': 1,   # Neutral (not East Asian, treated as narrow)
-                     'A': 1}   # Ambiguous (s/b wide in East Asian context,
-                               # narrow otherwise, but that doesn't work)
+                     'A': 1,   # Ambiguous (s/b wide in East Asian context,
+                     }         # narrow otherwise, but that doesn't work)
 """Mapping of result codes from `unicodedata.east_asian_widt()` to character
 column widths."""
+
 
 def column_width(text):
     """Return the column width of text.
 
     Correct ``len(text)`` for wide East Asian and combining Unicode chars.
     """
-    if isinstance(text, str) and sys.version_info < (3,0):
-        return len(text)
-    try:
-        width = sum([east_asian_widths[unicodedata.east_asian_width(c)]
-                     for c in text])
-    except AttributeError:  # east_asian_width() New in version 2.4.
-        width = len(text)
+    width = sum(east_asian_widths[unicodedata.east_asian_width(c)]
+                for c in text)
     # correction for combining chars:
     width -= len(find_combining_chars(text))
     return width
 
-def uniq(L):
-     r = []
-     for item in L:
-         if not item in r:
-             r.append(item)
-     return r
 
-# by Li Daobing http://code.activestate.com/recipes/190465/
-# since Python 2.6 there is also itertools.combinations()
-def unique_combinations(items, n):
-    """Return n-length tuples, in sorted order, no repeated elements"""
-    if n==0: yield []
-    else:
-        for i in range(len(items)-n+1):
-            for cc in unique_combinations(items[i+1:],n-1):
-                yield [items[i]]+cc
+def uniq(L):
+    r = []
+    for item in L:
+        if item not in r:
+            r.append(item)
+    return r
+
 
 def normalize_language_tag(tag):
     """Return a list of normalized combinations for a `BCP 47` language tag.
 
     Example:
 
+    >>> from docutils.utils import normalize_language_tag
     >>> normalize_language_tag('de_AT-1901')
     ['de-at-1901', 'de-at', 'de-1901', 'de']
+    >>> normalize_language_tag('de-CH-x_altquot')
+    ['de-ch-x-altquot', 'de-ch', 'de-x-altquot', 'de']
+
     """
     # normalize:
-    tag = tag.lower().replace('_','-')
+    tag = tag.lower().replace('-', '_')
     # split (except singletons, which mark the following tag as non-standard):
-    tag = re.sub(r'-([a-zA-Z0-9])-', r'-\1_', tag)
-    taglist = []
-    subtags = [subtag.replace('_', '-') for subtag in tag.split('-')]
-    base_tag = [subtags.pop(0)]
+    tag = re.sub(r'_([a-zA-Z0-9])_', r'_\1-', tag)
+    subtags = [subtag for subtag in tag.split('_')]
+    base_tag = (subtags.pop(0),)
     # find all combinations of subtags
+    taglist = []
     for n in range(len(subtags), 0, -1):
-        for tags in unique_combinations(subtags, n):
+        for tags in itertools.combinations(subtags, n):
             taglist.append('-'.join(base_tag+tags))
     taglist += base_tag
     return taglist
 
 
-class DependencyList(object):
+def xml_declaration(encoding=None):
+    """Return an XML text declaration.
+
+    Include an encoding declaration, if `encoding`
+    is not 'unicode', '', or None.
+    """
+    if encoding and encoding.lower() != 'unicode':
+        encoding_declaration = f' encoding="{encoding}"'
+    else:
+        encoding_declaration = ''
+    return f'<?xml version="1.0"{encoding_declaration}?>\n'
+
+
+class DependencyList:
 
     """
     List of dependencies, with file recording support.
@@ -691,15 +758,19 @@ class DependencyList(object):
     to explicitly call the close() method.
     """
 
-    def __init__(self, output_file=None, dependencies=[]):
+    def __init__(self, output_file=None, dependencies=()):
         """
         Initialize the dependency list, automatically setting the
         output file to `output_file` (see `set_output()`) and adding
         all supplied dependencies.
+
+        If output_file is None, no file output is done when calling add().
         """
-        self.set_output(output_file)
-        for i in dependencies:
-            self.add(i)
+        self.list = []
+        self.file = None
+        if output_file:
+            self.set_output(output_file)
+        self.add(*dependencies)
 
     def set_output(self, output_file):
         """
@@ -710,36 +781,34 @@ class DependencyList(object):
         immediately overwritten.
 
         If output_file is '-', the output will be written to stdout.
-        If it is None, no file output is done when calling add().
         """
-        self.list = []
         if output_file:
             if output_file == '-':
-                of = None
+                self.file = sys.stdout
             else:
-                of = output_file
-            self.file = docutils.io.FileOutput(destination_path=of,
-                                   encoding='utf8', autoclose=False)
-        else:
-            self.file = None
+                self.file = open(output_file, 'w', encoding='utf-8')
 
-    def add(self, *filenames):
+    def add(self, *paths):
         """
-        If the dependency `filename` has not already been added,
-        append it to self.list and print it to self.file if self.file
-        is not None.
+        Append `path` to `self.list` unless it is already there.
+
+        Also append to `self.file` unless it is already there
+        or `self.file is `None`.
         """
-        for filename in filenames:
-            if not filename in self.list:
-                self.list.append(filename)
+        for path in paths:
+            if isinstance(path, PurePath):
+                path = path.as_posix()  # use '/' as separator
+            if path not in self.list:
+                self.list.append(path)
                 if self.file is not None:
-                    self.file.write(filename+'\n')
+                    self.file.write(path+'\n')
 
     def close(self):
         """
         Close the output file.
         """
-        self.file.close()
+        if self.file is not sys.stdout:
+            self.file.close()
         self.file = None
 
     def __repr__(self):
@@ -748,3 +817,45 @@ class DependencyList(object):
         except AttributeError:
             output_file = None
         return '%s(%r, %s)' % (self.__class__.__name__, output_file, self.list)
+
+
+release_level_abbreviations = {
+    'alpha': 'a',
+    'beta': 'b',
+    'candidate': 'rc',
+    'final': ''}
+
+
+def version_identifier(version_info=None):
+    """
+    Return a version identifier string built from `version_info`, a
+    `docutils.VersionInfo` namedtuple instance or compatible tuple. If
+    `version_info` is not provided, by default return a version identifier
+    string based on `docutils.__version_info__` (i.e. the current Docutils
+    version).
+    """
+    if version_info is None:
+        version_info = __version_info__
+    if version_info.micro:
+        micro = '.%s' % version_info.micro
+    else:
+        # 0 is omitted:
+        micro = ''
+    releaselevel = release_level_abbreviations[version_info.releaselevel]
+    if version_info.serial:
+        serial = version_info.serial
+    else:
+        # 0 is omitted:
+        serial = ''
+    if version_info.release:
+        dev = ''
+    else:
+        dev = '.dev'
+    version = '%s.%s%s%s%s%s' % (
+        version_info.major,
+        version_info.minor,
+        micro,
+        releaselevel,
+        serial,
+        dev)
+    return version

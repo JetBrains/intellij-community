@@ -1,4 +1,4 @@
-# $Id: peps.py 6433 2010-09-28 08:21:25Z milde $
+# $Id: peps.py 9037 2022-03-05 23:31:10Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -16,9 +16,8 @@ __docformat__ = 'reStructuredText'
 import os
 import re
 import time
-
-from docutils import DataError
 from docutils import nodes, utils, languages
+from docutils import DataError
 from docutils.transforms import Transform
 from docutils.transforms import parts, references, misc
 
@@ -32,8 +31,8 @@ class Headers(Transform):
     default_priority = 360
 
     pep_url = 'pep-%04d'
-    pep_cvs_url = ('http://svn.python.org/view/*checkout*'
-                   '/peps/trunk/pep-%04d.txt')
+    pep_cvs_url = ('http://hg.python.org'
+                   '/peps/file/default/pep-%04d.txt')
     rcs_keyword_substitutions = (
           (re.compile(r'\$' r'RCSfile: (.+),v \$$', re.IGNORECASE), r'\1'),
           (re.compile(r'\$[a-zA-Z]+: (.+) \$$'), r'\1'),)
@@ -43,13 +42,13 @@ class Headers(Transform):
             # @@@ replace these DataErrors with proper system messages
             raise DataError('Document tree is empty.')
         header = self.document[0]
-        if not isinstance(header, nodes.field_list) or \
-              'rfc2822' not in header['classes']:
+        if (not isinstance(header, nodes.field_list)
+            or 'rfc2822' not in header['classes']):
             raise DataError('Document does not begin with an RFC-2822 '
                             'header; it is not a PEP.')
         pep = None
         for field in header:
-            if field[0].astext().lower() == 'pep': # should be the first field
+            if field[0].astext().lower() == 'pep':  # should be the first field
                 value = field[1].astext()
                 try:
                     pep = int(value)
@@ -92,9 +91,12 @@ class Headers(Transform):
                                     'a single paragraph:\n%s'
                                     % field.pformat(level=1))
             elif name == 'last-modified':
-                date = time.strftime(
-                      '%d-%b-%Y',
-                      time.localtime(os.stat(self.document['source'])[8]))
+                try:
+                    date = time.strftime(
+                        '%d-%b-%Y',
+                        time.localtime(os.stat(self.document['source'])[8]))
+                except OSError:
+                    date = 'unknown'
                 if cvs_url:
                     body += nodes.paragraph(
                         '', '', nodes.reference('', date, refuri=cvs_url))
@@ -113,14 +115,14 @@ class Headers(Transform):
             elif name in ('replaces', 'replaced-by', 'requires'):
                 newbody = []
                 space = nodes.Text(' ')
-                for refpep in re.split(',?\s+', body.astext()):
+                for refpep in re.split(r',?\s+', body.astext()):
                     pepno = int(refpep)
                     newbody.append(nodes.reference(
                         refpep, refpep,
                         refuri=(self.document.settings.pep_base_url
                                 + self.pep_url % pepno)))
                     newbody.append(space)
-                para[:] = newbody[:-1] # drop trailing space
+                para[:] = newbody[:-1]  # drop trailing space
             elif name == 'last-modified':
                 utils.clean_rcs_keywords(para, self.rcs_keyword_substitutions)
                 if cvs_url:
@@ -215,7 +217,7 @@ class PEPZero(Transform):
     Special processing for PEP 0.
     """
 
-    default_priority =760
+    default_priority = 760
 
     def apply(self):
         visitor = PEPZeroSpecial(self.document)
@@ -277,6 +279,7 @@ class PEPZeroSpecial(nodes.SparseNodeVisitor):
 non_masked_addresses = ('peps@python.org',
                         'python-list@python.org',
                         'python-dev@python.org')
+
 
 def mask_email(ref, pepno=None):
     """
