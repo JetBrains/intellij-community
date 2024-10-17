@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.MarkupModelEx
@@ -43,30 +44,26 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.Function
 import com.intellij.util.SlowOperations
 import com.intellij.util.UtilBundle.message
-import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
+import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.GridBag
-import com.intellij.util.ui.UIUtil
+import groovy.transform.Internal
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntBinaryOperator
-import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntMaps
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Container
-import java.util.*
-import java.util.function.Consumer
-import java.util.function.Supplier
 import javax.swing.JComponent
+
+private val LOG = logger<TrafficLightRenderer>()
 
 open class TrafficLightRenderer private constructor(
   project: Project,
@@ -74,46 +71,53 @@ open class TrafficLightRenderer private constructor(
   editor: Editor?
 ) : ErrorStripeRenderer, Disposable {
   protected val project: Project
-  private val myDocument: Document
-  private val myDaemonCodeAnalyzer: DaemonCodeAnalyzerImpl
+  private val document: Document
+  private val daemonCodeAnalyzer: DaemonCodeAnalyzerImpl
   val severityRegistrar: SeverityRegistrar
-  private val errorCount: Object2IntMap<HighlightSeverity?> = Object2IntMaps.synchronize<HighlightSeverity?>(
-    Object2IntOpenHashMap<HighlightSeverity?>())
+  private val errorCount = Object2IntMaps.synchronize(Object2IntOpenHashMap<HighlightSeverity>())
   protected val uIController: UIController
-  private val inLibrary: Boolean // true if getPsiFile() is in library sources
+  // true if getPsiFile() is in library sources
+  private val inLibrary: Boolean
   private val shouldHighlight: Boolean
   private var cachedErrors: IntArray = ArrayUtilRt.EMPTY_INT_ARRAY
-  private val myFileHighlightingSettings: MutableMap<Language?, FileHighlightingSetting?> // each root language -> its highlighting level
+  // each root language -> its highlighting level
+  private val fileHighlightingSettings: MutableMap<Language, FileHighlightingSetting>
 
   @Volatile
-  private var myHighlightingSettingsModificationCount: Long
+  private var highlightingSettingsModificationCount: Long
 
-  constructor(project: Project, document: Document) : this(project, document, null)
-  protected constructor(project: Project, editor: Editor) : this(project, editor.getDocument(), editor)
+  constructor(project: Project, document: Document) : this(project = project, document = document, editor = null)
+
+  @Internal
+  constructor(project: Project, editor: Editor) : this(project = project, document = editor.getDocument(), editor = editor)
 
   init {
-    ApplicationManager.getApplication().assertIsNonDispatchThread() // to be able to find PsiFile without "slow op in EDT" exceptions
+    // to be able to find PsiFile without "slow op in EDT" exceptions
+    ThreadingAssertions.assertBackgroundThread()
+
     this.project = project
-    myDaemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl
-    myDocument = document
+    daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl
+    this.document = document
     this.severityRegistrar = SeverityRegistrar.getSeverityRegistrar(this.project)
 
-    init(project, myDocument)
-    this.uIController = if (editor == null) createUIController() else createUIController(editor)
+    init(project, document)
+    uIController = if (editor == null) createUIController() else createUIController(editor)
     data class Stuff(
-      val fileHighlightingSettings: MutableMap<Language?, FileHighlightingSetting?>,
-      val inLibrary: Boolean,
-      val shouldHighlight: Boolean
+      @JvmField val fileHighlightingSettings: MutableMap<Language, FileHighlightingSetting>,
+      @JvmField val inLibrary: Boolean,
+      @JvmField val shouldHighlight: Boolean,
     )
 
-    val info = ReadAction.compute<Stuff, RuntimeException?>(ThrowableComputable {
-      val psiFile = this.psiFile
-      if (psiFile == null) {
-        return@compute Stuff(mutableMapOf<Language?, FileHighlightingSetting?>(), false, false)
-      }
+    val info = ReadAction.compute(ThrowableComputable {
+      val psiFile = psiFile ?: return@ThrowableComputable Stuff(
+        fileHighlightingSettings = mutableMapOf<Language, FileHighlightingSetting>(),
+        inLibrary = false,
+        shouldHighlight = false,
+      )
+
       val viewProvider = psiFile.getViewProvider()
       val languages = viewProvider.getLanguages()
-      val settingMap: MutableMap<Language?, FileHighlightingSetting?> = HashMap<Language?, FileHighlightingSetting?>(languages.size)
+      val settingMap = HashMap<Language, FileHighlightingSetting>(languages.size)
       val settings = HighlightingSettingsPerFile.getInstance(project)
       for (psiRoot in viewProvider.getAllFiles()) {
         val setting = settings.getHighlightingSettingForRoot(psiRoot)
@@ -121,15 +125,15 @@ open class TrafficLightRenderer private constructor(
       }
 
       val fileIndex = ProjectRootManager.getInstance(project).getFileIndex()
-      val virtualFile = checkNotNull(psiFile.getVirtualFile())
+      val virtualFile = psiFile.getVirtualFile()!!
       val inLib = fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile)
-      val shouldHighlight = ProblemHighlightFilter.shouldHighlightFile(this.psiFile)
-      Stuff(settingMap, inLib, shouldHighlight)
+      val shouldHighlight = ProblemHighlightFilter.shouldHighlightFile(psiFile)
+      Stuff(fileHighlightingSettings = settingMap, inLibrary = inLib, shouldHighlight = shouldHighlight)
     })
-    myFileHighlightingSettings = info.fileHighlightingSettings
+    fileHighlightingSettings = info.fileHighlightingSettings
     inLibrary = info.inLibrary
     shouldHighlight = info.shouldHighlight
-    myHighlightingSettingsModificationCount = HighlightingSettingsPerFile.getInstance(project).getModificationCount()
+    highlightingSettingsModificationCount = HighlightingSettingsPerFile.getInstance(project).getModificationCount()
   }
 
   private fun init(project: Project, document: Document) {
@@ -145,7 +149,7 @@ open class TrafficLightRenderer private constructor(
         incErrorCount(highlighter, -1)
       }
     })
-    UIUtil.invokeLaterIfNeeded(Runnable {
+    EdtInvocationManager.invokeLaterIfNeeded(Runnable {
       for (rangeHighlighter in model.getAllHighlighters()) {
         incErrorCount(rangeHighlighter, 1)
       }
@@ -153,7 +157,7 @@ open class TrafficLightRenderer private constructor(
   }
 
   private val psiFile: PsiFile?
-    get() = PsiDocumentManager.getInstance(this.project).getPsiFile(myDocument)
+    get() = PsiDocumentManager.getInstance(this.project).getPsiFile(document)
 
   open val errorCounts: IntArray
     /**
@@ -163,8 +167,8 @@ open class TrafficLightRenderer private constructor(
      */
     get() = cachedErrors.clone()
 
-  protected open fun refresh(editorMarkupModel: EditorMarkupModelImpl?) {
-    val severities = severityRegistrar.getAllSeverities()
+  open fun refresh(editorMarkupModel: EditorMarkupModelImpl?) {
+    val severities = severityRegistrar.allSeverities
     if (cachedErrors.size != severities.size) {
       cachedErrors = IntArray(severities.size)
     }
@@ -181,12 +185,13 @@ open class TrafficLightRenderer private constructor(
   }
 
   private fun incErrorCount(highlighter: RangeHighlighter, delta: Int) {
-    val info = HighlightInfo.fromRangeHighlighter(highlighter)
-    if (info == null) return
-    val infoSeverity = info.getSeverity()
-    if (infoSeverity.myVal <= HighlightSeverity.TEXT_ATTRIBUTES.myVal) return
+    val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return
+    val infoSeverity = info.severity
+    if (infoSeverity.myVal <= HighlightSeverity.TEXT_ATTRIBUTES.myVal) {
+      return
+    }
 
-    errorCount.mergeInt(infoSeverity, delta, IntBinaryOperator { a: Int, b: Int -> Integer.sum(a, b) })
+    errorCount.mergeInt(infoSeverity, delta, IntBinaryOperator { a, b -> Integer.sum(a, b) })
   }
 
   open val isValid: Boolean
@@ -201,7 +206,7 @@ open class TrafficLightRenderer private constructor(
         if (psiFile == null) return false
       }
       val settings = HighlightingSettingsPerFile.getInstance(psiFile!!.getProject())
-      return settings.getModificationCount() == myHighlightingSettingsModificationCount
+      return settings.getModificationCount() == highlightingSettingsModificationCount
     }
 
   @ApiStatus.Internal
@@ -260,7 +265,7 @@ open class TrafficLightRenderer private constructor(
       status.reasonWhyDisabled = DaemonBundle.message("process.title.project.is.disposed")
       return status
     }
-    if (!myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
+    if (!daemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
       if (!psiFile.isPhysical()) {
         status.reasonWhyDisabled = DaemonBundle.message("process.title.file.is.generated")
         return status
@@ -282,7 +287,7 @@ open class TrafficLightRenderer private constructor(
     val languages = provider.getLanguages()
     var shouldHighlight = languages.isEmpty()
 
-    for (entry in myFileHighlightingSettings.entries) {
+    for (entry in fileHighlightingSettings.entries) {
       val level: FileHighlightingSetting = entry.value!!
       shouldHighlight = shouldHighlight or (level != FileHighlightingSetting.SKIP_HIGHLIGHTING)
       status.minimumLevel = if (status.minimumLevel.compareTo(level) < 0) status.minimumLevel else level
@@ -303,14 +308,14 @@ open class TrafficLightRenderer private constructor(
 
     status.errorCounts = this.errorCounts
     status.passes = ContainerUtil.filter<ProgressableTextEditorHighlightingPass?>(
-      myDaemonCodeAnalyzer.getPassesToShowProgressFor(myDocument),
+      daemonCodeAnalyzer.getPassesToShowProgressFor(document),
       Condition { p: ProgressableTextEditorHighlightingPass? ->
         !StringUtil.isEmpty(
           p!!.getPresentableName()) && p.getProgress() >= 0
       })
 
-    status.errorAnalyzingFinished = myDaemonCodeAnalyzer.isAllAnalysisFinished(psiFile)
-    if (!myDaemonCodeAnalyzer.isUpdateByTimerEnabled()) {
+    status.errorAnalyzingFinished = daemonCodeAnalyzer.isAllAnalysisFinished(psiFile)
+    if (!daemonCodeAnalyzer.isUpdateByTimerEnabled()) {
       status.reasonWhySuspended = DaemonBundle.message("process.title.highlighting.is.paused.temporarily")
     }
     fillDaemonCodeAnalyzerErrorsStatus(status, severityRegistrar)
@@ -366,7 +371,7 @@ open class TrafficLightRenderer private constructor(
         details = DaemonBundle.message("shallow.analysis.completed.details")
         state = InspectionsState.SHALLOW_ANALYSIS_COMPLETE
       }
-      else if (myFileHighlightingSettings.containsValue(FileHighlightingSetting.ESSENTIAL)) {
+      else if (fileHighlightingSettings.containsValue(FileHighlightingSetting.ESSENTIAL)) {
         title = DaemonBundle.message("essential.analysis.completed")
         details = DaemonBundle.message("essential.analysis.completed.details")
         state = InspectionsState.ESSENTIAL_ANALYSIS_COMPLETE
@@ -486,63 +491,56 @@ open class TrafficLightRenderer private constructor(
       }
     }
 
-    override fun getHighlightLevels(): MutableList<LanguageHighlightLevel?> {
-      return ContainerUtil.map<MutableMap.MutableEntry<Language?, FileHighlightingSetting?>?, LanguageHighlightLevel?>(
-        myFileHighlightingSettings.entries,
-        Function { entry: MutableMap.MutableEntry<Language?, FileHighlightingSetting?>? ->
-          LanguageHighlightLevel(
-            entry!!.key!!.getID(), FileHighlightingSetting.toInspectionsLevel(
-              entry.value!!))
-        })
+    override fun getHighlightLevels(): List<LanguageHighlightLevel> {
+      return fileHighlightingSettings.entries.map { entry ->
+        LanguageHighlightLevel(langID = entry.key!!.id, level = FileHighlightingSetting.toInspectionsLevel(entry.value!!))
+      }
     }
 
     override fun setHighLightLevel(level: LanguageHighlightLevel) {
-      val psiFile: PsiFile? = this.psiFile
-      if (psiFile != null && !this.project.isDisposed() && !getHighlightLevels().contains(level)) {
+      val psiFile = psiFile
+      if (psiFile != null && !project.isDisposed() && !highlightLevels.contains(level)) {
         val viewProvider = psiFile.getViewProvider()
 
         val language = Language.findLanguageByID(level.langID)
         if (language != null) {
-          val root: PsiElement? = viewProvider.getPsi(language)
-          if (root == null) return
+          val root = viewProvider.getPsi(language) ?: return
           val setting = FileHighlightingSetting.fromInspectionsLevel(level.level)
           HighlightLevelUtil.forceRootHighlighting(root, setting)
-          InjectedLanguageManager.getInstance(this.project).dropFileCaches(psiFile)
-          myDaemonCodeAnalyzer.restart()
-          // after that TrafficLightRenderer will be recreated anew, no need to patch myFileHighlightingSettings
+          InjectedLanguageManager.getInstance(project).dropFileCaches(psiFile)
+          daemonCodeAnalyzer.restart()
+          // after that, TrafficLightRenderer will be recreated anew, no need to patch myFileHighlightingSettings
         }
       }
     }
 
     override fun fillHectorPanels(container: Container, gc: GridBag) {
-      val psiFile: PsiFile? = this.psiFile
-      if (psiFile != null) {
-        val list: MutableList<HectorComponentPanel> = ArrayList<HectorComponentPanel>()
-        for (hp in HectorComponentPanelsProvider.EP_NAME.getExtensionList(this.project)) {
-          val configurable = hp.createConfigurable(psiFile)
-          if (configurable != null) {
-            list.add(configurable)
-          }
+      val psiFile = psiFile ?: return
+      val list = ArrayList<HectorComponentPanel>()
+      for (hp in HectorComponentPanelsProvider.EP_NAME.getExtensionList(project)) {
+        val configurable = hp.createConfigurable(psiFile)
+        if (configurable != null) {
+          list.add(configurable)
         }
-        additionalPanels = list
+      }
+      additionalPanels = list
 
-        for (panel in additionalPanels) {
-          val c: JComponent?
-          try {
-            panel.reset()
-            c = panel.createComponent()
-          }
-          catch (e: ProcessCanceledException) {
-            throw e
-          }
-          catch (e: Throwable) {
-            Logger.getInstance(TrafficLightRenderer::class.java).error(e)
-            continue
-          }
+      for (panel in additionalPanels) {
+        val c: JComponent?
+        try {
+          panel.reset()
+          c = panel.createComponent()
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          Logger.getInstance(TrafficLightRenderer::class.java).error(e)
+          continue
+        }
 
-          if (c != null) {
-            container.add(c, gc.nextLine().next().fillCellHorizontally().coverLine().weightx(1.0))
-          }
+        if (c != null) {
+          container.add(c, gc.nextLine().next().fillCellHorizontally().coverLine().weightx(1.0))
         }
       }
     }
@@ -551,16 +549,18 @@ open class TrafficLightRenderer private constructor(
       if (additionalPanels.isEmpty()) {
         return true
       }
-      if (ContainerUtil.all<HectorComponentPanel?>(additionalPanels, Condition { p: HectorComponentPanel? -> p!!.canClose() })) {
-        val psiFile: PsiFile? = this.psiFile
-        if (additionalPanels.stream().filter { p: HectorComponentPanel? -> p!!.isModified() }.peek { panel: HectorComponentPanel? ->
-            Companion.applyPanel(
-              panel!!)
-          }.count() > 0) {
+      if (additionalPanels.all { it.canClose() }) {
+        val psiFile = psiFile
+        var hasModified = false
+        for (panel in additionalPanels.asSequence().filter { it.isModified() }) {
+          hasModified = true
+          applyPanel(panel)
+        }
+        if (hasModified) {
           if (psiFile != null) {
-            InjectedLanguageManager.getInstance(this.project).dropFileCaches(psiFile)
+            InjectedLanguageManager.getInstance(project).dropFileCaches(psiFile)
           }
-          myDaemonCodeAnalyzer.restart()
+          daemonCodeAnalyzer.restart()
         }
         return true
       }
@@ -568,112 +568,97 @@ open class TrafficLightRenderer private constructor(
     }
 
     override fun onClosePopup() {
-      additionalPanels.forEach(Consumer { p: HectorComponentPanel? -> p!!.disposeUIResources() })
-      additionalPanels = mutableListOf<HectorComponentPanel?>()
+      additionalPanels.forEach { it.disposeUIResources() }
+      additionalPanels = mutableListOf<HectorComponentPanel>()
     }
 
     override fun toggleProblemsView() {
-      val file: PsiFile? = this.psiFile
-      val virtualFile = if (file == null) null else file.getVirtualFile()
-      val document = if (file == null) null else file.getViewProvider().getDocument()
-      ProblemsView.toggleCurrentFileProblems(this.project, virtualFile, document)
+      val file = psiFile
+      val virtualFile = file?.getVirtualFile()
+      val document = file?.getViewProvider()?.getDocument()
+      ProblemsView.toggleCurrentFileProblems(project, virtualFile, document)
     }
   }
 
   protected open inner class DefaultUIController : AbstractUIController() {
     // only create actions when daemon widget used
-    private val menuActions: Supplier<MutableList<AnAction?>?> = SynchronizedClearableLazy<MutableList<AnAction?>?> {
-      val result: MutableList<AnAction?> = ArrayList<AnAction?>()
-      result.add(ActionManager.getInstance().getAction("ConfigureInspectionsAction"))
-      result.add(DaemonEditorPopup.createGotoGroup())
-      result.add(Separator.create())
-      result.add(ShowImportTooltipAction(this@TrafficLightRenderer))
-      result
+    @Suppress("RemoveRedundantQualifierName")
+    private val menuActions by lazy {
+      java.util.List.of(
+        ActionManager.getInstance().getAction("ConfigureInspectionsAction"),
+        DaemonEditorPopup.createGotoGroup(),
+        Separator.create(),
+        ShowImportTooltipAction(this@TrafficLightRenderer),
+      )
     }
 
-    override fun getActions(): MutableList<AnAction?> {
-      return menuActions.get()!!
-    }
+    override fun getActions(): List<AnAction> = menuActions
 
-    override fun isToolbarEnabled(): Boolean {
-      return true
-    }
+    override fun isToolbarEnabled(): Boolean = true
   }
 
-  // Actions shouldn't be anonymous classes for statistics reasons.
-  private class ShowImportTooltipAction(private val myRenderer: TrafficLightRenderer) : ToggleAction(
-    EditorBundle.message("iw.show.import.tooltip")) {
+  // actions shouldn't be anonymous classes for statistics reasons
+  private class ShowImportTooltipAction(private val renderer: TrafficLightRenderer)
+    : ToggleAction(EditorBundle.message("iw.show.import.tooltip")) {
     override fun isSelected(e: AnActionEvent): Boolean {
-      val psiFile = myRenderer.psiFile
-      return psiFile != null && myRenderer.myDaemonCodeAnalyzer.isImportHintsEnabled(psiFile)
+      val psiFile = renderer.psiFile
+      return psiFile != null && renderer.daemonCodeAnalyzer.isImportHintsEnabled(psiFile)
     }
 
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
-    }
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      val psiFile = myRenderer.psiFile
-      if (psiFile != null) {
-        myRenderer.myDaemonCodeAnalyzer.setImportHintsEnabled(psiFile, state)
-      }
+      renderer.daemonCodeAnalyzer.setImportHintsEnabled(renderer.psiFile ?: return, state)
     }
 
     override fun update(e: AnActionEvent) {
       super.update(e)
-      val psiFile = myRenderer.psiFile
-      e.getPresentation().setEnabled(psiFile != null && myRenderer.myDaemonCodeAnalyzer.isAutohintsAvailable(psiFile))
+      val psiFile = renderer.psiFile
+      e.presentation.setEnabled(psiFile != null && renderer.daemonCodeAnalyzer.isAutohintsAvailable(psiFile))
     }
 
-    override fun isDumbAware(): Boolean {
-      return true
-    }
+    override fun isDumbAware(): Boolean = true
   }
 
   fun invalidate() {
-    myHighlightingSettingsModificationCount = -1
+    highlightingSettingsModificationCount = -1
   }
+}
 
-  companion object {
-    private val LOG = Logger.getInstance(TrafficLightRenderer::class.java)
+private fun toPercent(progress: Double, finished: Boolean): Int {
+  val percent = (progress * 100).toInt()
+  return if (percent == 100 && !finished) 99 else percent
+}
 
-    /**
-     * Prefer using [TrafficLightRendererContributor] instead
-     */
-    fun setTrafficLightOnEditor(
-      project: Project,
-      editorMarkupModel: EditorMarkupModel,
-      modalityState: ModalityState,
-      createTrafficRenderer: Supplier<out TrafficLightRenderer?>
-    ) {
-      project.executeOnPooledThread(Runnable {
-        val tlRenderer: TrafficLightRenderer? = createTrafficRenderer.get()
-        if (tlRenderer == null) return@executeOnPooledThread
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          val editor = editorMarkupModel.getEditor()
-          if (project.isDisposed() || editor.isDisposed()) {
-            LOG.debug("Traffic light won't be set to editor: project dispose ", project.isDisposed(),
-                      " , editor dispose " + editor.isDisposed())
-            Disposer.dispose(tlRenderer) // would be registered in setErrorStripeRenderer() below
-            return@invokeLater
-          }
-          editorMarkupModel.setErrorStripeRenderer(tlRenderer)
-        }, modalityState)
-      })
-    }
-
-    private fun toPercent(progress: Double, finished: Boolean): Int {
-      val percent = (progress * 100).toInt()
-      return if (percent == 100 && !finished) 99 else percent
-    }
-
-
-    private fun applyPanel(panel: HectorComponentPanel) {
-      try {
-        panel.apply()
-      }
-      catch (ignored: ConfigurationException) {
-      }
-    }
+private fun applyPanel(panel: HectorComponentPanel) {
+  try {
+    panel.apply()
   }
+  catch (_: ConfigurationException) {
+  }
+}
+
+
+/**
+ * Prefer using [TrafficLightRendererContributor] instead
+ */
+internal fun setTrafficLightOnEditor(
+  project: Project,
+  editorMarkupModel: EditorMarkupModel,
+  modalityState: ModalityState,
+  createTrafficRenderer: () -> TrafficLightRenderer?,
+) {
+  project.executeOnPooledThread(Runnable {
+    val renderer = createTrafficRenderer() ?: return@Runnable
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      val editor = editorMarkupModel.getEditor()
+      if (project.isDisposed() || editor.isDisposed()) {
+        LOG.debug("Traffic light won't be set to editor: project dispose=${project.isDisposed()}, editor dispose=${editor.isDisposed()}")
+        // would be registered in setErrorStripeRenderer() below
+        Disposer.dispose(renderer)
+        return@Runnable
+      }
+      editorMarkupModel.setErrorStripeRenderer(renderer)
+    }, modalityState)
+  })
 }
