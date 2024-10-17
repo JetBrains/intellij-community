@@ -2,9 +2,16 @@ LineBreakpoint created at smartStepIntoSuspendLambda.kt:12
 Run Java
 Connected to the target VM
 smartStepIntoSuspendLambda.kt:12
-smartStepIntoSuspendLambda.kt:16
+smartStepIntoSuspendLambda.kt:14
+smartStepIntoSuspendLambda.kt:15
 smartStepIntoSuspendLambda.kt:16
 smartStepIntoSuspendLambda.kt:17
+smartStepIntoSuspendLambda.kt:18
+smartStepIntoSuspendLambda.kt:31
+smartStepIntoSuspendLambda.kt:19
+smartStepIntoSuspendLambda.kt:20
+smartStepIntoSuspendLambda.kt:21
+Compile bytecode for i
 Disconnected from the target VM
 
 Process finished with exit code 0
