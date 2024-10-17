@@ -1137,6 +1137,11 @@
         <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ReferenceType" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="Consider using optimized DebuggerUtils.findMethod" uuid="ae254482-bdcc-3cf5-bbc8-3c620a599488" text="$Instance$.methodsByName($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ReferenceType!" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="DataContext.getData(String)" description="DataContext.getData(DataKey) with a dedicated DataKey constant shall be used instead" problemDescriptor="DataContext.getData(DataKey) shall be used instead" text="$Var2$.getData($Var3$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" target="true" within="" contains="" />
         <constraint name="Var2" nameOfExprType="DataContext" within="" contains="" />

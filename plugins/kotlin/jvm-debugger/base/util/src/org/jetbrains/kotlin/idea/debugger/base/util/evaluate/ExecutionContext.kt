@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.base.util.evaluate
 
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
@@ -179,30 +180,21 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
         methodSignature: String,
         vararg params: Value
     ): Value? {
-        val method = type.methodsByName(name, methodSignature).single()
-        return invokeMethod(ref, method, params.asList())
+        return invokeMethod(ref, findSingleMethod(type, name, methodSignature), params.asList())
     }
 
     /**
      * static method invocation
      */
     private fun findAndInvoke(type: ClassType, name: String, methodSignature: String? = null, vararg params: Value): Value? {
-        val method =
-            if (methodSignature is String)
-                type.methodsByName(name, methodSignature).single()
-            else
-                type.methodsByName(name).single()
-        return invokeMethod(type, method, params.asList())
+        return invokeMethod(type, findSingleMethod(type, name, methodSignature), params.asList())
     }
 
     private fun findAndInvoke(instance: ObjectReference, name: String, methodSignature: String? = null, vararg params: Value): Value? {
-        val type = instance.referenceType()
-        type.allMethods()
-        val method =
-            if (methodSignature is String)
-                type.methodsByName(name, methodSignature).single()
-            else
-                type.methodsByName(name).single()
-        return invokeMethod(instance, method, params.asList())
+        return invokeMethod(instance, findSingleMethod(instance.referenceType(), name, methodSignature), params.asList())
     }
+}
+
+private fun findSingleMethod(type: ReferenceType, name: String, methodSignature: String?): Method {
+    return DebuggerUtils.findMethod(type, name, methodSignature) ?: error("Method {$name} {$methodSignature} not found")
 }

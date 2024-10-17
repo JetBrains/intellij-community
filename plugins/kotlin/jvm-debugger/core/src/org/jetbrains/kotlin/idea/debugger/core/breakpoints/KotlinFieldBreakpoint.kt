@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.PositionUtil
 import com.intellij.debugger.requests.Requestor
@@ -29,8 +30,8 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
-import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.base.util.runSmartAnalyze
+import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import javax.swing.Icon
@@ -125,17 +126,13 @@ class KotlinFieldBreakpoint(
                     val fieldName = getFieldName()
 
                     if (properties.watchAccess) {
-                        val getter = refType.methodsByName(JvmAbi.getterName(fieldName)).firstOrNull()
-                        if (getter != null) {
-                            createMethodBreakpoint(debugProcess, refType, getter)
-                        }
+                        DebuggerUtils.findMethod(refType, JvmAbi.getterName(fieldName), null)
+                            ?.let { createMethodBreakpoint(debugProcess, refType, it) }
                     }
 
                     if (properties.watchModification) {
-                        val setter = refType.methodsByName(JvmAbi.setterName(fieldName)).firstOrNull()
-                        if (setter != null) {
-                            createMethodBreakpoint(debugProcess, refType, setter)
-                        }
+                        DebuggerUtils.findMethod(refType, JvmAbi.setterName(fieldName), null)
+                            ?.let { createMethodBreakpoint(debugProcess, refType, it) }
                     }
                 }
             }

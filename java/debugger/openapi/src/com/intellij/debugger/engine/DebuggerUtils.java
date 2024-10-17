@@ -196,6 +196,7 @@ public abstract class DebuggerUtils {
       method = concreteMethodByName((ClassType)refType, methodName, methodSignature);
     }
     if (method == null) {
+      //noinspection SSBasedInspection
       method = ContainerUtil.getFirstItem(
         methodSignature != null ? refType.methodsByName(methodName, methodSignature) : refType.methodsByName(methodName));
     }

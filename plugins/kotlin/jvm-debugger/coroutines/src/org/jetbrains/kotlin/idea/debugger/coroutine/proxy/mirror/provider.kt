@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
+import com.intellij.debugger.engine.DebuggerUtils
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import kotlin.properties.ReadOnlyProperty
@@ -20,15 +21,13 @@ class MethodMirrorDelegate<T, F>(val name: String,
                                  private val mirrorProvider: MirrorProvider<T, F>,
                                  val signature: String? = null) : ReadOnlyProperty<ReferenceTypeProvider, MethodEvaluator.MirrorMethodEvaluator<T, F>> {
     override fun getValue(thisRef: ReferenceTypeProvider, property: KProperty<*>): MethodEvaluator.MirrorMethodEvaluator<T, F> {
-        val methods = if (signature == null) thisRef.getCls().methodsByName(name) else thisRef.getCls().methodsByName(name, signature)
-        return MethodEvaluator.MirrorMethodEvaluator(methods.singleOrNull(), mirrorProvider)
+        return MethodEvaluator.MirrorMethodEvaluator(DebuggerUtils.findMethod(thisRef.getCls(), name, signature), mirrorProvider)
     }
 }
 
 class MethodDelegate<T>(val name: String, val signature: String? = null) : ReadOnlyProperty<ReferenceTypeProvider, MethodEvaluator<T>> {
     override fun getValue(thisRef: ReferenceTypeProvider, property: KProperty<*>): MethodEvaluator<T> {
-        val methods = if (signature == null) thisRef.getCls().methodsByName(name) else thisRef.getCls().methodsByName(name, signature)
-        return MethodEvaluator.DefaultMethodEvaluator(methods.singleOrNull())
+        return MethodEvaluator.DefaultMethodEvaluator(DebuggerUtils.findMethod(thisRef.getCls(), name, signature))
     }
 }
 

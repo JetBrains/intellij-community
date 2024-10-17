@@ -111,6 +111,7 @@ public class MethodEvaluator implements Evaluator {
         // we know nothing about expected method's signature, so trying to match my method name and parameter count
         // dummy matching, may be improved with types matching later
         // IMPORTANT! using argumentTypeNames() instead of argumentTypes() to avoid type resolution inside JDI, which may be time-consuming
+        //noinspection SSBasedInspection
         List<Method> matchingMethods =
           StreamEx.of(referenceType.methodsByName(myMethodName)).filter(m -> m.argumentTypeNames().size() == args.size()).toList();
         if (matchingMethods.size() == 1) {
