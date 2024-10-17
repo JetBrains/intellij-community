@@ -24,7 +24,7 @@ final class PerProcessPathCustomization {
         // The config directory exists, but the plugins for the frontend process weren't migrated,
         // so we trigger importing of config from the local IDE to migrate the plugins.
         customTargetDirectoryToImportConfig = newConfig;
-        new CustomConfigMigrationOption.MigrateFromCustomPlace(oldConfigPath).writeConfigMarkerFile(newConfig);
+        new CustomConfigMigrationOption.MigratePluginsFromCustomPlace(oldConfigPath).writeConfigMarkerFile(newConfig);
       }
       CustomConfigFiles.prepareConfigDir(newConfig, oldConfigPath);
     }
