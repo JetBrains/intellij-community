@@ -1,4 +1,4 @@
-# $Id: __init__.py 7720 2013-09-05 12:54:56Z milde $
+# $Id: __init__.py 9542 2024-02-17 10:37:23Z milde $
 # Authors: Chris Liechti <cliechti@gmx.net>;
 #          David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
@@ -9,18 +9,17 @@ S5/HTML Slideshow Writer.
 
 __docformat__ = 'reStructuredText'
 
+import sys
 import os
 import re
-import sys
-
 import docutils
 from docutils import frontend, nodes, utils
-from docutils._compat import b
 from docutils.writers import html4css1
 
 themes_dir_path = utils.relative_path(
     os.path.join(os.getcwd(), 'dummy'),
     os.path.join(os.path.dirname(__file__), 'themes'))
+
 
 def find_theme(name):
     # Where else to look for a theme?
@@ -83,7 +82,8 @@ class Writer(html4css1.Writer):
     settings_default_overrides = {'toc_backlinks': 0}
 
     config_section = 's5_html writer'
-    config_section_dependencies = ('writers', 'html4css1 writer')
+    config_section_dependencies = ('writers', 'html writers',
+                                   'html4css1 writer')
 
     def __init__(self):
         html4css1.Writer.__init__(self)
@@ -142,7 +142,7 @@ class S5HTMLTranslator(html4css1.HTMLTranslator):
     """Names of theme files directly linked to in the output HTML"""
 
     indirect_theme_files = (
-        's5-core.css', 'framing.css', 'pretty.css', 'blank.gif', 'iepngfix.htc')
+        's5-core.css', 'framing.css', 'pretty.css')
     """Names of files used indirectly; imported or used by files in
     `direct_theme_files`."""
 
@@ -151,9 +151,12 @@ class S5HTMLTranslator(html4css1.HTMLTranslator):
 
     def __init__(self, *args):
         html4css1.HTMLTranslator.__init__(self, *args)
-        #insert S5-specific stylesheet and script stuff:
+        # insert S5-specific stylesheet and script stuff:
         self.theme_file_path = None
-        self.setup_theme()
+        try:
+            self.setup_theme()
+        except docutils.ApplicationError as e:
+            self.document.reporter.warning(e)
         view_mode = self.document.settings.view_mode
         control_visibility = ('visible', 'hidden')[self.document.settings
                                                    .hidden_controls]
@@ -163,7 +166,7 @@ class S5HTMLTranslator(html4css1.HTMLTranslator):
                                   'control_visibility': control_visibility})
         if not self.document.settings.current_slide:
             self.stylesheet.append(self.disable_current_slide)
-        self.add_meta('<meta name="version" content="S5 1.1" />\n')
+        self.meta.append('<meta name="version" content="S5 1.1" />\n')
         self.s5_footer = []
         self.s5_header = []
         self.section_count = 0
@@ -192,36 +195,37 @@ class S5HTMLTranslator(html4css1.HTMLTranslator):
         self.theme_files_copied = {}
         required_files_copied = {}
         # This is a link (URL) in HTML, so we use "/", not os.sep:
-        self.theme_file_path = '%s/%s' % ('ui', settings.theme)
-        if settings._destination:
-            dest = os.path.join(
-                os.path.dirname(settings._destination), 'ui', settings.theme)
-            if not os.path.isdir(dest):
-                os.makedirs(dest)
-        else:
-            # no destination, so we can't copy the theme
-            return
+        self.theme_file_path = 'ui/%s' % settings.theme
+        if not settings.output:
+            raise docutils.ApplicationError(
+                'Output path not specified, you may need to copy'
+                ' the S5 theme files "by hand" or set the "--output" option.')
+        dest = os.path.join(
+            os.path.dirname(settings.output), 'ui', settings.theme)
+        if not os.path.isdir(dest):
+            os.makedirs(dest)
         default = False
         while path:
             for f in os.listdir(path):  # copy all files from each theme
                 if f == self.base_theme_file:
                     continue            # ... except the "__base__" file
-                if ( self.copy_file(f, path, dest)
-                     and f in self.required_theme_files):
-                    required_files_copied[f] = 1
+                if (self.copy_file(f, path, dest)
+                    and f in self.required_theme_files):
+                    required_files_copied[f] = True
             if default:
                 break                   # "default" theme has no base theme
             # Find the "__base__" file in theme directory:
             base_theme_file = os.path.join(path, self.base_theme_file)
             # If it exists, read it and record the theme path:
             if os.path.isfile(base_theme_file):
-                lines = open(base_theme_file).readlines()
+                with open(base_theme_file, encoding='utf-8') as f:
+                    lines = f.readlines()
                 for line in lines:
                     line = line.strip()
                     if line and not line.startswith('#'):
                         path = find_theme(line)
-                        if path in theme_paths: # check for duplicates (cycles)
-                            path = None         # if found, use default base
+                        if path in theme_paths:  # check for duplicates/cycles
+                            path = None          # if found, use default base
                         else:
                             theme_paths.append(path)
                         break
@@ -236,25 +240,25 @@ class S5HTMLTranslator(html4css1.HTMLTranslator):
         if len(required_files_copied) != len(self.required_theme_files):
             # Some required files weren't found & couldn't be copied.
             required = list(self.required_theme_files)
-            for f in list(required_files_copied.keys()):
+            for f in required_files_copied.keys():
                 required.remove(f)
             raise docutils.ApplicationError(
                 'Theme files not found: %s'
-                % ', '.join(['%r' % f for f in required]))
+                % ', '.join('%r' % f for f in required))
 
     files_to_skip_pattern = re.compile(r'~$|\.bak$|#$|\.cvsignore$')
 
     def copy_file(self, name, source_dir, dest_dir):
         """
         Copy file `name` from `source_dir` to `dest_dir`.
-        Return 1 if the file exists in either `source_dir` or `dest_dir`.
+        Return True if the file exists in either `source_dir` or `dest_dir`.
         """
         source = os.path.join(source_dir, name)
         dest = os.path.join(dest_dir, name)
         if dest in self.theme_files_copied:
-            return 1
+            return True
         else:
-            self.theme_files_copied[dest] = 1
+            self.theme_files_copied[dest] = True
         if os.path.isfile(source):
             if self.files_to_skip_pattern.search(source):
                 return None
@@ -262,28 +266,25 @@ class S5HTMLTranslator(html4css1.HTMLTranslator):
             if os.path.exists(dest) and not settings.overwrite_theme_files:
                 settings.record_dependencies.add(dest)
             else:
-                src_file = open(source, 'rb')
-                src_data = src_file.read()
-                src_file.close()
-                dest_file = open(dest, 'wb')
-                dest_dir = dest_dir.replace(os.sep, '/')
-                dest_file.write(src_data.replace(
-                    b('ui/default'),
-                    dest_dir[dest_dir.rfind('ui/'):].encode(
-                    sys.getfilesystemencoding())))
-                dest_file.close()
+                with open(source, 'rb') as src_file:
+                    src_data = src_file.read()
+                with open(dest, 'wb') as dest_file:
+                    dest_dir = dest_dir.replace(os.sep, '/')
+                    dest_file.write(src_data.replace(
+                        b'ui/default',
+                        dest_dir[dest_dir.rfind('ui/'):].encode(
+                            sys.getfilesystemencoding())))
                 settings.record_dependencies.add(source)
-            return 1
+            return True
         if os.path.isfile(dest):
-            return 1
+            return True
 
     def depart_document(self, node):
         self.head_prefix.extend([self.doctype,
                                  self.head_prefix_template %
                                  {'lang': self.settings.language_code}])
         self.html_prolog.append(self.doctype)
-        self.meta.insert(0, self.content_type % self.settings.output_encoding)
-        self.head.insert(0, self.content_type % self.settings.output_encoding)
+        self.head = self.meta[:] + self.head
         if self.math_header:
             if self.math_output == 'mathjax':
                 self.head.extend(self.math_header)

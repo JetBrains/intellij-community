@@ -1,4 +1,4 @@
-# $Id: pygmentsformatter.py 5853 2009-01-19 21:02:02Z dkuhlman $
+# $Id: pygmentsformatter.py 9015 2022-03-03 22:15:00Z milde $
 # Author: Dave Kuhlman <dkuhlman@rexx.com>
 # Copyright: This module has been placed in the public domain.
 
@@ -19,7 +19,7 @@ class OdtPygmentsFormatter(pygments.formatter.Formatter):
         self.rststyle_function = rststyle_function
         self.escape_function = escape_function
 
-    def rststyle(self, name, parameters=( )):
+    def rststyle(self, name, parameters=()):
         return self.rststyle_function(name, parameters)
 
 
@@ -82,8 +82,8 @@ class OdtPygmentsLaTeXFormatter(OdtPygmentsFormatter):
                 s1 = '<text:span text:style-name="%s">%s</text:span>' % \
                     (s2, value, )
             elif ttype in (tokenclass.Literal.String,
-                    tokenclass.Literal.String.Backtick,
-                    ):
+                           tokenclass.Literal.String.Backtick,
+                           ):
                 s2 = self.rststyle('codeblock-string')
                 s1 = '<text:span text:style-name="%s">%s</text:span>' % \
                     (s2, value, )

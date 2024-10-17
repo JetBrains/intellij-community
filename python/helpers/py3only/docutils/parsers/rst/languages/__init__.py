@@ -1,9 +1,9 @@
-# $Id: __init__.py 7648 2013-04-18 07:36:22Z milde $
+# $Id: __init__.py 9026 2022-03-04 15:57:13Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
 # Internationalization details are documented in
-# <http://docutils.sf.net/docs/howto/i18n.html>.
+# <https://docutils.sourceforge.io/docs/howto/i18n.html>.
 
 """
 This package contains modules for language-dependent features of
@@ -12,26 +12,29 @@ reStructuredText.
 
 __docformat__ = 'reStructuredText'
 
-import sys
 
-from docutils.utils import normalize_language_tag
-if sys.version_info < (2,5):
-    from docutils._compat import __import__
+from docutils.languages import LanguageImporter
 
-_languages = {}
 
-def get_language(language_code):
-    for tag in normalize_language_tag(language_code):
-        tag = tag.replace('-','_') # '-' not valid in module names
-        if tag in _languages:
-            return _languages[tag]
-        try:
-            module = __import__(tag, globals(), locals(), level=1)
-        except ImportError:
-            try:
-                module = __import__(tag, globals(), locals(), level=0)
-            except ImportError:
-                continue
-        _languages[tag] = module
-        return module
-    return None
+class RstLanguageImporter(LanguageImporter):
+    """Import language modules.
+
+    When called with a BCP 47 language tag, instances return a module
+    with localisations for "directive" and "role" names for  from
+    `docutils.parsers.rst.languages` or the PYTHONPATH.
+
+    If there is no matching module, warn (if a `reporter` is passed)
+    and return None.
+    """
+    packages = ('docutils.parsers.rst.languages.', '')
+    warn_msg = 'rST localisation for language "%s" not found.'
+    fallback = None
+
+    def check_content(self, module):
+        """Check if we got an rST language module."""
+        if not (isinstance(module.directives, dict)
+                and isinstance(module.roles, dict)):
+            raise ImportError
+
+
+get_language = RstLanguageImporter()

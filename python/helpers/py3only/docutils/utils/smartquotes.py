@@ -1,8 +1,6 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-# :Id: $Id: smartquotes.py 7716 2013-08-21 21:54:57Z milde $
-# :Copyright: © 2010 Günter Milde,
+#!/usr/bin/python3
+# :Id: $Id: smartquotes.py 9481 2023-11-19 21:19:20Z milde $
+# :Copyright: © 2010-2023 Günter Milde,
 #             original `SmartyPants`_: © 2003 John Gruber
 #             smartypants.py:          © 2004, 2007 Chad Miller
 # :Maintainer: docutils-develop@lists.sourceforge.net
@@ -13,29 +11,29 @@
 #    notices and this notice are preserved.
 #    This file is offered as-is, without any warranty.
 #
-# .. _2-Clause BSD license: http://www.spdx.org/licenses/BSD-2-Clause
+# .. _2-Clause BSD license: https://opensource.org/licenses/BSD-2-Clause
 
 
 r"""
-========================
-SmartyPants for Docutils
-========================
+=========================
+Smart Quotes for Docutils
+=========================
 
 Synopsis
 ========
 
-Smart-quotes for Docutils.
+"SmartyPants" is a free web publishing plug-in for Movable Type, Blosxom, and
+BBEdit that easily translates plain ASCII punctuation characters into "smart"
+typographic punctuation characters.
 
-The original "SmartyPants" is a free web publishing plug-in for Movable Type,
-Blosxom, and BBEdit that easily translates plain ASCII punctuation characters
-into "smart" typographic punctuation characters.
+``smartquotes.py`` is an adaption of "SmartyPants" to Docutils_.
 
-`smartypants.py`, endeavours to be a functional port of
-SmartyPants to Python, for use with Pyblosxom_.
+* Using Unicode instead of HTML entities for typographic punctuation
+  characters, it works for any output format that supports Unicode.
+* Supports `language specific quote characters`__.
 
-`smartquotes.py` is an adaption of Smartypants to Docutils_. By using Unicode
-characters instead of HTML entities for typographic quotes, it works for any
-output format that supports Unicode.
+__ https://en.wikipedia.org/wiki/Non-English_usage_of_quotation_marks
+
 
 Authors
 =======
@@ -43,7 +41,7 @@ Authors
 `John Gruber`_ did all of the hard work of writing this software in Perl for
 `Movable Type`_ and almost all of this useful documentation.  `Chad Miller`_
 ported it to Python to use with Pyblosxom_.
-Adapted to Docutils_ by Günter Milde
+Adapted to Docutils_ by Günter Milde.
 
 Additional Credits
 ==================
@@ -133,8 +131,8 @@ smartypants.py license (2-Clause BSD license):
 .. _Pyblosxom: http://pyblosxom.bluesock.org/
 .. _SmartyPants: http://daringfireball.net/projects/smartypants/
 .. _Movable Type: http://www.movabletype.org/
-.. _2-Clause BSD license: http://www.spdx.org/licenses/BSD-2-Clause
-.. _Docutils: http://docutils.sf.net/
+.. _2-Clause BSD license: https://opensource.org/licenses/BSD-2-Clause
+.. _Docutils: https://docutils.sourceforge.io/
 
 Description
 ===========
@@ -144,117 +142,34 @@ SmartyPants can perform the following transformations:
 - Straight quotes ( " and ' ) into "curly" quote characters
 - Backticks-style quotes (\`\`like this'') into "curly" quote characters
 - Dashes (``--`` and ``---``) into en- and em-dash entities
-- Three consecutive dots (``...`` or ``. . .``) into an ellipsis entity
+- Three consecutive dots (``...`` or ``. . .``) into an ellipsis ``…``.
 
 This means you can write, edit, and save your posts using plain old
 ASCII straight quotes, plain dashes, and plain dots, but your published
 posts (and final HTML output) will appear with smart quotes, em-dashes,
 and proper ellipses.
 
-SmartyPants does not modify characters within ``<pre>``, ``<code>``, ``<kbd>``,
-``<math>`` or ``<script>`` tag blocks. Typically, these tags are used to
-display text where smart quotes and other "smart punctuation" would not be
-appropriate, such as source code or example markup.
-
-
 Backslash Escapes
 =================
 
-If you need to use literal straight quotes (or plain hyphens and
-periods), SmartyPants accepts the following backslash escape sequences
-to force non-smart punctuation. It does so by transforming the escape
-sequence into a character:
+If you need to use literal straight quotes (or plain hyphens and periods),
+`smartquotes` accepts the following backslash escape sequences to force
+ASCII-punctuation. Mind, that you need two backslashes in "docstrings", as
+Python expands them, too.
 
-========  =====  =========
-Escape    Value  Character
-========  =====  =========
-``\\\\``  &#92;  \\
-\\"       &#34;  "
-\\'       &#39;  '
-\\.       &#46;  .
-\\-       &#45;  \-
-\\`       &#96;  \`
-========  =====  =========
+========  =========
+Escape    Character
+========  =========
+``\\``    \\
+``\\"``   \\"
+``\\'``   \\'
+``\\.``   \\.
+``\\-``   \\-
+``\\```   \\`
+========  =========
 
 This is useful, for example, when you want to use straight quotes as
 foot and inch marks: 6\\'2\\" tall; a 17\\" iMac.
-
-Options
-=======
-
-For Pyblosxom users, the ``smartypants_attributes`` attribute is where you
-specify configuration options.
-
-Numeric values are the easiest way to configure SmartyPants' behavior:
-
-"0"
-        Suppress all transformations. (Do nothing.)
-"1"
-        Performs default SmartyPants transformations: quotes (including
-        \`\`backticks'' -style), em-dashes, and ellipses. "``--``" (dash dash)
-        is used to signify an em-dash; there is no support for en-dashes.
-
-"2"
-        Same as smarty_pants="1", except that it uses the old-school typewriter
-        shorthand for dashes:  "``--``" (dash dash) for en-dashes, "``---``"
-        (dash dash dash)
-        for em-dashes.
-
-"3"
-        Same as smarty_pants="2", but inverts the shorthand for dashes:
-        "``--``" (dash dash) for em-dashes, and "``---``" (dash dash dash) for
-        en-dashes.
-
-"-1"
-        Stupefy mode. Reverses the SmartyPants transformation process, turning
-        the characters produced by SmartyPants into their ASCII equivalents.
-        E.g.  "“" is turned into a simple double-quote (\"), "—" is
-        turned into two dashes, etc.
-
-
-The following single-character attribute values can be combined to toggle
-individual transformations from within the smarty_pants attribute. For
-example, to educate normal quotes and em-dashes, but not ellipses or
-\`\`backticks'' -style quotes:
-
-``py['smartypants_attributes'] = "1"``
-
-"q"
-        Educates normal quote characters: (") and (').
-
-"b"
-        Educates \`\`backticks'' -style double quotes.
-
-"B"
-        Educates \`\`backticks'' -style double quotes and \`single' quotes.
-
-"d"
-        Educates em-dashes.
-
-"D"
-        Educates em-dashes and en-dashes, using old-school typewriter shorthand:
-        (dash dash) for en-dashes, (dash dash dash) for em-dashes.
-
-"i"
-        Educates em-dashes and en-dashes, using inverted old-school typewriter
-        shorthand: (dash dash) for em-dashes, (dash dash dash) for en-dashes.
-
-"e"
-        Educates ellipses.
-
-"w"
-        Translates any instance of ``&quot;`` into a normal double-quote character.
-        This should be of no interest to most people, but of particular interest
-        to anyone who writes their posts using Dreamweaver, as Dreamweaver
-        inexplicably uses this entity to represent a literal double-quote
-        character. SmartyPants only educates normal quotes, not entities (because
-        ordinarily, entities are used for the explicit purpose of representing the
-        specific character they represent). The "w" option must be used in
-        conjunction with one (or both) of the other quote options ("q" or "b").
-        Thus, if you wish to apply all SmartyPants transformations (quotes, en-
-        and em-dashes, and ellipses) and also translate ``&quot;`` entities into
-        regular quotes so SmartyPants can educate them, you should pass the
-        following to the smarty_pants attribute:
 
 
 Caveats
@@ -274,7 +189,7 @@ If you're the sort of person who just doesn't care, you might well want to
 continue not caring. Using straight quotes -- and sticking to the 7-bit
 ASCII character set in general -- is certainly a simpler way to live.
 
-Even if you I *do* care about accurate typography, you still might want to
+Even if you *do* care about accurate typography, you still might want to
 think twice before educating the quote characters in your weblog. One side
 effect of publishing curly quote characters is that it makes your
 weblog a bit harder for others to quote from using copy-and-paste. What
@@ -300,21 +215,63 @@ Algorithmic Shortcomings
 ------------------------
 
 One situation in which quotes will get curled the wrong way is when
-apostrophes are used at the start of leading contractions. For example:
+apostrophes are used at the start of leading contractions. For example::
 
-``'Twas the night before Christmas.``
+  'Twas the night before Christmas.
 
 In the case above, SmartyPants will turn the apostrophe into an opening
-single-quote, when in fact it should be a closing one. I don't think
-this problem can be solved in the general case -- every word processor
-I've tried gets this wrong as well. In such cases, it's best to use the
-proper character for closing single-quotes (``’``) by hand.
+secondary quote, when in fact it should be the `RIGHT SINGLE QUOTATION MARK`
+character which is also "the preferred character to use for apostrophe"
+(Unicode). I don't think this problem can be solved in the general case --
+every word processor I've tried gets this wrong as well. In such cases, it's
+best to inset the `RIGHT SINGLE QUOTATION MARK` (’) by hand.
+
+In English, the same character is used for apostrophe and  closing secondary
+quote (both plain and "smart" ones). For other locales (French, Italean,
+Swiss, ...) "smart" secondary closing quotes differ from the curly apostrophe.
+
+   .. class:: language-fr
+
+   Il dit : "C'est 'super' !"
+
+If the apostrophe is used at the end of a word, it cannot be distinguished
+from a secondary quote by the algorithm. Therefore, a text like::
+
+   .. class:: language-de-CH
+
+   "Er sagt: 'Ich fass' es nicht.'"
+
+will get a single closing guillemet instead of an apostrophe.
+
+This can be prevented by use use of the `RIGHT SINGLE QUOTATION MARK` in
+the source::
+
+   -  "Er sagt: 'Ich fass' es nicht.'"
+   +  "Er sagt: 'Ich fass’ es nicht.'"
 
 
 Version History
 ===============
 
-1.7     2012-11-19
+1.10    2023-11-18
+        - Pre-compile regexps once, not with every call of `educateQuotes()`
+          (patch #206 by Chris Sewell). Simplify regexps.
+
+1.9     2022-03-04
+        - Code cleanup. Require Python 3.
+
+1.8.1   2017-10-25
+        - Use open quote after Unicode whitespace, ZWSP, and ZWNJ.
+        - Code cleanup.
+
+1.8:    2017-04-24
+        - Command line front-end.
+
+1.7.1:  2017-03-19
+        - Update and extend language-dependent quotes.
+        - Differentiate apostrophe from single quote.
+
+1.7:    2012-11-19
         - Internationalization: language-dependent quotes.
 
 1.6.1:  2012-11-06
@@ -358,102 +315,253 @@ Version History
         - Initial release
 """
 
-default_smartypants_attr = "1"
-
-
 import re
+import sys
 
-class smartchars(object):
-    """Smart quotes and dashes
-    """
 
-    endash   = '–' # "&#8211;" EN DASH
-    emdash   = '—' # "&#8212;" EM DASH
-    ellipsis = '…' # "&#8230;" HORIZONTAL ELLIPSIS
+options = r"""
+Options
+=======
+
+Numeric values are the easiest way to configure SmartyPants' behavior:
+
+:0:     Suppress all transformations. (Do nothing.)
+
+:1:     Performs default SmartyPants transformations: quotes (including
+        \`\`backticks'' -style), em-dashes, and ellipses. "``--``" (dash dash)
+        is used to signify an em-dash; there is no support for en-dashes
+
+:2:     Same as smarty_pants="1", except that it uses the old-school typewriter
+        shorthand for dashes:  "``--``" (dash dash) for en-dashes, "``---``"
+        (dash dash dash)
+        for em-dashes.
+
+:3:     Same as smarty_pants="2", but inverts the shorthand for dashes:
+        "``--``" (dash dash) for em-dashes, and "``---``" (dash dash dash) for
+        en-dashes.
+
+:-1:    Stupefy mode. Reverses the SmartyPants transformation process, turning
+        the characters produced by SmartyPants into their ASCII equivalents.
+        E.g. the LEFT DOUBLE QUOTATION MARK (“) is turned into a simple
+        double-quote (\"), "—" is turned into two dashes, etc.
+
+
+The following single-character attribute values can be combined to toggle
+individual transformations from within the smarty_pants attribute. For
+example, ``"1"`` is equivalent to ``"qBde"``.
+
+:q:     Educates normal quote characters: (") and (').
+
+:b:     Educates \`\`backticks'' -style double quotes.
+
+:B:     Educates \`\`backticks'' -style double quotes and \`single' quotes.
+
+:d:     Educates em-dashes.
+
+:D:     Educates em-dashes and en-dashes, using old-school typewriter
+        shorthand: (dash dash) for en-dashes, (dash dash dash) for em-dashes.
+
+:i:     Educates em-dashes and en-dashes, using inverted old-school typewriter
+        shorthand: (dash dash) for em-dashes, (dash dash dash) for en-dashes.
+
+:e:     Educates ellipses.
+
+:w:     Translates any instance of ``&quot;`` into a normal double-quote
+        character. This should be of no interest to most people, but
+        of particular interest to anyone who writes their posts using
+        Dreamweaver, as Dreamweaver inexplicably uses this entity to represent
+        a literal double-quote character. SmartyPants only educates normal
+        quotes, not entities (because ordinarily, entities are used for
+        the explicit purpose of representing the specific character they
+        represent). The "w" option must be used in conjunction with one (or
+        both) of the other quote options ("q" or "b"). Thus, if you wish to
+        apply all SmartyPants transformations (quotes, en- and em-dashes, and
+        ellipses) and also translate ``&quot;`` entities into regular quotes
+        so SmartyPants can educate them, you should pass the following to the
+        smarty_pants attribute:
+"""
+
+
+class smartchars:
+    """Smart quotes and dashes"""
+
+    endash = '–'      # EN DASH
+    emdash = '—'      # EM DASH
+    ellipsis = '…'    # HORIZONTAL ELLIPSIS
+    apostrophe = '’'  # RIGHT SINGLE QUOTATION MARK
 
     # quote characters (language-specific, set in __init__())
+    # https://en.wikipedia.org/wiki/Non-English_usage_of_quotation_marks
+    # https://de.wikipedia.org/wiki/Anf%C3%BChrungszeichen#Andere_Sprachen
+    # https://fr.wikipedia.org/wiki/Guillemet
+    # https://typographisme.net/post/Les-espaces-typographiques-et-le-web
+    # https://www.btb.termiumplus.gc.ca/tpv2guides/guides/redac/index-fra.html
+    # https://en.wikipedia.org/wiki/Hebrew_punctuation#Quotation_marks
+    # [7] https://www.tustep.uni-tuebingen.de/bi/bi00/bi001t1-anfuehrung.pdf
+    # [8] https://www.korrekturavdelingen.no/anforselstegn.htm
+    # [9] Typografisk håndbok. Oslo: Spartacus. 2000. s. 67. ISBN 8243001530.
+    # [10] https://www.typografi.org/sitat/sitatart.html
+    # [11] https://mk.wikipedia.org/wiki/Правопис_и_правоговор_на_македонскиот_јазик  # noqa:E501
+    # [12] https://hrvatska-tipografija.com/polunavodnici/
+    # [13] https://pl.wikipedia.org/wiki/Cudzys%C5%82%C3%B3w
     #
-    # English smart quotes (open primary, close primary, open secondary, close
-    # secondary) are:
-    #   opquote  = u'“' # "&#8220;" LEFT DOUBLE QUOTATION MARK
-    #   cpquote  = u'”' # "&#8221;" RIGHT DOUBLE QUOTATION MARK
-    #   osquote  = u'‘' # "&#8216;" LEFT SINGLE QUOTATION MARK
-    #   csquote  = u'’' # "&#8217;" RIGHT SINGLE QUOTATION MARK
-    # For other languages see:
-    # http://en.wikipedia.org/wiki/Non-English_usage_of_quotation_marks
-    # http://de.wikipedia.org/wiki/Anf%C3%BChrungszeichen#Andere_Sprachen
-    quotes = {'af':           '“”‘’',
-              'af-x-altquot': '„”‚’',
-              'ca':           '«»“”',
-              'ca-x-altquot': '“”‘’',
-              'cs':           '„“‚‘',
-              'cs-x-altquot': '»«›‹',
-              'da':           '»«‘’',
-              'da-x-altquot': '„“‚‘',
-              'de':           '„“‚‘',
-              'de-x-altquot': '»«›‹',
-              'de-CH':        '«»‹›',
-              'el':           '«»“”',
-              'en':           '“”‘’',
-              'en-UK':        '‘’“”',
-              'eo':           '“”‘’',
-              'es':           '«»“”',
-              'et':           '„“‚‘', # no secondary quote listed in
-              'et-x-altquot': '»«›‹', # the sources above (wikipedia.org)
-              'eu':           '«»‹›',
-              'es-x-altquot': '“”‘’',
-              'fi':           '””’’',
-              'fi-x-altquot': '»»’’',
-              'fr':           ('« ',  ' »', '‹ ', ' ›'), # with narrow no-break space
-              'fr-x-altquot': '«»‹›', # for use with manually set spaces
-              # 'fr-x-altquot': (u'“ ',  u' ”', u'‘ ', u' ’'), # rarely used
-              'fr-CH':        '«»‹›',
-              'gl':           '«»“”',
-              'he':           '”“»«',
-              'he-x-altquot': '„”‚’',
-              'it':           '«»“”',
-              'it-CH':        '«»‹›',
-              'it-x-altquot': '“”‘’',
-              'ja':           '「」『』',
-              'lt':           '„“‚‘',
-              'nl':           '“”‘’',
-              'nl-x-altquot': '„”‚’',
-              'pl':           '„”«»',
-              'pl-x-altquot': '«»“”',
-              'pt':           '«»“”',
-              'pt-BR':        '“”‘’',
-              'ro':           '„”«»',
-              'ro-x-altquot': '«»„”',
-              'ru':           '«»„“',
-              'sk':           '„“‚‘',
-              'sk-x-altquot': '»«›‹',
-              'sv':           '„“‚‘',
-              'sv-x-altquot': '»«›‹',
-              'zh-CN':        '“”‘’',
-              'it':           '«»“”',
-              'zh-TW':        '「」『』',
-             }
+    # See also configuration option "smartquote-locales".
+    quotes = {
+        'af':           '“”‘’',
+        'af-x-altquot': '„”‚’',
+        'bg':           '„“‚‘',  # https://bg.wikipedia.org/wiki/Кавички
+        'ca':           '«»“”',
+        'ca-x-altquot': '“”‘’',
+        'cs':           '„“‚‘',
+        'cs-x-altquot': '»«›‹',
+        'da':           '»«›‹',
+        'da-x-altquot': '„“‚‘',
+        # 'da-x-altquot2': '””’’',
+        'de':           '„“‚‘',
+        'de-x-altquot': '»«›‹',
+        'de-ch':        '«»‹›',
+        'el':           '«»“”',  # '«»‟”' https://hal.science/hal-02101618
+        'en':           '“”‘’',
+        'en-uk-x-altquot': '‘’“”',  # Attention: " → ‘ and ' → “ !
+        'eo':           '“”‘’',
+        'es':           '«»“”',
+        'es-x-altquot': '“”‘’',
+        'et':           '„“‚‘',  # no secondary quote listed in
+        'et-x-altquot': '«»‹›',  # the sources above (wikipedia.org)
+        'eu':           '«»‹›',
+        'fi':           '””’’',
+        'fi-x-altquot': '»»››',
+        'fr':           ('« ', ' »', '“', '”'),  # full no-break space
+        'fr-x-altquot': ('« ', ' »', '“', '”'),  # narrow no-break space
+        'fr-ch':        '«»‹›',                  # https://typoguide.ch/
+        'fr-ch-x-altquot': ('« ',  ' »', '‹ ', ' ›'),  # narrow no-break space  # noqa:E501
+        'gl':           '«»“”',
+        'he':           '”“»«',  # Hebrew is RTL, test position:
+        'he-x-altquot': '„”‚’',  # low quotation marks are opening.
+        # 'he-x-altquot': '“„‘‚',  # RTL: low quotation marks opening
+        'hr':           '„”‘’',  # Croatian [12]
+        'hr-x-altquot': '»«›‹',
+        'hsb':          '„“‚‘',
+        'hsb-x-altquot': '»«›‹',
+        'hu':           '„”«»',
+        'is':           '„“‚‘',
+        'it':           '«»“”',
+        'it-ch':        '«»‹›',
+        'it-x-altquot': '“”‘’',
+        # 'it-x-altquot2': '“„‘‚',  # [7] in headlines
+        'ja':           '「」『』',
+        'ko':           '“”‘’',
+        'lt':           '„“‚‘',
+        'lv':           '„“‚‘',
+        'mk':           '„“‚‘',  # Macedonian [11]
+        'nl':           '“”‘’',
+        'nl-x-altquot': '„”‚’',
+        # 'nl-x-altquot2': '””’’',
+        'nb':           '«»’’',     # Norsk bokmål (canonical form 'no')
+        'nn':           '«»’’',     # Nynorsk [10]
+        'nn-x-altquot': '«»‘’',     # [8], [10]
+        # 'nn-x-altquot2': '«»«»',  # [9], [10]
+        # 'nn-x-altquot3': '„“‚‘',  # [10]
+        'no':           '«»’’',     # Norsk bokmål [10]
+        'no-x-altquot': '«»‘’',     # [8], [10]
+        # 'no-x-altquot2': '«»«»',  # [9], [10
+        # 'no-x-altquot3': '„“‚‘',  # [10]
+        'pl':           '„”«»',
+        'pl-x-altquot': '«»‚’',
+        # 'pl-x-altquot2': '„”‚’',  # [13]
+        'pt':           '«»“”',
+        'pt-br':        '“”‘’',
+        'ro':           '„”«»',
+        'ru':           '«»„“',
+        'sh':           '„”‚’',  # Serbo-Croatian
+        'sh-x-altquot': '»«›‹',
+        'sk':           '„“‚‘',  # Slovak
+        'sk-x-altquot': '»«›‹',
+        'sl':           '„“‚‘',  # Slovenian
+        'sl-x-altquot': '»«›‹',
+        'sq':           '«»‹›',  # Albanian
+        'sq-x-altquot': '“„‘‚',
+        'sr':           '„”’’',
+        'sr-x-altquot': '»«›‹',
+        'sv':           '””’’',
+        'sv-x-altquot': '»»››',
+        'tr':           '“”‘’',
+        'tr-x-altquot': '«»‹›',
+        # 'tr-x-altquot2': '“„‘‚',  # [7] antiquated?
+        'uk':           '«»„“',
+        'uk-x-altquot': '„“‚‘',
+        'zh-cn':        '“”‘’',
+        'zh-tw':        '「」『』',
+        }
 
     def __init__(self, language='en'):
         self.language = language
         try:
             (self.opquote, self.cpquote,
-             self.osquote, self.csquote) = self.quotes[language]
+             self.osquote, self.csquote) = self.quotes[language.lower()]
         except KeyError:
             self.opquote, self.cpquote, self.osquote, self.csquote = '""\'\''
+
+
+class RegularExpressions:
+    # character classes:
+    _CH_CLASSES = {'open': '[([{]',    # opening braces
+                   'close': r'[^\s]',  # everything except whitespace
+                   'punct': r"""[-!"  #\$\%'()*+,.\/:;<=>?\@\[\\\]\^_`{|}~]""",
+                   'dash': r'[-–—]',
+                   'sep': '[\\s\u200B\u200C]',  # Whitespace, ZWSP, ZWNJ
+                   }
+    START_SINGLE = re.compile(r"^'(?=%s\\B)" % _CH_CLASSES['punct'])
+    START_DOUBLE = re.compile(r'^"(?=%s\\B)' % _CH_CLASSES['punct'])
+    ADJACENT_1 = re.compile('"\'(?=\\w)')
+    ADJACENT_2 = re.compile('\'"(?=\\w)')
+    OPEN_SINGLE = re.compile(r"(%(open)s|%(dash)s)'(?=%(punct)s? )"
+                             % _CH_CLASSES)
+    OPEN_DOUBLE = re.compile(r'(%(open)s|%(dash)s)"(?=%(punct)s? )'
+                             % _CH_CLASSES)
+    DECADE = re.compile(r"'(?=\d{2}s)")
+    APOSTROPHE = re.compile(r"(?<=(\w|\d))'(?=\w)")
+    OPENING_SECONDARY = re.compile("""
+                    (# ?<=  # look behind fails: requires fixed-width pattern
+                        %(sep)s     |  # a whitespace char, or
+                        %(open)s    |  # opening brace, or
+                        %(dash)s       # em/en-dash
+                    )
+                    '                  # the quote
+                    (?=\\w|%(punct)s)  # word character or punctuation
+                    """ % _CH_CLASSES, re.VERBOSE)
+    CLOSING_SECONDARY = re.compile(r"(?<!\s)'")
+    OPENING_PRIMARY = re.compile("""
+                    (
+                        %(sep)s     |  # a whitespace char, or
+                        %(open)s    |  # zero width separating char, or
+                        %(dash)s       # em/en-dash
+                    )
+                    "                 # the quote, followed by
+                    (?=\\w|%(punct)s) # a word character or punctuation
+                    """ % _CH_CLASSES, re.VERBOSE)
+    CLOSING_PRIMARY = re.compile(r"""
+                    (
+                    (?<!\s)" | # no whitespace before
+                    "(?=\s)    # whitespace behind
+                    )
+                    """, re.VERBOSE)
+
+
+regexes = RegularExpressions()
+
+
+default_smartypants_attr = '1'
 
 
 def smartyPants(text, attr=default_smartypants_attr, language='en'):
     """Main function for "traditional" use."""
 
-    return "".join([t for t in educate_tokens(tokenize(text),
-                                              attr, language)])
+    return "".join(t for t in educate_tokens(tokenize(text), attr, language))
 
 
 def educate_tokens(text_tokens, attr=default_smartypants_attr, language='en'):
-    """Return iterator that "educates" the items of `text_tokens`.
-    """
-
+    """Return iterator that "educates" the items of `text_tokens`."""
     # Parse attributes:
     # 0 : do nothing
     # 1 : set all
@@ -476,44 +584,43 @@ def educate_tokens(text_tokens, attr=default_smartypants_attr, language='en'):
     do_ellipses = False
     do_stupefy = False
 
-    if attr == "0": # Do nothing.
-        yield text
-    elif attr == "1": # Do everything, turn all options on.
-        do_quotes    = True
+    # if attr == "0":  # pass tokens unchanged (see below).
+    if attr == '1':  # Do everything, turn all options on.
+        do_quotes = True
         do_backticks = True
-        do_dashes    = 1
-        do_ellipses  = True
-    elif attr == "2":
+        do_dashes = 1
+        do_ellipses = True
+    elif attr == '2':
         # Do everything, turn all options on, use old school dash shorthand.
-        do_quotes    = True
+        do_quotes = True
         do_backticks = True
-        do_dashes    = 2
-        do_ellipses  = True
-    elif attr == "3":
+        do_dashes = 2
+        do_ellipses = True
+    elif attr == '3':
         # Do everything, use inverted old school dash shorthand.
-        do_quotes    = True
+        do_quotes = True
         do_backticks = True
-        do_dashes    = 3
-        do_ellipses  = True
-    elif attr == "-1": # Special "stupefy" mode.
-        do_stupefy   = True
+        do_dashes = 3
+        do_ellipses = True
+    elif attr == '-1':  # Special "stupefy" mode.
+        do_stupefy = True
     else:
-        if "q" in attr: do_quotes = True
-        if "b" in attr: do_backticks = True
-        if "B" in attr: do_backticks = 2
-        if "d" in attr: do_dashes = 1
-        if "D" in attr: do_dashes = 2
-        if "i" in attr: do_dashes = 3
-        if "e" in attr: do_ellipses = True
-        if "w" in attr: convert_quot = True
+        if 'q' in attr: do_quotes = True     # noqa: E701
+        if 'b' in attr: do_backticks = True  # noqa: E701
+        if 'B' in attr: do_backticks = 2     # noqa: E701
+        if 'd' in attr: do_dashes = 1        # noqa: E701
+        if 'D' in attr: do_dashes = 2        # noqa: E701
+        if 'i' in attr: do_dashes = 3        # noqa: E701
+        if 'e' in attr: do_ellipses = True   # noqa: E701
+        if 'w' in attr: convert_quot = True  # noqa: E701
 
-    prev_token_last_char = " "
+    prev_token_last_char = ' '
     # Last character of the previous text token. Used as
     # context to curl leading quote characters correctly.
 
     for (ttype, text) in text_tokens:
 
-        # skip HTML and/or XML tags as well as emtpy text tokens
+        # skip HTML and/or XML tags as well as empty text tokens
         # without updating the last character
         if ttype == 'tag' or not text:
             yield text
@@ -525,12 +632,12 @@ def educate_tokens(text_tokens, attr=default_smartypants_attr, language='en'):
             yield text
             continue
 
-        last_char = text[-1:] # Remember last char before processing.
+        last_char = text[-1:]  # Remember last char before processing.
 
         text = processEscapes(text)
 
         if convert_quot:
-            text = re.sub('&quot;', '"', text)
+            text = text.replace('&quot;', '"')
 
         if do_dashes == 1:
             text = educateDashes(text)
@@ -550,7 +657,10 @@ def educate_tokens(text_tokens, attr=default_smartypants_attr, language='en'):
             text = educateSingleBackticks(text, language)
 
         if do_quotes:
-            text = educateQuotes(prev_token_last_char+text, language)[1:]
+            # Replace plain quotes in context to prevent conversion to
+            # 2-character sequence in French.
+            context = prev_token_last_char.replace('"', ';').replace("'", ';')
+            text = educateQuotes(context+text, language)[1:]
 
         if do_stupefy:
             text = stupefyEntities(text, language)
@@ -563,7 +673,6 @@ def educate_tokens(text_tokens, attr=default_smartypants_attr, language='en'):
         yield text
 
 
-
 def educateQuotes(text, language='en'):
     """
     Parameter:  - text string (unicode or bytes).
@@ -571,94 +680,55 @@ def educateQuotes(text, language='en'):
     Returns:    The `text`, with "educated" curly quote characters.
 
     Example input:  "Isn't this fun?"
-    Example output: “Isn’t this fun?“;
+    Example output: “Isn’t this fun?“
     """
-
     smart = smartchars(language)
 
-    # oldtext = text
-    punct_class = r"""[!"#\$\%'()*+,-.\/:;<=>?\@\[\\\]\^_`{|}~]"""
+    if not re.search('[-"\']', text):
+        return text
 
     # Special case if the very first character is a quote
-    # followed by punctuation at a non-word-break.
-    # Close the quotes by brute force:
-    text = re.sub(r"""^'(?=%s\\B)""" % (punct_class,), smart.csquote, text)
-    text = re.sub(r"""^"(?=%s\\B)""" % (punct_class,), smart.cpquote, text)
+    # followed by punctuation at a non-word-break. Use closing quotes.
+    # TODO: example (when does this match?)
+    text = regexes.START_SINGLE.sub(smart.csquote, text)
+    text = regexes.START_DOUBLE.sub(smart.cpquote, text)
 
-    # Special case for double sets of quotes, e.g.:
-    #   <p>He said, "'Quoted' words in a larger quote."</p>
-    text = re.sub(r""""'(?=\w)""", smart.opquote+smart.osquote, text)
-    text = re.sub(r"""'"(?=\w)""", smart.osquote+smart.opquote, text)
+    # Special case for adjacent quotes
+    # like "'Quoted' words in a larger quote."
+    text = regexes.ADJACENT_1.sub(smart.opquote+smart.osquote, text)
+    text = regexes.ADJACENT_2.sub(smart.osquote+smart.opquote, text)
+
+    # Special case: "opening character" followed by quote,
+    # optional punctuation and space like "[", '(', or '-'.
+    text = regexes.OPEN_SINGLE.sub(r'\1%s'%smart.csquote, text)
+    text = regexes.OPEN_DOUBLE.sub(r'\1%s'%smart.cpquote, text)
 
     # Special case for decade abbreviations (the '80s):
-    text = re.sub(r"""\b'(?=\d{2}s)""", smart.csquote, text)
+    if language.startswith('en'):  # TODO similar cases in other languages?
+        text = regexes.DECADE.sub(smart.apostrophe, text)
 
-    close_class = r"""[^\ \t\r\n\[\{\(\-]"""
-    dec_dashes = r"""&#8211;|&#8212;"""
+    # Get most opening secondary quotes:
+    text = regexes.OPENING_SECONDARY.sub(r'\1'+smart.osquote, text)
 
-    # Get most opening single quotes:
-    opening_single_quotes_regex = re.compile(r"""
-                    (
-                            \s          |   # a whitespace char, or
-                            &nbsp;      |   # a non-breaking space entity, or
-                            --          |   # dashes, or
-                            &[mn]dash;  |   # named dash entities
-                            %s          |   # or decimal entities
-                            &\#x201[34];    # or hex
-                    )
-                    '                 # the quote
-                    (?=\w)            # followed by a word character
-                    """ % (dec_dashes,), re.VERBOSE)
-    text = opening_single_quotes_regex.sub(r'\1'+smart.osquote, text)
+    # In many locales, secondary closing quotes are different from apostrophe:
+    if smart.csquote != smart.apostrophe:
+        text = regexes.APOSTROPHE.sub(smart.apostrophe, text)
+    # TODO: keep track of quoting level to recognize apostrophe in, e.g.,
+    # "Ich fass' es nicht."
 
-    closing_single_quotes_regex = re.compile(r"""
-                    (%s)
-                    '
-                    (?!\s | s\b | \d)
-                    """ % (close_class,), re.VERBOSE)
-    text = closing_single_quotes_regex.sub(r'\1'+smart.csquote, text)
+    text = regexes.CLOSING_SECONDARY.sub(smart.csquote, text)
 
-    closing_single_quotes_regex = re.compile(r"""
-                    (%s)
-                    '
-                    (\s | s\b)
-                    """ % (close_class,), re.VERBOSE)
-    text = closing_single_quotes_regex.sub(r'\1%s\2' % smart.csquote, text)
+    # Any remaining secondary quotes should be opening ones:
+    text = text.replace(r"'", smart.osquote)
 
-    # Any remaining single quotes should be opening ones:
-    text = re.sub(r"""'""", smart.osquote, text)
+    # Get most opening primary quotes:
+    text = regexes.OPENING_PRIMARY.sub(r'\1'+smart.opquote, text)
 
-    # Get most opening double quotes:
-    opening_double_quotes_regex = re.compile(r"""
-                    (
-                            \s          |   # a whitespace char, or
-                            &nbsp;      |   # a non-breaking space entity, or
-                            --          |   # dashes, or
-                            &[mn]dash;  |   # named dash entities
-                            %s          |   # or decimal entities
-                            &\#x201[34];    # or hex
-                    )
-                    "                 # the quote
-                    (?=\w)            # followed by a word character
-                    """ % (dec_dashes,), re.VERBOSE)
-    text = opening_double_quotes_regex.sub(r'\1'+smart.opquote, text)
-
-    # Double closing quotes:
-    closing_double_quotes_regex = re.compile(r"""
-                    #(%s)?   # character that indicates the quote should be closing
-                    "
-                    (?=\s)
-                    """ % (close_class,), re.VERBOSE)
-    text = closing_double_quotes_regex.sub(smart.cpquote, text)
-
-    closing_double_quotes_regex = re.compile(r"""
-                    (%s)   # character that indicates the quote should be closing
-                    "
-                    """ % (close_class,), re.VERBOSE)
-    text = closing_double_quotes_regex.sub(r'\1'+smart.cpquote, text)
+    # primary closing quotes:
+    text = regexes.CLOSING_PRIMARY.sub(smart.cpquote, text)
 
     # Any remaining quotes should be opening ones.
-    text = re.sub(r'"', smart.opquote, text)
+    text = text.replace(r'"', smart.opquote)
 
     return text
 
@@ -669,12 +739,12 @@ def educateBackticks(text, language='en'):
     Returns:    The `text`, with ``backticks'' -style double quotes
                 translated into HTML curly quote entities.
     Example input:  ``Isn't this fun?''
-    Example output: “Isn't this fun?“;
+    Example output: “Isn't this fun?“
     """
     smart = smartchars(language)
 
-    text = re.sub(r"""``""", smart.opquote, text)
-    text = re.sub(r"""''""", smart.cpquote, text)
+    text = text.replace(r'``', smart.opquote)
+    text = text.replace(r"''", smart.cpquote)
     return text
 
 
@@ -689,8 +759,8 @@ def educateSingleBackticks(text, language='en'):
     """
     smart = smartchars(language)
 
-    text = re.sub(r"""`""", smart.osquote, text)
-    text = re.sub(r"""'""", smart.csquote, text)
+    text = text.replace(r'`', smart.osquote)
+    text = text.replace(r"'", smart.csquote)
     return text
 
 
@@ -701,8 +771,8 @@ def educateDashes(text):
                 an em-dash character.
     """
 
-    text = re.sub(r"""---""", smartchars.endash, text) # en  (yes, backwards)
-    text = re.sub(r"""--""", smartchars.emdash, text) # em (yes, backwards)
+    text = text.replace(r'---', smartchars.endash)  # en (yes, backwards)
+    text = text.replace(r'--', smartchars.emdash)   # em (yes, backwards)
     return text
 
 
@@ -714,8 +784,8 @@ def educateDashesOldSchool(text):
                 an em-dash character.
     """
 
-    text = re.sub(r"""---""", smartchars.emdash, text)
-    text = re.sub(r"""--""", smartchars.endash, text)
+    text = text.replace(r'---', smartchars.emdash)
+    text = text.replace(r'--', smartchars.endash)
     return text
 
 
@@ -733,10 +803,9 @@ def educateDashesOldSchoolInverted(text):
                 the shortcut should be shorter to type. (Thanks to Aaron
                 Swartz for the idea.)
     """
-    text = re.sub(r"""---""", smartchars.endash, text)    # em
-    text = re.sub(r"""--""", smartchars.emdash, text)    # en
+    text = text.replace(r'---', smartchars.endash)    # em
+    text = text.replace(r'--', smartchars.emdash)    # en
     return text
-
 
 
 def educateEllipses(text):
@@ -746,11 +815,11 @@ def educateEllipses(text):
                 an ellipsis character.
 
     Example input:  Huh...?
-    Example output: Huh&#8230;?
+    Example output: Huh…?
     """
 
-    text = re.sub(r"""\.\.\.""", smartchars.ellipsis, text)
-    text = re.sub(r"""\. \. \.""", smartchars.ellipsis, text)
+    text = text.replace(r'...', smartchars.ellipsis)
+    text = text.replace(r'. . .', smartchars.ellipsis)
     return text
 
 
@@ -765,16 +834,13 @@ def stupefyEntities(text, language='en'):
     """
     smart = smartchars(language)
 
-    text = re.sub(smart.endash, "-", text)  # en-dash
-    text = re.sub(smart.emdash, "--", text) # em-dash
-
-    text = re.sub(smart.osquote, "'", text)  # open single quote
-    text = re.sub(smart.csquote, "'", text)  # close single quote
-
-    text = re.sub(smart.opquote, '"', text)  # open double quote
-    text = re.sub(smart.cpquote, '"', text)  # close double quote
-
-    text = re.sub(smart.ellipsis, '...', text)# ellipsis
+    text = text.replace(smart.endash, "-")
+    text = text.replace(smart.emdash, "--")
+    text = text.replace(smart.osquote, "'")  # open secondary quote
+    text = text.replace(smart.csquote, "'")  # close secondary quote
+    text = text.replace(smart.opquote, '"')  # open primary quote
+    text = text.replace(smart.cpquote, '"')  # close primary quote
+    text = text.replace(smart.ellipsis, '...')
 
     return text
 
@@ -822,85 +888,117 @@ def tokenize(text):
                 the second is the actual value.
 
     Based on the _tokenize() subroutine from Brad Choate's MTRegex plugin.
-        <http://www.bradchoate.com/past/mtregex.php>
     """
-
-    pos = 0
-    length = len(text)
-    # tokens = []
-
-    depth = 6
-    nested_tags = "|".join(['(?:<(?:[^<>]',] * depth) + (')*>)' * depth)
-    #match = r"""(?: <! ( -- .*? -- \s* )+ > ) |  # comments
-    #               (?: <\? .*? \?> ) |  # directives
-    #               %s  # nested tags       """ % (nested_tags,)
-    tag_soup = re.compile(r"""([^<]*)(<[^>]*>)""")
-
+    tag_soup = re.compile(r'([^<]*)(<[^>]*>)')
     token_match = tag_soup.search(text)
-
     previous_end = 0
+
     while token_match is not None:
         if token_match.group(1):
-            yield ('text', token_match.group(1))
-
-        yield ('tag', token_match.group(2))
-
+            yield 'text', token_match.group(1)
+        yield 'tag', token_match.group(2)
         previous_end = token_match.end()
         token_match = tag_soup.search(text, token_match.end())
 
     if previous_end < len(text):
-        yield ('text', text[previous_end:])
-
+        yield 'text', text[previous_end:]
 
 
 if __name__ == "__main__":
 
+    import itertools
     import locale
-
     try:
-        locale.setlocale(locale.LC_ALL, '')
-    except:
-        pass
+        locale.setlocale(locale.LC_ALL, '')  # set to user defaults
+        defaultlanguage = locale.getlocale()[0]
+    except:  # noqa  catchall
+        defaultlanguage = 'en'
 
-    from docutils.core import publish_string
-    docstring_html = publish_string(__doc__, writer_name='html')
+    # Normalize and drop unsupported subtags:
+    defaultlanguage = defaultlanguage.lower().replace('-', '_')
+    # split (except singletons, which mark the following tag as non-standard):
+    defaultlanguage = re.sub(r'_([a-zA-Z0-9])_', r'_\1-', defaultlanguage)
+    _subtags = [subtag for subtag in defaultlanguage.split('_')]
+    _basetag = _subtags.pop(0)
+    # find all combinations of subtags
+    for n in range(len(_subtags), 0, -1):
+        for tags in itertools.combinations(_subtags, n):
+            _tag = '-'.join((_basetag, *tags))
+            if _tag in smartchars.quotes:
+                defaultlanguage = _tag
+                break
+        else:
+            if _basetag in smartchars.quotes:
+                defaultlanguage = _basetag
+            else:
+                defaultlanguage = 'en'
 
-    print(docstring_html)
+    import argparse
+    parser = argparse.ArgumentParser(
+                description='Filter <input> making ASCII punctuation "smart".')
+    # TODO: require input arg or other means to print USAGE instead of waiting.
+    # parser.add_argument("input", help="Input stream, use '-' for stdin.")
+    parser.add_argument("-a", "--action", default="1",
+                        help="what to do with the input (see --actionhelp)")
+    parser.add_argument("-e", "--encoding", default="utf-8",
+                        help="text encoding")
+    parser.add_argument("-l", "--language", default=defaultlanguage,
+                        help="text language (BCP47 tag), "
+                             f"Default: {defaultlanguage}")
+    parser.add_argument("-q", "--alternative-quotes", action="store_true",
+                        help="use alternative quote style")
+    parser.add_argument("--doc", action="store_true",
+                        help="print documentation")
+    parser.add_argument("--actionhelp", action="store_true",
+                        help="list available actions")
+    parser.add_argument("--stylehelp", action="store_true",
+                        help="list available quote styles")
+    parser.add_argument("--test", action="store_true",
+                        help="perform short self-test")
+    args = parser.parse_args()
 
+    if args.doc:
+        print(__doc__)
+    elif args.actionhelp:
+        print(options)
+    elif args.stylehelp:
+        print()
+        print("Available styles (primary open/close, secondary open/close)")
+        print("language tag   quotes")
+        print("============   ======")
+        for key in sorted(smartchars.quotes.keys()):
+            print("%-14s %s" % (key, smartchars.quotes[key]))
+    elif args.test:
+        # Unit test output goes to stderr.
+        import unittest
 
-    # Unit test output goes out stderr.
-    import unittest
-    sp = smartyPants
+        class TestSmartypantsAllAttributes(unittest.TestCase):
+            # the default attribute is "1", which means "all".
+            def test_dates(self):
+                self.assertEqual(smartyPants("1440-80's"), "1440-80’s")
+                self.assertEqual(smartyPants("1440-'80s"), "1440-’80s")
+                self.assertEqual(smartyPants("1440---'80s"), "1440–’80s")
+                self.assertEqual(smartyPants("1960's"), "1960’s")
+                self.assertEqual(smartyPants("one two '60s"), "one two ’60s")
+                self.assertEqual(smartyPants("'60s"), "’60s")
 
-    class TestSmartypantsAllAttributes(unittest.TestCase):
-        # the default attribute is "1", which means "all".
+            def test_educated_quotes(self):
+                self.assertEqual(smartyPants('"Isn\'t this fun?"'),
+                                 '“Isn’t this fun?”')
 
-        def test_dates(self):
-            self.assertEqual(sp("1440-80's"), "1440-80’s")
-            self.assertEqual(sp("1440-'80s"), "1440-‘80s")
-            self.assertEqual(sp("1440---'80s"), "1440–‘80s")
-            self.assertEqual(sp("1960s"), "1960s")  # no effect.
-            self.assertEqual(sp("1960's"), "1960’s")
-            self.assertEqual(sp("one two '60s"), "one two ‘60s")
-            self.assertEqual(sp("'60s"), "‘60s")
+            def test_html_tags(self):
+                text = '<a src="foo">more</a>'
+                self.assertEqual(smartyPants(text), text)
 
-        def test_ordinal_numbers(self):
-            self.assertEqual(sp("21st century"), "21st century")  # no effect.
-            self.assertEqual(sp("3rd"), "3rd")  # no effect.
+        suite = unittest.TestLoader().loadTestsFromTestCase(
+                                            TestSmartypantsAllAttributes)
+        unittest.TextTestRunner().run(suite)
 
-        def test_educated_quotes(self):
-            self.assertEqual(sp('''"Isn't this fun?"'''), '“Isn’t this fun?”')
-
-        def test_html_tags(self):
-            text = '<a src="foo">more</a>'
-            self.assertEqual(sp(text), text)
-
-    unittest.main()
-
-
-
-
-__author__ = "Chad Miller <smartypantspy@chad.org>"
-__version__ = "1.5_1.6: Fri, 27 Jul 2007 07:06:40 -0400"
-__url__ = "http://wiki.chad.org/SmartyPantsPy"
-__description__ = "Smart-quotes, smart-ellipses, and smart-dashes for weblog entries in pyblosxom"
+    else:
+        if args.alternative_quotes:
+            if '-x-altquot' in args.language:
+                args.language = args.language.replace('-x-altquot', '')
+            else:
+                args.language += '-x-altquot'
+        text = sys.stdin.read()
+        print(smartyPants(text, attr=args.action, language=args.language))

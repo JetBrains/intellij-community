@@ -1,4 +1,4 @@
-# $Id: parts.py 6073 2009-08-06 12:21:10Z milde $
+# $Id: parts.py 9038 2022-03-05 23:31:46Z milde $
 # Authors: David Goodger <goodger@python.org>; Ueli Schlaepfer; Dmitry Jemerov
 # Copyright: This module has been placed in the public domain.
 
@@ -8,8 +8,8 @@ Transforms related to document parts.
 
 __docformat__ = 'reStructuredText'
 
-import sys
 
+import sys
 from docutils import nodes
 from docutils.transforms import Transform
 
@@ -38,7 +38,7 @@ class SectNum(Transform):
             if self.maxdepth is None:
                 self.maxdepth = sys.maxsize
             self.update_section_numbers(self.document)
-        else: # store details for eventual section numbering by the writer
+        else:  # store details for eventual section numbering by the writer
             self.document.settings.sectnum_depth = self.maxdepth
             self.document.settings.sectnum_start = self.startvalue
             self.document.settings.sectnum_prefix = self.prefix
@@ -57,7 +57,7 @@ class SectNum(Transform):
                 # Use &nbsp; for spacing:
                 generated = nodes.generated(
                     '', (self.prefix + '.'.join(numbers) + self.suffix
-                         +  '\u00a0' * 3),
+                         + '\u00a0' * 3),
                     classes=['sectnum'])
                 title.insert(0, generated)
                 title['auto'] = 1
@@ -85,10 +85,8 @@ class Contents(Transform):
     default_priority = 720
 
     def apply(self):
-        try: # let the writer (or output software) build the contents list?
-            toc_by_writer = self.document.settings.use_latex_toc
-        except AttributeError:
-            toc_by_writer = False
+        # let the writer (or output software) build the contents list?
+        toc_by_writer = getattr(self.document.settings, 'use_latex_toc', False)
         details = self.startnode.details
         if 'local' in details:
             startnode = self.startnode.parent.parent
@@ -118,7 +116,6 @@ class Contents(Transform):
         level += 1
         sections = [sect for sect in node if isinstance(sect, nodes.section)]
         entries = []
-        autonum = 0
         depth = self.startnode.details.get('depth', sys.maxsize)
         for section in sections:
             title = section[0]
@@ -126,11 +123,12 @@ class Contents(Transform):
             entrytext = self.copy_and_filter(title)
             reference = nodes.reference('', '', refid=section['ids'][0],
                                         *entrytext)
-            ref_id = self.document.set_id(reference)
+            ref_id = self.document.set_id(reference,
+                                          suggested_prefix='toc-entry')
             entry = nodes.paragraph('', '', reference)
             item = nodes.list_item('', entry)
-            if ( self.backlinks in ('entry', 'top')
-                 and title.next_node(nodes.reference) is None):
+            if (self.backlinks in ('entry', 'top')
+                and title.next_node(nodes.reference) is None):
                 if self.backlinks == 'entry':
                     title['refid'] = ref_id
                 elif self.backlinks == 'top':
@@ -141,7 +139,7 @@ class Contents(Transform):
             entries.append(item)
         if entries:
             contents = nodes.bullet_list('', *entries)
-            if auto:
+            if auto:  # auto-numbered sections
                 contents['classes'].append('auto-toc')
             return contents
         else:
@@ -173,7 +171,6 @@ class ContentsFilter(nodes.TreeCopyVisitor):
     def ignore_node_but_process_children(self, node):
         raise nodes.SkipDeparture
 
-    visit_interpreted = ignore_node_but_process_children
     visit_problematic = ignore_node_but_process_children
     visit_reference = ignore_node_but_process_children
     visit_target = ignore_node_but_process_children

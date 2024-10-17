@@ -1,4 +1,4 @@
-# $Id: images.py 7753 2014-06-24 14:52:59Z milde $
+# $Id: images.py 9500 2023-12-14 22:38:49Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -8,11 +8,17 @@ Directives for figures and simple images.
 
 __docformat__ = 'reStructuredText'
 
-import sys
+from urllib.request import url2pathname
 
-import urllib.error
-import urllib.parse
-import urllib.request
+try:  # check for the Python Imaging Library
+    import PIL.Image
+except ImportError:
+    try:  # sometimes PIL modules are put in PYTHONPATH's root
+        import Image
+        class PIL: pass  # noqa:E701  dummy wrapper
+        PIL.Image = Image
+    except ImportError:
+        PIL = None
 
 from docutils import nodes
 from docutils.nodes import fully_normalize_name, whitespace_normalize_name
@@ -20,27 +26,23 @@ from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives, states
 from docutils.parsers.rst.roles import set_classes
 
-try: # check for the Python Imaging Library
-    import PIL.Image
-except ImportError:
-    try:  # sometimes PIL modules are put in PYTHONPATH's root
-        import Image
-        class PIL(object): pass  # dummy wrapper
-        PIL.Image = Image
-    except ImportError:
-        PIL = None
 
 class Image(Directive):
 
     align_h_values = ('left', 'center', 'right')
     align_v_values = ('top', 'middle', 'bottom')
     align_values = align_v_values + align_h_values
+    loading_values = ('embed', 'link', 'lazy')
 
     def align(argument):
-        # This is not callable as self.align.  We cannot make it a
+        # This is not callable as `self.align()`.  We cannot make it a
         # staticmethod because we're saving an unbound method in
         # option_spec below.
         return directives.choice(argument, Image.align_values)
+
+    def loading(argument):
+        # This is not callable as `self.loading()` (see above).
+        return directives.choice(argument, Image.loading_values)
 
     required_arguments = 1
     optional_arguments = 0
@@ -50,9 +52,10 @@ class Image(Directive):
                    'width': directives.length_or_percentage_or_unitless,
                    'scale': directives.percentage,
                    'align': align,
-                   'name': directives.unchanged,
                    'target': directives.unchanged_required,
-                   'class': directives.class_option}
+                   'loading': loading,
+                   'class': directives.class_option,
+                   'name': directives.unchanged}
 
     def run(self):
         if 'align' in self.options:
@@ -94,6 +97,8 @@ class Image(Directive):
             del self.options['target']
         set_classes(self.options)
         image_node = nodes.image(self.block_text, **self.options)
+        (image_node.source,
+         image_node.line) = self.state_machine.get_source_and_line(self.lineno)
         self.add_name(image_node)
         if reference_node:
             reference_node += image_node
@@ -127,19 +132,19 @@ class Figure(Image):
         if isinstance(image_node, nodes.system_message):
             return [image_node]
         figure_node = nodes.figure('', image_node)
+        (figure_node.source, figure_node.line
+         ) = self.state_machine.get_source_and_line(self.lineno)
         if figwidth == 'image':
             if PIL and self.state.document.settings.file_insertion_enabled:
-                imagepath = urllib.request.url2pathname(image_node['uri'])
+                imagepath = url2pathname(image_node['uri'])
                 try:
-                    img = PIL.Image.open(
-                            imagepath.encode(sys.getfilesystemencoding()))
-                except (IOError, UnicodeEncodeError):
-                    pass # TODO: warn?
+                    with PIL.Image.open(imagepath) as img:
+                        figure_node['width'] = '%dpx' % img.size[0]
+                except (OSError, UnicodeEncodeError):
+                    pass  # TODO: warn/info?
                 else:
                     self.state.document.settings.record_dependencies.add(
                         imagepath.replace('\\', '/'))
-                    figure_node['width'] = '%dpx' % img.size[0]
-                    del img
         elif figwidth is not None:
             figure_node['width'] = figwidth
         if figclasses:
@@ -158,7 +163,7 @@ class Figure(Image):
                 figure_node += caption
             elif not (isinstance(first_node, nodes.comment)
                       and len(first_node) == 0):
-                error = self.state_machine.reporter.error(
+                error = self.reporter.error(
                       'Figure caption must be a paragraph or empty comment.',
                       nodes.literal_block(self.block_text, self.block_text),
                       line=self.lineno)
