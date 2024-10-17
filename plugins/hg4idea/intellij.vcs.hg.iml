@@ -25,5 +25,6 @@
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
 </module>
