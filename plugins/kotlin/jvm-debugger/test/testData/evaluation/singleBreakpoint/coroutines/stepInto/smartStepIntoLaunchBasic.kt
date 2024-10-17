@@ -3,9 +3,43 @@
 
 import kotlinx.coroutines.*
 
+suspend fun foo(i: Int) {
+    coroutineScope {
+        if (i == 1) {
+            //Breakpoint!
+            i.toString()
+        }
+        launch(Dispatchers.Default) {
+            delay(1)
+            launch(Dispatchers.Default) {
+                delay(1)
+                launch(Dispatchers.Default) {
+                    delay(1)
+                    launch(Dispatchers.Default) {
+                        delay(1)
+                        launch(Dispatchers.Default) {
+                            delay(1)
+                            launch(Dispatchers.Default) {
+                                startMethod(i)
+                                delay(1)
+                                println("After delay $i")
+                            }
+                            delay(1)
+                        }
+                        delay(1)
+                    }
+                }
+            }
+        }
+    }
+    println("coroutineScope completed $i")
+}
+
 suspend fun startMethod(i: Int) {
-    delay(1)
-    "".toString()
+    if (i == 5) {
+        delay(1)
+        "".toString()
+    }
 }
 
 suspend fun endMethod(i: Int) {
@@ -14,21 +48,24 @@ suspend fun endMethod(i: Int) {
 
 fun main() {
     runBlocking {
-        for (i in 0 .. 100) {
-            if (i == 25) {
-                //Breakpoint!
-                "".toString()
-            }
+        for (i in 0 .. 1000) {
             launch {
-                startMethod(i)
-                delay(10)
-                delay(1)
-                startMethod(i)
+                foo(i)
             }
         }
     }
 }
 
 // STEP_OVER: 1
+// SMART_STEP_INTO_BY_INDEX: 1
+// STEP_OVER: 2
+// SMART_STEP_INTO_BY_INDEX: 1
+// STEP_OVER: 2
+// SMART_STEP_INTO_BY_INDEX: 1
+// STEP_OVER: 2
+// SMART_STEP_INTO_BY_INDEX: 1
+// STEP_OVER: 2
+// SMART_STEP_INTO_BY_INDEX: 1
+// STEP_OVER: 2
 // SMART_STEP_INTO_BY_INDEX: 1
 // STEP_OVER: 3

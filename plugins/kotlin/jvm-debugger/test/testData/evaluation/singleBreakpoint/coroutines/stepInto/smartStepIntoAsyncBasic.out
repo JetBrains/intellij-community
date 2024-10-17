@@ -1,12 +1,12 @@
-LineBreakpoint created at smartStepIntoAsyncBasic.kt:11
+LineBreakpoint created at smartStepIntoAsyncBasic.kt:10
 Run Java
 Connected to the target VM
-smartStepIntoAsyncBasic.kt:11
-smartStepIntoAsyncBasic.kt:13
+smartStepIntoAsyncBasic.kt:10
+smartStepIntoAsyncBasic.kt:12
+smartStepIntoAsyncBasic.kt:12
 smartStepIntoAsyncBasic.kt:13
 smartStepIntoAsyncBasic.kt:14
 smartStepIntoAsyncBasic.kt:15
-smartStepIntoAsyncBasic.kt:16
 Disconnected from the target VM
 
 Process finished with exit code 0
