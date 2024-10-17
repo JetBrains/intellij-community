@@ -8,5 +8,9 @@
   modules:
   - name: intellij.settingsRepository
     libraries:
-      eclipse.jgit.ssh.jsch:
-      - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.jsch/6/org.eclipse.jgit.ssh.jsch-6.jar
+      eclipse.jgit.ssh.apache.agent:
+      - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6/org.eclipse.jgit.ssh.apache.agent-6.jar
+      eclipse.jgit.ssh.apache:
+      - name: $MAVEN_REPOSITORY$/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6/org.eclipse.jgit.ssh.apache-6.jar
+      apache.sshd.osgi:
+      - name: $MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2/sshd-osgi-2.jar

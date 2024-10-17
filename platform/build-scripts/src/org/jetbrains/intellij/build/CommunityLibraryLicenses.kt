@@ -629,6 +629,14 @@ object CommunityLibraryLicenses {
       .license("Eclipse Distribution License 1.0", "https://www.eclipse.org/org/documents/edl-v10.php")
       .suppliedByOrganizations(Suppliers.ECLIPSE),
 
+    LibraryLicense("JGit SSH Apache", libraryName = "eclipse.jgit.ssh.apache", url = "https://www.eclipse.org/jgit/")
+      .license("Eclipse Distribution License 1.0", "https://www.eclipse.org/org/documents/edl-v10.php")
+      .suppliedByOrganizations(Suppliers.ECLIPSE),
+
+    LibraryLicense("JGit SSH Apache Agent", libraryName = "eclipse.jgit.ssh.apache.agent", url = "https://www.eclipse.org/jgit/")
+      .license("Eclipse Distribution License 1.0", "https://www.eclipse.org/org/documents/edl-v10.php")
+      .suppliedByOrganizations(Suppliers.ECLIPSE),
+
     LibraryLicense("JGoodies Common", libraryName = "jgoodies-common", url = "https://www.jgoodies.com/freeware/libraries/looks/")
       .newBsd("https://opensource.org/licenses/BSD-3-Clause"),  // no longer OSS; historic versions are still available
 
@@ -660,10 +668,6 @@ object CommunityLibraryLicenses {
 
     LibraryLicense("jps-javac-extension", libraryName = "jps-javac-extension", url = "https://github.com/JetBrains/jps-javac-extension/")
       .apache("https://github.com/JetBrains/jps-javac-extension/blob/master/LICENSE.txt"),
-
-    LibraryLicense("jsch", libraryName = "eclipse.jgit.ssh.jsch", url = "http://www.jcraft.com/jsch/")
-      .newBsd("http://www.jcraft.com/jsch/LICENSE.txt")
-      .suppliedByPersons("Atsuhiko Yamanaka"),
 
     LibraryLicense(libraryName = "jsch-agent-proxy", url = "https://github.com/ymnk/jsch-agent-proxy")
       .newBsd("https://github.com/ymnk/jsch-agent-proxy/blob/master/LICENSE.txt")
