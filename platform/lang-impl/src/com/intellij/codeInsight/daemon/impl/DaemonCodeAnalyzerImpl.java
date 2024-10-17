@@ -456,7 +456,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     MarkupModel markup = editor.getMarkupModel();
     if (markup instanceof EditorMarkupModelImpl editorMarkup) {
       editorMarkup.repaintTrafficLightIcon();
-      ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor, file);
+      ErrorStripeUpdateManager.getInstance(project).launchRepaintErrorStripePanel(editor, file);
     }
   }
 
