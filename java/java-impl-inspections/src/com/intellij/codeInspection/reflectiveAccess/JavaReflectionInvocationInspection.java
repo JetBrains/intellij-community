@@ -4,6 +4,7 @@ package com.intellij.codeInspection.reflectiveAccess;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
@@ -65,10 +66,11 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
       getRequiredMethodArguments(methodCall.getMethodExpression().getQualifierExpression(), argumentOffset, methodPredicate);
     if (requiredTypes != null) {
       final PsiExpressionList argumentList = methodCall.getArgumentList();
-      final Arguments actualArguments = getActualMethodArguments(argumentList.getExpressions(), argumentOffset, 
+      final Arguments actualArguments = getActualMethodArguments(argumentList.getExpressions(), argumentOffset,
                                                                  MethodCallUtils.isVarArgCall(methodCall));
       if (actualArguments != null) {
-        if (requiredTypes.size() != actualArguments.expressions.length) {
+        PsiExpression[] actualExpressions = actualArguments.expressions;
+        if (requiredTypes.size() != actualExpressions.length) {
           if (actualArguments.varargAsArray) {
             final PsiExpression[] expressions = argumentList.getExpressions();
             final PsiElement element = expressions.length == argumentOffset + 1 ? expressions[argumentOffset] : argumentList;
@@ -76,8 +78,15 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
               "inspection.reflection.invocation.item.count", requiredTypes.size()));
           }
           else {
-            holder.registerProblem(argumentList, JavaBundle.message(
-              "inspection.reflection.invocation.argument.count", requiredTypes.size() + argumentOffset));
+            if (actualExpressions.length > 0) {
+              TextRange range =
+                actualExpressions[0].getTextRangeInParent().union(actualExpressions[actualExpressions.length - 1].getTextRangeInParent());
+              holder.registerProblem(argumentList, range, JavaBundle.message(
+                "inspection.reflection.invocation.reflective.argument.count", requiredTypes.size()));
+            } else {
+              holder.registerProblem(argumentList, JavaBundle.message(
+                "inspection.reflection.invocation.reflective.argument.count", requiredTypes.size()));
+            }
           }
           return;
         }
@@ -85,7 +94,7 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
         for (int i = 0; i < requiredTypes.size(); i++) {
           final ReflectiveType requiredType = getReflectiveType(requiredTypes.get(i));
           if (requiredType != null) {
-            final PsiExpression argument = actualArguments.expressions[i];
+            final PsiExpression argument = actualExpressions[i];
             if (argument != null) {
               PsiType actualType = argument.getType();
               if (TypeUtils.isJavaLangObject(actualType) && !requiredType.isAssignableFrom(actualType) &&
@@ -107,7 +116,7 @@ public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLo
                   final PsiExpression[] expressions = argumentList.getExpressions();
                   final PsiElement element = expressions.length == argumentOffset + 1 ? expressions[argumentOffset] : argumentList;
                   holder.registerProblem(element, JavaBundle.message(
-                    "inspection.reflection.invocation.array.not.assignable", actualArguments.expressions.length));
+                    "inspection.reflection.invocation.array.not.assignable", actualExpressions.length));
                   break;
                 }
               }
