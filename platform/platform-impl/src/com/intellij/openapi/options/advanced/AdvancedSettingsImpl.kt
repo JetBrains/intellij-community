@@ -17,10 +17,10 @@ import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
-import com.jetbrains.rd.util.concurrentMapOf
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> {
   companion object {
@@ -210,8 +210,8 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
   }
 
   private val epCollector = KeyedExtensionCollector<AdvancedSettingBean, String>(AdvancedSettingBean.EP_NAME.name)
-  private val internalState = concurrentMapOf<String, Any>()
-  private val defaultValueCache = concurrentMapOf<String, Any>()
+  private val internalState = ConcurrentHashMap<String, Any>()
+  private val defaultValueCache = ConcurrentHashMap<String, Any>()
   private var modificationCount = 0L
 
   init {
@@ -313,7 +313,7 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
   private fun getSettingAndType(id: String): Pair<Any, AdvancedSettingType> =
     getSetting(id) to getOption(id).type()
 
-  fun isNonDefault(id: String): Boolean = id in internalState
+  fun isNonDefault(id: String): Boolean = internalState.containsKey(id)
 
   @TestOnly
   fun setSetting(id: String, value: Any, revertOnDispose: Disposable) {
