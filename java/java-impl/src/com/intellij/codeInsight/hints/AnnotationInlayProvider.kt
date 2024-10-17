@@ -60,15 +60,16 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
         }
         else if (element is PsiModifierListOwner) {
           var annotations = emptySequence<PsiAnnotation>()
-          if (settings.showExternal) {
-            annotations += ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(element)
-          }
-          if (settings.showInferred) {
-            annotations += InferredAnnotationsManager.getInstance(project).findInferredAnnotations(element)
-          }
           val previewAnnotation = PREVIEW_ANNOTATION_KEY.get(element)
           if (previewAnnotation != null) {
             annotations += previewAnnotation
+          } else {
+            if (settings.showExternal) {
+              annotations += ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(element)
+            }
+            if (settings.showInferred) {
+              annotations += InferredAnnotationsManager.getInstance(project).findInferredAnnotations(element)
+            }
           }
 
           val shownAnnotations = mutableSetOf<String>()
