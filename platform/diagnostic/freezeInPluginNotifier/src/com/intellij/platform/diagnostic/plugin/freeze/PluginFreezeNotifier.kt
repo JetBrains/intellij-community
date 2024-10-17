@@ -2,6 +2,8 @@
 package com.intellij.platform.diagnostic.plugin.freeze
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.ide.BrowserUtil
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -10,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
@@ -45,6 +48,11 @@ internal class PluginFreezeNotifier : EditorNotificationProvider {
 
             closePanel(project)
           }
+        createActionLabel(PluginFreezeBundle.message("action.open.issue.tracker.text")) {
+          openIssueTracker(project, pluginDescriptor)
+
+          LifecycleUsageTriggerCollector.pluginIssueTrackerOpened()
+        }
           createActionLabel(PluginFreezeBundle.message("action.close.panel.text")) {
             closePanel(project)
           }
@@ -57,6 +65,14 @@ internal class PluginFreezeNotifier : EditorNotificationProvider {
     val pluginDisabled = PluginManagerCore.disablePlugin(frozenPlugin)
     if (pluginDisabled) {
       RestartDialogImpl.showRestartRequired()
+    }
+  }
+
+  private fun openIssueTracker(project: Project, pluginDescriptor: IdeaPluginDescriptor) {
+    runWithModalProgressBlocking(project, PluginFreezeBundle.message("progress.title.opening.issue.tracker")) {
+      PluginIssueTrackerResolver.getMarketplaceBugTrackerUrl(pluginDescriptor)?.let {
+        BrowserUtil.open(it)
+      }
     }
   }
 
