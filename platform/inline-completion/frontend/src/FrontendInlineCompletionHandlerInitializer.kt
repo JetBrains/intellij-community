@@ -11,7 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 
 internal class FrontendInlineCompletionHandlerInitializer : InlineCompletionHandlerInitializer {
   override fun initialize(editor: Editor, scope: CoroutineScope, disposable: Disposable): InlineCompletionHandler? {
-    if (AppMode.isRemoteDevHost() && InlineCompletionRemDevUtils.useRhizome()) {
+    if (AppMode.isRemoteDevHost() && InlineCompletionRemDevUtils.isRhizomeUsed()) {
       return null
     }
     return FrontendInlineCompletionHandler(scope, editor, disposable)

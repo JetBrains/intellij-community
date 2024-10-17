@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object InlineCompletionRemDevUtils {
 
-  fun useRhizome(): Boolean {
+  fun isRhizomeUsed(): Boolean {
     return Registry.`is`("inline.completion.rem.dev.use.rhizome", false)
   }
 
