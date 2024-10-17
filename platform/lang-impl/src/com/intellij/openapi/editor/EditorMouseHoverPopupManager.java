@@ -12,7 +12,10 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -218,6 +221,9 @@ public class EditorMouseHoverPopupManager implements Disposable {
       mySkipNextMovement = false;
       return true;
     }
+    if (myContext != null && myContext.keepPopupOnMouseMove()) {
+      return true;
+    }
     Rectangle currentHintBounds = getCurrentHintBounds(e.getEditor());
     return myMouseMovementTracker.isMovingTowards(e.getMouseEvent(), currentHintBounds) ||
            currentHintBounds != null && myKeepPopupOnMouseMove;
@@ -347,7 +353,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     PsiElement elementForQuickDoc = findElementForQuickDoc(editor, offset, project);
     return info == null && elementForQuickDoc == null
            ? null
-           : new Context(startTimestamp, offset, info, elementForQuickDoc, showImmediately, showDocumentation);
+           : new Context(startTimestamp, offset, info, elementForQuickDoc, showImmediately, showDocumentation, false);
   }
 
   private static @Nullable PsiElement findElementForQuickDoc(@NotNull Editor editor, int offset, @NotNull Project project) {
@@ -448,7 +454,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
                               int offset,
                               boolean requestFocus,
                               boolean showImmediately) {
-    showInfoTooltip(editor, info, offset, requestFocus, showImmediately, false);
+    showInfoTooltip(editor, info, offset, requestFocus, showImmediately, false, false);
   }
 
   public void showInfoTooltip(@NotNull Editor editor,
@@ -457,9 +463,19 @@ public class EditorMouseHoverPopupManager implements Disposable {
                               boolean requestFocus,
                               boolean showImmediately,
                               boolean showDocumentation) {
+    showInfoTooltip(editor, info, offset, requestFocus, showImmediately, showDocumentation, false);
+  }
+
+  public void showInfoTooltip(@NotNull Editor editor,
+                              @NotNull HighlightInfo info,
+                              int offset,
+                              boolean requestFocus,
+                              boolean showImmediately,
+                              boolean showDocumentation,
+                              boolean keepPopupOnMouseMove) {
     if (editor.getProject() == null) return;
     cancelProcessingAndCloseHint();
-    Context context = new Context(System.currentTimeMillis(), offset, info, null, showImmediately, showDocumentation);
+    Context context = new Context(System.currentTimeMillis(), offset, info, null, showImmediately, showDocumentation, keepPopupOnMouseMove);
     scheduleProcessing(editor, context, false, true, requestFocus);
   }
 
@@ -467,6 +483,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     private final long startTimestamp;
     private final boolean showImmediately;
     private final boolean showDocumentation;
+    private final boolean keepPopupOnMouseMove;
     private final int targetOffset;
     private final WeakReference<HighlightInfo> highlightInfo;
     private final WeakReference<PsiElement> elementForQuickDoc;
@@ -476,13 +493,15 @@ public class EditorMouseHoverPopupManager implements Disposable {
                       HighlightInfo highlightInfo,
                       PsiElement elementForQuickDoc,
                       boolean showImmediately,
-                      boolean showDocumentation) {
+                      boolean showDocumentation,
+                      boolean keepPopupOnMouseMove) {
       this.startTimestamp = startTimestamp;
       this.targetOffset = targetOffset;
       this.highlightInfo = highlightInfo == null ? null : new WeakReference<>(highlightInfo);
       this.elementForQuickDoc = elementForQuickDoc == null ? null : new WeakReference<>(elementForQuickDoc);
       this.showImmediately = showImmediately;
       this.showDocumentation = showDocumentation;
+      this.keepPopupOnMouseMove = keepPopupOnMouseMove;
     }
 
     @Nullable PsiElement getElementForQuickDoc() {
@@ -491,6 +510,10 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
     public boolean showDocumentation() {
       return showDocumentation;
+    }
+
+    public boolean keepPopupOnMouseMove() {
+      return keepPopupOnMouseMove;
     }
 
     public HighlightInfo getHighlightInfo() {

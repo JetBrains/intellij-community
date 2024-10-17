@@ -13437,6 +13437,7 @@ c:com.intellij.openapi.editor.EditorMouseHoverPopupManager
 - p:handleMouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
 - showInfoTooltip(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.daemon.impl.HighlightInfo,I,Z,Z):V
 - showInfoTooltip(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.daemon.impl.HighlightInfo,I,Z,Z,Z):V
+- showInfoTooltip(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.daemon.impl.HighlightInfo,I,Z,Z,Z,Z):V
 - showInfoTooltip(com.intellij.openapi.editor.event.EditorMouseEvent):V
 f:com.intellij.openapi.editor.actions.FlipCommaIntention
 - com.intellij.modcommand.PsiUpdateModCommandAction
