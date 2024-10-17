@@ -11233,7 +11233,131 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation")
+    public abstract static class RestrictedRetentionForExpressionAnnotation extends AbstractHighLevelQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/addSourceRetention")
+        public static class AddSourceRetention extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("binaryRetention.kt")
+            public void testBinaryRetention() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/addSourceRetention/binaryRetention.kt");
+            }
+
+            @TestMetadata("emptyRetention.kt")
+            public void testEmptyRetention() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/addSourceRetention/emptyRetention.kt");
+            }
+
+            @TestMetadata("emptyRetention2.kt")
+            public void testEmptyRetention2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/addSourceRetention/emptyRetention2.kt");
+            }
+
+            @TestMetadata("noRetention.kt")
+            public void testNoRetention() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/addSourceRetention/noRetention.kt");
+            }
+
+            @TestMetadata("noRetention2.kt")
+            public void testNoRetention2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/addSourceRetention/noRetention2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/changeRetentionToSource")
+        public static class ChangeRetentionToSource extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("binaryRetention.kt")
+            public void testBinaryRetention() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/changeRetentionToSource/binaryRetention.kt");
+            }
+
+            @TestMetadata("emptyRetention.kt")
+            public void testEmptyRetention() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/changeRetentionToSource/emptyRetention.kt");
+            }
+
+            @TestMetadata("emptyRetention2.kt")
+            public void testEmptyRetention2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/changeRetentionToSource/emptyRetention2.kt");
+            }
+
+            @TestMetadata("emptyRetention3.kt")
+            public void testEmptyRetention3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/changeRetentionToSource/emptyRetention3.kt");
+            }
+
+            @TestMetadata("noRetention.kt")
+            public void testNoRetention() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/changeRetentionToSource/noRetention.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/removeExpressionTarget")
+        public static class RemoveExpressionTarget extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("binaryRetention.kt")
+            public void testBinaryRetention() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/removeExpressionTarget/binaryRetention.kt");
+            }
+
+            @TestMetadata("emptyRetention.kt")
+            public void testEmptyRetention() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/removeExpressionTarget/emptyRetention.kt");
+            }
+
+            @TestMetadata("emptyRetention2.kt")
+            public void testEmptyRetention2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/removeExpressionTarget/emptyRetention2.kt");
+            }
+
+            @TestMetadata("multipleTargets.kt")
+            public void testMultipleTargets() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/removeExpressionTarget/multipleTargets.kt");
+            }
+
+            @TestMetadata("multipleTargetsImported.kt")
+            public void testMultipleTargetsImported() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/removeExpressionTarget/multipleTargetsImported.kt");
+            }
+
+            @TestMetadata("noRetention.kt")
+            public void testNoRetention() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/restrictedRetentionForExpressionAnnotation/removeExpressionTarget/noRetention.kt");
+            }
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/simplifyComparison")
