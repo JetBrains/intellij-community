@@ -28,7 +28,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 71);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 72);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -72,6 +72,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     LIFECYCLE.registerEvent("ide.freeze.disabled.plugin", EventFields.PluginInfo);
   private static final EventId1<PluginInfo> IDE_FREEZE_PLUGIN_IGNORED =
     LIFECYCLE.registerEvent("ide.freeze.ignored.plugin", EventFields.PluginInfo);
+  private static final EventId IDE_FREEZE_PLUGIN_ISSUE_TRACKER_OPENED =
+    LIFECYCLE.registerEvent("ide.freeze.issue.tracker.opened");
 
   private static final ClassEventField errorField = EventFields.Class("error");
   private static final EventField<VMOptions.MemoryKind> memoryErrorKindField =
@@ -239,5 +241,9 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   public static void pluginFreezeIgnored(@NotNull PluginId id) {
     IDE_FREEZE_PLUGIN_IGNORED.log(getPluginInfoById(id));
+  }
+
+  public static void pluginIssueTrackerOpened() {
+    IDE_FREEZE_PLUGIN_ISSUE_TRACKER_OPENED.log();
   }
 }
