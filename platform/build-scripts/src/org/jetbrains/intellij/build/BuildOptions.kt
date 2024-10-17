@@ -516,6 +516,6 @@ data class BuildOptions(
   }
 }
 
-private fun getSetProperty(name: String): Set<String> = System.getProperty(name)?.splitToSequence(',')?.toSet() ?: emptySet()
+private fun getSetProperty(name: String): Set<String> = System.getProperty(name)?.splitToSequence(',')?.filterTo(LinkedHashSet()) { it.isNotBlank() } ?: emptySet()
 
 internal fun getBooleanProperty(key: String, defaultValue: Boolean = false): Boolean = System.getProperty(key)?.toBoolean() ?: defaultValue
