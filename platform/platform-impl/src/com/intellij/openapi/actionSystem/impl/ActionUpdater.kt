@@ -35,6 +35,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FList
@@ -744,6 +745,7 @@ private fun reportSlowEdtOperation(action: Any,
                                    operationName: String,
                                    currentEDTPerformMillis: Long,
                                    edtTraces: List<Throwable>?) {
+  if (application.isUnitTestMode) return
   var edtTraces1 = edtTraces
   val throwable: Throwable = PluginException.createByClass(
     elapsedReport(currentEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX, null, action.javaClass)
