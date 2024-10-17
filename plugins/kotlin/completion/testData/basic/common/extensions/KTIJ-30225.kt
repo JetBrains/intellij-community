@@ -1,4 +1,5 @@
-// IGNORE_K2
+// FIR_IDENTICAL
+// FIR_COMPARISON
 class Foo(private val bar: () -> String) {
 
     fun foo() {

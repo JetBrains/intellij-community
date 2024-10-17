@@ -28,9 +28,7 @@ import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 
@@ -76,11 +74,16 @@ public class HyperlinkAnnotator implements Annotator, DumbAware {
     }
   }
 
+  @VisibleForTesting
+  public static @NotNull List<PsiReference> calculateReferences(@NotNull PsiElement element) {
+    return PsiReferenceService.getService().getReferences(element, Hints.HIGHLIGHTED_REFERENCES);
+  }
+
   private static final Key<ParameterizedCachedValue<List<PsiReference>, PsiElement>> REFS_KEY = Key.create("HyperlinkAnnotator");
   private static final ParameterizedCachedValueProvider<List<PsiReference>, PsiElement> REFS_PROVIDER = element -> {
     List<PsiReference> references;
     try {
-      references = PsiReferenceService.getService().getReferences(element, Hints.HIGHLIGHTED_REFERENCES);
+      references = calculateReferences(element);
     }
     catch (IndexNotReadyException ignored) {
       return Result.create(emptyList(), DumbService.getInstance(element.getProject()));

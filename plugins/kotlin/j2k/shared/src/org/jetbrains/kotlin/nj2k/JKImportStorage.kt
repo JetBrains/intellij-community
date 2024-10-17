@@ -2,23 +2,24 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import com.intellij.openapi.project.Project
 import com.intellij.psi.CommonClassNames
-import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.analysis.api.imports.getDefaultImports
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
-import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 
-class JKImportStorage(languageSettings: LanguageVersionSettings) {
+class JKImportStorage(targetPlatform: TargetPlatform, project: Project) {
     private val imports = mutableSetOf<FqName>()
 
     private val defaultImports: Set<ImportPath> =
-        JvmPlatformAnalyzerServices.getDefaultImports(languageSettings, includeLowPriorityImports = true).toSet()
+        targetPlatform.getDefaultImports(project).defaultImports.mapTo(mutableSetOf()) { it.importPath }
 
     fun addImport(import: FqName) {
         if (isImportNeeded(import, allowSingleIdentifierImport = false)) {

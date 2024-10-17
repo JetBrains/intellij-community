@@ -635,6 +635,16 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/CompanionObjectWithAConflictingProperty.kt"));
         }
 
+        @TestMetadata("constructorWithValueClass.kt")
+        public void testConstructorWithValueClass() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/constructorWithValueClass.kt"));
+        }
+
+        @TestMetadata("constructorWithValueClassAsProperty.kt")
+        public void testConstructorWithValueClassAsProperty() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/constructorWithValueClassAsProperty.kt"));
+        }
+
         @TestMetadata("Constructors.kt")
         public void testConstructors() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/Constructors.kt"));

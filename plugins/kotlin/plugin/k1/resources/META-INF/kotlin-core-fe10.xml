@@ -58,6 +58,10 @@
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.imports.KaDefaultImportsProvider"
+            serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.KaFe10DefaultImportsProvider"/>
+
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinShortClassNameFileIndex"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService"
