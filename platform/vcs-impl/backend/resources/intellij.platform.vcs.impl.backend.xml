@@ -9,6 +9,8 @@
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.impl.backend.shelf.ShelvedChangeListToEntityConverter"/>
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.impl.backend.shelf.TagNodeToEntityConverter"/>
     <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.impl.backend.shelf.ShelvedChangeNodeConverter"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.impl.backend.shelf.ModuleNodeToEntityConverter"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.impl.backend.shelf.FilePathNodeToEntityConverter"/>
   </extensions>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.vcs.impl.backend.treeNodeConverter"

@@ -5,26 +5,53 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.platform.kernel.withKernel
+import com.intellij.vcs.impl.shared.rhizome.GroupingItemEntity
+import fleet.kernel.change
+import fleet.kernel.shared
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 
 @OptIn(FlowPreview::class)
 @Service
 class GroupingPolicyFactoryHolder(private val cs: CoroutineScope) {
   var factories: AvailableFactories = buildFactories()
+  private val saveToDbFlow = MutableSharedFlow<Unit>()
 
   init {
     ChangesGroupingPolicyFactory.EP_NAME.addChangeListener(::buildFactoriesAndSave, null)
-
+    cs.launch {
+      saveToDbFlow.debounce(DEBOUNCE_TIMEOUT_MS).collectLatest {
+        saveGroupingKeysToDb()
+      }
+    }
   }
 
   private fun buildFactoriesAndSave() {
     cs.launch {
       factories = buildFactories()
+      saveToDbFlow.emit(Unit)
     }
   }
 
+  suspend fun saveGroupingKeysToDb() {
+    withKernel {
+      change {
+        shared {
+          GroupingItemEntity.all().forEach { it.delete() }
+          for (groupingKey in factories.keyToFactory.keys) {
+            GroupingItemEntity.new {
+              it[GroupingItemEntity.Name] = groupingKey
+            }
+          }
+        }
+      }
+    }
+  }
 
   private fun buildFactories(): AvailableFactories {
     val keyToFactory = mutableMapOf<String, ChangesGroupingPolicyFactory>()
@@ -55,3 +82,5 @@ class AvailableFactories(
   val keyToFactory: Map<String, ChangesGroupingPolicyFactory>,
   val keyToWeight: Map<String, Int>,
 )
+
+private const val DEBOUNCE_TIMEOUT_MS = 200L

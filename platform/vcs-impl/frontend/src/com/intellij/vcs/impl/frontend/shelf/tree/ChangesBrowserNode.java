@@ -237,11 +237,10 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
 
-  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable FilePath parentPath) {
+  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable String parentPath) {
     if (parentPath != null) {
-      String presentablePath = VcsUtil.getPresentablePath(renderer.getProject(), parentPath, true, true);
-      if (presentablePath.isEmpty()) return;
-      renderer.append(spaceAndThinSpace() + presentablePath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      if (parentPath.isEmpty()) return;
+      renderer.append(spaceAndThinSpace() + parentPath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
 

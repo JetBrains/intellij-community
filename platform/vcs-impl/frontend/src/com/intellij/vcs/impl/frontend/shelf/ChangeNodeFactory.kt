@@ -2,12 +2,15 @@
 package com.intellij.vcs.impl.frontend.shelf
 
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.vcs.impl.frontend.changes.tree.FilePathTreeNode
+import com.intellij.vcs.impl.frontend.changes.tree.ModuleTreeNode
+import com.intellij.vcs.impl.frontend.changes.tree.RepositoryTreeNode
 import com.intellij.vcs.impl.frontend.shelf.tree.*
 import com.intellij.vcs.impl.shared.rhizome.*
 import javax.swing.tree.DefaultMutableTreeNode
 import kotlin.reflect.KClass
 
-private val converters = listOf(ShelvedChangeListNodeConverter(), RootNodeConverter(), TagNodeConverter(), ShelvedChangeNodeConverter())
+private val converters = listOf(ShelvedChangeListNodeConverter(), RootNodeConverter(), TagNodeConverter(), ShelvedChangeNodeConverter(), ModuleNodeConverter(), FileNodeConverter(), RepositoryNodeConverter())
 
 
 fun <T : NodeEntity> T.convertToTreeNode(): ChangesBrowserNode<*>? {
@@ -57,5 +60,23 @@ class TagNodeConverter : EntityNodeConverter<TagNodeEntity, TagNode>(TagNodeEnti
 class ShelvedChangeNodeConverter : EntityNodeConverter<ShelvedChangeEntity, ShelvedChangeNode>(ShelvedChangeEntity::class) {
   override fun convert(entity: ShelvedChangeEntity): ShelvedChangeNode {
     return ShelvedChangeNode(entity)
+  }
+}
+
+class ModuleNodeConverter : EntityNodeConverter<ModuleNodeEntity, ModuleTreeNode>(ModuleNodeEntity::class) {
+  override fun convert(entity: ModuleNodeEntity): ModuleTreeNode {
+    return ModuleTreeNode(entity)
+  }
+}
+
+class FileNodeConverter : EntityNodeConverter<FilePathNodeEntity, FilePathTreeNode>(FilePathNodeEntity::class) {
+  override fun convert(entity: FilePathNodeEntity): FilePathTreeNode {
+    return FilePathTreeNode(entity)
+  }
+}
+
+class RepositoryNodeConverter : EntityNodeConverter<RepositoryNodeEntity, ChangesBrowserNode<*>>(RepositoryNodeEntity::class) {
+  override fun convert(entity: RepositoryNodeEntity): ChangesBrowserNode<*> {
+    return RepositoryTreeNode(entity)
   }
 }

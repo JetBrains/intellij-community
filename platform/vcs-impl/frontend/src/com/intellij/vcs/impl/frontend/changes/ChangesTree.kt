@@ -2,8 +2,8 @@
 package com.intellij.vcs.impl.frontend.changes
 
 import com.intellij.ide.DefaultTreeExpander
-import com.intellij.ide.TreeExpander
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
@@ -18,21 +18,23 @@ import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserNode
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserNodeRenderer
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserRootNode
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesTreeFrontendCellRenderer
+import kotlinx.coroutines.CoroutineScope
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_ENTER
 import java.awt.event.MouseEvent
+import java.beans.PropertyChangeListener
 import java.util.*
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultTreeModel
 
 @Suppress("LeakingThis")
-open class ChangesTree(val project: Project, val showCheckboxes: Boolean, val highlightProblems: Boolean) : Tree(), UiCompatibleDataProvider {
+open class ChangesTree(val project: Project, private val cs: CoroutineScope, private val place: String, private val showCheckboxes: Boolean = false, private val highlightProblems: Boolean = false) : Tree(), UiCompatibleDataProvider {
   private var modelUpdateInProgress = false
   private val keyHandlers = ChangesTreeHandlers(this)
-  private var groupingKeys: List<String> = listOf()
   private var isModelFlat: Boolean = true
   private val treeExpander = MyTreeExpander()
+  protected val groupingSupport = ChangesGroupingSupport(project, place, cs)
 
   init {
     val nodeRenderer = ChangesBrowserNodeRenderer(project, { false }, false)
@@ -75,6 +77,10 @@ open class ChangesTree(val project: Project, val showCheckboxes: Boolean, val hi
     if (parent != null) Disposer.register(parent) { removeTreeSelectionListener(listener) }
   }
 
+  fun addGroupingChangedListener(listener: PropertyChangeListener) {
+    groupingSupport.addPropertyChangeListener(listener)
+  }
+
   private fun isCurrentModelFlat(): Boolean {
     var isFlat = true
     val enumeration: Enumeration<*> = getRoot().depthFirstEnumeration()
@@ -88,16 +94,21 @@ open class ChangesTree(val project: Project, val showCheckboxes: Boolean, val hi
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PlatformDataKeys.TREE_EXPANDER] = treeExpander
+    sink[GROUPING_SUPPORT_KEY] = groupingSupport
   }
 
   inner class MyTreeExpander : DefaultTreeExpander(this) {
     override fun isExpandAllVisible(): Boolean {
-      return groupingKeys.isNotEmpty() || !isModelFlat
+      return groupingSupport.isNone() || !isModelFlat
     }
 
     override fun isCollapseAllVisible(): Boolean {
       return isExpandAllVisible
     }
+  }
+
+  companion object {
+    val GROUPING_SUPPORT_KEY = DataKey.create<ChangesGroupingSupport>("grouping.support")
   }
 }
 

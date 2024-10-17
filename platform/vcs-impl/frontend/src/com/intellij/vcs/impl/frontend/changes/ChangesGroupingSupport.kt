@@ -1,0 +1,57 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.impl.frontend.changes
+
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
+import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTreeGroupingUpdateScheduler
+import com.intellij.vcs.impl.shared.rpc.UpdateStatus
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.NonNls
+import java.beans.PropertyChangeListener
+import java.beans.PropertyChangeSupport
+
+open class ChangesGroupingSupport(val project: Project, private val source: String, private val cs: CoroutineScope) {
+  private val changeSupport = PropertyChangeSupport(source)
+  private val groupingUpdateScheduler = ShelfTreeGroupingUpdateScheduler.getInstance(project)
+  private val groupingStatesHolder = ChangesGroupingStatesHolder.getInstance(project)
+  val groupingKeys get() = groupingStatesHolder.getGroupingsForPlace(source)
+
+
+  operator fun get(groupingKey: @NonNls String): Boolean {
+    return groupingStatesHolder.isGroupingEnabled(source, groupingKey)
+  }
+
+  operator fun set(groupingKey: String, state: Boolean) {
+    val oldGroupingKeys = groupingStatesHolder.getGroupingsForPlace(source)
+    val currentState = oldGroupingKeys.contains(groupingKey)
+    if (currentState == state) return
+
+    groupingStatesHolder.setGroupingEnabled(source, groupingKey, state)
+    cs.launch {
+      val newValue = groupingStatesHolder.getGroupingsForPlace(source)
+      if (groupingUpdateScheduler.requestUpdateGrouping(newValue, project) == UpdateStatus.OK) {
+        withContext(Dispatchers.EDT) {
+          changeSupport.firePropertyChange(PROP_GROUPING_KEYS, oldGroupingKeys, newValue)
+        }
+      }
+    }
+  }
+
+  fun isNone() = groupingKeys.isEmpty()
+
+
+  fun addPropertyChangeListener(listener: PropertyChangeListener) {
+    changeSupport.addPropertyChangeListener(listener)
+  }
+
+  fun removePropertyChangeListener(listener: PropertyChangeListener) {
+    changeSupport.removePropertyChangeListener(listener)
+  }
+
+  companion object {
+    const val PROP_GROUPING_KEYS = "ChangesGroupingKeys" // NON-NLS
+  }
+}

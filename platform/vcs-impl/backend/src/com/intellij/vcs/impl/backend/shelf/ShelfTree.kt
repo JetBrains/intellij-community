@@ -2,8 +2,10 @@
 package com.intellij.vcs.impl.backend.shelf;
 
 import com.intellij.ide.DeleteProvider
-import com.intellij.openapi.ListSelection
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsDataKeys
@@ -48,6 +50,11 @@ class ShelfTree internal constructor(project: Project) : AsyncChangesTree(projec
                            { ShelveChangesManager.getInstance(myProject).grouping = it })
     return groupingSupport
   }
+
+  override fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>) {
+    requestRefresh(treeStateStrategy) { ShelfTreeHolder.getInstance(project).updateDbModel() }
+  }
+
 
   override fun getToggleClickCount(): Int {
     return 2

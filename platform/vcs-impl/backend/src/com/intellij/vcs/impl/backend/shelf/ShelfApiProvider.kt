@@ -12,7 +12,11 @@ import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import fleet.kernel.SharedRef
 import fleet.kernel.change
 import fleet.kernel.shared
+import com.intellij.vcs.impl.shared.rpc.UpdateStatus
+import com.jetbrains.rhizomedb.EID
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
 
 class ShelfApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
@@ -25,16 +29,13 @@ class ShelfApiProvider : RemoteApiProvider {
 class BackendShelfApi : RemoteShelfApi {
   override suspend fun loadChangesAsync(projectRef: SharedRef<ProjectEntity>) {
     val project = getProject(projectRef) ?: return
-    withKernel {
-      change {
-        shared {
-          ShelveChangesManager.getInstance(project).allLists.forEach {
-            it.loadChangesIfNeeded(project)
-          }
-        }
-      }
+    ShelveChangesManager.getInstance(project).allLists.forEach {
+      it.loadChangesIfNeeded(project)
     }
-    ShelfTreeHolder.getInstance(project).scheduleTreeUpdate()
+
+    val shelfTreeHolder = ShelfTreeHolder.getInstance(project)
+    shelfTreeHolder.scheduleTreeUpdate()
+    shelfTreeHolder.saveGroupings()
   }
 
   override suspend fun showDiffForChanges(projectRef: SharedRef<ProjectEntity>, changeListDto: ChangeListDto) {
@@ -47,9 +48,20 @@ class BackendShelfApi : RemoteShelfApi {
     ShelfTreeHolder.getInstance(project).updateSelection(changeListDto)
   }
 
+  override suspend fun applyTreeGrouping(projectRef: SharedRef<ProjectEntity>, groupingKeys: Set<String>): Deferred<UpdateStatus> {
+    val project = getProject(projectRef) ?: return CompletableDeferred(UpdateStatus.FAILED)
+
+    ShelfTreeHolder.getInstance(project).changeGrouping(groupingKeys)
+    return CompletableDeferred(UpdateStatus.OK)
+  }
+
   private suspend fun getProject(projectRef: SharedRef<ProjectEntity>): Project? {
     return withKernel {
-      projectRef.deref().asProject()
+      change {
+        shared {
+          projectRef.deref().asProject()
+        }
+      }
     }
   }
 }

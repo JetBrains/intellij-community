@@ -1,6 +1,7 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.platform.vcs.impl.backend"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint name="pushSupport"
@@ -99,6 +100,7 @@
 
     <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
       implementation="com.intellij.dvcs.ui.CompareBranchesDiffPanel$GetVersionActionProvider"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.dvcs.repo.rhizome.RepositoryNodeToEntityConverter"/>
   </extensions>
 </idea-plugin>
 

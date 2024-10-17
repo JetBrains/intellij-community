@@ -14,7 +14,9 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+              <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
+              <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.0.21-RC-0.1/rpc-compiler-plugin-2.0.21-RC-0.1.jar</arg>
+              <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.0.21-RC-0.1/rhizomedb-compiler-plugin-2.0.21-RC-0.1.jar</arg>
             </arrayArg>
             <arrayArg name="pluginOptions" />
           </arrayArguments>
@@ -76,6 +78,7 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.microba" />
     <orderEntry type="module" module-name="intellij.platform.kernel" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
   </component>
 </module>

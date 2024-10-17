@@ -4,11 +4,13 @@ package com.intellij.vcs.impl.frontend.shelf.tree
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.ChangesTree
+import com.intellij.vcs.impl.shared.changes.GroupingUpdatePlaces
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
+import kotlinx.coroutines.CoroutineScope
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
-class ShelfTree(project: Project, private val treeRoot: ChangesBrowserRootNode) : ChangesTree(project, false, false) {
+class ShelfTree(project: Project, private val treeRoot: ChangesBrowserRootNode, cs: CoroutineScope) : ChangesTree(project, cs, GroupingUpdatePlaces.SHELF_TREE) {
 
   override fun isPathEditable(path: TreePath): Boolean {
     return isEditable && selectionCount == 1 && path.lastPathComponent is ShelvedChangeListNode

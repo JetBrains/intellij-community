@@ -7,19 +7,24 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.GroupingPolicyFactoryHolder
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update.Companion.create
 import com.intellij.vcs.impl.backend.shelf.diff.BackendShelveEditorDiffPreview
+import com.intellij.vcs.impl.shared.changes.GroupingUpdatePlaces
+import com.intellij.vcs.impl.shared.rhizome.GroupingItemEntity
+import com.intellij.vcs.impl.shared.rhizome.GroupingItemsEntity
 import com.intellij.vcs.impl.shared.rhizome.NodeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvesTreeRootEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
-import com.jetbrains.rhizomedb.entities
+import com.jetbrains.rhizomedb.entity
 import fleet.kernel.SharedRef
 import fleet.kernel.change
 import fleet.kernel.shared
@@ -38,27 +43,36 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
 
   private val updateQueue = MergingUpdateQueue("Update Shelf Content", 200, true, null, project, null, true)
 
+  private val shelveChangesManager = ShelveChangesManager.getInstance(project)
+
   private val tree = ShelfTree(project)
 
   private val diffPreview = BackendShelveEditorDiffPreview(tree, cs, project)
 
   private fun updateTreeModel() {
     tree.invalidateDataAndRefresh {
-      saveModelToDb()
+      updateDbModel()
     }
   }
 
-  private fun saveModelToDb() {
+  fun updateDbModel() {
     cs.launch {
       val root = tree.model.root as ChangesBrowserNode<*>
       withKernel {
-        val rootEntity = entities(ShelvesTreeRootEntity.Project, project.asEntity()).firstOrNull() ?: return@withKernel
         var order = 0
+        val rootNodes = mutableSetOf<NodeEntity>()
         for (child in root.children()) {
-          val nodeEntity = dfs(child as ChangesBrowserNode<*>, null, order++) ?: continue
-          change {
-            shared {
-              rootEntity.add(NodeEntity.Children, nodeEntity)
+          val entity = dfs(tree, child as ChangesBrowserNode<*>, null, order++) ?: continue
+          rootNodes.add(entity)
+        }
+        change {
+          shared {
+            val projectEntity = project.asEntity()
+            entity(ShelvesTreeRootEntity.Project, projectEntity)?.delete()
+            ShelvesTreeRootEntity.new {
+              it[NodeEntity.Order] = 0
+              it[NodeEntity.Children] = rootNodes
+              it[ShelvesTreeRootEntity.Project] = projectEntity
             }
           }
         }
@@ -66,8 +80,8 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     }
   }
 
-  private suspend fun dfs(node: ChangesBrowserNode<*>, parent: NodeEntity?, orderInParent: Int): NodeEntity? {
-    val entity = node.save(orderInParent) ?: return null
+  private suspend fun dfs(tree: ShelfTree, node: ChangesBrowserNode<*>, parent: NodeEntity?, orderInParent: Int): NodeEntity? {
+    val entity = node.save(tree, orderInParent, project) ?: return null
     if (parent != null) {
       change {
         shared {
@@ -77,13 +91,13 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     }
     var order = 0
     for (child in node.children()) {
-      dfs(child as ChangesBrowserNode<*>, entity, order++)
+      dfs(this.tree, child as ChangesBrowserNode<*>, entity, order++)
     }
     return entity
   }
 
-  private fun ChangesBrowserNode<*>.save(orderInParent: Int): NodeEntity? {
-    val entity = this.convertToEntity(orderInParent) ?: return null
+  private suspend fun ChangesBrowserNode<*>.save(tree: ShelfTree, orderInParent: Int, project: Project): NodeEntity? {
+    val entity = this.convertToEntity(tree, orderInParent, project) ?: return null
     putUserData(ENTITY_ID_KEY, entity.sharedRef())
     return entity
   }
@@ -121,12 +135,36 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     updateQueue.queue(create("update") { updateTreeModel() })
   }
 
+  fun saveGroupings() {
+    cs.launch {
+      GroupingPolicyFactoryHolder.getInstance().saveGroupingKeysToDb()
+      withKernel {
+        change {
+          shared {
+            val shelfTreeGroup = GroupingItemsEntity.new {
+              it[GroupingItemsEntity.Place] = GroupingUpdatePlaces.SHELF_TREE
+            }
+            shelveChangesManager.grouping.forEach {
+              val groupingItem = entity(GroupingItemEntity.Name, it) ?: return@forEach
+              shelfTreeGroup.add(GroupingItemsEntity.Items, groupingItem)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  fun changeGrouping(groupingKeys: Set<String>) {
+    tree.groupingSupport.setGroupingKeys(groupingKeys)
+  }
+
   override fun dispose() {
     updateQueue.cancelAllUpdates()
   }
 
   companion object {
     val ENTITY_ID_KEY = Key<SharedRef<NodeEntity>>("persistentId")
+    const val REPOSITORY_GROUPING_KEY = "repository"
 
     fun getInstance(project: Project) = project.service<ShelfTreeHolder>()
   }

@@ -56,6 +56,25 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
 
   override fun getBackgroundColor(project: Project): Color? = getBackgroundColorFor(project, filePath)
 
+  fun getOriginText(): String? = originInfo?.getText()
+
+  fun getRelativeFilePath(project: Project?, path: FilePath): @NlsSafe String {
+    val isLocal = !path.isNonLocal
+    val parentPath = safeCastToFilePath(getParent())
+    if (parentPath != null) {
+      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
+      val relativePath = FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive)
+      val prettyPath = relativePath ?: path.path
+      return if (isLocal) FileUtil.toSystemDependentName(prettyPath) else prettyPath
+    }
+    else if (isLocal) {
+      return VcsUtil.getPresentablePath(project, path, true, false)
+    }
+    else {
+      return path.path
+    }
+  }
+
   private fun appendOriginText(renderer: ChangesBrowserNodeRenderer) {
     originInfo?.let {
       renderer.append(FontUtil.spaceAndThinSpace() + it.getText(), SimpleTextAttributes.REGULAR_ATTRIBUTES)
@@ -79,20 +98,7 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     else SimpleTextAttributes.REGULAR_ATTRIBUTES
 
   protected open fun getRelativePath(renderer: ChangesBrowserNodeRenderer?, path: FilePath): @NlsSafe String {
-    val isLocal = !path.isNonLocal
-    val parentPath = safeCastToFilePath(getParent())
-    if (parentPath != null) {
-      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
-      val relativePath = FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive)
-      val prettyPath = relativePath ?: path.path
-      return if (isLocal) FileUtil.toSystemDependentName(prettyPath) else prettyPath
-    }
-    else if (isLocal) {
-      return VcsUtil.getPresentablePath(renderer?.project, path, true, false)
-    }
-    else {
-      return path.path
-    }
+    return getRelativeFilePath(renderer?.project, path)
   }
 
   override fun getTextPresentation(): String {

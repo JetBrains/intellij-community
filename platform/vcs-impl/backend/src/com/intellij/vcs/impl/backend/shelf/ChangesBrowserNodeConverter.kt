@@ -93,3 +93,51 @@ internal class TagNodeToEntityConverter : NodeToEntityConverter<TagChangesBrowse
     }
   }
 }
+
+internal class ModuleNodeToEntityConverter : NodeToEntityConverter<ChangesBrowserModuleNode, ModuleNodeEntity>(ChangesBrowserModuleNode::class) {
+  override suspend fun convert(node: ChangesBrowserModuleNode, tree: ShelfTree, orderInParent: Int, project: Project): ModuleNodeEntity {
+    return withKernel {
+      change {
+        shared {
+          ModuleNodeEntity.new {
+            val module = node.userObject
+            it[ModuleNodeEntity.Name] = module.name
+            it[ModuleNodeEntity.RootPath] = node.moduleRoot.toPresentablePath(project)
+            it[ModuleNodeEntity.ModuleType] = module.moduleTypeName
+            it[NodeEntity.Order] = orderInParent
+          }
+        }
+      }
+    }
+  }
+}
+
+
+internal class FilePathNodeToEntityConverter : NodeToEntityConverter<ChangesBrowserFilePathNode, FilePathNodeEntity>(ChangesBrowserFilePathNode::class) {
+  override suspend fun convert(node: ChangesBrowserFilePathNode, tree: ShelfTree, orderInParent: Int, project: Project): FilePathNodeEntity {
+    return withKernel {
+      change {
+        shared {
+          FilePathNodeEntity.new {
+            val filePath = node.userObject ?: return@new
+            val isFlatten = tree.isShowFlatten && node.isLeaf
+            val name = if (isFlatten) filePath.name else node.getRelativeFilePath(project, filePath)
+            it[FilePathNodeEntity.OriginText] = node.getOriginText()
+            if (isFlatten) {
+              it[FilePathNodeEntity.ParentPath] = filePath.parentPath?.toPresentablePath(project)
+            }
+            it[FilePathNodeEntity.FileStatus] = node.status?.id
+            it[FilePathNodeEntity.IsDirectory] = filePath.isDirectory
+            it[FilePathNodeEntity.Name] = name
+            it[NodeEntity.Order] = orderInParent
+          }
+        }
+      }
+    }
+  }
+}
+
+
+private fun FilePath.toPresentablePath(project: Project): String {
+  return VcsUtil.getPresentablePath(project, this, true, true)
+}
