@@ -67,6 +67,10 @@ internal class TerminalWidgetImpl(
       Disposer.register(this, session)
       BlockTerminalView(project, session, settings, terminalTitle).also {
         installStartupResponsivenessReporter(project, checkNotNull(options.startupMoment), session)
+        project.messageBus.syncPublisher(BlockTerminalInitializationListener.TOPIC).modelsInitialized(
+          it.promptView.controller.model,
+          it.outputView.controller.outputModel
+        )
       }
     }
     else {
