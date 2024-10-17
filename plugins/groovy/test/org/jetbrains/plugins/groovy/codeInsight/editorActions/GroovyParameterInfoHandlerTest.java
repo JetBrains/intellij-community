@@ -1,77 +1,89 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.codeInsight.editorActions
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.codeInsight.editorActions;
 
-import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.testFramework.fixtures.EditorHintFixture
-import com.intellij.util.ui.UIUtil
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest
-import org.jetbrains.plugins.groovy.util.ResolveTest
-import org.junit.Test
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.testFramework.fixtures.EditorHintFixture;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
+import org.jetbrains.plugins.groovy.util.ResolveTest;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.Test;
 
-import static com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents
-import static org.jetbrains.plugins.groovy.util.TestUtils.readInput
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
-@CompileStatic
-class GroovyParameterInfoHandlerTest extends GroovyLatestTest implements ResolveTest {
-
-  GroovyParameterInfoHandlerTest() {
-    super("parameterInfo/")
+public class GroovyParameterInfoHandlerTest extends GroovyLatestTest implements ResolveTest {
+  public GroovyParameterInfoHandlerTest() {
+    super("parameterInfo/");
   }
 
   @Test
-  void 'instance method reference zero params'() {
-    testParameterHint()
+  public void instance_method_reference_zero_params() {
+    testParameterHint();
   }
 
   @Test
-  void 'instance method reference single param'() {
-    testParameterHint()
+  public void instance_method_reference_single_param() {
+    testParameterHint();
   }
 
   @Test
-  void 'instance method reference default param'() {
-    testParameterHint()
+  public void instance_method_reference_default_param() {
+    testParameterHint();
   }
 
   @Test
-  void 'instance method reference overloads'() {
-    testParameterHint()
+  public void instance_method_reference_overloads() {
+    testParameterHint();
   }
 
   @Test
-  void 'method with several named params'() {
-    testParameterHint()
+  public void method_with_several_named_params() {
+    testParameterHint();
   }
 
   @Test
-  void 'method with named params annotation'() {
-    testParameterHint()
+  public void method_with_named_params_annotation() {
+    testParameterHint();
   }
 
   private void testParameterHint() {
-    def name = testName.split(" ")*.capitalize().join('').uncapitalize() + ".test"
-    def input = readInput("$fixture.testDataPath$name")[0]
-    def hint = getParameterHint(input)
-    configureByText "$input\n-----\n$hint"
-    fixture.checkResultByFile(name)
+    String name = uncapitalize(Arrays.stream(getTestName().split("_"))
+                                 .map(GroovyParameterInfoHandlerTest::capitalize)
+                                 .collect(Collectors.joining(""))) + ".test";
+
+    String input = TestUtils.readInput(getFixture().getTestDataPath() + name).get(0);
+    String hint = getParameterHint(input);
+    configureByText(input + "\n-----\n" + hint);
+    getFixture().checkResultByFile(name);
+  }
+
+  private static String capitalize(@Nullable String str) {
+    if (str == null || str.isBlank()) return str;
+    return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
+  }
+
+  private static String uncapitalize(@Nullable String str) {
+    if (str == null || str.isBlank()) return str;
+    return str.substring(0, 1).toLowerCase() + str.substring(1);
   }
 
   private String getParameterHint(String text) {
-    configureByText text
-    def myHintFixture = new EditorHintFixture(fixture.testRootDisposable)
-    fixture.performEditorAction IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO
-    dispatchAllInvocationEvents()
-    waitForParameterInfo()
-    return myHintFixture.currentHintText
+    configureByText(text);
+    EditorHintFixture myHintFixture = new EditorHintFixture(getFixture().getTestRootDisposable());
+    getFixture().performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    UIUtil.dispatchAllInvocationEvents();
+    waitForParameterInfo();
+    return myHintFixture.getCurrentHintText();
   }
 
-  static void waitForParameterInfo() {
+  public static void waitForParameterInfo() {
     // effective there is a chain of 3 nonBlockingRead actions
     for (int i = 0; i < 3; i++) {
-      UIUtil.dispatchAllInvocationEvents()
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+      UIUtil.dispatchAllInvocationEvents();
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     }
   }
 }
