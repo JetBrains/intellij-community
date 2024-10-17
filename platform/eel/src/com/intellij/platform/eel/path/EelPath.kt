@@ -6,7 +6,6 @@ import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath.Absolute.OS
 import java.nio.file.InvalidPathException
-import kotlin.Throws
 
 interface EelPathError {
   val raw: String
@@ -30,11 +29,6 @@ sealed interface EelPath {
     fun parseE(raw: String, os: OS?): EelPath =
       ArrayListEelAbsolutePath.parseOrNull(raw, os)
       ?: Relative.parseE(raw)
-
-    @JvmStatic
-    @Deprecated("Use the method with EelPathException")
-    fun parse(raw: String, os: OS?): EelResult<out EelPath, EelPathError> =
-      exceptionAdapter { parseE(raw, os) }
   }
 
   val fileName: String
@@ -109,9 +103,6 @@ sealed interface EelPath {
   @Throws(EelPathException::class)
   fun resolveE(other: Relative): EelPath
 
-  @Deprecated("Use the method with EelPathException")
-  fun resolve(other: Relative): EelResult<out EelPath, EelPathError>
-
   /**
    * ```kotlin
    * IjentRelativePath.parse("", false).getChild("abc") == Ok(IjentRelativePath.parse("abc", false))
@@ -125,9 +116,6 @@ sealed interface EelPath {
   @Throws(EelPathException::class)
   fun getChildE(name: String): EelPath
 
-  @Deprecated("Use the method with EelPathException")
-  fun getChild(name: String): EelResult<out EelPath, EelPathError>
-
   override fun toString(): String
 
   interface Relative : EelPath, Comparable<Relative> {
@@ -137,11 +125,6 @@ sealed interface EelPath {
       fun parseE(raw: String): Relative =
         ArrayListEelRelativePath.parse(raw)
 
-      @JvmStatic
-      @Deprecated("Use the method with EelPathException")
-      fun parse(raw: String): EelResult<out Relative, EelPathError> =
-        exceptionAdapter { parseE(raw) }
-
       /**
        * The parts of the path must not contain / or \.
        */
@@ -150,11 +133,6 @@ sealed interface EelPath {
       fun buildE(vararg parts: String): Relative =
         buildE(listOf(*parts))
 
-      @JvmStatic
-      @Deprecated("Use the method with EelPathException")
-      fun build(vararg parts: String): EelResult<out Relative, EelPathError> =
-        exceptionAdapter { buildE(*parts) }
-
       /**
        * The parts of the path must not contain / or \.
        */
@@ -162,11 +140,6 @@ sealed interface EelPath {
       @Throws(EelPathException::class)
       fun buildE(parts: List<String>): Relative =
         ArrayListEelRelativePath.build(parts)
-
-      @JvmStatic
-      @Deprecated("Use the method with EelPathException")
-      fun build(parts: List<String>): EelResult<out Relative, EelPathError> =
-        exceptionAdapter { buildE(parts) }
 
       @JvmField
       val EMPTY: Relative = ArrayListEelRelativePath.EMPTY
@@ -180,14 +153,8 @@ sealed interface EelPath {
     @Throws(EelPathException::class)
     override fun resolveE(other: Relative): Relative
 
-    @Deprecated("Use the method with EelPathException")
-    override fun resolve(other: Relative): EelResult<out Relative, EelPathError>
-
     @Throws(EelPathException::class)
     override fun getChildE(name: String): Relative
-
-    @Deprecated("Use the method with EelPathException")
-    override fun getChild(name: String): EelResult<out Relative, EelPathError>
 
     override fun compareTo(other: Relative): Int
 
@@ -220,29 +187,14 @@ sealed interface EelPath {
         ?: throw EelPathException(raw, "Not an absolute path")
 
       @JvmStatic
-      @Deprecated("Use the method with EelPathException")
-      fun parse(raw: String, os: OS?): EelResult<out Absolute, EelPathError> =
-        exceptionAdapter { parseE(raw, os) }
-
-      @JvmStatic
       @Throws(EelPathException::class)
       fun buildE(vararg parts: String): Absolute =
         buildE(listOf(*parts), null)
 
       @JvmStatic
-      @Deprecated("Use the method with EelPathException")
-      fun build(vararg parts: String): EelResult<out Absolute, EelPathError> =
-        exceptionAdapter { buildE(*parts) }
-
-      @JvmStatic
       @Throws(EelPathException::class)
       fun buildE(parts: List<String>, os: OS?): Absolute =
         ArrayListEelAbsolutePath.build(parts, os)
-
-      @JvmStatic
-      @Deprecated("Use the method with EelPathException")
-      fun build(parts: List<String>, os: OS?): EelResult<out Absolute, EelPathError> =
-        exceptionAdapter { buildE(parts, os) }
     }
 
     enum class OS {
@@ -263,15 +215,9 @@ sealed interface EelPath {
     @Throws(EelPathException::class)
     fun normalizeE(): Absolute
 
-    @Deprecated("Use the method with EelPathException")
-    fun normalize(): EelResult<out Absolute, EelPathError>
-
     /** See [java.nio.file.Path.resolve] */
     @Throws(EelPathException::class)
     override fun resolveE(other: Relative): Absolute
-
-    @Deprecated("Use the method with EelPathException")
-    override fun resolve(other: Relative): EelResult<out Absolute, EelPathError>
 
     /**
      * See [java.nio.file.Path.relativize].
@@ -284,14 +230,8 @@ sealed interface EelPath {
     @Throws(EelPathException::class)
     fun relativizeE(other: Absolute): Relative
 
-    @Deprecated("Use the method with EelPathException")
-    fun relativize(other: Absolute): EelResult<out Relative, EelPathError>
-
     @Throws(EelPathException::class)
     override fun getChildE(name: String): Absolute
-
-    @Deprecated("Use the method with EelPathException")
-    override fun getChild(name: String): EelResult<out Absolute, EelPathError>
 
     fun scan(): Sequence<Absolute>
 
@@ -312,13 +252,4 @@ val EelPlatform.pathOs: OS
   get() = when (this) {
     is EelPlatform.Posix -> OS.UNIX
     is EelPlatform.Windows -> OS.WINDOWS
-  }
-
-internal inline fun <T : EelPath> exceptionAdapter(body: () -> T): EelResult<T, EelPathError> =
-  try {
-    val result = body()
-    OkResult(result)
-  }
-  catch (e: EelPathException) {
-    ErrorResult(e)
   }
