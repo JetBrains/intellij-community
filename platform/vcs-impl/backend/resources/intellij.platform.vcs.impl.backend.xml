@@ -6,5 +6,13 @@
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.vcs.impl.backend.shelf.ShelfApiProvider"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.impl.backend.shelf.ShelvedChangeListToEntityConverter"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.impl.backend.shelf.TagNodeToEntityConverter"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.impl.backend.shelf.ShelvedChangeNodeConverter"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.vcs.impl.backend.treeNodeConverter"
+                    interface="com.intellij.vcs.impl.backend.shelf.NodeToEntityConverter"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

@@ -1,39 +1,47 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.backend.shelf
 
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserFilePathNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserModuleNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.TagChangesBrowserNode
 import com.intellij.platform.kernel.withKernel
-import com.intellij.vcs.impl.shared.rhizome.NodeEntity
-import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
-import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
-import com.intellij.vcs.impl.shared.rhizome.TagNodeEntity
+import com.intellij.vcs.impl.shared.rhizome.*
+import com.intellij.vcsUtil.VcsUtil
 import fleet.kernel.change
 import fleet.kernel.shared
 import kotlin.reflect.KClass
 
-private val converters: List<NodeToEntityConverter<*, *>> = listOf(ShelvedChangeListToEntityConverter, TagNodeToEntityConverter, ShelvedChangeNodeConverter)
-
-fun <T : ChangesBrowserNode<*>> T.convertToEntity(orderInParent: Int): NodeEntity? {
-  val converter = converters.firstOrNull { it.isNodeAcceptable(this) }
+suspend fun <T : ChangesBrowserNode<*>> T.convertToEntity(tree: ShelfTree, orderInParent: Int, project: Project): NodeEntity? {
+  val converter = NodeToEntityConverter.getConverter(this)
   if (converter == null) {
     println("converter for $this not found")
     return null
   }
   @Suppress("UNCHECKED_CAST")
-  return runBlockingCancellable { (converter as NodeToEntityConverter<T, NodeEntity>).convert(this@convertToEntity, orderInParent) }
+  return (converter as NodeToEntityConverter<T, NodeEntity>).convert(this@convertToEntity, tree, orderInParent, project)
 }
 
 
 abstract class NodeToEntityConverter<N : ChangesBrowserNode<*>, E : NodeEntity>(private val nodeClass: KClass<N>) {
-  abstract suspend fun convert(node: N, orderInParent: Int): E
+  abstract suspend fun convert(node: N, tree: ShelfTree, orderInParent: Int, project: Project): E
 
   fun isNodeAcceptable(node: ChangesBrowserNode<*>): Boolean = nodeClass.isInstance(node)
+
+  companion object {
+    val EP_NAME: ExtensionPointName<NodeToEntityConverter<*, *>> = ExtensionPointName("com.intellij.vcs.impl.backend.treeNodeConverter")
+
+    fun getConverter(node: ChangesBrowserNode<*>): NodeToEntityConverter<*, *>? {
+      return EP_NAME.extensionList.firstOrNull { it.isNodeAcceptable(node) }
+    }
+  }
 }
 
-private object ShelvedChangeListToEntityConverter : NodeToEntityConverter<ShelvedListNode, ShelvedChangeListEntity>(ShelvedListNode::class) {
-  override suspend fun convert(node: ShelvedListNode, orderInParent: Int): ShelvedChangeListEntity {
+internal class ShelvedChangeListToEntityConverter : NodeToEntityConverter<ShelvedListNode, ShelvedChangeListEntity>(ShelvedListNode::class) {
+  override suspend fun convert(node: ShelvedListNode, tree: ShelfTree, orderInParent: Int, project: Project): ShelvedChangeListEntity {
     return withKernel {
       change {
         shared {
@@ -53,8 +61,8 @@ private object ShelvedChangeListToEntityConverter : NodeToEntityConverter<Shelve
   }
 }
 
-private object ShelvedChangeNodeConverter : NodeToEntityConverter<ShelvedChangeNode, ShelvedChangeEntity>(ShelvedChangeNode::class) {
-  override suspend fun convert(node: ShelvedChangeNode, orderInParent: Int): ShelvedChangeEntity {
+internal class ShelvedChangeNodeConverter : NodeToEntityConverter<ShelvedChangeNode, ShelvedChangeEntity>(ShelvedChangeNode::class) {
+  override suspend fun convert(node: ShelvedChangeNode, tree: ShelfTree, orderInParent: Int, project: Project): ShelvedChangeEntity {
     return withKernel {
       change {
         shared {
@@ -71,8 +79,8 @@ private object ShelvedChangeNodeConverter : NodeToEntityConverter<ShelvedChangeN
 }
 
 
-private object TagNodeToEntityConverter : NodeToEntityConverter<TagChangesBrowserNode, TagNodeEntity>(TagChangesBrowserNode::class) {
-  override suspend fun convert(node: TagChangesBrowserNode, orderInParent: Int): TagNodeEntity {
+internal class TagNodeToEntityConverter : NodeToEntityConverter<TagChangesBrowserNode, TagNodeEntity>(TagChangesBrowserNode::class) {
+  override suspend fun convert(node: TagChangesBrowserNode, tree: ShelfTree, orderInParent: Int, project: Project): TagNodeEntity {
     return withKernel {
       change {
         shared {
