@@ -3,15 +3,15 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -30,10 +30,14 @@ object RestrictedRetentionForExpressionAnnotationFactory : KotlinIntentionAction
         val targetAnnotation = containingClass.annotation(StandardNames.FqNames.target)
         val expressionTargetArgument = if (targetAnnotation != null) findExpressionTargetArgument(targetAnnotation) else null
 
-        return listOfNotNull(
-            if (expressionTargetArgument != null) RemoveExpressionTargetFix(expressionTargetArgument) else null,
-            if (retentionAnnotation == null) AddSourceRetentionFix(containingClass) else ChangeRetentionToSourceFix(retentionAnnotation)
-        )
+        return buildList {
+            if (expressionTargetArgument != null) {
+                add(RemoveExpressionTargetFix(expressionTargetArgument).asIntention())
+            }
+
+            val retentionFix = retentionAnnotation?.let(::ChangeRetentionToSourceFix) ?: AddSourceRetentionFix(containingClass)
+            add(retentionFix.asIntention())
+        }
     }
 
     private fun KtClass.annotation(fqName: FqName): KtAnnotationEntry? {
@@ -57,58 +61,66 @@ object RestrictedRetentionForExpressionAnnotationFactory : KotlinIntentionAction
         return null
     }
 
-    private class AddSourceRetentionFix(element: KtClass) : KotlinQuickFixAction<KtClass>(element) {
-        override fun getText() = KotlinBundle.message("add.source.retention")
+    private class AddSourceRetentionFix(
+        element: KtClass,
+    ) : PsiUpdateModCommandAction<KtClass>(element) {
 
-        override fun getFamilyName() = text
+        override fun getFamilyName(): String = KotlinBundle.message("add.source.retention")
 
-        override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-            val element = element ?: return
-            val added = element.addAnnotationEntry(KtPsiFactory(project).createAnnotationEntry(sourceRetentionAnnotation))
-            ShortenReferences.DEFAULT.process(added)
+        override fun invoke(
+            context: ActionContext,
+            element: KtClass,
+            updater: ModPsiUpdater,
+        ) {
+            val added = element.addAnnotationEntry(KtPsiFactory(context.project).createAnnotationEntry(sourceRetentionAnnotation))
+            ShortenReferencesFacility.getInstance().shorten(added)
         }
     }
 
-    private class ChangeRetentionToSourceFix(retentionAnnotation: KtAnnotationEntry) :
-      KotlinQuickFixAction<KtAnnotationEntry>(retentionAnnotation) {
+    private class ChangeRetentionToSourceFix(
+        element: KtAnnotationEntry
+    ) : PsiUpdateModCommandAction<KtAnnotationEntry>(element) {
 
-        override fun getText() = KotlinBundle.message("change.existent.retention.to.source")
+        override fun getFamilyName(): String = KotlinBundle.message("change.existent.retention.to.source")
 
-        override fun getFamilyName() = text
-
-        override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-            val retentionAnnotation = element ?: return
-            val psiFactory = KtPsiFactory(project)
-            val added = if (retentionAnnotation.valueArgumentList == null) {
-                retentionAnnotation.add(psiFactory.createCallArguments("($sourceRetention)")) as KtValueArgumentList
+        override fun invoke(
+            context: ActionContext,
+            element: KtAnnotationEntry,
+            updater: ModPsiUpdater,
+        ) {
+            val psiFactory = KtPsiFactory(context.project)
+            val added = if (element.valueArgumentList == null) {
+                element.add(psiFactory.createCallArguments("($sourceRetention)")) as KtValueArgumentList
             } else {
-                if (retentionAnnotation.valueArguments.isNotEmpty()) {
-                    retentionAnnotation.valueArgumentList?.removeArgument(0)
+                if (element.valueArguments.isNotEmpty()) {
+                    element.valueArgumentList?.removeArgument(0)
                 }
-                retentionAnnotation.valueArgumentList?.addArgument(psiFactory.createArgument(sourceRetention))
+                element.valueArgumentList?.addArgument(psiFactory.createArgument(sourceRetention))
             }
             if (added != null) {
-                ShortenReferences.DEFAULT.process(added)
+                ShortenReferencesFacility.getInstance().shorten(added)
             }
         }
     }
 
-    private class RemoveExpressionTargetFix(expressionTargetArgument: KtValueArgument) :
-      KotlinQuickFixAction<KtValueArgument>(expressionTargetArgument) {
+    private class RemoveExpressionTargetFix(
+        element: KtValueArgument,
+    ) : PsiUpdateModCommandAction<KtValueArgument>(element) {
 
-        override fun getText() = KotlinBundle.message("remove.expression.target")
+        override fun getFamilyName(): String = KotlinBundle.message("remove.expression.target")
 
-        override fun getFamilyName() = text
-
-        override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-            val expressionTargetArgument = element ?: return
-            val argumentList = expressionTargetArgument.parent as? KtValueArgumentList ?: return
+        override fun invoke(
+            context: ActionContext,
+            element: KtValueArgument,
+            updater: ModPsiUpdater,
+        ) {
+            val argumentList = element.parent as? KtValueArgumentList ?: return
 
             if (argumentList.arguments.size == 1) {
                 val annotation = argumentList.parent as? KtAnnotationEntry ?: return
                 annotation.delete()
             } else {
-                argumentList.removeArgument(expressionTargetArgument)
+                argumentList.removeArgument(element)
             }
         }
     }
