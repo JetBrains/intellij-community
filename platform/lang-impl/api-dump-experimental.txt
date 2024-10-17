@@ -810,6 +810,10 @@ f:com.intellij.task.impl.ProjectTaskManagerImpl
 - a:getRequestedTasks(java.lang.Class):java.util.List
 f:com.intellij.testIntegration.TestFinderHelper
 - *s:navigateToTestImmediately(com.intellij.psi.PsiElement):Z
+f:com.intellij.unscramble.AnalyzeStacktraceUtil
+- *sf:EP_CONTENT_PROVIDER:com.intellij.openapi.extensions.ProjectExtensionPointName
+*:com.intellij.unscramble.StacktraceTabContentProvider
+- a:createRunTabDescriptor(com.intellij.openapi.project.Project,java.lang.String):com.intellij.execution.ui.RunContentDescriptor
 *f:com.intellij.util.gist.GistAstMarker
 - <init>(com.intellij.openapi.fileTypes.FileType,java.lang.String,kotlin.jvm.functions.Function1):V
 - f:accepts(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z

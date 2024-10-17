@@ -25,6 +25,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,9 @@ import static com.intellij.openapi.application.ex.ClipboardUtil.getTextInClipboa
 
 public final class AnalyzeStacktraceUtil {
   public static final ProjectExtensionPointName<Filter> EP_NAME = new ProjectExtensionPointName<>("com.intellij.analyzeStacktraceFilter");
+  @ApiStatus.Experimental
+  public static final ProjectExtensionPointName<StacktraceTabContentProvider> EP_CONTENT_PROVIDER =
+    new ProjectExtensionPointName<>("com.intellij.analyzeStacktraceRunContentProvider");
 
   private AnalyzeStacktraceUtil() {
   }
@@ -51,7 +55,10 @@ public final class AnalyzeStacktraceUtil {
     JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions);
   }
 
-  public static void addConsole(Project project, @Nullable ConsoleFactory consoleFactory, final @NlsContexts.TabTitle String tabTitle, String text) {
+  public static void addConsole(Project project,
+                                @Nullable ConsoleFactory consoleFactory,
+                                final @NlsContexts.TabTitle String tabTitle,
+                                String text) {
     addConsole(project, consoleFactory, tabTitle, text, null);
   }
 
@@ -87,7 +94,14 @@ public final class AnalyzeStacktraceUtil {
 
     if (withExecutor) {
       final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      RunContentManager.getInstance(project).showRunContent(executor, descriptor);
+      RunContentManager runContentManager = RunContentManager.getInstance(project);
+      runContentManager.showRunContent(executor, descriptor);
+
+      for (@NotNull StacktraceTabContentProvider stacktraceRunContentProvider : EP_CONTENT_PROVIDER.getExtensions(project)) {
+        RunContentDescriptor contentDescriptor = stacktraceRunContentProvider.createRunTabDescriptor(project, text);
+        if (contentDescriptor == null) continue;
+        runContentManager.showRunContent(executor, contentDescriptor);
+      }
     }
     consoleView.allowHeavyFilters();
     if (consoleFactory == null) {
@@ -108,7 +122,8 @@ public final class AnalyzeStacktraceUtil {
     MyConsolePanel(ExecutionConsole consoleView, ActionGroup toolbarActions) {
       super(new BorderLayout());
       JPanel toolbarPanel = new JPanel(new BorderLayout());
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.ANALYZE_STACKTRACE_PANEL_TOOLBAR, toolbarActions, false);
+      ActionToolbar toolbar =
+        ActionManager.getInstance().createActionToolbar(ActionPlaces.ANALYZE_STACKTRACE_PANEL_TOOLBAR, toolbarActions, false);
       toolbar.setTargetComponent(consoleView.getComponent());
       toolbarPanel.add(toolbar.getComponent());
       add(toolbarPanel, BorderLayout.WEST);

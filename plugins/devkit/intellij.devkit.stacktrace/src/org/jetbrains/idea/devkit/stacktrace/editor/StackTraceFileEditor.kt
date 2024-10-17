@@ -14,14 +14,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalyzer
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.threadDumpParser.ThreadDumpParser.parse
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory.getInstance
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.TabbedPaneContentUI
-import com.intellij.unscramble.AnalyzeStacktraceUtil
 import com.intellij.unscramble.UnscrambleUtils.addConsole
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
@@ -30,8 +28,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import org.jetbrains.idea.devkit.DevKitIcons
 import org.jetbrains.idea.devkit.stacktrace.DevKitStackTraceBundle
+import org.jetbrains.idea.devkit.stacktrace.FreezeDescriptor
 import org.jetbrains.idea.devkit.stacktrace.util.StackTracePluginScope
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
@@ -120,17 +118,7 @@ class StackTraceFileEditor(private val project: Project, private val file: Virtu
   }
 
   private suspend fun addFreezeAnalysisContent(contentManager: ContentManager) {
-    withContext(Dispatchers.Default) {
-      withBackgroundProgress(project, DevKitStackTraceBundle.message("progress.title.freeze.analysis")) {
-        FreezeAnalyzer.analyzeFreeze(document.text)
-      }
-    }?.let { result ->
-      val freezeDescriptor = AnalyzeStacktraceUtil.addConsole(
-        project, null,
-        DevKitStackTraceBundle.message("tab.title.freeze.analyzer"),
-        "${result.message}\n${result.additionalMessage ?: ""}\n======= Stack Trace: ========= \n${result.threads.joinToString { it -> it.stackTrace }}",
-        DevKitIcons.Freeze, false
-      )
+    FreezeDescriptor.getFreezeRunDescriptor(document.text, project)?.let { freezeDescriptor ->
       contentManager.addContent(createNewContent(freezeDescriptor).apply {
         executionId = freezeDescriptor.executionId
         component = freezeDescriptor.component

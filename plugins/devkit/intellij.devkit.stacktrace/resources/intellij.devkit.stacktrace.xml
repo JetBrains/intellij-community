@@ -8,5 +8,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider id="java-stacktrace-editor"
                         implementation="org.jetbrains.idea.devkit.stacktrace.editor.StackTraceEditorProvider"/>
+    <analyzeStacktraceRunContentProvider id="freeze-run-content"
+                                         implementation="org.jetbrains.idea.devkit.stacktrace.FreezeTabContentProvider"/>
   </extensions>
 </idea-plugin>
