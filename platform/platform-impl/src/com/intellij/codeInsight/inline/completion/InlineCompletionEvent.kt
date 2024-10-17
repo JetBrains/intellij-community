@@ -250,7 +250,7 @@ interface InlineCompletionEvent {
    * @param providerId the provider whose completion is inserted.
    */
   @ApiStatus.Experimental
-  class SuggestionInserted internal constructor(
+  class SuggestionInserted @ApiStatus.Internal constructor(
     val editor: Editor,
 
     @ApiStatus.Internal
@@ -266,7 +266,7 @@ interface InlineCompletionEvent {
    * Triggered by insertion of templates, like Live Templates.
    */
   @ApiStatus.Experimental
-  class TemplateInserted internal constructor(val editor: Editor) : InlineCompletionEvent {
+  class TemplateInserted @ApiStatus.Internal constructor(val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
       return getRequest(event = this, editor = editor)
     }
