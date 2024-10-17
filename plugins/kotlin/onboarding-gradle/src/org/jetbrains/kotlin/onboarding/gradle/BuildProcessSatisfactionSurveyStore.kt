@@ -27,7 +27,7 @@ internal fun Project.isKotlinGradleProject(): Boolean {
 }
 
 @ApiStatus.Internal
-@State(name = "BuildProcessSatisfactionSurveyStore", storages = [Storage("kotlin-onboarding.xml")])
+@State(name = "BuildProcessSatisfactionSurveyStore", storages = [Storage(value = "kotlin-onboarding.xml", roamingType = RoamingType.DISABLED)])
 internal class BuildProcessSatisfactionSurveyStore : PersistentStateComponent<BuildProcessSatisfactionSurveyState> {
     override fun getState(): BuildProcessSatisfactionSurveyState = currentState
 
