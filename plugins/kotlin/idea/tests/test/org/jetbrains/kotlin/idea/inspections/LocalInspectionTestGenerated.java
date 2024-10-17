@@ -8376,11 +8376,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/memberVisibilityCanBePrivate/sameClassCallableReferences.kt");
         }
 
-        @TestMetadata("sameClassFunctionCall.kt")
-        public void testSameClassFunctionCall() throws Exception {
-            runTest("testData/inspectionsLocal/memberVisibilityCanBePrivate/sameClassFunctionCall.kt");
-        }
-
         @TestMetadata("subClassFunctionCall.kt")
         public void testSubClassFunctionCall() throws Exception {
             runTest("testData/inspectionsLocal/memberVisibilityCanBePrivate/subClassFunctionCall.kt");

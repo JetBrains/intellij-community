@@ -10835,6 +10835,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         public void testPublic() throws Exception {
             runTest("testData/quickfix/memberVisibilityCanBePrivate/public.kt");
         }
+
+        @TestMetadata("sameClassFunctionCall.kt")
+        public void testSameClassFunctionCall() throws Exception {
+            runTest("testData/quickfix/memberVisibilityCanBePrivate/sameClassFunctionCall.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
