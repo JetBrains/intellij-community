@@ -76,9 +76,7 @@ internal class LineStatusMarkerPopupService {
   }
 
   private fun showHint(hint: LightweightHint, editor: Editor, point: Point) {
-    val parent = editor.getComponent().rootPane
-    val hintHint = HintHint(editor, point)
-    hint.show(parent, point.x, point.y, editor.getComponent(), hintHint)
+    HintManagerImpl.doShowInGivenLocation(hint, editor, point, HintHint(editor, point), true)
   }
 
   companion object {
