@@ -53,19 +53,19 @@
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="apache.sshd.osgi" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.apache.sshd:sshd-osgi:2.12.1">
+        <properties include-transitive-deps="false" maven-id="org.apache.sshd:sshd-osgi:2.14.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.12.1/sshd-osgi-2.12.1.jar">
-              <sha256sum>be42a8af60937fbe45d9cac2ceee0e45bff6afaa8cf291f69ba54d77b01f8554</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.14.0/sshd-osgi-2.14.0.jar">
+              <sha256sum>cf7450bf7204380a817c86bb5968aa7df81555081f479690b32eb20fb51015e9</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.12.1/sshd-osgi-2.12.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.14.0/sshd-osgi-2.14.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.12.1/sshd-osgi-2.12.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.14.0/sshd-osgi-2.14.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
